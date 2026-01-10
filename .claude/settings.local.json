@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file:*)",
+      "WebSearch",
+      "Bash(bd init:*)",
+      "Bash(bd stats:*)",
+      "Bash(bd doctor:*)",
+      "Bash(bd help:*)",
+      "Bash(bd onboard:*)",
+      "Bash(bd setup claude --help:*)",
+      "Bash(bd setup:*)"
+    ]
+  }
+}
