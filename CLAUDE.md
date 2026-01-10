@@ -78,3 +78,59 @@ bd blocked                         # Show all blocked issues
 Run `bd prime` for complete AI-optimized workflow documentation. Git hooks auto-inject this context at session start and before compaction.
 
 For more details: `bd --help` or `bd workflow`
+
+## Development Standards
+
+### Testing Requirements
+
+1. **100% Test Coverage Required**
+   - All code must have complete test coverage
+   - No exceptions unless explicitly approved
+
+2. **Mock External Services**
+   - All tests must mock services outside the project boundary to avoid API usage costs
+   - Exception: Post-deploy smoke tests or scenarios requiring live third-party integrations
+   - **Always get explicit approval before implementing tests using live services**
+
+3. **Test-Driven Development (TDD)**
+   - Follow red-green-refactor cycle:
+     1. Write failing test (red)
+     2. Write minimal code to pass (green)
+     3. Refactor while keeping tests green
+
+### Code Quality
+
+4. **Linting and Formatting**
+   - Use standard linting and formatting configurations for the programming language
+   - All lint errors and warnings must be eliminated before committing
+   - Fix all errors/warnings, even if caused by previous work
+
+5. **Test Integrity**
+   - All tests must pass before committing
+   - Never delete tests to achieve 100% pass rate
+   - Never ignore failing tests, regardless of origin
+   - When fixing failing tests, reason about correctness:
+     - Is the implementation wrong?
+     - Is the test wrong?
+   - Never change implementation just to make tests pass without proper analysis
+
+### Git Practices
+
+6. **Commit Practices**
+   - Commit logical changes together
+   - Write meaningful commit messages using Conventional Commits format
+   - Commit frequently
+   - Once origin repo is set up: push every commit to main (unless instructed otherwise)
+
+**Conventional Commits Format:**
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`
+
+Example: `feat(auth): add user login endpoint`
