@@ -1,8 +1,8 @@
 # Frosthaven Assistant Agent - Product Specification
 
-**Version:** 1.0
-**Date:** 2026-01-10
-**Status:** Planning Phase
+**Version:** 1.1
+**Date:** 2026-01-11
+**Status:** Planning Phase - Decisions Finalized
 
 ## Executive Summary
 
@@ -37,8 +37,9 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
   - Explicit recommendation with reasoning
 
 **Build Guide Integration:**
-- Auto-discover popular class guides from r/Gloomhaven subreddit
-- Parse Google Docs to extract level-by-level recommendations
+- Maintain curated list of popular class guides from r/Gloomhaven community
+- Agent fetches guides on-demand using web search/fetch capabilities
+- No parsing or pre-processing required - Claude reads guides directly
 - Track which guide user is following (inferred from choices)
 - Remember deviations from guide and understand user intentions
 - Provide recommendations that align with chosen build path OR explain alternative paths
@@ -120,30 +121,33 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
    - Link: https://github.com/any2cards/worldhaven
 
 3. **Community build guides** (strategy and recommendations)
-   - Google Docs from r/Gloomhaven
-   - Auto-discover and parse popular guides
-   - Extract level-by-level card recommendations
-   - Identify build archetypes and strategies
+   - Curated list of URLs to popular guides (Google Docs, Reddit posts, etc.)
+   - Agent fetches guides on-demand via web search/fetch
+   - Claude reads and understands guides in their native format
+   - No parsing or structured extraction needed
+   - RAG system available as fallback if web fetch proves insufficient
 
 4. **Frosthaven rulebook** (game rules)
    - Official PDF or structured text
    - Indexed for semantic search
    - All rules, clarifications, examples
 
-### Authentication & Access
-**frosthaven-storyline.com:**
-- Uses sharing URL system (not username/password)
-- User generates sharing URL from website
-- Agent receives URL and needs to persist session
-- Requires handling cookies or browser local storage
-- Session may need periodic refresh
+### Data Extraction & Access
+**frosthaven-storyline.com (Screenshot-based extraction):**
+- User captures ~5 screenshots from known pages (character sheet, inventory, cards, campaign progress, etc.)
+- Screenshots uploaded to web UI (manual upload for MVP, browser extension in future)
+- Backend sends screenshots to Claude Vision API with structured extraction prompt
+- Claude returns structured JSON with character data (class, level, gold, cards, items, prosperity, campaign progress)
+- Backend validates and caches extracted data
+- Handle vertical scrolling by capturing multiple screenshots per page if needed
 
 **Sync Strategy:**
-- Session-based caching
-- Fetch character data once at conversation start
-- Cache for duration of session
-- User can manually trigger refresh if needed
-- Display last sync timestamp
+- User-initiated refresh via "Sync Character Data" button
+- Frequency: ~1-2x per week (after play sessions)
+- Display "Last synced: X hours ago" timestamp
+- Cache extracted data for session duration
+- Manual data entry form always available as fallback
+- Cost per sync: ~$0.15-0.30 (5 screenshots × Vision API cost)
 
 ### Multiple Characters
 - User may have multiple characters
@@ -164,15 +168,24 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 - Progressive Web App (PWA) for offline capability
 
 ### Input Methods
-1. **Voice Input**
-   - Browser speech recognition API
-   - Primary input method for mobile
-   - Fallback to text if unsupported
+**Both voice and text are first-class input methods** - equally important and well-designed.
 
-2. **Text Input**
+1. **Voice Input** (required for Phase 1)
+   - Web Speech API for voice recognition
+   - Primary input during gameplay (hands-free, mobile-friendly)
+   - Chrome/Edge: Excellent support (primary target)
+   - Safari: Partial support (best effort)
+   - Firefox: Graceful degradation to text-only
+   - Clear visual feedback (listening indicator, live transcription)
+   - Easy correction when recognition errors occur
+   - Progressive enhancement with feature detection
+
+2. **Text Input** (required for Phase 1)
    - Standard chat interface
    - Keyboard input for detailed questions
-   - Fallback for situations where voice isn't appropriate
+   - Primary input before/after game sessions
+   - Always available as fallback
+   - Smooth toggle between voice and text modes
 
 ### Output Format
 **Multi-modal recommendations:**
@@ -200,19 +213,23 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 ## Critical Non-Functional Requirements
 
 ### 1. Spoiler Protection
-**Problem:** Frosthaven has locked classes, hidden scenarios, and campaign unlocks
+**Status: DEFERRED TO POST-MVP**
 
-**Solution:**
-- Track user's campaign progress via frosthaven-storyline.com
-- Only show content user has unlocked
-- Hide locked class information until revealed
-- Don't spoil future scenario or event outcomes
-- Allow user to override (e.g., "I know about class X, show me anyway")
+**MVP Approach:**
+- No spoiler protection implemented in Phase 1
+- Display clear warning: "This tool may contain spoilers for Frosthaven content including locked classes, scenarios, and events"
+- Users self-regulate what questions they ask
+- Reduces MVP complexity significantly
+- Focus development effort on core recommendation features
 
-**Implementation:**
-- Spoiler level flags in database
-- Filter queries based on user's campaign progress
-- Explicit spoiler warnings before revealing optional content
+**Future Enhancement (Phase 2+):**
+- Screenshot extraction already captures campaign progress data (unlocked classes, completed scenarios, prosperity)
+- Can add spoiler filtering later if user feedback indicates it's valuable
+- Implementation would include:
+  - Spoiler level flags in database
+  - Filter queries based on user's campaign progress
+  - Explicit spoiler warnings before revealing optional content
+  - User override option ("I know about class X, show me anyway")
 
 ### 2. Offline Capability
 **Goal:** Basic functionality without internet connection
@@ -267,8 +284,8 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 **Backend:**
 - **Runtime:** Node.js
 - **Framework:** Next.js API routes or Express
-- **Scraping:** Playwright or Puppeteer (for frosthaven-storyline.com)
-- **Data Parsing:** Cheerio (for HTML), pdf-parse (for rulebook)
+- **Image Processing:** Sharp or similar (for screenshot handling)
+- **Data Parsing:** pdf-parse (for rulebook), JSON parsing for worldhaven data
 
 **Database:**
 - **Primary DB:** PostgreSQL (hosted on Railway/Vercel Postgres)
@@ -277,9 +294,12 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 
 **LLM:**
 - **Provider:** Anthropic Claude API
-- **Model:** Claude 3.5 Sonnet (or latest)
-- **Capabilities:** Long context, tool use, vision (for future card image analysis)
-- **Cost Estimation:** ~$0.03 per query average
+- **Model:** Claude 3.5 Sonnet or latest (Opus 4.5 for complex reasoning if needed)
+- **Capabilities:** Long context, tool use, vision (for screenshot extraction and card image analysis)
+- **Cost Estimation:**
+  - Text queries: ~$0.03 per query average
+  - Screenshot extraction: ~$0.15-0.30 per character sync (5 images)
+  - Vision used for extracting structured data from frosthaven-storyline.com screenshots
 
 **Authentication:**
 - **User Auth:** NextAuth.js or Clerk
@@ -294,9 +314,11 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 - Tables: cards, items, abilities, classes, scenarios
 
 **Character State:**
-- Scrape frosthaven-storyline.com on session start
-- Parse HTML to extract structured data
-- Cache in user's session/database record
+- Extract from screenshots using Claude Vision API
+- User uploads ~5 screenshots from frosthaven-storyline.com pages
+- Claude Vision processes screenshots with structured extraction prompt
+- Returns validated JSON data structure
+- Cache extracted data in user's session/database record
 - Schema:
   ```typescript
   {
@@ -314,29 +336,30 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
       completedScenarios: string[]
       // etc.
     }
+    lastSyncedAt: timestamp
+    syncMethod: 'screenshot' | 'manual'
   }
   ```
+- Manual data entry form available as fallback if screenshot extraction fails
 
 **Build Guides:**
-- Scrape Google Docs from known r/Gloomhaven links
-- Parse into structured format:
+- Store curated list of guide URLs and metadata in PostgreSQL
+- Agent fetches guides on-demand using web search/fetch tool
+- No pre-processing or parsing required - Claude reads guides directly
+- Schema for guide metadata:
   ```typescript
   {
     guideId: string
+    url: string
     className: string
     buildName: string
+    author: string
     description: string
-    levelRecommendations: {
-      [level: number]: {
-        recommendedCards: string[]
-        reasoning: string
-        alternatives: string[]
-      }
-    }
+    lastVerified: timestamp
   }
   ```
-- Store in PostgreSQL
-- Periodically refresh (weekly cron job)
+- RAG system (chunking, embeddings, vector search) available as fallback if web fetch proves too slow or unreliable
+- Update guide list manually when new popular guides emerge
 
 **Rules Database:**
 - Extract text from Frosthaven rulebook PDF
@@ -357,14 +380,15 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 1. **Input:** User message (voice → text or text directly)
 2. **Context Gathering:**
    - Identify which character (from conversation or explicit)
-   - Load cached character state OR trigger fresh scrape
-   - Load relevant build guide if identified
+   - Load cached character state OR prompt user to sync via screenshot upload
    - Retrieve conversation history
+   - Identify relevant build guide URLs if needed
 3. **Tool Use:** Claude with available tools:
-   - `getCharacterState(characterName)` → current stats, cards, items
-   - `queryCards(className, level, filters)` → available cards
-   - `queryItems(prosperity, filters)` → available items
-   - `searchBuildGuide(className, buildName)` → guide recommendations
+   - `extractCharacterFromScreenshots(images[])` → parse screenshots to structured character data (Vision API)
+   - `getCharacterState(characterName)` → current stats, cards, items (from cache/DB)
+   - `queryCards(className, level, filters)` → available cards from worldhaven data
+   - `queryItems(prosperity, filters)` → available items from worldhaven data
+   - `fetchBuildGuide(url)` → retrieve and read build guide content
    - `searchRules(query)` → RAG over rulebook
    - `getPartyInfo()` → other characters in party
 4. **Reasoning:** Claude analyzes data and generates recommendation
@@ -399,82 +423,205 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 
 ## Development Phases
 
-### Phase 1: Foundation & Data Setup
-**Goal:** Get core infrastructure and data working
+### Phase 1: Foundation & Core Data
+**Goal:** Get infrastructure, database, and worldhaven data working
 
 **Tasks:**
 - Set up Next.js project with TypeScript
-- Design PostgreSQL schema (users, characters, cards, items, guides)
+- Configure testing infrastructure (Jest/Vitest, coverage reporting)
+- Set up CI/CD pipeline with tiered testing (unit on every commit, E2E daily)
+- Design PostgreSQL schema (users, characters, cards, items, guide_metadata)
 - Ingest worldhaven data into database
-- Build scraper for frosthaven-storyline.com
-  - Test with sharing URL auth
-  - Parse character data accurately
-  - Handle session persistence
-- Create basic web UI (chat interface)
+  - Fetch from GitHub repository
+  - Parse JSON files
+  - Populate cards, items, abilities, classes tables
+  - Write tests with 100% coverage for data ingestion logic
+- Create basic web UI (chat interface, mobile-responsive)
 - Integrate Claude API with simple conversation
+- Set up test infrastructure with mocked Claude API responses
 
-**Deliverable:** Can chat with agent and it can fetch character data
+**Testing Focus:**
+- Unit tests for data ingestion: 100% coverage
+- Mocked database tests for schema validation
+- Basic E2E test with real Claude API (daily CI)
 
-### Phase 2: Card Selection Feature
+**Deliverable:** Can chat with agent, worldhaven data queryable, test suite passing
+
+---
+
+### Phase 2: Screenshot Extraction & Character Data
+**Goal:** Get character data extraction working via screenshots
+
+**Tasks:**
+- Build screenshot upload UI
+  - File upload component (supports multiple images)
+  - Preview uploaded screenshots
+  - "Sync Character Data" button
+  - Display "Last synced: X ago" timestamp
+- Implement Claude Vision API integration for screenshot extraction
+  - Design structured extraction prompt
+  - Send screenshots to Claude Vision API
+  - Parse and validate returned JSON
+  - Handle extraction errors gracefully
+- Build manual data entry form as fallback
+  - Simple form for key fields (class, level, gold, prosperity, cards, items)
+  - Save to same character schema
+- Cache character data in PostgreSQL
+- Write comprehensive tests
+  - Unit tests for JSON validation: 100% coverage
+  - Integration tests with mocked Claude Vision API responses
+  - E2E test with real screenshots (daily CI, LLM-as-judge validates extraction quality)
+
+**Testing Focus:**
+- Mock Vision API responses in unit/integration tests
+- Fixture screenshots for testing
+- Validation logic at 100% coverage
+- Daily E2E with real Vision API calls
+
+**Deliverable:** User can upload screenshots and extract character data, or enter manually
+
+---
+
+### Phase 3: Card Selection Feature
 **Goal:** First core use case working end-to-end
 
 **Tasks:**
 - Build card recommendation logic
-- Scrape and parse first set of build guides
-- Implement build guide matching (detect which guide user follows)
-- Design card comparison UI (images, tables, explanations)
+  - Query available cards from database based on class/level
+  - Compare card synergies and stats
+  - Generate recommendation with reasoning
+  - Write tests: 100% coverage for deterministic logic, mocked LLM calls
+- Curate initial build guide list (URLs for 1-2 guides per starting class)
+  - Store guide metadata in database
+  - Implement web fetch tool for reading guides
+- Implement `fetchBuildGuide(url)` tool
+  - Fetch guide content on-demand
+  - Pass to Claude for analysis
+  - Test with mocked web responses and real guides (E2E)
+- Design card comparison UI
+  - Card images side-by-side
+  - Comparison table (stats, effects, synergies)
+  - Natural language explanation
+  - Recommendation with reasoning
+- Integrate voice input (Web Speech API)
+  - Feature detection and browser compatibility
+  - Visual feedback (listening indicator)
+  - Transcription display
+  - Toggle between voice and text
+  - Test across Chrome, Safari, Firefox
 - Test with real level-up scenarios
 
-**Deliverable:** User can ask "I just hit level 4, which card should I pick?" and get useful answer
+**Testing Focus:**
+- Card comparison logic: 100% coverage (deterministic)
+- Recommendation prompt construction: unit tested
+- Mock build guide responses in integration tests
+- E2E with real guides and LLM (daily CI, LLM-as-judge)
+- Voice input: manual testing across browsers
 
-### Phase 3: Inventory & Rules
-**Goal:** Expand to other major features
+**Deliverable:** User can ask "I just hit level 4, which card should I pick?" and get useful answer via voice or text
+
+---
+
+### Phase 4: Inventory & Rules
+**Goal:** Expand to inventory optimization and rules lookup
 
 **Tasks:**
 - Implement inventory optimization logic
+  - Query available items by prosperity level
+  - Filter by gold budget
+  - Analyze synergies with character build
+  - Recommend purchases, upgrades, items to sell
+  - Write tests: 100% coverage for item filtering/comparison logic
 - Add item comparison UI
+  - Item images
+  - Stats tables
+  - Synergy explanations
+  - Purchase recommendations
 - Build RAG system for rulebook
-- Ingest rulebook into vector database
-- Implement rules search and retrieval
-- Test accuracy of rules answers
+  - Extract text from Frosthaven rulebook PDF
+  - Chunk into semantic sections
+  - Generate embeddings (Claude or OpenAI)
+  - Store in pgvector
+  - Implement semantic search
+  - Test with known rules queries
+- Implement `searchRules(query)` tool
+  - Query vector DB
+  - Return relevant sections with page numbers
+  - Test with mocked embeddings in unit tests
+  - E2E with real rulebook queries (daily CI)
 
-**Deliverable:** User can ask about items and rules
+**Testing Focus:**
+- Item filtering logic: 100% coverage
+- RAG chunking and retrieval: integration tests with mocked embeddings
+- Rules accuracy validation in E2E tests
 
-### Phase 4: Advanced Features
-**Goal:** Combat advice, build planning, scenario guidance
+**Deliverable:** User can ask about items and rules, get accurate answers
+
+---
+
+### Phase 5: Advanced Features & Polish
+**Goal:** Combat advice, build planning, production readiness
 
 **Tasks:**
 - Implement pre-combat hand selection
+  - Consider scenario type (boss, mob-heavy, etc.)
+  - Party composition awareness
+  - Recommend optimal card hand
 - Build long-term build planning views
-- Add scenario/event guidance
-- Improve build guide coverage (more classes, more guides)
-
-**Deliverable:** Full feature set working
-
-### Phase 5: Polish & Additional Requirements
-**Goal:** Make it production-ready
-
-**Tasks:**
-- Implement spoiler protection system
-- Build offline capability (PWA, caching)
+  - Show recommended progression from current level to level 9
+  - Explain build philosophy
+  - Identify key cards to work toward
+- Add scenario/event guidance (no spoiler protection initially)
+- Improve build guide coverage (add more guides to curated list)
+- Polish mobile UX
+  - Responsive design optimization
+  - Voice input refinement
+  - Loading states and error handling
+- Build offline capability (PWA)
+  - Service worker for caching
+  - IndexedDB for offline data
+  - Queue actions when offline
+  - Offline/online status indicator
 - Add share/export features
-- Improve mobile UX (voice input, responsive design)
-- Add user authentication
+  - Shareable links to recommendations
+  - Export as PDF/markdown
+  - Screenshot downloads
+- Add user authentication (NextAuth.js or Clerk)
 - Optimize performance and costs
-- Testing and bug fixes
+  - Caching strategies
+  - Prompt optimization
+  - Monitor API usage
+- Comprehensive testing and bug fixes
+  - Increase E2E test coverage
+  - User acceptance testing
+  - Performance testing
 
-**Deliverable:** Production-ready application
+**Testing Focus:**
+- All new features tested with tiered approach
+- E2E suite expanded (still daily CI)
+- Performance benchmarks
+- Cost monitoring
+
+**Deliverable:** Production-ready application with full feature set
+
+---
 
 ### Phase 6: Launch & Iterate
 **Goal:** Real users, feedback, improvements
 
 **Tasks:**
-- Deploy to production
+- Deploy to production (Vercel or Railway)
 - User testing with real Frosthaven campaigns
 - Gather feedback
-- Fix issues
+- Fix issues based on user reports
 - Add quality-of-life improvements
 - Monitor costs and optimize
+- Consider adding:
+  - Browser extension for automated screenshot capture
+  - RAG for build guides if web fetch proves insufficient
+  - Spoiler protection if users request it
+
+**Deliverable:** Live application with active users
 
 ---
 
@@ -502,34 +649,46 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 ## Open Questions & Risks
 
 ### Technical Risks
-1. **frosthaven-storyline.com scraping reliability**
-   - Site may change structure, breaking scraper
-   - Mitigation: Build resilient parsing, alert on failures, maintain fallback to manual entry
+1. **Screenshot extraction accuracy**
+   - Claude Vision may not perfectly extract all data from screenshots
+   - Screenshots may have varying quality, resolution, or formatting
+   - Mitigation: Provide manual data entry fallback, validate extracted data, allow user corrections, start with core fields and expand gradually
 
-2. **Build guide quality and maintenance**
-   - Community guides may be outdated or low quality
-   - Mitigation: Curate list of trusted guides, allow user to specify guide, periodic review
+2. **Build guide web fetch reliability**
+   - Google Docs or Reddit posts may be slow to fetch or unavailable
+   - Links may break (deleted, moved, made private)
+   - Mitigation: Cache fetched guides temporarily, maintain fallback list of archived guides, implement RAG system if web fetch proves insufficient
 
 3. **Claude API costs**
+   - Vision API calls for screenshot extraction add cost (~$0.15-0.30 per sync)
    - Usage could exceed budget if popular
-   - Mitigation: Implement caching, optimize prompts, rate limiting, consider smaller model for simple queries
+   - Mitigation: User-initiated sync only (not automatic), implement caching, optimize prompts, monitor usage, rate limiting if needed
 
-4. **Character state parsing complexity**
-   - May be difficult to extract all needed data accurately
-   - Mitigation: Start with core data (level, cards, items), expand gradually, user can correct errors
+4. **Voice recognition accuracy**
+   - Web Speech API may struggle with Frosthaven terminology
+   - Browser support varies (good in Chrome, partial Safari, none Firefox)
+   - Mitigation: Show transcription so user can verify, easy correction mechanism, text input always available, progressive enhancement
+
+5. **Testing LLM behavior**
+   - Non-deterministic outputs make traditional testing difficult
+   - Mitigation: Tiered testing strategy, mock LLM in unit tests, LLM-as-judge for E2E validation, focus coverage on deterministic logic
 
 ### Product Risks
 1. **User adoption**
    - Frosthaven players might prefer forums/guides
    - Mitigation: Focus on convenience (voice, mobile), personalized advice, faster than searching
 
-2. **Spoiler management**
-   - Users might want different spoiler preferences
-   - Mitigation: Make spoiler settings configurable, default to safe
+2. **Spoiler concerns**
+   - MVP has no spoiler protection - users may be concerned about spoilers
+   - Mitigation: Clear warning on first use, add spoiler protection in Phase 6 if users request it, screenshot extraction already captures unlock data for future filtering
 
 3. **Rules accuracy**
    - Agent might give wrong rules interpretations
-   - Mitigation: Always cite rulebook page numbers, allow user feedback on wrong answers, improve RAG
+   - Mitigation: Always cite rulebook page numbers, allow user feedback on wrong answers, improve RAG, E2E tests validate common rules queries
+
+4. **Screenshot upload friction**
+   - Users may find manual screenshot upload cumbersome
+   - Mitigation: Build browser extension in Phase 6 for one-click capture, make upload UX as smooth as possible, manual entry always available
 
 ### Open Questions
 - How to handle errata and FAQ updates to rules?
@@ -567,3 +726,10 @@ This specification defines a comprehensive AI assistant for Frosthaven players t
 
 **Document History:**
 - 2026-01-10: Initial specification (v1.0) based on Q&A session
+- 2026-01-11: Updated specification (v1.1) with finalized technical decisions:
+  - Screenshot-based character data extraction using Claude Vision API
+  - On-demand web fetch for build guides (no parsing)
+  - Tiered test coverage requirements (100% for business logic, 80-90% for integrations, E2E with LLM-as-judge)
+  - Voice input as must-have for Phase 1 (Chrome-focused, progressive enhancement)
+  - Spoiler protection deferred to post-MVP
+  - Revised development phases to reflect decisions
