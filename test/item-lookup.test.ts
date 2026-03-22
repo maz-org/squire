@@ -1,4 +1,56 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+const { FAKE_ITEMS } = vi.hoisted(() => ({
+  FAKE_ITEMS: JSON.stringify([
+    {
+      name: 'spyglass',
+      image: 'items/frosthaven/fh-001-spyglass.png',
+      expansion: 'frosthaven',
+      xws: 'spyglass',
+    },
+    {
+      name: 'healing potion',
+      image: 'items/frosthaven/fh-083-healing-potion.png',
+      expansion: 'frosthaven',
+      xws: 'healingpotion',
+    },
+    {
+      name: 'major healing potion',
+      image: 'items/frosthaven/fh-099-major-healing-potion.png',
+      expansion: 'frosthaven',
+      xws: 'majorhealingpotion',
+    },
+    {
+      name: 'item 099',
+      image: 'items/frosthaven/fh-099-major-healing-potion.png',
+      expansion: 'frosthaven',
+      xws: 'majorhealingpotion',
+    },
+    {
+      name: 'winged boots',
+      image: 'items/frosthaven/fh-050-winged-boots.png',
+      expansion: 'frosthaven',
+      xws: 'wingedboots',
+    },
+    {
+      name: 'sturdy boots',
+      image: 'items/frosthaven/fh-051-sturdy-boots.png',
+      expansion: 'frosthaven',
+      xws: 'sturdyboots',
+    },
+    {
+      name: 'other game item',
+      image: 'items/other/other.png',
+      expansion: 'gloomhaven',
+      xws: 'othergameitem',
+    },
+  ]),
+}));
+
+vi.mock('node:fs', () => ({
+  readFileSync: vi.fn().mockReturnValue(FAKE_ITEMS),
+}));
+
 import { searchItems, formatItems } from '../src/item-lookup.ts';
 import type { ItemEntry } from '../src/item-lookup.ts';
 
@@ -28,8 +80,8 @@ describe('searchItems', () => {
   });
 
   it('respects the limit parameter', () => {
-    const results = searchItems('boots', 2);
-    expect(results.length).toBeLessThanOrEqual(2);
+    const results = searchItems('boots', 1);
+    expect(results.length).toBeLessThanOrEqual(1);
   });
 
   it('returns empty array for nonsense queries', () => {
@@ -40,10 +92,20 @@ describe('searchItems', () => {
   it('prefers longer (more specific) item names', () => {
     const results = searchItems('healing potion', 5);
     const names = results.map((r) => r.name);
-    // "major healing potion" is longer than "healing potion"
     if (names.includes('major healing potion') && names.includes('healing potion')) {
       expect(names.indexOf('major healing potion')).toBeLessThan(names.indexOf('healing potion'));
     }
+  });
+
+  it('filters out non-frosthaven items', () => {
+    const results = searchItems('other game item', 5);
+    expect(results).toEqual([]);
+  });
+
+  it('deduplicates by xws, preferring real names over aliases', () => {
+    const results = searchItems('099', 5);
+    const names = results.map((r) => r.name);
+    expect(names).not.toContain('item 099');
   });
 });
 

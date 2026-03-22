@@ -1,4 +1,46 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+const FAKE_MONSTER_STATS = JSON.stringify([
+  {
+    name: 'Algox Archer',
+    levelRange: '0-3',
+    normal: { 0: { hp: 5, move: 2, attack: 3, range: 4 } },
+    elite: { 0: { hp: 8, move: 3, attack: 4, range: 5 } },
+    immunities: [],
+    notes: null,
+  },
+]);
+
+const FAKE_BATTLE_GOALS = JSON.stringify([
+  {
+    name: 'Assassin',
+    condition: 'Kill an enemy before its first turn.',
+    checkmarks: 2,
+  },
+]);
+
+const { mockExistsSync, mockReadFileSync } = vi.hoisted(() => ({
+  mockExistsSync: vi.fn(),
+  mockReadFileSync: vi.fn(),
+}));
+
+vi.mock('node:fs', () => ({
+  existsSync: mockExistsSync,
+  readFileSync: mockReadFileSync,
+}));
+
+// Return fake data based on the path
+mockExistsSync.mockImplementation((path: string) => {
+  if (path.includes('monster-stats.json') || path.includes('battle-goals.json')) return true;
+  return false;
+});
+
+mockReadFileSync.mockImplementation((path: string) => {
+  if (typeof path === 'string' && path.includes('monster-stats.json')) return FAKE_MONSTER_STATS;
+  if (typeof path === 'string' && path.includes('battle-goals.json')) return FAKE_BATTLE_GOALS;
+  return '[]';
+});
+
 import { searchExtracted, formatExtracted } from '../src/extracted-data.ts';
 
 describe('searchExtracted', () => {
@@ -13,8 +55,8 @@ describe('searchExtracted', () => {
   });
 
   it('respects the k limit', () => {
-    const results = searchExtracted('attack move', 2);
-    expect(results.length).toBeLessThanOrEqual(2);
+    const results = searchExtracted('attack move', 1);
+    expect(results.length).toBeLessThanOrEqual(1);
   });
 
   it('returns empty for stopword-only queries', () => {
@@ -28,7 +70,6 @@ describe('searchExtracted', () => {
   });
 
   it('filters short tokens (< 3 chars)', () => {
-    // "at" is only 2 chars, should be filtered out
     const results = searchExtracted('at');
     expect(results).toEqual([]);
   });
