@@ -56,7 +56,7 @@ export async function askFrosthaven(question: string): Promise<string> {
 }
 
 // CLI entrypoint
-if (process.argv[1].endsWith('query.ts')) {
+if (process.argv[1]?.endsWith('query.ts')) {
   const question = process.argv.slice(2).join(' ');
   if (!question) {
     console.error('Usage: node src/query.ts "your question here"');

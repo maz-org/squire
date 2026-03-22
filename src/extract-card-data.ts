@@ -201,7 +201,7 @@ export async function extractCardType(cardType: CardType): Promise<ExtractedResu
     : [];
 
   // Only skip records that fully succeeded (no error, no parse error)
-  const succeeded = existing.filter((r) => !r._error && !r._parseError);
+  const succeeded = existing.filter((r) => !r._error);
   const processedFiles = new Set(succeeded.map((r) => r._file));
 
   const images = collectImages(cardType);

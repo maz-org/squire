@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockModel = vi.fn().mockResolvedValue({ data: new Float32Array([0.1, 0.2, 0.3]) });
-const mockPipeline = vi.fn().mockResolvedValue(mockModel);
+const { mockModel, mockPipeline } = vi.hoisted(() => {
+  const model = vi.fn().mockResolvedValue({ data: new Float32Array([0.1, 0.2, 0.3]) });
+  const pipeline = vi.fn().mockResolvedValue(model);
+  return { mockModel: model, mockPipeline: pipeline };
+});
 
 vi.mock('@xenova/transformers', () => ({
   pipeline: mockPipeline,
