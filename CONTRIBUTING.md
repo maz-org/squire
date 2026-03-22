@@ -89,9 +89,9 @@ source ~/.zshrc
 Install the project's Node version:
 
 ```bash
-nvm install    # reads .nvmrc → installs Node 24.14.0
+nvm install    # reads .nvmrc → installs Node 24.x
 nvm use
-node --version # should print v24.14.0
+node --version # should print v24.x
 ```
 
 ### GitHub CLI
