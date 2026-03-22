@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/ test/",
+    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads'",
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
     "prepare": "husky"
@@ -20,6 +21,9 @@
     "*.{ts,js}": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix"
     ]
   },
   "dependencies": {
@@ -41,6 +45,7 @@
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
+    "markdownlint-cli2": "^0.22.0",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1",

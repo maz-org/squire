@@ -26,6 +26,9 @@ jobs:
       - name: Lint
         run: npx eslint src/ test/
 
+      - name: Lint markdown
+        run: npm run lint:md
+
       - name: Format check
         run: npx prettier --check src/ test/
 

@@ -14,7 +14,7 @@ When you ask a question, Squire embeds it, searches the vector index and card da
 
 ## How it works
 
-```
+```text
 Question → Embed → Vector Search + Card Search → Claude → Answer
 ```
 

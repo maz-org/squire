@@ -21,6 +21,7 @@ This project uses **beads (bd)** for persistent issue tracking across sessions.
 Track ALL work in bd - never use markdown TODOs or comment-based task lists.
 
 **Quick Reference:**
+
 ```bash
 bd prime                              # Load complete workflow context
 bd ready                              # Show issues ready to work (no blockers)
@@ -43,21 +44,25 @@ bd sync --from-main                   # Sync beads from main (ephemeral branches
 **MANDATORY steps before ending session:**
 
 1. **Check what changed**
+
    ```bash
    git status
    ```
 
 2. **Stage code changes**
+
    ```bash
    git add <files>
    ```
 
 3. **Sync beads from main** (for ephemeral branches)
+
    ```bash
    bd sync --from-main
    ```
 
 4. **Commit code changes**
+
    ```bash
    git commit -m "..."
    ```
@@ -108,6 +113,7 @@ This project uses **tiered coverage requirements** based on module type:
 #### Test Pyramid Strategy
 
 Follow the test pyramid with this distribution:
+
 - **~70% Unit Tests**: Fast, deterministic, all external services mocked, run on every commit
 - **~25% Integration Tests**: External services mocked, test integration logic, run on every commit
 - **~5% E2E Tests**: Real third-party API calls, run on **daily schedule in CI** (not on every commit)
@@ -154,18 +160,19 @@ Follow the test pyramid with this distribution:
 #### Test-Driven Development (TDD)
 
 Follow red-green-refactor cycle:
+
 1. Write failing test (red)
 2. Write minimal code to pass (green)
 3. Refactor while keeping tests green
 
 ### Code Quality
 
-4. **Linting and Formatting**
+1. **Linting and Formatting**
    - Use standard linting and formatting configurations for the programming language
    - All lint errors and warnings must be eliminated before committing
    - Fix all errors/warnings, even if caused by previous work
 
-5. **Test Integrity**
+2. **Test Integrity**
    - All tests must pass before committing
    - Never delete tests to achieve 100% pass rate
    - Never ignore failing tests, regardless of origin
@@ -200,14 +207,15 @@ CodeRabbit configuration is in `.coderabbit.yaml`. Path-specific review instruct
 
 ### Git Practices
 
-6. **Commit Practices**
+1. **Commit Practices**
    - Commit logical changes together
    - Write meaningful commit messages using Conventional Commits format
    - Commit frequently
    - Once origin repo is set up: push every commit to main (unless instructed otherwise)
 
 **Conventional Commits Format:**
-```
+
+```text
 <type>(<scope>): <description>
 
 [optional body]
