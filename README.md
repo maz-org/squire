@@ -80,28 +80,6 @@ npm run eval -- --id=rule-poison
 
 Results are tracked in Langfuse with LLM-as-judge scoring (1-5 scale). Current baseline: **73% pass rate, 3.8/5 avg score**.
 
-## Project structure
-
-```
-src/
-  query.ts              # RAG pipeline: embed → search → Claude
-  embedder.ts           # Local text embedding (Xenova/transformers)
-  vector-store.ts       # In-memory vector index with cosine similarity
-  extracted-data.ts     # Search over OCR-extracted card data
-  extract-card-data.ts  # Vision OCR extraction using Claude Haiku
-  index-docs.ts         # PDF chunking and indexing
-  schemas.ts            # Zod schemas for card data validation
-  instrumentation.ts    # Langfuse/OpenTelemetry tracing setup
-eval/
-  dataset.json          # Evaluation question/answer pairs
-  run.ts                # Experiment runner with Langfuse integration
-test/                   # Unit tests (vitest)
-data/
-  worldhaven/           # Game data submodule (gitignored)
-  extracted/            # OCR-extracted card JSON (gitignored, regeneratable)
-  index.json            # Vector index (gitignored, regeneratable)
-```
-
 ## License
 
 This project is for personal/educational use. Frosthaven is a trademark of Cephalofair Games. Game content belongs to its respective owners.
