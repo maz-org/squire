@@ -21,7 +21,7 @@ function load(type) {
   const path = join(EXTRACTED_DIR, `${type}.json`);
   if (!existsSync(path)) { _cache[type] = []; return []; }
   const all = JSON.parse(readFileSync(path, 'utf-8'));
-  // Only use successfully extracted records
+  // Use records that have data — validation warnings are acceptable, hard errors are not
   _cache[type] = all.filter((r) => !r._error && !r._parseError);
   return _cache[type];
 }

@@ -6,12 +6,18 @@
   "scripts": {
     "index": "node src/index-docs.js",
     "query": "node src/query.js",
-    "extract": "node src/extract-card-data.js"
+    "extract": "node src/extract-card-data.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@xenova/transformers": "^2.17.2",
     "dotenv": "^17.3.1",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
   }
 }

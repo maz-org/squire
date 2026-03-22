@@ -12,13 +12,15 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
+import { SCHEMAS } from './schemas.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_BASE = join(__dirname, '..', 'data', 'worldhaven', 'images');
 const OUTPUT_DIR = join(__dirname, '..', 'data', 'extracted');
 
 // Rate limit: 10k output tokens/minute. ~200 tokens/card → max ~50/min.
-// Sequential with 1.5s delay keeps us comfortably under.
+// Sequential with 1.5s delay stays comfortably under.
 const REQUEST_DELAY_MS = 1500;
 const MAX_RETRIES = 3;
 
@@ -31,116 +33,55 @@ const CARD_TYPES = {
     imageDir: join(IMAGES_BASE, 'monster-stat-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
     subdirs: false,
-    prompt: `This is a Frosthaven monster stat card. Extract ALL data and return ONLY valid JSON with this schema:
-{
-  "name": "monster name",
-  "levelRange": "0-3" or "4-7",
-  "normal": {
-    "0": { "move": N, "attack": N, "range": N, "hp": N },
-    "1": { "move": N, "attack": N, "range": N, "hp": N }
+    context: 'This is a Frosthaven monster stat card showing HP, Move, Attack, and Range values for Normal and Elite difficulties across multiple levels.',
   },
-  "elite": {
-    "0": { "move": N, "attack": N, "range": N, "hp": N }
-  },
-  "immunities": ["poison", "wound"],
-  "notes": "any special rules text visible on the card"
-}
-Use null for stats shown as dashes. Include one entry per visible level column.`,
-  },
-
   'monster-abilities': {
     imageDir: join(IMAGES_BASE, 'monster-ability-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: true,
-    prompt: `This is a Frosthaven monster ability card. Return ONLY valid JSON:
-{
-  "monsterType": "monster deck name",
-  "cardName": "card name",
-  "initiative": N,
-  "abilities": ["full text of each ability line"]
-}`,
+    context: 'This is a Frosthaven monster ability card. Describe any icons as words (e.g. sword icon = "Attack", boot icon = "Move", heart = "Heal").',
   },
-
   'character-abilities': {
     imageDir: join(IMAGES_BASE, 'character-ability-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: true,
-    prompt: `This is a Frosthaven character ability card. Return ONLY valid JSON:
-{
-  "cardName": "name of the card",
-  "characterClass": "class name if visible",
-  "level": N,
-  "initiative": N,
-  "top": { "action": "primary action text", "effects": ["additional effect lines"] },
-  "bottom": { "action": "primary action text", "effects": ["additional effect lines"] },
-  "lost": true or false
-}
-Use null for any value not visible or not applicable.`,
+    context: 'This is a Frosthaven character ability card with a top action and a bottom action. Describe icons as words.',
   },
-
   'items': {
     imageDir: join(IMAGES_BASE, 'items', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: true,
-    prompt: `This is a Frosthaven item card. Return ONLY valid JSON:
-{
-  "number": "item number as 3-digit string e.g. '099'",
-  "name": "item name",
-  "slot": "head" or "body" or "legs" or "one hand" or "two hands" or "small item",
-  "cost": N,
-  "effect": "full effect text",
-  "uses": N or null,
-  "spent": true or false,
-  "lost": true or false
-}`,
+    context: 'This is a Frosthaven item card.',
   },
-
   'events': {
     imageDir: join(IMAGES_BASE, 'events', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
     subdirs: true,
-    prompt: `This is a Frosthaven event card. Return ONLY valid JSON:
-{
-  "eventType": "road" or "outpost" or "boat",
-  "season": "summer" or "winter" or null,
-  "number": "event number as string",
-  "flavorText": "the story/flavor text",
-  "optionA": { "text": "choice A text", "outcome": "outcome text for choice A" },
-  "optionB": { "text": "choice B text", "outcome": "outcome text for choice B" }
-}
-Omit optionB if there is no choice. Keep outcome text complete and verbatim.`,
+    context: 'This is a Frosthaven event card (road, outpost, or boat). Extract the full flavor text and both options with their complete outcomes.',
   },
-
   'battle-goals': {
     imageDir: join(IMAGES_BASE, 'battle-goals', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: false,
-    prompt: `This is a Frosthaven battle goal card. Return ONLY valid JSON:
-{
-  "name": "battle goal name",
-  "condition": "full text of the goal condition",
-  "checkmarks": N
-}`,
+    context: 'This is a Frosthaven battle goal card.',
   },
-
   'buildings': {
     imageDir: join(IMAGES_BASE, 'outpost-building-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: false,
-    prompt: `This is a Frosthaven outpost building card. Return ONLY valid JSON:
-{
-  "buildingNumber": "building number as string",
-  "name": "building name",
-  "level": N,
-  "buildCost": { "gold": N, "lumber": N, "metal": N, "hide": N },
-  "effect": "full effect/ability text",
-  "notes": "any other relevant text"
-}
-Use null for cost resources not required.`,
+    context: 'This is a Frosthaven outpost building card.',
   },
 };
 
-// ─── Core extraction ──────────────────────────────────────────────────────────
+// Pre-generate prompts from Zod schemas using Zod 4's built-in toJSONSchema
+const PROMPTS = {};
+for (const [type, config] of Object.entries(CARD_TYPES)) {
+  const jsonSchema = z.toJSONSchema(SCHEMAS[type]);
+  delete jsonSchema.$schema;
+  PROMPTS[type] = `${config.context}\n\nExtract all data and return ONLY valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`;
+}
+
+// ─── Image collection ─────────────────────────────────────────────────────────
 
 function collectImages(cardType) {
   const config = CARD_TYPES[cardType];
@@ -148,13 +89,9 @@ function collectImages(cardType) {
 
   function scanDir(dir) {
     if (!existsSync(dir)) return;
-    const entries = readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (entry.isDirectory() && config.subdirs) {
-        scanDir(join(dir, entry.name));
-      } else if (entry.isFile() && config.filter(entry.name)) {
-        images.push(join(dir, entry.name));
-      }
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && config.subdirs) scanDir(join(dir, entry.name));
+      else if (entry.isFile() && config.filter(entry.name)) images.push(join(dir, entry.name));
     }
   }
 
@@ -162,20 +99,20 @@ function collectImages(cardType) {
   return images;
 }
 
+// ─── Extraction ───────────────────────────────────────────────────────────────
+
 function extractJson(text) {
-  // Strip markdown code fences
   let s = text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
-  // Find outermost JSON object
   const start = s.indexOf('{');
   const end = s.lastIndexOf('}');
-  if (start !== -1 && end !== -1 && end > start) {
-    s = s.slice(start, end + 1);
-  }
+  if (start !== -1 && end !== -1 && end > start) s = s.slice(start, end + 1);
   return JSON.parse(s);
 }
 
-async function extractImage(imagePath, prompt) {
+async function extractImage(imagePath, cardType) {
   const imageData = readFileSync(imagePath).toString('base64');
+  const prompt = PROMPTS[cardType];
+  const schema = SCHEMAS[cardType];
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
@@ -191,14 +128,23 @@ async function extractImage(imagePath, prompt) {
         }],
       });
 
-      const text = response.content[0].text.trim();
-      return extractJson(text);
+      const raw = response.content[0].text.trim();
+      const parsed = extractJson(raw);
+
+      // Validate against Zod schema
+      const result = schema.safeParse(parsed);
+      if (!result.success) {
+        // Return data anyway but flag validation issues
+        return { ...parsed, _validationErrors: result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
+      }
+
+      return result.data;
 
     } catch (err) {
-      const isRateLimit = err.status === 429 || (err.message && err.message.includes('rate_limit'));
+      const isRateLimit = err.status === 429 || (err.message?.includes('rate_limit'));
       if (isRateLimit && attempt < MAX_RETRIES - 1) {
         const delay = Math.pow(2, attempt + 1) * REQUEST_DELAY_MS;
-        process.stdout.write(` [rate limited, waiting ${delay / 1000}s]`);
+        process.stdout.write(` [rate limit, ${delay / 1000}s wait]`);
         await new Promise((r) => setTimeout(r, delay));
         continue;
       }
@@ -207,27 +153,27 @@ async function extractImage(imagePath, prompt) {
   }
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Per-type runner ──────────────────────────────────────────────────────────
 
 async function extractCardType(cardType) {
-  const config = CARD_TYPES[cardType];
   const outputPath = join(OUTPUT_DIR, `${cardType}.json`);
 
   const existing = existsSync(outputPath)
     ? JSON.parse(readFileSync(outputPath, 'utf-8'))
     : [];
 
-  // Retry errored records alongside unprocessed ones
+  // Only skip records that fully succeeded (no error, no parse error)
   const succeeded = existing.filter((r) => !r._error && !r._parseError);
   const processedFiles = new Set(succeeded.map((r) => r._file));
 
   const images = collectImages(cardType);
   const pending = images.filter((p) => !processedFiles.has(basename(p)));
 
-  console.log(`\n[${cardType}] ${images.length} images, ${succeeded.length} succeeded, ${pending.length} to process`);
+  const errCount = existing.length - succeeded.length;
+  console.log(`\n[${cardType}] ${images.length} images — ${succeeded.length} succeeded, ${errCount} retrying, ${pending.length} pending`);
 
   if (pending.length === 0) {
-    console.log(`  All done.`);
+    console.log('  All done.');
     return succeeded;
   }
 
@@ -236,9 +182,12 @@ async function extractCardType(cardType) {
 
   for (const imagePath of pending) {
     try {
-      const extracted = await extractImage(imagePath, config.prompt);
+      const extracted = await extractImage(imagePath, cardType);
       extracted._file = basename(imagePath);
       extracted._path = imagePath;
+      if (extracted._validationErrors?.length) {
+        process.stdout.write(` [validation: ${extracted._validationErrors.length} issues]`);
+      }
       results.push(extracted);
     } catch (err) {
       results.push({ _file: basename(imagePath), _path: imagePath, _error: err.message });
@@ -255,9 +204,11 @@ async function extractCardType(cardType) {
   return results;
 }
 
-function saveResults(outputPath, results) {
-  writeFileSync(outputPath, JSON.stringify(results, null, 2), 'utf-8');
+function saveResults(path, results) {
+  writeFileSync(path, JSON.stringify(results, null, 2), 'utf-8');
 }
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -268,7 +219,7 @@ async function main() {
   const unknown = types.filter((t) => !CARD_TYPES[t]);
   if (unknown.length) {
     console.error(`Unknown card type(s): ${unknown.join(', ')}`);
-    console.error(`Valid types: ${Object.keys(CARD_TYPES).join(', ')}`);
+    console.error(`Valid: ${Object.keys(CARD_TYPES).join(', ')}`);
     process.exit(1);
   }
 
