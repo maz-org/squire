@@ -133,7 +133,8 @@ CodeRabbit configuration is in `.coderabbit.yaml`. Path-specific review instruct
    - Commit logical changes together
    - Write meaningful commit messages using Conventional Commits format
    - Commit frequently
-   - Once origin repo is set up: push every commit to main (unless instructed otherwise)
+   - Always use pull requests — never push directly to main
+   - Keep PRs small and focused — one logical change per PR
 
 **Conventional Commits Format:**
 
