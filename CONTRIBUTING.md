@@ -157,23 +157,16 @@ LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
 ```
 
-### Index the rulebooks
+### Data files
 
-This chunks and embeds the Frosthaven PDFs into a vector index. Takes a few
-minutes on first run:
-
-```bash
-npm run index
-```
-
-### Extracted data and vector index
-
-The extracted card data (`data/extracted/`) and vector index (`data/index.json`)
-are stored in the repo via [Git LFS](https://git-lfs.com/). They download
-automatically when you clone — no extra steps needed.
+The vector index (`data/index.json`) and extracted card data
+(`data/extracted/`) are stored in the repo via
+[Git LFS](https://git-lfs.com/). They download automatically when you clone —
+no extra setup needed.
 
 If you need to regenerate them (e.g., after changing the extraction pipeline or
-indexing logic), these are maintainer tasks:
+indexing logic), these are maintainer tasks managed by
+[@bcm](https://github.com/bcm):
 
 ```bash
 npm run index     # re-index rulebook PDFs (~2 min)
