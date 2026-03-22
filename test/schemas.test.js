@@ -8,8 +8,8 @@ describe('MonsterStatSchema', () => {
     const data = {
       name: 'Ooze',
       levelRange: '0-3',
-      normal: { '0': { move: 1, attack: 2, range: null, hp: 5 } },
-      elite: { '0': { move: 2, attack: 3, range: null, hp: 8 } },
+      normal: { 0: { move: 1, attack: 2, range: null, hp: 5 } },
+      elite: { 0: { move: 2, attack: 3, range: null, hp: 8 } },
       immunities: ['poison'],
       notes: null,
     };
@@ -76,7 +76,11 @@ describe('BattleGoalSchema', () => {
   const schema = SCHEMAS['battle-goals'];
 
   it('accepts a valid battle goal', () => {
-    const data = { name: 'Assassin', condition: 'Kill an enemy before its first turn.', checkmarks: 2 };
+    const data = {
+      name: 'Assassin',
+      condition: 'Kill an enemy before its first turn.',
+      checkmarks: 2,
+    };
     expect(schema.safeParse(data).success).toBe(true);
   });
 

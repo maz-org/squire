@@ -40,13 +40,9 @@ export async function askFrosthaven(question) {
     .map((h, i) => `[${i + 1}] (${h.source})\n${h.text}`)
     .join('\n\n---\n\n');
 
-  const itemContext = itemHits.length > 0
-    ? `\n\n## Item Lookup\n${formatItems(itemHits)}`
-    : '';
+  const itemContext = itemHits.length > 0 ? `\n\n## Item Lookup\n${formatItems(itemHits)}` : '';
 
-  const cardContext = cardHits.length > 0
-    ? `\n\n## Card Data\n${formatExtracted(cardHits)}`
-    : '';
+  const cardContext = cardHits.length > 0 ? `\n\n## Card Data\n${formatExtracted(cardHits)}` : '';
 
   const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${itemContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
 
@@ -70,5 +66,8 @@ if (process.argv[1].endsWith('query.js')) {
   console.log('Searching...\n');
   askFrosthaven(question)
     .then((answer) => console.log(answer))
-    .catch((err) => { console.error(err); process.exit(1); });
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }

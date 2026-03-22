@@ -75,7 +75,5 @@ export function searchItems(query, limit = 5) {
  */
 export function formatItems(items) {
   if (items.length === 0) return '';
-  return items
-    .map((i) => `Item #${i.number ?? '?'}: ${i.name}`)
-    .join('\n');
+  return items.map((i) => `Item #${i.number ?? '?'}: ${i.name}`).join('\n');
 }

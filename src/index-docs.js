@@ -5,7 +5,7 @@
 
 import 'dotenv/config';
 import { readFileSync, readdirSync } from 'fs';
-import { join, basename, dirname } from 'path';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { embedBatch } from './embedder.js';
@@ -13,8 +13,8 @@ import { loadIndex, addEntries } from './vector-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DOCS_DIR = join(__dirname, '..', 'docs');
-const CHUNK_SIZE = 800;      // characters
-const CHUNK_OVERLAP = 150;   // characters
+const CHUNK_SIZE = 800; // characters
+const CHUNK_OVERLAP = 150; // characters
 
 function chunkText(text, source) {
   const chunks = [];
@@ -70,7 +70,9 @@ async function main() {
           embedding: embeddings[j],
         });
       }
-      process.stdout.write(`\r    ${Math.min(i + BATCH, chunks.length)}/${chunks.length} chunks embedded`);
+      process.stdout.write(
+        `\r    ${Math.min(i + BATCH, chunks.length)}/${chunks.length} chunks embedded`,
+      );
     }
     console.log();
   }
@@ -84,4 +86,7 @@ async function main() {
   console.log(`\nDone. Index now has ${existing.length + allNewEntries.length} chunks total.`);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

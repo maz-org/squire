@@ -44,8 +44,8 @@ describe('formatExtracted', () => {
       _type: 'monster-stats',
       name: 'Ooze',
       levelRange: '0-3',
-      normal: { '0': { hp: 5, move: 1, attack: 2, range: null } },
-      elite: { '0': { hp: 8, move: 2, attack: 3, range: null } },
+      normal: { 0: { hp: 5, move: 1, attack: 2, range: null } },
+      elite: { 0: { hp: 8, move: 2, attack: 3, range: null } },
       immunities: ['poison'],
       notes: null,
     };

@@ -10,7 +10,15 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXTRACTED_DIR = join(__dirname, '..', 'data', 'extracted');
 
-const TYPES = ['monster-stats', 'monster-abilities', 'character-abilities', 'items', 'events', 'battle-goals', 'buildings'];
+const TYPES = [
+  'monster-stats',
+  'monster-abilities',
+  'character-abilities',
+  'items',
+  'events',
+  'battle-goals',
+  'buildings',
+];
 
 // ─── Loading ──────────────────────────────────────────────────────────────────
 
@@ -19,7 +27,10 @@ const _cache = {};
 function load(type) {
   if (_cache[type]) return _cache[type];
   const path = join(EXTRACTED_DIR, `${type}.json`);
-  if (!existsSync(path)) { _cache[type] = []; return []; }
+  if (!existsSync(path)) {
+    _cache[type] = [];
+    return [];
+  }
   const all = JSON.parse(readFileSync(path, 'utf-8'));
   // Use records that have data — validation warnings are acceptable, hard errors are not
   _cache[type] = all.filter((r) => !r._error && !r._parseError);
@@ -37,12 +48,20 @@ function recordToText(record) {
 
   if (t === 'monster-stats') {
     const levels = Object.entries(record.normal || {})
-      .map(([l, s]) => `Level ${l}: Normal(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack}${s?.range ? `, Range ${s.range}` : ''})`)
+      .map(
+        ([l, s]) =>
+          `Level ${l}: Normal(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack}${s?.range ? `, Range ${s.range}` : ''})`,
+      )
       .join('; ');
     const eliteLevels = Object.entries(record.elite || {})
-      .map(([l, s]) => `Level ${l}: Elite(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack}${s?.range ? `, Range ${s.range}` : ''})`)
+      .map(
+        ([l, s]) =>
+          `Level ${l}: Elite(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack}${s?.range ? `, Range ${s.range}` : ''})`,
+      )
       .join('; ');
-    const immunities = record.immunities?.length ? `Immunities: ${record.immunities.join(', ')}. ` : '';
+    const immunities = record.immunities?.length
+      ? `Immunities: ${record.immunities.join(', ')}. `
+      : '';
     const notes = record.notes ? `Notes: ${record.notes}` : '';
     return `Monster: ${record.name} (levels ${record.levelRange}). ${levels}. ${eliteLevels}. ${immunities}${notes}`;
   }
@@ -53,8 +72,12 @@ function recordToText(record) {
   }
 
   if (t === 'character-abilities') {
-    const top = record.top ? `Top: ${record.top.action}${record.top.effects?.length ? ' — ' + record.top.effects.join(', ') : ''}` : '';
-    const bot = record.bottom ? `Bottom: ${record.bottom.action}${record.bottom.effects?.length ? ' — ' + record.bottom.effects.join(', ') : ''}` : '';
+    const top = record.top
+      ? `Top: ${record.top.action}${record.top.effects?.length ? ' — ' + record.top.effects.join(', ') : ''}`
+      : '';
+    const bot = record.bottom
+      ? `Bottom: ${record.bottom.action}${record.bottom.effects?.length ? ' — ' + record.bottom.effects.join(', ') : ''}`
+      : '';
     const lost = record.lost ? ' [LOST]' : '';
     return `Character Ability — ${record.characterClass || 'Unknown'} Level ${record.level ?? '?'}: "${record.cardName}" (initiative ${record.initiative}). ${top}. ${bot}.${lost}`;
   }
@@ -68,8 +91,12 @@ function recordToText(record) {
 
   if (t === 'events') {
     const season = record.season ? `${record.season} ` : '';
-    const a = record.optionA ? `Option A: "${record.optionA.text}" → ${record.optionA.outcome}` : '';
-    const b = record.optionB ? `Option B: "${record.optionB.text}" → ${record.optionB.outcome}` : '';
+    const a = record.optionA
+      ? `Option A: "${record.optionA.text}" → ${record.optionA.outcome}`
+      : '';
+    const b = record.optionB
+      ? `Option B: "${record.optionB.text}" → ${record.optionB.outcome}`
+      : '';
     return `${season}${record.eventType} event #${record.number}: ${record.flavorText} ${a} ${b}`.trim();
   }
 
@@ -79,7 +106,10 @@ function recordToText(record) {
 
   if (t === 'buildings') {
     const cost = record.buildCost
-      ? Object.entries(record.buildCost).filter(([, v]) => v).map(([k, v]) => `${v} ${k}`).join(', ')
+      ? Object.entries(record.buildCost)
+          .filter(([, v]) => v)
+          .map(([k, v]) => `${v} ${k}`)
+          .join(', ')
       : 'unknown';
     return `Building #${record.buildingNumber} — ${record.name} Level ${record.level}. Cost: ${cost}. Effect: ${record.effect}. ${record.notes || ''}`.trim();
   }
@@ -107,8 +137,23 @@ function score(record, queryTokens) {
  */
 export function searchExtracted(query, k = 6) {
   // Tokenize query: lowercase words ≥ 3 chars, skip common words
-  const STOPWORDS = new Set(['the', 'and', 'for', 'what', 'how', 'does', 'with', 'this', 'that', 'are', 'can', 'its', 'which']);
-  const tokens = query.toLowerCase()
+  const STOPWORDS = new Set([
+    'the',
+    'and',
+    'for',
+    'what',
+    'how',
+    'does',
+    'with',
+    'this',
+    'that',
+    'are',
+    'can',
+    'its',
+    'which',
+  ]);
+  const tokens = query
+    .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter((t) => t.length >= 3 && !STOPWORDS.has(t));

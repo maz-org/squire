@@ -33,31 +33,35 @@ const CARD_TYPES = {
     imageDir: join(IMAGES_BASE, 'monster-stat-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
     subdirs: false,
-    context: 'This is a Frosthaven monster stat card showing HP, Move, Attack, and Range values for Normal and Elite difficulties across multiple levels.',
+    context:
+      'This is a Frosthaven monster stat card showing HP, Move, Attack, and Range values for Normal and Elite difficulties across multiple levels.',
   },
   'monster-abilities': {
     imageDir: join(IMAGES_BASE, 'monster-ability-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: true,
-    context: 'This is a Frosthaven monster ability card. Describe any icons as words (e.g. sword icon = "Attack", boot icon = "Move", heart = "Heal").',
+    context:
+      'This is a Frosthaven monster ability card. Describe any icons as words (e.g. sword icon = "Attack", boot icon = "Move", heart = "Heal").',
   },
   'character-abilities': {
     imageDir: join(IMAGES_BASE, 'character-ability-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: true,
-    context: 'This is a Frosthaven character ability card with a top action and a bottom action. Describe icons as words.',
+    context:
+      'This is a Frosthaven character ability card with a top action and a bottom action. Describe icons as words.',
   },
-  'items': {
+  items: {
     imageDir: join(IMAGES_BASE, 'items', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: true,
     context: 'This is a Frosthaven item card.',
   },
-  'events': {
+  events: {
     imageDir: join(IMAGES_BASE, 'events', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
     subdirs: true,
-    context: 'This is a Frosthaven event card (road, outpost, or boat). Extract the full flavor text and both options with their complete outcomes.',
+    context:
+      'This is a Frosthaven event card (road, outpost, or boat). Extract the full flavor text and both options with their complete outcomes.',
   },
   'battle-goals': {
     imageDir: join(IMAGES_BASE, 'battle-goals', 'frosthaven'),
@@ -65,7 +69,7 @@ const CARD_TYPES = {
     subdirs: false,
     context: 'This is a Frosthaven battle goal card.',
   },
-  'buildings': {
+  buildings: {
     imageDir: join(IMAGES_BASE, 'outpost-building-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
     subdirs: false,
@@ -78,7 +82,8 @@ const PROMPTS = {};
 for (const [type, config] of Object.entries(CARD_TYPES)) {
   const jsonSchema = z.toJSONSchema(SCHEMAS[type]);
   delete jsonSchema.$schema;
-  PROMPTS[type] = `${config.context}\n\nExtract all data and return ONLY valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`;
+  PROMPTS[type] =
+    `${config.context}\n\nExtract all data and return ONLY valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`;
 }
 
 // ─── Image collection ─────────────────────────────────────────────────────────
@@ -102,7 +107,10 @@ function collectImages(cardType) {
 // ─── Extraction ───────────────────────────────────────────────────────────────
 
 function extractJson(text) {
-  let s = text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+  let s = text
+    .replace(/^```(?:json)?\s*/m, '')
+    .replace(/\s*```\s*$/m, '')
+    .trim();
   const start = s.indexOf('{');
   const end = s.lastIndexOf('}');
   if (start !== -1 && end !== -1 && end > start) s = s.slice(start, end + 1);
@@ -119,13 +127,18 @@ async function extractImage(imagePath, cardType) {
       const response = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: imageData } },
-            { type: 'text', text: prompt },
-          ],
-        }],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: 'image/png', data: imageData },
+              },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
       });
 
       const raw = response.content[0].text.trim();
@@ -135,13 +148,15 @@ async function extractImage(imagePath, cardType) {
       const result = schema.safeParse(parsed);
       if (!result.success) {
         // Return data anyway but flag validation issues
-        return { ...parsed, _validationErrors: result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
+        return {
+          ...parsed,
+          _validationErrors: result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+        };
       }
 
       return result.data;
-
     } catch (err) {
-      const isRateLimit = err.status === 429 || (err.message?.includes('rate_limit'));
+      const isRateLimit = err.status === 429 || err.message?.includes('rate_limit');
       if (isRateLimit && attempt < MAX_RETRIES - 1) {
         const delay = Math.pow(2, attempt + 1) * REQUEST_DELAY_MS;
         process.stdout.write(` [rate limit, ${delay / 1000}s wait]`);
@@ -158,9 +173,7 @@ async function extractImage(imagePath, cardType) {
 async function extractCardType(cardType) {
   const outputPath = join(OUTPUT_DIR, `${cardType}.json`);
 
-  const existing = existsSync(outputPath)
-    ? JSON.parse(readFileSync(outputPath, 'utf-8'))
-    : [];
+  const existing = existsSync(outputPath) ? JSON.parse(readFileSync(outputPath, 'utf-8')) : [];
 
   // Only skip records that fully succeeded (no error, no parse error)
   const succeeded = existing.filter((r) => !r._error && !r._parseError);
@@ -170,7 +183,9 @@ async function extractCardType(cardType) {
   const pending = images.filter((p) => !processedFiles.has(basename(p)));
 
   const errCount = existing.length - succeeded.length;
-  console.log(`\n[${cardType}] ${images.length} images — ${succeeded.length} succeeded, ${errCount} retrying, ${pending.length} pending`);
+  console.log(
+    `\n[${cardType}] ${images.length} images — ${succeeded.length} succeeded, ${errCount} retrying, ${pending.length} pending`,
+  );
 
   if (pending.length === 0) {
     console.log('  All done.');
@@ -230,4 +245,7 @@ async function main() {
   console.log('\nExtraction complete.');
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
