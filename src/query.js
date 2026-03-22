@@ -8,16 +8,17 @@ import Anthropic from '@anthropic-ai/sdk';
 import { embed } from './embedder.js';
 import { loadIndex, search } from './vector-store.js';
 import { searchItems, formatItems } from './item-lookup.js';
+import { searchExtracted, formatExtracted } from './extracted-data.js';
 
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY from env
 
 const SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant. \
-Answer questions accurately based on the rulebook excerpts and item data provided. \
+Answer questions accurately based on the rulebook excerpts and card data provided. \
 Be concise but complete. If the provided data doesn't contain enough information to answer confidently, say so. \
-Do not invent rules or item numbers.`;
+Do not invent rules, stats, or item numbers.`;
 
 /**
- * Answer a Frosthaven rules question using RAG + item lookup.
+ * Answer a Frosthaven rules question using RAG + structured card data.
  * @param {string} question
  * @returns {Promise<string>}
  */
@@ -27,22 +28,27 @@ export async function askFrosthaven(question) {
     return 'The rulebook index is empty. Run `npm run index` first to index the docs.';
   }
 
-  // Run vector search and item lookup in parallel
-  const [queryEmbedding, itemHits] = await Promise.all([
+  // Run all lookups in parallel
+  const [queryEmbedding, itemHits, cardHits] = await Promise.all([
     embed(question),
     Promise.resolve(searchItems(question, 5)),
+    Promise.resolve(searchExtracted(question, 6)),
   ]);
-  const hits = search(index, queryEmbedding, 8);
+  const hits = search(index, queryEmbedding, 6);
 
-  const context = hits
+  const rulebookContext = hits
     .map((h, i) => `[${i + 1}] (${h.source})\n${h.text}`)
     .join('\n\n---\n\n');
 
   const itemContext = itemHits.length > 0
-    ? `\n\n## Matching Items from Worldhaven Database\n${formatItems(itemHits)}`
+    ? `\n\n## Item Lookup\n${formatItems(itemHits)}`
     : '';
 
-  const userMessage = `Here are relevant excerpts from the Frosthaven rulebooks:\n\n${context}${itemContext}\n\n---\n\nQuestion: ${question}`;
+  const cardContext = cardHits.length > 0
+    ? `\n\n## Card Data\n${formatExtracted(cardHits)}`
+    : '';
+
+  const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${itemContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
 
   const response = await client.messages.create({
     model: 'claude-opus-4-6',

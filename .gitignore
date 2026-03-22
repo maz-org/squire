@@ -141,5 +141,6 @@ vite.config.ts.timestamp-*
 # Squire project
 # Clone from https://github.com/any2cards/worldhaven if needed
 data/worldhaven/
-# Regeneratable vector index (run: npm run index)
+# Regeneratable artifacts
 data/index.json
+data/extracted/

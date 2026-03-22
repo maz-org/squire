@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "index": "node src/index-docs.js",
-    "query": "node src/query.js"
+    "query": "node src/query.js",
+    "extract": "node src/extract-card-data.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
