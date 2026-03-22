@@ -73,6 +73,15 @@ brew install gh
 gh auth login
 ```
 
+`gh auth login` is interactive. When prompted:
+
+1. **Where do you use GitHub?** → `GitHub.com`
+2. **Preferred protocol?** → `HTTPS`
+3. **Authenticate Git with GitHub credentials?** → `Yes`
+4. **How would you like to authenticate?** → `Login with a web browser`
+5. It will show a one-time code — press Enter, paste the code in the browser
+   window that opens, and authorize the GitHub CLI
+
 ## Getting started
 
 ### Clone the repo
