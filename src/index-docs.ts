@@ -23,7 +23,7 @@ interface Chunk {
   chunkIndex: number;
 }
 
-function chunkText(text: string, source: string): Chunk[] {
+export function chunkText(text: string, source: string): Chunk[] {
   const chunks: Chunk[] = [];
   let i = 0;
   let chunkIndex = 0;
@@ -45,7 +45,7 @@ async function extractText(pdfPath: string): Promise<string> {
   return data.text as string;
 }
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   const files = readdirSync(DOCS_DIR).filter((f) => f.endsWith('.pdf'));
   console.log(`Found ${files.length} PDF(s) to index.`);
 
@@ -93,7 +93,9 @@ async function main(): Promise<void> {
   console.log(`\nDone. Index now has ${existing.length + allNewEntries.length} chunks total.`);
 }
 
-main().catch((err: unknown) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith('index-docs.ts')) {
+  main().catch((err: unknown) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

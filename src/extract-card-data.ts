@@ -96,7 +96,7 @@ for (const [type, config] of Object.entries(CARD_TYPES)) {
 
 // ─── Image collection ─────────────────────────────────────────────────────────
 
-function collectImages(cardType: CardType): string[] {
+export function collectImages(cardType: CardType): string[] {
   const config = CARD_TYPES[cardType];
   const images: string[] = [];
 
@@ -121,7 +121,7 @@ interface ExtractedResult extends Record<string, unknown> {
   _error?: string;
 }
 
-function extractJson(text: string): unknown {
+export function extractJson(text: string): unknown {
   let s = text
     .replace(/^```(?:json)?\s*/m, '')
     .replace(/\s*```\s*$/m, '')
@@ -132,7 +132,10 @@ function extractJson(text: string): unknown {
   return JSON.parse(s);
 }
 
-async function extractImage(imagePath: string, cardType: CardType): Promise<ExtractedResult> {
+export async function extractImage(
+  imagePath: string,
+  cardType: CardType,
+): Promise<ExtractedResult> {
   const imageData = readFileSync(imagePath).toString('base64');
   const prompt = PROMPTS[cardType];
   const schema = SCHEMAS[cardType];
@@ -190,7 +193,7 @@ async function extractImage(imagePath: string, cardType: CardType): Promise<Extr
 
 // ─── Per-type runner ──────────────────────────────────────────────────────────
 
-async function extractCardType(cardType: CardType): Promise<ExtractedResult[]> {
+export async function extractCardType(cardType: CardType): Promise<ExtractedResult[]> {
   const outputPath = join(OUTPUT_DIR, `${cardType}.json`);
 
   const existing: ExtractedResult[] = existsSync(outputPath)
@@ -272,7 +275,9 @@ async function main(): Promise<void> {
   console.log('\nExtraction complete.');
 }
 
-main().catch((err: unknown) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith('extract-card-data.ts')) {
+  main().catch((err: unknown) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

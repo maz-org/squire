@@ -5,7 +5,7 @@
 When a Discord message asks a Frosthaven rules question, answer using the RAG pipeline:
 
 ```bash
-node src/query.js "<question here>"
+node src/query.ts "<question here>"
 ```
 
 Then reply to Discord with the output. The script loads `ANTHROPIC_API_KEY` from `.env` automatically. Before first use, the docs must be indexed once with `npm run index`.

@@ -1,5 +1,6 @@
 . "$HOME/.nvm/nvm.sh"
 nvm use >/dev/null 2>&1
 
+npx tsc --noEmit
 npx lint-staged
 npm test
