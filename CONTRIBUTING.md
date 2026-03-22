@@ -97,28 +97,13 @@ automatically.
 cp .env.example .env
 ```
 
-Edit `.env` and add your API keys:
+Edit `.env` and add your API keys (see the "Accounts you'll need" section below
+for how to obtain these):
 
 ```text
 ANTHROPIC_API_KEY=sk-ant-...
-```
 
-**Getting an Anthropic API key:**
-
-1. Sign up at [console.anthropic.com](https://console.anthropic.com/)
-2. Go to **Settings → API Keys**
-3. Click **Create Key**, give it a name, and copy the key
-4. You'll need to add credits to your account — the query pipeline uses Claude
-   Opus and the extraction pipeline uses Claude Haiku
-
-**Getting Langfuse keys (optional — for tracing and evals):**
-
-1. Sign up at [cloud.langfuse.com](https://cloud.langfuse.com/)
-2. Create a new project
-3. Go to **Settings → API Keys** and create a key pair
-4. Add all three values to `.env`:
-
-```text
+# Optional — for tracing and evals
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
 LANGFUSE_BASEURL=https://us.cloud.langfuse.com
@@ -241,22 +226,47 @@ way to work on this project. It's an AI coding agent that runs in your terminal,
 understands the full codebase, and follows the project conventions defined in
 `CLAUDE.md`.
 
+### Accounts you'll need
+
+**Anthropic (required)** — powers both Claude Code and the RAG pipeline:
+
+1. Sign up at [claude.ai](https://claude.ai/) for a Claude account
+2. Subscribe to **Claude Pro** ($20/mo) or **Claude Max** ($100/mo) — Claude
+   Code is included with either plan
+3. For API usage (running queries, extraction), you also need API credits. Go to
+   [console.anthropic.com](https://console.anthropic.com/), navigate to
+   **Settings → API Keys**, create a key, and add billing credits. This is the
+   key that goes in your `.env` file as `ANTHROPIC_API_KEY`.
+
+**CodeRabbit (optional)** — for running local code reviews before pushing:
+
+1. Sign up at [coderabbit.ai](https://coderabbit.ai/) using your GitHub account
+2. The free tier works for open-source repos
+
+**Langfuse (optional)** — for tracing and evaluation experiments:
+
+1. Sign up at [cloud.langfuse.com](https://cloud.langfuse.com/)
+2. Create a project, then go to **Settings → API Keys** to get your key pair
+3. Add `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASEURL` to
+   your `.env` file (see the environment setup section above)
+
 ### Installing Claude Code
 
 ```bash
 npm install -g @anthropic-ai/claude-code
 ```
 
-You'll need an Anthropic API key (or a Claude Pro/Max subscription). Launch it
-from the project root:
+Log in when you first launch it:
 
 ```bash
 cd squire
 claude
 ```
 
-Claude Code reads `CLAUDE.md` automatically for project-specific instructions —
-coding standards, testing requirements, PR workflow, and CodeRabbit integration.
+Claude Code will open a browser window to authenticate with your Anthropic
+account. Once logged in, it reads `CLAUDE.md` automatically for project-specific
+instructions — coding standards, testing requirements, PR workflow, and
+CodeRabbit integration.
 
 ### Installing CodeRabbit CLI
 
@@ -270,7 +280,7 @@ Install the CLI:
 curl -fsSL https://cli.coderabbit.ai/install.sh | sh
 ```
 
-Authenticate:
+Authenticate (opens a browser):
 
 ```bash
 coderabbit auth login
