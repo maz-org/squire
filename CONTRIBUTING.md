@@ -177,15 +177,51 @@ npm run format:check  # Prettier (check only)
 
 ### Running evaluations
 
-The eval framework measures RAG answer quality using LLM-as-judge scoring.
+The eval framework measures RAG answer quality using LLM-as-judge scoring. Each
+question is sent through the full RAG pipeline, then a separate Claude call
+grades the answer against expected results on a 1–5 scale. Results are tracked
+in Langfuse so you can compare runs over time.
+
 Requires Langfuse credentials in `.env`.
 
+**Seed the dataset (first time only):**
+
 ```bash
-npm run eval -- --seed             # upload dataset to Langfuse (first time)
-npm run eval -- --name="my test"   # run all 15 eval cases
-npm run eval -- --category=rulebook  # run a subset
-npm run eval -- --id=rule-poison   # run a single case
+npm run eval -- --seed
 ```
+
+Uploads the 15 question/answer pairs from `eval/dataset.json` to your Langfuse
+project. You only need to do this once, or again if you add new eval cases.
+
+**Run all eval cases:**
+
+```bash
+npm run eval -- --name="baseline"
+```
+
+Runs every question through the pipeline and grades it. Use `--name` to label
+the run — this is how you'll find it in the Langfuse UI. Run this before and
+after making changes to measure impact (e.g., `--name="before chunking fix"` and
+`--name="after chunking fix"`).
+
+**Run a single category:**
+
+```bash
+npm run eval -- --category=rulebook
+```
+
+Only runs questions in that category (`rulebook`, `monster-stats`, `items`,
+`buildings`, `scenarios`). Useful when you're working on a specific part of the
+pipeline — e.g., run `--category=items` after fixing item number extraction.
+
+**Run a single question:**
+
+```bash
+npm run eval -- --id=rule-poison
+```
+
+Runs one specific eval case by ID (IDs are in `eval/dataset.json`). Useful for
+debugging a single failure without waiting for the full suite.
 
 ## Pre-commit hooks
 
