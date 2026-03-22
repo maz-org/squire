@@ -185,10 +185,11 @@ Requires Langfuse credentials in `.env`.
 npm run eval -- --seed
 ```
 
-Each developer has their own Langfuse project (created during account setup).
-This command uploads the eval dataset (`eval/dataset.json`) to your project so
-that experiment runs can reference it. Run this once when you first set up
-Langfuse, or again after adding new eval cases to the dataset file.
+Every developer needs their own Langfuse project (created during account setup).
+This command uploads the eval dataset (`eval/dataset.json`) into it so that
+experiment runs have something to run against. Every developer must run this once
+after setting up Langfuse. Run it again if the dataset file changes (e.g.,
+someone adds new eval cases in a PR).
 
 **Run all eval cases:**
 
