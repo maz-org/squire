@@ -77,25 +77,17 @@ async function judgeAnswer(
 }
 
 // --- Seed dataset into Langfuse ---
+// Idempotent: Langfuse returns the existing dataset on duplicate create,
+// and upserts items when an id is provided. Safe to run repeatedly.
 
 async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): Promise<void> {
   console.log(`Seeding dataset "${DATASET_NAME}" with ${cases.length} items...`);
 
-  try {
-    await langfuse.api.datasets.create({
-      name: DATASET_NAME,
-      description: 'Frosthaven rules Q&A evaluation set',
-      metadata: { version: '1.0' },
-    });
-    console.log('Created dataset.');
-  } catch (err: unknown) {
-    const status = (err as { status?: number }).status;
-    if (status === 409) {
-      console.log('Dataset already exists, upserting items.');
-    } else {
-      throw err;
-    }
-  }
+  await langfuse.api.datasets.create({
+    name: DATASET_NAME,
+    description: 'Frosthaven rules Q&A evaluation set',
+    metadata: { version: '1.0' },
+  });
 
   for (const c of cases) {
     await langfuse.api.datasetItems.create({
