@@ -234,6 +234,52 @@ The pre-commit hook runs automatically on every commit:
 
 If any step fails, the commit is blocked. Fix the issue and try again.
 
+## Claude Code
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code) is the recommended
+way to work on this project. It's an AI coding agent that runs in your terminal,
+understands the full codebase, and follows the project conventions defined in
+`CLAUDE.md`.
+
+### Installing Claude Code
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+You'll need an Anthropic API key (or a Claude Pro/Max subscription). Launch it
+from the project root:
+
+```bash
+cd squire
+claude
+```
+
+Claude Code reads `CLAUDE.md` automatically for project-specific instructions —
+coding standards, testing requirements, PR workflow, and CodeRabbit integration.
+
+### Installing CodeRabbit CLI
+
+[CodeRabbit](https://coderabbit.ai) reviews every PR automatically on GitHub.
+You can also run reviews locally from within Claude Code before pushing, which
+catches issues early.
+
+Install the CLI:
+
+```bash
+curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+```
+
+Authenticate:
+
+```bash
+coderabbit auth login
+```
+
+Then from within a Claude Code session, run `/coderabbit:review` before pushing
+your branch. Claude Code will run the review, show you the results, and fix any
+issues it finds. This avoids back-and-forth on the PR after pushing.
+
 ## Submitting changes
 
 1. Create a branch from `main`:
