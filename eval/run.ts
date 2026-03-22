@@ -9,7 +9,7 @@
  */
 
 import 'dotenv/config';
-import { sdk } from '../src/instrumentation.ts';
+import { sdk, LANGFUSE_DEFAULT_BASE_URL } from '../src/instrumentation.ts';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -259,7 +259,9 @@ if (cases.length === 0) {
   process.exit(1);
 }
 
-const langfuse = new LangfuseClient();
+const langfuse = new LangfuseClient({
+  baseUrl: process.env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
+});
 
 if (shouldSeed) {
   await seedDataset(langfuse, allCases);
