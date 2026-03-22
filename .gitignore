@@ -138,6 +138,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Beads (deprecated, migrated to GitHub Issues)
+.beads/
+
 # Claude Code local settings
 .claude/settings.local.json
 

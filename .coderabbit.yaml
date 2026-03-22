@@ -15,7 +15,6 @@ reviews:
   review_status: true
   path_filters:
     - "!data/**"
-    - "!.beads/**"
     - "!docs/**"
     - "!package-lock.json"
   path_instructions:
