@@ -137,3 +137,9 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Squire project
+# 1.6GB of card images — too large for git
+data/worldhaven/images/
+# Regeneratable vector index (run: npm run index)
+data/index.json

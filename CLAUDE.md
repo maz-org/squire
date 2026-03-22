@@ -1,5 +1,19 @@
 # Squire Project
 
+## Frosthaven Rules Assistant (Discord)
+
+When a Discord message asks a Frosthaven rules question, answer using the RAG pipeline:
+
+```bash
+node src/query.js "<question here>"
+```
+
+Then reply to Discord with the output. The script loads `ANTHROPIC_API_KEY` from `.env` automatically. Before first use, the docs must be indexed once with `npm run index`.
+
+This behavior applies to **all Discord users** in the channel (not just bcm).
+
+---
+
 This project uses **beads (bd)** for persistent issue tracking across sessions.
 
 ## Issue Tracking with Beads

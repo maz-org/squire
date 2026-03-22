@@ -1,1 +1,16 @@
-{}
+{
+  "name": "squire",
+  "version": "0.1.0",
+  "description": "Frosthaven AI assistant with RAG over rulebooks",
+  "type": "module",
+  "scripts": {
+    "index": "node src/index-docs.js",
+    "query": "node src/query.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@xenova/transformers": "^2.17.2",
+    "dotenv": "^17.3.1",
+    "pdf-parse": "^1.1.1"
+  }
+}
