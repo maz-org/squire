@@ -97,13 +97,26 @@ automatically.
 cp .env.example .env
 ```
 
-Edit `.env` and add your [Anthropic API key](https://console.anthropic.com/):
+Edit `.env` and add your API keys:
 
 ```text
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Optional — if you want Langfuse tracing:
+**Getting an Anthropic API key:**
+
+1. Sign up at [console.anthropic.com](https://console.anthropic.com/)
+2. Go to **Settings → API Keys**
+3. Click **Create Key**, give it a name, and copy the key
+4. You'll need to add credits to your account — the query pipeline uses Claude
+   Opus and the extraction pipeline uses Claude Haiku
+
+**Getting Langfuse keys (optional — for tracing and evals):**
+
+1. Sign up at [cloud.langfuse.com](https://cloud.langfuse.com/)
+2. Create a new project
+3. Go to **Settings → API Keys** and create a key pair
+4. Add all three values to `.env`:
 
 ```text
 LANGFUSE_PUBLIC_KEY=pk-lf-...
