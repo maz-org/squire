@@ -113,9 +113,10 @@ for how to obtain these):
 ```text
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Optional — for tracing and evals
+# Optional — for tracing and evals (ask @bcm for the shared project keys)
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
+# Required because our project is in the US region (SDK defaults to EU)
 LANGFUSE_BASEURL=https://us.cloud.langfuse.com
 ```
 
@@ -179,17 +180,17 @@ in Langfuse so you can compare runs over time.
 
 Requires Langfuse credentials in `.env`.
 
-**Seed your Langfuse project:**
+**Seed the eval dataset (maintainer only):**
 
 ```bash
 npm run eval -- --seed
 ```
 
-Every developer needs their own Langfuse project (created during account setup).
-This command uploads the eval dataset (`eval/dataset.json`) into it so that
-experiment runs have something to run against. Every developer must run this once
-after setting up Langfuse. Run it again if the dataset file changes (e.g.,
-someone adds new eval cases in a PR).
+Uploads the eval dataset (`eval/dataset.json`) to the shared Langfuse project.
+This is a one-time project setup step managed by
+[@bcm](https://github.com/bcm). It needs to be re-run when eval cases are added
+or changed. The command is idempotent — running it again upserts items rather
+than duplicating them. Regular contributors don't need to run this.
 
 **Run all eval cases:**
 
@@ -258,10 +259,10 @@ understands the full codebase, and follows the project conventions defined in
 
 **Langfuse (optional)** — for tracing and evaluation experiments:
 
-1. Sign up at [cloud.langfuse.com](https://cloud.langfuse.com/)
-2. Create a project, then go to **Settings → API Keys** to get your key pair
-3. Add `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASEURL` to
-   your `.env` file (see the environment setup section above)
+All developers share a single Langfuse project so experiment runs can be
+compared against a common baseline. Ask
+[@bcm](https://github.com/bcm) for the shared project API keys and add them to
+your `.env` file.
 
 ### Installing Claude Code
 

@@ -79,17 +79,28 @@ async function judgeAnswer(
 // --- Seed dataset into Langfuse ---
 
 async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): Promise<void> {
-  console.log(`Creating dataset "${DATASET_NAME}" with ${cases.length} items...`);
+  console.log(`Seeding dataset "${DATASET_NAME}" with ${cases.length} items...`);
 
-  await langfuse.api.datasets.create({
-    name: DATASET_NAME,
-    description: 'Frosthaven rules Q&A evaluation set',
-    metadata: { version: '1.0' },
-  });
+  try {
+    await langfuse.api.datasets.create({
+      name: DATASET_NAME,
+      description: 'Frosthaven rules Q&A evaluation set',
+      metadata: { version: '1.0' },
+    });
+    console.log('Created dataset.');
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status;
+    if (status === 409) {
+      console.log('Dataset already exists, upserting items.');
+    } else {
+      throw err;
+    }
+  }
 
   for (const c of cases) {
     await langfuse.api.datasetItems.create({
       datasetName: DATASET_NAME,
+      id: c.id,
       input: { question: c.question },
       expectedOutput: { answer: c.expected, grading: c.grading },
       metadata: { id: c.id, category: c.category, source: c.source },
