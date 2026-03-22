@@ -63,7 +63,8 @@ async function judgeAnswer(
     ],
   });
 
-  let text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const block = response.content[0];
+  let text = block?.type === 'text' ? block.text : '';
   text = text
     .replace(/^```(?:json)?\s*/m, '')
     .replace(/\s*```\s*$/m, '')
