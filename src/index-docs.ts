@@ -4,20 +4,27 @@
  */
 
 import 'dotenv/config';
-import { readFileSync, readdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
-import { embedBatch } from './embedder.js';
-import { loadIndex, addEntries } from './vector-store.js';
+import { embedBatch } from './embedder.ts';
+import { loadIndex, addEntries } from './vector-store.ts';
+import type { IndexEntry } from './vector-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DOCS_DIR = join(__dirname, '..', 'docs');
 const CHUNK_SIZE = 800; // characters
 const CHUNK_OVERLAP = 150; // characters
 
-function chunkText(text, source) {
-  const chunks = [];
+interface Chunk {
+  text: string;
+  source: string;
+  chunkIndex: number;
+}
+
+function chunkText(text: string, source: string): Chunk[] {
+  const chunks: Chunk[] = [];
   let i = 0;
   let chunkIndex = 0;
   while (i < text.length) {
@@ -32,20 +39,20 @@ function chunkText(text, source) {
   return chunks;
 }
 
-async function extractText(pdfPath) {
+async function extractText(pdfPath: string): Promise<string> {
   const buffer = readFileSync(pdfPath);
   const data = await pdfParse(buffer);
-  return data.text;
+  return data.text as string;
 }
 
-async function main() {
+async function main(): Promise<void> {
   const files = readdirSync(DOCS_DIR).filter((f) => f.endsWith('.pdf'));
   console.log(`Found ${files.length} PDF(s) to index.`);
 
   const existing = loadIndex();
   const indexedSources = new Set(existing.map((e) => e.source));
 
-  let allNewEntries = [];
+  const allNewEntries: IndexEntry[] = [];
 
   for (const file of files) {
     if (indexedSources.has(file)) {
@@ -86,7 +93,7 @@ async function main() {
   console.log(`\nDone. Index now has ${existing.length + allNewEntries.length} chunks total.`);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exit(1);
 });

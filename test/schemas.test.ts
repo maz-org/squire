@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SCHEMAS } from '../src/schemas.js';
+import { SCHEMAS } from '../src/schemas.ts';
 
 describe('MonsterStatSchema', () => {
   const schema = SCHEMAS['monster-stats'];

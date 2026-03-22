@@ -1,14 +1,14 @@
 /**
  * Query the Frosthaven knowledge base.
- * Usage: node src/query.js "What is the loot action?"
+ * Usage: node src/query.ts "What is the loot action?"
  */
 
 import 'dotenv/config';
 import Anthropic from '@anthropic-ai/sdk';
-import { embed } from './embedder.js';
-import { loadIndex, search } from './vector-store.js';
-import { searchItems, formatItems } from './item-lookup.js';
-import { searchExtracted, formatExtracted } from './extracted-data.js';
+import { embed } from './embedder.ts';
+import { loadIndex, search } from './vector-store.ts';
+import { searchItems, formatItems } from './item-lookup.ts';
+import { searchExtracted, formatExtracted } from './extracted-data.ts';
 
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY from env
 
@@ -19,10 +19,8 @@ Do not invent rules, stats, or item numbers.`;
 
 /**
  * Answer a Frosthaven rules question using RAG + structured card data.
- * @param {string} question
- * @returns {Promise<string>}
  */
-export async function askFrosthaven(question) {
+export async function askFrosthaven(question: string): Promise<string> {
   const index = loadIndex();
   if (index.length === 0) {
     return 'The rulebook index is empty. Run `npm run index` first to index the docs.';
@@ -53,20 +51,21 @@ export async function askFrosthaven(question) {
     messages: [{ role: 'user', content: userMessage }],
   });
 
-  return response.content[0].text;
+  const block = response.content[0];
+  return block.type === 'text' ? block.text : '';
 }
 
 // CLI entrypoint
-if (process.argv[1].endsWith('query.js')) {
+if (process.argv[1].endsWith('query.ts')) {
   const question = process.argv.slice(2).join(' ');
   if (!question) {
-    console.error('Usage: node src/query.js "your question here"');
+    console.error('Usage: node src/query.ts "your question here"');
     process.exit(1);
   }
   console.log('Searching...\n');
   askFrosthaven(question)
     .then((answer) => console.log(answer))
-    .catch((err) => {
+    .catch((err: unknown) => {
       console.error(err);
       process.exit(1);
     });

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { cosineSimilarity, search } from '../src/vector-store.js';
+import { cosineSimilarity, search } from '../src/vector-store.ts';
+import type { IndexEntry } from '../src/vector-store.ts';
 
 describe('cosineSimilarity', () => {
   it('returns 1 for identical normalized vectors', () => {
@@ -22,11 +23,11 @@ describe('cosineSimilarity', () => {
 });
 
 describe('search', () => {
-  const entries = [
-    { id: 'a', text: 'first', embedding: [1, 0, 0] },
-    { id: 'b', text: 'second', embedding: [0, 1, 0] },
-    { id: 'c', text: 'third', embedding: [0, 0, 1] },
-    { id: 'd', text: 'mixed', embedding: [0.577, 0.577, 0.577] },
+  const entries: IndexEntry[] = [
+    { id: 'a', text: 'first', embedding: [1, 0, 0], source: 'test', chunkIndex: 0 },
+    { id: 'b', text: 'second', embedding: [0, 1, 0], source: 'test', chunkIndex: 1 },
+    { id: 'c', text: 'third', embedding: [0, 0, 1], source: 'test', chunkIndex: 2 },
+    { id: 'd', text: 'mixed', embedding: [0.577, 0.577, 0.577], source: 'test', chunkIndex: 3 },
   ];
 
   it('returns top-k results sorted by similarity', () => {

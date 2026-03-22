@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { searchExtracted, formatExtracted } from '../src/extracted-data.js';
+import { searchExtracted, formatExtracted } from '../src/extracted-data.ts';
 
 describe('searchExtracted', () => {
   it('finds monster stats by monster name', () => {
@@ -41,7 +41,7 @@ describe('formatExtracted', () => {
 
   it('formats monster stats with name and levels', () => {
     const record = {
-      _type: 'monster-stats',
+      _type: 'monster-stats' as const,
       name: 'Ooze',
       levelRange: '0-3',
       normal: { 0: { hp: 5, move: 1, attack: 2, range: null } },
@@ -57,7 +57,7 @@ describe('formatExtracted', () => {
 
   it('formats battle goals with condition', () => {
     const record = {
-      _type: 'battle-goals',
+      _type: 'battle-goals' as const,
       name: 'Assassin',
       condition: 'Kill an enemy before its first turn.',
       checkmarks: 2,
@@ -71,7 +71,7 @@ describe('formatExtracted', () => {
 
   it('formats items with slot and cost', () => {
     const record = {
-      _type: 'items',
+      _type: 'items' as const,
       number: '099',
       name: 'Major Healing Potion',
       slot: 'small item',
@@ -91,7 +91,7 @@ describe('formatExtracted', () => {
 
   it('formats character abilities with top and bottom actions', () => {
     const record = {
-      _type: 'character-abilities',
+      _type: 'character-abilities' as const,
       cardName: 'Nimble Knife',
       characterClass: 'Drifter',
       level: 1,
@@ -109,7 +109,7 @@ describe('formatExtracted', () => {
 
   it('formats events with options', () => {
     const record = {
-      _type: 'events',
+      _type: 'events' as const,
       eventType: 'road',
       season: 'winter',
       number: '05',
@@ -127,7 +127,7 @@ describe('formatExtracted', () => {
 
   it('formats buildings with cost and effect', () => {
     const record = {
-      _type: 'buildings',
+      _type: 'buildings' as const,
       buildingNumber: '05',
       name: 'Mining Camp',
       level: 1,
@@ -144,7 +144,7 @@ describe('formatExtracted', () => {
 
   it('formats monster abilities with initiative', () => {
     const record = {
-      _type: 'monster-abilities',
+      _type: 'monster-abilities' as const,
       monsterType: 'Algox Archer',
       cardName: 'Aimed Shot',
       initiative: 45,

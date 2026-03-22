@@ -3,42 +3,47 @@
  * Persists to data/index.json — no external server needed.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = join(__dirname, '..', 'data', 'index.json');
 
-export function cosineSimilarity(a, b) {
+export interface IndexEntry {
+  id: string;
+  text: string;
+  embedding: number[];
+  source: string;
+  chunkIndex: number;
+}
+
+export interface ScoredEntry extends IndexEntry {
+  score: number;
+}
+
+export function cosineSimilarity(a: number[], b: number[]): number {
   let dot = 0;
   for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
   return dot; // vectors are already normalized
 }
 
-export function loadIndex() {
+export function loadIndex(): IndexEntry[] {
   if (!existsSync(INDEX_PATH)) return [];
-  return JSON.parse(readFileSync(INDEX_PATH, 'utf-8'));
+  return JSON.parse(readFileSync(INDEX_PATH, 'utf-8')) as IndexEntry[];
 }
 
-export function saveIndex(entries) {
+export function saveIndex(entries: IndexEntry[]): void {
   writeFileSync(INDEX_PATH, JSON.stringify(entries), 'utf-8');
 }
 
-/**
- * Add entries to the index and persist.
- * Each entry: { id, text, embedding, source, chunkIndex }
- */
-export function addEntries(existing, newEntries) {
+export function addEntries(existing: IndexEntry[], newEntries: IndexEntry[]): IndexEntry[] {
   const merged = [...existing, ...newEntries];
   saveIndex(merged);
   return merged;
 }
 
-/**
- * Find the top-k most similar chunks to a query embedding.
- */
-export function search(index, queryEmbedding, k = 8) {
+export function search(index: IndexEntry[], queryEmbedding: number[], k = 8): ScoredEntry[] {
   const scored = index.map((entry) => ({
     ...entry,
     score: cosineSimilarity(entry.embedding, queryEmbedding),

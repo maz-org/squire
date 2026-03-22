@@ -8,12 +8,13 @@
  */
 
 import 'dotenv/config';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
-import { join, dirname, basename } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { join, dirname, basename } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
-import { SCHEMAS } from './schemas.js';
+import { SCHEMAS } from './schemas.ts';
+import type { CardType } from './schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_BASE = join(__dirname, '..', 'data', 'worldhaven', 'images');
@@ -28,7 +29,14 @@ const client = new Anthropic();
 
 // ─── Card type definitions ───────────────────────────────────────────────────
 
-const CARD_TYPES = {
+interface CardTypeConfig {
+  imageDir: string;
+  filter: (f: string) => boolean;
+  subdirs: boolean;
+  context: string;
+}
+
+const CARD_TYPES: Record<CardType, CardTypeConfig> = {
   'monster-stats': {
     imageDir: join(IMAGES_BASE, 'monster-stat-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
@@ -78,21 +86,21 @@ const CARD_TYPES = {
 };
 
 // Pre-generate prompts from Zod schemas using Zod 4's built-in toJSONSchema
-const PROMPTS = {};
+const PROMPTS: Record<string, string> = {};
 for (const [type, config] of Object.entries(CARD_TYPES)) {
-  const jsonSchema = z.toJSONSchema(SCHEMAS[type]);
-  delete jsonSchema.$schema;
+  const jsonSchema = z.toJSONSchema(SCHEMAS[type as CardType]);
+  delete (jsonSchema as Record<string, unknown>).$schema;
   PROMPTS[type] =
     `${config.context}\n\nExtract all data and return ONLY valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`;
 }
 
 // ─── Image collection ─────────────────────────────────────────────────────────
 
-function collectImages(cardType) {
+function collectImages(cardType: CardType): string[] {
   const config = CARD_TYPES[cardType];
-  const images = [];
+  const images: string[] = [];
 
-  function scanDir(dir) {
+  function scanDir(dir: string): void {
     if (!existsSync(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.isDirectory() && config.subdirs) scanDir(join(dir, entry.name));
@@ -106,7 +114,14 @@ function collectImages(cardType) {
 
 // ─── Extraction ───────────────────────────────────────────────────────────────
 
-function extractJson(text) {
+interface ExtractedResult extends Record<string, unknown> {
+  _file?: string;
+  _path?: string;
+  _validationErrors?: string[];
+  _error?: string;
+}
+
+function extractJson(text: string): unknown {
   let s = text
     .replace(/^```(?:json)?\s*/m, '')
     .replace(/\s*```\s*$/m, '')
@@ -117,7 +132,7 @@ function extractJson(text) {
   return JSON.parse(s);
 }
 
-async function extractImage(imagePath, cardType) {
+async function extractImage(imagePath: string, cardType: CardType): Promise<ExtractedResult> {
   const imageData = readFileSync(imagePath).toString('base64');
   const prompt = PROMPTS[cardType];
   const schema = SCHEMAS[cardType];
@@ -141,8 +156,9 @@ async function extractImage(imagePath, cardType) {
         ],
       });
 
-      const raw = response.content[0].text.trim();
-      const parsed = extractJson(raw);
+      const block = response.content[0];
+      const raw = block.type === 'text' ? block.text.trim() : '';
+      const parsed = extractJson(raw) as Record<string, unknown>;
 
       // Validate against Zod schema
       const result = schema.safeParse(parsed);
@@ -154,9 +170,10 @@ async function extractImage(imagePath, cardType) {
         };
       }
 
-      return result.data;
-    } catch (err) {
-      const isRateLimit = err.status === 429 || err.message?.includes('rate_limit');
+      return result.data as ExtractedResult;
+    } catch (err: unknown) {
+      const error = err as { status?: number; message?: string };
+      const isRateLimit = error.status === 429 || error.message?.includes('rate_limit');
       if (isRateLimit && attempt < MAX_RETRIES - 1) {
         const delay = Math.pow(2, attempt + 1) * REQUEST_DELAY_MS;
         process.stdout.write(` [rate limit, ${delay / 1000}s wait]`);
@@ -166,14 +183,19 @@ async function extractImage(imagePath, cardType) {
       throw err;
     }
   }
+
+  // Should not reach here, but satisfy TypeScript
+  throw new Error('Max retries exceeded');
 }
 
 // ─── Per-type runner ──────────────────────────────────────────────────────────
 
-async function extractCardType(cardType) {
+async function extractCardType(cardType: CardType): Promise<ExtractedResult[]> {
   const outputPath = join(OUTPUT_DIR, `${cardType}.json`);
 
-  const existing = existsSync(outputPath) ? JSON.parse(readFileSync(outputPath, 'utf-8')) : [];
+  const existing: ExtractedResult[] = existsSync(outputPath)
+    ? JSON.parse(readFileSync(outputPath, 'utf-8'))
+    : [];
 
   // Only skip records that fully succeeded (no error, no parse error)
   const succeeded = existing.filter((r) => !r._error && !r._parseError);
@@ -204,8 +226,13 @@ async function extractCardType(cardType) {
         process.stdout.write(` [validation: ${extracted._validationErrors.length} issues]`);
       }
       results.push(extracted);
-    } catch (err) {
-      results.push({ _file: basename(imagePath), _path: imagePath, _error: err.message });
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      results.push({
+        _file: basename(imagePath),
+        _path: imagePath,
+        _error: error.message || 'Unknown error',
+      });
       process.stdout.write(' [err]');
     }
     done++;
@@ -219,17 +246,17 @@ async function extractCardType(cardType) {
   return results;
 }
 
-function saveResults(path, results) {
+function saveResults(path: string, results: ExtractedResult[]): void {
   writeFileSync(path, JSON.stringify(results, null, 2), 'utf-8');
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const arg = process.argv[2];
-  const types = arg ? [arg] : Object.keys(CARD_TYPES);
+  const arg = process.argv[2] as CardType | undefined;
+  const types: CardType[] = arg ? [arg] : (Object.keys(CARD_TYPES) as CardType[]);
 
   const unknown = types.filter((t) => !CARD_TYPES[t]);
   if (unknown.length) {
@@ -245,7 +272,7 @@ async function main() {
   console.log('\nExtraction complete.');
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exit(1);
 });

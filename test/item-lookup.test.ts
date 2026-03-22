@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { searchItems, formatItems } from '../src/item-lookup.js';
+import { searchItems, formatItems } from '../src/item-lookup.ts';
+import type { ItemEntry } from '../src/item-lookup.ts';
 
 describe('searchItems', () => {
   it('finds an item by exact name', () => {
@@ -48,9 +49,9 @@ describe('searchItems', () => {
 
 describe('formatItems', () => {
   it('formats items with number and name', () => {
-    const items = [
-      { name: 'healing potion', number: '083', xws: 'healingpotion' },
-      { name: 'spyglass', number: '001', xws: 'spyglass' },
+    const items: ItemEntry[] = [
+      { name: 'healing potion', number: '083', xws: 'healingpotion', image: 'test.png' },
+      { name: 'spyglass', number: '001', xws: 'spyglass', image: 'test.png' },
     ];
     const result = formatItems(items);
     expect(result).toBe('Item #083: healing potion\nItem #001: spyglass');
@@ -61,7 +62,9 @@ describe('formatItems', () => {
   });
 
   it('handles items with null number', () => {
-    const result = formatItems([{ name: 'mystery', number: null, xws: 'mystery' }]);
+    const result = formatItems([
+      { name: 'mystery', number: null, xws: 'mystery', image: 'test.png' },
+    ]);
     expect(result).toBe('Item #?: mystery');
   });
 });

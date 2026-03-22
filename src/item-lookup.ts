@@ -3,22 +3,36 @@
  * Extracts item number from image filename (e.g. fh-099-major-healing-potion.png → 099).
  */
 
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ITEMS_PATH = join(__dirname, '..', 'data', 'worldhaven', 'data', 'items.js');
 
-let _items = null;
+interface RawItem {
+  name: string;
+  image: string;
+  expansion: string;
+  xws: string;
+}
 
-function loadItems() {
+export interface ItemEntry {
+  name: string;
+  number: string | null;
+  xws: string;
+  image: string;
+}
+
+let _items: ItemEntry[] | null = null;
+
+function loadItems(): ItemEntry[] {
   if (_items) return _items;
 
-  const raw = JSON.parse(readFileSync(ITEMS_PATH, 'utf-8'));
+  const raw: RawItem[] = JSON.parse(readFileSync(ITEMS_PATH, 'utf-8'));
 
   // Group by xws, then pick the best name (prefer real name over "item N" aliases)
-  const byXws = new Map();
+  const byXws = new Map<string, RawItem>();
 
   for (const entry of raw) {
     if (!entry.name || !entry.image || entry.expansion !== 'frosthaven') continue;
@@ -52,7 +66,7 @@ function loadItems() {
  * Search items by name (case-insensitive substring match).
  * Returns up to `limit` results sorted by match quality.
  */
-export function searchItems(query, limit = 5) {
+export function searchItems(query: string, limit = 5): ItemEntry[] {
   const items = loadItems();
   const q = query.toLowerCase();
 
@@ -73,7 +87,7 @@ export function searchItems(query, limit = 5) {
 /**
  * Format item results as a readable string for LLM context.
  */
-export function formatItems(items) {
+export function formatItems(items: ItemEntry[]): string {
   if (items.length === 0) return '';
   return items.map((i) => `Item #${i.number ?? '?'}: ${i.name}`).join('\n');
 }

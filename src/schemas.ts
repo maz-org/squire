@@ -127,4 +127,23 @@ export const SCHEMAS = {
   events: EventSchema,
   'battle-goals': BattleGoalSchema,
   buildings: BuildingSchema,
-};
+} as const;
+
+export type CardType = keyof typeof SCHEMAS;
+
+// Inferred types from Zod schemas
+export type MonsterStat = z.infer<typeof MonsterStatSchema>;
+export type MonsterAbility = z.infer<typeof MonsterAbilitySchema>;
+export type CharacterAbility = z.infer<typeof CharacterAbilitySchema>;
+export type Item = z.infer<typeof ItemSchema>;
+export type Event = z.infer<typeof EventSchema>;
+export type BattleGoal = z.infer<typeof BattleGoalSchema>;
+export type Building = z.infer<typeof BuildingSchema>;
+export type CardData =
+  | MonsterStat
+  | MonsterAbility
+  | CharacterAbility
+  | Item
+  | Event
+  | BattleGoal
+  | Building;
