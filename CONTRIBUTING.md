@@ -8,13 +8,35 @@ Linux users should be able to adapt these instructions — the toolchain (Node.j
 npm, git) is the same, but you'll use your system package manager instead of
 Homebrew. Windows is not supported.
 
+## Accounts you'll need
+
+**GitHub (required)** — for cloning, pull requests, and issues:
+
+Sign up at [github.com](https://github.com/signup) if you don't have an account.
+
+**Anthropic (required)** — powers both Claude Code and the RAG pipeline:
+
+1. Sign up at [claude.ai](https://claude.ai/) for a Claude account
+2. Subscribe to **Claude Pro** ($20/mo) or **Claude Max** ($100/mo) — Claude
+   Code is included with either plan
+3. For API usage (running queries, extraction), you also need API credits. Go to
+   [console.anthropic.com](https://console.anthropic.com/), navigate to
+   **Settings → API Keys**, create a key, and add billing credits. This is the
+   key that goes in your `.env` file as `ANTHROPIC_API_KEY`.
+
+**CodeRabbit (optional)** — for running local code reviews before pushing:
+
+1. Sign up at [coderabbit.ai](https://coderabbit.ai/) using your GitHub account
+2. The free tier works for open-source repos
+
+**Langfuse (optional)** — for tracing and evaluation experiments:
+
+All developers share a single Langfuse project so experiment runs can be
+compared against a common baseline. Ask
+[@bcm](https://github.com/bcm) for the shared project API keys and add them to
+your `.env` file.
+
 ## Prerequisites
-
-### GitHub account
-
-You'll need a GitHub account to clone the repo, open pull requests, and file
-issues. Sign up at [github.com](https://github.com/signup) if you don't have
-one.
 
 ### Homebrew
 
@@ -116,8 +138,8 @@ automatically.
 cp .env.example .env
 ```
 
-Edit `.env` and add your API keys (see the "Accounts you'll need" section below
-for how to obtain these):
+Edit `.env` and add your API keys (see "Accounts you'll need" above for how to
+obtain these):
 
 ```text
 ANTHROPIC_API_KEY=sk-ant-...
@@ -246,30 +268,6 @@ If any step fails, the commit is blocked. Fix the issue and try again.
 way to work on this project. It's an AI coding agent that runs in your terminal,
 understands the full codebase, and follows the project conventions defined in
 `CLAUDE.md`.
-
-### Accounts you'll need
-
-**Anthropic (required)** — powers both Claude Code and the RAG pipeline:
-
-1. Sign up at [claude.ai](https://claude.ai/) for a Claude account
-2. Subscribe to **Claude Pro** ($20/mo) or **Claude Max** ($100/mo) — Claude
-   Code is included with either plan
-3. For API usage (running queries, extraction), you also need API credits. Go to
-   [console.anthropic.com](https://console.anthropic.com/), navigate to
-   **Settings → API Keys**, create a key, and add billing credits. This is the
-   key that goes in your `.env` file as `ANTHROPIC_API_KEY`.
-
-**CodeRabbit (optional)** — for running local code reviews before pushing:
-
-1. Sign up at [coderabbit.ai](https://coderabbit.ai/) using your GitHub account
-2. The free tier works for open-source repos
-
-**Langfuse (optional)** — for tracing and evaluation experiments:
-
-All developers share a single Langfuse project so experiment runs can be
-compared against a common baseline. Ask
-[@bcm](https://github.com/bcm) for the shared project API keys and add them to
-your `.env` file.
 
 ### Installing Claude Code
 
