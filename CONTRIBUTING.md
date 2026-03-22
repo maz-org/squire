@@ -1,8 +1,12 @@
 # Contributing
 
-This guide walks you through setting up the Squire development environment on a
-fresh macOS install (Tahoe or later). By the end you'll be able to run the RAG
-pipeline, execute tests, and submit pull requests.
+This guide walks you through setting up the Squire development environment on
+macOS. We strongly recommend **macOS Tahoe** (the latest version) on Apple
+Silicon. These are the only instructions we maintain.
+
+Linux users should be able to adapt these instructions — the toolchain (Node.js,
+npm, git) is the same, but you'll use your system package manager instead of
+Homebrew. Windows is not supported.
 
 ## Prerequisites
 
