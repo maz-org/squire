@@ -30,9 +30,12 @@ All queries are traced with [Langfuse](https://langfuse.com) for observability.
 Requires Node.js 24+ (uses native TypeScript execution).
 
 ```bash
-# Clone with game data submodule
-git clone --recurse-submodules https://github.com/maz-org/squire.git
+# Clone the repo
+git clone https://github.com/maz-org/squire.git
 cd squire
+
+# Clone the worldhaven game data (images, PDFs, item data)
+git clone https://github.com/any2cards/worldhaven.git data/worldhaven
 
 # Install dependencies
 npm install
