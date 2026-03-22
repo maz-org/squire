@@ -158,17 +158,22 @@ minutes on first run:
 npm run index
 ```
 
-### Extract card data (optional)
+### Extract card data
 
-OCR-extracts structured data from card images using Claude Haiku. Takes ~30
-minutes and costs a few dollars in API usage:
+OCR-extracts structured data from card images using Claude Haiku. This produces
+the JSON files in `data/extracted/` that the query pipeline and any UI depend on.
+Since extracted data is gitignored, every contributor needs to run this:
 
 ```bash
 npm run extract
 ```
 
-You only need to run this if you're working on the extraction pipeline or want
-fresh card data.
+Takes ~30 minutes and costs a few dollars in Anthropic API usage. You can also
+extract a single card type to save time:
+
+```bash
+npm run extract monster-stats
+```
 
 ## Development
 
