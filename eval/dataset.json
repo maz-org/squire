@@ -1,0 +1,122 @@
+[
+  {
+    "id": "rule-long-rest-init",
+    "category": "rulebook",
+    "question": "What is the initiative value of a long rest in Frosthaven?",
+    "expected": "99",
+    "grading": "The answer must state the initiative is 99.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "rule-long-rest-steps",
+    "category": "rulebook",
+    "question": "What are the steps a character performs when taking a long rest in Frosthaven?",
+    "expected": "1. Lose one card from discard pile, return remaining to hand. 2. Perform Heal 2 self (optional). 3. Recover all spent items.",
+    "grading": "Must mention all three steps: losing a card from discard (mandatory), Heal 2 self (optional), and recovering spent items. Order matters.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "rule-scenario-level",
+    "category": "rulebook",
+    "question": "How is the recommended scenario level calculated in Frosthaven?",
+    "expected": "Average level of the characters divided by 2, rounded up.",
+    "grading": "Must mention dividing average character level by 2 and rounding up.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "rule-poison",
+    "category": "rulebook",
+    "question": "What does the Poison condition do in Frosthaven?",
+    "expected": "All attacks targeting the figure gain +1 Attack. Poison is removed when healed, but prevents the heal from increasing hit points.",
+    "grading": "Must mention +1 Attack on attacks targeting the figure AND that poison prevents healing from increasing HP while being removed by healing.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "rule-brittle",
+    "category": "rulebook",
+    "question": "What does the Brittle condition do in Frosthaven?",
+    "expected": "Next time the figure would suffer damage, they suffer double that damage instead, then brittle is removed. Also removed by healing.",
+    "grading": "Must mention double damage on next damage source and removal after triggering. Should mention healing also removes it.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "rule-advantage",
+    "category": "rulebook",
+    "question": "How does advantage work with attack modifier cards in Frosthaven?",
+    "expected": "Draw two modifiers and use one. Monsters always use the better one. Characters may use either one.",
+    "grading": "Must mention drawing two modifiers. Must distinguish that monsters use the better one while characters may choose either.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "rule-small-items",
+    "category": "rulebook",
+    "question": "How many small items can a character bring into a Frosthaven scenario?",
+    "expected": "Half their level, rounded up.",
+    "grading": "Must state half the character's level rounded up.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "monster-vermling-scout",
+    "category": "monster-stats",
+    "question": "What are the stats of a normal Vermling Scout at level 1 in Frosthaven?",
+    "expected": "HP 4, Move 3, Attack 2, Range 3.",
+    "grading": "Must include all four stats: HP 4, Move 3, Attack 2, Range 3.",
+    "source": "data/extracted/monster-stats.json"
+  },
+  {
+    "id": "monster-living-bones-immunity",
+    "category": "monster-stats",
+    "question": "What conditions are Living Bones immune to in Frosthaven?",
+    "expected": "Poison and wound.",
+    "grading": "Must mention both poison and wound immunity.",
+    "source": "data/extracted/monster-stats.json"
+  },
+  {
+    "id": "monster-flame-demon-elite",
+    "category": "monster-stats",
+    "question": "What are the stats of an elite Flame Demon at level 0 in Frosthaven?",
+    "expected": "HP 5, Move 3, Attack 4, Range 5.",
+    "grading": "Must include all four stats: HP 5, Move 3, Attack 4, Range 5.",
+    "source": "data/extracted/monster-stats.json"
+  },
+  {
+    "id": "building-alchemist",
+    "category": "buildings",
+    "question": "What does the Alchemist building cost to build at level 1 in Frosthaven?",
+    "expected": "1 gold, 2 lumber, 2 metal, 1 hide.",
+    "grading": "Must mention the four resources: 1 gold, 2 lumber, 2 metal, 1 hide.",
+    "source": "data/extracted/buildings.json"
+  },
+  {
+    "id": "item-spyglass",
+    "category": "items",
+    "question": "What does the Spyglass item do in Frosthaven, and what is its item number?",
+    "expected": "Item #001. During your attack ability, gain advantage on one attack. Costs 40 gold, small item slot, 2 uses.",
+    "grading": "Must state item number 001 (not 082). Must mention gaining advantage on an attack. Cost of 40 gold is a bonus.",
+    "source": "data/extracted/items.json (note: extracted number is wrong, correct is 001 from filename)"
+  },
+  {
+    "id": "item-crude-boots",
+    "category": "items",
+    "question": "What does the Crude Boots item do in Frosthaven?",
+    "expected": "Legs slot, costs 2 gold. During your move ability, add +1 movement.",
+    "grading": "Must mention +1 movement during move ability. Cost of 2 gold is a bonus.",
+    "source": "data/extracted/items.json"
+  },
+  {
+    "id": "scenario-61-unlock",
+    "category": "scenarios",
+    "question": "What section text unlocks scenario 61 (Life and Death) in Frosthaven?",
+    "expected": "Section 67.1 links to Life and Death (scenario 61). The section involves escaping shadows with Moonshard.",
+    "grading": "Must reference section 67 or the narrative context that leads to scenario 61. Mentioning 'Life and Death' as the scenario name is a bonus.",
+    "source": "fh-section-book-62-81.pdf"
+  },
+  {
+    "id": "rule-wound",
+    "category": "rulebook",
+    "question": "What does the Wound condition do in Frosthaven?",
+    "expected": "The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.",
+    "grading": "Must mention 1 damage at start of turns and removal by healing.",
+    "source": "fh-rule-book.pdf"
+  }
+]
