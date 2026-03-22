@@ -10,6 +10,12 @@ Homebrew. Windows is not supported.
 
 ## Prerequisites
 
+### GitHub account
+
+You'll need a GitHub account to clone the repo, open pull requests, and file
+issues. Sign up at [github.com](https://github.com/signup) if you don't have
+one.
+
 ### Homebrew
 
 Open Terminal and install [Homebrew](https://brew.sh):
