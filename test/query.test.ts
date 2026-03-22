@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('dotenv/config', () => ({}));
+vi.mock('../src/instrumentation.ts', () => ({ sdk: { shutdown: vi.fn() } }));
+vi.mock('@langfuse/tracing', () => ({
+  startActiveObservation: vi.fn((_name: string, fn: (trace: unknown) => unknown) =>
+    fn({ update: vi.fn() }),
+  ),
+  startObservation: vi.fn(() => ({ update: vi.fn(), end: vi.fn() })),
+}));
 
 const {
   mockMessagesCreate,
@@ -55,6 +62,7 @@ describe('askFrosthaven', () => {
     mockFormatExtracted.mockReturnValue('');
     mockMessagesCreate.mockResolvedValue({
       content: [{ type: 'text', text: 'Mocked answer' }],
+      usage: { input_tokens: 100, output_tokens: 50 },
     });
   });
 
