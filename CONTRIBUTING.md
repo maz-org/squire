@@ -179,14 +179,16 @@ in Langfuse so you can compare runs over time.
 
 Requires Langfuse credentials in `.env`.
 
-**Seed the dataset (first time only):**
+**Seed your Langfuse project:**
 
 ```bash
 npm run eval -- --seed
 ```
 
-Uploads the 15 question/answer pairs from `eval/dataset.json` to your Langfuse
-project. You only need to do this once, or again if you add new eval cases.
+Each developer has their own Langfuse project (created during account setup).
+This command uploads the eval dataset (`eval/dataset.json`) to your project so
+that experiment runs can reference it. Run this once when you first set up
+Langfuse, or again after adding new eval cases to the dataset file.
 
 **Run all eval cases:**
 
