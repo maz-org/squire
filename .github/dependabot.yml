@@ -8,8 +8,6 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
-      production-dependencies:
-        dependency-type: production
 
   - package-ecosystem: github-actions
     directory: /
