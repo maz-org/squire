@@ -76,8 +76,7 @@ export async function askFrosthaven(question: string): Promise<string> {
       messages: [{ role: 'user', content: userMessage }],
     });
 
-    const block = response.content[0];
-    const answer = block.type === 'text' ? block.text : '';
+    const answer = response.content.find((b) => b.type === 'text')?.text ?? '';
 
     genObs.update({
       output: answer,
