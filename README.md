@@ -83,6 +83,10 @@ npm run eval -- --id=rule-poison
 
 Results are tracked in Langfuse with LLM-as-judge scoring (1-5 scale). Current baseline: **73% pass rate, 3.8/5 avg score**.
 
+## Acknowledgments
+
+Game data (card images, PDFs, item databases) comes from [worldhaven](https://github.com/any2cards/worldhaven), a community-maintained collection of Gloomhaven/Frosthaven assets. Squire wouldn't be possible without their work.
+
 ## License
 
 This project is for personal/educational use. Frosthaven is a trademark of Cephalofair Games. Game content belongs to its respective owners.
