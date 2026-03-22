@@ -9,7 +9,7 @@
  */
 
 import 'dotenv/config';
-import { sdk } from '../src/instrumentation.ts';
+import { sdk, LANGFUSE_DEFAULT_BASE_URL } from '../src/instrumentation.ts';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -77,9 +77,11 @@ async function judgeAnswer(
 }
 
 // --- Seed dataset into Langfuse ---
+// Idempotent: Langfuse returns the existing dataset on duplicate create,
+// and upserts items when an id is provided. Safe to run repeatedly.
 
 async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): Promise<void> {
-  console.log(`Creating dataset "${DATASET_NAME}" with ${cases.length} items...`);
+  console.log(`Seeding dataset "${DATASET_NAME}" with ${cases.length} items...`);
 
   await langfuse.api.datasets.create({
     name: DATASET_NAME,
@@ -90,6 +92,7 @@ async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): Promise
   for (const c of cases) {
     await langfuse.api.datasetItems.create({
       datasetName: DATASET_NAME,
+      id: c.id,
       input: { question: c.question },
       expectedOutput: { answer: c.expected, grading: c.grading },
       metadata: { id: c.id, category: c.category, source: c.source },
@@ -248,7 +251,9 @@ if (cases.length === 0) {
   process.exit(1);
 }
 
-const langfuse = new LangfuseClient();
+const langfuse = new LangfuseClient({
+  baseUrl: process.env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
+});
 
 if (shouldSeed) {
   await seedDataset(langfuse, allCases);
