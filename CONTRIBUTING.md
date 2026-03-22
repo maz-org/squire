@@ -53,12 +53,20 @@ Terminal, then verify:
 brew --version
 ```
 
-### Git
+### Git and Git LFS
 
 macOS Tahoe includes Apple Git. That works fine, but if you want a newer version:
 
 ```bash
 brew install git
+```
+
+This project uses [Git LFS](https://git-lfs.com/) for large data files. Install
+it and initialize it once:
+
+```bash
+brew install git-lfs
+git lfs install
 ```
 
 ### Node.js (via nvm)
@@ -158,21 +166,18 @@ minutes on first run:
 npm run index
 ```
 
-### Extract card data
+### Extracted data and vector index
 
-OCR-extracts structured data from card images using Claude Haiku. This produces
-the JSON files in `data/extracted/` that the query pipeline and any UI depend on.
-Since extracted data is gitignored, every contributor needs to run this:
+The extracted card data (`data/extracted/`) and vector index (`data/index.json`)
+are stored in the repo via [Git LFS](https://git-lfs.com/). They download
+automatically when you clone — no extra steps needed.
 
-```bash
-npm run extract
-```
-
-Takes ~30 minutes and costs a few dollars in Anthropic API usage. You can also
-extract a single card type to save time:
+If you need to regenerate them (e.g., after changing the extraction pipeline or
+indexing logic), these are maintainer tasks:
 
 ```bash
-npm run extract monster-stats
+npm run index     # re-index rulebook PDFs (~2 min)
+npm run extract   # re-extract all card data (~30 min, costs API credits)
 ```
 
 ## Development

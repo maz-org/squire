@@ -150,6 +150,3 @@ eval/results/*.json
 # Squire project
 # Clone from https://github.com/any2cards/worldhaven if needed
 data/worldhaven/
-# Regeneratable artifacts
-data/index.json
-data/extracted/
