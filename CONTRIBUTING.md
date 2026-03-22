@@ -130,8 +130,9 @@ cd squire
 claude
 ```
 
-Claude Code will open a browser window to authenticate with your Anthropic
-account. Once logged in, it reads `CLAUDE.md` automatically for project-specific
+Claude Code will open a browser window to sign in with your claude.ai account
+(the same one you subscribed to Pro or Max with — this is separate from the API
+key in `.env`). Once logged in, it reads `CLAUDE.md` automatically for project-specific
 instructions — coding standards, testing requirements, PR workflow, and
 CodeRabbit integration.
 
