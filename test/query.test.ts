@@ -7,8 +7,6 @@ const {
   mockEmbed,
   mockLoadIndex,
   mockSearch,
-  mockSearchItems,
-  mockFormatItems,
   mockSearchExtracted,
   mockFormatExtracted,
 } = vi.hoisted(() => ({
@@ -16,8 +14,6 @@ const {
   mockEmbed: vi.fn(),
   mockLoadIndex: vi.fn(),
   mockSearch: vi.fn(),
-  mockSearchItems: vi.fn(),
-  mockFormatItems: vi.fn(),
   mockSearchExtracted: vi.fn(),
   mockFormatExtracted: vi.fn(),
 }));
@@ -35,11 +31,6 @@ vi.mock('../src/embedder.ts', () => ({
 vi.mock('../src/vector-store.ts', () => ({
   loadIndex: mockLoadIndex,
   search: mockSearch,
-}));
-
-vi.mock('../src/item-lookup.ts', () => ({
-  searchItems: mockSearchItems,
-  formatItems: mockFormatItems,
 }));
 
 vi.mock('../src/extracted-data.ts', () => ({
@@ -60,8 +51,6 @@ describe('askFrosthaven', () => {
     mockSearch.mockReturnValue([
       { source: 'rulebook.pdf', text: 'Some rulebook text', score: 0.9 },
     ]);
-    mockSearchItems.mockReturnValue([]);
-    mockFormatItems.mockReturnValue('');
     mockSearchExtracted.mockReturnValue([]);
     mockFormatExtracted.mockReturnValue('');
     mockMessagesCreate.mockResolvedValue({
@@ -97,17 +86,6 @@ describe('askFrosthaven', () => {
   it('returns the Claude API response text', async () => {
     const result = await askFrosthaven('What is the loot action?');
     expect(result).toBe('Mocked answer');
-  });
-
-  it('includes item context when searchItems returns results', async () => {
-    mockSearchItems.mockReturnValue([{ name: 'Iron Helmet' }]);
-    mockFormatItems.mockReturnValue('Iron Helmet: +1 armor');
-
-    await askFrosthaven('What does iron helmet do?');
-
-    const userMessage = mockMessagesCreate.mock.calls[0][0].messages[0].content as string;
-    expect(userMessage).toContain('## Item Lookup');
-    expect(userMessage).toContain('Iron Helmet: +1 armor');
   });
 
   it('includes card data context when searchExtracted returns results', async () => {

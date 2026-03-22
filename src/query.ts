@@ -7,7 +7,6 @@ import 'dotenv/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { embed } from './embedder.ts';
 import { loadIndex, search } from './vector-store.ts';
-import { searchItems, formatItems } from './item-lookup.ts';
 import { searchExtracted, formatExtracted } from './extracted-data.ts';
 
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY from env
@@ -27,10 +26,9 @@ export async function askFrosthaven(question: string): Promise<string> {
   }
 
   // Run all lookups in parallel
-  const [queryEmbedding, itemHits, cardHits] = await Promise.all([
+  const [queryEmbedding, cardHits] = await Promise.all([
     embed(question),
-    Promise.resolve(searchItems(question, 5)),
-    Promise.resolve(searchExtracted(question, 6)),
+    Promise.resolve(searchExtracted(question, 8)),
   ]);
   const hits = search(index, queryEmbedding, 6);
 
@@ -38,11 +36,9 @@ export async function askFrosthaven(question: string): Promise<string> {
     .map((h, i) => `[${i + 1}] (${h.source})\n${h.text}`)
     .join('\n\n---\n\n');
 
-  const itemContext = itemHits.length > 0 ? `\n\n## Item Lookup\n${formatItems(itemHits)}` : '';
-
   const cardContext = cardHits.length > 0 ? `\n\n## Card Data\n${formatExtracted(cardHits)}` : '';
 
-  const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${itemContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
+  const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
 
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
