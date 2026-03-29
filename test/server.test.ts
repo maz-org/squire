@@ -99,6 +99,11 @@ describe('GET /api/search/rules', () => {
     const res = await app.request('/api/search/rules?q=');
     expect(res.status).toBe(400);
   });
+
+  it('defaults topK when given invalid value', async () => {
+    await app.request('/api/search/rules?q=loot&topK=abc');
+    expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
+  });
 });
 
 // ─── GET /api/search/cards ───────────────────────────────────────────────────
@@ -134,6 +139,16 @@ describe('GET /api/search/cards', () => {
   it('returns 400 when q is missing', async () => {
     const res = await app.request('/api/search/cards');
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when q is empty', async () => {
+    const res = await app.request('/api/search/cards?q=');
+    expect(res.status).toBe(400);
+  });
+
+  it('defaults topK when given invalid value', async () => {
+    await app.request('/api/search/cards?q=algox&topK=abc');
+    expect(mockSearchCards).toHaveBeenCalledWith('algox', 6);
   });
 });
 

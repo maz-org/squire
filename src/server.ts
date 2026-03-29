@@ -22,12 +22,19 @@ app.get('/api/health', (c) => {
 
 // ─── Search endpoints ────────────────────────────────────────────────────────
 
+function parseTopK(raw: string | undefined): number {
+  if (!raw) return 6;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > 100) return 6;
+  return n;
+}
+
 app.get('/api/search/rules', async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json({ error: 'Missing required query parameter: q' }, 400);
 
-  const topK = parseInt(c.req.query('topK') || '6', 10);
-  const results = await searchRules(q, Number.isNaN(topK) ? 6 : topK);
+  const topK = parseTopK(c.req.query('topK'));
+  const results = await searchRules(q, topK);
   return c.json({ results });
 });
 
@@ -35,8 +42,8 @@ app.get('/api/search/cards', (c) => {
   const q = c.req.query('q');
   if (!q) return c.json({ error: 'Missing required query parameter: q' }, 400);
 
-  const topK = parseInt(c.req.query('topK') || '6', 10);
-  const results = searchCards(q, Number.isNaN(topK) ? 6 : topK);
+  const topK = parseTopK(c.req.query('topK'));
+  const results = searchCards(q, topK);
   return c.json({ results });
 });
 
