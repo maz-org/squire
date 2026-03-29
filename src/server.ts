@@ -150,7 +150,7 @@ app.post('/token', async (c) => {
 function requireBearerAuth() {
   return async (c: Parameters<Parameters<typeof app.use>[1]>[0], next: () => Promise<void>) => {
     const authHeader = c.req.header('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
       c.header('WWW-Authenticate', 'Bearer');
       return c.json(jsonError('Authentication required', 401), 401);
     }

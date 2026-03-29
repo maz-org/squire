@@ -777,6 +777,7 @@ describe('bearer auth middleware', () => {
       headers: { Authorization: 'Bearer invalid-token' },
     });
     expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toContain('invalid_token');
   });
 
   it('allows unauthenticated access to /api/health', async () => {
