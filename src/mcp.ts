@@ -139,5 +139,13 @@ export async function createInProcessClient(): Promise<Client> {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'squire-in-process', version: '0.1.0' });
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+
+  // Clean up server when client closes
+  const originalClose = client.close.bind(client);
+  client.close = async () => {
+    await originalClose();
+    await server.close();
+  };
+
   return client;
 }
