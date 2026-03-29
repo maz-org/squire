@@ -37,6 +37,14 @@ To get the IDs needed for `item-edit`, use:
 Set status to "In Progress" at the **start** of work (before creating a branch),
 not when opening the PR.
 
+## Development
+
+For server setup, API endpoints, MCP client configuration, and project
+structure, see [docs/development.md](docs/development.md).
+
+For architecture context and design rationale, see
+[docs/architecture-plan.md](docs/architecture-plan.md).
+
 ## Development Standards
 
 ### Testing Requirements

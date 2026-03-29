@@ -53,6 +53,24 @@ npm run extract
 
 ## Usage
 
+### API server
+
+Start the server to expose REST endpoints and MCP tools:
+
+```bash
+npm run serve
+# Squire server listening on port 3000
+```
+
+The server initializes the vector index and embedder on startup, then
+serves:
+
+- **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
+  `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
+- **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)
+
+Set `PORT` env var to change the listen port (default 3000).
+
 ### CLI
 
 ```bash
@@ -61,9 +79,12 @@ npm run query "What are the stats of an elite Flame Demon at level 3?"
 npm run query "How many small items can I bring into a scenario?"
 ```
 
-### Discord bot
+### MCP (Claude Desktop, Claude Code, etc.)
 
-Squire can run as a Discord bot, answering rules questions from any user in the channel. See `CLAUDE.md` for configuration details.
+Squire exposes its knowledge tools via the
+[Model Context Protocol](https://modelcontextprotocol.io). Any MCP client can
+connect and use the tools. See [docs/development.md](docs/development.md) for
+local setup instructions.
 
 ## Evaluation
 
