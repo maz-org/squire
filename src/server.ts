@@ -13,6 +13,40 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 
 export const app = new Hono();
 
+// ─── OAuth metadata ──────────────────────────────────────────────────────────
+
+function getBaseUrl(): string {
+  const env = process.env.SQUIRE_BASE_URL;
+  if (env && env.length > 0) return env;
+  return 'http://localhost:3000';
+}
+
+app.get('/.well-known/oauth-authorization-server', (c) => {
+  const base = getBaseUrl();
+  return c.json({
+    issuer: base,
+    authorization_endpoint: `${base}/authorize`,
+    token_endpoint: `${base}/token`,
+    registration_endpoint: `${base}/register`,
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+    token_endpoint_auth_methods_supported: ['none'],
+    code_challenge_methods_supported: ['S256'],
+    scopes_supported: ['squire:read', 'squire:write'],
+  });
+});
+
+app.get('/.well-known/oauth-protected-resource', (c) => {
+  const base = getBaseUrl();
+  return c.json({
+    resource: base,
+    authorization_servers: [base],
+    resource_name: 'Squire',
+    bearer_methods_supported: ['header'],
+    scopes_supported: ['squire:read', 'squire:write'],
+  });
+});
+
 // ─── MCP transport ───────────────────────────────────────────────────────────
 
 app.all('/mcp', async (c) => {
