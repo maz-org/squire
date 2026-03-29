@@ -145,7 +145,7 @@ have unrelated changes (e.g., CLAUDE.md updates), put them on a separate
 branch/PR.
 
 1. **Poll for review comments** (`gh api repos/{owner}/{repo}/pulls/{number}/comments`)
-   and PR status (`gh pr view <number> --json state,reviewDecision,statusCheckRollup`)
+   and PR status (`gh pr view <number> --json state,reviewDecision,reviews,statusCheckRollup`)
 2. **Fix legitimate issues** — bugs, type errors, missing validation, security concerns
 3. **Use judgment on nitpicks** — you don't need to address every style suggestion
    or minor nitpick. It's OK to disagree.

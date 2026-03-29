@@ -1,10 +1,15 @@
-. "$HOME/.nvm/nvm.sh"
-nvm use >/dev/null 2>&1
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+  nvm use >/dev/null 2>&1 || true
+fi
 
 # Block pushes to branches whose PR has already been merged
 branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 if [ "$branch" != "main" ] && [ -n "$branch" ]; then
-  pr_state=$(gh pr view "$branch" --json state --jq '.state' 2>/dev/null || echo "NONE")
+  pr_state=$(gh pr list --head "$branch" --state all --json state --jq '.[0].state // "NONE"') || {
+    echo "ERROR: Unable to query PR state via gh; aborting push."
+    exit 1
+  }
   if [ "$pr_state" = "MERGED" ]; then
     echo "ERROR: PR for branch '$branch' is already merged."
     echo "Do not push to merged branches. Create a new branch instead."
