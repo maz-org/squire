@@ -1,0 +1,129 @@
+/**
+ * Squire MCP server.
+ * Registers atomic tools from tools.ts as MCP tools.
+ */
+
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
+import type { CardType } from './schemas.ts';
+
+const CARD_TYPES = [
+  'monster-stats',
+  'monster-abilities',
+  'character-abilities',
+  'items',
+  'events',
+  'battle-goals',
+  'buildings',
+] as const;
+
+export function createMcpServer(): McpServer {
+  const server = new McpServer({
+    name: 'squire',
+    version: '0.1.0',
+  });
+
+  // ─── search_rules ──────────────────────────────────────────────────────────
+
+  server.registerTool(
+    'search_rules',
+    {
+      description: 'Search the Frosthaven rulebook for passages relevant to a query.',
+      inputSchema: {
+        query: z.string().describe('Search query'),
+        topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),
+      },
+    },
+    async ({ query, topK }) => {
+      const results = await searchRules(query, topK);
+      return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+    },
+  );
+
+  // ─── search_cards ──────────────────────────────────────────────────────────
+
+  server.registerTool(
+    'search_cards',
+    {
+      description: 'Search extracted card data using keyword matching.',
+      inputSchema: {
+        query: z.string().describe('Search query'),
+        topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),
+      },
+    },
+    ({ query, topK }) => {
+      const results = searchCards(query, topK);
+      return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+    },
+  );
+
+  // ─── list_card_types ───────────────────────────────────────────────────────
+
+  server.registerTool(
+    'list_card_types',
+    {
+      description: 'List all available card types with record counts.',
+    },
+    () => {
+      const types = listCardTypes();
+      return { content: [{ type: 'text', text: JSON.stringify(types, null, 2) }] };
+    },
+  );
+
+  // ─── list_cards ────────────────────────────────────────────────────────────
+
+  server.registerTool(
+    'list_cards',
+    {
+      description: 'List cards of a given type, optionally filtered by field values.',
+      inputSchema: {
+        type: z.enum(CARD_TYPES).describe('Card type to list'),
+        filter: z
+          .string()
+          .optional()
+          .describe('Optional JSON filter object (AND logic), e.g. {"name":"Algox Archer"}'),
+      },
+    },
+    ({ type, filter }) => {
+      let parsed: Record<string, unknown> | undefined;
+      if (filter) {
+        try {
+          parsed = JSON.parse(filter) as Record<string, unknown>;
+        } catch {
+          return {
+            content: [{ type: 'text' as const, text: 'Invalid filter JSON' }],
+            isError: true,
+          };
+        }
+      }
+      const cards = listCards(type as CardType, parsed);
+      return { content: [{ type: 'text', text: JSON.stringify(cards, null, 2) }] };
+    },
+  );
+
+  // ─── get_card ──────────────────────────────────────────────────────────────
+
+  server.registerTool(
+    'get_card',
+    {
+      description: 'Look up a single card by type and identifier.',
+      inputSchema: {
+        type: z.enum(CARD_TYPES).describe('Card type'),
+        id: z.string().describe('Card identifier (name, number, etc.)'),
+      },
+    },
+    ({ type, id }) => {
+      const card = getCard(type as CardType, id);
+      if (!card) {
+        return {
+          content: [{ type: 'text', text: `Card not found: ${type}/${id}` }],
+          isError: true,
+        };
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(card, null, 2) }] };
+    },
+  );
+
+  return server;
+}
