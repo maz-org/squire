@@ -22,8 +22,8 @@ app.notFound((c) => {
 });
 
 app.onError((err, c) => {
-  const message = err instanceof Error ? err.message : 'Internal server error';
-  return c.json(jsonError(message, 500), 500);
+  console.error('Unhandled error:', err);
+  return c.json(jsonError('Internal server error', 500), 500);
 });
 
 // ─── Health endpoint ─────────────────────────────────────────────────────────

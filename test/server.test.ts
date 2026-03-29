@@ -310,7 +310,8 @@ describe('POST /api/ask', () => {
     });
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body).toHaveProperty('error', 'Claude API error');
+    expect(body).toHaveProperty('error', 'Internal server error');
+    expect(body).toHaveProperty('status', 500);
   });
 });
 
