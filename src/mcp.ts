@@ -86,7 +86,17 @@ export function createMcpServer(): McpServer {
       },
     },
     ({ type, filter }) => {
-      const parsed = filter ? (JSON.parse(filter) as Record<string, unknown>) : undefined;
+      let parsed: Record<string, unknown> | undefined;
+      if (filter) {
+        try {
+          parsed = JSON.parse(filter) as Record<string, unknown>;
+        } catch {
+          return {
+            content: [{ type: 'text' as const, text: 'Invalid filter JSON' }],
+            isError: true,
+          };
+        }
+      }
       const cards = listCards(type as CardType, parsed);
       return { content: [{ type: 'text', text: JSON.stringify(cards, null, 2) }] };
     },
