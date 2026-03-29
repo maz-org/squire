@@ -43,9 +43,54 @@ import {
   collectImages,
   extractImage,
   extractCardType,
+  extractNumberFromFilename,
 } from '../src/extract-card-data.ts';
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
+
+describe('extractNumberFromFilename', () => {
+  it('extracts number from summer road event filename', () => {
+    expect(extractNumberFromFilename('fh-sre-01-f.png', 'events')).toBe('01');
+    expect(extractNumberFromFilename('fh-sre-35-b.png', 'events')).toBe('35');
+  });
+
+  it('extracts number from winter road event filename', () => {
+    expect(extractNumberFromFilename('fh-wre-02-f.png', 'events')).toBe('02');
+  });
+
+  it('extracts number from summer outpost event filename', () => {
+    expect(extractNumberFromFilename('fh-soe-10-f.png', 'events')).toBe('10');
+  });
+
+  it('extracts number from winter outpost event filename', () => {
+    expect(extractNumberFromFilename('fh-woe-05-b.png', 'events')).toBe('05');
+  });
+
+  it('extracts number from boat event filename', () => {
+    expect(extractNumberFromFilename('fh-be-01-f.png', 'events')).toBe('01');
+  });
+
+  it('extracts number from item filename', () => {
+    expect(extractNumberFromFilename('fh-001-spyglass.png', 'items')).toBe('001');
+    expect(extractNumberFromFilename('fh-142-boots-of-quickness.png', 'items')).toBe('142');
+  });
+
+  it('extracts number from building filename', () => {
+    expect(extractNumberFromFilename('fh-39-jeweler-level-2.png', 'buildings')).toBe('39');
+    expect(extractNumberFromFilename('fh-05-mining-camp-level-1.png', 'buildings')).toBe('05');
+  });
+
+  it('returns null for card types without number patterns', () => {
+    expect(extractNumberFromFilename('algox-archer.png', 'monster-stats')).toBeNull();
+    expect(extractNumberFromFilename('ability-01.png', 'monster-abilities')).toBeNull();
+    expect(extractNumberFromFilename('card.png', 'battle-goals')).toBeNull();
+  });
+
+  it('returns null when filename does not match expected pattern', () => {
+    expect(extractNumberFromFilename('random-file.png', 'events')).toBeNull();
+    expect(extractNumberFromFilename('not-an-item.png', 'items')).toBeNull();
+  });
+});
 
 describe('extractJson', () => {
   it('parses a plain JSON object string', () => {
@@ -255,5 +300,66 @@ describe('extractCardType', () => {
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('Test Goal');
     expect(mockWriteFileSync).toHaveBeenCalled();
+  });
+
+  it('overrides OCR event number with filename-derived number', async () => {
+    mockExistsSync.mockImplementation((path: string) => {
+      if (typeof path === 'string' && path.endsWith('.json')) return false;
+      if (typeof path === 'string' && path.includes('events')) return true;
+      return false;
+    });
+    mockReaddirSync.mockImplementation((dir: string) => {
+      if (dir.endsWith('road') || dir.endsWith('outpost') || dir.endsWith('boat')) {
+        if (dir.endsWith('road'))
+          return [{ name: 'fh-sre-35-f.png', isDirectory: () => false, isFile: () => true }];
+        return [];
+      }
+      // Return subdirectories for the events dir
+      return [
+        { name: 'road', isDirectory: () => true, isFile: () => false },
+        { name: 'outpost', isDirectory: () => true, isFile: () => false },
+        { name: 'boat', isDirectory: () => true, isFile: () => false },
+      ];
+    });
+    mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
+    mockMessagesCreate.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: '{"eventType": "road", "season": "summer", "number": "999", "flavorText": "Test", "optionA": {"text": "A", "outcome": "A result"}, "optionB": null}',
+        },
+      ],
+    });
+
+    const result = await extractCardType('events');
+    expect(result).toHaveLength(1);
+    expect(result[0].number).toBe('35'); // filename number, not OCR "999"
+  });
+
+  it('overrides OCR item number with filename-derived number', async () => {
+    mockExistsSync.mockImplementation((path: string) => {
+      if (typeof path === 'string' && path.endsWith('.json')) return false;
+      if (typeof path === 'string' && path.includes('items')) return true;
+      return false;
+    });
+    mockReaddirSync.mockImplementation((dir: string) => {
+      if (dir.endsWith('001-010'))
+        return [{ name: 'fh-001-spyglass.png', isDirectory: () => false, isFile: () => true }];
+      // Return subdirectory
+      return [{ name: '001-010', isDirectory: () => true, isFile: () => false }];
+    });
+    mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
+    mockMessagesCreate.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: '{"number": "082", "name": "Spyglass", "slot": "small item", "cost": 2, "effect": "Test effect", "uses": 1, "spent": false, "lost": false}',
+        },
+      ],
+    });
+
+    const result = await extractCardType('items');
+    expect(result).toHaveLength(1);
+    expect(result[0].number).toBe('001'); // filename number, not OCR "082"
   });
 });
