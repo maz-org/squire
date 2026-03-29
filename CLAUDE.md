@@ -20,11 +20,22 @@ Use GitHub Issues for all work tracking. Check open issues with `gh issue list`.
 When discovering work that needs to be done later, create an issue with
 `gh issue create`.
 
-**Before starting work on an issue**, assign it to yourself and mark it in progress:
+**Before starting work on an issue**, assign it and set the GitHub Projects
+status to "In Progress":
 
-```bash
-gh issue edit <number> --add-assignee @me
-```
+1. `gh issue edit <number> --add-assignee @me`
+2. Find which project the issue belongs to (`gh project item-list <N> --owner maz-org --format json`)
+3. Use `gh project item-edit` to set the Status field to "In Progress"
+
+To get the IDs needed for `item-edit`, use:
+
+- `gh project list --owner maz-org` — project numbers and IDs
+- `gh project field-list <N> --owner maz-org` — field IDs
+- `gh api graphql` to query Status field option IDs (Todo/In Progress/Done)
+- `gh project item-list <N> --owner maz-org --format json | jq` — item IDs
+
+Set status to "In Progress" at the **start** of work (before creating a branch),
+not when opening the PR.
 
 ## Development Standards
 
