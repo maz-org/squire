@@ -4,6 +4,8 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { z } from 'zod';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -126,4 +128,24 @@ export function createMcpServer(): McpServer {
   );
 
   return server;
+}
+
+/**
+ * Create an in-process MCP client connected to Squire's tools.
+ * No HTTP round-trip, no auth — for use by the web UI conversation agent.
+ */
+export async function createInProcessClient(): Promise<Client> {
+  const server = createMcpServer();
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: 'squire-in-process', version: '0.1.0' });
+  await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+
+  // Clean up server when client closes
+  const originalClose = client.close.bind(client);
+  client.close = async () => {
+    await originalClose();
+    await server.close();
+  };
+
+  return client;
 }
