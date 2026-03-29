@@ -10,7 +10,12 @@ import { searchRules, searchCards, listCardTypes, listCards, getCard } from './t
 import type { CardType } from './schemas.ts';
 import { createMcpServer } from './mcp.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { registerClient, createAuthorizationCode, exchangeAuthorizationCode } from './auth.ts';
+import {
+  registerClient,
+  createAuthorizationCode,
+  exchangeAuthorizationCode,
+  verifyAccessToken,
+} from './auth.ts';
 
 export const app = new Hono();
 
@@ -139,6 +144,35 @@ app.post('/token', async (c) => {
 
   return c.json(jsonError(`Unsupported grant_type: ${grantType}`, 400), 400);
 });
+
+// ─── Bearer auth middleware ──────────────────────────────────────────────────
+
+function requireBearerAuth() {
+  return async (c: Parameters<Parameters<typeof app.use>[1]>[0], next: () => Promise<void>) => {
+    const authHeader = c.req.header('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      c.header('WWW-Authenticate', 'Bearer');
+      return c.json(jsonError('Authentication required', 401), 401);
+    }
+
+    const token = authHeader.slice(7);
+    const valid = verifyAccessToken(token);
+    if (!valid) {
+      c.header('WWW-Authenticate', 'Bearer error="invalid_token"');
+      return c.json(jsonError('Invalid or expired token', 401), 401);
+    }
+
+    await next();
+  };
+}
+
+// Protect API endpoints (except health) and MCP
+app.use('/api/search/*', requireBearerAuth());
+app.use('/api/cards/*', requireBearerAuth());
+app.use('/api/cards', requireBearerAuth());
+app.use('/api/card-types', requireBearerAuth());
+app.use('/api/ask', requireBearerAuth());
+app.use('/mcp', requireBearerAuth());
 
 // ─── MCP transport ───────────────────────────────────────────────────────────
 

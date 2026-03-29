@@ -41,6 +41,62 @@ vi.mock('../src/tools.ts', () => ({
 import { app } from '../src/server.ts';
 import { _resetClientsForTesting } from '../src/auth.ts';
 
+// ─── Test auth helper ────────────────────────────────────────────────────────
+
+const CODE_VERIFIER = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+const CODE_CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
+
+async function getTestToken(): Promise<string> {
+  const regRes = await app.request('http://localhost:3000/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      redirect_uris: ['http://localhost:8080/callback'],
+      token_endpoint_auth_method: 'none',
+    }),
+  });
+  const { client_id: clientId } = (await regRes.json()) as { client_id: string };
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: 'http://localhost:8080/callback',
+    response_type: 'code',
+    code_challenge: CODE_CHALLENGE,
+    code_challenge_method: 'S256',
+  });
+  const authRes = await app.request(`http://localhost:3000/authorize?${params}`, {
+    redirect: 'manual',
+  });
+  const code = new URL(authRes.headers.get('location')!).searchParams.get('code')!;
+
+  const tokenRes = await app.request('http://localhost:3000/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: clientId,
+      code_verifier: CODE_VERIFIER,
+      redirect_uri: 'http://localhost:8080/callback',
+    }).toString(),
+  });
+  const { access_token } = (await tokenRes.json()) as { access_token: string };
+  return access_token;
+}
+
+let testToken: string | null = null;
+
+/** Get or create a valid access token for tests. Reset if clients were cleared. */
+async function auth(): Promise<Record<string, string>> {
+  if (!testToken) testToken = await getTestToken();
+  return { Authorization: `Bearer ${testToken}` };
+}
+
+/** Reset auth state — call after _resetClientsForTesting(). */
+function resetTestToken(): void {
+  testToken = null;
+}
+
 describe('GET /api/health', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,7 +145,7 @@ describe('GET /api/search/rules', () => {
   });
 
   it('returns search results', async () => {
-    const res = await app.request('/api/search/rules?q=loot+action');
+    const res = await app.request('/api/search/rules?q=loot+action', { headers: await auth() });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.results).toHaveLength(1);
@@ -99,27 +155,27 @@ describe('GET /api/search/rules', () => {
   });
 
   it('passes query and topK to searchRules', async () => {
-    await app.request('/api/search/rules?q=loot&topK=3');
+    await app.request('/api/search/rules?q=loot&topK=3', { headers: await auth() });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 3);
   });
 
   it('defaults topK to 6', async () => {
-    await app.request('/api/search/rules?q=loot');
+    await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
   });
 
   it('returns 400 when q is missing', async () => {
-    const res = await app.request('/api/search/rules');
+    const res = await app.request('/api/search/rules', { headers: await auth() });
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when q is empty', async () => {
-    const res = await app.request('/api/search/rules?q=');
+    const res = await app.request('/api/search/rules?q=', { headers: await auth() });
     expect(res.status).toBe(400);
   });
 
   it('defaults topK when given invalid value', async () => {
-    await app.request('/api/search/rules?q=loot&topK=abc');
+    await app.request('/api/search/rules?q=loot&topK=abc', { headers: await auth() });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
   });
 });
@@ -135,7 +191,7 @@ describe('GET /api/search/cards', () => {
   });
 
   it('returns search results', async () => {
-    const res = await app.request('/api/search/cards?q=algox+archer');
+    const res = await app.request('/api/search/cards?q=algox+archer', { headers: await auth() });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.results).toHaveLength(1);
@@ -145,27 +201,27 @@ describe('GET /api/search/cards', () => {
   });
 
   it('passes query and topK to searchCards', async () => {
-    await app.request('/api/search/cards?q=algox&topK=4');
+    await app.request('/api/search/cards?q=algox&topK=4', { headers: await auth() });
     expect(mockSearchCards).toHaveBeenCalledWith('algox', 4);
   });
 
   it('defaults topK to 6', async () => {
-    await app.request('/api/search/cards?q=algox');
+    await app.request('/api/search/cards?q=algox', { headers: await auth() });
     expect(mockSearchCards).toHaveBeenCalledWith('algox', 6);
   });
 
   it('returns 400 when q is missing', async () => {
-    const res = await app.request('/api/search/cards');
+    const res = await app.request('/api/search/cards', { headers: await auth() });
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when q is empty', async () => {
-    const res = await app.request('/api/search/cards?q=');
+    const res = await app.request('/api/search/cards?q=', { headers: await auth() });
     expect(res.status).toBe(400);
   });
 
   it('defaults topK when given invalid value', async () => {
-    await app.request('/api/search/cards?q=algox&topK=abc');
+    await app.request('/api/search/cards?q=algox&topK=abc', { headers: await auth() });
     expect(mockSearchCards).toHaveBeenCalledWith('algox', 6);
   });
 });
@@ -182,7 +238,7 @@ describe('GET /api/card-types', () => {
   });
 
   it('returns all card types', async () => {
-    const res = await app.request('/api/card-types');
+    const res = await app.request('/api/card-types', { headers: await auth() });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.types).toHaveLength(2);
@@ -200,7 +256,7 @@ describe('GET /api/cards', () => {
   });
 
   it('returns cards of a given type', async () => {
-    const res = await app.request('/api/cards?type=monster-stats');
+    const res = await app.request('/api/cards?type=monster-stats', { headers: await auth() });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.cards).toHaveLength(1);
@@ -208,18 +264,20 @@ describe('GET /api/cards', () => {
   });
 
   it('returns 400 when type is missing', async () => {
-    const res = await app.request('/api/cards');
+    const res = await app.request('/api/cards', { headers: await auth() });
     expect(res.status).toBe(400);
   });
 
   it('passes filter as parsed JSON', async () => {
     const filter = encodeURIComponent(JSON.stringify({ name: 'Algox Archer' }));
-    await app.request(`/api/cards?type=monster-stats&filter=${filter}`);
+    await app.request(`/api/cards?type=monster-stats&filter=${filter}`, { headers: await auth() });
     expect(mockListCards).toHaveBeenCalledWith('monster-stats', { name: 'Algox Archer' });
   });
 
   it('returns 400 for invalid filter JSON', async () => {
-    const res = await app.request('/api/cards?type=monster-stats&filter=not-json');
+    const res = await app.request('/api/cards?type=monster-stats&filter=not-json', {
+      headers: await auth(),
+    });
     expect(res.status).toBe(400);
   });
 });
@@ -233,7 +291,9 @@ describe('GET /api/cards/:type/:id', () => {
   });
 
   it('returns a card by type and id', async () => {
-    const res = await app.request('/api/cards/monster-stats/Algox%20Archer');
+    const res = await app.request('/api/cards/monster-stats/Algox%20Archer', {
+      headers: await auth(),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.card).toHaveProperty('name', 'Algox Archer');
@@ -242,7 +302,9 @@ describe('GET /api/cards/:type/:id', () => {
 
   it('returns 404 when card is not found', async () => {
     mockGetCard.mockReturnValue(null);
-    const res = await app.request('/api/cards/monster-stats/Nonexistent');
+    const res = await app.request('/api/cards/monster-stats/Nonexistent', {
+      headers: await auth(),
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -258,7 +320,7 @@ describe('POST /api/ask', () => {
   it('returns an answer for a valid question', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is the loot action?' }),
     });
     expect(res.status).toBe(200);
@@ -269,7 +331,7 @@ describe('POST /api/ask', () => {
   it('calls service.ask with the question', async () => {
     await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is the loot action?' }),
     });
     expect(mockAsk).toHaveBeenCalledWith('What is the loot action?');
@@ -278,7 +340,7 @@ describe('POST /api/ask', () => {
   it('returns 400 when question is missing', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(400);
@@ -287,7 +349,7 @@ describe('POST /api/ask', () => {
   it('returns 400 when question is empty', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: '' }),
     });
     expect(res.status).toBe(400);
@@ -296,7 +358,7 @@ describe('POST /api/ask', () => {
   it('returns 400 for invalid JSON body', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: 'not json',
     });
     expect(res.status).toBe(400);
@@ -306,7 +368,7 @@ describe('POST /api/ask', () => {
     mockAsk.mockRejectedValue(new Error('Claude API error'));
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'test' }),
     });
     expect(res.status).toBe(500);
@@ -329,7 +391,7 @@ describe('error handling', () => {
 
   it('returns structured error for unhandled exceptions', async () => {
     mockSearchRules.mockRejectedValue(new Error('Unexpected failure'));
-    const res = await app.request('/api/search/rules?q=test');
+    const res = await app.request('/api/search/rules?q=test', { headers: await auth() });
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body).toHaveProperty('error');
@@ -338,7 +400,7 @@ describe('error handling', () => {
 
   it('all error responses have consistent shape', async () => {
     // 400 case
-    const res400 = await app.request('/api/search/rules');
+    const res400 = await app.request('/api/search/rules', { headers: await auth() });
     expect(res400.status).toBe(400);
     const body400 = await res400.json();
     expect(body400).toHaveProperty('error');
@@ -392,12 +454,13 @@ describe('GET /.well-known/oauth-protected-resource', () => {
 describe('POST /register', () => {
   beforeEach(() => {
     _resetClientsForTesting();
+    resetTestToken();
   });
 
   it('registers a client and returns client_id', async () => {
     const res = await app.request('http://localhost:3000/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({
         redirect_uris: ['http://localhost:8080/callback'],
         client_name: 'Test Client',
@@ -419,7 +482,7 @@ describe('POST /register', () => {
   it('returns 400 for missing redirect_uris', async () => {
     const res = await app.request('http://localhost:3000/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ client_name: 'Bad Client' }),
     });
     expect(res.status).toBe(400);
@@ -428,7 +491,7 @@ describe('POST /register', () => {
   it('returns 400 for invalid JSON', async () => {
     const res = await app.request('http://localhost:3000/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: 'not json',
     });
     expect(res.status).toBe(400);
@@ -459,12 +522,13 @@ describe('POST /register', () => {
 describe('GET /authorize', () => {
   beforeEach(() => {
     _resetClientsForTesting();
+    resetTestToken();
   });
 
   async function registerTestClient(): Promise<string> {
     const res = await app.request('http://localhost:3000/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({
         redirect_uris: ['http://localhost:8080/callback'],
         client_name: 'Test Client',
@@ -538,6 +602,7 @@ describe('GET /authorize', () => {
 describe('POST /token', () => {
   beforeEach(() => {
     _resetClientsForTesting();
+    resetTestToken();
   });
 
   // PKCE: code_verifier → SHA256 → base64url = code_challenge
@@ -548,7 +613,7 @@ describe('POST /token', () => {
   async function getAuthCode(): Promise<{ clientId: string; code: string }> {
     const regRes = await app.request('http://localhost:3000/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({
         redirect_uris: ['http://localhost:8080/callback'],
         client_name: 'Test',
@@ -640,5 +705,96 @@ describe('POST /token', () => {
       body: new URLSearchParams({ grant_type: 'password' }).toString(),
     });
     expect(res.status).toBe(400);
+  });
+});
+
+// ─── Bearer auth middleware ──────────────────────────────────────────────────
+
+describe('bearer auth middleware', () => {
+  beforeEach(() => {
+    _resetClientsForTesting();
+    resetTestToken();
+  });
+
+  const CODE_VERIFIER = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+  const CODE_CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
+
+  async function getAccessToken(): Promise<string> {
+    const regRes = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({
+        redirect_uris: ['http://localhost:8080/callback'],
+        token_endpoint_auth_method: 'none',
+      }),
+    });
+    const { client_id: clientId } = (await regRes.json()) as { client_id: string };
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: 'http://localhost:8080/callback',
+      response_type: 'code',
+      code_challenge: CODE_CHALLENGE,
+      code_challenge_method: 'S256',
+    });
+    const authRes = await app.request(`http://localhost:3000/authorize?${params}`, {
+      redirect: 'manual',
+    });
+    const code = new URL(authRes.headers.get('location')!).searchParams.get('code')!;
+
+    const tokenRes = await app.request('http://localhost:3000/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: clientId,
+        code_verifier: CODE_VERIFIER,
+        redirect_uri: 'http://localhost:8080/callback',
+      }).toString(),
+    });
+    const { access_token } = (await tokenRes.json()) as { access_token: string };
+    return access_token;
+  }
+
+  it('rejects unauthenticated requests to /api/search/rules', async () => {
+    const res = await app.request('http://localhost:3000/api/search/rules?q=loot');
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toContain('Bearer');
+  });
+
+  it('allows authenticated requests to /api/search/rules', async () => {
+    mockSearchRules.mockResolvedValue([]);
+    const token = await getAccessToken();
+    const res = await app.request('http://localhost:3000/api/search/rules?q=loot', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects invalid tokens', async () => {
+    const res = await app.request('http://localhost:3000/api/search/rules?q=loot', {
+      headers: { Authorization: 'Bearer invalid-token' },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('allows unauthenticated access to /api/health', async () => {
+    const res = await app.request('http://localhost:3000/api/health');
+    expect(res.status).toBe(200);
+  });
+
+  it('allows unauthenticated access to OAuth endpoints', async () => {
+    const res = await app.request('http://localhost:3000/.well-known/oauth-authorization-server');
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects unauthenticated requests to /mcp', async () => {
+    const res = await app.request('http://localhost:3000/mcp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'initialize', id: 1 }),
+    });
+    expect(res.status).toBe(401);
   });
 });
