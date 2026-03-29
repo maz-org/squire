@@ -24,7 +24,7 @@ app.get('/api/health', (c) => {
 export async function startServer(): Promise<void> {
   await initialize();
 
-  const port = parseInt(process.env.PORT ?? '3000', 10);
+  const port = parseInt(process.env.PORT || '3000', 10);
   const { serve } = await import('@hono/node-server');
   serve({ fetch: app.fetch, port });
   console.log(`Squire server listening on port ${port}`);
