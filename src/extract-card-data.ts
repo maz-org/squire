@@ -42,7 +42,7 @@ const CARD_TYPES: Record<CardType, CardTypeConfig> = {
     filter: (f) => f.endsWith('.png'),
     subdirs: false,
     context:
-      'This is a Frosthaven monster stat card showing HP, Move, Attack, and Range values for Normal and Elite difficulties across multiple levels.',
+      'This is a Frosthaven monster stat card showing HP, Move, and Attack values for Normal and Elite difficulties across multiple levels.',
   },
   'monster-abilities': {
     imageDir: join(IMAGES_BASE, 'monster-ability-cards', 'frosthaven'),
@@ -92,6 +92,26 @@ for (const [type, config] of Object.entries(CARD_TYPES)) {
   delete (jsonSchema as Record<string, unknown>).$schema;
   PROMPTS[type] =
     `${config.context}\n\nExtract all data and return ONLY valid JSON matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`;
+}
+
+// ─── Filename-based number extraction ────────────────────────────────────────
+// OCR frequently misreads card numbers. Filenames encode the correct number,
+// so we parse it from the filename and override the OCR value.
+
+const FILENAME_NUMBER_PATTERNS: Partial<Record<CardType, RegExp>> = {
+  // fh-sre-01-f.png, fh-woe-35-b.png, fh-be-01-f.png
+  events: /^fh-(?:sre|wre|soe|woe|be)-(\d+)-[fb]\.png$/,
+  // fh-001-spyglass.png, fh-142-boots-of-quickness.png
+  items: /^fh-(\d+)-/,
+  // fh-39-jeweler-level-2.png, fh-05-mining-camp-level-1.png
+  buildings: /^fh-(\d+)-/,
+};
+
+export function extractNumberFromFilename(filename: string, cardType: CardType): string | null {
+  const pattern = FILENAME_NUMBER_PATTERNS[cardType];
+  if (!pattern) return null;
+  const match = filename.match(pattern);
+  return match ? match[1] : null;
 }
 
 // ─── Image collection ─────────────────────────────────────────────────────────
@@ -225,6 +245,18 @@ export async function extractCardType(cardType: CardType): Promise<ExtractedResu
       const extracted = await extractImage(imagePath, cardType);
       extracted._file = basename(imagePath);
       extracted._path = imagePath;
+
+      // Override OCR number with filename-derived number (more reliable)
+      const fileNumber = extractNumberFromFilename(basename(imagePath), cardType);
+      if (fileNumber !== null) {
+        if (cardType === 'events' || cardType === 'items') {
+          extracted.number = fileNumber;
+        }
+        if (cardType === 'buildings') {
+          extracted.buildingNumber = fileNumber;
+        }
+      }
+
       if (extracted._validationErrors?.length) {
         process.stdout.write(` [validation: ${extracted._validationErrors.length} issues]`);
       }

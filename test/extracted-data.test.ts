@@ -4,8 +4,8 @@ const FAKE_MONSTER_STATS = JSON.stringify([
   {
     name: 'Algox Archer',
     levelRange: '0-3',
-    normal: { 0: { hp: 5, move: 2, attack: 3, range: 4 } },
-    elite: { 0: { hp: 8, move: 3, attack: 4, range: 5 } },
+    normal: { 0: { hp: 5, move: 2, attack: 3 } },
+    elite: { 0: { hp: 8, move: 3, attack: 4 } },
     immunities: [],
     notes: null,
   },
@@ -85,8 +85,8 @@ describe('formatExtracted', () => {
       _type: 'monster-stats' as const,
       name: 'Ooze',
       levelRange: '0-3',
-      normal: { 0: { hp: 5, move: 1, attack: 2, range: null } },
-      elite: { 0: { hp: 8, move: 2, attack: 3, range: null } },
+      normal: { 0: { hp: 5, move: 1, attack: 2 } },
+      elite: { 0: { hp: 8, move: 2, attack: 3 } },
       immunities: ['poison'],
       notes: null,
     };
