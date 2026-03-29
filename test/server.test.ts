@@ -532,3 +532,113 @@ describe('GET /authorize', () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ─── POST /token ─────────────────────────────────────────────────────────────
+
+describe('POST /token', () => {
+  beforeEach(() => {
+    _resetClientsForTesting();
+  });
+
+  // PKCE: code_verifier → SHA256 → base64url = code_challenge
+  // Known pair from RFC 7636 Appendix B
+  const CODE_VERIFIER = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+  const CODE_CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
+
+  async function getAuthCode(): Promise<{ clientId: string; code: string }> {
+    const regRes = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        redirect_uris: ['http://localhost:8080/callback'],
+        client_name: 'Test',
+        token_endpoint_auth_method: 'none',
+      }),
+    });
+    const { client_id: clientId } = (await regRes.json()) as { client_id: string };
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: 'http://localhost:8080/callback',
+      response_type: 'code',
+      code_challenge: CODE_CHALLENGE,
+      code_challenge_method: 'S256',
+    });
+    const authRes = await app.request(`http://localhost:3000/authorize?${params}`, {
+      redirect: 'manual',
+    });
+    const location = authRes.headers.get('location')!;
+    const code = new URL(location).searchParams.get('code')!;
+    return { clientId, code };
+  }
+
+  it('exchanges auth code for access token', async () => {
+    const { clientId, code } = await getAuthCode();
+    const res = await app.request('http://localhost:3000/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: clientId,
+        code_verifier: CODE_VERIFIER,
+        redirect_uri: 'http://localhost:8080/callback',
+      }).toString(),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('access_token');
+    expect(body).toHaveProperty('token_type', 'bearer');
+    expect(body).toHaveProperty('expires_in');
+  });
+
+  it('rejects invalid code_verifier', async () => {
+    const { clientId, code } = await getAuthCode();
+    const res = await app.request('http://localhost:3000/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: clientId,
+        code_verifier: 'wrong-verifier',
+        redirect_uri: 'http://localhost:8080/callback',
+      }).toString(),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects reused auth code', async () => {
+    const { clientId, code } = await getAuthCode();
+    const tokenBody = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: clientId,
+      code_verifier: CODE_VERIFIER,
+      redirect_uri: 'http://localhost:8080/callback',
+    }).toString();
+
+    const res1 = await app.request('http://localhost:3000/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: tokenBody,
+    });
+    expect(res1.status).toBe(200);
+
+    const res2 = await app.request('http://localhost:3000/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: tokenBody,
+    });
+    expect(res2.status).toBe(400);
+  });
+
+  it('rejects unknown grant_type', async () => {
+    const res = await app.request('http://localhost:3000/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'password' }).toString(),
+    });
+    expect(res.status).toBe(400);
+  });
+});
