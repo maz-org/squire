@@ -10,7 +10,7 @@ import { searchRules, searchCards, listCardTypes, listCards, getCard } from './t
 import type { CardType } from './schemas.ts';
 import { createMcpServer } from './mcp.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { registerClient } from './auth.ts';
+import { registerClient, createAuthorizationCode } from './auth.ts';
 
 export const app = new Hono();
 
@@ -67,6 +67,35 @@ app.post('/register', async (c) => {
     return c.json(client, 201);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Registration failed';
+    return c.json(jsonError(message, 400), 400);
+  }
+});
+
+// ─── Authorization endpoint ──────────────────────────────────────────────────
+
+app.get('/authorize', (c) => {
+  const clientId = c.req.query('client_id');
+  const redirectUri = c.req.query('redirect_uri');
+  const responseType = c.req.query('response_type');
+  const codeChallenge = c.req.query('code_challenge');
+  const codeChallengeMethod = c.req.query('code_challenge_method');
+  const state = c.req.query('state');
+
+  if (!clientId || !redirectUri || responseType !== 'code') {
+    return c.json(jsonError('Missing or invalid required parameters', 400), 400);
+  }
+  if (!codeChallenge || codeChallengeMethod !== 'S256') {
+    return c.json(jsonError('PKCE code_challenge with S256 method is required', 400), 400);
+  }
+
+  try {
+    const authCode = createAuthorizationCode(clientId, redirectUri, codeChallenge, state);
+    const redirect = new URL(redirectUri);
+    redirect.searchParams.set('code', authCode.code);
+    if (state) redirect.searchParams.set('state', state);
+    return c.redirect(redirect.toString(), 302);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Authorization failed';
     return c.json(jsonError(message, 400), 400);
   }
 });
