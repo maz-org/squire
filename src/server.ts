@@ -8,8 +8,21 @@ import { isReady, initialize, ask } from './service.ts';
 import { loadIndex } from './vector-store.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
+import { createMcpServer } from './mcp.ts';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 
 export const app = new Hono();
+
+// ─── MCP transport ───────────────────────────────────────────────────────────
+
+app.all('/mcp', async (c) => {
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined, // Stateless mode — auth added later
+  });
+  const server = createMcpServer();
+  await server.connect(transport);
+  return transport.handleRequest(c.req.raw);
+});
 
 // ─── Error handling ──────────────────────────────────────────────────────────
 
@@ -22,7 +35,7 @@ app.notFound((c) => {
 });
 
 app.onError((err, c) => {
-  console.error('Unhandled error:', err);
+  console.error('Unhandled error:', err instanceof Error ? err.message : err);
   return c.json(jsonError('Internal server error', 500), 500);
 });
 
