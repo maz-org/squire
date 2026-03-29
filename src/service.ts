@@ -17,12 +17,31 @@ Be concise but complete. If the provided data doesn't contain enough information
 Do not invent rules, stats, or item numbers.`;
 
 let ready = false;
+let initPromise: Promise<void> | null = null;
+
+/** @internal Reset service state for testing. */
+export function _resetForTesting(): void {
+  ready = false;
+  initPromise = null;
+}
 
 /**
  * Initialize the service: load the vector index, warm the embedder, and
  * verify extracted data is available. Throws if the index is empty.
+ * Safe to call concurrently — only the first call does work.
  */
 export async function initialize(): Promise<void> {
+  if (ready) return;
+  if (initPromise) return initPromise;
+
+  initPromise = doInitialize().catch((err) => {
+    initPromise = null;
+    throw err;
+  });
+  return initPromise;
+}
+
+async function doInitialize(): Promise<void> {
   const index = loadIndex();
   if (index.length === 0) {
     throw new Error('Vector index is empty. Run `npm run index` first.');
