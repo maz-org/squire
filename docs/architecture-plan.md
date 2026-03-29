@@ -41,9 +41,29 @@ shortcut for the common case.
 
 ### Accumulated context
 
-Squire maintains state about the user's campaign (characters, completed
-scenarios, prosperity level). Agents read this at session start for contextual
-answers.
+Squire maintains state about campaigns and players. Three entities:
+
+- **User** — a person with an account. Exists independently of any campaign.
+  Can ask general rules questions without an active campaign.
+- **Campaign** — a game campaign with shared state: prosperity, completed
+  scenarios, unlocked items, party composition, active scenario.
+- **Player** — joins a user to a campaign. Holds per-player state: character
+  class, level, items, personal quest, gold, ability cards, perks.
+
+Campaigns are multiplayer. When a player asks "what items should I bring?",
+Squire needs the campaign (what's unlocked), the player (which character),
+and the user (who's asking). A user without an active campaign can still ask
+general rules questions — campaign context is optional.
+
+Both the conversation agent and knowledge agent need access to
+user/campaign/player state — the conversation agent to present a campaign
+picker and identify the user, the knowledge agent to personalize answers.
+Since both live in the same Hono server process, they share a data store
+(file-based or SQLite). If they ever separate, this becomes a shared
+database or API.
+
+Anonymous access (no user identity) may be supported in the future for
+read-only rules queries.
 
 ## Architecture
 
@@ -99,13 +119,13 @@ graph TB
 
 ### Client types and interfaces
 
-| Client | Interface | Auth | Notes |
-| ------------------- | ----------- | ------------ | ------------------------------------- |
-| Web UI | `/api/ask` | Session cookie | Conversation agent → knowledge agent |
-| Claude Desktop | `/mcp` | OAuth 2.1 | Direct tool access via MCP |
-| Claude Code | `/mcp` | OAuth 2.1 | Direct tool access via MCP |
-| CLI | `/api/*` | OAuth 2.1 | REST endpoints |
-| Services | `/api/*` | Client credentials | Machine-to-machine |
+| Client | Interface | Auth | Identity |
+| ------------------- | ----------- | ------------ | --------------------------------- |
+| Web UI | `/api/ask` | Session cookie | userId + campaignId from session |
+| Claude Desktop | `/mcp` | OAuth 2.1 | userId from token, campaign TBD |
+| Claude Code | `/mcp` | OAuth 2.1 | userId from token, campaign TBD |
+| CLI | `/api/*` | OAuth 2.1 | userId from token, campaign TBD |
+| Services | `/api/*` | Client credentials | Service identity from token |
 
 **Web UI conversation agent:**
 
@@ -160,14 +180,20 @@ graph TB
 
 ```json
 {
-  "question": "What items work well with the Blinkblade?",
+  "question": "What items should I bring to tonight's scenario?",
   "history": [
-    { "role": "user", "content": "What class should I play?" },
-    { "role": "assistant", "content": "Consider the Blinkblade..." }
+    { "role": "user", "content": "We're playing scenario 14 tonight" },
+    { "role": "assistant", "content": "Scenario 14 is..." }
   ],
-  "campaignId": "our-campaign"
+  "campaignId": "frosthaven-2024",
+  "userId": "bcm"
 }
 ```
+
+`campaignId` and `userId` are optional. Without them, the knowledge agent
+answers general rules questions using only the rulebook and card data.
+With them, it personalizes answers — "what items should I bring?" depends
+on which character *you* are playing in *this campaign*.
 
 The knowledge agent:
 
@@ -175,9 +201,10 @@ The knowledge agent:
    "Blinkblade" using conversation history
 2. **Decides retrieval strategy** — which atomic tools to call, in what order,
    how many results to fetch
-3. **Loads campaign context** — what characters, items, and scenarios are
-   available in this campaign
-4. **Generates a grounded answer** — using retrieved context + campaign state
+3. **Loads context** (if campaign/user provided) — shared campaign state plus
+   the player's character, items, and personal quest
+4. **Generates a grounded answer** — from source material, personalized to
+   this player's situation when campaign context is available
 
 Today this is a fixed pipeline (search rules + search cards + one LLM call).
 Over time it evolves into an agent loop that uses the atomic tools with
@@ -297,7 +324,8 @@ Work is tracked in the [Squire Service Architecture][project] GitHub project.
 - **Web UI architecture:** Conversation agent calls `/api/ask` — thin session
   manager, domain reasoning stays in the knowledge agent
 - **Web UI styling:** Tailwind CSS — Frosthaven dark/icy theme
-- **Campaign state:** File-based context — agents read/update; persists across
-  sessions
+- **Campaign state:** File-based; three entities (user, campaign, player);
+  campaign context optional for general queries; anonymous access possible
+  in future
 - **Deployment:** Clone, configure, run — no Docker/packaging yet
 - **Discord:** Separate project — Squire stays focused as a knowledge platform
