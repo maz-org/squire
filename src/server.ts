@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { isReady, initialize } from './service.ts';
+import { isReady, initialize, ask } from './service.ts';
 import { loadIndex } from './vector-store.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -83,6 +83,23 @@ app.get('/api/cards', (c) => {
 
   const cards = listCards(type as CardType, filter);
   return c.json({ cards });
+});
+
+// ─── Ask endpoint ────────────────────────────────────────────────────────────
+
+app.post('/api/ask', async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const { question } = body as { question?: string };
+  if (!question) return c.json({ error: 'Missing required field: question' }, 400);
+
+  const answer = await ask(question);
+  return c.json({ answer });
 });
 
 // ─── Server startup ──────────────────────────────────────────────────────────

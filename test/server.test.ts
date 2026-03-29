@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const {
   mockInitialize,
   mockIsReady,
+  mockAsk,
   mockSearchRules,
   mockSearchCards,
   mockListCardTypes,
@@ -11,6 +12,7 @@ const {
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockIsReady: vi.fn(),
+  mockAsk: vi.fn(),
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
   mockListCardTypes: vi.fn(),
@@ -21,6 +23,7 @@ const {
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
   isReady: mockIsReady,
+  ask: mockAsk,
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
@@ -240,6 +243,62 @@ describe('GET /api/cards/:type/:id', () => {
     mockGetCard.mockReturnValue(null);
     const res = await app.request('/api/cards/monster-stats/Nonexistent');
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── POST /api/ask ───────────────────────────────────────────────────────────
+
+describe('POST /api/ask', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAsk.mockResolvedValue('Loot tokens are picked up in your hex.');
+  });
+
+  it('returns an answer for a valid question', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: 'What is the loot action?' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('answer', 'Loot tokens are picked up in your hex.');
+  });
+
+  it('calls service.ask with the question', async () => {
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: 'What is the loot action?' }),
+    });
+    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?');
+  });
+
+  it('returns 400 when question is missing', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when question is empty', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: '' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for invalid JSON body', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'not json',
+    });
+    expect(res.status).toBe(400);
   });
 });
 
