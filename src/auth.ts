@@ -106,7 +106,7 @@ export function consumeAuthorizationCode(code: string): AuthorizationCode | unde
 
 // ─── Token issuance ──────────────────────────────────────────────────────────
 
-const ACCESS_TOKEN_EXPIRY = 3600; // 1 hour in seconds
+const ACCESS_TOKEN_EXPIRY = 30 * 24 * 3600; // 30 days in seconds
 
 interface AccessToken {
   token: string;

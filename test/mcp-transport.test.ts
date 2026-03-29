@@ -28,15 +28,43 @@ vi.mock('../src/vector-store.ts', () => ({
 }));
 
 import { app } from '../src/server.ts';
+import { registerClient, createAuthorizationCode, exchangeAuthorizationCode } from '../src/auth.ts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { createHash } from 'node:crypto';
+
+// Get a valid access token for MCP transport tests
+function getToken(): string {
+  const verifier = 'test-verifier-for-mcp-transport-tests';
+  const challenge = createHash('sha256').update(verifier).digest('base64url');
+  const client = registerClient({
+    redirect_uris: ['http://localhost/callback'],
+    token_endpoint_auth_method: 'none',
+  });
+  const authCode = createAuthorizationCode(
+    client.client_id,
+    'http://localhost/callback',
+    challenge,
+  );
+  const { access_token } = exchangeAuthorizationCode(
+    authCode.code,
+    client.client_id,
+    verifier,
+    'http://localhost/callback',
+  );
+  return access_token;
+}
 
 // Helper to create an MCP client connected via HTTP to the Hono app
 async function createHttpClient(): Promise<Client> {
+  const token = getToken();
   const client = new Client({ name: 'test-client', version: '1.0' });
   const transport = new StreamableHTTPClientTransport(new URL('http://localhost/mcp'), {
-    // Override fetch to route to Hono's test handler
-    fetch: async (url, init) => app.request(url as string, init as RequestInit),
+    fetch: async (url, init) => {
+      const headers = new Headers((init as RequestInit)?.headers);
+      headers.set('Authorization', `Bearer ${token}`);
+      return app.request(url as string, { ...init, headers } as RequestInit);
+    },
   });
   await client.connect(transport);
   return client;
