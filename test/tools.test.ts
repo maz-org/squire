@@ -73,8 +73,8 @@ vi.mock('../src/embedder.ts', () => ({
   embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
 }));
 
-import { searchRules, searchCards } from '../src/tools.ts';
-import type { RuleResult, CardResult } from '../src/tools.ts';
+import { searchRules, searchCards, listCardTypes, listCards } from '../src/tools.ts';
+import type { RuleResult, CardResult, CardTypeInfo } from '../src/tools.ts';
 
 // ─── searchRules ─────────────────────────────────────────────────────────────
 
@@ -184,6 +184,96 @@ describe('searchCards', () => {
     const results = searchCards('algox archer');
     for (const r of results) {
       expect(r.score).toBeGreaterThan(0);
+    }
+  });
+});
+
+// ─── listCardTypes ───────────────────────────────────────────────────────────
+
+describe('listCardTypes', () => {
+  it('returns all available card types with counts', () => {
+    const types: CardTypeInfo[] = listCardTypes();
+    expect(types.length).toBeGreaterThan(0);
+    // Our mocks have monster-stats and items with data
+    const monsterStats = types.find((t) => t.type === 'monster-stats');
+    expect(monsterStats).toBeDefined();
+    expect(monsterStats!.count).toBe(1);
+  });
+
+  it('each entry has type and count fields', () => {
+    const types = listCardTypes();
+    for (const t of types) {
+      expect(t).toHaveProperty('type');
+      expect(t).toHaveProperty('count');
+      expect(typeof t.type).toBe('string');
+      expect(typeof t.count).toBe('number');
+    }
+  });
+
+  it('includes types with zero records', () => {
+    const types = listCardTypes();
+    // events has no mock data, so count should be 0
+    const events = types.find((t) => t.type === 'events');
+    expect(events).toBeDefined();
+    expect(events!.count).toBe(0);
+  });
+
+  it('returns all 7 card types', () => {
+    const types = listCardTypes();
+    expect(types.length).toBe(7);
+    const typeNames = types.map((t) => t.type);
+    expect(typeNames).toContain('monster-stats');
+    expect(typeNames).toContain('monster-abilities');
+    expect(typeNames).toContain('character-abilities');
+    expect(typeNames).toContain('items');
+    expect(typeNames).toContain('events');
+    expect(typeNames).toContain('battle-goals');
+    expect(typeNames).toContain('buildings');
+  });
+});
+
+// ─── listCards ────────────────────────────────────────────────────────────────
+
+describe('listCards', () => {
+  it('returns all cards of a given type', () => {
+    const cards = listCards('monster-stats');
+    expect(cards.length).toBe(1);
+    expect(cards[0]).toHaveProperty('name', 'Algox Archer');
+  });
+
+  it('returns empty array for type with no data', () => {
+    const cards = listCards('events');
+    expect(cards).toEqual([]);
+  });
+
+  it('filters cards by a field value', () => {
+    const cards = listCards('monster-stats', { name: 'Algox Archer' });
+    expect(cards.length).toBe(1);
+    expect(cards[0]).toHaveProperty('name', 'Algox Archer');
+  });
+
+  it('returns empty when filter matches nothing', () => {
+    const cards = listCards('monster-stats', { name: 'Nonexistent Monster' });
+    expect(cards).toEqual([]);
+  });
+
+  it('filters items by slot', () => {
+    const cards = listCards('items', { slot: 'legs' });
+    expect(cards.length).toBe(1);
+    expect(cards[0]).toHaveProperty('name', 'Boots of Speed');
+  });
+
+  it('filters with multiple fields (AND logic)', () => {
+    const cards = listCards('items', { slot: 'legs', name: 'Boots of Speed' });
+    expect(cards.length).toBe(1);
+  });
+
+  it('does not include internal _type or _error fields in results', () => {
+    const cards = listCards('monster-stats');
+    for (const card of cards) {
+      expect(card).not.toHaveProperty('_type');
+      expect(card).not.toHaveProperty('_error');
+      expect(card).not.toHaveProperty('_parseError');
     }
   });
 });
