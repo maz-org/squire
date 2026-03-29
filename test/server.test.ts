@@ -300,6 +300,18 @@ describe('POST /api/ask', () => {
     });
     expect(res.status).toBe(400);
   });
+
+  it('returns 500 when ask() throws', async () => {
+    mockAsk.mockRejectedValue(new Error('Claude API error'));
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: 'test' }),
+    });
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toHaveProperty('error', 'Claude API error');
+  });
 });
 
 // ─── unknown routes ──────────────────────────────────────────────────────────

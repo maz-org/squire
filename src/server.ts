@@ -98,8 +98,13 @@ app.post('/api/ask', async (c) => {
   const { question } = body as { question?: string };
   if (!question) return c.json({ error: 'Missing required field: question' }, 400);
 
-  const answer = await ask(question);
-  return c.json({ answer });
+  try {
+    const answer = await ask(question);
+    return c.json({ answer });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return c.json({ error: message }, 500);
+  }
 });
 
 // ─── Server startup ──────────────────────────────────────────────────────────
