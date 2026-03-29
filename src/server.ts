@@ -71,7 +71,11 @@ app.get('/api/cards', (c) => {
   let filter: Record<string, unknown> | undefined;
   if (filterRaw) {
     try {
-      filter = JSON.parse(filterRaw);
+      const parsed = JSON.parse(filterRaw);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        return c.json({ error: 'Filter must be a JSON object' }, 400);
+      }
+      filter = parsed as Record<string, unknown>;
     } catch {
       return c.json({ error: 'Invalid filter JSON' }, 400);
     }
