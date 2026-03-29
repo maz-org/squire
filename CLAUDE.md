@@ -135,6 +135,7 @@ CodeRabbit configuration is in `.coderabbit.yaml`. Path-specific review instruct
    - Commit frequently
    - Always use pull requests — never push directly to main
    - Keep PRs small and focused — one logical change per PR
+   - **Never force push** (`--force`, `--force-with-lease`). If a pushed commit needs to be undone, make a new commit that reverts or corrects it.
 
 **Conventional Commits Format:**
 

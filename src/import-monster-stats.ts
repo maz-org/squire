@@ -63,14 +63,16 @@ interface ExtractedMonster {
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
 
-function kebabToTitle(name: string): string {
+export function kebabToTitle(name: string): string {
   return name
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 }
 
-function formatActions(actions?: Array<{ type: string; value: string | number }>): string | null {
+export function formatActions(
+  actions?: Array<{ type: string; value: string | number }>,
+): string | null {
   if (!actions?.length) return null;
   return actions
     .map((a) => {
@@ -83,7 +85,7 @@ function formatActions(actions?: Array<{ type: string; value: string | number }>
     .join(', ');
 }
 
-function convertMonster(ghs: GhsMonster): ExtractedMonster[] {
+export function convertMonster(ghs: GhsMonster): ExtractedMonster[] {
   const baseMove = ghs.baseStat?.movement ?? 0;
   const baseImmunities = ghs.baseStat?.immunities ?? [];
   const results: ExtractedMonster[] = [];
