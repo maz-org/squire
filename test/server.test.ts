@@ -385,3 +385,66 @@ describe('GET /.well-known/oauth-protected-resource', () => {
     expect(body).toHaveProperty('resource_name', 'Squire');
   });
 });
+
+// ─── POST /register ──────────────────────────────────────────────────────────
+
+describe('POST /register', () => {
+  it('registers a client and returns client_id', async () => {
+    const res = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        redirect_uris: ['http://localhost:8080/callback'],
+        client_name: 'Test Client',
+        grant_types: ['authorization_code'],
+        response_types: ['code'],
+        token_endpoint_auth_method: 'none',
+      }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body).toHaveProperty('client_id');
+    expect(typeof body.client_id).toBe('string');
+    expect(body.client_id.length).toBeGreaterThan(0);
+    expect(body).toHaveProperty('client_name', 'Test Client');
+    expect(body).toHaveProperty('redirect_uris');
+    expect(body).toHaveProperty('client_id_issued_at');
+  });
+
+  it('returns 400 for missing redirect_uris', async () => {
+    const res = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_name: 'Bad Client' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for invalid JSON', async () => {
+    const res = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'not json',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('generates unique client_ids', async () => {
+    const register = () =>
+      app.request('http://localhost:3000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          redirect_uris: ['http://localhost:8080/callback'],
+          client_name: 'Client',
+          token_endpoint_auth_method: 'none',
+        }),
+      });
+
+    const res1 = await register();
+    const res2 = await register();
+    const body1 = await res1.json();
+    const body2 = await res2.json();
+    expect(body1.client_id).not.toBe(body2.client_id);
+  });
+});
