@@ -1,10 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockInitialize, mockIsReady, mockSearchRules, mockSearchCards } = vi.hoisted(() => ({
+const {
+  mockInitialize,
+  mockIsReady,
+  mockSearchRules,
+  mockSearchCards,
+  mockListCardTypes,
+  mockListCards,
+  mockGetCard,
+} = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockIsReady: vi.fn(),
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
+  mockListCardTypes: vi.fn(),
+  mockListCards: vi.fn(),
+  mockGetCard: vi.fn(),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -19,6 +30,9 @@ vi.mock('../src/vector-store.ts', () => ({
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: mockSearchCards,
+  listCardTypes: mockListCardTypes,
+  listCards: mockListCards,
+  getCard: mockGetCard,
 }));
 
 import { app } from '../src/server.ts';
@@ -149,6 +163,83 @@ describe('GET /api/search/cards', () => {
   it('defaults topK when given invalid value', async () => {
     await app.request('/api/search/cards?q=algox&topK=abc');
     expect(mockSearchCards).toHaveBeenCalledWith('algox', 6);
+  });
+});
+
+// ─── GET /api/card-types ─────────────────────────────────────────────────────
+
+describe('GET /api/card-types', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockListCardTypes.mockReturnValue([
+      { type: 'monster-stats', count: 10 },
+      { type: 'items', count: 5 },
+    ]);
+  });
+
+  it('returns all card types', async () => {
+    const res = await app.request('/api/card-types');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.types).toHaveLength(2);
+    expect(body.types[0]).toHaveProperty('type');
+    expect(body.types[0]).toHaveProperty('count');
+  });
+});
+
+// ─── GET /api/cards ──────────────────────────────────────────────────────────
+
+describe('GET /api/cards', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockListCards.mockReturnValue([{ name: 'Algox Archer' }]);
+  });
+
+  it('returns cards of a given type', async () => {
+    const res = await app.request('/api/cards?type=monster-stats');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.cards).toHaveLength(1);
+    expect(mockListCards).toHaveBeenCalledWith('monster-stats', undefined);
+  });
+
+  it('returns 400 when type is missing', async () => {
+    const res = await app.request('/api/cards');
+    expect(res.status).toBe(400);
+  });
+
+  it('passes filter as parsed JSON', async () => {
+    const filter = encodeURIComponent(JSON.stringify({ name: 'Algox Archer' }));
+    await app.request(`/api/cards?type=monster-stats&filter=${filter}`);
+    expect(mockListCards).toHaveBeenCalledWith('monster-stats', { name: 'Algox Archer' });
+  });
+
+  it('returns 400 for invalid filter JSON', async () => {
+    const res = await app.request('/api/cards?type=monster-stats&filter=not-json');
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── GET /api/cards/:type/:id ────────────────────────────────────────────────
+
+describe('GET /api/cards/:type/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetCard.mockReturnValue({ name: 'Algox Archer', levelRange: '0-3' });
+  });
+
+  it('returns a card by type and id', async () => {
+    const res = await app.request('/api/cards/monster-stats/Algox%20Archer');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.card).toHaveProperty('name', 'Algox Archer');
+    expect(mockGetCard).toHaveBeenCalledWith('monster-stats', 'Algox Archer');
+  });
+
+  it('returns 404 when card is not found', async () => {
+    mockGetCard.mockReturnValue(null);
+    const res = await app.request('/api/cards/monster-stats/Nonexistent');
+    expect(res.status).toBe(404);
   });
 });
 
