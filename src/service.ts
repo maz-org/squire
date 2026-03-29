@@ -18,6 +18,11 @@ Do not invent rules, stats, or item numbers.`;
 
 let ready = false;
 
+/** @internal Reset service state for testing. */
+export function _resetForTesting(): void {
+  ready = false;
+}
+
 /**
  * Initialize the service: load the vector index, warm the embedder, and
  * verify extracted data is available. Throws if the index is empty.

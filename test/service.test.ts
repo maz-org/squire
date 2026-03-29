@@ -39,23 +39,22 @@ vi.mock('../src/extracted-data.ts', () => ({
   load: vi.fn(() => [{ name: 'test' }]),
 }));
 
-import { initialize, isReady, ask } from '../src/service.ts';
+import { initialize, isReady, ask, _resetForTesting } from '../src/service.ts';
 
 // ─── initialize / isReady ────────────────────────────────────────────────────
 
 describe('initialize', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetForTesting();
     mockLoadIndex.mockReturnValue([
       { id: 'chunk-1', text: 'test', embedding: [0.1], source: 'test.pdf', chunkIndex: 0 },
     ]);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
   });
 
-  it('isReady returns false before initialize', async () => {
-    // Module-level `ready` starts false; we can't fully reset module state
-    // but we can verify the function exists and returns a boolean
-    expect(typeof isReady()).toBe('boolean');
+  it('isReady returns false before initialize', () => {
+    expect(isReady()).toBe(false);
   });
 
   it('initialize loads index and warms embedder', async () => {
@@ -98,6 +97,7 @@ describe('initialize', () => {
 describe('ask', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetForTesting();
     mockLoadIndex.mockReturnValue([
       { id: 'chunk-1', text: 'test', embedding: [0.1], source: 'test.pdf', chunkIndex: 0 },
     ]);
