@@ -453,3 +453,82 @@ describe('POST /register', () => {
     expect(body1.client_id).not.toBe(body2.client_id);
   });
 });
+
+// ─── GET /authorize ──────────────────────────────────────────────────────────
+
+describe('GET /authorize', () => {
+  beforeEach(() => {
+    _resetClientsForTesting();
+  });
+
+  async function registerTestClient(): Promise<string> {
+    const res = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        redirect_uris: ['http://localhost:8080/callback'],
+        client_name: 'Test Client',
+        token_endpoint_auth_method: 'none',
+      }),
+    });
+    const body = await res.json();
+    return body.client_id as string;
+  }
+
+  it('redirects with auth code for valid request', async () => {
+    const clientId = await registerTestClient();
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: 'http://localhost:8080/callback',
+      response_type: 'code',
+      code_challenge: 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
+      code_challenge_method: 'S256',
+      state: 'test-state',
+    });
+    const res = await app.request(`http://localhost:3000/authorize?${params}`, {
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(302);
+    const location = res.headers.get('location');
+    expect(location).toBeTruthy();
+    const redirectUrl = new URL(location!);
+    expect(redirectUrl.searchParams.get('code')).toBeTruthy();
+    expect(redirectUrl.searchParams.get('state')).toBe('test-state');
+  });
+
+  it('returns 400 for unknown client_id', async () => {
+    const params = new URLSearchParams({
+      client_id: 'nonexistent',
+      redirect_uri: 'http://localhost:8080/callback',
+      response_type: 'code',
+      code_challenge: 'test',
+      code_challenge_method: 'S256',
+    });
+    const res = await app.request(`http://localhost:3000/authorize?${params}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for mismatched redirect_uri', async () => {
+    const clientId = await registerTestClient();
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: 'http://evil.com/callback',
+      response_type: 'code',
+      code_challenge: 'test',
+      code_challenge_method: 'S256',
+    });
+    const res = await app.request(`http://localhost:3000/authorize?${params}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for missing code_challenge', async () => {
+    const clientId = await registerTestClient();
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: 'http://localhost:8080/callback',
+      response_type: 'code',
+    });
+    const res = await app.request(`http://localhost:3000/authorize?${params}`);
+    expect(res.status).toBe(400);
+  });
+});

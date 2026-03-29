@@ -52,7 +52,60 @@ export function registerClient(metadata: Record<string, unknown>): RegisteredCli
   return client;
 }
 
-/** @internal Reset client store for testing. */
+// ─── Authorization codes ─────────────────────────────────────────────────────
+
+interface AuthorizationCode {
+  code: string;
+  clientId: string;
+  redirectUri: string;
+  codeChallenge: string;
+  state?: string;
+  createdAt: number;
+}
+
+const authCodes = new Map<string, AuthorizationCode>();
+
+/**
+ * Create an authorization code for the given client and PKCE challenge.
+ * Auto-approves for now (no user session/consent required yet).
+ */
+export function createAuthorizationCode(
+  clientId: string,
+  redirectUri: string,
+  codeChallenge: string,
+  state?: string,
+): AuthorizationCode {
+  const client = getClient(clientId);
+  if (!client) throw new Error('Unknown client_id');
+  if (!client.redirect_uris.includes(redirectUri)) {
+    throw new Error('redirect_uri does not match registered URIs');
+  }
+
+  const code: AuthorizationCode = {
+    code: randomUUID(),
+    clientId,
+    redirectUri,
+    codeChallenge,
+    state,
+    createdAt: Date.now(),
+  };
+
+  authCodes.set(code.code, code);
+  return code;
+}
+
+export function getAuthorizationCode(code: string): AuthorizationCode | undefined {
+  return authCodes.get(code);
+}
+
+export function consumeAuthorizationCode(code: string): AuthorizationCode | undefined {
+  const authCode = authCodes.get(code);
+  if (authCode) authCodes.delete(code);
+  return authCode;
+}
+
+/** @internal Reset all stores for testing. */
 export function _resetClientsForTesting(): void {
   clients.clear();
+  authCodes.clear();
 }
