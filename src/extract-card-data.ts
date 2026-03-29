@@ -249,8 +249,12 @@ export async function extractCardType(cardType: CardType): Promise<ExtractedResu
       // Override OCR number with filename-derived number (more reliable)
       const fileNumber = extractNumberFromFilename(basename(imagePath), cardType);
       if (fileNumber !== null) {
-        if ('number' in extracted) extracted.number = fileNumber;
-        if ('buildingNumber' in extracted) extracted.buildingNumber = fileNumber;
+        if (cardType === 'events' || cardType === 'items') {
+          extracted.number = fileNumber;
+        }
+        if (cardType === 'buildings') {
+          extracted.buildingNumber = fileNumber;
+        }
       }
 
       if (extracted._validationErrors?.length) {
