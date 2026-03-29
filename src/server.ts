@@ -10,7 +10,7 @@ import { searchRules, searchCards, listCardTypes, listCards, getCard } from './t
 import type { CardType } from './schemas.ts';
 import { createMcpServer } from './mcp.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { registerClient, createAuthorizationCode } from './auth.ts';
+import { registerClient, createAuthorizationCode, exchangeAuthorizationCode } from './auth.ts';
 
 export const app = new Hono();
 
@@ -98,6 +98,46 @@ app.get('/authorize', (c) => {
     const message = err instanceof Error ? err.message : 'Authorization failed';
     return c.json(jsonError(message, 400), 400);
   }
+});
+
+// ─── Token endpoint ──────────────────────────────────────────────────────────
+
+app.post('/token', async (c) => {
+  const contentType = c.req.header('content-type') || '';
+  let params: URLSearchParams;
+
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    const body = await c.req.text();
+    params = new URLSearchParams(body);
+  } else if (contentType.includes('application/json')) {
+    const body = (await c.req.json()) as Record<string, string>;
+    params = new URLSearchParams(body);
+  } else {
+    return c.json(jsonError('Unsupported content type', 400), 400);
+  }
+
+  const grantType = params.get('grant_type');
+
+  if (grantType === 'authorization_code') {
+    const code = params.get('code');
+    const clientId = params.get('client_id');
+    const codeVerifier = params.get('code_verifier');
+    const redirectUri = params.get('redirect_uri');
+
+    if (!code || !clientId || !codeVerifier || !redirectUri) {
+      return c.json(jsonError('Missing required parameters', 400), 400);
+    }
+
+    try {
+      const tokenResponse = exchangeAuthorizationCode(code, clientId, codeVerifier, redirectUri);
+      return c.json(tokenResponse);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Token exchange failed';
+      return c.json(jsonError(message, 400), 400);
+    }
+  }
+
+  return c.json(jsonError(`Unsupported grant_type: ${grantType}`, 400), 400);
 });
 
 // ─── MCP transport ───────────────────────────────────────────────────────────
