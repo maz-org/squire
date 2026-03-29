@@ -17,7 +17,7 @@ export const app = new Hono();
 
 function getBaseUrl(): string {
   const env = process.env.SQUIRE_BASE_URL;
-  if (env && env.length > 0) return env;
+  if (env && env.length > 0) return env.replace(/\/+$/, '');
   return 'http://localhost:3000';
 }
 
