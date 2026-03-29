@@ -39,6 +39,7 @@ vi.mock('../src/tools.ts', () => ({
 }));
 
 import { app } from '../src/server.ts';
+import { _resetClientsForTesting } from '../src/auth.ts';
 
 describe('GET /api/health', () => {
   beforeEach(() => {
@@ -389,6 +390,10 @@ describe('GET /.well-known/oauth-protected-resource', () => {
 // ─── POST /register ──────────────────────────────────────────────────────────
 
 describe('POST /register', () => {
+  beforeEach(() => {
+    _resetClientsForTesting();
+  });
+
   it('registers a client and returns client_id', async () => {
     const res = await app.request('http://localhost:3000/register', {
       method: 'POST',

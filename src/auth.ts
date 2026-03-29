@@ -33,6 +33,9 @@ export function registerClient(metadata: Record<string, unknown>): RegisteredCli
   if (!Array.isArray(redirectUris) || redirectUris.length === 0) {
     throw new Error('redirect_uris is required and must be a non-empty array');
   }
+  if (!redirectUris.every((uri) => typeof uri === 'string' && uri.length > 0)) {
+    throw new Error('redirect_uris must contain only non-empty strings');
+  }
 
   const client: RegisteredClient = {
     client_id: randomUUID(),

@@ -58,6 +58,10 @@ app.post('/register', async (c) => {
     return c.json(jsonError('Invalid JSON body', 400), 400);
   }
 
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return c.json(jsonError('Request body must be a JSON object', 400), 400);
+  }
+
   try {
     const client = registerClient(body as Record<string, unknown>);
     return c.json(client, 201);
