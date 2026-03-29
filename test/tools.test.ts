@@ -73,7 +73,7 @@ vi.mock('../src/embedder.ts', () => ({
   embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
 }));
 
-import { searchRules, searchCards, listCardTypes, listCards } from '../src/tools.ts';
+import { searchRules, searchCards, listCardTypes, listCards, getCard } from '../src/tools.ts';
 import type { RuleResult, CardResult, CardTypeInfo } from '../src/tools.ts';
 
 // ─── searchRules ─────────────────────────────────────────────────────────────
@@ -275,5 +275,45 @@ describe('listCards', () => {
       expect(card).not.toHaveProperty('_error');
       expect(card).not.toHaveProperty('_parseError');
     }
+  });
+});
+
+// ─── getCard ─────────────────────────────────────────────────────────────────
+
+describe('getCard', () => {
+  it('looks up a monster by name', () => {
+    const card = getCard('monster-stats', 'Algox Archer');
+    expect(card).not.toBeNull();
+    expect(card!.name).toBe('Algox Archer');
+  });
+
+  it('looks up an item by number', () => {
+    const card = getCard('items', '001');
+    expect(card).not.toBeNull();
+    expect(card!.name).toBe('Boots of Speed');
+  });
+
+  it('returns null for non-existent card', () => {
+    const card = getCard('monster-stats', 'Nonexistent Monster');
+    expect(card).toBeNull();
+  });
+
+  it('returns null for empty type', () => {
+    const card = getCard('events', '999');
+    expect(card).toBeNull();
+  });
+
+  it('does not include internal fields in result', () => {
+    const card = getCard('monster-stats', 'Algox Archer');
+    expect(card).not.toBeNull();
+    expect(card).not.toHaveProperty('_type');
+    expect(card).not.toHaveProperty('_error');
+    expect(card).not.toHaveProperty('_parseError');
+  });
+
+  it('is case-insensitive for name lookups', () => {
+    const card = getCard('monster-stats', 'algox archer');
+    expect(card).not.toBeNull();
+    expect(card!.name).toBe('Algox Archer');
   });
 });
