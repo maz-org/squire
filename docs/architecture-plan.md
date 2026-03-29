@@ -209,11 +209,31 @@ Implemented using `@modelcontextprotocol/sdk` auth handlers. PKCE required
 for all interactive clients. Dynamic Client Registration supported so clients
 auto-register without manual setup.
 
-## Implementation
+## Implementation Status
 
 Work is tracked in the [Squire Service Architecture][project] GitHub project.
 
 [project]: https://github.com/orgs/maz-org/projects/1
+
+### Completed
+
+- **Atomic Tool Layer** — `searchRules`, `searchCards`, `listCardTypes`,
+  `listCards`, `getCard` in `src/tools.ts`. Service layer with `initialize`,
+  `isReady`, `ask` in `src/service.ts`. CLI wrapper in `src/query.ts`.
+- **HTTP/REST API** — Hono server in `src/server.ts` with health check, search
+  endpoints, card discovery/lookup, and `/api/ask` convenience endpoint.
+  Structured JSON errors via global `onError` and `notFound` handlers.
+- **MCP Server** — 5 atomic tools registered as MCP tools in `src/mcp.ts`.
+  Streamable HTTP transport mounted at `/mcp` (stateless, no auth).
+  In-process transport via `createInProcessClient()` for the web UI.
+  Verified with Claude Desktop via `mcp-remote` bridge.
+
+### In Progress / Planned
+
+- **Auth Module** (#55–#59) — OAuth 2.1 for external MCP/REST clients
+- **Web UI** (#60–#65) — Hono JSX + HTMX conversation agent
+- **CLI Client** (#66–#69) — `squire` command-line tool
+- **Campaign State** (#70–#72) — persistent campaign context
 
 ## Key Decisions
 
