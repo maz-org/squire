@@ -90,7 +90,7 @@ export function listCards(
 
   if (filter) {
     records = records.filter((record) =>
-      Object.entries(filter).every(([key, value]) => record[key] === value),
+      Object.entries(filter).every(([key, value]) => key in record && record[key] === value),
     );
   }
 
