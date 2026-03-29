@@ -3,6 +3,7 @@
  * Hono-based API with health check and service initialization.
  */
 
+import 'dotenv/config';
 import { Hono } from 'hono';
 import { isReady, initialize, ask } from './service.ts';
 import { loadIndex } from './vector-store.ts';
