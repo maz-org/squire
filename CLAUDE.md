@@ -81,11 +81,13 @@ Follow the test pyramid with this distribution:
 
 #### Test-Driven Development (TDD)
 
-Follow red-green-refactor cycle:
+**Always** follow the red-green-refactor cycle when writing new code:
 
-1. Write failing test (red)
-2. Write minimal code to pass (green)
-3. Refactor while keeping tests green
+1. **Red** — Write a failing test first that defines the expected behavior
+2. **Green** — Write the minimal code needed to make the test pass
+3. **Refactor** — Clean up while keeping tests green
+
+Do not write implementation before tests. Each feature or fix starts with a test.
 
 ### Code Quality
 
@@ -134,7 +136,11 @@ CodeRabbit configuration is in `.coderabbit.yaml`. Path-specific review instruct
 
 ### Git Practices
 
-1. **Commit Practices**
+1. **Branch Naming**
+   - Always include the GitHub issue number in the branch name
+   - Format: `<type>/<issue-number>-<short-description>` (e.g., `refactor/41-extract-search-tools`)
+
+2. **Commit Practices**
    - Commit logical changes together
    - Write meaningful commit messages using Conventional Commits format
    - Commit frequently
