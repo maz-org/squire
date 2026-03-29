@@ -70,8 +70,26 @@ describe('initialize', () => {
   });
 
   it('initialize throws when index is empty', async () => {
-    mockLoadIndex.mockReturnValue([]);
-    await expect(initialize()).rejects.toThrow(/index is empty/i);
+    vi.resetModules();
+    vi.doMock('@anthropic-ai/sdk', () => ({
+      default: class {
+        messages = { create: mockMessagesCreate };
+      },
+    }));
+    vi.doMock('../src/tools.ts', () => ({
+      searchRules: mockSearchRules,
+      searchCards: mockSearchCards,
+      listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
+    }));
+    vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
+    vi.doMock('../src/vector-store.ts', () => ({ loadIndex: vi.fn(() => []) }));
+    vi.doMock('../src/extracted-data.ts', () => ({
+      TYPES: ['monster-stats'],
+      load: vi.fn(() => []),
+    }));
+
+    const { initialize: freshInit } = await import('../src/service.ts');
+    await expect(freshInit()).rejects.toThrow(/index is empty/i);
   });
 });
 

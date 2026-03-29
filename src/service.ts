@@ -23,6 +23,8 @@ let ready = false;
  * verify extracted data is available. Throws if the index is empty.
  */
 export async function initialize(): Promise<void> {
+  if (ready) return;
+
   const index = loadIndex();
   if (index.length === 0) {
     throw new Error('Vector index is empty. Run `npm run index` first.');

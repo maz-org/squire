@@ -3,6 +3,7 @@ import { defineConfig, configDefaults } from 'vitest/config';
 export default defineConfig({
   test: {
     exclude: [...configDefaults.exclude, 'data/**'],
+    sequence: { shuffle: true },
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
