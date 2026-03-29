@@ -11,6 +11,21 @@ import type { CardType } from './schemas.ts';
 
 export const app = new Hono();
 
+// ─── Error handling ──────────────────────────────────────────────────────────
+
+function jsonError(message: string, status: number) {
+  return { error: message, status };
+}
+
+app.notFound((c) => {
+  return c.json(jsonError('Not found', 404), 404);
+});
+
+app.onError((err, c) => {
+  const message = err instanceof Error ? err.message : 'Internal server error';
+  return c.json(jsonError(message, 500), 500);
+});
+
 // ─── Health endpoint ─────────────────────────────────────────────────────────
 
 app.get('/api/health', (c) => {
@@ -32,7 +47,7 @@ function parseTopK(raw: string | undefined): number {
 
 app.get('/api/search/rules', async (c) => {
   const q = c.req.query('q');
-  if (!q) return c.json({ error: 'Missing required query parameter: q' }, 400);
+  if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
 
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchRules(q, topK);
@@ -41,7 +56,7 @@ app.get('/api/search/rules', async (c) => {
 
 app.get('/api/search/cards', (c) => {
   const q = c.req.query('q');
-  if (!q) return c.json({ error: 'Missing required query parameter: q' }, 400);
+  if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
 
   const topK = parseTopK(c.req.query('topK'));
   const results = searchCards(q, topK);
@@ -59,13 +74,13 @@ app.get('/api/cards/:type/:id', (c) => {
   const type = c.req.param('type') as CardType;
   const id = decodeURIComponent(c.req.param('id'));
   const card = getCard(type, id);
-  if (!card) return c.json({ error: 'Card not found' }, 404);
+  if (!card) return c.json(jsonError('Card not found', 404), 404);
   return c.json({ card });
 });
 
 app.get('/api/cards', (c) => {
   const type = c.req.query('type');
-  if (!type) return c.json({ error: 'Missing required query parameter: type' }, 400);
+  if (!type) return c.json(jsonError('Missing required query parameter: type', 400), 400);
 
   const filterRaw = c.req.query('filter');
   let filter: Record<string, unknown> | undefined;
@@ -73,11 +88,11 @@ app.get('/api/cards', (c) => {
     try {
       const parsed = JSON.parse(filterRaw);
       if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-        return c.json({ error: 'Filter must be a JSON object' }, 400);
+        return c.json(jsonError('Filter must be a JSON object', 400), 400);
       }
       filter = parsed as Record<string, unknown>;
     } catch {
-      return c.json({ error: 'Invalid filter JSON' }, 400);
+      return c.json(jsonError('Invalid filter JSON', 400), 400);
     }
   }
 
@@ -92,19 +107,14 @@ app.post('/api/ask', async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: 'Invalid JSON body' }, 400);
+    return c.json(jsonError('Invalid JSON body', 400), 400);
   }
 
   const { question } = body as { question?: string };
-  if (!question) return c.json({ error: 'Missing required field: question' }, 400);
+  if (!question) return c.json(jsonError('Missing required field: question', 400), 400);
 
-  try {
-    const answer = await ask(question);
-    return c.json({ answer });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    return c.json({ error: message }, 500);
-  }
+  const answer = await ask(question);
+  return c.json({ answer });
 });
 
 // ─── Server startup ──────────────────────────────────────────────────────────

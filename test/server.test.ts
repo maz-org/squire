@@ -314,11 +314,32 @@ describe('POST /api/ask', () => {
   });
 });
 
-// ─── unknown routes ──────────────────────────────────────────────────────────
+// ─── Error handling ──────────────────────────────────────────────────────────
 
-describe('unknown routes', () => {
-  it('returns 404 for unknown paths', async () => {
+describe('error handling', () => {
+  it('returns structured 404 for unknown paths', async () => {
     const res = await app.request('/api/nonexistent');
     expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body).toHaveProperty('error');
+    expect(body).toHaveProperty('status', 404);
+  });
+
+  it('returns structured error for unhandled exceptions', async () => {
+    mockSearchRules.mockRejectedValue(new Error('Unexpected failure'));
+    const res = await app.request('/api/search/rules?q=test');
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toHaveProperty('error');
+    expect(body).toHaveProperty('status', 500);
+  });
+
+  it('all error responses have consistent shape', async () => {
+    // 400 case
+    const res400 = await app.request('/api/search/rules');
+    expect(res400.status).toBe(400);
+    const body400 = await res400.json();
+    expect(body400).toHaveProperty('error');
+    expect(body400).toHaveProperty('status', 400);
   });
 });
