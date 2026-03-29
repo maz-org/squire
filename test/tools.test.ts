@@ -1,0 +1,189 @@
+import { describe, it, expect, vi } from 'vitest';
+
+// ─── Mock extracted data (fs-level, same pattern as extracted-data.test.ts) ──
+
+const FAKE_MONSTER_STATS = JSON.stringify([
+  {
+    name: 'Algox Archer',
+    levelRange: '0-3',
+    normal: { 0: { hp: 5, move: 2, attack: 3 } },
+    elite: { 0: { hp: 8, move: 3, attack: 4 } },
+    immunities: [],
+    notes: null,
+  },
+]);
+
+const FAKE_ITEMS = JSON.stringify([
+  {
+    number: '001',
+    name: 'Boots of Speed',
+    slot: 'legs',
+    cost: 20,
+    effect: 'Move +1',
+    uses: null,
+    spent: false,
+    lost: false,
+  },
+]);
+
+const { mockExistsSync, mockReadFileSync } = vi.hoisted(() => ({
+  mockExistsSync: vi.fn(),
+  mockReadFileSync: vi.fn(),
+}));
+
+vi.mock('node:fs', () => ({
+  existsSync: mockExistsSync,
+  readFileSync: mockReadFileSync,
+}));
+
+mockExistsSync.mockImplementation((path: string) => {
+  if (path.includes('monster-stats.json')) return true;
+  if (path.includes('items.json')) return true;
+  if (path.includes('index.json')) return true;
+  return false;
+});
+
+mockReadFileSync.mockImplementation((path: string) => {
+  if (typeof path === 'string' && path.includes('monster-stats.json')) return FAKE_MONSTER_STATS;
+  if (typeof path === 'string' && path.includes('items.json')) return FAKE_ITEMS;
+  if (typeof path === 'string' && path.includes('index.json')) {
+    return JSON.stringify([
+      {
+        id: 'chunk-1',
+        text: 'Loot action: pick up all loot tokens in your hex.',
+        embedding: Array(384).fill(0.05),
+        source: 'rulebook.pdf:42',
+        chunkIndex: 0,
+      },
+      {
+        id: 'chunk-2',
+        text: 'Movement rules: a figure must move at least one hex.',
+        embedding: Array(384).fill(0.03),
+        source: 'rulebook.pdf:15',
+        chunkIndex: 1,
+      },
+    ]);
+  }
+  return '[]';
+});
+
+// ─── Mock embedder ───────────────────────────────────────────────────────────
+
+vi.mock('../src/embedder.ts', () => ({
+  embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
+}));
+
+import { searchRules, searchCards } from '../src/tools.ts';
+import type { RuleResult, CardResult } from '../src/tools.ts';
+
+// ─── searchRules ─────────────────────────────────────────────────────────────
+
+describe('searchRules', () => {
+  it('returns structured results with text, source, and score', async () => {
+    const results: RuleResult[] = await searchRules('loot action');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty('text');
+    expect(results[0]).toHaveProperty('source');
+    expect(results[0]).toHaveProperty('score');
+    expect(typeof results[0].text).toBe('string');
+    expect(typeof results[0].source).toBe('string');
+    expect(typeof results[0].score).toBe('number');
+  });
+
+  it('respects topK parameter', async () => {
+    const results = await searchRules('loot action', 1);
+    expect(results.length).toBe(1);
+  });
+
+  it('returns empty array when index is empty', async () => {
+    // Make loadIndex return [] by pretending index.json doesn't exist
+    mockExistsSync.mockImplementation((path: string) => {
+      if (path.includes('index.json')) return false;
+      return false;
+    });
+
+    const results = await searchRules('loot action');
+    expect(results).toEqual([]);
+
+    // Restore normal mock behavior
+    mockExistsSync.mockImplementation((path: string) => {
+      if (path.includes('monster-stats.json')) return true;
+      if (path.includes('items.json')) return true;
+      if (path.includes('index.json')) return true;
+      return false;
+    });
+  });
+
+  it('does not include embedding vectors in results', async () => {
+    const results = await searchRules('loot');
+    for (const r of results) {
+      expect(r).not.toHaveProperty('embedding');
+      expect(r).not.toHaveProperty('id');
+      expect(r).not.toHaveProperty('chunkIndex');
+    }
+  });
+});
+
+// ─── searchCards ─────────────────────────────────────────────────────────────
+
+describe('searchCards', () => {
+  it('returns structured results with type, data, and score', () => {
+    const results: CardResult[] = searchCards('algox archer stats');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty('type');
+    expect(results[0]).toHaveProperty('data');
+    expect(results[0]).toHaveProperty('score');
+    expect(typeof results[0].type).toBe('string');
+    expect(typeof results[0].data).toBe('object');
+    expect(typeof results[0].score).toBe('number');
+  });
+
+  it('does not include _type in data (it is promoted to type)', () => {
+    const results = searchCards('algox archer');
+    for (const r of results) {
+      expect(r.data).not.toHaveProperty('_type');
+      expect(r.type).toBeDefined();
+    }
+  });
+
+  it('returns monster-stats type for monster queries', () => {
+    const results = searchCards('algox archer');
+    expect(results.some((r) => r.type === 'monster-stats')).toBe(true);
+  });
+
+  it('returns items type for item queries', () => {
+    const results = searchCards('boots speed');
+    expect(results.some((r) => r.type === 'items')).toBe(true);
+  });
+
+  it('respects topK parameter', () => {
+    const results = searchCards('attack move', 1);
+    expect(results.length).toBeLessThanOrEqual(1);
+  });
+
+  it('returns empty array for empty query', () => {
+    const results = searchCards('');
+    expect(results).toEqual([]);
+  });
+
+  it('returns empty array for stopword-only queries', () => {
+    const results = searchCards('the and for');
+    expect(results).toEqual([]);
+  });
+
+  it('includes card data fields in data property', () => {
+    const results = searchCards('algox archer');
+    const monster = results.find((r) => r.type === 'monster-stats');
+    expect(monster).toBeDefined();
+    expect(monster!.data).toHaveProperty('name', 'Algox Archer');
+    expect(monster!.data).toHaveProperty('normal');
+    expect(monster!.data).toHaveProperty('elite');
+  });
+
+  it('score is positive for matching results', () => {
+    const results = searchCards('algox archer');
+    for (const r of results) {
+      expect(r.score).toBeGreaterThan(0);
+    }
+  });
+});
