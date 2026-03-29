@@ -10,6 +10,7 @@ import { searchRules, searchCards, listCardTypes, listCards, getCard } from './t
 import type { CardType } from './schemas.ts';
 import { createMcpServer } from './mcp.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { registerClient } from './auth.ts';
 
 export const app = new Hono();
 
@@ -45,6 +46,29 @@ app.get('/.well-known/oauth-protected-resource', (c) => {
     bearer_methods_supported: ['header'],
     scopes_supported: ['squire:read', 'squire:write'],
   });
+});
+
+// ─── Client registration ─────────────────────────────────────────────────────
+
+app.post('/register', async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(jsonError('Invalid JSON body', 400), 400);
+  }
+
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return c.json(jsonError('Request body must be a JSON object', 400), 400);
+  }
+
+  try {
+    const client = registerClient(body as Record<string, unknown>);
+    return c.json(client, 201);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Registration failed';
+    return c.json(jsonError(message, 400), 400);
+  }
 });
 
 // ─── MCP transport ───────────────────────────────────────────────────────────
