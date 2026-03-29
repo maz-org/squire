@@ -1,0 +1,13 @@
+. "$HOME/.nvm/nvm.sh"
+nvm use >/dev/null 2>&1
+
+# Block pushes to branches whose PR has already been merged
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$branch" != "main" ] && [ -n "$branch" ]; then
+  pr_state=$(gh pr view "$branch" --json state --jq '.state' 2>/dev/null || echo "NONE")
+  if [ "$pr_state" = "MERGED" ]; then
+    echo "ERROR: PR for branch '$branch' is already merged."
+    echo "Do not push to merged branches. Create a new branch instead."
+    exit 1
+  fi
+fi
