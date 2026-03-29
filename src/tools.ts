@@ -6,7 +6,7 @@
 import { embed } from './embedder.ts';
 import { loadIndex, search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
-import { searchExtracted } from './extracted-data.ts';
+import { searchExtracted, TYPES, load } from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
@@ -21,6 +21,11 @@ export interface CardResult {
   type: CardType;
   data: Record<string, unknown>;
   score: number;
+}
+
+export interface CardTypeInfo {
+  type: CardType;
+  count: number;
 }
 
 // ─── Tools ───────────────────────────────────────────────────────────────────
@@ -57,6 +62,44 @@ export function searchCards(query: string, topK = 6): CardResult[] {
       data,
       score: scoreRecord(record, query),
     };
+  });
+}
+
+// ─── Discovery tools ─────────────────────────────────────────────────────────
+
+/**
+ * List all available card types with record counts.
+ * Agents use this for runtime capability discovery.
+ */
+export function listCardTypes(): CardTypeInfo[] {
+  return TYPES.map((type) => ({
+    type,
+    count: load(type).length,
+  }));
+}
+
+/**
+ * List cards of a given type, optionally filtered by field values.
+ * Filter uses AND logic — all specified fields must match.
+ */
+export function listCards(
+  type: CardType,
+  filter?: Record<string, unknown>,
+): Record<string, unknown>[] {
+  let records = load(type);
+
+  if (filter) {
+    records = records.filter((record) =>
+      Object.entries(filter).every(([key, value]) => record[key] === value),
+    );
+  }
+
+  return records.map((record) => {
+    const data: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(record)) {
+      if (!key.startsWith('_')) data[key] = value;
+    }
+    return data;
   });
 }
 

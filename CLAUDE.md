@@ -20,6 +20,12 @@ Use GitHub Issues for all work tracking. Check open issues with `gh issue list`.
 When discovering work that needs to be done later, create an issue with
 `gh issue create`.
 
+**Before starting work on an issue**, assign it to yourself and mark it in progress:
+
+```bash
+gh issue edit <number> --add-assignee @me
+```
+
 ## Development Standards
 
 ### Testing Requirements

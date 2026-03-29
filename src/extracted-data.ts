@@ -12,7 +12,7 @@ import type { CardType } from './schemas.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXTRACTED_DIR = join(__dirname, '..', 'data', 'extracted');
 
-const TYPES: CardType[] = [
+export const TYPES: CardType[] = [
   'monster-stats',
   'monster-abilities',
   'character-abilities',
@@ -34,7 +34,7 @@ interface ExtractedRecord extends Record<string, unknown> {
 
 const _cache: Partial<Record<CardType, ExtractedRecord[]>> = {};
 
-function load(type: CardType): ExtractedRecord[] {
+export function load(type: CardType): ExtractedRecord[] {
   if (_cache[type]) return _cache[type];
   const path = join(EXTRACTED_DIR, `${type}.json`);
   if (!existsSync(path)) {
