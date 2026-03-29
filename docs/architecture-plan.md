@@ -55,6 +55,13 @@ Squire needs the campaign (what's unlocked), the player (which character),
 and the user (who's asking). A user without an active campaign can still ask
 general rules questions — campaign context is optional.
 
+Both the conversation agent and knowledge agent need access to
+user/campaign/player state — the conversation agent to present a campaign
+picker and identify the user, the knowledge agent to personalize answers.
+Since both live in the same Hono server process, they share a data store
+(file-based or SQLite). If they ever separate, this becomes a shared
+database or API.
+
 Anonymous access (no user identity) may be supported in the future for
 read-only rules queries.
 
