@@ -344,3 +344,44 @@ describe('error handling', () => {
     expect(body400).toHaveProperty('status', 400);
   });
 });
+
+// ─── OAuth metadata ──────────────────────────────────────────────────────────
+
+describe('GET /.well-known/oauth-authorization-server', () => {
+  it('returns valid OAuth metadata', async () => {
+    const res = await app.request('http://localhost:3000/.well-known/oauth-authorization-server');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('application/json');
+
+    const body = await res.json();
+    expect(body).toHaveProperty('issuer');
+    expect(body).toHaveProperty('authorization_endpoint');
+    expect(body).toHaveProperty('token_endpoint');
+    expect(body).toHaveProperty('registration_endpoint');
+    expect(body.response_types_supported).toContain('code');
+    expect(body.grant_types_supported).toContain('authorization_code');
+    expect(body.code_challenge_methods_supported).toContain('S256');
+  });
+
+  it('endpoints are absolute URLs', async () => {
+    const res = await app.request('http://localhost:3000/.well-known/oauth-authorization-server');
+    const body = await res.json();
+    for (const field of ['authorization_endpoint', 'token_endpoint', 'registration_endpoint']) {
+      const val = body[field] as string;
+      expect(val, `${field} should be absolute`).toMatch(/^https?:\/\//);
+    }
+  });
+});
+
+describe('GET /.well-known/oauth-protected-resource', () => {
+  it('returns valid protected resource metadata', async () => {
+    const res = await app.request('http://localhost:3000/.well-known/oauth-protected-resource');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('resource');
+    expect(body).toHaveProperty('authorization_servers');
+    expect(body.authorization_servers).toBeInstanceOf(Array);
+    expect(body.authorization_servers.length).toBeGreaterThan(0);
+    expect(body).toHaveProperty('resource_name', 'Squire');
+  });
+});
