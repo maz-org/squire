@@ -139,9 +139,13 @@ This repo uses [CodeRabbit](https://coderabbit.ai) as an automated PR reviewer. 
 
 Address all review comments before pushing. This catches issues early and avoids back-and-forth on the PR.
 
-**After pushing**, monitor the PR in a loop until it is merged and closed:
+**After creating the PR**, monitor it in a loop until it is merged. Do **not**
+push any additional commits to the branch after the PR is merged — if you
+have unrelated changes (e.g., CLAUDE.md updates), put them on a separate
+branch/PR.
 
 1. **Poll for review comments** (`gh api repos/{owner}/{repo}/pulls/{number}/comments`)
+   and PR status (`gh pr view <number> --json state,reviewDecision,statusCheckRollup`)
 2. **Fix legitimate issues** — bugs, type errors, missing validation, security concerns
 3. **Use judgment on nitpicks** — you don't need to address every style suggestion
    or minor nitpick. It's OK to disagree.
@@ -155,8 +159,8 @@ Address all review comments before pushing. This catches issues early and avoids
    - All PR checks have passed
    - CodeRabbit has approved the PR
    - The PR has been auto-merged and closed
-7. **Clean up** — after merge, switch to main, pull, prune remote refs, and
-   delete the local feature branch
+7. **Clean up** — after merge, close the issue if GitHub didn't auto-close it,
+   switch to main, pull, prune remote refs, and delete the local feature branch
 
 Use `/loop` or a polling interval (e.g., check every 30–60 seconds) to watch
 for new comments and check status. Do not stop watching early.
