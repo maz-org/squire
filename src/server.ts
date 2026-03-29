@@ -6,6 +6,7 @@
 import { Hono } from 'hono';
 import { isReady, initialize } from './service.ts';
 import { loadIndex } from './vector-store.ts';
+import { searchRules, searchCards } from './tools.ts';
 
 export const app = new Hono();
 
@@ -17,6 +18,33 @@ app.get('/api/health', (c) => {
     ready: isReady(),
     index_size: index.length,
   });
+});
+
+// ─── Search endpoints ────────────────────────────────────────────────────────
+
+function parseTopK(raw: string | undefined): number {
+  if (!raw) return 6;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > 100) return 6;
+  return n;
+}
+
+app.get('/api/search/rules', async (c) => {
+  const q = c.req.query('q');
+  if (!q) return c.json({ error: 'Missing required query parameter: q' }, 400);
+
+  const topK = parseTopK(c.req.query('topK'));
+  const results = await searchRules(q, topK);
+  return c.json({ results });
+});
+
+app.get('/api/search/cards', (c) => {
+  const q = c.req.query('q');
+  if (!q) return c.json({ error: 'Missing required query parameter: q' }, 400);
+
+  const topK = parseTopK(c.req.query('topK'));
+  const results = searchCards(q, topK);
+  return c.json({ results });
 });
 
 // ─── Server startup ──────────────────────────────────────────────────────────
