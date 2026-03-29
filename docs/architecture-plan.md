@@ -52,13 +52,20 @@ answers.
 The system separates **conversation** from **knowledge**:
 
 - **Conversation agent** (web UI) — manages chat session, handles follow-ups,
-  remembers context, presents results. One per client.
-- **Knowledge agent** (Squire core) — provides atomic data access tools,
-  stateless, shared by all clients.
+  compacts history, presents results. Thin. One per client session.
+- **Knowledge agent** (Squire core) — understands questions, decides retrieval
+  strategy, loads campaign context, generates answers. Stateless per request.
+  Shared by all clients.
 
-The conversation agent is an MCP client to Squire's MCP server. This means
-the web UI consumes Squire the same way Claude Desktop or any other MCP client
-does — dog-fooding the same tool interface.
+The conversation agent calls Squire's `/api/ask` endpoint, not MCP tools
+directly. This keeps the conversation agent focused on session management
+and UX, while the knowledge agent owns all domain reasoning — including
+which tools to use, how to resolve references from conversation history,
+and how to factor in campaign context.
+
+MCP tools remain available for **external agents** (Claude Desktop, Claude
+Code, custom agents) that want to compose tools directly with their own
+reasoning.
 
 ```mermaid
 graph TB
@@ -66,21 +73,23 @@ graph TB
         subgraph webui["Web UI Host"]
             browser["Browser"]
             conv["Conversation Agent<br/>(Claude API + session)"]
-            mcpclient["MCP Client<br/>(in-process, no auth)"]
             browser -->|cookie| conv
-            conv --> mcpclient
         end
-        subgraph squire["Squire MCP Server"]
+        subgraph squire["Squire Knowledge Agent"]
+            ask["/api/ask"]
             mcp["/mcp (Streamable HTTP)"]
             rest["/api/* (REST)"]
             oauth["OAuth endpoints"]
             auth["Auth Module<br/>(external clients only)"]
             tools["Atomic Tools"]
+            campaign["Campaign State"]
+            ask --> tools
+            ask --> campaign
             mcp --> auth
             rest --> auth
             auth --> tools
         end
-        mcpclient -->|in-process transport| tools
+        conv -->|/api/ask| ask
     end
 
     claude["Claude Desktop"] -->|OAuth 2.1| mcp
@@ -88,40 +97,35 @@ graph TB
     discord["Discord Bot<br/>(separate project)"] -->|Client credentials| rest
 ```
 
-### Transport and auth by client type
+### Client types and interfaces
 
-```mermaid
-graph LR
-    subgraph external["External Clients"]
-        cd["Claude Desktop"]
-        cl["CLI"]
-        svc["Services"]
-    end
-    subgraph inprocess["In-Process"]
-        ca["Conversation Agent"]
-    end
+| Client | Interface | Auth | Notes |
+| ------------------- | ----------- | ------------ | ------------------------------------- |
+| Web UI | `/api/ask` | Session cookie | Conversation agent → knowledge agent |
+| Claude Desktop | `/mcp` | OAuth 2.1 | Direct tool access via MCP |
+| Claude Code | `/mcp` | OAuth 2.1 | Direct tool access via MCP |
+| CLI | `/api/*` | OAuth 2.1 | REST endpoints |
+| Services | `/api/*` | Client credentials | Machine-to-machine |
 
-    cd -->|HTTP transport| oa["OAuth Validation"]
-    cl -->|HTTP transport| oa
-    svc -->|HTTP transport| oa
-    oa --> at["Atomic Tools"]
+**Web UI conversation agent:**
 
-    ca -->|In-process transport| at
-```
+- Calls `/api/ask` with question, conversation history, and campaign ID
+- Does **not** use MCP tools directly — delegates domain reasoning to
+  the knowledge agent
+- Owns session management: chat history, context compaction, streaming,
+  presentation
 
-**In-process clients (web UI conversation agent):**
-
-- Use in-process MCP transport (no HTTP round-trip)
-- No OAuth — already inside the trust boundary
-- Caller identity propagated via request context (user ID from session),
-  so tools like campaign state know who's asking
-
-**External network clients (Claude Desktop, CLI, Discord bot, services):**
+**External MCP clients (Claude Desktop, Claude Code, custom agents):**
 
 - Use Streamable HTTP transport over the network
+- Access atomic tools directly — they bring their own reasoning
 - OAuth 2.1 required (auth code + PKCE for interactive, client credentials
   for machine-to-machine)
-- Auth module validates bearer tokens on every request
+
+**REST clients (CLI, Discord bot, services):**
+
+- Use REST endpoints for search, card lookup, and `/api/ask`
+- OAuth 2.1 required
 
 ### Atomic tools
 
@@ -140,21 +144,44 @@ graph TB
         gcmp["get_campaign()"]
         ucmp["update_campaign(key, value)"]
     end
-    subgraph optimized["Optimized Path"]
-        ask["ask(question)"]
-    end
 
     sr --> vs["Vector Store"]
     sc --> ed["Extracted Data"]
     gc --> ed
     lct --> ed
     lc --> ed
-    ask --> vs
-    ask --> ed
-    ask --> llm["Claude API"]
     gcmp --> fs["Campaign File"]
     ucmp --> fs
 ```
+
+### The ask endpoint (knowledge agent)
+
+`POST /api/ask` is the knowledge agent's entry point. It receives:
+
+```json
+{
+  "question": "What items work well with the Blinkblade?",
+  "history": [
+    { "role": "user", "content": "What class should I play?" },
+    { "role": "assistant", "content": "Consider the Blinkblade..." }
+  ],
+  "campaignId": "our-campaign"
+}
+```
+
+The knowledge agent:
+
+1. **Resolves references** — "it" in "what items work well with it?" becomes
+   "Blinkblade" using conversation history
+2. **Decides retrieval strategy** — which atomic tools to call, in what order,
+   how many results to fetch
+3. **Loads campaign context** — what characters, items, and scenarios are
+   available in this campaign
+4. **Generates a grounded answer** — using retrieved context + campaign state
+
+Today this is a fixed pipeline (search rules + search cards + one LLM call).
+Over time it evolves into an agent loop that uses the atomic tools with
+judgment — the graduated optimization principle.
 
 ### Why atomic tools matter
 
@@ -170,19 +197,32 @@ answer. With atomic tools, an agent can:
 These are **emergent capabilities** — we never built features for them, but
 agents compose the tools to accomplish them.
 
-### Web UI as agent loop
+### Web UI conversation agent
 
-The web UI is not a form that calls `POST /api/ask`. The conversation agent
-connects to Squire via in-process MCP and converses with the user, making
-multiple tool calls as needed. The chat session persists. The agent uses
-campaign context for personalized answers.
+The conversation agent is a thin session manager. It does **not** reason
+about which Squire tools to use — it delegates that to the knowledge agent
+via `/api/ask`.
 
-This is where the Frosthaven-themed chat (dark palette, icy blues, medieval
-typography) with HTMX streaming and inline citations lives. The agent behind
-it does multi-step reasoning, not just single-shot Q&A.
+**The conversation agent owns:**
 
-Tool visibility: the UI shows which tools the agent is calling (search
-progress, card lookups) — no silent actions.
+- Chat session state (history, user identity)
+- Context compaction — summarizes older history when it grows too long,
+  sends a bounded window to `/api/ask`
+- Streaming — proxies the knowledge agent's response to the browser via SSE
+- Presentation — Frosthaven-themed chat (dark palette, icy blues, medieval
+  typography), inline citations, tool visibility
+- Follow-up handling — detects clarification needs, manages multi-turn flow
+
+**The conversation agent does NOT own:**
+
+- Retrieval strategy (which tools to call, how many results)
+- Reference resolution ("what items work with it?" → Blinkblade)
+- Campaign context (loaded server-side by the knowledge agent)
+- Domain reasoning of any kind
+
+This keeps the conversation agent simple and focused. Domain intelligence
+lives in the knowledge agent, which can evolve its retrieval strategy
+independently of the UI.
 
 ### Auth model
 
@@ -239,22 +279,23 @@ Work is tracked in the [Squire Service Architecture][project] GitHub project.
 
 - **Architecture:** Agent-native — tools as primitives, features as prompts,
   emergent capability ([inspiration][agent-native])
-- **Two-agent model:** Conversation agent (UI) + knowledge agent (Squire core),
-  connected via MCP
+- **Two-agent model:** Conversation agent (UI) + knowledge agent (Squire core).
+  Conversation agent calls `/api/ask`, not MCP tools — domain reasoning
+  belongs in the knowledge agent. MCP tools are for external agents.
 - **Tool design:** Atomic + discovery — agents compose tools; discover data
   at runtime
 - **RAG pipeline:** Optimized convenience — graduated-to-code hot path, not
   the foundation
 - **HTTP framework:** Hono — lightweight, web-standard Request/Response,
   TypeScript-first, built-in JSX
-- **MCP transport:** Streamable HTTP for external clients; in-process for web
-  UI conversation agent
+- **MCP transport:** Streamable HTTP for external agents; in-process available
+  but web UI uses `/api/ask` instead
 - **Auth:** OAuth 2.1 for external clients; no auth in-process; identity
   propagated via request context
 - **Web UI rendering:** Hono JSX + HTMX — server-rendered, no build step, no
   client framework
-- **Web UI architecture:** Conversation agent as MCP client to Squire
-  (dog-fooding)
+- **Web UI architecture:** Conversation agent calls `/api/ask` — thin session
+  manager, domain reasoning stays in the knowledge agent
 - **Web UI styling:** Tailwind CSS — Frosthaven dark/icy theme
 - **Campaign state:** File-based context — agents read/update; persists across
   sessions
