@@ -103,6 +103,44 @@ export function listCards(
   });
 }
 
+// ─── ID field mapping ────────────────────────────────────────────────────────
+
+/** The natural identifier field for each card type. */
+const ID_FIELDS: Record<CardType, string> = {
+  'monster-stats': 'name',
+  'monster-abilities': 'cardName',
+  'character-abilities': 'cardName',
+  items: 'number',
+  events: 'number',
+  'battle-goals': 'name',
+  buildings: 'buildingNumber',
+};
+
+/**
+ * Look up a single card by type and identifier.
+ * Uses the natural ID field for each card type (e.g., name for monsters, number for items).
+ * Case-insensitive for string identifiers.
+ */
+export function getCard(type: CardType, id: string): Record<string, unknown> | null {
+  const field = ID_FIELDS[type];
+  const records = load(type);
+  const idLower = id.toLowerCase();
+
+  const match = records.find((record) => {
+    const value = record[field];
+    if (typeof value === 'string') return value.toLowerCase() === idLower;
+    return value === id;
+  });
+
+  if (!match) return null;
+
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(match)) {
+    if (!key.startsWith('_')) data[key] = value;
+  }
+  return data;
+}
+
 /**
  * Re-score a record for the structured result.
  * Uses the same keyword overlap logic as extracted-data.ts.
