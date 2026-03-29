@@ -20,6 +20,10 @@ vi.mock('@anthropic-ai/sdk', () => ({
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: mockSearchCards,
+  listCardTypes: vi.fn(() => [
+    { type: 'monster-stats', count: 5 },
+    { type: 'items', count: 3 },
+  ]),
 }));
 
 vi.mock('../src/embedder.ts', () => ({
@@ -48,10 +52,10 @@ describe('initialize', () => {
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
   });
 
-  it('isReady returns false before initialize', () => {
-    // Fresh import state — but since modules are cached, we test via
-    // the exported function which tracks internal state
-    expect(typeof isReady).toBe('function');
+  it('isReady returns false before initialize', async () => {
+    // Module-level `ready` starts false; we can't fully reset module state
+    // but we can verify the function exists and returns a boolean
+    expect(typeof isReady()).toBe('boolean');
   });
 
   it('initialize loads index and warms embedder', async () => {
@@ -135,11 +139,28 @@ describe('ask', () => {
   });
 
   it('throws if not initialized', async () => {
-    // Reset module state by creating a fresh import
-    // Since we can't easily reset module state, we test via the contract:
-    // ask() should work after initialize()
-    await initialize();
-    const result = await ask('test');
-    expect(typeof result).toBe('string');
+    // Use a fresh module import to get uninitialized state
+    vi.resetModules();
+
+    // Re-register mocks before re-importing
+    vi.doMock('@anthropic-ai/sdk', () => ({
+      default: class {
+        messages = { create: mockMessagesCreate };
+      },
+    }));
+    vi.doMock('../src/tools.ts', () => ({
+      searchRules: mockSearchRules,
+      searchCards: mockSearchCards,
+      listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
+    }));
+    vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
+    vi.doMock('../src/vector-store.ts', () => ({ loadIndex: mockLoadIndex }));
+    vi.doMock('../src/extracted-data.ts', () => ({
+      TYPES: ['monster-stats'],
+      load: vi.fn(() => [{ name: 'test' }]),
+    }));
+
+    const { ask: freshAsk } = await import('../src/service.ts');
+    await expect(freshAsk('test')).rejects.toThrow(/not initialized/i);
   });
 });

@@ -6,7 +6,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { embed } from './embedder.ts';
 import { loadIndex } from './vector-store.ts';
-import { searchRules, searchCards } from './tools.ts';
+import { searchRules, searchCards, listCardTypes } from './tools.ts';
 import type { RuleResult, CardResult } from './tools.ts';
 
 const client = new Anthropic();
@@ -28,6 +28,13 @@ export async function initialize(): Promise<void> {
     throw new Error('Vector index is empty. Run `npm run index` first.');
   }
 
+  // Verify extracted data is available
+  const types = listCardTypes();
+  const totalCards = types.reduce((sum, t) => sum + t.count, 0);
+  if (totalCards === 0) {
+    throw new Error('No extracted card data found. Run `npm run extract` first.');
+  }
+
   // Warm the embedder so the first real query doesn't pay the cold-start cost
   await embed('warmup');
 
@@ -47,6 +54,10 @@ export function isReady(): boolean {
  * the atomic tools (searchRules, searchCards) with an LLM call.
  */
 export async function ask(question: string): Promise<string> {
+  if (!ready) {
+    throw new Error('Service not initialized. Call initialize() first.');
+  }
+
   // Step 1: Search for relevant rulebook passages and card data
   const ruleHits: RuleResult[] = await searchRules(question, 6);
   const cardHits: CardResult[] = searchCards(question, 8);
