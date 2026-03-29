@@ -74,13 +74,12 @@ describe('MCP over Streamable HTTP', () => {
     await client.close();
   });
 
-  it('returns 404 for non-MCP POST to /mcp', async () => {
+  it('rejects invalid JSON-RPC with 4xx', async () => {
     const res = await app.request('/mcp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ not: 'jsonrpc' }),
     });
-    // MCP transport handles invalid JSON-RPC with a 400
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 });
