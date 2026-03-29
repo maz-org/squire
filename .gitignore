@@ -150,3 +150,5 @@ eval/results/*.json
 # Squire project
 # Clone from https://github.com/any2cards/worldhaven if needed
 data/worldhaven/
+# Clone from https://github.com/Lurkars/gloomhavensecretariat if needed
+data/gloomhavensecretariat/

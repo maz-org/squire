@@ -8,8 +8,8 @@ describe('MonsterStatSchema', () => {
     const data = {
       name: 'Ooze',
       levelRange: '0-3',
-      normal: { 0: { move: 1, attack: 2, range: null, hp: 5 } },
-      elite: { 0: { move: 2, attack: 3, range: null, hp: 8 } },
+      normal: { 0: { move: 1, attack: 2, hp: 5 } },
+      elite: { 0: { move: 2, attack: 3, hp: 8 } },
       immunities: ['poison'],
       notes: null,
     };
@@ -32,6 +32,81 @@ describe('MonsterStatSchema', () => {
     const data = {
       levelRange: '0-3',
       normal: {},
+      elite: {},
+      immunities: [],
+      notes: null,
+    };
+    expect(schema.safeParse(data).success).toBe(false);
+  });
+
+  it('accepts stats at upper bounds', () => {
+    const data = {
+      name: 'Boss',
+      levelRange: '4-7',
+      normal: { 4: { move: 12, attack: 20, hp: 150 } },
+      elite: { 4: { move: 12, attack: 20, hp: 150 } },
+      immunities: [],
+      notes: null,
+    };
+    expect(schema.safeParse(data).success).toBe(true);
+  });
+
+  it('accepts stats at lower bounds', () => {
+    const data = {
+      name: 'Weak',
+      levelRange: '0-3',
+      normal: { 0: { move: 0, attack: 0, hp: 1 } },
+      elite: { 0: { move: 0, attack: 0, hp: 1 } },
+      immunities: [],
+      notes: null,
+    };
+    expect(schema.safeParse(data).success).toBe(true);
+  });
+
+  it('rejects stats above upper bounds', () => {
+    const base = {
+      name: 'Bad',
+      levelRange: '0-3' as const,
+      immunities: [],
+      notes: null,
+    };
+    const overMove = {
+      ...base,
+      normal: { 0: { move: 13, attack: 1, hp: 5 } },
+      elite: {},
+    };
+    const overAttack = {
+      ...base,
+      normal: { 0: { move: 1, attack: 21, hp: 5 } },
+      elite: {},
+    };
+    const overHp = {
+      ...base,
+      normal: { 0: { move: 1, attack: 1, hp: 151 } },
+      elite: {},
+    };
+    expect(schema.safeParse(overMove).success).toBe(false);
+    expect(schema.safeParse(overAttack).success).toBe(false);
+    expect(schema.safeParse(overHp).success).toBe(false);
+  });
+
+  it('rejects negative stat values', () => {
+    const data = {
+      name: 'Bad',
+      levelRange: '0-3',
+      normal: { 0: { move: -1, attack: 1, hp: 5 } },
+      elite: {},
+      immunities: [],
+      notes: null,
+    };
+    expect(schema.safeParse(data).success).toBe(false);
+  });
+
+  it('rejects hp of 0', () => {
+    const data = {
+      name: 'Bad',
+      levelRange: '0-3',
+      normal: { 0: { move: 1, attack: 1, hp: 0 } },
       elite: {},
       immunities: [],
       notes: null,

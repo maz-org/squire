@@ -59,8 +59,8 @@
     "id": "monster-vermling-scout",
     "category": "monster-stats",
     "question": "What are the stats of a normal Vermling Scout at level 1 in Frosthaven?",
-    "expected": "HP 4, Move 3, Attack 2, Range 3.",
-    "grading": "Must include all four stats: HP 4, Move 3, Attack 2, Range 3.",
+    "expected": "HP 3, Move 3, Attack 1.",
+    "grading": "Must include all three stats: HP 3, Move 3, Attack 1. Range is not a stat card value — do not penalize for omitting it.",
     "source": "data/extracted/monster-stats.json"
   },
   {
@@ -75,8 +75,8 @@
     "id": "monster-flame-demon-elite",
     "category": "monster-stats",
     "question": "What are the stats of an elite Flame Demon at level 0 in Frosthaven?",
-    "expected": "HP 5, Move 3, Attack 4, Range 5.",
-    "grading": "Must include all four stats: HP 5, Move 3, Attack 4, Range 5.",
+    "expected": "HP 3, Move 3, Attack 2. Shield 3.",
+    "grading": "Must include HP 3, Move 3, Attack 2. Shield 3 is a bonus. Range is not a stat card value — do not penalize for omitting it.",
     "source": "data/extracted/monster-stats.json"
   },
   {

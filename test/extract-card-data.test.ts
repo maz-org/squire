@@ -228,7 +228,7 @@ describe('extractImage', () => {
     expect(result._validationErrors!.length).toBeGreaterThan(0);
   });
 
-  it('calls Claude with the correct model', async () => {
+  it('uses Haiku model for battle-goals', async () => {
     mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
     mockMessagesCreate.mockResolvedValue({
       content: [
