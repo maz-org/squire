@@ -8,10 +8,12 @@ it into an **agent-native knowledge platform** — a set of atomic tools that
 agents compose to achieve outcomes, exposed via MCP, REST API, web UI, CLI,
 and agent skill.
 
-This follows [agent-native architecture principles](https://every.to/guides/agent-native):
-features are outcomes described in prompts, pursued by agents with tools in
-iterative loops. Squire provides the knowledge tools; agents provide the
-reasoning.
+This follows [agent-native architecture principles][agent-native] by Dan
+Shipper: features are outcomes described in prompts, pursued by agents with
+tools in iterative loops. Squire provides the knowledge tools; agents provide
+the reasoning.
+
+[agent-native]: https://every.to/guides/agent-native
 
 Discord integration will move to a separate project that consumes Squire's
 tools.
@@ -45,40 +47,113 @@ answers.
 
 ## Architecture
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    src/server.ts                          │  Hono + @hono/node-server
-│                                                          │
-│  Web UI:  / (agent loop — Hono JSX + HTMX, Tailwind)    │
-│  REST:    /api/* (atomic endpoints + convenience /ask)   │
-│  MCP:     /mcp (Streamable HTTP + OAuth 2.1)             │
-│  Health:  /api/health                                    │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│                   Atomic Tools                           │
-│                                                          │
-│  Discovery:                                              │
-│    list_card_types()         → available data categories │
-│    list_cards(type, filter?) → browse/filter cards       │
-│                                                          │
-│  Data access:                                            │
-│    get_card(type, id)        → specific card by type+id  │
-│    search_rules(query, topK) → vector search rulebook    │
-│    search_cards(query, topK) → keyword search all cards  │
-│                                                          │
-│  Campaign state:                                         │
-│    get_campaign()            → current campaign context  │
-│    update_campaign(k, v)     → remember campaign state   │
-│                                                          │
-│  Optimized path (graduated to code):                     │
-│    ask(question)             → bundled RAG for simple Q&A│
-└──────────────────────────┬──────────────────────────────┘
-                           │
-         ┌─────────────────┼─────────────────┐
-         │                 │                 │
-    embedder.ts      vector-store      extracted-data
-                        .ts               .ts
+### Two-agent model
+
+The system separates **conversation** from **knowledge**:
+
+- **Conversation agent** (web UI) — manages chat session, handles follow-ups,
+  remembers context, presents results. One per client.
+- **Knowledge agent** (Squire core) — provides atomic data access tools,
+  stateless, shared by all clients.
+
+The conversation agent is an MCP client to Squire's MCP server. This means
+the web UI consumes Squire the same way Claude Desktop or any other MCP client
+does — dog-fooding the same tool interface.
+
+```mermaid
+graph TB
+    subgraph hono["Hono Server"]
+        subgraph webui["Web UI Host"]
+            browser["Browser"]
+            conv["Conversation Agent<br/>(Claude API + session)"]
+            mcpclient["MCP Client<br/>(in-process, no auth)"]
+            browser -->|cookie| conv
+            conv --> mcpclient
+        end
+        subgraph squire["Squire MCP Server"]
+            mcp["/mcp (Streamable HTTP)"]
+            rest["/api/* (REST)"]
+            oauth["OAuth endpoints"]
+            auth["Auth Module<br/>(external clients only)"]
+            tools["Atomic Tools"]
+            mcp --> auth
+            rest --> auth
+            auth --> tools
+        end
+        mcpclient -->|in-process transport| tools
+    end
+
+    claude["Claude Desktop"] -->|OAuth 2.1| mcp
+    cli["CLI Client"] -->|OAuth 2.1| rest
+    discord["Discord Bot<br/>(separate project)"] -->|Client credentials| rest
+```
+
+### Transport and auth by client type
+
+```mermaid
+graph LR
+    subgraph external["External Clients"]
+        cd["Claude Desktop"]
+        cl["CLI"]
+        svc["Services"]
+    end
+    subgraph inprocess["In-Process"]
+        ca["Conversation Agent"]
+    end
+
+    cd -->|HTTP transport| oa["OAuth Validation"]
+    cl -->|HTTP transport| oa
+    svc -->|HTTP transport| oa
+    oa --> at["Atomic Tools"]
+
+    ca -->|In-process transport| at
+```
+
+**In-process clients (web UI conversation agent):**
+
+- Use in-process MCP transport (no HTTP round-trip)
+- No OAuth — already inside the trust boundary
+- Caller identity propagated via request context (user ID from session),
+  so tools like campaign state know who's asking
+
+**External network clients (Claude Desktop, CLI, Discord bot, services):**
+
+- Use Streamable HTTP transport over the network
+- OAuth 2.1 required (auth code + PKCE for interactive, client credentials
+  for machine-to-machine)
+- Auth module validates bearer tokens on every request
+
+### Atomic tools
+
+```mermaid
+graph TB
+    subgraph discovery["Discovery"]
+        lct["list_card_types()"]
+        lc["list_cards(type, filter?)"]
+    end
+    subgraph access["Data Access"]
+        gc["get_card(type, id)"]
+        sr["search_rules(query, topK?)"]
+        sc["search_cards(query, topK?)"]
+    end
+    subgraph campaign["Campaign State"]
+        gcmp["get_campaign()"]
+        ucmp["update_campaign(key, value)"]
+    end
+    subgraph optimized["Optimized Path"]
+        ask["ask(question)"]
+    end
+
+    sr --> vs["Vector Store"]
+    sc --> ed["Extracted Data"]
+    gc --> ed
+    lct --> ed
+    lc --> ed
+    ask --> vs
+    ask --> ed
+    ask --> llm["Claude API"]
+    gcmp --> fs["Campaign File"]
+    ucmp --> fs
 ```
 
 ### Why atomic tools matter
@@ -97,31 +172,71 @@ agents compose the tools to accomplish them.
 
 ### Web UI as agent loop
 
-The web UI is not a form that calls `POST /api/ask`. It's an **agent loop** —
-an LLM with Squire's tools that converses with the user, making multiple tool
-calls as needed. The chat session persists. The agent uses campaign context to
-give personalized answers.
+The web UI is not a form that calls `POST /api/ask`. The conversation agent
+connects to Squire via in-process MCP and converses with the user, making
+multiple tool calls as needed. The chat session persists. The agent uses
+campaign context for personalized answers.
 
 This is where the Frosthaven-themed chat (dark palette, icy blues, medieval
-typography) with HTMX streaming and inline citations lives. But the agent
-behind it can do multi-step reasoning, not just single-shot Q&A.
+typography) with HTMX streaming and inline citations lives. The agent behind
+it does multi-step reasoning, not just single-shot Q&A.
+
+Tool visibility: the UI shows which tools the agent is calling (search
+progress, card lookups) — no silent actions.
+
+### Auth model
+
+The auth module lives in the Hono server. It handles token issuance,
+validation, client registration, and the consent UI. It could be extracted
+to a separate service later.
+
+| Client              | Grant type         | Auth needed? | Identity propagation         |
+| ------------------- | ------------------ | ------------ | ---------------------------- |
+| Web UI (in-process) | None               | No           | Request context from session |
+| Claude Desktop      | Auth code + PKCE   | Yes          | From OAuth token             |
+| CLI                 | Auth code + PKCE   | Yes          | From OAuth token             |
+| Services            | Client credentials | Yes          | From OAuth token             |
+
+### OAuth endpoints (built into Hono server)
+
+- `/.well-known/oauth-authorization-server` — metadata discovery
+- `/.well-known/oauth-protected-resource` — resource metadata
+- `/authorize` — consent page (minimal HTML, Frosthaven-themed)
+- `/token` — token issuance
+- `/register` — dynamic client registration
+
+Implemented using `@modelcontextprotocol/sdk` auth handlers. PKCE required
+for all interactive clients. Dynamic Client Registration supported so clients
+auto-register without manual setup.
 
 ## Implementation
 
-Work is tracked in the [Squire Service Architecture](https://github.com/orgs/maz-org/projects/1)
-GitHub project.
+Work is tracked in the [Squire Service Architecture][project] GitHub project.
+
+[project]: https://github.com/orgs/maz-org/projects/1
 
 ## Key Decisions
 
-- **Architecture:** Agent-native — tools as primitives, features as prompts, emergent capability
-- **Tool design:** Atomic + discovery — agents compose tools creatively; discover available data at runtime
-- **RAG pipeline:** Optimized convenience — graduated-to-code hot path, not the foundation
-- **HTTP framework:** Hono — lightweight, web-standard Request/Response, TypeScript-first, built-in JSX
-- **MCP transport:** Streamable HTTP (remote) — network service, not local subprocess
-- **MCP auth:** Built-in OAuth 2.1 — SDK auth handlers + minimal consent UI, no external auth server
-- **Web UI rendering:** Hono JSX + HTMX — server-rendered, no build step, no client framework
-- **Web UI architecture:** Agent loop — LLM with Squire's tools, not a form calling a fixed endpoint
+- **Architecture:** Agent-native — tools as primitives, features as prompts,
+  emergent capability ([inspiration][agent-native])
+- **Two-agent model:** Conversation agent (UI) + knowledge agent (Squire core),
+  connected via MCP
+- **Tool design:** Atomic + discovery — agents compose tools; discover data
+  at runtime
+- **RAG pipeline:** Optimized convenience — graduated-to-code hot path, not
+  the foundation
+- **HTTP framework:** Hono — lightweight, web-standard Request/Response,
+  TypeScript-first, built-in JSX
+- **MCP transport:** Streamable HTTP for external clients; in-process for web
+  UI conversation agent
+- **Auth:** OAuth 2.1 for external clients; no auth in-process; identity
+  propagated via request context
+- **Web UI rendering:** Hono JSX + HTMX — server-rendered, no build step, no
+  client framework
+- **Web UI architecture:** Conversation agent as MCP client to Squire
+  (dog-fooding)
 - **Web UI styling:** Tailwind CSS — Frosthaven dark/icy theme
-- **Campaign state:** File-based context — agents read/update; persists across sessions
+- **Campaign state:** File-based context — agents read/update; persists across
+  sessions
 - **Deployment:** Clone, configure, run — no Docker/packaging yet
 - **Discord:** Separate project — Squire stays focused as a knowledge platform
