@@ -42,7 +42,7 @@ const CARD_TYPES: Record<CardType, CardTypeConfig> = {
     filter: (f) => f.endsWith('.png'),
     subdirs: false,
     context:
-      'This is a Frosthaven monster stat card showing HP, Move, Attack, and Range values for Normal and Elite difficulties across multiple levels.',
+      'This is a Frosthaven monster stat card showing HP, Move, and Attack values for Normal and Elite difficulties across multiple levels.',
   },
   'monster-abilities': {
     imageDir: join(IMAGES_BASE, 'monster-ability-cards', 'frosthaven'),

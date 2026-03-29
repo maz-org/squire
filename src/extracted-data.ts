@@ -61,16 +61,10 @@ function recordToText(record: ExtractedRecord): string {
     const normal = r.normal as Record<string, Record<string, number | null>> | undefined;
     const elite = r.elite as Record<string, Record<string, number | null>> | undefined;
     const levels = Object.entries(normal || {})
-      .map(
-        ([l, s]) =>
-          `Level ${l}: Normal(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack}${s?.range ? `, Range ${s.range}` : ''})`,
-      )
+      .map(([l, s]) => `Level ${l}: Normal(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack})`)
       .join('; ');
     const eliteLevels = Object.entries(elite || {})
-      .map(
-        ([l, s]) =>
-          `Level ${l}: Elite(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack}${s?.range ? `, Range ${s.range}` : ''})`,
-      )
+      .map(([l, s]) => `Level ${l}: Elite(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack})`)
       .join('; ');
     const immunities = (r.immunities as string[])?.length
       ? `Immunities: ${(r.immunities as string[]).join(', ')}. `

@@ -13,10 +13,27 @@ const nullableStr = z.string().nullable();
 // ─── Card schemas ─────────────────────────────────────────────────────────────
 
 const MonsterLevelStats = z.object({
-  move: nullableInt.describe('Movement value, or null if shown as a dash'),
-  attack: nullableInt.describe('Attack value, or null if shown as a dash'),
-  range: nullableInt.describe('Range value, or null if melee/dash'),
-  hp: nullableInt.describe('Hit point value, or null if shown as a dash'),
+  hp: z
+    .number()
+    .int()
+    .min(1)
+    .max(150)
+    .nullable()
+    .describe('Hit point value (1-150), or null if dash'),
+  move: z
+    .number()
+    .int()
+    .min(0)
+    .max(12)
+    .nullable()
+    .describe('Movement value (0-12), or null if dash'),
+  attack: z
+    .number()
+    .int()
+    .min(0)
+    .max(20)
+    .nullable()
+    .describe('Attack value (0-20), or null if dash'),
 });
 
 export const MonsterStatSchema = z.object({
