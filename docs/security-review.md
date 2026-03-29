@@ -1,0 +1,253 @@
+# Security Review: Squire Architecture
+
+Conceptual red team review of the Squire agent-native architecture.
+Performed 2026-03-29.
+
+## HIGH Risk
+
+### 1. Prompt Injection via Knowledge Agent
+
+The knowledge agent assembles context from multiple sources (rulebook
+passages, card data, conversation history, campaign state) and sends it
+to Claude. Every input path is a prompt injection surface.
+
+**Attack scenarios:**
+
+- User crafts a question that manipulates the system prompt ("ignore
+  your instructions...")
+- Conversation history injection — if raw history is passed to
+  `/api/ask`, a user can embed messages that look like system
+  instructions when concatenated
+- Indirect injection via poisoned card data — unlikely from OCR of
+  physical cards, but possible if the data pipeline or worldhaven repo
+  is compromised
+- Search result steering — crafted queries that surface specific
+  passages to manipulate the LLM's context window
+
+**Mitigations:**
+
+- Clearly delimit user input vs system context in prompts (XML tags,
+  not just prose boundaries)
+- Never include the system prompt or tool schemas in LLM output
+- Input length limits on questions and history
+- Anomaly detection via Langfuse traces (e.g., responses that contain
+  code, URLs, or instructions)
+- Rate limit per-user to bound abuse
+
+### 2. OAuth Implementation
+
+The auth module is the entire trust boundary for external clients. It is
+planned as a custom implementation inside the Hono server.
+
+**Attack scenarios:**
+
+- Dynamic client registration abuse — anyone can register, creating a
+  DoS vector or enabling phishing (register a client named "Squire
+  Official" with a malicious redirect URI)
+- Redirect URI open redirector — if validation is loose (prefix match
+  instead of exact), auth codes can be intercepted
+- PKCE implementation flaws — if `code_verifier` is not validated
+  against `code_challenge`, the flow is vulnerable to auth code
+  interception
+- Token theft — long-lived tokens stored unencrypted in Postgres
+- Consent UI CSRF — attacker tricks user into authorizing a malicious
+  client
+
+**Mitigations:**
+
+- Use the MCP SDK's auth handlers rather than rolling our own
+- Exact-match redirect URI validation, no wildcards
+- Rate limit client registration (e.g., 10/hour per IP)
+- Short-lived access tokens (15 min) with refresh token rotation
+- Encrypt tokens at rest in Postgres
+- CSRF protection on the consent page
+- Audit log all auth events (registrations, grants, token issuance)
+
+### 3. Campaign Data Isolation (Horizontal Privilege Escalation)
+
+With multiplayer campaigns, the system must prevent User A from accessing
+User B's data.
+
+**Attack scenarios:**
+
+- User guesses/enumerates `campaignId` values in `/api/ask` requests to
+  read other campaigns' state
+- User accesses another player's private data (personal quest, battle
+  goals — these are secret in Frosthaven)
+- Even with proper API-level access control, the LLM might leak private
+  data — if the knowledge agent loads all players' data into context,
+  the LLM could mention another player's personal quest in a response
+- A player mutates shared campaign state (prosperity, unlocked items)
+  without authorization from the party
+
+**Mitigations:**
+
+- Verify campaign membership on every request via the player entity
+- Scope the knowledge agent's context to only the requesting player's
+  data + shared campaign state — never load other players' private
+  fields
+- Player-level permissions on campaign mutations (or require consensus)
+- Audit logging for all campaign state changes
+- Integration tests that verify data isolation (User A cannot see User
+  B's personal quest)
+
+### 4. Secrets Management
+
+API keys and signing keys are high-value targets.
+
+**Attack scenarios:**
+
+- `ANTHROPIC_API_KEY` exposed via .env leak, server compromise, or
+  accidental commit — grants full API access under the project's
+  account
+- OAuth signing keys compromised — attacker forges valid tokens, full
+  account takeover for any user
+- Postgres credentials in environment variables — database compromise
+  leads to all user data
+- Langfuse keys — expose all query/response traces
+
+**Mitigations:**
+
+- Verify .env is in .gitignore
+- Use a secrets manager in production (not .env files)
+- Separate keys for dev/staging/production
+- Rotate API keys on a schedule
+- OAuth signing keys encrypted at rest; consider HSM for production
+- Least-privilege database credentials (read-only where possible)
+
+## MEDIUM Risk
+
+### 5. LLM Cost Exhaustion
+
+`/api/ask` calls the Claude API on every request. An authenticated
+attacker could run up significant costs.
+
+**Attack scenarios:**
+
+- Automated loop calling `/api/ask` with valid auth — each call costs
+  embedding + Claude API
+- Amplification via long conversation histories — passing large
+  `history` arrays increases token consumption
+- MCP tool abuse — `search_rules` triggers local embedding per call,
+  exhausting CPU
+
+**Mitigations:**
+
+- Per-user rate limits, with tighter limits on `/api/ask` and
+  `/api/search/rules`
+- Daily cost budget with circuit breaker (reject requests when budget
+  exceeded)
+- Cap `history` array length in `/api/ask`
+- Embedding result cache (same query leads to same embedding)
+- Monitor API spend with alerts
+
+### 6. Pre-Auth MCP Exposure
+
+The `/mcp` endpoint is currently open with no auth. If the server is
+network-accessible before the auth module is built, all tools are
+exposed.
+
+**Attack scenarios:**
+
+- Any network client can list tools, call `search_rules`, enumerate all
+  card data
+- Not damaging for game data, but sets a bad precedent — if campaign
+  tools are added before auth, private data is exposed
+
+**Mitigations:**
+
+- Do not deploy to a public network until auth is wired up (#59)
+- For dev, bind to localhost only
+- Consider a simple API key middleware as a stopgap before full OAuth
+
+### 7. Web UI XSS via LLM Output
+
+The web UI renders LLM responses with HTMX. If responses contain
+HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
+
+**Attack scenarios:**
+
+- Attacker crafts a prompt injection that causes the LLM to output
+  `<script>` tags
+- Stored XSS — if conversation history is persisted and re-rendered,
+  malicious content in a previous response executes on reload
+- Markdown rendering with embedded HTML
+
+**Mitigations:**
+
+- Escape all LLM output before rendering (treat as untrusted text, not
+  HTML)
+- Content Security Policy headers (no inline scripts)
+- If rendering markdown, use a sanitizing renderer that strips HTML
+  tags
+- HttpOnly, Secure, SameSite=Strict cookies
+
+### 8. Supply Chain / Data Pipeline
+
+**Attack scenarios:**
+
+- Compromised `worldhaven` repo injects malicious data into card
+  extraction
+- Compromised npm dependency (Hono, MCP SDK, etc.) exfiltrates API keys
+  or injects backdoors
+- Poisoned vector store — if `data/index.json` is tampered with,
+  adversarial embeddings surface for targeted queries
+
+**Mitigations:**
+
+- Pin worldhaven to a specific commit, review diffs before updating
+- npm audit + Dependabot (already configured)
+- SAST scanning (#12)
+- Integrity checksums on extracted data and vector index
+- Do not run the extraction pipeline in production — import
+  pre-verified data
+
+### 9. Denial of Service
+
+**Attack scenarios:**
+
+- Flood `/api/search/rules` — each request runs the local embedding
+  model (CPU-bound)
+- Flood `/mcp` — each request creates a new McpServer + transport
+  (memory-bound)
+- Large `topK` values (capped at 100, but 100 results times concurrent
+  requests strains memory)
+- `list_cards` with no filter returns all records of a type
+
+**Mitigations:**
+
+- Rate limiting per-IP and per-user
+- Connection limits
+- Response size limits
+- Consider caching for embeddings and frequent queries
+- Move MCP to stateful mode to reuse server instances
+
+## LOW Risk
+
+### 10. Information Disclosure
+
+- `/api/health` reveals `index_size` (minor internal state)
+- MCP server reports `name: 'squire', version: '0.1.0'`
+  (fingerprinting)
+- `/api/card-types` reveals the data schema (game data, not sensitive)
+- Langfuse traces could be exposed if misconfigured
+
+**Mitigations:**
+
+- Restrict Langfuse access
+- Do not expose stack traces in production (already handled by global
+  error handler)
+- Consider stripping version from MCP server info in production
+
+## Priority Recommendations
+
+1. Do not deploy publicly until auth is complete (#55-#59)
+2. Add SAST scanning now (#12)
+3. Design campaign data isolation before building campaign state — the
+   player entity must enforce access boundaries, and the knowledge
+   agent must scope its context to prevent LLM-mediated data leaks
+4. Add rate limiting middleware as a near-term task (before auth, since
+   it protects against DoS even for authenticated users)
+5. Establish a prompt injection test suite — adversarial test cases in
+   the E2E suite that try to extract the system prompt, manipulate
+   responses, or cause the LLM to output HTML

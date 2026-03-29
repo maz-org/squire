@@ -58,12 +58,31 @@ general rules questions — campaign context is optional.
 Both the conversation agent and knowledge agent need access to
 user/campaign/player state — the conversation agent to present a campaign
 picker and identify the user, the knowledge agent to personalize answers.
-Since both live in the same Hono server process, they share a data store
-(file-based or SQLite). If they ever separate, this becomes a shared
-database or API.
 
 Anonymous access (no user identity) may be supported in the future for
 read-only rules queries.
+
+### Storage
+
+All persistent state lives in **Postgres**:
+
+| Data | Dev (current) | Production |
+| ---- | ------------- | ---------- |
+| User/campaign/player state | N/A (not yet built) | Postgres |
+| Vector embeddings | `data/index.json` flat file | Postgres + pgvector |
+| Extracted card data | `data/extracted/*.json` | Postgres tables |
+| OAuth tokens/clients | N/A (not yet built) | Postgres |
+
+**pgvector** handles vector similarity search in the same database — no
+separate vector service needed at this scale.
+
+Extracted card data (monster stats, items, etc.) migrates from JSON files
+to Postgres tables. The atomic tools (`listCards`, `getCard`, etc.) become
+SQL queries instead of loading JSON into memory.
+
+Source PDFs (rulebooks, scenario books — 34GB+) are not deployed. They are
+input to the indexing step (`npm run index`), which produces the vector
+embeddings. Indexing runs as a build/CI task, not at runtime.
 
 ## Architecture
 
@@ -324,8 +343,10 @@ Work is tracked in the [Squire Service Architecture][project] GitHub project.
 - **Web UI architecture:** Conversation agent calls `/api/ask` — thin session
   manager, domain reasoning stays in the knowledge agent
 - **Web UI styling:** Tailwind CSS — Frosthaven dark/icy theme
-- **Campaign state:** File-based; three entities (user, campaign, player);
-  campaign context optional for general queries; anonymous access possible
-  in future
-- **Deployment:** Clone, configure, run — no Docker/packaging yet
+- **Storage:** Postgres for everything (state, vectors via pgvector, card
+  data, OAuth). Dev uses local flat files; production migrates to Postgres.
+- **Campaign state:** Three entities (user, campaign, player); campaign
+  context optional for general queries; anonymous access possible in future
+- **Deployment:** Clone, configure, run for dev. Production needs Postgres
+  and a data migration step (indexing + card data import)
 - **Discord:** Separate project — Squire stays focused as a knowledge platform
