@@ -114,6 +114,9 @@ export function convertMonster(ghs: GhsMonster): ExtractedMonster[] {
         if (stat.health === undefined && stat.movement === undefined && stat.attack === undefined)
           continue;
 
+        // GHS omits fields when the value is 0 (e.g., immobile monsters omit
+        // movement, Chaos Spark omits attack). These are real game values — a
+        // monster with attack 0 still draws from the attack modifier deck.
         const levelStats: LevelStats = {
           hp: stat.health ?? 0,
           move: stat.movement ?? baseMove,

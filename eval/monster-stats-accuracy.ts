@@ -102,6 +102,7 @@ function compareMonster(
     if (typeof stat.health === 'string') continue;
 
     const diff = stat.type === 'elite' ? 'elite' : 'normal';
+    // GHS omits fields when value is 0 — use same ?? 0 convention as the importer
     refLookup.set(`${diff}-${stat.level}`, {
       health: stat.health ?? 0,
       movement: stat.movement ?? reference.baseStat?.movement ?? 0,
@@ -118,6 +119,8 @@ function compareMonster(
     for (const [levelStr, extractedStats] of Object.entries(stats)) {
       const level = parseInt(levelStr);
       const ref = refLookup.get(`${diff}-${level}`);
+      // Only compares levels present in extracted data. Since we import from
+      // GHS (always complete), missing levels don't occur in practice.
       if (!ref) continue;
 
       const comparisons: [string, number | null, number][] = [
