@@ -18,6 +18,7 @@ const CARD_TYPES = [
   'events',
   'battle-goals',
   'buildings',
+  'personal-quests',
 ] as const;
 
 export function createMcpServer(): McpServer {
