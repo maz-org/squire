@@ -136,6 +136,36 @@ export const BuildingSchema = z.object({
   notes: nullableStr.describe('Any other relevant text, or null'),
 });
 
+export const ScenarioSchema = z.object({
+  index: z.string().describe('Scenario number/identifier (e.g. "1", "4A")'),
+  name: z.string().describe('Scenario name'),
+  complexity: z.number().int().min(1).max(3).describe('Scenario complexity rating (1-3)'),
+  monsters: z.array(z.string()).describe('Monster types present in this scenario'),
+  allies: z.array(z.string()).describe('Allied monster types, if any'),
+  unlocks: z.array(z.string()).describe('Scenario indices unlocked on completion'),
+  requirements: z
+    .array(
+      z.object({
+        buildings: z.array(z.string()).optional(),
+      }),
+    )
+    .describe('Prerequisites to play this scenario'),
+  objectives: z
+    .array(
+      z.object({
+        name: z.string(),
+        escort: z.boolean().optional(),
+      }),
+    )
+    .describe('Named objectives in the scenario'),
+  rewards: nullableStr.describe('Human-readable completion rewards text'),
+  lootDeckConfig: z
+    .record(z.string(), z.number())
+    .describe('Loot deck composition by resource type'),
+  flowChartGroup: nullableStr.describe('Campaign flow chart group'),
+  initial: z.boolean().describe('Whether this is a starting scenario'),
+});
+
 export const SCHEMAS = {
   'monster-stats': MonsterStatSchema,
   'monster-abilities': MonsterAbilitySchema,
@@ -144,6 +174,7 @@ export const SCHEMAS = {
   events: EventSchema,
   'battle-goals': BattleGoalSchema,
   buildings: BuildingSchema,
+  scenarios: ScenarioSchema,
 } as const;
 
 export type CardType = keyof typeof SCHEMAS;
@@ -156,6 +187,7 @@ export type Item = z.infer<typeof ItemSchema>;
 export type Event = z.infer<typeof EventSchema>;
 export type BattleGoal = z.infer<typeof BattleGoalSchema>;
 export type Building = z.infer<typeof BuildingSchema>;
+export type Scenario = z.infer<typeof ScenarioSchema>;
 export type CardData =
   | MonsterStat
   | MonsterAbility
@@ -163,4 +195,5 @@ export type CardData =
   | Item
   | Event
   | BattleGoal
-  | Building;
+  | Building
+  | Scenario;
