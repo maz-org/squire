@@ -67,12 +67,23 @@ export function isReady(): boolean {
   return ready;
 }
 
+/** Maximum number of history messages to include in the LLM call. */
+const MAX_HISTORY_TURNS = 20;
+
+export interface HistoryMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 /**
  * Answer a Frosthaven rules question using the bundled RAG pipeline.
  * This is the "graduated optimization" convenience path — it composes
  * the atomic tools (searchRules, searchCards) with an LLM call.
+ *
+ * @param history - Optional conversation history for multi-turn context.
+ *   Truncated to the last {@link MAX_HISTORY_TURNS} messages.
  */
-export async function ask(question: string): Promise<string> {
+export async function ask(question: string, history?: HistoryMessage[]): Promise<string> {
   if (!ready) {
     throw new Error('Service not initialized. Call initialize() first.');
   }
@@ -93,12 +104,19 @@ export async function ask(question: string): Promise<string> {
 
   const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
 
-  // Step 3: LLM generation
+  // Step 3: Build messages array with optional history
+  const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
+  const messages = [
+    ...truncatedHistory.map((m) => ({ role: m.role, content: m.content })),
+    { role: 'user' as const, content: userMessage },
+  ];
+
+  // Step 4: LLM generation
   const response = await client.messages.create({
     model: 'claude-opus-4-6',
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: userMessage }],
+    messages,
   });
 
   return response.content.find((b) => b.type === 'text')?.text ?? '';

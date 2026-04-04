@@ -334,7 +334,7 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is the loot action?' }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?');
+    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?', undefined);
   });
 
   it('returns 400 when question is missing', async () => {
@@ -360,6 +360,61 @@ describe('POST /api/ask', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: 'not json',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('passes history to ask()', async () => {
+    const history = [
+      { role: 'user', content: 'What is loot?' },
+      { role: 'assistant', content: 'Loot tokens are picked up.' },
+    ];
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What about traps?', history }),
+    });
+    expect(mockAsk).toHaveBeenCalledWith('What about traps?', history);
+  });
+
+  it('works without history (backward compatible)', async () => {
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is loot?' }),
+    });
+    expect(mockAsk).toHaveBeenCalledWith('What is loot?', undefined);
+  });
+
+  it('returns 400 for invalid history role', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({
+        question: 'test',
+        history: [{ role: 'system', content: 'hi' }],
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when history is not an array', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'test', history: 'not-array' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when history item missing content', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({
+        question: 'test',
+        history: [{ role: 'user' }],
+      }),
     });
     expect(res.status).toBe(400);
   });

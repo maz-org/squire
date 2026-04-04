@@ -156,6 +156,46 @@ describe('ask', () => {
     expect(userMessage).toContain('Boots of Speed');
   });
 
+  it('passes history messages before the context message', async () => {
+    await initialize();
+    const history = [
+      { role: 'user' as const, content: 'What is loot?' },
+      { role: 'assistant' as const, content: 'Loot tokens are picked up in your hex.' },
+    ];
+    await ask('What about traps?', history);
+    const messages = mockMessagesCreate.mock.calls[0][0].messages;
+    expect(messages).toHaveLength(3);
+    expect(messages[0]).toEqual({ role: 'user', content: 'What is loot?' });
+    expect(messages[1]).toEqual({
+      role: 'assistant',
+      content: 'Loot tokens are picked up in your hex.',
+    });
+    expect(messages[2].role).toBe('user');
+    expect(messages[2].content).toContain('What about traps?');
+  });
+
+  it('sends only the context message when history is omitted', async () => {
+    await initialize();
+    await ask('What is the loot action?');
+    const messages = mockMessagesCreate.mock.calls[0][0].messages;
+    expect(messages).toHaveLength(1);
+    expect(messages[0].role).toBe('user');
+  });
+
+  it('truncates history to the last 20 messages', async () => {
+    await initialize();
+    const history = Array.from({ length: 30 }, (_, i) => ({
+      role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: `message ${i}`,
+    }));
+    await ask('Final question', history);
+    const messages = mockMessagesCreate.mock.calls[0][0].messages;
+    // 20 history + 1 context = 21
+    expect(messages).toHaveLength(21);
+    // Should keep the last 20 (indices 10-29)
+    expect(messages[0].content).toBe('message 10');
+  });
+
   it('throws if not initialized', async () => {
     // Use a fresh module import to get uninitialized state
     vi.resetModules();

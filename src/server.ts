@@ -9,6 +9,7 @@ import { isReady, initialize, ask } from './service.ts';
 import { loadIndex } from './vector-store.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
+import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import {
@@ -277,6 +278,19 @@ app.get('/api/cards', (c) => {
 
 // ─── Ask endpoint ────────────────────────────────────────────────────────────
 
+const AskRequestSchema = z.object({
+  question: z.string().min(1),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string(),
+      }),
+    )
+    .max(20)
+    .optional(),
+});
+
 app.post('/api/ask', async (c) => {
   let body: unknown;
   try {
@@ -285,10 +299,13 @@ app.post('/api/ask', async (c) => {
     return c.json(jsonError('Invalid JSON body', 400), 400);
   }
 
-  const { question } = body as { question?: string };
-  if (!question) return c.json(jsonError('Missing required field: question', 400), 400);
+  const result = AskRequestSchema.safeParse(body);
+  if (!result.success) {
+    return c.json(jsonError('Invalid request: ' + result.error.issues[0].message, 400), 400);
+  }
 
-  const answer = await ask(question);
+  const { question, history } = result.data;
+  const answer = await ask(question, history);
   return c.json({ answer });
 });
 
