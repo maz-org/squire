@@ -114,6 +114,7 @@ const ID_FIELDS: Record<CardType, string> = {
   events: 'number',
   'battle-goals': 'name',
   buildings: 'buildingNumber',
+  'personal-quests': 'cardId',
 };
 
 /**

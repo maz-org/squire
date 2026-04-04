@@ -30,6 +30,7 @@ const CARD_TYPES = [
   'events',
   'battle-goals',
   'buildings',
+  'personal-quests',
 ] as const;
 
 export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \

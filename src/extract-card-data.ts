@@ -36,7 +36,9 @@ interface CardTypeConfig {
   context: string;
 }
 
-const CARD_TYPES: Record<CardType, CardTypeConfig> = {
+// Card types that have image-based OCR extraction. Not all CardTypes are here —
+// types like personal-quests are imported directly from structured GHS data.
+const CARD_TYPES: Partial<Record<CardType, CardTypeConfig>> = {
   'monster-stats': {
     imageDir: join(IMAGES_BASE, 'monster-stat-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
@@ -117,7 +119,9 @@ export function extractNumberFromFilename(filename: string, cardType: CardType):
 // ─── Image collection ─────────────────────────────────────────────────────────
 
 export function collectImages(cardType: CardType): string[] {
-  const config = CARD_TYPES[cardType];
+  const maybeConfig = CARD_TYPES[cardType];
+  if (!maybeConfig) return [];
+  const config: CardTypeConfig = maybeConfig;
   const images: string[] = [];
 
   function scanDir(dir: string): void {

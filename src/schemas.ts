@@ -136,6 +136,28 @@ export const BuildingSchema = z.object({
   notes: nullableStr.describe('Any other relevant text, or null'),
 });
 
+const PersonalQuestRequirementSchema = z.object({
+  description: z.string().describe('Human-readable requirement text'),
+  target: z
+    .union([z.number().int(), z.string()])
+    .describe('Counter target (number) or formula string (e.g. "80+20xP")'),
+  options: z
+    .array(z.string())
+    .nullable()
+    .describe('Checkbox options (e.g. herb names), or null if not applicable'),
+  dependsOn: z
+    .array(z.number().int())
+    .nullable()
+    .describe('1-based indices of prerequisite requirements, or null'),
+});
+
+export const PersonalQuestSchema = z.object({
+  cardId: z.string().describe('Personal quest card ID'),
+  name: z.string().describe('Quest title'),
+  requirements: z.array(PersonalQuestRequirementSchema).describe('Completion requirements'),
+  openEnvelope: z.string().describe('Envelope/section references to open on completion'),
+});
+
 export const SCHEMAS = {
   'monster-stats': MonsterStatSchema,
   'monster-abilities': MonsterAbilitySchema,
@@ -144,6 +166,7 @@ export const SCHEMAS = {
   events: EventSchema,
   'battle-goals': BattleGoalSchema,
   buildings: BuildingSchema,
+  'personal-quests': PersonalQuestSchema,
 } as const;
 
 export type CardType = keyof typeof SCHEMAS;
@@ -156,6 +179,7 @@ export type Item = z.infer<typeof ItemSchema>;
 export type Event = z.infer<typeof EventSchema>;
 export type BattleGoal = z.infer<typeof BattleGoalSchema>;
 export type Building = z.infer<typeof BuildingSchema>;
+export type PersonalQuest = z.infer<typeof PersonalQuestSchema>;
 export type CardData =
   | MonsterStat
   | MonsterAbility
@@ -163,4 +187,5 @@ export type CardData =
   | Item
   | Event
   | BattleGoal
-  | Building;
+  | Building
+  | PersonalQuest;
