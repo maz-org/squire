@@ -5,6 +5,7 @@
 
 import 'dotenv/config';
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { isReady, initialize, ask } from './service.ts';
 import { loadIndex } from './vector-store.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
@@ -307,8 +308,21 @@ app.post('/api/ask', async (c) => {
   }
 
   const { question, ...options } = result.data;
-  const answer = await ask(question, options);
-  return c.json({ answer });
+  return streamSSE(c, async (stream) => {
+    try {
+      await ask(question, {
+        ...options,
+        emit: async (event, data) => {
+          await stream.writeSSE({ event, data: JSON.stringify(data) });
+        },
+      });
+    } catch {
+      await stream.writeSSE({
+        event: 'error',
+        data: JSON.stringify({ message: 'Internal server error' }),
+      });
+    }
+  });
 });
 
 // ─── Server startup ──────────────────────────────────────────────────────────
