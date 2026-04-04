@@ -165,17 +165,19 @@ issues it finds.
 ### Clone the repo
 
 ```bash
-git clone https://github.com/maz-org/squire.git
+git clone --recurse-submodules https://github.com/maz-org/squire.git
 cd squire
 ```
 
-### Clone the worldhaven game data
+### Initialize game data submodules
 
-[Worldhaven](https://github.com/any2cards/worldhaven) provides card images and
-item data used by the extraction pipeline:
+[Worldhaven](https://github.com/any2cards/worldhaven) and
+[Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat)
+are pinned as git submodules. If you used `--recurse-submodules` above, they're
+already populated. Otherwise:
 
 ```bash
-git clone https://github.com/any2cards/worldhaven.git data/worldhaven
+git submodule update --init
 ```
 
 ### Install dependencies

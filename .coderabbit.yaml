@@ -23,7 +23,7 @@ reviews:
     - path: "src/extract-card-data.ts"
       instructions: "This uses Claude Haiku for vision OCR. Check rate limit handling, retry logic, and that extracted data is validated against Zod schemas."
     - path: "test/**"
-      instructions: "All external services must be mocked. Tests must not depend on data files in data/ (gitignored). Check for proper use of vi.hoisted() when mock variables are referenced in vi.mock() factories."
+      instructions: "All external services must be mocked. Tests must not depend on data files in data/ (submodules, not checked in). Check for proper use of vi.hoisted() when mock variables are referenced in vi.mock() factories."
   tools:
     ast-grep:
       essential_rules: true
