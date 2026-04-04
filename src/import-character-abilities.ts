@@ -70,7 +70,7 @@ interface GhsAction {
 interface GhsAbility {
   name: string;
   cardId: number;
-  level: number;
+  level: number | 'X';
   initiative: number;
   actions?: GhsAction[];
   bottomActions?: GhsAction[];
@@ -97,7 +97,7 @@ type LabelData = Record<string, any>;
 interface ExtractedCharacterAbility {
   cardName: string;
   characterClass: string;
-  level: number;
+  level: number | 'X';
   initiative: number;
   top: { action: string; effects: string[] };
   bottom: { action: string; effects: string[] };
@@ -208,7 +208,13 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
 
   if (action.type === 'custom') {
     const val = String(action.value);
-    text = val.startsWith('%data.') ? resolveLabel(val, labels) : resolveGameTokens(val);
+    if (val === '%character.abilities.wip%') {
+      text = '(ability text not yet available)';
+    } else if (val.startsWith('%data.')) {
+      text = resolveLabel(val, labels);
+    } else {
+      text = resolveGameTokens(val);
+    }
   } else if (action.type === 'condition') {
     text = capitalize(String(action.value));
   } else if (action.type === 'summon') {
@@ -287,13 +293,12 @@ export function importCharacterAbilities(): ExtractedCharacterAbility[] {
     );
   }
 
-  // Load and merge label files
-  const baseLabels: LabelData = existsSync(GHS_LABEL_PATH)
-    ? JSON.parse(readFileSync(GHS_LABEL_PATH, 'utf-8'))
-    : {};
-  const spoilerLabels: LabelData = existsSync(GHS_SPOILER_LABEL_PATH)
-    ? JSON.parse(readFileSync(GHS_SPOILER_LABEL_PATH, 'utf-8'))
-    : {};
+  // Load and merge label files — fail fast if missing
+  if (!existsSync(GHS_LABEL_PATH) || !existsSync(GHS_SPOILER_LABEL_PATH)) {
+    throw new Error('Missing GHS label data. Expected both base and spoiler English label files.');
+  }
+  const baseLabels: LabelData = JSON.parse(readFileSync(GHS_LABEL_PATH, 'utf-8'));
+  const spoilerLabels: LabelData = JSON.parse(readFileSync(GHS_SPOILER_LABEL_PATH, 'utf-8'));
   const labels = mergeLabels(baseLabels, spoilerLabels);
 
   const allResults: ExtractedCharacterAbility[] = [];
@@ -305,7 +310,26 @@ export function importCharacterAbilities(): ExtractedCharacterAbility[] {
     const deck: GhsDeck = JSON.parse(readFileSync(join(GHS_DECK_DIR, file), 'utf-8'));
 
     for (const ability of deck.abilities) {
-      allResults.push(convertAbility(ability, characterName, labels));
+      const converted = convertAbility(ability, characterName, labels);
+
+      // Fail if any data/game tokens survived resolution (but not WIP placeholders,
+      // which are legitimately incomplete in upstream GHS data)
+      const allText = [
+        converted.top.action,
+        ...converted.top.effects,
+        converted.bottom.action,
+        ...converted.bottom.effects,
+      ];
+      const unresolved = allText.find(
+        (t) => /%(?:data|game)\./.test(t) && !t.includes('%character.abilities.wip%'),
+      );
+      if (unresolved) {
+        throw new Error(
+          `Unresolved label/token in ${characterName}/${ability.cardId}: ${unresolved}`,
+        );
+      }
+
+      allResults.push(converted);
     }
   }
 

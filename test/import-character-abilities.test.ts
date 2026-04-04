@@ -384,6 +384,20 @@ describe('convertAbility', () => {
     expect(result.bottom.effects).toEqual([]);
   });
 
+  it('preserves level "X" for cards with no numeric level', () => {
+    const ghsAbility = {
+      name: 'Special Card',
+      cardId: 99,
+      level: 'X' as const,
+      initiative: 50,
+      actions: [{ type: 'attack', value: 2 }],
+      bottomActions: [{ type: 'move', value: 3 }],
+    };
+
+    const result = convertAbility(ghsAbility, 'drifter', labels);
+    expect(result.level).toBe('X');
+  });
+
   it('skips non-formattable actions (concatenation, forceBox)', () => {
     const ghsAbility = {
       name: 'Complex Card',
