@@ -36,7 +36,10 @@ interface CardTypeConfig {
   context: string;
 }
 
-const CARD_TYPES: Record<CardType, CardTypeConfig> = {
+// Only card types that use OCR extraction from images.
+// Some types (e.g., character-mats, monster-stats, character-abilities) are
+// imported from GHS reference data instead — see import-*.ts scripts.
+const CARD_TYPES: Partial<Record<CardType, CardTypeConfig>> = {
   'monster-stats': {
     imageDir: join(IMAGES_BASE, 'monster-stat-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
@@ -118,17 +121,19 @@ export function extractNumberFromFilename(filename: string, cardType: CardType):
 
 export function collectImages(cardType: CardType): string[] {
   const config = CARD_TYPES[cardType];
+  if (!config) return [];
+  const { imageDir, filter, subdirs } = config;
   const images: string[] = [];
 
   function scanDir(dir: string): void {
     if (!existsSync(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory() && config.subdirs) scanDir(join(dir, entry.name));
-      else if (entry.isFile() && config.filter(entry.name)) images.push(join(dir, entry.name));
+      if (entry.isDirectory() && subdirs) scanDir(join(dir, entry.name));
+      else if (entry.isFile() && filter(entry.name)) images.push(join(dir, entry.name));
     }
   }
 
-  scanDir(config.imageDir);
+  scanDir(imageDir);
   return images;
 }
 

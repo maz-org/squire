@@ -81,6 +81,18 @@ export const CharacterAbilitySchema = z.object({
   lost: z.boolean().describe('True if the card has a lost symbol'),
 });
 
+export const CharacterMatSchema = z.object({
+  name: z.string().describe('Character class name (e.g. "Drifter")'),
+  characterClass: z.string().describe('Character race (e.g. "Inox")'),
+  handSize: z.number().int().describe('Starting hand size'),
+  traits: z.array(z.string()).describe('Character traits (e.g. outcast, resourceful, strong)'),
+  hp: z
+    .record(z.string(), z.number().int())
+    .describe('HP by level, keyed by level number string ("1" through "9")'),
+  perks: z.array(z.string()).describe('Human-readable perk descriptions'),
+  masteries: z.array(z.string()).describe('Human-readable mastery conditions'),
+});
+
 export const ItemSchema = z.object({
   number: z.string().describe('Item number as 3-digit string e.g. "099"'),
   name: z.string().describe('Item name'),
@@ -140,6 +152,7 @@ export const SCHEMAS = {
   'monster-stats': MonsterStatSchema,
   'monster-abilities': MonsterAbilitySchema,
   'character-abilities': CharacterAbilitySchema,
+  'character-mats': CharacterMatSchema,
   items: ItemSchema,
   events: EventSchema,
   'battle-goals': BattleGoalSchema,
@@ -152,6 +165,7 @@ export type CardType = keyof typeof SCHEMAS;
 export type MonsterStat = z.infer<typeof MonsterStatSchema>;
 export type MonsterAbility = z.infer<typeof MonsterAbilitySchema>;
 export type CharacterAbility = z.infer<typeof CharacterAbilitySchema>;
+export type CharacterMat = z.infer<typeof CharacterMatSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type Event = z.infer<typeof EventSchema>;
 export type BattleGoal = z.infer<typeof BattleGoalSchema>;
@@ -160,6 +174,7 @@ export type CardData =
   | MonsterStat
   | MonsterAbility
   | CharacterAbility
+  | CharacterMat
   | Item
   | Event
   | BattleGoal

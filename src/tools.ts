@@ -110,6 +110,7 @@ const ID_FIELDS: Record<CardType, string> = {
   'monster-stats': 'name',
   'monster-abilities': 'cardName',
   'character-abilities': 'cardName',
+  'character-mats': 'name',
   items: 'number',
   events: 'number',
   'battle-goals': 'name',
