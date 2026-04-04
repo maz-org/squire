@@ -12,16 +12,10 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { GHS_DATA_DIR, kebabToTitle } from './ghs-utils.ts';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_MONSTER_DIR = join(
-  __dirname,
-  '..',
-  'data',
-  'gloomhavensecretariat',
-  'data',
-  'fh',
-  'monster',
-);
+const GHS_MONSTER_DIR = join(GHS_DATA_DIR, 'monster');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'monster-stats.json');
 
 // ─── GHS types ───────────────────────────────────────────────────────────────
@@ -62,13 +56,6 @@ interface ExtractedMonster {
 }
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
-
-export function kebabToTitle(name: string): string {
-  return name
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
 
 export function formatActions(
   actions?: Array<{ type: string; value: string | number }>,

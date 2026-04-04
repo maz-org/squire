@@ -1,19 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { kebabToTitle, formatActions, convertMonster } from '../src/import-monster-stats.ts';
-
-describe('kebabToTitle', () => {
-  it('converts kebab-case to title case', () => {
-    expect(kebabToTitle('earth-demon')).toBe('Earth Demon');
-  });
-
-  it('handles single word', () => {
-    expect(kebabToTitle('ooze')).toBe('Ooze');
-  });
-
-  it('handles multiple hyphens', () => {
-    expect(kebabToTitle('fracture-of-the-deep')).toBe('Fracture Of The Deep');
-  });
-});
+import { formatActions, convertMonster } from '../src/import-monster-stats.ts';
 
 describe('formatActions', () => {
   it('returns null for undefined actions', () => {
