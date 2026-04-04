@@ -7,11 +7,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
-import type { AskOptions, HistoryMessage } from './service.ts';
+import type { AskOptions, HistoryMessage, EmitFn } from './service.ts';
 
 type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
 type ContentBlockParam = Anthropic.ContentBlockParam;
+type Message = Anthropic.Message;
 
 const client = new Anthropic();
 
@@ -156,11 +157,39 @@ export async function executeToolCall(
 }
 
 /**
+ * Call the Claude API, either streaming or non-streaming based on emit.
+ * Returns the final Message in both cases.
+ */
+async function callClaude(messages: MessageParam[], emit?: EmitFn): Promise<Message> {
+  const params = {
+    model: 'claude-sonnet-4-6' as const,
+    max_tokens: 4096,
+    system: AGENT_SYSTEM_PROMPT,
+    tools: AGENT_TOOLS,
+    messages,
+  };
+
+  if (!emit) {
+    return client.messages.create(params);
+  }
+
+  const stream = client.messages.stream(params);
+  stream.on('text', (delta) => {
+    void emit('text', { delta });
+  });
+  return stream.finalMessage();
+}
+
+/**
  * Run the knowledge agent loop. Claude decides which tools to call,
  * iterates until it has enough context, then produces a final answer.
+ *
+ * When `options.emit` is provided, text is streamed as it's generated
+ * and tool activity is emitted as events.
  */
 export async function runAgentLoop(question: string, options?: AskOptions): Promise<string> {
   const history = options?.history;
+  const emit = options?.emit;
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
 
   const messages: MessageParam[] = [
@@ -174,13 +203,7 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
   let lastTextContent = '';
 
   for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: AGENT_SYSTEM_PROMPT,
-      tools: AGENT_TOOLS,
-      messages,
-    });
+    const response = await callClaude(messages, emit);
 
     // Collect all text content from this response
     const texts: string[] = [];
@@ -195,6 +218,7 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
 
     // If the model is done (no more tool calls), return the answer
     if (response.stop_reason === 'end_turn' || response.stop_reason === 'stop_sequence') {
+      if (emit) await emit('done', {});
       return lastTextContent;
     }
 
@@ -207,13 +231,15 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
 
     // Process tool calls
     if (response.stop_reason === 'tool_use') {
-      // Add the assistant's response (with tool_use blocks) to messages
       messages.push({ role: 'assistant', content: response.content });
 
-      // Execute each tool call and build tool_result blocks
       const toolResults: ContentBlockParam[] = [];
       for (const block of response.content) {
         if (block.type === 'tool_use') {
+          if (emit) {
+            await emit('tool_call', { name: block.name, input: block.input });
+          }
+
           let result: string;
           let isError = false;
           try {
@@ -222,6 +248,11 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
             result = `Tool error: ${err instanceof Error ? err.message : String(err)}`;
             isError = true;
           }
+
+          if (emit) {
+            await emit('tool_result', { name: block.name });
+          }
+
           toolResults.push({
             type: 'tool_result',
             tool_use_id: block.id,
@@ -236,9 +267,11 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
     }
 
     // Unrecoverable stop reasons (refusal, context window exceeded, etc.)
+    if (emit) await emit('done', {});
     return lastTextContent || 'I was unable to answer this question.';
   }
 
-  // Iteration limit reached — return whatever text we have
+  // Iteration limit reached
+  if (emit) await emit('done', {});
   return lastTextContent || 'I was unable to produce an answer within the allowed number of steps.';
 }

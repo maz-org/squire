@@ -64,12 +64,16 @@ export interface HistoryMessage {
   content: string;
 }
 
+export type EmitFn = (event: string, data: unknown) => Promise<void>;
+
 export interface AskOptions {
   history?: HistoryMessage[];
   /** Campaign UUID — reserved for future campaign context loading. */
   campaignId?: string;
   /** User UUID — reserved for future player context loading. */
   userId?: string;
+  /** SSE emit callback. When provided, the agent streams text deltas and tool events. */
+  emit?: EmitFn;
 }
 
 /**
