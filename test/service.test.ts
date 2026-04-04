@@ -162,7 +162,7 @@ describe('ask', () => {
       { role: 'user' as const, content: 'What is loot?' },
       { role: 'assistant' as const, content: 'Loot tokens are picked up in your hex.' },
     ];
-    await ask('What about traps?', history);
+    await ask('What about traps?', { history });
     const messages = mockMessagesCreate.mock.calls[0][0].messages;
     expect(messages).toHaveLength(3);
     expect(messages[0]).toEqual({ role: 'user', content: 'What is loot?' });
@@ -188,12 +188,31 @@ describe('ask', () => {
       role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
       content: `message ${i}`,
     }));
-    await ask('Final question', history);
+    await ask('Final question', { history });
     const messages = mockMessagesCreate.mock.calls[0][0].messages;
     // 20 history + 1 context = 21
     expect(messages).toHaveLength(21);
     // Should keep the last 20 (indices 10-29)
     expect(messages[0].content).toBe('message 10');
+  });
+
+  it('accepts options object with history', async () => {
+    await initialize();
+    const history = [{ role: 'user' as const, content: 'What is loot?' }];
+    await ask('Follow-up', { history });
+    const messages = mockMessagesCreate.mock.calls[0][0].messages;
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toEqual({ role: 'user', content: 'What is loot?' });
+  });
+
+  it('accepts campaignId and userId in options', async () => {
+    await initialize();
+    await ask('What items do I have?', {
+      campaignId: '550e8400-e29b-41d4-a716-446655440000',
+      userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+    // Should still produce a valid answer (campaign context not loaded yet)
+    expect(mockMessagesCreate).toHaveBeenCalled();
   });
 
   it('throws if not initialized', async () => {

@@ -334,7 +334,7 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is the loot action?' }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?', undefined);
+    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?', {});
   });
 
   it('returns 400 when question is missing', async () => {
@@ -374,7 +374,7 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What about traps?', history }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What about traps?', history);
+    expect(mockAsk).toHaveBeenCalledWith('What about traps?', { history });
   });
 
   it('works without history (backward compatible)', async () => {
@@ -383,7 +383,36 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is loot?' }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What is loot?', undefined);
+    expect(mockAsk).toHaveBeenCalledWith('What is loot?', {});
+  });
+
+  it('passes campaignId and userId to ask()', async () => {
+    const campaignId = '550e8400-e29b-41d4-a716-446655440000';
+    const userId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What items do I have?', campaignId, userId }),
+    });
+    expect(mockAsk).toHaveBeenCalledWith('What items do I have?', { campaignId, userId });
+  });
+
+  it('returns 400 for non-UUID campaignId', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'test', campaignId: 'not-a-uuid' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for non-UUID userId', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'test', userId: 'not-a-uuid' }),
+    });
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 for invalid history role', async () => {
