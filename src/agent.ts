@@ -90,8 +90,8 @@ export const AGENT_TOOLS: Tool[] = [
           description: 'Card type to list',
         },
         filter: {
-          type: 'string',
-          description: 'Optional JSON filter object (AND logic), e.g. {"name":"Algox Archer"}',
+          type: 'object',
+          description: 'Optional field/value filters (AND logic)',
         },
       },
       required: ['type'],
@@ -138,14 +138,10 @@ export async function executeToolCall(
       return JSON.stringify(listCardTypes(), null, 2);
     }
     case 'list_cards': {
-      let filter: Record<string, unknown> | undefined;
-      if (input.filter) {
-        try {
-          filter = JSON.parse(input.filter as string) as Record<string, unknown>;
-        } catch {
-          return `Invalid filter JSON: ${input.filter}`;
-        }
-      }
+      const filter =
+        input.filter && typeof input.filter === 'object' && !Array.isArray(input.filter)
+          ? (input.filter as Record<string, unknown>)
+          : undefined;
       const cards = listCards(input.type as CardType, filter);
       return JSON.stringify(cards, null, 2);
     }
@@ -194,8 +190,15 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
     }
 
     // If the model is done (no more tool calls), return the answer
-    if (response.stop_reason === 'end_turn') {
+    if (response.stop_reason === 'end_turn' || response.stop_reason === 'stop_sequence') {
       return lastTextContent;
+    }
+
+    // Max tokens or pause — append partial response and continue for more
+    if (response.stop_reason === 'max_tokens' || response.stop_reason === 'pause_turn') {
+      messages.push({ role: 'assistant', content: response.content });
+      messages.push({ role: 'user', content: 'Continue.' });
+      continue;
     }
 
     // Process tool calls
@@ -217,7 +220,11 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
       }
 
       messages.push({ role: 'user', content: toolResults });
+      continue;
     }
+
+    // Unrecoverable stop reasons (refusal, context window exceeded, etc.)
+    return lastTextContent || 'I was unable to answer this question.';
   }
 
   // Iteration limit reached — return whatever text we have

@@ -129,6 +129,32 @@ describe('runAgentLoop', () => {
     expect(mockListCardTypes).toHaveBeenCalled();
   });
 
+  it('handles max_tokens by continuing', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce({
+        content: [{ type: 'text', text: 'Partial ans' }],
+        stop_reason: 'max_tokens',
+        usage: { input_tokens: 100, output_tokens: 4096 },
+      })
+      .mockResolvedValueOnce(textResponse('Partial answer continued.'));
+
+    const result = await runAgentLoop('Long question');
+    expect(result).toBe('Partial answer continued.');
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('handles refusal by returning gracefully', async () => {
+    mockMessagesCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'I cannot help with that.' }],
+      stop_reason: 'refusal',
+      usage: { input_tokens: 100, output_tokens: 20 },
+    });
+
+    const result = await runAgentLoop('Bad question');
+    expect(result).toBe('I cannot help with that.');
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+  });
+
   it('respects iteration limit', async () => {
     // Claude keeps calling tools forever
     mockMessagesCreate.mockResolvedValue(toolUseResponse('search_rules', { query: 'loop' }));
