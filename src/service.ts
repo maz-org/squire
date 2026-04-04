@@ -1,20 +1,12 @@
 /**
  * Squire knowledge service.
- * Provides initialization, readiness checks, and the bundled RAG convenience path.
+ * Provides initialization, readiness checks, and the knowledge agent.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import { embed } from './embedder.ts';
 import { loadIndex } from './vector-store.ts';
-import { searchRules, searchCards, listCardTypes } from './tools.ts';
-import type { RuleResult, CardResult } from './tools.ts';
-
-const client = new Anthropic();
-
-const SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant. \
-Answer questions accurately based on the rulebook excerpts and card data provided. \
-Be concise but complete. If the provided data doesn't contain enough information to answer confidently, say so. \
-Do not invent rules, stats, or item numbers.`;
+import { listCardTypes } from './tools.ts';
+import { runAgentLoop } from './agent.ts';
 
 let ready = false;
 let initPromise: Promise<void> | null = null;
@@ -67,9 +59,6 @@ export function isReady(): boolean {
   return ready;
 }
 
-/** Maximum number of history messages to include in the LLM call. */
-const MAX_HISTORY_TURNS = 20;
-
 export interface HistoryMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -84,52 +73,14 @@ export interface AskOptions {
 }
 
 /**
- * Answer a Frosthaven rules question using the bundled RAG pipeline.
- * This is the "graduated optimization" convenience path — it composes
- * the atomic tools (searchRules, searchCards) with an LLM call.
- *
- * @param options.history - Optional conversation history for multi-turn context.
- *   Truncated to the last {@link MAX_HISTORY_TURNS} messages.
- * @param options.campaignId - Optional campaign UUID. Reserved for future use —
- *   campaign context loading depends on #94 (data isolation design).
- * @param options.userId - Optional user UUID. Reserved for future use.
+ * Answer a Frosthaven rules question using the knowledge agent.
+ * The agent decides which tools to call based on the question,
+ * iterates until it has enough context, then produces a grounded answer.
  */
 export async function ask(question: string, options?: AskOptions): Promise<string> {
   if (!ready) {
     throw new Error('Service not initialized. Call initialize() first.');
   }
 
-  // Step 1: Search for relevant rulebook passages and card data
-  const ruleHits: RuleResult[] = await searchRules(question, 6);
-  const cardHits: CardResult[] = searchCards(question, 8);
-
-  // Step 2: Assemble context
-  const rulebookContext = ruleHits
-    .map((h, i) => `[${i + 1}] (${h.source})\n${h.text}`)
-    .join('\n\n---\n\n');
-
-  const cardContext =
-    cardHits.length > 0
-      ? `\n\n## Card Data\n${cardHits.map((c) => `[${c.type}] ${JSON.stringify(c.data)}`).join('\n')}`
-      : '';
-
-  const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
-
-  // Step 3: Build messages array with optional history
-  const history = options?.history;
-  const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
-  const messages = [
-    ...truncatedHistory.map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user' as const, content: userMessage },
-  ];
-
-  // Step 4: LLM generation
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages,
-  });
-
-  return response.content.find((b) => b.type === 'text')?.text ?? '';
+  return runAgentLoop(question, options);
 }

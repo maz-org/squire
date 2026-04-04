@@ -2,24 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const { mockMessagesCreate, mockSearchRules, mockSearchCards, mockEmbed, mockLoadIndex } =
-  vi.hoisted(() => ({
-    mockMessagesCreate: vi.fn(),
-    mockSearchRules: vi.fn(),
-    mockSearchCards: vi.fn(),
-    mockEmbed: vi.fn(),
-    mockLoadIndex: vi.fn(),
-  }));
+const { mockRunAgentLoop, mockEmbed, mockLoadIndex } = vi.hoisted(() => ({
+  mockRunAgentLoop: vi.fn(),
+  mockEmbed: vi.fn(),
+  mockLoadIndex: vi.fn(),
+}));
 
-vi.mock('@anthropic-ai/sdk', () => ({
-  default: class {
-    messages = { create: mockMessagesCreate };
-  },
+vi.mock('../src/agent.ts', () => ({
+  runAgentLoop: mockRunAgentLoop,
 }));
 
 vi.mock('../src/tools.ts', () => ({
-  searchRules: mockSearchRules,
-  searchCards: mockSearchCards,
   listCardTypes: vi.fn(() => [
     { type: 'monster-stats', count: 5 },
     { type: 'items', count: 3 },
@@ -70,14 +63,8 @@ describe('initialize', () => {
 
   it('initialize throws when index is empty', async () => {
     vi.resetModules();
-    vi.doMock('@anthropic-ai/sdk', () => ({
-      default: class {
-        messages = { create: mockMessagesCreate };
-      },
-    }));
+    vi.doMock('../src/agent.ts', () => ({ runAgentLoop: mockRunAgentLoop }));
     vi.doMock('../src/tools.ts', () => ({
-      searchRules: mockSearchRules,
-      searchCards: mockSearchCards,
       listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
     }));
     vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
@@ -102,132 +89,31 @@ describe('ask', () => {
       { id: 'chunk-1', text: 'test', embedding: [0.1], source: 'test.pdf', chunkIndex: 0 },
     ]);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
-    mockSearchRules.mockResolvedValue([
-      { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
-    ]);
-    mockSearchCards.mockReturnValue([]);
-    mockMessagesCreate.mockResolvedValue({
-      content: [{ type: 'text', text: 'You pick up loot tokens in your hex.' }],
-      usage: { input_tokens: 100, output_tokens: 50 },
-    });
+    mockRunAgentLoop.mockResolvedValue('You pick up loot tokens in your hex.');
   });
 
-  it('calls searchRules with the question', async () => {
-    await initialize();
-    await ask('What is the loot action?');
-    expect(mockSearchRules).toHaveBeenCalledWith('What is the loot action?', 6);
-  });
-
-  it('calls searchCards with the question', async () => {
-    await initialize();
-    await ask('What is the loot action?');
-    expect(mockSearchCards).toHaveBeenCalledWith('What is the loot action?', 8);
-  });
-
-  it('calls Claude API with search results as context', async () => {
-    await initialize();
-    await ask('What is the loot action?');
-    expect(mockMessagesCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: 'claude-opus-4-6',
-        max_tokens: 1024,
-        system: expect.stringContaining('Frosthaven rules assistant'),
-      }),
-    );
-    const userMessage = mockMessagesCreate.mock.calls[0][0].messages[0].content as string;
-    expect(userMessage).toContain('Loot: pick up all loot tokens.');
-    expect(userMessage).toContain('What is the loot action?');
-  });
-
-  it('returns the Claude API response text', async () => {
+  it('delegates to runAgentLoop', async () => {
     await initialize();
     const result = await ask('What is the loot action?');
+    expect(mockRunAgentLoop).toHaveBeenCalledWith('What is the loot action?', undefined);
     expect(result).toBe('You pick up loot tokens in your hex.');
   });
 
-  it('includes card data when searchCards returns results', async () => {
-    mockSearchCards.mockReturnValue([
-      { type: 'items', data: { name: 'Boots of Speed', effect: 'Move +1' }, score: 2 },
-    ]);
+  it('passes options through to runAgentLoop', async () => {
     await initialize();
-    await ask('What items grant movement?');
-    const userMessage = mockMessagesCreate.mock.calls[0][0].messages[0].content as string;
-    expect(userMessage).toContain('Card Data');
-    expect(userMessage).toContain('Boots of Speed');
-  });
-
-  it('passes history messages before the context message', async () => {
-    await initialize();
-    const history = [
-      { role: 'user' as const, content: 'What is loot?' },
-      { role: 'assistant' as const, content: 'Loot tokens are picked up in your hex.' },
-    ];
-    await ask('What about traps?', { history });
-    const messages = mockMessagesCreate.mock.calls[0][0].messages;
-    expect(messages).toHaveLength(3);
-    expect(messages[0]).toEqual({ role: 'user', content: 'What is loot?' });
-    expect(messages[1]).toEqual({
-      role: 'assistant',
-      content: 'Loot tokens are picked up in your hex.',
-    });
-    expect(messages[2].role).toBe('user');
-    expect(messages[2].content).toContain('What about traps?');
-  });
-
-  it('sends only the context message when history is omitted', async () => {
-    await initialize();
-    await ask('What is the loot action?');
-    const messages = mockMessagesCreate.mock.calls[0][0].messages;
-    expect(messages).toHaveLength(1);
-    expect(messages[0].role).toBe('user');
-  });
-
-  it('truncates history to the last 20 messages', async () => {
-    await initialize();
-    const history = Array.from({ length: 30 }, (_, i) => ({
-      role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
-      content: `message ${i}`,
-    }));
-    await ask('Final question', { history });
-    const messages = mockMessagesCreate.mock.calls[0][0].messages;
-    // 20 history + 1 context = 21
-    expect(messages).toHaveLength(21);
-    // Should keep the last 20 (indices 10-29)
-    expect(messages[0].content).toBe('message 10');
-  });
-
-  it('accepts options object with history', async () => {
-    await initialize();
-    const history = [{ role: 'user' as const, content: 'What is loot?' }];
-    await ask('Follow-up', { history });
-    const messages = mockMessagesCreate.mock.calls[0][0].messages;
-    expect(messages).toHaveLength(2);
-    expect(messages[0]).toEqual({ role: 'user', content: 'What is loot?' });
-  });
-
-  it('accepts campaignId and userId in options', async () => {
-    await initialize();
-    await ask('What items do I have?', {
+    const options = {
+      history: [{ role: 'user' as const, content: 'What is loot?' }],
       campaignId: '550e8400-e29b-41d4-a716-446655440000',
       userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-    });
-    // Should still produce a valid answer (campaign context not loaded yet)
-    expect(mockMessagesCreate).toHaveBeenCalled();
+    };
+    await ask('Follow-up', options);
+    expect(mockRunAgentLoop).toHaveBeenCalledWith('Follow-up', options);
   });
 
   it('throws if not initialized', async () => {
-    // Use a fresh module import to get uninitialized state
     vi.resetModules();
-
-    // Re-register mocks before re-importing
-    vi.doMock('@anthropic-ai/sdk', () => ({
-      default: class {
-        messages = { create: mockMessagesCreate };
-      },
-    }));
+    vi.doMock('../src/agent.ts', () => ({ runAgentLoop: mockRunAgentLoop }));
     vi.doMock('../src/tools.ts', () => ({
-      searchRules: mockSearchRules,
-      searchCards: mockSearchCards,
       listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
     }));
     vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
