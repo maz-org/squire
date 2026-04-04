@@ -1,0 +1,6 @@
+[submodule "data/gloomhavensecretariat"]
+	path = data/gloomhavensecretariat
+	url = https://github.com/Lurkars/gloomhavensecretariat.git
+[submodule "data/worldhaven"]
+	path = data/worldhaven
+	url = https://github.com/any2cards/worldhaven.git
