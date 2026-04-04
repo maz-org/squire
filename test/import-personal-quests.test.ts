@@ -37,6 +37,7 @@ describe('convertPersonalQuest', () => {
 
     expect(result).toEqual({
       cardId: '100',
+      altId: '01',
       name: 'Test Quest Title',
       requirements: [
         {
@@ -47,6 +48,7 @@ describe('convertPersonalQuest', () => {
         },
       ],
       openEnvelope: '24:42',
+      errata: null,
       _source: 'gloomhavensecretariat:personal-quest/100',
     });
   });
@@ -143,7 +145,7 @@ describe('convertPersonalQuest', () => {
     expect(result.requirements[0].target).toBe('80+20xP');
   });
 
-  it('preserves errata field when present', () => {
+  it('includes errata when present in source data', () => {
     const ghs = {
       cardId: '100',
       altId: '01',
@@ -152,9 +154,8 @@ describe('convertPersonalQuest', () => {
       errata: 'env24',
     };
 
-    // errata is not in our extracted schema — just ensure it doesn't break
     const result = convertPersonalQuest(ghs, labels);
-    expect(result.cardId).toBe('100');
+    expect(result.errata).toBe('env24');
   });
 
   it('sets options to null when no checkbox present', () => {

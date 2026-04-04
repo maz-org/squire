@@ -188,16 +188,18 @@ const PersonalQuestRequirementSchema = z.object({
     .nullable()
     .describe('Checkbox options (e.g. herb names), or null if not applicable'),
   dependsOn: z
-    .array(z.number().int())
+    .array(z.number().int().min(1))
     .nullable()
     .describe('1-based indices of prerequisite requirements, or null'),
 });
 
 export const PersonalQuestSchema = z.object({
   cardId: z.string().describe('Personal quest card ID'),
+  altId: z.string().describe('Alternate personal quest ID from source data'),
   name: z.string().describe('Quest title'),
   requirements: z.array(PersonalQuestRequirementSchema).describe('Completion requirements'),
   openEnvelope: z.string().describe('Envelope/section references to open on completion'),
+  errata: z.string().nullable().describe('Errata key/reference, or null'),
 });
 
 export const SCHEMAS = {
@@ -214,6 +216,9 @@ export const SCHEMAS = {
 } as const;
 
 export type CardType = keyof typeof SCHEMAS;
+
+/** All card type keys as a runtime array. Single source of truth for MCP/agent enums. */
+export const CARD_TYPES = Object.keys(SCHEMAS) as [CardType, ...CardType[]];
 
 // Inferred types from Zod schemas
 export type MonsterStat = z.infer<typeof MonsterStatSchema>;

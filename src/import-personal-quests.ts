@@ -53,9 +53,11 @@ interface ExtractedRequirement {
 
 interface ExtractedPersonalQuest {
   cardId: string;
+  altId: string;
   name: string;
   requirements: ExtractedRequirement[];
   openEnvelope: string;
+  errata: string | null;
   _source: string;
 }
 
@@ -78,13 +80,8 @@ function resolveCharacterTokens(text: string): string {
  * Handles %data.% label references, %game.% tokens, and %character.% tokens.
  */
 function resolveRequirementName(name: string, labels: LabelData): string {
-  if (name.startsWith('%data.')) {
-    return resolveLabel(name, labels);
-  }
-  // For non-%data. refs, resolve both game and character tokens
-  let result = resolveGameTokens(name);
-  result = resolveCharacterTokens(result);
-  return result;
+  const base = name.startsWith('%data.') ? resolveLabel(name, labels) : name;
+  return resolveCharacterTokens(resolveGameTokens(base));
 }
 
 /**
@@ -107,7 +104,9 @@ export function convertPersonalQuest(
   const requirements: ExtractedRequirement[] = ghs.requirements.map((req) => {
     const description = resolveRequirementName(req.name, labels);
 
-    const options = req.checkbox ? req.checkbox.map((opt) => resolveGameTokens(opt)) : null;
+    const options = req.checkbox
+      ? req.checkbox.map((opt) => resolveCharacterTokens(resolveGameTokens(opt)))
+      : null;
 
     return {
       description,
@@ -119,9 +118,11 @@ export function convertPersonalQuest(
 
   return {
     cardId: ghs.cardId,
+    altId: ghs.altId,
     name: resolveQuestTitle(ghs.cardId, labels),
     requirements,
     openEnvelope: ghs.openEnvelope,
+    errata: ghs.errata ?? null,
     _source: `gloomhavensecretariat:personal-quest/${ghs.cardId}`,
   };
 }

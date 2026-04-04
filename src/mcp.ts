@@ -8,18 +8,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { z } from 'zod';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
-import type { CardType } from './schemas.ts';
-
-const CARD_TYPES = [
-  'monster-stats',
-  'monster-abilities',
-  'character-abilities',
-  'items',
-  'events',
-  'battle-goals',
-  'buildings',
-  'personal-quests',
-] as const;
+import { CARD_TYPES, type CardType } from './schemas.ts';
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
