@@ -155,6 +155,20 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
   });
 
+  it('recovers from tool execution errors', async () => {
+    mockSearchRules.mockRejectedValueOnce(new Error('Embedder failed'));
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'loot' }))
+      .mockResolvedValueOnce(textResponse('I encountered an error but can still help.'));
+
+    const result = await runAgentLoop('What is loot?');
+    expect(result).toBe('I encountered an error but can still help.');
+    // The tool result should have been sent back as an error
+    const toolResultMsg = mockMessagesCreate.mock.calls[1][0].messages.at(-1);
+    expect(toolResultMsg.content[0].is_error).toBe(true);
+    expect(toolResultMsg.content[0].content).toContain('Embedder failed');
+  });
+
   it('respects iteration limit', async () => {
     // Claude keeps calling tools forever
     mockMessagesCreate.mockResolvedValue(toolUseResponse('search_rules', { query: 'loop' }));

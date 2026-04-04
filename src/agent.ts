@@ -182,11 +182,15 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
       messages,
     });
 
-    // Collect any text content from this response
+    // Collect all text content from this response
+    const texts: string[] = [];
     for (const block of response.content) {
       if (block.type === 'text') {
-        lastTextContent = block.text;
+        texts.push(block.text);
       }
+    }
+    if (texts.length > 0) {
+      lastTextContent = texts.join('\n\n');
     }
 
     // If the model is done (no more tool calls), return the answer
@@ -210,11 +214,19 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
       const toolResults: ContentBlockParam[] = [];
       for (const block of response.content) {
         if (block.type === 'tool_use') {
-          const result = await executeToolCall(block.name, block.input as Record<string, unknown>);
+          let result: string;
+          let isError = false;
+          try {
+            result = await executeToolCall(block.name, block.input as Record<string, unknown>);
+          } catch (err) {
+            result = `Tool error: ${err instanceof Error ? err.message : String(err)}`;
+            isError = true;
+          }
           toolResults.push({
             type: 'tool_result',
             tool_use_id: block.id,
             content: result,
+            is_error: isError,
           } as ContentBlockParam);
         }
       }
