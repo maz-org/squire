@@ -140,7 +140,11 @@ export async function executeToolCall(
     case 'list_cards': {
       let filter: Record<string, unknown> | undefined;
       if (input.filter) {
-        filter = JSON.parse(input.filter as string) as Record<string, unknown>;
+        try {
+          filter = JSON.parse(input.filter as string) as Record<string, unknown>;
+        } catch {
+          return `Invalid filter JSON: ${input.filter}`;
+        }
       }
       const cards = listCards(input.type as CardType, filter);
       return JSON.stringify(cards, null, 2);
