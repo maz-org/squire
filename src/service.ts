@@ -75,15 +75,26 @@ export interface HistoryMessage {
   content: string;
 }
 
+export interface AskOptions {
+  history?: HistoryMessage[];
+  /** Campaign UUID — reserved for future campaign context loading. */
+  campaignId?: string;
+  /** User UUID — reserved for future player context loading. */
+  userId?: string;
+}
+
 /**
  * Answer a Frosthaven rules question using the bundled RAG pipeline.
  * This is the "graduated optimization" convenience path — it composes
  * the atomic tools (searchRules, searchCards) with an LLM call.
  *
- * @param history - Optional conversation history for multi-turn context.
+ * @param options.history - Optional conversation history for multi-turn context.
  *   Truncated to the last {@link MAX_HISTORY_TURNS} messages.
+ * @param options.campaignId - Optional campaign UUID. Reserved for future use —
+ *   campaign context loading depends on #94 (data isolation design).
+ * @param options.userId - Optional user UUID. Reserved for future use.
  */
-export async function ask(question: string, history?: HistoryMessage[]): Promise<string> {
+export async function ask(question: string, options?: AskOptions): Promise<string> {
   if (!ready) {
     throw new Error('Service not initialized. Call initialize() first.');
   }
@@ -105,6 +116,7 @@ export async function ask(question: string, history?: HistoryMessage[]): Promise
   const userMessage = `## Rulebook Excerpts\n\n${rulebookContext}${cardContext}\n\n---\n\nQuestion: ${question}`;
 
   // Step 3: Build messages array with optional history
+  const history = options?.history;
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
   const messages = [
     ...truncatedHistory.map((m) => ({ role: m.role, content: m.content })),

@@ -289,6 +289,8 @@ const AskRequestSchema = z.object({
     )
     .max(20)
     .optional(),
+  campaignId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
 });
 
 app.post('/api/ask', async (c) => {
@@ -304,8 +306,8 @@ app.post('/api/ask', async (c) => {
     return c.json(jsonError('Invalid request: ' + result.error.issues[0].message, 400), 400);
   }
 
-  const { question, history } = result.data;
-  const answer = await ask(question, history);
+  const { question, ...options } = result.data;
+  const answer = await ask(question, options);
   return c.json({ answer });
 });
 
