@@ -36,10 +36,10 @@ interface CardTypeConfig {
   context: string;
 }
 
-// Only card types that use OCR extraction from images.
-// Some types (e.g., character-mats, monster-stats, character-abilities) are
-// imported from GHS reference data instead — see import-*.ts scripts.
-const CARD_TYPES: Partial<Record<CardType, CardTypeConfig>> = {
+// Some card types are imported from GHS data, not OCR-extracted from images.
+type OcrCardType = Exclude<CardType, 'scenarios' | 'character-mats'>;
+
+const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
   'monster-stats': {
     imageDir: join(IMAGES_BASE, 'monster-stat-cards', 'frosthaven'),
     filter: (f) => f.endsWith('.png'),
@@ -119,10 +119,8 @@ export function extractNumberFromFilename(filename: string, cardType: CardType):
 
 // ─── Image collection ─────────────────────────────────────────────────────────
 
-export function collectImages(cardType: CardType): string[] {
-  const config = CARD_TYPES[cardType];
-  if (!config) return [];
-  const { imageDir, filter, subdirs } = config;
+export function collectImages(cardType: OcrCardType): string[] {
+  const { imageDir, filter, subdirs } = CARD_TYPES[cardType];
   const images: string[] = [];
 
   function scanDir(dir: string): void {
@@ -218,7 +216,7 @@ export async function extractImage(
 
 // ─── Per-type runner ──────────────────────────────────────────────────────────
 
-export async function extractCardType(cardType: CardType): Promise<ExtractedResult[]> {
+export async function extractCardType(cardType: OcrCardType): Promise<ExtractedResult[]> {
   const outputPath = join(OUTPUT_DIR, `${cardType}.json`);
 
   const existing: ExtractedResult[] = existsSync(outputPath)
@@ -295,10 +293,10 @@ function saveResults(path: string, results: ExtractedResult[]): void {
 async function main(): Promise<void> {
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const arg = process.argv[2] as CardType | undefined;
-  const types: CardType[] = arg ? [arg] : (Object.keys(CARD_TYPES) as CardType[]);
+  const arg = process.argv[2] as OcrCardType | undefined;
+  const types: OcrCardType[] = arg ? [arg] : (Object.keys(CARD_TYPES) as OcrCardType[]);
 
-  const unknown = types.filter((t) => !CARD_TYPES[t]);
+  const unknown = types.filter((t) => !CARD_TYPES[t as OcrCardType]);
   if (unknown.length) {
     console.error(`Unknown card type(s): ${unknown.join(', ')}`);
     console.error(`Valid: ${Object.keys(CARD_TYPES).join(', ')}`);

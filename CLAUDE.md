@@ -37,6 +37,29 @@ To get the IDs needed for `item-edit`, use:
 Set status to "In Progress" at the **start** of work (before creating a branch),
 not when opening the PR.
 
+## Git Submodules — CRITICAL
+
+This repo has large git submodules (`data/gloomhavensecretariat`,
+`data/worldhaven`) that take **over an hour** to clone. They are already
+initialized in the main worktree.
+
+**Rules:**
+
+- **NEVER** run `git submodule init`, `git submodule update`, or
+  `git clone` for these repos. They are already present.
+- In a **secondary worktree** (e.g., `.claude/worktrees/`), the submodule
+  directories must be **symlinked** from the main worktree — not cloned.
+- After entering a worktree, check if the submodule data is accessible
+  (e.g., `ls data/gloomhavensecretariat/data/fh/`). If not, run:
+
+  ```bash
+  bash scripts/symlink-submodules.sh
+  ```
+
+- The husky `post-checkout` hook does this automatically for `git checkout`
+  and `git worktree add`, but Claude Code's `EnterWorktree` may not trigger
+  it. **Always verify and symlink manually if needed.**
+
 ## Development
 
 For server setup, API endpoints, MCP client configuration, and project

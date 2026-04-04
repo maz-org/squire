@@ -21,6 +21,7 @@ export const TYPES: CardType[] = [
   'events',
   'battle-goals',
   'buildings',
+  'scenarios',
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -145,6 +146,28 @@ function recordToText(record: ExtractedRecord): string {
           .join(', ')
       : 'unknown';
     return `Building #${r.buildingNumber} — ${r.name} Level ${r.level}. Cost: ${cost}. Effect: ${r.effect}. ${(r.notes as string) || ''}`.trim();
+  }
+
+  if (t === 'scenarios') {
+    const r = record as ExtractedRecord;
+    const monsters = (r.monsters as string[])?.length
+      ? `Monsters: ${(r.monsters as string[]).join(', ')}.`
+      : '';
+    const allies = (r.allies as string[])?.length
+      ? ` Allies: ${(r.allies as string[]).join(', ')}.`
+      : '';
+    const unlocks = (r.unlocks as string[])?.length
+      ? ` Unlocks: ${(r.unlocks as string[]).join(', ')}.`
+      : '';
+    const rewards = r.rewards ? ` Rewards: ${r.rewards}.` : '';
+    const loot = r.lootDeckConfig as Record<string, number> | undefined;
+    const lootStr = loot
+      ? ` Loot: ${Object.entries(loot)
+          .map(([k, v]) => `${v} ${k}`)
+          .join(', ')}.`
+      : '';
+    const initial = r.initial ? ' [Starting scenario]' : '';
+    return `Scenario #${r.index}: ${r.name} (Complexity ${r.complexity}).${initial} ${monsters}${allies}${unlocks}${rewards}${lootStr}`.trim();
   }
 
   return JSON.stringify(record);
