@@ -242,6 +242,17 @@ describe('chunkText', () => {
     expect(woundChunk?.text).toContain('[NEGATIVE CONDITIONS]');
   });
 
+  it('preserves heading context across split oversized paragraphs', () => {
+    // A heading followed by a very long paragraph that must be split
+    const longBody = Array(50).fill('This is a sentence about game rules.').join(' ');
+    const text = `SCENARIO RULES\n\n${longBody}`;
+    const chunks = chunkText(text, 'test.pdf');
+    // Every chunk should have the heading prefix
+    for (const chunk of chunks) {
+      expect(chunk.text).toContain('[SCENARIO RULES]');
+    }
+  });
+
   it('skips chunks shorter than 50 characters', () => {
     const text = 'A'.repeat(30);
     const chunks = chunkText(text, 'test.pdf');
