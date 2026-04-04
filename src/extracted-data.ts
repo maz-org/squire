@@ -16,6 +16,7 @@ export const TYPES: CardType[] = [
   'monster-stats',
   'monster-abilities',
   'character-abilities',
+  'character-mats',
   'items',
   'events',
   'battle-goals',
@@ -92,6 +93,24 @@ function recordToText(record: ExtractedRecord): string {
       : '';
     const lost = r.lost ? ' [LOST]' : '';
     return `Character Ability — ${(r.characterClass as string) || 'Unknown'} Level ${r.level ?? '?'}: "${r.cardName}" (initiative ${r.initiative}). ${topStr}. ${botStr}.${lost}`;
+  }
+
+  if (t === 'character-mats') {
+    const r = record as ExtractedRecord;
+    const hp = r.hp as Record<string, number> | undefined;
+    const hpStr = Object.entries(hp || {})
+      .map(([l, v]) => `L${l}=${v}`)
+      .join(', ');
+    const traits = (r.traits as string[])?.length
+      ? `Traits: ${(r.traits as string[]).join(', ')}. `
+      : '';
+    const perks = (r.perks as string[])?.length
+      ? `Perks: ${(r.perks as string[]).join('; ')}. `
+      : '';
+    const masteries = (r.masteries as string[])?.length
+      ? `Masteries: ${(r.masteries as string[]).join('; ')}.`
+      : '';
+    return `Character Mat — ${r.name} (${r.characterClass}). Hand size: ${r.handSize}. ${traits}HP: ${hpStr}. ${perks}${masteries}`;
   }
 
   if (t === 'items') {

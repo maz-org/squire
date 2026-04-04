@@ -218,13 +218,14 @@ describe('listCardTypes', () => {
     expect(events!.count).toBe(0);
   });
 
-  it('returns all 8 card types', () => {
+  it('returns all 9 card types', () => {
     const types = listCardTypes();
-    expect(types.length).toBe(8);
+    expect(types.length).toBe(9);
     const typeNames = types.map((t) => t.type);
     expect(typeNames).toContain('monster-stats');
     expect(typeNames).toContain('monster-abilities');
     expect(typeNames).toContain('character-abilities');
+    expect(typeNames).toContain('character-mats');
     expect(typeNames).toContain('items');
     expect(typeNames).toContain('events');
     expect(typeNames).toContain('battle-goals');

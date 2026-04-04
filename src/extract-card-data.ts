@@ -36,8 +36,8 @@ interface CardTypeConfig {
   context: string;
 }
 
-// Scenarios are imported from GHS data (not OCR-extracted), so they're excluded here.
-type OcrCardType = Exclude<CardType, 'scenarios'>;
+// Some card types are imported from GHS data, not OCR-extracted from images.
+type OcrCardType = Exclude<CardType, 'scenarios' | 'character-mats'>;
 
 const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
   'monster-stats': {
@@ -120,18 +120,18 @@ export function extractNumberFromFilename(filename: string, cardType: CardType):
 // ─── Image collection ─────────────────────────────────────────────────────────
 
 export function collectImages(cardType: OcrCardType): string[] {
-  const config = CARD_TYPES[cardType];
+  const { imageDir, filter, subdirs } = CARD_TYPES[cardType];
   const images: string[] = [];
 
   function scanDir(dir: string): void {
     if (!existsSync(dir)) return;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory() && config.subdirs) scanDir(join(dir, entry.name));
-      else if (entry.isFile() && config.filter(entry.name)) images.push(join(dir, entry.name));
+      if (entry.isDirectory() && subdirs) scanDir(join(dir, entry.name));
+      else if (entry.isFile() && filter(entry.name)) images.push(join(dir, entry.name));
     }
   }
 
-  scanDir(config.imageDir);
+  scanDir(imageDir);
   return images;
 }
 
