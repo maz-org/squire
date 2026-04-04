@@ -37,6 +37,7 @@
   },
   "enabledPlugins": {
     "beads@beads-marketplace": true,
-    "coderabbit@claude-plugins-official": true
+    "coderabbit@claude-plugins-official": true,
+    "codex@openai-codex": true
   }
 }

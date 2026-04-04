@@ -141,8 +141,9 @@ vite.config.ts.timestamp-*
 # Beads (deprecated, migrated to GitHub Issues)
 .beads/
 
-# Claude Code local settings
+# Claude Code local state
 .claude/settings.local.json
+.claude/worktrees/
 
 # Eval results (regeneratable)
 eval/results/*.json
