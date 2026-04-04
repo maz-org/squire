@@ -182,11 +182,12 @@ export function chunkText(text: string, source: string): Chunk[] {
   // 3. Split oversized paragraphs at sentence/word boundaries,
   //    preserving heading prefix on each resulting chunk
   const expanded = processed.flatMap((p) => {
-    const headingMatch = p.match(/^\[([^\]]+)\]\n\n/);
-    if (!headingMatch) return splitLongParagraph(p, MAX_CHUNK_CHARS);
+    const sep = p.indexOf('\n\n');
+    const hasPrefixedHeading = sep > 1 && p.startsWith('[') && p[sep - 1] === ']';
+    if (!hasPrefixedHeading) return splitLongParagraph(p, MAX_CHUNK_CHARS);
 
-    const prefix = headingMatch[0];
-    const body = p.slice(prefix.length);
+    const prefix = p.slice(0, sep + 2); // includes "\n\n"
+    const body = p.slice(sep + 2);
     const bodyChunks = splitLongParagraph(body, MAX_CHUNK_CHARS - prefix.length);
     return bodyChunks.map((chunk) => prefix + chunk);
   });
