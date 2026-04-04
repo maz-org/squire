@@ -123,7 +123,7 @@ describe('formatPerk', () => {
     );
   });
 
-  it('formats add perk with multiple cards', () => {
+  it('formats replace perk with multiple-count cards', () => {
     const perk = {
       type: 'replace',
       count: 1,
@@ -133,6 +133,75 @@ describe('formatPerk', () => {
       ],
     };
     expect(formatPerk(perk, 'drifter', labels)).toBe('Replace 1 two +1 cards with two +2 cards');
+  });
+
+  it('formats add perk with multiple card groups', () => {
+    const perk = {
+      type: 'add',
+      count: 2,
+      cards: [
+        {
+          count: 1,
+          attackModifier: {
+            type: 'plus0',
+            rolling: true,
+            effects: [{ type: 'condition', value: 'disarm' }],
+          },
+        },
+        {
+          count: 1,
+          attackModifier: {
+            type: 'plus0',
+            rolling: true,
+            effects: [{ type: 'condition', value: 'muddle' }],
+          },
+        },
+      ],
+    };
+    expect(formatPerk(perk, 'drifter', labels)).toBe(
+      'Add 2 Rolling +0 Disarm cards and Rolling +0 Muddle cards',
+    );
+  });
+
+  it('formats replace perk with multiple new card groups', () => {
+    const perk = {
+      type: 'replace',
+      count: 2,
+      cards: [
+        { count: 2, attackModifier: { type: 'plus0' } },
+        {
+          count: 1,
+          attackModifier: {
+            type: 'plus0',
+            rolling: true,
+            effects: [{ type: 'pierce', value: 3 }],
+          },
+        },
+        {
+          count: 1,
+          attackModifier: {
+            type: 'plus0',
+            rolling: true,
+            effects: [{ type: 'retaliate', value: 2 }],
+          },
+        },
+      ],
+    };
+    expect(formatPerk(perk, 'drifter', labels)).toBe(
+      'Replace 2 two +0 cards with Rolling +0 Pierce 3 cards and Rolling +0 Retaliate 2 cards',
+    );
+  });
+
+  it('formats remove perk with multiple card groups', () => {
+    const perk = {
+      type: 'remove',
+      count: 1,
+      cards: [
+        { count: 1, attackModifier: { type: 'minus2' } },
+        { count: 1, attackModifier: { type: 'plus1' } },
+      ],
+    };
+    expect(formatPerk(perk, 'drifter', labels)).toBe('Remove 1 -2 card and +1 card');
   });
 });
 

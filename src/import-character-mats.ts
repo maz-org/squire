@@ -34,7 +34,7 @@ interface GhsAttackModifier {
   rolling?: boolean;
   effects?: Array<{
     type: string;
-    value?: string;
+    value?: string | number;
     effects?: Array<{ type: string; value: string }>;
   }>;
 }
@@ -178,7 +178,7 @@ function formatModifier(mod: GhsAttackModifier, labels: LabelData): string {
       effectParts.push(resolvePerkText(val, labels));
     } else if (effect.type === 'pierce' || effect.type === 'push' || effect.type === 'pull') {
       effectParts.push(`${capitalize(effect.type)} ${effect.value}`);
-    } else if (effect.type === 'heal' || effect.type === 'shield') {
+    } else if (effect.type === 'heal' || effect.type === 'shield' || effect.type === 'retaliate') {
       effectParts.push(`${capitalize(effect.type)} ${effect.value}`);
     }
   }
@@ -206,24 +206,25 @@ export function formatPerk(perk: GhsPerk, characterName: string, labels: LabelDa
   const cards = perk.cards ?? [];
   if (cards.length === 0) return `${capitalize(perk.type)} ${perk.count} cards`;
 
-  if (perk.type === 'remove') {
-    const desc = formatCardGroup(cards[0], labels);
-    const total = perk.count * cards[0].count;
-    return `Remove ${perk.count} ${desc} ${pluralizeCard(total)}`;
-  }
-
-  if (perk.type === 'add') {
-    const desc = formatCardGroup(cards[0], labels);
-    const total = perk.count * cards[0].count;
-    return `Add ${perk.count} ${desc} ${pluralizeCard(total)}`;
+  if (perk.type === 'remove' || perk.type === 'add') {
+    const groups = cards.map((c) => {
+      const desc = formatCardGroup(c, labels);
+      const total = perk.count * c.count;
+      return `${desc} ${pluralizeCard(total)}`;
+    });
+    const verb = perk.type === 'remove' ? 'Remove' : 'Add';
+    return `${verb} ${perk.count} ${groups.join(' and ')}`;
   }
 
   if (perk.type === 'replace' && cards.length >= 2) {
     const oldCard = formatCardGroup(cards[0], labels);
-    const newCard = formatCardGroup(cards[1], labels);
     const oldTotal = perk.count * cards[0].count;
-    const newTotal = perk.count * cards[1].count;
-    return `Replace ${perk.count} ${oldCard} ${pluralizeCard(oldTotal)} with ${newCard} ${pluralizeCard(newTotal)}`;
+    const newGroups = cards.slice(1).map((c) => {
+      const desc = formatCardGroup(c, labels);
+      const total = perk.count * c.count;
+      return `${desc} ${pluralizeCard(total)}`;
+    });
+    return `Replace ${perk.count} ${oldCard} ${pluralizeCard(oldTotal)} with ${newGroups.join(' and ')}`;
   }
 
   return `${capitalize(perk.type)} ${perk.count} cards`;
