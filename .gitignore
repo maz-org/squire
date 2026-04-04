@@ -149,7 +149,5 @@ vite.config.ts.timestamp-*
 eval/results/*.json
 
 # Squire project
-# Clone from https://github.com/any2cards/worldhaven if needed
-data/worldhaven/
-# Clone from https://github.com/Lurkars/gloomhavensecretariat if needed
-data/gloomhavensecretariat/
+# These are git submodules — do not gitignore them.
+# Run `git submodule update --init` to populate.
