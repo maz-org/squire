@@ -22,6 +22,7 @@ export const TYPES: CardType[] = [
   'battle-goals',
   'buildings',
   'scenarios',
+  'personal-quests',
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -134,6 +135,26 @@ function recordToText(record: ExtractedRecord): string {
   if (t === 'battle-goals') {
     const r = record as ExtractedRecord;
     return `Battle Goal: "${r.name}". Condition: ${r.condition}. Checkmarks: ${r.checkmarks}.`;
+  }
+
+  if (t === 'personal-quests') {
+    const r = record as ExtractedRecord;
+    const reqs =
+      (r.requirements as Array<{
+        description: string;
+        target: number | string;
+        options: string[] | null;
+        dependsOn: number[] | null;
+      }>) || [];
+    const reqText = reqs
+      .map((req, i) => {
+        let line = `${i + 1}. ${req.description} (target: ${req.target})`;
+        if (req.options) line += ` [${req.options.join(', ')}]`;
+        if (req.dependsOn) line += ` (requires step ${req.dependsOn.join(', ')})`;
+        return line;
+      })
+      .join('; ');
+    return `Personal Quest #${r.cardId}: "${r.name}". Requirements: ${reqText}. Completion: open envelope ${r.openEnvelope}.`;
   }
 
   if (t === 'buildings') {

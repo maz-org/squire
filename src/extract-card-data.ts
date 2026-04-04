@@ -37,7 +37,7 @@ interface CardTypeConfig {
 }
 
 // Some card types are imported from GHS data, not OCR-extracted from images.
-type OcrCardType = Exclude<CardType, 'scenarios' | 'character-mats'>;
+type OcrCardType = Exclude<CardType, 'scenarios' | 'character-mats' | 'personal-quests'>;
 
 const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
   'monster-stats': {

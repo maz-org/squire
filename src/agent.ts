@@ -6,7 +6,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
-import type { CardType } from './schemas.ts';
+import { CARD_TYPES, type CardType } from './schemas.ts';
 import type { AskOptions, HistoryMessage, EmitFn } from './service.ts';
 
 type MessageParam = Anthropic.MessageParam;
@@ -21,16 +21,6 @@ export const MAX_AGENT_ITERATIONS = 10;
 
 /** Maximum number of history messages to include. */
 const MAX_HISTORY_TURNS = 20;
-
-const CARD_TYPES = [
-  'monster-stats',
-  'monster-abilities',
-  'character-abilities',
-  'items',
-  'events',
-  'battle-goals',
-  'buildings',
-] as const;
 
 export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \
 for searching the rulebook and looking up card data. Use the tools to find relevant information before answering.

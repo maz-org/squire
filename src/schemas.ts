@@ -178,6 +178,30 @@ export const ScenarioSchema = z.object({
   initial: z.boolean().describe('Whether this is a starting scenario'),
 });
 
+const PersonalQuestRequirementSchema = z.object({
+  description: z.string().describe('Human-readable requirement text'),
+  target: z
+    .union([z.number().int(), z.string()])
+    .describe('Counter target (number) or formula string (e.g. "80+20xP")'),
+  options: z
+    .array(z.string())
+    .nullable()
+    .describe('Checkbox options (e.g. herb names), or null if not applicable'),
+  dependsOn: z
+    .array(z.number().int().min(1))
+    .nullable()
+    .describe('1-based indices of prerequisite requirements, or null'),
+});
+
+export const PersonalQuestSchema = z.object({
+  cardId: z.string().describe('Personal quest card ID'),
+  altId: z.string().describe('Alternate personal quest ID from source data'),
+  name: z.string().describe('Quest title'),
+  requirements: z.array(PersonalQuestRequirementSchema).describe('Completion requirements'),
+  openEnvelope: z.string().describe('Envelope/section references to open on completion'),
+  errata: z.string().nullable().describe('Errata key/reference, or null'),
+});
+
 export const SCHEMAS = {
   'monster-stats': MonsterStatSchema,
   'monster-abilities': MonsterAbilitySchema,
@@ -188,9 +212,13 @@ export const SCHEMAS = {
   'battle-goals': BattleGoalSchema,
   buildings: BuildingSchema,
   scenarios: ScenarioSchema,
+  'personal-quests': PersonalQuestSchema,
 } as const;
 
 export type CardType = keyof typeof SCHEMAS;
+
+/** All card type keys as a runtime array. Single source of truth for MCP/agent enums. */
+export const CARD_TYPES = Object.keys(SCHEMAS) as [CardType, ...CardType[]];
 
 // Inferred types from Zod schemas
 export type MonsterStat = z.infer<typeof MonsterStatSchema>;
@@ -202,6 +230,7 @@ export type Event = z.infer<typeof EventSchema>;
 export type BattleGoal = z.infer<typeof BattleGoalSchema>;
 export type Building = z.infer<typeof BuildingSchema>;
 export type Scenario = z.infer<typeof ScenarioSchema>;
+export type PersonalQuest = z.infer<typeof PersonalQuestSchema>;
 export type CardData =
   | MonsterStat
   | MonsterAbility
@@ -211,4 +240,5 @@ export type CardData =
   | Event
   | BattleGoal
   | Building
-  | Scenario;
+  | Scenario
+  | PersonalQuest;
