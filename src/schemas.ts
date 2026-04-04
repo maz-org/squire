@@ -60,7 +60,7 @@ export const MonsterAbilitySchema = z.object({
 
 export const CharacterAbilitySchema = z.object({
   cardName: z.string().describe('Name of the card'),
-  characterClass: nullableStr.describe('Character class name if visible, or null'),
+  characterClass: z.string().describe('Character class name'),
   level: z
     .union([z.number().int(), z.literal('X')])
     .nullable()
