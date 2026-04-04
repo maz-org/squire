@@ -311,30 +311,52 @@ describe('GET /api/cards/:type/:id', () => {
 
 // ─── POST /api/ask ───────────────────────────────────────────────────────────
 
+/** Parse SSE events from a response body string. */
+function parseSSE(text: string): Array<{ event?: string; data: string }> {
+  return text
+    .split('\n\n')
+    .filter((block) => block.trim())
+    .map((block) => {
+      const lines = block.split('\n');
+      const event = lines
+        .find((l) => l.startsWith('event:'))
+        ?.slice(6)
+        .trim();
+      const data =
+        lines
+          .find((l) => l.startsWith('data:'))
+          ?.slice(5)
+          .trim() ?? '';
+      return { event, data };
+    });
+}
+
 describe('POST /api/ask', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAsk.mockResolvedValue('Loot tokens are picked up in your hex.');
   });
 
-  it('returns an answer for a valid question', async () => {
+  it('returns SSE content type', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is the loot action?' }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toHaveProperty('answer', 'Loot tokens are picked up in your hex.');
+    expect(res.headers.get('content-type')).toContain('text/event-stream');
   });
 
-  it('calls service.ask with the question', async () => {
+  it('calls service.ask with the question and emit callback', async () => {
     await app.request('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What is the loot action?' }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?', {});
+    expect(mockAsk).toHaveBeenCalledWith(
+      'What is the loot action?',
+      expect.objectContaining({ emit: expect.any(Function) }),
+    );
   });
 
   it('returns 400 when question is missing', async () => {
@@ -374,16 +396,7 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What about traps?', history }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What about traps?', { history });
-  });
-
-  it('works without history (backward compatible)', async () => {
-    await app.request('/api/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await auth()) },
-      body: JSON.stringify({ question: 'What is loot?' }),
-    });
-    expect(mockAsk).toHaveBeenCalledWith('What is loot?', {});
+    expect(mockAsk).toHaveBeenCalledWith('What about traps?', expect.objectContaining({ history }));
   });
 
   it('passes campaignId and userId to ask()', async () => {
@@ -394,7 +407,10 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What items do I have?', campaignId, userId }),
     });
-    expect(mockAsk).toHaveBeenCalledWith('What items do I have?', { campaignId, userId });
+    expect(mockAsk).toHaveBeenCalledWith(
+      'What items do I have?',
+      expect.objectContaining({ campaignId, userId }),
+    );
   });
 
   it('returns 400 for non-UUID campaignId', async () => {
@@ -448,17 +464,19 @@ describe('POST /api/ask', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 500 when ask() throws', async () => {
+  it('emits error event when ask() throws', async () => {
     mockAsk.mockRejectedValue(new Error('Claude API error'));
     const res = await app.request('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'test' }),
     });
-    expect(res.status).toBe(500);
-    const body = await res.json();
-    expect(body).toHaveProperty('error', 'Internal server error');
-    expect(body).toHaveProperty('status', 500);
+    expect(res.status).toBe(200); // SSE streams always return 200
+    const text = await res.text();
+    const events = parseSSE(text);
+    const errorEvent = events.find((e) => e.event === 'error');
+    expect(errorEvent).toBeDefined();
+    expect(JSON.parse(errorEvent!.data)).toHaveProperty('message', 'Internal server error');
   });
 });
 

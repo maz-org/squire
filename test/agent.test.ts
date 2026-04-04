@@ -2,18 +2,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const { mockMessagesCreate, mockSearchRules, mockSearchCards, mockListCardTypes, mockGetCard } =
-  vi.hoisted(() => ({
-    mockMessagesCreate: vi.fn(),
-    mockSearchRules: vi.fn(),
-    mockSearchCards: vi.fn(),
-    mockListCardTypes: vi.fn(),
-    mockGetCard: vi.fn(),
-  }));
+const {
+  mockMessagesCreate,
+  mockMessagesStream,
+  mockSearchRules,
+  mockSearchCards,
+  mockListCardTypes,
+  mockGetCard,
+} = vi.hoisted(() => ({
+  mockMessagesCreate: vi.fn(),
+  mockMessagesStream: vi.fn(),
+  mockSearchRules: vi.fn(),
+  mockSearchCards: vi.fn(),
+  mockListCardTypes: vi.fn(),
+  mockGetCard: vi.fn(),
+}));
 
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
-    messages = { create: mockMessagesCreate };
+    messages = { create: mockMessagesCreate, stream: mockMessagesStream };
   },
 }));
 
@@ -28,6 +35,27 @@ vi.mock('../src/tools.ts', () => ({
 import { runAgentLoop, executeToolCall, AGENT_TOOLS, MAX_AGENT_ITERATIONS } from '../src/agent.ts';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Create a mock MessageStream that emits text deltas and resolves to a final message. */
+function mockStream(finalMessage: Record<string, unknown>, textDeltas: string[] = []) {
+  const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
+  return {
+    on(event: string, cb: (...args: unknown[]) => void) {
+      listeners[event] = listeners[event] || [];
+      listeners[event].push(cb);
+      // Fire text deltas immediately after registration
+      if (event === 'text') {
+        for (const delta of textDeltas) {
+          cb(delta, '');
+        }
+      }
+      return this;
+    },
+    async finalMessage() {
+      return finalMessage;
+    },
+  };
+}
 
 /** Create a mock response where Claude returns text immediately (no tool use). */
 function textResponse(text: string) {
@@ -252,5 +280,64 @@ describe('executeToolCall', () => {
   it('returns error for unknown tool', async () => {
     const result = await executeToolCall('unknown_tool', {});
     expect(result).toContain('Unknown tool');
+  });
+});
+
+// ─── streaming ───────────────────────────────────────────────────────────────
+
+describe('runAgentLoop with emit (streaming)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSearchRules.mockResolvedValue([
+      { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
+    ]);
+    mockSearchCards.mockReturnValue([]);
+    mockGetCard.mockReturnValue({ name: 'Boots of Speed', effect: 'Move +1' });
+  });
+
+  it('uses stream() instead of create() when emit is provided', async () => {
+    const msg = textResponse('Streamed answer');
+    mockMessagesStream.mockReturnValue(mockStream(msg, ['Streamed ', 'answer']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    await runAgentLoop('test', { emit });
+    expect(mockMessagesStream).toHaveBeenCalledTimes(1);
+    expect(mockMessagesCreate).not.toHaveBeenCalled();
+  });
+
+  it('emits text deltas', async () => {
+    const msg = textResponse('Hello world');
+    mockMessagesStream.mockReturnValue(mockStream(msg, ['Hello ', 'world']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    await runAgentLoop('test', { emit });
+    expect(emit).toHaveBeenCalledWith('text', { delta: 'Hello ' });
+    expect(emit).toHaveBeenCalledWith('text', { delta: 'world' });
+  });
+
+  it('emits done event at the end', async () => {
+    const msg = textResponse('Done');
+    mockMessagesStream.mockReturnValue(mockStream(msg, ['Done']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    await runAgentLoop('test', { emit });
+    expect(emit).toHaveBeenCalledWith('done', {});
+  });
+
+  it('emits tool_call and tool_result events', async () => {
+    const toolMsg = toolUseResponse('search_rules', { query: 'loot' });
+    const finalMsg = textResponse('Answer');
+    mockMessagesStream
+      .mockReturnValueOnce(mockStream(toolMsg))
+      .mockReturnValueOnce(mockStream(finalMsg, ['Answer']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    await runAgentLoop('test', { emit });
+    expect(emit).toHaveBeenCalledWith('tool_call', {
+      name: 'search_rules',
+      input: { query: 'loot' },
+    });
+    expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules' });
+    expect(emit).toHaveBeenCalledWith('done', {});
   });
 });
