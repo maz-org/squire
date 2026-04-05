@@ -3,7 +3,7 @@
  *
  * Run with: npx tsx src/import-personal-quests.ts
  *
- * Requires: data/gloomhavensecretariat/ (git submodule)
+ * Requires: GHS data (set GHS_DATA_DIR env var, or clone into data/gloomhavensecretariat/)
  * Output: data/extracted/personal-quests.json
  */
 

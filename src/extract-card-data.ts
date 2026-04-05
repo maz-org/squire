@@ -17,7 +17,9 @@ import { SCHEMAS } from './schemas.ts';
 import type { CardType } from './schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const IMAGES_BASE = join(__dirname, '..', 'data', 'worldhaven', 'images');
+const IMAGES_BASE = process.env.WORLDHAVEN_DIR
+  ? join(process.env.WORLDHAVEN_DIR, 'images')
+  : join(__dirname, '..', 'data', 'worldhaven', 'images');
 const OUTPUT_DIR = join(__dirname, '..', 'data', 'extracted');
 
 // Rate limit: 10k output tokens/minute. ~200 tokens/card → max ~50/min.

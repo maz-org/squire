@@ -5,7 +5,7 @@
  *
  * Run with: npx tsx src/import-character-abilities.ts
  *
- * Requires: data/gloomhavensecretariat/ (clone from https://github.com/Lurkars/gloomhavensecretariat)
+ * Requires: GHS data (set GHS_DATA_DIR env var, or clone into data/gloomhavensecretariat/)
  * Output: data/extracted/character-abilities.json
  */
 
@@ -81,7 +81,7 @@ export function convertAbility(
 export function importCharacterAbilities(): ExtractedCharacterAbility[] {
   if (!existsSync(GHS_DECK_DIR)) {
     throw new Error(
-      `GHS data not found at ${GHS_DECK_DIR}. Clone https://github.com/Lurkars/gloomhavensecretariat into data/gloomhavensecretariat/`,
+      `GHS data not found at ${GHS_DECK_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
