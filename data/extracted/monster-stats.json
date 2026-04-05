@@ -1,3 +1,6292 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:b384a02d2eb5b0a06f5a3ca63e55c89367b9ab36d0a035483c65e41cd3025494
-size 124269
+[
+  {
+    "name": "Abael Herder",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 8,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 11,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 13,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: muddle; elite L1: muddle; elite L2: muddle; elite L3: muddle",
+    "_source": "gloomhavensecretariat:abael-herder"
+  },
+  {
+    "name": "Abael Herder",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 11,
+        "move": 4,
+        "attack": 3
+      },
+      "5": {
+        "hp": 14,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 18,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 24,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 17,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 20,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 28,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 36,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "elite L4: muddle; elite L5: muddle; normal L6: muddle; elite L6: muddle; normal L7: muddle; elite L7: muddle",
+    "_source": "gloomhavensecretariat:abael-herder"
+  },
+  {
+    "name": "Abael Scout",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 2,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 4,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 4,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 5,
+        "move": 4,
+        "attack": 3
+      },
+      "1": {
+        "hp": 5,
+        "move": 4,
+        "attack": 4
+      },
+      "2": {
+        "hp": 7,
+        "move": 4,
+        "attack": 4
+      },
+      "3": {
+        "hp": 9,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: poison; elite L1: poison; normal L2: poison; elite L2: poison; normal L3: poison; elite L3: poison",
+    "_source": "gloomhavensecretariat:abael-scout"
+  },
+  {
+    "name": "Abael Scout",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 5,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 7,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 10,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 14,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 10,
+        "move": 5,
+        "attack": 5
+      },
+      "5": {
+        "hp": 13,
+        "move": 5,
+        "attack": 5
+      },
+      "6": {
+        "hp": 17,
+        "move": 5,
+        "attack": 6
+      },
+      "7": {
+        "hp": 23,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: poison; elite L4: poison; normal L5: poison; elite L5: poison; normal L6: poison; elite L6: poison; normal L7: poison; elite L7: poison",
+    "_source": "gloomhavensecretariat:abael-scout"
+  },
+  {
+    "name": "Abael Warlord",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 12,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 18,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 22,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 26,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L0: muddle; normal L1: muddle; normal L2: muddle; normal L3: muddle",
+    "_source": "gloomhavensecretariat:abael-warlord"
+  },
+  {
+    "name": "Abael Warlord",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 34,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 40,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 56,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 72,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: muddle; normal L5: muddle; normal L6: muddle; normal L7: muddle",
+    "_source": "gloomhavensecretariat:abael-warlord"
+  },
+  {
+    "name": "Algox Archer",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 1,
+        "attack": 3
+      },
+      "1": {
+        "hp": 5,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 7,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 7,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 11,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 12,
+        "move": 2,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:algox-archer"
+  },
+  {
+    "name": "Algox Archer",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      },
+      "6": {
+        "hp": 19,
+        "move": 2,
+        "attack": 4
+      },
+      "7": {
+        "hp": 22,
+        "move": 2,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 16,
+        "move": 2,
+        "attack": 5
+      },
+      "5": {
+        "hp": 18,
+        "move": 2,
+        "attack": 6
+      },
+      "6": {
+        "hp": 28,
+        "move": 2,
+        "attack": 6
+      },
+      "7": {
+        "hp": 33,
+        "move": 2,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:algox-archer"
+  },
+  {
+    "name": "Algox Guard",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 12,
+        "move": 3,
+        "attack": 4
+      },
+      "2": {
+        "hp": 15,
+        "move": 3,
+        "attack": 5
+      },
+      "3": {
+        "hp": 19,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:algox-guard"
+  },
+  {
+    "name": "Algox Guard",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 15,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 19,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 25,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 33,
+        "move": 5,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 22,
+        "move": 4,
+        "attack": 6
+      },
+      "5": {
+        "hp": 27,
+        "move": 5,
+        "attack": 6
+      },
+      "6": {
+        "hp": 37,
+        "move": 5,
+        "attack": 7
+      },
+      "7": {
+        "hp": 47,
+        "move": 6,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:algox-guard"
+  },
+  {
+    "name": "Algox Icespeaker",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 8,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 10,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1; elite L0: Shield 2; normal L1: Shield 1; elite L1: Shield 2, brittle; normal L2: Shield 1; elite L2: Shield 2, brittle; normal L3: Shield 1; elite L3: Shield 2, brittle",
+    "_source": "gloomhavensecretariat:algox-icespeaker"
+  },
+  {
+    "name": "Algox Icespeaker",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 14,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 20,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 27,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 15,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 18,
+        "move": 4,
+        "attack": 6
+      },
+      "6": {
+        "hp": 26,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 35,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1; elite L4: Shield 2, brittle; normal L5: Shield 2; elite L5: Shield 2, brittle; normal L6: Shield 2; elite L6: Shield 2, brittle; elite L6 immunities: brittle; normal L7: Shield 2; normal L7 immunities: brittle; elite L7: Shield 2, brittle; elite L7 immunities: brittle",
+    "_source": "gloomhavensecretariat:algox-icespeaker"
+  },
+  {
+    "name": "Algox Priest",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: pierce 2; normal L1: Shield 1; elite L1: Shield 2, pierce 2; normal L2: Shield 1; elite L2: Shield 2, pierce 2; normal L3: Shield 1; elite L3: Shield 2, pierce 2",
+    "_source": "gloomhavensecretariat:algox-priest"
+  },
+  {
+    "name": "Algox Priest",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 15,
+        "move": 2,
+        "attack": 3
+      },
+      "6": {
+        "hp": 20,
+        "move": 2,
+        "attack": 4
+      },
+      "7": {
+        "hp": 27,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 14,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 19,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 25,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 34,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1; elite L4: Shield 2, pierce 2; normal L5: Shield 1; elite L5: Shield 2, pierce 2; normal L6: Shield 1; elite L6: Shield 2, pierce 3; normal L7: Shield 1; elite L7: Shield 2, pierce 3",
+    "_source": "gloomhavensecretariat:algox-priest"
+  },
+  {
+    "name": "Algox Scout",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 4,
+        "attack": 2
+      },
+      "2": {
+        "hp": 11,
+        "move": 4,
+        "attack": 2
+      },
+      "3": {
+        "hp": 12,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "1": {
+        "hp": 12,
+        "move": 4,
+        "attack": 3
+      },
+      "2": {
+        "hp": 13,
+        "move": 5,
+        "attack": 4
+      },
+      "3": {
+        "hp": 17,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L1: impair; elite L2: impair; elite L3: impair",
+    "_source": "gloomhavensecretariat:algox-scout"
+  },
+  {
+    "name": "Algox Scout",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 15,
+        "move": 4,
+        "attack": 3
+      },
+      "5": {
+        "hp": 18,
+        "move": 5,
+        "attack": 3
+      },
+      "6": {
+        "hp": 24,
+        "move": 5,
+        "attack": 4
+      },
+      "7": {
+        "hp": 33,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 22,
+        "move": 5,
+        "attack": 4
+      },
+      "5": {
+        "hp": 26,
+        "move": 5,
+        "attack": 5
+      },
+      "6": {
+        "hp": 32,
+        "move": 6,
+        "attack": 6
+      },
+      "7": {
+        "hp": 40,
+        "move": 6,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "elite L4: impair; elite L5: impair; elite L6: impair; elite L7: impair",
+    "_source": "gloomhavensecretariat:algox-scout"
+  },
+  {
+    "name": "Algox Snowspeaker",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 7,
+        "move": 1,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 12,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Retaliate 1; elite L0: Retaliate 1; normal L1: Retaliate 1; elite L1: Retaliate 1, push 1; normal L2: Retaliate 1; elite L2: Retaliate 2, push 1; normal L3: Retaliate 1; elite L3: Retaliate 2, push 1",
+    "_source": "gloomhavensecretariat:algox-snowspeaker"
+  },
+  {
+    "name": "Algox Snowspeaker",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 20,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 27,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 17,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 21,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 27,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 35,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Retaliate 2; elite L4: Retaliate 2, push 2; normal L5: Retaliate 2; elite L5: Retaliate 2, push 2; normal L6: Retaliate 2; elite L6: Retaliate 3, push 2; elite L6 immunities: brittle; normal L7: Retaliate 3; normal L7 immunities: brittle; elite L7: Retaliate 3, push 2; elite L7 immunities: brittle",
+    "_source": "gloomhavensecretariat:algox-snowspeaker"
+  },
+  {
+    "name": "Ancient Artillery",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 0,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 0,
+        "attack": 2
+      },
+      "2": {
+        "hp": 8,
+        "move": 0,
+        "attack": 2
+      },
+      "3": {
+        "hp": 9,
+        "move": 0,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 0,
+        "attack": 3
+      },
+      "1": {
+        "hp": 9,
+        "move": 0,
+        "attack": 3
+      },
+      "2": {
+        "hp": 12,
+        "move": 0,
+        "attack": 3
+      },
+      "3": {
+        "hp": 14,
+        "move": 0,
+        "attack": 4
+      }
+    },
+    "immunities": [
+      "muddle"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:ancient-artillery"
+  },
+  {
+    "name": "Ancient Artillery",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 0,
+        "attack": 3
+      },
+      "5": {
+        "hp": 15,
+        "move": 0,
+        "attack": 3
+      },
+      "6": {
+        "hp": 18,
+        "move": 0,
+        "attack": 4
+      },
+      "7": {
+        "hp": 21,
+        "move": 0,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 16,
+        "move": 0,
+        "attack": 5
+      },
+      "5": {
+        "hp": 21,
+        "move": 0,
+        "attack": 5
+      },
+      "6": {
+        "hp": 26,
+        "move": 0,
+        "attack": 6
+      },
+      "7": {
+        "hp": 34,
+        "move": 0,
+        "attack": 7
+      }
+    },
+    "immunities": [
+      "muddle"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:ancient-artillery"
+  },
+  {
+    "name": "Black Imp",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 3,
+        "move": 1,
+        "attack": 1
+      },
+      "1": {
+        "hp": 3,
+        "move": 1,
+        "attack": 1
+      },
+      "2": {
+        "hp": 4,
+        "move": 1,
+        "attack": 1
+      },
+      "3": {
+        "hp": 4,
+        "move": 1,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 3,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 5,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "3": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: poison; normal L1: poison; elite L1: poison; normal L2: poison; elite L2: poison; normal L3: poison; elite L3: custom %data.custom.fh.black-imp.1%, poison",
+    "_source": "gloomhavensecretariat:black-imp"
+  },
+  {
+    "name": "Black Imp",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 5,
+        "move": 1,
+        "attack": 2
+      },
+      "5": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "6": {
+        "hp": 9,
+        "move": 1,
+        "attack": 3
+      },
+      "7": {
+        "hp": 13,
+        "move": 1,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 7,
+        "move": 1,
+        "attack": 3
+      },
+      "5": {
+        "hp": 9,
+        "move": 1,
+        "attack": 3
+      },
+      "6": {
+        "hp": 12,
+        "move": 1,
+        "attack": 4
+      },
+      "7": {
+        "hp": 18,
+        "move": 1,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: poison; elite L4: custom %data.custom.fh.black-imp.1%, poison; normal L5: poison; elite L5: custom %data.custom.fh.black-imp.1%, poison; normal L6: poison; elite L6: custom %data.custom.fh.black-imp.1%, poison; normal L7: poison; elite L7: custom %data.custom.fh.black-imp.1%, poison",
+    "_source": "gloomhavensecretariat:black-imp"
+  },
+  {
+    "name": "Burrowing Blade",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 5,
+        "move": 4,
+        "attack": 3
+      },
+      "2": {
+        "hp": 6,
+        "move": 4,
+        "attack": 4
+      },
+      "3": {
+        "hp": 7,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1; elite L0: Shield 2; normal L1: Shield 2, wound; elite L1: Shield 3, wound; normal L2: Shield 2, wound; elite L2: Shield 3, wound; normal L3: Shield 2, wound; elite L3: Shield 3, wound",
+    "_source": "gloomhavensecretariat:burrowing-blade"
+  },
+  {
+    "name": "Burrowing Blade",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 8,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 11,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 13,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 9,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 11,
+        "move": 5,
+        "attack": 5
+      },
+      "6": {
+        "hp": 15,
+        "move": 5,
+        "attack": 6
+      },
+      "7": {
+        "hp": 19,
+        "move": 5,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 3, wound; elite L4: Shield 3, wound; normal L5: Shield 3, wound; elite L5: Shield 3, wound; normal L6: Shield 3, wound; elite L6: Shield 3, wound; normal L7: Shield 3, wound; elite L7: Shield 3, wound",
+    "_source": "gloomhavensecretariat:burrowing-blade"
+  },
+  {
+    "name": "Chaos Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 11,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "1": {
+        "hp": 12,
+        "move": 4,
+        "attack": 4
+      },
+      "2": {
+        "hp": 14,
+        "move": 4,
+        "attack": 5
+      },
+      "3": {
+        "hp": 18,
+        "move": 5,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:chaos-demon"
+  },
+  {
+    "name": "Chaos Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 14,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 16,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 20,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 25,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 21,
+        "move": 5,
+        "attack": 6
+      },
+      "5": {
+        "hp": 26,
+        "move": 5,
+        "attack": 6
+      },
+      "6": {
+        "hp": 33,
+        "move": 5,
+        "attack": 8
+      },
+      "7": {
+        "hp": 39,
+        "move": 6,
+        "attack": 9
+      }
+    },
+    "immunities": [],
+    "notes": "elite L6 immunities: curse; normal L7 immunities: curse; elite L7 immunities: curse",
+    "_source": "gloomhavensecretariat:chaos-demon"
+  },
+  {
+    "name": "Chaos Lieutenant",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "1": {
+        "hp": 12,
+        "move": 4,
+        "attack": 4
+      },
+      "2": {
+        "hp": 14,
+        "move": 4,
+        "attack": 5
+      },
+      "3": {
+        "hp": 18,
+        "move": 5,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L0 immunities: disarm, stun; normal L1 immunities: disarm, stun; normal L2 immunities: disarm, stun; normal L3 immunities: disarm, stun",
+    "_source": "gloomhavensecretariat:chaos-lieutenant"
+  },
+  {
+    "name": "Chaos Lieutenant",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 21,
+        "move": 5,
+        "attack": 6
+      },
+      "5": {
+        "hp": 26,
+        "move": 5,
+        "attack": 6
+      },
+      "6": {
+        "hp": 33,
+        "move": 5,
+        "attack": 8
+      },
+      "7": {
+        "hp": 39,
+        "move": 6,
+        "attack": 9
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4 immunities: disarm, stun; normal L5 immunities: disarm, stun; normal L6 immunities: disarm, stun, curse; normal L7 immunities: disarm, stun, curse",
+    "_source": "gloomhavensecretariat:chaos-lieutenant"
+  },
+  {
+    "name": "Chaos Spark",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 1,
+        "move": 0,
+        "attack": 0
+      },
+      "1": {
+        "hp": 2,
+        "move": 0,
+        "attack": 0
+      },
+      "2": {
+        "hp": 3,
+        "move": 0,
+        "attack": 0
+      },
+      "3": {
+        "hp": 4,
+        "move": 0,
+        "attack": 0
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:chaos-spark"
+  },
+  {
+    "name": "Chaos Spark",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 5,
+        "move": 0,
+        "attack": 0
+      },
+      "5": {
+        "hp": 6,
+        "move": 0,
+        "attack": 0
+      },
+      "6": {
+        "hp": 7,
+        "move": 0,
+        "attack": 0
+      },
+      "7": {
+        "hp": 8,
+        "move": 0,
+        "attack": 0
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:chaos-spark"
+  },
+  {
+    "name": "Chief Of Spikes",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 8,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 10,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "stun"
+    ],
+    "notes": "normal L0: Shield 2, Target 1, muddle; normal L1: Shield 2, Target 1, muddle; normal L2: Shield 2, Target 1, muddle; normal L3: Shield 2, Target 1, muddle",
+    "_source": "gloomhavensecretariat:chief-of-spikes"
+  },
+  {
+    "name": "Chief Of Spikes",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 15,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 18,
+        "move": 4,
+        "attack": 6
+      },
+      "6": {
+        "hp": 26,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 35,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "stun"
+    ],
+    "notes": "normal L4: Shield 2, Target 1, muddle; normal L5: Shield 2, Target 1, muddle; normal L6: Shield 2, Target 1, muddle; normal L6 immunities: brittle; normal L7: Shield 2, Target 1, muddle; normal L7 immunities: brittle",
+    "_source": "gloomhavensecretariat:chief-of-spikes"
+  },
+  {
+    "name": "City Guard",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 9,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: Shield 1; normal L1: Shield 1; elite L1: Shield 2; normal L2: Shield 1; elite L2: Shield 2; normal L3: Shield 1; elite L3: Shield 2, Retaliate 1",
+    "_source": "gloomhavensecretariat:city-guard"
+  },
+  {
+    "name": "City Guard",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 17,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 10,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 20,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1; elite L4: Shield 2, Retaliate 2; normal L5: Shield 2; elite L5: Shield 2, Retaliate 2; normal L6: Shield 2; elite L6: Shield 3, Retaliate 3; normal L7: Shield 2; elite L7: Shield 3, Retaliate 3",
+    "_source": "gloomhavensecretariat:city-guard"
+  },
+  {
+    "name": "Deep Terror",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 3,
+        "move": 0,
+        "attack": 2
+      },
+      "1": {
+        "hp": 4,
+        "move": 0,
+        "attack": 2
+      },
+      "2": {
+        "hp": 4,
+        "move": 0,
+        "attack": 3
+      },
+      "3": {
+        "hp": 5,
+        "move": 0,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 5,
+        "move": 0,
+        "attack": 3
+      },
+      "1": {
+        "hp": 6,
+        "move": 0,
+        "attack": 3
+      },
+      "2": {
+        "hp": 7,
+        "move": 0,
+        "attack": 4
+      },
+      "3": {
+        "hp": 8,
+        "move": 0,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: Retaliate 1; elite L1: Retaliate 1; normal L2: Retaliate 1; elite L2: Retaliate 1; normal L3: Retaliate 2; elite L3: Retaliate 2",
+    "_source": "gloomhavensecretariat:deep-terror"
+  },
+  {
+    "name": "Deep Terror",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 7,
+        "move": 0,
+        "attack": 3
+      },
+      "5": {
+        "hp": 7,
+        "move": 0,
+        "attack": 4
+      },
+      "6": {
+        "hp": 9,
+        "move": 0,
+        "attack": 4
+      },
+      "7": {
+        "hp": 9,
+        "move": 0,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 9,
+        "move": 0,
+        "attack": 5
+      },
+      "5": {
+        "hp": 11,
+        "move": 0,
+        "attack": 5
+      },
+      "6": {
+        "hp": 13,
+        "move": 0,
+        "attack": 6
+      },
+      "7": {
+        "hp": 16,
+        "move": 0,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Retaliate 2; elite L4: Retaliate 2; normal L5: Retaliate 3; elite L5: Retaliate 3; normal L6: Retaliate 3; elite L6: Retaliate 3; normal L7: Retaliate 4; elite L7: Retaliate 4",
+    "_source": "gloomhavensecretariat:deep-terror"
+  },
+  {
+    "name": "Earth Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 1,
+        "attack": 3
+      },
+      "1": {
+        "hp": 9,
+        "move": 1,
+        "attack": 3
+      },
+      "2": {
+        "hp": 12,
+        "move": 1,
+        "attack": 3
+      },
+      "3": {
+        "hp": 13,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 18,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 20,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L3: immobilize",
+    "_source": "gloomhavensecretariat:earth-demon"
+  },
+  {
+    "name": "Earth Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 15,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 17,
+        "move": 2,
+        "attack": 4
+      },
+      "6": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 25,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 21,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 25,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 32,
+        "move": 3,
+        "attack": 6
+      },
+      "7": {
+        "hp": 42,
+        "move": 3,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "elite L4: immobilize; normal L5: immobilize; elite L5: immobilize; normal L6: immobilize; elite L6: immobilize; normal L7: immobilize; elite L7: immobilize",
+    "_source": "gloomhavensecretariat:earth-demon"
+  },
+  {
+    "name": "Energized Corpse",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 20,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 20,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 22,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 28,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L1: Shield 1, Retaliate 1; normal L2: Shield 1, Retaliate 1; normal L3: Shield 1, Retaliate 2",
+    "_source": "gloomhavensecretariat:energized-corpse"
+  },
+  {
+    "name": "Energized Corpse",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 34,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 40,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 48,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 62,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: Shield 1, Retaliate 2; normal L5: Shield 1, Retaliate 3; normal L6: Shield 2, Retaliate 3; normal L7: Shield 2, Retaliate 3",
+    "_source": "gloomhavensecretariat:energized-corpse"
+  },
+  {
+    "name": "Flame Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 2,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 2,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 4,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 2; elite L0: Shield 3; normal L1: Shield 3; elite L1: Shield 4, Retaliate 2; normal L2: Shield 3; elite L2: Shield 4, Retaliate 2; normal L3: Shield 3, Retaliate 2; elite L3: Shield 4, Retaliate 2",
+    "_source": "gloomhavensecretariat:flame-demon"
+  },
+  {
+    "name": "Flame Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 3,
+        "move": 4,
+        "attack": 3
+      },
+      "5": {
+        "hp": 4,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 4,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 6,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 5,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 6,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 7,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 9,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 3, Retaliate 3; elite L4: Shield 4, Retaliate 3; normal L5: Shield 4, Retaliate 3; elite L5: Shield 5, Retaliate 3; normal L6: Shield 4, Retaliate 4; elite L6: Shield 5, Retaliate 4; normal L7: Shield 4, Retaliate 5; elite L7: Shield 5, Retaliate 5",
+    "_source": "gloomhavensecretariat:flame-demon"
+  },
+  {
+    "name": "Flaming Bladespinner",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 8,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 13,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 15,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "immunities": [
+      "wound"
+    ],
+    "notes": "normal L0: Target 2; elite L0: Target 3; normal L1: Retaliate 2, Target 3; elite L1: Retaliate 3, Target 3; normal L2: Retaliate 2, Target 3; elite L2: Retaliate 3, Target 3; normal L3: Retaliate 2, Target 3; elite L3: Retaliate 3, Target 3",
+    "_source": "gloomhavensecretariat:flaming-bladespinner"
+  },
+  {
+    "name": "Flaming Bladespinner",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 11,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 19,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 22,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 18,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 24,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 32,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "immunities": [
+      "wound"
+    ],
+    "notes": "normal L4: Retaliate 2, Target 3; elite L4: Retaliate 4, Target 3; normal L5: Retaliate 3, Target 3; elite L5: Retaliate 4, Target 3; normal L6: Retaliate 3, Target 3; elite L6: Retaliate 5, Target 3; normal L7: Retaliate 4, Target 3; elite L7: Retaliate 5, Target 3",
+    "_source": "gloomhavensecretariat:flaming-bladespinner"
+  },
+  {
+    "name": "Flaming Sword Of Justice",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 9,
+        "move": 2,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L0: Shield 1, wound; normal L1: Shield 2, wound; normal L2: Shield 2, wound; normal L3: Shield 2, Retaliate 1, wound",
+    "_source": "gloomhavensecretariat:flaming-sword-of-justice"
+  },
+  {
+    "name": "Flaming Sword Of Justice",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 10,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 13,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 15,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 20,
+        "move": 3,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: Shield 2, Retaliate 2, wound; normal L5: Shield 2, Retaliate 2, wound; normal L6: Shield 3, Retaliate 3, wound; normal L7: Shield 3, Retaliate 3, wound",
+    "_source": "gloomhavensecretariat:flaming-sword-of-justice"
+  },
+  {
+    "name": "Forest Imp",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 1,
+        "move": 3,
+        "attack": 1
+      },
+      "1": {
+        "hp": 2,
+        "move": 3,
+        "attack": 1
+      },
+      "2": {
+        "hp": 2,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 3,
+        "move": 4,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 4,
+        "move": 3,
+        "attack": 1
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 6,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 7,
+        "move": 4,
+        "attack": 2
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1; elite L0: Shield 1; normal L1: Shield 1; elite L1: Shield 1; normal L2: Shield 1; elite L2: Shield 1, curse; normal L3: Shield 1; elite L3: Shield 1, curse",
+    "_source": "gloomhavensecretariat:forest-imp"
+  },
+  {
+    "name": "Forest Imp",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 3,
+        "move": 4,
+        "attack": 2
+      },
+      "5": {
+        "hp": 4,
+        "move": 4,
+        "attack": 2
+      },
+      "6": {
+        "hp": 5,
+        "move": 4,
+        "attack": 3
+      },
+      "7": {
+        "hp": 8,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 7,
+        "move": 4,
+        "attack": 2
+      },
+      "5": {
+        "hp": 8,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 10,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 14,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 2; elite L4: Shield 2, curse; normal L5: Shield 2, curse; elite L5: Shield 2, curse; normal L6: Shield 2, curse; elite L6: Shield 2, curse; normal L7: Shield 2, curse; elite L7: Shield 2, curse",
+    "_source": "gloomhavensecretariat:forest-imp"
+  },
+  {
+    "name": "Fracture Of The Deep",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 20,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 25,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 30,
+        "move": 3,
+        "attack": 5
+      },
+      "3": {
+        "hp": 36,
+        "move": 3,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "disarm",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:fracture-of-the-deep"
+  },
+  {
+    "name": "Fracture Of The Deep",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 42,
+        "move": 3,
+        "attack": 7
+      },
+      "5": {
+        "hp": 50,
+        "move": 4,
+        "attack": 7
+      },
+      "6": {
+        "hp": 70,
+        "move": 4,
+        "attack": 8
+      },
+      "7": {
+        "hp": 90,
+        "move": 4,
+        "attack": 9
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "disarm",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:fracture-of-the-deep"
+  },
+  {
+    "name": "Frost Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 8,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 12,
+        "move": 4,
+        "attack": 4
+      },
+      "3": {
+        "hp": 14,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: Retaliate 1; elite L1: Retaliate 2; normal L2: Retaliate 2; elite L2: Retaliate 2; normal L3: Retaliate 2; elite L3: Retaliate 3",
+    "_source": "gloomhavensecretariat:frost-demon"
+  },
+  {
+    "name": "Frost Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 11,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 18,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 25,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 19,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 22,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 29,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 40,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Retaliate 2; elite L4: Retaliate 3; normal L5: Retaliate 3; elite L5: Retaliate 3; normal L6: Retaliate 3; elite L6: Retaliate 4; normal L7: Retaliate 3; elite L7: Retaliate 4",
+    "_source": "gloomhavensecretariat:frost-demon"
+  },
+  {
+    "name": "Frozen Corpse",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 9,
+        "move": 1,
+        "attack": 2
+      },
+      "3": {
+        "hp": 10,
+        "move": 2,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 10,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 11,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 14,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: Shield 1; elite L1: Shield 1, Retaliate 1; normal L2: Shield 1; elite L2: Shield 1, Retaliate 1; normal L3: Shield 1; elite L3: Shield 1, Retaliate 2",
+    "_source": "gloomhavensecretariat:frozen-corpse"
+  },
+  {
+    "name": "Frozen Corpse",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 15,
+        "move": 2,
+        "attack": 3
+      },
+      "6": {
+        "hp": 17,
+        "move": 2,
+        "attack": 4
+      },
+      "7": {
+        "hp": 23,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 17,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 20,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 24,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 31,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1; elite L4: Shield 1, Retaliate 2; normal L5: Shield 1; elite L5: Shield 1, Retaliate 3; normal L6: Shield 2; elite L6: Shield 2, Retaliate 3; normal L7: Shield 2; elite L7: Shield 2, Retaliate 3",
+    "_source": "gloomhavensecretariat:frozen-corpse"
+  },
+  {
+    "name": "Guard Captain",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 9,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: Shield 1; normal L1: Shield 1; elite L1: Shield 2; normal L2: Shield 1; elite L2: Shield 2; normal L3: Shield 1; elite L3: Shield 2, Retaliate 1",
+    "_source": "gloomhavensecretariat:guard-captain"
+  },
+  {
+    "name": "Guard Captain",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "7": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 10,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1; elite L4: Shield 2, Retaliate 2; normal L5: Shield 2; elite L5: Shield 2, Retaliate 2; normal L6: Shield 2; elite L6: Shield 2, Retaliate 2; normal L7: Shield 2; elite L7: Shield 2, Retaliate 2",
+    "_source": "gloomhavensecretariat:guard-captain"
+  },
+  {
+    "name": "Harbinger Of Shadow 1",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 24,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 30,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 39,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 48,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "immobilize",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:harbinger-of-shadow-1"
+  },
+  {
+    "name": "Harbinger Of Shadow 1",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 60,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 72,
+        "move": 3,
+        "attack": 6
+      },
+      "6": {
+        "hp": 97,
+        "move": 3,
+        "attack": 7
+      },
+      "7": {
+        "hp": 125,
+        "move": 3,
+        "attack": 8
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "immobilize",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:harbinger-of-shadow-1"
+  },
+  {
+    "name": "Harbinger Of Shadow 2",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 24,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 30,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 39,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 48,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "immobilize",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:harbinger-of-shadow-2"
+  },
+  {
+    "name": "Harbinger Of Shadow 2",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 60,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 72,
+        "move": 3,
+        "attack": 6
+      },
+      "6": {
+        "hp": 97,
+        "move": 3,
+        "attack": 7
+      },
+      "7": {
+        "hp": 125,
+        "move": 3,
+        "attack": 8
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "immobilize",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:harbinger-of-shadow-2"
+  },
+  {
+    "name": "Harbinger Of Shadow",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 24,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 30,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 39,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 48,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "immobilize",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:harbinger-of-shadow"
+  },
+  {
+    "name": "Harbinger Of Shadow",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 60,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 72,
+        "move": 3,
+        "attack": 6
+      },
+      "6": {
+        "hp": 97,
+        "move": 3,
+        "attack": 7
+      },
+      "7": {
+        "hp": 125,
+        "move": 3,
+        "attack": 8
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "wound",
+      "poison",
+      "immobilize",
+      "stun",
+      "curse"
+    ],
+    "notes": null,
+    "_source": "gloomhavensecretariat:harbinger-of-shadow"
+  },
+  {
+    "name": "Harrower Infester",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 8,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 12,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 12,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 14,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 17,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: Retaliate 1; elite L1: Retaliate 2; normal L2: Retaliate 2; elite L2: Retaliate 2; normal L3: Retaliate 2; elite L3: Retaliate 3",
+    "_source": "gloomhavensecretariat:harrower-infester"
+  },
+  {
+    "name": "Harrower Infester",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 12,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 15,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 18,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 19,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 21,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 27,
+        "move": 3,
+        "attack": 6
+      },
+      "7": {
+        "hp": 32,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Retaliate 2; elite L4: Retaliate 3; normal L5: Retaliate 3; elite L5: Retaliate 3; normal L6: Retaliate 3; elite L6: Retaliate 4; elite L6 immunities: poison; normal L7: Retaliate 4; normal L7 immunities: poison; elite L7: Retaliate 4; elite L7 immunities: poison",
+    "_source": "gloomhavensecretariat:harrower-infester"
+  },
+  {
+    "name": "Hollow Scholar",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 12,
+        "move": 4,
+        "attack": 2
+      },
+      "1": {
+        "hp": 12,
+        "move": 4,
+        "attack": 2
+      },
+      "2": {
+        "hp": 14,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 18,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:hollow-scholar"
+  },
+  {
+    "name": "Hollow Scholar",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 20,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 26,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 36,
+        "move": 5,
+        "attack": 4
+      },
+      "7": {
+        "hp": 42,
+        "move": 6,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:hollow-scholar"
+  },
+  {
+    "name": "Hound",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 4,
+        "move": 4,
+        "attack": 2
+      },
+      "2": {
+        "hp": 6,
+        "move": 4,
+        "attack": 2
+      },
+      "3": {
+        "hp": 8,
+        "move": 4,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 5,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 5,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 5,
+        "attack": 3
+      },
+      "3": {
+        "hp": 8,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: Retaliate 1; elite L1: Retaliate 2; normal L2: Retaliate 1; elite L2: Retaliate 2; normal L3: Retaliate 1; elite L3: Retaliate 2",
+    "_source": "gloomhavensecretariat:hound"
+  },
+  {
+    "name": "Hound",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 4,
+        "attack": 3
+      },
+      "5": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 14,
+        "move": 5,
+        "attack": 3
+      },
+      "7": {
+        "hp": 17,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 11,
+        "move": 5,
+        "attack": 4
+      },
+      "5": {
+        "hp": 13,
+        "move": 5,
+        "attack": 4
+      },
+      "6": {
+        "hp": 17,
+        "move": 6,
+        "attack": 5
+      },
+      "7": {
+        "hp": 23,
+        "move": 6,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Retaliate 1; elite L4: Retaliate 2; normal L5: Retaliate 2; elite L5: Retaliate 3; normal L6: Retaliate 2; elite L6: Retaliate 3; normal L7: Retaliate 2; elite L7: Retaliate 3",
+    "_source": "gloomhavensecretariat:hound"
+  },
+  {
+    "name": "Ice Wraith",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 10,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 4,
+        "attack": 3
+      },
+      "1": {
+        "hp": 8,
+        "move": 4,
+        "attack": 3
+      },
+      "2": {
+        "hp": 10,
+        "move": 5,
+        "attack": 3
+      },
+      "3": {
+        "hp": 10,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1; normal L1: Shield 2; elite L1: Retaliate 2; normal L2: Shield 2; elite L2: Retaliate 2; normal L3: Shield 2, curse; elite L3: Retaliate 2, wound",
+    "_source": "gloomhavensecretariat:ice-wraith"
+  },
+  {
+    "name": "Ice Wraith",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 16,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 27,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 12,
+        "move": 5,
+        "attack": 4
+      },
+      "5": {
+        "hp": 16,
+        "move": 5,
+        "attack": 5
+      },
+      "6": {
+        "hp": 21,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 27,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 2, curse; elite L4: Retaliate 3, wound; normal L5: Shield 2, curse; elite L5: Retaliate 3, wound; normal L6: Shield 2, curse; normal L6 immunities: curse; elite L6: Retaliate 4, wound; elite L6 immunities: curse; normal L7: Shield 2, curse; normal L7 immunities: curse; elite L7: Retaliate 4, wound; elite L7 immunities: curse",
+    "_source": "gloomhavensecretariat:ice-wraith"
+  },
+  {
+    "name": "Incarnation Of Ancestors",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 22,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 28,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 30,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 36,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "poison",
+      "stun"
+    ],
+    "notes": "normal L0: Shield 1, custom %game.custom.advantage%; normal L1: Shield 1, custom %game.custom.advantage%; normal L2: Shield 1, custom %game.custom.advantage%; normal L3: Shield 1, custom %game.custom.advantage%",
+    "_source": "gloomhavensecretariat:incarnation-of-ancestors"
+  },
+  {
+    "name": "Incarnation Of Ancestors",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 40,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 40,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 54,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 58,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "poison",
+      "stun"
+    ],
+    "notes": "normal L4: Shield 1, custom %game.custom.advantage%; normal L5: Shield 2, custom %game.custom.advantage%; normal L6: Shield 2, custom %game.custom.advantage%; normal L7: Shield 3, custom %game.custom.advantage%",
+    "_source": "gloomhavensecretariat:incarnation-of-ancestors"
+  },
+  {
+    "name": "Large Vermling Scout",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 12,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 14,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 16,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [
+      "immobilize",
+      "stun"
+    ],
+    "notes": "normal L0 immunities: immobilize, stun; elite L0 immunities: immobilize, stun; normal L1 immunities: immobilize, stun; elite L1 immunities: immobilize, stun; normal L2 immunities: immobilize, stun; elite L2 immunities: immobilize, stun; normal L3: wound; normal L3 immunities: immobilize, stun; elite L3 immunities: immobilize, stun",
+    "_source": "gloomhavensecretariat:large-vermling-scout"
+  },
+  {
+    "name": "Large Vermling Scout",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 16,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 23,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 29,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 20,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 24,
+        "move": 4,
+        "attack": 6
+      },
+      "6": {
+        "hp": 36,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 44,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [
+      "immobilize",
+      "stun"
+    ],
+    "notes": "normal L4: wound; normal L4 immunities: immobilize, stun; elite L4 immunities: immobilize, stun; normal L5: wound; normal L5 immunities: immobilize, stun; elite L5 immunities: immobilize, stun; normal L6: wound; normal L6 immunities: immobilize, stun; elite L6 immunities: immobilize, disarm, stun; normal L7: wound; normal L7 immunities: immobilize, disarm, stun; elite L7 immunities: immobilize, disarm, stun",
+    "_source": "gloomhavensecretariat:large-vermling-scout"
+  },
+  {
+    "name": "Lightning Eel",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 1,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 2,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 6,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: custom %data.custom.fh.lightning-eel.1%; elite L1: custom %data.custom.fh.lightning-eel.1%; elite L2: custom %data.custom.fh.lightning-eel.1%; elite L3: custom %data.custom.fh.lightning-eel.1%",
+    "_source": "gloomhavensecretariat:lightning-eel"
+  },
+  {
+    "name": "Lightning Eel",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 6,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 9,
+        "move": 4,
+        "attack": 3
+      },
+      "7": {
+        "hp": 11,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 7,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 9,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 13,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 17,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "elite L4: custom %data.custom.fh.lightning-eel.1%; elite L5: custom %data.custom.fh.lightning-eel.1%; elite L6: custom %data.custom.fh.lightning-eel.1%; elite L7: custom %data.custom.fh.lightning-eel.1%",
+    "_source": "gloomhavensecretariat:lightning-eel"
+  },
+  {
+    "name": "Living Bones",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 1
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 1
+      },
+      "2": {
+        "hp": 5,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 7,
+        "move": 3,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 4,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 4,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 9,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Target 2; elite L0: Target 2; normal L1: Shield 1, Target 2; elite L1: Shield 1, Target 3; normal L2: Shield 1, Target 2; elite L2: Shield 1, Target 3; normal L3: Shield 1, Target 2; elite L3: Shield 1, Target 3",
+    "_source": "gloomhavensecretariat:living-bones"
+  },
+  {
+    "name": "Living Bones",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 12,
+        "move": 4,
+        "attack": 3
+      },
+      "7": {
+        "hp": 15,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 10,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 13,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 18,
+        "move": 5,
+        "attack": 4
+      },
+      "7": {
+        "hp": 21,
+        "move": 6,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1, Target 2; elite L4: Shield 1, Target 3; normal L5: Shield 1, Target 2; elite L5: Shield 1, Target 3; normal L6: Shield 1, Target 2; elite L6: Shield 1, Target 3; normal L7: Shield 1, Target 2; elite L7: Shield 1, Target 3",
+    "_source": "gloomhavensecretariat:living-bones"
+  },
+  {
+    "name": "Living Doom",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 9,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 10,
+        "move": 3,
+        "attack": 4
+      },
+      "2": {
+        "hp": 11,
+        "move": 3,
+        "attack": 5
+      },
+      "3": {
+        "hp": 14,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "elite L0: Shield 1; normal L1: Shield 1; elite L1: Shield 2; normal L2: Shield 1; elite L2: Shield 2; normal L3: Shield 2; elite L3: Shield 2",
+    "_source": "gloomhavensecretariat:living-doom"
+  },
+  {
+    "name": "Living Doom",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 11,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 14,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 18,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 24,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 18,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 20,
+        "move": 4,
+        "attack": 6
+      },
+      "6": {
+        "hp": 27,
+        "move": 4,
+        "attack": 7
+      },
+      "7": {
+        "hp": 30,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 2; elite L4: Shield 2; normal L5: Shield 2; elite L5: Shield 2; normal L6: Shield 2; elite L6: Shield 2; elite L6 immunities: bane; normal L7: Shield 2; normal L7 immunities: bane; elite L7: Shield 3; elite L7 immunities: bane",
+    "_source": "gloomhavensecretariat:living-doom"
+  },
+  {
+    "name": "Living Spirit",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 2,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 2,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 2,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 3,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 4,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1; elite L0: Shield 2; normal L1: Shield 2; elite L1: Shield 3; normal L2: Shield 2; elite L2: Shield 3; normal L3: Shield 2; elite L3: Shield 3",
+    "_source": "gloomhavensecretariat:living-spirit"
+  },
+  {
+    "name": "Living Spirit",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 4,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 6,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 7,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 4,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 5,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 8,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 10,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 3; elite L4: Shield 4; normal L5: Shield 3; elite L5: Shield 4; normal L6: Shield 3; elite L6: Shield 4; normal L7: Shield 3; elite L7: Shield 4",
+    "_source": "gloomhavensecretariat:living-spirit"
+  },
+  {
+    "name": "Lost In Seaweed",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 12,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 14,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 18,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 22,
+        "move": 2,
+        "attack": 2
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L1: immobilize; normal L2: immobilize; normal L3: immobilize",
+    "_source": "gloomhavensecretariat:lost-in-seaweed"
+  },
+  {
+    "name": "Lost In Seaweed",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 26,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 32,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 42,
+        "move": 3,
+        "attack": 3
+      },
+      "7": {
+        "hp": 52,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: immobilize; normal L5: immobilize; normal L6: immobilize; normal L7: immobilize",
+    "_source": "gloomhavensecretariat:lost-in-seaweed"
+  },
+  {
+    "name": "Lurker Clawcrusher",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 10,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 13,
+        "move": 3,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 13,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 14,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Target 2; elite L0: Shield 1, Target 2; normal L1: Shield 1, Target 2; elite L1: Shield 2, Target 2, impair; normal L2: Shield 1, Target 2; elite L2: Shield 2, Target 2, impair; normal L3: Shield 1, Target 2; elite L3: Shield 2, Target 2, impair",
+    "_source": "gloomhavensecretariat:lurker-clawcrusher"
+  },
+  {
+    "name": "Lurker Clawcrusher",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 13,
+        "move": 3,
+        "attack": 2
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 23,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 18,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 21,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 22,
+        "move": 3,
+        "attack": 6
+      },
+      "7": {
+        "hp": 29,
+        "move": 3,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 2, Target 2; elite L4: Shield 2, Target 2, impair; normal L5: Shield 2, Target 2; elite L5: Shield 2, Target 2, impair; normal L6: Shield 2, Target 2; elite L6: Shield 3, Target 2, impair; elite L6 immunities: stun; normal L7: Shield 2, Target 2; normal L7 immunities: stun; elite L7: Shield 3, Target 2, impair; elite L7 immunities: stun",
+    "_source": "gloomhavensecretariat:lurker-clawcrusher"
+  },
+  {
+    "name": "Lurker Mindsnipper",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 6,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 8,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 11,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Target 2; elite L0: Target 2; normal L1: Target 2, pierce 2; elite L1: Target 2, pierce 3, muddle; normal L2: Target 2, pierce 2; elite L2: Target 2, pierce 3, muddle; normal L3: Target 2, pierce 3; elite L3: Target 2, pierce 4, muddle",
+    "_source": "gloomhavensecretariat:lurker-mindsnipper"
+  },
+  {
+    "name": "Lurker Mindsnipper",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 12,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 20,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 13,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 15,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 22,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 27,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Target 2, pierce 3; elite L4: Target 2, pierce 4, muddle; normal L5: Target 2, pierce 3; elite L5: Target 2, pierce 4, muddle; normal L6: Target 2, pierce 3; elite L6: Target 2, pierce 4, muddle; normal L7: Target 2, pierce 3; elite L7: Target 2, pierce 4, muddle",
+    "_source": "gloomhavensecretariat:lurker-mindsnipper"
+  },
+  {
+    "name": "Lurker Soldier",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 9,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 11,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Target 2; elite L0: Shield 1, Target 2; normal L1: Target 2, pierce 1; elite L1: Shield 1, Target 2, pierce 1; normal L2: Target 2, pierce 1; elite L2: Shield 1, Target 2, pierce 2; normal L3: Target 2, pierce 1; elite L3: Shield 1, Target 2, pierce 2",
+    "_source": "gloomhavensecretariat:lurker-soldier"
+  },
+  {
+    "name": "Lurker Soldier",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 11,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 16,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 20,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 13,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 19,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 27,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1, Target 2, pierce 2; elite L4: Shield 2, Target 2, pierce 3; normal L5: Shield 1, Target 2, pierce 2; elite L5: Shield 2, Target 2, pierce 3; normal L6: Shield 1, Target 2, pierce 2; elite L6: Shield 2, Target 2, pierce 3; normal L7: Shield 1, Target 2, pierce 2; elite L7: Shield 2, Target 2, pierce 3",
+    "_source": "gloomhavensecretariat:lurker-soldier"
+  },
+  {
+    "name": "Lurker Wavethrower",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 1,
+        "attack": 1
+      },
+      "1": {
+        "hp": 6,
+        "move": 1,
+        "attack": 1
+      },
+      "2": {
+        "hp": 8,
+        "move": 1,
+        "attack": 1
+      },
+      "3": {
+        "hp": 10,
+        "move": 2,
+        "attack": 1
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 6,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 11,
+        "move": 2,
+        "attack": 2
+      }
+    },
+    "immunities": [],
+    "notes": "elite L1: immobilize; elite L2: immobilize; elite L3: immobilize",
+    "_source": "gloomhavensecretariat:lurker-wavethrower"
+  },
+  {
+    "name": "Lurker Wavethrower",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 11,
+        "move": 2,
+        "attack": 2
+      },
+      "5": {
+        "hp": 14,
+        "move": 2,
+        "attack": 2
+      },
+      "6": {
+        "hp": 17,
+        "move": 3,
+        "attack": 2
+      },
+      "7": {
+        "hp": 20,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 13,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 16,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 21,
+        "move": 3,
+        "attack": 3
+      },
+      "7": {
+        "hp": 26,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L4: immobilize; elite L5: immobilize; elite L6: immobilize; elite L7: immobilize",
+    "_source": "gloomhavensecretariat:lurker-wavethrower"
+  },
+  {
+    "name": "Mountains Heart",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 20,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 26,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 36,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 40,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L3: immobilize",
+    "_source": "gloomhavensecretariat:mountains-heart"
+  },
+  {
+    "name": "Mountains Heart",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 42,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 50,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 64,
+        "move": 3,
+        "attack": 6
+      },
+      "7": {
+        "hp": 84,
+        "move": 3,
+        "attack": 7
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: immobilize; normal L5: immobilize; normal L6: immobilize; normal L7: immobilize",
+    "_source": "gloomhavensecretariat:mountains-heart"
+  },
+  {
+    "name": "Night Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 3,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 6,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 7,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 5,
+        "move": 4,
+        "attack": 4
+      },
+      "1": {
+        "hp": 8,
+        "move": 4,
+        "attack": 4
+      },
+      "2": {
+        "hp": 11,
+        "move": 4,
+        "attack": 4
+      },
+      "3": {
+        "hp": 13,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:night-demon"
+  },
+  {
+    "name": "Night Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 8,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 11,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 16,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 20,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 15,
+        "move": 5,
+        "attack": 5
+      },
+      "5": {
+        "hp": 17,
+        "move": 5,
+        "attack": 6
+      },
+      "6": {
+        "hp": 23,
+        "move": 5,
+        "attack": 7
+      },
+      "7": {
+        "hp": 30,
+        "move": 5,
+        "attack": 8
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:night-demon"
+  },
+  {
+    "name": "Ooze",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 5,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "3": {
+        "hp": 8,
+        "move": 1,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 8,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 9,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 11,
+        "move": 1,
+        "attack": 3
+      },
+      "3": {
+        "hp": 11,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: Shield 1; elite L1: Shield 1; normal L2: Shield 1; elite L2: Shield 1; normal L3: Shield 1; elite L3: Shield 1, poison",
+    "_source": "gloomhavensecretariat:ooze"
+  },
+  {
+    "name": "Ooze",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "6": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      },
+      "7": {
+        "hp": 17,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 12,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 27,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1; elite L4: Shield 1, poison; normal L5: Shield 1, poison; elite L5: Shield 1, poison; normal L6: Shield 1, poison; elite L6: Shield 1, poison; normal L7: Shield 1, poison; elite L7: Shield 1, poison",
+    "_source": "gloomhavensecretariat:ooze"
+  },
+  {
+    "name": "Piranha Pig",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 6,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 8,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 11,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "elite L1: wound; elite L2: wound; elite L3: wound",
+    "_source": "gloomhavensecretariat:piranha-pig"
+  },
+  {
+    "name": "Piranha Pig",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 11,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 15,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 21,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 15,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 19,
+        "move": 5,
+        "attack": 4
+      },
+      "6": {
+        "hp": 25,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 33,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: wound; elite L4: wound; normal L5: wound; elite L5: wound; normal L6: wound; elite L6: wound; normal L7: wound; elite L7: wound",
+    "_source": "gloomhavensecretariat:piranha-pig"
+  },
+  {
+    "name": "Plea For Help Without Answer",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 21,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 21,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 24,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 33,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "disarm",
+      "stun"
+    ],
+    "notes": "normal L0: Target 2, Retaliate (L/3)+2; normal L1: Target 2, Retaliate (L/3)+2, muddle; normal L2: Target 2, Retaliate (L/3)+2, muddle; normal L3: Target 2, Retaliate (L/3)+2, muddle",
+    "_source": "gloomhavensecretariat:plea-for-help-without-answer"
+  },
+  {
+    "name": "Plea For Help Without Answer",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 39,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 45,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 66,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 81,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "disarm",
+      "stun"
+    ],
+    "notes": "normal L4: Target 2, Retaliate (L/3)+2, muddle; normal L5: Target 2, Retaliate (L/3)+2, muddle; normal L6: Target 2, Retaliate (L/3)+2, muddle; normal L7: Target 2, Retaliate (L/3)+2, muddle",
+    "_source": "gloomhavensecretariat:plea-for-help-without-answer"
+  },
+  {
+    "name": "Polar Bear",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 10,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 12,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 14,
+        "move": 3,
+        "attack": 4
+      },
+      "3": {
+        "hp": 16,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [
+      "immobilize",
+      "stun"
+    ],
+    "notes": "normal L0 immunities: immobilize, stun; elite L0: wound; elite L0 immunities: immobilize, stun; normal L1 immunities: immobilize, stun; elite L1: wound; elite L1 immunities: immobilize, stun; normal L2 immunities: immobilize, stun; elite L2: wound; elite L2 immunities: immobilize, stun; normal L3: wound; normal L3 immunities: immobilize, stun; elite L3: wound; elite L3 immunities: immobilize, stun",
+    "_source": "gloomhavensecretariat:polar-bear"
+  },
+  {
+    "name": "Polar Bear",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 12,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 16,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 23,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 29,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 20,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 24,
+        "move": 4,
+        "attack": 6
+      },
+      "6": {
+        "hp": 36,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 44,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [
+      "immobilize",
+      "stun"
+    ],
+    "notes": "normal L4: wound; normal L4 immunities: immobilize, stun; elite L4: wound; elite L4 immunities: immobilize, stun; normal L5: wound; normal L5 immunities: immobilize, stun; elite L5: wound; elite L5 immunities: immobilize, stun; normal L6: wound; normal L6 immunities: immobilize, stun; elite L6: wound; elite L6 immunities: immobilize, disarm, stun; normal L7: wound; normal L7 immunities: immobilize, disarm, stun; elite L7: wound; elite L7 immunities: immobilize, disarm, stun",
+    "_source": "gloomhavensecretariat:polar-bear"
+  },
+  {
+    "name": "Rending Drake",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 6,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 7,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 7,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 4,
+        "attack": 4
+      },
+      "1": {
+        "hp": 7,
+        "move": 4,
+        "attack": 5
+      },
+      "2": {
+        "hp": 9,
+        "move": 5,
+        "attack": 5
+      },
+      "3": {
+        "hp": 10,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: wound; elite L1: wound; normal L2: wound; elite L2: wound; normal L3: wound; elite L3: wound",
+    "_source": "gloomhavensecretariat:rending-drake"
+  },
+  {
+    "name": "Rending Drake",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 10,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 14,
+        "move": 5,
+        "attack": 5
+      },
+      "7": {
+        "hp": 18,
+        "move": 5,
+        "attack": 6
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 12,
+        "move": 6,
+        "attack": 6
+      },
+      "5": {
+        "hp": 15,
+        "move": 6,
+        "attack": 6
+      },
+      "6": {
+        "hp": 19,
+        "move": 6,
+        "attack": 7
+      },
+      "7": {
+        "hp": 24,
+        "move": 6,
+        "attack": 8
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: wound; elite L4: wound; normal L5: wound; elite L5: wound; normal L6: wound; elite L6: wound; normal L7: wound; elite L7: wound",
+    "_source": "gloomhavensecretariat:rending-drake"
+  },
+  {
+    "name": "Robotic Boltshooter",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 1,
+        "attack": 1
+      },
+      "1": {
+        "hp": 4,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 6,
+        "move": 1,
+        "attack": 2
+      },
+      "3": {
+        "hp": 6,
+        "move": 1,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 1,
+        "attack": 1
+      },
+      "1": {
+        "hp": 7,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 9,
+        "move": 1,
+        "attack": 2
+      },
+      "3": {
+        "hp": 10,
+        "move": 1,
+        "attack": 2
+      }
+    },
+    "immunities": [
+      "wound"
+    ],
+    "notes": "normal L0: Target 2; elite L0: Target 3; elite L0 immunities: wound; normal L1: Target 2; elite L1: Target 3; elite L1 immunities: wound; normal L2: Target 2; elite L2: Target 3; elite L2 immunities: wound; normal L3: Target 3; elite L3: Target 4; elite L3 immunities: wound",
+    "_source": "gloomhavensecretariat:robotic-boltshooter"
+  },
+  {
+    "name": "Robotic Boltshooter",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 6,
+        "move": 1,
+        "attack": 3
+      },
+      "5": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "6": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "7": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 11,
+        "move": 1,
+        "attack": 3
+      },
+      "5": {
+        "hp": 14,
+        "move": 2,
+        "attack": 3
+      },
+      "6": {
+        "hp": 17,
+        "move": 2,
+        "attack": 4
+      },
+      "7": {
+        "hp": 23,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "immunities": [
+      "wound"
+    ],
+    "notes": "normal L4: Target 3; elite L4: Target 4; elite L4 immunities: wound; normal L5: Target 3; elite L5: Target 4; elite L5 immunities: wound; normal L6: Target 3; elite L6: Target 4; elite L6 immunities: wound, disarm; normal L7: Target 3; normal L7 immunities: wound, disarm; elite L7: Target 4; elite L7 immunities: wound, disarm",
+    "_source": "gloomhavensecretariat:robotic-boltshooter"
+  },
+  {
+    "name": "Ruined Machine",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 3,
+        "move": 1,
+        "attack": 1
+      },
+      "1": {
+        "hp": 5,
+        "move": 1,
+        "attack": 1
+      },
+      "2": {
+        "hp": 6,
+        "move": 2,
+        "attack": 1
+      },
+      "3": {
+        "hp": 6,
+        "move": 2,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 5,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "immunities": [
+      "poison"
+    ],
+    "notes": "normal L0 immunities: poison; elite L0 immunities: poison; normal L1 immunities: poison; elite L1 immunities: poison; normal L2 immunities: poison; elite L2 immunities: poison; normal L3 immunities: poison; elite L3 immunities: poison",
+    "_source": "gloomhavensecretariat:ruined-machine"
+  },
+  {
+    "name": "Ruined Machine",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 8,
+        "move": 2,
+        "attack": 2
+      },
+      "5": {
+        "hp": 10,
+        "move": 2,
+        "attack": 2
+      },
+      "6": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "7": {
+        "hp": 15,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 13,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 18,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 22,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [
+      "poison"
+    ],
+    "notes": "normal L4 immunities: poison; elite L4 immunities: poison; normal L5 immunities: poison; elite L5 immunities: poison; normal L6 immunities: poison; elite L6 immunities: poison, immobilize; normal L7 immunities: poison, immobilize; elite L7 immunities: poison, immobilize",
+    "_source": "gloomhavensecretariat:ruined-machine"
+  },
+  {
+    "name": "Savvas Icestorm",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 7,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 10,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 12,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 12,
+        "move": 3,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 15,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 17,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: pierce 3; elite L0: pierce 3; normal L1: pierce 3; elite L1: Shield 1, pierce 3; normal L2: pierce 3; elite L2: Shield 1, pierce 3; normal L3: Shield 1, pierce 3; elite L3: Shield 1, pierce 3",
+    "_source": "gloomhavensecretariat:savvas-icestorm"
+  },
+  {
+    "name": "Savvas Icestorm",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 13,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 16,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 20,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 17,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 20,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 26,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 33,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1, pierce 3; elite L4: Shield 2, pierce 3; normal L5: Shield 1, pierce 3; elite L5: Shield 2, pierce 3; normal L6: Shield 2, pierce 3; elite L6: Shield 2, pierce 3; normal L7: Shield 2, pierce 3; elite L7: Shield 2, pierce 3",
+    "_source": "gloomhavensecretariat:savvas-icestorm"
+  },
+  {
+    "name": "Savvas Lavaflow",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 8,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 9,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 11,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 14,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 13,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 15,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 18,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: poison; elite L1: wound; normal L2: poison; elite L2: wound, poison; normal L3: poison; elite L3: wound, poison",
+    "_source": "gloomhavensecretariat:savvas-lavaflow"
+  },
+  {
+    "name": "Savvas Lavaflow",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 16,
+        "move": 3,
+        "attack": 4
+      },
+      "5": {
+        "hp": 20,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 28,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 35,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 25,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 30,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 40,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 50,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: poison; elite L4: wound, poison; normal L5: poison; elite L5: wound, poison; normal L6: poison; elite L6: wound, poison; normal L7: poison; elite L7: wound, poison",
+    "_source": "gloomhavensecretariat:savvas-lavaflow"
+  },
+  {
+    "name": "Scabwit",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 3,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 3,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 4,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 5,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L0: Shield 2; normal L1: Shield 3; normal L2: Shield 3; normal L3: Shield 3",
+    "_source": "gloomhavensecretariat:scabwit"
+  },
+  {
+    "name": "Scabwit",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 5,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 6,
+        "move": 2,
+        "attack": 4
+      },
+      "6": {
+        "hp": 8,
+        "move": 2,
+        "attack": 5
+      },
+      "7": {
+        "hp": 11,
+        "move": 2,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: Shield 4, muddle; normal L5: Shield 4, muddle; normal L6: Shield 5, muddle; normal L7: Shield 5, muddle",
+    "_source": "gloomhavensecretariat:scabwit"
+  },
+  {
+    "name": "Shape Blocks Out The Sun",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 30,
+        "move": 1,
+        "attack": 4
+      },
+      "1": {
+        "hp": 30,
+        "move": 1,
+        "attack": 4
+      },
+      "2": {
+        "hp": 39,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 42,
+        "move": 2,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "disarm"
+    ],
+    "notes": "normal L0: Shield 1, Target 2; normal L1: Shield 2, Target 2, impair; normal L2: Shield 2, Target 2, impair; normal L3: Shield 2, Target 2, impair",
+    "_source": "gloomhavensecretariat:shape-blocks-out-the-sun"
+  },
+  {
+    "name": "Shape Blocks Out The Sun",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 54,
+        "move": 2,
+        "attack": 5
+      },
+      "5": {
+        "hp": 63,
+        "move": 2,
+        "attack": 6
+      },
+      "6": {
+        "hp": 66,
+        "move": 2,
+        "attack": 7
+      },
+      "7": {
+        "hp": 87,
+        "move": 2,
+        "attack": 8
+      }
+    },
+    "elite": {},
+    "immunities": [
+      "disarm"
+    ],
+    "notes": "normal L4: Shield 2, Target 2, impair; normal L5: Shield 2, Target 2, impair; normal L6: Shield 3, Target 2, impair; normal L6 immunities: stun, disarm; normal L7: Shield 3, Target 2, impair; normal L7 immunities: stun, disarm",
+    "_source": "gloomhavensecretariat:shape-blocks-out-the-sun"
+  },
+  {
+    "name": "Shrike Fiend",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 1,
+        "attack": 2
+      },
+      "2": {
+        "hp": 9,
+        "move": 1,
+        "attack": 3
+      },
+      "3": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 8,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 10,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 12,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 16,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "immunities": [
+      "poison",
+      "wound",
+      "muddle"
+    ],
+    "notes": "normal L0 immunities: poison, wound, muddle; elite L0 immunities: poison, wound, muddle; normal L1 immunities: poison, wound, muddle; elite L1 immunities: poison, wound, muddle; normal L2 immunities: poison, wound, muddle; elite L2 immunities: poison, wound, muddle; normal L3 immunities: poison, wound, muddle; elite L3 immunities: poison, wound, muddle",
+    "_source": "gloomhavensecretariat:shrike-fiend"
+  },
+  {
+    "name": "Shrike Fiend",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 13,
+        "move": 2,
+        "attack": 3
+      },
+      "5": {
+        "hp": 15,
+        "move": 2,
+        "attack": 4
+      },
+      "6": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 29,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 20,
+        "move": 2,
+        "attack": 5
+      },
+      "5": {
+        "hp": 25,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 33,
+        "move": 3,
+        "attack": 6
+      },
+      "7": {
+        "hp": 45,
+        "move": 3,
+        "attack": 6
+      }
+    },
+    "immunities": [
+      "poison",
+      "wound",
+      "muddle"
+    ],
+    "notes": "normal L4 immunities: poison, wound, muddle; elite L4 immunities: poison, wound, muddle; normal L5 immunities: poison, wound, muddle; elite L5 immunities: poison, wound, muddle; normal L6 immunities: poison, wound, muddle; elite L6 immunities: poison, wound, muddle, disarm; normal L7 immunities: poison, wound, muddle, disarm; elite L7 immunities: poison, wound, muddle, disarm",
+    "_source": "gloomhavensecretariat:shrike-fiend"
+  },
+  {
+    "name": "Snow Imp",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 2,
+        "move": 2,
+        "attack": 1
+      },
+      "1": {
+        "hp": 2,
+        "move": 2,
+        "attack": 1
+      },
+      "2": {
+        "hp": 3,
+        "move": 2,
+        "attack": 1
+      },
+      "3": {
+        "hp": 3,
+        "move": 2,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 4,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 4,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 5,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 7,
+        "move": 3,
+        "attack": 2
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: brittle; elite L1: brittle; normal L2: brittle; elite L2: brittle; normal L3: brittle; elite L3: brittle",
+    "_source": "gloomhavensecretariat:snow-imp"
+  },
+  {
+    "name": "Snow Imp",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 4,
+        "move": 2,
+        "attack": 2
+      },
+      "5": {
+        "hp": 5,
+        "move": 3,
+        "attack": 2
+      },
+      "6": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "7": {
+        "hp": 11,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 8,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 13,
+        "move": 4,
+        "attack": 4
+      },
+      "7": {
+        "hp": 18,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: brittle; elite L4: brittle; normal L5: brittle; elite L5: brittle; normal L6: brittle; elite L6: brittle; normal L7: brittle; elite L7: brittle",
+    "_source": "gloomhavensecretariat:snow-imp"
+  },
+  {
+    "name": "Spitting Drake",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 4,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "3": {
+        "hp": 8,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 7,
+        "move": 3,
+        "attack": 4
+      },
+      "1": {
+        "hp": 9,
+        "move": 3,
+        "attack": 4
+      },
+      "2": {
+        "hp": 10,
+        "move": 3,
+        "attack": 5
+      },
+      "3": {
+        "hp": 13,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L1: muddle; elite L1: muddle; normal L2: muddle; elite L2: muddle; normal L3: muddle; elite L3: muddle",
+    "_source": "gloomhavensecretariat:spitting-drake"
+  },
+  {
+    "name": "Spitting Drake",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 9,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 12,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 16,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 22,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 16,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 19,
+        "move": 4,
+        "attack": 6
+      },
+      "6": {
+        "hp": 27,
+        "move": 4,
+        "attack": 6
+      },
+      "7": {
+        "hp": 34,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: muddle; elite L4: muddle; normal L5: muddle; elite L5: muddle; normal L6: muddle; elite L6: muddle; normal L7: muddle; elite L7: muddle",
+    "_source": "gloomhavensecretariat:spitting-drake"
+  },
+  {
+    "name": "Steel Automaton",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 9,
+        "move": 1,
+        "attack": 3
+      },
+      "1": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 14,
+        "move": 2,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 10,
+        "move": 2,
+        "attack": 4
+      },
+      "1": {
+        "hp": 12,
+        "move": 2,
+        "attack": 4
+      },
+      "2": {
+        "hp": 14,
+        "move": 2,
+        "attack": 5
+      },
+      "3": {
+        "hp": 17,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [
+      "poison",
+      "disarm"
+    ],
+    "notes": "normal L0: Shield 1; elite L0: Shield 2; normal L1: Shield 2; elite L1: Shield 3; normal L2: Shield 2; elite L2: Shield 3; normal L3: Shield 2; elite L3: Shield 3",
+    "_source": "gloomhavensecretariat:steel-automaton"
+  },
+  {
+    "name": "Steel Automaton",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 18,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 21,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 22,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 27,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 22,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 25,
+        "move": 3,
+        "attack": 6
+      },
+      "6": {
+        "hp": 26,
+        "move": 3,
+        "attack": 7
+      },
+      "7": {
+        "hp": 36,
+        "move": 4,
+        "attack": 7
+      }
+    },
+    "immunities": [
+      "poison",
+      "disarm"
+    ],
+    "notes": "normal L4: Shield 2; elite L4: Shield 3; normal L5: Shield 2; elite L5: Shield 3; normal L6: Shield 3; elite L6: Shield 4; normal L7: Shield 3; elite L7: Shield 4",
+    "_source": "gloomhavensecretariat:steel-automaton"
+  },
+  {
+    "name": "Sun Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 5,
+        "move": 2,
+        "attack": 2
+      },
+      "1": {
+        "hp": 8,
+        "move": 2,
+        "attack": 2
+      },
+      "2": {
+        "hp": 10,
+        "move": 2,
+        "attack": 2
+      },
+      "3": {
+        "hp": 11,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "1": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      },
+      "2": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      },
+      "3": {
+        "hp": 16,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1, custom %data.custom.fh.sun-demon.1%; elite L0: Shield 1, custom %data.custom.fh.sun-demon.1%; normal L1: Shield 1, custom %data.custom.fh.sun-demon.1%; elite L1: Shield 1, custom %data.custom.fh.sun-demon.1%; normal L2: Shield 1, custom %data.custom.fh.sun-demon.1%; elite L2: Shield 1, custom %data.custom.fh.sun-demon.1%; normal L3: Shield 1, custom %data.custom.fh.sun-demon.1%; elite L3: Shield 1, custom %data.custom.fh.sun-demon.1%",
+    "_source": "gloomhavensecretariat:sun-demon"
+  },
+  {
+    "name": "Sun Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 13,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 13,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 16,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 19,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 18,
+        "move": 3,
+        "attack": 5
+      },
+      "5": {
+        "hp": 18,
+        "move": 3,
+        "attack": 5
+      },
+      "6": {
+        "hp": 25,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 27,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 1, custom %data.custom.fh.sun-demon.1%; elite L4: Shield 1, custom %data.custom.fh.sun-demon.1%; normal L5: Shield 2, custom %data.custom.fh.sun-demon.1%; elite L5: Shield 2, custom %data.custom.fh.sun-demon.1%; normal L6: Shield 2, custom %data.custom.fh.sun-demon.1%; elite L6: Shield 2, custom %data.custom.fh.sun-demon.1%; normal L7: Shield 2, custom %data.custom.fh.sun-demon.1%; elite L7: Shield 3, custom %data.custom.fh.sun-demon.1%",
+    "_source": "gloomhavensecretariat:sun-demon"
+  },
+  {
+    "name": "Vermling Priest",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 2,
+        "move": 2,
+        "attack": 1
+      },
+      "1": {
+        "hp": 2,
+        "move": 2,
+        "attack": 1
+      },
+      "2": {
+        "hp": 3,
+        "move": 2,
+        "attack": 1
+      },
+      "3": {
+        "hp": 3,
+        "move": 2,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 2; elite L0: Shield 2; normal L1: Shield 3; elite L1: Shield 3; normal L2: Shield 3; elite L2: Shield 3; normal L3: Shield 3; elite L3: Shield 3",
+    "_source": "gloomhavensecretariat:vermling-priest"
+  },
+  {
+    "name": "Vermling Priest",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "5": {
+        "hp": 4,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 5,
+        "move": 3,
+        "attack": 4
+      },
+      "7": {
+        "hp": 8,
+        "move": 3,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 6,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 8,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 11,
+        "move": 3,
+        "attack": 5
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 3, muddle; elite L4: Shield 4, muddle; normal L5: Shield 3, muddle; elite L5: Shield 4, muddle; normal L6: Shield 3, muddle; elite L6: Shield 4, muddle; normal L7: Shield 3, muddle; elite L7: Shield 4, muddle",
+    "_source": "gloomhavensecretariat:vermling-priest"
+  },
+  {
+    "name": "Vermling Scout",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 2,
+        "move": 3,
+        "attack": 1
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 1
+      },
+      "2": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "3": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 4,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 5,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 7,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:vermling-scout"
+  },
+  {
+    "name": "Vermling Scout",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "5": {
+        "hp": 7,
+        "move": 3,
+        "attack": 3
+      },
+      "6": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "7": {
+        "hp": 15,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 8,
+        "move": 4,
+        "attack": 4
+      },
+      "5": {
+        "hp": 11,
+        "move": 4,
+        "attack": 4
+      },
+      "6": {
+        "hp": 16,
+        "move": 5,
+        "attack": 4
+      },
+      "7": {
+        "hp": 23,
+        "move": 5,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": null,
+    "_source": "gloomhavensecretariat:vermling-scout"
+  },
+  {
+    "name": "Wind Demon",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "1": {
+        "hp": 3,
+        "move": 3,
+        "attack": 2
+      },
+      "2": {
+        "hp": 4,
+        "move": 4,
+        "attack": 2
+      },
+      "3": {
+        "hp": 5,
+        "move": 4,
+        "attack": 3
+      }
+    },
+    "elite": {
+      "0": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "1": {
+        "hp": 5,
+        "move": 3,
+        "attack": 3
+      },
+      "2": {
+        "hp": 7,
+        "move": 4,
+        "attack": 3
+      },
+      "3": {
+        "hp": 8,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "immunities": [],
+    "notes": "normal L0: Shield 1; elite L0: Shield 1; normal L1: Shield 2; elite L1: Shield 2; normal L2: Shield 2; elite L2: Shield 2; normal L3: Shield 2; elite L3: Shield 2",
+    "_source": "gloomhavensecretariat:wind-demon"
+  },
+  {
+    "name": "Wind Demon",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 7,
+        "move": 4,
+        "attack": 3
+      },
+      "5": {
+        "hp": 10,
+        "move": 4,
+        "attack": 3
+      },
+      "6": {
+        "hp": 11,
+        "move": 4,
+        "attack": 3
+      },
+      "7": {
+        "hp": 14,
+        "move": 4,
+        "attack": 4
+      }
+    },
+    "elite": {
+      "4": {
+        "hp": 10,
+        "move": 4,
+        "attack": 5
+      },
+      "5": {
+        "hp": 14,
+        "move": 4,
+        "attack": 5
+      },
+      "6": {
+        "hp": 16,
+        "move": 4,
+        "attack": 5
+      },
+      "7": {
+        "hp": 21,
+        "move": 4,
+        "attack": 6
+      }
+    },
+    "immunities": [],
+    "notes": "normal L4: Shield 2; elite L4: Shield 2; normal L5: Shield 2; elite L5: Shield 2; normal L6: Shield 3; elite L6: Shield 3; normal L7: Shield 3; elite L7: Shield 3",
+    "_source": "gloomhavensecretariat:wind-demon"
+  },
+  {
+    "name": "Yoglang",
+    "levelRange": "0-3",
+    "normal": {
+      "0": {
+        "hp": 6,
+        "move": 1,
+        "attack": 2
+      },
+      "1": {
+        "hp": 7,
+        "move": 1,
+        "attack": 3
+      },
+      "2": {
+        "hp": 9,
+        "move": 2,
+        "attack": 3
+      },
+      "3": {
+        "hp": 12,
+        "move": 2,
+        "attack": 3
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L0: Retaliate 1, range ^5; normal L1: Retaliate 1, range ^5; normal L2: Retaliate 1, range ^5; normal L3: Retaliate 1, range ^5",
+    "_source": "gloomhavensecretariat:yoglang"
+  },
+  {
+    "name": "Yoglang",
+    "levelRange": "4-7",
+    "normal": {
+      "4": {
+        "hp": 13,
+        "move": 2,
+        "attack": 4
+      },
+      "5": {
+        "hp": 15,
+        "move": 3,
+        "attack": 4
+      },
+      "6": {
+        "hp": 20,
+        "move": 3,
+        "attack": 5
+      },
+      "7": {
+        "hp": 27,
+        "move": 4,
+        "attack": 5
+      }
+    },
+    "elite": {},
+    "immunities": [],
+    "notes": "normal L4: Retaliate 2, range ^5; normal L5: Retaliate 2, range ^5; normal L6: Retaliate 2, range ^5; normal L7: Retaliate 3, range ^5; normal L7 immunities: brittle",
+    "_source": "gloomhavensecretariat:yoglang"
+  }
+]

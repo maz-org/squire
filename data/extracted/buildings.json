@@ -1,3 +1,1122 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:f2abd8c65e66a3b09507ce5e350a81f4f0a9531774cd3e7d8e4a4bd946f8b47c
-size 37975
+[
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 3,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 3 metal for 2 gold each",
+    "notes": "Active during day. Requires any 3 resources to gain 1 prosperity. -1 morale penalty applies.",
+    "_file": "fh-05-mining-camp-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-05-mining-camp-level-3.png"
+  },
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 2,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 2 for 2 gold each",
+    "notes": "Prosperity increases to 49.2. Available during day phase only. Requires: 5 wood, 8 stone, 5 metal, 2 hide",
+    "_file": "fh-05-mining-camp-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-05-mining-camp-level-2.png"
+  },
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 4,
+    "buildCost": {
+      "gold": 2,
+      "lumber": 4,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 4 resources for 2 gold each",
+    "notes": "+1 prosperity",
+    "_file": "fh-05-mining-camp-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-05-mining-camp-level-4.png"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 1,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 1 for 2 gold",
+    "notes": "Night ability: None. Resource production: Any 2 = +1 prosperity (172.3). Resources available: 3 gold, 6 lumber, 2 metal, 3 hide",
+    "_file": "fh-12-hunting-lodge-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-12-hunting-lodge-level-1.png"
+  },
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 1,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "Collectively buy up to 1 production for 2 gold",
+    "notes": "Night effect: None. Provides +1 prosperity. Any 2 resources can be converted to production.",
+    "_file": "fh-05-mining-camp-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-05-mining-camp-level-1.png"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 4,
+    "buildCost": {
+      "gold": 8,
+      "lumber": 4,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 4 lumber for 2 gold each",
+    "notes": "+1 prosperity",
+    "_file": "fh-12-hunting-lodge-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-12-hunting-lodge-level-4.png"
+  },
+  {
+    "buildingNumber": "21",
+    "name": "Inn",
+    "level": 1,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy 1 material resource for 2 gold",
+    "notes": "+1 prosperity upon completion (I51.2)",
+    "_file": "fh-21-inn-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-21-inn-level-1.png"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 4,
+    "buildCost": {
+      "gold": 2,
+      "lumber": 4,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 4 lumber for 2 gold each",
+    "notes": "No night action. Requires any 4 resource icons. Provides +1 prosperity.",
+    "_file": "fh-17-logging-camp-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-17-logging-camp-level-4.png"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 2,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 2 lumber for 2 gold each",
+    "notes": "Requires any 3 of the following resources to build: Crate, Hide, Metal, Sawblade, Skull. Provides +1 prosperity when completed.",
+    "_file": "fh-17-logging-camp-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-17-logging-camp-level-2.png"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 1,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 1 lumber for 2 gold",
+    "notes": "Active during day. Requires any 2 of the following: 3 lumber, 4 metal, 5 hide, 2 prosperity. Provides +1 prosperity.",
+    "_file": "fh-17-logging-camp-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-17-logging-camp-level-1.png"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 3,
+    "buildCost": {
+      "gold": 7,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
+    "notes": "Day action (sun icon). Produces -1 morale and +1 prosperity. Requires 3 of any resource to use.",
+    "_file": "fh-24-garden-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-24-garden-level-3.png"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": 4
+    },
+    "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
+    "notes": "Daytime action. Produces +1 prosperity and +1 plot",
+    "_file": "fh-24-garden-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-24-garden-level-4.png"
+  },
+  {
+    "buildingNumber": "21",
+    "name": "Inn",
+    "level": 3,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 3 different material resources for 2 gold each",
+    "notes": "Night action (crescent moon icon). Requires any 4 resources to upgrade. Provides +1 prosperity.",
+    "_file": "fh-21-inn-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-21-inn-level-3.png"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 1,
+    "buildCost": {
+      "gold": 2,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "Plant herbs, rotate this card 180°, then stop. Each turn, rotate this card 180°, then plant herbs. Check planted 1 herb from each planting.",
+    "notes": "+1 prosperity. Requires any 2 resources to build (indicated by 'Any 2 = *' icon). Prosperity value: 78.4",
+    "_file": "fh-24-garden-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-24-garden-level-1.png"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 2,
+    "buildCost": {
+      "gold": 5,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Plant herbs, rotate this card 180°, then stop. Then when next time 3 is 180°, return one time 3 herb from card pile",
+    "notes": "+1 prosperity, +1 plot. Requires any 3 matching resources to build. Night action available (moon icon). 511*",
+    "_file": "fh-24-garden-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-24-garden-level-2.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 2,
+    "buildCost": {
+      "gold": 2,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Requires any 2 of the shown resources to craft. +1 prosperity. Add 011 to 015 supply.",
+    "_file": "fh-34-craftsman-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-2.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 1,
+    "buildCost": {
+      "gold": 1,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Requires any 2 of the shown resources. Add 001 to 010 to the item deck. Active at night (crescent moon symbol).",
+    "_file": "fh-34-craftsman-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-1.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 6,
+    "buildCost": {
+      "gold": 6,
+      "lumber": 7,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Any 3 = ★. +1 prosperity. Add [031] to [035] supply.",
+    "_file": "fh-34-craftsman-level-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-6.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 5,
+    "buildCost": {
+      "gold": 5,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 3
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Any 3 of the following resources (gold, lumber, metal, hide) can be used. Adds 1020 to 1030 prosperity.",
+    "_file": "fh-34-craftsman-level-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-5.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 7,
+    "buildCost": {
+      "gold": 7,
+      "lumber": 8,
+      "metal": 5,
+      "hide": 4
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity. Add 1030 to 1040 supply. -1 morale. Any 4 craft items.",
+    "_file": "fh-34-craftsman-level-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-7.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 4,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 5,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Any 3 resources equal 1 supply. +1 prosperity. Add 1021 to 1025.",
+    "_file": "fh-34-craftsman-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-4.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 8,
+    "buildCost": {
+      "gold": 8,
+      "lumber": 9,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Any 4 resources grant +1 prosperity. Add 1041 to 1045 to supply. -1 morale",
+    "_file": "fh-34-craftsman-level-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-8.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 9,
+    "buildCost": {
+      "gold": 1040,
+      "lumber": null,
+      "metal": 1050,
+      "hide": null
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Requires any 4 resources. Provides +1 prosperity.",
+    "_file": "fh-34-craftsman-level-9.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-9.png"
+  },
+  {
+    "buildingNumber": "35",
+    "name": "Alchemist",
+    "level": 1,
+    "buildCost": {
+      "gold": 1,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Brew 2-herb potions",
+    "notes": "No effect at this level. Requires any 2 resources from the available icons shown.",
+    "_file": "fh-35-alchemist-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-35-alchemist-level-1.png"
+  },
+  {
+    "buildingNumber": "35",
+    "name": "Alchemist",
+    "level": 3,
+    "buildCost": {
+      "gold": 3,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Brew and distill 2- and 3-herb potions",
+    "notes": "+1 prosperity, Cost: Any 3 resources",
+    "_file": "fh-35-alchemist-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-35-alchemist-level-3.png"
+  },
+  {
+    "buildingNumber": "35",
+    "name": "Alchemist",
+    "level": 2,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 2
+    },
+    "effect": "Brew and distill 2-herb potions. Any 2 resources can be converted into 1 prosperity.",
+    "notes": "No effect listed for this level. Night action available (indicated by crescent moon symbol).",
+    "_file": "fh-35-alchemist-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-35-alchemist-level-2.png"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 2,
+    "buildCost": {
+      "gold": 5,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Buy up to two items",
+    "notes": "+1 prosperity, 12.4",
+    "_file": "fh-37-trading-post-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-37-trading-post-level-2.png"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 1,
+    "buildCost": {
+      "gold": 3,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "No effect",
+    "notes": "Buy up to one item. Any 2 resources equal 1 gold. +1 prosperity (25.2)",
+    "_file": "fh-37-trading-post-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-37-trading-post-level-1.png"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 4,
+    "buildCost": {
+      "gold": 4,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "No effect",
+    "notes": "Buy up to four items. +1 prosperity (196.2)",
+    "_file": "fh-37-trading-post-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-37-trading-post-level-4.png"
+  },
+  {
+    "buildingNumber": "39",
+    "name": "Jeweler",
+    "level": 3,
+    "buildCost": {
+      "gold": 164,
+      "lumber": null,
+      "metal": null,
+      "hide": 167
+    },
+    "effect": "+1 prosperity",
+    "notes": "No effect, None. Requires any 4 resource symbols. Card ID: 522",
+    "_file": "fh-39-jeweler-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-39-jeweler-level-3.png"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 3,
+    "buildCost": {
+      "gold": 7,
+      "lumber": 5,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "No effect. Buy up to three items. Any 3 → +1 prosperity.",
+    "notes": "+1 morale, +1 prosperity (38.3)",
+    "_file": "fh-37-trading-post-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-37-trading-post-level-3.png"
+  },
+  {
+    "buildingNumber": "39",
+    "name": "Jeweler",
+    "level": 2,
+    "buildCost": {
+      "gold": 8,
+      "lumber": 2,
+      "metal": 10,
+      "hide": 3
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity; Add 160 to 163; -1 morale; Any 3 = +1 supply",
+    "_file": "fh-39-jeweler-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-39-jeweler-level-2.png"
+  },
+  {
+    "buildingNumber": "39",
+    "name": "Jeweler",
+    "level": 1,
+    "buildCost": {
+      "gold": 6,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity. Requires any 2 resources to build (indicated by 'Any 2' symbol). Night action available (crescent moon icon). Prosperity gain: +1 (shown as 31.3)",
+    "_file": "fh-39-jeweler-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-39-jeweler-level-1.png"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 1,
+    "buildCost": {
+      "gold": 3,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 0
+    },
+    "effect": "No effect",
+    "notes": "Buy enhancements. Any 2 resources equal 1 prosperity. +1 prosperity at 193.1",
+    "_file": "fh-44-enhancer-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-44-enhancer-level-1.png"
+  },
+  {
+    "buildingNumber": "42",
+    "name": "Temple of the Great Oak",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Each character may lose 5 gold to start the next scenario with x2",
+    "notes": "No night effect. Requires any 4 resource icons to build. Provides +5 prosperity upon completion.",
+    "_file": "fh-42-temple-of-the-great-oak-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-42-temple-of-the-great-oak-level-3.png"
+  },
+  {
+    "buildingNumber": "42",
+    "name": "Temple of the Great Oak",
+    "level": 2,
+    "buildCost": {
+      "gold": 7,
+      "lumber": 1,
+      "metal": 10,
+      "hide": 4
+    },
+    "effect": "Each character may lose 5 gold to start the next scenario with ×2",
+    "notes": "Grants +3 prosperity upon completion. Requires any 3 of the following resources to unlock: (shown as alternative build paths)",
+    "_file": "fh-42-temple-of-the-great-oak-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-42-temple-of-the-great-oak-level-2.png"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 2,
+    "buildCost": {
+      "gold": 5,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "Reduce all enhancement costs by 10 gold",
+    "notes": "Buy enhancements. Requires Any 3 of: (arrow, shield, sword, hat, helmet). Provides +1 prosperity (157.2)",
+    "_file": "fh-44-enhancer-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-44-enhancer-level-2.png"
+  },
+  {
+    "buildingNumber": "42",
+    "name": "Temple of the Great Oak",
+    "level": 1,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "Each character may lose 5 gold to start the next scenario with +1 prosperity (x2)",
+    "notes": "Requires any 2 resource icons. Night effect: None. Provides +1 prosperity (192.5 total shown).",
+    "_file": "fh-42-temple-of-the-great-oak-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-42-temple-of-the-great-oak-level-1.png"
+  },
+  {
+    "buildingNumber": "67",
+    "name": "Lumber Depot",
+    "level": 1,
+    "buildCost": {
+      "gold": 5,
+      "lumber": 7,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Collectively sell up to 1 lumber for 5 gold",
+    "notes": "Day action (sun icon). Prosperity bonus: +1 (144.3). Night action (moon icon): None",
+    "_file": "fh-67-lumber-depot-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-67-lumber-depot-level-1.png"
+  },
+  {
+    "buildingNumber": "65",
+    "name": "Metal Depot",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": 4
+    },
+    "effect": "Collective sell up to 2 metal for 5 gold each",
+    "notes": "+2 prosperity",
+    "_file": "fh-65-metal-depot-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-65-metal-depot-level-2.png"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 1,
+    "buildCost": {
+      "gold": 7,
+      "lumber": 5,
+      "metal": 6,
+      "hide": 6
+    },
+    "effect": "Reduce all enhancement costs by 10 gold and level penalties by 10 gold per level",
+    "notes": "Buy enhancements. Requires any 3 resources (gold, lumber, metal, hide). Provides +1 morale and +1 prosperity.",
+    "_file": "fh-44-enhancer-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-44-enhancer-level-3.png"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Reduce all enhancement costs by 10 gold, level penalties by 10 gold per level, and repeat penalties by 25 gold per enhancement",
+    "notes": "Buy enhancements. Cost: Any 4 resources. Prosperity bonus: +1 (56.3)",
+    "_file": "fh-44-enhancer-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-44-enhancer-level-4.png"
+  },
+  {
+    "buildingNumber": "65",
+    "name": "Metal Depot",
+    "level": 1,
+    "buildCost": {
+      "gold": null,
+      "lumber": 7,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Collectively sell up to 1 metal for 5 gold",
+    "notes": "+1 prosperity. Prosperity track value: 193.4",
+    "_file": "fh-65-metal-depot-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-65-metal-depot-level-1.png"
+  },
+  {
+    "buildingNumber": "74",
+    "name": "Tavern",
+    "level": 2,
+    "buildCost": {
+      "gold": 6,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 2
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity at 35.3",
+    "_file": "fh-74-tavern-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-74-tavern-level-2.png"
+  },
+  {
+    "buildingNumber": "74",
+    "name": "Tavern",
+    "level": 1,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity. Prosperity value: 160.2",
+    "_file": "fh-74-tavern-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-74-tavern-level-1.png"
+  },
+  {
+    "buildingNumber": "72",
+    "name": "Hide Depot",
+    "level": 1,
+    "buildCost": {
+      "gold": 5,
+      "lumber": null,
+      "metal": null,
+      "hide": 1
+    },
+    "effect": "Collectively sell up to 1 hide for 5 gold",
+    "notes": "Night ability: None. Requires any 3 resources (prosperity track shows +1 prosperity, 173.1)",
+    "_file": "fh-72-hide-depot-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-72-hide-depot-level-1.png"
+  },
+  {
+    "buildingNumber": "72",
+    "name": "Hide Depot",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": 4
+    },
+    "effect": "Collective sell up to 2 hide for 5 gold each",
+    "notes": "Available during day phase only. Provides +2 prosperity.",
+    "_file": "fh-72-hide-depot-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-72-hide-depot-level-2.png"
+  },
+  {
+    "buildingNumber": "67",
+    "name": "Lumber Depot",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collective sell up to 2 lumber for 5 gold each",
+    "notes": "Active during day. No night action. Requires any 4 resource tokens to build. Provides +2 prosperity.",
+    "_file": "fh-67-lumber-depot-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-67-lumber-depot-level-2.png"
+  },
+  {
+    "buildingNumber": "81",
+    "name": "Hall of Revelry",
+    "level": 2,
+    "buildCost": {
+      "gold": 4,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Access to Tholos' Favors",
+    "notes": "+1 prosperity",
+    "_file": "fh-81-hall-of-revelry-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-81-hall-of-revelry-level-2.png"
+  },
+  {
+    "buildingNumber": "83",
+    "name": "Library",
+    "level": 1,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 1
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity. Requires any 2 resources to unlock. Prosperity bonus: 190.3",
+    "_file": "fh-83-library-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-83-library-level-1.png"
+  },
+  {
+    "buildingNumber": "83",
+    "name": "Library",
+    "level": 2,
+    "buildCost": {
+      "gold": 6,
+      "lumber": 2,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity. Requires any 3 resources. Prosperity gain: +116.3",
+    "_file": "fh-83-library-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-83-library-level-2.png"
+  },
+  {
+    "buildingNumber": "81",
+    "name": "Hall of Revelry",
+    "level": 1,
+    "buildCost": {
+      "gold": 3,
+      "lumber": null,
+      "metal": null,
+      "hide": 1
+    },
+    "effect": "When the trials deck is complete, read 187.1",
+    "notes": "Night action. Prosperity: +1 (read 178.2)",
+    "_file": "fh-81-hall-of-revelry-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-81-hall-of-revelry-level-1.png"
+  },
+  {
+    "buildingNumber": "83",
+    "name": "Library",
+    "level": 3,
+    "buildCost": {
+      "gold": 4,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity, 89.2",
+    "_file": "fh-83-library-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-83-library-level-3.png"
+  },
+  {
+    "buildingNumber": "84",
+    "name": "Workshop",
+    "level": 1,
+    "upgrades": [
+      {
+        "name": "Boat",
+        "buildCost": {
+          "gold": 1,
+          "lumber": 4,
+          "metal": 1,
+          "hide": 2
+        },
+        "cost": 139.2
+      },
+      {
+        "name": "Sled",
+        "buildCost": {
+          "gold": 1,
+          "lumber": 3,
+          "metal": 2,
+          "hide": 1
+        },
+        "cost": 169.2
+      },
+      {
+        "name": "Climbing Gear",
+        "buildCost": {
+          "gold": 1,
+          "lumber": 1,
+          "metal": 3,
+          "hide": 2
+        },
+        "cost": 161.1
+      }
+    ],
+    "notes": "Each of the following is an upgrade that can be built in any order. Any 2 resources can be substituted (see icon at bottom).",
+    "_file": "fh-84-workshop-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-84-workshop-level-1.png"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 1,
+    "buildCost": {
+      "gold": 0,
+      "lumber": 8,
+      "metal": 8,
+      "hide": 8
+    },
+    "effect": "Bring two pets into each scenario. Capacity: 8",
+    "notes": "Night action available. Produces -1 morale or +1 prosperity. Requires any 3 resources to activate.",
+    "_file": "fh-88-stables-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-88-stables-level-3.png"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 1,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Bring one pet into each scenario. Capacity: 4",
+    "notes": "+1 prosperity. Any 2 resources equal 1 lumber.",
+    "_file": "fh-88-stables-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-88-stables-level-1.png"
+  },
+  {
+    "buildingNumber": "90",
+    "name": "Town Hall",
+    "level": 1,
+    "buildCost": {
+      "gold": 4,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Draw one challenge and keep up to one. When the challenge deck is complete, read 190.1",
+    "notes": "Requires any 2 resource types. Night action (indicated by moon icon). +1 prosperity upon completion (189.1). Card reference 558.",
+    "_file": "fh-90-town-hall-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-90-town-hall-level-1.png"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 2,
+    "buildCost": {
+      "gold": 6,
+      "lumber": 6,
+      "metal": 7,
+      "hide": 6
+    },
+    "effect": "Bring one pet into each scenario. Capacity: 8",
+    "notes": "Active at night (moon icon). Requires any 3 matching resource icons to activate. Provides +1 prosperity when completed.",
+    "_file": "fh-88-stables-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-88-stables-level-2.png"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 4,
+    "buildCost": {
+      "gold": 4,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Bring two pets into each scenario. Capacity: 12",
+    "notes": "Requires any 4 resource tokens. Provides +1 prosperity.",
+    "_file": "fh-88-stables-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-88-stables-level-4.png"
+  },
+  {
+    "buildingNumber": "90",
+    "name": "Town Hall",
+    "level": 2,
+    "buildCost": {
+      "gold": 6,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 4
+    },
+    "effect": "Draw two challenges and keep up to one. When the challenge deck is complete, read 190.1",
+    "notes": "+1 prosperity. Night action. Requires any 3 resource types to build.",
+    "_file": "fh-90-town-hall-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-90-town-hall-level-2.png"
+  },
+  {
+    "buildingNumber": "90",
+    "name": "Town Hall",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Draw three challenges and keep up to two. When the challenge deck is complete, read 190.1",
+    "notes": "Requires any 4 resources to build. Provides +1 prosperity.",
+    "_file": "fh-90-town-hall-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-90-town-hall-level-3.png"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 1,
+    "buildCost": {
+      "gold": 3,
+      "lumber": 1,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource. Capacity: 4. Advantage and -5 morale.",
+    "notes": "Requires any 2 resource types. Produces +4 soldiers.",
+    "_file": "fh-98-barracks-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-98-barracks-level-1.png"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 3,
+    "buildCost": {
+      "gold": 3,
+      "lumber": null,
+      "metal": 1,
+      "hide": null
+    },
+    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource each. Capacity: 8. Advantage and -25%",
+    "notes": "No night ability. Requires any 3 resources to unlock. Provides +1 prosperity and +2 soldiers upon completion.",
+    "_file": "fh-98-barracks-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-98-barracks-level-3.png"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 2,
+    "buildCost": {
+      "gold": 3,
+      "lumber": null,
+      "metal": 1,
+      "hide": null
+    },
+    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource. Capacity: 6. Advantage and -15 XP.",
+    "notes": "Unlock rewards: +1 prosperity, +2 soldiers. Any 2 resources required for unlock.",
+    "_file": "fh-98-barracks-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-98-barracks-level-2.png"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 4,
+    "buildCost": {
+      "gold": 3,
+      "lumber": null,
+      "metal": 1,
+      "hide": null
+    },
+    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource each. Capacity: 10. Advantage and -35%",
+    "notes": "Produces +1 prosperity and +2 soldiers. Requires any 3 resources to activate.",
+    "_file": "fh-98-barracks-level-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-98-barracks-level-4.png"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 2,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 2 lumber for 2 gold each",
+    "notes": "Day action: None. Night action: Any 3 matching symbols grants +1 prosperity. Building provides 5 gold, 8 lumber, 2 metal, and 5 hide resources when purchased.",
+    "_file": "fh-12-hunting-lodge-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-12-hunting-lodge-level-2.png"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 3,
+    "buildCost": {
+      "gold": 2,
+      "lumber": 7,
+      "metal": 10,
+      "hide": 3
+    },
+    "effect": "Collectively buy up to 3 lumber for 2 gold each",
+    "notes": "Day action: Any 3 resources equal 1 check mark. Night action: None. Prosperity gain: +1. Morale loss: -1",
+    "_file": "fh-12-hunting-lodge-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-12-hunting-lodge-level-3.png"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 3,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 3 lumber for 2 gold each",
+    "notes": "Can be purchased during day phase. Provides -1 morale at night, +1 prosperity during day.",
+    "_file": "fh-17-logging-camp-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-17-logging-camp-level-3.png"
+  },
+  {
+    "buildingNumber": "21",
+    "name": "Inn",
+    "level": 2,
+    "buildCost": {
+      "gold": 2,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively buy up to 2 different material resources for 2 gold each",
+    "notes": "Night action (crescent moon icon). Requires any 3 of the following: 5 lumber, 6 metal, 6 hide, or 6 hide. Grants +1 prosperity upon completion.",
+    "_file": "fh-21-inn-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-21-inn-level-2.png"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 3,
+    "buildCost": {
+      "gold": 3,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "No effect",
+    "notes": "Craft items. Any 2 resources equal 1 prosperity. Add 010 to 1020 supply.",
+    "_file": "fh-34-craftsman-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-34-craftsman-level-3.png"
+  },
+  {
+    "buildingNumber": "74",
+    "name": "Tavern",
+    "level": 3,
+    "buildCost": {
+      "gold": 4,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "No effect",
+    "notes": "+1 prosperity, Prosperity value 113.1",
+    "_file": "fh-74-tavern-level-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-74-tavern-level-3.png"
+  },
+  {
+    "buildingNumber": "85",
+    "name": "Carpenter",
+    "level": 1,
+    "buildCost": {
+      "gold": 5,
+      "lumber": 6,
+      "metal": 5,
+      "hide": 4
+    },
+    "effect": "Reduce all construction costs by 1 material resource",
+    "notes": "+1 prosperity upon completion. Night active. Requires any 2 resources to upgrade.",
+    "_file": "fh-85-carpenter-level-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-85-carpenter-level-1.png"
+  },
+  {
+    "buildingNumber": "85",
+    "name": "Carpenter",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": null,
+      "hide": 1
+    },
+    "effect": "Reduce all construction costs by 1 material resource and the extra construction cost by 1 morale",
+    "notes": "Night action. Requires any 3 resources to use. Provides +1 prosperity.",
+    "_file": "fh-85-carpenter-level-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/outpost-building-cards/frosthaven/fh-85-carpenter-level-2.png"
+  }
+]
