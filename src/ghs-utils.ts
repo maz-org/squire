@@ -14,7 +14,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // ─── GHS data paths ─────────────────────────────────────────────────────────
 
 export const GHS_DATA_DIR = process.env.GHS_DATA_DIR
-  ? join(process.env.GHS_DATA_DIR, 'data', 'fh')
+  ? existsSync(join(process.env.GHS_DATA_DIR, 'data', 'fh'))
+    ? join(process.env.GHS_DATA_DIR, 'data', 'fh')
+    : process.env.GHS_DATA_DIR
   : join(__dirname, '..', 'data', 'gloomhavensecretariat', 'data', 'fh');
 
 export const GHS_LABEL_PATH = join(GHS_DATA_DIR, 'label', 'en.json');
