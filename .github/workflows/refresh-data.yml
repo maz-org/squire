@@ -80,13 +80,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          branch="chore/refresh-extracted-data-$(date +%Y%m%d)"
+          branch="chore/refresh-extracted-data-$(date +%Y%m%d-%H%M%S)"
           git checkout -b "$branch"
           git add data/extracted/
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: refresh extracted data from upstream sources"
           git push -u origin "$branch"
+          gh label create automated --description "Created by CI" --color ededed 2>/dev/null || true
           gh pr create \
             --title "chore: refresh extracted data $(date +%Y-%m-%d)" \
             --body "Automated refresh of \`data/extracted/\` from upstream GHS and worldhaven repos." \
