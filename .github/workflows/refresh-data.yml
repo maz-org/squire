@@ -1,0 +1,94 @@
+name: Refresh extracted data
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly on Sundays at 06:00 UTC
+    - cron: '0 6 * * 0'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Shallow-clone GHS with only the Frosthaven data subtree (~6 MB)
+      - name: Fetch GHS data
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/Lurkars/gloomhavensecretariat.git /tmp/ghs
+          cd /tmp/ghs
+          git sparse-checkout set data/fh
+
+      # Shallow-clone worldhaven with only Frosthaven card images
+      - name: Fetch worldhaven images
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/any2cards/worldhaven.git /tmp/worldhaven
+          cd /tmp/worldhaven
+          git sparse-checkout set \
+            images/monster-stat-cards/frosthaven \
+            images/monster-ability-cards/frosthaven \
+            images/character-ability-cards/frosthaven \
+            images/items/frosthaven \
+            images/events/frosthaven \
+            images/battle-goals/frosthaven \
+            images/outpost-building-cards/frosthaven
+
+      # Run GHS imports (free — JSON parsing only)
+      - name: Run GHS imports
+        env:
+          GHS_DATA_DIR: /tmp/ghs
+        run: |
+          npx tsx src/import-monster-stats.ts
+          npx tsx src/import-character-abilities.ts
+          npx tsx src/import-character-mats.ts
+          npx tsx src/import-scenarios.ts
+          npx tsx src/import-personal-quests.ts
+
+      # Run OCR extraction (costs API money — ~$5-10 per full run)
+      - name: Run OCR extraction
+        env:
+          WORLDHAVEN_DIR: /tmp/worldhaven
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npx tsx src/extract-card-data.ts
+
+      # Open a PR if any extracted data changed
+      - name: Check for changes
+        id: diff
+        run: |
+          if [ -z "$(git status --porcelain -- data/extracted/)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="chore/refresh-extracted-data-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$branch"
+          git add data/extracted/
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: refresh extracted data from upstream sources"
+          git push -u origin "$branch"
+          gh label create automated --description "Created by CI" --color ededed 2>/dev/null || true
+          gh pr create \
+            --title "chore: refresh extracted data $(date +%Y-%m-%d)" \
+            --body "Automated refresh of \`data/extracted/\` from upstream GHS and worldhaven repos." \
+            --label "automated"

@@ -2,12 +2,3 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
   nvm use >/dev/null 2>&1 || true
 fi
-
-# Auto-symlink submodules in worktrees to avoid re-cloning large data repos.
-# Only runs on branch checkouts ($3 == 1), not file checkouts.
-if [ "$3" = "1" ]; then
-  script="$(git rev-parse --show-toplevel)/scripts/symlink-submodules.sh"
-  if [ -f "$script" ]; then
-    bash "$script"
-  fi
-fi

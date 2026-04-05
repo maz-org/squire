@@ -1,3 +1,3881 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:40d6f440f149eaddfa83403bd5d00953cf3e3aa6fdff02b0a1af8c9d2b5f8fbd
-size 115998
+[
+  {
+    "monsterType": "Piranha Pig",
+    "cardName": "Pig Parade",
+    "initiative": 68,
+    "abilities": [
+      "Summon one normal Piranha Pig."
+    ],
+    "_file": "fh-ma-ah-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-3.png"
+  },
+  {
+    "monsterType": "Piranha Pig",
+    "cardName": "Bring Bristles",
+    "initiative": 18,
+    "abilities": [
+      "Attack -1",
+      "Grant the closest Piranha Pig within Range 4: Move +0, Strengthen +1"
+    ],
+    "_file": "fh-ma-ah-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-1.png"
+  },
+  {
+    "monsterType": "Piranha Pig",
+    "cardName": "Desperate Herd",
+    "initiative": 72,
+    "abilities": [
+      "Attack -1",
+      "Grant all Piranha Pigs within Range 3: Attack -1, Move -2",
+      "Piranha Pig suffers Wound 1"
+    ],
+    "_file": "fh-ma-ah-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-2.png"
+  },
+  {
+    "monsterType": "Horde",
+    "cardName": "Advancing Horde",
+    "initiative": 88,
+    "abilities": [
+      "Grant the closest Piranha Pig within Range 4: +0 Attack, +0 Experience",
+      "If no Piranha Pig was targeted by the grant ability, summon one normal Piranha Pig"
+    ],
+    "_file": "fh-ma-ah-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Knockout Punch",
+    "initiative": 76,
+    "abilities": [
+      "Attack +0",
+      "Stun -1",
+      "Frost"
+    ],
+    "_file": "fh-ma-ai-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 56,
+    "abilities": [
+      "Attack +0",
+      "Move +0, Range +3"
+    ],
+    "_file": "fh-ma-ah-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-8.png"
+  },
+  {
+    "monsterType": "Guide the School",
+    "cardName": "Guide the School",
+    "initiative": 12,
+    "abilities": [
+      "Attack +0 Grapple +3",
+      "Grapple all Piranha Pigs Grapple +3"
+    ],
+    "_file": "fh-ma-ah-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-6.png"
+  },
+  {
+    "monsterType": "Piranha Pigs",
+    "cardName": "Heed the Pigs",
+    "initiative": 65,
+    "abilities": [
+      "Attack +0",
+      "Star X, Grant X+1 where X is the number of Piranha Pigs on the map."
+    ],
+    "_file": "fh-ma-ah-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Two-Fisted Strike",
+    "initiative": 41,
+    "abilities": [
+      "Attack -1",
+      "Attack -1",
+      "Attack +2 Attack",
+      "Attack -1",
+      "Heal +2 Attack"
+    ],
+    "_file": "fh-ma-ai-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-3.png"
+  },
+  {
+    "monsterType": "Frozen Debris",
+    "cardName": "Frozen Debris",
+    "initiative": 39,
+    "abilities": [
+      "Attack -1",
+      "Move +0, Range +3",
+      "Heal self, Stun"
+    ],
+    "_file": "fh-ma-ai-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-4.png"
+  },
+  {
+    "monsterType": "Cold Winds",
+    "cardName": "Cold Winds",
+    "initiative": 18,
+    "abilities": [
+      "Attack +0, Move 2, Heal 5",
+      "Ice attack, Poison attack"
+    ],
+    "_file": "fh-ma-as-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Blinding Vortex",
+    "initiative": 22,
+    "abilities": [
+      "Attack +0",
+      "Move -1, Range +3, ?",
+      "Spawn 7 Brittle hexes"
+    ],
+    "_file": "fh-ma-as-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Terrifying Growl",
+    "initiative": 80,
+    "abilities": [
+      "Attack +0",
+      "Target all enemies, Gain 2"
+    ],
+    "_file": "fh-ma-ai-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "One with the Earth",
+    "initiative": 12,
+    "abilities": [
+      "3",
+      "Heal 1 self",
+      "Heal 3 self"
+    ],
+    "_file": "fh-ma-ai-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-8.png"
+  },
+  {
+    "monsterType": "Sleet",
+    "cardName": "Sleet",
+    "initiative": 43,
+    "abilities": [
+      "Move +0",
+      "Attack +1 Range 4",
+      "Frost"
+    ],
+    "_file": "fh-ma-as-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-3.png"
+  },
+  {
+    "monsterType": "Snow Drifts",
+    "cardName": "Snow Drifts",
+    "initiative": 66,
+    "abilities": [
+      "All allies, Gain 6",
+      "Heal 1: ? All allies, Gain 6"
+    ],
+    "_file": "fh-ma-as-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Blistering Assault",
+    "initiative": 30,
+    "abilities": [
+      "Attack +1",
+      "Stun -1, Range 4, Pierce 1",
+      "Heal +2, Pierce 1"
+    ],
+    "_file": "fh-ma-as-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hail",
+    "initiative": 59,
+    "abilities": [
+      "Attack -1",
+      "Move +1, Range +4",
+      "Heal +2"
+    ],
+    "_file": "fh-ma-as-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 27,
+    "abilities": [
+      "Move +0",
+      "Attack +0, Range 5"
+    ],
+    "_file": "fh-ma-as-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Snowstorm",
+    "initiative": 6,
+    "abilities": [
+      "All enemies within Range 3 suffer Immobilize 2.",
+      "2 Heal all, Range 3"
+    ],
+    "_file": "fh-ma-as-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-snowspeaker/fh-ma-as-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Long Shot",
+    "initiative": 46,
+    "abilities": [
+      "Focus on the enemy farthest away within Range 7.",
+      "Attack -1 Range 7"
+    ],
+    "_file": "fh-ma-aa-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Heavy Shot",
+    "initiative": 95,
+    "abilities": [
+      "Attack +1, Gain 5 Gold"
+    ],
+    "_file": "fh-ma-aa-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Massive Blast",
+    "initiative": 57,
+    "abilities": [
+      "1 Ally, Grant +1",
+      "-1 Attack, Grant +3"
+    ],
+    "_file": "fh-ma-aa-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Exploding Ammunition",
+    "initiative": 71,
+    "abilities": [
+      "Attack +0 Range +5",
+      "All enemies adjacent to the target suffer 2 damage"
+    ],
+    "_file": "fh-ma-aa-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Exploding Ammunition",
+    "initiative": 71,
+    "abilities": [
+      "Attack +0, Range 5",
+      "All enemies adjacent to the target suffer Brittle 2"
+    ],
+    "_file": "fh-ma-aa-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Concussive Burst",
+    "initiative": 46,
+    "abilities": [
+      "-1",
+      "Attack +5",
+      "Push 1",
+      "Stun 1"
+    ],
+    "_file": "fh-ma-aa-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Defensive Ordinance",
+    "initiative": 17,
+    "abilities": [
+      "Heal 2, all, Cursed +1",
+      "Attack -2, Cursed +5",
+      "Shield 2"
+    ],
+    "_file": "fh-ma-aa-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 31,
+    "abilities": [
+      "Rabbit +0",
+      "Projectile +0, Range 4"
+    ],
+    "_file": "fh-ma-ar-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Power Shot",
+    "initiative": 64,
+    "abilities": [
+      "Attack +1, Range 5"
+    ],
+    "_file": "fh-ma-ar-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Close In",
+    "initiative": 32,
+    "abilities": [
+      "Rabbit +0",
+      "Spark +1 Range 3"
+    ],
+    "_file": "fh-ma-ar-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 16,
+    "abilities": [
+      "Attack +1",
+      "Stun -1, Range +4"
+    ],
+    "_file": "fh-ma-ar-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Set Trap",
+    "initiative": 14,
+    "abilities": [
+      "Heal 1",
+      "Attack 1 Range 5",
+      "Create one Shield 3 trap in an adjacent empty hex closest to an enemy."
+    ],
+    "_file": "fh-ma-ar-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Accelerated Power",
+    "initiative": 11,
+    "abilities": [
+      "Special 2"
+    ],
+    "_file": "fh-ma-bo-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 44,
+    "abilities": [
+      "Attack -1",
+      "Perform an additional attack +1 and Ranged attack +4"
+    ],
+    "_file": "fh-ma-ar-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-7.png"
+  },
+  {
+    "monsterType": "Twin Bolts",
+    "cardName": "Twin Bolts",
+    "initiative": 56,
+    "abilities": [
+      "Attack -1, Range 2, Target 4"
+    ],
+    "_file": "fh-ma-ar-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Accelerated Power",
+    "initiative": 17,
+    "abilities": [
+      "Special 2"
+    ],
+    "_file": "fh-ma-bo-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Descend",
+    "initiative": 75,
+    "abilities": [
+      "All adjacent enemies suffer Poison 2."
+    ],
+    "_file": "fh-ma-bb-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-3.png"
+  },
+  {
+    "monsterType": "White Claws",
+    "cardName": "White Claws",
+    "initiative": 42,
+    "abilities": [
+      "Attack +0",
+      "Move +0 advantage",
+      "Heal self +4"
+    ],
+    "_file": "fh-ma-cd-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Arcane Explosion",
+    "initiative": 77,
+    "abilities": [
+      "Attack +0",
+      "Spell +0"
+    ],
+    "_file": "fh-ma-cd-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Beam of Annihilation",
+    "initiative": 60,
+    "abilities": [
+      "Attack +0 Range 3"
+    ],
+    "_file": "fh-ma-dt-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Burning Gaze",
+    "initiative": 84,
+    "abilities": [
+      "Attack 1 against all adjacent enemies",
+      "Attack 0, Move 4, Ranged"
+    ],
+    "_file": "fh-ma-dt-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Strong Growth",
+    "initiative": 40,
+    "abilities": [
+      "+4 self",
+      "Heal all, Move +2"
+    ],
+    "_file": "fh-ma-ed-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 42,
+    "abilities": [
+      "+1 Attack",
+      "-1 Move"
+    ],
+    "_file": "fh-ma-ed-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Reckless Charge",
+    "initiative": 79,
+    "abilities": [
+      "Move +1",
+      "Attack +0",
+      "Target: -2 Attack"
+    ],
+    "_file": "fh-ma-ed-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-7.png"
+  },
+  {
+    "monsterType": "Fire Spout",
+    "cardName": "Fire Spout",
+    "initiative": 8,
+    "abilities": [
+      "Create one ⚔4 trap in an adjacent empty hex closest to an enemy."
+    ],
+    "_file": "fh-ma-fld-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Heat Aura",
+    "initiative": 77,
+    "abilities": [
+      "Attack +0 against all adjacent enemies",
+      "Brittle 1 to self"
+    ],
+    "_file": "fh-ma-fld-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Intense Torch",
+    "initiative": 49,
+    "abilities": [
+      "Attack +0",
+      "Heal 1, Attack 1"
+    ],
+    "_file": "fh-ma-fld-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Defensive Blades",
+    "initiative": 12,
+    "abilities": [
+      "All enemies within Range 2 suffer Disadvantage 2"
+    ],
+    "_file": "fh-ma-fbs-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-4.png"
+  },
+  {
+    "monsterType": "Firestorm",
+    "cardName": "Firestorm",
+    "initiative": 17,
+    "abilities": [
+      "1",
+      "2 Attack 3"
+    ],
+    "_file": "fh-ma-fbs-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-7.png"
+  },
+  {
+    "monsterType": "Hasty Assault",
+    "cardName": "Hasty Assault",
+    "initiative": 38,
+    "abilities": [
+      "Move +1",
+      "Attack -1"
+    ],
+    "_file": "fh-ma-frd-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Cold Snap",
+    "initiative": 42,
+    "abilities": [
+      "Muddle +1",
+      "Stun -1",
+      "Target gains Cold and Brittle"
+    ],
+    "_file": "fh-ma-fc-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-3.png"
+  },
+  {
+    "monsterType": "Frozen Corpse",
+    "cardName": "Thawed Strike",
+    "initiative": 68,
+    "abilities": [
+      "Attack -1",
+      "Move +2",
+      "If the element is consumed by the Frozen Corpse during the move ability, it suffers Frost 2.",
+      "Regenerate +1"
+    ],
+    "_file": "fh-ma-fc-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 71,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-fc-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 70,
+    "abilities": [
+      "Attack -1",
+      "Attack +1"
+    ],
+    "_file": "fh-ma-gu-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Parry and Thrust",
+    "initiative": 15,
+    "abilities": [
+      "Shield 1",
+      "Attack 2"
+    ],
+    "_file": "fh-ma-gu-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-1.png"
+  },
+  {
+    "monsterType": "Centipede",
+    "cardName": "Centipede Strike",
+    "initiative": 7,
+    "abilities": [
+      "Move +0",
+      "Attack -1"
+    ],
+    "_file": "fh-ma-hi-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Throwing Axe",
+    "initiative": 35,
+    "abilities": [
+      "Attack -1",
+      "Move +0, Range +2"
+    ],
+    "_file": "fh-ma-gu-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Drain the Essence",
+    "initiative": 7,
+    "abilities": [
+      "Attack 1, Range 3, ?",
+      "Heal 4, self"
+    ],
+    "_file": "fh-ma-hi-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Clouds of Hate",
+    "initiative": 38,
+    "abilities": [
+      "Attack +0",
+      "Move -1, Range +2, Heal",
+      "Shield +1, Range +1"
+    ],
+    "_file": "fh-ma-hi-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-8.png"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Pack Hunting",
+    "initiative": 19,
+    "abilities": [
+      "Attack +0",
+      "Move +0",
+      "Add +2 Attack if the target is adjacent to any of the Hound's allies."
+    ],
+    "_file": "fh-ma-ho-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Gripping Teeth",
+    "initiative": 6,
+    "abilities": [
+      "Attack -1",
+      "Move +0"
+    ],
+    "_file": "fh-ma-ho-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Renewed Aggression",
+    "initiative": 44,
+    "abilities": [
+      "Heal 1 (self)",
+      "Move +0",
+      "Attack +0 (Normal: 4)"
+    ],
+    "_file": "fh-ma-iw-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Shard Strike",
+    "initiative": 16,
+    "abilities": [
+      "Attack +0. Normal: Range 4.",
+      "Heal 2."
+    ],
+    "_file": "fh-ma-iw-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Tip the Scales",
+    "initiative": 24,
+    "abilities": [
+      "Target all, Gain 2",
+      "Target all, Gain 2"
+    ],
+    "_file": "fh-ma-im-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-8.png"
+  },
+  {
+    "monsterType": "Rotten Sting",
+    "cardName": "Rotten Sting",
+    "initiative": 43,
+    "abilities": [
+      "Move +0",
+      "Attack -1, Range 3, Poison",
+      "Gain Loot +1"
+    ],
+    "_file": "fh-ma-im-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 76,
+    "abilities": [
+      "Attack -1",
+      "Piercing +1, Range +3"
+    ],
+    "_file": "fh-ma-im-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 20,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-le-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 5,
+    "abilities": [
+      "Attack +1",
+      "Move -1"
+    ],
+    "_file": "fh-ma-le-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 45,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-lb-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Power Slash",
+    "initiative": 81,
+    "abilities": [
+      "Attack +2"
+    ],
+    "_file": "fh-ma-lb-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 57,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-ld-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Arresting Advance",
+    "initiative": 32,
+    "abilities": [
+      "Move +1",
+      "Attack -1",
+      "Immobilize"
+    ],
+    "_file": "fh-ma-ld-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 47,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-luc-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Crush Armor",
+    "initiative": 36,
+    "abilities": [
+      "Attack +0",
+      "Brittle -1",
+      "The target suffers Brittle X, where X is their Armor value for this attack.",
+      "X is double their Armor value instead."
+    ],
+    "_file": "fh-ma-luc-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Frantic Swipes",
+    "initiative": 31,
+    "abilities": [
+      "Attack +1",
+      "Attack -2 to all adjacent enemies"
+    ],
+    "_file": "fh-ma-luc-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Consume All Hope",
+    "initiative": 22,
+    "abilities": [
+      "Attack +0",
+      "Attack -1, Grant +3, Curse"
+    ],
+    "_file": "fh-ma-lum-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Powerful Claw",
+    "initiative": 60,
+    "abilities": [
+      "Attack -1",
+      "Move +2"
+    ],
+    "_file": "fh-ma-luw-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-1.png"
+  },
+  {
+    "monsterType": "Twin Claws",
+    "cardName": "Twin Claws",
+    "initiative": 48,
+    "abilities": [
+      "Attack +0",
+      "Disable +0",
+      "Heal +0"
+    ],
+    "_file": "fh-ma-luw-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-7.png"
+  },
+  {
+    "monsterType": "Black Thorns",
+    "cardName": "Black Thorns",
+    "initiative": 26,
+    "abilities": [
+      "Attack -2, Range 3, Target +3"
+    ],
+    "_file": "fh-ma-nd-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 22,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-nd-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 57,
+    "abilities": [
+      "Attack +0",
+      "Move +0, Range +3"
+    ],
+    "_file": "fh-ma-oo-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-2.png"
+  },
+  {
+    "monsterType": "Piranha Pig",
+    "cardName": "Schooling",
+    "initiative": 40,
+    "abilities": [
+      "Attack +0",
+      "Move +0",
+      "Add +1 Move if the target is adjacent to any of the Piranha Pig's allies."
+    ],
+    "_file": "fh-ma-pp-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Drain Strength",
+    "initiative": 8,
+    "abilities": [
+      "Knight +0",
+      "Shatter -1, Target 3, Heal 1"
+    ],
+    "_file": "fh-ma-pr-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 39,
+    "abilities": [
+      "Attack -1",
+      "Move +1"
+    ],
+    "_file": "fh-ma-rd-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Unending Frenzy",
+    "initiative": 72,
+    "abilities": [
+      "Attack -1",
+      "Attack -1",
+      "Attack -2"
+    ],
+    "_file": "fh-ma-rd-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Safety Valve",
+    "initiative": 22,
+    "abilities": [
+      "Move -1",
+      "Attack -1 Range +4",
+      "Heal 2"
+    ],
+    "_file": "fh-ma-rb-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Repair Drones",
+    "initiative": 16,
+    "abilities": [
+      "1 Heal self",
+      "3 Heal self"
+    ],
+    "_file": "fh-ma-rb-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Latch On",
+    "initiative": 31,
+    "abilities": [
+      "+1 Attack",
+      "Poison Condition, Stun Condition, +1 Regenerate"
+    ],
+    "_file": "fh-ma-rm-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Freezing Winds",
+    "initiative": 14,
+    "abilities": [
+      "Attack +0, Range +4",
+      "+2 Attack, Heal 1",
+      "Move 2"
+    ],
+    "_file": "fh-ma-si-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Cone of Cold",
+    "initiative": 35,
+    "abilities": [
+      "Attack -1",
+      "Move -1",
+      "Heal 1 (represented by snowflake icon)"
+    ],
+    "_file": "fh-ma-si-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-8.png"
+  },
+  {
+    "monsterType": "Cruel Bow",
+    "cardName": "Cruel Bow",
+    "initiative": 29,
+    "abilities": [
+      "Attack -1",
+      "Stun -1 Range 3 Hex"
+    ],
+    "_file": "fh-ma-sc-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 53,
+    "abilities": [
+      "Move +0",
+      "Attack +0"
+    ],
+    "_file": "fh-ma-sc-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 52,
+    "abilities": [
+      "Attack +0",
+      "Move +0, Range +4"
+    ],
+    "_file": "fh-ma-spd-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-2.png"
+  },
+  {
+    "monsterType": "Splashing Bile",
+    "cardName": "Splashing Bile",
+    "initiative": 57,
+    "abilities": [
+      "Move +0",
+      "Attack -1, Range +3",
+      "Heal +0"
+    ],
+    "_file": "fh-ma-spd-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-3.png"
+  },
+  {
+    "monsterType": "Venom Glands",
+    "cardName": "Venom Glands",
+    "initiative": 27,
+    "abilities": [
+      "Attack +0, Move 2, Heal 4"
+    ],
+    "_file": "fh-ma-spd-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Body Block",
+    "initiative": 24,
+    "abilities": [
+      "Knight +1",
+      "Shield 1",
+      "Paw 2"
+    ],
+    "_file": "fh-ma-sa-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Ray of Warmth",
+    "initiative": 17,
+    "abilities": [
+      "Attack +3, Range +3",
+      "Attack all enemies in a line"
+    ],
+    "_file": "fh-ma-sud-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-1.png"
+  },
+  {
+    "monsterType": "Supernova",
+    "cardName": "Supernova",
+    "initiative": 95,
+    "abilities": [
+      "Loot -1",
+      "Attack +0 (Range 3)",
+      "Target all enemies"
+    ],
+    "_file": "fh-ma-sud-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Into Thin Air",
+    "initiative": 9,
+    "abilities": [
+      "Attack -1, Range +2",
+      "Heal 1 (self)",
+      "Move, then Stun (self)"
+    ],
+    "_file": "fh-ma-wd-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-1.png"
+  },
+  {
+    "monsterType": "Shining Orb",
+    "cardName": "Shining Orb",
+    "initiative": 50,
+    "abilities": [
+      "Move +0",
+      "Attack +0 Range +3"
+    ],
+    "_file": "fh-ma-sud-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-8.png"
+  },
+  {
+    "monsterType": "Whirlwinds",
+    "cardName": "Whirlwinds",
+    "initiative": 29,
+    "abilities": [
+      "Move +0",
+      "Attack -1 (Range 2, Target 3)",
+      "Pull 2, Push 2"
+    ],
+    "_file": "fh-ma-wd-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-4.png"
+  },
+  {
+    "monsterType": "Fish Net",
+    "cardName": "Fish Net",
+    "initiative": 20,
+    "abilities": [
+      "Move +0",
+      "Attack +0, Range 3, Target 2, Push 1"
+    ],
+    "_file": "fh-ma-ah-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/abael-herder/fh-ma-ah-4.png"
+  },
+  {
+    "monsterType": "Warding Swipe",
+    "cardName": "Warding Swipe",
+    "initiative": 17,
+    "abilities": [
+      "+1 Movement",
+      "-1 Attack",
+      "Heal 1"
+    ],
+    "_file": "fh-ma-ai-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-1.png"
+  },
+  {
+    "monsterType": "Ice Wall",
+    "cardName": "Ice Wall",
+    "initiative": 8,
+    "abilities": [
+      "Create one 1-hex obstacle tile in an adjacent empty hex closest to an enemy.",
+      "All enemies adjacent to the created obstacle suffer hazardous terrain damage."
+    ],
+    "_file": "fh-ma-ai-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 56,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-ai-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/algox-icespeaker/fh-ma-ai-6.png"
+  },
+  {
+    "monsterType": "Grenade",
+    "cardName": "Grenade",
+    "initiative": 37,
+    "abilities": [
+      "1 ⊕ all, ⊕+1",
+      "-1 ⊕+4"
+    ],
+    "_file": "fh-ma-aa-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ancient-artillery/fh-ma-aa-4.png"
+  },
+  {
+    "monsterType": "Shoot Foot",
+    "cardName": "Shoot Foot",
+    "initiative": 29,
+    "abilities": [
+      "+0",
+      "-1 (5 turns)"
+    ],
+    "_file": "fh-ma-ar-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/archer/fh-ma-ar-1.png"
+  },
+  {
+    "monsterType": "Accelerated Power",
+    "cardName": "Accelerated Power",
+    "initiative": 14,
+    "abilities": [
+      "Special 2"
+    ],
+    "_file": "fh-ma-bo-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-2.png"
+  },
+  {
+    "monsterType": "Lingering Strength",
+    "cardName": "Special 1",
+    "initiative": 85,
+    "abilities": [
+      "Lingering Strength"
+    ],
+    "_file": "fh-ma-bo-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-4.png"
+  },
+  {
+    "monsterType": "Lingering Strength",
+    "cardName": "Lingering Strength",
+    "initiative": 79,
+    "abilities": [
+      "Special 1"
+    ],
+    "_file": "fh-ma-bo-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-5.png"
+  },
+  {
+    "monsterType": "Lingering Strength",
+    "cardName": "Special 1",
+    "initiative": 73,
+    "abilities": [],
+    "_file": "fh-ma-bo-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 36,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-bo-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Twin Shots",
+    "initiative": 52,
+    "abilities": [
+      "-1",
+      "-1 @2,@+3"
+    ],
+    "_file": "fh-ma-bo-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/boss/fh-ma-bo-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Tunneling Slices",
+    "initiative": 68,
+    "abilities": [
+      "Focus on the enemy farthest away.",
+      "+1 attack, +1 range",
+      "-2 attack: all enemies occupying or adjacent to hexes entered during the move ability"
+    ],
+    "_file": "fh-ma-bb-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-1.png"
+  },
+  {
+    "monsterType": "Tunneling Slices",
+    "cardName": "Tunneling Slices",
+    "initiative": 68,
+    "abilities": [
+      "Focus on the enemy farthest away.",
+      "+1 to range",
+      "-2 to attack against all enemies occupying or adjacent to hexes entered during the move ability"
+    ],
+    "_file": "fh-ma-bb-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Soaring Strikes",
+    "initiative": 53,
+    "abilities": [
+      "+0 [Winged Melee Icon]",
+      "-1 [Stun Icon] 2"
+    ],
+    "_file": "fh-ma-bb-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Explosive Ascent",
+    "initiative": 63,
+    "abilities": [
+      "+0",
+      "All enemies within ⊙2 suffer ※2."
+    ],
+    "_file": "fh-ma-bb-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-5.png"
+  },
+  {
+    "monsterType": "Aura of Fear",
+    "cardName": "Aura of Fear",
+    "initiative": 37,
+    "abilities": [
+      "Focus on the enemy farthest away.",
+      "+2 Range",
+      "All allies gain +2"
+    ],
+    "_file": "fh-ma-bb-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-6.png"
+  },
+  {
+    "monsterType": "Rocky Thrust",
+    "cardName": "Rocky Thrust",
+    "initiative": 65,
+    "abilities": [
+      "-1 movement",
+      "+1 attack",
+      "+1 range"
+    ],
+    "_file": "fh-ma-bb-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Crashing Blow",
+    "initiative": 85,
+    "abilities": [
+      "+2 Attack",
+      "+2 Attack (with icon indicating additional target or effect)"
+    ],
+    "_file": "fh-ma-bb-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/burrowing-blade/fh-ma-bb-8.png"
+  },
+  {
+    "monsterType": "Chilling Breath",
+    "cardName": "Chilling Breath",
+    "initiative": 14,
+    "abilities": [
+      "-1",
+      "+0",
+      "2 +2"
+    ],
+    "_file": "fh-ma-cd-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Heat Blast",
+    "initiative": 1,
+    "abilities": [
+      "+1",
+      "-1 (Range +2)",
+      "Fire, Target"
+    ],
+    "_file": "fh-ma-cd-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Seismic Punch",
+    "initiative": 67,
+    "abilities": [
+      "-2",
+      "+1 and 2"
+    ],
+    "_file": "fh-ma-cd-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-3.png"
+  },
+  {
+    "monsterType": "Whirlwind",
+    "cardName": "Whirlwind",
+    "initiative": 20,
+    "abilities": [
+      "+0",
+      "-1",
+      "+2",
+      "Heal 2"
+    ],
+    "_file": "fh-ma-cd-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-4.png"
+  },
+  {
+    "monsterType": "Black Tendrils",
+    "cardName": "Black Tendrils",
+    "initiative": 51,
+    "abilities": [
+      "-1",
+      "+1",
+      "Self"
+    ],
+    "_file": "fh-ma-cd-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-6.png"
+  },
+  {
+    "monsterType": "Hungry Maw",
+    "cardName": "Hungry Maw",
+    "initiative": 98,
+    "abilities": [
+      "-1",
+      "-1"
+    ],
+    "_file": "fh-ma-cd-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/chaos-demon/fh-ma-cd-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Horrible Glare",
+    "initiative": 65,
+    "abilities": [
+      "-1",
+      "Ⓒ3 Ⓒ+3",
+      "⚡"
+    ],
+    "_file": "fh-ma-dt-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Beam of Annihilation",
+    "initiative": 60,
+    "abilities": [
+      "+0",
+      "Range 3"
+    ],
+    "_file": "fh-ma-dt-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-2.png"
+  },
+  {
+    "monsterType": "Rooted Fear",
+    "cardName": "Rooted Fear",
+    "initiative": 75,
+    "abilities": [
+      "-1",
+      "-1 Range 5"
+    ],
+    "_file": "fh-ma-dt-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Disruptive Frenzy",
+    "initiative": 75,
+    "abilities": [
+      "-2",
+      "-1 +2, +3"
+    ],
+    "_file": "fh-ma-dt-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-6.png"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Terrible Growth",
+    "initiative": 96,
+    "abilities": [
+      "Attack -2, Range +6",
+      "If the attack ability was performed, summon one normal Deep Terror in an empty hex adjacent to the target of the attack ability."
+    ],
+    "_file": "fh-ma-dt-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-7.png"
+  },
+  {
+    "monsterType": "Ray of Hate",
+    "cardName": "Ray of Hate",
+    "initiative": 54,
+    "abilities": [
+      "All allies gain 1",
+      "Inflict 0 damage. Target 4 enemies"
+    ],
+    "_file": "fh-ma-dt-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/deep-terror/fh-ma-dt-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 62,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-ed-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-3.png"
+  },
+  {
+    "monsterType": "Boulder Throw",
+    "cardName": "Boulder Throw",
+    "initiative": 71,
+    "abilities": [
+      "+0 G+4",
+      "+1 Ⓒ"
+    ],
+    "_file": "fh-ma-ed-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 83,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-ed-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Ground Slam",
+    "initiative": 93,
+    "abilities": [
+      "-1 Movement",
+      "-1 Attack, all adjacent enemies",
+      "1 Range, 1 Target"
+    ],
+    "_file": "fh-ma-ed-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-6.png"
+  },
+  {
+    "monsterType": "Earthen Eruption",
+    "cardName": "Earthen Eruption",
+    "initiative": 87,
+    "abilities": [
+      "+0",
+      "-1",
+      "Summon token"
+    ],
+    "_file": "fh-ma-ed-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/earth-demon/fh-ma-ed-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 3,
+    "abilities": [
+      "+1",
+      "-1 and +4"
+    ],
+    "_file": "fh-ma-fld-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 24,
+    "abilities": [
+      "+0",
+      "+0 ⊙+4"
+    ],
+    "_file": "fh-ma-fld-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Explosive Blast",
+    "initiative": 46,
+    "abilities": [
+      "+0 [attack symbol] C+4",
+      "Attack 7 hexes in a cluster pattern. -1 [range symbol]"
+    ],
+    "_file": "fh-ma-fld-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 67,
+    "abilities": [
+      "-1",
+      "+1 and +3"
+    ],
+    "_file": "fh-ma-fld-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-6.png"
+  },
+  {
+    "monsterType": "Raging Blaze",
+    "cardName": "Raging Blaze",
+    "initiative": 30,
+    "abilities": [
+      "All adjacent enemies suffer ⚡2",
+      "+0",
+      "-2 ⚡2,⊙4,🧿"
+    ],
+    "_file": "fh-ma-fld-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flame-demon/fh-ma-fld-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 78,
+    "abilities": [
+      "-2",
+      "+1",
+      "Fire"
+    ],
+    "_file": "fh-ma-fbs-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-1.png"
+  },
+  {
+    "monsterType": "Hasty Assault",
+    "cardName": "Hasty Assault",
+    "initiative": 38,
+    "abilities": [
+      "+2",
+      "-1",
+      "Fire"
+    ],
+    "_file": "fh-ma-fbs-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Increase Momentum",
+    "initiative": 33,
+    "abilities": [
+      "+0",
+      "-1",
+      "self"
+    ],
+    "_file": "fh-ma-fbs-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Heated Sweep",
+    "initiative": 58,
+    "abilities": [
+      "+0",
+      "+0",
+      "+1 and apply +1 burn"
+    ],
+    "_file": "fh-ma-fbs-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-5.png"
+  },
+  {
+    "monsterType": "Flame Jets",
+    "cardName": "Flame Jets",
+    "initiative": 43,
+    "abilities": [
+      "All enemies within Range 2 suffer 1 Piercing Damage"
+    ],
+    "_file": "fh-ma-fbs-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Spinning Charge",
+    "initiative": 68,
+    "abilities": [
+      "Focus on the enemy farthest away.",
+      "+1 to attack, +1 to movement",
+      "-1 to all enemies occupying or adjacent to hexes entered during the move ability"
+    ],
+    "_file": "fh-ma-fbs-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/flaming-bladespinner/fh-ma-fbs-8.png"
+  },
+  {
+    "monsterType": "Gather the Frost",
+    "cardName": "Gather the Frost",
+    "initiative": 18,
+    "abilities": [
+      "All, C+2",
+      "Self: +3"
+    ],
+    "_file": "fh-ma-frd-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-1.png"
+  },
+  {
+    "monsterType": "Frozen Shards",
+    "cardName": "Frozen Shards",
+    "initiative": 58,
+    "abilities": [
+      "-1",
+      "+0, +2",
+      "+2, +1"
+    ],
+    "_file": "fh-ma-frd-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 58,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-frd-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-4.png"
+  },
+  {
+    "monsterType": "Cold Claws",
+    "cardName": "Cold Claws",
+    "initiative": 78,
+    "abilities": [
+      "-1 Range",
+      "+0 Attack",
+      "Apply 2 Brittle and 1 Wound"
+    ],
+    "_file": "fh-ma-frd-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-5.png"
+  },
+  {
+    "monsterType": "Cold Claws",
+    "cardName": "Cold Claws",
+    "initiative": 78,
+    "abilities": [
+      "-1",
+      "+0"
+    ],
+    "_file": "fh-ma-frd-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Chilled to the Bone",
+    "initiative": 58,
+    "abilities": [
+      "Lose 1 {resource type}",
+      "Lose 1 {attack type} and gain 3 {armor type}",
+      "Apply {pie chart condition} and {frost condition}"
+    ],
+    "_file": "fh-ma-frd-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-7.png"
+  },
+  {
+    "monsterType": "Ice Barrier",
+    "cardName": "Ice Barrier",
+    "initiative": 18,
+    "abilities": [
+      "+1",
+      "2",
+      "Grant Self Shield 1"
+    ],
+    "_file": "fh-ma-frd-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frost-demon/fh-ma-frd-8.png"
+  },
+  {
+    "monsterType": "Freezing Embrace",
+    "cardName": "Freezing Embrace",
+    "initiative": 23,
+    "abilities": [
+      "+1 attack",
+      "Gain 1 armor",
+      "Gain 1 shield"
+    ],
+    "_file": "fh-ma-fc-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Cold Snap",
+    "initiative": 42,
+    "abilities": [
+      "+1 Attack",
+      "-1 Range",
+      "Target gains Ice and Brittle conditions"
+    ],
+    "_file": "fh-ma-fc-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-4.png"
+  },
+  {
+    "monsterType": "Frozen Corpse",
+    "cardName": "Thawed Strike",
+    "initiative": 68,
+    "abilities": [
+      "-1",
+      "+2 (icon: fire/consumed element)",
+      "If the element is consumed by the Frozen Corpse during the move ability, it suffers ❄ 2.",
+      "+1 (icon: ice)"
+    ],
+    "_file": "fh-ma-fc-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-5.png"
+  },
+  {
+    "monsterType": "Frost Breath",
+    "cardName": "Frost Breath",
+    "initiative": 39,
+    "abilities": [
+      "+0",
+      "-1",
+      "Ice (damages 1 target)"
+    ],
+    "_file": "fh-ma-fc-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-7.png"
+  },
+  {
+    "monsterType": "Icy Swipe",
+    "cardName": "Icy Swipe",
+    "initiative": 84,
+    "abilities": [
+      "-1 range",
+      "+1 attack",
+      "Add one Brittle hex"
+    ],
+    "_file": "fh-ma-fc-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/frozen-corpse/fh-ma-fc-8.png"
+  },
+  {
+    "monsterType": "Venom Shiv",
+    "cardName": "Venom Shiv",
+    "initiative": 15,
+    "abilities": [
+      "+0",
+      "1"
+    ],
+    "_file": "fh-ma-gu-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 30,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-gu-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 50,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-gu-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-6.png"
+  },
+  {
+    "monsterType": "Nothing Special",
+    "cardName": "Nothing Special",
+    "initiative": 50,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-gu-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Psych Up",
+    "initiative": 55,
+    "abilities": [
+      "-1",
+      "+0",
+      "self"
+    ],
+    "_file": "fh-ma-gu-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/guard/fh-ma-gu-8.png"
+  },
+  {
+    "monsterType": "Biting Gnats",
+    "cardName": "Biting Gnats",
+    "initiative": 38,
+    "abilities": [
+      "-1",
+      "+1 | 2"
+    ],
+    "_file": "fh-ma-hi-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-1.png"
+  },
+  {
+    "monsterType": "Swarm",
+    "cardName": "Restore the Swarm",
+    "initiative": 16,
+    "abilities": [
+      "-1 Ranged",
+      "-1 Attack",
+      "+5 Heal (self)"
+    ],
+    "_file": "fh-ma-hi-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-3.png"
+  },
+  {
+    "monsterType": "Spiked Mandibles",
+    "cardName": "Spiked Mandibles",
+    "initiative": 16,
+    "abilities": [
+      "+2 Attack; Inflict 1 Bleed",
+      "2 Attacks"
+    ],
+    "_file": "fh-ma-hi-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-5.png"
+  },
+  {
+    "monsterType": "Angry Bulwark",
+    "cardName": "02",
+    "initiative": 2,
+    "abilities": [
+      "Shield 2",
+      "Attack 2, Range 3"
+    ],
+    "_file": "fh-ma-hi-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-6.png"
+  },
+  {
+    "monsterType": "Piercing Parasites",
+    "cardName": "Piercing Parasites",
+    "initiative": 30,
+    "abilities": [
+      "Perform \"◇X, self\" where X is twice the number of enemies targeted by the attack ability.",
+      "+0",
+      "-1"
+    ],
+    "_file": "fh-ma-hi-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/harrower-infester/fh-ma-hi-7.png"
+  },
+  {
+    "monsterType": "Harrowing Howl",
+    "cardName": "Harrowing Howl",
+    "initiative": 7,
+    "abilities": [
+      "+0",
+      "all, G+1"
+    ],
+    "_file": "fh-ma-ho-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-2.png"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Pack Hunting",
+    "initiative": 19,
+    "abilities": [
+      "+0",
+      "+0",
+      "Add +2 if the target is adjacent to any of the Hound's allies."
+    ],
+    "_file": "fh-ma-ho-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 26,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-ho-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 26,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-ho-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 83,
+    "abilities": [
+      "-2",
+      "+1"
+    ],
+    "_file": "fh-ma-ho-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-7.png"
+  },
+  {
+    "monsterType": "Sharp Fangs",
+    "cardName": "Sharp Fangs",
+    "initiative": 72,
+    "abilities": [
+      "-1 attack, +2 range",
+      "-2 movement",
+      "-1 attack, +2 range"
+    ],
+    "_file": "fh-ma-ho-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/hound/fh-ma-ho-8.png"
+  },
+  {
+    "monsterType": "Ice Wraith",
+    "cardName": "Shift Form",
+    "initiative": 95,
+    "abilities": [
+      "All elite Ice Wraiths become normal, and all normal Ice Wraiths become elite.",
+      "+1 (self)",
+      "+0",
+      "-1 Normal: G>4"
+    ],
+    "_file": "fh-ma-iw-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Unholy Strength",
+    "initiative": 59,
+    "abilities": [
+      "Gain Frost and Self conditions"
+    ],
+    "_file": "fh-ma-iw-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Fade Out",
+    "initiative": 59,
+    "abilities": [
+      "self",
+      "self, self",
+      "self"
+    ],
+    "_file": "fh-ma-iw-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 41,
+    "abilities": [
+      "+1",
+      "-1 Normal: ⊙+4"
+    ],
+    "_file": "fh-ma-iw-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 71,
+    "abilities": [
+      "-1",
+      "+1 Normal: ⊕+4"
+    ],
+    "_file": "fh-ma-iw-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Restore Essence",
+    "initiative": 13,
+    "abilities": [
+      "+3 self",
+      "2 (costs 2 blue essence)"
+    ],
+    "_file": "fh-ma-iw-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ice-wraith/fh-ma-iw-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Phase Out",
+    "initiative": 5,
+    "abilities": [
+      "5",
+      "1 self",
+      "Pie chart icon (resource/condition distribution)"
+    ],
+    "_file": "fh-ma-im-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 37,
+    "abilities": [
+      "+0",
+      "+0 →3"
+    ],
+    "_file": "fh-ma-im-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 37,
+    "abilities": [
+      "+0",
+      "+0 → 3"
+    ],
+    "_file": "fh-ma-im-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Restoration",
+    "initiative": 42,
+    "abilities": [
+      "+1",
+      "2 Restoration, +3 Shield"
+    ],
+    "_file": "fh-ma-im-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-4.png"
+  },
+  {
+    "monsterType": "Dark Charm",
+    "cardName": "Dark Charm",
+    "initiative": 43,
+    "abilities": [
+      "+0",
+      "-1 and +3"
+    ],
+    "_file": "fh-ma-im-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/imp/fh-ma-im-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Shocking Voltage",
+    "initiative": 82,
+    "abilities": [
+      "-1 to one random enemy",
+      "-1 to all adjacent enemies"
+    ],
+    "_file": "fh-ma-le-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Thrashing in the Water",
+    "initiative": 9,
+    "abilities": [
+      "+1",
+      "-1 to all adjacent enemies"
+    ],
+    "_file": "fh-ma-le-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 35,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-le-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Paralyzing Bite",
+    "initiative": 67,
+    "abilities": [
+      "-1",
+      "+0",
+      "+1 and +0"
+    ],
+    "_file": "fh-ma-le-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Leaping Dive",
+    "initiative": 12,
+    "abilities": [
+      "+2 (horse icon) +2 (loot icon)",
+      "-1 (stun icon)"
+    ],
+    "_file": "fh-ma-le-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-6.png"
+  },
+  {
+    "monsterType": "Electric Pulse",
+    "cardName": "Electric Pulse",
+    "initiative": 16,
+    "abilities": [
+      "-1",
+      "+0, +2"
+    ],
+    "_file": "fh-ma-le-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lightning-eel/fh-ma-le-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 64,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-lb-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-1.png"
+  },
+  {
+    "monsterType": "Drain Life",
+    "cardName": "Drain Life",
+    "initiative": 20,
+    "abilities": [
+      "-2",
+      "+0",
+      "2 self"
+    ],
+    "_file": "fh-ma-lb-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 25,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-lb-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 45,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-lb-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Focused Stabs",
+    "initiative": 74,
+    "abilities": [
+      "+0",
+      "+0 | 1 enemy with all attacks"
+    ],
+    "_file": "fh-ma-lb-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-7.png"
+  },
+  {
+    "monsterType": "Eternal Life",
+    "cardName": "Eternal Life",
+    "initiative": 12,
+    "abilities": [
+      "1",
+      "2 self"
+    ],
+    "_file": "fh-ma-lb-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-bones/fh-ma-lb-8.png"
+  },
+  {
+    "monsterType": "Chilling Aura",
+    "cardName": "Chilling Aura",
+    "initiative": 70,
+    "abilities": [
+      "+0",
+      "-1",
+      "Recover 1 Chilling Aura card"
+    ],
+    "_file": "fh-ma-ld-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-1.png"
+  },
+  {
+    "monsterType": "Face of Darkness",
+    "cardName": "Face of Darkness",
+    "initiative": 82,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-ld-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-2.png"
+  },
+  {
+    "monsterType": "Sunless Abyss",
+    "cardName": "Sunless Abyss",
+    "initiative": 11,
+    "abilities": [
+      "G+2",
+      "1",
+      "2 G+2"
+    ],
+    "_file": "fh-ma-ld-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-5.png"
+  },
+  {
+    "monsterType": "Hateful Spikes",
+    "cardName": "Hateful Spikes",
+    "initiative": 17,
+    "abilities": [
+      "+1",
+      "2"
+    ],
+    "_file": "fh-ma-ld-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-6.png"
+  },
+  {
+    "monsterType": "Pull of the Grave",
+    "cardName": "Pull of the Grave",
+    "initiative": 98,
+    "abilities": [
+      "+1",
+      "-3"
+    ],
+    "_file": "fh-ma-ld-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-7.png"
+  },
+  {
+    "monsterType": "Living Spirits",
+    "cardName": "Call for Souls",
+    "initiative": 78,
+    "abilities": [
+      "Summon X normal Living Spirits where X is the Living Doom's current hit point value divided by 5 (rounded down), up to a maximum of three."
+    ],
+    "_file": "fh-ma-ld-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-doom/fh-ma-ld-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Sap Strength",
+    "initiative": 22,
+    "abilities": [
+      "-1",
+      "-1 [range 3+], [?]"
+    ],
+    "_file": "fh-ma-ls-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-1.png"
+  },
+  {
+    "monsterType": "Booming Scream",
+    "cardName": "Booming Scream",
+    "initiative": 33,
+    "abilities": [
+      "-1",
+      "-1 (3, 0+3)"
+    ],
+    "_file": "fh-ma-ls-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-2.png"
+  },
+  {
+    "monsterType": "Nothing Special",
+    "cardName": "Nothing Special",
+    "initiative": 48,
+    "abilities": [
+      "Rabbit +0",
+      "Wand +0 G+3"
+    ],
+    "_file": "fh-ma-ls-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 48,
+    "abilities": [
+      "+0",
+      "+0 C+3"
+    ],
+    "_file": "fh-ma-ls-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-4.png"
+  },
+  {
+    "monsterType": "Coupled Chain",
+    "cardName": "Coupled Chain",
+    "initiative": 61,
+    "abilities": [
+      "+0",
+      "2",
+      "3"
+    ],
+    "_file": "fh-ma-ls-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-5.png"
+  },
+  {
+    "monsterType": "Leech",
+    "cardName": "Warmth",
+    "initiative": 75,
+    "abilities": [
+      "-1",
+      "+1 Attack, Range 2",
+      "1 Self Heal"
+    ],
+    "_file": "fh-ma-ls-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-6.png"
+  },
+  {
+    "monsterType": "Angry Howl",
+    "cardName": "Angry Howl",
+    "initiative": 55,
+    "abilities": [
+      "+0",
+      "3, 2"
+    ],
+    "_file": "fh-ma-ls-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-7.png"
+  },
+  {
+    "monsterType": "Icy Glare",
+    "cardName": "Icy Glare",
+    "initiative": 67,
+    "abilities": [
+      "-1",
+      "+0, Range +4"
+    ],
+    "_file": "fh-ma-ls-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/living-spirit/fh-ma-ls-8.png"
+  },
+  {
+    "monsterType": "Smash Armor",
+    "cardName": "Smash Armor",
+    "initiative": 58,
+    "abilities": [
+      "¥ -1",
+      "✦ +0",
+      "The target suffers ✦X, where X is their ◉ value for this attack.",
+      "X is double their ◉ value instead."
+    ],
+    "_file": "fh-ma-luc-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-2.png"
+  },
+  {
+    "monsterType": "Crippling Claw",
+    "cardName": "Crippling Claw",
+    "initiative": 44,
+    "abilities": [
+      "+0",
+      "-1"
+    ],
+    "_file": "fh-ma-luc-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Take Hostage",
+    "initiative": 13,
+    "abilities": [
+      "-1",
+      "2"
+    ],
+    "_file": "fh-ma-luc-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-4.png"
+  },
+  {
+    "monsterType": "Earthen Blow",
+    "cardName": "Earthen Blow",
+    "initiative": 60,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-luc-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-5.png"
+  },
+  {
+    "monsterType": "Claw Guard",
+    "cardName": "Claw Guard",
+    "initiative": 11,
+    "abilities": [
+      "2",
+      "2"
+    ],
+    "_file": "fh-ma-luc-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-clawcrusher/fh-ma-luc-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Psychic Shock",
+    "initiative": 6,
+    "abilities": [
+      "Fist 3, G+3",
+      "Target +2 Fist",
+      "Question mark, Target all, G+3"
+    ],
+    "_file": "fh-ma-lum-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 10,
+    "abilities": [
+      "+2",
+      "-1 and +3"
+    ],
+    "_file": "fh-ma-lum-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 34,
+    "abilities": [
+      "-2",
+      "+1 and Target 3"
+    ],
+    "_file": "fh-ma-lum-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Instill Fear",
+    "initiative": 37,
+    "abilities": [
+      "-1",
+      "+20 C +3",
+      "2"
+    ],
+    "_file": "fh-ma-lum-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-5.png"
+  },
+  {
+    "monsterType": "Beguiling Thoughts",
+    "cardName": "Beguiling Thoughts",
+    "initiative": 18,
+    "abilities": [
+      "+0",
+      "-2, +2, "
+    ],
+    "_file": "fh-ma-lum-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Turn the Weak",
+    "initiative": 51,
+    "abilities": [
+      "+0",
+      "-2, +3",
+      "Control all targets of the attack ability in initiative order: 3"
+    ],
+    "_file": "fh-ma-lum-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-7.png"
+  },
+  {
+    "monsterType": "Paralyze",
+    "cardName": "Paralyze",
+    "initiative": 46,
+    "abilities": [
+      "-1",
+      "4"
+    ],
+    "_file": "fh-ma-lum-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-mindsnipper/fh-ma-lum-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Defensive Claws",
+    "initiative": 11,
+    "abilities": [
+      "All allies gain +1",
+      "Gain 1 armor",
+      "Gain +1 cold resistance"
+    ],
+    "_file": "fh-ma-lus-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 28,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-lus-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 38,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-lus-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Focused Strikes",
+    "initiative": 38,
+    "abilities": [
+      "+0",
+      "+0 ◉1 enemy with all attacks"
+    ],
+    "_file": "fh-ma-lus-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 61,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-lus-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-5.png"
+  },
+  {
+    "monsterType": "Berserk Rage",
+    "cardName": "Berserk Rage",
+    "initiative": 64,
+    "abilities": [
+      "+1 Attack for each enemy within 2 hexes"
+    ],
+    "_file": "fh-ma-lus-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Strength of the Deep",
+    "initiative": 41,
+    "abilities": [
+      "+0",
+      "-1"
+    ],
+    "_file": "fh-ma-lus-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hardened by Frost",
+    "initiative": 23,
+    "abilities": [
+      "+0",
+      "-1",
+      "1"
+    ],
+    "_file": "fh-ma-lus-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-soldier/fh-ma-lus-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Distant Wave",
+    "initiative": 51,
+    "abilities": [
+      "Focus on the enemy farthest away within ⊕+6.",
+      "✻+1 ⊕+6"
+    ],
+    "_file": "fh-ma-luw-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-2.png"
+  },
+  {
+    "monsterType": "Tsunami",
+    "cardName": "Tsunami",
+    "initiative": 29,
+    "abilities": [
+      "+1",
+      "-1",
+      "+2",
+      "6 hexes in a flower pattern"
+    ],
+    "_file": "fh-ma-luw-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-3.png"
+  },
+  {
+    "monsterType": "Lightning Eel",
+    "cardName": "Aid from Below",
+    "initiative": 98,
+    "abilities": [
+      "Create one 1-hex water tile in an adjacent empty hex.",
+      "Summon one Lightning Eel in an adjacent unoccupied hex with a water tile. Normal Wavethrowers summon normal Eels, elites summon elites."
+    ],
+    "_file": "fh-ma-luw-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-4.png"
+  },
+  {
+    "monsterType": "Aid from Below",
+    "cardName": "Aid from Below",
+    "initiative": 98,
+    "abilities": [
+      "Create one 1-hex water tile in an adjacent empty hex.",
+      "Summon one Lightning Eel in an adjacent unoccupied hex with a water tile. Normal Wavethrowers summon normal Eels, elites summon elites."
+    ],
+    "_file": "fh-ma-luw-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-5.png"
+  },
+  {
+    "monsterType": "Crushing Crest",
+    "cardName": "Crushing Crest",
+    "initiative": 36,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-luw-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-6.png"
+  },
+  {
+    "monsterType": "Massive Swell",
+    "cardName": "Massive Swell",
+    "initiative": 40,
+    "abilities": [
+      "+0",
+      "+0 → 3",
+      "Gain 3 armor"
+    ],
+    "_file": "fh-ma-luw-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/lurker-wavethrower/fh-ma-luw-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 4,
+    "abilities": [
+      "+1 Move",
+      "-1 Attack"
+    ],
+    "_file": "fh-ma-nd-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-1.png"
+  },
+  {
+    "monsterType": "Into Darkness",
+    "cardName": "Into Darkness",
+    "initiative": 37,
+    "abilities": [
+      "+1",
+      "-2",
+      "self"
+    ],
+    "_file": "fh-ma-nd-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-2.png"
+  },
+  {
+    "monsterType": "Death's Embrace",
+    "cardName": "Death's Embrace",
+    "initiative": 46,
+    "abilities": [
+      "-1 Gold",
+      "+1 Experience",
+      "Target with 2+ Blight gains 2 Blight"
+    ],
+    "_file": "fh-ma-nd-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 41,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-nd-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-6.png"
+  },
+  {
+    "monsterType": "Impale",
+    "cardName": "Impale",
+    "initiative": 35,
+    "abilities": [
+      "✦ -1",
+      "✦ -1 ⬥ 2",
+      "⊙ : self"
+    ],
+    "_file": "fh-ma-nd-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-7.png"
+  },
+  {
+    "monsterType": "The Night Feeds",
+    "cardName": "The Night Feeds",
+    "initiative": 15,
+    "abilities": [
+      "+0",
+      "-1",
+      "All adjacent allies and enemies suffer ⚡1."
+    ],
+    "_file": "fh-ma-nd-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/night-demon/fh-ma-nd-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 36,
+    "abilities": [
+      "+1",
+      "-1 and +3"
+    ],
+    "_file": "fh-ma-oo-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Toxic Explosion",
+    "initiative": 59,
+    "abilities": [
+      "+0, 2G, +3",
+      "+10"
+    ],
+    "_file": "fh-ma-oo-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-3.png"
+  },
+  {
+    "monsterType": "Plasma Ward",
+    "cardName": "Plasma Ward",
+    "initiative": 85,
+    "abilities": [
+      "+1 to all, Range +1, Shield",
+      "+1, Range +2"
+    ],
+    "_file": "fh-ma-oo-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 66,
+    "abilities": [
+      "-1",
+      "+1 and Range +4"
+    ],
+    "_file": "fh-ma-oo-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-5.png"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Split",
+    "initiative": 94,
+    "abilities": [
+      "Ooze suffers ☠2.",
+      "Summon one normal Ooze with a hit point value equal to the summoning Ooze's current hit point value (limited by a normal Ooze's maximum hit point value)."
+    ],
+    "_file": "fh-ma-oo-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-6.png"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Split",
+    "initiative": 94,
+    "abilities": [
+      "Ooze suffers ☠2.",
+      "Summon one normal Ooze with a hit point value equal to the summoning Ooze's current hit point value (limited by a normal Ooze's maximum hit point value)."
+    ],
+    "_file": "fh-ma-oo-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Feed",
+    "initiative": 66,
+    "abilities": [
+      "-1 move",
+      "+1 attack",
+      "+2 range, self",
+      "Target gains +1 advantage"
+    ],
+    "_file": "fh-ma-oo-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ooze/fh-ma-oo-8.png"
+  },
+  {
+    "monsterType": "Bloodthirst",
+    "cardName": "Bloodthirst",
+    "initiative": 38,
+    "abilities": [
+      "+1",
+      "-1",
+      "Add 2 if the target has"
+    ],
+    "_file": "fh-ma-pp-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-2.png"
+  },
+  {
+    "monsterType": "Easy Prey",
+    "cardName": "Easy Prey",
+    "initiative": 54,
+    "abilities": [
+      "-1",
+      "+1",
+      "Add +1 if the target is occupying a hex with a water tile."
+    ],
+    "_file": "fh-ma-pp-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Feast",
+    "initiative": 26,
+    "abilities": [
+      "+0",
+      "X self, where X is the amount of damage suffered by the target of the attack ability."
+    ],
+    "_file": "fh-ma-pp-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 18,
+    "abilities": [
+      "+1 Move",
+      "-1 Attack"
+    ],
+    "_file": "fh-ma-pp-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "No Escape",
+    "initiative": 23,
+    "abilities": [
+      "+1"
+    ],
+    "_file": "fh-ma-pp-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-6.png"
+  },
+  {
+    "monsterType": "Bared Teeth",
+    "cardName": "Bared Teeth",
+    "initiative": 13,
+    "abilities": [
+      "+1",
+      "All enemies, G+1",
+      "2"
+    ],
+    "_file": "fh-ma-pp-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 31,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-pp-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/piranha-pig/fh-ma-pp-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 13,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-pb-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Low Slash",
+    "initiative": 14,
+    "abilities": [
+      "-1 Move",
+      "-1 Attack"
+    ],
+    "_file": "fh-ma-pb-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-2.png"
+  },
+  {
+    "monsterType": "Full Force",
+    "cardName": "Full Force",
+    "initiative": 29,
+    "abilities": [
+      "+1"
+    ],
+    "_file": "fh-ma-pb-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 41,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-pb-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 60,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-pb-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-5.png"
+  },
+  {
+    "monsterType": "Rampage",
+    "cardName": "Rampage",
+    "initiative": 80,
+    "abilities": [
+      "-1",
+      "-2",
+      "-1"
+    ],
+    "_file": "fh-ma-pb-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Claw Swipes",
+    "initiative": 61,
+    "abilities": [
+      "+0",
+      "-1 @2"
+    ],
+    "_file": "fh-ma-pb-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-7.png"
+  },
+  {
+    "monsterType": "Hibernate",
+    "cardName": "Hibernate",
+    "initiative": 3,
+    "abilities": [
+      "1",
+      "2",
+      "2 self"
+    ],
+    "_file": "fh-ma-pb-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/polar-bear/fh-ma-pb-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Drain Speed",
+    "initiative": 8,
+    "abilities": [
+      "-1",
+      "+0",
+      "G+3",
+      "Self-heal 1"
+    ],
+    "_file": "fh-ma-pr-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 62,
+    "abilities": [
+      "+0",
+      "+0 → +3"
+    ],
+    "_file": "fh-ma-pr-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Tend to the Clan",
+    "initiative": 23,
+    "abilities": [
+      "+0",
+      "+3 Heal 3"
+    ],
+    "_file": "fh-ma-pr-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-4.png"
+  },
+  {
+    "monsterType": "Tend to the Clan",
+    "cardName": "Tend to the Clan",
+    "initiative": 23,
+    "abilities": [
+      "+0",
+      "+3 Heal (self)",
+      "+3 Regenerate"
+    ],
+    "_file": "fh-ma-pr-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 74,
+    "abilities": [
+      "-1",
+      "+1 and +3"
+    ],
+    "_file": "fh-ma-pr-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Divine Energy",
+    "initiative": 89,
+    "abilities": [
+      "-1",
+      "+1 to all allies, G+1",
+      "self"
+    ],
+    "_file": "fh-ma-pr-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-7.png"
+  },
+  {
+    "monsterType": "Angry Hex",
+    "cardName": "Angry Hex",
+    "initiative": 9,
+    "abilities": [
+      "+1",
+      "-1 ⊕2,⊕3,◆"
+    ],
+    "_file": "fh-ma-pr-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/priest/fh-ma-pr-8.png"
+  },
+  {
+    "monsterType": "Hasty Assault",
+    "cardName": "Hasty Assault",
+    "initiative": 12,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-rd-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-1.png"
+  },
+  {
+    "monsterType": "Swift Claws",
+    "cardName": "Swift Claws",
+    "initiative": 13,
+    "abilities": [
+      "-1",
+      "-1",
+      "-1"
+    ],
+    "_file": "fh-ma-rd-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 25,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-rd-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-3.png"
+  },
+  {
+    "monsterType": "Venom Glands",
+    "cardName": "Venom Glands",
+    "initiative": 54,
+    "abilities": [
+      "-2",
+      "-1, 2 Poison, 3 Poison"
+    ],
+    "_file": "fh-ma-rd-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-5.png"
+  },
+  {
+    "monsterType": "Dangerous Fury",
+    "cardName": "Dangerous Fury",
+    "initiative": 59,
+    "abilities": [
+      "-2",
+      "+1 (Range 2)"
+    ],
+    "_file": "fh-ma-rd-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Empowering Rest",
+    "initiative": 6,
+    "abilities": [
+      "Heal 2",
+      "Gain 2 bless tokens. Self"
+    ],
+    "_file": "fh-ma-rd-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/rending-drake/fh-ma-rd-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Shot",
+    "initiative": 83,
+    "abilities": [
+      "-1",
+      "+1",
+      "Range 5"
+    ],
+    "_file": "fh-ma-rb-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-1.png"
+  },
+  {
+    "monsterType": "Sharpshooter",
+    "cardName": "Sharpshooter",
+    "initiative": 44,
+    "abilities": [
+      "+1",
+      "-1, Range 5, Target 2"
+    ],
+    "_file": "fh-ma-rb-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Retracted Assault",
+    "initiative": 48,
+    "abilities": [
+      "-1",
+      "+0 (C+4)",
+      "1"
+    ],
+    "_file": "fh-ma-rb-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 57,
+    "abilities": [
+      "+0",
+      "+0 →5"
+    ],
+    "_file": "fh-ma-rb-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-5.png"
+  },
+  {
+    "monsterType": "Ballista Bolt",
+    "cardName": "Ballista Bolt",
+    "initiative": 91,
+    "abilities": [
+      "+2",
+      "-10",
+      "G+4"
+    ],
+    "_file": "fh-ma-rb-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Focus Fire",
+    "initiative": 78,
+    "abilities": [
+      "+0",
+      "-1 ⊙1 enemy with all attacks, ⊕+5"
+    ],
+    "_file": "fh-ma-rb-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/robotic-boltshooter/fh-ma-rb-7.png"
+  },
+  {
+    "monsterType": "Hasty Assault",
+    "cardName": "Hasty Assault",
+    "initiative": 41,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-rm-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 63,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-rm-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 85,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-rm-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-4.png"
+  },
+  {
+    "monsterType": "Ruined Machine",
+    "cardName": "Fuel Leak",
+    "initiative": 29,
+    "abilities": [
+      "If the move ability was performed, Ruined Machine suffers ⚒1."
+    ],
+    "_file": "fh-ma-rm-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-5.png"
+  },
+  {
+    "monsterType": "Ruined Machine",
+    "cardName": "Devastating Tackle",
+    "initiative": 42,
+    "abilities": [
+      "+2",
+      "If the attack ability was performed, Ruined Machine suffers 1."
+    ],
+    "_file": "fh-ma-rm-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-6.png"
+  },
+  {
+    "monsterType": "Signal Jam",
+    "cardName": "Signal Jam",
+    "initiative": 56,
+    "abilities": [
+      "+0",
+      "?, ⊙all, ⊙+2",
+      "Ruined Machine suffers ⚒1."
+    ],
+    "_file": "fh-ma-rm-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-7.png"
+  },
+  {
+    "monsterType": "Ruined Machine",
+    "cardName": "Self-Destruct",
+    "initiative": 93,
+    "abilities": [
+      "If the attack ability was performed, all adjacent enemies suffer trap damage and the Ruined Machine dies."
+    ],
+    "_file": "fh-ma-rm-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/ruined-machine/fh-ma-rm-8.png"
+  },
+  {
+    "monsterType": "Repulsive Torrent",
+    "cardName": "Repulsive Torrent",
+    "initiative": 70,
+    "abilities": [
+      "2 all, ⊙+1",
+      "+2, ⊙+1",
+      "+1 ⊙+5"
+    ],
+    "_file": "fh-ma-si-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-1.png"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Call to the Wind",
+    "initiative": 98,
+    "abilities": [
+      "Summon one normal Wind Demon."
+    ],
+    "_file": "fh-ma-si-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-2.png"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Call to the Frost",
+    "initiative": 98,
+    "abilities": [
+      "Summon one normal Frost Demon."
+    ],
+    "_file": "fh-ma-si-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-3.png"
+  },
+  {
+    "monsterType": "Hardened Frost",
+    "cardName": "Hardened Frost",
+    "initiative": 19,
+    "abilities": [
+      "Grant all allies within range 2 and self: +1 Shield and +1 Cold resistance"
+    ],
+    "_file": "fh-ma-si-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-4.png"
+  },
+  {
+    "monsterType": "Frozen Shell",
+    "cardName": "Frozen Shell",
+    "initiative": 14,
+    "abilities": [
+      "4",
+      "2 , 3",
+      ": +3",
+      ": -1 , +3"
+    ],
+    "_file": "fh-ma-si-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Forceful Gust",
+    "initiative": 47,
+    "abilities": [
+      "all, G+1",
+      "+0",
+      "-1, G+4"
+    ],
+    "_file": "fh-ma-si-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-icestorm/fh-ma-si-7.png"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Call to the Flame",
+    "initiative": 97,
+    "abilities": [
+      "Summon one normal Flame Demon."
+    ],
+    "_file": "fh-ma-sl-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-1.png"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Call to the Earth",
+    "initiative": 97,
+    "abilities": [
+      "Summon one normal Earth Demon."
+    ],
+    "_file": "fh-ma-sl-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Circle of Fire",
+    "initiative": 22,
+    "abilities": [
+      "+1 to all adjacent enemies",
+      "-1 all adjacent enemies",
+      "Attack 3"
+    ],
+    "_file": "fh-ma-sl-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-3.png"
+  },
+  {
+    "monsterType": "Rock Bomb",
+    "cardName": "Rock Bomb",
+    "initiative": 68,
+    "abilities": [
+      "-1",
+      "+1 and 3",
+      "All allies and enemies adjacent to the target suffer 2"
+    ],
+    "_file": "fh-ma-sl-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-4.png"
+  },
+  {
+    "monsterType": "Stone Spikes",
+    "cardName": "Stone Spikes",
+    "initiative": 41,
+    "abilities": [
+      "+0",
+      "-1",
+      "+2, add one [herb] token"
+    ],
+    "_file": "fh-ma-sl-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-5.png"
+  },
+  {
+    "monsterType": "Flowing Magma",
+    "cardName": "Flowing Magma",
+    "initiative": 51,
+    "abilities": [
+      "All enemies within C+4 suffer ⚡2."
+    ],
+    "_file": "fh-ma-sl-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Strength of the Mountain",
+    "initiative": 31,
+    "abilities": [
+      "4 Heal",
+      "3 Gain"
+    ],
+    "_file": "fh-ma-sl-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-7.png"
+  },
+  {
+    "monsterType": "Fire Bolts",
+    "cardName": "Fire Bolts",
+    "initiative": 68,
+    "abilities": [
+      "-1",
+      "-1 (2 to 3)"
+    ],
+    "_file": "fh-ma-sl-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/savvas-lavaflow/fh-ma-sl-8.png"
+  },
+  {
+    "monsterType": "Hasty Assault",
+    "cardName": "Hasty Assault",
+    "initiative": 40,
+    "abilities": [
+      "+1",
+      "-1"
+    ],
+    "_file": "fh-ma-sc-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-2.png"
+  },
+  {
+    "monsterType": "Rancid Arrow",
+    "cardName": "Rancid Arrow",
+    "initiative": 54,
+    "abilities": [
+      "-2",
+      "+0 G+3, "
+    ],
+    "_file": "fh-ma-sc-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 69,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-sc-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-5.png"
+  },
+  {
+    "monsterType": "Noxious Blade",
+    "cardName": "Noxious Blade",
+    "initiative": 92,
+    "abilities": [
+      "+2"
+    ],
+    "_file": "fh-ma-sc-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-6.png"
+  },
+  {
+    "monsterType": "Rapid Bolts",
+    "cardName": "Rapid Bolts",
+    "initiative": 79,
+    "abilities": [
+      "-1",
+      "Circle 2",
+      "Circle 4"
+    ],
+    "_file": "fh-ma-sc-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-7.png"
+  },
+  {
+    "monsterType": "Greed",
+    "cardName": "Greed",
+    "initiative": 35,
+    "abilities": [
+      "+1 Move",
+      "1 Attack"
+    ],
+    "_file": "fh-ma-sc-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/scout/fh-ma-sc-8.png"
+  },
+  {
+    "monsterType": "Darken the Skies",
+    "cardName": "Darken the Skies",
+    "initiative": 27,
+    "abilities": [
+      "+0",
+      "-1 (3, 3)"
+    ],
+    "_file": "fh-ma-sf-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-1.png"
+  },
+  {
+    "monsterType": "Concentrated Flock",
+    "cardName": "Concentrated Flock",
+    "initiative": 10,
+    "abilities": [
+      "-1",
+      "+0",
+      "2G+5"
+    ],
+    "_file": "fh-ma-sf-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-2.png"
+  },
+  {
+    "monsterType": "Fiendish Charge",
+    "cardName": "Fiendish Charge",
+    "initiative": 73,
+    "abilities": [
+      "+2",
+      "+0"
+    ],
+    "_file": "fh-ma-sf-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-3.png"
+  },
+  {
+    "monsterType": "Angry Cloud",
+    "cardName": "Angry Cloud",
+    "initiative": 9,
+    "abilities": [
+      "All enemies within ⊕3 suffer ❄2.",
+      "⚔2 ⊕3"
+    ],
+    "_file": "fh-ma-sf-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Gather the Flock",
+    "initiative": 72,
+    "abilities": [
+      "2 ⊞all, ⊕5",
+      "All enemies within ⊕3 suffer ⚡2."
+    ],
+    "_file": "fh-ma-sf-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-5.png"
+  },
+  {
+    "monsterType": "Dive Bombs",
+    "cardName": "Dive Bombs",
+    "initiative": 49,
+    "abilities": [
+      "+0",
+      "2 attacks with 3 range"
+    ],
+    "_file": "fh-ma-sf-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 90,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-sf-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-7.png"
+  },
+  {
+    "monsterType": "Birds of Prey",
+    "cardName": "Birds of Prey",
+    "initiative": 23,
+    "abilities": [
+      "-2",
+      "3, +6,",
+      "2",
+      "2"
+    ],
+    "_file": "fh-ma-sf-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/shrike-fiend/fh-ma-sf-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Hasty Assault",
+    "initiative": 32,
+    "abilities": [
+      "+1",
+      "-1 and +4"
+    ],
+    "_file": "fh-ma-spd-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 87,
+    "abilities": [
+      "-1",
+      "+1 ⊗ +4"
+    ],
+    "_file": "fh-ma-spd-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-5.png"
+  },
+  {
+    "monsterType": "Subduing Spit",
+    "cardName": "Subduing Spit",
+    "initiative": 89,
+    "abilities": [
+      "-2",
+      "+4,  "
+    ],
+    "_file": "fh-ma-spd-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Empowering Rest",
+    "initiative": 6,
+    "abilities": [
+      "2",
+      "2 self"
+    ],
+    "_file": "fh-ma-spd-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-7.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Explosive Vomit",
+    "initiative": 89,
+    "abilities": [
+      "-1",
+      "-2, Range 3"
+    ],
+    "_file": "fh-ma-spd-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/spitting-drake/fh-ma-spd-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Calculated Strike",
+    "initiative": 95,
+    "abilities": [
+      "-1",
+      "+1"
+    ],
+    "_file": "fh-ma-sa-1.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-1.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Heavy Footfalls",
+    "initiative": 48,
+    "abilities": [
+      "All adjacent enemies suffer ❄1.",
+      "All adjacent enemies suffer hazardous terrain damage."
+    ],
+    "_file": "fh-ma-sa-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-2.png"
+  },
+  {
+    "monsterType": "Clobber",
+    "cardName": "Clobber",
+    "initiative": 76,
+    "abilities": [
+      "+1"
+    ],
+    "_file": "fh-ma-sa-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Nothing Special",
+    "initiative": 70,
+    "abilities": [
+      "+0",
+      "+0"
+    ],
+    "_file": "fh-ma-sa-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-5.png"
+  },
+  {
+    "monsterType": "Mortar Shell",
+    "cardName": "Mortar Shell",
+    "initiative": 64,
+    "abilities": [
+      "-1",
+      "3",
+      "3"
+    ],
+    "_file": "fh-ma-sa-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-6.png"
+  },
+  {
+    "monsterType": "Unstoppable Force",
+    "cardName": "Unstoppable Force",
+    "initiative": 45,
+    "abilities": [
+      "+1",
+      "-1",
+      "3"
+    ],
+    "_file": "fh-ma-sa-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-7.png"
+  },
+  {
+    "monsterType": "Immoble Object",
+    "cardName": "Immoble Object",
+    "initiative": 10,
+    "abilities": [
+      "No abilities visible on this card"
+    ],
+    "_file": "fh-ma-sa-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/steel-automaton/fh-ma-sa-8.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Brilliant Aura",
+    "initiative": 36,
+    "abilities": [
+      "+0 to attack",
+      "+0 to all adjacent enemies"
+    ],
+    "_file": "fh-ma-sud-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-2.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Brilliant Aura",
+    "initiative": 36,
+    "abilities": [
+      "+0",
+      "+0 ⊙all adjacent enemies"
+    ],
+    "_file": "fh-ma-sud-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-3.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Star Strike",
+    "initiative": 68,
+    "abilities": [
+      "Move +0",
+      "Attack +1"
+    ],
+    "_file": "fh-ma-sud-4.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-4.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Vicious Opportunity",
+    "initiative": 73,
+    "abilities": [
+      "-1",
+      "+1",
+      "+3 self"
+    ],
+    "_file": "fh-ma-sud-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-5.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Glowing Sweep",
+    "initiative": 88,
+    "abilities": [
+      "-1 Movement",
+      "-1 Attack to all adjacent enemies",
+      "Self condition"
+    ],
+    "_file": "fh-ma-sud-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/sun-demon/fh-ma-sud-7.png"
+  },
+  {
+    "monsterType": "Tailwind",
+    "cardName": "Tailwind",
+    "initiative": 21,
+    "abilities": [
+      "+0",
+      "+0 Range +3, Heal 1"
+    ],
+    "_file": "fh-ma-wd-2.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-2.png"
+  },
+  {
+    "monsterType": "Tailwind",
+    "cardName": "Tailwind",
+    "initiative": 21,
+    "abilities": [
+      "+0",
+      "+0 Range 3, Heal 1"
+    ],
+    "_file": "fh-ma-wd-3.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-3.png"
+  },
+  {
+    "monsterType": "Cyclone",
+    "cardName": "Cyclone",
+    "initiative": 37,
+    "abilities": [
+      "+0",
+      "+0",
+      "+1 ice"
+    ],
+    "_file": "fh-ma-wd-5.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-5.png"
+  },
+  {
+    "monsterType": "Cutting Blast",
+    "cardName": "Cutting Blast",
+    "initiative": 43,
+    "abilities": [
+      "-1",
+      "+1 and +3"
+    ],
+    "_file": "fh-ma-wd-6.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-6.png"
+  },
+  {
+    "monsterType": "Unknown",
+    "cardName": "Blast of Air",
+    "initiative": 43,
+    "abilities": [
+      "1 ⊕ all, ⊕+1",
+      "+0 ⊕+4, 🧊",
+      "-2 ⊕"
+    ],
+    "_file": "fh-ma-wd-7.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-7.png"
+  },
+  {
+    "monsterType": "Eye of the Storm",
+    "cardName": "Eye of the Storm 02",
+    "initiative": null,
+    "abilities": [
+      "£ -1",
+      "☠ -1, ⊕ +3",
+      "◯ 1",
+      "Discard 1 card tile, then perform a 2-space move"
+    ],
+    "_file": "fh-ma-wd-8.png",
+    "_path": "/Users/bcm/Projects/maz/squire/data/worldhaven/images/monster-ability-cards/frosthaven/wind-demon/fh-ma-wd-8.png"
+  }
+]

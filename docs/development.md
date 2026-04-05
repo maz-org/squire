@@ -3,8 +3,11 @@
 ## Prerequisites
 
 - Node.js 24+ (see `.nvmrc`)
-- Frosthaven data indexed: `npm run index` and `npm run extract`
 - `.env` file with `ANTHROPIC_API_KEY`
+
+Extracted card data (`data/extracted/*.json`) and the vector index
+(`data/index.json`) are committed to the repo. No additional data setup
+is needed for most development — just `npm ci` and go.
 
 ## Running the dev server
 
@@ -132,6 +135,57 @@ npm run format:check  # Prettier check
 Tests use randomized execution order (`sequence.shuffle` in vitest
 config) to catch order-dependent tests. The full suite runs as a
 pre-commit hook along with typecheck and lint.
+
+## Data management
+
+Extracted card data (`data/extracted/*.json`) and the vector index
+(`data/index.json`) are checked into the repo as regular files. A
+[CI workflow](../.github/workflows/refresh-data.yml) refreshes them
+weekly from upstream sources and opens a PR if anything changed.
+
+### Refreshing data
+
+Trigger the workflow manually from the Actions tab, or wait for the
+weekly schedule. The workflow shallow-clones only the needed portions
+of each upstream repo.
+
+### Working on import scripts locally
+
+Import scripts read from two upstream repos. Clone them once outside
+the project and point the scripts at them via env vars:
+
+```bash
+# GHS (structured JSON, ~6 MB with sparse checkout)
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/Lurkars/gloomhavensecretariat.git ~/data/ghs
+cd ~/data/ghs && git sparse-checkout set data/fh
+
+# Worldhaven (card images for OCR extraction)
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/any2cards/worldhaven.git ~/data/worldhaven
+cd ~/data/worldhaven && git sparse-checkout set \
+  images/monster-stat-cards/frosthaven \
+  images/monster-ability-cards/frosthaven \
+  images/character-ability-cards/frosthaven \
+  images/items/frosthaven \
+  images/events/frosthaven \
+  images/battle-goals/frosthaven \
+  images/outpost-building-cards/frosthaven
+```
+
+Then run the import scripts:
+
+```bash
+# GHS imports (free — JSON parsing only)
+GHS_DATA_DIR=~/data/ghs npx tsx src/import-monster-stats.ts
+
+# OCR extraction (costs ~$5-10 per full run)
+WORLDHAVEN_DIR=~/data/worldhaven npx tsx src/extract-card-data.ts
+```
+
+The clones live outside the repo so they don't interfere with git or
+worktrees. Commit updated `data/extracted/*.json` files alongside your
+script changes.
 
 ## Project structure
 

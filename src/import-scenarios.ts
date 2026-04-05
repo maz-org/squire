@@ -5,7 +5,7 @@
  *
  * Run with: npx tsx src/import-scenarios.ts
  *
- * Requires: data/gloomhavensecretariat/ (clone from https://github.com/Lurkars/gloomhavensecretariat)
+ * Requires: GHS data (set GHS_DATA_DIR env var, or clone into data/gloomhavensecretariat/)
  * Output: data/extracted/scenarios.json
  */
 
@@ -160,7 +160,7 @@ export function convertScenario(ghs: GhsScenario, labels: LabelData): ExtractedS
 export function importScenarios(): ExtractedScenario[] {
   if (!existsSync(GHS_SCENARIO_DIR)) {
     throw new Error(
-      `GHS scenario data not found at ${GHS_SCENARIO_DIR}. Clone https://github.com/Lurkars/gloomhavensecretariat into data/gloomhavensecretariat/`,
+      `GHS scenario data not found at ${GHS_SCENARIO_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
