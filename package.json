@@ -30,7 +30,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@hono/node-server": "^1.19.11",
-    "@langfuse/client": "^5.0.1",
+    "@langfuse/client": "^5.0.2",
     "@langfuse/otel": "^5.0.1",
     "@langfuse/tracing": "^5.0.1",
     "@modelcontextprotocol/sdk": "^1.28.0",
