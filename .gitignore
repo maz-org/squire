@@ -148,6 +148,6 @@ vite.config.ts.timestamp-*
 # Eval results (regeneratable)
 eval/results/*.json
 
-# Squire project
-# These are git submodules — do not gitignore them.
-# Run `git submodule update --init` to populate.
+# Raw data repos (cloned locally for import script development, not submodules)
+data/gloomhavensecretariat/
+data/worldhaven/
