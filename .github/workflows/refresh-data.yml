@@ -69,7 +69,7 @@ jobs:
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet data/extracted/; then
+          if [ -z "$(git status --porcelain -- data/extracted/)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"

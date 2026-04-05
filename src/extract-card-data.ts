@@ -230,6 +230,11 @@ export async function extractCardType(cardType: OcrCardType): Promise<ExtractedR
   const processedFiles = new Set(succeeded.map((r) => r._file));
 
   const images = collectImages(cardType);
+  if (images.length === 0 && succeeded.length === 0) {
+    throw new Error(
+      `No images found for "${cardType}" under ${CARD_TYPES[cardType].imageDir}. Check WORLDHAVEN_DIR and sparse-checkout paths.`,
+    );
+  }
   const pending = images.filter((p) => !processedFiles.has(basename(p)));
 
   const errCount = existing.length - succeeded.length;
