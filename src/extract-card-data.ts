@@ -18,7 +18,9 @@ import type { CardType } from './schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_BASE = process.env.WORLDHAVEN_DIR
-  ? join(process.env.WORLDHAVEN_DIR, 'images')
+  ? existsSync(join(process.env.WORLDHAVEN_DIR, 'images'))
+    ? join(process.env.WORLDHAVEN_DIR, 'images')
+    : process.env.WORLDHAVEN_DIR
   : join(__dirname, '..', 'data', 'worldhaven', 'images');
 const OUTPUT_DIR = join(__dirname, '..', 'data', 'extracted');
 
