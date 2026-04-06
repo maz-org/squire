@@ -83,7 +83,7 @@ describe('extractNumberFromFilename', () => {
   it('returns null for card types without number patterns', () => {
     expect(extractNumberFromFilename('algox-archer.png', 'monster-stats')).toBeNull();
     expect(extractNumberFromFilename('ability-01.png', 'monster-abilities')).toBeNull();
-    expect(extractNumberFromFilename('card.png', 'battle-goals')).toBeNull();
+    expect(extractNumberFromFilename('card.png', 'character-abilities')).toBeNull();
   });
 
   it('returns null when filename does not match expected pattern', () => {
@@ -150,14 +150,14 @@ describe('collectImages', () => {
     expect(result[0]).toMatch(/algox-archer\.png$/);
   });
 
-  it('excludes -back.png files for battle-goals', () => {
+  it('excludes -back.png files for buildings', () => {
     mockExistsSync.mockReturnValue(true);
     mockReaddirSync.mockReturnValue([
       { name: 'card-back.png', isDirectory: () => false, isFile: () => true },
       { name: 'card-front.png', isDirectory: () => false, isFile: () => true },
     ]);
 
-    const result = collectImages('battle-goals');
+    const result = collectImages('buildings');
     expect(result).toHaveLength(1);
     expect(result[0]).toMatch(/card-front\.png$/);
   });
@@ -194,21 +194,26 @@ describe('extractImage', () => {
     vi.clearAllMocks();
   });
 
-  it('returns validated data for a valid battle goal response', async () => {
+  it('returns validated data for a valid monster stats response', async () => {
     mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
     mockMessagesCreate.mockResolvedValue({
       content: [
         {
           type: 'text',
-          text: '{"name": "Assassin", "condition": "Kill an enemy", "checkmarks": 2}',
+          text: JSON.stringify({
+            name: 'Algox Archer',
+            levelRange: '0-3',
+            normal: { '0': { hp: 3, move: 2, attack: 2, range: 4, attributes: [] } },
+            elite: { '0': { hp: 5, move: 2, attack: 3, range: 5, attributes: [] } },
+            immunities: [],
+            notes: null,
+          }),
         },
       ],
     });
 
-    const result = await extractImage('/fake/card.png', 'battle-goals');
-    expect(result.name).toBe('Assassin');
-    expect(result.condition).toBe('Kill an enemy');
-    expect(result.checkmarks).toBe(2);
+    const result = await extractImage('/fake/card.png', 'monster-stats');
+    expect(result.name).toBe('Algox Archer');
     expect(result._validationErrors).toBeUndefined();
   });
 
@@ -218,28 +223,28 @@ describe('extractImage', () => {
       content: [
         {
           type: 'text',
-          text: '{"name": "Bad", "condition": "Test"}',
+          text: '{"monsterName": "Bad"}',
         },
       ],
     });
 
-    const result = await extractImage('/fake/card.png', 'battle-goals');
+    const result = await extractImage('/fake/card.png', 'monster-stats');
     expect(result._validationErrors).toBeDefined();
     expect(result._validationErrors!.length).toBeGreaterThan(0);
   });
 
-  it('uses Haiku model for battle-goals', async () => {
+  it('uses Haiku model for extraction', async () => {
     mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
     mockMessagesCreate.mockResolvedValue({
       content: [
         {
           type: 'text',
-          text: '{"name": "Test", "condition": "Test", "checkmarks": 1}',
+          text: '{"monsterName": "Test", "levels": [{"level": 0, "normal": {"hp": 1, "move": 1, "attack": 1, "range": 0, "attributes": []}, "elite": {"hp": 2, "move": 1, "attack": 2, "range": 0, "attributes": []}}]}',
         },
       ],
     });
 
-    await extractImage('/fake/card.png', 'battle-goals');
+    await extractImage('/fake/card.png', 'monster-stats');
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({ model: 'claude-haiku-4-5-20251001' }),
     );
@@ -249,7 +254,7 @@ describe('extractImage', () => {
     mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
     mockMessagesCreate.mockRejectedValue(new Error('connection failed'));
 
-    await expect(extractImage('/fake/card.png', 'battle-goals')).rejects.toThrow(
+    await expect(extractImage('/fake/card.png', 'monster-stats')).rejects.toThrow(
       'connection failed',
     );
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
@@ -267,11 +272,11 @@ describe('extractCardType', () => {
       return false; // image dir doesn't exist
     });
     mockReadFileSync.mockReturnValue(
-      JSON.stringify([{ _file: 'card.png', name: 'Test', condition: 'X', checkmarks: 1 }]),
+      JSON.stringify([{ _file: 'card.png', monsterName: 'Test', levels: [] }]),
     );
     mockReaddirSync.mockReturnValue([]);
 
-    return extractCardType('battle-goals').then((result) => {
+    return extractCardType('monster-stats').then((result) => {
       expect(result).toHaveLength(1);
       expect(mockMessagesCreate).not.toHaveBeenCalled();
     });
@@ -280,25 +285,25 @@ describe('extractCardType', () => {
   it('processes pending images and saves results', async () => {
     mockExistsSync.mockImplementation((path: string) => {
       if (typeof path === 'string' && path.endsWith('.json')) return false;
-      if (typeof path === 'string' && path.includes('battle-goals')) return true;
+      if (typeof path === 'string' && path.includes('monster-stat-cards')) return true;
       return false;
     });
     mockReaddirSync.mockReturnValue([
-      { name: 'goal1.png', isDirectory: () => false, isFile: () => true },
+      { name: 'algox-archer.png', isDirectory: () => false, isFile: () => true },
     ]);
     mockReadFileSync.mockReturnValue(Buffer.from('fake image'));
     mockMessagesCreate.mockResolvedValue({
       content: [
         {
           type: 'text',
-          text: '{"name": "Test Goal", "condition": "Do something", "checkmarks": 1}',
+          text: '{"monsterName": "Algox Archer", "levels": [{"level": 0, "normal": {"hp": 3, "move": 2, "attack": 2, "range": 4, "attributes": []}, "elite": {"hp": 5, "move": 2, "attack": 3, "range": 5, "attributes": []}}]}',
         },
       ],
     });
 
-    const result = await extractCardType('battle-goals');
+    const result = await extractCardType('monster-stats');
     expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('Test Goal');
+    expect(result[0].monsterName).toBe('Algox Archer');
     expect(mockWriteFileSync).toHaveBeenCalled();
   });
 
