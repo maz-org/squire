@@ -62,6 +62,7 @@ jobs:
           npx tsx src/import-scenarios.ts
           npx tsx src/import-personal-quests.ts
           npx tsx src/import-events.ts
+          npx tsx src/import-battle-goals.ts
           npx tsx src/import-buildings.ts
           npx tsx src/import-items.ts
 

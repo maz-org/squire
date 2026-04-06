@@ -41,7 +41,10 @@ interface CardTypeConfig {
 }
 
 // Some card types are imported from GHS data, not OCR-extracted from images.
-type OcrCardType = Exclude<CardType, 'scenarios' | 'character-mats' | 'personal-quests'>;
+type OcrCardType = Exclude<
+  CardType,
+  'scenarios' | 'character-mats' | 'personal-quests' | 'battle-goals'
+>;
 
 const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
   'monster-stats': {
@@ -77,12 +80,6 @@ const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
     subdirs: true,
     context:
       'This is a Frosthaven event card (road, outpost, or boat). Extract the full flavor text and both options with their complete outcomes.',
-  },
-  'battle-goals': {
-    imageDir: join(IMAGES_BASE, 'battle-goals', 'frosthaven'),
-    filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
-    subdirs: false,
-    context: 'This is a Frosthaven battle goal card.',
   },
   buildings: {
     imageDir: join(IMAGES_BASE, 'outpost-building-cards', 'frosthaven'),
