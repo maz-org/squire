@@ -70,9 +70,9 @@ interface ExtractedBuilding {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-/** Convert a number to null if it's zero or undefined. */
+/** Convert a number to null if it's zero or undefined (zero means "no cost"). */
 function zeroToNull(n: number | undefined): number | null {
-  return n ? n : null;
+  return n === 0 || n === undefined ? null : n;
 }
 
 /**
