@@ -124,7 +124,9 @@ export function resolveLabel(ref: string, labels: LabelData): string {
   }
 
   if (typeof current !== 'string') return ref;
-  return resolveGameTokens(current);
+  // Strip HTML <br> tags from label text (GHS labels use HTML formatting)
+  const cleaned = current.replace(/<br\s*\/?>/g, ' ');
+  return resolveGameTokens(cleaned);
 }
 
 /**
@@ -212,7 +214,14 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     const name = action.valueObject?.name;
     text = name ? `Summon ${kebabToTitle(String(name))}` : 'Summon';
   } else {
-    text = `${capitalize(action.type)} ${action.value}`;
+    const val = String(action.value);
+    if (val.startsWith('%data.')) {
+      // When the value is a label reference, resolve it directly —
+      // prepending the type name would duplicate words already in the label
+      text = resolveLabel(val, labels);
+    } else {
+      text = `${capitalize(action.type)} ${resolveGameTokens(val)}`;
+    }
   }
 
   // Append useful sub-actions

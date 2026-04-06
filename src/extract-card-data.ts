@@ -1,7 +1,7 @@
 /**
  * Extract structured data from Frosthaven card images using Claude vision.
  * Run with: npm run extract [card-type]
- * Card types: monster-stats, monster-abilities, character-abilities, items, events, buildings
+ * Card types: monster-stats, character-abilities, items, events, buildings
  * Omit card-type to run all.
  *
  * Output: data/extracted/<card-type>.json
@@ -43,7 +43,7 @@ interface CardTypeConfig {
 // Some card types are imported from GHS data, not OCR-extracted from images.
 type OcrCardType = Exclude<
   CardType,
-  'scenarios' | 'character-mats' | 'personal-quests' | 'battle-goals'
+  'scenarios' | 'character-mats' | 'personal-quests' | 'battle-goals' | 'monster-abilities'
 >;
 
 const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
@@ -53,13 +53,6 @@ const CARD_TYPES: Record<OcrCardType, CardTypeConfig> = {
     subdirs: false,
     context:
       'This is a Frosthaven monster stat card showing HP, Move, and Attack values for Normal and Elite difficulties across multiple levels.',
-  },
-  'monster-abilities': {
-    imageDir: join(IMAGES_BASE, 'monster-ability-cards', 'frosthaven'),
-    filter: (f) => f.endsWith('.png') && !f.endsWith('-back.png'),
-    subdirs: true,
-    context:
-      'This is a Frosthaven monster ability card. Describe any icons as words (e.g. sword icon = "Attack", boot icon = "Move", heart = "Heal").',
   },
   'character-abilities': {
     imageDir: join(IMAGES_BASE, 'character-ability-cards', 'frosthaven'),

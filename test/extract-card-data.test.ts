@@ -82,7 +82,7 @@ describe('extractNumberFromFilename', () => {
 
   it('returns null for card types without number patterns', () => {
     expect(extractNumberFromFilename('algox-archer.png', 'monster-stats')).toBeNull();
-    expect(extractNumberFromFilename('ability-01.png', 'monster-abilities')).toBeNull();
+    expect(extractNumberFromFilename('ability-01.png', 'character-abilities')).toBeNull();
     expect(extractNumberFromFilename('card.png', 'character-abilities')).toBeNull();
   });
 
@@ -171,7 +171,7 @@ describe('collectImages', () => {
       return [{ name: 'algox-archer', isDirectory: () => true, isFile: () => false }];
     });
 
-    const result = collectImages('monster-abilities');
+    const result = collectImages('character-abilities');
     expect(result).toHaveLength(1);
     expect(result[0]).toMatch(/ability-01\.png$/);
   });

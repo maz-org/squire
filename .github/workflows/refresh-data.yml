@@ -44,7 +44,6 @@ jobs:
           cd /tmp/worldhaven
           git sparse-checkout set \
             images/monster-stat-cards/frosthaven \
-            images/monster-ability-cards/frosthaven \
             images/character-ability-cards/frosthaven \
             images/items/frosthaven \
             images/events/frosthaven \
@@ -65,6 +64,7 @@ jobs:
           npx tsx src/import-battle-goals.ts
           npx tsx src/import-buildings.ts
           npx tsx src/import-items.ts
+          npx tsx src/import-monster-abilities.ts
 
       # Run OCR extraction (costs API money — ~$5-10 per full run)
       - name: Run OCR extraction

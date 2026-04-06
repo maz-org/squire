@@ -165,7 +165,6 @@ git clone --depth 1 --filter=blob:none --sparse \
   https://github.com/any2cards/worldhaven.git ~/data/worldhaven
 cd ~/data/worldhaven && git sparse-checkout set \
   images/monster-stat-cards/frosthaven \
-  images/monster-ability-cards/frosthaven \
   images/character-ability-cards/frosthaven \
   images/items/frosthaven \
   images/events/frosthaven \
