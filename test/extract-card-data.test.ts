@@ -272,7 +272,17 @@ describe('extractCardType', () => {
       return false; // image dir doesn't exist
     });
     mockReadFileSync.mockReturnValue(
-      JSON.stringify([{ _file: 'card.png', monsterName: 'Test', levels: [] }]),
+      JSON.stringify([
+        {
+          _file: 'card.png',
+          name: 'Test',
+          levelRange: '0-3',
+          normal: {},
+          elite: {},
+          immunities: [],
+          notes: null,
+        },
+      ]),
     );
     mockReaddirSync.mockReturnValue([]);
 
@@ -296,14 +306,21 @@ describe('extractCardType', () => {
       content: [
         {
           type: 'text',
-          text: '{"monsterName": "Algox Archer", "levels": [{"level": 0, "normal": {"hp": 3, "move": 2, "attack": 2, "range": 4, "attributes": []}, "elite": {"hp": 5, "move": 2, "attack": 3, "range": 5, "attributes": []}}]}',
+          text: JSON.stringify({
+            name: 'Algox Archer',
+            levelRange: '0-3',
+            normal: { '0': { hp: 3, move: 2, attack: 2, range: 4, attributes: [] } },
+            elite: { '0': { hp: 5, move: 2, attack: 3, range: 5, attributes: [] } },
+            immunities: [],
+            notes: null,
+          }),
         },
       ],
     });
 
     const result = await extractCardType('monster-stats');
     expect(result).toHaveLength(1);
-    expect(result[0].monsterName).toBe('Algox Archer');
+    expect(result[0].name).toBe('Algox Archer');
     expect(mockWriteFileSync).toHaveBeenCalled();
   });
 
