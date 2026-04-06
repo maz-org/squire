@@ -164,7 +164,15 @@ export function loadLabels(): LabelData {
 // ─── Action formatting ───────────────────────────────────────────────────────
 
 // Action types that we skip — they're layout/rendering-only
-const SKIP_TYPES = new Set(['concatenation', 'forceBox', 'concatenationSpacer', 'card', 'area']);
+const SKIP_TYPES = new Set([
+  'concatenation',
+  'forceBox',
+  'concatenationSpacer',
+  'card',
+  'area',
+  'boxFhSubActions',
+  'grid',
+]);
 
 // Sub-action types that produce useful text
 const USEFUL_SUBACTION_TYPES = new Set([
@@ -220,7 +228,11 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
         : resolveGameTokens(val);
       subParts.push(resolved);
     } else {
-      subParts.push(`${capitalize(sub.type)} ${sub.value}`);
+      const val = String(sub.value);
+      const resolved = val.startsWith('%data.')
+        ? resolveLabel(val, labels)
+        : resolveGameTokens(val);
+      subParts.push(`${capitalize(sub.type)} ${resolved}`);
     }
   }
 
