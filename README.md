@@ -8,7 +8,7 @@ Squire uses retrieval-augmented generation (RAG) to answer Frosthaven rules ques
 
 - **Rulebook** — the complete Frosthaven rule book
 - **Scenario & section books** — all 166 scenarios and 197 sections
-- **Card data** — 1,900+ cards extracted via OCR (monster stats, abilities, items, events, battle goals, buildings)
+- **Card data** — 1,900+ cards from structured game data and OCR extraction (monster stats, abilities, items, events, battle goals, buildings)
 
 When you ask a question, Squire embeds it, searches the vector index and card database for relevant context, then sends everything to Claude for a grounded answer.
 
@@ -103,7 +103,12 @@ Results are tracked in Langfuse with LLM-as-judge scoring (1-5 scale). Current b
 
 ## Acknowledgments
 
-Game data (card images, PDFs, item databases) comes from [worldhaven](https://github.com/any2cards/worldhaven), a community-maintained collection of Gloomhaven/Frosthaven assets. Squire wouldn't be possible without their work.
+Game data comes from two community projects:
+
+- **[Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat)** — structured JSON data for items, characters, monsters, scenarios, and more. Used as the primary source for card data imports.
+- **[worldhaven](https://github.com/any2cards/worldhaven)** — card images and PDFs used for OCR-based extraction of card types not yet covered by GHS imports.
+
+Squire wouldn't be possible without their work.
 
 ## License
 
