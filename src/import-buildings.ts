@@ -89,12 +89,7 @@ export function resolveSectionRefs(text: string): string {
  */
 function resolveEffectText(ref: string, labels: LabelData): string {
   const resolved = resolveLabel(ref, labels);
-  const withSections = resolveSectionRefs(resolved);
-  // Strip HTML tags that GHS uses for formatting (e.g. <br>, <i>)
-  return withSections
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+  return resolveSectionRefs(resolved);
 }
 
 // ─── Conversion ────────────────────────────────────────────────────────────
