@@ -103,10 +103,13 @@ interface ExtractedScenario {
 function formatRewards(rewards: GhsRewards | undefined, labels: LabelData): string | null {
   if (!rewards) return null;
 
-  // If a custom label reference exists, resolve it — it's the authoritative text
+  // If a custom label reference exists, resolve it — it's the authoritative text.
+  // Return even if unresolved so the validator catches missing labels instead of
+  // silently falling through to the structured builder.
   if (rewards.custom && typeof rewards.custom === 'string' && rewards.custom.startsWith('%data.')) {
     const resolved = resolveLabel(rewards.custom, labels);
     if (resolved !== rewards.custom) return resolveGameTokens(resolveSectionRefs(resolved));
+    return rewards.custom;
   }
 
   // Otherwise build from structured fields
