@@ -4,6 +4,8 @@
 
 - Node.js 24+ (see `.nvmrc`)
 - `.env` file with `ANTHROPIC_API_KEY`
+- [gstack](https://github.com/garrytan/gstack) skills for Claude Code (see
+  [AI tooling setup](#ai-tooling-setup) below)
 
 Extracted card data (`data/extracted/*.json`) and the vector index
 (`data/index.json`) are committed to the repo. No additional data setup
@@ -169,6 +171,23 @@ GHS_DATA_DIR=~/data/ghs npx tsx src/import-monster-stats.ts
 The clone lives outside the repo so it doesn't interfere with git or
 worktrees. Commit updated `data/extracted/*.json` files alongside your
 script changes.
+
+## AI tooling setup
+
+This repo requires [gstack](https://github.com/garrytan/gstack) for
+AI-assisted development. A pre-tool hook in `.claude/settings.json`
+enforces this — Claude Code will warn if gstack is missing.
+
+One-time setup (per developer machine):
+
+```bash
+git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+cd ~/.claude/skills/gstack && ./setup --team
+```
+
+This installs gstack skills (browse, review, ship, etc.) and enables
+auto-updates at the start of each Claude Code session. See the
+`## gstack` section in `CLAUDE.md` for the full list of available skills.
 
 ## Project structure
 
