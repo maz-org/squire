@@ -1,7 +1,7 @@
 /**
  * Extract structured data from Frosthaven card images using Claude vision.
  * Run with: npm run extract [card-type]
- * Card types: monster-stats, monster-abilities, character-abilities, items, events, battle-goals, buildings
+ * Card types: monster-stats, monster-abilities, character-abilities, items, events, buildings
  * Omit card-type to run all.
  *
  * Output: data/extracted/<card-type>.json

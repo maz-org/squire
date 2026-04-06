@@ -28,6 +28,8 @@ interface GhsBattleGoal {
 
 // ─── Our extracted format ───────────────────────────────────────────────────
 
+// Extends BattleGoalSchema fields with _source for provenance tracking.
+// _source is not in the Zod schema — it's import-only metadata used by all GHS imports.
 interface ExtractedBattleGoal {
   name: string;
   condition: string;
