@@ -203,15 +203,16 @@ The vector index (`data/index.json`) and extracted card data
 [Git LFS](https://git-lfs.com/). They download automatically when you clone —
 no extra setup needed.
 
-If you need to regenerate them (e.g., after changing import scripts or
-indexing logic), these are maintainer tasks managed by
+The vector index can be regenerated locally if needed (e.g., after
+changing indexing logic) — this is a maintainer task managed by
 [@bcm](https://github.com/bcm):
 
 ```bash
 npm run index   # re-index rulebook PDFs (~2 min)
 ```
 
-Card data is refreshed automatically by the weekly CI workflow.
+Extracted card data (`data/extracted/`) is refreshed automatically by
+the weekly CI workflow from GHS upstream data.
 
 ## Development
 
