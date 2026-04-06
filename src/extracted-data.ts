@@ -1,6 +1,6 @@
 /**
  * Search and format extracted card data for use as RAG context.
- * Loads from data/extracted/<type>.json files produced by extract-card-data.ts.
+ * Loads from data/extracted/<type>.json files produced by GHS import scripts.
  */
 
 import { readFileSync, existsSync } from 'node:fs';

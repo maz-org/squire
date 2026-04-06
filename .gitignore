@@ -150,4 +150,3 @@ eval/results/*.json
 
 # Raw data repos (cloned locally for import script development, not submodules)
 data/gloomhavensecretariat/
-data/worldhaven/

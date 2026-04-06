@@ -18,9 +18,8 @@ to Claude. Every input path is a prompt injection surface.
 - Conversation history injection — if raw history is passed to
   `/api/ask`, a user can embed messages that look like system
   instructions when concatenated
-- Indirect injection via poisoned card data — unlikely from OCR of
-  physical cards, but possible if the data pipeline or worldhaven repo
-  is compromised
+- Indirect injection via poisoned card data — possible if the GHS
+  upstream repo is compromised
 - Search result steering — crafted queries that surface specific
   passages to manipulate the LLM's context window
 
@@ -186,8 +185,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 **Attack scenarios:**
 
-- Compromised `worldhaven` repo injects malicious data into card
-  extraction
+- Compromised GHS repo injects malicious data into card imports
 - Compromised npm dependency (Hono, MCP SDK, etc.) exfiltrates API keys
   or injects backdoors
 - Poisoned vector store — if `data/index.json` is tampered with,
@@ -195,7 +193,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 **Mitigations:**
 
-- Pin worldhaven to a specific commit, review diffs before updating
+- Pin GHS to a specific commit, review diffs before updating
 - npm audit + Dependabot (already configured)
 - SAST scanning (#12)
 - Integrity checksums on extracted data and vector index

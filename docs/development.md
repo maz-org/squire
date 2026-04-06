@@ -151,38 +151,22 @@ of each upstream repo.
 
 ### Working on import scripts locally
 
-Import scripts read from two upstream repos. Clone them once outside
-the project and point the scripts at them via env vars:
+Import scripts read from the GHS upstream repo. Clone it once outside
+the project and point the scripts at it via env var:
 
 ```bash
-# GHS (structured JSON, ~6 MB with sparse checkout)
 git clone --depth 1 --filter=blob:none --sparse \
   https://github.com/Lurkars/gloomhavensecretariat.git ~/data/ghs
 cd ~/data/ghs && git sparse-checkout set data/fh
-
-# Worldhaven (card images for OCR extraction)
-git clone --depth 1 --filter=blob:none --sparse \
-  https://github.com/any2cards/worldhaven.git ~/data/worldhaven
-cd ~/data/worldhaven && git sparse-checkout set \
-  images/monster-stat-cards/frosthaven \
-  images/character-ability-cards/frosthaven \
-  images/items/frosthaven \
-  images/events/frosthaven \
-  images/battle-goals/frosthaven \
-  images/outpost-building-cards/frosthaven
 ```
 
-Then run the import scripts:
+Then run any import script:
 
 ```bash
-# GHS imports (free — JSON parsing only)
 GHS_DATA_DIR=~/data/ghs npx tsx src/import-monster-stats.ts
-
-# OCR extraction (costs ~$5-10 per full run)
-WORLDHAVEN_DIR=~/data/worldhaven npx tsx src/extract-card-data.ts
 ```
 
-The clones live outside the repo so they don't interfere with git or
+The clone lives outside the repo so it doesn't interfere with git or
 worktrees. Commit updated `data/extracted/*.json` files alongside your
 script changes.
 
@@ -198,5 +182,5 @@ src/
   embedder.ts       # Local embedding via all-MiniLM-L6-v2
   vector-store.ts   # Flat-file vector store with cosine similarity
   extracted-data.ts # Card data loading, search, and formatting
-  schemas.ts        # Zod schemas for all 7 card types
+  schemas.ts        # Zod schemas for all 10 card types
 ```
