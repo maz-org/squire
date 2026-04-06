@@ -169,17 +169,6 @@ git clone --recurse-submodules https://github.com/maz-org/squire.git
 cd squire
 ```
 
-### Initialize game data submodules
-
-[Worldhaven](https://github.com/any2cards/worldhaven) and
-[Gloomhaven Secretariat](https://github.com/Lurkars/gloomhavensecretariat)
-are pinned as git submodules. If you used `--recurse-submodules` above, they're
-already populated. Otherwise:
-
-```bash
-git submodule update --init
-```
-
 ### Install dependencies
 
 ```bash
@@ -214,14 +203,15 @@ The vector index (`data/index.json`) and extracted card data
 [Git LFS](https://git-lfs.com/). They download automatically when you clone —
 no extra setup needed.
 
-If you need to regenerate them (e.g., after changing the extraction pipeline or
+If you need to regenerate them (e.g., after changing import scripts or
 indexing logic), these are maintainer tasks managed by
 [@bcm](https://github.com/bcm):
 
 ```bash
-npm run index     # re-index rulebook PDFs (~2 min)
-npm run extract   # re-extract all card data (~30 min, costs API credits)
+npm run index   # re-index rulebook PDFs (~2 min)
 ```
+
+Card data is refreshed automatically by the weekly CI workflow.
 
 ## Development
 

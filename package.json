@@ -7,7 +7,6 @@
     "index": "node src/index-docs.ts",
     "query": "node src/query.ts",
     "serve": "node src/server.ts",
-    "extract": "node src/extract-card-data.ts",
     "eval": "node eval/run.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

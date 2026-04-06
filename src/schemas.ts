@@ -1,6 +1,6 @@
 /**
- * Zod schemas for each Frosthaven card type extracted via vision OCR.
- * Used for both prompt generation (via zod-to-json-schema) and runtime validation.
+ * Zod schemas for each Frosthaven card type.
+ * Used for validation during GHS data imports and at runtime.
  */
 
 import { z } from 'zod';

@@ -36,20 +36,6 @@ jobs:
           cd /tmp/ghs
           git sparse-checkout set data/fh
 
-      # Shallow-clone worldhaven with only Frosthaven card images
-      - name: Fetch worldhaven images
-        run: |
-          git clone --depth 1 --filter=blob:none --sparse \
-            https://github.com/any2cards/worldhaven.git /tmp/worldhaven
-          cd /tmp/worldhaven
-          git sparse-checkout set \
-            images/monster-stat-cards/frosthaven \
-            images/character-ability-cards/frosthaven \
-            images/items/frosthaven \
-            images/events/frosthaven \
-            images/battle-goals/frosthaven \
-            images/outpost-building-cards/frosthaven
-
       # Run GHS imports (free — JSON parsing only)
       - name: Run GHS imports
         env:
@@ -65,13 +51,6 @@ jobs:
           npx tsx src/import-buildings.ts
           npx tsx src/import-items.ts
           npx tsx src/import-monster-abilities.ts
-
-      # Run OCR extraction (costs API money — ~$5-10 per full run)
-      - name: Run OCR extraction
-        env:
-          WORLDHAVEN_DIR: /tmp/worldhaven
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: npx tsx src/extract-card-data.ts
 
       # Open a PR if any extracted data changed
       - name: Check for changes
@@ -98,5 +77,5 @@ jobs:
           gh label create automated --description "Created by CI" --color ededed 2>/dev/null || true
           gh pr create \
             --title "chore: refresh extracted data $(date +%Y-%m-%d)" \
-            --body "Automated refresh of \`data/extracted/\` from upstream GHS and worldhaven repos." \
+            --body "Automated refresh of \`data/extracted/\` from upstream GHS repo." \
             --label "automated"
