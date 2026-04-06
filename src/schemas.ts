@@ -124,6 +124,13 @@ export const EventSchema = z.object({
     })
     .nullable()
     .describe('Option B, or null if there is no choice'),
+  optionC: z
+    .object({
+      text: z.string().describe('Choice C text'),
+      outcome: z.string().describe('Full outcome text for choice C'),
+    })
+    .nullable()
+    .describe('Option C, or null if there is no third choice'),
 });
 
 export const BattleGoalSchema = z.object({

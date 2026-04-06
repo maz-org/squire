@@ -176,6 +176,7 @@ describe('EventSchema', () => {
       flavorText: 'A storm.',
       optionA: { text: 'Shelter', outcome: 'Safe' },
       optionB: { text: 'Go', outcome: 'Hurt' },
+      optionC: null,
     };
     expect(schema.safeParse(data).success).toBe(true);
   });
@@ -188,6 +189,20 @@ describe('EventSchema', () => {
       flavorText: 'Calm seas.',
       optionA: { text: 'Continue', outcome: 'Nothing happens' },
       optionB: null,
+      optionC: null,
+    };
+    expect(schema.safeParse(data).success).toBe(true);
+  });
+
+  it('accepts an event with optionC', () => {
+    const data = {
+      eventType: 'boat',
+      season: null,
+      number: '01',
+      flavorText: 'A fun event.',
+      optionA: { text: 'A', outcome: 'A outcome' },
+      optionB: { text: 'B', outcome: 'B outcome' },
+      optionC: { text: 'C', outcome: 'C outcome' },
     };
     expect(schema.safeParse(data).success).toBe(true);
   });
@@ -200,6 +215,7 @@ describe('EventSchema', () => {
       flavorText: 'X',
       optionA: { text: 'Y', outcome: 'Z' },
       optionB: null,
+      optionC: null,
     };
     expect(schema.safeParse(data).success).toBe(false);
   });

@@ -61,7 +61,9 @@ jobs:
           npx tsx src/import-character-mats.ts
           npx tsx src/import-scenarios.ts
           npx tsx src/import-personal-quests.ts
+          npx tsx src/import-events.ts
           npx tsx src/import-buildings.ts
+          npx tsx src/import-items.ts
 
       # Run OCR extraction (costs API money — ~$5-10 per full run)
       - name: Run OCR extraction
