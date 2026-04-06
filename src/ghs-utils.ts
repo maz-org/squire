@@ -3,6 +3,19 @@
  *
  * Provides label resolution, game token resolution, action formatting, and
  * common path constants used by all GHS import scripts.
+ *
+ * ## `_source` convention
+ *
+ * Every extracted record includes a `_source` field for provenance tracking.
+ * Format: `gloomhavensecretariat:<entity-type>/<entity-id>`
+ *
+ * Examples:
+ *   - `gloomhavensecretariat:battle-goal/1301`
+ *   - `gloomhavensecretariat:monster-stat/bandit-guard`
+ *   - `gloomhavensecretariat:character-mat/blinkblade`
+ *   - `gloomhavensecretariat:item/001`
+ *
+ * `_source` is not in the Zod schemas — it's import-only metadata.
  */
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -79,6 +92,20 @@ export function kebabToTitle(name: string): string {
     .join(' ');
 }
 
+// ─── HTML stripping ─────────────────────────────────────────────────────────
+
+/**
+ * Strip HTML tags from GHS text. Converts `<br>` to spaces, removes all
+ * other tags, and collapses whitespace.
+ */
+export function stripHtml(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/  +/g, ' ')
+    .trim();
+}
+
 // ─── Game token resolution ───────────────────────────────────────────────────
 
 /**
@@ -124,9 +151,7 @@ export function resolveLabel(ref: string, labels: LabelData): string {
   }
 
   if (typeof current !== 'string') return ref;
-  // Strip HTML <br> tags from label text (GHS labels use HTML formatting)
-  const cleaned = current.replace(/<br\s*\/?>/g, ' ');
-  return resolveGameTokens(cleaned);
+  return resolveGameTokens(stripHtml(current));
 }
 
 /**

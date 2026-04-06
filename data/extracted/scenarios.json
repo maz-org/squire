@@ -1272,7 +1272,7 @@
       }
     ],
     "objectives": [],
-    "rewards": "Read %data.section:36.7% now",
+    "rewards": "Read Section 36.7 now",
     "lootDeckConfig": {
       "money": 9,
       "lumber": 2,
@@ -3761,7 +3761,7 @@
         "escort": true
       }
     ],
-    "rewards": "Spend any remaining dust to gain the following: <br><br> Spend seven (once only): Scepter of Control Item #203 <br>Spend one: Any 1 material resource <br>Spend two: Any 1 herb resource",
+    "rewards": "Spend any remaining dust to gain the following: Spend seven (once only): Scepter of Control Item #203 Spend one: Any 1 material resource Spend two: Any 1 herb resource",
     "lootDeckConfig": {},
     "flowChartGroup": "other",
     "initial": false,

@@ -298,7 +298,7 @@ describe('convertCharacterMat', () => {
 
   it('sets _source field', () => {
     const result = convertCharacterMat(ghsDrifter, labels);
-    expect(result._source).toBe('gloomhavensecretariat:drifter');
+    expect(result._source).toBe('gloomhavensecretariat:character-mat/drifter');
   });
 
   it('handles multi-word character names', () => {

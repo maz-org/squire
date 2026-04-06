@@ -18,8 +18,11 @@ import {
   kebabToTitle,
   loadLabels,
   resolveLabel,
+  resolveGameTokens,
   type LabelData,
 } from './ghs-utils.ts';
+
+import { resolveSectionRefs } from './import-buildings.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GHS_SCENARIO_DIR = join(GHS_DATA_DIR, 'scenarios');
@@ -100,10 +103,13 @@ interface ExtractedScenario {
 function formatRewards(rewards: GhsRewards | undefined, labels: LabelData): string | null {
   if (!rewards) return null;
 
-  // If a custom label reference exists, resolve it — it's the authoritative text
+  // If a custom label reference exists, resolve it — it's the authoritative text.
+  // Return even if unresolved so the validator catches missing labels instead of
+  // silently falling through to the structured builder.
   if (rewards.custom && typeof rewards.custom === 'string' && rewards.custom.startsWith('%data.')) {
     const resolved = resolveLabel(rewards.custom, labels);
-    if (resolved !== rewards.custom) return resolved;
+    if (resolved !== rewards.custom) return resolveGameTokens(resolveSectionRefs(resolved));
+    return rewards.custom;
   }
 
   // Otherwise build from structured fields
@@ -172,7 +178,13 @@ export function importScenarios(): ExtractedScenario[] {
 
     const scenario: GhsScenario = JSON.parse(readFileSync(join(GHS_SCENARIO_DIR, file), 'utf-8'));
 
-    allResults.push(convertScenario(scenario, labels));
+    const converted = convertScenario(scenario, labels);
+
+    if (converted.rewards && /%(?:data|game)\./.test(converted.rewards)) {
+      throw new Error(`Unresolved label/token in scenario ${scenario.index}: ${converted.rewards}`);
+    }
+
+    allResults.push(converted);
   }
 
   return allResults;

@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { GHS_DATA_DIR, resolveGameTokens } from './ghs-utils.ts';
+import { GHS_DATA_DIR, resolveGameTokens, stripHtml } from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GHS_EVENTS_PATH = join(GHS_DATA_DIR, 'events.json');
@@ -64,16 +64,6 @@ interface ExtractedEvent {
   optionB: { text: string; outcome: string } | null;
   optionC: { text: string; outcome: string } | null;
   _source: string;
-}
-
-// ─── HTML stripping ─────────────────────────────────────────────────────────
-
-function stripHtml(text: string): string {
-  return text
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/  +/g, ' ')
-    .trim();
 }
 
 // ─── Type mapping ───────────────────────────────────────────────────────────
@@ -292,40 +282,43 @@ export function formatEffect(effect: GhsEffect): string | null {
 // ─── Condition formatting ───────────────────────────────────────────────────
 
 function formatCondition(condition: GhsCondition): string {
-  if (typeof condition === 'string') return condition;
+  if (typeof condition === 'string') return resolveGameTokens(condition);
 
   const { type, values = [] } = condition;
+  // Resolve any game tokens in condition values (e.g., %game.resource.lumber%)
+  const resolved = values.map((v) => resolveGameTokens(String(v)));
+
   switch (type) {
     case 'otherwise':
       return 'OTHERWISE';
     case 'season':
-      return values[0]?.toUpperCase() ?? 'SEASON';
+      return resolved[0]?.toUpperCase() ?? 'SEASON';
     case 'building':
-      return values.join(', ').toUpperCase();
+      return resolved.join(', ').toUpperCase();
     case 'traits':
-      return values.join(', ').toUpperCase();
+      return resolved.join(', ').toUpperCase();
     case 'campaignSticker':
-      return `STICKER: ${values.join(', ')}`.toUpperCase();
+      return `STICKER: ${resolved.join(', ')}`.toUpperCase();
     case 'moraleGT':
-      return `MORALE > ${values[0]}`;
+      return `MORALE > ${resolved[0]}`;
     case 'moraleLT':
-      return `MORALE < ${values[0]}`;
+      return `MORALE < ${resolved[0]}`;
     case 'seasonLT':
-      return `BEFORE ${values[0]?.toUpperCase()}`;
+      return `BEFORE ${resolved[0]?.toUpperCase()}`;
     case 'loseCollectiveGold':
-      return `LOSE ${values[0]} COLLECTIVE GOLD`;
+      return `LOSE ${resolved[0]} COLLECTIVE GOLD`;
     case 'loseCollectiveResource':
-      return `LOSE COLLECTIVE ${values.join(', ')}`.toUpperCase();
+      return `LOSE COLLECTIVE ${resolved.join(', ')}`.toUpperCase();
     case 'loseCollectiveResourceType':
-      return `LOSE COLLECTIVE ${values.join(', ')}`.toUpperCase();
+      return `LOSE COLLECTIVE ${resolved.join(', ')}`.toUpperCase();
     case 'loseResource':
-      return `LOSE ${values.join(', ')}`.toUpperCase();
+      return `LOSE ${resolved.join(', ')}`.toUpperCase();
     case 'loseResourceType':
-      return `LOSE ${values.join(', ')}`.toUpperCase();
+      return `LOSE ${resolved.join(', ')}`.toUpperCase();
     case 'and':
-      return values.join(' AND ').toUpperCase();
+      return resolved.join(' AND ').toUpperCase();
     default:
-      return values.length > 0 ? values.join(', ').toUpperCase() : type.toUpperCase();
+      return resolved.length > 0 ? resolved.join(', ').toUpperCase() : type.toUpperCase();
   }
 }
 
@@ -364,7 +357,7 @@ export function formatOutcomes(outcomes: GhsOutcome[]): string {
 
     // Add narrative
     if (outcome.narrative) {
-      text += stripHtml(outcome.narrative);
+      text += resolveGameTokens(stripHtml(outcome.narrative));
     }
 
     // Add effects
@@ -408,7 +401,7 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
     const opt = optionsByLabel[label];
     if (!opt) return null;
     return {
-      text: opt.narrative ? stripHtml(opt.narrative) : '',
+      text: opt.narrative ? resolveGameTokens(stripHtml(opt.narrative)) : '',
       outcome: formatOutcomes(opt.outcomes ?? []),
     };
   };
@@ -419,7 +412,7 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
     eventType,
     season,
     number,
-    flavorText: stripHtml(ghs.narrative),
+    flavorText: resolveGameTokens(stripHtml(ghs.narrative)),
     optionA: optionA ?? { text: '', outcome: '' },
     optionB: buildOption('B'),
     optionC: buildOption('C'),
@@ -437,7 +430,28 @@ export function importEvents(): ExtractedEvent[] {
   }
 
   const events: GhsEvent[] = JSON.parse(readFileSync(GHS_EVENTS_PATH, 'utf-8'));
-  return events.map((e) => convertEvent(e));
+  const results = events.map((e) => convertEvent(e));
+
+  for (const event of results) {
+    const allText = [
+      event.flavorText,
+      event.optionA.text,
+      event.optionA.outcome,
+      event.optionB?.text,
+      event.optionB?.outcome,
+      event.optionC?.text,
+      event.optionC?.outcome,
+    ].filter((t): t is string => t != null);
+
+    const unresolved = allText.find((t) => /%(?:data|game)\./.test(t));
+    if (unresolved) {
+      throw new Error(
+        `Unresolved label/token in event ${event.eventType}-${event.number}: ${unresolved}`,
+      );
+    }
+  }
+
+  return results;
 }
 
 if (process.argv[1]?.endsWith('import-events.ts')) {

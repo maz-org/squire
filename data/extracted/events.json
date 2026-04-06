@@ -462,11 +462,11 @@
     "number": "10",
     "flavorText": "\"Care to make a trade?\" A man with skin rough as leather beckons you over to the stool he's set on the main street through town. \"I've got the best deals on building materials, come have a chat.\" You wander over to hear his pitch. \"The trick is buying this junk in bulk down in the real cities, then it's just a matter of hauling it up here. Massive profits for me, good deals for you. It'll take a few weeks to get here, but you can't beat the cost.\" He flips through a notepad, doing the math in his head. \"I've got enough room on the next shipment to squeeze in a few more things if you're interested. I'll even cut you a better deal than these other suckers just so I can head out before it gets dark.\"",
     "optionA": {
-      "text": "Order 5 %game.resource.lumber% and 2 %game.resource.metal% (requires 15 gold).",
+      "text": "Order 5 Lumber and 2 Metal (requires 15 gold).",
       "outcome": "The merchant marks down your order in his ledger. \"Alright, five lumber and two metal. Should be a few weeks before it gets here, what with the pass and all.\" Lose 15 collective gold. See section/week: 103.2, 3, winter, 2, summer."
     },
     "optionB": {
-      "text": "Order 5 %game.resource.metal% and 2 %game.resource.lumber% (requires 15 gold).",
+      "text": "Order 5 Metal and 2 Lumber (requires 15 gold).",
       "outcome": "The merchant marks down your order in his ledger. \"Got it, five metal and two lumber. I'll bring it over to your place when I get back.\" Lose 15 collective gold. See section/week: 179.5, 3, winter, 2, summer."
     },
     "optionC": {
@@ -516,7 +516,7 @@
     "number": "13",
     "flavorText": "A Valrath man comes up to you in the street. \"Say... you spend some time outside the walls, right? Happened to come across any snowthistle?\" He speaks in a low voice, and his hood makes it difficult to make out his face. Before you have a chance to respond, a portly woman rushes up with a broom, smacking the Valrath on the back. \"You again?! Leave these people alone!\" The Valrath scurries off into an alley without another word. The woman turns to you, her hands on her hips. \"Valraths and snowthistle, am I right? For most people it's a garnish, or medicinal. For them-well, they can't get enough of the stuff. Addicts!\" She mumbles to herself as she heads back into her home. You continue your walk, but hear the Valrath's voice down the alley. \"So? Have any? I've got coin.\"",
     "optionA": {
-      "text": "Sell the Valrath some snowthistle (requires %game.resource.snowthistle%).",
+      "text": "Sell the Valrath some snowthistle (requires Snowthistle).",
       "outcome": "VALRATH: The Valrath energetically prepares some of your snowthistle for sharing. Surely, a little bit couldn't hurt-oh, it's evening now. Well, just a bit more for the road-is that the morning sun? The buyer smiles. \"Let me know if you get more. Happy to share.\" Gain 1 morale. Gain 15 collective gold. Lose all collective Snowthistle. OTHERWISE: You hand the Valrath some snowthistle, and he licks his lips. \"Good, nice quality. Happy to put any excess to you have to better use...\" Lose any number of collective Snowthistle.. Gain 5 collective GOLD for each Snowthistle lost."
     },
     "optionB": {
@@ -835,7 +835,7 @@
     "number": "32",
     "flavorText": "Balancing on a single wheel, a small metal box with a wobbly head rolls up to the main gate. The guards are hesitant to ring the alarm bell over a lone robot, but the debate is cut short as it announces itself with a full-throated metallic voice: \"PROVIDE US SUFFICIENT METAL OR FACE OUR BEAM OF DEATH.\" With that, a device on the mountainside gives off a flickering light, projecting a blue dot on the side of a building in town. The edges of the light singe the wall, and the intensity seems to be growing. \"SNICKLES AND STUMP ARE IMPATIENT BY DESIGN. YOU HAVE ONE MINUTE TO COMPLY.\"",
     "optionA": {
-      "text": "Toss some metal down to the small robotic box (requires 3 %game.resource.metal%).",
+      "text": "Toss some metal down to the small robotic box (requires 3 Metal).",
       "outcome": "You throw the metal off the battlements and the small box uses a fold-out arm to gather the resources. \"OUR BUSINESS CONCLUDES. GOOD DAY.\" It wheels back to wherever it came from, wobbly head bobbing. The blue light coming from the mountainside deactivates. Lose metal collective 3. Skip the next threat increase."
     },
     "optionB": {
@@ -1223,7 +1223,7 @@
       "outcome": "ALGOX: You refuse to honor the man's request, and throw in some choice words for his callous indifference to life. Gain 1 morale. OTHERWISE: You make exceptionally clear your stance on killing for such useless excess. No effect."
     },
     "optionC": {
-      "text": "Offer the man one of your own teeth (requires %game.trait:algox%).",
+      "text": "Offer the man one of your own teeth (requires Algox).",
       "outcome": "With very little pomp and circumstance you rip a tooth from your mouth, handing it to him. He accepts it, wholly horrified. One Algox character gains 20 gold and starts the next scenario with Wound."
     },
     "_source": "gloomhavensecretariat:event/SO-55"
@@ -1239,7 +1239,7 @@
     },
     "optionB": {
       "text": "With a bit of flamefruit, you could make any of your existing hides the perfect gift...",
-      "outcome": "Lose 1 %game.resource.hide%  and 1 %game.resource.flamefruit% : You spend a few minutes dying a hide of yours in some crushed-up flamefruit. It's splotchy and has an amateurish tie-dyed effect, but it's passably in line with what the tanner described. You let it dry then present it to her. \"A Firegox pelt? You saw one? You killed one?! You must tell me everything.\" You spend the next hour making up increasingly outlandish tales about the death-defying battle. Eventually, she agrees to buy it off you at a high price. Gain 15 collective gold. Gain 2 morale. OTHERWISE: You try to pass off an Algox hide with a bit of blood still staining it as a Firegox. The tanner isn't buying it but laughs at your attempt. No effect."
+      "outcome": "Lose 1 Hide and 1 Flamefruit: You spend a few minutes dying a hide of yours in some crushed-up flamefruit. It's splotchy and has an amateurish tie-dyed effect, but it's passably in line with what the tanner described. You let it dry then present it to her. \"A Firegox pelt? You saw one? You killed one?! You must tell me everything.\" You spend the next hour making up increasingly outlandish tales about the death-defying battle. Eventually, she agrees to buy it off you at a high price. Gain 15 collective gold. Gain 2 morale. OTHERWISE: You try to pass off an Algox hide with a bit of blood still staining it as a Firegox. The tanner isn't buying it but laughs at your attempt. No effect."
     },
     "optionC": null,
     "_source": "gloomhavensecretariat:event/SO-56"
@@ -1315,7 +1315,7 @@
     "flavorText": "\"No, no, no!\" Pinter Droman, Frosthaven's tinkerer, shouts from the back room of his workshop. \"The impurity of these metals is simply catastrophic. This is like baking a cake using flour that's forty percent dirt!\" He tosses some scrap metal on the ground, listening to it plink across the stone floor. \"Hear that? I bet the tinkerers in White Oak don't have such shoddy materials!\" He shakes his head, wiping grease off his hands as he approaches you. \"Listen, I think I've got a way to improve the alloys we use around here. Less junk, more metal. I'm 95% certain it'll work, but I need some raw ores to test it out on. Help me and I'll share the results.\" An explosion from the back of the workshop sends black smoke billowing through the room. Pinter coughs, swinging his gloves around to clear the air. He looks back at you with an abashed smile. \"85% certain.\"",
     "optionA": {
       "text": "Give Pinter metal for his experiments.",
-      "outcome": "Lose 6 collective %game.resource.metal% (or, if the box in outcome B is checked, 3 collection %game.resource.metal%): You hand over the metal and the Quatryl quickly gets to work on his metal refinement machine. Pinter adds it to a boiling cauldron and automated hands stir and sift the white-hot mixture. He flips down a pair of heavy goggles and pulls a final lever with a dramatic smile. An iron paddle slaps at the resulting ingot until it cools. When the cacophony stops you see it: a shining, dense chunk of Pinter's supermetal. \"It's perfect! I should be able to replicate this for future processing!\" Add a Plus1 sticker to one Metal card (the card gives one extra Metal when resolved)."
+      "outcome": "Lose 6 collective Metal (or, if the box in outcome B is checked, 3 collection Metal): You hand over the metal and the Quatryl quickly gets to work on his metal refinement machine. Pinter adds it to a boiling cauldron and automated hands stir and sift the white-hot mixture. He flips down a pair of heavy goggles and pulls a final lever with a dramatic smile. An iron paddle slaps at the resulting ingot until it cools. When the cacophony stops you see it: a shining, dense chunk of Pinter's supermetal. \"It's perfect! I should be able to replicate this for future processing!\" Add a Plus1 sticker to one Metal card (the card gives one extra Metal when resolved)."
     },
     "optionB": {
       "text": "Tell Pinter you'll return when he's made more progress on the research.",
@@ -1612,8 +1612,8 @@
     "number": "15",
     "flavorText": "You encounter a young Algox away from his tribe, looking hungry and weary. He explains his name is Malrog, and that he has been exiled as part of the ritual transition into adulthood. He will need to slay a great beast to prove his value and return to his people. It's clear he doesn't want to interact with you, but he's desperate. \"I shattered my greatsword against the rocks two days ago, and now I am defenseless. It is beneath my status to ask, but do you have anything I could use?\" Judging by his current condition, it doesn't look like he'll make it very long without your help.",
     "optionA": {
-      "text": "Leave Malrog with a %game.itemSlot:onehand% or %game.itemSlot:twohand% item (select the item now).",
-      "outcome": "Resolve the following based on the item selected.<br><br>. the selected item is %game.itemSlot:twohand%: Thank you! Your kindness is incredible. I will not forget this day. Our people have a history of adversity, but we are friends. Return the selected item to the available supply.. Add event WR-37 to the winter-road deck. the selected item is %game.itemSlot:onehand%: I am grateful for your kindness. Thank you. Return the selected item to the available supply.. Add event WR-38 to the winter-road deck."
+      "text": "Leave Malrog with a One Hand or Two Hands item (select the item now).",
+      "outcome": "Resolve the following based on the item selected.<br><br>. the selected item is Two Hands: Thank you! Your kindness is incredible. I will not forget this day. Our people have a history of adversity, but we are friends. Return the selected item to the available supply.. Add event WR-37 to the winter-road deck. the selected item is One Hand: I am grateful for your kindness. Thank you. Return the selected item to the available supply.. Add event WR-38 to the winter-road deck."
     },
     "optionB": {
       "text": "Refuse to interfere in the ritual and provide him nothing.",
@@ -1805,7 +1805,7 @@
     "flavorText": "Walking through a narrow valley between two ridges, you catch sight of a cluster of Lurkers burrowing into the rock. It's mating season, and hundreds have gathered here to find a partner. It would be wise to take a different path, but it would take a hike to get up the ridgeway. Before you've had a chance to discuss a way forward, the Lurkers spot you. The message spreads, and within seconds a few dozen are barreling down on your position, chittering and snapping their terrifying claws. Apparently mating makes them quite ravenous, and they will do anything to feed. Good to know.",
     "optionA": {
       "text": "All characters may select a card from their pool to play for its movement to outrun the stampede. The card selected will be excluded from your pool for the upcoming scenario.",
-      "outcome": "All characters select the top or bottom action of their card. Add up all movement values on the action (ignoring any conditional bonuses). All characters resolve the following individually based on the value of their total movement:. NIMBLE: Add +1 Move. %game.action.move% < 3: You catch a razor-sharp claw in the torso. All characters suffer 4 damage at the start of the next scenario. %game.action.move% 3: The Lurkers swipe at your limbs, but you only take a few scrapes. All characters start the next scenario with Wound. %game.action.move% 4: You scurry just out of reach. No effect. %game.action.move% > 4: This is nothing worse than your morning jog, but it certainly leaves you with a good story! Gain 5 experience. <br>The slowest character (or tied characters) start the next scenario with Damage 1 (in addition to other Damage)."
+      "outcome": "All characters select the top or bottom action of their card. Add up all movement values on the action (ignoring any conditional bonuses). All characters resolve the following individually based on the value of their total movement:. NIMBLE: Add +1 Move. Move < 3: You catch a razor-sharp claw in the torso. All characters suffer 4 damage at the start of the next scenario. Move 3: The Lurkers swipe at your limbs, but you only take a few scrapes. All characters start the next scenario with Wound. Move 4: You scurry just out of reach. No effect. Move > 4: This is nothing worse than your morning jog, but it certainly leaves you with a good story! Gain 5 experience. <br>The slowest character (or tied characters) start the next scenario with Damage 1 (in addition to other Damage)."
     },
     "optionB": null,
     "optionC": null,
@@ -3287,7 +3287,7 @@
     "number": "60",
     "flavorText": "More than a dozen torches shine in the night, just outside arrow-range from the main gate. The night is still young, and the sun won't rise for some time. The unmistakable voice of an Algox rings out from the assembly. \"It has taken time to find you, but the magic of the Algox can trace a trail long faded by snow.\" His face bears blue tattoos unlike those you've seen before-another week, another Algox clan with an axe to grind against Frosthaven's walls. \"We have avoided contact with you, despite your trespasses into our lands. But now your people have cut our majestic wall of sacred arrowvine, destroying the very essence of our people and the ladder to our hallowed sites. For that you must pay. Return the arrowvine, or the consequences will be swift.\" They can't be serious. The arrowvine wall you cut down, while impressive, was there for the taking. How should you have known it had any meaning to these Algox?",
     "optionA": {
-      "text": "Apologize and offer to return a supply of arrowvine (requires 3 collective %game.resource.arrowvine%).",
+      "text": "Apologize and offer to return a supply of arrowvine (requires 3 collective Arrowvine).",
       "outcome": "There's no need for bloodshed. You hand over arrowvine from your own supplies with your apologies, assuring them that the sacrilege was unintentional. The Algox with the blue face tattoos accepts the plants with a look of relief. \"Our tribe thanks you for your humility.\" Gain 1 morale. Lose arrowvine collective 3. Skip the next threat increase."
     },
     "optionB": {
@@ -4073,7 +4073,7 @@
     "number": "27",
     "flavorText": "This winter day has been a good one for travel, with little snowfall and not a creature in sight. The only sound is the snow crunching as you progress toward your destination. But now, even your footsteps grow eerily silent. One more step and a flash of light erupts from underfoot, searing pain ripping through your body. You discover you're standing in what appears to be a runic minefield-a dangerous tool of wars from ages past. You see a pack of Snow Imps descend from the trees, chittering in glee at your misfortune.",
     "optionA": {
-      "text": "Attempt to navigate the runic minefield: All characters individually choose a color of rune to move through right now, then resolves the effect on the back of the card (%game.trait:arcane% characters pick two and resolve whichever effect they prefer)-PURPLE, WHITE, or PINK.",
+      "text": "Attempt to navigate the runic minefield: All characters individually choose a color of rune to move through right now, then resolves the effect on the back of the card ( Arcane characters pick two and resolve whichever effect they prefer)-PURPLE, WHITE, or PINK.",
       "outcome": "All characters resolve the following individually based on their choice:<br><br>. purple: Intense light blinds you, and you need to be led out of the minefield. Start the next scenario with Disarm. white: Where did your legs go? And why do you feel sick... Start the next scenario with Wound, Poison, and Invisible. pink: This isn't so bad. Well, your legs are completely numb, but other than that... Start the next scenario with Immobilize."
     },
     "optionB": {

@@ -12,7 +12,14 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { GHS_DATA_DIR, kebabToTitle } from './ghs-utils.ts';
+import {
+  GHS_DATA_DIR,
+  kebabToTitle,
+  loadLabels,
+  resolveLabel,
+  resolveGameTokens,
+  type LabelData,
+} from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GHS_MONSTER_DIR = join(GHS_DATA_DIR, 'monster');
@@ -58,7 +65,8 @@ interface ExtractedMonster {
 // ─── Conversion ──────────────────────────────────────────────────────────────
 
 export function formatActions(
-  actions?: Array<{ type: string; value: string | number }>,
+  actions: Array<{ type: string; value: string | number }> | undefined,
+  labels: LabelData,
 ): string | null {
   if (!actions?.length) return null;
   return actions
@@ -67,12 +75,17 @@ export function formatActions(
       if (a.type === 'retaliate') return `Retaliate ${a.value}`;
       if (a.type === 'condition') return String(a.value);
       if (a.type === 'target') return `Target ${a.value}`;
+      if (a.type === 'custom') {
+        const val = String(a.value);
+        if (val.startsWith('%data.')) return resolveLabel(val, labels);
+        return resolveGameTokens(val);
+      }
       return `${a.type} ${a.value}`;
     })
     .join(', ');
 }
 
-export function convertMonster(ghs: GhsMonster): ExtractedMonster[] {
+export function convertMonster(ghs: GhsMonster, labels: LabelData): ExtractedMonster[] {
   const baseMove = ghs.baseStat?.movement ?? 0;
   const baseImmunities = ghs.baseStat?.immunities ?? [];
   const results: ExtractedMonster[] = [];
@@ -117,7 +130,7 @@ export function convertMonster(ghs: GhsMonster): ExtractedMonster[] {
         }
 
         // Collect action notes
-        const actions = formatActions(stat.actions);
+        const actions = formatActions(stat.actions, labels);
         if (actions) {
           const key = `${difficulty} L${level}`;
           noteParts.push(`${key}: ${actions}`);
@@ -141,7 +154,7 @@ export function convertMonster(ghs: GhsMonster): ExtractedMonster[] {
       elite,
       immunities: baseImmunities,
       notes: noteParts.length > 0 ? noteParts.join('; ') : null,
-      _source: `gloomhavensecretariat:${ghs.name}`,
+      _source: `gloomhavensecretariat:monster-stat/${ghs.name}`,
     });
   }
 
@@ -157,6 +170,7 @@ export function importMonsterStats(): ExtractedMonster[] {
     );
   }
 
+  const labels = loadLabels();
   const allResults: ExtractedMonster[] = [];
 
   for (const file of readdirSync(GHS_MONSTER_DIR).sort()) {
@@ -165,7 +179,16 @@ export function importMonsterStats(): ExtractedMonster[] {
     if (file.includes('scenario') || file.includes('solo')) continue;
 
     const ghs: GhsMonster = JSON.parse(readFileSync(join(GHS_MONSTER_DIR, file), 'utf-8'));
-    const records = convertMonster(ghs);
+    const records = convertMonster(ghs, labels);
+
+    for (const record of records) {
+      if (record.notes && /%(?:data|game)\./.test(record.notes)) {
+        throw new Error(
+          `Unresolved label/token in monster ${ghs.name} ${record.levelRange}: ${record.notes}`,
+        );
+      }
+    }
+
     allResults.push(...records);
   }
 

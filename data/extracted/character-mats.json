@@ -36,7 +36,7 @@
       "Have five active Fh-infusion bonuses",
       "Kill at least four enemies, but never attack"
     ],
-    "_source": "gloomhavensecretariat:astral"
+    "_source": "gloomhavensecretariat:character-mat/astral"
   },
   {
     "name": "Banner Spear",
@@ -74,7 +74,7 @@
       "Attack at least three enemies with each of three different area of effect attack abilities",
       "Perform a Banner summon ability on your first turn, keep the banner alive and within Range 3 of you for the entire scenario"
     ],
-    "_source": "gloomhavensecretariat:banner-spear"
+    "_source": "gloomhavensecretariat:character-mat/banner-spear"
   },
   {
     "name": "Blinkblade",
@@ -101,7 +101,7 @@
       "Replace 2 -1 cards with +1 cards",
       "Replace 2 -1 cards with +0 Wound cards",
       "Replace 2 +0 cards with +1 Immobilize cards",
-      "Replace 3 +0 cards with Rolling +0 On your next attack, discard this card to add +2 Attack.<br> Persistent cards",
+      "Replace 3 +0 cards with Rolling +0 On your next attack, discard this card to add +2 Attack. Persistent cards",
       "Replace 1 two +1 cards with two +2 cards",
       "Add 2 -1 Gain 1 Time token cards",
       "Add 2 Rolling +2 Regenerate Self cards",
@@ -113,7 +113,7 @@
       "Declare Fast for seven consecutive rounds",
       "Never be targeted by an attack"
     ],
-    "_source": "gloomhavensecretariat:blinkblade"
+    "_source": "gloomhavensecretariat:character-mat/blinkblade"
   },
   {
     "name": "Boneshaper",
@@ -151,7 +151,7 @@
       "Kill at least fifteen of your summons",
       "Play a summon action on your first turn, have the summon kill at least six enemies, and keep it alive for the entire scenario"
     ],
-    "_source": "gloomhavensecretariat:boneshaper"
+    "_source": "gloomhavensecretariat:character-mat/boneshaper"
   },
   {
     "name": "Coral",
@@ -189,7 +189,7 @@
       "Never suffer damage from attacks, and be targeted by at least five attacks",
       "At the start of each of your rests, have more active Fh-tides than cards in your discard pile"
     ],
-    "_source": "gloomhavensecretariat:coral"
+    "_source": "gloomhavensecretariat:character-mat/coral"
   },
   {
     "name": "Deathwalker",
@@ -228,7 +228,7 @@
       "Remove seven Shadow in one round",
       "Place or remove at least one Shadow each round"
     ],
-    "_source": "gloomhavensecretariat:deathwalker"
+    "_source": "gloomhavensecretariat:character-mat/deathwalker"
   },
   {
     "name": "Drifter",
@@ -269,7 +269,7 @@
       "End a scenario with your character tokens on the last slots of four persistent abilities",
       "Never perform a move ability or attack with a value less then 4, and perform at least one move or attack ability each round"
     ],
-    "_source": "gloomhavensecretariat:drifter"
+    "_source": "gloomhavensecretariat:character-mat/drifter"
   },
   {
     "name": "Drill",
@@ -307,7 +307,7 @@
       "Never attack",
       "For four consecutive rounds, move the pressure gauge up or down three levels from where is started the round ( Fh-pressure-low to Fh-pressure-over, or vice versa)"
     ],
-    "_source": "gloomhavensecretariat:drill"
+    "_source": "gloomhavensecretariat:character-mat/drill"
   },
   {
     "name": "Fist",
@@ -346,7 +346,7 @@
       "Recover at least one card from your discard pile each round",
       "Enter at least ten different hexes with one move ability, then cause one enemy to suffer at least Damage 10 with one attack ability in the same turn"
     ],
-    "_source": "gloomhavensecretariat:fist"
+    "_source": "gloomhavensecretariat:character-mat/fist"
   },
   {
     "name": "Geminate",
@@ -386,7 +386,7 @@
       "Switch forms each round",
       "Lose at least one ability card each round"
     ],
-    "_source": "gloomhavensecretariat:geminate"
+    "_source": "gloomhavensecretariat:character-mat/geminate"
   },
   {
     "name": "Kelp",
@@ -426,7 +426,7 @@
       "Perform all your attacks with advantage",
       "Infuse Dark each round"
     ],
-    "_source": "gloomhavensecretariat:kelp"
+    "_source": "gloomhavensecretariat:character-mat/kelp"
   },
   {
     "name": "Meteor",
@@ -466,7 +466,7 @@
       "Create or destroy at least one obstacle or hazardous terrain tile each round",
       "Move enemies through six different hexes of hazardous terrain you created in one turn"
     ],
-    "_source": "gloomhavensecretariat:meteor"
+    "_source": "gloomhavensecretariat:character-mat/meteor"
   },
   {
     "name": "Prism",
@@ -504,7 +504,7 @@
       "Fh-mode each round",
       "Fh-mode into four different summons in one round"
     ],
-    "_source": "gloomhavensecretariat:prism"
+    "_source": "gloomhavensecretariat:character-mat/prism"
   },
   {
     "name": "Shackles",
@@ -536,7 +536,7 @@
       "Add 2 three Rolling +0 Heal 1 cards",
       "Add 2 +0 Add +1 Attack for each negative condition you have cards",
       "Add 1 two +1 cards",
-      "Each round in which you long rest, you may ignore all negative conditions you have.<br>If you do, they cannot be removed that round",
+      "Each round in which you long rest, you may ignore all negative conditions you have. If you do, they cannot be removed that round",
       "Whenever you become exhausted, first perform Curse, Target all, Range 3",
       "Increase your maximum hit point value by 5"
     ],
@@ -544,7 +544,7 @@
       "Cause other figures to suffer a total of at least Damage 40 in one round",
       "Start a turn with Wound, Brittle, Bane, Poison, Immobilize, Disarm, Stun and Muddle"
     ],
-    "_source": "gloomhavensecretariat:shackles"
+    "_source": "gloomhavensecretariat:character-mat/shackles"
   },
   {
     "name": "Shards",
@@ -583,7 +583,7 @@
       "Always have 0 Fh-resonance directly before you gain Fh-resonance at the end of each of your turns",
       "Spend 5 Fh-resonance on each of five different Wave abilities"
     ],
-    "_source": "gloomhavensecretariat:shards"
+    "_source": "gloomhavensecretariat:character-mat/shards"
   },
   {
     "name": "Snowflake",
@@ -620,7 +620,7 @@
       "Cause at least one ally or enemy to move each round",
       "Ensure the first ally to suffer Damage each round, directly before suffering the Damage, has at least one condition you applied"
     ],
-    "_source": "gloomhavensecretariat:snowflake"
+    "_source": "gloomhavensecretariat:character-mat/snowflake"
   },
   {
     "name": "Trap",
@@ -658,6 +658,6 @@
       "Have one Heal trap on the map with a value of at least 20",
       "Move enemies through seven or more traps with one ability"
     ],
-    "_source": "gloomhavensecretariat:trap"
+    "_source": "gloomhavensecretariat:character-mat/trap"
   }
 ]

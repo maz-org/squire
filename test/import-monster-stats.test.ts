@@ -1,33 +1,36 @@
 import { describe, it, expect } from 'vitest';
 import { formatActions, convertMonster } from '../src/import-monster-stats.ts';
+import type { LabelData } from '../src/ghs-utils.ts';
+
+const emptyLabels: LabelData = {};
 
 describe('formatActions', () => {
   it('returns null for undefined actions', () => {
-    expect(formatActions(undefined)).toBeNull();
+    expect(formatActions(undefined, emptyLabels)).toBeNull();
   });
 
   it('returns null for empty actions', () => {
-    expect(formatActions([])).toBeNull();
+    expect(formatActions([], emptyLabels)).toBeNull();
   });
 
   it('formats shield action', () => {
-    expect(formatActions([{ type: 'shield', value: 3 }])).toBe('Shield 3');
+    expect(formatActions([{ type: 'shield', value: 3 }], emptyLabels)).toBe('Shield 3');
   });
 
   it('formats retaliate action', () => {
-    expect(formatActions([{ type: 'retaliate', value: 2 }])).toBe('Retaliate 2');
+    expect(formatActions([{ type: 'retaliate', value: 2 }], emptyLabels)).toBe('Retaliate 2');
   });
 
   it('formats condition action', () => {
-    expect(formatActions([{ type: 'condition', value: 'muddle' }])).toBe('muddle');
+    expect(formatActions([{ type: 'condition', value: 'muddle' }], emptyLabels)).toBe('muddle');
   });
 
   it('formats target action', () => {
-    expect(formatActions([{ type: 'target', value: 2 }])).toBe('Target 2');
+    expect(formatActions([{ type: 'target', value: 2 }], emptyLabels)).toBe('Target 2');
   });
 
   it('formats unknown action type', () => {
-    expect(formatActions([{ type: 'pierce', value: 3 }])).toBe('pierce 3');
+    expect(formatActions([{ type: 'pierce', value: 3 }], emptyLabels)).toBe('pierce 3');
   });
 
   it('joins multiple actions', () => {
@@ -35,7 +38,20 @@ describe('formatActions', () => {
       { type: 'shield', value: 2 },
       { type: 'condition', value: 'muddle' },
     ];
-    expect(formatActions(actions)).toBe('Shield 2, muddle');
+    expect(formatActions(actions, emptyLabels)).toBe('Shield 2, muddle');
+  });
+
+  it('resolves custom data labels', () => {
+    const labels: LabelData = { custom: { fh: { 'test-monster': { '1': 'Retaliate 2' } } } };
+    expect(
+      formatActions([{ type: 'custom', value: '%data.custom.fh.test-monster.1%' }], labels),
+    ).toBe('Retaliate 2');
+  });
+
+  it('resolves custom game tokens', () => {
+    expect(formatActions([{ type: 'custom', value: '%game.condition.wound%' }], emptyLabels)).toBe(
+      'Wound',
+    );
   });
 });
 
@@ -65,7 +81,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results).toHaveLength(2);
 
     const low = results[0];
@@ -79,7 +95,7 @@ describe('convertMonster', () => {
     expect(high.levelRange).toBe('4-7');
     expect(high.normal['7']).toEqual({ hp: 22, move: 4, attack: 5 });
     expect(high.elite['7']).toEqual({ hp: 30, move: 5, attack: 7 });
-    expect(high._source).toBe('gloomhavensecretariat:test-monster');
+    expect(high._source).toBe('gloomhavensecretariat:monster-stat/test-monster');
   });
 
   it('inherits movement from baseStat when absent', () => {
@@ -93,7 +109,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results[0].normal['0']).toEqual({ hp: 4, move: 1, attack: 2 });
     expect(results[0].elite['0']).toEqual({ hp: 7, move: 1, attack: 3 });
   });
@@ -108,7 +124,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results[0].normal['0'].move).toBe(0);
   });
 
@@ -123,7 +139,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     // Normal entry skipped (formula health), only elite present
     expect(results[0].normal).toEqual({});
     expect(results[0].elite['0']).toEqual({ hp: 30, move: 3, attack: 6 });
@@ -140,7 +156,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results[0].normal).toEqual({});
     expect(results[0].elite['0']).toEqual({ hp: 20, move: 2, attack: 5 });
   });
@@ -161,7 +177,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results[0].notes).toBe('normal L0: Shield 2');
   });
 
@@ -176,7 +192,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results[0].immunities).toEqual(['poison', 'wound']);
   });
 
@@ -190,7 +206,7 @@ describe('convertMonster', () => {
       ],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results[0].normal['0'].attack).toBe(0);
   });
 
@@ -202,7 +218,7 @@ describe('convertMonster', () => {
       stats: [{ level: 0 }, { level: 1 }, { level: 2 }, { level: 3 }],
     };
 
-    const results = convertMonster(ghs);
+    const results = convertMonster(ghs, emptyLabels);
     expect(results).toHaveLength(0);
   });
 });

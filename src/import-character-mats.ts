@@ -250,7 +250,7 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
     hp,
     perks,
     masteries,
-    _source: `gloomhavensecretariat:${ghs.name}`,
+    _source: `gloomhavensecretariat:character-mat/${ghs.name}`,
   };
 }
 
@@ -271,6 +271,13 @@ export function importCharacterMats(): ExtractedCharacterMat[] {
 
     const ghs: GhsCharacter = JSON.parse(readFileSync(join(GHS_CHARACTER_DIR, file), 'utf-8'));
     const record = convertCharacterMat(ghs, labels);
+
+    const allText = [...record.perks, ...record.masteries];
+    const unresolved = allText.find((t) => /%(?:data|game)\./.test(t));
+    if (unresolved) {
+      throw new Error(`Unresolved label/token in character ${ghs.name}: ${unresolved}`);
+    }
+
     allResults.push(record);
   }
 
