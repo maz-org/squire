@@ -1,9 +1,13 @@
 # Squire — Frosthaven Knowledge Agent Product Specification
 
-**Version:** 2.1
+**Version:** 3.0
 **Date:** 2026-04-07
 **Last Refreshed:** 2026-04-07
+**Owner:** Product (PM)
+**Companion doc:** [docs/ARCHITECTURE.md](ARCHITECTURE.md) — architect-owned tech spec (how / with-what / where)
 **Status:** Phase 1 in progress, MVP scoped. GH2 content expansion (Phase 2) deadline ~mid-2026.
+
+This document is the **product spec** — what Squire is, why it exists, who it's for, and when each capability lands. Technical architecture (stack, data layer, agent design, deployment, observability, tech risks) lives in the companion [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Executive Summary
 
@@ -38,7 +42,7 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 **Requirements:**
 
 - Fetch character's current level, class, and existing cards from frosthaven-storyline.com
-- Query worldhaven database for available cards at new level
+- Query GHS data for available cards at new level
 - Identify which build guide (if any) user is following
 - Analyze synergy with existing cards and build direction
 - Present recommendation with:
@@ -67,7 +71,7 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
   2. Best purchases for current gold and prosperity level
   3. Long-term items to save for at higher prosperity
   4. Suggestions to sell/replace outdated items
-- Access to all available items from worldhaven database
+- Access to all available items from GHS data
 - Filter by user's current prosperity and gold
 - Consider item slots and current equipment
 - Show item images and detailed stats
@@ -197,193 +201,16 @@ Squire is an online-only web app. No PWA, no service worker, no offline mode, no
 
 ## Technical Architecture
 
-### Stack
-
-**Language:** TypeScript end-to-end. Node 24, ESM modules.
-
-**Web channel (frontend + server):**
-
-- **Server framework:** Hono (`@hono/node-server`)
-- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS via CDN
-- **Build pipeline:** none — no bundler, no client-side build step
-
-  *Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no bundler, no client build step. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
-
-**Database:**
-
-- **Primary DB:** PostgreSQL (planned — currently flat JSON files)
-- **Vector DB:** pgvector extension on the same Postgres instance
-- **ORM:** Drizzle
-
-  *Rationale for Drizzle: first-class pgvector support (Prisma's is preview-only and forces raw SQL fallbacks), TypeScript-native schema (no DSL, no codegen step — fits the no-build-step theme), lightweight runtime, generates readable SQL. drizzle-kit handles migrations.*
-
-**Embeddings:**
-
-- **Current:** `@xenova/transformers` running in-process. Model `Xenova/all-MiniLM-L6-v2` (384 dimensions, mean-pooled, normalized). See `src/embedder.ts`.
-
-  *Rationale: chosen for simplicity getting started — no API key, no network roundtrip during indexing, no per-token cost.*
-
-- **Upgrade path:** if retrieval quality doesn't hold up at production scale, swap to **Voyage AI** (purpose-built for retrieval, strong benchmark performance, integrates cleanly with Anthropic-based stacks). The vector store (pgvector) is independent and doesn't change.
-
-  *Note: embedding model and vector store are two independent choices that can evolve separately.*
-
-**LLM:**
-
-- **Provider:** Anthropic Claude API (`@anthropic-ai/sdk`)
-- **Current model:** Claude Sonnet 4.6 (`claude-sonnet-4-6`) — single-model setup. See `src/agent.ts:155`.
-- **Future tiering** (when justified by cost or quality):
-  - Sonnet 4.6 — default agent loop
-  - Haiku 4.5 — cheap/fast cases (simple lookups, classification)
-  - Opus 4.6 — complex reasoning only when Sonnet falls short
-- **Capabilities used:** long context, tool use, structured JSON output. Vision is reserved for the future character-state ingestion path (Phase 6) and is not part of the current architecture.
-
-**Document parsing:**
-
-- **Rulebook ingestion:** `pdf-parse` for the Frosthaven rulebook PDF, chunked and embedded into pgvector
-
-**Authentication:**
-
-- **Approach:** custom Hono middleware. Google OAuth as the only identity provider (extends the existing OAuth infrastructure already built for the MCP layer). Server-side sessions stored in Postgres. HttpOnly + Secure + SameSite=Strict cookies. CSRF tokens for mutating endpoints.
-
-  *Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing, reuses code that already exists for MCP. Single IdP keeps the surface area tiny.*
-
-**Edge layer:**
-
-- **Cloudflare** in front of the hosted app as a WAF. Provides DDoS protection, edge rate limiting, and bot mitigation. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
-
-### Data Architecture
-
-**Static Game Data — Gloomhaven Secretariat (GHS):**
-
-Squire imports static game data directly from **Gloomhaven Secretariat (GHS)** — an open-source Gloomhaven/Frosthaven companion app maintained by Lurkars on GitHub: <https://github.com/Lurkars/gloomhavensecretariat>. GHS maintains structured data in its `data/` subfolder, community-maintained and auto-formatted on commit.
-
-Squire has dedicated import scripts in `src/import-*.ts` for each card type:
-
-- `import-battle-goals.ts`
-- `import-buildings.ts`
-- `import-character-abilities.ts`
-- `import-character-mats.ts`
-- `import-events.ts`
-- `import-items.ts`
-- `import-monster-abilities.ts`
-- `import-monster-stats.ts`
-- `import-personal-quests.ts`
-- `import-scenarios.ts`
-
-GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term recommendation engine. If gaps emerge later, the plan is:
-
-1. First, contribute upstream to GHS to fill the gap
-2. Failing that, spin up an OCR pipeline as a last resort
-
-*Historical note: an earlier version of Squire used the worldhaven repository plus an OCR pipeline. Both were retired (commit `34a26a1`) once GHS proved sufficient.*
-
-**Rules Database:**
-
-- Extract text from the Frosthaven rulebook PDF using `pdf-parse`
-- Chunk into semantic sections (`src/index-docs.ts`)
-- Generate embeddings via the local Xenova model (see Embeddings in Stack)
-- Store in pgvector
-- RAG retrieval via `searchRules()` (see Agent Architecture)
-
-**Character State:** *Phase 6 / future. See "Character State Ingestion" in the Phases section.*
-
-**Build Guides:** *Phase 5 / future. See "Recommendation Engine" in the Phases section.*
-
-**User Conversations:**
-
-- Store conversation history in Postgres, scoped to user
-- Bounded context window via summarization of older messages
-- Used as context for future turns
-
-### Agent Architecture
-
-**Core Agent Loop:**
-
-1. **Input:** User message (text)
-2. **Context Gathering:** Load conversation history (with bounded summarization), identify caller identity from session
-3. **Tool Use:** Claude calls atomic tools (see below) to retrieve relevant rules, cards, items, monsters, or scenarios
-4. **Reasoning:** Claude synthesizes a response from tool results
-5. **Response:** Stream back to the channel (web UI via SSE, MCP via protocol response)
-6. **Memory:** Persist conversation turn for future context
-
-**Atomic Tools (current — `src/tools.ts`):**
-
-Squire exposes a **generalized atomic-tools API** that works across all GHS card types — monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, personal quests. The same handful of tools handle every card type via parameter, rather than one tool per feature.
-
-| Tool | Purpose |
-| --- | --- |
-| `searchRules(query, topK)` | Vector search over the rulebook RAG index |
-| `searchCards(query, topK)` | Keyword search across all card types |
-| `listCardTypes()` | Discovery — returns all GHS data types with record counts |
-| `listCards(type, filter)` | List records of a given type with field-level AND filter |
-| `getCard(type, id)` | Exact lookup by natural ID (name, number, cardId, etc.) |
-
-**Generalization principle:** per-feature operations are *invocations*, not new tools. For example, "show me all level-4 character abilities for Drifter" is `listCards('character-abilities', { class: 'drifter', level: 4 })` — not a dedicated `queryCards()` tool. This keeps the tool surface tiny and the agent's choices simple.
-
-**Future tools** (added as later phases land):
-
-- `getCharacterState(characterId)` — Phase 4, campaign state
-- `getPartyInfo(campaignId)` — Phase 4, campaign state
-- `fetchBuildGuide(url)` — Phase 5, recommendation engine
-- `extractCharacterFromScreenshots(images[])` — Phase 6, character state ingestion (only if the screenshot path is chosen over the browser-extension or GHS-as-tracker alternatives)
-
-**Implementation:**
-
-- Each tool is a TypeScript function in `src/tools.ts`
-- Queries the in-memory data layer today, Postgres + pgvector after the storage migration
-- Returns structured JSON to Claude
-- Claude decides which tools to call and interprets results
-
-### MCP Server
-
-Squire exposes its atomic knowledge tools via the **Model Context Protocol** over a `/mcp` endpoint (`src/mcp.ts`). This makes Squire's Frosthaven knowledge accessible to any MCP-capable agent harness — Claude Code, Claude Desktop, or other AI tools — without going through Squire's own conversation UI.
-
-**Use cases:**
-
-- Brian uses Claude Code with Squire's MCP tools mounted to ask rules questions during development
-- Future end users may opt to mount Squire as an MCP server in their own agent of choice (treated like a public API surface, with auth)
-- Other AI tools in the *haven ecosystem could compose Squire's knowledge tools into larger workflows
-
-**Architectural note:** an earlier design considered using internal MCP between Squire's own conversation agent and a separate knowledge agent. That split has been dropped for simplicity — Squire's conversation agent calls the atomic tools directly (in-process), and MCP is purely an external surface for other agents.
-
-**Auth on `/mcp`:** the same OAuth infrastructure used by the web channel protects the MCP endpoint. No anonymous access in production.
-
-**Channel framing:** MCP-capable agents are a **third channel type** alongside the web UI (primary today) and future Discord/iMessage clients. All channels talk to the same underlying knowledge agent.
-
-### Observability
-
-Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP handlers via `@opentelemetry/sdk-node`. Initialization lives in `src/instrumentation.ts`.
-
-**LLM observability and evals: Langfuse.** Trace exports flow into Langfuse via `@langfuse/otel` and `@langfuse/tracing`, where each conversation, tool call, and model call is captured as a structured trace. Langfuse's built-in LLM-as-judge eval templates grade production traces (planned). Langfuse was chosen specifically for its eval system, which is more capable than alternatives for LLM-as-judge workflows.
-
-**APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make Langfuse a better fit for evals — so even if Datadog is adopted for APM/RUM, Langfuse stays for LLM-specific observability.
-
-### Deployment
-
-**Hosting (open, decision deferred):**
-
-- **Fly.io** — VM-based, global regions, good Postgres story (Fly Postgres), Docker-native
-- **Railway** — simple deploys from a Dockerfile, included Postgres add-on, $5/mo hobby tier
-- **Render** — managed services + Postgres, similar to Railway, free tier for hobby
-- **Self-hosted VPS** (Hetzner, DigitalOcean) — most control, most ops work
-
-All four work with the Docker-first deployment plan. Cloudflare WAF sits in front regardless of host choice.
-
-**Estimated monthly cost (Phase 1 MVP):**
-
-- Hosting: $0–10 (free tiers on Fly/Railway/Render, or hobby plan)
-- Postgres: $0–10 (included in host's free tier or hobby add-on)
-- Cloudflare WAF: $0 (free tier)
-- Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
-- **Total: ~$10–50/month** for a single user with moderate usage
-
-Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 6 when screenshot extraction lands, and only apply if that path is chosen over the browser-extension or GHS-as-tracker alternatives.
-
-**CI/CD:**
-
-- GitHub repository
-- Automatic deploys on push to main (Vercel/Railway integration)
-- Staging environment for testing
+The full technical architecture — stack choices, data layer, agent loop, atomic tools, MCP server, observability, deployment, and tech risks — lives in [docs/ARCHITECTURE.md](ARCHITECTURE.md).
+
+Quick pointers for product readers:
+
+- **Stack and rationale:** [ARCHITECTURE.md → Stack](ARCHITECTURE.md#stack)
+- **Game data sources (GHS, rulebook RAG):** [ARCHITECTURE.md → Data Architecture](ARCHITECTURE.md#data-architecture)
+- **Agent design and atomic tools:** [ARCHITECTURE.md → Agent Architecture](ARCHITECTURE.md#agent-architecture)
+- **MCP server (third channel type):** [ARCHITECTURE.md → MCP Server](ARCHITECTURE.md#mcp-server)
+- **Observability and evals:** [ARCHITECTURE.md → Observability](ARCHITECTURE.md#observability)
+- **Deployment and cost:** [ARCHITECTURE.md → Deployment](ARCHITECTURE.md#deployment)
 
 ---
 
@@ -603,40 +430,22 @@ All channels talk to the same underlying knowledge agent via the same atomic too
 
 ## Open Questions & Risks
 
-### Technical Risks
-
-1. **Rules answer accuracy.** The agent might give wrong rules interpretations. Mitigation: always cite rulebook source passages so the user can verify, allow user feedback on wrong answers, expand the daily E2E suite, tune the RAG chunking and retrieval parameters as needed.
-
-2. **Embedding quality.** The local Xenova model is chosen for simplicity, not for retrieval quality. If RAG accuracy isn't good enough, the planned upgrade is Voyage AI. The vector store (pgvector) doesn't change. Mitigation: monitor retrieval quality via Langfuse evals, swap embeddings if scores drop.
-
-3. **Testing LLM behavior.** Non-deterministic outputs make traditional testing difficult. Mitigation: tiered testing strategy (per `CLAUDE.md`) — mock LLMs in unit tests, LLM-as-judge for E2E, focus coverage on deterministic logic.
-
-4. **Browser-extension fragility (Phase 6).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
-
-5. **Build guide web fetch reliability (Phase 5).** Google Docs and Reddit posts can be slow to fetch (2–5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if web fetch proves unreliable.
-
-6. **Build guide content nuance (Phase 5).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
-
-7. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via Langfuse, model tiering (Haiku for cheap cases) when justified.
-
-8. **frosthaven-storyline.com may not support Gloomhaven 2.0 (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, his current campaign-tracking workflow breaks for the new game. All four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
+Tech risks (browser-extension fragility, build guide fetch reliability, embedding quality, Claude API costs, storyline GH2 support) and tech open questions (APM/RUM, hosting platform) live in [ARCHITECTURE.md → Tech Risks](ARCHITECTURE.md#tech-risks) and [ARCHITECTURE.md → Open Tech Questions](ARCHITECTURE.md#open-tech-questions).
 
 ### Product Risks
 
 1. **User adoption.** Frosthaven players might prefer forums and existing guide PDFs. Mitigation: focus on convenience (mobile, fast, no flipping through 100-page rulebooks), personalized context, integration with the campaign tools they already use.
 
-2. **Rules edge cases and errata.** Frosthaven has complex interactions and ongoing errata. The agent might give answers that are correct per the rulebook PDF but outdated per official errata. Mitigation: cite sources, allow user feedback, plan for an errata-update workflow eventually.
+2. **Rules answer accuracy as a trust risk.** If Squire gives wrong rules interpretations, Brian stops trusting it at the table and the product dies. Mitigation: always cite rulebook source passages so the user can verify, allow user feedback on wrong answers, expand the daily E2E suite. (Underlying RAG quality work tracked in ARCHITECTURE.md.)
 
-3. **Spoiler concerns.** MVP has no spoiler protection. Users may be concerned about being spoiled on locked classes, scenarios, or events. Mitigation: clear warning on first use; add spoiler protection in Phase 7 (Polish) if user feedback indicates it's valuable.
+3. **Rules edge cases and errata.** Frosthaven has complex interactions and ongoing errata. The agent might give answers that are correct per the rulebook PDF but outdated per official errata. Mitigation: cite sources, allow user feedback, plan for an errata-update workflow eventually.
 
-### Open Questions
+4. **Spoiler concerns.** MVP has no spoiler protection. Users may be concerned about being spoiled on locked classes, scenarios, or events. Mitigation: clear warning on first use; add spoiler protection in Phase 7 (Polish) if user feedback indicates it is valuable.
+
+### Open Product Questions
 
 - **Errata and FAQ updates.** How does Squire stay current with official rules errata and FAQ updates? Manual reindexing? Watching for community-maintained errata documents?
 - **Monetization.** If the user base grows, how does Squire cover its API costs? (No urgency — single-user today.)
-- **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
-- **Hosting platform.** Fly.io vs Railway vs Render vs self-hosted VPS — defer until Phase 1 deployment work begins.
-- **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
-- **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
 ---
 
@@ -661,6 +470,14 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
 ---
 
 ## Changelog
+
+- **2026-04-07 (v3.0):** Split into product spec + tech spec.
+  - SPEC.md is now the **product spec** (PM-owned): what / why / who / when. Owner: Product.
+  - All technical architecture content moved to the new companion [ARCHITECTURE.md](ARCHITECTURE.md) (architect-owned): how / with-what / where.
+  - Removed sections from SPEC: Stack, Data Architecture, Agent Architecture, MCP Server, Observability, Deployment, Cost. Replaced with cross-references.
+  - Removed tech risks (embedding quality, browser-extension fragility, build guide fetch, Claude API costs, storyline GH2) and tech open questions (APM/RUM, hosting platform) — now in ARCHITECTURE.md.
+  - Reframed "Rules answer accuracy" as a product trust risk; underlying RAG quality work lives in ARCHITECTURE.md.
+  - Header updated: Version 3.0, Owner: Product (PM), companion-doc note added.
 
 - **2026-04-07 (v2.1):** GH2 phase + cleanup of stale sections missed in v2.0.
   - **New Phase 2: Gloomhaven 2.0 content expansion.** Deadline-driven (Brian's group transitions to GH2 in ~mid-2026, ~3–4 months from now). Adds GH2 rulebook ingestion, GHS GH2 import scripts, and a `game` dimension to the data layer to prevent cross-contamination of FH and GH2 rules. Confirmed via web search that GHS supports Gloomhaven 2nd Edition.
