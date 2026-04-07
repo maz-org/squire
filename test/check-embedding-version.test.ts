@@ -57,7 +57,7 @@ describe('checkEmbeddingVersion', () => {
     expect(message).toContain('xenova-minilm-l6-v2.v0');
   });
 
-  it('does not warn when current + stale versions coexist (drift = current version absent, not just "not alone")', async () => {
+  it('warns when current + stale versions coexist (partial reindex silently mixes incompatible embeddings)', async () => {
     mockExecute.mockResolvedValueOnce({
       rows: [
         { embedding_version: EMBEDDING_VERSION },
@@ -65,9 +65,14 @@ describe('checkEmbeddingVersion', () => {
       ],
     });
     await checkEmbeddingVersion();
-    // Current version is present, so no drift warning — drift is defined as
-    // "current version is NOT in the set", not "only current version is in the set".
-    expect(warnSpy).not.toHaveBeenCalled();
+    // search() doesn't filter by version, so a table containing both v0 and v1
+    // embeddings feeds cosine distance across incompatible vectors. That's as
+    // broken as "code expects v1 and table has v0 only" — warn loudly either way.
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const message = warnSpy.mock.calls[0][0] as string;
+    expect(message).toContain('MIXED EMBEDDING VERSIONS');
+    expect(message).toContain(EMBEDDING_VERSION);
+    expect(message).toContain('xenova-minilm-l6-v2.v0');
   });
 
   it('swallows database errors with a non-fatal warning', async () => {

@@ -91,26 +91,30 @@ export async function addEntries(entries: IndexEntry[]): Promise<void> {
   const { db } = getDb('server');
   // Chunk the insert so we don't blow the Postgres parameter limit on
   // pathological PDFs. 500 rows × 7 cols = 3500 params, safely below 65535.
+  // Wrap the whole batching loop in a single transaction so a crash mid-way
+  // can't leave the table with a partial subset of chunks for a given PDF.
   const CHUNK = 500;
-  for (let i = 0; i < entries.length; i += CHUNK) {
-    const batch = entries.slice(i, i + CHUNK);
-    await db
-      .insert(embeddingsTable)
-      .values(
-        batch.map((e) => ({
-          id: e.id,
-          source: e.source,
-          chunkIndex: e.chunkIndex,
-          text: e.text,
-          embedding: e.embedding,
-          game: e.game ?? DEFAULT_GAME,
-          embeddingVersion: EMBEDDING_VERSION,
-        })),
-      )
-      .onConflictDoNothing({
-        target: [embeddingsTable.source, embeddingsTable.chunkIndex],
-      });
-  }
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < entries.length; i += CHUNK) {
+      const batch = entries.slice(i, i + CHUNK);
+      await tx
+        .insert(embeddingsTable)
+        .values(
+          batch.map((e) => ({
+            id: e.id,
+            source: e.source,
+            chunkIndex: e.chunkIndex,
+            text: e.text,
+            embedding: e.embedding,
+            game: e.game ?? DEFAULT_GAME,
+            embeddingVersion: EMBEDDING_VERSION,
+          })),
+        )
+        .onConflictDoNothing({
+          target: [embeddingsTable.source, embeddingsTable.chunkIndex],
+        });
+    }
+  });
 }
 
 /**
@@ -239,9 +243,13 @@ export async function checkEmbeddingVersion(): Promise<void> {
     );
     const versions = result.rows.map((r) => r.embedding_version);
     if (versions.length === 0) return;
-    if (!versions.includes(EMBEDDING_VERSION)) {
+    // Warn on either missing or mixed versions — after a version bump, a
+    // partial reindex leaves the table with [old, new] rows and retrieval
+    // silently mixes incompatible embeddings until a full reindex runs.
+    if (versions.some((v) => v !== EMBEDDING_VERSION)) {
+      const label = versions.length > 1 ? 'MIXED EMBEDDING VERSIONS' : 'EMBEDDING VERSION DRIFT';
       console.warn(
-        `⚠️  EMBEDDING VERSION DRIFT: code expects "${EMBEDDING_VERSION}" but ` +
+        `⚠️  ${label}: code expects "${EMBEDDING_VERSION}" but ` +
           `embeddings table contains [${versions.join(', ')}]. ` +
           `Run \`npm run index\` to reindex.`,
       );
