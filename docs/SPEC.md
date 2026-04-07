@@ -17,7 +17,7 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 
 **MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly behind Cloudflare WAF. The agent answers using a rulebook RAG pipeline and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
 
-**Long-term product (Phases 2–6):** Multiplayer campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion from frosthaven-storyline.com, build guide integration, and polish (voice input, share/export, additional channels).
+**Long-term product (Phases 2–8):** Gloomhaven 2.0 content expansion, multi-user platform, campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion, polish (voice input, share/export, spoiler protection), and additional channels (Discord, iMessage).
 
 **Primary Use Cases:**
 
@@ -348,7 +348,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ### Phase 6: Character state ingestion
 
-**Goal:** Stop typing your character sheet in by hand. Pull state from frosthaven-storyline.com automatically.
+**Goal:** Stop typing your character sheet in by hand. Pull state from a third-party campaign tracker (frosthaven-storyline.com today, GHS-as-tracker as a strong alternative for the GH2 campaign).
 
 **Background:** frosthaven-storyline.com (also reached as gloomhaven-storyline.com) stores all campaign + character data in **browser local storage**. The server component only exists to sync state between browsers — it's a relay, not a data store. There is no public API.
 
@@ -372,7 +372,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 - "Last synced: X ago" UX
 - Manual data entry remains as a permanent fallback
 
-**Deliverable:** Brian can keep using frosthaven-storyline.com as his canonical source of campaign and character truth, and Squire stays in sync without manual re-entry.
+**Deliverable:** Brian's chosen campaign tracker (storyline.com or GHS) stays the canonical source of campaign and character truth, and Squire stays in sync without manual re-entry.
 
 ---
 
@@ -470,6 +470,8 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
 ---
 
 ## Changelog
+
+- **2026-04-07 (v3.0.1):** Final-pass cleanup. Fixed "Phases 2–6" → "Phases 2–8" in the executive summary (8 phases now). Broadened Phase 6 goal/deliverable beyond storyline.com to acknowledge GHS-as-tracker as a viable alternative for the GH2 campaign.
 
 - **2026-04-07 (v3.0):** Split into product spec + tech spec.
   - SPEC.md is now the **product spec** (PM-owned): what / why / who / when. Owner: Product.

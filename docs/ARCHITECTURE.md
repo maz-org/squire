@@ -199,7 +199,7 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 | OAuth tokens / clients | N/A (Phase 1) | Postgres |
 | Conversation history | In-memory per session | Postgres |
 
-pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source PDFs (~34GB+) are inputs to indexing, not deployed artifacts; they live in `data/pdfs/` for local development and are excluded from the production image.
+pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source PDFs (~164MB) are inputs to indexing, not deployed artifacts; they live in `data/pdfs/` for local development and are excluded from the production image.
 
 ### Character State
 
@@ -563,5 +563,7 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-04-07 (v1.0.1):** Final-pass cleanup. Fixed bogus "~34GB+" PDF size to actual ~164MB.
 
 - **2026-04-07 (v1.0):** Born from the v3.0 split of `frosthaven-agent-product-spec.md`. Absorbed all Technical Architecture content (Stack, Data Architecture, Agent Architecture, MCP Server, Observability, Deployment, Cost), tech risks, and tech open questions from the old single-file spec. Absorbed the architectural principles, two-agent split rationale, atomic tools rationale, code structure, and Mermaid diagrams from the old `docs/architecture-plan.md` (which is now deleted). Fixed the v2.1 misstatement about the two-agent split: only the internal MCP *transport* was dropped, not the split itself. Added the `game` dimension section for Frosthaven + Gloomhaven 2.0 support. Updated all code references (`src/*.ts`) including the 10 import scripts. The old `docs/architecture-plan.md` content is preserved in git history before this commit.

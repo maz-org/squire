@@ -53,20 +53,12 @@ Terminal, then verify:
 brew --version
 ```
 
-### Git and Git LFS
+### Git
 
 macOS Tahoe includes Apple Git. That works fine, but if you want a newer version:
 
 ```bash
 brew install git
-```
-
-This project uses [Git LFS](https://git-lfs.com/) for large data files. Install
-it and initialize it once:
-
-```bash
-brew install git-lfs
-git lfs install
 ```
 
 ### Node.js (via nvm)
@@ -165,7 +157,7 @@ issues it finds.
 ### Clone the repo
 
 ```bash
-git clone --recurse-submodules https://github.com/maz-org/squire.git
+git clone https://github.com/maz-org/squire.git
 cd squire
 ```
 
@@ -199,9 +191,8 @@ LANGFUSE_SECRET_KEY=sk-lf-...
 ### Data files
 
 The vector index (`data/index.json`) and extracted card data
-(`data/extracted/`) are stored in the repo via
-[Git LFS](https://git-lfs.com/). They download automatically when you clone —
-no extra setup needed.
+(`data/extracted/`) are committed to the repo as regular files. No extra setup
+needed — they're present immediately after `git clone`.
 
 The vector index can be regenerated locally if needed (e.g., after
 changing indexing logic) — this is a maintainer task managed by
@@ -348,6 +339,7 @@ data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 
 ## Changelog
 
+- **2026-04-07:** Final-pass cleanup. Removed stale Git LFS install step and `--recurse-submodules` clone flag — extracted card data and the vector index are committed as regular files (not LFS, no submodules) since PR #162.
 - **2026-04-07:** Moved from repo root to `docs/CONTRIBUTING.md` as part of the docs consolidation. Added changelog. Updated project layout listing to include CONTRIBUTING alongside the other ALL_CAPS docs.
 - **2026-04-07:** Updated project layout description for the SPEC v3.0 / ARCHITECTURE v1.0 docs split.
 - **2026-04-07:** Updated to reflect PDF move to `data/pdfs/`.
