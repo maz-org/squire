@@ -15,7 +15,6 @@ reviews:
   review_status: true
   path_filters:
     - "!data/**"
-    - "!docs/**"
     - "!package-lock.json"
   path_instructions:
     - path: "src/schemas.ts"
