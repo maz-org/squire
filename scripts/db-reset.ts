@@ -30,7 +30,8 @@ async function main(): Promise<void> {
   if (!ALLOWED_DB_NAMES.has(dbName)) {
     console.error(
       `refusing to reset database "${dbName}" — db:reset only targets ` +
-        `${[...ALLOWED_DB_NAMES].join(', ')}. Set DATABASE_URL to a dev DB.`,
+        `${[...ALLOWED_DB_NAMES].join(', ')}. Use NODE_ENV=test (or npm run db:reset:test) ` +
+        `for the test DB, or set DATABASE_URL to a dev DB.`,
     );
     process.exit(1);
   }

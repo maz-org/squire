@@ -212,7 +212,8 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 - Pin GHS to a specific commit, review diffs before updating
 - npm audit + Dependabot (already configured)
 - SAST scanning (Linear: Security Hardening project)
-- Integrity checksums on extracted data and vector index
+- Integrity checksums on extracted data and on the `embeddings` pgvector
+  table contents (or on canonical reindex artifacts)
 - Do not run the extraction pipeline in production — import
   pre-verified data
 

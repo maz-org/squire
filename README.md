@@ -45,8 +45,10 @@ cp .env.example .env
 # Start the local Postgres + pgvector database
 docker compose up -d
 
-# Apply schema migrations to the dev DB (and test DB if you plan to run tests)
+# Apply schema migrations to the dev DB
 npm run db:migrate
+
+# Optional: migrate the test DB too if you plan to run the test suite
 npm run db:migrate:test
 
 # Index the rulebooks into pgvector (one-time, ~1 minute)

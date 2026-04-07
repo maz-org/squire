@@ -57,16 +57,6 @@ export const EMBEDDING_VERSION = 'xenova-minilm-l6-v2.v1';
 const DEFAULT_GAME = 'frosthaven';
 
 /**
- * Upsert rulebook chunk embeddings into the `embeddings` table.
- *
- * Idempotent: uses `ON CONFLICT (source, chunk_index) DO NOTHING`, so
- * reindexing the same PDF twice is a no-op. If chunking changes for an
- * existing PDF, delete rows for that source first (`DELETE FROM embeddings
- * WHERE source = $1`) and reindex — see the tech spec's diff-vs-rebuild table.
- *
- * Every row is stamped with the current `EMBEDDING_VERSION` as a drift guard.
- */
-/**
  * Ensure the HNSW cosine index exists on `embeddings.embedding`.
  *
  * Called by `index-docs.ts` after the bulk insert completes. HNSW is much
@@ -85,6 +75,16 @@ export async function ensureHnswIndex(): Promise<void> {
   `);
 }
 
+/**
+ * Upsert rulebook chunk embeddings into the `embeddings` table.
+ *
+ * Idempotent: uses `ON CONFLICT (source, chunk_index) DO NOTHING`, so
+ * reindexing the same PDF twice is a no-op. If chunking changes for an
+ * existing PDF, delete rows for that source first (`DELETE FROM embeddings
+ * WHERE source = $1`) and reindex — see the tech spec's diff-vs-rebuild table.
+ *
+ * Every row is stamped with the current `EMBEDDING_VERSION` as a drift guard.
+ */
 export async function addEntries(entries: IndexEntry[]): Promise<void> {
   if (entries.length === 0) return;
 

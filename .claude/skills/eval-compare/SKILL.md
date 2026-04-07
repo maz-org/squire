@@ -67,8 +67,9 @@ npx --yes langfuse-cli api dataset-items list --dataset-name frosthaven-qa --lim
 ```
 
 Each item has `metadata.id` (e.g. `rule-poison`, `monster-vermling-scout`) —
-use that as the row label. Fall back to `id[:8]` for older items that predate
-the `metadata.id` convention in `eval/run.ts`.
+use that as the row label. Fall back to the first 8 characters of `id`
+(`${id:0:8}` in bash) for older items that predate the `metadata.id`
+convention in `eval/run.ts`.
 
 ### 3. Fetch correctness scores in bulk
 
