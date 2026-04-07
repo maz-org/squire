@@ -27,7 +27,8 @@ All queries are traced with [Langfuse](https://langfuse.com) for observability.
 
 ## Setup
 
-Requires Node.js 24+ (uses native TypeScript execution).
+Requires Node.js 24+ (uses native TypeScript execution) and Docker (for the
+local Postgres + pgvector database that holds the rulebook embeddings).
 
 ```bash
 # Clone the repo
@@ -41,10 +42,18 @@ npm install
 cp .env.example .env
 # Edit .env with your ANTHROPIC_API_KEY (and optionally LANGFUSE_* keys)
 
-# Index the rulebooks (one-time, takes a few minutes)
-npm run index
+# Start the local Postgres + pgvector database
+docker compose up -d
 
+# Apply schema migrations to the dev DB (and test DB if you plan to run tests)
+npm run db:migrate
+npm run db:migrate:test
+
+# Index the rulebooks into pgvector (one-time, ~1 minute)
+npm run index
 ```
+
+For the full contributor walkthrough, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
 ## Usage
 

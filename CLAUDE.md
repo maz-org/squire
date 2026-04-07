@@ -8,7 +8,7 @@ When a Discord message asks a Frosthaven rules question, answer using the RAG pi
 node src/query.ts "<question here>"
 ```
 
-Then reply to Discord with the output. The script loads `ANTHROPIC_API_KEY` from `.env` automatically. Before first use, the docs must be indexed once with `npm run index`.
+Then reply to Discord with the output. The script loads `ANTHROPIC_API_KEY` from `.env` automatically. Before first use, bring up the local database and index the rulebooks: `docker compose up -d && npm run db:migrate && npm run index`.
 
 This behavior applies to **all Discord users** in the channel (not just bcm).
 
