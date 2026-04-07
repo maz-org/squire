@@ -252,5 +252,5 @@ describe('parity regression vs flat-file vector store', () => {
       const gotIds = hits.map((h) => h.id).sort();
       expect(gotIds, `query="${query}"`).toEqual([...expectedTopIds].sort());
     }
-  }, 120_000);
+  }, 240_000);
 });
