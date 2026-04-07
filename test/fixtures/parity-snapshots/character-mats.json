@@ -349,46 +349,6 @@
     "sourceId": "gloomhavensecretariat:character-mat/fist"
   },
   {
-    "name": "Geminate",
-    "characterClass": "Harrower",
-    "handSize": "7|7",
-    "traits": [
-      "arcane",
-      "chaotic",
-      "nimble"
-    ],
-    "hp": {
-      "1": 8,
-      "2": 9,
-      "3": 11,
-      "4": 12,
-      "5": 14,
-      "6": 15,
-      "7": 17,
-      "8": 18,
-      "9": 20
-    },
-    "perks": [
-      "Replace 1 -2 card with +0 card",
-      "Replace 3 -1 cards with +0 cards",
-      "Replace 2 +0 cards with +1 Poison cards",
-      "Replace 2 +0 cards with +1 Wound cards",
-      "Replace 1 two +0 cards with two Rolling +0 Pierce 3 cards",
-      "Add 1 two +1 Push 3 cards",
-      "Add 1 double Brittle Self card",
-      "Add 2 Rolling +1 Regenerate Self cards",
-      "You may ignore negative scenario effects",
-      "Whenever you short rest, you may remove one negative condition from one ally within Range 3",
-      "Once each scenario, when you would give yourself a negative condition, prevent the condition",
-      "Whenever you perform an action with a lost icon, you may discard one card to Recover one card from your discard pile of equal or lower level"
-    ],
-    "masteries": [
-      "Switch forms each round",
-      "Lose at least one ability card each round"
-    ],
-    "sourceId": "gloomhavensecretariat:character-mat/geminate"
-  },
-  {
     "name": "Kelp",
     "characterClass": "Lurker",
     "handSize": 10,

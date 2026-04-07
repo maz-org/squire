@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { load, searchExtracted, TYPES } from '../src/extracted-data.ts';
+import { SCHEMAS } from '../src/schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..');
@@ -60,10 +61,27 @@ function main(): void {
   mkdirSync(SEARCH_QUERIES_DIR, { recursive: true });
 
   // ─── load() snapshots ────────────────────────────────────────────────────
+  // Two important alignment notes for SQR-57's parity test:
+  //
+  // 1. Records are filtered through the same Zod schema that `seedCards` uses,
+  //    so the snapshot matches what the seeded `card_*` tables actually
+  //    contain. Otherwise the 18 scenarios / 1 monster ability / 1 character
+  //    mat that fail Zod validation would be in the snapshot but not the DB.
+  //
+  // 2. We sort by raw byte order (not `localeCompare`) so the snapshot lines
+  //    up with Postgres `ORDER BY source_id` under the default `C`-equivalent
+  //    collation. JS `Intl.Collator` and Postgres ICU sort can disagree on
+  //    punctuation/digit boundaries, which would silently break parity.
   for (const type of TYPES) {
-    const records = [...load(type)].sort((a, b) =>
-      String(a.sourceId).localeCompare(String(b.sourceId)),
-    );
+    const schema = SCHEMAS[type];
+    const records = load(type)
+      .filter((r) => schema.safeParse(r).success)
+      .slice()
+      .sort((a, b) => {
+        const sa = String(a.sourceId);
+        const sb = String(b.sourceId);
+        return sa < sb ? -1 : sa > sb ? 1 : 0;
+      });
     const out = join(SNAPSHOT_DIR, `${type}.json`);
     writeFileSync(out, JSON.stringify(records, null, 2) + '\n');
     console.log(`✓ ${type}: ${records.length} records → ${out}`);

@@ -16,7 +16,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { getTableColumns, sql } from 'drizzle-orm';
-import type { PgTable } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
+
+/**
+ * Every `card_*` table has `game` and `sourceId` columns by construction
+ * (see `src/db/schema/cards.ts`). Drizzle's `PgTable` type erases the
+ * per-table column shape, so we narrow once with this alias instead of
+ * sprinkling `@ts-expect-error` at every conflict-target call site.
+ */
+type CardTable = PgTable & { game: AnyPgColumn; sourceId: AnyPgColumn };
 
 import type { Db } from '../db.ts';
 import {
@@ -74,7 +82,7 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
   const results: SeedCardsResult[] = [];
 
   for (const type of types) {
-    const table = TYPE_TO_TABLE[type];
+    const table = TYPE_TO_TABLE[type] as CardTable;
     const schema = SCHEMAS[type];
     const path = join(EXTRACTED_DIR, `${type}.json`);
     const raw = JSON.parse(readFileSync(path, 'utf-8')) as Array<Record<string, unknown>>;
@@ -118,8 +126,6 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
         .insert(table)
         .values(rows)
         .onConflictDoUpdate({
-          // @ts-expect-error — Drizzle's PgTable type erases the column shape;
-          // every card_* table has `game` + `sourceId` by construction.
           target: [table.game, table.sourceId],
           set: updateSet,
         });
