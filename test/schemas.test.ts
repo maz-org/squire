@@ -6,6 +6,7 @@ describe('MonsterStatSchema', () => {
 
   it('accepts a valid monster stat card', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/ooze/0-3',
       name: 'Ooze',
       levelRange: '0-3',
       normal: { 0: { move: 1, attack: 2, hp: 5 } },
@@ -41,6 +42,7 @@ describe('MonsterStatSchema', () => {
 
   it('accepts stats at upper bounds', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/boss/4-7',
       name: 'Boss',
       levelRange: '4-7',
       normal: { 4: { move: 12, attack: 20, hp: 150 } },
@@ -53,6 +55,7 @@ describe('MonsterStatSchema', () => {
 
   it('accepts stats at lower bounds', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/weak/0-3',
       name: 'Weak',
       levelRange: '0-3',
       normal: { 0: { move: 0, attack: 0, hp: 1 } },
@@ -120,6 +123,7 @@ describe('ItemSchema', () => {
 
   it('accepts a valid item card', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:item/099',
       number: '099',
       name: 'Major Healing Potion',
       slot: 'small item',
@@ -152,6 +156,7 @@ describe('BattleGoalSchema', () => {
 
   it('accepts a valid battle goal', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:battle-goal/1301',
       name: 'Assassin',
       condition: 'Kill an enemy before its first turn.',
       checkmarks: 2,
@@ -170,6 +175,7 @@ describe('EventSchema', () => {
 
   it('accepts an event with two options', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/100',
       eventType: 'road',
       season: 'winter',
       number: '05',
@@ -183,6 +189,7 @@ describe('EventSchema', () => {
 
   it('accepts an event with null optionB', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/101',
       eventType: 'boat',
       season: null,
       number: '01',
@@ -196,6 +203,7 @@ describe('EventSchema', () => {
 
   it('accepts an event with optionC', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/102',
       eventType: 'boat',
       season: null,
       number: '01',

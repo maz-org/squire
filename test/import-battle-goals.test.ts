@@ -29,7 +29,7 @@ describe('convertBattleGoal', () => {
       name: 'Accountant',
       condition: 'Have zero cards in your hand each time you rest.',
       checkmarks: 1,
-      _source: 'gloomhavensecretariat:battle-goal/1301',
+      sourceId: 'gloomhavensecretariat:battle-goal/1301',
     });
   });
 
@@ -49,7 +49,7 @@ describe('convertBattleGoal', () => {
 
     expect(result.name).toBe('Unknown Goal');
     expect(result.condition).toBe('');
-    expect(result._source).toBe('gloomhavensecretariat:battle-goal/9999');
+    expect(result.sourceId).toBe('gloomhavensecretariat:battle-goal/9999');
   });
 
   it('resolves game tokens in condition text', () => {

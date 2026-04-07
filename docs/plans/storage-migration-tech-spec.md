@@ -200,45 +200,104 @@ Every table has:
 
 - `id uuid primary key default gen_random_uuid()` — internal PK
 - `game text not null default 'frosthaven'` — Decision 4
-- Per-type natural-key fields flattened from the Zod schemas in `src/schemas.ts`
-- Unique constraint on `(game, <natural_id>)` for idempotent upserts
+- `source_id text not null` — the GHS source identifier (e.g.
+  `gloomhavensecretariat:battle-goal/1301`). Promoted from import-only
+  metadata to a real Zod schema field on 2026-04-07 — see "Natural key
+  verification" below.
+- **Unique constraint on `(game, source_id)`** — the only uniqueness
+  constraint on a card table. Idempotent upserts key on this.
+- Per-type natural-key fields (`name`, `level_range`, `number`, `index`,
+  `card_id`, etc.) flattened from the Zod schemas in `src/schemas.ts` —
+  kept as regular indexed columns since they're useful for query / filter /
+  `getCard` lookups, but **not unique**.
 - `game` index
-- `jsonb` column for any field that's nested or variable-shape (e.g., `monster_stats.normal`, `scenarios.loot_deck_config`)
+- `jsonb` column for any field that's nested or variable-shape (e.g.,
+  `monster_stats.normal`, `scenarios.loot_deck_config`)
 
 Example — `card_monster_stats`:
 
 ```ts
-export const cardMonsterStats = pgTable('card_monster_stats', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  game: text('game').notNull().default('frosthaven'),
-  name: text('name').notNull(),
-  levelRange: text('level_range').notNull(), // '0-3' | '4-7'
-  normal: jsonb('normal').notNull(),
-  elite: jsonb('elite').notNull(),
-  immunities: text('immunities').array().notNull().default(sql`'{}'::text[]`),
-  notes: text('notes'),
-}, (t) => ({
-  gameNameRangeKey: uniqueIndex('card_monster_stats_game_name_range_key').on(t.game, t.name, t.levelRange),
-  gameIdx: index('card_monster_stats_game_idx').on(t.game),
-}));
+export const cardMonsterStats = pgTable(
+  'card_monster_stats',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    game: text('game').notNull().default('frosthaven'),
+    sourceId: text('source_id').notNull(),
+    name: text('name').notNull(),
+    levelRange: text('level_range').notNull(), // '0-3' | '4-7'
+    normal: jsonb('normal').notNull(),
+    elite: jsonb('elite').notNull(),
+    immunities: text('immunities').array().notNull(),
+    notes: text('notes'),
+  },
+  (t) => [
+    uniqueIndex('card_monster_stats_game_source_idx').on(t.game, t.sourceId),
+    index('card_monster_stats_game_idx').on(t.game),
+    index('card_monster_stats_name_idx').on(t.name),
+  ],
+);
 ```
 
-Natural key for each card type (used for the unique constraint and for `getCard`):
+`getCard(type, id)` semantics (for SQR-35): `id` resolves against
+`source_id`, not the per-type natural-key column. Recorded here so SQR-35's
+implementer doesn't pick a different convention.
 
-| Card type | Natural key field(s) |
-| --- | --- |
-| `monster-stats` | `(game, name, level_range)` |
-| `monster-abilities` | `(game, monster_type, card_name)` |
-| `character-abilities` | `(game, character_class, card_name)` |
-| `character-mats` | `(game, name)` |
-| `items` | `(game, number)` |
-| `events` | `(game, event_type, number)` |
-| `battle-goals` | `(game, name)` |
-| `buildings` | `(game, building_number, level)` |
-| `scenarios` | `(game, index)` |
-| `personal-quests` | `(game, card_id)` |
+### Natural key verification (2026-04-07)
 
-Implementors: double-check these against `src/schemas.ts` and `data/extracted/*.json` before building. Some (`items.number`, `buildings.buildingNumber`) are stored as strings — preserve that.
+Implementors of the original spec were told to "double-check the per-type
+natural keys against `src/schemas.ts` and `data/extracted/*.json` before
+building." Doing that during SQR-31 turned up four collisions and three
+latent data-quality bugs. Rather than paper over them with per-type
+fixes, we unified on `(game, source_id)` for every card type.
+
+**Collisions found against the original per-type keys:**
+
+| Card type | Original key | Collisions | Root cause |
+| --- | --- | --- | --- |
+| `events` | `(game, event_type, number)` | 114 | Outpost summer/winter share numbering. Adding `season` would fix it but creates a NULLs-distinct edge case for boat events. |
+| `monster-abilities` | `(game, monster_type, card_name)` | 32 | The Boss deck is a *template* — every boss scenario instantiates its own variant with scenario-specific initiatives. There's no field in `MonsterAbilitySchema` that names which boss owns the card. |
+| `buildings` | `(game, building_number, level)` | 4 | Walls have no building number in the GHS domain. Importer was emitting `buildingNumber: undefined`. |
+| `scenarios` | `(game, index)` | 17 | Frosthaven solo scenarios share `index` values with the main campaign (e.g. main scenario 20 "Temple of Liberation" vs solo scenario 20 "Wonder of Nature"). The schema had no namespace field. |
+
+**Why `(game, source_id)` instead of patching each per-type key:**
+
+- `_source` already exists on every imported record — it's the GHS source
+  identifier (`gloomhavensecretariat:<entity>/<id>`), stable across
+  reimports because it comes from the upstream data.
+- A single uniform key removes per-type domain modeling guesswork. New card
+  types in Phase 2 (GH2) get a clean rule to follow.
+- The Boss-deck "what's the right key for template-instantiated cards"
+  question disappears: each row's `source_id` distinguishes it.
+- The scenarios solo-vs-main namespace question disappears: solo20_drifter
+  and 020 have different filenames, hence different `source_id` values
+  (importer changed to use the filename basename, not the in-file `index`
+  field, when constructing `source_id`).
+
+**Three data-quality bugs fixed in the same PR (rather than deferred):**
+
+1. **Exploding Ammunition duplicate.** Upstream GHS
+   `ancient-artillery.json` contains two `Exploding Ammunition` rows
+   (cards 627, 628) with byte-identical content except for `cardId`.
+   `import-monster-abilities.ts` now dedupes by content equivalence after
+   sorting each deck by `cardId`, keeping the lowest-ID row and logging
+   the dropped `sourceId` to stderr.
+2. **Walls have no `buildingNumber`.** `import-buildings.ts` was emitting
+   `buildingNumber: undefined` and `_source: gloomhavensecretariat:building/undefined`
+   for all walls. `BuildingSchema.buildingNumber` is now `z.string().nullable()`,
+   the importer writes `null` for walls, and `sourceId` falls back to
+   `ghs.name` so each wall gets a distinct identifier.
+3. **Scenario index cross-namespace overlap.** Frosthaven solos share
+   `index` values with the main campaign. `ScenarioSchema` gains a
+   `scenarioGroup: 'main' | 'solo' | 'random'` field, derived from the
+   GHS filename pattern (`solo*` → solo, `random` → random, otherwise →
+   main). `sourceId` now uses the filename basename so the canonical key
+   is unique end-to-end.
+
+**Drizzle implementation note:** the schema files at `src/db/schema/{core,auth,cards,index}.ts` ship in SQR-31 (this issue) along with `drizzle-orm` + `pg` as dependencies. SQR-32 still owns `src/db.ts`, the migration generation, the docker-compose Postgres service, and the CI service container — adding the deps early lets the schema files typecheck in this PR.
+
+**Parity-test note:** the `load(type)` parity snapshots for SQR-34 must
+be generated *after* `sourceId` lands in the Zod schemas, not before, or
+every snapshot will diff on the new field.
 
 ---
 

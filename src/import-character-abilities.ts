@@ -37,7 +37,7 @@ interface ExtractedCharacterAbility {
   top: { action: string; effects: string[] };
   bottom: { action: string; effects: string[] };
   lost: boolean;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export function convertAbility(
       effects: bottomParts.slice(1),
     },
     lost: !!(ghs.bottomLost || ghs.topLost),
-    _source: `gloomhavensecretariat:${characterName}/${ghs.cardId}`,
+    sourceId: `gloomhavensecretariat:character-ability/${characterName}/${ghs.cardId}`,
   };
 }
 

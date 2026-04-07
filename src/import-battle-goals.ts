@@ -32,7 +32,7 @@ interface ExtractedBattleGoal {
   name: string;
   condition: string;
   checkmarks: number;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Conversion ─────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ export function convertBattleGoal(ghs: GhsBattleGoal, labels: LabelData): Extrac
     name: ghs.name,
     condition,
     checkmarks: ghs.checks,
-    _source: `gloomhavensecretariat:battle-goal/${ghs.cardId}`,
+    sourceId: `gloomhavensecretariat:battle-goal/${ghs.cardId}`,
   };
 }
 

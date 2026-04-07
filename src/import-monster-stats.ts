@@ -59,7 +59,7 @@ interface ExtractedMonster {
   elite: Record<string, LevelStats>;
   immunities: string[];
   notes: string | null;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
@@ -154,7 +154,9 @@ export function convertMonster(ghs: GhsMonster, labels: LabelData): ExtractedMon
       elite,
       immunities: baseImmunities,
       notes: noteParts.length > 0 ? noteParts.join('; ') : null,
-      _source: `gloomhavensecretariat:monster-stat/${ghs.name}`,
+      // Each GHS monster expands into one row per level range (0-3 and 4-7)
+      // — append the range so the two rows have distinct sourceIds.
+      sourceId: `gloomhavensecretariat:monster-stat/${ghs.name}/${rangeLabel}`,
     });
   }
 

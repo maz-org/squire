@@ -37,6 +37,9 @@ const MonsterLevelStats = z.object({
 });
 
 export const MonsterStatSchema = z.object({
+  sourceId: z
+    .string()
+    .describe('GHS source identifier (e.g. gloomhavensecretariat:monster-stat/bandit-guard)'),
   name: z.string().describe('Monster name as printed on the card'),
   levelRange: z.enum(['0-3', '4-7']).describe('Which half of levels this card shows'),
   normal: z
@@ -50,6 +53,9 @@ export const MonsterStatSchema = z.object({
 });
 
 export const MonsterAbilitySchema = z.object({
+  sourceId: z
+    .string()
+    .describe('GHS source identifier (e.g. gloomhavensecretariat:algox-archer/123)'),
   monsterType: z.string().describe('Monster deck name (e.g. "Algox Archer")'),
   cardName: z.string().describe('Name of the ability card'),
   initiative: z.number().int().describe('Initiative number'),
@@ -59,6 +65,7 @@ export const MonsterAbilitySchema = z.object({
 });
 
 export const CharacterAbilitySchema = z.object({
+  sourceId: z.string().describe('GHS source identifier (e.g. gloomhavensecretariat:drifter/456)'),
   cardName: z.string().describe('Name of the card'),
   characterClass: z.string().describe('Character class name'),
   level: z
@@ -82,6 +89,9 @@ export const CharacterAbilitySchema = z.object({
 });
 
 export const CharacterMatSchema = z.object({
+  sourceId: z
+    .string()
+    .describe('GHS source identifier (e.g. gloomhavensecretariat:character-mat/drifter)'),
   name: z.string().describe('Character class name (e.g. "Drifter")'),
   characterClass: z.string().describe('Character race (e.g. "Inox")'),
   handSize: z.number().int().describe('Starting hand size'),
@@ -94,6 +104,7 @@ export const CharacterMatSchema = z.object({
 });
 
 export const ItemSchema = z.object({
+  sourceId: z.string().describe('GHS source identifier (e.g. gloomhavensecretariat:item/099)'),
   number: z.string().describe('Item number as 3-digit string e.g. "099"'),
   name: z.string().describe('Item name'),
   slot: z
@@ -107,6 +118,7 @@ export const ItemSchema = z.object({
 });
 
 export const EventSchema = z.object({
+  sourceId: z.string().describe('GHS source identifier (e.g. gloomhavensecretariat:event/1234)'),
   eventType: z.enum(['road', 'outpost', 'boat']).describe('Type of event'),
   season: z.enum(['summer', 'winter']).nullable().describe('Season if shown, or null'),
   number: z.string().describe('Event number as string'),
@@ -134,13 +146,22 @@ export const EventSchema = z.object({
 });
 
 export const BattleGoalSchema = z.object({
+  sourceId: z
+    .string()
+    .describe('GHS source identifier (e.g. gloomhavensecretariat:battle-goal/1301)'),
   name: z.string().describe('Battle goal name'),
   condition: z.string().describe('Full goal condition text'),
   checkmarks: z.number().int().describe('Number of checkmarks awarded'),
 });
 
 export const BuildingSchema = z.object({
-  buildingNumber: z.string().describe('Building number as string'),
+  sourceId: z
+    .string()
+    .describe('GHS source identifier (e.g. gloomhavensecretariat:building/05 or .../wall-j)'),
+  buildingNumber: z
+    .string()
+    .nullable()
+    .describe('Building number as string, or null for walls (which have no number)'),
   name: z.string().describe('Building name'),
   level: z.number().int().describe('Building level'),
   buildCost: z
@@ -156,6 +177,12 @@ export const BuildingSchema = z.object({
 });
 
 export const ScenarioSchema = z.object({
+  sourceId: z.string().describe('GHS source identifier (e.g. gloomhavensecretariat:scenario/020)'),
+  scenarioGroup: z
+    .enum(['main', 'solo', 'random'])
+    .describe(
+      'Scenario namespace — main campaign, solo class scenario, or random side scenario. Required because solo scenarios share `index` values with the main campaign (e.g. main 20 "Temple of Liberation" vs solo 20 "Wonder of Nature").',
+    ),
   index: z.string().describe('Scenario number/identifier (e.g. "1", "4A")'),
   name: z.string().describe('Scenario name'),
   complexity: z.number().int().min(1).max(3).describe('Scenario complexity rating (1-3)'),
@@ -201,6 +228,9 @@ const PersonalQuestRequirementSchema = z.object({
 });
 
 export const PersonalQuestSchema = z.object({
+  sourceId: z
+    .string()
+    .describe('GHS source identifier (e.g. gloomhavensecretariat:personal-quest/501)'),
   cardId: z.string().describe('Personal quest card ID'),
   altId: z.string().describe('Alternate personal quest ID from source data'),
   name: z.string().describe('Quest title'),

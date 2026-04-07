@@ -63,7 +63,7 @@ interface ExtractedEvent {
   optionA: { text: string; outcome: string };
   optionB: { text: string; outcome: string } | null;
   optionC: { text: string; outcome: string } | null;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Type mapping ───────────────────────────────────────────────────────────
@@ -416,7 +416,7 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
     optionA: optionA ?? { text: '', outcome: '' },
     optionB: buildOption('B'),
     optionC: buildOption('C'),
-    _source: `gloomhavensecretariat:event/${ghs.cardId}`,
+    sourceId: `gloomhavensecretariat:event/${ghs.cardId}`,
   };
 }
 

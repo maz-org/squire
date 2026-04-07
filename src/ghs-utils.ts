@@ -4,10 +4,11 @@
  * Provides label resolution, game token resolution, action formatting, and
  * common path constants used by all GHS import scripts.
  *
- * ## `_source` convention
+ * ## `sourceId` convention
  *
- * Every extracted record includes a `_source` field for provenance tracking.
- * Format: `gloomhavensecretariat:<entity-type>/<entity-id>`
+ * Every extracted record includes a `sourceId` field for provenance tracking
+ * and as the canonical natural key for the Postgres `card_*` tables (unique
+ * on `(game, source_id)`). Format: `gloomhavensecretariat:<entity-type>/<entity-id>`.
  *
  * Examples:
  *   - `gloomhavensecretariat:battle-goal/1301`
@@ -15,7 +16,10 @@
  *   - `gloomhavensecretariat:character-mat/blinkblade`
  *   - `gloomhavensecretariat:item/001`
  *
- * `_source` is not in the Zod schemas — it's import-only metadata.
+ * `sourceId` is a real Zod schema field on every card type (see `src/schemas.ts`).
+ * It was promoted from import-only `_source` metadata to a first-class field
+ * during SQR-31 — see `docs/plans/storage-migration-tech-spec.md`
+ * §"Natural key verification".
  */
 
 import { readFileSync, existsSync } from 'node:fs';

@@ -16,7 +16,7 @@
       "text": "",
       "outcome": "Using the climbing gear you haul your sled all the way to the top of the iceberg. You load everyone in, hope for the best, and push off. IT. IS. EPIC. You skid to a stop a hand's width away from the ship, just as the crew completes repairs. Their envy is obvious, and you bask in it. Gain 2 morale."
     },
-    "_source": "gloomhavensecretariat:event/B-01"
+    "sourceId": "gloomhavensecretariat:event/B-01"
   },
   {
     "eventType": "boat",
@@ -32,7 +32,7 @@
       "outcome": "Looming ahead is a starfish bigger than any you've ever seen. Its arms drift in and out of the water, propelling it forward. It pays you no mind, but the Captain grits his teeth and looks to you. \"Fire!\" Select one character to perform attack 5, including a draw from their attack modifier deck. Ignore any effects that don't modify the value of the attack. RESULT > 6: You sink the harpoon dead center in the beast, who howls a haunting scream, then sinks below the waves. The Captain lets a tear run openly down his face. \"Thank you. Finally, peace for my love.\" All characters start the next scenario with Bless:2. OTHERWISE: The harpoon falls short of the massive starfish, and it continues on its way. The Captain dejectedly retires to his cabin, and you don't see him again for the remainder of the journey. Lose 2 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-02"
+    "sourceId": "gloomhavensecretariat:event/B-02"
   },
   {
     "eventType": "boat",
@@ -48,7 +48,7 @@
       "outcome": "You agree to the race as a pretense, but meanwhile prepare to attack. Halfway through the race you open fire on the Lurker. It disappears under the water, and after some rumblings under the ship, reappears off to the side of your vessel. You spin the ship's wheel to turn toward it, but notice your rudder is floating in your wake. It wins this round, and you'll have to make repairs before challenging a Lurker again. Lose lumber collective 1."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-03"
+    "sourceId": "gloomhavensecretariat:event/B-03"
   },
   {
     "eventType": "boat",
@@ -64,7 +64,7 @@
       "outcome": "In silent conspiracy you nod to the captain, who gives the order to fire the harpoons. It's not much of a fight, but when it's over your ship is dragging a sturdy shell, and her decks are piled high with meat. Gain hide collective 4. Lose 2 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-04"
+    "sourceId": "gloomhavensecretariat:event/B-04"
   },
   {
     "eventType": "boat",
@@ -80,7 +80,7 @@
       "outcome": "It's not worth the risk to the ship. You convince the crew to divert around the ice floes, despite the additional time it'll take. Draw another boat event."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-05"
+    "sourceId": "gloomhavensecretariat:event/B-05"
   },
   {
     "eventType": "boat",
@@ -96,7 +96,7 @@
       "outcome": "By the time you open your eyes, it's morning and the ship is well underway to its destination. You feel relaxed and well rested. The deckhand laughs and rummages through a wet crate-would you believe a crate of goods was just bobbing in the ocean, asking to be snatched up? It's a bright future. You can feel it. Gain 3 morale. Gain material-resource 1."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-06"
+    "sourceId": "gloomhavensecretariat:event/B-06"
   },
   {
     "eventType": "boat",
@@ -112,7 +112,7 @@
       "outcome": "You let the ship meet its watery fate and spend a few moments gathering whatever cargo you can find among the wreckage. You fear the worst for the ship's crew. Strange that someone would set the ship aflame-there's plenty of salvageable material here that would have gone to waste had you not happened upon it at the right time. Gain lumber collective 2. Gain metal collective 2. Gain hide collective 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-07"
+    "sourceId": "gloomhavensecretariat:event/B-07"
   },
   {
     "eventType": "boat",
@@ -128,7 +128,7 @@
       "outcome": "AESTHER: You discuss briefly, referencing the stars, the waves, and a host of other invisible elements surrounding your two craft. After a moment she smiles. \"That's it! It's the perfect way to avoid Now and arrive Then. Thank you!\" She heads back into the hatch, and the craft disappears in a pop of shimmering gold light. Gain 10 experience (requires aesther). OTHERWISE: \"I'm trying to get to a place... well, judging by your clothes, I'd say best bet is you know it as Gloomhaven-\" You point in the direction of the city of Gloomhaven. \"No, it's not the same one. The one I'm looking for is... different.\" She pauses, shaking her head. \"Well... good luck with whatever it is you're doing. Maybe we'll meet again someday.\" She heads back down, and the craft disappears in a pop of shimmering gold light. All characters start the next scenario with Muddle."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-08"
+    "sourceId": "gloomhavensecretariat:event/B-08"
   },
   {
     "eventType": "boat",
@@ -144,7 +144,7 @@
       "outcome": "You note that hopping into the water right now would be foolish, and offer her a trip back to dry land. She stubbornly refuses, noting: \"A Quatryl asks for help when needed, but finds a solution when necessary.\" You leave her to her devices and hope for the best. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-09"
+    "sourceId": "gloomhavensecretariat:event/B-09"
   },
   {
     "eventType": "boat",
@@ -160,7 +160,7 @@
       "outcome": "LURKER: He turns to you and screams, clawing his way past you with speed born from pure adrenaline. He leaps headlong from the deck and disappears beneath the waves. No effect. OTHERWISE: \"The myths are true. You cannot hide, cannot run. It is everywhere and it is nowhere.\" He falls silent, staring at his own hands for a time. Finally, he speaks, \"Fire is the only way. The sacrifice is necessary.\" You don't press for more details. It's clear he isn't willing to share them. Gain 5 experience."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-10"
+    "sourceId": "gloomhavensecretariat:event/B-10"
   },
   {
     "eventType": "boat",
@@ -176,7 +176,7 @@
       "outcome": "\"Aim. FIRE!\" The prospect of destroying a minefield would be slow work were it not for the sheer fun of watching barrel after barrel detonate on the water. After a half dozen test explosions, the crew expertly uses the wake of the ship to knock barrels together, resulting in chain reactions of even more epic proportions. You don't know who put so much work into laying this trap, but there couldn't have been better entertainment on the way to your destination. Gain 2 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-11"
+    "sourceId": "gloomhavensecretariat:event/B-11"
   },
   {
     "eventType": "boat",
@@ -192,7 +192,7 @@
       "outcome": "INTIMIDATING, PERSUASIVE: You shout at Violet to get back into the boat before Lurkers, Abaeli, Piranha Pigs, or Lightning Eels make a meal of her. She dismounts and returns to the deck, \"Sorry, it's just something I'd read about.\" No effect. OTHERWISE: You shout at Violet, but she ignores your pleas. After a few minutes of ineffective hollering for her to return to the ship, the commotion draws a school of Piranha Pigs. The ensuing rescue leaves you with nothing but a mumbled apology from Violet and the scrapes to remember it by. All characters suffer 3 damage at the start of the next scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-12"
+    "sourceId": "gloomhavensecretariat:event/B-12"
   },
   {
     "eventType": "boat",
@@ -208,7 +208,7 @@
       "outcome": "You write a note designed to lift someone else's spirits in the future. You mention the monsters you've slain and the incredible regions you've traveled. While it's mostly an accurate retelling, you don't shy away from \"enhancing\" a few elements to keep the reader's attention. You finish with some pleasantries and well wishes, dropping a few coins into the bottle before sealing it with a cork and tossing it into the water. The current carries it away, mixing in with everything else to be found in the vast ocean. Lose 3 collective gold. Add event B-14 to the boat deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-13"
+    "sourceId": "gloomhavensecretariat:event/B-13"
   },
   {
     "eventType": "boat",
@@ -224,7 +224,7 @@
       "outcome": "You write a pleasant note designed to lift someone else's spirits in the future. You make sure to include all sorts of interesting anecdotes about your time battling monsters and embellish just a little bit in the right spots-but certainly not to the unbelievable extent the original author had. You make sure to leave the few gold coins at the bottom of the bottle to brighten the day of someone more in need than you. You seal it with a cork and toss it into the water. The current carries it away, mixing in with everything else to be found in the vast ocean. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-14"
+    "sourceId": "gloomhavensecretariat:event/B-14"
   },
   {
     "eventType": "boat",
@@ -240,7 +240,7 @@
       "outcome": "Doghogger stares at you for a good couple of seconds, clearly contemplating if anyone would miss you if \"accidentally\" fell overboard, and then he growls out: \"COME ABOUT!\" The ship careens around and heads back toward the fight. The Crashing Tide is clearly surprised-or, as some might say, distracted-by your return. The tide of the battle shifts slightly and the Abaeli swarm over the Lurker. You're able to peel off some of the fishmen to fight you instead, and by the end of it, you all are worse for wear. The Crashing Tide projects feelings of frustration into your mind and then descends back into the ocean. All characters start the next scenario with Wound."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-15"
+    "sourceId": "gloomhavensecretariat:event/B-15"
   },
   {
     "eventType": "boat",
@@ -256,7 +256,7 @@
       "outcome": "Using only the cards you did not slect to bring with you on your journey:."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-16"
+    "sourceId": "gloomhavensecretariat:event/B-16"
   },
   {
     "eventType": "boat",
@@ -272,7 +272,7 @@
       "outcome": "You assist the crew in getting below decks and hope for the best. Lightning strikes up a fire on the mast, but the frigid rain quickly douses it. It is a perfect balance of chaos. When the storm finally lets up, you go looking for the Lurkers, but they're nowhere to be found. You hope they're okay. All characters start the next scenario with Muddle."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-17"
+    "sourceId": "gloomhavensecretariat:event/B-17"
   },
   {
     "eventType": "boat",
@@ -288,7 +288,7 @@
       "outcome": "LOSE COLLECTIVE 1, METAL: You drop a chunk of metal off the back of the ship, causing a loud SMACK as it hits the water. The Leviathan dives after the decoy and your crew takes the opportunity to get underway. No effect. OTHERWISE: You can't find something suitable to distract it."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-18"
+    "sourceId": "gloomhavensecretariat:event/B-18"
   },
   {
     "eventType": "boat",
@@ -304,7 +304,7 @@
       "outcome": "Before too long, the biggest of the Abaeli hails you. \"You are the ones who stopped the mad Fish King from absorbing the scale of the Leviathan and laying waste to our neighboring kingdom, yes?\" He asks. \"We appreciate this greatly. Normally we demand tribute from your kind, but you have done more than enough to earn safe passage through our waters. May the grace of the Leviathans be with you in your travels!\" With that, the giant whale descends and the waves engulf the Abael hunting party, leaving you in peace. All characters start the next scenario with Bless."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/B-19"
+    "sourceId": "gloomhavensecretariat:event/B-19"
   },
   {
     "eventType": "outpost",
@@ -320,7 +320,7 @@
       "outcome": "Against all the curiosity in your being, you refrain from opening the lumpy package. A short while later two Aesthers dressed in drab yellow arrive at your door. \"Hello mercenaries. We are Leonidas-\" \"-and Maximus. We have come for our package.\" You hand it over, and they tear open the top, reaching much too deep inside to be obeying the laws of the universe. Out comes a large black diamond. \"The Shadow Gem. We have-\" \"-your payment, as agreed.\" They hand you a sack of coins and then turn and leave, passing the diamond back and forth between them. Gain 30 collective gold."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-01"
+    "sourceId": "gloomhavensecretariat:event/SO-01"
   },
   {
     "eventType": "outpost",
@@ -336,7 +336,7 @@
       "outcome": "RESOURCEFUL: Using a makeshift bird caller, you're able to collect enough snowbirds to fill a crate. When the kiss finally comes, they burst out in a beautiful spectacle. Xain sidles up next to you. \"See? Told you no one could tell.\" Gain 2 morale. OTHERWISE: You try to gather snowbirds, but they're too crafty for the small trap you've set up. You're so engaged in the task you nearly miss the ceremony, and walk up in horror just as Xain unleashes a box of unpainted snow imps on the crowd. The couple make a full recovery. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-02"
+    "sourceId": "gloomhavensecretariat:event/SO-02"
   },
   {
     "eventType": "outpost",
@@ -352,7 +352,7 @@
       "outcome": "You join a hunting party gathering wild meats and harvesting vegetables outside Frosthaven. An older man has more spring in his step as he picks snowthistle to use as a tangy garnish. \"He's got rough hands from working the fields before he got the gift of sight. Long, beautiful hair, not bald like me. Never met him, but heard he talks slow-not like me-he wants to make sure you get the attention you deserve. Great man, that Dallum.\" Gain 1 morale. Gain snowthistle collective 1. See section/week: 180.1, 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-03"
+    "sourceId": "gloomhavensecretariat:event/SO-03"
   },
   {
     "eventType": "outpost",
@@ -371,7 +371,7 @@
       "text": "",
       "outcome": "If you shouted \"cheating!\" or \"neither!\" instead of choosing a or b: You flip over both cards at the same time-aha! Two spades just like you suspected! You knock the table to the ground and drive the charlatan out of town. Sometimes the only way to beat a cheater is to beat them at your own game. Looks like he left behind a pouch of something... Gain item 124."
     },
-    "_source": "gloomhavensecretariat:event/SO-04"
+    "sourceId": "gloomhavensecretariat:event/SO-04"
   },
   {
     "eventType": "outpost",
@@ -387,7 +387,7 @@
       "outcome": "You shout down the slimy ticket salesman-it'd be impossible to build a rail line from Frosthaven to anywhere useful. The man rapidly packs up his suitcase and walks right back out the town gate. Some of your fellow citizens look disheartened... perhaps what he was really selling was hope of a brighter future. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-05"
+    "sourceId": "gloomhavensecretariat:event/SO-05"
   },
   {
     "eventType": "outpost",
@@ -403,7 +403,7 @@
       "outcome": "Captain Olmstead balls his fists and bites his tongue. \"Yes, these are... guards.\" He stares daggers at you. \"In... training.\" The emissary makes a few marks on his pad of paper. \"Well, it's still shameful to see them so underdressed! See to it they get the supplies they need. I expect them armored within the hour!\" Captain Olmstead smiles through gritted teeth. \"Of course, sir. I'll see to it personally.\" The Captain leads you to the armory a little more forcefully than necessary. All characters without Armored gain one Body item crafted from 1 or 2 material resources."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-06"
+    "sourceId": "gloomhavensecretariat:event/SO-06"
   },
   {
     "eventType": "outpost",
@@ -422,7 +422,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-07"
+    "sourceId": "gloomhavensecretariat:event/SO-07"
   },
   {
     "eventType": "outpost",
@@ -438,7 +438,7 @@
       "outcome": "Screams ring out from the harbor, and Captain Olmstead blows a whistle hanging around his neck. Instantly, two teams of guards push past the outposters wading in the water and start stabbing spears at the icy waves. A red tint creeps through the bay-lightning eels were about to make a quick snack of Frosthaven's populace. Good thing someone was on the lookout... and shockingly enough, the eels make a pretty tasty dinner. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-08"
+    "sourceId": "gloomhavensecretariat:event/SO-08"
   },
   {
     "eventType": "outpost",
@@ -454,7 +454,7 @@
       "outcome": "You can't help but side with Satha under the circumstances: the Lurkers have proven, time and again, to be vicious killing machines with physiology to match. You don't doubt that Violet means well, but if there are resources that could be used to protect the town, it's better for Satha to use them on defense rather than research projects. Violet lowers her gaze, then walks off without another word, dejected. Add event SO-39 to the summer-outpost deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-09"
+    "sourceId": "gloomhavensecretariat:event/SO-09"
   },
   {
     "eventType": "outpost",
@@ -473,7 +473,7 @@
       "text": "Take him up on the offer some other time.",
       "outcome": "\"Suit yourself. I'm sure there's a buyer looking for a deal somewhere in this popsicle.\" No effect."
     },
-    "_source": "gloomhavensecretariat:event/SO-10"
+    "sourceId": "gloomhavensecretariat:event/SO-10"
   },
   {
     "eventType": "outpost",
@@ -489,7 +489,7 @@
       "outcome": "You return several hours later to find Pinter filing the last edges off a stunning purple necklace. He wipes it with the edge of his shirt sleeve and hands it to you. \"You take it. Just promise me, if you ever find that enchanting Brummix, you treat it well. I heard they're crazy for axenuts, if you'd believe it.\" Gain 1 morale. Gain item 31. Add campaign sticker: brummix."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-11"
+    "sourceId": "gloomhavensecretariat:event/SO-11"
   },
   {
     "eventType": "outpost",
@@ -508,7 +508,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-12"
+    "sourceId": "gloomhavensecretariat:event/SO-12"
   },
   {
     "eventType": "outpost",
@@ -524,7 +524,7 @@
       "outcome": "PERSUASIVE: You offer encouraging words, reminding the Valrath that his pursuits don't need to define who he is. He grumbles as he slinks down the alley. \"I'll, uh, consider what you said.\" No effect. OTHERWISE: You tell the Valrath just how troubling his actions are for society. He waves you off. \"Keep your opinions to yourself! And, uh, let me know if you come across some snowthistle, obviously.\" No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-13"
+    "sourceId": "gloomhavensecretariat:event/SO-13"
   },
   {
     "eventType": "outpost",
@@ -540,7 +540,7 @@
       "outcome": "You stop an Orchid mercenary as he loads the last of the meager supplies onto the wagon. He clearly hasn't seen much combat-you describe just how dangerous this could be. \"I... uh, I didn't think of it that way.\" He walks off to talk with his companions who start looking more concerned. Eventually, he returns. \"Thanks for the dose of reality. I'm probably better off just joining the town guard. I guess we won't be needing this.\" He hands you the object that inspired their adventure. Unlock a random scenario. Gain 1 soldier."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-14"
+    "sourceId": "gloomhavensecretariat:event/SO-14"
   },
   {
     "eventType": "outpost",
@@ -556,7 +556,7 @@
       "outcome": "Captain Olmstead grabs a decorative shield off the wall and begins bashing it against the straw face of the practice dummy. He soon abandons the dented shield and starts furiously clawing the dummy, pulling out big tufts of straw with his bare hands. You take that as a cue to return at a more convenient time. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-15"
+    "sourceId": "gloomhavensecretariat:event/SO-15"
   },
   {
     "eventType": "outpost",
@@ -572,7 +572,7 @@
       "outcome": "You find some of the dead guard's companions at the barracks and hand off the package. Opening it is a somber occasion, but, ultimately, all of the homemade items inside lift the soldiers' spirits, and using them brings back fond memories of their friend. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-16"
+    "sourceId": "gloomhavensecretariat:event/SO-16"
   },
   {
     "eventType": "outpost",
@@ -585,7 +585,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-17"
+    "sourceId": "gloomhavensecretariat:event/SO-17"
   },
   {
     "eventType": "outpost",
@@ -601,7 +601,7 @@
       "outcome": "All characters resolve the following individually:. LOSE UP TO 2 RESOURCES: Huh. Does Satha know you have all this? Well, had, I guess. Pleasure doing business with you!\" Xain laughs loud enough to scare off a wind demon. Record the resources lost. If the next scenario is completed successfully, gain double what was lost. OTHERWISE: I wouldn't bet on you either, to be honest.\" Xain doesn't notice your glare as he whispers, \"I put all my money on that group of young-looking mercenaries with the donkey.\" No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-18"
+    "sourceId": "gloomhavensecretariat:event/SO-18"
   },
   {
     "eventType": "outpost",
@@ -617,7 +617,7 @@
       "outcome": "You explain the virtues of a wintertime holiday, highlighting that hot drinks and bonfires could warm the hearts of the townsfolk, providing much needed merriment during the dark winter days. Satha is readily swayed. \"It's settled, then! We'll have a Winter Festival!\" Add event WO-61 to the winter-outpost deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-19"
+    "sourceId": "gloomhavensecretariat:event/SO-19"
   },
   {
     "eventType": "outpost",
@@ -636,7 +636,7 @@
       "text": "Go a step further and offer to house them in your longhouse.",
       "outcome": "You know first hand how difficult it can be to get a foothold in Frosthaven, and there's no need to kick these unwelcome \"guests\" when they're already down. You offer them a place in your longhouse while they're getting settled. The soldiers resupply quickly and start heading back out the main gate. Satha invites them to stay the evening, but their response is short: \"We've heard plenty of stories about the safety of this outpost, and we'll take our chances on the road. Good luck with the prisoners...\" See section/week: 41.3, 3."
     },
-    "_source": "gloomhavensecretariat:event/SO-20"
+    "sourceId": "gloomhavensecretariat:event/SO-20"
   },
   {
     "eventType": "outpost",
@@ -652,7 +652,7 @@
       "outcome": "LOSE 20 COLLECTIVE GOLD: After some significant back-and-forth, you calm the merchant down and convince him you'll help make his trip worthwhile. He doesn't look happy about it, but he agrees to sell you some of what he hauled up here so that he doesn't have to take everything back through the treacherous Frozen Pass. Gain lumber collective 3. Gain metal collective 3. Gain hide collective 3. OTHERWISE: He's not offering enough of a deal to make it worthwhile. He grumpily heads back out the main gate-but at least he's not making a scene. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-21"
+    "sourceId": "gloomhavensecretariat:event/SO-21"
   },
   {
     "eventType": "outpost",
@@ -668,7 +668,7 @@
       "outcome": "You approach the boy and sit down next to him. After a few minutes of silence, he looks at you and introduces himself. You ask if anything is biting today. Next thing you know, it's nightfall. You skipped out on today's assigned duties, but you're pretty sure you spent the day doing the most important work that could be done. One character starts the next scenario discarding two cards.. Gain 2 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-22"
+    "sourceId": "gloomhavensecretariat:event/SO-22"
   },
   {
     "eventType": "outpost",
@@ -687,7 +687,7 @@
       "text": "",
       "outcome": "Wreck building: workshop."
     },
-    "_source": "gloomhavensecretariat:event/SO-23"
+    "sourceId": "gloomhavensecretariat:event/SO-23"
   },
   {
     "eventType": "outpost",
@@ -703,7 +703,7 @@
       "outcome": "You don't have the heart to crush this old man, and instead, tell him how his son met a girl here not long ago, and the two eloped. Rumor has it they've set up a cabin somewhere in the Coppernecks, but last you saw him, the two couldn't have been happier. The old man nods, seemingly at peace. He thanks you for the information and prepares to head back to his hometown with a bit more spring in his step. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-24"
+    "sourceId": "gloomhavensecretariat:event/SO-24"
   },
   {
     "eventType": "outpost",
@@ -722,7 +722,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-25"
+    "sourceId": "gloomhavensecretariat:event/SO-25"
   },
   {
     "eventType": "outpost",
@@ -741,7 +741,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-26"
+    "sourceId": "gloomhavensecretariat:event/SO-26"
   },
   {
     "eventType": "outpost",
@@ -757,7 +757,7 @@
       "outcome": "PERSUASIVE: You grab a smoothie and make a big scene about just how incredible the flavors are and how refreshing it is, despite the cold weather. After a few minutes other interested buyers start taking notice, and once some drinks are sold, word-of-mouth takes over. The Quatryl can't thank you enough and splits the profits. Gain 1 morale. Gain 10 collective gold. Gain rockroot collective 1. OTHERWISE: You try to talk up just how great the smoothies are to passers-by, but the public just isn't interested. You recommend the Quatryl looks into setting up somewhere warmer. He dejectedly hands you some leftover supplies as he packs up the cart. Gain rockroot collective 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-27"
+    "sourceId": "gloomhavensecretariat:event/SO-27"
   },
   {
     "eventType": "outpost",
@@ -773,7 +773,7 @@
       "outcome": "BEFORE WINTER: Sure enough, the warm weather turns to chillier days, and the snowpack seems to solidify more with each passing hour. Nothing to worry about. No effect. OTHERWISE: The ice continues to melt in the summer sun, eventually cracking under the strain. It tumbles towards the city, gathering momentum until it finally blows straight through the wall. This'll take significant repair. Wreck any two buildings adjacent to the outside wall."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-28"
+    "sourceId": "gloomhavensecretariat:event/SO-28"
   },
   {
     "eventType": "outpost",
@@ -792,7 +792,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-29"
+    "sourceId": "gloomhavensecretariat:event/SO-29"
   },
   {
     "eventType": "outpost",
@@ -808,7 +808,7 @@
       "outcome": "You pen a letter to a famous equipment designer. You look down at your gear and have no shortage of topics to write about. You've heard they have ten assistants who search twenty different markets just to buy whatever pieces they need to complete their work. You describe in great detail what you had to go through to harvest the materials for your current gear. You can just picture their curiosity (or perhaps, disgust). The letter goes out with the caravan, just in time. See section/week: 171.4, 6."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-30"
+    "sourceId": "gloomhavensecretariat:event/SO-30"
   },
   {
     "eventType": "outpost",
@@ -827,7 +827,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-31"
+    "sourceId": "gloomhavensecretariat:event/SO-31"
   },
   {
     "eventType": "outpost",
@@ -846,7 +846,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-32"
+    "sourceId": "gloomhavensecretariat:event/SO-32"
   },
   {
     "eventType": "outpost",
@@ -865,7 +865,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-33"
+    "sourceId": "gloomhavensecretariat:event/SO-33"
   },
   {
     "eventType": "outpost",
@@ -884,7 +884,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SO-34"
+    "sourceId": "gloomhavensecretariat:event/SO-34"
   },
   {
     "eventType": "outpost",
@@ -900,7 +900,7 @@
       "outcome": "You make a hasty exit-no need to disturb the Captain when it's clear he needs some alone time. There will be other opportunities. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-35"
+    "sourceId": "gloomhavensecretariat:event/SO-35"
   },
   {
     "eventType": "outpost",
@@ -916,7 +916,7 @@
       "outcome": "You cajole the server as he comes by, dropping off another round of drinks to your party. That word usually refers only to the people you adventure with, but tonight, your honorary \"party\" is most of the town. You eat to excess, you drink to excess, you stuff your pockets with delicious food, and the feeling of camaraderie is burned into your mind-when the dark hours return, this memory is where you'll find solace. For this moment, things are right in the world. Gain 1 morale. Gain herb-resource collective 2. Place \"Harvest Festival\" campaign sticker on this week's column of the calendar. Transfer over any sections in the covered weeks and add 57 3 to the week in each subsequent year."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-36"
+    "sourceId": "gloomhavensecretariat:event/SO-36"
   },
   {
     "eventType": "outpost",
@@ -932,7 +932,7 @@
       "outcome": "You poke through the contents of the pack he discarded. The provisions are low, but there are some pelts that you could put to better use. You also find the object that likely inspired the adventure in the first place. Unlock a random scenario. Gain hide collective 2. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-37"
+    "sourceId": "gloomhavensecretariat:event/SO-37"
   },
   {
     "eventType": "outpost",
@@ -948,7 +948,7 @@
       "outcome": "The Orchid happily hands you your earnings, and you ask if he has any leads on other potential adventures. \"Actually, we did find something curious on our last outing. It may lead somewhere interesting, but I think the party is ready to spend some of what we've earned for a time-maybe join up with the town guard. No harm in sharing with the mercenaries who funded us in the first place!\" Unlock a random scenario. Gain 20 collective gold. Gain lumber collective 2. Gain metal collective 2. Gain hide collective 2. Gain 1 soldier. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-38"
+    "sourceId": "gloomhavensecretariat:event/SO-38"
   },
   {
     "eventType": "outpost",
@@ -964,7 +964,7 @@
       "outcome": "You describe the attacks you've witnessed, the raw strength of their claws and their penchant for using them. You describe the battlefield after a fight, and how you've watched the color drain from companions and onto the ground. You try to convey that they are built for war, and that even if they have beauty, there is a darkness she should beware. She nods, understanding. She doesn't speak for some time, a few tears dripping down her chin, and eventually you take it as your cue to leave. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-39"
+    "sourceId": "gloomhavensecretariat:event/SO-39"
   },
   {
     "eventType": "outpost",
@@ -980,7 +980,7 @@
       "outcome": "The Aesthers look surprised. \"That is not according to plan. Perhaps-\" \"-we could pay half now, half on delivery.\" They shrug, then hand over a sack of gold and flag down a mail carrier. She takes the lumpy package from them. She looks at the package, wrapped in cord. \"There's no name?\" \"No name, but an address-\" \"-it's theirs now.\" Gain 10 collective gold. Return this event to the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-40"
+    "sourceId": "gloomhavensecretariat:event/SO-40"
   },
   {
     "eventType": "outpost",
@@ -996,7 +996,7 @@
       "outcome": "You don't know what happened to the crew of the ship you burned, but you know that it couldn't have been good. Unloading the cargo seems like less of a risk than crossing whoever was supposed to receive it, though. \"I appreciate a mercenary that cares more about coin than sticking their nose in things. It's a good feature to have. Stack the crates beside the dock. I'll collect them thereafter.\" He flips up the hood of his cloak. \"Payment now, as we may not meet again.\" Gain 30 collective gold. See section/week: 178.1, 3."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-41"
+    "sourceId": "gloomhavensecretariat:event/SO-41"
   },
   {
     "eventType": "outpost",
@@ -1012,7 +1012,7 @@
       "outcome": "You know the map will be more useful for a group like yourselves who actually head beyond the walls of Frosthaven. With a map like this it'll be easier to avoid the problems on the road that plague most of your excursions. Gain item 229."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-42"
+    "sourceId": "gloomhavensecretariat:event/SO-42"
   },
   {
     "eventType": "outpost",
@@ -1028,7 +1028,7 @@
       "outcome": "Harrowers aren't particularly sentimental, but they will readily honor the concept of a debt-a fact that has made their business acumen renowned across the region. The Harrower orders its steward to unload a crate from the ship, gives a nod of acknowledgement, then disappears below decks. Gain 1 prosperity. Gain a random item."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-43"
+    "sourceId": "gloomhavensecretariat:event/SO-43"
   },
   {
     "eventType": "outpost",
@@ -1044,7 +1044,7 @@
       "outcome": "You head outside the town walls and into the woods to track down the shipment. After hours of work you find an overturned cart and horse with crude spearmarks: it looks to be the work of northern Vermling raiders. You return with the news and a few handfuls of nuts as evidence. To the extent the Harrower can look apologetic it does so. \"Weeee willl reee-seeenddd the nutsssss.\" The matter settled, it surges out the town gates as a sea of black chitin. Gain axenut collective 3."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-44"
+    "sourceId": "gloomhavensecretariat:event/SO-44"
   },
   {
     "eventType": "outpost",
@@ -1060,7 +1060,7 @@
       "outcome": "The Savvas rolls its eyes. \"Fine, I understand. I'm sure we can come to an arrangement that lets your next ballad be all the more... well funded.\" It turns over a dense sack of gold. \"By the way, whatever you did to me has put an unbelievable spring in my step. I might be the first Savvas to live past 170!\" Gain 30 collective gold. Gain 1 inspiration."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-45"
+    "sourceId": "gloomhavensecretariat:event/SO-45"
   },
   {
     "eventType": "outpost",
@@ -1076,7 +1076,7 @@
       "outcome": "You take the resources, determined to use them in the way that will benefit Frosthaven the most. Perhaps a library would be useful, but you can think of other ways these resources could be much more useful. Gain 1 morale. Gain lumber collective 2. Gain metal collective 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-46"
+    "sourceId": "gloomhavensecretariat:event/SO-46"
   },
   {
     "eventType": "outpost",
@@ -1092,7 +1092,7 @@
       "outcome": ""
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-47"
+    "sourceId": "gloomhavensecretariat:event/SO-47"
   },
   {
     "eventType": "outpost",
@@ -1108,7 +1108,7 @@
       "outcome": "You walk to the edge of the dock and give the Lurkers an earful, making sure they understand that society here in Frosthaven has expectations of them, and that if there's to be any hope of a future between your peoples, they'll need to make an effort to abide by your rules. The lecture is cut abruptly short when one kicks the edge of the dock, shaking loose the post and sending you headlong into the water. The other Lurkers snicker at the good joke. Lose 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-48"
+    "sourceId": "gloomhavensecretariat:event/SO-48"
   },
   {
     "eventType": "outpost",
@@ -1124,7 +1124,7 @@
       "outcome": "UNFETTERED: The loggers don't like Loggo, but they don't trust a group that fights alongside one of these machines. They refuse to engage with you. Lose 1 morale. OTHERWISE: It takes some doing, but you convince the loggers to unionize against Loggo and other Unfettered taking their livelihoods. Add event SO-50 to the summer-outpost deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-49"
+    "sourceId": "gloomhavensecretariat:event/SO-49"
   },
   {
     "eventType": "outpost",
@@ -1140,7 +1140,7 @@
       "outcome": "UNFETTERED: You watch your mechanical sibling in joy at the log-chopping event. It trounces the competition, and the inferior organic loggers are forced to concede. There's a new logger in town, and its name is Loggo. Lose 1 morale. Gain lumber collective 3. OTHERWISE: The shirtless human lumberjack works without a break from the first sound of the whistle. He trades out his axe seven times through the course of the day, dulling each blade with his rhythmic thumps. By the time the sun sets the stacks of wood are near evenly matched. When the judges call time the shirtless logger has beaten Loggo by just a single cord of wood. He smiles in his triumph, then collapses stone-dead on the ground from exhaustion. The town mourns the glistening logger, but with Loggo's ego in check, it's more willing to work with the other lumberjacks in an uneasy truce. Gain 1 morale. Gain lumber collective 3."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-50"
+    "sourceId": "gloomhavensecretariat:event/SO-50"
   },
   {
     "eventType": "outpost",
@@ -1156,7 +1156,7 @@
       "outcome": "What's a night of drinking without a little chaos? You make a crude remark about a nearby Inox's horns and the resulting fight turns into a true bar brawl. Eventually you're tossed out as troublemakers... but it was still a good night. Gain 1 morale. All characters suffer 2 damage at the start of the next scenario. CHAOTIC: You fight like it's your last day alive. It's truly a brawl to remember. Gain 10 experience."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-51"
+    "sourceId": "gloomhavensecretariat:event/SO-51"
   },
   {
     "eventType": "outpost",
@@ -1172,7 +1172,7 @@
       "outcome": "You pull the children back from the creature-Frosthaven has enough horrors without needing to see the circle of life so clearly. The guards finish their dark task and you thank the turtle for helping this town survive. Gain hide collective 5. Gain 3 soldiers."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-52"
+    "sourceId": "gloomhavensecretariat:event/SO-52"
   },
   {
     "eventType": "outpost",
@@ -1191,7 +1191,7 @@
       "text": "",
       "outcome": "Option B: Ask Satha about the incident. Read 144 2 now."
     },
-    "_source": "gloomhavensecretariat:event/SO-53"
+    "sourceId": "gloomhavensecretariat:event/SO-53"
   },
   {
     "eventType": "outpost",
@@ -1207,7 +1207,7 @@
       "outcome": "It's clear this Unfettered will never assist the citizens of Frosthaven, and it's time to turn him loose. You help Pinter cart it outside, supervise the reattachment of its limbs, and watch it rush to freedom. \"GOODBYE, BRIGANDS. I HAVE SOME REVENGE TO INVOKE ON A PILE OF ROCKS.\" No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-54"
+    "sourceId": "gloomhavensecretariat:event/SO-54"
   },
   {
     "eventType": "outpost",
@@ -1226,7 +1226,7 @@
       "text": "Offer the man one of your own teeth (requires Algox).",
       "outcome": "With very little pomp and circumstance you rip a tooth from your mouth, handing it to him. He accepts it, wholly horrified. One Algox character gains 20 gold and starts the next scenario with Wound."
     },
-    "_source": "gloomhavensecretariat:event/SO-55"
+    "sourceId": "gloomhavensecretariat:event/SO-55"
   },
   {
     "eventType": "outpost",
@@ -1242,7 +1242,7 @@
       "outcome": "Lose 1 Hide and 1 Flamefruit: You spend a few minutes dying a hide of yours in some crushed-up flamefruit. It's splotchy and has an amateurish tie-dyed effect, but it's passably in line with what the tanner described. You let it dry then present it to her. \"A Firegox pelt? You saw one? You killed one?! You must tell me everything.\" You spend the next hour making up increasingly outlandish tales about the death-defying battle. Eventually, she agrees to buy it off you at a high price. Gain 15 collective gold. Gain 2 morale. OTHERWISE: You try to pass off an Algox hide with a bit of blood still staining it as a Firegox. The tanner isn't buying it but laughs at your attempt. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-56"
+    "sourceId": "gloomhavensecretariat:event/SO-56"
   },
   {
     "eventType": "outpost",
@@ -1258,7 +1258,7 @@
       "outcome": "You walk the Vermling tea aficionado over to the town garden. He is visibly overwhelmed at the sight. \"It's beautiful! After traveling through so much ice, to see this lush greenery... I could weep!\" As if to demonstrate the point, he does. Openly. Then Listerius, the Savvas gardener, emerges from the greenhouse and the two hit it off incredibly well, discussing herbs and teas until the sun goes down. Eventually, the Vermling turns to you and hands you some withered herbs. \"Thank you for showing this to me. I think I am home.\" Gain arrowvine collective 1. Gain flamefruit collective 1. Gain snowthistle collective 1."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-57"
+    "sourceId": "gloomhavensecretariat:event/SO-57"
   },
   {
     "eventType": "outpost",
@@ -1274,7 +1274,7 @@
       "outcome": "You mumble what you thought was a very diplomatic answer about how great Lurkers are that definitely shouldn't upset either Valrath, but the looks on their faces make it clear this was precisely the wrong thing to say. After some back-and-forth sisterly bickering, Eddica throws your party and Violet out, shouting things at a volume unbecoming of a library. Violet buttons up her purple coat against the cold, smiling at you. \"Thanks for the assist-she's always down on my work. So prim and proper, but you can tell she's just a volcano waiting to explode. Anyway, I was actually coming around to tell her I found a tip for one of the books. I guess I can just tell you instead.\" Move events to top of deck: summer-road, SR-47, SR-48, SR-49."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-58"
+    "sourceId": "gloomhavensecretariat:event/SO-58"
   },
   {
     "eventType": "outpost",
@@ -1290,7 +1290,7 @@
       "outcome": "You throw in your votes and stand by in anticipation as Captain Olmstead tallies the votes. Gain 1 morale. Add campaign sticker to map: blue-well. Add event WO-76 to the winter outpost deck and event SR-40 to the summer-road deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-59"
+    "sourceId": "gloomhavensecretariat:event/SO-59"
   },
   {
     "eventType": "outpost",
@@ -1306,7 +1306,7 @@
       "outcome": "You can't stay out here running errands all night. Arriving back in Frosthaven, you go door to door asking about bluestone and elkwood. After hours of searching, the best you could collect was a few scraps. You knock on the door to the carpenter's shop and offer up the mostly empty bag of resources you collected. Glancing into the bag, the carpenter looks up at you in wordless disappointment. You stammer out an explanation. The carpenter sighs, shakes his head, and mutters something about never sending a mercenary to do an artisan's work. Gain 15 collective gold. Lose 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-60"
+    "sourceId": "gloomhavensecretariat:event/SO-60"
   },
   {
     "eventType": "outpost",
@@ -1322,7 +1322,7 @@
       "outcome": "\"Suit yourself, I'll keep looking into it until you next come around.\" Pinter grabs a wrench and heads towards the back room. Check the box below if it is not yet checked:. Gain  perk checks."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-61"
+    "sourceId": "gloomhavensecretariat:event/SO-61"
   },
   {
     "eventType": "outpost",
@@ -1338,7 +1338,7 @@
       "outcome": "You suggest that splitting the team would make them more likely to have an impact during raids. Perhaps their expertise could rub off on some of the other recruits, too. After a bit of discussion the group comes around and the decision is made. Gain 2 soldiers. Add fh-tg-add-plus10-soldier town guard cards. Add event WO-78 to the winter-outpost deck. Add event SR-45 to the summer-road deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-62"
+    "sourceId": "gloomhavensecretariat:event/SO-62"
   },
   {
     "eventType": "outpost",
@@ -1354,7 +1354,7 @@
       "outcome": "You know there were many paths you could have chosen, but your internal goals are what makes you into you. What you saw in the mirror reaffirms you're already walking the right path. Discard the new personal quest you saw in the mirror back to the draw pile."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-63"
+    "sourceId": "gloomhavensecretariat:event/SO-63"
   },
   {
     "eventType": "outpost",
@@ -1370,7 +1370,7 @@
       "outcome": "\"What? Are you doubting my ability to do my job?\" The Blinkblade asks. \"He's the only piece of garbage the Sin-Ra bothered sending. Plus, they receive extensive anti-interrogation training. Probably even has a poison capsule in his tooth or some-yep, there he goes...\" The man begins to convulse and foam at the mouth. The Blinkblade lets him go, and he slumps to the ground dead. The Blinkblade quickly raises up their hands as if to absolve themselves of responsibility. \"Hey, that was definitely, technically, not murder.\" Gain 1 prosperity. Lose 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-64"
+    "sourceId": "gloomhavensecretariat:event/SO-64"
   },
   {
     "eventType": "outpost",
@@ -1386,7 +1386,7 @@
       "outcome": "It takes a few sleepless nights watching the docks in the dark, but eventually, a perpetrator emerges from the sea onto the docks carrying a clawful of smaller fish. You leap from your hiding spot, torch in one hand and weapon in the other. You stand surprised, staring at the illuminated form of the Deepwraith. They too are surprised-it's quite difficult to sneak up on a Deepwraith, after all. Black ink sprays forth, covering you and the dock in a thick slime. By the time you wipe it from your eyes, the Deepwraith is long gone. At least you determined the fish was safe. Unfortunately, it's not quite as fresh anymore. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SO-65"
+    "sourceId": "gloomhavensecretariat:event/SO-65"
   },
   {
     "eventType": "road",
@@ -1402,7 +1402,7 @@
       "outcome": "Following the bloodless tracks, a rotten stench fills your nostrils. Only when you reach the end of the path do you realize that the creatures who made this trail left no blood, not because they were uninjured, but because they have no blood. The pack of frozen corpses turns from its aimless wandering to attack you. You beat them back and retreat, but you lose some blood of your own in the process. All characters start the next scenario with Wound."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-01"
+    "sourceId": "gloomhavensecretariat:event/SR-01"
   },
   {
     "eventType": "road",
@@ -1418,7 +1418,7 @@
       "outcome": "You note that you're not as well-traveled as he is, and ask if there's any locales he'd recommend. \"I'm not a huge fan of the tourist-y places, but I can tell you about some exciting regions I've noted from afar...\" Gain 1 inspiration."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-02"
+    "sourceId": "gloomhavensecretariat:event/SR-02"
   },
   {
     "eventType": "road",
@@ -1431,7 +1431,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-03"
+    "sourceId": "gloomhavensecretariat:event/SR-03"
   },
   {
     "eventType": "road",
@@ -1447,7 +1447,7 @@
       "outcome": "This sap expects us to believe he represents the Great Oak? You're putting a stop to this right now. A few swings of the arm take care of the makeshift shrine, and you don't expect to see this charlatan harassing travelers in the future. Gain 10 collective gold. All characters start the next scenario with Curse."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-04"
+    "sourceId": "gloomhavensecretariat:event/SR-04"
   },
   {
     "eventType": "road",
@@ -1460,7 +1460,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-05"
+    "sourceId": "gloomhavensecretariat:event/SR-05"
   },
   {
     "eventType": "road",
@@ -1476,7 +1476,7 @@
       "outcome": "You trim back the less useful mushrooms soaking up nutrients, pocketing just a few corpscap stems. By the time you next come around it should be ready for a strong harvest. Gain corpsecap collective 2. Shuffle the summer road deck after returning the card to it."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-06"
+    "sourceId": "gloomhavensecretariat:event/SR-06"
   },
   {
     "eventType": "road",
@@ -1492,7 +1492,7 @@
       "outcome": "You find a suitable container and pocket the beetle. Maybe it will be useful someday. Add campaign sticker: bug-in-a-jar. Add event SR-34 to the summer-road deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-07"
+    "sourceId": "gloomhavensecretariat:event/SR-07"
   },
   {
     "eventType": "road",
@@ -1508,7 +1508,7 @@
       "outcome": "Dramm smiles. \"Not much to offer, never had much myself.\" He explains that a persistent hunter, Malak, selected him from the infinite beings in the multiverse as his next kill. Most would roll over and accept the inevitable, but as Dramm puts it, \"I've been dodging him for years. He may catch me eventually, but I have no interest in making it easy on him.\" \"Alright... payment for a service. But if you see him, you've never met me.\" Gain 15 collective gold."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-08"
+    "sourceId": "gloomhavensecretariat:event/SR-08"
   },
   {
     "eventType": "road",
@@ -1524,7 +1524,7 @@
       "outcome": "You take a dip in the warm water of the lagoon and can't recall a better decision. The fish are plentiful and easy to catch, and setting camp by the water's edge gives an idyllic view for the evening supplemented by the stars peeking through the branches of the willowburn tree. You drift off to a peaceful night's sleep and awake alert and refreshed. All characters start the next scenario with Ward."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-09"
+    "sourceId": "gloomhavensecretariat:event/SR-09"
   },
   {
     "eventType": "road",
@@ -1540,7 +1540,7 @@
       "outcome": "You dig out some of the hardened rations that have ridden around in your pack for weeks now-they're as good as rocks and equally hard. You slip a few onto the platters as you serve the uptight Savvas, and they relish them the same as any of their fancy rocks. They finish their meal happily and hand over a small pouch of gold, but can't help but remind you they're withholding some of the payment for your tardiness. You make a quick exit and are nearly out of earshot before the retching starts. Gain 1 morale. Gain 10 collective gold."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-10"
+    "sourceId": "gloomhavensecretariat:event/SR-10"
   },
   {
     "eventType": "road",
@@ -1556,7 +1556,7 @@
       "outcome": "CHAOTIC: It's obvious she won't listen to reason, so you resort to volume. You step toward the salt circle and start yelling nonsense at her whenever she resumes her arcane chant. Baffled, the agitator stops her ritual and hurries away into the cold. Gain 1 morale. OTHERWISE: You try to approach the woman, but each time you try to step into the circle, you are blown away by some magic force. Finally, she falls silent as she scatters some white dust inside the salt circle with a wicked smile, then disappears in a burst of chilly wind. Advance the calendar by marking the next week on it."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-11"
+    "sourceId": "gloomhavensecretariat:event/SR-11"
   },
   {
     "eventType": "road",
@@ -1572,7 +1572,7 @@
       "outcome": "It takes several hours, but you manage to drag these drunks-donkey and all-back to the walls of Frosthaven. The Inox stumbles up to you and, with a hiccup, hands you a few gold coins. \"Trouble. For my trouble...\" he pouts for a moment. \"For your trouble. Of me.\" He nods, then joins back up with the group. \"Same time next week?\" Gain 10 collective gold. Discard 2 cards; gain Undefined. Draw another summer-road event."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-12"
+    "sourceId": "gloomhavensecretariat:event/SR-12"
   },
   {
     "eventType": "road",
@@ -1588,7 +1588,7 @@
       "outcome": "She pops the firepepper into her mouth with a shrug, washing it down with something from her canteen. \"See? Easy for someone like me. That's the way it goes... some things are just easier depending on who you are. Now, some battle-hardened warriors like yourselves? Well, you'd probably be best at a task I need some help with...\" Add campaign sticker: firepepper. Unlock scenario 122."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-13"
+    "sourceId": "gloomhavensecretariat:event/SR-13"
   },
   {
     "eventType": "road",
@@ -1604,7 +1604,7 @@
       "outcome": "return 1 collective potion to the available supply: You pluck off a single berry and add it to a potion you're carrying. The fruit dissolves into the liquid with a pitiful sputter, and the whole concoction turns a rancid brown. A whiff of the results makes you want to retch, but maybe that's useful in its own right. Gain item 95. OTHERWISE: You wonder what would happen if you added a red tin-berry to one of your potions, but don't have any on hand to experiment with. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-14"
+    "sourceId": "gloomhavensecretariat:event/SR-14"
   },
   {
     "eventType": "road",
@@ -1620,7 +1620,7 @@
       "outcome": "You tell the Algox it would be dishonorable for you to interfere and assist him where others had no help. The Algox nods his understanding and continues on his way into the snow. Add event WR-39 to the winter-road deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-15"
+    "sourceId": "gloomhavensecretariat:event/SR-15"
   },
   {
     "eventType": "road",
@@ -1636,7 +1636,7 @@
       "outcome": "LOSE COLLECTIVE 2, HIDE: \"Nice pelt. Is this Valrath?\" It is not Valrath. True to his word, the Inox shows you how to sharpen a saw with a technique new to you. You thank him and head on your way. Add a Plus1 sticker to one Lumber card (the card gives one extra Lumber when resolved). OTHERWISE: No offense, but I think you've overstayed your welcome. See you when you've got something worth swappin' for. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-16"
+    "sourceId": "gloomhavensecretariat:event/SR-16"
   },
   {
     "eventType": "road",
@@ -1652,7 +1652,7 @@
       "outcome": "It takes a torch and some chasing, but you manage to retrieve the cloak and brush off the last of the bugs. Looks pretty nice! Gain item 27."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-17"
+    "sourceId": "gloomhavensecretariat:event/SR-17"
   },
   {
     "eventType": "road",
@@ -1668,7 +1668,7 @@
       "outcome": "You slip the core into your pocket. It makes you feel strong to carry it... alive. Thump-THUMP. You can hear it thrumming in your pocket. Now to decide what to use it for... Add campaign sticker: charged-core."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-18"
+    "sourceId": "gloomhavensecretariat:event/SR-18"
   },
   {
     "eventType": "road",
@@ -1684,7 +1684,7 @@
       "outcome": "LOSE 25 COLLECTIVE GOLD: You ask if he carries anything a bit more unique... something you wouldn't find back in Frosthaven. He smiles a crooked grin. \"Perhaps... but it would cost you...\" The way he smiles makes your skin crawl. Gain a random item. All characters start the next scenario with Curse. OTHERWISE: Unfortunately, you don't have enough money to bargain for his special wares. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-19"
+    "sourceId": "gloomhavensecretariat:event/SR-19"
   },
   {
     "eventType": "road",
@@ -1700,7 +1700,7 @@
       "outcome": "INOX, PERSUASIVE: The Inox shrugs. \"Yeah, okay.\" The inside is a mishmash of chains and pulleys, but you think you can time it right. add two additional loot cards of your choice to the machine. OTHERWISE: You try to convince the Inox to let you look inside before you bet, but pressing the situation quickly gets out of hand. The Inox grabs a battleaxe from behind the prize table-while it looks nice, the delivery doesn't seem pleasant and you quickly depart. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-20"
+    "sourceId": "gloomhavensecretariat:event/SR-20"
   },
   {
     "eventType": "road",
@@ -1716,7 +1716,7 @@
       "outcome": "With practiced precision, you attack the Algox mid-meal. Arms are quickly drawn and the fight is a bloody one, but you ultimately emerge dirty and victorious. At least there's a hot meal here to lessen the blow. Gain hide collective 2. All characters suffer 2 damage at the start of the next scenario. Discard 1 card."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-21"
+    "sourceId": "gloomhavensecretariat:event/SR-21"
   },
   {
     "eventType": "road",
@@ -1732,7 +1732,7 @@
       "outcome": "You know that appearances can be deceiving with Ice Wraiths, and the leadership can shift between them in an instant. You focus down the minions while you have the chance, overcoming their armor and avoiding the majority of their ice shards while they're in their weaker form. It's a closer fight than you'd like, but you're victorious. With the enemies dispatched, you make camp, huddled around the fire. It'll be tough to get warm tonight. Discard 1 card."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-22"
+    "sourceId": "gloomhavensecretariat:event/SR-22"
   },
   {
     "eventType": "road",
@@ -1748,7 +1748,7 @@
       "outcome": "\"Monsters?!\" Narb starts pummeling you, or attempts as much, and Nits takes to stomping the snow. \"Take that!\" Eventually, you calm them both, but it's to no avail. A moment later, the cycle repeats itself, leaving them to fight whatever is in arms' reach. You make an exit in the chaos. At least all that activity should keep them from freezing to death in the snow. All characters suffer 1 damage at the start of the next scenario. Unlock scenario 128."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-23"
+    "sourceId": "gloomhavensecretariat:event/SR-23"
   },
   {
     "eventType": "road",
@@ -1764,7 +1764,7 @@
       "outcome": "You walk the scout back to camp and give her a bowl of stew and some of your wine. Once she realizes you aren't about to kill her, she tentatively tries the food, then goes back for seconds. She won't divulge much other than a description of her leader: a Vermling wearing bright orange feathers. When you press for details she changes the topic to a parable of her people about the moon: \"The moon is a giant Algox that hunts in the night sky, stalking its prey across the heavens. Whenever the sky hunter succeeds, the blood from its quarry sprays over the world, forming the glimmering streaks of the aurora... it means good hunting for the Vermlings of the land.\" She gets up to leave, but turns back for a final thought: \"Careful when you see the aurora... the Vermlings will be ready.\" You post an extra guard under the bright night sky. All characters start the next scenario with Ward."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-24"
+    "sourceId": "gloomhavensecretariat:event/SR-24"
   },
   {
     "eventType": "road",
@@ -1780,7 +1780,7 @@
       "outcome": "A quick slash with a knife is enough to pierce the fleshy organism's skin. It ruptures, catastrophically splitting along its width and splashing a torrent of sappy goo that knocks everyone to their knees. It burns-the feeling of heat courses through you, causing your skin to bubble as the smell of sickening sweetness churns your stomach. You've scraped most of it off by the time you make it to your destination, but the aroma lingers. Your wounds do seem to be healing rapidly, though... All characters suffer 3 damage at the start of the next scenario. All characters start the next scenario with Regenerate."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-25"
+    "sourceId": "gloomhavensecretariat:event/SR-25"
   },
   {
     "eventType": "road",
@@ -1796,7 +1796,7 @@
       "outcome": "You draw your weapons and try to get the jump on the imp, but it flitters off between the trees, casting something back over its shoulder as it goes. All characters start the next scenario with Muddle."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-26"
+    "sourceId": "gloomhavensecretariat:event/SR-26"
   },
   {
     "eventType": "road",
@@ -1809,7 +1809,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-27"
+    "sourceId": "gloomhavensecretariat:event/SR-27"
   },
   {
     "eventType": "road",
@@ -1825,7 +1825,7 @@
       "outcome": "You stop and soak up the majesty of the wall, preserved here for so long. A light breeze drifts across the tight-knit network of plants, causing it to undulate with a pleasing rhythm that puts you at peace. You can see why no one has harvested it. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-28"
+    "sourceId": "gloomhavensecretariat:event/SR-28"
   },
   {
     "eventType": "road",
@@ -1841,7 +1841,7 @@
       "outcome": "Whatever this is, it isn't something you want to send towards Frosthaven. You point directly opposite where it wants to head, leading it astray. Without another word the Harrower dissolves into a sea of bugs that flood the landscape towards where you pointed. You watch the swarm disappear into the distance, knowing you made the right decision. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-29"
+    "sourceId": "gloomhavensecretariat:event/SR-29"
   },
   {
     "eventType": "road",
@@ -1857,7 +1857,7 @@
       "outcome": "Time to find out what happens if a tree falls in a forest and you are there to hear it. As you move in to attack, you notice most of it has already been replaced with wood and some small creatures have even taken up residence in its rickety leg. The metal creature falls to the ground after a single swing and you help yourself to some of the raw materials. As you walk away you hear it attempting to put itself back together again. Gain lumber collective 1. Gain metal collective 1. All characters start the next scenario with Wound."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-30"
+    "sourceId": "gloomhavensecretariat:event/SR-30"
   },
   {
     "eventType": "road",
@@ -1876,7 +1876,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/SR-31"
+    "sourceId": "gloomhavensecretariat:event/SR-31"
   },
   {
     "eventType": "road",
@@ -1892,7 +1892,7 @@
       "outcome": "With considerable effort, you break the chunk of metal into pieces you can carry. It looks to be of excellent quality-you'll be sure to put it to good use. Gain metal collective 4."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-32"
+    "sourceId": "gloomhavensecretariat:event/SR-32"
   },
   {
     "eventType": "road",
@@ -1905,7 +1905,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-33"
+    "sourceId": "gloomhavensecretariat:event/SR-33"
   },
   {
     "eventType": "road",
@@ -1921,7 +1921,7 @@
       "outcome": "There's nothing you can do. You use a nearby charred stick to separate the mass of bugs in pain, scattering them across the ground. Once they're far enough apart they stop their chittering and dissipate into the burned forest floor. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-34"
+    "sourceId": "gloomhavensecretariat:event/SR-34"
   },
   {
     "eventType": "road",
@@ -1937,7 +1937,7 @@
       "outcome": "ARMORED: You wrap a protected fist around the blade and pull hard. It offers resistance, then comes cleanly free with a singing ring. The weight of it is perfect, the balance legendary. Gain item 209. OTHERWISE: You try to wrap your fist in whatever material is on hand, but the blade is incredibly sharp. After some concerted pulling you manage to free it, but not without significant injury. The blade itself is perfect, and you can't help but wonder about the circumstances that led to it being embedded here. All characters start the next scenario with Impair. Gain item 209."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-35"
+    "sourceId": "gloomhavensecretariat:event/SR-35"
   },
   {
     "eventType": "road",
@@ -1953,7 +1953,7 @@
       "outcome": "The Aesther and Vermling enter mortal combat, wordlessly exchanging blows and wounds. The Vermling is fast-jumping between the tree branches and staying away from the Aesther's flashing blades. Finally, you intervene when Malak least expects it, running the Aesther through with your own weapon. With his dying gurgle he looks to you, confused, then collapses. Dramm dusts himself off, overwhelmed with emotion. \"Thank you-I owe you my life. He's hunted me for a decade, but today it ends.\" Gain 10 experience."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-36"
+    "sourceId": "gloomhavensecretariat:event/SR-36"
   },
   {
     "eventType": "road",
@@ -1969,7 +1969,7 @@
       "outcome": "It's time you joined the long and noble tradition of actor-assassins. The king's court flees in terror as the tyrant is brought low. Hurdle screams in protest, but soon realizes the opportunity in front of him and seizes his moment. \"Long live King Hurdle!\" the usurper shouts, gleefully swinging his walking stick at the fleeing amphibians. \"Hurdle is your ruler now!\" You dine together on the toad legs, with a toast to King Hurdle's health. All characters start the next scenario with Ward."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-37"
+    "sourceId": "gloomhavensecretariat:event/SR-37"
   },
   {
     "eventType": "road",
@@ -1985,7 +1985,7 @@
       "outcome": "You drag the machine back to Frosthaven. It spends the whole trip launching impotent threats. \"I WILL FILL YOUR BOOTS WITH BLOOD!\" With some significant repairs you should be able to get it back to working order. Back in town you leave it with the capable Quatryl inventor, Pinter Droman, and hope for the best. Add event SO-54 to the summer-outpost deck. Draw another summer-road event."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-38"
+    "sourceId": "gloomhavensecretariat:event/SR-38"
   },
   {
     "eventType": "road",
@@ -2001,7 +2001,7 @@
       "outcome": "You insist Satha stays inside the walls of Frosthaven too much, and needs a taste of adventure every once in a while. Over the next few days, you surf river rapids on sheets of ice, capture a polar bear and ride it through the mountains, and go spear-fishing for piranha pigs. You make a roaring camp fire every night, tend to the injuries sustained from the day's escapades, and trade stories of epic battles and close calls. \"This has been a great birthday. But I've got an outpost to run, and I think you have a mission you need to get back to?\" Despite scrapes and bruises, you all part ways refreshed, ready to tackle whatever challenge may come. All characters suffer 1 damage at the start of the next scenario. Gain 3 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-39"
+    "sourceId": "gloomhavensecretariat:event/SR-39"
   },
   {
     "eventType": "road",
@@ -2017,7 +2017,7 @@
       "outcome": "You tell him a small contribution from everyone will suffice, and a smile creeps across his face. \"I like your way of thinking, friends. In my experience, equal contributions from everyone creates a community that can survive even the harshest of winters... usually. If you are all contributing, so am I.\" At the end of the next scenario, if all characters collected the same number of loot tokens, all characters draw one additional loot card for each loot token they collected during the scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-40"
+    "sourceId": "gloomhavensecretariat:event/SR-40"
   },
   {
     "eventType": "road",
@@ -2033,7 +2033,7 @@
       "outcome": "The small crustacean doesn't put up a fight. You knock it out with a single blow and manage to stumble away with nothing but a headache. You can't get the images out of your head. Back in Frosthaven, you study the maps of the northern coast and discover where the Lurker may have come from. Unlock scenario 131."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-41"
+    "sourceId": "gloomhavensecretariat:event/SR-41"
   },
   {
     "eventType": "road",
@@ -2049,7 +2049,7 @@
       "outcome": "LOSE 30 COLLECTIVE GOLD: \"I get it. I've grown attached to some of my pets, too. I guess I could sell one to you instead of the stablemaster. The extra money will really help my parents.\" Draw one card randomly from locked pet cards 1-10 and add it to the Stables. This can exceed its capacity. OTHERWISE: \"It's okay, I can probably get a better rate from the stablemaster anyway. Good luck out here!\" No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-42"
+    "sourceId": "gloomhavensecretariat:event/SR-42"
   },
   {
     "eventType": "road",
@@ -2065,7 +2065,7 @@
       "outcome": "The Keepers are not amused. As you finish stammering through a pathetic justification about how these resources will help keep outposters happy and productive, you realize your excuse sounded much better in your head. The Keepers turn and walk away without a word. You make a mental note to put on a big show of donating some resources to Frosthaven when you get back, hoping the Keepers will see you. Lose 1 morale. Lose material_resources collective 1. All characters start the next scenario with Curse:2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-43"
+    "sourceId": "gloomhavensecretariat:event/SR-43"
   },
   {
     "eventType": "road",
@@ -2081,7 +2081,7 @@
       "outcome": "ARCANE: You approach the machine and feel its power pushing against you-it seems to understand your intent, lashing out at you with waves of energy. You deflect the waves as you step closer, and with a final touch, unseat a metal component at the center of the machine. Gain metal collective 3. OTHERWISE: You approach the machine, waves of burning energy buffeting your face. You push forward and deal a devastating blow that knocks the machine offline. All characters suffer 2 damage at the start of the next scenario. Gain metal collective 3."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-44"
+    "sourceId": "gloomhavensecretariat:event/SR-44"
   },
   {
     "eventType": "road",
@@ -2097,7 +2097,7 @@
       "outcome": "INTIMIDATING, PERSUASIVE, SAVVAS: You extoll the virtues of the Frostguard, the honor it conveys, and the respect it commands. It doesn't seem swayed, and it remains more interested in living up to Savvas ideals. You mention the frequency of attacks on Frosthaven, though, and its eyes light up: this could be an opportunity for real-life training. It agrees on the spot. Gain 1 soldier. Add a town guard card. OTHERWISE: It refuses to join the Frostguard, and eventually you leave it to its training. Better off without someone like that in the guard anyway. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-45"
+    "sourceId": "gloomhavensecretariat:event/SR-45"
   },
   {
     "eventType": "road",
@@ -2113,7 +2113,7 @@
       "outcome": "You spend hours smashing rocks with a sledgehammer to make the rough soil suitable for the next plantings, then it's carefully removing frosted berries from the vineyard to be crushed into icewine. When you've exhausted the list of chores she holds up her end of the bargain. Out from her pocket comes a small satchel of yellow dust, which she silently hands over to you. She pantomimes sprinkling it over crops. Seems to be easy enough. Resolve the building operation of the Garden immediately (in addition to its normal resolution in the building operation step)."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-46"
+    "sourceId": "gloomhavensecretariat:event/SR-46"
   },
   {
     "eventType": "road",
@@ -2129,7 +2129,7 @@
       "outcome": "You lift the sarcophagus lid back onto the skeleton's resting place and a calm falls over the room. Carvings in the walls of the room, obscured by dust, tell the tale of a great king and leader laid to rest. You don't know who would notice, but you take a moment to brush off the cobwebs and leave the tomb better than you found it. It would be nice to be honored this way someday. Gain 1 morale. See section/week: 142.1. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-47"
+    "sourceId": "gloomhavensecretariat:event/SR-47"
   },
   {
     "eventType": "road",
@@ -2145,7 +2145,7 @@
       "outcome": "You remember Eddica's warning and quickly stow the book in your satchel without opening it. She'll be in a better position to unlock the power within. See section/week: 44.4. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-48"
+    "sourceId": "gloomhavensecretariat:event/SR-48"
   },
   {
     "eventType": "road",
@@ -2161,7 +2161,7 @@
       "outcome": "This looks beyond your pay grade. You place it carefully into your pack to bring back to Eddica the librarian. She'll know what to do with it. See section/week: 181.1. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-49"
+    "sourceId": "gloomhavensecretariat:event/SR-49"
   },
   {
     "eventType": "road",
@@ -2177,7 +2177,7 @@
       "outcome": "You splash into the warm water and scoop up a few handfuls of coins. Before you have a chance to sift through them all an old Orchid emerges from the undergrowth, stamping his cane and looking very upset with your transgression. You hurry on your way, a bit richer for the trouble. Gain 10 collective gold. All characters start the next scenario with Curse. Select an entry to read from an available Ancient Coin loot card. If it provides only gold, do not gain it."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-50"
+    "sourceId": "gloomhavensecretariat:event/SR-50"
   },
   {
     "eventType": "road",
@@ -2193,7 +2193,7 @@
       "outcome": "\"Fact is, all Aesthers have a focus of some sort. Something that gave them the will to pull themselves from the infinite multiverse and coalesce back into a single form. For some it was vengeance, or love, or... I dunno, pursuit of knowledge or something. I didn't have anything like that before I became an Aesther. I drank, I enjoyed life. I worked a bit, but not too much. Then this happened to me.\" He holds his arms out, showing his translucent form. \"But I realized that wanting to enjoy life-to have a good time-is enough of a focus to piece me back together. And if people need someone to worship, might as well be me, right? Better than someone who's going to lead them to destruction, I'd say.\" He takes another swig from the canteen, then looks suddenly concerned. \"I'd appreciate it if we kept this between us. How's a bribe sound?\" Gain a random item blueprint."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-51"
+    "sourceId": "gloomhavensecretariat:event/SR-51"
   },
   {
     "eventType": "road",
@@ -2209,7 +2209,7 @@
       "outcome": "You close your eyes. The amulet reaches into your mind and draws you to a singular place. It's a giant field of ice, ancient and pulsing with power. You can feel where you're destined to go like a tickle in the back of your brain. The amulet can take you there whenever you are ready. You sigh. As if you didn't have enough to do already, it looks like now you've got to heal the fabric of time itself. Unlock scenario 124. You may attempt this scenario immediately."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/SR-52"
+    "sourceId": "gloomhavensecretariat:event/SR-52"
   },
   {
     "eventType": "outpost",
@@ -2228,7 +2228,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-01"
+    "sourceId": "gloomhavensecretariat:event/WO-01"
   },
   {
     "eventType": "outpost",
@@ -2247,7 +2247,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-02"
+    "sourceId": "gloomhavensecretariat:event/WO-02"
   },
   {
     "eventType": "outpost",
@@ -2266,7 +2266,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-03"
+    "sourceId": "gloomhavensecretariat:event/WO-03"
   },
   {
     "eventType": "outpost",
@@ -2285,7 +2285,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-04"
+    "sourceId": "gloomhavensecretariat:event/WO-04"
   },
   {
     "eventType": "outpost",
@@ -2304,7 +2304,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-05"
+    "sourceId": "gloomhavensecretariat:event/WO-05"
   },
   {
     "eventType": "outpost",
@@ -2323,7 +2323,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-06"
+    "sourceId": "gloomhavensecretariat:event/WO-06"
   },
   {
     "eventType": "outpost",
@@ -2342,7 +2342,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-07"
+    "sourceId": "gloomhavensecretariat:event/WO-07"
   },
   {
     "eventType": "outpost",
@@ -2361,7 +2361,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-08"
+    "sourceId": "gloomhavensecretariat:event/WO-08"
   },
   {
     "eventType": "outpost",
@@ -2380,7 +2380,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-09"
+    "sourceId": "gloomhavensecretariat:event/WO-09"
   },
   {
     "eventType": "outpost",
@@ -2396,7 +2396,7 @@
       "outcome": "PERSUASIVE, RESOURCEFUL: You talk up your business acumen and note how your hands-on understanding of both the Algox and the Lurkers make you uniquely suited to being a business partner. Xain looks doubtful, but eventually you bring him around by reminding him that you've got a good enough reputation around Frosthaven to convince some other people to invest-so long as he gives you a cut. See section/week: 155.2, 158.3. OTHERWISE: Xain shakes his head, \"There are plenty of other people who are willing to be a patron of genius.\" He spots another group coming through the door. \"Hey! Friends! Just the folks I was looking to see!\" No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-10"
+    "sourceId": "gloomhavensecretariat:event/WO-10"
   },
   {
     "eventType": "outpost",
@@ -2412,7 +2412,7 @@
       "outcome": "You pick up the sack of radishes and clandestinely try to find a buyer for them. No one around town is interested, though, and you're not willing to keep hauling this bag around. You dump the bag back where you found it. Perhaps someone else will have better luck. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-11"
+    "sourceId": "gloomhavensecretariat:event/WO-11"
   },
   {
     "eventType": "outpost",
@@ -2428,7 +2428,7 @@
       "outcome": "You approach Lance and congratulate him on his induction. You didn't think his grin could get any bigger, but when you offer him a piece of your battle-hardened equipment, his smile shines brighter than a sun demon. He stammers out a thanks, and promises to defend the outpost with everything he's got. Gain 2 morale. Gain 1 soldier. Lose one collective item, returning it to the available supply."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-12"
+    "sourceId": "gloomhavensecretariat:event/WO-12"
   },
   {
     "eventType": "outpost",
@@ -2444,7 +2444,7 @@
       "outcome": "You get the foreman to agree to a rate proportional to whatever horrors you discover in the room. A Night Demon has taken up residence, drawing power from a natural focus point in the mine. It's been harvesting the essence of evil and is pretty upset with your sudden interest in killing it. The whole ordeal takes just a few minutes, but you'll be digging broken claws out of your skin for days. At least the foreman was happy to turn over some extra coin when he saw the trouble you went to. Gain 30 collective gold. Gain lumber collective 3. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-13"
+    "sourceId": "gloomhavensecretariat:event/WO-13"
   },
   {
     "eventType": "outpost",
@@ -2460,7 +2460,7 @@
       "outcome": "You get the foreman to agree to a rate proportional to whatever horrors you discover in the room. Frustratingly, it turns out some teenagers have been sneaking in after dark, looking for an alcove to call their own, away from their parents. There isn't a single skull to bash in... at least, not without upsetting some parents. The foreman happily pays you for tracking down the source of the problem, but not a penny for your fighting skills. Gain 5 collective gold. Gain metal collective 1. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-14"
+    "sourceId": "gloomhavensecretariat:event/WO-14"
   },
   {
     "eventType": "outpost",
@@ -2476,7 +2476,7 @@
       "outcome": "You realize that if one of them is lying, they both must be lying. That means the right portion of the Harrower is the half being rejected for their murderous drives. You summon the guards accordingly. The Aesther tips his hunting cap approvingly. \"Another mystery solved with the help of Detective Elsewhere! I'm sure they'll be more complex in the future. Of course, the real trick will be separating the two, but I'll leave you to it.\" With that, he steps into a rift and is gone. Gain 2 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-15"
+    "sourceId": "gloomhavensecretariat:event/WO-15"
   },
   {
     "eventType": "outpost",
@@ -2489,7 +2489,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-16"
+    "sourceId": "gloomhavensecretariat:event/WO-16"
   },
   {
     "eventType": "outpost",
@@ -2505,7 +2505,7 @@
       "outcome": "You do not know what occurred here, but it is clear what needs to be done. You toss a burning rag onto the deck from the safety of the dock and push the ship back out to sea. It burns as the winds carry it into the bay, eventually disintegrating below the waves. The dockworkers thank you for handling the matter, and there's a general air of relief. Gain 2 morale. Add event SO-41 to the summer-outpost deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-17"
+    "sourceId": "gloomhavensecretariat:event/WO-17"
   },
   {
     "eventType": "outpost",
@@ -2521,7 +2521,7 @@
       "outcome": "AESTHER, LURKER, VERMLING, UNFETTERED: You push the evil drive from your head, then concentrate on extending your safer thoughts to your allies, ushering them down the stairs and inside the safety of the wall. Unlock scenario 120."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-18"
+    "sourceId": "gloomhavensecretariat:event/WO-18"
   },
   {
     "eventType": "outpost",
@@ -2537,7 +2537,7 @@
       "outcome": "You explain to Eros that being in the water won't do much good in the event of an attack, and that you'd have a much better vantage point from the guard towers... given that's what they're literally there for. \"I see that this is a creative difference we will be unable to overcome. I bid you good day.\" The Savvas flips its scarf defiantly and moves on. Later in the week, you're walking by a poorly-attended show on the docks and spot some other mercenaries keeping watch, weapons drawn, in the frigid ocean. The show gets lukewarm reviews. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-19"
+    "sourceId": "gloomhavensecretariat:event/WO-19"
   },
   {
     "eventType": "outpost",
@@ -2553,7 +2553,7 @@
       "outcome": "You think better of interrupting the two most powerful people in Frosthaven and decide to come back later. Surely they can work this out between themselves. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-20"
+    "sourceId": "gloomhavensecretariat:event/WO-20"
   },
   {
     "eventType": "outpost",
@@ -2572,7 +2572,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-21"
+    "sourceId": "gloomhavensecretariat:event/WO-21"
   },
   {
     "eventType": "outpost",
@@ -2591,7 +2591,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-22"
+    "sourceId": "gloomhavensecretariat:event/WO-22"
   },
   {
     "eventType": "outpost",
@@ -2610,7 +2610,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-23"
+    "sourceId": "gloomhavensecretariat:event/WO-23"
   },
   {
     "eventType": "outpost",
@@ -2629,7 +2629,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-24"
+    "sourceId": "gloomhavensecretariat:event/WO-24"
   },
   {
     "eventType": "outpost",
@@ -2648,7 +2648,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-25"
+    "sourceId": "gloomhavensecretariat:event/WO-25"
   },
   {
     "eventType": "outpost",
@@ -2667,7 +2667,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-26"
+    "sourceId": "gloomhavensecretariat:event/WO-26"
   },
   {
     "eventType": "outpost",
@@ -2686,7 +2686,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-27"
+    "sourceId": "gloomhavensecretariat:event/WO-27"
   },
   {
     "eventType": "outpost",
@@ -2705,7 +2705,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-28"
+    "sourceId": "gloomhavensecretariat:event/WO-28"
   },
   {
     "eventType": "outpost",
@@ -2721,7 +2721,7 @@
       "outcome": "You bring the Vermling children to The Crater, the burned-out drinking post where Frosthaven's bar used to be. You never got to experience the original bar before it was destroyed in an attack, but The Crater certainly fills the hole in the town's heart. According to plan, the Vermling children help nudge your fellow patrons into showing their appreciation for your bravery around town with a bit of coin. It's probably not the best lesson to teach them, but it sure feels good getting the recognition you deserve! Gain 10 collective gold."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-29"
+    "sourceId": "gloomhavensecretariat:event/WO-29"
   },
   {
     "eventType": "outpost",
@@ -2737,7 +2737,7 @@
       "outcome": "\"You serious? Just... for free?\" A grin spreads across his face from ear to ear. \"Captain's been all over me to keep better track of the storeroom... This'll be the last time I screw up, I promise.\" Take one of each herb in the loot deck and shuffle them into a pile. Draw three: these are the herbs the chef desperately needs. He'll take as many of each type as you choose to give him. For each herb you provide, gain 1 moral."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-30"
+    "sourceId": "gloomhavensecretariat:event/WO-30"
   },
   {
     "eventType": "outpost",
@@ -2756,7 +2756,7 @@
       "text": "They're equally important. Donate the difference so you can build both.",
       "outcome": "[OBJECT OBJECT] AND [OBJECT OBJECT]: A. B. OTHERWISE: Select one outcome: A, B."
     },
-    "_source": "gloomhavensecretariat:event/WO-31"
+    "sourceId": "gloomhavensecretariat:event/WO-31"
   },
   {
     "eventType": "outpost",
@@ -2775,7 +2775,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-32"
+    "sourceId": "gloomhavensecretariat:event/WO-32"
   },
   {
     "eventType": "outpost",
@@ -2794,7 +2794,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-33"
+    "sourceId": "gloomhavensecretariat:event/WO-33"
   },
   {
     "eventType": "outpost",
@@ -2813,7 +2813,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-34"
+    "sourceId": "gloomhavensecretariat:event/WO-34"
   },
   {
     "eventType": "outpost",
@@ -2832,7 +2832,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-35"
+    "sourceId": "gloomhavensecretariat:event/WO-35"
   },
   {
     "eventType": "outpost",
@@ -2851,7 +2851,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-36"
+    "sourceId": "gloomhavensecretariat:event/WO-36"
   },
   {
     "eventType": "outpost",
@@ -2870,7 +2870,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-37"
+    "sourceId": "gloomhavensecretariat:event/WO-37"
   },
   {
     "eventType": "outpost",
@@ -2889,7 +2889,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-38"
+    "sourceId": "gloomhavensecretariat:event/WO-38"
   },
   {
     "eventType": "outpost",
@@ -2908,7 +2908,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-39"
+    "sourceId": "gloomhavensecretariat:event/WO-39"
   },
   {
     "eventType": "outpost",
@@ -2927,7 +2927,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-40"
+    "sourceId": "gloomhavensecretariat:event/WO-40"
   },
   {
     "eventType": "outpost",
@@ -2946,7 +2946,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-41"
+    "sourceId": "gloomhavensecretariat:event/WO-41"
   },
   {
     "eventType": "outpost",
@@ -2965,7 +2965,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-42"
+    "sourceId": "gloomhavensecretariat:event/WO-42"
   },
   {
     "eventType": "outpost",
@@ -2984,7 +2984,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-43"
+    "sourceId": "gloomhavensecretariat:event/WO-43"
   },
   {
     "eventType": "outpost",
@@ -3003,7 +3003,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-44"
+    "sourceId": "gloomhavensecretariat:event/WO-44"
   },
   {
     "eventType": "outpost",
@@ -3022,7 +3022,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-45"
+    "sourceId": "gloomhavensecretariat:event/WO-45"
   },
   {
     "eventType": "outpost",
@@ -3041,7 +3041,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-46"
+    "sourceId": "gloomhavensecretariat:event/WO-46"
   },
   {
     "eventType": "outpost",
@@ -3057,7 +3057,7 @@
       "outcome": "You circle up with a group donning Algox costumes and readying wooden weapons. It looks like it'll be a fight for the ages! After lots of growling and back-and-forth banter, you've \"battled\" your fill for the day and retire to drinks with the group. Not a bad lot. Gain 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-47"
+    "sourceId": "gloomhavensecretariat:event/WO-47"
   },
   {
     "eventType": "outpost",
@@ -3076,7 +3076,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-48"
+    "sourceId": "gloomhavensecretariat:event/WO-48"
   },
   {
     "eventType": "outpost",
@@ -3095,7 +3095,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-49"
+    "sourceId": "gloomhavensecretariat:event/WO-49"
   },
   {
     "eventType": "outpost",
@@ -3114,7 +3114,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-50"
+    "sourceId": "gloomhavensecretariat:event/WO-50"
   },
   {
     "eventType": "outpost",
@@ -3133,7 +3133,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-51"
+    "sourceId": "gloomhavensecretariat:event/WO-51"
   },
   {
     "eventType": "outpost",
@@ -3152,7 +3152,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-52"
+    "sourceId": "gloomhavensecretariat:event/WO-52"
   },
   {
     "eventType": "outpost",
@@ -3171,7 +3171,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-53"
+    "sourceId": "gloomhavensecretariat:event/WO-53"
   },
   {
     "eventType": "outpost",
@@ -3190,7 +3190,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-54"
+    "sourceId": "gloomhavensecretariat:event/WO-54"
   },
   {
     "eventType": "outpost",
@@ -3209,7 +3209,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-55"
+    "sourceId": "gloomhavensecretariat:event/WO-55"
   },
   {
     "eventType": "outpost",
@@ -3228,7 +3228,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-56"
+    "sourceId": "gloomhavensecretariat:event/WO-56"
   },
   {
     "eventType": "outpost",
@@ -3244,7 +3244,7 @@
       "outcome": "No no no! Real mercenary work has a lot more blood, and the blades are much sharper. Some of the armor on stage looked like it wouldn't stop a Vermling Raider, let alone a Rending Drake. The swordplay was abysmal-what if a child saw this and thought they never needed to parry? That could get kids killed! Eros looks mortified and you're quickly escorted out. Word spreads and the show gets miserable reviews. Lose 1 prosperity."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-57"
+    "sourceId": "gloomhavensecretariat:event/WO-57"
   },
   {
     "eventType": "outpost",
@@ -3260,7 +3260,7 @@
       "outcome": "If the chosen character is:. LEVEL 9: The crowd is rapt and cheers when you bow. You've ignited a fire in them. Gain 1 morale. Gain 2 inspiration. LEVEL 5 to 8: The onlookers are delighted with the excitement you bring to the presentation. Gain 1 morale. OTHERWISE: Your anecdotes don't resonate with the hardened people of Frosthaven. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-58"
+    "sourceId": "gloomhavensecretariat:event/WO-58"
   },
   {
     "eventType": "outpost",
@@ -3279,7 +3279,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-59"
+    "sourceId": "gloomhavensecretariat:event/WO-59"
   },
   {
     "eventType": "outpost",
@@ -3298,7 +3298,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-60"
+    "sourceId": "gloomhavensecretariat:event/WO-60"
   },
   {
     "eventType": "outpost",
@@ -3314,7 +3314,7 @@
       "outcome": "You partake in icewine, juniper ale, and an axenut ale brewed by an industrious Quatryl. The dancing continues by torchlight, then by sunlight. As the sun warms the town someone has the grand idea to jump-fully clothed-into the bay. Who are you to stop the fun? As you rush from the water back to the welcoming bonfire, a towel wrapped around you, you can't help but etch this moment into your memory. For all its trouble, Frosthaven is a beautiful place. Gain 3 morale. All characters start the next scenario with Bless. Place \"Harvest Festival\" campaign sticker on this week's column of the calendar. Transfer over any sections in the covered weeks and add 57 3 to the week in each subsequent year."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-61"
+    "sourceId": "gloomhavensecretariat:event/WO-61"
   },
   {
     "eventType": "outpost",
@@ -3333,7 +3333,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-62"
+    "sourceId": "gloomhavensecretariat:event/WO-62"
   },
   {
     "eventType": "outpost",
@@ -3349,7 +3349,7 @@
       "outcome": "At the Orphan's request, Unfettered swarm over the wreckage from the most recent attack, rebuilding the outpost with incredible speed. Strangely, as they reassemble the buildings they also create a stack of what look like raw materials in the center of town. \"REPAIRS COMPLETE. STRUCTURAL INEFFICIENCIES REMOVED,\" an Unfettered confirms in a mechanical voice. \"WHERE WOULD YOU LIKE THE REDUNDANT MATERIALS RELOCATED?\" Immediately repair all wrecked buildings for no cost. For each building repaired this way, gain 1 material resource of any type.. If no buildings were wrecked, gain 1 prosperity."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-63"
+    "sourceId": "gloomhavensecretariat:event/WO-63"
   },
   {
     "eventType": "outpost",
@@ -3365,7 +3365,7 @@
       "outcome": "You know better than to get between a genius and their work. Before too long the Quatryl's murmuring turns to squeals of \"Let's go test it!\" and they rush out of the establishment. The next morning, the workshop is in ruins as the pair of grinning Quatryls confirm their discoveries to a crowd: Unfettered communication technology can be used to remotely trigger explosives. \"Yes, yes, very unfortunate about the test building, but think of the APPLICATIONS!\" Pinter explains to a scowling Mayor Satha. Wreck building: workshop. Gain 1 prosperity."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-64"
+    "sourceId": "gloomhavensecretariat:event/WO-64"
   },
   {
     "eventType": "outpost",
@@ -3381,7 +3381,7 @@
       "outcome": "Captain Olmstead's jaw clenches. \"Idealists still, after all this? What's the point of discovery if there's nobody left to share it with when you get back? If you get back?\" He huffs. \"Fine, you can take some guards. But you lot will be covering their shifts in the guard towers until they get back!\" Crain leaps for joy and almost looks like he might kiss the Captain but wisely stops short. He leaves before Captain Olmstead can change his mind, bowing gratefully toward you as he goes. Remove a town guard card. Remove a town guard card. See section/week: 28.4, 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-65"
+    "sourceId": "gloomhavensecretariat:event/WO-65"
   },
   {
     "eventType": "outpost",
@@ -3397,7 +3397,7 @@
       "outcome": "Frosthaven has made do without these old tools for this long, and it's better to let the dead lie. You'd rather have goods you can use, and trading hides with the Algox is better than trading blows. Gain 1 prosperity. Gain lumber collective 2. Gain metal collective 2. Gain hide collective 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-66"
+    "sourceId": "gloomhavensecretariat:event/WO-66"
   },
   {
     "eventType": "outpost",
@@ -3416,7 +3416,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-67"
+    "sourceId": "gloomhavensecretariat:event/WO-67"
   },
   {
     "eventType": "outpost",
@@ -3432,7 +3432,7 @@
       "outcome": "The hunter nods. \"Less fun, o' course, but I'd rather have my belly full next year than stock up today. Better safe than sorry!\" Add a Plus1 sticker to one Hide loot card (the card gives one extra Hide when resolved).. Gain 1 prosperity."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-68"
+    "sourceId": "gloomhavensecretariat:event/WO-68"
   },
   {
     "eventType": "outpost",
@@ -3448,7 +3448,7 @@
       "outcome": "You've seen firsthand what these things can do. You're not letting the Icespeakers or anyone else leave a weapon like that right by your gate. The Icespeakers watch with disgust as you smash their divine monument, but they don't raise a hand to stop you. \"We serve at the command of the Speaker in the Ice,\" the shaman says stonily before turning away. \"You may reject its protection, but you will hear its voice in the end.\" Gain 2 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-69"
+    "sourceId": "gloomhavensecretariat:event/WO-69"
   },
   {
     "eventType": "outpost",
@@ -3467,7 +3467,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-70"
+    "sourceId": "gloomhavensecretariat:event/WO-70"
   },
   {
     "eventType": "outpost",
@@ -3486,7 +3486,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-71"
+    "sourceId": "gloomhavensecretariat:event/WO-71"
   },
   {
     "eventType": "outpost",
@@ -3505,7 +3505,7 @@
       "text": "",
       "outcome": "Wreck building: metal-depot."
     },
-    "_source": "gloomhavensecretariat:event/WO-72"
+    "sourceId": "gloomhavensecretariat:event/WO-72"
   },
   {
     "eventType": "outpost",
@@ -3521,7 +3521,7 @@
       "outcome": "Under your guidance, the volunteers split into teams for foraging, hunting, and cooking. The day is long, but the anticipation of the upcoming feast keeps everyone motivated. As night falls, the smell of crackling meat fills the air. The people of Frosthaven gather to enjoy a rare and much-needed celebration with plenty of food and music. For a brief moment, the dreary chill of winter is all but forgotten. Gain 1 prosperity."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-73"
+    "sourceId": "gloomhavensecretariat:event/WO-73"
   },
   {
     "eventType": "outpost",
@@ -3537,7 +3537,7 @@
       "outcome": "You bring the case to the metal depot and the merchant there takes a peek inside. \"I WILL FIND XAIN, AND I WILL REMOVE HIS-\" the merchant shuts the box again. He thinks for a moment, drumming his fingers on the case. \"Yes... I can find a buyer. Weird that it's still functioning. Someone'll pay a premium for that, I'm sure. We have a deal.\" Gain metal collective 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-74"
+    "sourceId": "gloomhavensecretariat:event/WO-74"
   },
   {
     "eventType": "outpost",
@@ -3553,7 +3553,7 @@
       "outcome": "EDUCATED: You've studied the maps of Frosthaven and have the layout committed to memory. Now that you have your bearings, you're able to traverse the outpost almost as quickly as you could without the fog. It doesn't take long to gather all the outposters and lead them to the well. Safety in numbers! When the fog clears hours later, the outposters give a cheer for your helpfulness. Gain 1 morale. OTHERWISE: Using the well as a homing beacon, you make several excursions out into Frosthaven. It takes hours, but you finally lead everyone to the well. The fog eventually dissipates and you get a few nods in thanks. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-75"
+    "sourceId": "gloomhavensecretariat:event/WO-75"
   },
   {
     "eventType": "outpost",
@@ -3569,7 +3569,7 @@
       "outcome": "You finish your tour of Frosthaven, making sure to highlight the overwhelming simplicity and mundanity of the equipment available this far away from civilization. \"It's incredible you're able to survive out here working with this.\" The Algox pauses, then comes to a decision. \"Come with me, I suspect I have exactly what you're looking for.\" Gain a random item blueprint."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-76"
+    "sourceId": "gloomhavensecretariat:event/WO-76"
   },
   {
     "eventType": "outpost",
@@ -3585,7 +3585,7 @@
       "outcome": "You bang on the door of the Aesthers next door and they eventually open up. Dressed in drab yellow, they're passing around an ornate, glowing headdress in their otherwise spartan room. You tell them what's been going on in the shop and their eyes widen. The one with the headdress mutters about how their experiment is a failure, but you're not really interested beyond their assurance it won't happen again. He sighs, hands you the headdress, and closes the door. Gain item 197."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-77"
+    "sourceId": "gloomhavensecretariat:event/WO-77"
   },
   {
     "eventType": "outpost",
@@ -3601,7 +3601,7 @@
       "outcome": "You know the value of the Frostguard, and you've seen what they can do on the battlefield. But they're trained for town defense, not outbound strikes in unfamiliar territory. You lay out your concerns, and the others agree to call off the mission. With any luck, the rumors of an attack weren't true. See section/week: 139.3."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-78"
+    "sourceId": "gloomhavensecretariat:event/WO-78"
   },
   {
     "eventType": "outpost",
@@ -3617,7 +3617,7 @@
       "outcome": "Dinah returns to the table and throws a dishrag in your lap. \"Clean it up, you're screwing with the atmosphere in here.\" She snatches the bag of coins off the table and heads back behind the bar to count it. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-79"
+    "sourceId": "gloomhavensecretariat:event/WO-79"
   },
   {
     "eventType": "outpost",
@@ -3633,7 +3633,7 @@
       "outcome": "Finding Joseph's merchandise was easy enough as it was just left lying on the road. You wonder why no Algox had commandeered it. The merchant isn't exactly pleased that you're extorting him, but agrees to pay you for his possessions. You are unfortunately barred from ever purchasing the new dish he invented called \"ice-cream\" from the stand he's planning to eventually open up. Gain 10 collective gold. See section/week: 163.3, 5."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WO-80"
+    "sourceId": "gloomhavensecretariat:event/WO-80"
   },
   {
     "eventType": "outpost",
@@ -3652,7 +3652,7 @@
       "text": "",
       "outcome": ""
     },
-    "_source": "gloomhavensecretariat:event/WO-81"
+    "sourceId": "gloomhavensecretariat:event/WO-81"
   },
   {
     "eventType": "road",
@@ -3668,7 +3668,7 @@
       "outcome": "OUTCAST: You know there's no use trying to convince the stubborn hermit of the beaver's innocence. Instead you appeal to Hurdle's better nature, convincing him that the best vengeance is a life well lived, and that Clovis must live with the weight of his guilt. The Vermling nods sagely. \"Wise mer-canary... You help Hurdle see truth, yes. Hurdle return gift.\" Add a Plus1 sticker to one Metal loot card (the card gives one extra Metal when resolved). OTHERWISE: You've been asked to do some demeaning things as a mercenary, but your pride is still above settling a vendetta against a small, semi-aquatic mammal. \"Stupid mer-canaries!\" The hermit rages as he scurries off. \"You regret!\" As you turn away, you hear a menacing chitter-almost a laugh-from the dam behind you... but when you look back, Clovis is gone. All characters start the next scenario with Curse."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-01"
+    "sourceId": "gloomhavensecretariat:event/WR-01"
   },
   {
     "eventType": "road",
@@ -3684,7 +3684,7 @@
       "outcome": "The old Valrath grabs an icicle off her necklace, hurling it at you with surprising speed. She closes the distance between herself and your party, and she's on you like a demon, clawing and biting. Whatever drives her is supernatural, and it's no small task to finally put her down. The ice sculpture was damaged in the fight, and the archer is now missing an arm. Too bad; it would've made a nice feature to drag home. All characters start the next scenario with Brittle, Curse."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-02"
+    "sourceId": "gloomhavensecretariat:event/WR-02"
   },
   {
     "eventType": "road",
@@ -3700,7 +3700,7 @@
       "outcome": "This is either the world's greatest threat or the world's greatest treasure someone is trying to protect. If it was treasure, they wouldn't have left it buried in the snow. You push it back in the snow as deeply as the ice will allow and move on. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-03"
+    "sourceId": "gloomhavensecretariat:event/WR-03"
   },
   {
     "eventType": "road",
@@ -3716,7 +3716,7 @@
       "outcome": "You make note of the location on your map, confident that returning after the ice has softened will allow you to retrieve the weapon easily. You hustle along to your destination and hope the delay won't cause too many issues. Add event SR-35 to the summer-road deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-04"
+    "sourceId": "gloomhavensecretariat:event/WR-04"
   },
   {
     "eventType": "road",
@@ -3732,7 +3732,7 @@
       "outcome": "CHAOTIC, RESOURCEFUL: The river looks dire, but it's a manageable problem. You see the patterns in the chaotic water and strategically toss in some larger stones and branches to create a makeshift path and get across with only a few unexpected dips into the stream. Discard 1 card. OTHERWISE: You try to wade through the icy river, but it's impossibly cold. The swift current takes your balance out from under you, and by the time you've made it to the other side, all warmth has left your body, and the contents of your pack are scattered. All characters start the next scenario with Brittle. All characters suffer 3 damage at the start of the next scenario. All characters Lost one Small."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-05"
+    "sourceId": "gloomhavensecretariat:event/WR-05"
   },
   {
     "eventType": "road",
@@ -3748,7 +3748,7 @@
       "outcome": "You tell the Aesther you haven't seen Dramm. His eyes linger on you a bit too long, trying to determine whether you're lying, but ultimately he shrugs and accepts your statement with a disconcerting smile. You hurry on to your destination. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-06"
+    "sourceId": "gloomhavensecretariat:event/WR-06"
   },
   {
     "eventType": "road",
@@ -3764,7 +3764,7 @@
       "outcome": "You let the young man down easy, telling him this mission may be one you yourself don't return from. He smiles weakly and agrees it would be best to give it a go some other time. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-07"
+    "sourceId": "gloomhavensecretariat:event/WR-07"
   },
   {
     "eventType": "road",
@@ -3780,7 +3780,7 @@
       "outcome": "The frozen waterfall provides easy handholds for climbing its surface, and before long, you're standing at the top, looking down on the grotto. You can even reach up and touch the willowburn tree branches. It looks like a great spot to make camp... before the buzzing starts. In a burst of angry yellow, thousands of bees swarm your party, driving you back down the waterfall. You're out of breath before they give up the chase. All characters start the next scenario with Impair. Discard 2 cards; gain Undefined."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-08"
+    "sourceId": "gloomhavensecretariat:event/WR-08"
   },
   {
     "eventType": "road",
@@ -3796,7 +3796,7 @@
       "outcome": "Three sets of small tracks lead to a blackthorn shrub, whose prickly branches quiver with fear. You part the barbed branches and see three little Orchids, barely more than toddlers. Their father defended them from a polar bear, they tell you, and commanded them to hide while he drew the bear away. Judging by the amount of blood you saw back there, you doubt their father is returning anytime soon. You're too remote to send the children home on their own. You can take them with you, though, and bring them to Frosthaven once your business nearby is complete. If you complete the next scenario:<br>Gain 3 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-09"
+    "sourceId": "gloomhavensecretariat:event/WR-09"
   },
   {
     "eventType": "road",
@@ -3812,7 +3812,7 @@
       "outcome": "You approach the two creatures cautiously, weapon sheathed. They freeze as they see you approach, and you make a show of your empty hands. \"THREAT ASSESSMENT... MINIMAL.\" One of the machines screeches and turns away from you. They don't appear to be attached or tied together. Their metal bodies just seem... unable to move away. You watch as they activate cutting tools, slice off the stuck parts of each others' bodies, and free themselves. They hobble away into the woods. Sorting through the remains, you find the metal piece that was causing all the trouble. Gain item 167."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-10"
+    "sourceId": "gloomhavensecretariat:event/WR-10"
   },
   {
     "eventType": "road",
@@ -3828,7 +3828,7 @@
       "outcome": "OUTCAST: You don't know what this solitary Kivak did to wrong the others, but you understand rejection by your peers. You grab the Kivak and push through the herd. Once on the other side, the reject snorts in thanks before wandering off. Gain a battle goal check. OTHERWISE: You ignore the lone Kivak and the crazy shepherd, instead pushing through the herd. They stand strong, and their stone skin makes passage akin to squeezing through a tight cave. Finally, you emerge exhausted on the other side of the herd. All characters start the next scenario with Impair. All characters suffer 2 damage at the start of the next scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-11"
+    "sourceId": "gloomhavensecretariat:event/WR-11"
   },
   {
     "eventType": "road",
@@ -3844,7 +3844,7 @@
       "outcome": "EDUCATED, ORCHID: The writing is archaic, but you can piece together the majority of the meaning. You recognize the sigils as that of the Orchid High Council-this must be a treasure vault. The writing reads: \"Herein lies the treasure of the Orchid Keeper of Joy.\" Gain 3 experience. OTHERWISE: The writing looks floral and the cursive is very pleasing to the eye, but you can't make out any meaning, despite your efforts. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-12"
+    "sourceId": "gloomhavensecretariat:event/WR-12"
   },
   {
     "eventType": "road",
@@ -3860,7 +3860,7 @@
       "outcome": "CHAOTIC: This trickery means nothing to you. You focus on what's real-the currents of air against your skin and the babbling of water in the distance. And your gut, of course. You charge through without hesitation. Unlock scenario 113. You may attempt this scenario immediately. OTHERWISE: Lush forest turns to bramble thickets as you try to navigate through. After hours of hiking, you welcome the heavy fog that spits you back onto the winter trail. Draw another winter-road event."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-13"
+    "sourceId": "gloomhavensecretariat:event/WR-13"
   },
   {
     "eventType": "road",
@@ -3876,7 +3876,7 @@
       "outcome": "You plunge into the water and push downward to the source of the heat: a mechanical device embedded deep in the natural rock. It's malfunctioning, throwing off enormous amounts of energy. STICKER: UNCHARGED-CORE: The metal core you're carrying reacts to the machine, drawing the heat into itself and sparking back to life. Replace campaign sticker: charged-core. OTHERWISE: The scalding liquid burns you as the unstable device flares with heat. All characters start the next scenario with Wound."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-14"
+    "sourceId": "gloomhavensecretariat:event/WR-14"
   },
   {
     "eventType": "road",
@@ -3892,7 +3892,7 @@
       "outcome": "SAVVAS: The Savvas in your group nods solemnly, knowing the remains must be returned, per tradition, to the Savvas' home under the Copperneck Mountains. You take a small detour into the foothills, delivering the remains to the closest Savvas patrol, and they thank you for returning one of their own, offering you gifts in gratitude. Gain hide collective 3. OTHERWISE: You do your best to dig into the ice for a proper burial, but don't make much headway. You ultimately push it down the same crevasse the deckhands chose-a fitting end for the rocks. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-15"
+    "sourceId": "gloomhavensecretariat:event/WR-15"
   },
   {
     "eventType": "road",
@@ -3908,7 +3908,7 @@
       "outcome": "You charge at the Algox, hoping to drive them off quickly so you can come back to tend to the Valrath. These towering bandits are holding their own, putting up a ferocious fight, when they suddenly flee into the woods. Confused, you turn around just in time to see a fifth Algox dragging the Valrath into the woods. You try to track them, but the robbers are very adept at covering their tracks in the snow, and you soon lose the trail. The Valrath might be gone, but the overturned cart is still there. Gain hide 1. Lose 1 morale."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-16"
+    "sourceId": "gloomhavensecretariat:event/WR-16"
   },
   {
     "eventType": "road",
@@ -3921,7 +3921,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-17"
+    "sourceId": "gloomhavensecretariat:event/WR-17"
   },
   {
     "eventType": "road",
@@ -3937,7 +3937,7 @@
       "outcome": "You're a sell-sword, not a sell-shovel. Still, you're happy to bail Jeremy out of an embarrassing situation, so you volunteer some of your own supplies. Hurdle snatches up your offering and scurries off in a huff, muttering that next time will be \"Jeremy soup.\" Discard 1 card."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-18"
+    "sourceId": "gloomhavensecretariat:event/WR-18"
   },
   {
     "eventType": "road",
@@ -3953,7 +3953,7 @@
       "outcome": "You dig out the aeronautical and cram into the restricted interior. The Quatryl just barely seals the hatch with you all inside and struggles to start up the machine with the extra weight. It's claustrophobic, but after it gets airborne much of the terror subsides. The descent is violent but you arrive in one piece closer to your destination. All characters without Quatryl or Vermling start the next scenario with Impair."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-19"
+    "sourceId": "gloomhavensecretariat:event/WR-19"
   },
   {
     "eventType": "road",
@@ -3969,7 +3969,7 @@
       "outcome": "CHAOTIC, RESOURCEFUL: The sun is gone, and the world is a sea of white, but you are at home in the confusion and know exactly how to handle the situation. You trace your steps back the way you came and reorient yourself based on your rapidly fading footprints. It's a cold trip but you make it to your destination. All characters start the next scenario with Brittle. OTHERWISE: It can't be that difficult to find a way through this blizzard. You head back the way you came for a few steps, then strike out toward what you're sure is the right direction. It is not, and by the time you've determined where you are, you're numb with cold. All characters start the next scenario with Brittle. All characters suffer 2 damage at the start of the next scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-20"
+    "sourceId": "gloomhavensecretariat:event/WR-20"
   },
   {
     "eventType": "road",
@@ -3985,7 +3985,7 @@
       "outcome": "LOSE [10xC] COLLECTIVE GOLD: \"Only if you can spare it,\" she responds. \"May the Great Oak bless you, and may you always trust in its path.\" As you depart, the wind picks up again, obscuring your vision in a snowy haze. All characters start the next scenario with Bless:2, Ward. OTHERWISE: You offer all you have, which isn't much. The apprentice Seer shakes her head. \"The Sanctuary will thrive with or without your gold. May you always trust in the Great Oak's path.\" As you depart, the wind picks up again, obscuring your vision in a snowy haze. All characters start the next scenario with Ward."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-21"
+    "sourceId": "gloomhavensecretariat:event/WR-21"
   },
   {
     "eventType": "road",
@@ -4001,7 +4001,7 @@
       "outcome": "You toss the arm back to its mechanical owner, watching in awe as some mysterious force guides the arm through the air, reattaching it seamlessly to the machine. Encouraged by the sight, you join the robot in its attack on the Algox. She puts up a great fight, trading blow for blow, but in the end, your combined might is enough to put her down. With one final wail, the Algox falls, tumbling onto the bloodied snow. Its task finished, the automaton lumbers away without a sound, its optical sensors swiveling to give you a long, ponderous glance as it passes by. Gain 5 experience. All characters suffer 2 damage at the start of the next scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-22"
+    "sourceId": "gloomhavensecretariat:event/WR-22"
   },
   {
     "eventType": "road",
@@ -4017,7 +4017,7 @@
       "outcome": "It's long past merchant season; the poor guy must have gotten lost on his way to Frosthaven all the way back in summer. You toss him what food you have and point the way back to town. The Valrath drops his bow and starts bawling in gratitude, wiping the tears from his face before they freeze. You turn back to the path, happy to have saved this man's life. You can't eat good feelings, however. By the time you finally arrive at your destination, your stomach is rumbling. Discard 2 cards; gain Undefined. Gain 1 morale. Gain 1 soldier."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-23"
+    "sourceId": "gloomhavensecretariat:event/WR-23"
   },
   {
     "eventType": "road",
@@ -4033,7 +4033,7 @@
       "outcome": "Without that gear, you're as good as dead anyway. You pull your digging tools toward you and flatten yourself against the back of the cave, where you hope the rock is the strongest. Sure enough, the rockfall leaves you with only a few bruises, and you're able to recover your gear after a bit of digging. Digging yourself out, however, will be more of a chore. ARMORED: Discard 1 card. OTHERWISE: Discard 2 cards; gain Undefined."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-24"
+    "sourceId": "gloomhavensecretariat:event/WR-24"
   },
   {
     "eventType": "road",
@@ -4049,7 +4049,7 @@
       "outcome": "SLED: You clamber onto the sled and race down the hill as quickly as possible. You barrel past the bandit to the sound of a chorus of roars coming from behind you. Your sled crashes near the bottom of the hill. It'll need repairs, but at least you're alive. Lose lumber collective 1. OTHERWISE: Charging down the hill, you see the bandit chanting with her eyes closed. You sprint past her as the chanting continues uninterrupted. You reach the bottom of the hill and catch your breath. The snowstorm is subsiding, but you feel an odd sensation creeping down the back of your neck. All characters start the next scenario with Curse."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-25"
+    "sourceId": "gloomhavensecretariat:event/WR-25"
   },
   {
     "eventType": "road",
@@ -4065,7 +4065,7 @@
       "outcome": "You wait until nightfall-it's not a long wait this time of year. You peer through the rippling aurora as the stars emerge, trying to make sense of where you are. CHAOTIC: Yes, the darkness of night is definitely more your thing. You embrace the uncertainty of the situation and follow your gut. It doesn't lead you astray. Gain 1 inspiration. OTHERWISE: You think you've got it figured out... until you realize the constellation you thought you were following isn't even in the sky this time of year. Hopes dashed, you make camp and try again in the morning. All characters suffer 2 damage at the start of the next scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-26"
+    "sourceId": "gloomhavensecretariat:event/WR-26"
   },
   {
     "eventType": "road",
@@ -4081,7 +4081,7 @@
       "outcome": "You feel ashamed as you retreat, but you'd happily trade the delay for not having to walk through any more of those mines. It seems like the Snow Imps, however, do not plan to forget your shame so easily, and they harass you all the way to your destination. Discard 1 card."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-27"
+    "sourceId": "gloomhavensecretariat:event/WR-27"
   },
   {
     "eventType": "road",
@@ -4097,7 +4097,7 @@
       "outcome": "The delivery location turns out to be a narrow cave that requires a bit of squeezing to enter. You call out when you get inside, but instead of a grandson waiting for an envelope, you find the needle-like teeth of a half-dozen Abaeli. They spring on you, tearing at your skin in an effort to collect an easy meal. The ambushers weren't expecting battle-hardened mercenaries, though-after some unpaid work, you finish off the last of the creatures. You open the old man's envelope to find a scrawled note: \"These are the last idiots I'm sending you today.\" All characters suffer 3 damage at the start of the next scenario."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-28"
+    "sourceId": "gloomhavensecretariat:event/WR-28"
   },
   {
     "eventType": "road",
@@ -4113,7 +4113,7 @@
       "outcome": "Following the trail away from Frosthaven, you get an eerie feeling of being watched. Whenever you turn to look, though, there's nothing but snow and trees. The trail goes cold as it leads down into a ravine and eventually dead-ends against a sheer cliff face. You start to head back to the main path when you're confronted by a group of hungry-looking Vermlings, weapons drawn. It's a fine ambush, but they weren't expecting mercenaries traveling to a mission. You make short work of them and correct the signage when you return to the marker pole. All characters suffer 2 damage at the start of the next scenario. Gain 5 experience."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-29"
+    "sourceId": "gloomhavensecretariat:event/WR-29"
   },
   {
     "eventType": "road",
@@ -4129,7 +4129,7 @@
       "outcome": "You'll never make it through the night. The only way to keep warm is to keep moving, and without your supplies there's nothing you can do but turn back. Discard 2 cards; gain Undefined. Draw another winter-road event."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-30"
+    "sourceId": "gloomhavensecretariat:event/WR-30"
   },
   {
     "eventType": "road",
@@ -4145,7 +4145,7 @@
       "outcome": "You kneel on the ice and start digging. After more than two hours in the cold, you survey the haul: three malformed radishes between the lot of you. He resigns himself to failure and thanks you for your time before wandering back toward Frosthaven. Discard 1 card."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-31"
+    "sourceId": "gloomhavensecretariat:event/WR-31"
   },
   {
     "eventType": "road",
@@ -4158,7 +4158,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-32"
+    "sourceId": "gloomhavensecretariat:event/WR-32"
   },
   {
     "eventType": "road",
@@ -4174,7 +4174,7 @@
       "outcome": "He takes it in stride: \"No matter, friends. There will always be a greater battle. I will train until we meet again!\" Ormi begins doing one-handed push-ups at the side of the road. No effect."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-33"
+    "sourceId": "gloomhavensecretariat:event/WR-33"
   },
   {
     "eventType": "road",
@@ -4193,7 +4193,7 @@
       "text": "",
       "outcome": "Just as the old Orchid woman predicted, you knew the right answer to the riddle. The curse is lifted and you're able to speak freely once more. The crystal itself fades, the light gone from it. At a touch it crumbles away, revealing a robe similar to that one the old Orchid woman was wearing so long ago. Gain item 47."
     },
-    "_source": "gloomhavensecretariat:event/WR-34"
+    "sourceId": "gloomhavensecretariat:event/WR-34"
   },
   {
     "eventType": "road",
@@ -4209,7 +4209,7 @@
       "outcome": "CHAOTIC, RESOURCEFUL: The river looks dire, but it's a manageable problem. You see the patterns in the chaotic water and strategically toss in some larger stones and branches to create a makeshift path and get across with only a few unexpected dips into the stream. Discard 1 card. OTHERWISE: You try to wade through the icy river but it's impossibly cold. The swift current takes your balance out from under you, and by the time you've made it to the other side, all warmth has left your body and the contents of your pack are scattered. All characters start the next scenario with Brittle. All characters suffer 3 damage at the start of the next scenario. All characters Lost one Small."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-35"
+    "sourceId": "gloomhavensecretariat:event/WR-35"
   },
   {
     "eventType": "road",
@@ -4225,7 +4225,7 @@
       "outcome": "You want to know how this kid keeps ending up on the business end of undead hordes. The only way you're going to find out, though, is if you keep him alive long enough to ask him. You draw steel and jump into the fray alongside the overconfident youth. \"Thanks. I mean, I had that handled, but, you were helpful,\" the Inox says as you wipe off your blade. \"Here, as a momento of my favor.\" He takes an amulet from around his neck. \"It was meant to help me in my hunt for monsters, but... well, I think it works too well.\" Gain item 198."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-36"
+    "sourceId": "gloomhavensecretariat:event/WR-36"
   },
   {
     "eventType": "road",
@@ -4241,7 +4241,7 @@
       "outcome": "Malrog digs into his satchel and pulls out a small pendant on a long chain. \"I kept this in the hopes I'd see you again. As thanks for your gift so long ago.\" With that and a smile, he bids you farewell. Gain item 31. All characters start the next scenario with Bless."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-37"
+    "sourceId": "gloomhavensecretariat:event/WR-37"
   },
   {
     "eventType": "road",
@@ -4257,7 +4257,7 @@
       "outcome": "You shout up to Malrog, who obliges with a flurry of blue-feathered arrows from his bow. The hounds scatter, uninterested in a fight they're not sure to win. \"You honored me with your assistance some time ago, and an Algox doesn't forget. Regardless of your appearance, you will always be among my Algox friends.\" He drops a fresh kill at your feet. \"I wish you safe travels.\" Gain hide collective 2."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-38"
+    "sourceId": "gloomhavensecretariat:event/WR-38"
   },
   {
     "eventType": "road",
@@ -4273,7 +4273,7 @@
       "outcome": "You shout up to Malrog, asking for help in the face of impossible odds. \"You taught me an important lesson about self-sufficiency, and I would not dishonor you by preventing your own education.\" The hounds circle your party and attack, a maelstrom of bites and claws, as Malrog silently watches from his perch. You fight for your lives as the exhaustion sets in, and still Malrog refuses to do more than observe. You barely beat back the last of the hounds and see that Malrog has turned to leave. \"Until we meet again.\" All characters start the next scenario with Wound, Brittle, Impair. Discard 1 card."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-39"
+    "sourceId": "gloomhavensecretariat:event/WR-39"
   },
   {
     "eventType": "road",
@@ -4286,7 +4286,7 @@
     },
     "optionB": null,
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-40"
+    "sourceId": "gloomhavensecretariat:event/WR-40"
   },
   {
     "eventType": "road",
@@ -4302,7 +4302,7 @@
       "outcome": "\"TOUGH GUYS, HUH?\" Stump's head glows with a blue light. \"YOU THINK YOU'RE TOUGHER THAN US?\" While Snickles isn't much of a threat, Stump more than makes up for it in the ensuing fight-by the time it's over, the impromptu battlefield is singed with blasts of blue light. Smoke permeates the air after a particularly large bolt and the pair of machines take the opportunity to slip away in the chaos. At least you got a few good hits in. Gain 3 experience. All characters start the next scenario with Wound."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-41"
+    "sourceId": "gloomhavensecretariat:event/WR-41"
   },
   {
     "eventType": "road",
@@ -4318,7 +4318,7 @@
       "outcome": "LOSE 1, AXENUT: You hold out a handful of nuts, and the majestic creature briefly forgets its predicament. With its sharp golden beak it taps at the nut, cracking it open with a swiftness unbecoming its size. A long pink tongue scrapes your hand as it picks the edible bits from between the shells. The distraction gives you a chance to wrest the creature's enormous antlers free of the brambles. They have a warmth to them, as though blood is flowing clear to the tips. It doesn't take long before the creature is free. It bows its head and gives a purring noise before galloping off. Add campaign sticker: brummix."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-42"
+    "sourceId": "gloomhavensecretariat:event/WR-42"
   },
   {
     "eventType": "road",
@@ -4334,7 +4334,7 @@
       "outcome": "VERMLING: You catch a whiff of the meal they're cooking and recognize it immediately! It's Black Imp stew-your mother used to make it for the whole nest when you were young. Vermling: All characters start the next scenario with Ward. OTHERWISE: You offer to tend to the stew. The Vermlings are surprised, but happy for the help. After a few minutes of stirring, you taste it to see if it's ready... and start vomiting within seconds. A Vermling mutters, \"Most species can't handle Black Imp meat like we can. Delicate stomachs.\" All characters start the next scenario with Poison."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-43"
+    "sourceId": "gloomhavensecretariat:event/WR-43"
   },
   {
     "eventType": "road",
@@ -4350,7 +4350,7 @@
       "outcome": "\"Perfect,\" she says as the red corpsescap you were holding suddenly appears in her hand. She gives it a big sniff. \"Yes, this should do nicely…\" She breaks off a small chunk and hands it to you. \"Chew on that.\" It has a spongy, icy texture that melts to a distinct aftertaste of ash. \"Don't say I never gave you anything.\" With that, she splits a portal open in the air and steps through to an alley in front of a decrepit tavern in a city that looks nice and warm. It snaps shut behind her. All characters start the next scenario with Ward, Strengthen."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-44"
+    "sourceId": "gloomhavensecretariat:event/WR-44"
   },
   {
     "eventType": "road",
@@ -4366,7 +4366,7 @@
       "outcome": "You lift the sarcophagus lid back onto the skeleton's resting place and a calm falls over the room. Carvings in the walls of the room, obscured by dust, tell the tale of a great king and leader laid to rest. You don't know who would notice, but you take a moment to brush off the cobwebs and leave the tomb better than you found it. It would be nice to be honored this way someday. Gain 1 morale. See section/week: 142.1. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-45"
+    "sourceId": "gloomhavensecretariat:event/WR-45"
   },
   {
     "eventType": "road",
@@ -4382,7 +4382,7 @@
       "outcome": "You remember Eddica's warning and quickly stow the book in your satchel without opening it. She'll be in a better position to unlock the power within. See section/week: 44.4. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-46"
+    "sourceId": "gloomhavensecretariat:event/WR-46"
   },
   {
     "eventType": "road",
@@ -4398,7 +4398,7 @@
       "outcome": "This looks beyond your pay grade. You place it carefully into your pack to bring back to Eddica the librarian. She'll know what to do with it. See section/week: 181.1. Remove this event from the deck."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-47"
+    "sourceId": "gloomhavensecretariat:event/WR-47"
   },
   {
     "eventType": "road",
@@ -4417,7 +4417,7 @@
       "text": "Both machines are the HIVE.",
       "outcome": "You try to explain that both of the machines are part of the HIVE, that the essence of the HIVE was cooperation-a bunch of different machines working in unison to highlight their strengths and shore up their weaknesses. No single machine could possibly represent the HIVE. \"PERHAPS YOU ARE RIGHT,\" the machines admit. The helicopter flies down and attaches itself to the tank, lifting it out of the snow. \"YES. NOW WE ARE STRONG AND MOBILE. WE MUST FIND THE OTHERS!\" The united machines fly off in excitement. All characters start the next scenario with Bless."
     },
-    "_source": "gloomhavensecretariat:event/WR-48"
+    "sourceId": "gloomhavensecretariat:event/WR-48"
   },
   {
     "eventType": "road",
@@ -4433,6 +4433,6 @@
       "outcome": "You know that if you go through that door, it's going to turn into a whole thing, and you have much more pressing matters to attend to at the moment. And so, you meticulously pinpoint its location on your map so you can return to investigate this mystery later. Once the storm passes, you head on your way. Unlock scenario 105."
     },
     "optionC": null,
-    "_source": "gloomhavensecretariat:event/WR-49"
+    "sourceId": "gloomhavensecretariat:event/WR-49"
   }
 ]

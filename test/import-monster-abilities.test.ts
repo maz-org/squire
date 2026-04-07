@@ -33,7 +33,7 @@ describe('convertMonsterAbility', () => {
       cardName: 'Forceful Strike',
       initiative: 45,
       abilities: ['Move 1', 'Attack 2'],
-      _source: 'gloomhavensecretariat:algox-archer/100',
+      sourceId: 'gloomhavensecretariat:monster-ability/algox-archer/100',
     });
   });
 

@@ -34,7 +34,7 @@ interface ExtractedMonsterAbility {
   cardName: string;
   initiative: number;
   abilities: string[];
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ export function convertMonsterAbility(
     cardName: ghs.name,
     initiative: ghs.initiative,
     abilities,
-    _source: `gloomhavensecretariat:${deckName}/${ghs.cardId}`,
+    sourceId: `gloomhavensecretariat:monster-ability/${deckName}/${ghs.cardId}`,
   };
 }
 
@@ -78,7 +78,18 @@ export function importMonsterAbilities(): ExtractedMonsterAbility[] {
     const deckName = basename(file, '.json');
     const deck: GhsDeck = JSON.parse(readFileSync(join(GHS_DECK_DIR, file), 'utf-8'));
 
-    for (const ability of deck.abilities) {
+    // Sort by cardId so dedupe is deterministic — keep the lowest-ID copy.
+    const sortedAbilities = [...deck.abilities].sort((a, b) => a.cardId - b.cardId);
+
+    // Dedupe within a deck by content equivalence. Upstream GHS data contains
+    // genuine duplicates (e.g. ancient-artillery cards 627 and 628 both
+    // "Exploding Ammunition" with byte-identical actions). Keep the first
+    // occurrence and drop subsequent rows whose (name, initiative, abilities)
+    // tuple matches a row already kept. Log dropped sourceIds to stderr so
+    // reviewers can spot the upstream dupes.
+    const seen = new Set<string>();
+
+    for (const ability of sortedAbilities) {
       const converted = convertMonsterAbility(ability, deckName, labels);
 
       // Replace any unresolved label references with a placeholder — some solo
@@ -94,6 +105,15 @@ export function importMonsterAbilities(): ExtractedMonsterAbility[] {
           `Unresolved game token in ${deckName}/${ability.cardId}: ${unresolvedGame}`,
         );
       }
+
+      const dedupeKey = `${converted.cardName}|${converted.initiative}|${JSON.stringify(converted.abilities)}`;
+      if (seen.has(dedupeKey)) {
+        console.warn(
+          `[import-monster-abilities] dropping upstream duplicate: ${converted.sourceId} (matches an earlier row in ${deckName})`,
+        );
+        continue;
+      }
+      seen.add(dedupeKey);
 
       allResults.push(converted);
     }

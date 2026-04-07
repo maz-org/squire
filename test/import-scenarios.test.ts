@@ -38,7 +38,7 @@ describe('convertScenario', () => {
       },
     };
 
-    const result = convertScenario(ghs, labels);
+    const result = convertScenario(ghs, '001', labels);
 
     expect(result.index).toBe('1');
     expect(result.name).toBe('A Town in Flames');
@@ -59,7 +59,42 @@ describe('convertScenario', () => {
       snowthistle: 2,
     });
     expect(result.flowChartGroup).toBe('intro');
-    expect(result._source).toBe('gloomhavensecretariat:scenario/1');
+    expect(result.scenarioGroup).toBe('main');
+    expect(result.sourceId).toBe('gloomhavensecretariat:scenario/001');
+  });
+
+  it('derives scenarioGroup=solo from solo* filename and uses filename in sourceId', () => {
+    const ghs = {
+      index: '20',
+      name: 'Wonder of Nature',
+      edition: 'fh',
+      complexity: 1,
+      monsters: [],
+      lootDeckConfig: {},
+    };
+
+    const result = convertScenario(ghs, 'solo20_drifter', labels);
+
+    expect(result.scenarioGroup).toBe('solo');
+    // sourceId uses the filename basename, not the in-file index — this is
+    // what disambiguates main scenario 20 from solo scenario 20.
+    expect(result.sourceId).toBe('gloomhavensecretariat:scenario/solo20_drifter');
+  });
+
+  it('derives scenarioGroup=random from the random.json filename', () => {
+    const ghs = {
+      index: '1',
+      name: 'Random',
+      edition: 'fh',
+      complexity: 1,
+      monsters: [],
+      lootDeckConfig: {},
+    };
+
+    const result = convertScenario(ghs, 'random', labels);
+
+    expect(result.scenarioGroup).toBe('random');
+    expect(result.sourceId).toBe('gloomhavensecretariat:scenario/random');
   });
 
   it('converts a scenario with requirements, objectives, and structured rewards', () => {
@@ -84,7 +119,7 @@ describe('convertScenario', () => {
       lootDeckConfig: { money: 13, lumber: 2, hide: 3, arrowvine: 2 },
     };
 
-    const result = convertScenario(ghs, labels);
+    const result = convertScenario(ghs, '001', labels);
 
     expect(result.index).toBe('50');
     expect(result.name).toBe('Explosive Descent');
@@ -120,7 +155,7 @@ describe('convertScenario', () => {
       },
     };
 
-    const result = convertScenario(ghs, labels);
+    const result = convertScenario(ghs, '001', labels);
 
     expect(result.index).toBe('73');
     expect(result.name).toBe('Flotsam');
@@ -149,7 +184,7 @@ describe('convertScenario', () => {
       },
     };
 
-    const result = convertScenario(ghs, labels);
+    const result = convertScenario(ghs, '001', labels);
 
     expect(result.rewards).toBe('Prosperity 1, Morale 1');
   });
@@ -169,7 +204,7 @@ describe('convertScenario', () => {
       },
     };
 
-    const result = convertScenario(ghs, labels);
+    const result = convertScenario(ghs, '001', labels);
 
     expect(result.rewards).toBe('15 XP, 10 gold');
   });
@@ -189,7 +224,7 @@ describe('convertScenario', () => {
       },
     };
 
-    const result = convertScenario(ghs, labels);
+    const result = convertScenario(ghs, '001', labels);
 
     // custom label takes priority
     expect(result.rewards).toBe(

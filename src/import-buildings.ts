@@ -29,7 +29,9 @@ const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'buildings.json')
 // ─── GHS building type ─────────────────────────────────────────────────────
 
 export interface GhsBuilding {
-  id: string;
+  // Walls (e.g. wall-j, wall-k) genuinely have no `id` field in GHS — they're
+  // identified only by `name`. Optional here so the importer can handle both.
+  id?: string;
   name: string;
   costs: {
     prosperity: number;
@@ -54,7 +56,8 @@ export interface GhsBuilding {
 // ─── Our extracted format ──────────────────────────────────────────────────
 
 interface ExtractedBuilding {
-  buildingNumber: string;
+  // Nullable: walls have no building number in the GHS domain.
+  buildingNumber: string | null;
   name: string;
   level: number;
   buildCost: {
@@ -65,7 +68,7 @@ interface ExtractedBuilding {
   };
   effect: string;
   notes: string | null;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -134,13 +137,19 @@ export function convertBuilding(ghs: GhsBuilding, labels: LabelData): ExtractedB
     }
 
     results.push({
-      buildingNumber: ghs.id,
+      // Walls have no number in GHS — keep null rather than coercing to a string.
+      buildingNumber: ghs.id ?? null,
       name: displayName,
       level,
       buildCost,
       effect,
       notes: null,
-      _source: `gloomhavensecretariat:building/${ghs.id}`,
+      // Fall back to `ghs.name` (e.g. "wall-j") so each wall gets a stable,
+      // unique identifier even though they share `buildingNumber: null`.
+      // Append `/L<level>` because each GHS building expands into one row
+      // per level — without the level suffix every level of the same
+      // building would collide on sourceId.
+      sourceId: `gloomhavensecretariat:building/${ghs.id ?? ghs.name}/L${level}`,
     });
   }
 

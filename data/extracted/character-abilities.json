@@ -13,7 +13,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/185"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/185"
   },
   {
     "cardName": "Bounty of the Earth",
@@ -29,7 +29,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/186"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/186"
   },
   {
     "cardName": "Caress of the night",
@@ -45,7 +45,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/187"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/187"
   },
   {
     "cardName": "Formless Bladestorm",
@@ -61,7 +61,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/188"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/188"
   },
   {
     "cardName": "Emerald Edge",
@@ -77,7 +77,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/189"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/189"
   },
   {
     "cardName": "Torrential Cleave",
@@ -93,7 +93,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/190"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/190"
   },
   {
     "cardName": "Onyx Shards",
@@ -109,7 +109,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/191"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/191"
   },
   {
     "cardName": "Unstoppable Impulse",
@@ -125,7 +125,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/192"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/192"
   },
   {
     "cardName": "Slashing Cyclone",
@@ -141,7 +141,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/193"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/193"
   },
   {
     "cardName": "Rising Momentum",
@@ -157,7 +157,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/194"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/194"
   },
   {
     "cardName": "Stoic Vigilance",
@@ -173,7 +173,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/195"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/195"
   },
   {
     "cardName": "Imbue with Life",
@@ -189,7 +189,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/196"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/196"
   },
   {
     "cardName": "Battle Prowess",
@@ -205,7 +205,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/197"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/197"
   },
   {
     "cardName": "Crystalline Aegis",
@@ -221,7 +221,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/198"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/198"
   },
   {
     "cardName": "Veil of Protection",
@@ -237,7 +237,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/199"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/199"
   },
   {
     "cardName": "Remote Impact",
@@ -253,7 +253,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/200"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/200"
   },
   {
     "cardName": "Reinforced Riposte",
@@ -269,7 +269,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/201"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/201"
   },
   {
     "cardName": "Guide the Flow",
@@ -285,7 +285,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/202"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/202"
   },
   {
     "cardName": "Coalescing Darkness",
@@ -301,7 +301,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/203"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/203"
   },
   {
     "cardName": "Desperate Throw",
@@ -317,7 +317,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/204"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/204"
   },
   {
     "cardName": "Gemstone Resonance",
@@ -333,7 +333,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/205"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/205"
   },
   {
     "cardName": "Obsidian Spear",
@@ -349,7 +349,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/206"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/206"
   },
   {
     "cardName": "Propulsive Tailwind",
@@ -365,7 +365,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/207"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/207"
   },
   {
     "cardName": "Gale Barrage",
@@ -381,7 +381,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/208"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/208"
   },
   {
     "cardName": "Diamondization",
@@ -397,7 +397,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/209"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/209"
   },
   {
     "cardName": "Malachite Shockwave",
@@ -413,7 +413,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/210"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/210"
   },
   {
     "cardName": "Untether the Shackles",
@@ -429,7 +429,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/211"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/211"
   },
   {
     "cardName": "Swift Pivot",
@@ -445,7 +445,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/212"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/212"
   },
   {
     "cardName": "Ancient Rites of Power",
@@ -461,7 +461,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/213"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/213"
   },
   {
     "cardName": "Sky-Splitting Strike",
@@ -477,7 +477,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:astral/214"
+    "sourceId": "gloomhavensecretariat:character-ability/astral/214"
   },
   {
     "cardName": "At All Costs",
@@ -493,7 +493,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/61"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/61"
   },
   {
     "cardName": "Rallying Cry",
@@ -509,7 +509,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:banner-spear/62"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/62"
   },
   {
     "cardName": "Unbreakable Wall",
@@ -525,7 +525,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:banner-spear/63"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/63"
   },
   {
     "cardName": "Javelin",
@@ -543,7 +543,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/64"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/64"
   },
   {
     "cardName": "Deflecting Maneuver",
@@ -559,7 +559,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/65"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/65"
   },
   {
     "cardName": "Tip of the Spear",
@@ -575,7 +575,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/66"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/66"
   },
   {
     "cardName": "Combined Effort",
@@ -591,7 +591,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/67"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/67"
   },
   {
     "cardName": "Set for the Charge",
@@ -607,7 +607,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/68"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/68"
   },
   {
     "cardName": "Pincer Movement",
@@ -623,7 +623,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/69"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/69"
   },
   {
     "cardName": "Regroup",
@@ -639,7 +639,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/70"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/70"
   },
   {
     "cardName": "Resolved Courage",
@@ -655,7 +655,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/71"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/71"
   },
   {
     "cardName": "Incendiary Throw",
@@ -671,7 +671,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/72"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/72"
   },
   {
     "cardName": "Driving Inspiration",
@@ -687,7 +687,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/73"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/73"
   },
   {
     "cardName": "Meat Grinder",
@@ -703,7 +703,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/74"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/74"
   },
   {
     "cardName": "Pinning Charge",
@@ -719,7 +719,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/75"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/75"
   },
   {
     "cardName": "Let Them Come",
@@ -735,7 +735,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/76"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/76"
   },
   {
     "cardName": "Head of the Hammer",
@@ -751,7 +751,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/77"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/77"
   },
   {
     "cardName": "Boldening Blow",
@@ -767,7 +767,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/78"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/78"
   },
   {
     "cardName": "Air Support",
@@ -783,7 +783,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/79"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/79"
   },
   {
     "cardName": "Explosive Epicenter",
@@ -799,7 +799,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/80"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/80"
   },
   {
     "cardName": "Hold the Line",
@@ -815,7 +815,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/81"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/81"
   },
   {
     "cardName": "Barricade",
@@ -831,7 +831,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/82"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/82"
   },
   {
     "cardName": "Bolstering Shout",
@@ -847,7 +847,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/83"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/83"
   },
   {
     "cardName": "Tri-Thrust",
@@ -863,7 +863,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/84"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/84"
   },
   {
     "cardName": "Lead from Afar",
@@ -879,7 +879,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/85"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/85"
   },
   {
     "cardName": "Sweeping Aid",
@@ -895,7 +895,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/86"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/86"
   },
   {
     "cardName": "Taunting Howl",
@@ -911,7 +911,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/87"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/87"
   },
   {
     "cardName": "Take no Prisoners",
@@ -927,7 +927,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/88"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/88"
   },
   {
     "cardName": "Hail of Spears",
@@ -943,7 +943,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:banner-spear/89"
+    "sourceId": "gloomhavensecretariat:character-ability/banner-spear/89"
   },
   {
     "cardName": "Blurry Jab",
@@ -959,7 +959,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/32"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/32"
   },
   {
     "cardName": "Twin Strike",
@@ -975,7 +975,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/33"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/33"
   },
   {
     "cardName": "Sap Speed",
@@ -991,7 +991,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/34"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/34"
   },
   {
     "cardName": "Kinetic Transfer",
@@ -1007,7 +1007,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/35"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/35"
   },
   {
     "cardName": "Overdrive",
@@ -1023,7 +1023,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/36"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/36"
   },
   {
     "cardName": "Power Leak",
@@ -1039,7 +1039,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/37"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/37"
   },
   {
     "cardName": "Hit and Run",
@@ -1055,7 +1055,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/38"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/38"
   },
   {
     "cardName": "Drive Recharge",
@@ -1071,7 +1071,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/39"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/39"
   },
   {
     "cardName": "Cascading Reaction",
@@ -1087,7 +1087,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/40"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/40"
   },
   {
     "cardName": "Temporal Displacement",
@@ -1103,7 +1103,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/41"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/41"
   },
   {
     "cardName": "Experimental Adjustment",
@@ -1119,7 +1119,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/42"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/42"
   },
   {
     "cardName": "Sand in the Hourglass",
@@ -1135,7 +1135,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/43"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/43"
   },
   {
     "cardName": "Borrowed Time",
@@ -1151,7 +1151,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/44"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/44"
   },
   {
     "cardName": "Systems Reboot",
@@ -1167,7 +1167,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/45"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/45"
   },
   {
     "cardName": "Reckless Augmentation",
@@ -1183,7 +1183,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/46"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/46"
   },
   {
     "cardName": "Make It Count",
@@ -1199,7 +1199,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/47"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/47"
   },
   {
     "cardName": "Double Time",
@@ -1215,7 +1215,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/48"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/48"
   },
   {
     "cardName": "Precision Timing",
@@ -1231,7 +1231,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/49"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/49"
   },
   {
     "cardName": "Potential Energy",
@@ -1247,7 +1247,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/50"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/50"
   },
   {
     "cardName": "Breakneck Speed",
@@ -1263,7 +1263,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/51"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/51"
   },
   {
     "cardName": "Flashing Flurry",
@@ -1279,7 +1279,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/52"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/52"
   },
   {
     "cardName": "Stab Them All",
@@ -1295,7 +1295,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/53"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/53"
   },
   {
     "cardName": "The Knife's Edge",
@@ -1311,7 +1311,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/54"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/54"
   },
   {
     "cardName": "Phasing Blades",
@@ -1327,7 +1327,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/55"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/55"
   },
   {
     "cardName": "Rushed to the End",
@@ -1343,7 +1343,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/56"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/56"
   },
   {
     "cardName": "Quantum Uncertainty",
@@ -1359,7 +1359,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/57"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/57"
   },
   {
     "cardName": "Fastest Alive",
@@ -1375,7 +1375,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/58"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/58"
   },
   {
     "cardName": "Reverse the Flow",
@@ -1391,7 +1391,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/59"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/59"
   },
   {
     "cardName": "Fractured Timeline",
@@ -1407,7 +1407,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:blinkblade/60"
+    "sourceId": "gloomhavensecretariat:character-ability/blinkblade/60"
   },
   {
     "cardName": "Life in Death",
@@ -1423,7 +1423,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/120"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/120"
   },
   {
     "cardName": "Returned Servant",
@@ -1439,7 +1439,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/121"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/121"
   },
   {
     "cardName": "Damned Horde",
@@ -1455,7 +1455,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/122"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/122"
   },
   {
     "cardName": "Transfer of Essence",
@@ -1471,7 +1471,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/123"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/123"
   },
   {
     "cardName": "Decaying Will",
@@ -1487,7 +1487,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/124"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/124"
   },
   {
     "cardName": "Dark Tidings",
@@ -1503,7 +1503,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/125"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/125"
   },
   {
     "cardName": "Angry Spirits",
@@ -1519,7 +1519,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/126"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/126"
   },
   {
     "cardName": "Fell Remedy",
@@ -1535,7 +1535,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/127"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/127"
   },
   {
     "cardName": "Flow of the Black River",
@@ -1551,7 +1551,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/128"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/128"
   },
   {
     "cardName": "Command the Wretched",
@@ -1567,7 +1567,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/129"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/129"
   },
   {
     "cardName": "Eternal Torment",
@@ -1583,7 +1583,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/130"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/130"
   },
   {
     "cardName": "Malicious Conversion",
@@ -1599,7 +1599,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/131"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/131"
   },
   {
     "cardName": "Approach Oblivion",
@@ -1615,7 +1615,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/132"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/132"
   },
   {
     "cardName": "Exploding Corpse",
@@ -1631,7 +1631,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/133"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/133"
   },
   {
     "cardName": "Wrath of the Turned Earth",
@@ -1647,7 +1647,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/134"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/134"
   },
   {
     "cardName": "Unearthed Horror",
@@ -1663,7 +1663,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/135"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/135"
   },
   {
     "cardName": "Bone",
@@ -1679,7 +1679,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/136"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/136"
   },
   {
     "cardName": "Grave Digging",
@@ -1695,7 +1695,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/137"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/137"
   },
   {
     "cardName": "Putrid Cloud",
@@ -1711,7 +1711,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/138"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/138"
   },
   {
     "cardName": "Critical Failure",
@@ -1727,7 +1727,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/139"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/139"
   },
   {
     "cardName": "Flesh Shield",
@@ -1743,7 +1743,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/140"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/140"
   },
   {
     "cardName": "Unforgivable Methods",
@@ -1759,7 +1759,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/141"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/141"
   },
   {
     "cardName": "Solid Bones",
@@ -1775,7 +1775,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/142"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/142"
   },
   {
     "cardName": "Rotting Multitude",
@@ -1791,7 +1791,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/143"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/143"
   },
   {
     "cardName": "Twisted Decree",
@@ -1807,7 +1807,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/144"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/144"
   },
   {
     "cardName": "Recycled Limbs",
@@ -1823,7 +1823,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/145"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/145"
   },
   {
     "cardName": "Soul Claim",
@@ -1839,7 +1839,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/146"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/146"
   },
   {
     "cardName": "Endless Numbers",
@@ -1855,7 +1855,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/147"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/147"
   },
   {
     "cardName": "Wailing from Beyond",
@@ -1871,7 +1871,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/148"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/148"
   },
   {
     "cardName": "Unholy Prowess",
@@ -1887,7 +1887,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/149"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/149"
   },
   {
     "cardName": "Behold the Shrouded Sun",
@@ -1903,7 +1903,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:boneshaper/150"
+    "sourceId": "gloomhavensecretariat:character-ability/boneshaper/150"
   },
   {
     "cardName": "Overwhelming Wave",
@@ -1919,7 +1919,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/474"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/474"
   },
   {
     "cardName": "Soft Flesh",
@@ -1935,7 +1935,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/475"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/475"
   },
   {
     "cardName": "Rancid Brine",
@@ -1951,7 +1951,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/476"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/476"
   },
   {
     "cardName": "Sharp Chitin",
@@ -1967,7 +1967,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/477"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/477"
   },
   {
     "cardName": "Down to the Depths",
@@ -1983,7 +1983,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/478"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/478"
   },
   {
     "cardName": "Pool of Power",
@@ -1999,7 +1999,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/479"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/479"
   },
   {
     "cardName": "Skitter",
@@ -2015,7 +2015,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/480"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/480"
   },
   {
     "cardName": "Cleansing Swell",
@@ -2031,7 +2031,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/481"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/481"
   },
   {
     "cardName": "Cresting Force",
@@ -2047,7 +2047,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/482"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/482"
   },
   {
     "cardName": "Crashing Surge",
@@ -2063,7 +2063,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/483"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/483"
   },
   {
     "cardName": "Mighty Claws",
@@ -2079,7 +2079,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/484"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/484"
   },
   {
     "cardName": "Submerge",
@@ -2095,7 +2095,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/485"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/485"
   },
   {
     "cardName": "Rising flood",
@@ -2111,7 +2111,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/486"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/486"
   },
   {
     "cardName": "Undertow",
@@ -2127,7 +2127,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/487"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/487"
   },
   {
     "cardName": "Crush Armor",
@@ -2143,7 +2143,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/488"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/488"
   },
   {
     "cardName": "Smashing Torrent",
@@ -2159,7 +2159,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/489"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/489"
   },
   {
     "cardName": "Blood in the Water",
@@ -2175,7 +2175,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/490"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/490"
   },
   {
     "cardName": "Shuck",
@@ -2191,7 +2191,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/491"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/491"
   },
   {
     "cardName": "Powerful Pincer",
@@ -2207,7 +2207,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/492"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/492"
   },
   {
     "cardName": "Chaotic Refraction",
@@ -2223,7 +2223,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/493"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/493"
   },
   {
     "cardName": "Clean Sweep",
@@ -2239,7 +2239,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/494"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/494"
   },
   {
     "cardName": "Tidal Blast",
@@ -2255,7 +2255,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/495"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/495"
   },
   {
     "cardName": "Sodden Soil",
@@ -2271,7 +2271,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/496"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/496"
   },
   {
     "cardName": "Endless Cycle",
@@ -2287,7 +2287,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/497"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/497"
   },
   {
     "cardName": "Twilight Grasp",
@@ -2303,7 +2303,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/498"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/498"
   },
   {
     "cardName": "Dug In",
@@ -2319,7 +2319,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/499"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/499"
   },
   {
     "cardName": "Drown beneath the Waves",
@@ -2335,7 +2335,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/500"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/500"
   },
   {
     "cardName": "Death on All Sides",
@@ -2351,7 +2351,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/501"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/501"
   },
   {
     "cardName": "Ebb and Flow",
@@ -2367,7 +2367,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/502"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/502"
   },
   {
     "cardName": "High Tide",
@@ -2383,7 +2383,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/503"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/503"
   },
   {
     "cardName": "Low Tide",
@@ -2399,7 +2399,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:coral/504"
+    "sourceId": "gloomhavensecretariat:character-ability/coral/504"
   },
   {
     "cardName": "Call to the Abyss",
@@ -2415,7 +2415,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/90"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/90"
   },
   {
     "cardName": "Anger of the Dead",
@@ -2431,7 +2431,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/91"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/91"
   },
   {
     "cardName": "Sunless Apparition",
@@ -2447,7 +2447,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/92"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/92"
   },
   {
     "cardName": "Fluid night",
@@ -2463,7 +2463,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/93"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/93"
   },
   {
     "cardName": "Dark fog",
@@ -2479,7 +2479,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/94"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/94"
   },
   {
     "cardName": "Black Barrage",
@@ -2495,7 +2495,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/95"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/95"
   },
   {
     "cardName": "Call of Doom",
@@ -2511,7 +2511,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/96"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/96"
   },
   {
     "cardName": "Eclipse",
@@ -2527,7 +2527,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/97"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/97"
   },
   {
     "cardName": "Lingering Rot",
@@ -2543,7 +2543,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/98"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/98"
   },
   {
     "cardName": "Shadow Step",
@@ -2559,7 +2559,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/99"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/99"
   },
   {
     "cardName": "Strength of the Abyss",
@@ -2575,7 +2575,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/100"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/100"
   },
   {
     "cardName": "Wave of Anguish",
@@ -2591,7 +2591,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/101"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/101"
   },
   {
     "cardName": "Forceful Spirits",
@@ -2607,7 +2607,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/102"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/102"
   },
   {
     "cardName": "Rest in the Shade",
@@ -2623,7 +2623,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/103"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/103"
   },
   {
     "cardName": "Restless Spirits",
@@ -2639,7 +2639,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/104"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/104"
   },
   {
     "cardName": "Deepening Despair",
@@ -2655,7 +2655,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/105"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/105"
   },
   {
     "cardName": "Dead Bolt",
@@ -2671,7 +2671,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/106"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/106"
   },
   {
     "cardName": "Ritual Sacrifice",
@@ -2687,7 +2687,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/107"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/107"
   },
   {
     "cardName": "Fleeting Dusk",
@@ -2703,7 +2703,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/108"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/108"
   },
   {
     "cardName": "Pulled Across",
@@ -2719,7 +2719,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/109"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/109"
   },
   {
     "cardName": "Medium",
@@ -2735,7 +2735,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/110"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/110"
   },
   {
     "cardName": "Dominate",
@@ -2751,7 +2751,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/111"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/111"
   },
   {
     "cardName": "The night Takes Shape",
@@ -2767,7 +2767,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/112"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/112"
   },
   {
     "cardName": "Vengeful Storm",
@@ -2783,7 +2783,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/113"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/113"
   },
   {
     "cardName": "Proliferation of the Abyss",
@@ -2799,7 +2799,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/114"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/114"
   },
   {
     "cardName": "Hungry Grasps",
@@ -2815,7 +2815,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/115"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/115"
   },
   {
     "cardName": "Lashing Tendrils",
@@ -2831,7 +2831,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/116"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/116"
   },
   {
     "cardName": "Frozen in Fear",
@@ -2847,7 +2847,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/117"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/117"
   },
   {
     "cardName": "When Your Time Comes",
@@ -2863,7 +2863,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/118"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/118"
   },
   {
     "cardName": "Black Lance",
@@ -2879,7 +2879,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:deathwalker/119"
+    "sourceId": "gloomhavensecretariat:character-ability/deathwalker/119"
   },
   {
     "cardName": "Crushing Weight",
@@ -2897,7 +2897,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/1"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/1"
   },
   {
     "cardName": "Sustained Momentum",
@@ -2915,7 +2915,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/2"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/2"
   },
   {
     "cardName": "Precision Aim",
@@ -2933,7 +2933,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/3"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/3"
   },
   {
     "cardName": "Continuous Health",
@@ -2951,7 +2951,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/4"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/4"
   },
   {
     "cardName": "Relentless",
@@ -2967,7 +2967,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/5"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/5"
   },
   {
     "cardName": "Unbreakable",
@@ -2983,7 +2983,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/6"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/6"
   },
   {
     "cardName": "Vile Assault",
@@ -3003,7 +3003,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/7"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/7"
   },
   {
     "cardName": "Draining Arrows",
@@ -3021,7 +3021,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/8"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/8"
   },
   {
     "cardName": "Prudent Preparation",
@@ -3039,7 +3039,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/9"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/9"
   },
   {
     "cardName": "Deadly Shot",
@@ -3055,7 +3055,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/10"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/10"
   },
   {
     "cardName": "Bloodletting",
@@ -3073,7 +3073,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/11"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/11"
   },
   {
     "cardName": "Violent Inheritance",
@@ -3093,7 +3093,7 @@
       ]
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/12"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/12"
   },
   {
     "cardName": "Fortitude",
@@ -3109,7 +3109,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/13"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/13"
   },
   {
     "cardName": "No Remorse",
@@ -3128,7 +3128,7 @@
       ]
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/14"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/14"
   },
   {
     "cardName": "Destructive Fury",
@@ -3144,7 +3144,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/15"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/15"
   },
   {
     "cardName": "Shockwave",
@@ -3162,7 +3162,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/16"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/16"
   },
   {
     "cardName": "Ever Forward",
@@ -3180,7 +3180,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/17"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/17"
   },
   {
     "cardName": "Fierce Barrage",
@@ -3196,7 +3196,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/18"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/18"
   },
   {
     "cardName": "Dual Bow",
@@ -3212,7 +3212,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/19"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/19"
   },
   {
     "cardName": "Chunk of Flesh",
@@ -3231,7 +3231,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/20"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/20"
   },
   {
     "cardName": "Gift of the Prey",
@@ -3251,7 +3251,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/21"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/21"
   },
   {
     "cardName": "Survivalist",
@@ -3270,7 +3270,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/22"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/22"
   },
   {
     "cardName": "Break Through",
@@ -3288,7 +3288,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/23"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/23"
   },
   {
     "cardName": "Accurate Strikes",
@@ -3306,7 +3306,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/24"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/24"
   },
   {
     "cardName": "Consume Stamina",
@@ -3327,7 +3327,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/25"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/25"
   },
   {
     "cardName": "Like the Wind",
@@ -3345,7 +3345,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/26"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/26"
   },
   {
     "cardName": "Unending Fight",
@@ -3364,7 +3364,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/27"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/27"
   },
   {
     "cardName": "Against All Odds",
@@ -3382,7 +3382,7 @@
       "effects": []
     },
     "lost": true,
-    "_source": "gloomhavensecretariat:drifter/28"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/28"
   },
   {
     "cardName": "Inevitable Conclusion",
@@ -3398,7 +3398,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/29"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/29"
   },
   {
     "cardName": "Everlasting",
@@ -3414,7 +3414,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/30"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/30"
   },
   {
     "cardName": "Use Every Part",
@@ -3434,7 +3434,7 @@
       ]
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drifter/31"
+    "sourceId": "gloomhavensecretariat:character-ability/drifter/31"
   },
   {
     "cardName": "Steam Armor",
@@ -3450,7 +3450,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/417"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/417"
   },
   {
     "cardName": "Ancient Drill",
@@ -3466,7 +3466,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/418"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/418"
   },
   {
     "cardName": "Rocket Boots",
@@ -3482,7 +3482,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/419"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/419"
   },
   {
     "cardName": "Power Core",
@@ -3498,7 +3498,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/420"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/420"
   },
   {
     "cardName": "Steel Piston",
@@ -3514,7 +3514,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/421"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/421"
   },
   {
     "cardName": "Pressure Build Up",
@@ -3530,7 +3530,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/422"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/422"
   },
   {
     "cardName": "Beam Axe",
@@ -3546,7 +3546,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/423"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/423"
   },
   {
     "cardName": "Memory Drive",
@@ -3562,7 +3562,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/424"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/424"
   },
   {
     "cardName": "Super Heat Transfer",
@@ -3578,7 +3578,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/425"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/425"
   },
   {
     "cardName": "Processing",
@@ -3594,7 +3594,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/426"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/426"
   },
   {
     "cardName": "Recursion",
@@ -3610,7 +3610,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/427"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/427"
   },
   {
     "cardName": "Curious Gear",
@@ -3626,7 +3626,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/428"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/428"
   },
   {
     "cardName": "Release Valve",
@@ -3642,7 +3642,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/429"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/429"
   },
   {
     "cardName": "Bronze Plating",
@@ -3658,7 +3658,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/430"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/430"
   },
   {
     "cardName": "Stress Vents",
@@ -3674,7 +3674,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/431"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/431"
   },
   {
     "cardName": "Electrical Discharge",
@@ -3690,7 +3690,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/432"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/432"
   },
   {
     "cardName": "Energy Conversion",
@@ -3706,7 +3706,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/433"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/433"
   },
   {
     "cardName": "Magnetic Field",
@@ -3722,7 +3722,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/434"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/434"
   },
   {
     "cardName": "Radiation",
@@ -3738,7 +3738,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/435"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/435"
   },
   {
     "cardName": "Heat Conduction",
@@ -3754,7 +3754,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/436"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/436"
   },
   {
     "cardName": "Scalding Blast",
@@ -3770,7 +3770,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/437"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/437"
   },
   {
     "cardName": "Steam Core",
@@ -3786,7 +3786,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/438"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/438"
   },
   {
     "cardName": "Heated Drill",
@@ -3802,7 +3802,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/439"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/439"
   },
   {
     "cardName": "Cryogenic Hibernation",
@@ -3818,7 +3818,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/440"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/440"
   },
   {
     "cardName": "Piston Barrage",
@@ -3834,7 +3834,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/441"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/441"
   },
   {
     "cardName": "Curious Machinery",
@@ -3850,7 +3850,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/442"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/442"
   },
   {
     "cardName": "Polarity Shift",
@@ -3866,7 +3866,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/443"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/443"
   },
   {
     "cardName": "Unstable Core",
@@ -3882,7 +3882,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:drill/444"
+    "sourceId": "gloomhavensecretariat:character-ability/drill/444"
   },
   {
     "cardName": "One with the Mountain",
@@ -3898,7 +3898,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/360"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/360"
   },
   {
     "cardName": "Cold Boulder",
@@ -3914,7 +3914,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/361"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/361"
   },
   {
     "cardName": "Frost Eruption",
@@ -3930,7 +3930,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/362"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/362"
   },
   {
     "cardName": "Fury of the Mountain",
@@ -3946,7 +3946,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/363"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/363"
   },
   {
     "cardName": "Encased Punch",
@@ -3962,7 +3962,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/364"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/364"
   },
   {
     "cardName": "Voice from Below",
@@ -3978,7 +3978,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/365"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/365"
   },
   {
     "cardName": "Piercing Pummel",
@@ -3994,7 +3994,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/366"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/366"
   },
   {
     "cardName": "Ice Blast",
@@ -4010,7 +4010,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/367"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/367"
   },
   {
     "cardName": "Shard Launch",
@@ -4026,7 +4026,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/368"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/368"
   },
   {
     "cardName": "Primal Bellow",
@@ -4042,7 +4042,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/369"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/369"
   },
   {
     "cardName": "Freezing Shell",
@@ -4058,7 +4058,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/370"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/370"
   },
   {
     "cardName": "Draw of the Bedrock",
@@ -4074,7 +4074,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/371"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/371"
   },
   {
     "cardName": "Crushing Crystals",
@@ -4090,7 +4090,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/372"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/372"
   },
   {
     "cardName": "Lacerating Eruption",
@@ -4106,7 +4106,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/373"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/373"
   },
   {
     "cardName": "Frozen Over",
@@ -4122,7 +4122,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/374"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/374"
   },
   {
     "cardName": "The Mountain s Fist",
@@ -4138,7 +4138,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/375"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/375"
   },
   {
     "cardName": "Packed Solid",
@@ -4154,7 +4154,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/376"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/376"
   },
   {
     "cardName": "Preserved Fury",
@@ -4170,7 +4170,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/377"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/377"
   },
   {
     "cardName": "Ice Uppercut",
@@ -4186,7 +4186,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/378"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/378"
   },
   {
     "cardName": "Thick Frost",
@@ -4202,7 +4202,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/379"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/379"
   },
   {
     "cardName": "Glacier Slam",
@@ -4218,7 +4218,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/380"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/380"
   },
   {
     "cardName": "Gift of the Mountain",
@@ -4234,7 +4234,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/381"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/381"
   },
   {
     "cardName": "Seeing Stars",
@@ -4250,7 +4250,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/382"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/382"
   },
   {
     "cardName": "Shattering Blow",
@@ -4266,7 +4266,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/383"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/383"
   },
   {
     "cardName": "Draw Strength",
@@ -4282,7 +4282,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/384"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/384"
   },
   {
     "cardName": "Bring Down the Mountain",
@@ -4298,7 +4298,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/385"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/385"
   },
   {
     "cardName": "Frozen Spike",
@@ -4314,7 +4314,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:fist/386"
+    "sourceId": "gloomhavensecretariat:character-ability/fist/386"
   },
   {
     "cardName": "Icebound Quills",
@@ -4330,7 +4330,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/151"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/151"
   },
   {
     "cardName": "Draining Pincers",
@@ -4346,7 +4346,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/152"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/152"
   },
   {
     "cardName": "Hornet Stingers",
@@ -4362,7 +4362,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/153"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/153"
   },
   {
     "cardName": "Changeling's Boon",
@@ -4378,7 +4378,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/154"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/154"
   },
   {
     "cardName": "Flailing Tendrils",
@@ -4394,7 +4394,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/155"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/155"
   },
   {
     "cardName": "Drag Down",
@@ -4410,7 +4410,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/156"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/156"
   },
   {
     "cardName": "Hornbeetle Carapace",
@@ -4426,7 +4426,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/157"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/157"
   },
   {
     "cardName": "Reckless Jab",
@@ -4442,7 +4442,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/158"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/158"
   },
   {
     "cardName": "Feeding Frenzy",
@@ -4458,7 +4458,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/159"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/159"
   },
   {
     "cardName": "Selfless Offering",
@@ -4474,7 +4474,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/160"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/160"
   },
   {
     "cardName": "Into My Embrace",
@@ -4490,7 +4490,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/161"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/161"
   },
   {
     "cardName": "Firefly Swarm",
@@ -4506,7 +4506,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/162"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/162"
   },
   {
     "cardName": "Scarab flight",
@@ -4522,7 +4522,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/163"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/163"
   },
   {
     "cardName": "Mind Spike",
@@ -4538,7 +4538,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/164"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/164"
   },
   {
     "cardName": "Harvest the Essence",
@@ -4554,7 +4554,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/165"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/165"
   },
   {
     "cardName": "Hail of Thorns",
@@ -4570,7 +4570,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/166"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/166"
   },
   {
     "cardName": "Smoldering Hatred",
@@ -4586,7 +4586,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/167"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/167"
   },
   {
     "cardName": "Reshape the Guise",
@@ -4602,7 +4602,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/168"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/168"
   },
   {
     "cardName": "Venomous Barbs",
@@ -4618,7 +4618,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/169"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/169"
   },
   {
     "cardName": "Locust Host",
@@ -4634,7 +4634,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/170"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/170"
   },
   {
     "cardName": "Mandible Storm",
@@ -4650,7 +4650,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/171"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/171"
   },
   {
     "cardName": "Dragonfly Surge",
@@ -4666,7 +4666,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/172"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/172"
   },
   {
     "cardName": "Thresh and Flail",
@@ -4682,7 +4682,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/173"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/173"
   },
   {
     "cardName": "Luminous Descent",
@@ -4698,7 +4698,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/174"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/174"
   },
   {
     "cardName": "Formless Grace",
@@ -4714,7 +4714,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/175"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/175"
   },
   {
     "cardName": "Chitinous Horde",
@@ -4730,7 +4730,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/176"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/176"
   },
   {
     "cardName": "Corrosive Acids",
@@ -4746,7 +4746,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/177"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/177"
   },
   {
     "cardName": "Hirudotherapy",
@@ -4762,7 +4762,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/178"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/178"
   },
   {
     "cardName": "Two Pronged Entrapment",
@@ -4778,7 +4778,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/179"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/179"
   },
   {
     "cardName": "Alluring Pheromones",
@@ -4794,7 +4794,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/180"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/180"
   },
   {
     "cardName": "Accelerated Metabolism",
@@ -4810,7 +4810,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/181"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/181"
   },
   {
     "cardName": "Oscillating Entity",
@@ -4826,7 +4826,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/182"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/182"
   },
   {
     "cardName": "Harbinger of Ruin",
@@ -4842,7 +4842,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/183"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/183"
   },
   {
     "cardName": "Voice of Salvation",
@@ -4858,7 +4858,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:geminate/184"
+    "sourceId": "gloomhavensecretariat:character-ability/geminate/184"
   },
   {
     "cardName": "Skull Collection",
@@ -4874,7 +4874,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/445"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/445"
   },
   {
     "cardName": "Hollow Aura",
@@ -4890,7 +4890,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/446"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/446"
   },
   {
     "cardName": "Skewer the Flesh",
@@ -4906,7 +4906,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/447"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/447"
   },
   {
     "cardName": "Succumb to Fear",
@@ -4922,7 +4922,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/448"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/448"
   },
   {
     "cardName": "Ink Cloud",
@@ -4938,7 +4938,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/449"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/449"
   },
   {
     "cardName": "Lacerating Stabs",
@@ -4954,7 +4954,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/450"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/450"
   },
   {
     "cardName": "Staring into the Abyss",
@@ -4970,7 +4970,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/451"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/451"
   },
   {
     "cardName": "Mantle of Dread",
@@ -4986,7 +4986,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/452"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/452"
   },
   {
     "cardName": "Black Scythe",
@@ -5002,7 +5002,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/453"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/453"
   },
   {
     "cardName": "Tumultuous Panic",
@@ -5018,7 +5018,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/454"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/454"
   },
   {
     "cardName": "Soul Hunger",
@@ -5034,7 +5034,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/455"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/455"
   },
   {
     "cardName": "Morbid Camouflage",
@@ -5050,7 +5050,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/456"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/456"
   },
   {
     "cardName": "Haunting Brutality",
@@ -5066,7 +5066,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/457"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/457"
   },
   {
     "cardName": "Slipping into Death",
@@ -5082,7 +5082,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/458"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/458"
   },
   {
     "cardName": "Lie in Wait",
@@ -5098,7 +5098,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/459"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/459"
   },
   {
     "cardName": "Crippling Terror",
@@ -5114,7 +5114,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/460"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/460"
   },
   {
     "cardName": "Pinning Spines",
@@ -5130,7 +5130,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/461"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/461"
   },
   {
     "cardName": "Crushing Darkness",
@@ -5146,7 +5146,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/462"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/462"
   },
   {
     "cardName": "Grim Trophies",
@@ -5162,7 +5162,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/463"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/463"
   },
   {
     "cardName": "Extra Decoration",
@@ -5178,7 +5178,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/464"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/464"
   },
   {
     "cardName": "Death Spiral",
@@ -5194,7 +5194,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/465"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/465"
   },
   {
     "cardName": "Claw of Doom",
@@ -5210,7 +5210,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/466"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/466"
   },
   {
     "cardName": "The Remorseless Deep",
@@ -5226,7 +5226,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/467"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/467"
   },
   {
     "cardName": "Hasten the End",
@@ -5242,7 +5242,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/468"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/468"
   },
   {
     "cardName": "Dire frenzy",
@@ -5258,7 +5258,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/469"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/469"
   },
   {
     "cardName": "Unseen Horror",
@@ -5274,7 +5274,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/470"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/470"
   },
   {
     "cardName": "Rip from the Bone",
@@ -5290,7 +5290,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/471"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/471"
   },
   {
     "cardName": "Black Night of the Deep",
@@ -5306,7 +5306,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/472"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/472"
   },
   {
     "cardName": "Consume the Helpless",
@@ -5322,7 +5322,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:kelp/473"
+    "sourceId": "gloomhavensecretariat:character-ability/kelp/473"
   },
   {
     "cardName": "Cooling",
@@ -5338,7 +5338,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/215"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/215"
   },
   {
     "cardName": "Quenched Rage",
@@ -5354,7 +5354,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/216"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/216"
   },
   {
     "cardName": "Flowing Fire",
@@ -5370,7 +5370,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/217"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/217"
   },
   {
     "cardName": "Eruption",
@@ -5386,7 +5386,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/218"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/218"
   },
   {
     "cardName": "Lava Bomb",
@@ -5402,7 +5402,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/219"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/219"
   },
   {
     "cardName": "Igneous Path",
@@ -5418,7 +5418,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/220"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/220"
   },
   {
     "cardName": "Under Pressure",
@@ -5434,7 +5434,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/221"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/221"
   },
   {
     "cardName": "Melted Armor",
@@ -5450,7 +5450,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/222"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/222"
   },
   {
     "cardName": "Liquid Stone",
@@ -5466,7 +5466,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/223"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/223"
   },
   {
     "cardName": "Cloud of Ash",
@@ -5482,7 +5482,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/224"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/224"
   },
   {
     "cardName": "Wildfire",
@@ -5498,7 +5498,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/225"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/225"
   },
   {
     "cardName": "Force of the Earth",
@@ -5514,7 +5514,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/226"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/226"
   },
   {
     "cardName": "Metamorphic Rock",
@@ -5530,7 +5530,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/227"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/227"
   },
   {
     "cardName": "Searing Smoke",
@@ -5546,7 +5546,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/228"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/228"
   },
   {
     "cardName": "Deep Fury",
@@ -5562,7 +5562,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/229"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/229"
   },
   {
     "cardName": "Living Magma",
@@ -5578,7 +5578,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/230"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/230"
   },
   {
     "cardName": "Hardened Spike",
@@ -5594,7 +5594,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/231"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/231"
   },
   {
     "cardName": "Hand of Flame",
@@ -5610,7 +5610,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/232"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/232"
   },
   {
     "cardName": "Heat Wave",
@@ -5626,7 +5626,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/233"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/233"
   },
   {
     "cardName": "Rain of Fire",
@@ -5642,7 +5642,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/234"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/234"
   },
   {
     "cardName": "Magma Orbs",
@@ -5658,7 +5658,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/235"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/235"
   },
   {
     "cardName": "Return to the Source",
@@ -5674,7 +5674,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/236"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/236"
   },
   {
     "cardName": "Obsidian Shield",
@@ -5690,7 +5690,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/237"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/237"
   },
   {
     "cardName": "Erupting Rage",
@@ -5706,7 +5706,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/238"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/238"
   },
   {
     "cardName": "Swelter",
@@ -5722,7 +5722,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/239"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/239"
   },
   {
     "cardName": "Feed the Beast",
@@ -5738,7 +5738,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/240"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/240"
   },
   {
     "cardName": "Cinder Lance",
@@ -5754,7 +5754,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/241"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/241"
   },
   {
     "cardName": "Stone Armor",
@@ -5770,7 +5770,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/242"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/242"
   },
   {
     "cardName": "Calamity",
@@ -5786,7 +5786,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:meteor/243"
+    "sourceId": "gloomhavensecretariat:character-ability/meteor/243"
   },
   {
     "cardName": "Plated Defense",
@@ -5802,7 +5802,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/387"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/387"
   },
   {
     "cardName": "Reconstructive Aid",
@@ -5818,7 +5818,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/388"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/388"
   },
   {
     "cardName": "Hunter Killer",
@@ -5834,7 +5834,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/389"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/389"
   },
   {
     "cardName": "Coiled Limbs",
@@ -5850,7 +5850,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/390"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/390"
   },
   {
     "cardName": "Aimed Assault",
@@ -5866,7 +5866,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/391"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/391"
   },
   {
     "cardName": "Launch Pod",
@@ -5882,7 +5882,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/392"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/392"
   },
   {
     "cardName": "Faceless Entity",
@@ -5898,7 +5898,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/393"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/393"
   },
   {
     "cardName": "Prepare for Deployment",
@@ -5914,7 +5914,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/394"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/394"
   },
   {
     "cardName": "Reaper Function",
@@ -5930,7 +5930,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/395"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/395"
   },
   {
     "cardName": "High Impact Projectiles",
@@ -5946,7 +5946,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/396"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/396"
   },
   {
     "cardName": "Interference",
@@ -5962,7 +5962,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/397"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/397"
   },
   {
     "cardName": "Shocking Pulse",
@@ -5978,7 +5978,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/398"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/398"
   },
   {
     "cardName": "Remote Control",
@@ -5994,7 +5994,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/399"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/399"
   },
   {
     "cardName": "Reassemble",
@@ -6010,7 +6010,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/400"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/400"
   },
   {
     "cardName": "Force Field",
@@ -6026,7 +6026,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/401"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/401"
   },
   {
     "cardName": "Long Range Missile",
@@ -6042,7 +6042,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/402"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/402"
   },
   {
     "cardName": "Rapid Fire",
@@ -6058,7 +6058,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/403"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/403"
   },
   {
     "cardName": "Hijack",
@@ -6074,7 +6074,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/404"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/404"
   },
   {
     "cardName": "Plague Protocol",
@@ -6090,7 +6090,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/405"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/405"
   },
   {
     "cardName": "Divergent Destruction",
@@ -6106,7 +6106,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/406"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/406"
   },
   {
     "cardName": "Net Dispersal",
@@ -6122,7 +6122,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/407"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/407"
   },
   {
     "cardName": "Code Geminate",
@@ -6138,7 +6138,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/408"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/408"
   },
   {
     "cardName": "Spinning Blades",
@@ -6154,7 +6154,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/409"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/409"
   },
   {
     "cardName": "Triage Program",
@@ -6170,7 +6170,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/410"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/410"
   },
   {
     "cardName": "Mortar Shells",
@@ -6186,7 +6186,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/411"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/411"
   },
   {
     "cardName": "Recall",
@@ -6202,7 +6202,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/412"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/412"
   },
   {
     "cardName": "Swarming Bulwark",
@@ -6218,7 +6218,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/413"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/413"
   },
   {
     "cardName": "Burning Slash",
@@ -6234,7 +6234,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/414"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/414"
   },
   {
     "cardName": "Heavy metal",
@@ -6250,7 +6250,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/415"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/415"
   },
   {
     "cardName": "Disassemble",
@@ -6266,7 +6266,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:prism/416"
+    "sourceId": "gloomhavensecretariat:character-ability/prism/416"
   },
   {
     "cardName": "Shared Affliction",
@@ -6282,7 +6282,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/301"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/301"
   },
   {
     "cardName": "Line of Transference",
@@ -6298,7 +6298,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/302"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/302"
   },
   {
     "cardName": "Transferred Injury",
@@ -6314,7 +6314,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/303"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/303"
   },
   {
     "cardName": "The Agony of Others",
@@ -6330,7 +6330,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/304"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/304"
   },
   {
     "cardName": "Unending Torment",
@@ -6346,7 +6346,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/305"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/305"
   },
   {
     "cardName": "Blood Ritual",
@@ -6362,7 +6362,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/306"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/306"
   },
   {
     "cardName": "Scarred Effigy",
@@ -6378,7 +6378,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/307"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/307"
   },
   {
     "cardName": "Explosive Wounds",
@@ -6394,7 +6394,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/308"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/308"
   },
   {
     "cardName": "Cleansing Fire",
@@ -6410,7 +6410,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/309"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/309"
   },
   {
     "cardName": "Swift Vengeance",
@@ -6426,7 +6426,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/310"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/310"
   },
   {
     "cardName": "Delayed Malady",
@@ -6442,7 +6442,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/311"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/311"
   },
   {
     "cardName": "Unstable Effigy",
@@ -6458,7 +6458,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/312"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/312"
   },
   {
     "cardName": "Pleasure in Pain",
@@ -6474,7 +6474,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/313"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/313"
   },
   {
     "cardName": "Reversal of Fate",
@@ -6490,7 +6490,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/314"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/314"
   },
   {
     "cardName": "Infection Purge",
@@ -6506,7 +6506,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/315"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/315"
   },
   {
     "cardName": "Burned at Both Ends",
@@ -6522,7 +6522,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/316"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/316"
   },
   {
     "cardName": "Reprisal",
@@ -6538,7 +6538,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/317"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/317"
   },
   {
     "cardName": "Mirrored Misery",
@@ -6554,7 +6554,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/318"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/318"
   },
   {
     "cardName": "Down to the Dirt",
@@ -6570,7 +6570,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/319"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/319"
   },
   {
     "cardName": "Chained by Spite",
@@ -6586,7 +6586,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/320"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/320"
   },
   {
     "cardName": "Chained by Despair",
@@ -6602,7 +6602,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/321"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/321"
   },
   {
     "cardName": "Hopelessness",
@@ -6618,7 +6618,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/322"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/322"
   },
   {
     "cardName": "Phantom Limb",
@@ -6634,7 +6634,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/323"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/323"
   },
   {
     "cardName": "Reject the Gift",
@@ -6650,7 +6650,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/324"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/324"
   },
   {
     "cardName": "Penance",
@@ -6666,7 +6666,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/325"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/325"
   },
   {
     "cardName": "Wave of Anguish",
@@ -6682,7 +6682,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/326"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/326"
   },
   {
     "cardName": "Wracked with Pain",
@@ -6698,7 +6698,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/327"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/327"
   },
   {
     "cardName": "Redemption",
@@ -6714,7 +6714,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/328"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/328"
   },
   {
     "cardName": "The End of Everything",
@@ -6730,7 +6730,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shackles/329"
+    "sourceId": "gloomhavensecretariat:character-ability/shackles/329"
   },
   {
     "cardName": "Unrelenting Wail",
@@ -6746,7 +6746,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/244"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/244"
   },
   {
     "cardName": "Lifting Voice",
@@ -6762,7 +6762,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/245"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/245"
   },
   {
     "cardName": "Heartening Harmony",
@@ -6778,7 +6778,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/246"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/246"
   },
   {
     "cardName": "Forceful Vibrations",
@@ -6794,7 +6794,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/247"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/247"
   },
   {
     "cardName": "Resonant frequency",
@@ -6810,7 +6810,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/248"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/248"
   },
   {
     "cardName": "Foreboding Tremors",
@@ -6826,7 +6826,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/249"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/249"
   },
   {
     "cardName": "Sonic Shock",
@@ -6842,7 +6842,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/250"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/250"
   },
   {
     "cardName": "Precious Gems",
@@ -6858,7 +6858,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/251"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/251"
   },
   {
     "cardName": "Empowering Pulse",
@@ -6874,7 +6874,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/252"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/252"
   },
   {
     "cardName": "Devastating Shout",
@@ -6890,7 +6890,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/253"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/253"
   },
   {
     "cardName": "Calamitous Yawp",
@@ -6906,7 +6906,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/254"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/254"
   },
   {
     "cardName": "Din of Battle",
@@ -6922,7 +6922,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/255"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/255"
   },
   {
     "cardName": "Illuminative Tone",
@@ -6938,7 +6938,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/256"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/256"
   },
   {
     "cardName": "Transparency",
@@ -6954,7 +6954,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/257"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/257"
   },
   {
     "cardName": "Befuddling Bellow",
@@ -6970,7 +6970,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/258"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/258"
   },
   {
     "cardName": "Shape the Path",
@@ -6986,7 +6986,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/259"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/259"
   },
   {
     "cardName": "Stealth Vibrations",
@@ -7002,7 +7002,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/260"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/260"
   },
   {
     "cardName": "Concentrated Blast",
@@ -7018,7 +7018,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/261"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/261"
   },
   {
     "cardName": "Elemental Pulse",
@@ -7034,7 +7034,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/262"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/262"
   },
   {
     "cardName": "Shrieking Chakram",
@@ -7050,7 +7050,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/263"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/263"
   },
   {
     "cardName": "Empowering note",
@@ -7066,7 +7066,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/264"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/264"
   },
   {
     "cardName": "Unsustainable Wave",
@@ -7082,7 +7082,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/265"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/265"
   },
   {
     "cardName": "Future Sense",
@@ -7098,7 +7098,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/266"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/266"
   },
   {
     "cardName": "Sound Therapy",
@@ -7114,7 +7114,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/267"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/267"
   },
   {
     "cardName": "Cloaking Refraction",
@@ -7130,7 +7130,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/268"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/268"
   },
   {
     "cardName": "Soft Spots",
@@ -7146,7 +7146,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/269"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/269"
   },
   {
     "cardName": "Feedback",
@@ -7162,7 +7162,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/270"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/270"
   },
   {
     "cardName": "Barbaric Yawp",
@@ -7178,7 +7178,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/271"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/271"
   },
   {
     "cardName": "Violent Vibrations",
@@ -7194,7 +7194,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:shards/272"
+    "sourceId": "gloomhavensecretariat:character-ability/shards/272"
   },
   {
     "cardName": "Blizzard",
@@ -7210,7 +7210,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/330"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/330"
   },
   {
     "cardName": "Enticing Breeze",
@@ -7226,7 +7226,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/331"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/331"
   },
   {
     "cardName": "Chilling Impact",
@@ -7242,7 +7242,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/332"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/332"
   },
   {
     "cardName": "Gathering Force",
@@ -7258,7 +7258,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/333"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/333"
   },
   {
     "cardName": "Nature's Breath",
@@ -7274,7 +7274,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/334"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/334"
   },
   {
     "cardName": "Lifting Gust",
@@ -7290,7 +7290,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/335"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/335"
   },
   {
     "cardName": "Snowball",
@@ -7306,7 +7306,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/336"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/336"
   },
   {
     "cardName": "Whiteout",
@@ -7322,7 +7322,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/337"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/337"
   },
   {
     "cardName": "Cross Winds",
@@ -7338,7 +7338,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/338"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/338"
   },
   {
     "cardName": "Frigid Growth",
@@ -7354,7 +7354,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/339"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/339"
   },
   {
     "cardName": "Cold Therapy",
@@ -7370,7 +7370,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/340"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/340"
   },
   {
     "cardName": "White Winds",
@@ -7386,7 +7386,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/341"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/341"
   },
   {
     "cardName": "Blinding Vortex",
@@ -7402,7 +7402,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/342"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/342"
   },
   {
     "cardName": "The Spirit's Call",
@@ -7418,7 +7418,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/343"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/343"
   },
   {
     "cardName": "Birds in a Tempest",
@@ -7434,7 +7434,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/344"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/344"
   },
   {
     "cardName": "Tornado",
@@ -7450,7 +7450,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/345"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/345"
   },
   {
     "cardName": "Cold Snap",
@@ -7466,7 +7466,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/346"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/346"
   },
   {
     "cardName": "Polar Vortex",
@@ -7482,7 +7482,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/347"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/347"
   },
   {
     "cardName": "Zephyr Barrier",
@@ -7498,7 +7498,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/348"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/348"
   },
   {
     "cardName": "Biting frost",
@@ -7514,7 +7514,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/349"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/349"
   },
   {
     "cardName": "Whipping Gale",
@@ -7530,7 +7530,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/350"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/350"
   },
   {
     "cardName": "Shifting Snow",
@@ -7546,7 +7546,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/351"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/351"
   },
   {
     "cardName": "Refreshing Flurry",
@@ -7562,7 +7562,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/352"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/352"
   },
   {
     "cardName": "Frozen Brand",
@@ -7578,7 +7578,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/353"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/353"
   },
   {
     "cardName": "Freezing Storm",
@@ -7594,7 +7594,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/354"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/354"
   },
   {
     "cardName": "Storm Wall",
@@ -7610,7 +7610,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/355"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/355"
   },
   {
     "cardName": "Surging Blow",
@@ -7626,7 +7626,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/356"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/356"
   },
   {
     "cardName": "The Endless White",
@@ -7642,7 +7642,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/357"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/357"
   },
   {
     "cardName": "Winds of Change",
@@ -7658,7 +7658,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/358"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/358"
   },
   {
     "cardName": "Snowblind",
@@ -7674,7 +7674,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:snowflake/359"
+    "sourceId": "gloomhavensecretariat:character-ability/snowflake/359"
   },
   {
     "cardName": "Caltrops",
@@ -7690,7 +7690,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/273"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/273"
   },
   {
     "cardName": "Furry facade",
@@ -7706,7 +7706,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/274"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/274"
   },
   {
     "cardName": "Boar Catcher",
@@ -7722,7 +7722,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/275"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/275"
   },
   {
     "cardName": "Spike Pit",
@@ -7738,7 +7738,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/276"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/276"
   },
   {
     "cardName": "Electrified net",
@@ -7754,7 +7754,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/277"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/277"
   },
   {
     "cardName": "Honeypot",
@@ -7770,7 +7770,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/278"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/278"
   },
   {
     "cardName": "Enticing Bait",
@@ -7786,7 +7786,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/279"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/279"
   },
   {
     "cardName": "Exploding Decoy",
@@ -7802,7 +7802,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/280"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/280"
   },
   {
     "cardName": "Flurry of Nails",
@@ -7818,7 +7818,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/281"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/281"
   },
   {
     "cardName": "Dismantle",
@@ -7834,7 +7834,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/282"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/282"
   },
   {
     "cardName": "Spring Loaded",
@@ -7850,7 +7850,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/283"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/283"
   },
   {
     "cardName": "Improvised Improvement",
@@ -7866,7 +7866,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/284"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/284"
   },
   {
     "cardName": "Unavoidable Outcome",
@@ -7882,7 +7882,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/285"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/285"
   },
   {
     "cardName": "Path of Pain",
@@ -7898,7 +7898,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/286"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/286"
   },
   {
     "cardName": "Extra Teeth",
@@ -7914,7 +7914,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/287"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/287"
   },
   {
     "cardName": "Pyrotechnics",
@@ -7930,7 +7930,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/288"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/288"
   },
   {
     "cardName": "Dangerous Ground",
@@ -7946,7 +7946,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/289"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/289"
   },
   {
     "cardName": "Stalker's Spoils",
@@ -7962,7 +7962,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/290"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/290"
   },
   {
     "cardName": "Lure of the Snare",
@@ -7978,7 +7978,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/291"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/291"
   },
   {
     "cardName": "Proficient Hunter",
@@ -7994,7 +7994,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/292"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/292"
   },
   {
     "cardName": "Persistent Pitfalls",
@@ -8010,7 +8010,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/293"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/293"
   },
   {
     "cardName": "Cage of Thorns",
@@ -8026,7 +8026,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/294"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/294"
   },
   {
     "cardName": "Grasping Hazards",
@@ -8042,7 +8042,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/295"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/295"
   },
   {
     "cardName": "Foxhole",
@@ -8058,7 +8058,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/296"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/296"
   },
   {
     "cardName": "Spike Strip",
@@ -8074,7 +8074,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/297"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/297"
   },
   {
     "cardName": "Magnetic Shards",
@@ -8090,7 +8090,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/298"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/298"
   },
   {
     "cardName": "Dangerous Cargo",
@@ -8106,7 +8106,7 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/299"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/299"
   },
   {
     "cardName": "Mother of All Traps",
@@ -8122,6 +8122,6 @@
       "effects": []
     },
     "lost": false,
-    "_source": "gloomhavensecretariat:trap/300"
+    "sourceId": "gloomhavensecretariat:character-ability/trap/300"
   }
 ]
