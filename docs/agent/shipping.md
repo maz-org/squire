@@ -40,5 +40,5 @@ The rules in this file still apply — `/ship` doesn't override them, it execute
 - Never force-push, never push to main directly. `/ship` always goes through a PR.
 
 After `/ship` opens the PR, follow the CodeRabbit polling loop in
-[coderabbit-loop.md](coderabbit-loop.md) until merge. `/land-and-deploy` takes
+[review.md](review.md) until merge. `/land-and-deploy` takes
 over from there if you want it to handle the merge + deploy verification.
