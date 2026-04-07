@@ -7,7 +7,7 @@
       "Move 1",
       "Grant the closest Piranha Pig within Range 4:"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/778"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/778"
   },
   {
     "monsterType": "Abael Herder",
@@ -17,7 +17,7 @@
       "Move 1",
       "Grant all Piranha Pigs within Range 3:, Piranha Pig suffers Damage 1."
     ],
-    "_source": "gloomhavensecretariat:abael-herder/779"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/779"
   },
   {
     "monsterType": "Abael Herder",
@@ -26,7 +26,7 @@
     "abilities": [
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/780"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/780"
   },
   {
     "monsterType": "Abael Herder",
@@ -36,7 +36,7 @@
       "Move 0",
       "Attack 0, Range 3, Pull 2, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/781"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/781"
   },
   {
     "monsterType": "Abael Herder",
@@ -46,7 +46,7 @@
       "Grant the closest Piranha Pig within Range 4:",
       "If no Piranha Pig was targeted by the grant ability:"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/782"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/782"
   },
   {
     "monsterType": "Abael Herder",
@@ -56,7 +56,7 @@
       "Attack 0, Range 3",
       "Strengthen, Target all Piranha Pigs, Range 3"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/783"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/783"
   },
   {
     "monsterType": "Abael Herder",
@@ -65,7 +65,7 @@
     "abilities": [
       "Move 0"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/784"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/784"
   },
   {
     "monsterType": "Abael Herder",
@@ -75,7 +75,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:abael-herder/785"
+    "sourceId": "gloomhavensecretariat:monster-ability/abael-herder/785"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -87,7 +87,7 @@
       "Shield 1",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/730"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/730"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -98,7 +98,7 @@
       "Attack 1, Stun",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/731"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/731"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -109,7 +109,7 @@
       "Attack 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/732"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/732"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -119,7 +119,7 @@
       "Move 1",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/733"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/733"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -130,7 +130,7 @@
       "All enemies adjacent to the created obstacle suffer hazardous terrain damage.",
       "Element ice:earth"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/734"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/734"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -141,7 +141,7 @@
       "Attack 0",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/735"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/735"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -151,7 +151,7 @@
       "Attack 0",
       "Disarm, Target All, Range 2"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/736"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/736"
   },
   {
     "monsterType": "Algox Icespeaker",
@@ -162,7 +162,7 @@
       "Element earth",
       "Heal 3, Self"
     ],
-    "_source": "gloomhavensecretariat:algox-icespeaker/737"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-icespeaker/737"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -173,7 +173,7 @@
       "Attack 1, Range 2, Muddle",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/738"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/738"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -182,7 +182,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 4"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/739"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/739"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -193,7 +193,7 @@
       "Attack 1, Range 3",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/740"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/740"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -203,7 +203,7 @@
       "Move 1",
       "Attack 1, Range 3, Push 1"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/741"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/741"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -214,7 +214,7 @@
       "Push 2, Target All, Range 2",
       "Element ice:air"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/742"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/742"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -224,7 +224,7 @@
       "Move 1",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/743"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/743"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -235,7 +235,7 @@
       "Attack 0, Range 4",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/744"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/744"
   },
   {
     "monsterType": "Algox Snowspeaker Trap Solo",
@@ -245,7 +245,7 @@
       "Immobilize, Target All, Range 5",
       "Element air, Muddle"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker-trap-solo/745"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker-trap-solo/745"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -256,7 +256,7 @@
       "Attack 1, Range 3, Muddle",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/738"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/738"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -265,7 +265,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 5"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/739"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/739"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -276,7 +276,7 @@
       "Attack 1, Range 4",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/740"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/740"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -286,7 +286,7 @@
       "Move 1",
       "Attack 1, Range 4, Push 1"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/741"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/741"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -297,7 +297,7 @@
       "Push 2, Target All, Range 3",
       "Element ice:air"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/742"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/742"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -307,7 +307,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/743"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/743"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -318,7 +318,7 @@
       "Attack 0, Range 5",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/744"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/744"
   },
   {
     "monsterType": "Algox Snowspeaker",
@@ -328,7 +328,7 @@
       "Immobilize, Target All, Range 6",
       "Element air, Muddle"
     ],
-    "_source": "gloomhavensecretariat:algox-snowspeaker/745"
+    "sourceId": "gloomhavensecretariat:monster-ability/algox-snowspeaker/745"
   },
   {
     "monsterType": "Ancient Artillery",
@@ -338,21 +338,14 @@
       "Focus on the enemy farthest away within Range 7",
       "Attack 1, Range 7"
     ],
-    "_source": "gloomhavensecretariat:ancient-artillery/626"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/626"
   },
   {
     "monsterType": "Ancient Artillery",
     "cardName": "Exploding Ammunition",
     "initiative": 71,
     "abilities": [],
-    "_source": "gloomhavensecretariat:ancient-artillery/627"
-  },
-  {
-    "monsterType": "Ancient Artillery",
-    "cardName": "Exploding Ammunition",
-    "initiative": 71,
-    "abilities": [],
-    "_source": "gloomhavensecretariat:ancient-artillery/628"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/627"
   },
   {
     "monsterType": "Ancient Artillery",
@@ -362,7 +355,7 @@
       "Push 1, Target All, Range 1",
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:ancient-artillery/629"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/629"
   },
   {
     "monsterType": "Ancient Artillery",
@@ -372,7 +365,7 @@
       "Push 1, Target All, Range 1",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:ancient-artillery/630"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/630"
   },
   {
     "monsterType": "Ancient Artillery",
@@ -381,7 +374,7 @@
     "abilities": [
       "Attack 1, Range 5"
     ],
-    "_source": "gloomhavensecretariat:ancient-artillery/631"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/631"
   },
   {
     "monsterType": "Ancient Artillery",
@@ -392,7 +385,7 @@
       "Attack 2, Range 5",
       "Shield 2"
     ],
-    "_source": "gloomhavensecretariat:ancient-artillery/632"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/632"
   },
   {
     "monsterType": "Ancient Artillery",
@@ -401,7 +394,7 @@
     "abilities": [
       "Attack 1, Range 5, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:ancient-artillery/633"
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/633"
   },
   {
     "monsterType": "Archer",
@@ -411,7 +404,7 @@
       "Move 0",
       "Attack 1, Range 5, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:archer/754"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/754"
   },
   {
     "monsterType": "Archer",
@@ -422,7 +415,7 @@
       "Attack 1, Range 5",
       "Create one Damage 3 trap in an adjacent empty hex closest to an enemy."
     ],
-    "_source": "gloomhavensecretariat:archer/755"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/755"
   },
   {
     "monsterType": "Archer",
@@ -432,7 +425,7 @@
       "Move 0",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:archer/756"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/756"
   },
   {
     "monsterType": "Archer",
@@ -442,7 +435,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:archer/757"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/757"
   },
   {
     "monsterType": "Archer",
@@ -451,7 +444,7 @@
     "abilities": [
       "Attack 1, Range 5"
     ],
-    "_source": "gloomhavensecretariat:archer/758"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/758"
   },
   {
     "monsterType": "Archer",
@@ -461,7 +454,7 @@
       "Move 0",
       "Attack 0, Range 4"
     ],
-    "_source": "gloomhavensecretariat:archer/759"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/759"
   },
   {
     "monsterType": "Archer",
@@ -471,7 +464,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:archer/760"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/760"
   },
   {
     "monsterType": "Archer",
@@ -480,7 +473,7 @@
     "abilities": [
       "Attack 1, Target 2, Range 4"
     ],
-    "_source": "gloomhavensecretariat:archer/761"
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/761"
   },
   {
     "monsterType": "Belara",
@@ -490,7 +483,7 @@
       "Summon",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:belara/786"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/786"
   },
   {
     "monsterType": "Belara",
@@ -500,7 +493,7 @@
       "Summon",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:belara/787"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/787"
   },
   {
     "monsterType": "Belara",
@@ -511,7 +504,7 @@
       "Attack 1, EnemiesAdjacent",
       "Element fire, Retaliate 3"
     ],
-    "_source": "gloomhavensecretariat:belara/788"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/788"
   },
   {
     "monsterType": "Belara",
@@ -521,7 +514,7 @@
       "Move 1",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:belara/789"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/789"
   },
   {
     "monsterType": "Belara",
@@ -531,7 +524,7 @@
       "Move 0",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:belara/790"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/790"
   },
   {
     "monsterType": "Belara",
@@ -542,7 +535,7 @@
       "Element fire, Wound",
       "Element earth, Disarm"
     ],
-    "_source": "gloomhavensecretariat:belara/791"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/791"
   },
   {
     "monsterType": "Belara",
@@ -551,7 +544,7 @@
     "abilities": [
       "Heal 4, Range 3"
     ],
-    "_source": "gloomhavensecretariat:belara/792"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/792"
   },
   {
     "monsterType": "Belara",
@@ -562,7 +555,7 @@
       "Attack 1, Target 2, Range 3",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:belara/793"
+    "sourceId": "gloomhavensecretariat:monster-ability/belara/793"
   },
   {
     "monsterType": "Boss",
@@ -571,7 +564,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:boss/874"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/874"
   },
   {
     "monsterType": "Boss",
@@ -580,7 +573,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:boss/875"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/875"
   },
   {
     "monsterType": "Boss",
@@ -589,7 +582,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:boss/876"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/876"
   },
   {
     "monsterType": "Boss",
@@ -598,7 +591,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:boss/877"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/877"
   },
   {
     "monsterType": "Boss",
@@ -607,7 +600,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:boss/878"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/878"
   },
   {
     "monsterType": "Boss",
@@ -616,7 +609,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:boss/879"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/879"
   },
   {
     "monsterType": "Boss",
@@ -626,7 +619,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:boss/880"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/880"
   },
   {
     "monsterType": "Boss",
@@ -636,7 +629,7 @@
       "Move 1",
       "Attack 1, Target 2, Range 3"
     ],
-    "_source": "gloomhavensecretariat:boss/881"
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/881"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -646,17 +639,7 @@
       "SpecialTarget focusEnemyFarthest",
       "Attack 2, EnemiesMovedThroughAdjacent"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/818"
-  },
-  {
-    "monsterType": "Burrowing Blade",
-    "cardName": "Tunneling Slices",
-    "initiative": 68,
-    "abilities": [
-      "SpecialTarget focusEnemyFarthest",
-      "Attack 2, EnemiesMovedThroughAdjacent"
-    ],
-    "_source": "gloomhavensecretariat:burrowing-blade/819"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/818"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -667,7 +650,7 @@
       "Invisible, Self",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/820"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/820"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -678,7 +661,7 @@
       "Attack 1, Target 2",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/821"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/821"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -689,7 +672,7 @@
       "All enemies within Range 2 suffer Damage 2.",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/822"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/822"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -698,7 +681,7 @@
     "abilities": [
       "SpecialTarget focusEnemyFarthest"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/823"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/823"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -708,7 +691,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/824"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/824"
   },
   {
     "monsterType": "Burrowing Blade",
@@ -717,7 +700,7 @@
     "abilities": [
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:burrowing-blade/825"
+    "sourceId": "gloomhavensecretariat:monster-ability/burrowing-blade/825"
   },
   {
     "monsterType": "Chaos Demon",
@@ -728,7 +711,7 @@
       "Attack 0",
       "Element ice, Retaliate 2"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/538"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/538"
   },
   {
     "monsterType": "Chaos Demon",
@@ -738,7 +721,7 @@
       "Move 1",
       "Attack 1, Range 2"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/539"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/539"
   },
   {
     "monsterType": "Chaos Demon",
@@ -748,7 +731,7 @@
       "Move 2",
       "Attack 1, Push 2"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/540"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/540"
   },
   {
     "monsterType": "Chaos Demon",
@@ -759,7 +742,7 @@
       "Attack 1, Range 2",
       "Element air, Shield 2"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/541"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/541"
   },
   {
     "monsterType": "Chaos Demon",
@@ -770,7 +753,7 @@
       "Attack 0, Advantage",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/542"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/542"
   },
   {
     "monsterType": "Chaos Demon",
@@ -781,7 +764,7 @@
       "Attack 1",
       "Element dark, Invisible"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/543"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/543"
   },
   {
     "monsterType": "Chaos Demon",
@@ -791,7 +774,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/544"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/544"
   },
   {
     "monsterType": "Chaos Demon",
@@ -801,7 +784,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:chaos-demon/545"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/545"
   },
   {
     "monsterType": "Chaos Spark",
@@ -811,7 +794,7 @@
       "Attack (C-2), +(2xT)",
       "where T is the number of damage tokens on the target's character mat"
     ],
-    "_source": "gloomhavensecretariat:chaos-spark/undefined"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-spark/undefined"
   },
   {
     "monsterType": "City Guard Banner Spear Solo",
@@ -820,7 +803,7 @@
     "abilities": [
       "Attack [(L/2){$math.ceil}]"
     ],
-    "_source": "gloomhavensecretariat:city-guard-banner-spear-solo/752"
+    "sourceId": "gloomhavensecretariat:monster-ability/city-guard-banner-spear-solo/752"
   },
   {
     "monsterType": "City Guard Scenario 1",
@@ -829,7 +812,7 @@
     "abilities": [
       "Does not perform a turn."
     ],
-    "_source": "gloomhavensecretariat:city-guard-scenario-1/752"
+    "sourceId": "gloomhavensecretariat:monster-ability/city-guard-scenario-1/752"
   },
   {
     "monsterType": "Deep Terror",
@@ -838,7 +821,7 @@
     "abilities": [
       "Attack 1, Range 3, Target 3, Curse"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/722"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/722"
   },
   {
     "monsterType": "Deep Terror",
@@ -847,16 +830,7 @@
     "abilities": [
       "Attack 0, Pierce 3"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/723"
-  },
-  {
-    "monsterType": "Deep Terror",
-    "cardName": "Beam of Annihilation",
-    "initiative": 60,
-    "abilities": [
-      "Attack 0, Pierce 3"
-    ],
-    "_source": "gloomhavensecretariat:deep-terror/724"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/723"
   },
   {
     "monsterType": "Deep Terror",
@@ -866,7 +840,7 @@
       "Attack 1, EnemiesAdjacent",
       "Attack 0, Range 4, Wound"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/725"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/725"
   },
   {
     "monsterType": "Deep Terror",
@@ -876,7 +850,7 @@
       "Attack 1, Poison",
       "Attack 1, Range 5, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/726"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/726"
   },
   {
     "monsterType": "Deep Terror",
@@ -886,7 +860,7 @@
       "Attack 2, Disarm",
       "Attack 1, Target 2, Range 3, Impair"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/727"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/727"
   },
   {
     "monsterType": "Deep Terror",
@@ -896,7 +870,7 @@
       "Attack 2, Range 6",
       "If the attack ability was performed"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/728"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/728"
   },
   {
     "monsterType": "Deep Terror",
@@ -905,7 +879,7 @@
     "abilities": [
       "Attack 0, Range 4"
     ],
-    "_source": "gloomhavensecretariat:deep-terror/739"
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/739"
   },
   {
     "monsterType": "Earth Demon",
@@ -915,7 +889,7 @@
       "Heal 4, Self",
       "Element earth, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/570"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/570"
   },
   {
     "monsterType": "Earth Demon",
@@ -925,7 +899,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/571"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/571"
   },
   {
     "monsterType": "Earth Demon",
@@ -936,7 +910,7 @@
       "Attack 0",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/572"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/572"
   },
   {
     "monsterType": "Earth Demon",
@@ -945,7 +919,7 @@
     "abilities": [
       "Attack 0, Range 4"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/573"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/573"
   },
   {
     "monsterType": "Earth Demon",
@@ -956,7 +930,7 @@
       "Attack 1",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/574"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/574"
   },
   {
     "monsterType": "Earth Demon",
@@ -966,7 +940,7 @@
       "Move 1",
       "Attack 1, EnemiesAdjacent"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/575"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/575"
   },
   {
     "monsterType": "Earth Demon",
@@ -976,7 +950,7 @@
       "Move 1",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/576"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/576"
   },
   {
     "monsterType": "Earth Demon",
@@ -986,7 +960,7 @@
       "Move 0",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:earth-demon/577"
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/577"
   },
   {
     "monsterType": "Fish King Scenario 76",
@@ -995,7 +969,7 @@
     "abilities": [
       "The Fish King does not act."
     ],
-    "_source": "gloomhavensecretariat:fish-king-scenario-76/752"
+    "sourceId": "gloomhavensecretariat:monster-ability/fish-king-scenario-76/752"
   },
   {
     "monsterType": "Flame Demon",
@@ -1006,7 +980,7 @@
       "Attack 1, Range 4",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/546"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/546"
   },
   {
     "monsterType": "Flame Demon",
@@ -1017,7 +991,7 @@
       "Attack 0, Range 4",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/547"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/547"
   },
   {
     "monsterType": "Flame Demon",
@@ -1026,7 +1000,7 @@
     "abilities": [
       "Attack 0, Range 4"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/548"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/548"
   },
   {
     "monsterType": "Flame Demon",
@@ -1037,7 +1011,7 @@
       "Create one Damage 4 trap in an adjacent empty hex closest to an enemy",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/549"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/549"
   },
   {
     "monsterType": "Flame Demon",
@@ -1046,7 +1020,7 @@
     "abilities": [
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/550"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/550"
   },
   {
     "monsterType": "Flame Demon",
@@ -1057,7 +1031,7 @@
       "Attack 1, Range 3",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/551"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/551"
   },
   {
     "monsterType": "Flame Demon",
@@ -1067,7 +1041,7 @@
       "Attack 0, EnemiesAdjacent",
       "Element ice, Damage 1"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/552"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/552"
   },
   {
     "monsterType": "Flame Demon",
@@ -1078,7 +1052,7 @@
       "Move 0",
       "Attack 2, Target 2, Range 4, Wound"
     ],
-    "_source": "gloomhavensecretariat:flame-demon/553"
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/553"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1089,7 +1063,7 @@
       "Attack 1",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/610"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/610"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1100,7 +1074,7 @@
       "Attack 1",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/611"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/611"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1112,7 +1086,7 @@
       "Strengthen, Self",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/612"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/612"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1122,7 +1096,7 @@
       "Shield 2",
       "Element fire, All enemies within Range 2 suffer Damage 2."
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/613"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/613"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1132,7 +1106,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/614"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/614"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1143,7 +1117,7 @@
       "All enemies within Range 2 suffer Damage 1.",
       "Element fire, Wound"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/615"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/615"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1153,7 +1127,7 @@
       "Shield 1",
       "Retaliate 2, Range 3"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/616"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/616"
   },
   {
     "monsterType": "Flaming Bladespinner",
@@ -1163,7 +1137,7 @@
       "SpecialTarget focusEnemyFarthest",
       "Attack 1, EnemiesMovedThroughAdjacent"
     ],
-    "_source": "gloomhavensecretariat:flaming-bladespinner/617"
+    "sourceId": "gloomhavensecretariat:monster-ability/flaming-bladespinner/617"
   },
   {
     "monsterType": "Frost Demon",
@@ -1173,7 +1147,7 @@
       "Immobilize, Target All, Range 2",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/554"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/554"
   },
   {
     "monsterType": "Frost Demon",
@@ -1183,7 +1157,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/555"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/555"
   },
   {
     "monsterType": "Frost Demon",
@@ -1193,7 +1167,7 @@
       "Move 1",
       "Attack 0, Range 2"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/556"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/556"
   },
   {
     "monsterType": "Frost Demon",
@@ -1203,7 +1177,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/557"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/557"
   },
   {
     "monsterType": "Frost Demon",
@@ -1214,18 +1188,7 @@
       "Attack 0",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/558"
-  },
-  {
-    "monsterType": "Frost Demon",
-    "cardName": "Cold Claws",
-    "initiative": 78,
-    "abilities": [
-      "Move 1",
-      "Attack 0",
-      "Element ice"
-    ],
-    "_source": "gloomhavensecretariat:frost-demon/559"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/558"
   },
   {
     "monsterType": "Frost Demon",
@@ -1236,7 +1199,7 @@
       "Attack 1, Pierce 3",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/560"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/560"
   },
   {
     "monsterType": "Frost Demon",
@@ -1247,7 +1210,7 @@
       "Shield 2",
       "Element fire, Damage 1"
     ],
-    "_source": "gloomhavensecretariat:frost-demon/627"
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/627"
   },
   {
     "monsterType": "Frozen Corpse",
@@ -1256,7 +1219,7 @@
     "abilities": [
       "Move 1"
     ],
-    "_source": "gloomhavensecretariat:frozen-corpse/634"
+    "sourceId": "gloomhavensecretariat:monster-ability/frozen-corpse/634"
   },
   {
     "monsterType": "Frozen Corpse",
@@ -1267,7 +1230,7 @@
       "Attack 0",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:frozen-corpse/635"
+    "sourceId": "gloomhavensecretariat:monster-ability/frozen-corpse/635"
   },
   {
     "monsterType": "Frozen Corpse",
@@ -1277,17 +1240,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:frozen-corpse/636"
-  },
-  {
-    "monsterType": "Frozen Corpse",
-    "cardName": "Cold Snap",
-    "initiative": 42,
-    "abilities": [
-      "Move 1",
-      "Attack 1"
-    ],
-    "_source": "gloomhavensecretariat:frozen-corpse/637"
+    "sourceId": "gloomhavensecretariat:monster-ability/frozen-corpse/636"
   },
   {
     "monsterType": "Frozen Corpse",
@@ -1298,18 +1251,7 @@
       "If the element is consumed by the Frozen Corpse during the move ability, it suffers Damage 2.",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:frozen-corpse/638"
-  },
-  {
-    "monsterType": "Frozen Corpse",
-    "cardName": "Thawed Strike",
-    "initiative": 68,
-    "abilities": [
-      "Move 1",
-      "If the element is consumed by the Frozen Corpse during the move ability, it suffers Damage 2.",
-      "Attack 1"
-    ],
-    "_source": "gloomhavensecretariat:frozen-corpse/639"
+    "sourceId": "gloomhavensecretariat:monster-ability/frozen-corpse/638"
   },
   {
     "monsterType": "Frozen Corpse",
@@ -1320,7 +1262,7 @@
       "Attack 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:frozen-corpse/640"
+    "sourceId": "gloomhavensecretariat:monster-ability/frozen-corpse/640"
   },
   {
     "monsterType": "Frozen Corpse",
@@ -1331,7 +1273,7 @@
       "Attack 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:frozen-corpse/641"
+    "sourceId": "gloomhavensecretariat:monster-ability/frozen-corpse/641"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1340,7 +1282,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/874"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/874"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1349,7 +1291,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/875"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/875"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1358,7 +1300,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/876"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/876"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1367,7 +1309,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/877"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/877"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1376,7 +1318,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/878"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/878"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1385,7 +1327,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/879"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/879"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1394,7 +1336,7 @@
     "abilities": [
       "Nothing"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/880"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/880"
   },
   {
     "monsterType": "Giant Piranha Pig Boss",
@@ -1403,7 +1345,7 @@
     "abilities": [
       "Nothing"
     ],
-    "_source": "gloomhavensecretariat:giant-piranha-pig-boss/881"
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-piranha-pig-boss/881"
   },
   {
     "monsterType": "Guard",
@@ -1413,7 +1355,7 @@
       "Shield 1",
       "Retaliate 2"
     ],
-    "_source": "gloomhavensecretariat:guard/746"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/746"
   },
   {
     "monsterType": "Guard",
@@ -1423,7 +1365,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:guard/747"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/747"
   },
   {
     "monsterType": "Guard",
@@ -1433,7 +1375,7 @@
       "Move 1",
       "Attack 0, Range 2"
     ],
-    "_source": "gloomhavensecretariat:guard/748"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/748"
   },
   {
     "monsterType": "Guard",
@@ -1443,7 +1385,7 @@
       "Attack 0, Poison",
       "Shield 1"
     ],
-    "_source": "gloomhavensecretariat:guard/749"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/749"
   },
   {
     "monsterType": "Guard",
@@ -1453,7 +1395,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:guard/750"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/750"
   },
   {
     "monsterType": "Guard",
@@ -1463,17 +1405,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:guard/751"
-  },
-  {
-    "monsterType": "Guard",
-    "cardName": "Nothing Special",
-    "initiative": 50,
-    "abilities": [
-      "Move 0",
-      "Attack 0"
-    ],
-    "_source": "gloomhavensecretariat:guard/752"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/751"
   },
   {
     "monsterType": "Guard",
@@ -1484,7 +1416,7 @@
       "Attack 0",
       "Strengthen, Self"
     ],
-    "_source": "gloomhavensecretariat:guard/753"
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/753"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1494,7 +1426,7 @@
       "Move 1",
       "Attack 1, Target 2"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/802"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/802"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1505,7 +1437,7 @@
       "Attack 1, Poison",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/803"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/803"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1516,7 +1448,7 @@
       "Attack 1",
       "Heal 5, Self"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/804"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/804"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1526,7 +1458,7 @@
       "Attack 1, Range 3, Muddle",
       "Heal 4, Self"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/805"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/805"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1536,7 +1468,7 @@
       "Attack 2, Immobilize",
       "Retaliate 2"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/806"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/806"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1546,7 +1478,7 @@
       "Shield 2",
       "Retaliate 2, Range 3"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/807"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/807"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1557,7 +1489,7 @@
       "Attack 0",
       "Element dark, Perform \" Heal X, self\" where X is twice the number of enemies targeted by the attack ability."
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/808"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/808"
   },
   {
     "monsterType": "Harrower Infester",
@@ -1567,7 +1499,7 @@
       "Move 0",
       "Attack 1, Target 2, Impair"
     ],
-    "_source": "gloomhavensecretariat:harrower-infester/809"
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/809"
   },
   {
     "monsterType": "Hound Scenario 0",
@@ -1577,7 +1509,7 @@
       "Move 2",
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:hound-scenario-0/846"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound-scenario-0/846"
   },
   {
     "monsterType": "Hound",
@@ -1587,7 +1519,7 @@
       "Move 1",
       "Attack 0, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:hound/842"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/842"
   },
   {
     "monsterType": "Hound",
@@ -1597,7 +1529,7 @@
       "Move 0",
       "Muddle, Target All, Range 1"
     ],
-    "_source": "gloomhavensecretariat:hound/843"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/843"
   },
   {
     "monsterType": "Hound",
@@ -1606,16 +1538,7 @@
     "abilities": [
       "Move 0"
     ],
-    "_source": "gloomhavensecretariat:hound/844"
-  },
-  {
-    "monsterType": "Hound",
-    "cardName": "Pack Hunting",
-    "initiative": 19,
-    "abilities": [
-      "Move 0"
-    ],
-    "_source": "gloomhavensecretariat:hound/845"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/844"
   },
   {
     "monsterType": "Hound",
@@ -1625,17 +1548,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:hound/846"
-  },
-  {
-    "monsterType": "Hound",
-    "cardName": "Nothing Special",
-    "initiative": 26,
-    "abilities": [
-      "Move 0",
-      "Attack 0"
-    ],
-    "_source": "gloomhavensecretariat:hound/847"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/846"
   },
   {
     "monsterType": "Hound",
@@ -1645,7 +1558,7 @@
       "Move 2",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:hound/848"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/848"
   },
   {
     "monsterType": "Hound",
@@ -1656,7 +1569,7 @@
       "Move 2",
       "Attack 1, Pierce 2"
     ],
-    "_source": "gloomhavensecretariat:hound/849"
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/849"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1668,7 +1581,7 @@
       "Move 0",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/642"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/642"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1680,7 +1593,7 @@
       "Attack 0",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/643"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/643"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1690,7 +1603,7 @@
       "Element ice",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/644"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/644"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1701,7 +1614,7 @@
       "Element ice",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/645"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/645"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1712,7 +1625,7 @@
       "Attack 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/646"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/646"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1723,7 +1636,7 @@
       "Attack 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/647"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/647"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1733,7 +1646,7 @@
       "Heal 3, Self",
       "Element ice, Shield 2"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/648"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/648"
   },
   {
     "monsterType": "Ice Wraith",
@@ -1743,7 +1656,7 @@
       "Attack 0",
       "Element ice, Retaliate 2"
     ],
-    "_source": "gloomhavensecretariat:ice-wraith/649"
+    "sourceId": "gloomhavensecretariat:monster-ability/ice-wraith/649"
   },
   {
     "monsterType": "Imp",
@@ -1754,7 +1667,7 @@
       "Heal 1, Self",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:imp/826"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/826"
   },
   {
     "monsterType": "Imp",
@@ -1764,17 +1677,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:imp/827"
-  },
-  {
-    "monsterType": "Imp",
-    "cardName": "Nothing Special",
-    "initiative": 37,
-    "abilities": [
-      "Move 0",
-      "Attack 0, Range 3"
-    ],
-    "_source": "gloomhavensecretariat:imp/828"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/827"
   },
   {
     "monsterType": "Imp",
@@ -1784,7 +1687,7 @@
       "Move 1",
       "Heal 2, Range 3"
     ],
-    "_source": "gloomhavensecretariat:imp/829"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/829"
   },
   {
     "monsterType": "Imp",
@@ -1794,7 +1697,7 @@
       "Move 0",
       "Attack 1, Range 3, Poison"
     ],
-    "_source": "gloomhavensecretariat:imp/830"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/830"
   },
   {
     "monsterType": "Imp",
@@ -1804,7 +1707,7 @@
       "Move 1",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:imp/831"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/831"
   },
   {
     "monsterType": "Imp",
@@ -1814,7 +1717,7 @@
       "Move 0",
       "Attack 1, Range 3, Curse"
     ],
-    "_source": "gloomhavensecretariat:imp/832"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/832"
   },
   {
     "monsterType": "Imp",
@@ -1824,7 +1727,7 @@
       "Strengthen, Target All, Range 2",
       "Muddle, Target All, Range 2"
     ],
-    "_source": "gloomhavensecretariat:imp/833"
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/833"
   },
   {
     "monsterType": "Laser Spires",
@@ -1833,7 +1736,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/874"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/874"
   },
   {
     "monsterType": "Laser Spires",
@@ -1842,7 +1745,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/875"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/875"
   },
   {
     "monsterType": "Laser Spires",
@@ -1851,7 +1754,7 @@
     "abilities": [
       "Special 2"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/876"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/876"
   },
   {
     "monsterType": "Laser Spires",
@@ -1860,7 +1763,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/877"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/877"
   },
   {
     "monsterType": "Laser Spires",
@@ -1869,7 +1772,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/878"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/878"
   },
   {
     "monsterType": "Laser Spires",
@@ -1878,7 +1781,7 @@
     "abilities": [
       "Special 1"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/879"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/879"
   },
   {
     "monsterType": "Laser Spires",
@@ -1887,7 +1790,7 @@
     "abilities": [
       "Rotate each laser spire clockwise (if able)"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/880"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/880"
   },
   {
     "monsterType": "Laser Spires",
@@ -1896,7 +1799,7 @@
     "abilities": [
       "Rotate each laser spire counterclockwise (if able)"
     ],
-    "_source": "gloomhavensecretariat:laser-spires/881"
+    "sourceId": "gloomhavensecretariat:monster-ability/laser-spires/881"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1907,7 +1810,7 @@
       "Attack 0",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/706"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/706"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1917,7 +1820,7 @@
       "Move 1",
       "Attack 1, EnemiesAdjacent"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/707"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/707"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1927,7 +1830,7 @@
       "Move 1",
       "Attack 1, EnemiesAdjacent"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/708"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/708"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1938,7 +1841,7 @@
       "Attack 1",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/709"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/709"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1948,7 +1851,7 @@
       "Move 1",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/710"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/710"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1959,7 +1862,7 @@
       "Attack 1",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/711"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/711"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1970,7 +1873,7 @@
       "Attack 0, Range 2",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/712"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/712"
   },
   {
     "monsterType": "Lightning Eel",
@@ -1980,7 +1883,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lightning-eel/713"
+    "sourceId": "gloomhavensecretariat:monster-ability/lightning-eel/713"
   },
   {
     "monsterType": "Living Bones",
@@ -1990,7 +1893,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:living-bones/666"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/666"
   },
   {
     "monsterType": "Living Bones",
@@ -2001,7 +1904,7 @@
       "Attack 0",
       "Heal 2, Self"
     ],
-    "_source": "gloomhavensecretariat:living-bones/667"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/667"
   },
   {
     "monsterType": "Living Bones",
@@ -2011,7 +1914,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:living-bones/668"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/668"
   },
   {
     "monsterType": "Living Bones",
@@ -2021,17 +1924,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:living-bones/669"
-  },
-  {
-    "monsterType": "Living Bones",
-    "cardName": "Nothing Special",
-    "initiative": 45,
-    "abilities": [
-      "Move 0",
-      "Attack 0"
-    ],
-    "_source": "gloomhavensecretariat:living-bones/670"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/669"
   },
   {
     "monsterType": "Living Bones",
@@ -2040,7 +1933,7 @@
     "abilities": [
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:living-bones/671"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/671"
   },
   {
     "monsterType": "Living Bones",
@@ -2050,7 +1943,7 @@
       "Move 0",
       "Attack 0, EnemyOneAll"
     ],
-    "_source": "gloomhavensecretariat:living-bones/672"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/672"
   },
   {
     "monsterType": "Living Bones",
@@ -2060,7 +1953,7 @@
       "Shield 1",
       "Heal 2, Self"
     ],
-    "_source": "gloomhavensecretariat:living-bones/673"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/673"
   },
   {
     "monsterType": "Living Doom",
@@ -2071,7 +1964,7 @@
       "Attack 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:living-doom/650"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/650"
   },
   {
     "monsterType": "Living Doom",
@@ -2081,7 +1974,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:living-doom/651"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/651"
   },
   {
     "monsterType": "Living Doom",
@@ -2091,7 +1984,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:living-doom/652"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/652"
   },
   {
     "monsterType": "Living Doom",
@@ -2102,7 +1995,7 @@
       "Attack 0",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:living-doom/653"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/653"
   },
   {
     "monsterType": "Living Doom",
@@ -2114,7 +2007,7 @@
       "Retaliate 2, Range 2",
       "Element ice:dark"
     ],
-    "_source": "gloomhavensecretariat:living-doom/654"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/654"
   },
   {
     "monsterType": "Living Doom",
@@ -2125,7 +2018,7 @@
       "Retaliate 2",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:living-doom/655"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/655"
   },
   {
     "monsterType": "Living Doom",
@@ -2135,7 +2028,7 @@
       "Move 1",
       "Attack 3, Bane"
     ],
-    "_source": "gloomhavensecretariat:living-doom/656"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/656"
   },
   {
     "monsterType": "Living Doom",
@@ -2144,7 +2037,7 @@
     "abilities": [
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:living-doom/657"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-doom/657"
   },
   {
     "monsterType": "Living Spirit",
@@ -2154,7 +2047,7 @@
       "Move 1",
       "Attack 1, Range 3, Muddle"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/658"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/658"
   },
   {
     "monsterType": "Living Spirit",
@@ -2164,7 +2057,7 @@
       "Move 1",
       "Attack 1, Target 3, Range 3"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/659"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/659"
   },
   {
     "monsterType": "Living Spirit",
@@ -2174,17 +2067,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/660"
-  },
-  {
-    "monsterType": "Living Spirit",
-    "cardName": "Nothing Special",
-    "initiative": 48,
-    "abilities": [
-      "Move 0",
-      "Attack 0, Range 3"
-    ],
-    "_source": "gloomhavensecretariat:living-spirit/661"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/660"
   },
   {
     "monsterType": "Living Spirit",
@@ -2193,7 +2076,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 3"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/662"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/662"
   },
   {
     "monsterType": "Living Spirit",
@@ -2205,7 +2088,7 @@
       "Heal 1, Self",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/663"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/663"
   },
   {
     "monsterType": "Living Spirit",
@@ -2216,7 +2099,7 @@
       "Curse, Target 3, Range 2",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/664"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/664"
   },
   {
     "monsterType": "Living Spirit",
@@ -2226,7 +2109,7 @@
       "Move 1",
       "Attack 0, Range 4"
     ],
-    "_source": "gloomhavensecretariat:living-spirit/665"
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/665"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2237,7 +2120,7 @@
       "Attack 2",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/698"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/698"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2248,7 +2131,7 @@
       "Attack 1, Range 6",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/699"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/699"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2259,7 +2142,7 @@
       "Attack 1, Range 2",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/700"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/700"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2269,17 +2152,7 @@
       "(ability text not yet available)",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/701"
-  },
-  {
-    "monsterType": "Lost In Seaweed",
-    "cardName": "Aid from Below",
-    "initiative": 98,
-    "abilities": [
-      "(ability text not yet available)",
-      "Summon"
-    ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/702"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/701"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2290,7 +2163,7 @@
       "Attack 1",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/703"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/703"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2301,7 +2174,7 @@
       "Attack 0",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/704"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/704"
   },
   {
     "monsterType": "Lost In Seaweed",
@@ -2312,7 +2185,7 @@
       "Attack 0, Range 3",
       "Summon"
     ],
-    "_source": "gloomhavensecretariat:lost-in-seaweed/705"
+    "sourceId": "gloomhavensecretariat:monster-ability/lost-in-seaweed/705"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2323,7 +2196,7 @@
       "Attack 0",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/690"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/690"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2332,7 +2205,7 @@
     "abilities": [
       "Move 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/691"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/691"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2342,7 +2215,7 @@
       "Move 0",
       "Attack 1, Poison"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/692"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/692"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2353,7 +2226,7 @@
       "Shield 2",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/693"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/693"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2363,7 +2236,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/694"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/694"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2372,7 +2245,7 @@
     "abilities": [
       "Move 0"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/695"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/695"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2383,7 +2256,7 @@
       "Retaliate 2",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/696"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/696"
   },
   {
     "monsterType": "Lurker Clawcrusher",
@@ -2394,7 +2267,7 @@
       "Attack 2, EnemiesAdjacent, Poison",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:lurker-clawcrusher/697"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-clawcrusher/697"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2404,7 +2277,7 @@
       "Retaliate 3, Range 3",
       "Muddle, Target All, Range 3"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/682"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/682"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2415,7 +2288,7 @@
       "Attack 1, Range 3",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/683"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/683"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2426,7 +2299,7 @@
       "Attack 1, Range 3, Curse",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/684"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/684"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2437,7 +2310,7 @@
       "Attack 1, Range 3",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/685"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/685"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2446,7 +2319,7 @@
     "abilities": [
       "Attack 1, Target 2, Range 3, Push 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/686"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/686"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2456,7 +2329,7 @@
       "Move 0",
       "Attack 2, Range 2, Disarm"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/687"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/687"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2467,7 +2340,7 @@
       "Attack 2, Range 3",
       "Control all targets of the attack ability in initiative order:"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/688"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/688"
   },
   {
     "monsterType": "Lurker Mindsnipper",
@@ -2476,7 +2349,7 @@
     "abilities": [
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:lurker-mindsnipper/689"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-mindsnipper/689"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2486,7 +2359,7 @@
       "Wound, Target All, Range 1",
       "Shield 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/674"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/674"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2496,7 +2369,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/675"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/675"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2506,7 +2379,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/676"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/676"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2516,7 +2389,7 @@
       "Move 0",
       "Attack 0, EnemyOneAll"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/677"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/677"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2526,7 +2399,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/678"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/678"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2535,7 +2408,7 @@
     "abilities": [
       "Attack 1, Target enemies within 2 hexes, Impair"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/679"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/679"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2546,7 +2419,7 @@
       "Move 0",
       "Attack 1, Wound"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/680"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/680"
   },
   {
     "monsterType": "Lurker Soldier",
@@ -2558,7 +2431,7 @@
       "Shield 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:lurker-soldier/681"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/681"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2568,7 +2441,7 @@
       "Move 1",
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/698"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/698"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2578,7 +2451,7 @@
       "Focus on the enemy farthest away within Range 6",
       "Attack 1, Range 6"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/699"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/699"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2588,7 +2461,7 @@
       "Move 1",
       "Attack 1, Range 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/700"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/700"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2597,16 +2470,7 @@
     "abilities": [
       "Create one 1-hex water tile in an adjacent empty hex."
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/701"
-  },
-  {
-    "monsterType": "Lurker Wavethrower Scenario 128",
-    "cardName": "Aid from Below",
-    "initiative": 98,
-    "abilities": [
-      "Create one 1-hex water tile in an adjacent empty hex."
-    ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/702"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/701"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2616,7 +2480,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/703"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/703"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2626,7 +2490,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/704"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/704"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 128",
@@ -2636,7 +2500,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-128/705"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/705"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2646,7 +2510,7 @@
       "Move 1",
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/698"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/698"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2656,7 +2520,7 @@
       "Focus on the enemy farthest away within Range 6",
       "Attack 1, Range 6"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/699"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/699"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2666,7 +2530,7 @@
       "Move 1",
       "Attack 1, Range 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/700"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/700"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2677,18 +2541,7 @@
       "Attack 1, Range 4",
       "Teleport , to the leftmost empty hex if it is an odd round or rightmost if it is even"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/701"
-  },
-  {
-    "monsterType": "Lurker Wavethrower Scenario 131",
-    "cardName": "Aid from Below",
-    "initiative": 98,
-    "abilities": [
-      "Create one 1-hex water tile in an adjacent empty hex.",
-      "Attack 1, Range 4",
-      "Teleport , to the leftmost empty hex if it is an odd round or rightmost if it is even"
-    ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/702"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/701"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2698,7 +2551,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/703"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/703"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2708,7 +2561,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/704"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/704"
   },
   {
     "monsterType": "Lurker Wavethrower Scenario 131",
@@ -2718,7 +2571,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower-scenario-131/705"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/705"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2728,7 +2581,7 @@
       "Move 1",
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/698"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/698"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2738,7 +2591,7 @@
       "Focus on the enemy farthest away within Range 6",
       "Attack 1, Range 6"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/699"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/699"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2748,7 +2601,7 @@
       "Move 1",
       "Attack 1, Range 2"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/700"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/700"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2757,16 +2610,7 @@
     "abilities": [
       "Create one 1-hex water tile in an adjacent empty hex."
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/701"
-  },
-  {
-    "monsterType": "Lurker Wavethrower",
-    "cardName": "Aid from Below",
-    "initiative": 98,
-    "abilities": [
-      "Create one 1-hex water tile in an adjacent empty hex."
-    ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/702"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/701"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2776,7 +2620,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/703"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/703"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2786,7 +2630,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/704"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/704"
   },
   {
     "monsterType": "Lurker Wavethrower",
@@ -2796,7 +2640,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:lurker-wavethrower/705"
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-wavethrower/705"
   },
   {
     "monsterType": "Night Demon",
@@ -2807,7 +2651,7 @@
       "Attack 1",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:night-demon/578"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/578"
   },
   {
     "monsterType": "Night Demon",
@@ -2818,7 +2662,7 @@
       "Attack 2",
       "Element dark, Invisible"
     ],
-    "_source": "gloomhavensecretariat:night-demon/579"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/579"
   },
   {
     "monsterType": "Night Demon",
@@ -2829,7 +2673,7 @@
       "Attack 0",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:night-demon/580"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/580"
   },
   {
     "monsterType": "Night Demon",
@@ -2838,7 +2682,7 @@
     "abilities": [
       "Attack 2, Target 3, Range 3"
     ],
-    "_source": "gloomhavensecretariat:night-demon/581"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/581"
   },
   {
     "monsterType": "Night Demon",
@@ -2848,7 +2692,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:night-demon/582"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/582"
   },
   {
     "monsterType": "Night Demon",
@@ -2859,7 +2703,7 @@
       "Attack 1",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:night-demon/583"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/583"
   },
   {
     "monsterType": "Night Demon",
@@ -2870,7 +2714,7 @@
       "Attack 1, Pierce 2",
       "Element light, Curse"
     ],
-    "_source": "gloomhavensecretariat:night-demon/584"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/584"
   },
   {
     "monsterType": "Night Demon",
@@ -2882,7 +2726,7 @@
       "All adjacent allies and enemies suffer Damage 1.",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:night-demon/585"
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/585"
   },
   {
     "monsterType": "Ooze",
@@ -2893,7 +2737,7 @@
       "Attack 1, Range 3",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:ooze/866"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/866"
   },
   {
     "monsterType": "Ooze",
@@ -2903,7 +2747,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:ooze/867"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/867"
   },
   {
     "monsterType": "Ooze",
@@ -2912,7 +2756,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 3, Poison"
     ],
-    "_source": "gloomhavensecretariat:ooze/868"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/868"
   },
   {
     "monsterType": "Ooze",
@@ -2922,7 +2766,7 @@
       "Push 1, Target All, Range 1, Poison",
       "Attack 1, Range 2"
     ],
-    "_source": "gloomhavensecretariat:ooze/869"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/869"
   },
   {
     "monsterType": "Ooze",
@@ -2933,7 +2777,7 @@
       "Attack 1, Range 4",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:ooze/870"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/870"
   },
   {
     "monsterType": "Ooze",
@@ -2943,17 +2787,7 @@
       "SufferDamage 2",
       "Summon, with H equal to the summoning Ooze's current hit point value (limited by a normal Ooze's maximum hit point values)."
     ],
-    "_source": "gloomhavensecretariat:ooze/871"
-  },
-  {
-    "monsterType": "Ooze",
-    "cardName": "Split",
-    "initiative": 94,
-    "abilities": [
-      "SufferDamage 2",
-      "Summon, with H equal to the summoning Ooze's current hit point value (limited by a normal Ooze's maximum hit point values)."
-    ],
-    "_source": "gloomhavensecretariat:ooze/872"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/871"
   },
   {
     "monsterType": "Ooze",
@@ -2964,7 +2798,7 @@
       "Loot 1",
       "Heal 2, Self"
     ],
-    "_source": "gloomhavensecretariat:ooze/873"
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/873"
   },
   {
     "monsterType": "Piranha Pig",
@@ -2973,7 +2807,7 @@
     "abilities": [
       "Move 0"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/714"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/714"
   },
   {
     "monsterType": "Piranha Pig",
@@ -2982,7 +2816,7 @@
     "abilities": [
       "Move 1"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/715"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/715"
   },
   {
     "monsterType": "Piranha Pig",
@@ -2991,7 +2825,7 @@
     "abilities": [
       "Move 1"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/716"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/716"
   },
   {
     "monsterType": "Piranha Pig",
@@ -3000,7 +2834,7 @@
     "abilities": [
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/717"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/717"
   },
   {
     "monsterType": "Piranha Pig",
@@ -3010,7 +2844,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/718"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/718"
   },
   {
     "monsterType": "Piranha Pig",
@@ -3019,7 +2853,7 @@
     "abilities": [
       "Attack 1, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/719"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/719"
   },
   {
     "monsterType": "Piranha Pig",
@@ -3030,7 +2864,7 @@
       "Wound, Target All, Range 1",
       "Retaliate 2"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/720"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/720"
   },
   {
     "monsterType": "Piranha Pig",
@@ -3040,7 +2874,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:piranha-pig/721"
+    "sourceId": "gloomhavensecretariat:monster-ability/piranha-pig/721"
   },
   {
     "monsterType": "Polar Bear",
@@ -3050,7 +2884,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/834"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/834"
   },
   {
     "monsterType": "Polar Bear",
@@ -3060,7 +2894,7 @@
       "Move 1",
       "Attack 1, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/835"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/835"
   },
   {
     "monsterType": "Polar Bear",
@@ -3069,7 +2903,7 @@
     "abilities": [
       "Attack 1, Impair"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/836"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/836"
   },
   {
     "monsterType": "Polar Bear",
@@ -3079,7 +2913,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/837"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/837"
   },
   {
     "monsterType": "Polar Bear",
@@ -3089,7 +2923,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/838"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/838"
   },
   {
     "monsterType": "Polar Bear",
@@ -3100,7 +2934,7 @@
       "Move 2",
       "Attack 1, Impair"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/839"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/839"
   },
   {
     "monsterType": "Polar Bear",
@@ -3110,7 +2944,7 @@
       "Move 0",
       "Attack 1, Target 2"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/840"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/840"
   },
   {
     "monsterType": "Polar Bear",
@@ -3121,7 +2955,7 @@
       "Retaliate 2",
       "Heal 2, Self"
     ],
-    "_source": "gloomhavensecretariat:polar-bear/841"
+    "sourceId": "gloomhavensecretariat:monster-ability/polar-bear/841"
   },
   {
     "monsterType": "Priest",
@@ -3131,7 +2965,7 @@
       "Move 1",
       "Attack 0, Range 3, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:priest/762"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/762"
   },
   {
     "monsterType": "Priest",
@@ -3141,7 +2975,7 @@
       "Move 0",
       "Attack 1, Range 3, Disarm"
     ],
-    "_source": "gloomhavensecretariat:priest/763"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/763"
   },
   {
     "monsterType": "Priest",
@@ -3151,7 +2985,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:priest/764"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/764"
   },
   {
     "monsterType": "Priest",
@@ -3161,17 +2995,7 @@
       "Move 0",
       "Heal 3, Range 3"
     ],
-    "_source": "gloomhavensecretariat:priest/765"
-  },
-  {
-    "monsterType": "Priest",
-    "cardName": "Tend to the Clan",
-    "initiative": 23,
-    "abilities": [
-      "Move 0",
-      "Heal 3, Range 3"
-    ],
-    "_source": "gloomhavensecretariat:priest/766"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/765"
   },
   {
     "monsterType": "Priest",
@@ -3181,7 +3005,7 @@
       "Move 1",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:priest/767"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/767"
   },
   {
     "monsterType": "Priest",
@@ -3192,7 +3016,7 @@
       "Heal 1, Allies, Range 1",
       "Bless, Self"
     ],
-    "_source": "gloomhavensecretariat:priest/768"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/768"
   },
   {
     "monsterType": "Priest",
@@ -3202,7 +3026,7 @@
       "Move 1",
       "Attack 1, Target 2, Range 3, Curse"
     ],
-    "_source": "gloomhavensecretariat:priest/769"
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/769"
   },
   {
     "monsterType": "Rending Drake",
@@ -3212,7 +3036,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/850"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/850"
   },
   {
     "monsterType": "Rending Drake",
@@ -3223,7 +3047,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/851"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/851"
   },
   {
     "monsterType": "Rending Drake",
@@ -3233,7 +3057,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/852"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/852"
   },
   {
     "monsterType": "Rending Drake",
@@ -3243,7 +3067,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/853"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/853"
   },
   {
     "monsterType": "Rending Drake",
@@ -3253,7 +3077,7 @@
       "Move 2",
       "Attack 1, Target 2, Range 3, Poison"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/854"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/854"
   },
   {
     "monsterType": "Rending Drake",
@@ -3263,7 +3087,7 @@
       "Move 2",
       "Attack 1, Target 2"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/855"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/855"
   },
   {
     "monsterType": "Rending Drake",
@@ -3274,7 +3098,7 @@
       "Attack 1",
       "Attack 2"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/856"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/856"
   },
   {
     "monsterType": "Rending Drake",
@@ -3284,7 +3108,7 @@
       "Shield 2",
       "Heal 2, Self, Strengthen"
     ],
-    "_source": "gloomhavensecretariat:rending-drake/857"
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/857"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3294,7 +3118,7 @@
       "Move 1",
       "Attack 1, Range 5"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/602"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/602"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3305,7 +3129,7 @@
       "Attack 1, Range 4",
       "Shield 2"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/603"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/603"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3315,7 +3139,7 @@
       "Move 1",
       "Attack 1, Range 5, Pierce 2"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/604"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/604"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3326,7 +3150,7 @@
       "Attack 0, Range 4",
       "Shield 1"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/605"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/605"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3336,7 +3160,7 @@
       "Move 0",
       "Attack 0, Range 5"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/606"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/606"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3345,7 +3169,7 @@
     "abilities": [
       "Attack 2, Target 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/607"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/607"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3355,7 +3179,7 @@
       "Move 0",
       "Attack 1, EnemyOneAll, Range 5"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/608"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/608"
   },
   {
     "monsterType": "Robotic Boltshooter",
@@ -3365,7 +3189,7 @@
       "Shield 1",
       "Heal 3, Self"
     ],
-    "_source": "gloomhavensecretariat:robotic-boltshooter/609"
+    "sourceId": "gloomhavensecretariat:monster-ability/robotic-boltshooter/609"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3374,7 +3198,7 @@
     "abilities": [
       "Move 1"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/594"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/594"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3384,7 +3208,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/595"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/595"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3394,7 +3218,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/596"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/596"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3404,7 +3228,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/597"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/597"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3415,7 +3239,7 @@
       "If the move ability was performed,",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/598"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/598"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3425,7 +3249,7 @@
       "Attack 2, Immobilize",
       "If the attack ability was performed,"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/599"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/599"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3436,7 +3260,7 @@
       "Muddle, Target All, Range 2",
       "SufferDamage 1"
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/600"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/600"
   },
   {
     "monsterType": "Ruined Machine",
@@ -3447,7 +3271,7 @@
       "Attack 0",
       "If the attack ability was performed, all adjacent enemies suffer trap damage and the Ruined Machine dies."
     ],
-    "_source": "gloomhavensecretariat:ruined-machine/601"
+    "sourceId": "gloomhavensecretariat:monster-ability/ruined-machine/601"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3457,7 +3281,7 @@
       "Push 2, Target All, Range 1",
       "Attack 1, Range 5"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/794"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/794"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3467,7 +3291,7 @@
       "Summon",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/795"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/795"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3477,7 +3301,7 @@
       "Summon",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/796"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/796"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3489,7 +3313,7 @@
       "Grant all allies within Range 2 and self:, Shield 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/797"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/797"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3500,7 +3324,7 @@
       "Retaliate 2",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/798"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/798"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3511,7 +3335,7 @@
       "Heal 2, Range 3",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/799"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/799"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3523,7 +3347,7 @@
       "Attack 1, Range 4",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/800"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/800"
   },
   {
     "monsterType": "Savvas Icestorm",
@@ -3534,7 +3358,7 @@
       "Attack 1",
       "Element ice"
     ],
-    "_source": "gloomhavensecretariat:savvas-icestorm/801"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/801"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3544,7 +3368,7 @@
       "Summon",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/786"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/786"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3554,7 +3378,7 @@
       "Summon",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/787"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/787"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3565,7 +3389,7 @@
       "Attack 1, EnemiesAdjacent",
       "Element fire, Retaliate 3"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/788"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/788"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3575,7 +3399,7 @@
       "Move 1",
       "Element earth"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/789"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/789"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3585,7 +3409,7 @@
       "Move 0",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/790"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/790"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3596,7 +3420,7 @@
       "Element fire, Wound",
       "Element earth, Disarm"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/791"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/791"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3605,7 +3429,7 @@
     "abilities": [
       "Heal 4, Range 3"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/792"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/792"
   },
   {
     "monsterType": "Savvas Lavaflow",
@@ -3616,7 +3440,7 @@
       "Attack 1, Target 2, Range 3",
       "Element fire"
     ],
-    "_source": "gloomhavensecretariat:savvas-lavaflow/793"
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/793"
   },
   {
     "monsterType": "Scout",
@@ -3626,7 +3450,7 @@
       "Move 1",
       "Attack 1, Range 3, Impair"
     ],
-    "_source": "gloomhavensecretariat:scout/770"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/770"
   },
   {
     "monsterType": "Scout",
@@ -3636,7 +3460,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:scout/771"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/771"
   },
   {
     "monsterType": "Scout",
@@ -3646,7 +3470,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:scout/772"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/772"
   },
   {
     "monsterType": "Scout",
@@ -3656,7 +3480,7 @@
       "Move 2",
       "Attack 0, Range 3, Poison"
     ],
-    "_source": "gloomhavensecretariat:scout/773"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/773"
   },
   {
     "monsterType": "Scout",
@@ -3666,7 +3490,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:scout/774"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/774"
   },
   {
     "monsterType": "Scout",
@@ -3675,7 +3499,7 @@
     "abilities": [
       "Attack 2, Poison"
     ],
-    "_source": "gloomhavensecretariat:scout/775"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/775"
   },
   {
     "monsterType": "Scout",
@@ -3684,7 +3508,7 @@
     "abilities": [
       "Attack 1, Target 2, Range 4"
     ],
-    "_source": "gloomhavensecretariat:scout/776"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/776"
   },
   {
     "monsterType": "Scout",
@@ -3694,7 +3518,7 @@
       "Move 1",
       "Loot 1"
     ],
-    "_source": "gloomhavensecretariat:scout/777"
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/777"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3704,7 +3528,7 @@
       "Move 0",
       "Attack 1, Target 3, Range 3"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/810"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/810"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3714,7 +3538,7 @@
       "Move 1",
       "Attack 0, Target 2, Range 5"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/811"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/811"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3724,7 +3548,7 @@
       "Move 2",
       "Attack 0, Push 2"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/812"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/812"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3735,7 +3559,7 @@
       "Retaliate 2, Range 3",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/813"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/813"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3745,7 +3569,7 @@
       "Pull 2, Target All, Range 5",
       "All enemies within Range 3 suffer Damage 2."
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/814"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/814"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3754,7 +3578,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 3, Immobilize"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/815"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/815"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3765,7 +3589,7 @@
       "Attack 0",
       "Element dark"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/816"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/816"
   },
   {
     "monsterType": "Shrike Fiend",
@@ -3775,7 +3599,7 @@
       "Attack 2, Target 3, Range 6, Pull 2",
       "Element dark, Shield 2"
     ],
-    "_source": "gloomhavensecretariat:shrike-fiend/817"
+    "sourceId": "gloomhavensecretariat:monster-ability/shrike-fiend/817"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3785,7 +3609,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/858"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/858"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3795,7 +3619,7 @@
       "Move 0",
       "Attack 0, Range 4"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/859"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/859"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3805,7 +3629,7 @@
       "Move 0",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/860"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/860"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3814,7 +3638,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 4, Poison"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/861"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/861"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3824,7 +3648,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/862"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/862"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3833,7 +3657,7 @@
     "abilities": [
       "Attack 2, Range 4, Stun"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/863"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/863"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3843,7 +3667,7 @@
       "Shield 2",
       "Heal 2, Self, Strengthen"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/864"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/864"
   },
   {
     "monsterType": "Spitting Drake",
@@ -3853,7 +3677,7 @@
       "Move 1",
       "Attack 2, Range 3, Poison"
     ],
-    "_source": "gloomhavensecretariat:spitting-drake/865"
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/865"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3863,7 +3687,7 @@
       "Move 1",
       "Attack 1"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/618"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/618"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3874,7 +3698,7 @@
       "Move 2",
       "All adjacent enemies suffer hazardous terrain damage."
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/619"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/619"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3883,7 +3707,7 @@
     "abilities": [
       "Attack 1, Stun"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/620"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/620"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3894,7 +3718,7 @@
       "Shield 1",
       "Retaliate 2"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/621"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/621"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3904,7 +3728,7 @@
       "Move 0",
       "Attack 0"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/622"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/622"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3913,7 +3737,7 @@
     "abilities": [
       "Attack 1, Range 3, Pierce 3"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/623"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/623"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3923,7 +3747,7 @@
       "Move 1",
       "Attack 1, Push 3"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/624"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/624"
   },
   {
     "monsterType": "Steel Automaton",
@@ -3932,7 +3756,7 @@
     "abilities": [
       "Shield 4"
     ],
-    "_source": "gloomhavensecretariat:steel-automaton/625"
+    "sourceId": "gloomhavensecretariat:monster-ability/steel-automaton/625"
   },
   {
     "monsterType": "Sun Demon",
@@ -3941,7 +3765,7 @@
     "abilities": [
       "Heal 3, Range 3"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/586"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/586"
   },
   {
     "monsterType": "Sun Demon",
@@ -3952,18 +3776,7 @@
       "Attack 0, EnemiesAdjacent",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/587"
-  },
-  {
-    "monsterType": "Sun Demon",
-    "cardName": "Brilliant Aura",
-    "initiative": 36,
-    "abilities": [
-      "Move 0",
-      "Attack 0, EnemiesAdjacent",
-      "Element light"
-    ],
-    "_source": "gloomhavensecretariat:sun-demon/588"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/587"
   },
   {
     "monsterType": "Sun Demon",
@@ -3974,7 +3787,7 @@
       "Attack 1",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/589"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/589"
   },
   {
     "monsterType": "Sun Demon",
@@ -3985,7 +3798,7 @@
       "Attack 1",
       "Element light"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/590"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/590"
   },
   {
     "monsterType": "Sun Demon",
@@ -3995,7 +3808,7 @@
       "Move 1",
       "Attack 0, Range 3"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/591"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/591"
   },
   {
     "monsterType": "Sun Demon",
@@ -4006,7 +3819,7 @@
       "Attack 1, EnemiesAdjacent",
       "Element dark, Muddle"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/592"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/592"
   },
   {
     "monsterType": "Sun Demon",
@@ -4017,7 +3830,7 @@
       "Attack 0, Range 3",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:sun-demon/593"
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/593"
   },
   {
     "monsterType": "Vermling Scout Scenario 94",
@@ -4026,7 +3839,7 @@
     "abilities": [
       "Move 0"
     ],
-    "_source": "gloomhavensecretariat:vermling-scout-scenario-94/752"
+    "sourceId": "gloomhavensecretariat:monster-ability/vermling-scout-scenario-94/752"
   },
   {
     "monsterType": "Wind Demon",
@@ -4037,7 +3850,7 @@
       "Heal 1, Self",
       "Element air, Invisible"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/562"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/562"
   },
   {
     "monsterType": "Wind Demon",
@@ -4048,18 +3861,7 @@
       "Attack 0, Range 3, Pull 1",
       "Element air"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/563"
-  },
-  {
-    "monsterType": "Wind Demon",
-    "cardName": "Tailwind",
-    "initiative": 21,
-    "abilities": [
-      "Move 0",
-      "Attack 0, Range 3, Pull 1",
-      "Element air"
-    ],
-    "_source": "gloomhavensecretariat:wind-demon/564"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/563"
   },
   {
     "monsterType": "Wind Demon",
@@ -4069,7 +3871,7 @@
       "Move 0",
       "Attack 1, Target 2, Range 3"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/565"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/565"
   },
   {
     "monsterType": "Wind Demon",
@@ -4078,7 +3880,7 @@
     "abilities": [
       "Move 0"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/566"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/566"
   },
   {
     "monsterType": "Wind Demon",
@@ -4088,7 +3890,7 @@
       "Move 1",
       "Attack 1, Range 3"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/567"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/567"
   },
   {
     "monsterType": "Wind Demon",
@@ -4098,7 +3900,7 @@
       "Push 1, Target All, Range 1",
       "Attack 0, Range 4, Disarm"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/568"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/568"
   },
   {
     "monsterType": "Wind Demon",
@@ -4110,6 +3912,6 @@
       "Shield 1",
       "Element wild"
     ],
-    "_source": "gloomhavensecretariat:wind-demon/651"
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/651"
   }
 ]

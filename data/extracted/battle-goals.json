@@ -3,360 +3,360 @@
     "name": "Accountant",
     "condition": "Have zero cards in your hand each time you rest.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1301"
+    "sourceId": "gloomhavensecretariat:battle-goal/1301"
   },
   {
     "name": "Acrobat",
     "condition": "Lose a card to negate suffering 5 or more damage.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1302"
+    "sourceId": "gloomhavensecretariat:battle-goal/1302"
   },
   {
     "name": "Ascetic",
     "condition": "Collect fewer loot tokens than any other character.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1303"
+    "sourceId": "gloomhavensecretariat:battle-goal/1303"
   },
   {
     "name": "Assassin",
     "condition": "Kill an enemy before it takes its first turn.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1346"
+    "sourceId": "gloomhavensecretariat:battle-goal/1346"
   },
   {
     "name": "Assistant",
     "condition": "Kill an enemy attacked by any of your allies earlier in the same round.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1304"
+    "sourceId": "gloomhavensecretariat:battle-goal/1304"
   },
   {
     "name": "Bastion",
     "condition": "Occupy a door hex adjacent to two or more enemies at the end of a round.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1305"
+    "sourceId": "gloomhavensecretariat:battle-goal/1305"
   },
   {
     "name": "Bully",
     "condition": "Kill an enemy that has two or more negative conditions.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1306"
+    "sourceId": "gloomhavensecretariat:battle-goal/1306"
   },
   {
     "name": "Cleaner",
     "condition": "Collect three or more loot tokens in the same turn.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1307"
+    "sourceId": "gloomhavensecretariat:battle-goal/1307"
   },
   {
     "name": "Closer",
     "condition": "Kill the last enemy to die in the scenario.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1308"
+    "sourceId": "gloomhavensecretariat:battle-goal/1308"
   },
   {
     "name": "Conservator",
     "condition": "Never perform an action with a lost icon.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1309"
+    "sourceId": "gloomhavensecretariat:battle-goal/1309"
   },
   {
     "name": "Daredevil",
     "condition": "Add two cards to your lost pile before your first rest.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1347"
+    "sourceId": "gloomhavensecretariat:battle-goal/1347"
   },
   {
     "name": "Dawdler",
     "condition": "Never use your lowest initiative played card as your initiative card.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1348"
+    "sourceId": "gloomhavensecretariat:battle-goal/1348"
   },
   {
     "name": "Diehard",
     "condition": "Never have your hit point value drop below half your maximum hit point value (rounded up).",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1310"
+    "sourceId": "gloomhavensecretariat:battle-goal/1310"
   },
   {
     "name": "Duelist",
     "condition": "Never exit a hex adjacent to an enemy except through forced movement.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1349"
+    "sourceId": "gloomhavensecretariat:battle-goal/1349"
   },
   {
     "name": "Dynamo",
     "condition": "Kill an enemy with an attack that would have caused at least 4 more points of damage than necessary.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1311"
+    "sourceId": "gloomhavensecretariat:battle-goal/1311"
   },
   {
     "name": "Egoist",
     "condition": "Collect more loot tokens than any other character.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1312"
+    "sourceId": "gloomhavensecretariat:battle-goal/1312"
   },
   {
     "name": "Executioner",
     "condition": "Kill an undamaged enemy with a single attack action.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1313"
+    "sourceId": "gloomhavensecretariat:battle-goal/1313"
   },
   {
     "name": "Exterminator",
     "condition": "Kill one or more enemies of each monster type that appears in the scenario.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1350"
+    "sourceId": "gloomhavensecretariat:battle-goal/1350"
   },
   {
     "name": "Gambler",
     "condition": "Kill an enemy with an attack that has disadvantage.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1314"
+    "sourceId": "gloomhavensecretariat:battle-goal/1314"
   },
   {
     "name": "Hunter",
     "condition": "Kill one or more elite enemies, or two or more for four characters.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1315"
+    "sourceId": "gloomhavensecretariat:battle-goal/1315"
   },
   {
     "name": "Insomniac",
     "condition": "Suffer damage from an attack in the same round you long rest.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1316"
+    "sourceId": "gloomhavensecretariat:battle-goal/1316"
   },
   {
     "name": "Layabout",
     "condition": "Gain 7 or fewer experience before any bonus scenario experience.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1351"
+    "sourceId": "gloomhavensecretariat:battle-goal/1351"
   },
   {
     "name": "Masochist",
     "condition": "End the scenario with a hit point value of 3 or less.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1317"
+    "sourceId": "gloomhavensecretariat:battle-goal/1317"
   },
   {
     "name": "Miser",
     "condition": "Never exit a room with loot tokens in it.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1352"
+    "sourceId": "gloomhavensecretariat:battle-goal/1352"
   },
   {
     "name": "Mugger",
     "condition": "Kill an enemy and loot the loot token it drops in the same round.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1318"
+    "sourceId": "gloomhavensecretariat:battle-goal/1318"
   },
   {
     "name": "Opener",
     "condition": "Kill the first enemy to die in the scenario.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1319"
+    "sourceId": "gloomhavensecretariat:battle-goal/1319"
   },
   {
     "name": "Optimist",
     "condition": "Remove a negative condition from yourself or an ally two or more times.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1320"
+    "sourceId": "gloomhavensecretariat:battle-goal/1320"
   },
   {
     "name": "Overachiever",
     "condition": "Kill an enemy and open a door in the same turn, in either order.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1353"
+    "sourceId": "gloomhavensecretariat:battle-goal/1353"
   },
   {
     "name": "Pacifist",
     "condition": "Kill three or fewer enemies.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1321"
+    "sourceId": "gloomhavensecretariat:battle-goal/1321"
   },
   {
     "name": "Pauper",
     "condition": "Never collect a loot token from end-of-turn looting.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1322"
+    "sourceId": "gloomhavensecretariat:battle-goal/1322"
   },
   {
     "name": "Peacemonger",
     "condition": "Never kill an enemy.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1354"
+    "sourceId": "gloomhavensecretariat:battle-goal/1354"
   },
   {
     "name": "Pedestrian",
     "condition": "Never enter a hex occupied by an ally, enemy, objective, or obstacle.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1323"
+    "sourceId": "gloomhavensecretariat:battle-goal/1323"
   },
   {
     "name": "Perfectionist",
     "condition": "End the scenario with your hit point value equal to your maximum hit point value.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1324"
+    "sourceId": "gloomhavensecretariat:battle-goal/1324"
   },
   {
     "name": "Pickpocket",
     "condition": "Collect two or more loot tokens by performing a loot ability while adjacent to one or more enemies.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1325"
+    "sourceId": "gloomhavensecretariat:battle-goal/1325"
   },
   {
     "name": "Pincushion",
     "condition": "Be targeted by attacks from three or more enemies in the same round.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1326"
+    "sourceId": "gloomhavensecretariat:battle-goal/1326"
   },
   {
     "name": "Plebeian",
     "condition": "Never kill an elite enemy, named enemy or boss.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1327"
+    "sourceId": "gloomhavensecretariat:battle-goal/1327"
   },
   {
     "name": "Prepper",
     "condition": "Perform no attack abilities in the first three rounds.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1355"
+    "sourceId": "gloomhavensecretariat:battle-goal/1355"
   },
   {
     "name": "Prohibitionist",
     "condition": "Never use a potion.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1328"
+    "sourceId": "gloomhavensecretariat:battle-goal/1328"
   },
   {
     "name": "Promoter",
     "condition": "Perform an ability targeting an ally before your first rest and in between each of your rests.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1329"
+    "sourceId": "gloomhavensecretariat:battle-goal/1329"
   },
   {
     "name": "Rambler",
     "condition": "End no more than three of your turns in the hex in which you started the turn, except when long resting.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1330"
+    "sourceId": "gloomhavensecretariat:battle-goal/1330"
   },
   {
     "name": "Ravager",
     "condition": "Perform two actions with lost icons in the same turn.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1331"
+    "sourceId": "gloomhavensecretariat:battle-goal/1331"
   },
   {
     "name": "Recluse",
     "condition": "Never end your turn adjacent to any other character (gain one additional Checkmark for four characters).",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1332"
+    "sourceId": "gloomhavensecretariat:battle-goal/1332"
   },
   {
     "name": "Ritualist",
     "condition": "Kill an enemy while three or more elements are strong or waning.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1333"
+    "sourceId": "gloomhavensecretariat:battle-goal/1333"
   },
   {
     "name": "Sadist",
     "condition": "Kill five or more enemies.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1334"
+    "sourceId": "gloomhavensecretariat:battle-goal/1334"
   },
   {
     "name": "Scrambler",
     "condition": "Never long rest.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1335"
+    "sourceId": "gloomhavensecretariat:battle-goal/1335"
   },
   {
     "name": "Shirker",
     "condition": "Kill an enemy not adjacent to you while you are adjacent to another enemy.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1336"
+    "sourceId": "gloomhavensecretariat:battle-goal/1336"
   },
   {
     "name": "Slayer",
     "condition": "Kill two or more enemies in the same round.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1356"
+    "sourceId": "gloomhavensecretariat:battle-goal/1356"
   },
   {
     "name": "Sleeper",
     "condition": "Have one or more cards in your hand each time you rest.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1337"
+    "sourceId": "gloomhavensecretariat:battle-goal/1337"
   },
   {
     "name": "Slowpoke",
     "condition": "Move no more than two hexes on each turn.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1357"
+    "sourceId": "gloomhavensecretariat:battle-goal/1357"
   },
   {
     "name": "Sluggard",
     "condition": "Perform a long rest while at your maximum hit point value, after you have already suffered damage.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1338"
+    "sourceId": "gloomhavensecretariat:battle-goal/1338"
   },
   {
     "name": "Specialist",
     "condition": "Never perform a basic action.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1358"
+    "sourceId": "gloomhavensecretariat:battle-goal/1358"
   },
   {
     "name": "Straggler",
     "condition": "Never short rest.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1339"
+    "sourceId": "gloomhavensecretariat:battle-goal/1339"
   },
   {
     "name": "Streamliner",
     "condition": "Have five or more total cards in your hand and discard pile at the end of the scenario.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1340"
+    "sourceId": "gloomhavensecretariat:battle-goal/1340"
   },
   {
     "name": "Tormentor",
     "condition": "Apply a different negative condition to an enemy that already has one or more negative conditions.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1341"
+    "sourceId": "gloomhavensecretariat:battle-goal/1341"
   },
   {
     "name": "Vanguard",
     "condition": "Never attack an enemy that has already acted in the round.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1359"
+    "sourceId": "gloomhavensecretariat:battle-goal/1359"
   },
   {
     "name": "Wallflower",
     "condition": "End each of your turns adjacent to a wall, obstacle, or objective.",
     "checkmarks": 2,
-    "_source": "gloomhavensecretariat:battle-goal/1360"
+    "sourceId": "gloomhavensecretariat:battle-goal/1360"
   },
   {
     "name": "Wastrel",
     "condition": "Lose a card to negate 2 or less damage from an attack.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1342"
+    "sourceId": "gloomhavensecretariat:battle-goal/1342"
   },
   {
     "name": "Weakling",
     "condition": "Become exhausted before any other character.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1343"
+    "sourceId": "gloomhavensecretariat:battle-goal/1343"
   },
   {
     "name": "Workhorse",
     "condition": "Gain 13 or more experience before any bonus scenario experience.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1344"
+    "sourceId": "gloomhavensecretariat:battle-goal/1344"
   },
   {
     "name": "Zealot",
     "condition": "Have three or fewer total cards in your hand and discard pile while also not exhausted at the end of the scenario.",
     "checkmarks": 1,
-    "_source": "gloomhavensecretariat:battle-goal/1345"
+    "sourceId": "gloomhavensecretariat:battle-goal/1345"
   }
 ]

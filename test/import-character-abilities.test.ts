@@ -45,7 +45,7 @@ describe('convertAbility', () => {
         effects: [],
       },
       lost: false,
-      _source: 'gloomhavensecretariat:drifter/1',
+      sourceId: 'gloomhavensecretariat:character-ability/drifter/1',
     });
   });
 

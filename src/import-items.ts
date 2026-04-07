@@ -69,7 +69,7 @@ interface ExtractedItem {
   uses: number | null;
   spent: boolean;
   lost: boolean;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Slot mapping ───────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ export function convertItem(ghs: GhsItem, labels: LabelData): ExtractedItem {
     uses: null,
     spent: ghs.spent ?? false,
     lost: ghs.loss ?? false,
-    _source: `gloomhavensecretariat:item/${ghs.id}`,
+    sourceId: `gloomhavensecretariat:item/${ghs.id}`,
   };
 }
 

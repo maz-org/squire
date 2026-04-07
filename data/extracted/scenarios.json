@@ -1,5 +1,6 @@
 [
   {
+    "scenarioGroup": "main",
     "index": "0",
     "name": "Howling in the Snow",
     "complexity": 1,
@@ -19,9 +20,10 @@
     },
     "flowChartGroup": "intro",
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/0"
+    "sourceId": "gloomhavensecretariat:scenario/000"
   },
   {
+    "scenarioGroup": "main",
     "index": "1",
     "name": "A Town in Flames",
     "complexity": 1,
@@ -51,9 +53,10 @@
     },
     "flowChartGroup": "intro",
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/1"
+    "sourceId": "gloomhavensecretariat:scenario/001"
   },
   {
+    "scenarioGroup": "main",
     "index": "2",
     "name": "Algox Scouting",
     "complexity": 1,
@@ -81,9 +84,10 @@
     },
     "flowChartGroup": "intro",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/2"
+    "sourceId": "gloomhavensecretariat:scenario/002"
   },
   {
+    "scenarioGroup": "main",
     "index": "3",
     "name": "Algox Offensive",
     "complexity": 2,
@@ -111,9 +115,10 @@
     },
     "flowChartGroup": "intro",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/3"
+    "sourceId": "gloomhavensecretariat:scenario/003"
   },
   {
+    "scenarioGroup": "main",
     "index": "4A",
     "name": "Heart of Ice A",
     "complexity": 2,
@@ -137,9 +142,10 @@
     },
     "flowChartGroup": "intro",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/4A"
+    "sourceId": "gloomhavensecretariat:scenario/004A"
   },
   {
+    "scenarioGroup": "main",
     "index": "4B",
     "name": "Heart of Ice B",
     "complexity": 2,
@@ -163,9 +169,10 @@
     },
     "flowChartGroup": "intro",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/4B"
+    "sourceId": "gloomhavensecretariat:scenario/004B"
   },
   {
+    "scenarioGroup": "main",
     "index": "5",
     "name": "Frozen Crypt",
     "complexity": 2,
@@ -190,9 +197,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/5"
+    "sourceId": "gloomhavensecretariat:scenario/005"
   },
   {
+    "scenarioGroup": "main",
     "index": "6",
     "name": "Avalanche",
     "complexity": 2,
@@ -226,9 +234,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/6"
+    "sourceId": "gloomhavensecretariat:scenario/006"
   },
   {
+    "scenarioGroup": "main",
     "index": "7",
     "name": "Edge of the World",
     "complexity": 1,
@@ -254,9 +263,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/7"
+    "sourceId": "gloomhavensecretariat:scenario/007"
   },
   {
+    "scenarioGroup": "main",
     "index": "8",
     "name": "Crystal Trench",
     "complexity": 1,
@@ -282,9 +292,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/8"
+    "sourceId": "gloomhavensecretariat:scenario/008"
   },
   {
+    "scenarioGroup": "main",
     "index": "9",
     "name": "Glowing Catacombs",
     "complexity": 1,
@@ -309,9 +320,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/9"
+    "sourceId": "gloomhavensecretariat:scenario/009"
   },
   {
+    "scenarioGroup": "main",
     "index": "10",
     "name": "Crystal Enclosure",
     "complexity": 2,
@@ -346,9 +358,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/10"
+    "sourceId": "gloomhavensecretariat:scenario/010"
   },
   {
+    "scenarioGroup": "main",
     "index": "11",
     "name": "Snowscorn Peak",
     "complexity": 2,
@@ -381,9 +394,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/11"
+    "sourceId": "gloomhavensecretariat:scenario/011"
   },
   {
+    "scenarioGroup": "main",
     "index": "12",
     "name": "Temple Entrance",
     "complexity": 1,
@@ -407,9 +421,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/12"
+    "sourceId": "gloomhavensecretariat:scenario/012"
   },
   {
+    "scenarioGroup": "main",
     "index": "13",
     "name": "Frozen Fjord",
     "complexity": 2,
@@ -440,9 +455,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/13"
+    "sourceId": "gloomhavensecretariat:scenario/013"
   },
   {
+    "scenarioGroup": "main",
     "index": "14",
     "name": "Jagged Shoals",
     "complexity": 2,
@@ -473,9 +489,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/14"
+    "sourceId": "gloomhavensecretariat:scenario/014"
   },
   {
+    "scenarioGroup": "main",
     "index": "15",
     "name": "Ancient Spire",
     "complexity": 2,
@@ -503,9 +520,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/15"
+    "sourceId": "gloomhavensecretariat:scenario/015"
   },
   {
+    "scenarioGroup": "main",
     "index": "16",
     "name": "Derelict Elevator",
     "complexity": 3,
@@ -530,9 +548,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/16"
+    "sourceId": "gloomhavensecretariat:scenario/016"
   },
   {
+    "scenarioGroup": "main",
     "index": "17",
     "name": "Haunted Vault",
     "complexity": 3,
@@ -558,9 +577,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/17"
+    "sourceId": "gloomhavensecretariat:scenario/017"
   },
   {
+    "scenarioGroup": "main",
     "index": "18",
     "name": "Crystal Fields",
     "complexity": 1,
@@ -585,9 +605,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/18"
+    "sourceId": "gloomhavensecretariat:scenario/018"
   },
   {
+    "scenarioGroup": "main",
     "index": "19",
     "name": "Skyhall",
     "complexity": 3,
@@ -612,9 +633,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/19"
+    "sourceId": "gloomhavensecretariat:scenario/019"
   },
   {
+    "scenarioGroup": "main",
     "index": "20",
     "name": "Temple of Liberation",
     "complexity": 3,
@@ -644,9 +666,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/20"
+    "sourceId": "gloomhavensecretariat:scenario/020"
   },
   {
+    "scenarioGroup": "main",
     "index": "21",
     "name": "Realm of Endless Frost",
     "complexity": 3,
@@ -676,9 +699,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/21"
+    "sourceId": "gloomhavensecretariat:scenario/021"
   },
   {
+    "scenarioGroup": "main",
     "index": "22",
     "name": "Ice Floes",
     "complexity": 2,
@@ -706,9 +730,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/22"
+    "sourceId": "gloomhavensecretariat:scenario/022"
   },
   {
+    "scenarioGroup": "main",
     "index": "23",
     "name": "Spire Basement",
     "complexity": 1,
@@ -733,9 +758,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/23"
+    "sourceId": "gloomhavensecretariat:scenario/023"
   },
   {
+    "scenarioGroup": "main",
     "index": "24",
     "name": "Upper Spire",
     "complexity": 2,
@@ -761,9 +787,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/24"
+    "sourceId": "gloomhavensecretariat:scenario/024"
   },
   {
+    "scenarioGroup": "main",
     "index": "25",
     "name": "Rusted Tunnels",
     "complexity": 2,
@@ -785,9 +812,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/25"
+    "sourceId": "gloomhavensecretariat:scenario/025"
   },
   {
+    "scenarioGroup": "main",
     "index": "26",
     "name": "Quatryl Library",
     "complexity": 2,
@@ -810,9 +838,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/26"
+    "sourceId": "gloomhavensecretariat:scenario/026"
   },
   {
+    "scenarioGroup": "main",
     "index": "27",
     "name": "Depths of Delirium",
     "complexity": 2,
@@ -845,9 +874,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/27"
+    "sourceId": "gloomhavensecretariat:scenario/027"
   },
   {
+    "scenarioGroup": "main",
     "index": "28",
     "name": "Summit Meeting",
     "complexity": 3,
@@ -879,9 +909,10 @@
     },
     "flowChartGroup": "algox-3",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/28"
+    "sourceId": "gloomhavensecretariat:scenario/028"
   },
   {
+    "scenarioGroup": "main",
     "index": "29",
     "name": "War of the Spire A",
     "complexity": 2,
@@ -915,9 +946,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/29"
+    "sourceId": "gloomhavensecretariat:scenario/029"
   },
   {
+    "scenarioGroup": "main",
     "index": "30",
     "name": "War of the Spire B",
     "complexity": 2,
@@ -945,9 +977,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/30"
+    "sourceId": "gloomhavensecretariat:scenario/030"
   },
   {
+    "scenarioGroup": "main",
     "index": "31",
     "name": "Crackling Tunnel",
     "complexity": 2,
@@ -972,9 +1005,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/31"
+    "sourceId": "gloomhavensecretariat:scenario/031"
   },
   {
+    "scenarioGroup": "main",
     "index": "32",
     "name": "Ravens' Roost",
     "complexity": 2,
@@ -996,9 +1030,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/32"
+    "sourceId": "gloomhavensecretariat:scenario/032"
   },
   {
+    "scenarioGroup": "main",
     "index": "33",
     "name": "Thawed Wood",
     "complexity": 3,
@@ -1027,9 +1062,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/33"
+    "sourceId": "gloomhavensecretariat:scenario/033"
   },
   {
+    "scenarioGroup": "main",
     "index": "34",
     "name": "Top of the Spire",
     "complexity": 2,
@@ -1045,9 +1081,10 @@
     "lootDeckConfig": {},
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/34"
+    "sourceId": "gloomhavensecretariat:scenario/034"
   },
   {
+    "scenarioGroup": "main",
     "index": "35",
     "name": "Scrap Pit",
     "complexity": 2,
@@ -1078,9 +1115,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/35"
+    "sourceId": "gloomhavensecretariat:scenario/035"
   },
   {
+    "scenarioGroup": "main",
     "index": "36",
     "name": "Buried Ducts",
     "complexity": 1,
@@ -1118,9 +1156,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/36"
+    "sourceId": "gloomhavensecretariat:scenario/036"
   },
   {
+    "scenarioGroup": "main",
     "index": "37",
     "name": "The Dead Mile",
     "complexity": 1,
@@ -1145,9 +1184,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/37"
+    "sourceId": "gloomhavensecretariat:scenario/037"
   },
   {
+    "scenarioGroup": "main",
     "index": "38",
     "name": "The Way Forward",
     "complexity": 3,
@@ -1182,9 +1222,10 @@
     },
     "flowChartGroup": "algox-3",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/38"
+    "sourceId": "gloomhavensecretariat:scenario/038"
   },
   {
+    "scenarioGroup": "main",
     "index": "39",
     "name": "Corrupted Camp",
     "complexity": 3,
@@ -1220,9 +1261,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/39"
+    "sourceId": "gloomhavensecretariat:scenario/039"
   },
   {
+    "scenarioGroup": "main",
     "index": "40",
     "name": "Relief Effort",
     "complexity": 2,
@@ -1251,9 +1293,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/40"
+    "sourceId": "gloomhavensecretariat:scenario/040"
   },
   {
+    "scenarioGroup": "main",
     "index": "41",
     "name": "Unfettered Shard",
     "complexity": 2,
@@ -1284,9 +1327,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/41"
+    "sourceId": "gloomhavensecretariat:scenario/041"
   },
   {
+    "scenarioGroup": "main",
     "index": "42",
     "name": "Sunless Trench",
     "complexity": 1,
@@ -1315,9 +1359,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/42"
+    "sourceId": "gloomhavensecretariat:scenario/042"
   },
   {
+    "scenarioGroup": "main",
     "index": "43",
     "name": "Overrun Barricade",
     "complexity": 3,
@@ -1343,9 +1388,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/43"
+    "sourceId": "gloomhavensecretariat:scenario/043"
   },
   {
+    "scenarioGroup": "main",
     "index": "44",
     "name": "Nerve Center",
     "complexity": 2,
@@ -1374,9 +1420,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/44"
+    "sourceId": "gloomhavensecretariat:scenario/044"
   },
   {
+    "scenarioGroup": "main",
     "index": "45",
     "name": "Living Glacier",
     "complexity": 1,
@@ -1408,9 +1455,10 @@
     },
     "flowChartGroup": "algox-3",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/45"
+    "sourceId": "gloomhavensecretariat:scenario/045"
   },
   {
+    "scenarioGroup": "main",
     "index": "46",
     "name": "Dead Pass",
     "complexity": 2,
@@ -1441,9 +1489,10 @@
     },
     "flowChartGroup": "algox-3",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/46"
+    "sourceId": "gloomhavensecretariat:scenario/046"
   },
   {
+    "scenarioGroup": "main",
     "index": "47",
     "name": "Carrion Ridge",
     "complexity": 1,
@@ -1468,9 +1517,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/47"
+    "sourceId": "gloomhavensecretariat:scenario/047"
   },
   {
+    "scenarioGroup": "main",
     "index": "48",
     "name": "Blizzard Island",
     "complexity": 2,
@@ -1501,9 +1551,10 @@
     },
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/48"
+    "sourceId": "gloomhavensecretariat:scenario/048"
   },
   {
+    "scenarioGroup": "main",
     "index": "49",
     "name": "Beneath Sea and Stone",
     "complexity": 3,
@@ -1541,9 +1592,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/49"
+    "sourceId": "gloomhavensecretariat:scenario/049"
   },
   {
+    "scenarioGroup": "main",
     "index": "50",
     "name": "Explosive Descent",
     "complexity": 2,
@@ -1579,9 +1631,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/50"
+    "sourceId": "gloomhavensecretariat:scenario/050"
   },
   {
+    "scenarioGroup": "main",
     "index": "51",
     "name": "Orphan's Halls",
     "complexity": 3,
@@ -1606,9 +1659,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/51"
+    "sourceId": "gloomhavensecretariat:scenario/051"
   },
   {
+    "scenarioGroup": "main",
     "index": "52",
     "name": "Fleeting Permanence",
     "complexity": 2,
@@ -1643,9 +1697,10 @@
     },
     "flowChartGroup": "algox-3",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/52"
+    "sourceId": "gloomhavensecretariat:scenario/052"
   },
   {
+    "scenarioGroup": "main",
     "index": "53",
     "name": "Underwater Throne",
     "complexity": 2,
@@ -1679,9 +1734,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/53"
+    "sourceId": "gloomhavensecretariat:scenario/053"
   },
   {
+    "scenarioGroup": "main",
     "index": "54",
     "name": "Among the Wreckage",
     "complexity": 2,
@@ -1723,9 +1779,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/54"
+    "sourceId": "gloomhavensecretariat:scenario/054"
   },
   {
+    "scenarioGroup": "main",
     "index": "55",
     "name": "Change of Heart",
     "complexity": 2,
@@ -1750,9 +1807,10 @@
     },
     "flowChartGroup": "algox-3",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/55"
+    "sourceId": "gloomhavensecretariat:scenario/055"
   },
   {
+    "scenarioGroup": "main",
     "index": "56",
     "name": "Call of the Harbinger",
     "complexity": 3,
@@ -1780,9 +1838,10 @@
     },
     "flowChartGroup": "algox-1",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/56"
+    "sourceId": "gloomhavensecretariat:scenario/056"
   },
   {
+    "scenarioGroup": "main",
     "index": "57",
     "name": "Sanctuary of Snow",
     "complexity": 3,
@@ -1809,9 +1868,10 @@
     "lootDeckConfig": {},
     "flowChartGroup": "algox-2",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/57"
+    "sourceId": "gloomhavensecretariat:scenario/057"
   },
   {
+    "scenarioGroup": "main",
     "index": "58",
     "name": "Orphan's Core",
     "complexity": 3,
@@ -1839,9 +1899,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/58"
+    "sourceId": "gloomhavensecretariat:scenario/058"
   },
   {
+    "scenarioGroup": "main",
     "index": "59",
     "name": "Automaton Uprising",
     "complexity": 2,
@@ -1870,9 +1931,10 @@
     },
     "flowChartGroup": "unfettered",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/59"
+    "sourceId": "gloomhavensecretariat:scenario/059"
   },
   {
+    "scenarioGroup": "main",
     "index": "60",
     "name": "Uniting the Crown",
     "complexity": 2,
@@ -1909,9 +1971,10 @@
     },
     "flowChartGroup": "lurker",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/60"
+    "sourceId": "gloomhavensecretariat:scenario/060"
   },
   {
+    "scenarioGroup": "main",
     "index": "61",
     "name": "Life and Death",
     "complexity": 2,
@@ -1940,9 +2003,10 @@
     },
     "flowChartGroup": "puzzle-book",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/61"
+    "sourceId": "gloomhavensecretariat:scenario/061"
   },
   {
+    "scenarioGroup": "main",
     "index": "62",
     "name": "The Unfettered Seal",
     "complexity": 3,
@@ -1974,9 +2038,10 @@
     },
     "flowChartGroup": "puzzle-book",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/62"
+    "sourceId": "gloomhavensecretariat:scenario/062"
   },
   {
+    "scenarioGroup": "main",
     "index": "63",
     "name": "The Savvas Seal",
     "complexity": 3,
@@ -2011,9 +2076,10 @@
     },
     "flowChartGroup": "puzzle-book",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/63"
+    "sourceId": "gloomhavensecretariat:scenario/063"
   },
   {
+    "scenarioGroup": "main",
     "index": "64",
     "name": "The Frosthaven Seal",
     "complexity": 3,
@@ -2051,9 +2117,10 @@
     },
     "flowChartGroup": "puzzle-book",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/64"
+    "sourceId": "gloomhavensecretariat:scenario/064"
   },
   {
+    "scenarioGroup": "main",
     "index": "65",
     "name": "A Strong Foundation",
     "complexity": 1,
@@ -2077,9 +2144,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/65"
+    "sourceId": "gloomhavensecretariat:scenario/065"
   },
   {
+    "scenarioGroup": "main",
     "index": "66",
     "name": "Elemental Cores",
     "complexity": 2,
@@ -2103,9 +2171,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/66"
+    "sourceId": "gloomhavensecretariat:scenario/066"
   },
   {
+    "scenarioGroup": "main",
     "index": "67",
     "name": "Core Attunement",
     "complexity": 2,
@@ -2139,9 +2208,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/67"
+    "sourceId": "gloomhavensecretariat:scenario/067"
   },
   {
+    "scenarioGroup": "main",
     "index": "68",
     "name": "The Face of Torment",
     "complexity": 2,
@@ -2168,9 +2238,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/68"
+    "sourceId": "gloomhavensecretariat:scenario/068"
   },
   {
+    "scenarioGroup": "main",
     "index": "69",
     "name": "Sacred Soil",
     "complexity": 2,
@@ -2199,9 +2270,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/69"
+    "sourceId": "gloomhavensecretariat:scenario/069"
   },
   {
+    "scenarioGroup": "main",
     "index": "70",
     "name": "The True Oak",
     "complexity": 1,
@@ -2229,9 +2301,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/70"
+    "sourceId": "gloomhavensecretariat:scenario/070"
   },
   {
+    "scenarioGroup": "main",
     "index": "71",
     "name": "Invasion of the Dock",
     "complexity": 3,
@@ -2252,9 +2325,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/71"
+    "sourceId": "gloomhavensecretariat:scenario/071"
   },
   {
+    "scenarioGroup": "main",
     "index": "72",
     "name": "A Giant Block of Ice",
     "complexity": 2,
@@ -2277,9 +2351,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/72"
+    "sourceId": "gloomhavensecretariat:scenario/072"
   },
   {
+    "scenarioGroup": "main",
     "index": "73",
     "name": "Flotsam",
     "complexity": 2,
@@ -2300,9 +2375,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/73"
+    "sourceId": "gloomhavensecretariat:scenario/073"
   },
   {
+    "scenarioGroup": "main",
     "index": "74A",
     "name": "Gaps in the Road A",
     "complexity": 2,
@@ -2339,9 +2415,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/74A"
+    "sourceId": "gloomhavensecretariat:scenario/074A"
   },
   {
+    "scenarioGroup": "main",
     "index": "74B",
     "name": "Gaps in the Road B",
     "complexity": 2,
@@ -2369,9 +2446,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/74B"
+    "sourceId": "gloomhavensecretariat:scenario/074B"
   },
   {
+    "scenarioGroup": "main",
     "index": "75",
     "name": "Infiltrating the Lair",
     "complexity": 2,
@@ -2403,9 +2481,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/75"
+    "sourceId": "gloomhavensecretariat:scenario/075"
   },
   {
+    "scenarioGroup": "main",
     "index": "76",
     "name": "Apotheosis",
     "complexity": 3,
@@ -2440,9 +2519,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/76"
+    "sourceId": "gloomhavensecretariat:scenario/076"
   },
   {
+    "scenarioGroup": "main",
     "index": "77",
     "name": "Fish King's Ascension",
     "complexity": 3,
@@ -2472,9 +2552,10 @@
     },
     "flowChartGroup": "personal-quests",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/77"
+    "sourceId": "gloomhavensecretariat:scenario/077"
   },
   {
+    "scenarioGroup": "main",
     "index": "78",
     "name": "The Lurker Problem",
     "complexity": 2,
@@ -2504,9 +2585,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/78"
+    "sourceId": "gloomhavensecretariat:scenario/078"
   },
   {
+    "scenarioGroup": "main",
     "index": "79",
     "name": "Relic",
     "complexity": 3,
@@ -2534,9 +2616,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/79"
+    "sourceId": "gloomhavensecretariat:scenario/079"
   },
   {
+    "scenarioGroup": "main",
     "index": "80",
     "name": "Relic Renewed",
     "complexity": 2,
@@ -2575,9 +2658,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/80"
+    "sourceId": "gloomhavensecretariat:scenario/080"
   },
   {
+    "scenarioGroup": "main",
     "index": "81",
     "name": "Ruinous Research Lab",
     "complexity": 3,
@@ -2610,9 +2694,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/81"
+    "sourceId": "gloomhavensecretariat:scenario/081"
   },
   {
+    "scenarioGroup": "main",
     "index": "82",
     "name": "Expedition North",
     "complexity": 2,
@@ -2644,9 +2729,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/82"
+    "sourceId": "gloomhavensecretariat:scenario/082"
   },
   {
+    "scenarioGroup": "main",
     "index": "83",
     "name": "Rising Brine",
     "complexity": 2,
@@ -2679,9 +2765,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/83"
+    "sourceId": "gloomhavensecretariat:scenario/083"
   },
   {
+    "scenarioGroup": "main",
     "index": "84",
     "name": "Here There Be Oozes",
     "complexity": 3,
@@ -2703,9 +2790,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/84"
+    "sourceId": "gloomhavensecretariat:scenario/084"
   },
   {
+    "scenarioGroup": "main",
     "index": "85",
     "name": "Deadly Pastimes",
     "complexity": 3,
@@ -2735,9 +2823,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/85"
+    "sourceId": "gloomhavensecretariat:scenario/085"
   },
   {
+    "scenarioGroup": "main",
     "index": "86",
     "name": "The Lady in White",
     "complexity": 2,
@@ -2765,9 +2854,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/86"
+    "sourceId": "gloomhavensecretariat:scenario/086"
   },
   {
+    "scenarioGroup": "main",
     "index": "87",
     "name": "The Collection",
     "complexity": 1,
@@ -2793,9 +2883,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/87"
+    "sourceId": "gloomhavensecretariat:scenario/087"
   },
   {
+    "scenarioGroup": "main",
     "index": "88",
     "name": "Collection's Capstone",
     "complexity": 2,
@@ -2823,9 +2914,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/88"
+    "sourceId": "gloomhavensecretariat:scenario/088"
   },
   {
+    "scenarioGroup": "main",
     "index": "89",
     "name": "A Contained Fire",
     "complexity": 2,
@@ -2848,9 +2940,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/89"
+    "sourceId": "gloomhavensecretariat:scenario/089"
   },
   {
+    "scenarioGroup": "main",
     "index": "90",
     "name": "Frozen Treasure",
     "complexity": 2,
@@ -2873,9 +2966,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/90"
+    "sourceId": "gloomhavensecretariat:scenario/090"
   },
   {
+    "scenarioGroup": "main",
     "index": "91",
     "name": "Shoreline Scramble",
     "complexity": 2,
@@ -2899,9 +2993,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/91"
+    "sourceId": "gloomhavensecretariat:scenario/091"
   },
   {
+    "scenarioGroup": "main",
     "index": "92",
     "name": "Sinking Ship",
     "complexity": 3,
@@ -2933,9 +3028,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/92"
+    "sourceId": "gloomhavensecretariat:scenario/092"
   },
   {
+    "scenarioGroup": "main",
     "index": "93A",
     "name": "Midwinter Brawl A",
     "complexity": 2,
@@ -2964,9 +3060,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/93A"
+    "sourceId": "gloomhavensecretariat:scenario/093A"
   },
   {
+    "scenarioGroup": "main",
     "index": "93B",
     "name": "Midwinter Brawl B",
     "complexity": 2,
@@ -2995,9 +3092,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/93B"
+    "sourceId": "gloomhavensecretariat:scenario/093B"
   },
   {
+    "scenarioGroup": "main",
     "index": "94",
     "name": "A Grand View",
     "complexity": 3,
@@ -3030,9 +3128,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/94"
+    "sourceId": "gloomhavensecretariat:scenario/094"
   },
   {
+    "scenarioGroup": "main",
     "index": "95",
     "name": "To Bury the Dead",
     "complexity": 2,
@@ -3053,9 +3152,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/95"
+    "sourceId": "gloomhavensecretariat:scenario/095"
   },
   {
+    "scenarioGroup": "main",
     "index": "96",
     "name": "Underground Station",
     "complexity": 2,
@@ -3089,9 +3189,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/96"
+    "sourceId": "gloomhavensecretariat:scenario/096"
   },
   {
+    "scenarioGroup": "main",
     "index": "97",
     "name": "Program Control Nexus",
     "complexity": 3,
@@ -3117,9 +3218,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/97"
+    "sourceId": "gloomhavensecretariat:scenario/097"
   },
   {
+    "scenarioGroup": "main",
     "index": "98",
     "name": "Collapsing Vent",
     "complexity": 1,
@@ -3142,9 +3244,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/98"
+    "sourceId": "gloomhavensecretariat:scenario/098"
   },
   {
+    "scenarioGroup": "main",
     "index": "99",
     "name": "Prison Break",
     "complexity": 1,
@@ -3168,9 +3271,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/99"
+    "sourceId": "gloomhavensecretariat:scenario/099"
   },
   {
+    "scenarioGroup": "main",
     "index": "100",
     "name": "Inside the Swarm",
     "complexity": 3,
@@ -3190,9 +3294,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/100"
+    "sourceId": "gloomhavensecretariat:scenario/100"
   },
   {
+    "scenarioGroup": "main",
     "index": "101",
     "name": "Harrower Library",
     "complexity": 1,
@@ -3224,9 +3329,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/101"
+    "sourceId": "gloomhavensecretariat:scenario/101"
   },
   {
+    "scenarioGroup": "main",
     "index": "102",
     "name": "Into the Black",
     "complexity": 3,
@@ -3248,9 +3354,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/102"
+    "sourceId": "gloomhavensecretariat:scenario/102"
   },
   {
+    "scenarioGroup": "main",
     "index": "103",
     "name": "The Lead Door",
     "complexity": 2,
@@ -3275,9 +3382,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/103"
+    "sourceId": "gloomhavensecretariat:scenario/103"
   },
   {
+    "scenarioGroup": "main",
     "index": "104",
     "name": "Ruins of the Solstice",
     "complexity": 2,
@@ -3307,9 +3415,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/104"
+    "sourceId": "gloomhavensecretariat:scenario/104"
   },
   {
+    "scenarioGroup": "main",
     "index": "105",
     "name": "Ruins of the Equinox",
     "complexity": 2,
@@ -3340,9 +3449,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/105"
+    "sourceId": "gloomhavensecretariat:scenario/105"
   },
   {
+    "scenarioGroup": "main",
     "index": "106",
     "name": "The Tempus Forge",
     "complexity": 2,
@@ -3363,9 +3473,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/106"
+    "sourceId": "gloomhavensecretariat:scenario/106"
   },
   {
+    "scenarioGroup": "main",
     "index": "107",
     "name": "My Private Empire",
     "complexity": 2,
@@ -3392,9 +3503,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/107"
+    "sourceId": "gloomhavensecretariat:scenario/107"
   },
   {
+    "scenarioGroup": "main",
     "index": "108",
     "name": "Lustrous Pit",
     "complexity": 2,
@@ -3418,9 +3530,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/108"
+    "sourceId": "gloomhavensecretariat:scenario/108"
   },
   {
+    "scenarioGroup": "main",
     "index": "109",
     "name": "Furious Factory",
     "complexity": 3,
@@ -3451,9 +3564,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/109"
+    "sourceId": "gloomhavensecretariat:scenario/109"
   },
   {
+    "scenarioGroup": "main",
     "index": "110",
     "name": "Guardian's Temple",
     "complexity": 2,
@@ -3493,9 +3607,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/110"
+    "sourceId": "gloomhavensecretariat:scenario/110"
   },
   {
+    "scenarioGroup": "main",
     "index": "111",
     "name": "Ice Cave",
     "complexity": 3,
@@ -3524,9 +3639,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/111"
+    "sourceId": "gloomhavensecretariat:scenario/111"
   },
   {
+    "scenarioGroup": "main",
     "index": "112",
     "name": "Raised by Wolves",
     "complexity": 1,
@@ -3552,9 +3668,10 @@
     },
     "flowChartGroup": "random-scenarios",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/112"
+    "sourceId": "gloomhavensecretariat:scenario/112"
   },
   {
+    "scenarioGroup": "main",
     "index": "113",
     "name": "Lush Grotto",
     "complexity": 1,
@@ -3579,9 +3696,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/113"
+    "sourceId": "gloomhavensecretariat:scenario/113"
   },
   {
+    "scenarioGroup": "main",
     "index": "114",
     "name": "Work Freeze",
     "complexity": 2,
@@ -3611,9 +3729,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/114"
+    "sourceId": "gloomhavensecretariat:scenario/114"
   },
   {
+    "scenarioGroup": "main",
     "index": "115",
     "name": "Pylon Problems",
     "complexity": 2,
@@ -3642,9 +3761,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/115"
+    "sourceId": "gloomhavensecretariat:scenario/115"
   },
   {
+    "scenarioGroup": "main",
     "index": "116",
     "name": "Caravan Guards",
     "complexity": 2,
@@ -3675,9 +3795,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/116"
+    "sourceId": "gloomhavensecretariat:scenario/116"
   },
   {
+    "scenarioGroup": "main",
     "index": "117",
     "name": "A Waiting Game",
     "complexity": 2,
@@ -3702,9 +3823,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/117"
+    "sourceId": "gloomhavensecretariat:scenario/117"
   },
   {
+    "scenarioGroup": "main",
     "index": "118",
     "name": "Lurker Necromancy",
     "complexity": 1,
@@ -3735,9 +3857,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/118"
+    "sourceId": "gloomhavensecretariat:scenario/118"
   },
   {
+    "scenarioGroup": "main",
     "index": "119",
     "name": "Radiant Dust",
     "complexity": 2,
@@ -3765,9 +3888,10 @@
     "lootDeckConfig": {},
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/119"
+    "sourceId": "gloomhavensecretariat:scenario/119"
   },
   {
+    "scenarioGroup": "main",
     "index": "120",
     "name": "Under the Influence",
     "complexity": 1,
@@ -3788,9 +3912,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/120"
+    "sourceId": "gloomhavensecretariat:scenario/120"
   },
   {
+    "scenarioGroup": "main",
     "index": "121",
     "name": "Black Memories",
     "complexity": 3,
@@ -3814,9 +3939,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/121"
+    "sourceId": "gloomhavensecretariat:scenario/121"
   },
   {
+    "scenarioGroup": "main",
     "index": "122",
     "name": "The Eternal Crave",
     "complexity": 2,
@@ -3837,9 +3963,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/122"
+    "sourceId": "gloomhavensecretariat:scenario/122"
   },
   {
+    "scenarioGroup": "main",
     "index": "123",
     "name": "The Titan",
     "complexity": 3,
@@ -3861,9 +3988,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/123"
+    "sourceId": "gloomhavensecretariat:scenario/123"
   },
   {
+    "scenarioGroup": "main",
     "index": "124",
     "name": "A Growing Problem",
     "complexity": 2,
@@ -3888,9 +4016,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/124"
+    "sourceId": "gloomhavensecretariat:scenario/124"
   },
   {
+    "scenarioGroup": "main",
     "index": "125",
     "name": "The Longest Second",
     "complexity": 2,
@@ -3914,9 +4043,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/125"
+    "sourceId": "gloomhavensecretariat:scenario/125"
   },
   {
+    "scenarioGroup": "main",
     "index": "126",
     "name": "Joseph the Lion",
     "complexity": 2,
@@ -3959,9 +4089,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/126"
+    "sourceId": "gloomhavensecretariat:scenario/126"
   },
   {
+    "scenarioGroup": "main",
     "index": "127",
     "name": "Derelict Freighter",
     "complexity": 1,
@@ -3983,9 +4114,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/127"
+    "sourceId": "gloomhavensecretariat:scenario/127"
   },
   {
+    "scenarioGroup": "main",
     "index": "128",
     "name": "A Tall Drunken Tale",
     "complexity": 3,
@@ -4010,9 +4142,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/128"
+    "sourceId": "gloomhavensecretariat:scenario/128"
   },
   {
+    "scenarioGroup": "main",
     "index": "129",
     "name": "How to Lay an Ambush",
     "complexity": 3,
@@ -4038,9 +4171,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/129"
+    "sourceId": "gloomhavensecretariat:scenario/129"
   },
   {
+    "scenarioGroup": "main",
     "index": "130",
     "name": "And Then, a Stream",
     "complexity": 3,
@@ -4065,9 +4199,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/130"
+    "sourceId": "gloomhavensecretariat:scenario/130"
   },
   {
+    "scenarioGroup": "main",
     "index": "131",
     "name": "The Dancing Iceberg",
     "complexity": 3,
@@ -4083,9 +4218,10 @@
     "lootDeckConfig": {},
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/131"
+    "sourceId": "gloomhavensecretariat:scenario/131"
   },
   {
+    "scenarioGroup": "main",
     "index": "132",
     "name": "Temple of Feline Power",
     "complexity": 2,
@@ -4116,9 +4252,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/132"
+    "sourceId": "gloomhavensecretariat:scenario/132"
   },
   {
+    "scenarioGroup": "main",
     "index": "133",
     "name": "Bolt",
     "complexity": 2,
@@ -4143,9 +4280,10 @@
     },
     "flowChartGroup": "job-postings",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/133"
+    "sourceId": "gloomhavensecretariat:scenario/133"
   },
   {
+    "scenarioGroup": "main",
     "index": "134",
     "name": "Tower of Knowledge",
     "complexity": 3,
@@ -4175,9 +4313,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/134"
+    "sourceId": "gloomhavensecretariat:scenario/134"
   },
   {
+    "scenarioGroup": "main",
     "index": "135",
     "name": "Belara's Keep",
     "complexity": 3,
@@ -4203,9 +4342,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/135"
+    "sourceId": "gloomhavensecretariat:scenario/135"
   },
   {
+    "scenarioGroup": "main",
     "index": "136",
     "name": "Abandoned Hideout",
     "complexity": 2,
@@ -4233,9 +4373,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/136"
+    "sourceId": "gloomhavensecretariat:scenario/136"
   },
   {
+    "scenarioGroup": "main",
     "index": "137",
     "name": "Pirate Queen's Haul",
     "complexity": 1,
@@ -4264,9 +4405,10 @@
     },
     "flowChartGroup": "other",
     "initial": false,
-    "_source": "gloomhavensecretariat:scenario/137"
+    "sourceId": "gloomhavensecretariat:scenario/137"
   },
   {
+    "scenarioGroup": "random",
     "index": "rnd",
     "name": "Random Dungeon",
     "monsters": [],
@@ -4289,9 +4431,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/rnd"
+    "sourceId": "gloomhavensecretariat:scenario/random"
   },
   {
+    "scenarioGroup": "solo",
     "index": "20",
     "name": "Wonder of Nature",
     "monsters": [
@@ -4308,9 +4451,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/20"
+    "sourceId": "gloomhavensecretariat:scenario/solo20_drifter"
   },
   {
+    "scenarioGroup": "solo",
     "index": "21",
     "name": "Race Against the Clock",
     "monsters": [
@@ -4327,9 +4471,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/21"
+    "sourceId": "gloomhavensecretariat:scenario/solo21_blinkblade"
   },
   {
+    "scenarioGroup": "solo",
     "index": "22",
     "name": "Scouting Ambush",
     "monsters": [
@@ -4349,9 +4494,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/22"
+    "sourceId": "gloomhavensecretariat:scenario/solo22_banner-spear"
   },
   {
+    "scenarioGroup": "solo",
     "index": "23",
     "name": "The Dead of Night",
     "monsters": [
@@ -4373,9 +4519,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/23"
+    "sourceId": "gloomhavensecretariat:scenario/solo23_deathwalker"
   },
   {
+    "scenarioGroup": "solo",
     "index": "24",
     "name": "Bones in the Dirt",
     "monsters": [
@@ -4393,9 +4540,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/24"
+    "sourceId": "gloomhavensecretariat:scenario/solo24_boneshaper"
   },
   {
+    "scenarioGroup": "solo",
     "index": "25",
     "name": "Divide and Conquer",
     "monsters": [
@@ -4416,9 +4564,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/25"
+    "sourceId": "gloomhavensecretariat:scenario/solo25_geminate"
   },
   {
+    "scenarioGroup": "solo",
     "index": "26",
     "name": "Path of Ancestry",
     "monsters": [
@@ -4447,9 +4596,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/26"
+    "sourceId": "gloomhavensecretariat:scenario/solo26_astral"
   },
   {
+    "scenarioGroup": "solo",
     "index": "27",
     "name": "Crumbling Descent",
     "monsters": [
@@ -4467,9 +4617,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/27"
+    "sourceId": "gloomhavensecretariat:scenario/solo27_meteor"
   },
   {
+    "scenarioGroup": "solo",
     "index": "28",
     "name": "Tuning the Resonance",
     "monsters": [
@@ -4493,9 +4644,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/28"
+    "sourceId": "gloomhavensecretariat:scenario/solo28_shards"
   },
   {
+    "scenarioGroup": "solo",
     "index": "29",
     "name": "A Magnificent Trap",
     "monsters": [
@@ -4513,9 +4665,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/29"
+    "sourceId": "gloomhavensecretariat:scenario/solo29_trap"
   },
   {
+    "scenarioGroup": "solo",
     "index": "30",
     "name": "A Collection of Suffering",
     "monsters": [
@@ -4534,9 +4687,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/30"
+    "sourceId": "gloomhavensecretariat:scenario/solo30_shackles"
   },
   {
+    "scenarioGroup": "solo",
     "index": "31",
     "name": "Fighting Snow with Snow",
     "monsters": [
@@ -4563,9 +4717,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/31"
+    "sourceId": "gloomhavensecretariat:scenario/solo31_snowflake"
   },
   {
+    "scenarioGroup": "solo",
     "index": "32",
     "name": "Under the Ice",
     "monsters": [
@@ -4584,9 +4739,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/32"
+    "sourceId": "gloomhavensecretariat:scenario/solo32_fist"
   },
   {
+    "scenarioGroup": "solo",
     "index": "33",
     "name": "Recharge",
     "monsters": [
@@ -4605,9 +4761,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/33"
+    "sourceId": "gloomhavensecretariat:scenario/solo33_prism"
   },
   {
+    "scenarioGroup": "solo",
     "index": "34",
     "name": "Boiler Room",
     "monsters": [
@@ -4626,9 +4783,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/34"
+    "sourceId": "gloomhavensecretariat:scenario/solo34_drill"
   },
   {
+    "scenarioGroup": "solo",
     "index": "35",
     "name": "Wet Work",
     "monsters": [
@@ -4647,9 +4805,10 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/35"
+    "sourceId": "gloomhavensecretariat:scenario/solo35_kelp"
   },
   {
+    "scenarioGroup": "solo",
     "index": "36",
     "name": "Crash Against the Waves",
     "monsters": [
@@ -4666,6 +4825,6 @@
     },
     "flowChartGroup": null,
     "initial": true,
-    "_source": "gloomhavensecretariat:scenario/36"
+    "sourceId": "gloomhavensecretariat:scenario/solo36_coral"
   }
 ]

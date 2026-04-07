@@ -20,7 +20,7 @@
     ],
     "openEnvelope": "24:42",
     "errata": "env24",
-    "_source": "gloomhavensecretariat:personal-quest/581"
+    "sourceId": "gloomhavensecretariat:personal-quest/581"
   },
   {
     "cardId": "582",
@@ -44,7 +44,7 @@
     ],
     "openEnvelope": "24:42",
     "errata": "env24",
-    "_source": "gloomhavensecretariat:personal-quest/582"
+    "sourceId": "gloomhavensecretariat:personal-quest/582"
   },
   {
     "cardId": "583",
@@ -84,7 +84,7 @@
     ],
     "openEnvelope": "37:74",
     "errata": "env37",
-    "_source": "gloomhavensecretariat:personal-quest/583"
+    "sourceId": "gloomhavensecretariat:personal-quest/583"
   },
   {
     "cardId": "584",
@@ -100,7 +100,7 @@
     ],
     "openEnvelope": "37:74",
     "errata": "env37",
-    "_source": "gloomhavensecretariat:personal-quest/584"
+    "sourceId": "gloomhavensecretariat:personal-quest/584"
   },
   {
     "cardId": "585",
@@ -116,7 +116,7 @@
     ],
     "openEnvelope": "85:21",
     "errata": "env85",
-    "_source": "gloomhavensecretariat:personal-quest/585"
+    "sourceId": "gloomhavensecretariat:personal-quest/585"
   },
   {
     "cardId": "586",
@@ -132,7 +132,7 @@
     ],
     "openEnvelope": "85:21",
     "errata": "env85",
-    "_source": "gloomhavensecretariat:personal-quest/586"
+    "sourceId": "gloomhavensecretariat:personal-quest/586"
   },
   {
     "cardId": "587",
@@ -148,7 +148,7 @@
     ],
     "openEnvelope": "44:88",
     "errata": "env44",
-    "_source": "gloomhavensecretariat:personal-quest/587"
+    "sourceId": "gloomhavensecretariat:personal-quest/587"
   },
   {
     "cardId": "588",
@@ -176,7 +176,7 @@
     ],
     "openEnvelope": "44:88",
     "errata": "env44",
-    "_source": "gloomhavensecretariat:personal-quest/588"
+    "sourceId": "gloomhavensecretariat:personal-quest/588"
   },
   {
     "cardId": "589",
@@ -192,7 +192,7 @@
     ],
     "openEnvelope": "90:83",
     "errata": "env90",
-    "_source": "gloomhavensecretariat:personal-quest/589"
+    "sourceId": "gloomhavensecretariat:personal-quest/589"
   },
   {
     "cardId": "590",
@@ -208,7 +208,7 @@
     ],
     "openEnvelope": "90:83",
     "errata": "env90",
-    "_source": "gloomhavensecretariat:personal-quest/590"
+    "sourceId": "gloomhavensecretariat:personal-quest/590"
   },
   {
     "cardId": "505",
@@ -224,7 +224,7 @@
     ],
     "openEnvelope": "39:72",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/505"
+    "sourceId": "gloomhavensecretariat:personal-quest/505"
   },
   {
     "cardId": "509",
@@ -240,7 +240,7 @@
     ],
     "openEnvelope": "90:42",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/509"
+    "sourceId": "gloomhavensecretariat:personal-quest/509"
   },
   {
     "cardId": "514",
@@ -256,7 +256,7 @@
     ],
     "openEnvelope": "44:74",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/514"
+    "sourceId": "gloomhavensecretariat:personal-quest/514"
   },
   {
     "cardId": "519",
@@ -296,7 +296,7 @@
     ],
     "openEnvelope": "37:72",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/519"
+    "sourceId": "gloomhavensecretariat:personal-quest/519"
   },
   {
     "cardId": "523",
@@ -312,7 +312,7 @@
     ],
     "openEnvelope": "65:85",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/523"
+    "sourceId": "gloomhavensecretariat:personal-quest/523"
   },
   {
     "cardId": "527",
@@ -328,7 +328,7 @@
     ],
     "openEnvelope": "85:88",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/527"
+    "sourceId": "gloomhavensecretariat:personal-quest/527"
   },
   {
     "cardId": "538",
@@ -344,7 +344,7 @@
     ],
     "openEnvelope": "81:67",
     "errata": "env81",
-    "_source": "gloomhavensecretariat:personal-quest/538"
+    "sourceId": "gloomhavensecretariat:personal-quest/538"
   },
   {
     "cardId": "542",
@@ -360,7 +360,7 @@
     ],
     "openEnvelope": "44:67",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/542"
+    "sourceId": "gloomhavensecretariat:personal-quest/542"
   },
   {
     "cardId": "545",
@@ -384,7 +384,7 @@
     ],
     "openEnvelope": "81:67",
     "errata": "env81",
-    "_source": "gloomhavensecretariat:personal-quest/545"
+    "sourceId": "gloomhavensecretariat:personal-quest/545"
   },
   {
     "cardId": "549",
@@ -400,7 +400,7 @@
     ],
     "openEnvelope": "24:21",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/549"
+    "sourceId": "gloomhavensecretariat:personal-quest/549"
   },
   {
     "cardId": "552",
@@ -416,7 +416,7 @@
     ],
     "openEnvelope": "39:72",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/552"
+    "sourceId": "gloomhavensecretariat:personal-quest/552"
   },
   {
     "cardId": "557",
@@ -432,7 +432,7 @@
     ],
     "openEnvelope": "37:83",
     "errata": "env37",
-    "_source": "gloomhavensecretariat:personal-quest/557"
+    "sourceId": "gloomhavensecretariat:personal-quest/557"
   },
   {
     "cardId": "543",
@@ -448,6 +448,6 @@
     ],
     "openEnvelope": "A",
     "errata": null,
-    "_source": "gloomhavensecretariat:personal-quest/543"
+    "sourceId": "gloomhavensecretariat:personal-quest/543"
   }
 ]

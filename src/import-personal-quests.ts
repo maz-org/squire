@@ -58,7 +58,7 @@ interface ExtractedPersonalQuest {
   requirements: ExtractedRequirement[];
   openEnvelope: string;
   errata: string | null;
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Conversion ─────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ export function convertPersonalQuest(
     requirements,
     openEnvelope: ghs.openEnvelope,
     errata: ghs.errata ?? null,
-    _source: `gloomhavensecretariat:personal-quest/${ghs.cardId}`,
+    sourceId: `gloomhavensecretariat:personal-quest/${ghs.cardId}`,
   };
 }
 

@@ -95,7 +95,8 @@ describe('convertMonster', () => {
     expect(high.levelRange).toBe('4-7');
     expect(high.normal['7']).toEqual({ hp: 22, move: 4, attack: 5 });
     expect(high.elite['7']).toEqual({ hp: 30, move: 5, attack: 7 });
-    expect(high._source).toBe('gloomhavensecretariat:monster-stat/test-monster');
+    // sourceId includes the level range to distinguish the 0-3 and 4-7 rows.
+    expect(high.sourceId).toBe('gloomhavensecretariat:monster-stat/test-monster/4-7');
   });
 
   it('inherits movement from baseStat when absent', () => {

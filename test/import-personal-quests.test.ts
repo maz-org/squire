@@ -49,7 +49,7 @@ describe('convertPersonalQuest', () => {
       ],
       openEnvelope: '24:42',
       errata: null,
-      _source: 'gloomhavensecretariat:personal-quest/100',
+      sourceId: 'gloomhavensecretariat:personal-quest/100',
     });
   });
 

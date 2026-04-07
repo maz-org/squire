@@ -77,7 +77,7 @@ interface ExtractedCharacterMat {
   hp: Record<string, number>;
   perks: string[];
   masteries: string[];
-  _source: string;
+  sourceId: string;
 }
 
 // ─── Perk formatting ────────────────────────────────────────────────────────
@@ -250,7 +250,7 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
     hp,
     perks,
     masteries,
-    _source: `gloomhavensecretariat:character-mat/${ghs.name}`,
+    sourceId: `gloomhavensecretariat:character-mat/${ghs.name}`,
   };
 }
 

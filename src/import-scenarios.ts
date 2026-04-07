@@ -79,6 +79,10 @@ interface GhsScenario {
 // ─── Our extracted format ───────────────────────────────────────────────────
 
 interface ExtractedScenario {
+  // 'main' | 'solo' | 'random' — required to disambiguate `index`, which is
+  // reused across namespaces (e.g. main 20 "Temple of Liberation" and solo
+  // 20 "Wonder of Nature" both exist).
+  scenarioGroup: 'main' | 'solo' | 'random';
   index: string;
   name: string;
   complexity: number;
@@ -91,7 +95,18 @@ interface ExtractedScenario {
   lootDeckConfig: Record<string, number>;
   flowChartGroup: string | null;
   initial: boolean;
-  _source: string;
+  sourceId: string;
+}
+
+/**
+ * Derive the scenario namespace from the GHS filename basename. GHS uses
+ * filename patterns to distinguish solos and the random scenario from the
+ * main campaign — there's no in-file marker.
+ */
+function deriveScenarioGroup(filenameBasename: string): 'main' | 'solo' | 'random' {
+  if (/^solo/i.test(filenameBasename)) return 'solo';
+  if (filenameBasename === 'random') return 'random';
+  return 'main';
 }
 
 // ─── Reward formatting ──────────────────────────────────────────────────────
@@ -138,9 +153,18 @@ function formatRewards(rewards: GhsRewards | undefined, labels: LabelData): stri
 
 /**
  * Convert a single GHS scenario object into our extracted format.
+ *
+ * `filenameBasename` is the GHS source filename without the `.json` extension
+ * (e.g. `020`, `solo20_drifter`, `random`). It drives both `scenarioGroup`
+ * and `sourceId`, since the in-file `index` field collides across namespaces.
  */
-export function convertScenario(ghs: GhsScenario, labels: LabelData): ExtractedScenario {
+export function convertScenario(
+  ghs: GhsScenario,
+  filenameBasename: string,
+  labels: LabelData,
+): ExtractedScenario {
   return {
+    scenarioGroup: deriveScenarioGroup(filenameBasename),
     index: ghs.index,
     name: ghs.name,
     complexity: ghs.complexity,
@@ -157,7 +181,9 @@ export function convertScenario(ghs: GhsScenario, labels: LabelData): ExtractedS
     lootDeckConfig: ghs.lootDeckConfig ?? {},
     flowChartGroup: ghs.flowChartGroup ?? null,
     initial: ghs.initial ?? false,
-    _source: `gloomhavensecretariat:scenario/${ghs.index}`,
+    // Use the filename basename instead of `ghs.index` so cross-namespace
+    // collisions (main 20 vs solo20_drifter) yield distinct sourceIds.
+    sourceId: `gloomhavensecretariat:scenario/${filenameBasename}`,
   };
 }
 
@@ -176,9 +202,10 @@ export function importScenarios(): ExtractedScenario[] {
   for (const file of readdirSync(GHS_SCENARIO_DIR).sort()) {
     if (!file.endsWith('.json')) continue;
 
+    const filenameBasename = file.slice(0, -'.json'.length);
     const scenario: GhsScenario = JSON.parse(readFileSync(join(GHS_SCENARIO_DIR, file), 'utf-8'));
 
-    const converted = convertScenario(scenario, labels);
+    const converted = convertScenario(scenario, filenameBasename, labels);
 
     if (converted.rewards && /%(?:data|game)\./.test(converted.rewards)) {
       throw new Error(`Unresolved label/token in scenario ${scenario.index}: ${converted.rewards}`);

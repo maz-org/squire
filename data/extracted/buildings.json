@@ -11,7 +11,7 @@
     },
     "effect": "Collectively buy up to 1 Metal for 2 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/05"
+    "sourceId": "gloomhavensecretariat:building/05/L1"
   },
   {
     "buildingNumber": "05",
@@ -25,7 +25,7 @@
     },
     "effect": "Collectively buy up to 2 Metal for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/05"
+    "sourceId": "gloomhavensecretariat:building/05/L2"
   },
   {
     "buildingNumber": "05",
@@ -39,7 +39,7 @@
     },
     "effect": "Collectively buy up to 3 Metal for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/05"
+    "sourceId": "gloomhavensecretariat:building/05/L3"
   },
   {
     "buildingNumber": "05",
@@ -53,7 +53,7 @@
     },
     "effect": "Collectively buy up to 4 Metal for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/05"
+    "sourceId": "gloomhavensecretariat:building/05/L4"
   },
   {
     "buildingNumber": "12",
@@ -67,7 +67,7 @@
     },
     "effect": "Collectively buy up to 1 Hide for 2 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/12"
+    "sourceId": "gloomhavensecretariat:building/12/L1"
   },
   {
     "buildingNumber": "12",
@@ -81,7 +81,7 @@
     },
     "effect": "Collectively buy up to 2 Hide for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/12"
+    "sourceId": "gloomhavensecretariat:building/12/L2"
   },
   {
     "buildingNumber": "12",
@@ -95,7 +95,7 @@
     },
     "effect": "Collectively buy up to 3 Hide for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/12"
+    "sourceId": "gloomhavensecretariat:building/12/L3"
   },
   {
     "buildingNumber": "12",
@@ -109,7 +109,7 @@
     },
     "effect": "Collectively buy up to 4 Hide for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/12"
+    "sourceId": "gloomhavensecretariat:building/12/L4"
   },
   {
     "buildingNumber": "17",
@@ -123,7 +123,7 @@
     },
     "effect": "Collectively buy up to 1 Lumber for 2 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/17"
+    "sourceId": "gloomhavensecretariat:building/17/L1"
   },
   {
     "buildingNumber": "17",
@@ -137,7 +137,7 @@
     },
     "effect": "Collectively buy up to 2 Lumber for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/17"
+    "sourceId": "gloomhavensecretariat:building/17/L2"
   },
   {
     "buildingNumber": "17",
@@ -151,7 +151,7 @@
     },
     "effect": "Collectively buy up to 3 Lumber for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/17"
+    "sourceId": "gloomhavensecretariat:building/17/L3"
   },
   {
     "buildingNumber": "17",
@@ -165,7 +165,7 @@
     },
     "effect": "Collectively buy up to 4 Lumber for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/17"
+    "sourceId": "gloomhavensecretariat:building/17/L4"
   },
   {
     "buildingNumber": "21",
@@ -179,7 +179,7 @@
     },
     "effect": "Collectively buy up to 1 material resource for 2 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/21"
+    "sourceId": "gloomhavensecretariat:building/21/L1"
   },
   {
     "buildingNumber": "21",
@@ -193,7 +193,7 @@
     },
     "effect": "Collectively buy up to 2 different material resource for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/21"
+    "sourceId": "gloomhavensecretariat:building/21/L2"
   },
   {
     "buildingNumber": "21",
@@ -207,7 +207,7 @@
     },
     "effect": "Collectively buy up to 3 different material resource for 2 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/21"
+    "sourceId": "gloomhavensecretariat:building/21/L3"
   },
   {
     "buildingNumber": "24",
@@ -221,7 +221,7 @@
     },
     "effect": "Plant herbs, rotate this card 180°, then stop - Gain 1 herb from each planted plot, then rotate this card 180° then stop",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/24"
+    "sourceId": "gloomhavensecretariat:building/24/L1"
   },
   {
     "buildingNumber": "24",
@@ -235,7 +235,7 @@
     },
     "effect": "Plant herbs, rotate this card 180°, then stop - Gain 1 herb from each planted plot, then rotate this card 180° then stop",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/24"
+    "sourceId": "gloomhavensecretariat:building/24/L2"
   },
   {
     "buildingNumber": "24",
@@ -249,7 +249,7 @@
     },
     "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/24"
+    "sourceId": "gloomhavensecretariat:building/24/L3"
   },
   {
     "buildingNumber": "24",
@@ -263,7 +263,7 @@
     },
     "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/24"
+    "sourceId": "gloomhavensecretariat:building/24/L4"
   },
   {
     "buildingNumber": "34",
@@ -277,7 +277,7 @@
     },
     "effect": "Lose 1 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L1"
   },
   {
     "buildingNumber": "34",
@@ -291,7 +291,7 @@
     },
     "effect": "Lose 1 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L2"
   },
   {
     "buildingNumber": "34",
@@ -305,7 +305,7 @@
     },
     "effect": "Lose 1 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L3"
   },
   {
     "buildingNumber": "34",
@@ -319,7 +319,7 @@
     },
     "effect": "Lose 2 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L4"
   },
   {
     "buildingNumber": "34",
@@ -333,7 +333,7 @@
     },
     "effect": "Lose 2 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L5"
   },
   {
     "buildingNumber": "34",
@@ -347,7 +347,7 @@
     },
     "effect": "Lose 2 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L6"
   },
   {
     "buildingNumber": "34",
@@ -361,7 +361,7 @@
     },
     "effect": "Lose 2 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L7"
   },
   {
     "buildingNumber": "34",
@@ -375,7 +375,7 @@
     },
     "effect": "Lose 2 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L8"
   },
   {
     "buildingNumber": "34",
@@ -389,7 +389,7 @@
     },
     "effect": "Lose 2 collective Hide",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/34"
+    "sourceId": "gloomhavensecretariat:building/34/L9"
   },
   {
     "buildingNumber": "35",
@@ -403,7 +403,7 @@
     },
     "effect": "Characters cannot use potions",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/35"
+    "sourceId": "gloomhavensecretariat:building/35/L1"
   },
   {
     "buildingNumber": "35",
@@ -417,7 +417,7 @@
     },
     "effect": "Characters cannot use potions",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/35"
+    "sourceId": "gloomhavensecretariat:building/35/L2"
   },
   {
     "buildingNumber": "35",
@@ -431,7 +431,7 @@
     },
     "effect": "Characters cannot use potions",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/35"
+    "sourceId": "gloomhavensecretariat:building/35/L3"
   },
   {
     "buildingNumber": "37",
@@ -445,7 +445,7 @@
     },
     "effect": "Lose 5 collective gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/37"
+    "sourceId": "gloomhavensecretariat:building/37/L1"
   },
   {
     "buildingNumber": "37",
@@ -459,7 +459,7 @@
     },
     "effect": "Lose 10 collective gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/37"
+    "sourceId": "gloomhavensecretariat:building/37/L2"
   },
   {
     "buildingNumber": "37",
@@ -473,7 +473,7 @@
     },
     "effect": "Lose 15 collective gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/37"
+    "sourceId": "gloomhavensecretariat:building/37/L3"
   },
   {
     "buildingNumber": "37",
@@ -487,7 +487,7 @@
     },
     "effect": "Lose 20 collective gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/37"
+    "sourceId": "gloomhavensecretariat:building/37/L4"
   },
   {
     "buildingNumber": "39",
@@ -501,7 +501,7 @@
     },
     "effect": "Damage any one building",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/39"
+    "sourceId": "gloomhavensecretariat:building/39/L1"
   },
   {
     "buildingNumber": "39",
@@ -515,7 +515,7 @@
     },
     "effect": "Damage any one building",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/39"
+    "sourceId": "gloomhavensecretariat:building/39/L2"
   },
   {
     "buildingNumber": "39",
@@ -529,7 +529,7 @@
     },
     "effect": "Damage any one building",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/39"
+    "sourceId": "gloomhavensecretariat:building/39/L3"
   },
   {
     "buildingNumber": "42",
@@ -543,7 +543,7 @@
     },
     "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/42"
+    "sourceId": "gloomhavensecretariat:building/42/L1"
   },
   {
     "buildingNumber": "42",
@@ -557,7 +557,7 @@
     },
     "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/42"
+    "sourceId": "gloomhavensecretariat:building/42/L2"
   },
   {
     "buildingNumber": "42",
@@ -571,7 +571,7 @@
     },
     "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/42"
+    "sourceId": "gloomhavensecretariat:building/42/L3"
   },
   {
     "buildingNumber": "44",
@@ -585,7 +585,7 @@
     },
     "effect": "",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/44"
+    "sourceId": "gloomhavensecretariat:building/44/L1"
   },
   {
     "buildingNumber": "44",
@@ -599,7 +599,7 @@
     },
     "effect": "Reduce all enhancement costs by 10 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/44"
+    "sourceId": "gloomhavensecretariat:building/44/L2"
   },
   {
     "buildingNumber": "44",
@@ -613,7 +613,7 @@
     },
     "effect": "Reduce all enhancement costs by 10 gold and level penalties by 10 gold per level",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/44"
+    "sourceId": "gloomhavensecretariat:building/44/L3"
   },
   {
     "buildingNumber": "44",
@@ -627,7 +627,7 @@
     },
     "effect": "Reduce all enhancement costs by 10 gold, level penalties by 10 gold per level, and repeat penalties by 25 gold per enhancement",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/44"
+    "sourceId": "gloomhavensecretariat:building/44/L4"
   },
   {
     "buildingNumber": "65",
@@ -641,7 +641,7 @@
     },
     "effect": "Collectively sell up to 1 Metal for 5 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/65"
+    "sourceId": "gloomhavensecretariat:building/65/L1"
   },
   {
     "buildingNumber": "65",
@@ -655,7 +655,7 @@
     },
     "effect": "Collectively sell up to 2 Metal for 5 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/65"
+    "sourceId": "gloomhavensecretariat:building/65/L2"
   },
   {
     "buildingNumber": "67",
@@ -669,7 +669,7 @@
     },
     "effect": "Collectively sell up to 1 Lumber for 5 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/67"
+    "sourceId": "gloomhavensecretariat:building/67/L1"
   },
   {
     "buildingNumber": "67",
@@ -683,7 +683,7 @@
     },
     "effect": "Collectively sell up to 2 Lumber for 5 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/67"
+    "sourceId": "gloomhavensecretariat:building/67/L2"
   },
   {
     "buildingNumber": "72",
@@ -697,7 +697,7 @@
     },
     "effect": "Collectively sell up to 1 Hide for 5 gold",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/72"
+    "sourceId": "gloomhavensecretariat:building/72/L1"
   },
   {
     "buildingNumber": "72",
@@ -711,7 +711,7 @@
     },
     "effect": "Collectively sell up to 2 Hide for 5 gold each",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/72"
+    "sourceId": "gloomhavensecretariat:building/72/L2"
   },
   {
     "buildingNumber": "74",
@@ -725,7 +725,7 @@
     },
     "effect": "Lose 1 morale",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/74"
+    "sourceId": "gloomhavensecretariat:building/74/L1"
   },
   {
     "buildingNumber": "74",
@@ -739,7 +739,7 @@
     },
     "effect": "Lose 1 morale",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/74"
+    "sourceId": "gloomhavensecretariat:building/74/L2"
   },
   {
     "buildingNumber": "74",
@@ -753,7 +753,7 @@
     },
     "effect": "Lose 1 morale",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/74"
+    "sourceId": "gloomhavensecretariat:building/74/L3"
   },
   {
     "buildingNumber": "81",
@@ -767,7 +767,7 @@
     },
     "effect": "When the trials deck is complete, read Section 187.1",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/81"
+    "sourceId": "gloomhavensecretariat:building/81/L1"
   },
   {
     "buildingNumber": "81",
@@ -781,7 +781,7 @@
     },
     "effect": "Access to Tholos' Favors",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/81"
+    "sourceId": "gloomhavensecretariat:building/81/L2"
   },
   {
     "buildingNumber": "83",
@@ -795,7 +795,7 @@
     },
     "effect": "Lose 1 inspiration",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/83"
+    "sourceId": "gloomhavensecretariat:building/83/L1"
   },
   {
     "buildingNumber": "83",
@@ -809,7 +809,7 @@
     },
     "effect": "Lose 1 inspiration",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/83"
+    "sourceId": "gloomhavensecretariat:building/83/L2"
   },
   {
     "buildingNumber": "83",
@@ -823,7 +823,7 @@
     },
     "effect": "Lose 1 inspiration",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/83"
+    "sourceId": "gloomhavensecretariat:building/83/L3"
   },
   {
     "buildingNumber": "84",
@@ -837,7 +837,7 @@
     },
     "effect": "Lose 1 collective Lumber",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/84"
+    "sourceId": "gloomhavensecretariat:building/84/L1"
   },
   {
     "buildingNumber": "85",
@@ -851,7 +851,7 @@
     },
     "effect": "Reduce all construction costs by 1 material resource",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/85"
+    "sourceId": "gloomhavensecretariat:building/85/L1"
   },
   {
     "buildingNumber": "85",
@@ -865,7 +865,7 @@
     },
     "effect": "Reduce all construction costs by 1 material resource and the extra construction cost by 1 morale",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/85"
+    "sourceId": "gloomhavensecretariat:building/85/L2"
   },
   {
     "buildingNumber": "88",
@@ -879,7 +879,7 @@
     },
     "effect": "Bring one pet into each scenario. Capacity: 4",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/88"
+    "sourceId": "gloomhavensecretariat:building/88/L1"
   },
   {
     "buildingNumber": "88",
@@ -893,7 +893,7 @@
     },
     "effect": "Bring one pet into each scenario. Capacity: 8",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/88"
+    "sourceId": "gloomhavensecretariat:building/88/L2"
   },
   {
     "buildingNumber": "88",
@@ -907,7 +907,7 @@
     },
     "effect": "Bring two pets into each scenario. Capacity: 8",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/88"
+    "sourceId": "gloomhavensecretariat:building/88/L3"
   },
   {
     "buildingNumber": "88",
@@ -921,7 +921,7 @@
     },
     "effect": "Bring two pets into each scenario. Capacity: 12",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/88"
+    "sourceId": "gloomhavensecretariat:building/88/L4"
   },
   {
     "buildingNumber": "90",
@@ -935,7 +935,7 @@
     },
     "effect": "Draw one challenge and keep up to one. When the challenge deck is complete, read Section 190.1",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/90"
+    "sourceId": "gloomhavensecretariat:building/90/L1"
   },
   {
     "buildingNumber": "90",
@@ -949,7 +949,7 @@
     },
     "effect": "Draw two challenges and keep up to one. When the challenge deck is complete, read Section 190.1",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/90"
+    "sourceId": "gloomhavensecretariat:building/90/L2"
   },
   {
     "buildingNumber": "90",
@@ -963,7 +963,7 @@
     },
     "effect": "Draw three challenges and keep up to two. When the challenge deck is complete, read Section 190.1",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/90"
+    "sourceId": "gloomhavensecretariat:building/90/L3"
   },
   {
     "buildingNumber": "98",
@@ -977,7 +977,7 @@
     },
     "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 4 Effect: advantage and -5 Attack",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/98"
+    "sourceId": "gloomhavensecretariat:building/98/L1"
   },
   {
     "buildingNumber": "98",
@@ -991,7 +991,7 @@
     },
     "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 6 Effect: advantage and -15 Attack",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/98"
+    "sourceId": "gloomhavensecretariat:building/98/L2"
   },
   {
     "buildingNumber": "98",
@@ -1005,7 +1005,7 @@
     },
     "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 8 Effect: advantage and -25 Attack",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/98"
+    "sourceId": "gloomhavensecretariat:building/98/L3"
   },
   {
     "buildingNumber": "98",
@@ -1019,9 +1019,10 @@
     },
     "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 10 Effect: advantage and -35 Attack",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/98"
+    "sourceId": "gloomhavensecretariat:building/98/L4"
   },
   {
+    "buildingNumber": null,
     "name": "Wall J",
     "level": 1,
     "buildCost": {
@@ -1032,9 +1033,10 @@
     },
     "effect": "+5 Defense",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/undefined"
+    "sourceId": "gloomhavensecretariat:building/wall-j/L1"
   },
   {
+    "buildingNumber": null,
     "name": "Wall K",
     "level": 1,
     "buildCost": {
@@ -1045,9 +1047,10 @@
     },
     "effect": "+5 Defense",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/undefined"
+    "sourceId": "gloomhavensecretariat:building/wall-k/L1"
   },
   {
+    "buildingNumber": null,
     "name": "Wall L",
     "level": 1,
     "buildCost": {
@@ -1058,9 +1061,10 @@
     },
     "effect": "+5 Defense",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/undefined"
+    "sourceId": "gloomhavensecretariat:building/wall-l/L1"
   },
   {
+    "buildingNumber": null,
     "name": "Wall M",
     "level": 1,
     "buildCost": {
@@ -1071,9 +1075,10 @@
     },
     "effect": "+5 Defense",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/undefined"
+    "sourceId": "gloomhavensecretariat:building/wall-m/L1"
   },
   {
+    "buildingNumber": null,
     "name": "Wall N",
     "level": 1,
     "buildCost": {
@@ -1084,6 +1089,6 @@
     },
     "effect": "+5 Defense",
     "notes": null,
-    "_source": "gloomhavensecretariat:building/undefined"
+    "sourceId": "gloomhavensecretariat:building/wall-n/L1"
   }
 ]

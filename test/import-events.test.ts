@@ -297,7 +297,7 @@ describe('convertEvent', () => {
       outcome: 'You find some supplies. Gain 5 gold.',
     });
     expect(result.optionC).toBeNull();
-    expect(result._source).toBe('gloomhavensecretariat:event/B-01');
+    expect(result.sourceId).toBe('gloomhavensecretariat:event/B-01');
   });
 
   it('splits summer-road into eventType=road, season=summer', () => {

@@ -47,7 +47,7 @@ describe('convertItem', () => {
       uses: null,
       spent: true,
       lost: false,
-      _source: 'gloomhavensecretariat:item/1',
+      sourceId: 'gloomhavensecretariat:item/1',
     });
   });
 

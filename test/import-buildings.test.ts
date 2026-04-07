@@ -95,9 +95,32 @@ describe('convertBuilding', () => {
     }
   });
 
-  it('includes _source provenance field', () => {
+  it('includes sourceId provenance field', () => {
     const results = convertBuilding(miningCamp, labels);
-    expect(results[0]._source).toBe('gloomhavensecretariat:building/05');
+    // sourceId includes the level suffix to distinguish each level row.
+    expect(results[0].sourceId).toBe('gloomhavensecretariat:building/05/L1');
+  });
+
+  it('handles walls (no `id` in GHS) with null buildingNumber and name-based sourceId', () => {
+    // Walls in GHS genuinely have no `id` field — only a `name` like "wall-j".
+    // The importer should keep `buildingNumber` null (not "undefined") and
+    // fall back to `name` for sourceId so each wall is uniquely identified.
+    const wallJ: GhsBuilding = {
+      // `id` deliberately omitted to mirror the real GHS shape
+      name: 'wall-j',
+      costs: { prosperity: 1, lumber: 4, metal: 0, hide: 0, gold: 10 },
+      upgrades: [],
+      repair: [],
+      rebuild: [],
+      effectNormal: ['+5 Defense'],
+      rewards: [{ defense: 5 }],
+    };
+
+    const results = convertBuilding(wallJ, labels);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].buildingNumber).toBeNull();
+    expect(results[0].sourceId).toBe('gloomhavensecretariat:building/wall-j/L1');
   });
 
   it('treats zero-valued resources as null', () => {

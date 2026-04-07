@@ -6,6 +6,7 @@ describe('MonsterStatSchema', () => {
 
   it('accepts a valid monster stat card', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/ooze/0-3',
       name: 'Ooze',
       levelRange: '0-3',
       normal: { 0: { move: 1, attack: 2, hp: 5 } },
@@ -18,6 +19,7 @@ describe('MonsterStatSchema', () => {
 
   it('rejects invalid levelRange', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/ooze/0-3',
       name: 'Ooze',
       levelRange: '0-7',
       normal: {},
@@ -30,6 +32,7 @@ describe('MonsterStatSchema', () => {
 
   it('rejects missing name', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/ooze/0-3',
       levelRange: '0-3',
       normal: {},
       elite: {},
@@ -41,6 +44,7 @@ describe('MonsterStatSchema', () => {
 
   it('accepts stats at upper bounds', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/boss/4-7',
       name: 'Boss',
       levelRange: '4-7',
       normal: { 4: { move: 12, attack: 20, hp: 150 } },
@@ -53,6 +57,7 @@ describe('MonsterStatSchema', () => {
 
   it('accepts stats at lower bounds', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/weak/0-3',
       name: 'Weak',
       levelRange: '0-3',
       normal: { 0: { move: 0, attack: 0, hp: 1 } },
@@ -65,6 +70,7 @@ describe('MonsterStatSchema', () => {
 
   it('rejects stats above upper bounds', () => {
     const base = {
+      sourceId: 'gloomhavensecretariat:monster-stat/bad/0-3',
       name: 'Bad',
       levelRange: '0-3' as const,
       immunities: [],
@@ -92,6 +98,7 @@ describe('MonsterStatSchema', () => {
 
   it('rejects negative stat values', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/bad/0-3',
       name: 'Bad',
       levelRange: '0-3',
       normal: { 0: { move: -1, attack: 1, hp: 5 } },
@@ -104,6 +111,7 @@ describe('MonsterStatSchema', () => {
 
   it('rejects hp of 0', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:monster-stat/bad/0-3',
       name: 'Bad',
       levelRange: '0-3',
       normal: { 0: { move: 1, attack: 1, hp: 0 } },
@@ -120,6 +128,7 @@ describe('ItemSchema', () => {
 
   it('accepts a valid item card', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:item/099',
       number: '099',
       name: 'Major Healing Potion',
       slot: 'small item',
@@ -134,6 +143,7 @@ describe('ItemSchema', () => {
 
   it('rejects invalid slot type', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:item/001',
       number: '001',
       name: 'Test',
       slot: 'backpack',
@@ -152,6 +162,7 @@ describe('BattleGoalSchema', () => {
 
   it('accepts a valid battle goal', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:battle-goal/1301',
       name: 'Assassin',
       condition: 'Kill an enemy before its first turn.',
       checkmarks: 2,
@@ -160,7 +171,12 @@ describe('BattleGoalSchema', () => {
   });
 
   it('rejects non-integer checkmarks', () => {
-    const data = { name: 'Test', condition: 'Do something', checkmarks: 1.5 };
+    const data = {
+      sourceId: 'gloomhavensecretariat:battle-goal/9999',
+      name: 'Test',
+      condition: 'Do something',
+      checkmarks: 1.5,
+    };
     expect(schema.safeParse(data).success).toBe(false);
   });
 });
@@ -170,6 +186,7 @@ describe('EventSchema', () => {
 
   it('accepts an event with two options', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/100',
       eventType: 'road',
       season: 'winter',
       number: '05',
@@ -183,6 +200,7 @@ describe('EventSchema', () => {
 
   it('accepts an event with null optionB', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/101',
       eventType: 'boat',
       season: null,
       number: '01',
@@ -196,6 +214,7 @@ describe('EventSchema', () => {
 
   it('accepts an event with optionC', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/102',
       eventType: 'boat',
       season: null,
       number: '01',
@@ -209,6 +228,7 @@ describe('EventSchema', () => {
 
   it('rejects invalid event type', () => {
     const data = {
+      sourceId: 'gloomhavensecretariat:event/999',
       eventType: 'dungeon',
       season: null,
       number: '01',
