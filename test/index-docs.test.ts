@@ -28,14 +28,20 @@ vi.mock('../src/embedder.ts', () => ({
   embedBatch: mockEmbedBatch,
 }));
 
-const { mockLoadIndex, mockAddEntries } = vi.hoisted(() => ({
-  mockLoadIndex: vi.fn(),
+const { mockGetIndexedSources, mockAddEntries } = vi.hoisted(() => ({
+  mockGetIndexedSources: vi.fn(),
   mockAddEntries: vi.fn(),
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
-  loadIndex: mockLoadIndex,
+  getIndexedSources: mockGetIndexedSources,
   addEntries: mockAddEntries,
+  ensureHnswIndex: vi.fn().mockResolvedValue(undefined),
+  EMBEDDING_VERSION: 'test-version',
+}));
+
+vi.mock('../src/db.ts', () => ({
+  shutdownServerPool: vi.fn().mockResolvedValue(undefined),
 }));
 
 import {
@@ -280,15 +286,7 @@ describe('main', () => {
 
   it('skips files already in the index', async () => {
     mockReaddirSync.mockReturnValue(['rulebook.pdf']);
-    mockLoadIndex.mockReturnValue([
-      {
-        id: 'rulebook.pdf::0',
-        text: 'text',
-        embedding: [0.1],
-        source: 'rulebook.pdf',
-        chunkIndex: 0,
-      },
-    ]);
+    mockGetIndexedSources.mockResolvedValue(new Set(['rulebook.pdf']));
 
     await main();
 
@@ -302,9 +300,9 @@ describe('main', () => {
     mockReaddirSync.mockReturnValue(['newfile.pdf']);
     mockReadFileSync.mockReturnValue(Buffer.from('pdf'));
     mockPdfParse.mockResolvedValue({ text: longText });
-    mockLoadIndex.mockReturnValue([]);
+    mockGetIndexedSources.mockResolvedValue(new Set<string>());
     mockEmbedBatch.mockResolvedValue([[0.1, 0.2]]);
-    mockAddEntries.mockReturnValue([]);
+    mockAddEntries.mockResolvedValue(undefined);
 
     await main();
 
@@ -312,7 +310,7 @@ describe('main', () => {
     expect(mockEmbedBatch).toHaveBeenCalled();
     expect(mockAddEntries).toHaveBeenCalledOnce();
 
-    const newEntries = mockAddEntries.mock.calls[0][1];
+    const newEntries = mockAddEntries.mock.calls[0][0];
     expect(newEntries.length).toBeGreaterThan(0);
     expect(newEntries[0].source).toBe('newfile.pdf');
     expect(newEntries[0].embedding).toEqual([0.1, 0.2]);
@@ -320,7 +318,7 @@ describe('main', () => {
 
   it('logs nothing new for empty docs directory', async () => {
     mockReaddirSync.mockReturnValue([]);
-    mockLoadIndex.mockReturnValue([]);
+    mockGetIndexedSources.mockResolvedValue(new Set<string>());
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await main();

@@ -8,8 +8,11 @@
 - [gstack](https://github.com/garrytan/gstack) skills for Claude Code (see
   [AI tooling setup](#ai-tooling-setup) below)
 
-Extracted card data (`data/extracted/*.json`) and the vector index
-(`data/index.json`) are committed to the repo.
+Extracted card data (`data/extracted/*.json`) is committed to the repo.
+The rulebook vector index lives in Postgres (pgvector) and is populated by
+running `npm run index` against a local docker-compose Postgres — see the
+[Database setup](#database-setup) and [Data management](#data-management)
+sections below.
 
 ## Database setup
 
@@ -17,9 +20,15 @@ Squire uses Postgres + pgvector for rulebook embeddings, card data, and
 OAuth state. Local dev runs it via docker-compose:
 
 ```bash
-docker compose up -d   # first run: creates the squire + squire_test DBs
-npm run db:migrate     # apply Drizzle migrations
+docker compose up -d      # first run: creates the squire + squire_test DBs
+npm run db:migrate        # apply Drizzle migrations to the dev DB
+npm run db:migrate:test   # apply Drizzle migrations to the test DB
+npm run index             # populate rulebook embeddings from data/pdfs/
 ```
+
+`db:migrate` and `db:migrate:test` both go through `resolveDatabaseUrl()` in
+`src/db.ts`, so the test variant just sets `NODE_ENV=test` — no manual
+`DATABASE_URL=...` incantation required.
 
 The connection string defaults to
 `postgres://squire:squire@localhost:5432/squire` — no `.env` edit needed.
@@ -160,12 +169,26 @@ pre-commit hook along with typecheck and lint.
 
 ## Data management
 
-Frosthaven rulebook PDFs live in `data/pdfs/` and are indexed by
-`src/index-docs.ts` into `data/index.json`. Extracted card data
-(`data/extracted/*.json`) and the vector index
-(`data/index.json`) are checked into the repo as regular files. A
-[CI workflow](../.github/workflows/refresh-data.yml) refreshes them
-weekly from upstream sources and opens a PR if anything changed.
+Frosthaven rulebook PDFs live in `data/pdfs/`. `src/index-docs.ts`
+(`npm run index`) chunks them, embeds each chunk with the local Xenova
+model, and upserts the result into the `embeddings` pgvector table. The
+flat-file `data/index.json` that used to hold this data was removed in
+SQR-33 — the runtime vector store is Postgres-only now.
+
+Extracted card data (`data/extracted/*.json`) is still checked into the
+repo as regular JSON files. A [CI workflow](../.github/workflows/refresh-data.yml)
+refreshes those weekly from upstream GHS and opens a PR if anything
+changed.
+
+Local bootstrap on a fresh clone:
+
+```bash
+docker compose up -d
+npm ci
+npm run db:migrate
+npm run index              # populates the embeddings table (~2 min)
+# npm run seed:cards       # lands with SQR-36 (card tables → Postgres)
+```
 
 ### Refreshing data
 

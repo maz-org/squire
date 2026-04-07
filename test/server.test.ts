@@ -26,8 +26,17 @@ vi.mock('../src/service.ts', () => ({
   ask: mockAsk,
 }));
 
-vi.mock('../src/vector-store.ts', () => ({
-  loadIndex: vi.fn(() => [{ id: '1' }, { id: '2' }, { id: '3' }]),
+// The /api/health endpoint now queries Postgres directly (COUNT(*) on
+// embeddings). Mock getDb so server tests stay hermetic without needing a
+// running Postgres.
+vi.mock('../src/db.ts', () => ({
+  getDb: () => ({
+    db: {
+      execute: vi.fn().mockResolvedValue({ rows: [{ count: '3' }] }),
+    },
+    close: async () => {},
+  }),
+  shutdownServerPool: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../src/tools.ts', () => ({

@@ -4,7 +4,7 @@
  */
 
 import { embed } from './embedder.ts';
-import { loadIndex, search } from './vector-store.ts';
+import { search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
 import { searchExtracted, TYPES, load } from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
@@ -35,11 +35,8 @@ export interface CardTypeInfo {
  * Returns structured results with text, source, and similarity score.
  */
 export async function searchRules(query: string, topK = 6): Promise<RuleResult[]> {
-  const index = loadIndex();
-  if (index.length === 0) return [];
-
   const queryEmbedding = await embed(query);
-  const hits: ScoredEntry[] = search(index, queryEmbedding, topK);
+  const hits: ScoredEntry[] = await search(queryEmbedding, topK);
 
   return hits.map((h) => ({
     text: h.text,

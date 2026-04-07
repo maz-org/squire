@@ -1,0 +1,15 @@
+-- Intentionally empty.
+--
+-- The HNSW index on `embeddings.embedding` is created by `index-docs.ts`
+-- *after* the bulk insert completes, not here, because building HNSW
+-- incrementally during insert is ~10x slower than building it once against
+-- a populated table. Sequential scan is the fallback at ~1k vectors and is
+-- already sub-millisecond at that scale.
+--
+-- Production reindex workflows (tracked in the Deployment project) will
+-- follow the same pattern: DROP INDEX → bulk insert → CREATE INDEX, so
+-- live query traffic keeps the old index until the swap.
+--
+-- This file is kept so the migration journal stays contiguous and older
+-- branches don't need to regenerate the snapshot.
+SELECT 1;

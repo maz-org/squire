@@ -51,7 +51,7 @@ export const DEFAULT_TEST_DATABASE_URL = 'postgres://squire:squire@localhost:543
  * Outside tests we default to the dev database. Either default can be
  * overridden via `DATABASE_URL` / `TEST_DATABASE_URL`.
  */
-function resolveDatabaseUrl(): string {
+export function resolveDatabaseUrl(): string {
   const isTest = process.env.VITEST === 'true' || process.env.NODE_ENV === 'test';
   if (isTest) {
     return process.env.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL;

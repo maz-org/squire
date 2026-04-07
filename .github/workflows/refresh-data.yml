@@ -1,3 +1,8 @@
+# Weekly refresh of `data/extracted/*.json` from upstream GHS. The rulebook
+# vector index used to live in `data/index.json` and was refreshed here too;
+# since SQR-33 the embeddings live in Postgres and the rulebook reindex is
+# handled by a separate workflow tracked in the Deployment project. This
+# workflow now only touches extracted card data.
 name: Refresh extracted data
 
 on:
