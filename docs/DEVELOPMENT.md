@@ -208,3 +208,13 @@ src/
   extracted-data.ts # Card data loading, search, and formatting
   schemas.ts        # Zod schemas for all 10 card types
 ```
+
+## Changelog
+
+- **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear MAZ-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
+- **2026-04-07:** Renamed from `docs/development.md` to `docs/DEVELOPMENT.md` as part of the ALL_CAPS docs consolidation.
+- **2026-04-06:** Retired OCR pipeline and Worldhaven dependency references (commit `34a26a1`).
+- **2026-04-06:** Added gstack requirement for AI-assisted work (PR #175).
+- **2026-04-06:** Documented monster abilities import from GHS structured data (PR #172).
+- **2026-04-05:** Replaced git submodules with committed extracted data + weekly CI refresh workflow (PR #162).
+- **2026-03-29:** Initial development guide added (PR #90).
