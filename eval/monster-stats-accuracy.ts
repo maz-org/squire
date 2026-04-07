@@ -37,7 +37,7 @@ interface ExtractedMonster {
   normal: Record<string, ExtractedStats>;
   elite: Record<string, ExtractedStats>;
   _file?: string;
-  _source?: string;
+  sourceId?: string;
   _error?: string;
 }
 
@@ -170,10 +170,14 @@ export function runAccuracyEval(): {
   for (const monster of extracted) {
     if (monster._error) continue;
 
-    // Match by _source (GHS import) or _file (OCR extraction)
+    // Match by sourceId (GHS import) or _file (OCR extraction).
+    // sourceId format is `gloomhavensecretariat:monster-stat/<name>/<level-range>`
+    // — strip the prefix and the `/<level-range>` suffix to get the GHS ref name.
     let refName: string | null = null;
-    if (monster._source) {
-      refName = monster._source.replace('gloomhavensecretariat:', '');
+    if (monster.sourceId) {
+      refName = monster.sourceId
+        .replace('gloomhavensecretariat:monster-stat/', '')
+        .replace(/\/(0-3|4-7)$/, '');
     } else if (monster._file) {
       refName = extractedNameToRefName(monster._file);
     }
