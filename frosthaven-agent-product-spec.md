@@ -1,23 +1,31 @@
-# Frosthaven Assistant Agent - Product Specification
+# Squire — Frosthaven Knowledge Agent Product Specification
 
-**Version:** 1.1
-**Date:** 2026-01-11
-**Status:** Planning Phase - Decisions Finalized
+**Version:** 2.0
+**Date:** 2026-04-07
+**Last Refreshed:** 2026-04-07
+**Status:** Phase 1 in progress, MVP scoped
 
 ## Executive Summary
 
-An AI-powered assistant to help Frosthaven players make optimal decisions for character building, inventory management, and gameplay strategy. The agent provides personalized recommendations based on build guides, character state, and campaign progress.
+Squire is a deep game-knowledge agent for Gloomhaven and Frosthaven. It answers rules questions, looks up cards, items, monsters, and scenarios, and (longer term) makes personalized recommendations for character building, inventory, and gameplay strategy.
+
+Squire is **the agent**, not a specific app. It's reachable through multiple **channels** — primarily its own web UI today, with MCP-capable agent harnesses (Claude Code, Claude Desktop) as a second channel, and Discord / iMessage clients planned for the far future. All channels talk to the same underlying knowledge agent.
+
+**MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly behind Cloudflare WAF. The agent answers using a rulebook RAG pipeline and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
+
+**Long-term product (Phases 2–6):** Multiplayer campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion from frosthaven-storyline.com, build guide integration, and polish (voice input, share/export, additional channels).
 
 **Primary Use Cases:**
 
-- Card selection when leveling up
-- Inventory optimization (buying, selling, upgrading items)
-- Pre-combat hand selection
-- Rules lookup and clarification
-- Long-term build planning
-- Scenario and event guidance
+- **Rules lookup and clarification** (MVP — at the table, on a phone)
+- Card, item, monster, and scenario lookup (MVP)
+- Card selection when leveling up (future)
+- Inventory optimization (future)
+- Pre-combat hand selection (future)
+- Long-term build planning (future)
+- Scenario and event guidance (future)
 
-**Target User:** Mobile-first (phone), voice + text input, used between sessions, during gameplay prep, and mid-session
+**Target User (MVP):** Brian, sitting at the table mid-session, pulling out a phone or iPad to check a rule without breaking flow. Text input only — voice handled externally via iOS speech-to-text apps like Monologue. Future channels and users come later.
 
 ---
 
@@ -309,166 +317,185 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 
 ### Stack
 
-**Language:** TypeScript (full-stack)
+**Language:** TypeScript end-to-end. Node 24, ESM modules.
 
-**Frontend:**
+**Web channel (frontend + server):**
 
-- **Framework:** Next.js 14+ (React)
-- **Styling:** Tailwind CSS
-- **Voice:** Web Speech API
-- **PWA:** next-pwa or custom service worker
-- **State:** React Context or Zustand
-- **Local Storage:** IndexedDB (Dexie.js)
+- **Server framework:** Hono (`@hono/node-server`)
+- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS via CDN
+- **Build pipeline:** none — no bundler, no client-side build step
 
-**Backend:**
-
-- **Runtime:** Node.js
-- **Framework:** Next.js API routes or Express
-- **Image Processing:** Sharp or similar (for screenshot handling)
-- **Data Parsing:** pdf-parse (for rulebook), JSON parsing for worldhaven data
+  *Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no bundler, no client build step. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
 
 **Database:**
 
-- **Primary DB:** PostgreSQL (hosted on Railway/Vercel Postgres)
-- **Vector DB:** pgvector (extension) OR Pinecone
-- **ORM:** Prisma or Drizzle
+- **Primary DB:** PostgreSQL (planned — currently flat JSON files)
+- **Vector DB:** pgvector extension on the same Postgres instance
+- **ORM:** Drizzle
+
+  *Rationale for Drizzle: first-class pgvector support (Prisma's is preview-only and forces raw SQL fallbacks), TypeScript-native schema (no DSL, no codegen step — fits the no-build-step theme), lightweight runtime, generates readable SQL. drizzle-kit handles migrations.*
+
+**Embeddings:**
+
+- **Current:** `@xenova/transformers` running in-process. Model `Xenova/all-MiniLM-L6-v2` (384 dimensions, mean-pooled, normalized). See `src/embedder.ts`.
+
+  *Rationale: chosen for simplicity getting started — no API key, no network roundtrip during indexing, no per-token cost.*
+
+- **Upgrade path:** if retrieval quality doesn't hold up at production scale, swap to **Voyage AI** (purpose-built for retrieval, strong benchmark performance, integrates cleanly with Anthropic-based stacks). The vector store (pgvector) is independent and doesn't change.
+
+  *Note: embedding model and vector store are two independent choices that can evolve separately.*
 
 **LLM:**
 
-- **Provider:** Anthropic Claude API
-- **Model:** Claude 3.5 Sonnet or latest (Opus 4.5 for complex reasoning if needed)
-- **Capabilities:** Long context, tool use, vision (for screenshot extraction and card image analysis)
-- **Cost Estimation:**
-  - Text queries: ~$0.03 per query average
-  - Screenshot extraction: ~$0.15-0.30 per character sync (5 images)
-  - Vision used for extracting structured data from frosthaven-storyline.com screenshots
+- **Provider:** Anthropic Claude API (`@anthropic-ai/sdk`)
+- **Current model:** Claude Sonnet 4.6 (`claude-sonnet-4-6`) — single-model setup. See `src/agent.ts:155`.
+- **Future tiering** (when justified by cost or quality):
+  - Sonnet 4.6 — default agent loop
+  - Haiku 4.5 — cheap/fast cases (simple lookups, classification)
+  - Opus 4.6 — complex reasoning only when Sonnet falls short
+- **Capabilities used:** long context, tool use, structured JSON output. Vision is reserved for the future character-state ingestion path (Phase 5) and is not part of the current architecture.
+
+**Document parsing:**
+
+- **Rulebook ingestion:** `pdf-parse` for the Frosthaven rulebook PDF, chunked and embedded into pgvector
 
 **Authentication:**
 
-- **User Auth:** NextAuth.js or Clerk
-- **Session Management:** JWT or session cookies
+- **Approach:** custom Hono middleware. Google OAuth as the only identity provider (extends the existing OAuth infrastructure already built for the MCP layer). Server-side sessions stored in Postgres. HttpOnly + Secure + SameSite=Strict cookies. CSRF tokens for mutating endpoints.
+
+  *Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing, reuses code that already exists for MCP. Single IdP keeps the surface area tiny.*
+
+**Edge layer:**
+
+- **Cloudflare** in front of the hosted app as a WAF. Provides DDoS protection, edge rate limiting, and bot mitigation. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
 
 ### Data Architecture
 
-**Static Game Data (worldhaven):**
+**Static Game Data — Gloomhaven Secretariat (GHS):**
 
-- Fetch from GitHub on deploy
-- Parse JSON files into PostgreSQL
-- Index for fast queries
-- Tables: cards, items, abilities, classes, scenarios
+Squire imports static game data directly from **Gloomhaven Secretariat (GHS)** — an open-source Gloomhaven/Frosthaven companion app maintained by Lurkars on GitHub: <https://github.com/Lurkars/gloomhavensecretariat>. GHS maintains structured data in its `data/` subfolder, community-maintained and auto-formatted on commit.
 
-**Character State:**
+Squire has dedicated import scripts in `src/import-*.ts` for each card type:
 
-- Extract from screenshots using Claude Vision API
-- User uploads ~5 screenshots from frosthaven-storyline.com pages
-- Claude Vision processes screenshots with structured extraction prompt
-- Returns validated JSON data structure
-- Cache extracted data in user's session/database record
-- Schema:
+- `import-battle-goals.ts`
+- `import-buildings.ts`
+- `import-character-abilities.ts`
+- `import-character-mats.ts`
+- `import-events.ts`
+- `import-items.ts`
+- `import-monster-abilities.ts`
+- `import-monster-stats.ts`
+- `import-personal-quests.ts`
+- `import-scenarios.ts`
 
-  ```typescript
-  {
-    characterId: string
-    className: string
-    level: number
-    xp: number
-    gold: number
-    ownedCards: string[]
-    activeCards: string[]
-    items: string[]
-    prosperity: number
-    campaignProgress: {
-      unlockedClasses: string[]
-      completedScenarios: string[]
-      // etc.
-    }
-    lastSyncedAt: timestamp
-    syncMethod: 'screenshot' | 'manual'
-  }
-  ```
+GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term recommendation engine. If gaps emerge later, the plan is:
 
-- Manual data entry form available as fallback if screenshot extraction fails
+1. First, contribute upstream to GHS to fill the gap
+2. Failing that, spin up an OCR pipeline as a last resort
 
-**Build Guides:**
-
-- Store curated list of guide URLs and metadata in PostgreSQL
-- Agent fetches guides on-demand using web search/fetch tool
-- No pre-processing or parsing required - Claude reads guides directly
-- Schema for guide metadata:
-
-  ```typescript
-  {
-    guideId: string
-    url: string
-    className: string
-    buildName: string
-    author: string
-    description: string
-    lastVerified: timestamp
-  }
-  ```
-
-- RAG system (chunking, embeddings, vector search) available as fallback if web fetch proves too slow or unreliable
-- Update guide list manually when new popular guides emerge
+*Historical note: an earlier version of Squire used the worldhaven repository plus an OCR pipeline. Both were retired (commit `34a26a1`) once GHS proved sufficient.*
 
 **Rules Database:**
 
-- Extract text from Frosthaven rulebook PDF
-- Chunk into semantic sections
-- Generate embeddings (Claude API or OpenAI embeddings)
-- Store in vector database (pgvector)
-- RAG pipeline for retrieval
+- Extract text from the Frosthaven rulebook PDF using `pdf-parse`
+- Chunk into semantic sections (`src/index-docs.ts`)
+- Generate embeddings via the local Xenova model (see Embeddings in Stack)
+- Store in pgvector
+- RAG retrieval via `searchRules()` (see Agent Architecture)
+
+**Character State:** *Phase 5 / future. See "Character State Ingestion" in the Phases section.*
+
+**Build Guides:** *Phase 4 / future. See "Recommendation Engine" in the Phases section.*
 
 **User Conversations:**
 
-- Store conversation history in PostgreSQL
-- Link to user account
-- Include: messages, recommendations, decisions made
-- Use for context in future conversations
+- Store conversation history in Postgres, scoped to user
+- Bounded context window via summarization of older messages
+- Used as context for future turns
 
 ### Agent Architecture
 
 **Core Agent Loop:**
 
-1. **Input:** User message (voice → text or text directly)
-2. **Context Gathering:**
-   - Identify which character (from conversation or explicit)
-   - Load cached character state OR prompt user to sync via screenshot upload
-   - Retrieve conversation history
-   - Identify relevant build guide URLs if needed
-3. **Tool Use:** Claude with available tools:
-   - `extractCharacterFromScreenshots(images[])` → parse screenshots to structured character data (Vision API)
-   - `getCharacterState(characterName)` → current stats, cards, items (from cache/DB)
-   - `queryCards(className, level, filters)` → available cards from worldhaven data
-   - `queryItems(prosperity, filters)` → available items from worldhaven data
-   - `fetchBuildGuide(url)` → retrieve and read build guide content
-   - `searchRules(query)` → RAG over rulebook
-   - `getPartyInfo()` → other characters in party
-4. **Reasoning:** Claude analyzes data and generates recommendation
-5. **Response:** Format multi-modal response (images, tables, text)
-6. **Memory:** Save decision and context for future
+1. **Input:** User message (text)
+2. **Context Gathering:** Load conversation history (with bounded summarization), identify caller identity from session
+3. **Tool Use:** Claude calls atomic tools (see below) to retrieve relevant rules, cards, items, monsters, or scenarios
+4. **Reasoning:** Claude synthesizes a response from tool results
+5. **Response:** Stream back to the channel (web UI via SSE, MCP via protocol response)
+6. **Memory:** Persist conversation turn for future context
 
-**Tool Implementation:**
+**Atomic Tools (current — `src/tools.ts`):**
 
-- Each tool is a TypeScript function
-- Queries PostgreSQL or vector DB
-- Returns structured data to Claude
+Squire exposes a **generalized atomic-tools API** that works across all GHS card types — monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, personal quests. The same handful of tools handle every card type via parameter, rather than one tool per feature.
+
+| Tool | Purpose |
+| --- | --- |
+| `searchRules(query, topK)` | Vector search over the rulebook RAG index |
+| `searchCards(query, topK)` | Keyword search across all card types |
+| `listCardTypes()` | Discovery — returns all GHS data types with record counts |
+| `listCards(type, filter)` | List records of a given type with field-level AND filter |
+| `getCard(type, id)` | Exact lookup by natural ID (name, number, cardId, etc.) |
+
+**Generalization principle:** per-feature operations are *invocations*, not new tools. For example, "show me all level-4 character abilities for Drifter" is `listCards('character-abilities', { class: 'drifter', level: 4 })` — not a dedicated `queryCards()` tool. This keeps the tool surface tiny and the agent's choices simple.
+
+**Future tools** (added as later phases land):
+
+- `getCharacterState(characterId)` — Phase 3, campaign state
+- `getPartyInfo(campaignId)` — Phase 3, campaign state
+- `fetchBuildGuide(url)` — Phase 4, recommendation engine
+- `extractCharacterFromScreenshots(images[])` — Phase 5, character state ingestion (only if the screenshot path is chosen over the browser-extension alternative)
+
+**Implementation:**
+
+- Each tool is a TypeScript function in `src/tools.ts`
+- Queries the in-memory data layer today, Postgres + pgvector after the storage migration
+- Returns structured JSON to Claude
 - Claude decides which tools to call and interprets results
+
+### MCP Server
+
+Squire exposes its atomic knowledge tools via the **Model Context Protocol** over a `/mcp` endpoint (`src/mcp.ts`). This makes Squire's Frosthaven knowledge accessible to any MCP-capable agent harness — Claude Code, Claude Desktop, or other AI tools — without going through Squire's own conversation UI.
+
+**Use cases:**
+
+- Brian uses Claude Code with Squire's MCP tools mounted to ask rules questions during development
+- Future end users may opt to mount Squire as an MCP server in their own agent of choice (treated like a public API surface, with auth)
+- Other AI tools in the *haven ecosystem could compose Squire's knowledge tools into larger workflows
+
+**Architectural note:** an earlier design considered using internal MCP between Squire's own conversation agent and a separate knowledge agent. That split has been dropped for simplicity — Squire's conversation agent calls the atomic tools directly (in-process), and MCP is purely an external surface for other agents.
+
+**Auth on `/mcp`:** the same OAuth infrastructure used by the web channel protects the MCP endpoint. No anonymous access in production.
+
+**Channel framing:** MCP-capable agents are a **third channel type** alongside the web UI (primary today) and future Discord/iMessage clients. All channels talk to the same underlying knowledge agent.
+
+### Observability
+
+Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP handlers via `@opentelemetry/sdk-node`. Initialization lives in `src/instrumentation.ts`.
+
+**LLM observability and evals: Langfuse.** Trace exports flow into Langfuse via `@langfuse/otel` and `@langfuse/tracing`, where each conversation, tool call, and model call is captured as a structured trace. Langfuse's built-in LLM-as-judge eval templates grade production traces (planned). Langfuse was chosen specifically for its eval system, which is more capable than alternatives for LLM-as-judge workflows.
+
+**APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make Langfuse a better fit for evals — so even if Datadog is adopted for APM/RUM, Langfuse stays for LLM-specific observability.
 
 ### Deployment
 
-**Hosting:** Vercel or Railway
+**Hosting (open, decision deferred):**
 
-- Vercel: Best for Next.js, free tier generous, easy deploys
-- Railway: Good for full-stack with Postgres, $5/month
+- **Fly.io** — VM-based, global regions, good Postgres story (Fly Postgres), Docker-native
+- **Railway** — simple deploys from a Dockerfile, included Postgres add-on, $5/mo hobby tier
+- **Render** — managed services + Postgres, similar to Railway, free tier for hobby
+- **Self-hosted VPS** (Hetzner, DigitalOcean) — most control, most ops work
 
-**Cost Breakdown (estimated monthly):**
+All four work with the Docker-first deployment plan. Cloudflare WAF sits in front regardless of host choice.
 
-- Hosting: $0-20 (Vercel free tier or Railway hobby plan)
-- Database: $0-10 (included in Railway or Vercel Postgres free tier)
-- Claude API: $30-60 (depends on usage, ~1000-2000 queries/month)
-- Vector DB: $0 (pgvector) or $10 (Pinecone free tier)
-- **Total: ~$30-90/month** (within budget)
+**Estimated monthly cost (Phase 1 MVP):**
+
+- Hosting: $0–10 (free tiers on Fly/Railway/Render, or hobby plan)
+- Postgres: $0–10 (included in host's free tier or hobby add-on)
+- Cloudflare WAF: $0 (free tier)
+- Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
+- **Total: ~$10–50/month** for a single user with moderate usage
+
+Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 5 when screenshot extraction lands, and only apply if that path is chosen over the browser-extension approach.
 
 **CI/CD:**
 
@@ -480,246 +507,183 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 
 ## Development Phases
 
-### Phase 1: Foundation & Core Data
-
-**Goal:** Get infrastructure, database, and worldhaven data working
-
-**Tasks:**
-
-- Set up Next.js project with TypeScript
-- Configure testing infrastructure (Jest/Vitest, coverage reporting)
-- Set up CI/CD pipeline with tiered testing (unit on every commit, E2E daily)
-- Design PostgreSQL schema (users, characters, cards, items, guide_metadata)
-- Ingest worldhaven data into database
-  - Fetch from GitHub repository
-  - Parse JSON files
-  - Populate cards, items, abilities, classes tables
-  - Write tests with 100% coverage for data ingestion logic
-- Create basic web UI (chat interface, mobile-responsive)
-- Integrate Claude API with simple conversation
-- Set up test infrastructure with mocked Claude API responses
-
-**Testing Focus:**
-
-- Unit tests for data ingestion: 100% coverage
-- Mocked database tests for schema validation
-- Basic E2E test with real Claude API (daily CI)
-
-**Deliverable:** Can chat with agent, worldhaven data queryable, test suite passing
+The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refresh. The original spec was organized around the recommendation engine as the centerpiece. The new sequencing puts **rules Q&A at the table** as MVP and treats character state, recommendations, and channel expansion as later phases.
 
 ---
 
-### Phase 2: Screenshot Extraction & Character Data
+### Phase 1: MVP — Rules Q&A at the table
 
-**Goal:** Get character data extraction working via screenshots
+**Goal:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. Hosted publicly behind Cloudflare WAF.
+
+**Status as of 2026-04-07:** rules RAG pipeline, GHS imports, atomic tools, MCP server, and Discord-callable query are all built. The main remaining work is the web channel + auth + deployment.
 
 **Tasks:**
 
-- Build screenshot upload UI
-  - File upload component (supports multiple images)
-  - Preview uploaded screenshots
-  - "Sync Character Data" button
-  - Display "Last synced: X ago" timestamp
-- Implement Claude Vision API integration for screenshot extraction
-  - Design structured extraction prompt
-  - Send screenshots to Claude Vision API
-  - Parse and validate returned JSON
-  - Handle extraction errors gracefully
-- Build manual data entry form as fallback
-  - Simple form for key fields (class, level, gold, prosperity, cards, items)
-  - Save to same character schema
-- Cache character data in PostgreSQL
-- Write comprehensive tests
-  - Unit tests for JSON validation: 100% coverage
-  - Integration tests with mocked Claude Vision API responses
-  - E2E test with real screenshots (daily CI, LLM-as-judge validates extraction quality)
+- Hono JSX + HTMX web chat UI (mobile-friendly, no SPA, no build step)
+- Streaming responses via Server-Sent Events
+- Tool call visibility in the UI (no silent actions)
+- Source citations under each answer
+- Google OAuth web login (extends existing MCP OAuth infrastructure)
+- Server-side sessions in Postgres
+- CSRF protection on mutating endpoints
+- Storage migration: flat files → Postgres + pgvector
+- Drizzle schema and migrations (`drizzle-kit`)
+- Docker containerization
+- CI/CD pipeline
+- Production health checks and readiness
+- Cloudflare WAF in front of the deployed app
+- Hosting platform decision (Fly / Railway / Render / VPS)
 
-**Testing Focus:**
+**Out of scope for Phase 1:**
 
-- Mock Vision API responses in unit/integration tests
-- Fixture screenshots for testing
-- Validation logic at 100% coverage
-- Daily E2E with real Vision API calls
+- Voice input (Brian uses iOS Monologue externally for speech-to-text)
+- Multi-user (single user, but auth is real so it's not bypassable)
+- Any campaign or character state
+- Any recommendations beyond rules answers
+- Discord, iMessage, or other channels beyond the web UI and MCP
 
-**Deliverable:** User can upload screenshots and extract character data, or enter manually
+**Deliverable:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. The agent answers using the rulebook RAG pipeline and the GHS atomic tools (`searchRules`, `searchCards`, `listCards`, `getCard`). Hosted publicly behind Cloudflare WAF. Test suite passing.
 
 ---
 
-### Phase 3: Card Selection Feature
+### Phase 2: Multi-user platform
 
-**Goal:** First core use case working end-to-end
+**Goal:** Other people can use Squire without stepping on each other.
 
 **Tasks:**
 
-- Build card recommendation logic
-  - Query available cards from database based on class/level
-  - Compare card synergies and stats
-  - Generate recommendation with reasoning
-  - Write tests: 100% coverage for deterministic logic, mocked LLM calls
-- Curate initial build guide list (URLs for 1-2 guides per starting class)
-  - Store guide metadata in database
-  - Implement web fetch tool for reading guides
-- Implement `fetchBuildGuide(url)` tool
-  - Fetch guide content on-demand
-  - Pass to Claude for analysis
-  - Test with mocked web responses and real guides (E2E)
-- Design card comparison UI
-  - Card images side-by-side
-  - Comparison table (stats, effects, synergies)
-  - Natural language explanation
-  - Recommendation with reasoning
-- Integrate voice input (Web Speech API)
-  - Feature detection and browser compatibility
-  - Visual feedback (listening indicator)
-  - Transcription display
-  - Toggle between voice and text
-  - Test across Chrome, Safari, Firefox
-- Test with real level-up scenarios
+- Production hardening: rate limiting (per-user, on top of Cloudflare edge rate limiting)
+- Daily LLM cost budget with circuit breaker
+- Prompt injection resistance test suite (E2E, daily CI)
+- SAST scanning (Semgrep / CodeQL free tier)
+- Langfuse eval templates wired to production traces
+- Browser E2E tests for web UI user journeys (Playwright)
+- REST API integration tests (daily CI with real Claude API, LLM-as-judge)
 
-**Testing Focus:**
-
-- Card comparison logic: 100% coverage (deterministic)
-- Recommendation prompt construction: unit tested
-- Mock build guide responses in integration tests
-- E2E with real guides and LLM (daily CI, LLM-as-judge)
-- Voice input: manual testing across browsers
-
-**Deliverable:** User can ask "I just hit level 4, which card should I pick?" and get useful answer via voice or text
+**Deliverable:** Squire is safe to share. Multiple users can sign in, ask rules questions, and not interfere with each other. Costs are bounded.
 
 ---
 
-### Phase 4: Inventory & Rules
+### Phase 3: Campaign & character state
 
-**Goal:** Expand to inventory optimization and rules lookup
+**Goal:** Squire knows who you are, what your party looks like, and what character you're playing.
 
 **Tasks:**
 
-- Implement inventory optimization logic
-  - Query available items by prosperity level
-  - Filter by gold budget
-  - Analyze synergies with character build
-  - Recommend purchases, upgrades, items to sell
-  - Write tests: 100% coverage for item filtering/comparison logic
-- Add item comparison UI
-  - Item images
-  - Stats tables
-  - Synergy explanations
-  - Purchase recommendations
-- Build RAG system for rulebook
-  - Extract text from Frosthaven rulebook PDF
-  - Chunk into semantic sections
-  - Generate embeddings (Claude or OpenAI)
-  - Store in pgvector
-  - Implement semantic search
-  - Test with known rules queries
-- Implement `searchRules(query)` tool
-  - Query vector DB
-  - Return relevant sections with page numbers
-  - Test with mocked embeddings in unit tests
-  - E2E with real rulebook queries (daily CI)
+- Postgres data model for campaigns and players
+- Identity propagation via request context (caller identity from session/OAuth token)
+- **Data isolation design (must come first):** the player entity enforces campaign membership on every request; the agent's LLM context is scoped to the requesting player's data plus shared campaign state; never load other players' private fields (personal quest, battle goals) into context
+- Campaign CRUD (create, invite, join, leave, list, details)
+- Player CRUD (create character, update items/level/perks/etc.)
+- Manual character entry — no screenshot pipeline yet
+- New atomic tools: `getCampaign`, `updateCampaign`, `getCharacterState`, `getPartyInfo`
+- User profile and settings
 
-**Testing Focus:**
-
-- Item filtering logic: 100% coverage
-- RAG chunking and retrieval: integration tests with mocked embeddings
-- Rules accuracy validation in E2E tests
-
-**Deliverable:** User can ask about items and rules, get accurate answers
+**Deliverable:** A player can sign in, create or join a campaign, manually enter their character, and Squire's answers reflect that context (e.g., "what items can I afford?" knows their gold and prosperity).
 
 ---
 
-### Phase 5: Advanced Features & Polish
+### Phase 4: Recommendation engine
 
-**Goal:** Combat advice, build planning, production readiness
+**Goal:** The actual product the original spec was designed around — personalized recommendations.
 
 **Tasks:**
 
-- Implement pre-combat hand selection
-  - Consider scenario type (boss, mob-heavy, etc.)
-  - Party composition awareness
-  - Recommend optimal card hand
-- Build long-term build planning views
-  - Show recommended progression from current level to level 9
-  - Explain build philosophy
-  - Identify key cards to work toward
-- Add scenario/event guidance (no spoiler protection initially)
-- Improve build guide coverage (add more guides to curated list)
-- Polish mobile UX
-  - Responsive design optimization
-  - Voice input refinement
-  - Loading states and error handling
-- Build offline capability (PWA)
-  - Service worker for caching
-  - IndexedDB for offline data
-  - Queue actions when offline
-  - Offline/online status indicator
-- Add share/export features
-  - Shareable links to recommendations
-  - Export as PDF/markdown
-  - Screenshot downloads
-- Add user authentication (NextAuth.js or Clerk)
-- Optimize performance and costs
-  - Caching strategies
-  - Prompt optimization
-  - Monitor API usage
-- Comprehensive testing and bug fixes
-  - Increase E2E test coverage
-  - User acceptance testing
-  - Performance testing
+- Card selection at level-up: `listCards('character-abilities', { class, level })` + comparison logic + reasoning
+- Inventory optimization: `listCards('items', { prosperity })` filtered by gold + build synergy
+- Pre-combat hand selection (scenario type + party composition awareness)
+- Long-term build planning (level 2 → 9 progression)
+- Scenario and event guidance
+- Build guide system:
+  - Curated list of guide URLs and metadata in Postgres
+  - `fetchBuildGuide(url)` tool fetches and reads guides on-demand (no parsing — Claude reads native format)
+  - RAG fallback if web fetch proves unreliable
+- Card / item comparison UI components
 
-**Testing Focus:**
+**Risks (specific to this phase):**
 
-- All new features tested with tiered approach
-- E2E suite expanded (still daily CI)
-- Performance benchmarks
-- Cost monitoring
+- **Build guide web fetch reliability.** Google Docs and Reddit posts can be slow to fetch (2–5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if fetch proves unreliable.
+- **Build guide content nuance.** Even with on-demand fetch (no parsing), Claude still has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare — most guides say things like "Card A is better for most builds, but if you're going melee-heavy take Card B" or "I prefer Card A, but both are viable." The agent needs to surface this nuance, not flatten it into a single answer.
 
-**Deliverable:** Production-ready application with full feature set
+**Deliverable:** Squire can answer "I just hit level 4 on my Drifter, which card should I pick?" with a side-by-side comparison, build guide context, and a reasoned recommendation.
 
 ---
 
-### Phase 6: Launch & Iterate
+### Phase 5: Character state ingestion
 
-**Goal:** Real users, feedback, improvements
+**Goal:** Stop typing your character sheet in by hand. Pull state from frosthaven-storyline.com automatically.
+
+**Background:** frosthaven-storyline.com (also reached as gloomhaven-storyline.com) stores all campaign + character data in **browser local storage**. The server component only exists to sync state between browsers — it's a relay, not a data store. There is no public API.
+
+**Ingestion options (decision deferred):**
+
+1. **Browser extension** — read localStorage on the storyline site, push to Squire (cleanest, structured, no Vision cost)
+2. **Manual JSON export → upload** — user exports localStorage, uploads to Squire (lo-fi, no extension to maintain)
+3. **Sync via the storyline server protocol** — reverse-engineer the websocket sync to make Squire look like another client (fragile, unsupported)
+4. **Screenshot → Claude Vision** — original spec approach. Image preprocessing via Sharp (resize, normalize, compress) before sending to Claude Vision API. Cost ~$0.15–0.30 per character sync. Kept as a fallback for users who can't install an extension.
+
+**Risk:** **Browser-extension fragility.** The browser-extension and JSON-export approaches inherit the same class of risk as the original scraping concerns — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
+
+**Tasks (once approach is chosen):**
+
+- Implement chosen ingestion path
+- Validation and caching
+- "Last synced: X ago" UX
+- Manual data entry remains as a permanent fallback
+
+**Deliverable:** Brian can keep using frosthaven-storyline.com as his canonical source of campaign and character truth, and Squire stays in sync without manual re-entry.
+
+---
+
+### Phase 6: Polish
+
+**Goal:** UX refinements, additional features, broader reach within the web channel.
 
 **Tasks:**
 
-- Deploy to production (Vercel or Railway)
-- User testing with real Frosthaven campaigns
-- Gather feedback
-- Fix issues based on user reports
-- Add quality-of-life improvements
-- Monitor costs and optimize
-- Consider adding:
-  - Browser extension for automated screenshot capture
-  - RAG for build guides if web fetch proves insufficient
-  - Spoiler protection if users request it
+- **Voice input** via Web Speech API (Chrome-first, progressive enhancement, graceful fallback to text). Voice is one input method within the web channel, not a separate product surface.
+- Share & export: shareable links to recommendations, export as PDF / markdown
+- Spoiler protection (if user feedback indicates it's valuable — currently a clear warning suffices)
+- Performance and cost optimization
+- Comprehensive E2E test coverage expansion
 
-**Deliverable:** Live application with active users
+**Deliverable:** Squire feels polished. Voice works. You can share an answer with a teammate.
+
+---
+
+### Phase 7: Additional channels (far future)
+
+**Goal:** Reach Squire from outside the web UI.
+
+**Tasks:**
+
+- Discord client
+- iMessage client
+- Any other channel where it makes sense
+
+All channels talk to the same underlying knowledge agent via the same atomic tools. Channel work is mostly UX glue — the agent doesn't change.
+
+**Deliverable:** Brian can ask Squire a rules question from Discord or iMessage and get the same answer he'd get from the web UI.
 
 ---
 
 ## Success Metrics
 
-### User Experience
+### Phase 1 (MVP)
 
-- Average response time < 3 seconds
-- Voice recognition accuracy > 85%
-- Mobile-friendly UI (responsive, readable)
-- Session retention (users return for future levels/decisions)
+- Brian uses Squire at the table during a real Frosthaven session
+- Rules lookup answers are accurate enough that Brian doesn't have to re-check the rulebook
+- Average response time < 5 seconds end-to-end (cold start excluded)
+- Mobile UI is readable and usable on a phone without zooming
+- Uptime > 99% for the hosted service
 
-### Recommendation Quality
+### Long-term (Phases 2+)
 
-- User agrees with agent recommendation > 70% of time
-- User finds recommendations helpful (qualitative feedback)
+- User agrees with the agent's recommendation > 70% of the time
+- Users find recommendations helpful (qualitative feedback)
 - Build guide matching accuracy > 85%
-
-### Technical
-
-- Uptime > 99%
-- Monthly costs within budget ($50-100)
-- Character scraping success rate > 95%
-- Rules lookup relevance (user doesn't need to re-ask)
+- Character state ingestion success rate > 95% (whichever path is chosen in Phase 5)
+- Monthly costs within budget (currently ~$10–50 single-user; revisit when Phase 2 lands)
 
 ---
 
@@ -727,91 +691,85 @@ An AI-powered assistant to help Frosthaven players make optimal decisions for ch
 
 ### Technical Risks
 
-1. **Screenshot extraction accuracy**
-   - Claude Vision may not perfectly extract all data from screenshots
-   - Screenshots may have varying quality, resolution, or formatting
-   - Mitigation: Provide manual data entry fallback, validate extracted data, allow user corrections, start with core fields and expand gradually
+1. **Rules answer accuracy.** The agent might give wrong rules interpretations. Mitigation: always cite rulebook source passages so the user can verify, allow user feedback on wrong answers, expand the daily E2E suite, tune the RAG chunking and retrieval parameters as needed.
 
-2. **Build guide web fetch reliability**
-   - Google Docs or Reddit posts may be slow to fetch or unavailable
-   - Links may break (deleted, moved, made private)
-   - Mitigation: Cache fetched guides temporarily, maintain fallback list of archived guides, implement RAG system if web fetch proves insufficient
+2. **Embedding quality.** The local Xenova model is chosen for simplicity, not for retrieval quality. If RAG accuracy isn't good enough, the planned upgrade is Voyage AI. The vector store (pgvector) doesn't change. Mitigation: monitor retrieval quality via Langfuse evals, swap embeddings if scores drop.
 
-3. **Claude API costs**
-   - Vision API calls for screenshot extraction add cost (~$0.15-0.30 per sync)
-   - Usage could exceed budget if popular
-   - Mitigation: User-initiated sync only (not automatic), implement caching, optimize prompts, monitor usage, rate limiting if needed
+3. **Testing LLM behavior.** Non-deterministic outputs make traditional testing difficult. Mitigation: tiered testing strategy (per `CLAUDE.md`) — mock LLMs in unit tests, LLM-as-judge for E2E, focus coverage on deterministic logic.
 
-4. **Voice recognition accuracy**
-   - Web Speech API may struggle with Frosthaven terminology
-   - Browser support varies (good in Chrome, partial Safari, none Firefox)
-   - Mitigation: Show transcription so user can verify, easy correction mechanism, text input always available, progressive enhancement
+4. **Browser-extension fragility (Phase 5).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
 
-5. **Testing LLM behavior**
-   - Non-deterministic outputs make traditional testing difficult
-   - Mitigation: Tiered testing strategy, mock LLM in unit tests, LLM-as-judge for E2E validation, focus coverage on deterministic logic
+5. **Build guide web fetch reliability (Phase 4).** Google Docs and Reddit posts can be slow to fetch (2–5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if web fetch proves unreliable.
+
+6. **Build guide content nuance (Phase 4).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
+
+7. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 2+) and the recommendation engine (Phase 4) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via Langfuse, model tiering (Haiku for cheap cases) when justified.
 
 ### Product Risks
 
-1. **User adoption**
-   - Frosthaven players might prefer forums/guides
-   - Mitigation: Focus on convenience (voice, mobile), personalized advice, faster than searching
+1. **User adoption.** Frosthaven players might prefer forums and existing guide PDFs. Mitigation: focus on convenience (mobile, fast, no flipping through 100-page rulebooks), personalized context, integration with the campaign tools they already use.
 
-2. **Spoiler concerns**
-   - MVP has no spoiler protection - users may be concerned about spoilers
-   - Mitigation: Clear warning on first use, add spoiler protection in Phase 6 if users request it, screenshot extraction already captures unlock data for future filtering
+2. **Rules edge cases and errata.** Frosthaven has complex interactions and ongoing errata. The agent might give answers that are correct per the rulebook PDF but outdated per official errata. Mitigation: cite sources, allow user feedback, plan for an errata-update workflow eventually.
 
-3. **Rules accuracy**
-   - Agent might give wrong rules interpretations
-   - Mitigation: Always cite rulebook page numbers, allow user feedback on wrong answers, improve RAG, E2E tests validate common rules queries
-
-4. **Screenshot upload friction**
-   - Users may find manual screenshot upload cumbersome
-   - Mitigation: Build browser extension in Phase 6 for one-click capture, make upload UX as smooth as possible, manual entry always available
+3. **Spoiler concerns.** MVP has no spoiler protection. Users may be concerned about being spoiled on locked classes, scenarios, or events. Mitigation: clear warning on first use; add spoiler protection in Phase 6 if user feedback indicates it's valuable.
 
 ### Open Questions
 
-- How to handle errata and FAQ updates to rules?
-- Should agent support tracking party inventory/cards too?
-- Monetization strategy if user base grows?
-- How to handle multiple campaigns (one user, multiple active campaigns)?
+- **Errata and FAQ updates.** How does Squire stay current with official rules errata and FAQ updates? Manual reindexing? Watching for community-maintained errata documents?
+- **Monetization.** If the user base grows, how does Squire cover its API costs? (No urgency — single-user today.)
+- **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
+- **Hosting platform.** Fly.io vs Railway vs Render vs self-hosted VPS — defer until Phase 1 deployment work begins.
+- **Character state ingestion path (Phase 5).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision — defer until Phase 5 begins.
 
 ---
 
-## Future Enhancements (Out of Scope for MVP)
+## Future Enhancements (Out of Scope)
 
 - **Turn-by-turn combat advice** (real-time during battle)
-- **Support for other Gloomhaven games** (original, JOTL, Crimson Scales)
-- **Native mobile apps** (iOS/Android)
-- **Party coordination features** (sync with teammates' characters)
-- **Automated campaign tracking** (fully sync with frosthaven-storyline, track events automatically)
+- **Support for other Gloomhaven games** (original Gloomhaven, Jaws of the Lion, Crimson Scales, Forgotten Circles)
+- **Native mobile apps** (iOS / Android)
+- **Party coordination features** (sync with teammates' characters in real time)
+- **Automated campaign tracking** (fully sync with frosthaven-storyline events automatically, beyond character state)
 - **Custom build creator** (let users design and save their own builds)
 - **Community features** (share builds, rate recommendations, discuss strategies)
-- **Video/streaming integration** (embed in Twitch/YouTube for content creators)
+- **Video / streaming integration** (embed in Twitch / YouTube for content creators)
 - **Gloomhaven Manager integration** (alternative to frosthaven-storyline.com)
 
 ---
 
 ## Conclusion
 
-This specification defines a comprehensive AI assistant for Frosthaven players that provides personalized, context-aware recommendations for character building and gameplay strategy. The project leverages modern web technologies, Claude's advanced reasoning capabilities, and community resources to deliver a mobile-first experience that enhances the Frosthaven gameplay experience.
-
-**Next Steps:**
-
-1. Review and approve this specification
-2. Set up development environment
-3. Begin Phase 1 implementation
-4. Iterate based on testing and feedback
+Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on purpose: rules Q&A at the table, on a phone, behind real auth. Everything else — campaigns, characters, recommendations, voice, additional channels — is sequenced after the walking skeleton ships. The product spec is a living document and will be refreshed every 1–2 months to reflect what Squire actually is, not what it was originally imagined to be.
 
 ---
 
-**Document History:**
+## Changelog
 
-- 2026-01-10: Initial specification (v1.0) based on Q&A session
-- 2026-01-11: Updated specification (v1.1) with finalized technical decisions:
+- **2026-04-07 (v2.0):** Major refresh after the first month of real building.
+  - **Product reframe:** Squire is the agent, not an app. Reachable via multiple channels (web UI today, MCP, future Discord / iMessage). Stopped conflating "personal assistant chatbot" with "*haven game-knowledge agent" — Squire is only the latter.
+  - **MVP redefined:** rules Q&A at the table, on a phone, with Google login behind Cloudflare WAF. Recommendation engine, screenshot extraction, voice, PWA, multi-user — all moved to later phases.
+  - **Stack updates:** Hono JSX + HTMX + Tailwind CDN (no React, no Next.js, no build step). Drizzle (no Prisma). pgvector (no Pinecone). Custom Google OAuth (no NextAuth / Clerk). Sonnet 4.6. Local Xenova embeddings (`Xenova/all-MiniLM-L6-v2`) with Voyage AI as the planned upgrade path. Cloudflare WAF as edge layer.
+  - **Game data:** Worldhaven and OCR pipeline retired (commit `34a26a1`). Replaced with Gloomhaven Secretariat (GHS) structured data — 10 import scripts in `src/import-*.ts`.
+  - **Tools:** Reframed as a generalized atomic-tools API in `src/tools.ts` (`searchRules`, `searchCards`, `listCardTypes`, `listCards`, `getCard`) that works across all GHS card types. Per-feature operations are invocations, not new tools.
+  - **MCP server:** Added as a first-class architectural fact. Treated as a third channel type alongside web UI and future Discord / iMessage. Internal MCP between conversation and knowledge agents was considered and dropped for simplicity.
+  - **Observability:** Added Langfuse + OpenTelemetry section. APM / RUM stack is open.
+  - **Hosting:** Vercel dropped (doesn't fit a long-running Hono Node server). Fly / Railway / Render / VPS as the open shortlist.
+  - **Phases resequenced:** 7 phases instead of 6. Phase 1 = MVP rules Q&A; Phase 2 = multi-user platform; Phase 3 = campaign + character state (manual entry); Phase 4 = recommendation engine + build guides; Phase 5 = character state ingestion (browser extension preferred over Vision); Phase 6 = polish (voice + share/export); Phase 7 = additional channels.
+  - **Voice and PWA:** Voice moved out of Phase 1 to Phase 6 (Brian uses iOS Monologue externally for now). PWA / IndexedDB / offline mode dropped entirely — Squire is a mobile-responsive web app, not a PWA.
+  - **frosthaven-storyline.com:** Still the canonical character state source, but the technical reality (browser localStorage, no API) was discovered later. Four ingestion options now documented; decision deferred to Phase 5.
+  - **Cost rewrite:** ~$10–50/month for current Phase 1 single-user state. Vision costs deferred to Phase 5.
+  - **Risks:** Pulled forward valid risks from the (now-deleted) `spec-discussion-areas.md`: browser-extension fragility (Phase 5), build guide fetch reliability (Phase 4), build guide content nuance (Phase 4).
+  - **Stale companion docs:** `frosthaven-agent-checkpoint.md` and `spec-discussion-areas.md` deleted as part of this refresh — load-bearing content folded into the spec.
+
+- **2026-01-11 (v1.1):** Updated specification with finalized technical decisions:
   - Screenshot-based character data extraction using Claude Vision API
   - On-demand web fetch for build guides (no parsing)
   - Tiered test coverage requirements (100% for business logic, 80-90% for integrations, E2E with LLM-as-judge)
   - Voice input as must-have for Phase 1 (Chrome-focused, progressive enhancement)
   - Spoiler protection deferred to post-MVP
-  - Revised development phases to reflect decisions
+
+- **2026-01-10 (v1.0):** Initial specification based on Q&A session.
+
+---
+
+*This spec is refreshed every 1–2 months. Next refresh expected: ~2026-06.*
