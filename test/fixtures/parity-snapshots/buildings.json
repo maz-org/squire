@@ -1,0 +1,1094 @@
+[
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Collectively buy up to 1 Metal for 2 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/05/L1"
+  },
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "Collectively buy up to 2 Metal for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/05/L2"
+  },
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 8,
+      "metal": 5,
+      "hide": 2
+    },
+    "effect": "Collectively buy up to 3 Metal for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/05/L3"
+  },
+  {
+    "buildingNumber": "05",
+    "name": "Mining Camp",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 10,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "Collectively buy up to 4 Metal for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/05/L4"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": 1,
+      "hide": 2
+    },
+    "effect": "Collectively buy up to 1 Hide for 2 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/12/L1"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 3
+    },
+    "effect": "Collectively buy up to 2 Hide for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/12/L2"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 8,
+      "metal": 2,
+      "hide": 5
+    },
+    "effect": "Collectively buy up to 3 Hide for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/12/L3"
+  },
+  {
+    "buildingNumber": "12",
+    "name": "Hunting Lodge",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 10,
+      "metal": 3,
+      "hide": 6
+    },
+    "effect": "Collectively buy up to 4 Hide for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/12/L4"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "Collectively buy up to 1 Lumber for 2 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/17/L1"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 2
+    },
+    "effect": "Collectively buy up to 2 Lumber for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/17/L2"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "Collectively buy up to 3 Lumber for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/17/L3"
+  },
+  {
+    "buildingNumber": "17",
+    "name": "Logging Camp",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 8,
+      "metal": 8,
+      "hide": 3
+    },
+    "effect": "Collectively buy up to 4 Lumber for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/17/L4"
+  },
+  {
+    "buildingNumber": "21",
+    "name": "Inn",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "Collectively buy up to 1 material resource for 2 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/21/L1"
+  },
+  {
+    "buildingNumber": "21",
+    "name": "Inn",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Collectively buy up to 2 different material resource for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/21/L2"
+  },
+  {
+    "buildingNumber": "21",
+    "name": "Inn",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 6
+    },
+    "effect": "Collectively buy up to 3 different material resource for 2 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/21/L3"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 3,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Plant herbs, rotate this card 180°, then stop - Gain 1 herb from each planted plot, then rotate this card 180° then stop",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/24/L1"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "Plant herbs, rotate this card 180°, then stop - Gain 1 herb from each planted plot, then rotate this card 180° then stop",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/24/L2"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/24/L3"
+  },
+  {
+    "buildingNumber": "24",
+    "name": "Garden",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/24/L4"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 1,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Lose 1 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L1"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Lose 1 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L2"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "Lose 1 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L3"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "Lose 2 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L4"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 5,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Lose 2 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L5"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 6,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 3
+    },
+    "effect": "Lose 2 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L6"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 7,
+    "buildCost": {
+      "gold": null,
+      "lumber": 7,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "Lose 2 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L7"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 8,
+    "buildCost": {
+      "gold": null,
+      "lumber": 8,
+      "metal": 5,
+      "hide": 3
+    },
+    "effect": "Lose 2 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L8"
+  },
+  {
+    "buildingNumber": "34",
+    "name": "Craftsman",
+    "level": 9,
+    "buildCost": {
+      "gold": null,
+      "lumber": 9,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Lose 2 collective Hide",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/34/L9"
+  },
+  {
+    "buildingNumber": "35",
+    "name": "Alchemist",
+    "level": 1,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Characters cannot use potions",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/35/L1"
+  },
+  {
+    "buildingNumber": "35",
+    "name": "Alchemist",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Characters cannot use potions",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/35/L2"
+  },
+  {
+    "buildingNumber": "35",
+    "name": "Alchemist",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 2
+    },
+    "effect": "Characters cannot use potions",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/35/L3"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Lose 5 collective gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/37/L1"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "Lose 10 collective gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/37/L2"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Lose 15 collective gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/37/L3"
+  },
+  {
+    "buildingNumber": "37",
+    "name": "Trading Post",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "Lose 20 collective gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/37/L4"
+  },
+  {
+    "buildingNumber": "39",
+    "name": "Jeweler",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 4
+    },
+    "effect": "Damage any one building",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/39/L1"
+  },
+  {
+    "buildingNumber": "39",
+    "name": "Jeweler",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "Damage any one building",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/39/L2"
+  },
+  {
+    "buildingNumber": "39",
+    "name": "Jeweler",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 2,
+      "metal": 10,
+      "hide": 3
+    },
+    "effect": "Damage any one building",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/39/L3"
+  },
+  {
+    "buildingNumber": "42",
+    "name": "Temple of the Great Oak",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/42/L1"
+  },
+  {
+    "buildingNumber": "42",
+    "name": "Temple of the Great Oak",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/42/L2"
+  },
+  {
+    "buildingNumber": "42",
+    "name": "Temple of the Great Oak",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 10,
+      "hide": 4
+    },
+    "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/42/L3"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 3,
+      "metal": 4,
+      "hide": null
+    },
+    "effect": "",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/44/L1"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 5,
+      "hide": null
+    },
+    "effect": "Reduce all enhancement costs by 10 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/44/L2"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "effect": "Reduce all enhancement costs by 10 gold and level penalties by 10 gold per level",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/44/L3"
+  },
+  {
+    "buildingNumber": "44",
+    "name": "Enhancer",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 6,
+      "hide": 6
+    },
+    "effect": "Reduce all enhancement costs by 10 gold, level penalties by 10 gold per level, and repeat penalties by 25 gold per enhancement",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/44/L4"
+  },
+  {
+    "buildingNumber": "65",
+    "name": "Metal Depot",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 2,
+      "metal": 6,
+      "hide": 2
+    },
+    "effect": "Collectively sell up to 1 Metal for 5 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/65/L1"
+  },
+  {
+    "buildingNumber": "65",
+    "name": "Metal Depot",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Collectively sell up to 2 Metal for 5 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/65/L2"
+  },
+  {
+    "buildingNumber": "67",
+    "name": "Lumber Depot",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "Collectively sell up to 1 Lumber for 5 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/67/L1"
+  },
+  {
+    "buildingNumber": "67",
+    "name": "Lumber Depot",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Collectively sell up to 2 Lumber for 5 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/67/L2"
+  },
+  {
+    "buildingNumber": "72",
+    "name": "Hide Depot",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 6
+    },
+    "effect": "Collectively sell up to 1 Hide for 5 gold",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/72/L1"
+  },
+  {
+    "buildingNumber": "72",
+    "name": "Hide Depot",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Collectively sell up to 2 Hide for 5 gold each",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/72/L2"
+  },
+  {
+    "buildingNumber": "74",
+    "name": "Tavern",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Lose 1 morale",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/74/L1"
+  },
+  {
+    "buildingNumber": "74",
+    "name": "Tavern",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "Lose 1 morale",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/74/L2"
+  },
+  {
+    "buildingNumber": "74",
+    "name": "Tavern",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 2
+    },
+    "effect": "Lose 1 morale",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/74/L3"
+  },
+  {
+    "buildingNumber": "81",
+    "name": "Hall of Revelry",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 6
+    },
+    "effect": "When the trials deck is complete, read Section 187.1",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/81/L1"
+  },
+  {
+    "buildingNumber": "81",
+    "name": "Hall of Revelry",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Access to Tholos' Favors",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/81/L2"
+  },
+  {
+    "buildingNumber": "83",
+    "name": "Library",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": null
+    },
+    "effect": "Lose 1 inspiration",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/83/L1"
+  },
+  {
+    "buildingNumber": "83",
+    "name": "Library",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 1
+    },
+    "effect": "Lose 1 inspiration",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/83/L2"
+  },
+  {
+    "buildingNumber": "83",
+    "name": "Library",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 2,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Lose 1 inspiration",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/83/L3"
+  },
+  {
+    "buildingNumber": "84",
+    "name": "Workshop",
+    "level": 1,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Lose 1 collective Lumber",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/84/L1"
+  },
+  {
+    "buildingNumber": "85",
+    "name": "Carpenter",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "Reduce all construction costs by 1 material resource",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/85/L1"
+  },
+  {
+    "buildingNumber": "85",
+    "name": "Carpenter",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 5,
+      "hide": 4
+    },
+    "effect": "Reduce all construction costs by 1 material resource and the extra construction cost by 1 morale",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/85/L2"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "Bring one pet into each scenario. Capacity: 4",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/88/L1"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 5
+    },
+    "effect": "Bring one pet into each scenario. Capacity: 8",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/88/L2"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 6,
+      "metal": 7,
+      "hide": 6
+    },
+    "effect": "Bring two pets into each scenario. Capacity: 8",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/88/L3"
+  },
+  {
+    "buildingNumber": "88",
+    "name": "Stables",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": 8,
+      "metal": 8,
+      "hide": 8
+    },
+    "effect": "Bring two pets into each scenario. Capacity: 12",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/88/L4"
+  },
+  {
+    "buildingNumber": "90",
+    "name": "Town Hall",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "Draw one challenge and keep up to one. When the challenge deck is complete, read Section 190.1",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/90/L1"
+  },
+  {
+    "buildingNumber": "90",
+    "name": "Town Hall",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "Draw two challenges and keep up to one. When the challenge deck is complete, read Section 190.1",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/90/L2"
+  },
+  {
+    "buildingNumber": "90",
+    "name": "Town Hall",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 4
+    },
+    "effect": "Draw three challenges and keep up to two. When the challenge deck is complete, read Section 190.1",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/90/L3"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 1,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 4 Effect: advantage and -5 Attack",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/98/L1"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 2,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 6 Effect: advantage and -15 Attack",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/98/L2"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 3,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 8 Effect: advantage and -25 Attack",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/98/L3"
+  },
+  {
+    "buildingNumber": "98",
+    "name": "Barracks",
+    "level": 4,
+    "buildCost": {
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 10 Effect: advantage and -35 Attack",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/98/L4"
+  },
+  {
+    "buildingNumber": null,
+    "name": "Wall J",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": null,
+      "hide": null
+    },
+    "effect": "+5 Defense",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/wall-j/L1"
+  },
+  {
+    "buildingNumber": null,
+    "name": "Wall K",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 2
+    },
+    "effect": "+5 Defense",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/wall-k/L1"
+  },
+  {
+    "buildingNumber": null,
+    "name": "Wall L",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 1
+    },
+    "effect": "+5 Defense",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/wall-l/L1"
+  },
+  {
+    "buildingNumber": null,
+    "name": "Wall M",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3
+    },
+    "effect": "+5 Defense",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/wall-m/L1"
+  },
+  {
+    "buildingNumber": null,
+    "name": "Wall N",
+    "level": 1,
+    "buildCost": {
+      "gold": 10,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 2
+    },
+    "effect": "+5 Defense",
+    "notes": null,
+    "sourceId": "gloomhavensecretariat:building/wall-n/L1"
+  }
+]

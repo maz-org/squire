@@ -1,0 +1,453 @@
+[
+  {
+    "cardId": "505",
+    "altId": "11",
+    "name": "Refined Tastes",
+    "requirements": [
+      {
+        "description": "Items craftable with own items costs",
+        "target": 15,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "39:72",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/505"
+  },
+  {
+    "cardId": "509",
+    "altId": "12",
+    "name": "Threat from the Deep",
+    "requirements": [
+      {
+        "description": "Follow \"Invasion of the Docks\" ScenarioNumber 71 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "90:42",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/509"
+  },
+  {
+    "cardId": "514",
+    "altId": "13",
+    "name": "End the Trickery",
+    "requirements": [
+      {
+        "description": "Imps killed",
+        "target": 15,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "44:74",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/514"
+  },
+  {
+    "cardId": "519",
+    "altId": "14",
+    "name": "Eternal Wanderer",
+    "requirements": [
+      {
+        "description": "Completed scenario in Whitefire Wood",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Completed scenario in Copperneck Mountains",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Completed scenario in Radiant Forest",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Completed scenario in Crystal Fields",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Completed scenario in Biting Sea",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "37:72",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/519"
+  },
+  {
+    "cardId": "523",
+    "altId": "15",
+    "name": "Continued Prosperity",
+    "requirements": [
+      {
+        "description": "Gold donated to the Temple of the Great Oak",
+        "target": 70,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "65:85",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/523"
+  },
+  {
+    "cardId": "527",
+    "altId": "16",
+    "name": "Prepared for the Worst",
+    "requirements": [
+      {
+        "description": "Enhancements purchased",
+        "target": 5,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "85:88",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/527"
+  },
+  {
+    "cardId": "538",
+    "altId": "17",
+    "name": "Battle Legend",
+    "requirements": [
+      {
+        "description": "Earned Checkmark from completed battle goals",
+        "target": 16,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "81:67",
+    "errata": "env81",
+    "sourceId": "gloomhavensecretariat:personal-quest/538"
+  },
+  {
+    "cardId": "542",
+    "altId": "18",
+    "name": "Let Them Be",
+    "requirements": [
+      {
+        "description": "Side scenarios (numbered 65 or higher) completed",
+        "target": 8,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "44:67",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/542"
+  },
+  {
+    "cardId": "543",
+    "altId": "23",
+    "name": "The Chosen One",
+    "requirements": [
+      {
+        "description": "Allies exhausted during scenarios you otherwise complete",
+        "target": 10,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "A",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/543"
+  },
+  {
+    "cardId": "545",
+    "altId": "19",
+    "name": "Quiet the Dead Places",
+    "requirements": [
+      {
+        "description": "Own Abyss Axe ItemFh 39",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Frozen Corpses, Ice Wraiths, and/or Living Dooms killed with it",
+        "target": 10,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "81:67",
+    "errata": "env81",
+    "sourceId": "gloomhavensecretariat:personal-quest/545"
+  },
+  {
+    "cardId": "549",
+    "altId": "20",
+    "name": "Return to Simplicity",
+    "requirements": [
+      {
+        "description": "Ruined Machines killed",
+        "target": 15,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "24:21",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/549"
+  },
+  {
+    "cardId": "552",
+    "altId": "21",
+    "name": "The Study of Life",
+    "requirements": [
+      {
+        "description": "Enemies captured",
+        "target": 8,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "39:72",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/552"
+  },
+  {
+    "cardId": "557",
+    "altId": "22",
+    "name": "The Greatest Challenge",
+    "requirements": [
+      {
+        "description": "Challenges completed",
+        "target": 12,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "37:83",
+    "errata": "env37",
+    "sourceId": "gloomhavensecretariat:personal-quest/557"
+  },
+  {
+    "cardId": "581",
+    "altId": "01",
+    "name": "The Study of Plants",
+    "requirements": [
+      {
+        "description": "Different types of herbs looted",
+        "target": 5,
+        "options": [
+          "Arrowvine",
+          "Axenut",
+          "Corpsecap",
+          "Flamefruit",
+          "Rockroot",
+          "Snowthistle"
+        ],
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "24:42",
+    "errata": "env24",
+    "sourceId": "gloomhavensecretariat:personal-quest/581"
+  },
+  {
+    "cardId": "582",
+    "altId": "02",
+    "name": "Searching for the Oak",
+    "requirements": [
+      {
+        "description": "Lumber cards looted",
+        "target": 8,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Follow \"Sacred Soil\" ScenarioNumber 69 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "24:42",
+    "errata": "env24",
+    "sourceId": "gloomhavensecretariat:personal-quest/582"
+  },
+  {
+    "cardId": "583",
+    "altId": "03",
+    "name": "Merchant Class",
+    "requirements": [
+      {
+        "description": "Head items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Body items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Legs items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "One Hand or Two Hands items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Small items",
+        "target": 4,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "37:74",
+    "errata": "env37",
+    "sourceId": "gloomhavensecretariat:personal-quest/583"
+  },
+  {
+    "cardId": "584",
+    "altId": "04",
+    "name": "Greed is Good",
+    "requirements": [
+      {
+        "description": "Gold",
+        "target": "80+20xP",
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "37:74",
+    "errata": "env37",
+    "sourceId": "gloomhavensecretariat:personal-quest/584"
+  },
+  {
+    "cardId": "585",
+    "altId": "05",
+    "name": "Build, not Destroy",
+    "requirements": [
+      {
+        "description": "Buildings constructed or upgraded",
+        "target": 12,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "85:21",
+    "errata": "env85",
+    "sourceId": "gloomhavensecretariat:personal-quest/585"
+  },
+  {
+    "cardId": "586",
+    "altId": "06",
+    "name": "Team Building",
+    "requirements": [
+      {
+        "description": "Person's name read in different outpost phases",
+        "target": 8,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "85:21",
+    "errata": "env85",
+    "sourceId": "gloomhavensecretariat:personal-quest/586"
+  },
+  {
+    "cardId": "587",
+    "altId": "07",
+    "name": "Aesther Outpost",
+    "requirements": [
+      {
+        "description": "Follow \"A Strong Foundation\" ScenarioNumber 65 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "44:88",
+    "errata": "env44",
+    "sourceId": "gloomhavensecretariat:personal-quest/587"
+  },
+  {
+    "cardId": "588",
+    "altId": "08",
+    "name": "Dangerous Game",
+    "requirements": [
+      {
+        "description": "Algox Guards killed",
+        "target": 2,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Lurker Clawcrushers killed",
+        "target": 2,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Robotic Boltshooters killed",
+        "target": 2,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "44:88",
+    "errata": "env44",
+    "sourceId": "gloomhavensecretariat:personal-quest/588"
+  },
+  {
+    "cardId": "589",
+    "altId": "09",
+    "name": "Life Lessons",
+    "requirements": [
+      {
+        "description": "Experience gained from ability cards",
+        "target": 150,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "90:83",
+    "errata": "env90",
+    "sourceId": "gloomhavensecretariat:personal-quest/589"
+  },
+  {
+    "cardId": "590",
+    "altId": "10",
+    "name": "Explore the Reaches",
+    "requirements": [
+      {
+        "description": "Scenarios completed with Boat, Climbing-gear, or Sled requirement",
+        "target": 5,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "90:83",
+    "errata": "env90",
+    "sourceId": "gloomhavensecretariat:personal-quest/590"
+  }
+]
