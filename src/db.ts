@@ -33,6 +33,7 @@ export interface DbHandle {
 }
 
 let serverPool: pg.Pool | null = null;
+let serverDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 /**
  * Default to the local docker-compose Postgres. These URLs are constant
@@ -63,13 +64,17 @@ function resolveDatabaseUrl(): string {
  */
 export function getDb(mode: DbMode = 'server'): DbHandle {
   if (mode === 'server') {
-    serverPool ??= new Pool({
-      connectionString: resolveDatabaseUrl(),
-      max: 10,
-      idleTimeoutMillis: 30_000,
-    });
+    if (!serverPool) {
+      serverPool = new Pool({
+        connectionString: resolveDatabaseUrl(),
+        max: 10,
+        idleTimeoutMillis: 30_000,
+      });
+      serverDb = drizzle(serverPool, { schema });
+    }
     return {
-      db: drizzle(serverPool, { schema }),
+      // Non-null assertion is safe: serverDb is set in lockstep with serverPool.
+      db: serverDb!,
       // Server pool lives for the process lifetime — caller uses
       // shutdownServerPool() at SIGTERM time instead.
       close: async () => {},
@@ -96,6 +101,7 @@ export async function shutdownServerPool(): Promise<void> {
   if (serverPool) {
     const pool = serverPool;
     serverPool = null;
+    serverDb = null;
     await pool.end();
   }
 }
