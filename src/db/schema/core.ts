@@ -14,7 +14,6 @@
  * operator classes — see tech spec §pgvector operator sign-flip.
  */
 
-import { sql } from 'drizzle-orm';
 import {
   index,
   integer,
@@ -75,6 +74,3 @@ export const embeddings = pgTable(
     //     USING hnsw (embedding vector_cosine_ops);
   ],
 );
-
-// Suppress unused-import warning — `sql` is reserved for SQR-32's defaults work.
-void sql;

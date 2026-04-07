@@ -11,6 +11,10 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import type { z } from 'zod';
+
+import { MonsterStatSchema } from '../src/schemas.ts';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXTRACTED_PATH = join(__dirname, '..', 'data', 'extracted', 'monster-stats.json');
 const REFERENCE_DIR = join(
@@ -25,21 +29,21 @@ const REFERENCE_DIR = join(
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface ExtractedStats {
-  hp: number | null;
-  move: number | null;
-  attack: number | null;
-}
-
-interface ExtractedMonster {
-  name: string;
-  levelRange: string;
-  normal: Record<string, ExtractedStats>;
-  elite: Record<string, ExtractedStats>;
+/**
+ * Records read from `data/extracted/monster-stats.json` are validated by
+ * `MonsterStatSchema` (the canonical source of truth in `src/schemas.ts`).
+ * `_file` and `_error` are eval-only metadata that may be present on records
+ * the importer flagged as needing manual review.
+ *
+ * Importing `MonsterStatSchema` here means a future schema rename (like the
+ * `_source` → `sourceId` rename in SQR-31) is caught at typecheck time
+ * instead of silently breaking the GHS-match path. Do NOT reintroduce a
+ * local interface duplicate of these fields.
+ */
+type ExtractedMonster = z.infer<typeof MonsterStatSchema> & {
   _file?: string;
-  sourceId?: string;
   _error?: string;
-}
+};
 
 interface GhsStat {
   type?: string;
