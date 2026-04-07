@@ -230,7 +230,7 @@ describe('parity regression vs flat-file vector store', () => {
       readFileSync(join(FIXTURES, 'vector-parity-fixture.json'), 'utf-8'),
     );
     const queries: QueryCase[] = JSON.parse(
-      readFileSync(join(FIXTURES, 'search-queries.json'), 'utf-8'),
+      readFileSync(join(FIXTURES, 'search-queries', 'rules.json'), 'utf-8'),
     );
 
     await addEntries(
