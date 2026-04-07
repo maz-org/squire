@@ -166,13 +166,13 @@ Do not write implementation before tests. Each feature or fix starts with a test
 
 This repo uses [CodeRabbit](https://coderabbit.ai) as an automated PR reviewer. CodeRabbit is configured to auto-approve PRs that pass review, which satisfies the branch protection "1 approving review" requirement.
 
-**Before pushing to GitHub**, run the CodeRabbit review locally:
+**Before pushing to GitHub**, run the gstack `/review` skill:
 
 ```bash
-/coderabbit:review
+/review
 ```
 
-Address all review comments before pushing. This catches issues early and avoids back-and-forth on the PR.
+`/review` performs a structural pre-landing review of the diff against the base branch (SQL safety, LLM trust boundary violations, conditional side effects, and similar issues). Address its findings before pushing. This catches problems early and avoids back-and-forth on the PR.
 
 **After creating the PR**, monitor it in a loop until it is merged. Do **not**
 push any additional commits to the branch after the PR is merged — if you

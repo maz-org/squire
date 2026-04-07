@@ -148,9 +148,9 @@ This opens a browser window to sign in with your CodeRabbit account. Once
 authenticated, the CLI stores your credentials locally. You can verify it worked
 with `coderabbit auth status`.
 
-From within a Claude Code session, run `/coderabbit:review` before pushing your
-branch. Claude Code will run the review, show you the results, and fix any
-issues it finds.
+From within a Claude Code session, run the gstack `/review` skill before
+pushing your branch. Claude Code will run a structural pre-landing review of
+the diff, show you the results, and fix any issues it finds.
 
 ## Getting started
 

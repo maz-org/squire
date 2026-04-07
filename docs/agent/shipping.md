@@ -27,3 +27,18 @@
 Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`
 
 Example: `feat(auth): add user login endpoint`
+
+## Use the `/ship` skill
+
+For the actual ship workflow, invoke the gstack **`/ship`** skill rather than running the steps by hand. `/ship` detects and merges the base branch, runs tests, reviews the diff, bumps `VERSION`, updates `CHANGELOG`, commits, pushes, and opens the PR — wrapping up everything above into one command.
+
+The rules in this file still apply — `/ship` doesn't override them, it executes them:
+
+- Branch must follow the naming convention above (Linear's `gitBranchName` already does).
+- Commits must follow Conventional Commits.
+- One logical change per PR.
+- Never force-push, never push to main directly. `/ship` always goes through a PR.
+
+After `/ship` opens the PR, follow the CodeRabbit polling loop in
+[coderabbit-loop.md](coderabbit-loop.md) until merge. `/land-and-deploy` takes
+over from there if you want it to handle the merge + deploy verification.
