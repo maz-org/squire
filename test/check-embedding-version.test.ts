@@ -57,7 +57,7 @@ describe('checkEmbeddingVersion', () => {
     expect(message).toContain('xenova-minilm-l6-v2.v0');
   });
 
-  it('logs a drift warning when current + stale versions coexist', async () => {
+  it('does not warn when current + stale versions coexist (drift = current version absent, not just "not alone")', async () => {
     mockExecute.mockResolvedValueOnce({
       rows: [
         { embedding_version: EMBEDDING_VERSION },
