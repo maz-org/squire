@@ -16,6 +16,18 @@ This behavior applies to **all Discord users** in the channel (not just bcm).
 
 ## Issue Tracking
 
+This project moved off GitHub Issues to **Linear** in early Phase 1. Linear gives
+us first-class projects and initiatives (so the Phase 1 MVP work can be sliced
+across Storage / Web UI / User Accounts / Deployment / Production Readiness with
+visible dependencies), an MCP integration that lets agents read and edit issues
+without shelling out, and pre-computed git branch names per issue. The trade-off
+is that issue tracking now lives in a SaaS tool rather than next to the code in
+GitHub — acceptable for a single-maintainer project with tight Linear integration
+in the agent loop. GitHub Issues is still used for repo-level concerns
+(Dependabot, security advisories) but **not** for work tracking. Per the
+"Document Design Choices" rule below, this rationale lives here so future agents
+and contributors don't re-litigate the choice.
+
 Use **Linear** for all work tracking. The Squire team key is `SQR`. Issues are
 organized into projects (Storage & Data Migration, Web UI, User Accounts,
 Deployment, Production Readiness) under the

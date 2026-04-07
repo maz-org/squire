@@ -380,7 +380,12 @@ Ripple sites to update:
 - `src/server.ts` — REST endpoints in `/api/cards`, `/api/card-types`, `/api/cards/:type/:id` await tool calls
 - `test/tools.test.ts`, `test/mcp-in-process.test.ts`, `test/mcp.test.ts`, `test/server.test.ts`, `test/service.test.ts` — fixture setup becomes `beforeEach` DB seed rather than pre-built JSON
 
-No change to the public tool *shape* — same parameters, same return types. Just async.
+Two changes to the tool signatures, both deliberate:
+
+1. **All five tools become async.** `searchCards`, `listCardTypes`, `listCards`, and `getCard` were synchronous; they now return `Promise<...>`. `searchRules` was already async (because of the embedder), unchanged in that regard.
+2. **Each tool gains an optional `game` parameter.** `searchRules(query, topK, opts?)`, `searchCards(query, topK, opts?)`, `listCardTypes(opts?)`, `listCards(type, filter?, opts?)`, `getCard(type, id, opts?)`, where `opts = { game?: 'frosthaven' | 'gloomhaven-2' }` and defaults to `'frosthaven'`. Phase 1 ignores the value at the call sites; Phase 2 wires the per-session game selector through to the tool calls.
+
+Return types are unchanged (`RuleResult[]`, `CardResult[]`, `CardTypeInfo[]`, etc.). The score semantics on `searchRules` are preserved by the operator sign-flip handling in `vector-store.ts`. The score semantics on `searchCards` shift from "keyword overlap count" to "ts_rank value" once SQR-34's FTS swap lands — same field, different distribution; PR description must call this out.
 
 ---
 
