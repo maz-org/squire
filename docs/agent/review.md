@@ -35,8 +35,7 @@ branch/PR.
 7. **Clean up** — after merge, close the issue if GitHub didn't auto-close it,
    switch to main, pull, prune remote refs, and delete the local feature branch
 
-Use `/loop` or a polling interval (e.g., check every 30–60 seconds) to watch
-for new comments and check status. Do not stop watching early.
+Use `/loop` to watch for new comments and check status. Do not stop watching early.
 
 CodeRabbit configuration is in `.coderabbit.yaml`. Path-specific review
 instructions can be added there for modules that need domain-aware review
