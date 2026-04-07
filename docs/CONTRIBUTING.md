@@ -340,8 +340,17 @@ If any step fails, the commit is blocked. Fix the issue and try again.
 src/           TypeScript source (runs natively on Node 24)
 test/          Unit tests (vitest)
 eval/          Evaluation framework and dataset
-docs/          Project documentation (SPEC, ARCHITECTURE, DEVELOPMENT, SECURITY)
+docs/          Project documentation (SPEC, ARCHITECTURE, DEVELOPMENT, SECURITY, CONTRIBUTING)
 data/          Game data and generated artifacts (mostly gitignored)
 data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 .github/       CI workflows, Dependabot config
 ```
+
+## Changelog
+
+- **2026-04-07:** Moved from repo root to `docs/CONTRIBUTING.md` as part of the docs consolidation. Added changelog. Updated project layout listing to include CONTRIBUTING alongside the other ALL_CAPS docs.
+- **2026-04-07:** Updated project layout description for the SPEC v3.0 / ARCHITECTURE v1.0 docs split.
+- **2026-04-07:** Updated to reflect PDF move to `data/pdfs/`.
+- **2026-04-06:** Updated to reflect retirement of OCR pipeline and Worldhaven dependency (commit `34a26a1`).
+- **2026-04-04:** Migrated data dependencies to git submodules (PR #146). Later replaced with committed extracted data + weekly CI refresh (PR #162).
+- **2026-03-22:** Initial CONTRIBUTING guide added alongside Git LFS for data files and Langfuse improvements (PR #17).
