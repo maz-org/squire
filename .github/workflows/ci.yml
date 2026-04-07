@@ -10,6 +10,31 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    # Postgres + pgvector service container so integration tests can run
+    # against a real DB. Required from SQR-32 onward — every issue in the
+    # Storage & Data Migration project depends on this.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: squire
+          POSTGRES_PASSWORD: squire
+          POSTGRES_DB: squire_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U squire -d squire_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # CI intentionally points both DATABASE_URL and TEST_DATABASE_URL at the
+    # same database — there's only one pgvector service container and no
+    # "dev vs test" distinction at CI time. Do not split these.
+    env:
+      DATABASE_URL: postgres://squire:squire@localhost:5432/squire_test
+      TEST_DATABASE_URL: postgres://squire:squire@localhost:5432/squire_test
+
     steps:
       - uses: actions/checkout@v6
 
@@ -20,11 +45,14 @@ jobs:
 
       - run: npm ci
 
+      - name: Run database migrations
+        run: npm run db:migrate
+
       - name: Typecheck
         run: npx tsc --noEmit
 
       - name: Lint
-        run: npx eslint src/ test/
+        run: npx eslint src/ test/ scripts/
 
       - name: Lint markdown
         run: npm run lint:md

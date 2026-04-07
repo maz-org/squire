@@ -4,7 +4,7 @@
  */
 
 import { embed } from './embedder.ts';
-import { loadIndex } from './vector-store.ts';
+import { initializeRetrieval } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
 import { runAgentLoop } from './agent.ts';
 
@@ -34,20 +34,15 @@ export async function initialize(): Promise<void> {
 }
 
 async function doInitialize(): Promise<void> {
-  const index = loadIndex();
-  if (index.length === 0) {
-    throw new Error('Vector index is empty. Run `npm run index` first.');
-  }
+  // Retrieval layer owns vector index + embedder warmup + drift guard.
+  await initializeRetrieval(embed);
 
-  // Verify extracted data is available
+  // Verify extracted data is available.
   const types = listCardTypes();
   const totalCards = types.reduce((sum, t) => sum + t.count, 0);
   if (totalCards === 0) {
     throw new Error('No extracted card data found. Run `npm run extract` first.');
   }
-
-  // Warm the embedder so the first real query doesn't pay the cold-start cost
-  await embed('warmup');
 
   ready = true;
 }

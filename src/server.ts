@@ -4,6 +4,10 @@
  */
 
 import 'dotenv/config';
+// MUST be the first application import — PgInstrumentation has to patch `pg`
+// before service.ts transitively loads db.ts, otherwise Postgres spans never
+// reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
+import './instrumentation.ts';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { isReady, initialize, ask } from './service.ts';

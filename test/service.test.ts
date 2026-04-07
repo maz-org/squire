@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const { mockRunAgentLoop, mockEmbed, mockLoadIndex } = vi.hoisted(() => ({
+const { mockRunAgentLoop, mockEmbed, mockInitializeRetrieval } = vi.hoisted(() => ({
   mockRunAgentLoop: vi.fn(),
   mockEmbed: vi.fn(),
-  mockLoadIndex: vi.fn(),
+  mockInitializeRetrieval: vi.fn(),
 }));
 
 vi.mock('../src/agent.ts', () => ({
@@ -24,7 +24,7 @@ vi.mock('../src/embedder.ts', () => ({
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
-  loadIndex: mockLoadIndex,
+  initializeRetrieval: mockInitializeRetrieval,
 }));
 
 vi.mock('../src/extracted-data.ts', () => ({
@@ -40,9 +40,7 @@ describe('initialize', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     _resetForTesting();
-    mockLoadIndex.mockReturnValue([
-      { id: 'chunk-1', text: 'test', embedding: [0.1], source: 'test.pdf', chunkIndex: 0 },
-    ]);
+    mockInitializeRetrieval.mockResolvedValue(undefined);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
   });
 
@@ -50,10 +48,12 @@ describe('initialize', () => {
     expect(isReady()).toBe(false);
   });
 
-  it('initialize loads index and warms embedder', async () => {
+  it('delegates retrieval bootstrap to initializeRetrieval', async () => {
     await initialize();
-    expect(mockLoadIndex).toHaveBeenCalled();
-    expect(mockEmbed).toHaveBeenCalledWith('warmup');
+    // service passes the embedder in so retrieval can warm it without
+    // importing it itself — keeps the retrieval layer free of a direct
+    // embedder dependency in the type surface.
+    expect(mockInitializeRetrieval).toHaveBeenCalledWith(mockEmbed);
   });
 
   it('isReady returns true after initialize', async () => {
@@ -61,21 +61,9 @@ describe('initialize', () => {
     expect(isReady()).toBe(true);
   });
 
-  it('initialize throws when index is empty', async () => {
-    vi.resetModules();
-    vi.doMock('../src/agent.ts', () => ({ runAgentLoop: mockRunAgentLoop }));
-    vi.doMock('../src/tools.ts', () => ({
-      listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
-    }));
-    vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
-    vi.doMock('../src/vector-store.ts', () => ({ loadIndex: vi.fn(() => []) }));
-    vi.doMock('../src/extracted-data.ts', () => ({
-      TYPES: ['monster-stats'],
-      load: vi.fn(() => []),
-    }));
-
-    const { initialize: freshInit } = await import('../src/service.ts');
-    await expect(freshInit()).rejects.toThrow(/index is empty/i);
+  it('surfaces retrieval initialization errors', async () => {
+    mockInitializeRetrieval.mockRejectedValueOnce(new Error('Vector index is empty.'));
+    await expect(initialize()).rejects.toThrow(/index is empty/i);
   });
 });
 
@@ -85,9 +73,7 @@ describe('ask', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     _resetForTesting();
-    mockLoadIndex.mockReturnValue([
-      { id: 'chunk-1', text: 'test', embedding: [0.1], source: 'test.pdf', chunkIndex: 0 },
-    ]);
+    mockInitializeRetrieval.mockResolvedValue(undefined);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
     mockRunAgentLoop.mockResolvedValue('You pick up loot tokens in your hex.');
   });
@@ -117,7 +103,9 @@ describe('ask', () => {
       listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
     }));
     vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
-    vi.doMock('../src/vector-store.ts', () => ({ loadIndex: mockLoadIndex }));
+    vi.doMock('../src/vector-store.ts', () => ({
+      initializeRetrieval: mockInitializeRetrieval,
+    }));
     vi.doMock('../src/extracted-data.ts', () => ({
       TYPES: ['monster-stats'],
       load: vi.fn(() => [{ name: 'test' }]),
