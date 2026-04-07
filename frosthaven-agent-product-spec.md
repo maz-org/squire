@@ -1,9 +1,9 @@
 # Squire — Frosthaven Knowledge Agent Product Specification
 
-**Version:** 2.0
+**Version:** 2.1
 **Date:** 2026-04-07
 **Last Refreshed:** 2026-04-07
-**Status:** Phase 1 in progress, MVP scoped
+**Status:** Phase 1 in progress, MVP scoped. GH2 content expansion (Phase 2) deadline ~mid-2026.
 
 ## Executive Summary
 
@@ -127,61 +127,23 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 
 ## Character State Management
 
-### Data Sources
+Squire's MVP (Phase 1) does not track any character or campaign state. The agent answers rules questions using a generalized knowledge layer over the rulebook RAG and GHS static game data.
 
-1. **frosthaven-storyline.com** (user's character and campaign state)
-   - Character class, level, XP, gold
-   - Owned cards, active cards in deck
-   - Current items and equipment
-   - Campaign progress (prosperity, reputation, unlocks)
-   - Party composition
+Character and campaign state lands in **Phase 4 (Campaign & character state)** with a Postgres data model and manual entry. **Phase 6 (Character state ingestion)** adds automated state ingestion from a third-party source — see that phase for the five ingestion options under consideration (browser extension, JSON export, sync protocol, Claude Vision on screenshots, or reading directly from a campaign tracker like GHS).
 
-2. **worldhaven GitHub repository** (static game data)
-   - All cards by class and level
-   - All items by prosperity
-   - Abilities, effects, mechanics
-   - Events and scenarios
-   - Link: <https://github.com/any2cards/worldhaven>
+### Data Sources (current)
 
-3. **Community build guides** (strategy and recommendations)
-   - Curated list of URLs to popular guides (Google Docs, Reddit posts, etc.)
-   - Agent fetches guides on-demand via web search/fetch
-   - Claude reads and understands guides in their native format
-   - No parsing or structured extraction needed
-   - RAG system available as fallback if web fetch proves insufficient
+- **Static game data:** Gloomhaven Secretariat (GHS) structured data — see Data Architecture section. Imported via dedicated `src/import-*.ts` scripts.
+- **Rulebook:** the official Frosthaven rulebook PDF, chunked and embedded into pgvector for retrieval. Gloomhaven 2.0 rulebook ingestion lands in Phase 2.
 
-4. **Frosthaven rulebook** (game rules)
-   - Official PDF or structured text
-   - Indexed for semantic search
-   - All rules, clarifications, examples
+### Data Sources (future, by phase)
 
-### Data Extraction & Access
-
-**frosthaven-storyline.com (Screenshot-based extraction):**
-
-- User captures ~5 screenshots from known pages (character sheet, inventory, cards, campaign progress, etc.)
-- Screenshots uploaded to web UI (manual upload for MVP, browser extension in future)
-- Backend sends screenshots to Claude Vision API with structured extraction prompt
-- Claude returns structured JSON with character data (class, level, gold, cards, items, prosperity, campaign progress)
-- Backend validates and caches extracted data
-- Handle vertical scrolling by capturing multiple screenshots per page if needed
-
-**Sync Strategy:**
-
-- User-initiated refresh via "Sync Character Data" button
-- Frequency: ~1-2x per week (after play sessions)
-- Display "Last synced: X hours ago" timestamp
-- Cache extracted data for session duration
-- Manual data entry form always available as fallback
-- Cost per sync: ~$0.15-0.30 (5 screenshots × Vision API cost)
+- **User's character and campaign state** (Phase 4 manual entry, Phase 6 automated ingestion): character class, level, XP, gold, owned/active cards, items, prosperity, campaign progress, party composition. Source TBD per Phase 6.
+- **Community build guides** (Phase 5 with the recommendation engine): curated URL list, agent fetches on-demand, no pre-parsing.
 
 ### Multiple Characters
 
-- User may have multiple characters
-- Agent infers which character from conversation context
-- Example: "My Drifter just hit level 4" → knows to check Drifter
-- Must track multiple characters per user account
-- Allow explicit character switching if ambiguous
+A user may have multiple characters across multiple campaigns. From Phase 4 onward, Squire models character ↔ user ↔ campaign relationships explicitly. The agent infers which character a question is about from conversation context (e.g., "my Drifter just hit level 4" → check the user's Drifter). Explicit character switching is available when ambiguous.
 
 ---
 
@@ -189,127 +151,47 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 
 ### Platform
 
-**Web App** (mobile-first responsive design)
-
-- Accessible via mobile browser
-- No app installation required
-- Works on all devices (phone, tablet, desktop)
-- Progressive Web App (PWA) for offline capability
+Mobile-responsive web app, server-rendered (Hono JSX + HTMX + Tailwind via CDN). Accessible via any modern mobile or desktop browser. No app installation, no PWA, no service worker.
 
 ### Input Methods
 
-**Both voice and text are first-class input methods** - equally important and well-designed.
+**Phase 1 MVP:** text input only. Brian uses iOS speech-to-text apps like Monologue externally when he wants to talk instead of type — no native voice input is wired up.
 
-1. **Voice Input** (required for Phase 1)
-   - Web Speech API for voice recognition
-   - Primary input during gameplay (hands-free, mobile-friendly)
-   - Chrome/Edge: Excellent support (primary target)
-   - Safari: Partial support (best effort)
-   - Firefox: Graceful degradation to text-only
-   - Clear visual feedback (listening indicator, live transcription)
-   - Easy correction when recognition errors occur
-   - Progressive enhancement with feature detection
-
-2. **Text Input** (required for Phase 1)
-   - Standard chat interface
-   - Keyboard input for detailed questions
-   - Primary input before/after game sessions
-   - Always available as fallback
-   - Smooth toggle between voice and text modes
+**Phase 7 (Polish):** Web Speech API voice input lands as a Phase 7 enhancement, Chrome-first with progressive enhancement and graceful fallback to text. Voice is one input *method* within the web channel, not a separate product surface.
 
 ### Output Format
 
-**Multi-modal recommendations:**
+**Phase 1 MVP:** conversational text answers with source citations and visible tool calls. The agent shows what it's looking up (no silent actions) and links every claim back to its source.
 
-- **Card/Item Images**: Visual reference, familiar to players
-- **Comparison Tables**: Side-by-side stats, effects, synergies
-- **Natural Language**: Conversational explanations and reasoning
-- **Scores/Rankings**: When comparing multiple options
+**Future phases:** as the recommendation engine (Phase 5) lands, output expands to include card and item images, side-by-side comparison tables, and explicit recommendations with reasoning. These are not part of MVP.
 
 ### Agent Persona
 
-**Functional Assistant**
-
-- Clear, concise, professional tone
-- Focus on data and actionable recommendations
-- No unnecessary fluff or roleplay elements
-- Efficient responses optimized for mobile reading
+Functional assistant — clear, concise, professional. Focus on data and actionable answers. No roleplay, no fluff. Optimized for mobile reading at the table.
 
 ### Conversation Flow
 
-- Context-aware chat interface
-- Remembers conversation history within session
-- Persists important decisions across sessions (which cards chosen, build guide followed, etc.)
-- Can reference previous conversations
-- Allows follow-up questions
+Context-aware chat with bounded conversation history (older messages summarized to keep the context window from growing unbounded). Within a session, the agent remembers what's been asked and answered. Cross-session memory of decisions and context arrives with campaign state in Phase 4.
 
 ---
 
-## Critical Non-Functional Requirements
+## Non-Functional Requirements
 
-### 1. Spoiler Protection
+### Spoiler Protection
 
-**Status: DEFERRED TO POST-MVP**
+**Status:** deferred to post-MVP.
 
-**MVP Approach:**
+Phase 1 displays a clear warning: "This tool may contain spoilers for Frosthaven (and Gloomhaven 2.0) content including locked classes, scenarios, and events." Users self-regulate what they ask. This dramatically reduces MVP complexity and lets development effort focus on core features.
 
-- No spoiler protection implemented in Phase 1
-- Display clear warning: "This tool may contain spoilers for Frosthaven content including locked classes, scenarios, and events"
-- Users self-regulate what questions they ask
-- Reduces MVP complexity significantly
-- Focus development effort on core recommendation features
+If user feedback indicates spoiler protection is valuable, it can be added in Phase 7 (Polish) once campaign state is available to drive filtering. The data model already exists from Phase 4 (campaign progress, prosperity, completed scenarios).
 
-**Future Enhancement (Phase 2+):**
+### Share & Export
 
-- Screenshot extraction already captures campaign progress data (unlocked classes, completed scenarios, prosperity)
-- Can add spoiler filtering later if user feedback indicates it's valuable
-- Implementation would include:
-  - Spoiler level flags in database
-  - Filter queries based on user's campaign progress
-  - Explicit spoiler warnings before revealing optional content
-  - User override option ("I know about class X, show me anyway")
+Phase 7 (Polish) adds shareable links to specific recommendations and PDF/markdown export. Not part of MVP. See the Phases section for details.
 
-### 2. Offline Capability
+### Offline Capability
 
-**Goal:** Basic functionality without internet connection
-
-**Offline Features:**
-
-- View cached character data
-- Browse known cards and items
-- Read cached rules sections
-- Access conversation history
-
-**Online-Required Features:**
-
-- Fresh character data sync
-- Build guide updates
-- LLM-powered recommendations
-- New rules searches
-
-**Implementation:**
-
-- Service worker for PWA
-- IndexedDB for local data storage
-- Queue actions for when online
-- Clear offline/online status indicator
-
-### 3. Share & Export
-
-**Use Case:** Show recommendations to party members
-
-**Features:**
-
-- Generate shareable links to specific recommendations
-- Screenshot/download agent responses as images
-- Export build plans as PDF or markdown
-- Share with party members who don't have accounts
-
-**Implementation:**
-
-- Unique URLs for each recommendation
-- Render-friendly formatting for exports
-- Public (non-authenticated) view for shared links
+Squire is an online-only web app. No PWA, no service worker, no offline mode, no client-side storage. Earlier versions of the spec called for these and they were removed in v2.0 — they don't fit a server-rendered Hono stack and the use case (rules Q&A at the table over Wi-Fi or cellular) doesn't justify the engineering cost.
 
 ---
 
@@ -353,7 +235,7 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
   - Sonnet 4.6 — default agent loop
   - Haiku 4.5 — cheap/fast cases (simple lookups, classification)
   - Opus 4.6 — complex reasoning only when Sonnet falls short
-- **Capabilities used:** long context, tool use, structured JSON output. Vision is reserved for the future character-state ingestion path (Phase 5) and is not part of the current architecture.
+- **Capabilities used:** long context, tool use, structured JSON output. Vision is reserved for the future character-state ingestion path (Phase 6) and is not part of the current architecture.
 
 **Document parsing:**
 
@@ -403,9 +285,9 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 - Store in pgvector
 - RAG retrieval via `searchRules()` (see Agent Architecture)
 
-**Character State:** *Phase 5 / future. See "Character State Ingestion" in the Phases section.*
+**Character State:** *Phase 6 / future. See "Character State Ingestion" in the Phases section.*
 
-**Build Guides:** *Phase 4 / future. See "Recommendation Engine" in the Phases section.*
+**Build Guides:** *Phase 5 / future. See "Recommendation Engine" in the Phases section.*
 
 **User Conversations:**
 
@@ -440,10 +322,10 @@ Squire exposes a **generalized atomic-tools API** that works across all GHS card
 
 **Future tools** (added as later phases land):
 
-- `getCharacterState(characterId)` — Phase 3, campaign state
-- `getPartyInfo(campaignId)` — Phase 3, campaign state
-- `fetchBuildGuide(url)` — Phase 4, recommendation engine
-- `extractCharacterFromScreenshots(images[])` — Phase 5, character state ingestion (only if the screenshot path is chosen over the browser-extension alternative)
+- `getCharacterState(characterId)` — Phase 4, campaign state
+- `getPartyInfo(campaignId)` — Phase 4, campaign state
+- `fetchBuildGuide(url)` — Phase 5, recommendation engine
+- `extractCharacterFromScreenshots(images[])` — Phase 6, character state ingestion (only if the screenshot path is chosen over the browser-extension or GHS-as-tracker alternatives)
 
 **Implementation:**
 
@@ -495,7 +377,7 @@ All four work with the Docker-first deployment plan. Cloudflare WAF sits in fron
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
 - **Total: ~$10–50/month** for a single user with moderate usage
 
-Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 5 when screenshot extraction lands, and only apply if that path is chosen over the browser-extension approach.
+Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 6 when screenshot extraction lands, and only apply if that path is chosen over the browser-extension or GHS-as-tracker alternatives.
 
 **CI/CD:**
 
@@ -546,7 +428,35 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 2: Multi-user platform
+### Phase 2: Gloomhaven 2.0 content expansion
+
+**Goal:** Brian can pull out his phone at the GH2 table the day his group transitions and Squire works for the new game.
+
+**Deadline-driven:** Brian's group has roughly 3–4 months left in their Frosthaven campaign before transitioning to Gloomhaven 2.0 (~mid-2026). Squire needs to be useful at the GH2 table when that happens. This is the only phase in the plan with a hard external deadline, which is why it sits right after MVP and ahead of multi-user.
+
+**Tasks:**
+
+- Ingest the Gloomhaven 2.0 rulebook PDFs into `data/pdfs/` and reindex (`npm run index`)
+- Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven 2nd Edition, so the import path is unblocked.
+- **Add a `game` dimension to the data layer** so the agent doesn't mix Frosthaven and GH2 rules in the same answer:
+  - Tag each card record with a `game` field (`'frosthaven' | 'gloomhaven-2'`)
+  - Rule chunks are already implicitly tagged via filename prefix (`fh-rule-book.pdf` vs `gh2-rule-book.pdf` etc.)
+  - Atomic tools accept an optional `game` filter parameter
+- Update the agent system prompt to know which game the user is asking about (per-session game selector for MVP; inferred from campaign once Phase 4 lands)
+- Smoke test: ask both a Frosthaven and a Gloomhaven 2.0 rules question in the same session and verify no cross-contamination
+
+**Risks:**
+
+- **frosthaven-storyline.com may not support Gloomhaven 2.0.** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, his current campaign-tracking workflow breaks for the new game and the future Phase 6 ingestion path needs to be re-evaluated for GH2 specifically. Mitigation: confirm storyline GH2 support before this phase begins; if absent, consider switching campaign management to GHS itself for the GH2 campaign (GHS is also a campaign tracker, not just a data source — see Phase 6 ingestion options).
+- **Action item for Brian:** before this phase begins, verify that frosthaven-storyline.com (or its successor) supports Gloomhaven 2nd Edition. If not, plan the GH2 campaign-tracking workflow accordingly.
+
+**Out of scope:** original Gloomhaven (1st Edition), Jaws of the Lion, Crimson Scales, Forgotten Circles. Those stay in Future Enhancements.
+
+**Deliverable:** When Brian's group sits down for their first Gloomhaven 2.0 scenario, Squire answers GH2 rules questions correctly, never mixes them up with Frosthaven rules, and works from the same phone-at-the-table workflow as the MVP.
+
+---
+
+### Phase 3: Multi-user platform
 
 **Goal:** Other people can use Squire without stepping on each other.
 
@@ -564,7 +474,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 3: Campaign & character state
+### Phase 4: Campaign & character state
 
 **Goal:** Squire knows who you are, what your party looks like, and what character you're playing.
 
@@ -583,7 +493,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 4: Recommendation engine
+### Phase 5: Recommendation engine
 
 **Goal:** The actual product the original spec was designed around — personalized recommendations.
 
@@ -609,7 +519,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 5: Character state ingestion
+### Phase 6: Character state ingestion
 
 **Goal:** Stop typing your character sheet in by hand. Pull state from frosthaven-storyline.com automatically.
 
@@ -617,12 +527,16 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 **Ingestion options (decision deferred):**
 
-1. **Browser extension** — read localStorage on the storyline site, push to Squire (cleanest, structured, no Vision cost)
+1. **Browser extension** — read localStorage on the storyline site, push to Squire (cleanest of the storyline-based options, structured, no Vision cost)
 2. **Manual JSON export → upload** — user exports localStorage, uploads to Squire (lo-fi, no extension to maintain)
 3. **Sync via the storyline server protocol** — reverse-engineer the websocket sync to make Squire look like another client (fragile, unsupported)
 4. **Screenshot → Claude Vision** — original spec approach. Image preprocessing via Sharp (resize, normalize, compress) before sending to Claude Vision API. Cost ~$0.15–0.30 per character sync. Kept as a fallback for users who can't install an extension.
+5. **GHS as the campaign tracker** — Brian (or the user) uses **Gloomhaven Secretariat** as the campaign tracker instead of frosthaven-storyline.com, and Squire reads campaign state directly from GHS. Squire already imports static GHS data — extending it to read live user state is a much smaller jump than reverse-engineering a third-party site. Especially compelling for the **Gloomhaven 2.0** campaign (Phase 2), since storyline.com may not support GH2 at all. Tradeoff: requires Brian to switch his campaign-tracking workflow from storyline to GHS, which only happens if he likes GHS as a tracker.
 
-**Risk:** **Browser-extension fragility.** The browser-extension and JSON-export approaches inherit the same class of risk as the original scraping concerns — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
+**Risks:**
+
+- **Browser-extension fragility (options 1 and 2).** The browser-extension and JSON-export approaches inherit the same class of risk as the original scraping concerns — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
+- **storyline.com may not support Gloomhaven 2.0.** All four storyline-based options (1–4) become non-viable for the GH2 campaign if storyline doesn't support GH2. Mitigation: option 5 (GHS-as-tracker) sidesteps this entirely. Confirm storyline GH2 support before this phase begins; if absent, GH2 must use option 5.
 
 **Tasks (once approach is chosen):**
 
@@ -635,7 +549,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 6: Polish
+### Phase 7: Polish
 
 **Goal:** UX refinements, additional features, broader reach within the web channel.
 
@@ -651,7 +565,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 7: Additional channels (far future)
+### Phase 8: Additional channels (far future)
 
 **Goal:** Reach Squire from outside the web UI.
 
@@ -682,8 +596,8 @@ All channels talk to the same underlying knowledge agent via the same atomic too
 - User agrees with the agent's recommendation > 70% of the time
 - Users find recommendations helpful (qualitative feedback)
 - Build guide matching accuracy > 85%
-- Character state ingestion success rate > 95% (whichever path is chosen in Phase 5)
-- Monthly costs within budget (currently ~$10–50 single-user; revisit when Phase 2 lands)
+- Character state ingestion success rate > 95% (whichever path is chosen in Phase 6)
+- Monthly costs within budget (currently ~$10–50 single-user; revisit when Phase 3 multi-user lands)
 
 ---
 
@@ -697,13 +611,15 @@ All channels talk to the same underlying knowledge agent via the same atomic too
 
 3. **Testing LLM behavior.** Non-deterministic outputs make traditional testing difficult. Mitigation: tiered testing strategy (per `CLAUDE.md`) — mock LLMs in unit tests, LLM-as-judge for E2E, focus coverage on deterministic logic.
 
-4. **Browser-extension fragility (Phase 5).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
+4. **Browser-extension fragility (Phase 6).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
 
-5. **Build guide web fetch reliability (Phase 4).** Google Docs and Reddit posts can be slow to fetch (2–5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if web fetch proves unreliable.
+5. **Build guide web fetch reliability (Phase 5).** Google Docs and Reddit posts can be slow to fetch (2–5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if web fetch proves unreliable.
 
-6. **Build guide content nuance (Phase 4).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
+6. **Build guide content nuance (Phase 5).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
 
-7. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 2+) and the recommendation engine (Phase 4) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via Langfuse, model tiering (Haiku for cheap cases) when justified.
+7. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via Langfuse, model tiering (Haiku for cheap cases) when justified.
+
+8. **frosthaven-storyline.com may not support Gloomhaven 2.0 (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, his current campaign-tracking workflow breaks for the new game. All four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
 
 ### Product Risks
 
@@ -711,7 +627,7 @@ All channels talk to the same underlying knowledge agent via the same atomic too
 
 2. **Rules edge cases and errata.** Frosthaven has complex interactions and ongoing errata. The agent might give answers that are correct per the rulebook PDF but outdated per official errata. Mitigation: cite sources, allow user feedback, plan for an errata-update workflow eventually.
 
-3. **Spoiler concerns.** MVP has no spoiler protection. Users may be concerned about being spoiled on locked classes, scenarios, or events. Mitigation: clear warning on first use; add spoiler protection in Phase 6 if user feedback indicates it's valuable.
+3. **Spoiler concerns.** MVP has no spoiler protection. Users may be concerned about being spoiled on locked classes, scenarios, or events. Mitigation: clear warning on first use; add spoiler protection in Phase 7 (Polish) if user feedback indicates it's valuable.
 
 ### Open Questions
 
@@ -719,7 +635,8 @@ All channels talk to the same underlying knowledge agent via the same atomic too
 - **Monetization.** If the user base grows, how does Squire cover its API costs? (No urgency — single-user today.)
 - **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
 - **Hosting platform.** Fly.io vs Railway vs Render vs self-hosted VPS — defer until Phase 1 deployment work begins.
-- **Character state ingestion path (Phase 5).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision — defer until Phase 5 begins.
+- **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
+- **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
 ---
 
@@ -744,6 +661,16 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
 ---
 
 ## Changelog
+
+- **2026-04-07 (v2.1):** GH2 phase + cleanup of stale sections missed in v2.0.
+  - **New Phase 2: Gloomhaven 2.0 content expansion.** Deadline-driven (Brian's group transitions to GH2 in ~mid-2026, ~3–4 months from now). Adds GH2 rulebook ingestion, GHS GH2 import scripts, and a `game` dimension to the data layer to prevent cross-contamination of FH and GH2 rules. Confirmed via web search that GHS supports Gloomhaven 2nd Edition.
+  - **Phases renumbered:** old Phases 2–7 shifted down to 3–8. Eight phases total now. All in-document phase number cross-references updated.
+  - **Phase 6 (Character state ingestion) gains a fifth option: GHS-as-tracker.** Brian uses GHS as the campaign tracker instead of frosthaven-storyline.com, and Squire reads campaign state directly from GHS. Especially compelling for the GH2 campaign since storyline.com may not support GH2.
+  - **New Risk 8:** frosthaven-storyline.com may not support Gloomhaven 2.0. Action item to confirm before Phase 2 begins; if absent, GH2 must use the GHS-as-tracker ingestion path.
+  - **Cleanup of three stale mid-document sections** that were missed in v2.0 and contradicted the v2.0 phase decisions:
+    - **Character State Management** — was still describing worldhaven and screenshot/Vision extraction as the current architecture. Replaced with a brief pointer to Phase 4 (manual entry) and Phase 6 (automated ingestion).
+    - **User Interface & Experience** — was still saying "Voice required for Phase 1" and "Progressive Web App for offline capability." Both directly contradicted v2.0 decisions. Rewritten to describe MVP reality (Hono JSX + HTMX, mobile-responsive, text only, no PWA) with forward references to Phases 5 and 7 for richer output and voice.
+    - **Critical Non-Functional Requirements** — Spoiler Protection kept (deferred), Offline Capability dropped entirely (PWA / IndexedDB / service worker — none of which fit a server-rendered Hono stack), Share & Export reframed as a Phase 7 forward reference.
 
 - **2026-04-07 (v2.0):** Major refresh after the first month of real building.
   - **Product reframe:** Squire is the agent, not an app. Reachable via multiple channels (web UI today, MCP, future Discord / iMessage). Stopped conflating "personal assistant chatbot" with "*haven game-knowledge agent" — Squire is only the latter.
