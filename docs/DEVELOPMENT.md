@@ -61,7 +61,7 @@ Squire exposes 5 atomic tools via MCP at `/mcp`:
 
 The MCP endpoint uses Streamable HTTP transport in stateless mode (no
 auth in development). OAuth ships with the User Accounts work tracked
-in Linear (MAZ-37/38/39/40).
+in Linear (SQR-37/38/39/40).
 
 For broader architectural context — agent loop, atomic-tool design,
 data layer, deployment, observability — see
@@ -94,7 +94,7 @@ yet — it requires a stdio bridge. Use
 
 3. Restart Claude Desktop. The tools appear in the chat input area.
 
-Once the User Accounts work (Linear MAZ-37/38/39/40) ships, Squire can
+Once the User Accounts work (Linear SQR-37/38/39/40) ships, Squire can
 be added as a proper Connector in Claude Desktop via the `+` button in
 Settings > Connectors (no config file needed).
 
@@ -211,7 +211,7 @@ src/
 
 ## Changelog
 
-- **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear MAZ-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
+- **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear SQR-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
 - **2026-04-07:** Renamed from `docs/development.md` to `docs/DEVELOPMENT.md` as part of the ALL_CAPS docs consolidation.
 - **2026-04-06:** Retired OCR pipeline and Worldhaven dependency references (commit `34a26a1`).
 - **2026-04-06:** Added gstack requirement for AI-assisted work (PR #175).
