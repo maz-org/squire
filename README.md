@@ -53,6 +53,9 @@ npm run db:migrate:test
 
 # Index the rulebooks into pgvector (one-time, ~1 minute)
 npm run index
+
+# Seed the card tables from data/extracted/*.json (idempotent)
+npm run seed:cards
 ```
 
 For the full contributor walkthrough, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
