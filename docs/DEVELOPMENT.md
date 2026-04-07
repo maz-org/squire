@@ -60,7 +60,12 @@ Squire exposes 5 atomic tools via MCP at `/mcp`:
 | `get_card` | Look up a single card by type and identifier |
 
 The MCP endpoint uses Streamable HTTP transport in stateless mode (no
-auth). OAuth will be added in the Auth Module epic.
+auth in development). OAuth ships with the User Accounts work tracked
+in Linear (MAZ-37/38/39/40).
+
+For broader architectural context — agent loop, atomic-tool design,
+data layer, deployment, observability — see
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Connecting Claude Desktop (development)
 
@@ -89,9 +94,9 @@ yet — it requires a stdio bridge. Use
 
 3. Restart Claude Desktop. The tools appear in the chat input area.
 
-Once the Auth Module is implemented, Squire can be added as a proper
-Connector in Claude Desktop via the `+` button in Settings > Connectors
-(no config file needed).
+Once the User Accounts work (Linear MAZ-37/38/39/40) ships, Squire can
+be added as a proper Connector in Claude Desktop via the `+` button in
+Settings > Connectors (no config file needed).
 
 ### Connecting Claude Code (development)
 
@@ -110,20 +115,6 @@ Add to your Claude Code MCP settings
 
 Claude Code supports Streamable HTTP natively — no bridge needed.
 
-### In-process client (for web UI)
-
-The web UI conversation agent connects via in-process MCP transport
-with no HTTP round-trip:
-
-```typescript
-import { createInProcessClient } from './mcp.ts';
-
-const client = await createInProcessClient();
-const { tools } = await client.listTools();
-const result = await client.callTool({ name: 'search_rules', arguments: { query: 'loot' } });
-await client.close(); // also closes the server side
-```
-
 ## Testing
 
 ```bash
@@ -140,7 +131,9 @@ pre-commit hook along with typecheck and lint.
 
 ## Data management
 
-Extracted card data (`data/extracted/*.json`) and the vector index
+Frosthaven rulebook PDFs live in `data/pdfs/` and are indexed by
+`src/index-docs.ts` into `data/index.json`. Extracted card data
+(`data/extracted/*.json`) and the vector index
 (`data/index.json`) are checked into the repo as regular files. A
 [CI workflow](../.github/workflows/refresh-data.yml) refreshes them
 weekly from upstream sources and opens a PR if anything changed.
@@ -196,7 +189,19 @@ src/
   tools.ts          # Atomic data access primitives (search, list, get)
   service.ts        # Service initialization + bundled RAG convenience path
   server.ts         # Hono HTTP server (REST + MCP transport)
-  mcp.ts            # MCP tool registration + in-process client factory
+  mcp.ts            # MCP tool registration (Streamable HTTP transport)
+  agent.ts          # Knowledge agent loop (Claude Sonnet 4.6 + atomic tools)
+  index-docs.ts     # Rulebook PDF chunker + indexer (data/pdfs/)
+  import-battle-goals.ts
+  import-buildings.ts
+  import-character-abilities.ts
+  import-character-mats.ts
+  import-events.ts
+  import-items.ts
+  import-monster-abilities.ts
+  import-monster-stats.ts
+  import-personal-quests.ts
+  import-scenarios.ts
   query.ts          # Thin CLI wrapper over service.ts
   embedder.ts       # Local embedding via all-MiniLM-L6-v2
   vector-store.ts   # Flat-file vector store with cosine similarity
