@@ -1,5 +1,5 @@
 /**
- * One-time indexer: reads all PDFs from docs/, chunks text, embeds, saves to data/index.json.
+ * One-time indexer: reads all PDFs from data/pdfs/, chunks text, embeds, saves to data/index.json.
  * Run with: npm run index
  */
 
@@ -13,7 +13,7 @@ import { loadIndex, addEntries } from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DOCS_DIR = join(__dirname, '..', 'docs');
+const PDFS_DIR = join(__dirname, '..', 'data', 'pdfs');
 
 const MIN_CHUNK_CHARS = 50;
 const TARGET_CHUNK_CHARS = 1200;
@@ -210,7 +210,7 @@ async function extractText(pdfPath: string): Promise<string> {
 }
 
 export async function main(): Promise<void> {
-  const files = readdirSync(DOCS_DIR).filter((f) => f.endsWith('.pdf'));
+  const files = readdirSync(PDFS_DIR).filter((f) => f.endsWith('.pdf'));
   console.log(`Found ${files.length} PDF(s) to index.`);
 
   const existing = loadIndex();
@@ -224,7 +224,7 @@ export async function main(): Promise<void> {
       continue;
     }
     console.log(`  Extracting: ${file}`);
-    const text = await extractText(join(DOCS_DIR, file));
+    const text = await extractText(join(PDFS_DIR, file));
     const chunks = chunkText(text, file);
     console.log(`    ${chunks.length} chunks — embedding...`);
 
