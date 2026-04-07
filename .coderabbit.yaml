@@ -16,14 +16,46 @@ reviews:
   path_filters:
     - "!data/**"
     - "!package-lock.json"
+    # drizzle-kit generated, not hand-written — review would be noise.
+    - "!src/db/migrations/**"
   path_instructions:
     - path: "src/schemas.ts"
       instructions: "Validate that Zod schemas match Frosthaven game data structures. Check for nullable fields that should be required and vice versa."
     - path: "test/**"
       instructions: "All external services must be mocked. Tests must not depend on data files in data/ (submodules, not checked in). Check for proper use of vi.hoisted() when mock variables are referenced in vi.mock() factories."
+    - path: "src/db/schema/**"
+      instructions: "Drizzle table definitions. Confirm new columns match docs/plans/storage-migration-tech-spec.md §Schema. Flag any unique constraint other than (game, source_id) on card_* tables, and flag any new schema.ts file that would collapse the core/auth/cards split (the split is required for parallel-lane execution)."
+  # Minimal useful toolset for this codebase: TypeScript + Node + vitest + a
+  # handful of GitHub Actions workflows. Everything else CodeRabbit can run is
+  # explicitly disabled to keep review signal-to-noise high and reviews fast.
+  #
+  # Kept:
+  # - ast-grep      — cheap, catches common TS/JS anti-patterns
+  # - eslint        — same config we run in CI
+  # - actionlint    — real GitHub Actions bugs in .github/workflows/*.yml
+  # - yamllint      — YAML syntax/indent for workflows + compose + this file
+  # - github-checks — surfaces CI check results in the review
+  #
+  # Disabled (and why):
+  # - biome        — duplicates eslint + prettier
+  # - markdownlint — we run markdownlint-cli2 in CI ourselves
+  # - shellcheck   — no shell scripts worth reviewing yet
+  # - languagetool — prose nitpicks, low signal
+  # - hadolint     — no Dockerfile in repo (docker-compose uses prebuilt image)
+  # - semgrep      — too noisy at this codebase size; revisit if the threat model grows
+  # - sqlfluff     — migrations are drizzle-kit generated, hand-lint adds noise
   tools:
     ast-grep:
       essential_rules: true
+    eslint:
+      enabled: true
+    actionlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 90000
     biome:
       enabled: false
     markdownlint:
@@ -32,12 +64,11 @@ reviews:
       enabled: false
     languagetool:
       enabled: false
-    yamllint:
-      enabled: true
-    eslint:
-      enabled: true
-    github-checks:
-      enabled: true
-      timeout_ms: 90000
+    hadolint:
+      enabled: false
+    semgrep:
+      enabled: false
+    sqlfluff:
+      enabled: false
 chat:
   auto_reply: true

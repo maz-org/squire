@@ -3,13 +3,42 @@
 ## Prerequisites
 
 - Node.js 24+ (see `.nvmrc`)
+- Docker (for the Postgres + pgvector dev database)
 - `.env` file with `ANTHROPIC_API_KEY`
 - [gstack](https://github.com/garrytan/gstack) skills for Claude Code (see
   [AI tooling setup](#ai-tooling-setup) below)
 
 Extracted card data (`data/extracted/*.json`) and the vector index
-(`data/index.json`) are committed to the repo. No additional data setup
-is needed for most development — just `npm ci` and go.
+(`data/index.json`) are committed to the repo.
+
+## Database setup
+
+Squire uses Postgres + pgvector for rulebook embeddings, card data, and
+OAuth state. Local dev runs it via docker-compose:
+
+```bash
+docker compose up -d   # first run: creates the squire + squire_test DBs
+npm run db:migrate     # apply Drizzle migrations
+```
+
+The connection string defaults to
+`postgres://squire:squire@localhost:5432/squire` — no `.env` edit needed.
+Under vitest the default flips to `squire_test`. Override either by
+setting `DATABASE_URL` / `TEST_DATABASE_URL` in `.env`.
+
+**If `npm run db:migrate` fails with "database squire_test does not exist":**
+you have a pre-existing data volume from before `scripts/init-db.sql` was
+added. The Postgres image only runs init scripts on a fresh volume, so you
+need to wipe and reprovision:
+
+```bash
+docker compose down -v   # destroys the data volume
+docker compose up -d     # re-runs scripts/init-db.sql
+npm run db:migrate
+```
+
+`npm run db:reset` drops and recreates the current `DATABASE_URL` target
+(guarded to refuse anything that isn't `squire` or `squire_test`).
 
 ## Running the dev server
 
