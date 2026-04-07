@@ -153,3 +153,6 @@ eval/results/*.json
 
 # Raw data repos (cloned locally for import script development, not submodules)
 data/gloomhavensecretariat/
+
+# Vector index lives in Postgres now (pgvector). Regenerate locally with `npm run index`.
+data/index.json

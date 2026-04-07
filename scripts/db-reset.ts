@@ -14,20 +14,24 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 
-import { DEFAULT_DATABASE_URL } from '../src/db.ts';
+import { resolveDatabaseUrl } from '../src/db.ts';
 
 const { Pool } = pg;
 
 const ALLOWED_DB_NAMES = new Set(['squire', 'squire_test']);
 
 async function main(): Promise<void> {
-  const url = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
+  // Shares URL resolution with the rest of the app — `NODE_ENV=test`
+  // targets the test DB, otherwise the dev DB. `npm run db:reset:test`
+  // is the test-DB entry point; no explicit `DATABASE_URL=...` needed.
+  const url = resolveDatabaseUrl();
   const dbName = new URL(url).pathname.replace(/^\//, '');
 
   if (!ALLOWED_DB_NAMES.has(dbName)) {
     console.error(
       `refusing to reset database "${dbName}" — db:reset only targets ` +
-        `${[...ALLOWED_DB_NAMES].join(', ')}. Set DATABASE_URL to a dev DB.`,
+        `${[...ALLOWED_DB_NAMES].join(', ')}. Use NODE_ENV=test (or npm run db:reset:test) ` +
+        `for the test DB, or set DATABASE_URL to a dev DB.`,
     );
     process.exit(1);
   }

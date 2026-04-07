@@ -190,20 +190,24 @@ LANGFUSE_SECRET_KEY=sk-lf-...
 
 ### Data files
 
-The vector index (`data/index.json`) and extracted card data
-(`data/extracted/`) are committed to the repo as regular files. No extra setup
-needed — they're present immediately after `git clone`.
+Extracted card data (`data/extracted/`) is committed to the repo as
+regular JSON files — no extra setup needed there. It's refreshed
+automatically by the weekly CI workflow from GHS upstream data.
 
-The vector index can be regenerated locally if needed (e.g., after
-changing indexing logic) — this is a maintainer task managed by
-[@bcm](https://github.com/bcm):
+The rulebook vector index lives in Postgres (pgvector), not on disk. On
+a fresh clone, bring up the local DB and populate it before running the
+server:
 
 ```bash
-npm run index   # re-index rulebook PDFs (~2 min)
+docker compose up -d
+npm run db:migrate
+npm run index   # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
 ```
 
-Extracted card data (`data/extracted/`) is refreshed automatically by
-the weekly CI workflow from GHS upstream data.
+`npm run index` is idempotent — re-running it skips PDFs that are
+already in the `embeddings` table. If you change chunking logic, bump
+`EMBEDDING_VERSION` in `src/vector-store.ts` and re-run after clearing
+the affected sources.
 
 ## Development
 

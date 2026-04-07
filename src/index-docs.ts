@@ -9,8 +9,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { embedBatch } from './embedder.ts';
-import { loadIndex, addEntries } from './vector-store.ts';
+import { shutdownServerPool } from './db.ts';
+import { addEntries, ensureHnswIndex, getIndexedSources } from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
+
+// Re-exported so seed / deployment workflows can reference the current value.
+export { EMBEDDING_VERSION } from './vector-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PDFS_DIR = join(__dirname, '..', 'data', 'pdfs');
@@ -213,8 +217,7 @@ export async function main(): Promise<void> {
   const files = readdirSync(PDFS_DIR).filter((f) => f.endsWith('.pdf'));
   console.log(`Found ${files.length} PDF(s) to index.`);
 
-  const existing = loadIndex();
-  const indexedSources = new Set(existing.map((e) => e.source));
+  const indexedSources = await getIndexedSources();
 
   const allNewEntries: IndexEntry[] = [];
 
@@ -253,13 +256,21 @@ export async function main(): Promise<void> {
     return;
   }
 
-  addEntries(existing, allNewEntries);
-  console.log(`\nDone. Index now has ${existing.length + allNewEntries.length} chunks total.`);
+  await addEntries(allNewEntries);
+  // Build HNSW post-insert so a cold `npm run index` isn't paying the
+  // incremental-insert cost on every row. No-op if the index already exists.
+  console.log('Building HNSW index...');
+  await ensureHnswIndex();
+  console.log(`\nDone. Indexed ${allNewEntries.length} new chunks.`);
 }
 
 if (process.argv[1]?.endsWith('index-docs.ts')) {
-  main().catch((err: unknown) => {
-    console.error(err);
-    process.exit(1);
-  });
+  main()
+    .catch((err: unknown) => {
+      console.error(err);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await shutdownServerPool();
+    });
 }

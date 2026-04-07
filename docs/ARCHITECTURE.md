@@ -87,7 +87,7 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 ### Database
 
-- **Primary DB:** PostgreSQL (planned — currently flat JSON files in `data/extracted/` and `data/index.json`)
+- **Primary DB:** PostgreSQL. Rulebook embeddings live in the `embeddings` pgvector table as of SQR-33 (storage migration); extracted GHS card data still lives in `data/extracted/*.json` and will move into card tables in SQR-34.
 - **Vector DB:** pgvector extension on the same Postgres instance
 - **ORM:** Drizzle, with `drizzle-kit` for migrations
 
@@ -186,7 +186,7 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 - Extract text from rulebook PDFs in `data/pdfs/` using `pdf-parse`
 - Chunk into semantic sections in `src/index-docs.ts`
 - Generate embeddings via the local Xenova model (see [Stack → Embeddings](#embeddings))
-- Store in pgvector after the storage migration; today in flat-file `data/index.json`
+- Store in the `embeddings` pgvector table (populated by `npm run index`; idempotent per-source upserts)
 - RAG retrieval via `searchRules()` (see [Atomic Tools](#atomic-tools))
 
 ### Storage strategy
@@ -194,7 +194,7 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 | Data | Dev (current) | Production |
 | --- | --- | --- |
 | User / campaign / player state | N/A (Phase 4) | Postgres |
-| Vector embeddings | `data/index.json` (flat) | Postgres + pgvector |
+| Vector embeddings | Postgres + pgvector (docker-compose) | Postgres + pgvector |
 | Extracted card data | `data/extracted/*.json` | Postgres tables |
 | OAuth tokens / clients | N/A (Phase 1) | Postgres |
 | Conversation history | In-memory per session | Postgres |
@@ -523,8 +523,7 @@ src/
 
 data/
   pdfs/                         Source rulebook + scenario / section PDFs (input to indexing)
-  extracted/*.json              Card data (current dev — migrates to Postgres)
-  index.json                    Vector index (current dev — migrates to pgvector)
+  extracted/*.json              Card data (current dev — migrates to Postgres in SQR-34)
 ```
 
 For developer setup, running the server, working on import scripts locally, and testing, see [DEVELOPMENT.md](DEVELOPMENT.md).

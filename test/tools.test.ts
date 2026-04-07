@@ -39,33 +39,46 @@ vi.mock('node:fs', () => ({
 mockExistsSync.mockImplementation((path: string) => {
   if (path.includes('monster-stats.json')) return true;
   if (path.includes('items.json')) return true;
-  if (path.includes('index.json')) return true;
   return false;
 });
 
 mockReadFileSync.mockImplementation((path: string) => {
   if (typeof path === 'string' && path.includes('monster-stats.json')) return FAKE_MONSTER_STATS;
   if (typeof path === 'string' && path.includes('items.json')) return FAKE_ITEMS;
-  if (typeof path === 'string' && path.includes('index.json')) {
-    return JSON.stringify([
-      {
-        id: 'chunk-1',
-        text: 'Loot action: pick up all loot tokens in your hex.',
-        embedding: Array(384).fill(0.05),
-        source: 'rulebook.pdf:42',
-        chunkIndex: 0,
-      },
-      {
-        id: 'chunk-2',
-        text: 'Movement rules: a figure must move at least one hex.',
-        embedding: Array(384).fill(0.03),
-        source: 'rulebook.pdf:15',
-        chunkIndex: 1,
-      },
-    ]);
-  }
   return '[]';
 });
+
+// Mock the vector store so searchRules tests don't require a real Postgres
+// connection — they are unit tests for the tools layer, integration of the
+// pgvector query path lives in `test/vector-store.test.ts`.
+const { mockSearch } = vi.hoisted(() => ({
+  mockSearch: vi.fn(),
+}));
+
+vi.mock('../src/vector-store.ts', () => ({
+  search: mockSearch,
+}));
+
+const FAKE_RULE_HITS = [
+  {
+    id: 'chunk-1',
+    text: 'Loot action: pick up all loot tokens in your hex.',
+    source: 'rulebook.pdf:42',
+    chunkIndex: 0,
+    game: 'frosthaven',
+    score: 0.92,
+  },
+  {
+    id: 'chunk-2',
+    text: 'Movement rules: a figure must move at least one hex.',
+    source: 'rulebook.pdf:15',
+    chunkIndex: 1,
+    game: 'frosthaven',
+    score: 0.61,
+  },
+];
+
+mockSearch.mockImplementation(async (_v: number[], k = 6) => FAKE_RULE_HITS.slice(0, k));
 
 // ─── Mock embedder ───────────────────────────────────────────────────────────
 
@@ -95,23 +108,10 @@ describe('searchRules', () => {
     expect(results.length).toBe(1);
   });
 
-  it('returns empty array when index is empty', async () => {
-    // Make loadIndex return [] by pretending index.json doesn't exist
-    mockExistsSync.mockImplementation((path: string) => {
-      if (path.includes('index.json')) return false;
-      return false;
-    });
-
+  it('returns empty array when the vector store is empty', async () => {
+    mockSearch.mockResolvedValueOnce([]);
     const results = await searchRules('loot action');
     expect(results).toEqual([]);
-
-    // Restore normal mock behavior
-    mockExistsSync.mockImplementation((path: string) => {
-      if (path.includes('monster-stats.json')) return true;
-      if (path.includes('items.json')) return true;
-      if (path.includes('index.json')) return true;
-      return false;
-    });
   });
 
   it('does not include embedding vectors in results', async () => {

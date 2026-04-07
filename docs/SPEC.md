@@ -224,7 +224,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 **Goal:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. Hosted publicly behind Cloudflare WAF.
 
-**Status as of 2026-04-07:** rules RAG pipeline, GHS imports, atomic tools, MCP server, and Discord-callable query are all built. The main remaining work is the web channel + auth + deployment.
+**Status as of 2026-04-07:** rules RAG pipeline, GHS imports, atomic tools, and MCP server are all built. The main remaining work is the web channel + auth + deployment.
 
 **Tasks:**
 

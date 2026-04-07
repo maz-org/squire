@@ -11,7 +11,9 @@ import './instrumentation.ts';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { isReady, initialize, ask } from './service.ts';
-import { loadIndex } from './vector-store.ts';
+import { sql } from 'drizzle-orm';
+
+import { getDb } from './db.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
 import { z } from 'zod';
@@ -209,11 +211,21 @@ app.onError((err, c) => {
 
 // ─── Health endpoint ─────────────────────────────────────────────────────────
 
-app.get('/api/health', (c) => {
-  const index = loadIndex();
+app.get('/api/health', async (c) => {
+  let indexSize = 0;
+  try {
+    const { db } = getDb('server');
+    const result = await db.execute<{ count: string }>(
+      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
+    );
+    indexSize = Number(result.rows[0]?.count ?? 0);
+  } catch {
+    // Health endpoint stays best-effort — if the DB is down, report ready:false
+    // via isReady() and leave index_size at 0 rather than 500ing.
+  }
   return c.json({
     ready: isReady(),
-    index_size: index.length,
+    index_size: indexSize,
   });
 });
 

@@ -1,0 +1,222 @@
+[
+  {
+    "query": "how does the poison condition work",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::128",
+      "fh-rule-book.pdf::100",
+      "fh-section-book-162-181.pdf::0",
+      "fh-rule-book.pdf::139",
+      "fh-rule-book.pdf::84",
+      "fh-scenario-book-142-166.pdf::20"
+    ]
+  },
+  {
+    "query": "loot action rules",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::110",
+      "fh-rule-book.pdf::66",
+      "fh-scenario-book-122-141.pdf::43",
+      "fh-scenario-book-122-141.pdf::40",
+      "fh-section-book-62-81.pdf::34",
+      "fh-rule-book.pdf::111"
+    ]
+  },
+  {
+    "query": "movement and difficult terrain",
+    "expectedTopIds": [
+      "fh-scenario-book-122-141.pdf::25",
+      "fh-scenario-book-2-21.pdf::17",
+      "fh-scenario-book-42-61.pdf::36",
+      "fh-scenario-book-62-81.pdf::36",
+      "fh-scenario-book-2-21.pdf::18",
+      "fh-scenario-book-142-166.pdf::53"
+    ]
+  },
+  {
+    "query": "retaliate timing",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::171",
+      "fh-rule-book.pdf::175",
+      "fh-rule-book.pdf::172",
+      "fh-rule-book.pdf::94",
+      "fh-rule-book.pdf::174",
+      "fh-section-book-102-121.pdf::15"
+    ]
+  },
+  {
+    "query": "stamina potion",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::196",
+      "fh-rule-book.pdf::197",
+      "fh-rule-book.pdf::169",
+      "fh-section-book-182-197.pdf::4",
+      "fh-section-book-142-161.pdf::9",
+      "fh-rule-book.pdf::232"
+    ]
+  },
+  {
+    "query": "long rest vs short rest",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::124",
+      "fh-section-book-82-101.pdf::51",
+      "fh-section-book-2-21.pdf::21",
+      "fh-rule-book.pdf::126",
+      "fh-section-book-62-81.pdf::14",
+      "fh-section-book-142-161.pdf::28"
+    ]
+  },
+  {
+    "query": "elemental infusion use",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::84",
+      "fh-rule-book.pdf::139",
+      "fh-rule-book.pdf::85",
+      "fh-scenario-book-142-166.pdf::6",
+      "fh-rule-book.pdf::221",
+      "fh-section-book-82-101.pdf::39"
+    ]
+  },
+  {
+    "query": "advantage and disadvantage",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::95",
+      "fh-rule-book.pdf::96",
+      "fh-rule-book.pdf::119",
+      "fh-scenario-book-102-121.pdf::7",
+      "fh-section-book-162-181.pdf::21",
+      "fh-section-book-122-141.pdf::56"
+    ]
+  },
+  {
+    "query": "shield value stacks",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::105",
+      "fh-rule-book.pdf::195",
+      "fh-rule-book.pdf::194",
+      "fh-rule-book.pdf::116",
+      "fh-rule-book.pdf::225",
+      "fh-rule-book.pdf::77"
+    ]
+  },
+  {
+    "query": "exhaustion rules",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::126",
+      "fh-rule-book.pdf::204",
+      "fh-scenario-book-22-41.pdf::40",
+      "fh-rule-book.pdf::125",
+      "fh-section-book-182-197.pdf::36",
+      "fh-section-book-142-161.pdf::9"
+    ]
+  },
+  {
+    "query": "scenario level and gold conversion",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::149",
+      "fh-rule-book.pdf::148",
+      "fh-scenario-book-142-166.pdf::9",
+      "fh-rule-book.pdf::67",
+      "fh-rule-book.pdf::66",
+      "fh-rule-book.pdf::20"
+    ]
+  },
+  {
+    "query": "opening doors in a scenario",
+    "expectedTopIds": [
+      "fh-section-book-122-141.pdf::14",
+      "fh-scenario-book-82-101.pdf::17",
+      "fh-scenario-book-122-141.pdf::1",
+      "fh-rule-book.pdf::62",
+      "fh-section-book-82-101.pdf::56",
+      "fh-scenario-book-122-141.pdf::20"
+    ]
+  },
+  {
+    "query": "monster focus rules",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::133",
+      "fh-rule-book.pdf::135",
+      "fh-rule-book.pdf::216",
+      "fh-rule-book.pdf::141",
+      "fh-rule-book.pdf::220",
+      "fh-rule-book.pdf::132"
+    ]
+  },
+  {
+    "query": "boss immunities",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::128",
+      "fh-scenario-book-102-121.pdf::10",
+      "fh-rule-book.pdf::143",
+      "fh-scenario-book-82-101.pdf::8",
+      "fh-rule-book.pdf::219",
+      "fh-section-book-82-101.pdf::47"
+    ]
+  },
+  {
+    "query": "flying movement over obstacles",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::87",
+      "fh-rule-book.pdf::63",
+      "fh-rule-book.pdf::114",
+      "fh-rule-book.pdf::109",
+      "fh-scenario-book-142-166.pdf::15",
+      "fh-rule-book.pdf::88"
+    ]
+  },
+  {
+    "query": "jump action specifics",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::87",
+      "fh-rule-book.pdf::115",
+      "fh-scenario-book-122-141.pdf::25",
+      "fh-rule-book.pdf::136",
+      "fh-rule-book.pdf::216",
+      "fh-rule-book.pdf::76"
+    ]
+  },
+  {
+    "query": "enhancements sticker rules",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::164",
+      "fh-rule-book.pdf::156",
+      "fh-rule-book.pdf::119",
+      "fh-rule-book.pdf::30",
+      "fh-rule-book.pdf::185",
+      "fh-rule-book.pdf::28"
+    ]
+  },
+  {
+    "query": "city events resolution",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::55",
+      "fh-rule-book.pdf::175",
+      "fh-rule-book.pdf::43",
+      "fh-scenario-book-142-166.pdf::9",
+      "fh-scenario-book-22-41.pdf::43",
+      "fh-scenario-book-142-166.pdf::21"
+    ]
+  },
+  {
+    "query": "outpost phase order",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::171",
+      "fh-rule-book.pdf::175",
+      "fh-rule-book.pdf::172",
+      "fh-section-book-122-141.pdf::21",
+      "fh-rule-book.pdf::149",
+      "fh-rule-book.pdf::152"
+    ]
+  },
+  {
+    "query": "battle goals scoring",
+    "expectedTopIds": [
+      "fh-rule-book.pdf::70",
+      "fh-rule-book.pdf::163",
+      "fh-rule-book.pdf::148",
+      "fh-rule-book.pdf::174",
+      "fh-scenario-book-42-61.pdf::18",
+      "fh-scenario-book-22-41.pdf::43"
+    ]
+  }
+]

@@ -23,8 +23,14 @@ vi.mock('../src/service.ts', () => ({
   ask: vi.fn(),
 }));
 
-vi.mock('../src/vector-store.ts', () => ({
-  loadIndex: vi.fn(() => [{ id: '1' }]),
+vi.mock('../src/db.ts', () => ({
+  getDb: () => ({
+    db: {
+      execute: vi.fn().mockResolvedValue({ rows: [{ count: '1' }] }),
+    },
+    close: async () => {},
+  }),
+  shutdownServerPool: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { app } from '../src/server.ts';

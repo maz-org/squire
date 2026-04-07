@@ -1,22 +1,23 @@
 /**
- * Retrieval layer: rulebook vector store.
+ * Retrieval layer: rulebook vector store backed by Postgres + pgvector.
  *
- * Currently a flat JSON file (data/index.json); SQR-33 replaces the backend
- * with pgvector. Everything this module exports — including EMBEDDING_VERSION
- * and the drift guard — belongs to the retrieval layer, not the service
- * layer, so service.ts can stay a thin orchestrator.
+ * Replaces the previous flat-file `data/index.json` implementation. Everything
+ * this module exports — including `EMBEDDING_VERSION` and the drift guard —
+ * belongs to the retrieval layer, not the service layer, so `service.ts` stays
+ * a thin orchestrator.
+ *
+ * See `docs/plans/storage-migration-tech-spec.md` §"pgvector operator sign-flip"
+ * for the critical detail: pgvector's `<=>` operator returns cosine *distance*
+ * (low = more similar), but the existing `ScoredEntry` contract is "high score
+ * = more similar". `search()` preserves the old contract by converting distance
+ * to similarity in the SELECT clause while still letting the ORDER BY use the
+ * raw operator so the HNSW index can serve the query.
  */
-
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const INDEX_PATH = join(__dirname, '..', 'data', 'index.json');
+import { embeddings as embeddingsTable } from './db/schema/core.ts';
 
 export interface IndexEntry {
   id: string;
@@ -24,67 +25,201 @@ export interface IndexEntry {
   embedding: number[];
   source: string;
   chunkIndex: number;
+  /**
+   * Optional on input — defaults to `'frosthaven'` at insert time via the
+   * column default. Phase 2 starts populating this per-row from the PDF
+   * filename prefix in `index-docs.ts`.
+   */
+  game?: string;
 }
 
-export interface ScoredEntry extends IndexEntry {
+export interface ScoredEntry {
+  id: string;
+  text: string;
+  source: string;
+  chunkIndex: number;
+  game: string;
   score: number;
 }
 
-export function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
-  return dot; // vectors are already normalized
-}
-
-export function loadIndex(): IndexEntry[] {
-  if (!existsSync(INDEX_PATH)) return [];
-  return JSON.parse(readFileSync(INDEX_PATH, 'utf-8')) as IndexEntry[];
-}
-
-export function saveIndex(entries: IndexEntry[]): void {
-  writeFileSync(INDEX_PATH, JSON.stringify(entries), 'utf-8');
-}
-
-export function addEntries(existing: IndexEntry[], newEntries: IndexEntry[]): IndexEntry[] {
-  const merged = [...existing, ...newEntries];
-  saveIndex(merged);
-  return merged;
-}
-
-export function search(index: IndexEntry[], queryEmbedding: number[], k = 8): ScoredEntry[] {
-  const scored = index.map((entry) => ({
-    ...entry,
-    score: cosineSimilarity(entry.embedding, queryEmbedding),
-  }));
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, k);
+export interface SearchOptions {
+  /** Game filter. Defaults to `'frosthaven'`. */
+  game?: string;
 }
 
 /**
  * Bumped whenever chunking logic in `index-docs.ts` or the embedder model
- * changes. Used by `checkEmbeddingVersion()` as a code-vs-data drift guard
- * (storage migration tech spec §"Drift guard"). SQR-33 starts writing this
- * value into the `embeddings.embedding_version` column when it ports the
- * backend to pgvector.
+ * changes. Stamped onto every row inserted via `addEntries()` and checked
+ * on server startup by `checkEmbeddingVersion()` as a drift guard.
  */
 export const EMBEDDING_VERSION = 'xenova-minilm-l6-v2.v1';
 
+const DEFAULT_GAME = 'frosthaven';
+
 /**
- * Bring the retrieval layer into a ready state: load the rulebook index,
- * warm the embedder, and run the embedding-version drift guard. The service
- * layer (`src/service.ts`) calls this during startup and owns nothing
- * retrieval-specific itself.
+ * Ensure the HNSW cosine index exists on `embeddings.embedding`.
  *
- * Throws if the index is empty — that's an unrecoverable misconfiguration
+ * Called by `index-docs.ts` after the bulk insert completes. HNSW is much
+ * cheaper to build once against a populated table than to maintain during
+ * row-by-row inserts — building post-insert keeps a fresh `npm run index`
+ * fast on an empty database. If the index already exists (reindex on top of
+ * an existing corpus), this is a no-op and the existing index continues to
+ * serve queries.
+ */
+export async function ensureHnswIndex(): Promise<void> {
+  const { db } = getDb('server');
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS embeddings_hnsw_idx
+      ON embeddings
+      USING hnsw (embedding vector_cosine_ops)
+  `);
+}
+
+/**
+ * Upsert rulebook chunk embeddings into the `embeddings` table.
+ *
+ * Idempotent: uses `ON CONFLICT (source, chunk_index) DO NOTHING`, so
+ * reindexing the same PDF twice is a no-op. If chunking changes for an
+ * existing PDF, delete rows for that source first (`DELETE FROM embeddings
+ * WHERE source = $1`) and reindex — see the tech spec's diff-vs-rebuild table.
+ *
+ * Every row is stamped with the current `EMBEDDING_VERSION` as a drift guard.
+ */
+export async function addEntries(entries: IndexEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+
+  const { db } = getDb('server');
+  // Chunk the insert so we don't blow the Postgres parameter limit on
+  // pathological PDFs. 500 rows × 7 cols = 3500 params, safely below 65535.
+  // Wrap the whole batching loop in a single transaction so a crash mid-way
+  // can't leave the table with a partial subset of chunks for a given PDF.
+  const CHUNK = 500;
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < entries.length; i += CHUNK) {
+      const batch = entries.slice(i, i + CHUNK);
+      await tx
+        .insert(embeddingsTable)
+        .values(
+          batch.map((e) => ({
+            id: e.id,
+            source: e.source,
+            chunkIndex: e.chunkIndex,
+            text: e.text,
+            embedding: e.embedding,
+            game: e.game ?? DEFAULT_GAME,
+            embeddingVersion: EMBEDDING_VERSION,
+          })),
+        )
+        .onConflictDoNothing({
+          target: [embeddingsTable.source, embeddingsTable.chunkIndex],
+        });
+    }
+  });
+}
+
+/**
+ * Return the set of `source` values already present in the embeddings table.
+ * Used by `index-docs.ts` to skip PDFs that are already indexed.
+ */
+export async function getIndexedSources(game: string = DEFAULT_GAME): Promise<Set<string>> {
+  try {
+    const { db } = getDb('server');
+    const rows = await db.execute<{ source: string }>(
+      sql`SELECT DISTINCT source FROM embeddings WHERE game = ${game}`,
+    );
+    return new Set(rows.rows.map((r) => r.source));
+  } catch (err) {
+    throw wrapDbError(err);
+  }
+}
+
+/**
+ * Top-k nearest-neighbour search over the `embeddings` table.
+ *
+ * Returns a `ScoredEntry[]` with the existing contract: `score` is a cosine
+ * similarity in `[0, 1]` (high = more similar). See the module-level comment
+ * for the operator sign-flip explanation.
+ */
+export async function search(
+  queryEmbedding: number[],
+  k = 8,
+  opts: SearchOptions = {},
+): Promise<ScoredEntry[]> {
+  const game = opts.game ?? DEFAULT_GAME;
+  const vectorLiteral = `[${queryEmbedding.join(',')}]`;
+
+  try {
+    const { db } = getDb('server');
+    const result = await db.execute<{
+      id: string;
+      source: string;
+      chunk_index: number;
+      text: string;
+      game: string;
+      score: number;
+    }>(sql`
+      SELECT
+        id,
+        source,
+        chunk_index,
+        text,
+        game,
+        1 - (embedding <=> ${vectorLiteral}::vector) AS score
+      FROM embeddings
+      WHERE game = ${game}
+      ORDER BY embedding <=> ${vectorLiteral}::vector
+      LIMIT ${k}
+    `);
+
+    return result.rows.map((r) => ({
+      id: r.id,
+      source: r.source,
+      chunkIndex: Number(r.chunk_index),
+      text: r.text,
+      game: r.game,
+      // Postgres numeric arithmetic can return strings in edge cases; coerce.
+      score: Number(r.score),
+    }));
+  } catch (err) {
+    throw wrapDbError(err);
+  }
+}
+
+function wrapDbError(err: unknown): Error {
+  const msg = (err as Error).message ?? String(err);
+  return new Error(
+    `vector-store query failed: ${msg}. ` +
+      'Is Postgres running? Try `docker compose up -d` and `npm run db:migrate`.',
+  );
+}
+
+/**
+ * Bring the retrieval layer into a ready state: verify the embeddings table
+ * is populated, warm the embedder, and run the embedding-version drift guard.
+ *
+ * Throws if the table is empty — that's an unrecoverable misconfiguration
  * (data not indexed yet) and the caller needs to surface it loudly.
  */
 export async function initializeRetrieval(
   warmupEmbed: (text: string) => Promise<unknown>,
 ): Promise<void> {
-  const index = loadIndex();
-  if (index.length === 0) {
-    throw new Error('Vector index is empty. Run `npm run index` first.');
+  try {
+    const { db } = getDb('server');
+    const result = await db.execute<{ count: string }>(
+      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
+    );
+    const count = Number(result.rows[0]?.count ?? 0);
+    if (count === 0) {
+      throw new Error(
+        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+      );
+    }
+  } catch (err) {
+    // Surface DB connectivity problems with the same friendly hint as search().
+    if ((err as Error).message?.startsWith('Embeddings table is empty')) throw err;
+    throw wrapDbError(err);
   }
+
   // Pay the embedder cold-start cost now so the first real query is fast.
   await warmupEmbed('warmup');
   // Code-vs-data drift guard (storage migration tech spec §"Drift guard").
@@ -97,8 +232,8 @@ export async function initializeRetrieval(
  * throw, because the server can still serve queries against stale embeddings,
  * the results just won't reflect any chunking/model changes.
  *
- * No-ops if the embeddings table is empty (SQR-33 hasn't seeded it yet) or
- * doesn't exist (early dev before migrations have run).
+ * No-ops if the embeddings table is empty or doesn't exist (early dev before
+ * migrations have run).
  */
 export async function checkEmbeddingVersion(): Promise<void> {
   try {
@@ -108,14 +243,19 @@ export async function checkEmbeddingVersion(): Promise<void> {
     );
     const versions = result.rows.map((r) => r.embedding_version);
     if (versions.length === 0) return;
-    if (!versions.includes(EMBEDDING_VERSION)) {
+    // Warn on either missing or mixed versions — after a version bump, a
+    // partial reindex leaves the table with [old, new] rows and retrieval
+    // silently mixes incompatible embeddings until a full reindex runs.
+    if (versions.some((v) => v !== EMBEDDING_VERSION)) {
+      const label = versions.length > 1 ? 'MIXED EMBEDDING VERSIONS' : 'EMBEDDING VERSION DRIFT';
       console.warn(
-        `⚠️  EMBEDDING VERSION DRIFT: code expects "${EMBEDDING_VERSION}" but ` +
+        `⚠️  ${label}: code expects "${EMBEDDING_VERSION}" but ` +
           `embeddings table contains [${versions.join(', ')}]. ` +
           `Run \`npm run index\` to reindex.`,
       );
     }
   } catch (err) {
-    console.warn('embedding_version sanity check skipped:', (err as Error).message);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('embedding_version sanity check skipped:', msg);
   }
 }
