@@ -59,11 +59,23 @@ planned as a custom implementation inside the Hono server.
 
 - Use the MCP SDK's auth handlers rather than rolling our own
 - Exact-match redirect URI validation, no wildcards
-- Rate limit client registration (e.g., 10/hour per IP)
-- Short-lived access tokens (15 min) with refresh token rotation
-- Encrypt tokens at rest in Postgres
-- CSRF protection on the consent page
-- Audit log all auth events (registrations, grants, token issuance)
+- Rate limit client registration (e.g., 10/hour per IP) — tracked in the
+  Production Readiness project (SQR-52) alongside other rate-limit configuration
+- **Long-lived access tokens (30-day default)** stored as SHA-256 hashes at rest.
+  Long-lived tokens are a deliberate developer-experience choice for MCP and API
+  clients — short-lived tokens with refresh rotation force every client (Claude
+  Code, Claude Desktop, other agent harnesses) to implement refresh flows
+  correctly and re-authenticate every 15 minutes, and any client whose OAuth SDK
+  doesn't handle refresh cleanly produces 401s mid-session. Revisit if the threat
+  model changes — multi-tenant deployment, compliance requirements, or detected
+  abuse.
+- Hash both `oauth_tokens` and `oauth_authorization_codes` at rest (SHA-256 hex
+  as primary key — the raw secret is only ever in flight). This is stronger than
+  reversible encryption: a DB read leak does not expose live bearer secrets.
+- Enforce auth code expiry (~60s) on consumption (`WHERE expires_at > now()`).
+- CSRF protection on the consent page (User Accounts project)
+- Audit log all auth events (registrations, grants, token issuance, verifies,
+  revocations) to the `oauth_audit_log` table
 
 ### 3. Campaign Data Isolation (Horizontal Privilege Escalation)
 

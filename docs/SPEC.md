@@ -265,10 +265,10 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 - Ingest the Gloomhaven 2.0 rulebook PDFs into `data/pdfs/` and reindex (`npm run index`)
 - Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven 2nd Edition, so the import path is unblocked.
-- **Add a `game` dimension to the data layer** so the agent doesn't mix Frosthaven and GH2 rules in the same answer:
-  - Tag each card record with a `game` field (`'frosthaven' | 'gloomhaven-2'`)
-  - Rule chunks are already implicitly tagged via filename prefix (`fh-rule-book.pdf` vs `gh2-rule-book.pdf` etc.)
-  - Atomic tools accept an optional `game` filter parameter
+- **Turn on the `game` dimension** so the agent doesn't mix Frosthaven and GH2 rules in the same answer. The Storage & Data Migration project (Phase 1) ships the `game` column on every `card_*` table and the `embeddings` table with `default 'frosthaven'`, so existing rows are tagged correctly. The runtime code that *populates* and *filters* on the column is Phase 2 work — none of this exists today. Phase 2 will:
+  - Update the GH2 import scripts to write `game: 'gloomhaven-2'` on each new row (the existing Frosthaven importers don't yet write a `game` field; they rely on the column default)
+  - Add filename-prefix → `game` derivation in `src/index-docs.ts` so rule chunks from `fh-*.pdf` get `game: 'frosthaven'` and chunks from `gh2-*.pdf` get `game: 'gloomhaven-2'`. Today `IndexEntry` in `src/vector-store.ts` has no `game` field at all — Phase 2 adds it alongside the index-docs.ts changes.
+  - Wire the optional `game` filter parameter on the atomic tools through to the agent system prompt and through every call site that knows the active game
 - Update the agent system prompt to know which game the user is asking about (per-session game selector for MVP; inferred from campaign once Phase 4 lands)
 - Smoke test: ask both a Frosthaven and a Gloomhaven 2.0 rules question in the same session and verify no cross-contamination
 
