@@ -203,7 +203,8 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 - Compromised GHS repo injects malicious data into card imports
 - Compromised npm dependency (Hono, MCP SDK, etc.) exfiltrates API keys
   or injects backdoors
-- Poisoned vector store — if `data/index.json` is tampered with,
+- Poisoned vector store — if the `embeddings` pgvector table is
+  tampered with (or the PDF reindex workflow is compromised),
   adversarial embeddings surface for targeted queries
 
 **Mitigations:**

@@ -247,6 +247,7 @@ export async function checkEmbeddingVersion(): Promise<void> {
       );
     }
   } catch (err) {
-    console.warn('embedding_version sanity check skipped:', (err as Error).message);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('embedding_version sanity check skipped:', msg);
   }
 }
