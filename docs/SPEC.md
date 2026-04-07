@@ -265,10 +265,10 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 - Ingest the Gloomhaven 2.0 rulebook PDFs into `data/pdfs/` and reindex (`npm run index`)
 - Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven 2nd Edition, so the import path is unblocked.
-- **Add a `game` dimension to the data layer** so the agent doesn't mix Frosthaven and GH2 rules in the same answer:
-  - Tag each card record with a `game` field (`'frosthaven' | 'gloomhaven-2'`)
-  - Rule chunks are already implicitly tagged via filename prefix (`fh-rule-book.pdf` vs `gh2-rule-book.pdf` etc.)
-  - Atomic tools accept an optional `game` filter parameter
+- **Turn on the `game` dimension** so the agent doesn't mix Frosthaven and GH2 rules in the same answer. The `game` column on every `card_*` table and the `embeddings` table already ships in Phase 1's Storage & Data Migration project (default `'frosthaven'`). Phase 2 work:
+  - Update the GH2 import scripts to write `game: 'gloomhaven-2'` on each row
+  - Tag rule chunks via filename prefix (`fh-rule-book.pdf` vs `gh2-rule-book.pdf` etc.) — `index-docs.ts` derives the `game` column from the source basename
+  - Wire the optional `game` filter parameter on the atomic tools through to the agent system prompt
 - Update the agent system prompt to know which game the user is asking about (per-session game selector for MVP; inferred from campaign once Phase 4 lands)
 - Smoke test: ask both a Frosthaven and a Gloomhaven 2.0 rules question in the same session and verify no cross-contamination
 

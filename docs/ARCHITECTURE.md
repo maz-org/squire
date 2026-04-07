@@ -149,7 +149,7 @@ To prevent cross-contamination between games (e.g., the agent answering a GH2 qu
 - **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2', prosperity: 4 })`)
 - **Agent system prompt** is told which game the user is asking about. Phase 2 uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
 
-The `game` field on import records is added in Phase 2 alongside the GH2 import scripts. Existing FH records get `game: 'frosthaven'` retroactively when the schema lands.
+The `game` column ships in **Phase 1** as part of the Storage & Data Migration project — every `card_*` table and the `embeddings` table includes `game text not null default 'frosthaven'` from day 1. Atomic tools accept the optional `game` parameter but don't filter on it until Phase 2. Pulling the column forward avoids 11 ALTER TABLE migrations later when GH2 lands. The `game` field on **import records** (the JSON shape produced by `src/import-*.ts`) is still added in Phase 2 alongside the GH2 import scripts, since today's Frosthaven importers don't need it.
 
 ---
 
