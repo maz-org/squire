@@ -78,7 +78,7 @@ npm run query "How many small items can I bring into a scenario?"
 
 Squire exposes its knowledge tools via the
 [Model Context Protocol](https://modelcontextprotocol.io). Any MCP client can
-connect and use the tools. See [docs/development.md](docs/development.md) for
+connect and use the tools. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for
 local setup instructions.
 
 ## Evaluation

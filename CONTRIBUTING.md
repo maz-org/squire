@@ -340,7 +340,7 @@ If any step fails, the commit is blocked. Fix the issue and try again.
 src/           TypeScript source (runs natively on Node 24)
 test/          Unit tests (vitest)
 eval/          Evaluation framework and dataset
-docs/          Project documentation (architecture, development, security review)
+docs/          Project documentation (SPEC, ARCHITECTURE, DEVELOPMENT, SECURITY)
 data/          Game data and generated artifacts (mostly gitignored)
 data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 .github/       CI workflows, Dependabot config

@@ -40,10 +40,10 @@ not when opening the PR.
 ## Development
 
 For server setup, API endpoints, MCP client configuration, and project
-structure, see [docs/development.md](docs/development.md).
+structure, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-For architecture context and design rationale, see
-[docs/architecture-plan.md](docs/architecture-plan.md).
+For the product spec, see [docs/SPEC.md](docs/SPEC.md). For architecture
+context and design rationale, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Development Standards
 
