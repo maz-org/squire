@@ -90,7 +90,7 @@ export const AGENT_TOOLS: Tool[] = [
   },
   {
     name: 'get_card',
-    description: 'Look up a single card by type and identifier (name, number, etc.).',
+    description: 'Look up a single card by type and canonical sourceId.',
     input_schema: {
       type: 'object',
       properties: {
@@ -99,7 +99,11 @@ export const AGENT_TOOLS: Tool[] = [
           enum: [...CARD_TYPES],
           description: 'Card type',
         },
-        id: { type: 'string', description: 'Card identifier (name, number, etc.)' },
+        id: {
+          type: 'string',
+          description:
+            'Canonical sourceId (e.g. "gloomhavensecretariat:item/1"). Case-sensitive. Use list_cards or search_cards to discover sourceIds.',
+        },
       },
       required: ['type', 'id'],
     },

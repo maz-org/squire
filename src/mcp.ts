@@ -99,10 +99,14 @@ export function createMcpServer(): McpServer {
   server.registerTool(
     'get_card',
     {
-      description: 'Look up a single card by type and identifier.',
+      description: 'Look up a single card by type and canonical sourceId.',
       inputSchema: {
         type: z.enum(CARD_TYPES).describe('Card type'),
-        id: z.string().describe('Card identifier (name, number, etc.)'),
+        id: z
+          .string()
+          .describe(
+            'Canonical sourceId (e.g. "gloomhavensecretariat:item/1"). Case-sensitive. Use list_cards or search_cards to discover sourceIds.',
+          ),
       },
     },
     async ({ type, id }) => {

@@ -20,7 +20,18 @@ import { seedCards } from '../../src/seed/seed-cards.ts';
 const { Pool } = pg;
 
 export default async function globalSetup(): Promise<void> {
-  const pool = new Pool({ connectionString: resolveDatabaseUrl(), max: 2 });
+  const url = resolveDatabaseUrl();
+  // Fail-fast guard: refuse to TRUNCATE anything that isn't a *_test DB.
+  // resolveDatabaseUrl picks the test DB under VITEST=true, but a
+  // misconfigured env (or running this file outside vitest) could otherwise
+  // wipe a real database.
+  if (!/_test(\?|$)/.test(url) && !/squire_test/.test(url)) {
+    throw new Error(
+      `[global-setup] refusing to TRUNCATE: resolved DB URL does not look like a test DB. ` +
+        `Got "${url.replace(/:[^:@]*@/, ':***@')}". Set DATABASE_URL/TEST_DATABASE_URL to a *_test database.`,
+    );
+  }
+  const pool = new Pool({ connectionString: url, max: 2 });
   try {
     const db = drizzle(pool, { schema });
     await db.execute(sql`

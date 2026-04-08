@@ -7,10 +7,11 @@
  * (`formatExtracted`) are still tested as plain unit tests since they don't
  * touch the DB.
  *
- * The card_* tables are seeded once per file via the real `seedCards`
- * function over `data/extracted/*.json`, mirroring how `npm run seed:cards`
- * populates dev. Tests are read-only against the seeded data, so we don't
- * truncate between tests.
+ * The card_* tables are seeded once per RUN by `test/helpers/global-setup.ts`
+ * (registered in vitest.config.ts) via the real `seedCards` over
+ * `data/extracted/*.json`, mirroring how `npm run seed:cards` populates dev.
+ * Tests here are read-only against that shared seed, so we don't truncate
+ * between files.
  */
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 
