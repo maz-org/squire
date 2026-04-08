@@ -1,6 +1,6 @@
 # Design System — Squire
 
-**Version:** 0.3
+**Version:** 0.4
 **Date:** 2026-04-08
 **Status:** Approved via `/design-consultation`. Covers all eight phases of the
 Squire initiative, not just Phase 1. Implementation in `src/web-ui/` follows
