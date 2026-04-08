@@ -82,3 +82,280 @@ html {
   color: var(--parchment);
   font-family: Geist, system-ui, sans-serif;
 }
+
+/*
+ * ─── Companion-first layout shell (SQR-65 / SQR-5b) ─────────────────────────
+ *
+ * Five mobile regions stacked top-to-bottom inside `.squire-column`; on
+ * desktop a narrow `.squire-rail` joins to the left and the column centers
+ * inside the remaining viewport. The structure is locked here so later
+ * tickets (SQR-6 streaming chat, SQR-67 empty state, SQR-5c visual polish)
+ * drop content into stable selectors without refactoring the page grid.
+ *
+ * Visual polish (monogram glyph styling, drop cap, rule-term highlighter,
+ * tool-call footer copy, chip styling) is intentionally NOT in this file —
+ * those land in SQR-5c so SQR-65's diff stays scoped to layout structure.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  /* Body text floor — DESIGN.md §Typography "16px mobile / 18px desktop." */
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.squire-body {
+  /* Prevent horizontal scroll at 375px viewport (an SQR-65 acceptance
+     criterion). The mobile regions are width-bounded by the column wrapper. */
+  overflow-x: hidden;
+}
+
+/* Skip-link: visually hidden until focused, then becomes a wax-outlined
+   button at the top of the viewport so keyboard users land directly on the
+   real `<input id="squire-input">` inside `.squire-input-dock`. */
+.sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-visible {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  width: auto;
+  height: auto;
+  padding: 10px 14px;
+  margin: 0;
+  clip: auto;
+  background: var(--surface);
+  color: var(--parchment);
+  outline: 2px solid var(--wax);
+  border-radius: 4px;
+  z-index: 1000;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 14px;
+}
+
+/* `.squire-frame` is the outermost flex shell. On mobile/tablet it collapses
+   to a single column; on ≥1024px the desktop rail sits to its left. */
+.squire-frame {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+.squire-rail {
+  display: none; /* Hidden on mobile + tablet — desktop only. */
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--rule);
+  padding: 24px 20px;
+}
+
+/* `.squire-column` wraps the five mobile regions. Flex column so the input
+   dock can sit at the bottom and the main surface flexes to fill. */
+.squire-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* 1. Header bar — thin, with bottom hairline rule. */
+.squire-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+.squire-header .squire-monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--wax);
+  color: var(--parchment);
+  border-radius: 4px;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 700;
+}
+.squire-header .squire-wordmark {
+  font-family: Fraunces, Georgia, serif;
+  font-size: 18px;
+  font-weight: 500;
+}
+.squire-header .squire-context {
+  margin-left: auto;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+/* 2. Main surface — flexes to fill. NOT a chat column — content modes
+   (streaming answer, card comparison, character sheet) drop in as siblings
+   of any error banner that the fallback path injects. */
+.squire-surface {
+  flex: 1 1 auto;
+  padding: 24px 16px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* 3. Tool-call footer — single line, sepia small caps, separated by a
+   hairline rule. Empty in SQR-65 — SQR-5d / SQR-8 populate it. */
+.squire-toolcall {
+  border-top: 1px solid var(--rule);
+  padding: 8px 16px;
+  min-height: 28px;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  flex-shrink: 0;
+}
+
+/* 4. Recent-questions chip row — empty in SQR-65 (SQR-6 populates it). */
+.squire-recent {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 36px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+/* 5. Input dock — sticky at the bottom of the viewport, never collapses,
+   respects iOS safe-area-inset-bottom so the home indicator doesn't sit on
+   top of the submit button. */
+.squire-input-dock {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: var(--ink);
+  border-top: 1px solid var(--rule);
+  flex-shrink: 0;
+}
+.squire-input-dock #squire-input {
+  flex: 1 1 auto;
+  background: var(--surface);
+  color: var(--parchment);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: italic;
+  /* 44px tap target floor — input height = 16px text + 12px*2 padding +
+     1px*2 border = 43px; bump min-height for the WCAG floor. */
+  min-height: 44px;
+}
+.squire-input-dock #squire-input::placeholder {
+  color: var(--sepia);
+  font-style: italic;
+}
+.squire-input-dock__submit {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--wax);
+  color: var(--parchment);
+  border: none;
+  border-radius: 4px;
+  font-size: 20px;
+  cursor: pointer;
+}
+.squire-input-dock__submit:hover {
+  background: var(--wax-dim);
+}
+
+/* `.squire-banner` reusable primitive (SQR-67 ships the full set of
+   modifiers; SQR-65 ships the `--error` modifier so the server-side error
+   fallback has a real component to render into). */
+.squire-banner {
+  border-left: 3px solid var(--rule);
+  background: var(--surface);
+  padding: 16px 18px;
+  border-radius: 0 8px 8px 0;
+  margin: 0 0 16px;
+}
+.squire-banner__label {
+  display: block;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--sepia);
+  margin-bottom: 6px;
+}
+.squire-banner__body {
+  margin: 0;
+  font-size: 15px;
+  color: var(--parchment-dim);
+}
+.squire-banner--error {
+  border-left-color: var(--error);
+}
+.squire-banner--error .squire-banner__label {
+  color: var(--error);
+}
+
+/* Tablet (≥768px and <1024px): main column caps at 640px and centers, but
+   the desktop rail stays hidden — same regions, narrower main column. */
+@media (min-width: 768px) {
+  .squire-surface {
+    padding: 32px 24px;
+  }
+  body,
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Desktop (≥1024px): rail visible to the left of the column. */
+@media (min-width: 1024px) {
+  .squire-rail {
+    display: block;
+  }
+  .squire-frame {
+    /* Outer 12px border-radius lives on a wrapper container at this
+       breakpoint — DESIGN.md §Spacing border-radius scale. */
+    border-radius: 12px;
+  }
+}
+
+/* Reduced-motion: no transitions on the layout shell. (DESIGN.md a11y
+   bundle — SQR-65 ships the structural piece; SQR-5c may add motion that
+   needs to be gated by this query.) */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

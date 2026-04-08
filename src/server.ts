@@ -25,8 +25,27 @@ import {
   exchangeAuthorizationCode,
   verifyAccessToken,
 } from './auth.ts';
+import { layoutShell, renderHomePage } from './web-ui/layout.ts';
 
 export const app = new Hono();
+
+// ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
+//
+// GET / renders the empty layout shell. The handler wraps the renderer in a
+// try/catch so a thrown error (db down, agent down, future content slot
+// throwing during render) still yields a fully-formed layout with an inline
+// error banner instead of a bare 500 page. The layout shell never depends on
+// JS — the fallback path is the same HTML primitive that SQR-6 / SQR-8 will
+// reuse for recoverable runtime errors. See DESIGN.md decisions log
+// "`.squire-banner` is a reusable primitive."
+app.get('/', (c) => {
+  try {
+    return c.html(renderHomePage());
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return c.html(layoutShell({ errorBanner: { message } }), 500);
+  }
+});
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────
 
