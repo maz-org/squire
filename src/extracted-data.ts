@@ -1,16 +1,33 @@
 /**
  * Search and format extracted card data for use as RAG context.
- * Loads from data/extracted/<type>.json files produced by GHS import scripts.
+ *
+ * Backed by Postgres — the `card_*` tables seeded via `scripts/seed-cards.ts`.
+ * Full-text search runs against the per-table `search_vector` stored generated
+ * columns (see `src/db/migrations/0002_card_fts.sql`), ranked with `ts_rank`
+ * over `websearch_to_tsquery('english', ...)`.
+ *
+ * There is NO flat-file fallback — per Decision 9 of the storage-migration
+ * tech spec, if the DB is unreachable we throw a clear error rather than
+ * silently serving stale JSON.
  */
 
-import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { getTableColumns, sql } from 'drizzle-orm';
+import type { PgTable } from 'drizzle-orm/pg-core';
 
+import { getDb } from './db.ts';
+import {
+  cardBattleGoals,
+  cardBuildings,
+  cardCharacterAbilities,
+  cardCharacterMats,
+  cardEvents,
+  cardItems,
+  cardMonsterAbilities,
+  cardMonsterStats,
+  cardPersonalQuests,
+  cardScenarios,
+} from './db/schema/cards.ts';
 import type { CardType } from './schemas.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const EXTRACTED_DIR = join(__dirname, '..', 'data', 'extracted');
 
 export const TYPES: CardType[] = [
   'monster-stats',
@@ -29,32 +46,146 @@ export const TYPES: CardType[] = [
 
 interface ExtractedRecord extends Record<string, unknown> {
   _type: CardType;
-  _error?: string;
-  _parseError?: string;
 }
 
-// ─── Loading ──────────────────────────────────────────────────────────────────
-
-const _cache: Partial<Record<CardType, ExtractedRecord[]>> = {};
-
-export function load(type: CardType): ExtractedRecord[] {
-  if (_cache[type]) return _cache[type];
-  const path = join(EXTRACTED_DIR, `${type}.json`);
-  if (!existsSync(path)) {
-    _cache[type] = [];
-    return [];
-  }
-  const all: ExtractedRecord[] = JSON.parse(readFileSync(path, 'utf-8'));
-  // Use records that have data — validation warnings are acceptable, hard errors are not
-  _cache[type] = all.filter((r) => !r._error && !r._parseError);
-  return _cache[type]!;
+interface LoadOpts {
+  /** Campaign variant. Defaults to 'frosthaven'. Reserved for Phase 2. */
+  game?: string;
 }
 
-function loadAll(): ExtractedRecord[] {
-  return TYPES.flatMap((t) => load(t).map((r) => ({ ...r, _type: t })));
+// ─── Table registry ──────────────────────────────────────────────────────────
+
+const TYPE_TO_TABLE: Record<CardType, PgTable> = {
+  'monster-stats': cardMonsterStats,
+  'monster-abilities': cardMonsterAbilities,
+  'character-abilities': cardCharacterAbilities,
+  'character-mats': cardCharacterMats,
+  items: cardItems,
+  events: cardEvents,
+  'battle-goals': cardBattleGoals,
+  buildings: cardBuildings,
+  scenarios: cardScenarios,
+  'personal-quests': cardPersonalQuests,
+};
+
+/** Columns excluded from the returned record shape. */
+const HIDDEN_COLUMNS = new Set(['id', 'game', 'searchVector']);
+
+/**
+ * Given a Drizzle table, emit the SQL columns we want to expose in an
+ * `ExtractedRecord` — everything except the hidden internals.
+ */
+function visibleColumns(table: PgTable): Array<{ tsKey: string; sqlName: string }> {
+  const cols = getTableColumns(table);
+  return Object.entries(cols)
+    .filter(([tsKey]) => !HIDDEN_COLUMNS.has(tsKey))
+    .map(([tsKey, col]) => ({ tsKey, sqlName: (col as { name: string }).name }));
 }
 
-// ─── Text representation ──────────────────────────────────────────────────────
+/**
+ * Build a `jsonb_build_object('tsKey', col, ...)` SQL fragment for a table's
+ * visible columns. Used by the FTS UNION so the driver hands us a fully
+ * reshaped record per row.
+ */
+function tableToJsonbObject(table: PgTable): ReturnType<typeof sql> {
+  const cols = visibleColumns(table);
+  const parts = cols.map(
+    ({ tsKey, sqlName }) => sql`${sql.raw(`'${tsKey}'`)}, ${sql.identifier(sqlName)}`,
+  );
+  // Manual join — drizzle's sql.join is available but we need interleaved commas.
+  let body = sql`${parts[0]}`;
+  for (let i = 1; i < parts.length; i++) body = sql`${body}, ${parts[i]}`;
+  return sql`jsonb_build_object(${body})`;
+}
+
+// ─── Loading ─────────────────────────────────────────────────────────────────
+
+/**
+ * Load every record of a given card type from the DB. Results are ordered
+ * by `source_id` so they align with the pre-migration parity snapshots.
+ *
+ * Throws if the DB is unreachable — no JSON fallback.
+ */
+export async function load(type: CardType, opts: LoadOpts = {}): Promise<ExtractedRecord[]> {
+  const { db } = getDb();
+  const table = TYPE_TO_TABLE[type];
+  const cols = visibleColumns(table);
+  const game = opts.game ?? 'frosthaven';
+
+  // Explicit SELECT of visible columns keeps the row shape stable and lets
+  // us match the pre-migration record shape exactly.
+  const selectList = cols.map(
+    ({ tsKey, sqlName }) => sql`${sql.identifier(sqlName)} AS ${sql.identifier(tsKey)}`,
+  );
+  let selectSql = sql`${selectList[0]}`;
+  for (let i = 1; i < selectList.length; i++) selectSql = sql`${selectSql}, ${selectList[i]}`;
+
+  const rows = await db.execute<Record<string, unknown>>(
+    sql`SELECT ${selectSql} FROM ${table} WHERE game = ${game} ORDER BY source_id`,
+  );
+
+  return rows.rows.map((r) => ({ ...r, _type: type }));
+}
+
+// ─── Search ──────────────────────────────────────────────────────────────────
+
+/**
+ * FTS-ranked search across all 10 card tables. Each branch of the UNION ALL
+ * builds a `jsonb_build_object(...)` payload from that table's visible
+ * columns, filters on `search_vector @@ websearch_to_tsquery('english', $q)`,
+ * and ranks with `ts_rank`. The outer wrapper orders and limits globally.
+ */
+export async function searchExtractedRanked(
+  query: string,
+  k = 6,
+  opts: LoadOpts = {},
+): Promise<Array<{ record: ExtractedRecord; score: number }>> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+
+  const branches = TYPES.map((type) => {
+    const table = TYPE_TO_TABLE[type];
+    const payload = tableToJsonbObject(table);
+    return sql`
+      SELECT
+        ${sql.raw(`'${type}'`)} AS card_type,
+        ${payload} AS payload,
+        ts_rank(search_vector, websearch_to_tsquery('english', ${query})) AS score
+      FROM ${table}
+      WHERE game = ${game} AND search_vector @@ websearch_to_tsquery('english', ${query})
+    `;
+  });
+
+  let unioned = sql`${branches[0]}`;
+  for (let i = 1; i < branches.length; i++) unioned = sql`${unioned} UNION ALL ${branches[i]}`;
+
+  const rows = await db.execute<{
+    card_type: CardType;
+    payload: Record<string, unknown>;
+    score: number;
+  }>(sql`SELECT card_type, payload, score FROM (${unioned}) s ORDER BY score DESC LIMIT ${k}`);
+
+  return rows.rows.map((r) => ({
+    record: { ...r.payload, _type: r.card_type } as ExtractedRecord,
+    score: Number(r.score),
+  }));
+}
+
+/**
+ * Top-k relevant extracted records for a query. Thin wrapper over
+ * `searchExtractedRanked` that drops the score.
+ */
+export async function searchExtracted(
+  query: string,
+  k = 6,
+  opts: LoadOpts = {},
+): Promise<ExtractedRecord[]> {
+  const ranked = await searchExtractedRanked(query, k, opts);
+  return ranked.map((r) => r.record);
+}
+
+// ─── Text representation ─────────────────────────────────────────────────────
+// Unchanged from the JSON-backed version — pure functions over a record.
 
 function recordToText(record: ExtractedRecord): string {
   const t = record._type;
@@ -194,58 +325,6 @@ function recordToText(record: ExtractedRecord): string {
   return JSON.stringify(record);
 }
 
-// ─── Search ───────────────────────────────────────────────────────────────────
-
-/**
- * Score a record against a query using keyword overlap.
- * Higher = more relevant.
- */
-function score(record: ExtractedRecord, queryTokens: string[]): number {
-  const text = recordToText(record).toLowerCase();
-  let hits = 0;
-  for (const token of queryTokens) {
-    if (text.includes(token)) hits++;
-  }
-  return hits;
-}
-
-/**
- * Find the top-k most relevant extracted records for a query.
- */
-export function searchExtracted(query: string, k = 6): ExtractedRecord[] {
-  // Tokenize query: lowercase words ≥ 3 chars, skip common words
-  const STOPWORDS = new Set([
-    'the',
-    'and',
-    'for',
-    'what',
-    'how',
-    'does',
-    'with',
-    'this',
-    'that',
-    'are',
-    'can',
-    'its',
-    'which',
-  ]);
-  const tokens = query
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= 3 && !STOPWORDS.has(t));
-
-  if (tokens.length === 0) return [];
-
-  const all = loadAll();
-  const scored = all
-    .map((r) => ({ record: r, score: score(r, tokens) }))
-    .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  return scored.slice(0, k).map((s) => s.record);
-}
-
 /**
  * Format extracted records as a readable string for LLM context.
  */
@@ -254,12 +333,22 @@ export function formatExtracted(records: ExtractedRecord[]): string {
   return records.map((r) => recordToText(r)).join('\n');
 }
 
+// ─── Stats ───────────────────────────────────────────────────────────────────
+
 /**
- * How many records are loaded across all types.
+ * Record counts across all 10 card tables. Single round-trip via a CTE.
  */
-export function extractedStats(): string {
-  return TYPES.map((t) => {
-    const records = load(t);
-    return `${t}: ${records.length}`;
-  }).join(', ');
+export async function extractedStats(): Promise<string> {
+  const { db } = getDb();
+  const selects = TYPES.map(
+    (type) =>
+      sql`SELECT ${sql.raw(`'${type}'`)} AS type, count(*)::int AS n FROM ${TYPE_TO_TABLE[type]}`,
+  );
+  let unioned = sql`${selects[0]}`;
+  for (let i = 1; i < selects.length; i++) unioned = sql`${unioned} UNION ALL ${selects[i]}`;
+
+  const rows = await db.execute<{ type: CardType; n: number }>(unioned);
+  // Preserve canonical TYPES order rather than relying on UNION ALL ordering.
+  const counts = new Map(rows.rows.map((r) => [r.type, r.n]));
+  return TYPES.map((t) => `${t}: ${counts.get(t) ?? 0}`).join(', ');
 }
