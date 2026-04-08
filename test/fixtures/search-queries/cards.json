@@ -34,10 +34,7 @@
   },
   {
     "query": "healing potion",
-    "expectedTopSourceIds": [
-      "gloomhavensecretariat:item/83",
-      "gloomhavensecretariat:item/99"
-    ]
+    "expectedTopSourceIds": ["gloomhavensecretariat:item/83", "gloomhavensecretariat:item/99"]
   },
   {
     "query": "winter outpost",
@@ -63,21 +60,15 @@
   },
   {
     "query": "temple liberation",
-    "expectedTopSourceIds": [
-      "gloomhavensecretariat:scenario/020"
-    ]
+    "expectedTopSourceIds": ["gloomhavensecretariat:scenario/020"]
   },
   {
     "query": "personal quest",
-    "expectedTopSourceIds": [
-      "gloomhavensecretariat:event/WR-07"
-    ]
+    "expectedTopSourceIds": ["gloomhavensecretariat:event/WR-07"]
   },
   {
     "query": "assassin",
-    "expectedTopSourceIds": [
-      "gloomhavensecretariat:battle-goal/1346"
-    ]
+    "expectedTopSourceIds": ["gloomhavensecretariat:battle-goal/1346"]
   },
   {
     "query": "belara",
@@ -136,9 +127,7 @@
   },
   {
     "query": "harrower library",
-    "expectedTopSourceIds": [
-      "gloomhavensecretariat:scenario/101"
-    ]
+    "expectedTopSourceIds": ["gloomhavensecretariat:scenario/101"]
   },
   {
     "query": "weapon",
