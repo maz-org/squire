@@ -2,6 +2,8 @@
 
 **Status:** ✅ APPLIED 2026-04-08 — all 20 decisions landed in Linear + docs. See "Applied changes summary" at the bottom.
 
+**Superseded in part by** [`web-ui-f4481c1cff1d-design-review-walkthrough.md`](web-ui-f4481c1cff1d-design-review-walkthrough.md) (2026-04-08, same day). The design review rewrote the chat surface as a current-turn ledger rather than a message list, so the "HTMX `hx-swap` regions do not reflow the visible message list" AC under concern #17 below is obsolete — SQR-5 no longer has a visible message list to reflow. All other decisions here still stand. When in doubt, the design walkthrough is the newer source of truth for UI surface behavior.
+
 **Started:** 2026-04-08
 **Branch:** `claude/eager-mccarthy`
 **Reviewer:** plan-eng-review skill, Claude Opus 4.6
