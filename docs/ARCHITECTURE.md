@@ -80,12 +80,12 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 ### Web channel (frontend + server)
 
 - **Server framework:** Hono (`@hono/node-server`)
-- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS pre-built via Tailwind CLI
-- **Build pipeline:** no JavaScript bundler. One CSS build step (`npm run build:css` → `tailwindcss -i src/web-ui/styles.css -o public/app.css --minify`) runs in CI before tests today and will additionally run in the Dockerfile once SQR-42 lands. `public/app.css` is gitignored (regenerated on every build) and served as a static file by Hono (edge-cached by Cloudflare).
+- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS compiled in-process via `@tailwindcss/node`
+- **Build pipeline:** no JavaScript bundler and no client-side build step. `GET /app.css` compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node` on first request and caches the result in a module-level variable; dev keys the cache on source-file mtime so edits show up on the next request, prod compiles exactly once per process. Prod serves the compiled CSS at a content-hashed URL (`/app.<hash>.css`) with `Cache-Control: public, max-age=31536000, immutable` so Cloudflare and browsers can cache forever and invalidation is automatic on content change; dev serves the bare `/app.css` path with `Cache-Control: no-cache`. A parallel `/squire.js` handler serves vanilla-JS islands (currently the SQR-66 cite tap-toggle) with the same caching pattern. No `public/` build output, no `npm run build:css` — every fresh clone renders correctly without a build prerequisite.
 
 *Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
 
-*Tailwind delivery decision: see [ADR 0008 — Tailwind CLI for production CSS](adr/0008-tailwind-cli-for-production-css.md).*
+*Tailwind delivery decision: see [ADR 0011 — On-demand asset pipeline via in-process Tailwind JIT](adr/0011-on-demand-asset-pipeline.md) (supersedes [ADR 0008](adr/0008-tailwind-cli-for-production-css.md)).*
 
 *Chat surface layout decision: the web UI renders ONE turn at a time on `main.squire-surface` — current user question (Fraunces hero) + current answer (drop cap + citations + tool footer) — with prior turns collapsed into the recent-questions chip row. Not a scrolling message list. See [ADR 0010 — Current-turn ledger for multi-turn chat surface](adr/0010-current-turn-ledger.md) and the design system in [DESIGN.md](../DESIGN.md).*
 
@@ -530,7 +530,9 @@ src/
   web-ui/
     layout.ts                   Companion-first layout shell (5 mobile regions + desktop rail)
     fonts.ts                    Google Fonts URL + preconnect constants
-    styles.css                  Tailwind CLI entry — design tokens + layout shell CSS
+    assets.ts                   On-demand Tailwind JIT + squire.js pipeline (SQR-71, ADR 0011)
+    squire.js                   Vanilla JS islands (SQR-66 cite tap-toggle)
+    styles.css                  Tailwind entry point — design tokens + layout shell CSS
   types/                        Shared TypeScript types
   import-battle-goals.ts        GHS importer
   import-buildings.ts           GHS importer

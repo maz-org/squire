@@ -475,9 +475,10 @@ attribute on `<html>`. That's the extent of the per-game theming.
 ## Implementation Notes
 
 - **Source of truth for tokens:** CSS custom properties on `:root` in the
-  Tailwind CSS entry file (`src/web-ui/styles.css`, built via the Tailwind
-  CLI per ADR 0008). Tailwind utilities should reference tokens via
-  `theme.extend.colors` so class names like `bg-ink text-parchment` work.
+  Tailwind CSS entry file (`src/web-ui/styles.css`, compiled in-process
+  via `@tailwindcss/node` per ADR 0011). Tailwind utilities should
+  reference tokens via `theme.extend.colors` so class names like
+  `bg-ink text-parchment` work.
 - **Font loading:** Google Fonts `<link>` tags in the base Hono JSX layout.
   Preconnect to `fonts.googleapis.com` and `fonts.gstatic.com`. One
   stylesheet URL with both `Fraunces` (axes `opsz,wght,SOFT`) and

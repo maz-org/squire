@@ -19,7 +19,8 @@
 import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
-import { APP_CSS_HREF, FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
+import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
+import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -48,14 +49,24 @@ export interface LayoutShellOptions {
  * `squire-recent`, `squire-input-dock`, `squire-rail`) are guaranteed by
  * the acceptance criteria — later tickets target them by class.
  */
-export function layoutShell(
-  options: LayoutShellOptions = {},
-): HtmlEscapedString | Promise<HtmlEscapedString> {
+export async function layoutShell(options: LayoutShellOptions = {}): Promise<HtmlEscapedString> {
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin
       ? html`<link rel="preconnect" href="${p.href}" crossorigin />`
       : html`<link rel="preconnect" href="${p.href}" />`,
   );
+
+  // Rails Propshaft semantics (SQR-71, ADR 0011): dev emits bare
+  // `/app.css` / `/squire.js` for a clean devtools experience and
+  // immediate edit-refresh; prod emits content-hashed paths
+  // (`/app.<hash>.css`, `/squire.<hash>.js`) for immutable edge
+  // caching. The URL helpers handle both cases — we just await
+  // whatever they return and drop it into the template. Fetched in
+  // parallel because the two helpers are independent; in dev each
+  // call is microseconds (one fs.stat), in prod each is a cache hit
+  // after the first request, but that's still one avoidable serial
+  // hop per page render.
+  const [cssUrl, jsUrl] = await Promise.all([getAppCssUrl(), getSquireJsUrl()]);
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
@@ -117,7 +128,7 @@ export function layoutShell(
         <title>Squire</title>
         ${preconnects}
         <link rel="stylesheet" href="${GOOGLE_FONTS_HREF}" />
-        <link rel="stylesheet" href="${APP_CSS_HREF}" />
+        <link rel="stylesheet" href="${cssUrl}" />
       </head>
       <body class="squire-body">
         <a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>
@@ -165,24 +176,13 @@ export function layoutShell(
           </div>
         </div>
         <!--
-          SQR-66 cite tap-toggle (plan-design-review Decision #4). Tap on a
-          .squire-answer .cite adds .is-active; tap anywhere else clears it.
-          Five lines of vanilla JS — no framework, no dependency. Keyboard
-          focus is already covered by the global :focus-visible ring.
+          SQR-66 cite tap-toggle, served from /squire.js (dev) or
+          /squire.<hash>.js (prod) by the on-demand asset pipeline
+          (SQR-71, ADR 0011). Extracted from an inline <script> so
+          SQR-61's CSP can drop 'unsafe-inline' for script-src.
+          The file lives at src/web-ui/squire.js and ships unbundled.
         -->
-        <script>
-          document.addEventListener('click', function (e) {
-            var t = e.target;
-            var cite = t && t.closest ? t.closest('.squire-answer .cite') : null;
-            document.querySelectorAll('.squire-answer .cite.is-active').forEach(function (el) {
-              if (el !== cite) el.classList.remove('is-active');
-            });
-            if (cite) {
-              e.preventDefault();
-              cite.classList.toggle('is-active');
-            }
-          });
-        </script>
+        <script src="${jsUrl}" defer></script>
       </body>
     </html>`;
 }
@@ -195,6 +195,6 @@ export function layoutShell(
  * point that tests can stub via `vi.mock` to exercise the server-side error
  * fallback branch.
  */
-export function renderHomePage(): HtmlEscapedString | Promise<HtmlEscapedString> {
+export async function renderHomePage(): Promise<HtmlEscapedString> {
   return layoutShell();
 }

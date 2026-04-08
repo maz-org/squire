@@ -11,7 +11,17 @@
 
 import { readFileSync } from 'node:fs';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import {
+  _getCssCompileCountForTests,
+  _getJsReadCountForTests,
+  _resetAssetCachesForTests,
+  getAppCss,
+  getAppCssUrl,
+  getSquireJs,
+  getSquireJsUrl,
+} from '../src/web-ui/assets.ts';
 
 vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
@@ -124,25 +134,168 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   });
 });
 
-describe('GET /app.css — static asset serving (SQR-65 / ISSUE-001)', () => {
-  // Regression: ISSUE-001 — layout shell linked to /app.css but the route
-  // had no static handler and `public/app.css` was never built, so the page
-  // rendered unstyled in a real browser even though all DOM-level tests
-  // passed. Found by /qa on 2026-04-08. SQR-64's fonts.ts promised the
-  // "/app.css served by Hono as a static file" wiring; this test pins it.
-  // Report: .gstack/qa-reports/qa-report-localhost-2026-04-08.md
-  it('serves /app.css when public/app.css exists', async () => {
-    // The Tailwind CLI build emits public/app.css. We don't rebuild it from
-    // the test (vitest shouldn't depend on the build pipeline) — instead
-    // we assert the route is wired and gracefully degrades if the file is
-    // absent. The HTTP layer either streams the file (200) or 404s if the
-    // build hasn't been run. Either way it must NOT 500 and must NOT bleed
-    // into another route.
+// SQR-71 ships two asset pipelines in one module: an on-demand Tailwind
+// JIT compile for CSS, and a vanilla file-read-and-cache for squire.js.
+// Both are served with Rails Propshaft semantics — dev uses bare paths
+// with no-cache, prod uses content-hashed paths with immutable caching.
+// Concurrent cold-start requests share one compile via Promise memo.
+// See ADR 0011 (fingerprinting addendum) for the decision log.
+
+describe('SQR-71 dev asset pipeline — bare paths', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    vi.stubEnv('NODE_ENV', 'development');
+    // Env transitions within a test file invalidate the cache (prod
+    // minifies, dev doesn't → different content, different hash).
+    _resetAssetCachesForTests();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    _resetAssetCachesForTests();
+  });
+
+  it('serves /app.css with no-cache and compiled body', async () => {
     const res = await app.request('/app.css');
-    expect([200, 404]).toContain(res.status);
-    if (res.status === 200) {
-      expect(res.headers.get('content-type') ?? '').toMatch(/text\/css/);
-    }
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/text\/css/);
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = await res.text();
+    // Smoke test: the JIT engine ran against our source. The
+    // .squire-monogram class is styled in styles.css.
+    expect(body).toContain('squire-monogram');
+  }, 15000);
+
+  it('serves /squire.js with no-cache and the cite tap-toggle handler', async () => {
+    const res = await app.request('/squire.js');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/javascript/);
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = await res.text();
+    expect(body).toContain('squire-answer');
+    expect(body).toContain('is-active');
+  });
+
+  it('404s the hashed CSS route in dev (it is prod-only)', async () => {
+    const res = await app.request('/app.abc123def0.css');
+    expect(res.status).toBe(404);
+  });
+
+  it('404s the hashed JS route in dev (it is prod-only)', async () => {
+    const res = await app.request('/squire.abc123def0.js');
+    expect(res.status).toBe(404);
+  });
+
+  it('renders the layout with bare /app.css and /squire.js URLs', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/<link[^>]+rel="stylesheet"[^>]+href="\/app\.css"/);
+    expect(body).toMatch(/<script[^>]+src="\/squire\.js"[^>]*defer/);
+    // Inline tap-toggle gone (SQR-66 extraction pin for CSP — SQR-61).
+    expect(body).not.toMatch(/document\.addEventListener\(\s*['"]click['"]/);
+  }, 15000);
+
+  it('getAppCssUrl and getSquireJsUrl return bare paths in dev', async () => {
+    expect(await getAppCssUrl()).toBe('/app.css');
+    expect(await getSquireJsUrl()).toBe('/squire.js');
+  });
+});
+
+describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    vi.stubEnv('NODE_ENV', 'production');
+    _resetAssetCachesForTests();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    _resetAssetCachesForTests();
+  });
+
+  it('serves /app.<hash>.css with immutable cache on correct hash', async () => {
+    const { hash } = await getAppCss();
+    const res = await app.request(`/app.${hash}.css`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/text\/css/);
+    expect(res.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+    const body = await res.text();
+    expect(body).toContain('squire-monogram');
+  }, 15000);
+
+  it('serves /squire.<hash>.js with immutable cache on correct hash', async () => {
+    const { hash } = await getSquireJs();
+    const res = await app.request(`/squire.${hash}.js`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/javascript/);
+    expect(res.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+    const body = await res.text();
+    expect(body).toContain('squire-answer');
+  });
+
+  it('404s /app.<hash>.css on hash mismatch', async () => {
+    const res = await app.request('/app.deadbeef01.css');
+    expect(res.status).toBe(404);
+  }, 15000);
+
+  it('404s /squire.<hash>.js on hash mismatch', async () => {
+    const res = await app.request('/squire.deadbeef01.js');
+    expect(res.status).toBe(404);
+  });
+
+  it('404s non-hex hash paths at the router layer', async () => {
+    // `NOTAHASH!!` contains non-hex chars — the route regex
+    // [a-f0-9]+ rejects it before the handler sees it.
+    const cssRes = await app.request('/app.NOTAHASH.css');
+    expect(cssRes.status).toBe(404);
+    const jsRes = await app.request('/squire.NOTAHASH.js');
+    expect(jsRes.status).toBe(404);
+  });
+
+  it('404s the bare /app.css and /squire.js paths in prod', async () => {
+    expect((await app.request('/app.css')).status).toBe(404);
+    expect((await app.request('/squire.js')).status).toBe(404);
+  });
+
+  it('renders the layout with hashed /app.<hex>.css and /squire.<hex>.js URLs', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/<link[^>]+rel="stylesheet"[^>]+href="\/app\.[a-f0-9]+\.css"/);
+    expect(body).toMatch(/<script[^>]+src="\/squire\.[a-f0-9]+\.js"[^>]*defer/);
+    expect(body).not.toMatch(/document\.addEventListener\(\s*['"]click['"]/);
+  }, 15000);
+
+  it('getAppCssUrl and getSquireJsUrl return hashed paths in prod', async () => {
+    const cssUrl = await getAppCssUrl();
+    const jsUrl = await getSquireJsUrl();
+    expect(cssUrl).toMatch(/^\/app\.[a-f0-9]{10}\.css$/);
+    expect(jsUrl).toMatch(/^\/squire\.[a-f0-9]{10}\.js$/);
+  }, 15000);
+});
+
+describe('SQR-71 Promise memoization — concurrent cold start', () => {
+  beforeEach(() => {
+    _resetAssetCachesForTests();
+  });
+  afterEach(() => {
+    _resetAssetCachesForTests();
+  });
+
+  it('compiles CSS exactly once when two callers race a cold cache', async () => {
+    const [a, b] = await Promise.all([getAppCss(), getAppCss()]);
+    // Both callers receive the same entry reference (same content,
+    // same hash) because the second await joined the first compile.
+    expect(a.hash).toBe(b.hash);
+    expect(a.content).toBe(b.content);
+    // And the compile ran exactly once, not twice.
+    expect(_getCssCompileCountForTests()).toBe(1);
+  }, 15000);
+
+  it('reads squire.js exactly once when two callers race a cold cache', async () => {
+    const [a, b] = await Promise.all([getSquireJs(), getSquireJs()]);
+    expect(a.hash).toBe(b.hash);
+    expect(a.content).toBe(b.content);
+    expect(_getJsReadCountForTests()).toBe(1);
   });
 });
 

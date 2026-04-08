@@ -26,24 +26,87 @@ import {
   verifyAccessToken,
   OAuthError,
 } from './auth.ts';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
+import { getAppCss, getSquireJs } from './web-ui/assets.ts';
 
 export const app = new Hono();
 
-// ─── Web UI: static asset serving ────────────────────────────────────────────
+// ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0011) ─────────────────────
 //
-// SQR-64 promised that the Tailwind CLI build output (`public/app.css`) would
-// be "served at /app.css by Hono as a static file (ADR 0008)" but never
-// actually wired the handler. Without this, the layout shell from SQR-65
-// renders unstyled in a browser even though the HTML structure is correct.
-// Folded into SQR-65 because the layout has no meaning without its CSS.
-app.use(
-  '/app.css',
-  serveStatic({
-    path: './public/app.css',
-  }),
-);
+// Replaces the prebuilt-static-file pipeline from ADR 0008 with
+// Rails Propshaft semantics: dev serves bare paths with no-cache so
+// edits to styles.css and squire.js show up immediately in devtools,
+// prod serves content-hashed paths (`/app.<hash>.css`,
+// `/squire.<hash>.js`) with immutable caching so Cloudflare and
+// browsers can cache forever and invalidation is automatic on
+// content change. Hash is enforced by the router regex
+// (`[a-f0-9]+`) so non-hex paths 404 before the handler runs; a
+// prod hash mismatch (stale HTML after deploy) also 404s and the
+// browser reloads HTML on next navigation.
+//
+// Both route patterns are registered unconditionally; the handlers
+// branch on NODE_ENV at request time so tests can stub env without
+// re-importing the server module. See ADR 0011 fingerprinting
+// addendum for the full rationale.
+
+const PROD_ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+const DEV_ASSET_CACHE_CONTROL = 'no-cache';
+
+function isProdEnv(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+// Dev-only bare CSS path. In prod the HTML references the hashed
+// URL, so the bare path 404s there.
+app.get('/app.css', async (c) => {
+  if (isProdEnv()) return c.notFound();
+  const { content } = await getAppCss();
+  c.header('content-type', 'text/css; charset=utf-8');
+  c.header('cache-control', DEV_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
+// Prod-only hashed CSS path. The regex matches the full filename
+// (`app.<hex>.css`) as a single param because Hono's router doesn't
+// support `:param{regex}.literal` patterns — it either 404s silently
+// (single-segment) or throws (multi-segment) — but full-filename
+// constraints work fine. Router rejects non-hex at the match layer;
+// the handler then checks the filename matches the current compile
+// exactly and 404s on mismatch.
+//
+// Trade-off: the handler calls getAppCss() *before* comparing the
+// hash, so an unauthenticated 404 probe on a cold process pays one
+// Tailwind compile (~38 ms) before getting its 404. One-time cost
+// per process lifetime, not amplifiable — accepted. See ADR 0011
+// fingerprinting addendum, "What this does not solve".
+app.get('/:file{app\\.[a-f0-9]+\\.css}', async (c) => {
+  if (!isProdEnv()) return c.notFound();
+  const { content, hash } = await getAppCss();
+  if (c.req.param('file') !== `app.${hash}.css`) return c.notFound();
+  c.header('content-type', 'text/css; charset=utf-8');
+  c.header('cache-control', PROD_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
+// Dev-only bare JS path.
+app.get('/squire.js', async (c) => {
+  if (isProdEnv()) return c.notFound();
+  const { content } = await getSquireJs();
+  c.header('content-type', 'text/javascript; charset=utf-8');
+  c.header('cache-control', DEV_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
+// Prod-only hashed JS path. Same full-filename-as-param pattern as
+// the CSS handler for the same Hono router reason.
+app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
+  if (!isProdEnv()) return c.notFound();
+  const { content, hash } = await getSquireJs();
+  if (c.req.param('file') !== `squire.${hash}.js`) return c.notFound();
+  c.header('content-type', 'text/javascript; charset=utf-8');
+  c.header('cache-control', PROD_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
 
 // ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
 //
@@ -55,13 +118,27 @@ app.use(
 // reuse for recoverable runtime errors. See DESIGN.md decisions log
 // "`.squire-banner` is a reusable primitive."
 app.get('/', async (c) => {
-  // Both `renderHomePage()` and `layoutShell()` return
-  // `HtmlEscapedString | Promise<HtmlEscapedString>` (the Promise variant
-  // is what hono/html falls back to when interpolating arrays). Without
-  // `await`, a rejected promise from either function would bypass this
-  // try/catch and bubble up to `app.onError` as a JSON 500 — losing the
-  // styled HTML fallback that the SQR-65 ticket required. Awaiting both
-  // ensures the catch branch always renders the layout shell.
+  // `renderHomePage()` and `layoutShell()` both return
+  // `Promise<HtmlEscapedString>` (tightened from a union in SQR-71
+  // when layout.ts went async to await the asset URL helpers).
+  // Without `await`, a rejected promise from either function would
+  // bypass this try/catch and bubble up to `app.onError` as a JSON
+  // 500 — losing the styled HTML fallback that the SQR-65 ticket
+  // required. Awaiting both ensures the catch branch always renders
+  // the layout shell.
+  //
+  // Known gap (accepted, SQR-71 eng review): if the ORIGINAL error
+  // was an asset-compile failure in prod (unreadable styles.css,
+  // broken @tailwindcss/node upgrade), the fallback re-invokes
+  // `layoutShell` which re-invokes `getAppCssUrl` → `getAppCss` →
+  // throws again, bypassing this catch. The styled fallback is
+  // lost in that specific case and the user gets the bare
+  // `app.onError` JSON 500. We accept this because a prod deploy
+  // with an unreadable styles.css is already broken end-to-end —
+  // CSS is load-bearing, no error banner saves a page with no
+  // styles. Dev is unaffected because `getAppCssUrl` in dev
+  // returns a constant string without I/O. See ADR 0011
+  // fingerprinting addendum, "What this does not solve".
   try {
     return c.html(await renderHomePage());
   } catch (err) {

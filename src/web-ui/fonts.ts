@@ -14,8 +14,11 @@
  * served with preconnect hints to fonts.googleapis.com and
  * fonts.gstatic.com (the latter requires `crossorigin`).
  *
- * The stylesheet for the Tailwind CLI output is served at `/app.css` by
- * Hono as a static file (ADR 0008).
+ * The app stylesheet URL is no longer a compile-time constant — it is
+ * computed at render time by `getAppCssUrl()` in `assets.ts` because
+ * SQR-71 / ADR 0011 fingerprints the prod URL with the content hash.
+ * Importers in `layout.ts` await the URL helper instead of reading a
+ * constant from this module.
  */
 
 export const GOOGLE_FONTS_HREF =
@@ -28,5 +31,3 @@ export const FONT_PRECONNECTS = [
   { href: 'https://fonts.googleapis.com', crossorigin: false },
   { href: 'https://fonts.gstatic.com', crossorigin: true },
 ] as const;
-
-export const APP_CSS_HREF = '/app.css';

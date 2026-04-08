@@ -29,6 +29,18 @@ export default tseslint.config(
     },
   },
   {
+    // Browser-side vanilla JS islands served by the on-demand asset
+    // pipeline (SQR-71, ADR 0011). These run in the browser, not Node,
+    // so they need DOM globals available to the linter.
+    files: ['src/web-ui/**/*.js'],
+    languageOptions: {
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+      },
+    },
+  },
+  {
     ignores: ['node_modules/', 'data/'],
   },
 );
