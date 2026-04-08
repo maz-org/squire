@@ -43,3 +43,23 @@ branch), not when opening the PR.
 
 GitHub Issues is only used for repo-level concerns (Dependabot, security
 advisories) — not for work tracking.
+
+## Dependencies: capture in BOTH Linear Relations AND description text
+
+When a ticket depends on other work, record the dependency in **both** places:
+
+1. **Linear `blockedBy` / `blocks` relations** — set via
+   `save_issue({ id, blockedBy: ["SQR-NN", ...] })`. These power the
+   dependency graph views and make blocked work impossible to pick up by
+   accident.
+2. **A "Depends on:" line in the ticket description** — a human-readable
+   pointer for reviewers skimming the description. Include the reasoning
+   ("blocked by SQR-34 because Postgres must be available").
+
+Both together — not one or the other. The description text survives view
+changes and shows up in PR bodies and search results; the Linear relation
+powers filtering and graph traversal.
+
+**When querying relations,** pass `includeRelations: true` to
+`mcp__claude_ai_Linear__get_issue`. The field is off by default and it's
+easy to mistakenly conclude a repo doesn't use relations when it does.
