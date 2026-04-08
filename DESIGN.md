@@ -8,6 +8,10 @@ this document.
 **Companion docs:** [docs/SPEC.md](docs/SPEC.md),
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), ADR
 [0008](docs/adr/0008-tailwind-cli-for-production-css.md).
+**Visual target:** [docs/design-preview.html](docs/design-preview.html) — a
+self-contained HTML mockup of the approved Phase 1 mobile surface, the Phase 5
+card-comparison view, and the Phase 4 desktop layout. Open it in a browser to
+see what implementations of this doc should look like.
 
 This document is the authoritative source of truth for every visual and UI
 decision in Squire. Read it before touching fonts, color, spacing, layout,
