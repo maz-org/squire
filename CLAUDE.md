@@ -21,6 +21,7 @@ Read these on demand:
 | Ship a PR (or use `/ship`) | [docs/agent/shipping.md](docs/agent/shipping.md) |
 | Run the pre-push review and watch the PR | [docs/agent/review.md](docs/agent/review.md) |
 | Write a tech spec or plan-review checkpoint | [docs/agent/planning-artifacts.md](docs/agent/planning-artifacts.md) |
+| Record a design/eng decision, or implement a feature that might touch one | [docs/agent/adrs.md](docs/agent/adrs.md) |
 
 ## Always-on rules
 

@@ -66,3 +66,27 @@ Follow the test pyramid with this distribution:
 3. **Refactor** — Clean up while keeping tests green
 
 Do not write implementation before tests. Each feature or fix starts with a test.
+
+## Test Quality Principles
+
+Borrowed from [Kent Beck's test desiderata](https://medium.com/@kentbeck_7670/test-desiderata-94150638a4b3).
+The pyramid above covers *fast*, *deterministic*, *automated*, and *predictive*.
+These four are the ones most likely to bite us and deserve explicit rules:
+
+- **Structure-insensitive — assert on outputs, not internals.** A test should
+  still pass after a pure refactor. Don't pin internal call sequences, private
+  helpers, or prompt-string substrings that aren't part of the contract. This
+  matters most under our 100% core-coverage rule, which otherwise pressures
+  people to test implementation details.
+- **Mock at the boundary.** When mocking Claude, GitHub, or Postgres, assert on
+  the *behavior the caller observes*, not on the mock's call log — unless the
+  call itself is the contract (e.g. "we must send exactly one API request"). A
+  mock assertion is a structural assertion in disguise.
+- **Specific — one failure, one obvious cause.** Prefer focused tests with
+  descriptive names over giant table-driven tests where a red row 37 tells you
+  nothing. If a table test is the right shape, make each row's failure message
+  self-explanatory.
+- **Isolated — no order dependence, no shared state.** Tests must pass in any
+  order and in parallel. For Postgres/FTS tests, each test owns its data and
+  cleans up (transaction rollback or per-test schema); never rely on a prior
+  test having seeded a row.

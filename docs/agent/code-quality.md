@@ -12,7 +12,12 @@
    - Future agents and humans reading the code won't see PR discussions; the rationale must live in the codebase
    - Examples: why a field defaults to 0 instead of null, why a particular data source is used, why an approach was chosen over alternatives
 
-3. **Test Integrity**
+3. **Boy Scout Rule**
+   - Leave the code in a better state than you found it ([Robert C. Martin](https://www.oreilly.com/library/view/97-things-every/9780596809515/ch08.html))
+   - When you touch a file, small opportunistic cleanups are welcome: a clearer name, a dead import removed, a misleading comment fixed
+   - Keep cleanups in scope — don't snowball a bug fix into a refactor. If the cleanup is bigger than the change that brought you there, open a separate PR
+
+4. **Test Integrity**
    - All tests must pass before committing
    - Never delete tests to achieve 100% pass rate
    - Never ignore failing tests, regardless of origin

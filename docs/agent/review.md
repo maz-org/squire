@@ -12,6 +12,8 @@ This repo uses [CodeRabbit](https://coderabbit.ai) as an automated PR reviewer. 
 
 `/review` performs a structural pre-landing review of the diff against the base branch (SQL safety, LLM trust boundary violations, conditional side effects, and similar issues). Address its findings before pushing. This catches problems early and avoids back-and-forth on the PR.
 
+If the review surfaces a non-obvious design or engineering decision — or if addressing a finding requires choosing between meaningful alternatives — capture it as an ADR before pushing. See [adrs.md](adrs.md) for the workflow.
+
 **After creating the PR**, monitor it in a loop until it is merged. Do **not**
 push any additional commits to the branch after the PR is merged — if you
 have unrelated changes (e.g., CLAUDE.md updates), put them on a separate
