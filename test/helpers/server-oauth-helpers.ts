@@ -43,8 +43,8 @@ export function parseSSE(text: string): Array<{ event?: string; data: string }> 
 /**
  * Build auth helpers bound to a specific Hono app instance. Each test file
  * gets its own closure so the cached token doesn't leak across suites — the
- * `_resetClientsForTesting()` + `resetTestToken()` dance in OAuth tests
- * wipes both in the same `beforeEach`.
+ * `resetTestDb()` + `resetTestToken()` dance in OAuth tests wipes both in
+ * the same `beforeEach` (post-SQR-69 the auth state lives in Postgres).
  */
 export function makeAuthHelpers(app: Hono) {
   let testToken: string | null = null;
@@ -93,7 +93,7 @@ export function makeAuthHelpers(app: Hono) {
     return { Authorization: `Bearer ${testToken}` };
   }
 
-  /** Clear the cached token. Call after `_resetClientsForTesting()`. */
+  /** Clear the cached token. Call after `resetTestDb()`. */
   function resetTestToken(): void {
     testToken = null;
   }
