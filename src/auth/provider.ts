@@ -163,20 +163,26 @@ export class SquireOAuthProvider {
 
     const rawCode = randomUUID();
     const codeHash = hashSecret(rawCode);
-    const expiresAt = new Date(Date.now() + AUTHORIZATION_CODE_LIFETIME_SECONDS * 1000);
 
-    await this.db.transaction(async (tx) => {
-      await tx.insert(oauthAuthorizationCodes).values({
-        codeHash,
-        clientId: client.client_id,
-        userId: userId ?? null,
-        redirectUri,
-        codeChallenge,
-        codeChallengeMethod,
-        scope: scope ?? null,
-        state: state ?? null,
-        expiresAt,
-      });
+    // Stamp expiry with Postgres `now()`, not `Date.now()`. The liveness
+    // check in exchangeAuthorizationCode uses DB `now()`; deriving the
+    // expiry from app time would let clock skew between the app and DB
+    // shift the real lifetime — the 60s guarantee must be DB-clock enforced.
+    const { expiresAt } = await this.db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(oauthAuthorizationCodes)
+        .values({
+          codeHash,
+          clientId: client.client_id,
+          userId: userId ?? null,
+          redirectUri,
+          codeChallenge,
+          codeChallengeMethod,
+          scope: scope ?? null,
+          state: state ?? null,
+          expiresAt: sql`now() + (${AUTHORIZATION_CODE_LIFETIME_SECONDS} * interval '1 second')`,
+        })
+        .returning({ expiresAt: oauthAuthorizationCodes.expiresAt });
 
       await writeAuditEvent(tx, {
         eventType: 'authorize',
@@ -187,6 +193,8 @@ export class SquireOAuthProvider {
         userAgent: context.userAgent,
         metadata: { scope: scope ?? null },
       });
+
+      return inserted;
     });
 
     return { code: rawCode, expiresAt };
@@ -261,9 +269,15 @@ export class SquireOAuthProvider {
           );
         }
 
-        if (redirectUri !== undefined && row.redirectUri !== redirectUri) {
+        // RFC 6749 §4.1.3: if the authorization request included a
+        // redirect_uri, the token request MUST include it and they MUST be
+        // identical. Omitting it on exchange cannot silently bypass the
+        // binding — every code created here is bound to a concrete URI.
+        if (redirectUri === undefined || row.redirectUri !== redirectUri) {
           throw new AuditableOAuthError(
-            new InvalidGrantError('redirect_uri does not match the authorization request'),
+            new InvalidGrantError(
+              'redirect_uri is missing or does not match the authorization request',
+            ),
             'redirect_uri_mismatch',
           );
         }
@@ -275,19 +289,18 @@ export class SquireOAuthProvider {
           );
         }
 
-        // Issue the access token.
+        // Issue the access token. Expiry is stamped with Postgres `now()`
+        // so lifetimes are enforced by DB clock, same reason as the auth
+        // code insert above.
         const rawToken = randomUUID();
         const tokenHash = hashSecret(rawToken);
-        const now = new Date();
-        const expiresAt = new Date(now.getTime() + this.tokenLifetimeSeconds * 1000);
 
         await tx.insert(oauthTokens).values({
           tokenHash,
           clientId: client.client_id,
           userId: row.userId,
           scope: row.scope,
-          expiresAt,
-          createdAt: now,
+          expiresAt: sql`now() + (${this.tokenLifetimeSeconds} * interval '1 second')`,
         });
 
         await writeAuditEvent(tx, {
@@ -339,15 +352,32 @@ export class SquireOAuthProvider {
   async verifyAccessToken(token: string, context: AuditContext = {}): Promise<AuthInfo> {
     const tokenHash = hashSecret(token);
 
-    // Bump last_used_at in the same UPDATE that validates expiry. If the
-    // token is missing or expired, UPDATE … RETURNING yields no row and we
-    // audit-log + throw. Single round-trip, no TOCTOU gap.
-    const now = new Date();
-    const [row] = await this.db
-      .update(oauthTokens)
-      .set({ lastUsedAt: now })
-      .where(and(eq(oauthTokens.tokenHash, tokenHash), sql`${oauthTokens.expiresAt} > now()`))
-      .returning();
+    // Bump last_used_at and write the success audit row in the same
+    // transaction. Otherwise a crash between the UPDATE and the audit
+    // INSERT leaves last_used_at advanced without a corresponding audit
+    // trail — the exact partial-write gap the audit-atomicity invariant
+    // in src/auth/audit.ts is trying to prevent. Single round-trip to the
+    // DB on the happy path, no TOCTOU gap.
+    const row = await this.db.transaction(async (tx) => {
+      const [liveToken] = await tx
+        .update(oauthTokens)
+        .set({ lastUsedAt: sql`now()` })
+        .where(and(eq(oauthTokens.tokenHash, tokenHash), sql`${oauthTokens.expiresAt} > now()`))
+        .returning();
+
+      if (!liveToken) return undefined;
+
+      await writeAuditEvent(tx, {
+        eventType: 'token_verify',
+        clientId: liveToken.clientId,
+        userId: liveToken.userId,
+        outcome: 'success',
+        ipAddress: context.ipAddress,
+        userAgent: context.userAgent,
+      });
+
+      return liveToken;
+    });
 
     if (!row) {
       // Distinguish "missing" from "expired" by looking the row up without
@@ -376,15 +406,6 @@ export class SquireOAuthProvider {
       }
       throw new InvalidTokenError('Invalid or expired access token');
     }
-
-    await writeAuditEvent(this.db, {
-      eventType: 'token_verify',
-      clientId: row.clientId,
-      userId: row.userId,
-      outcome: 'success',
-      ipAddress: context.ipAddress,
-      userAgent: context.userAgent,
-    });
 
     return {
       token,

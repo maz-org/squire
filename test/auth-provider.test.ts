@@ -339,6 +339,24 @@ describe('SquireOAuthProvider.exchangeAuthorizationCode', () => {
       failureReason: 'redirect_uri_mismatch',
     });
   });
+
+  // RFC 6749 §4.1.3 — if a redirect_uri was bound to the code at authorize
+  // time, the exchange request MUST include an identical redirect_uri.
+  // Regression guard: an earlier version only checked redirect_uri when the
+  // caller passed one, so omitting it bypassed the binding entirely.
+  it('rejects an omitted redirect_uri on exchange (redirect-binding bypass)', async () => {
+    const { client, code, verifier } = await walkToCode();
+    await expect(
+      provider.exchangeAuthorizationCode(client, code, verifier, undefined),
+    ).rejects.toBeInstanceOf(InvalidGrantError);
+
+    const audit = await auditRowsOrdered();
+    expect(audit.at(-1)).toMatchObject({
+      eventType: 'code_exchange',
+      outcome: 'failure',
+      failureReason: 'redirect_uri_mismatch',
+    });
+  });
 });
 
 describe('SquireOAuthProvider.verifyAccessToken', () => {
