@@ -61,14 +61,6 @@ function readRawExtracted(type: CardType): Array<Record<string, unknown>> {
  * issue is fixed, the entry here must be removed in the same PR.
  */
 const KNOWN_PARITY_EXCLUSIONS: Partial<Record<CardType, { sourceIds: string[]; issue: string }>> = {
-  'monster-abilities': {
-    // Importer produced a sourceId literally ending in `/undefined`
-    // because the ability card has no recognisable initiative. Schema
-    // requires `cardName`, which is also missing. Real import-path bug,
-    // not a schema gap.
-    sourceIds: ['gloomhavensecretariat:monster-ability/chaos-spark/undefined'],
-    issue: 'SQR-62',
-  },
   'character-mats': {
     // Geminate is a split character mat (two forms) and ships with
     // handSize "7|7". Current schema declares handSize as int; evolving
