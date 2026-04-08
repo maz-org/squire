@@ -45,7 +45,12 @@ app.get('/.well-known/oauth-authorization-server', (c) => {
     token_endpoint: `${base}/token`,
     registration_endpoint: `${base}/register`,
     response_types_supported: ['code'],
-    grant_types_supported: ['authorization_code', 'refresh_token'],
+    // Squire deliberately does not support refresh_token rotation — access
+    // tokens are long-lived (30 days) as a DX choice for MCP/API clients.
+    // See SECURITY.md §2 and `SquireOAuthProvider.exchangeRefreshToken`
+    // (throws UnsupportedGrantTypeError). Advertising only what the
+    // provider actually honors keeps the discovery metadata truthful.
+    grant_types_supported: ['authorization_code'],
     token_endpoint_auth_methods_supported: ['none'],
     code_challenge_methods_supported: ['S256'],
     scopes_supported: ['squire:read', 'squire:write'],
