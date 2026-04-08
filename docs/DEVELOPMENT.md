@@ -167,6 +167,14 @@ Tests use randomized execution order (`sequence.shuffle` in vitest
 config) to catch order-dependent tests. The full suite runs as a
 pre-commit hook along with typecheck and lint.
 
+**Prettier covers everything CI checks.** CI runs `prettier --check src/ test/`
+which walks those directories and formats *every* file type Prettier knows
+(`.ts`, `.js`, `.json`, `.yml`, `.md`, etc.). `lint-staged` in `package.json`
+must stay in sync — if CI formats a file type, the pre-commit hook must too,
+otherwise drift slips through locally and fails in CI. When adding a new file
+type under `src/` or `test/`, add it to both `lint-staged` and leave
+`format:check` alone (it already globs everything).
+
 ## Data management
 
 Frosthaven rulebook PDFs live in `data/pdfs/`. `src/index-docs.ts`
