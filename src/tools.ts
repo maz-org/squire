@@ -6,7 +6,7 @@
 import { embed } from './embedder.ts';
 import { search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
-import { searchExtractedRanked, TYPES, load } from './extracted-data.ts';
+import { countsByType, load, loadOne, searchExtractedRanked, TYPES } from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
@@ -92,12 +92,9 @@ export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Pro
  * Agents use this for runtime capability discovery.
  */
 export async function listCardTypes(opts?: ToolOpts): Promise<CardTypeInfo[]> {
-  return Promise.all(
-    TYPES.map(async (type) => ({
-      type,
-      count: (await load(type, opts)).length,
-    })),
-  );
+  // Single UNION ALL of `count(*)` per type instead of N full-table scans.
+  const counts = await countsByType(opts);
+  return TYPES.map((type) => ({ type, count: counts[type] }));
 }
 
 /**
@@ -135,8 +132,9 @@ export async function getCard(
   id: string,
   opts?: ToolOpts,
 ): Promise<Record<string, unknown> | null> {
-  const records = await load(type, opts);
-  const match = records.find((record) => record.sourceId === id);
+  // Indexed single-row lookup via `loadOne` — hits the `(game, source_id)`
+  // unique index instead of loading every row and scanning client-side.
+  const match = await loadOne(type, id, opts);
   if (!match) return null;
   return stripInternalKeys(match);
 }

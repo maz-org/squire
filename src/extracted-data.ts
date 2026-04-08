@@ -106,25 +106,86 @@ function tableToJsonbObject(table: PgTable): ReturnType<typeof sql> {
  *
  * Throws if the DB is unreachable — no JSON fallback.
  */
+/**
+ * Build the `col1 AS "tsKey1", col2 AS "tsKey2", ...` projection for a
+ * table, preserving camelCase aliases so the pg driver hands us rows with
+ * TS-shaped keys. Shared between `load` and `loadOne`.
+ */
+function visibleSelectList(table: PgTable): ReturnType<typeof sql> {
+  const cols = visibleColumns(table);
+  const parts = cols.map(
+    ({ tsKey, sqlName }) => sql`${sql.identifier(sqlName)} AS ${sql.identifier(tsKey)}`,
+  );
+  let out = sql`${parts[0]}`;
+  for (let i = 1; i < parts.length; i++) out = sql`${out}, ${parts[i]}`;
+  return out;
+}
+
 export async function load(type: CardType, opts: LoadOpts = {}): Promise<ExtractedRecord[]> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
-  const cols = visibleColumns(table);
   const game = opts.game ?? 'frosthaven';
 
-  // Explicit SELECT of visible columns keeps the row shape stable and lets
-  // us match the pre-migration record shape exactly.
-  const selectList = cols.map(
-    ({ tsKey, sqlName }) => sql`${sql.identifier(sqlName)} AS ${sql.identifier(tsKey)}`,
-  );
-  let selectSql = sql`${selectList[0]}`;
-  for (let i = 1; i < selectList.length; i++) selectSql = sql`${selectSql}, ${selectList[i]}`;
-
   const rows = await db.execute<Record<string, unknown>>(
-    sql`SELECT ${selectSql} FROM ${table} WHERE game = ${game} ORDER BY source_id`,
+    sql`SELECT ${visibleSelectList(table)} FROM ${table} WHERE game = ${game} ORDER BY source_id`,
   );
 
   return rows.rows.map((r) => ({ ...r, _type: type }));
+}
+
+/**
+ * Fetch a single record by its canonical `source_id`. Uses the
+ * `(game, source_id)` unique index for an O(1) lookup instead of scanning
+ * the full table client-side the way the MVP version of `tools.getCard`
+ * used to. Returns `null` if no row matches.
+ */
+export async function loadOne(
+  type: CardType,
+  sourceId: string,
+  opts: LoadOpts = {},
+): Promise<ExtractedRecord | null> {
+  const { db } = getDb();
+  const table = TYPE_TO_TABLE[type];
+  const game = opts.game ?? 'frosthaven';
+
+  const rows = await db.execute<Record<string, unknown>>(
+    sql`SELECT ${visibleSelectList(table)} FROM ${table}
+        WHERE game = ${game} AND source_id = ${sourceId}
+        LIMIT 1`,
+  );
+
+  const row = rows.rows[0];
+  return row ? { ...row, _type: type } : null;
+}
+
+/**
+ * Record counts for every card type in a single round-trip. Used by
+ * `tools.listCardTypes` and `extractedStats` to avoid the N full-table
+ * scans the naive "load every row and count" implementation would do.
+ *
+ * Returns a `Record<CardType, number>` with every key populated (0 for
+ * types that have no rows), so callers can iterate `TYPES` without
+ * defensive fallbacks.
+ */
+export async function countsByType(opts: LoadOpts = {}): Promise<Record<CardType, number>> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+
+  const branches = TYPES.map(
+    (type) => sql`
+      SELECT ${sql.raw(`'${type}'`)} AS type, count(*)::int AS n
+      FROM ${TYPE_TO_TABLE[type]}
+      WHERE game = ${game}
+    `,
+  );
+  let unioned = sql`${branches[0]}`;
+  for (let i = 1; i < branches.length; i++) unioned = sql`${unioned} UNION ALL ${branches[i]}`;
+
+  const rows = await db.execute<{ type: CardType; n: number }>(unioned);
+  const counts: Record<string, number> = {};
+  for (const type of TYPES) counts[type] = 0;
+  for (const r of rows.rows) counts[r.type] = r.n;
+  return counts as Record<CardType, number>;
 }
 
 // ─── Search ──────────────────────────────────────────────────────────────────
@@ -339,16 +400,6 @@ export function formatExtracted(records: ExtractedRecord[]): string {
  * Record counts across all 10 card tables. Single round-trip via a CTE.
  */
 export async function extractedStats(): Promise<string> {
-  const { db } = getDb();
-  const selects = TYPES.map(
-    (type) =>
-      sql`SELECT ${sql.raw(`'${type}'`)} AS type, count(*)::int AS n FROM ${TYPE_TO_TABLE[type]}`,
-  );
-  let unioned = sql`${selects[0]}`;
-  for (let i = 1; i < selects.length; i++) unioned = sql`${unioned} UNION ALL ${selects[i]}`;
-
-  const rows = await db.execute<{ type: CardType; n: number }>(unioned);
-  // Preserve canonical TYPES order rather than relying on UNION ALL ordering.
-  const counts = new Map(rows.rows.map((r) => [r.type, r.n]));
-  return TYPES.map((t) => `${t}: ${counts.get(t) ?? 0}`).join(', ');
+  const counts = await countsByType();
+  return TYPES.map((t) => `${t}: ${counts[t]}`).join(', ');
 }

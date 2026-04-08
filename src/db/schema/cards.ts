@@ -21,6 +21,23 @@
  *
  * `getCard(type, id)` semantics (for SQR-35): `id` resolves against
  * `source_id`, not the per-type natural key column.
+ *
+ * ## Hand-migrated columns — drizzle-kit generate warning
+ *
+ * The `searchVector` tsvector column on every table is a STORED generated
+ * column whose real expression lives in the hand-written migration
+ * `src/db/migrations/0002_card_fts.sql`. The schema only declares a
+ * placeholder marker (`SV_MARKER`) so drizzle-orm excludes the column
+ * from INSERT/UPDATE.
+ *
+ * If you run `npx drizzle-kit generate` against this schema, drizzle-kit
+ * will see the placeholder and try to "fix" the expression by emitting a
+ * migration that drops and recreates the column with the marker SQL —
+ * which would destroy the FTS index and silently break
+ * `searchExtracted`/`searchCards`. **Always review drizzle-kit output
+ * before committing it.** If drizzle-kit proposes any change to
+ * `search_vector` or to `card_*_search_idx`, discard that hunk and update
+ * `0002_card_fts.sql` by hand instead.
  */
 
 import { sql } from 'drizzle-orm';
