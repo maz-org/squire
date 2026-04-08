@@ -12,6 +12,16 @@ export default defineConfig({
     // parallel runner — see test/helpers/global-setup.ts for the gory details.
     globalSetup: ['./test/helpers/global-setup.ts'],
     sequence: { shuffle: true },
+    // Every DB-backed test file truncates and repopulates the same
+    // `squire_test` database in `beforeEach`. Under vitest's default
+    // parallel file runner, two workers can end up in a TRUNCATE vs
+    // INSERT lock-ordering cycle on the `oauth_*` tables (surfaced first
+    // by SQR-68's auth-provider tests — the failure mode was a flaky
+    // deadlock that depended on the random test shuffle order). The
+    // whole suite shares one Postgres, so inter-file parallelism here is
+    // negative value: it doesn't make the run meaningfully faster and it
+    // introduces non-deterministic deadlocks. Disable it.
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
