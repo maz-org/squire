@@ -124,25 +124,47 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   });
 });
 
-describe('GET /app.css — static asset serving (SQR-65 / ISSUE-001)', () => {
-  // Regression: ISSUE-001 — layout shell linked to /app.css but the route
-  // had no static handler and `public/app.css` was never built, so the page
-  // rendered unstyled in a real browser even though all DOM-level tests
-  // passed. Found by /qa on 2026-04-08. SQR-64's fonts.ts promised the
-  // "/app.css served by Hono as a static file" wiring; this test pins it.
-  // Report: .gstack/qa-reports/qa-report-localhost-2026-04-08.md
-  it('serves /app.css when public/app.css exists', async () => {
-    // The Tailwind CLI build emits public/app.css. We don't rebuild it from
-    // the test (vitest shouldn't depend on the build pipeline) — instead
-    // we assert the route is wired and gracefully degrades if the file is
-    // absent. The HTTP layer either streams the file (200) or 404s if the
-    // build hasn't been run. Either way it must NOT 500 and must NOT bleed
-    // into another route.
+describe('GET /app.css — on-demand Tailwind JIT compile (SQR-71)', () => {
+  // SQR-71 replaced the prebuilt-static-file pipeline (ADR 0008) with
+  // in-process @tailwindcss/node compilation at request time. The handler
+  // compiles src/web-ui/styles.css against the project sources via
+  // @tailwindcss/oxide's Scanner, caches the result in memory, and serves
+  // it as text/css. No build step required on a fresh clone — the
+  // motivating regression was ISSUE-001 from SQR-65 (page rendered
+  // unstyled because `npm run build:css` had never run).
+  it('compiles and serves /app.css with no build step', async () => {
     const res = await app.request('/app.css');
-    expect([200, 404]).toContain(res.status);
-    if (res.status === 200) {
-      expect(res.headers.get('content-type') ?? '').toMatch(/text\/css/);
-    }
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/text\/css/);
+    const body = await res.text();
+    // Smoke test: the JIT engine actually ran against our source. The
+    // .squire-monogram class is referenced in layout.ts and styled in
+    // styles.css, so its rule must appear in the compiled output.
+    expect(body).toContain('squire-monogram');
+  }, 15000);
+});
+
+describe('GET /squire.js — on-demand vanilla JS asset (SQR-71)', () => {
+  // SQR-71 extracted the cite tap-toggle from layout.ts's inline <script>
+  // into src/web-ui/squire.js so SQR-61 (CSP) can drop 'unsafe-inline'
+  // for script-src. The handler reads the file once and caches it.
+  it('serves /squire.js with the cite tap-toggle handler', async () => {
+    const res = await app.request('/squire.js');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/javascript/);
+    const body = await res.text();
+    // Smoke test: the actual handler body is present.
+    expect(body).toContain('squire-answer');
+    expect(body).toContain('is-active');
+  });
+
+  it('renders the layout with a /squire.js src reference, not an inline <script>', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/<script[^>]+src="\/squire\.js"[^>]*defer/);
+    // The inline tap-toggle handler from SQR-66 must be gone — CSP (SQR-61)
+    // depends on this extraction.
+    expect(body).not.toMatch(/document\.addEventListener\(\s*['"]click['"]/);
   });
 });
 

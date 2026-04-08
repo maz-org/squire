@@ -2,9 +2,18 @@
 type: ADR
 id: "0008"
 title: "Tailwind CLI for production CSS (not the JIT CDN runtime)"
-status: active
+status: superseded
+superseded_by: "0009"
 date: 2026-04-08
 ---
+
+> **Superseded by [ADR 0009](0009-on-demand-asset-pipeline.md) (SQR-71).**
+> The Tailwind CLI build step was replaced with in-process compilation
+> via `@tailwindcss/node` at request time. The framing in this ADR — CDN
+> JIT runtime vs. statically-built CSS file — still stands; what changed
+> is *when* the build runs (request-time, in-process, cached) instead of
+> *deploy time, out-of-process, committed to disk*. The dev ergonomics
+> motivation is documented in ADR 0009.
 
 ## Context
 

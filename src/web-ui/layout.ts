@@ -165,24 +165,12 @@ export function layoutShell(
           </div>
         </div>
         <!--
-          SQR-66 cite tap-toggle (plan-design-review Decision #4). Tap on a
-          .squire-answer .cite adds .is-active; tap anywhere else clears it.
-          Five lines of vanilla JS — no framework, no dependency. Keyboard
-          focus is already covered by the global :focus-visible ring.
+          SQR-66 cite tap-toggle, served from /squire.js by the on-demand
+          asset pipeline (SQR-71, ADR 0009). Extracted from an inline
+          <script> so SQR-61's CSP can drop 'unsafe-inline' for script-src.
+          The file lives at src/web-ui/squire.js and ships unbundled.
         -->
-        <script>
-          document.addEventListener('click', function (e) {
-            var t = e.target;
-            var cite = t && t.closest ? t.closest('.squire-answer .cite') : null;
-            document.querySelectorAll('.squire-answer .cite.is-active').forEach(function (el) {
-              if (el !== cite) el.classList.remove('is-active');
-            });
-            if (cite) {
-              e.preventDefault();
-              cite.classList.toggle('is-active');
-            }
-          });
-        </script>
+        <script src="/squire.js" defer></script>
       </body>
     </html>`;
 }

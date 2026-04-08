@@ -26,24 +26,31 @@ import {
   verifyAccessToken,
   OAuthError,
 } from './auth.ts';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
+import { getAppCss, getSquireJs } from './web-ui/assets.ts';
 
 export const app = new Hono();
 
-// ─── Web UI: static asset serving ────────────────────────────────────────────
+// ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0009) ─────────────────────
 //
-// SQR-64 promised that the Tailwind CLI build output (`public/app.css`) would
-// be "served at /app.css by Hono as a static file (ADR 0008)" but never
-// actually wired the handler. Without this, the layout shell from SQR-65
-// renders unstyled in a browser even though the HTML structure is correct.
-// Folded into SQR-65 because the layout has no meaning without its CSS.
-app.use(
-  '/app.css',
-  serveStatic({
-    path: './public/app.css',
-  }),
-);
+// Replaces the prebuilt-static-file pipeline from ADR 0008. `/app.css`
+// compiles src/web-ui/styles.css in-process via @tailwindcss/node on the
+// first request and caches the result; `/squire.js` reads the vanilla-JS
+// island file from src/web-ui/squire.js with the same cache pattern. In
+// dev mode the cache is keyed on source-file mtime, so edits show up on
+// the next request without a rebuild step. No `npm run build:css`, no
+// gitignored build output, no fresh-clone "I forgot to build" trap.
+app.get('/app.css', async (c) => {
+  const css = await getAppCss();
+  c.header('content-type', 'text/css; charset=utf-8');
+  return c.body(css);
+});
+
+app.get('/squire.js', async (c) => {
+  const js = await getSquireJs();
+  c.header('content-type', 'text/javascript; charset=utf-8');
+  return c.body(js);
+});
 
 // ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
 //
