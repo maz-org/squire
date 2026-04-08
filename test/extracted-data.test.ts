@@ -60,16 +60,8 @@ function readRawExtracted(type: CardType): Array<Record<string, unknown>> {
  * EXCLUDED from both sides of the comparison. If the underlying Linear
  * issue is fixed, the entry here must be removed in the same PR.
  */
-const KNOWN_PARITY_EXCLUSIONS: Partial<Record<CardType, { sourceIds: string[]; issue: string }>> = {
-  'monster-abilities': {
-    // Importer produced a sourceId literally ending in `/undefined`
-    // because the ability card has no recognisable initiative. Schema
-    // requires `cardName`, which is also missing. Real import-path bug,
-    // not a schema gap.
-    sourceIds: ['gloomhavensecretariat:monster-ability/chaos-spark/undefined'],
-    issue: 'SQR-62',
-  },
-};
+const KNOWN_PARITY_EXCLUSIONS: Partial<Record<CardType, { sourceIds: string[]; issue: string }>> =
+  {};
 
 function readSearchSnapshot(): Array<{ query: string; expectedTopSourceIds: string[] }> {
   const path = join(import.meta.dirname, 'fixtures', 'search-queries', 'cards.json');
