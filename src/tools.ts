@@ -6,7 +6,7 @@
 import { embed } from './embedder.ts';
 import { search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
-import { searchExtracted, TYPES, load } from './extracted-data.ts';
+import { searchExtractedRanked, TYPES, load } from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
@@ -28,13 +28,37 @@ export interface CardTypeInfo {
   count: number;
 }
 
+interface ToolOpts {
+  /** Campaign variant. Defaults to 'frosthaven'. Reserved for Phase 2. */
+  game?: string;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Strip internal `_*` marker keys from a card record. */
+function stripInternalKeys(record: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (!key.startsWith('_')) out[key] = value;
+  }
+  return out;
+}
+
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
 /**
  * Search the rulebook vector index for passages relevant to a query.
  * Returns structured results with text, source, and similarity score.
+ *
+ * `opts.game` is accepted for API symmetry with the card tools; the vector
+ * store does not yet filter on game, so it's currently a no-op. Phase 2
+ * will add a game-tagged rulebook index.
  */
-export async function searchRules(query: string, topK = 6): Promise<RuleResult[]> {
+export async function searchRules(
+  query: string,
+  topK = 6,
+  _opts?: ToolOpts,
+): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
   const hits: ScoredEntry[] = await search(queryEmbedding, topK);
 
@@ -46,18 +70,17 @@ export async function searchRules(query: string, topK = 6): Promise<RuleResult[]
 }
 
 /**
- * Search extracted card data using keyword matching.
- * Returns structured results with card type, data, and relevance score.
+ * Search extracted card data using Postgres FTS.
+ * Returns structured results with card type, data, and `ts_rank` score.
  */
-export function searchCards(query: string, topK = 6): CardResult[] {
-  const hits = searchExtracted(query, topK);
-
-  return hits.map((record) => {
-    const { _type, ...data } = record;
+export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Promise<CardResult[]> {
+  const ranked = await searchExtractedRanked(query, topK, opts);
+  return ranked.map(({ record, score }) => {
+    const { _type, ...rest } = record;
     return {
       type: _type,
-      data,
-      score: scoreRecord(record, query),
+      data: stripInternalKeys(rest),
+      score,
     };
   });
 }
@@ -68,22 +91,25 @@ export function searchCards(query: string, topK = 6): CardResult[] {
  * List all available card types with record counts.
  * Agents use this for runtime capability discovery.
  */
-export function listCardTypes(): CardTypeInfo[] {
-  return TYPES.map((type) => ({
-    type,
-    count: load(type).length,
-  }));
+export async function listCardTypes(opts?: ToolOpts): Promise<CardTypeInfo[]> {
+  return Promise.all(
+    TYPES.map(async (type) => ({
+      type,
+      count: (await load(type, opts)).length,
+    })),
+  );
 }
 
 /**
  * List cards of a given type, optionally filtered by field values.
  * Filter uses AND logic — all specified fields must match.
  */
-export function listCards(
+export async function listCards(
   type: CardType,
   filter?: Record<string, unknown>,
-): Record<string, unknown>[] {
-  let records = load(type);
+  opts?: ToolOpts,
+): Promise<Record<string, unknown>[]> {
+  let records = await load(type, opts);
 
   if (filter) {
     records = records.filter((record) =>
@@ -91,88 +117,26 @@ export function listCards(
     );
   }
 
-  return records.map((record) => {
-    const data: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(record)) {
-      if (!key.startsWith('_')) data[key] = value;
-    }
-    return data;
-  });
+  return records.map(stripInternalKeys);
 }
 
-// ─── ID field mapping ────────────────────────────────────────────────────────
-
-/** The natural identifier field for each card type. */
-const ID_FIELDS: Record<CardType, string> = {
-  'monster-stats': 'name',
-  'monster-abilities': 'cardName',
-  'character-abilities': 'cardName',
-  'character-mats': 'name',
-  items: 'number',
-  events: 'number',
-  'battle-goals': 'name',
-  buildings: 'buildingNumber',
-  scenarios: 'index',
-  'personal-quests': 'cardId',
-};
-
 /**
- * Look up a single card by type and identifier.
- * Uses the natural ID field for each card type (e.g., name for monsters, number for items).
- * Case-insensitive for string identifiers.
+ * Look up a single card by type and `sourceId`.
+ *
+ * Per the storage-migration tech spec §"natural key verification", we resolve
+ * against the canonical `sourceId` rather than per-type natural key fields:
+ * four per-type natural keys had collisions in the real data, and using
+ * `sourceId` everywhere sidesteps the ambiguity entirely. Match is
+ * case-sensitive — `sourceId` is a canonical GHS identifier like
+ * `gloomhavensecretariat:battle-goal/1301`, not a human-entered string.
  */
-export function getCard(type: CardType, id: string): Record<string, unknown> | null {
-  const field = ID_FIELDS[type];
-  const records = load(type);
-  const idLower = id.toLowerCase();
-
-  const match = records.find((record) => {
-    const value = record[field];
-    if (typeof value === 'string') return value.toLowerCase() === idLower;
-    return value === id;
-  });
-
+export async function getCard(
+  type: CardType,
+  id: string,
+  opts?: ToolOpts,
+): Promise<Record<string, unknown> | null> {
+  const records = await load(type, opts);
+  const match = records.find((record) => record.sourceId === id);
   if (!match) return null;
-
-  const data: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(match)) {
-    if (!key.startsWith('_')) data[key] = value;
-  }
-  return data;
-}
-
-/**
- * Re-score a record for the structured result.
- * Uses the same keyword overlap logic as extracted-data.ts.
- */
-function scoreRecord(record: Record<string, unknown>, query: string): number {
-  const STOPWORDS = new Set([
-    'the',
-    'and',
-    'for',
-    'what',
-    'how',
-    'does',
-    'with',
-    'this',
-    'that',
-    'are',
-    'can',
-    'its',
-    'which',
-  ]);
-  const tokens = query
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= 3 && !STOPWORDS.has(t));
-
-  if (tokens.length === 0) return 0;
-
-  const text = JSON.stringify(record).toLowerCase();
-  let hits = 0;
-  for (const token of tokens) {
-    if (text.includes(token)) hits++;
-  }
-  return hits;
+  return stripInternalKeys(match);
 }

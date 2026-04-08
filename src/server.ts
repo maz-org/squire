@@ -247,31 +247,31 @@ app.get('/api/search/rules', async (c) => {
   return c.json({ results });
 });
 
-app.get('/api/search/cards', (c) => {
+app.get('/api/search/cards', async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
 
   const topK = parseTopK(c.req.query('topK'));
-  const results = searchCards(q, topK);
+  const results = await searchCards(q, topK);
   return c.json({ results });
 });
 
 // ─── Card discovery and lookup endpoints ─────────────────────────────────────
 
-app.get('/api/card-types', (c) => {
-  const types = listCardTypes();
+app.get('/api/card-types', async (c) => {
+  const types = await listCardTypes();
   return c.json({ types });
 });
 
-app.get('/api/cards/:type/:id', (c) => {
+app.get('/api/cards/:type/:id', async (c) => {
   const type = c.req.param('type') as CardType;
   const id = decodeURIComponent(c.req.param('id'));
-  const card = getCard(type, id);
+  const card = await getCard(type, id);
   if (!card) return c.json(jsonError('Card not found', 404), 404);
   return c.json({ card });
 });
 
-app.get('/api/cards', (c) => {
+app.get('/api/cards', async (c) => {
   const type = c.req.query('type');
   if (!type) return c.json(jsonError('Missing required query parameter: type', 400), 400);
 
@@ -289,7 +289,7 @@ app.get('/api/cards', (c) => {
     }
   }
 
-  const cards = listCards(type as CardType, filter);
+  const cards = await listCards(type as CardType, filter);
   return c.json({ cards });
 });
 

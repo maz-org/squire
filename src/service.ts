@@ -38,7 +38,7 @@ async function doInitialize(): Promise<void> {
   await initializeRetrieval(embed);
 
   // Verify extracted data is available.
-  const types = listCardTypes();
+  const types = await listCardTypes();
   const totalCards = types.reduce((sum, t) => sum + t.count, 0);
   if (totalCards === 0) {
     throw new Error('No extracted card data found. Run `npm run extract` first.');
