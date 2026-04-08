@@ -8,6 +8,9 @@ export default defineConfig({
     // tests against the same `squire_test` DB, producing confusing false
     // failures (seen during /document-release on SQR-56).
     exclude: [...configDefaults.exclude, 'data/**', '.claude/worktrees/**'],
+    // Seed card_* tables ONCE per run. Per-file seeding raced under vitest's
+    // parallel runner — see test/helpers/global-setup.ts for the gory details.
+    globalSetup: ['./test/helpers/global-setup.ts'],
     sequence: { shuffle: true },
     coverage: {
       provider: 'v8',
