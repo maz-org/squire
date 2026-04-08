@@ -512,8 +512,8 @@ html {
   color: var(--parchment);
   background-image: linear-gradient(
     to top,
-    rgb(212, 161, 71, 0.6) 0,
-    rgb(212, 161, 71, 0.6) 75%,
+    rgb(212 161 71 / 0.6) 0,
+    rgb(212 161 71 / 0.6) 75%,
     transparent 75%,
     transparent 100%
   );

@@ -17,6 +17,7 @@
           "tailwind",
           "theme",
           "utility",
+          "variant",
           "variants"
         ]
       }
@@ -24,7 +25,7 @@
     "font-family-name-quotes": "always-unless-keyword",
     "no-descending-specificity": null,
     "alpha-value-notation": "number",
-    "color-function-notation": "legacy",
+    "color-function-notation": "modern",
     "media-feature-range-notation": "prefix",
     "import-notation": "string",
     "selector-class-pattern": [

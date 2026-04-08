@@ -204,8 +204,16 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toContain('font-variant-caps: all-small-caps');
-    // stylelint normalizes rgba(...) → rgb(...) (identical behavior with 4 args).
-    expect(body).toMatch(/rgba?\(212,\s*161,\s*71,\s*0\.6/);
+    // stylelint-config-standard enforces `color-function-notation: modern`, so
+    // stylelint autofix rewrote the original `rgba(212, 161, 71, 0.6)` to the
+    // modern space-separated form `rgb(212 161 71 / 0.6)`. An earlier attempt
+    // used `color-function-notation: legacy`, which produced an invalid 4-arg
+    // comma form `rgb(212, 161, 71, 0.6)` (legacy rgb() has no alpha arg);
+    // browsers dropped the whole declaration and the rule-term highlighter
+    // rendered without its amber stripe. Pin the modern syntax here so a
+    // future config regression fails loudly instead of silently shipping
+    // broken CSS.
+    expect(body).toMatch(/rgb\(212\s+161\s+71\s*\/\s*0\.6/);
     expect(body).toContain('75%');
     expect(body).toContain('white-space: nowrap');
   });
