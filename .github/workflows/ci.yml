@@ -45,6 +45,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build CSS
+        run: npm run build:css
+
       - name: Run database migrations
         run: npm run db:migrate
 

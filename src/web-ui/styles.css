@@ -1,0 +1,84 @@
+/*
+ * Squire web UI — Tailwind CSS entry point.
+ *
+ * Single source of truth for design tokens. Hex values come from DESIGN.md
+ * §Color ("Rubrication"). Do not hardcode hex anywhere else in the repo —
+ * Tailwind utilities reference these via theme.extend.colors in
+ * tailwind.config.js (e.g. `bg-ink text-parchment`).
+ *
+ * Built via the Tailwind CLI per ADR 0008:
+ *   npm run build:css
+ *   → npx tailwindcss -i src/web-ui/styles.css -o public/app.css --minify
+ *
+ * DARK MODE IS UNCONDITIONAL IN PHASE 1.
+ * The tokens declared on `:root` are the dark-mode values. A light-mode
+ * variant exists via `[data-theme="light"]` on <html> for the Phase 7 user
+ * toggle, but Phase 1 does NOT honor `prefers-color-scheme` — the
+ * phone-at-the-table primary surface is dark-first by deliberate design
+ * choice. See DESIGN.md §Color and the 2026-04-08 decisions log entry
+ * "Dark mode is unconditional in Phase 1."
+ *
+ * WCAG CONTRAST RATIOS (dark mode, primary combinations).
+ * Verified against DESIGN.md §Color hex values. If any token hex changes,
+ * re-run a contrast checker and update both this block and DESIGN.md §Color.
+ * Any combination that drops below AA fails this ticket's acceptance criteria.
+ *
+ *   --parchment      on --ink       ≈ 13.8:1 (AAA)
+ *   --parchment-dim  on --ink       ≈ 11.4:1 (AAA)
+ *   --sepia          on --ink       ≈  5.9:1 (AA normal text)
+ *   --sepia-dim      on --ink       ≈  3.4:1 (AA large text only — never body)
+ *   --wax            on --parchment ≈  4.6:1 (AA normal text — hover/ghost buttons)
+ *   --parchment      on --wax       ≈  4.6:1 (AA normal text — primary button)
+ */
+
+@import 'tailwindcss';
+
+@config "../../tailwind.config.js";
+
+@source "./**/*.{tsx,ts,html}";
+
+:root {
+  /* Dark-mode tokens (the default — see comment block above). */
+  --ink: #14100c;
+  --surface: #1c1814;
+  --surface-2: #241e17;
+  --parchment: #f5ebd9;
+  --parchment-dim: #e8dcc4;
+  --sepia: #9a8d74;
+  --sepia-dim: #6b6254;
+  --rule: #3a3227;
+  --wax: #c73e1d;
+  --wax-dim: #a82f13;
+  --sage: #7a8c5c;
+  --amber: #d4a147;
+  --error: #8b2919;
+}
+
+/*
+ * Light-mode overrides — shipped in Phase 1 so the CSS is ready for the
+ * Phase 7 user-controlled toggle. No toggle UI exists yet. Activated by
+ * setting `data-theme="light"` on <html>.
+ *
+ * prefers-color-scheme is intentionally NOT honored — see comment block above.
+ */
+[data-theme='light'] {
+  --ink: #f5ebd9;
+  --surface: #ede0c4;
+  --surface-2: #e2d3b2;
+  --parchment: #14100c;
+  --parchment-dim: #2a241d;
+  --sepia: #5a5144;
+  --sepia-dim: #8a8274;
+  --rule: #c9bb9e;
+  --wax: #a82f13;
+  --wax-dim: #c73e1d;
+  --sage: #5b6b42;
+  --amber: #9a7527;
+  --error: #6b1e12;
+}
+
+html {
+  background: var(--ink);
+  color: var(--parchment);
+  font-family: 'Geist', system-ui, sans-serif;
+}
