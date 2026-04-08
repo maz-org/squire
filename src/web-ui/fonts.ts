@@ -16,7 +16,7 @@
  *
  * The app stylesheet URL is no longer a compile-time constant — it is
  * computed at render time by `getAppCssUrl()` in `assets.ts` because
- * SQR-71 / ADR 0009 fingerprints the prod URL with the content hash.
+ * SQR-71 / ADR 0011 fingerprints the prod URL with the content hash.
  * Importers in `layout.ts` await the URL helper instead of reading a
  * constant from this module.
  */

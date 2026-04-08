@@ -31,7 +31,7 @@ import { getAppCss, getSquireJs } from './web-ui/assets.ts';
 
 export const app = new Hono();
 
-// ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0009) ─────────────────────
+// ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0011) ─────────────────────
 //
 // Replaces the prebuilt-static-file pipeline from ADR 0008 with
 // Rails Propshaft semantics: dev serves bare paths with no-cache so
@@ -46,7 +46,7 @@ export const app = new Hono();
 //
 // Both route patterns are registered unconditionally; the handlers
 // branch on NODE_ENV at request time so tests can stub env without
-// re-importing the server module. See ADR 0009 fingerprinting
+// re-importing the server module. See ADR 0011 fingerprinting
 // addendum for the full rationale.
 
 const PROD_ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable';
@@ -77,7 +77,7 @@ app.get('/app.css', async (c) => {
 // Trade-off: the handler calls getAppCss() *before* comparing the
 // hash, so an unauthenticated 404 probe on a cold process pays one
 // Tailwind compile (~38 ms) before getting its 404. One-time cost
-// per process lifetime, not amplifiable — accepted. See ADR 0009
+// per process lifetime, not amplifiable — accepted. See ADR 0011
 // fingerprinting addendum, "What this does not solve".
 app.get('/:file{app\\.[a-f0-9]+\\.css}', async (c) => {
   if (!isProdEnv()) return c.notFound();
@@ -137,7 +137,7 @@ app.get('/', async (c) => {
   // with an unreadable styles.css is already broken end-to-end —
   // CSS is load-bearing, no error banner saves a page with no
   // styles. Dev is unaffected because `getAppCssUrl` in dev
-  // returns a constant string without I/O. See ADR 0009
+  // returns a constant string without I/O. See ADR 0011
   // fingerprinting addendum, "What this does not solve".
   try {
     return c.html(await renderHomePage());

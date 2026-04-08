@@ -1,5 +1,5 @@
 /**
- * Squire web UI — on-demand asset pipeline (SQR-71, ADR 0009).
+ * Squire web UI — on-demand asset pipeline (SQR-71, ADR 0011).
  *
  * Compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node`
  * and reads `src/web-ui/squire.js` from disk. Exposes both content
@@ -19,7 +19,7 @@
  *
  * Promise memoization on the compile/read paths collapses two
  * concurrent cold-start callers into a single compile instead of
- * a race. See ADR 0009 (fingerprinting addendum) for the full
+ * a race. See ADR 0011 (fingerprinting addendum) for the full
  * rationale and the rolling-deploy caveat.
  */
 
@@ -80,7 +80,7 @@ async function computeCssCacheKey(): Promise<string> {
   // re-scans on every compile call (we deliberately don't cache the
   // Scanner instance for that reason). Keying on the styles.css mtime
   // alone catches the common case (editing the stylesheet) — the
-  // Scanner walk dominates the cost either way. Matches the ADR 0009
+  // Scanner walk dominates the cost either way. Matches the ADR 0011
   // promise: "edit styles.css → next request reflects the edit."
   try {
     const s = await stat(STYLES_PATH);
@@ -247,7 +247,7 @@ export async function getSquireJsUrl(): Promise<string> {
 // extra ~38 ms compile per call and has no data-corruption or
 // exfiltration pathway. If this ever grows past three hooks, split
 // them into `src/web-ui/assets.test-only.ts` and import from there
-// in the test file. See ADR 0009 fingerprinting addendum.
+// in the test file. See ADR 0011 fingerprinting addendum.
 
 /**
  * Test-only hook. Vitest re-imports this module per test file, so

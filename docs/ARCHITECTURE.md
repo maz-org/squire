@@ -85,7 +85,7 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 *Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
 
-*Tailwind delivery decision: see [ADR 0009 — On-demand asset pipeline via in-process Tailwind JIT](adr/0009-on-demand-asset-pipeline.md) (supersedes [ADR 0008](adr/0008-tailwind-cli-for-production-css.md)).*
+*Tailwind delivery decision: see [ADR 0011 — On-demand asset pipeline via in-process Tailwind JIT](adr/0011-on-demand-asset-pipeline.md) (supersedes [ADR 0008](adr/0008-tailwind-cli-for-production-css.md)).*
 
 *Chat surface layout decision: the web UI renders ONE turn at a time on `main.squire-surface` — current user question (Fraunces hero) + current answer (drop cap + citations + tool footer) — with prior turns collapsed into the recent-questions chip row. Not a scrolling message list. See [ADR 0010 — Current-turn ledger for multi-turn chat surface](adr/0010-current-turn-ledger.md) and the design system in [DESIGN.md](../DESIGN.md).*
 
@@ -530,7 +530,9 @@ src/
   web-ui/
     layout.ts                   Companion-first layout shell (5 mobile regions + desktop rail)
     fonts.ts                    Google Fonts URL + preconnect constants
-    styles.css                  Tailwind CLI entry — design tokens + layout shell CSS
+    assets.ts                   On-demand Tailwind JIT + squire.js pipeline (SQR-71, ADR 0011)
+    squire.js                   Vanilla JS islands (SQR-66 cite tap-toggle)
+    styles.css                  Tailwind entry point — design tokens + layout shell CSS
   types/                        Shared TypeScript types
   import-battle-goals.ts        GHS importer
   import-buildings.ts           GHS importer

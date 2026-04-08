@@ -139,7 +139,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 // Both are served with Rails Propshaft semantics — dev uses bare paths
 // with no-cache, prod uses content-hashed paths with immutable caching.
 // Concurrent cold-start requests share one compile via Promise memo.
-// See ADR 0009 (fingerprinting addendum) for the decision log.
+// See ADR 0011 (fingerprinting addendum) for the decision log.
 
 describe('SQR-71 dev asset pipeline — bare paths', () => {
   beforeEach(() => {

@@ -8,7 +8,7 @@
  *
  * Compiled in-process by `src/web-ui/assets.ts` via `@tailwindcss/node`
  * and served at `/app.css` (dev) or `/app.<hash>.css` (prod). See
- * ADR 0009 for the on-demand asset pipeline decision.
+ * ADR 0011 for the on-demand asset pipeline decision.
  *
  * DARK MODE IS UNCONDITIONAL IN PHASE 1.
  * The tokens declared on `:root` are the dark-mode values. A light-mode

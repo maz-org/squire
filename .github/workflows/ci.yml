@@ -45,7 +45,7 @@ jobs:
 
       - run: npm ci
 
-      # CSS build step removed with SQR-71 (ADR 0009): `/app.css` is now
+      # CSS build step removed with SQR-71 (ADR 0011): `/app.css` is now
       # compiled in-process at request time via @tailwindcss/node, so no
       # pre-build step exists or is needed. Vitest exercises the full
       # compile path in the test suite.

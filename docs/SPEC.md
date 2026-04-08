@@ -155,7 +155,7 @@ A user may have multiple characters across multiple campaigns. From Phase 4 onwa
 
 ### Platform
 
-Mobile-responsive web app, server-rendered (Hono JSX + HTMX + Tailwind via CDN). Accessible via any modern mobile or desktop browser. No app installation, no PWA, no service worker.
+Mobile-responsive web app, server-rendered (Hono JSX + HTMX + Tailwind compiled in-process via `@tailwindcss/node`, see [ADR 0011](adr/0011-on-demand-asset-pipeline.md)). Accessible via any modern mobile or desktop browser. No app installation, no PWA, no service worker.
 
 ### Input Methods
 

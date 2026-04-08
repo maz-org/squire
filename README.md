@@ -80,7 +80,7 @@ serves:
   `@tailwindcss/node` on first request and caches the result — no build
   step required on a fresh clone. Prod uses content-hashed URLs
   (`/app.<hash>.css`) with immutable caching. See
-  [ADR 0009](docs/adr/0009-on-demand-asset-pipeline.md))
+  [ADR 0011](docs/adr/0011-on-demand-asset-pipeline.md))
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)

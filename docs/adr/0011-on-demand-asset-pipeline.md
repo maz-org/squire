@@ -1,6 +1,6 @@
 ---
 type: ADR
-id: "0009"
+id: "0011"
 title: "On-demand asset pipeline via in-process Tailwind JIT"
 status: active
 supersedes: "0008"

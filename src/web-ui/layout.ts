@@ -56,7 +56,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
       : html`<link rel="preconnect" href="${p.href}" />`,
   );
 
-  // Rails Propshaft semantics (SQR-71, ADR 0009): dev emits bare
+  // Rails Propshaft semantics (SQR-71, ADR 0011): dev emits bare
   // `/app.css` / `/squire.js` for a clean devtools experience and
   // immediate edit-refresh; prod emits content-hashed paths
   // (`/app.<hash>.css`, `/squire.<hash>.js`) for immutable edge
@@ -178,7 +178,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <!--
           SQR-66 cite tap-toggle, served from /squire.js (dev) or
           /squire.<hash>.js (prod) by the on-demand asset pipeline
-          (SQR-71, ADR 0009). Extracted from an inline <script> so
+          (SQR-71, ADR 0011). Extracted from an inline <script> so
           SQR-61's CSP can drop 'unsafe-inline' for script-src.
           The file lives at src/web-ui/squire.js and ships unbundled.
         -->

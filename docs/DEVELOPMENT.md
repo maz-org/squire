@@ -163,7 +163,7 @@ npm run lint          # ESLint
 npm run lint:css      # stylelint (CSS, Tailwind v4 aware — SQR-70)
 npm run format:check  # Prettier check
 # No CSS build step — `/app.css` is compiled in-process on request
-# via @tailwindcss/node. SQR-71 / ADR 0009 replaced the former
+# via @tailwindcss/node. SQR-71 / ADR 0011 replaced the former
 # `npm run build:css` pipeline.
 ```
 
