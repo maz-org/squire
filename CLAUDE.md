@@ -18,6 +18,7 @@ Read these on demand:
 | Start work on a Linear issue | [docs/agent/issue-workflow.md](docs/agent/issue-workflow.md) |
 | Write or modify tests | [docs/agent/testing.md](docs/agent/testing.md) |
 | Make a non-obvious design choice | [docs/agent/code-quality.md](docs/agent/code-quality.md) |
+| Touch anything visual — fonts, color, spacing, layout, copy tone | [DESIGN.md](DESIGN.md) |
 | Ship a PR (or use `/ship`) | [docs/agent/shipping.md](docs/agent/shipping.md) |
 | Run the pre-push review and watch the PR | [docs/agent/review.md](docs/agent/review.md) |
 | Write a tech spec or plan-review checkpoint | [docs/agent/planning-artifacts.md](docs/agent/planning-artifacts.md) |
@@ -32,6 +33,7 @@ These are short on purpose. Anything not on this list lives in one of the files 
 - **TDD.** Write a failing test first. Don't write implementation before the test.
 - **Document *why* in the codebase.** When making a non-obvious design choice, the rationale goes in a code comment or markdown file — not just in PR descriptions or review replies. Future agents and humans won't see PR discussions.
 - **Conventional Commits.** `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`.
+- **Design system.** Always read [DESIGN.md](DESIGN.md) before making any visual or UI decision. Fonts, colors, spacing, layout, components, voice — all defined there. Do not deviate without explicit user approval and a DESIGN.md update. In QA mode, flag any code that doesn't match DESIGN.md.
 
 ## gstack
 

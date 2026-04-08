@@ -147,6 +147,7 @@ vite.config.ts.timestamp-*
 # Claude Code local state
 .claude/settings.local.json
 .claude/worktrees/
+.claude/launch.json
 
 # Eval results (regeneratable)
 eval/results/*.json
@@ -156,3 +157,4 @@ data/gloomhavensecretariat/
 
 # Vector index lives in Postgres now (pgvector). Regenerate locally with `npm run index`.
 data/index.json
+.gstack/
