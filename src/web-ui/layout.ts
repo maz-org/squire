@@ -63,32 +63,51 @@ export function layoutShell(
   // `HtmlEscapedString` so the compiler guarantees the caller already
   // escaped it (see the LayoutShellOptions doc comment above) — no `raw()`
   // wrap needed, the value flows directly into the template.
-  // SQR-66 placeholder content — a hero question above a sample answer
-  // that exercises every signature component (drop cap, two rule-term
-  // `<em>`s, a citation link). SQR-6 replaces this with real streamed
-  // content; until then the shell renders visually complete so QA can
-  // verify the stylesheet against docs/design-preview.html. The text is
-  // intentionally mundane rather than trying to look like a real ruling
-  // so no one mistakes it for a source-of-truth answer.
-  const placeholderAnswer = html`<h1 class="squire-question">
-      Sample question rendered here by SQR-6.
-    </h1>
-    <section class="squire-answer" aria-label="Sample answer">
-      <p>
-        Sometimes a <em>rule term</em> needs emphasis inside the body copy, and sometimes two terms
-        like <em>loss condition</em> and <em>round end</em>
-        sit on the same line without colliding. Squire cites its sources inline, like the
-        <a class="cite" href="#">Rulebook p.47</a> or the scenario book, so you can verify without
-        leaving the table.
+  //
+  // SQR-67 stub content — first-run empty state plus a styled showcase of
+  // the signature components SQR-6 / SQR-8 / Phase 5 will later wire to
+  // real data (spoiler banner, verdict block, picked-card badge). These
+  // are pure visual stubs: no behavior, no state. SQR-6 will swap the
+  // empty state for a streaming `.squire-question` + `.squire-answer`
+  // pair once there's a current turn. The hidden `<template>` at the end
+  // pins the error and sync banner variants so QA and tests can verify
+  // their computed CSS without needing to fake an error or wait for the
+  // Phase 6 sync feature. Without the fixtures the CSS silently bit-rots.
+  const emptyStateAndStubs = html`<section class="squire-empty" aria-label="Welcome">
+      <h1 class="squire-question">At your service.</h1>
+      <p class="squire-empty__scope">ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO</p>
+    </section>
+    <div class="squire-banner squire-banner--spoiler" role="note" aria-label="Spoiler warning">
+      <span class="squire-banner__label">SPOILER WARNING</span>
+      <p class="squire-banner__body">
+        Squire's answers may reference unlocked content from your campaign. Ask a narrower question
+        to keep the surprise intact.
       </p>
-    </section>`;
+    </div>
+    <aside class="squire-verdict" aria-label="Squire recommends">
+      <span class="squire-verdict__label">SQUIRE RECOMMENDS</span>
+      <p class="squire-verdict__body">
+        Phase 5 will render a recommendation here when comparing cards.
+        <span class="squire-picked">PICKED</span>
+      </p>
+    </aside>
+    <template id="squire-banner-fixtures" aria-hidden="true">
+      <div class="squire-banner squire-banner--error" role="alert">
+        <span class="squire-banner__label">SOMETHING WENT WRONG</span>
+        <p class="squire-banner__body">Error banner fixture for QA / tests.</p>
+      </div>
+      <div class="squire-banner squire-banner--sync" role="status">
+        <span class="squire-banner__label">SYNCED · 2H AGO</span>
+        <p class="squire-banner__body">Sync banner fixture for QA / tests.</p>
+      </div>
+    </template>`;
 
   const surfaceContent = options.errorBanner
     ? html`<div class="squire-banner squire-banner--error" role="alert">
         <span class="squire-banner__label">SOMETHING WENT WRONG</span>
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
-    : (options.mainContent ?? placeholderAnswer);
+    : (options.mainContent ?? emptyStateAndStubs);
 
   return html`<!doctype html>
     <html lang="en">
@@ -116,8 +135,14 @@ export function layoutShell(
             <main class="squire-surface" aria-live="polite" aria-atomic="false">
               ${surfaceContent}
             </main>
-            <footer class="squire-toolcall" aria-live="off"></footer>
-            <nav class="squire-recent" aria-label="Recent questions"></nav>
+            <footer class="squire-toolcall" aria-live="off">
+              CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
+            </footer>
+            <nav class="squire-recent" aria-label="Recent questions">
+              <span class="squire-chip">Looting</span>
+              <span class="squire-chip">Element infusion</span>
+              <span class="squire-chip">Negative scenario effects</span>
+            </nav>
             <!--
           SQR-65 ships the structural form only. The action target points
           at /api/ask, which is the eventual endpoint, but the API requires

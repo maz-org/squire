@@ -152,25 +152,18 @@ describe('GET / — signature components (SQR-66)', () => {
     mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
   });
 
-  it('renders a hero question <h1 class="squire-question"> above the answer', async () => {
+  // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
+  // squire-answer sample) with the first-run empty state. The hero question
+  // selector `.squire-question` is still rendered inside `.squire-empty`
+  // (empty state reuses that class per the ticket), but the sample
+  // `<section class="squire-answer">` is gone until SQR-6 wires real
+  // streamed answers. Drop-cap / em / cite CSS is covered by the
+  // `styles.css` block below instead of DOM assertions on the home page.
+
+  it('renders the .squire-question hero (now inside the empty state)', async () => {
     const res = await app.request('/');
     const body = await res.text();
     expect(body).toMatch(/<h1[^>]*class="squire-question"[^>]*>/);
-    const qIdx = body.indexOf('class="squire-question"');
-    const aIdx = body.indexOf('class="squire-answer"');
-    expect(qIdx).toBeGreaterThan(-1);
-    expect(aIdx).toBeGreaterThan(qIdx);
-  });
-
-  it('renders a .squire-answer block with at least two <em> rule-terms and a .cite link', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
-    const answerMatch = body.match(/<section[^>]*class="squire-answer"[\s\S]*?<\/section>/);
-    expect(answerMatch).not.toBeNull();
-    const answer = answerMatch![0];
-    const emCount = (answer.match(/<em>/g) || []).length;
-    expect(emCount).toBeGreaterThanOrEqual(2);
-    expect(answer).toMatch(/class="cite"/);
   });
 
   it('does NOT use a wrapping <span class="squire-dropcap"> for the drop cap', async () => {
@@ -267,6 +260,130 @@ describe('styles.css — SQR-66 signature component rules', () => {
     // acceptance criterion; assert it still exists AFTER SQR-66's stylesheet
     // additions so nobody accidentally drops it.
     expect(css).toMatch(/prefers-reduced-motion:\s*reduce/);
+  });
+});
+
+describe('GET / — SQR-67 stub regions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+  });
+
+  it('renders the first-run empty state with "At your service." and the scope line', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/<section[^>]*class="squire-empty"/);
+    expect(body).toContain('At your service.');
+    expect(body).toMatch(/class="squire-empty__scope"/);
+    expect(body).toContain('ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO');
+  });
+
+  it('renders the spoiler warning banner via the .squire-banner primitive', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/squire-banner squire-banner--spoiler/);
+    expect(body).toContain('SPOILER WARNING');
+  });
+
+  it('renders the tool-call footer with the CONSULTED placeholder line', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[\s\S]*CONSULTED · RULEBOOK P\.47/);
+  });
+
+  it('renders at least two recent-question chips inside nav.squire-recent', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    const navMatch = body.match(/<nav[^>]*class="squire-recent"[\s\S]*?<\/nav>/);
+    expect(navMatch).not.toBeNull();
+    const chips = (navMatch![0].match(/class="squire-chip"/g) || []).length;
+    expect(chips).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders the .squire-verdict block with label and picked badge', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/class="squire-verdict"/);
+    expect(body).toContain('SQUIRE RECOMMENDS');
+    expect(body).toMatch(/class="squire-picked"/);
+  });
+
+  it('ships hidden fixtures for the error and sync banner variants', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    const tpl = body.match(/<template[^>]*id="squire-banner-fixtures"[\s\S]*?<\/template>/);
+    expect(tpl).not.toBeNull();
+    expect(tpl![0]).toMatch(/squire-banner squire-banner--error/);
+    expect(tpl![0]).toMatch(/squire-banner squire-banner--sync/);
+    expect(tpl![0]).toContain('SYNCED · 2H AGO');
+  });
+});
+
+describe('styles.css — SQR-67 stub-region rules', () => {
+  const css = readFileSync(new URL('../src/web-ui/styles.css', import.meta.url), 'utf8');
+
+  it('declares .squire-banner--spoiler with amber left border and 8% amber tint', () => {
+    const rule = css.match(/\.squire-banner--spoiler\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![0]).toContain('border-left-color: var(--amber)');
+    expect(rule![0]).toMatch(/rgba\(212,\s*161,\s*71,\s*0\.08\)/);
+  });
+
+  it('declares .squire-banner--sync with sage left border and 8% sage tint', () => {
+    const rule = css.match(/\.squire-banner--sync\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![0]).toContain('border-left-color: var(--sage)');
+    expect(rule![0]).toMatch(/rgba\(122,\s*140,\s*92,\s*0\.08\)/);
+  });
+
+  it('declares .squire-banner--error with 8% error tint (Phase 6 bit-rot guard)', () => {
+    const rule = css.match(/\.squire-banner--error\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![0]).toContain('border-left-color: var(--error)');
+    expect(rule![0]).toMatch(/rgba\(139,\s*41,\s*25,\s*0\.08\)/);
+  });
+
+  it('declares .squire-empty__scope with small-caps, letter-spacing ≥ 0.14em, sepia', () => {
+    const rule = css.match(/\.squire-empty__scope\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('text-transform: uppercase');
+    expect(body).toMatch(/letter-spacing:\s*0\.1[4-9]em|letter-spacing:\s*0\.2/);
+    expect(body).toContain('color: var(--sepia)');
+    expect(body).toMatch(/font-size:\s*1[01]px/);
+  });
+
+  it('declares .squire-recent .squire-chip with 1px --rule border and 4px radius', () => {
+    const rule = css.match(/\.squire-recent\s+\.squire-chip\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toMatch(/border:\s*1px\s+solid\s+var\(--rule\)/);
+    expect(body).toMatch(/border-radius:\s*4px/);
+    expect(body).toContain('color: var(--sepia)');
+  });
+
+  it('declares .squire-verdict with 3px wax left border', () => {
+    const rule = css.match(/\.squire-verdict\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![0]).toMatch(/border-left:\s*3px\s+solid\s+var\(--wax\)/);
+  });
+
+  it('declares .squire-picked with --wax background and --parchment text', () => {
+    const rule = css.match(/\.squire-picked\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('background: var(--wax)');
+    expect(body).toContain('color: var(--parchment)');
+  });
+
+  it('declares the tool-call footer with sepia small-caps ≤12px font', () => {
+    const rule = css.match(/\.squire-toolcall\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('color: var(--sepia)');
+    expect(body).toContain('text-transform: uppercase');
+    expect(body).toMatch(/letter-spacing:\s*0\.1[4-9]em|letter-spacing:\s*0\.2/);
+    expect(body).toMatch(/font-size:\s*1[012]px/);
   });
 });
 
