@@ -16,6 +16,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Belt-and-suspenders: `NODE_ENV` is the happy-path guard, but it can be
+  // unset in a prod shell while `DATABASE_URL` points at a real database.
+  // If `DATABASE_URL` is present, require it to target a local dev/test DB
+  // by both hostname and database name before we touch anything.
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    const { hostname, pathname } = new URL(databaseUrl);
+    const dbName = pathname.replace(/^\//, '');
+    const localHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const allowedDb = dbName === 'squire' || dbName === 'squire_test';
+    if (!localHost || !allowedDb) {
+      console.error(
+        `[seed-dev-user] refusing to run against non-local database: ${hostname}/${dbName}`,
+      );
+      process.exit(1);
+    }
+  }
+
   const { db, close } = getDb('cli');
   try {
     const result = await seedDevUser(db);

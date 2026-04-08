@@ -69,4 +69,26 @@ describe('seedDevUser', () => {
     expect(rows[0].name).toBe('Hand-edited Name');
     expect(rows[0].googleSub).toBe('preexisting-sub');
   });
+
+  it('leaves an existing user with the same googleSub untouched (sibling unique-key path)', async () => {
+    // The other unique constraint on users — seedDevUser uses targetless
+    // `ON CONFLICT DO NOTHING` specifically so a google_sub collision
+    // no-ops the same way an email collision does.
+    await db.insert(schema.users).values({
+      email: 'other@squire.local',
+      googleSub: DEV_USER.googleSub,
+      name: 'Existing By Sub',
+    });
+
+    const result = await seedDevUser(db);
+
+    expect(result.inserted).toBe(false);
+    const rows = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.googleSub, DEV_USER.googleSub));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].email).toBe('other@squire.local');
+    expect(rows[0].name).toBe('Existing By Sub');
+  });
 });

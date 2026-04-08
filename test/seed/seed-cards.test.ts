@@ -47,9 +47,16 @@ describe('seedCards', () => {
     // (e.g. `test/extracted-data.test.ts`'s fixed query set). TRUNCATE +
     // re-seed items cleanly restores the shared state the rest of the
     // suite depends on, regardless of test run order.
-    await db.execute(sql`TRUNCATE card_items RESTART IDENTITY CASCADE`);
-    await seedCards(db, { types: ['items'] });
-    await teardownTestDb();
+    //
+    // Wrapped in try/finally so the pool is always torn down even if the
+    // restore fails — leaking the pool would cascade into confusing
+    // "too many clients" errors on the next test file.
+    try {
+      await db.execute(sql`TRUNCATE card_items RESTART IDENTITY CASCADE`);
+      await seedCards(db, { types: ['items'] });
+    } finally {
+      await teardownTestDb();
+    }
   });
 
   describe('per-type row counts match the extracted JSON', () => {

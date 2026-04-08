@@ -3,9 +3,10 @@
  *
  * Used by `npm run seed:dev` so local testing of authenticated paths has a
  * stable account without walking through the Google OAuth flow. Idempotent
- * via `ON CONFLICT (email) DO NOTHING` — existing rows (including
- * hand-edited ones) are left untouched so a human can tweak the row without
- * the next `seed:dev` run clobbering it.
+ * via targetless `ON CONFLICT DO NOTHING` — a conflict on either the `email`
+ * or `google_sub` unique constraint is absorbed, so existing rows (including
+ * hand-edited ones) are left untouched and a human can tweak either column
+ * without the next `seed:dev` run clobbering it.
  *
  * This helper must NOT run against production. The CLI wrapper in
  * `scripts/seed-dev-user.ts` checks `NODE_ENV` before invoking it; the
