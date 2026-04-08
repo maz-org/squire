@@ -125,8 +125,10 @@ function visibleSelectList(table: PgTable): ReturnType<typeof sql> {
  * Per-type row normalizers. The DB stores every value in a column, and some
  * columns lose type information (e.g. `card_character_abilities.level` is
  * `text` so it can hold both numeric levels and the `"X"` sentinel for
- * lost/no-level cards). Normalizers restore the original type so that
- * `load()` output matches `data/extracted/<type>.json` byte-for-byte.
+ * lost/no-level cards). Normalizers restore the original type so the
+ * `load()` output matches the shape of `data/extracted/<type>.json`
+ * (modulo null/undefined normalization; the parity test in
+ * `test/extracted-data.test.ts` enforces this end-to-end).
  */
 const ROW_NORMALIZERS: Partial<Record<CardType, (row: Record<string, unknown>) => void>> = {
   'character-abilities': (row) => {

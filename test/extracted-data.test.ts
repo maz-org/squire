@@ -160,12 +160,13 @@ describe('countsByType', () => {
   });
 });
 
-// ─── load parity (committed pre-migration snapshots) ────────────────────────
+// ─── load parity (raw data/extracted as snapshot) ───────────────────────────
 //
-// Snapshots in `test/fixtures/parity-snapshots/<type>.json` were generated in
-// SQR-55 from the JSON-backed `load(type)` and committed before the SQR-56
-// rewrite. Sorted by `sourceId` so they line up with the post-migration
-// `ORDER BY source_id`. These tests guard the load() rewrite as a no-op.
+// The parity test compares `load(type)` against `data/extracted/<type>.json`
+// directly — the raw JSON IS the snapshot. Committing static copies under
+// `test/fixtures/parity-snapshots/` (SQR-55) was redundant and prone to
+// drift, so SQR-57 deleted them in favour of this dynamic check. Any field
+// silently lost in the seed → DB → load pipeline fails the test loudly.
 
 /**
  * Drop keys whose value is null or undefined so that a column stored as
