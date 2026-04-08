@@ -94,7 +94,11 @@ export const CharacterMatSchema = z.object({
     .describe('GHS source identifier (e.g. gloomhavensecretariat:character-mat/drifter)'),
   name: z.string().describe('Character class name (e.g. "Drifter")'),
   characterClass: z.string().describe('Character race (e.g. "Inox")'),
-  handSize: z.number().int().describe('Starting hand size'),
+  handSize: z
+    .union([z.number().int(), z.tuple([z.number().int(), z.number().int()])])
+    .describe(
+      'Starting hand size. A single integer for normal mats, or a `[form1, form2]` tuple for split mats like Geminate where GHS encodes the hand size as the pipe-separated string "7|7". The importer parses the string into a tuple; see SQR-63.',
+    ),
   traits: z.array(z.string()).describe('Character traits (e.g. outcast, resourceful, strong)'),
   hp: z
     .record(z.string(), z.number().int())

@@ -56,7 +56,9 @@ interface GhsCharacter {
   name: string;
   characterClass: string;
   edition: string;
-  handSize: number;
+  // GHS encodes split mats (e.g. Geminate) as the string "7|7" rather than
+  // a number. `convertCharacterMat` parses either form.
+  handSize: number | string;
   traits: string[];
   stats: Array<{ level: number; health: number }>;
   perks: GhsPerk[];
@@ -72,7 +74,9 @@ interface GhsCharacter {
 interface ExtractedCharacterMat {
   name: string;
   characterClass: string;
-  handSize: number;
+  // Single number for normal mats, or a `[form1, form2]` tuple for split
+  // mats (e.g. Geminate). See SQR-63 and CharacterMatSchema.
+  handSize: number | [number, number];
   traits: string[];
   hp: Record<string, number>;
   perks: string[];
@@ -232,6 +236,27 @@ export function formatPerk(perk: GhsPerk, characterName: string, labels: LabelDa
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
 
+/**
+ * Parse GHS handSize. Normal mats are a plain integer; split mats (e.g.
+ * Geminate) are encoded as a pipe-separated string like "7|7". We return
+ * a `[form1, form2]` tuple for the split case so downstream consumers can
+ * distinguish it from a scalar. See SQR-63.
+ */
+function parseHandSize(raw: number | string): number | [number, number] {
+  if (typeof raw === 'number') return raw;
+  const parts = raw.split('|').map((p) => {
+    const n = Number.parseInt(p, 10);
+    if (!Number.isFinite(n)) {
+      throw new Error(`Unparseable handSize segment "${p}" in "${raw}"`);
+    }
+    return n;
+  });
+  if (parts.length !== 2) {
+    throw new Error(`Unsupported handSize string "${raw}" — expected "N" or "N|N"`);
+  }
+  return [parts[0], parts[1]];
+}
+
 export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): ExtractedCharacterMat {
   const hp: Record<string, number> = {};
   for (const stat of ghs.stats) {
@@ -245,7 +270,7 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
   return {
     name: kebabToTitle(ghs.name),
     characterClass: kebabToTitle(ghs.characterClass),
-    handSize: ghs.handSize,
+    handSize: parseHandSize(ghs.handSize),
     traits: ghs.traits,
     hp,
     perks,

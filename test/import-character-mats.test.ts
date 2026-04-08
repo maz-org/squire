@@ -263,6 +263,12 @@ describe('convertCharacterMat', () => {
     expect(result.handSize).toBe(12);
   });
 
+  it('parses split handSize "7|7" into a [form1, form2] tuple (Geminate)', () => {
+    const ghs = { ...ghsDrifter, name: 'geminate', handSize: '7|7' };
+    const result = convertCharacterMat(ghs, labels);
+    expect(result.handSize).toEqual([7, 7]);
+  });
+
   it('preserves traits', () => {
     const result = convertCharacterMat(ghsDrifter, labels);
     expect(result.traits).toEqual(['outcast', 'resourceful', 'strong']);

@@ -338,7 +338,13 @@ function recordToText(record: ExtractedRecord): string {
     const masteries = (r.masteries as string[])?.length
       ? `Masteries: ${(r.masteries as string[]).join('; ')}.`
       : '';
-    return `Character Mat — ${r.name} (${r.characterClass}). Hand size: ${r.handSize}. ${traits}HP: ${hpStr}. ${perks}${masteries}`;
+    // Split mats (e.g. Geminate) arrive as a `[form1, form2]` tuple; render
+    // as "7 / 7 (split)" so the agent/FTS can distinguish them from scalar
+    // hand sizes. See SQR-63 and src/schemas.ts#CharacterMatSchema.
+    const handSize = Array.isArray(r.handSize)
+      ? `${(r.handSize as number[]).join(' / ')} (split)`
+      : r.handSize;
+    return `Character Mat — ${r.name} (${r.characterClass}). Hand size: ${handSize}. ${traits}HP: ${hpStr}. ${perks}${masteries}`;
   }
 
   if (t === 'items') {

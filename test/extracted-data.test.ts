@@ -60,15 +60,8 @@ function readRawExtracted(type: CardType): Array<Record<string, unknown>> {
  * EXCLUDED from both sides of the comparison. If the underlying Linear
  * issue is fixed, the entry here must be removed in the same PR.
  */
-const KNOWN_PARITY_EXCLUSIONS: Partial<Record<CardType, { sourceIds: string[]; issue: string }>> = {
-  'character-mats': {
-    // Geminate is a split character mat (two forms) and ships with
-    // handSize "7|7". Current schema declares handSize as int; evolving
-    // to support split mats needs its own design pass.
-    sourceIds: ['gloomhavensecretariat:character-mat/geminate'],
-    issue: 'SQR-63',
-  },
-};
+const KNOWN_PARITY_EXCLUSIONS: Partial<Record<CardType, { sourceIds: string[]; issue: string }>> =
+  {};
 
 function readSearchSnapshot(): Array<{ query: string; expectedTopSourceIds: string[] }> {
   const path = join(import.meta.dirname, 'fixtures', 'search-queries', 'cards.json');
@@ -439,6 +432,23 @@ describe('formatExtracted', () => {
     expect(text).toContain('Hand size: 11');
     expect(text).toContain('Traits: Quatryl');
     expect(text).toContain('L1=8');
+  });
+
+  it('formats split character mats (Geminate) with a tuple hand size', () => {
+    const text = formatExtracted([
+      {
+        _type: 'character-mats',
+        name: 'Geminate',
+        characterClass: 'Harrower',
+        handSize: [7, 7],
+        hp: { 1: 8 },
+        traits: ['arcane'],
+        perks: [],
+        masteries: [],
+      },
+    ]);
+    expect(text).toContain('Geminate');
+    expect(text).toContain('Hand size: 7 / 7 (split)');
   });
 
   it('formats personal quests with requirements', () => {
