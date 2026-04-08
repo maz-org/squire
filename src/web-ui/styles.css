@@ -61,7 +61,7 @@
  *
  * prefers-color-scheme is intentionally NOT honored — see comment block above.
  */
-[data-theme='light'] {
+html[data-theme='light'] {
   --ink: #f5ebd9;
   --surface: #ede0c4;
   --surface-2: #e2d3b2;
