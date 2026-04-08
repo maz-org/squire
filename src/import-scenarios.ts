@@ -56,6 +56,8 @@ interface GhsObjective {
 
 interface GhsRequirement {
   buildings?: string[];
+  campaignSticker?: string[];
+  scenarios?: string[];
 }
 
 interface GhsScenario {
@@ -63,7 +65,9 @@ interface GhsScenario {
   name: string;
   flowChartGroup?: string;
   edition: string;
-  complexity: number;
+  // Solo class scenarios and the random dungeon ship without a printed
+  // complexity value.
+  complexity?: number;
   initial?: boolean;
   unlocks?: string[];
   rewards?: GhsRewards;
@@ -85,7 +89,7 @@ interface ExtractedScenario {
   scenarioGroup: 'main' | 'solo' | 'random';
   index: string;
   name: string;
-  complexity: number;
+  complexity: number | null;
   monsters: string[];
   allies: string[];
   unlocks: string[];
@@ -167,7 +171,7 @@ export function convertScenario(
     scenarioGroup: deriveScenarioGroup(filenameBasename),
     index: ghs.index,
     name: ghs.name,
-    complexity: ghs.complexity,
+    complexity: ghs.complexity ?? null,
     monsters: (ghs.monsters ?? []).map(kebabToTitle),
     allies: (ghs.allies ?? []).map(kebabToTitle),
     unlocks: ghs.unlocks ?? [],

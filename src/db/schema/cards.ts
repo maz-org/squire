@@ -289,7 +289,9 @@ export const cardScenarios = pgTable(
     scenarioGroup: text('scenario_group').notNull(),
     index: text('index').notNull(),
     name: text('name').notNull(),
-    complexity: integer('complexity').notNull(),
+    // Nullable: solo class scenarios and the random dungeon ship without a
+    // printed complexity value. See src/schemas.ts#ScenarioSchema.
+    complexity: integer('complexity'),
     monsters: text('monsters').array().notNull(),
     allies: text('allies').array().notNull(),
     unlocks: text('unlocks').array().notNull(),

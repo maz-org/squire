@@ -121,6 +121,29 @@ function visibleSelectList(table: PgTable): ReturnType<typeof sql> {
   return out;
 }
 
+/**
+ * Per-type row normalizers. The DB stores every value in a column, and some
+ * columns lose type information (e.g. `card_character_abilities.level` is
+ * `text` so it can hold both numeric levels and the `"X"` sentinel for
+ * lost/no-level cards). Normalizers restore the original type so that
+ * `load()` output matches `data/extracted/<type>.json` byte-for-byte.
+ */
+const ROW_NORMALIZERS: Partial<Record<CardType, (row: Record<string, unknown>) => void>> = {
+  'character-abilities': (row) => {
+    // `level` is stored as text so "X" can round-trip; numeric levels come
+    // back as strings like "1". Restore the number where possible.
+    const lvl = row.level;
+    if (typeof lvl === 'string' && lvl !== 'X' && /^-?\d+$/.test(lvl)) {
+      row.level = Number(lvl);
+    }
+  },
+};
+
+function normalizeRow(type: CardType, row: Record<string, unknown>): Record<string, unknown> {
+  ROW_NORMALIZERS[type]?.(row);
+  return row;
+}
+
 export async function load(type: CardType, opts: LoadOpts = {}): Promise<ExtractedRecord[]> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
@@ -130,7 +153,7 @@ export async function load(type: CardType, opts: LoadOpts = {}): Promise<Extract
     sql`SELECT ${visibleSelectList(table)} FROM ${table} WHERE game = ${game} ORDER BY source_id`,
   );
 
-  return rows.rows.map((r) => ({ ...r, _type: type }));
+  return rows.rows.map((r) => ({ ...normalizeRow(type, r), _type: type }));
 }
 
 /**
@@ -155,7 +178,7 @@ export async function loadOne(
   );
 
   const row = rows.rows[0];
-  return row ? { ...row, _type: type } : null;
+  return row ? { ...normalizeRow(type, row), _type: type } : null;
 }
 
 /**
@@ -234,7 +257,10 @@ export async function searchExtractedRanked(
   }>(sql`SELECT card_type, payload, score FROM (${unioned}) s ORDER BY score DESC LIMIT ${k}`);
 
   return rows.rows.map((r) => ({
-    record: { ...r.payload, _type: r.card_type } as ExtractedRecord,
+    record: {
+      ...normalizeRow(r.card_type, r.payload as Record<string, unknown>),
+      _type: r.card_type,
+    } as ExtractedRecord,
     score: Number(r.score),
   }));
 }
@@ -387,7 +413,8 @@ function recordToText(record: ExtractedRecord): string {
           .join(', ')}.`
       : '';
     const initial = r.initial ? ' [Starting scenario]' : '';
-    return `Scenario #${r.index}: ${r.name} (Complexity ${r.complexity}).${initial} ${monsters}${allies}${unlocks}${rewards}${lootStr}`.trim();
+    const complexity = r.complexity == null ? '' : ` (Complexity ${r.complexity as number})`;
+    return `Scenario #${r.index}: ${r.name}${complexity}.${initial} ${monsters}${allies}${unlocks}${rewards}${lootStr}`.trim();
   }
 
   return JSON.stringify(record);

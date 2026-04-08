@@ -185,14 +185,31 @@ export const ScenarioSchema = z.object({
     ),
   index: z.string().describe('Scenario number/identifier (e.g. "1", "4A")'),
   name: z.string().describe('Scenario name'),
-  complexity: z.number().int().min(1).max(3).describe('Scenario complexity rating (1-3)'),
+  complexity: z
+    .number()
+    .int()
+    .min(1)
+    .max(3)
+    .nullish()
+    .describe(
+      'Scenario complexity rating (1-3). Null/absent for solo class scenarios and the random dungeon, which ship without a printed complexity value.',
+    ),
   monsters: z.array(z.string()).describe('Monster types present in this scenario'),
   allies: z.array(z.string()).describe('Allied monster types, if any'),
   unlocks: z.array(z.string()).describe('Scenario indices unlocked on completion'),
   requirements: z
     .array(
+      // Each requirement is an AND-group of conditions. Real data has three
+      // kinds: `buildings` (town has building X at level Y), `campaignSticker`
+      // (a story sticker is placed on the campaign sheet), and `scenarios`
+      // (a prior scenario is completed). All three are optional because any
+      // given requirement row only uses the fields it needs.
       z.object({
         buildings: z.array(z.string()).optional(),
+        campaignSticker: z.array(z.string()).optional(),
+        // Nested: each inner array is an AND-group of scenario indices
+        // that together satisfy one prerequisite branch. GHS source shape.
+        scenarios: z.array(z.array(z.string())).optional(),
       }),
     )
     .describe('Prerequisites to play this scenario'),
