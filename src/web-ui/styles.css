@@ -168,13 +168,21 @@ html {
 }
 
 /* `.squire-column` wraps the five mobile regions. Flex column so the input
-   dock can sit at the bottom and the main surface flexes to fill. */
+   dock can sit at the bottom and the main surface flexes to fill. The
+   640px max-width + auto-margin lives HERE rather than on `.squire-surface`
+   so the header, tool-call footer, recent chips, and input dock all share
+   the same centered ledger column on tablet/desktop. Earlier the cap was
+   only on `.squire-surface`, which made the dock and header full-bleed
+   while the body was bounded — visually asymmetric. CodeRabbit caught it
+   on PR #198. */
 .squire-column {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 100vh;
   width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
 }
 
 /* 1. Header bar — thin, with bottom hairline rule. */
@@ -198,7 +206,8 @@ html {
   font-family: Fraunces, Georgia, serif;
   font-weight: 700;
 }
-.squire-header .squire-wordmark {
+.squire-header .squire-wordmark,
+.squire-rail .squire-wordmark {
   font-family: Fraunces, Georgia, serif;
   font-size: 18px;
   font-weight: 500;
@@ -214,13 +223,13 @@ html {
 
 /* 2. Main surface — flexes to fill. NOT a chat column — content modes
    (streaming answer, card comparison, character sheet) drop in as siblings
-   of any error banner that the fallback path injects. */
+   of any error banner that the fallback path injects. The 640px max-width
+   lives on `.squire-column` (above), not here, so all five regions share
+   the same centered ledger width. */
 .squire-surface {
   flex: 1 1 auto;
   padding: 24px 16px;
   width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
 }
 
 /* 3. Tool-call footer — single line, sepia small caps, separated by a
@@ -318,6 +327,10 @@ html {
   margin: 0;
   font-size: 15px;
   color: var(--parchment-dim);
+  /* Long Error.message strings (paths, URLs, stack tokens) need to wrap
+     instead of pushing the layout horizontally on narrow viewports. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .squire-banner--error {
   border-left-color: var(--error);
