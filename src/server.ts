@@ -33,23 +33,73 @@ export const app = new Hono();
 
 // ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0009) ─────────────────────
 //
-// Replaces the prebuilt-static-file pipeline from ADR 0008. `/app.css`
-// compiles src/web-ui/styles.css in-process via @tailwindcss/node on the
-// first request and caches the result; `/squire.js` reads the vanilla-JS
-// island file from src/web-ui/squire.js with the same cache pattern. In
-// dev mode the cache is keyed on source-file mtime, so edits show up on
-// the next request without a rebuild step. No `npm run build:css`, no
-// gitignored build output, no fresh-clone "I forgot to build" trap.
+// Replaces the prebuilt-static-file pipeline from ADR 0008 with
+// Rails Propshaft semantics: dev serves bare paths with no-cache so
+// edits to styles.css and squire.js show up immediately in devtools,
+// prod serves content-hashed paths (`/app.<hash>.css`,
+// `/squire.<hash>.js`) with immutable caching so Cloudflare and
+// browsers can cache forever and invalidation is automatic on
+// content change. Hash is enforced by the router regex
+// (`[a-f0-9]+`) so non-hex paths 404 before the handler runs; a
+// prod hash mismatch (stale HTML after deploy) also 404s and the
+// browser reloads HTML on next navigation.
+//
+// Both route patterns are registered unconditionally; the handlers
+// branch on NODE_ENV at request time so tests can stub env without
+// re-importing the server module. See ADR 0009 fingerprinting
+// addendum for the full rationale.
+
+const PROD_ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+const DEV_ASSET_CACHE_CONTROL = 'no-cache';
+
+function isProdEnv(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+// Dev-only bare CSS path. In prod the HTML references the hashed
+// URL, so the bare path 404s there.
 app.get('/app.css', async (c) => {
-  const css = await getAppCss();
+  if (isProdEnv()) return c.notFound();
+  const { content } = await getAppCss();
   c.header('content-type', 'text/css; charset=utf-8');
-  return c.body(css);
+  c.header('cache-control', DEV_ASSET_CACHE_CONTROL);
+  return c.body(content);
 });
 
+// Prod-only hashed CSS path. The regex matches the full filename
+// (`app.<hex>.css`) as a single param because Hono's router doesn't
+// support `:param{regex}.literal` patterns — it either 404s silently
+// (single-segment) or throws (multi-segment) — but full-filename
+// constraints work fine. Router rejects non-hex at the match layer;
+// the handler then checks the filename matches the current compile
+// exactly and 404s on mismatch.
+app.get('/:file{app\\.[a-f0-9]+\\.css}', async (c) => {
+  if (!isProdEnv()) return c.notFound();
+  const { content, hash } = await getAppCss();
+  if (c.req.param('file') !== `app.${hash}.css`) return c.notFound();
+  c.header('content-type', 'text/css; charset=utf-8');
+  c.header('cache-control', PROD_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
+// Dev-only bare JS path.
 app.get('/squire.js', async (c) => {
-  const js = await getSquireJs();
+  if (isProdEnv()) return c.notFound();
+  const { content } = await getSquireJs();
   c.header('content-type', 'text/javascript; charset=utf-8');
-  return c.body(js);
+  c.header('cache-control', DEV_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
+// Prod-only hashed JS path. Same full-filename-as-param pattern as
+// the CSS handler for the same Hono router reason.
+app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
+  if (!isProdEnv()) return c.notFound();
+  const { content, hash } = await getSquireJs();
+  if (c.req.param('file') !== `squire.${hash}.js`) return c.notFound();
+  c.header('content-type', 'text/javascript; charset=utf-8');
+  c.header('cache-control', PROD_ASSET_CACHE_CONTROL);
+  return c.body(content);
 });
 
 // ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────

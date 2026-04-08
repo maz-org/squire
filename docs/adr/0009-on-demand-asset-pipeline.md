@@ -125,3 +125,140 @@ surprise was how cheap the Tailwind v4 compile actually is — 38 ms for
 the full design system was well below the expected 100–300 ms band, so
 the trade-off ADR 0008 worried about (Node-side compilation cost)
 turned out to be a non-issue at this scale.
+
+## Addendum — content-hash fingerprinting (2026-04-08 eng review)
+
+The decision above stopped at "compile in-process, cache in memory"
+and left the route handlers serving the bare `/app.css` and
+`/squire.js` paths with no `Cache-Control` header. Eng review on the
+initial SQR-71 implementation flagged that gap: without an explicit
+cache header, Cloudflare's edge cache behavior is implicit and every
+browser load re-fetches the CSS. Setting a short `max-age` is a
+half-measure (stale-risk vs. cache-efficiency compromise); the
+complete answer is content-hash fingerprinting with long-lived
+immutable caching, which is what Webpack, Vite, Rails Propshaft, and
+Phoenix Asset Pipeline all emit for the same reason. Folded into
+SQR-71 rather than spun out as a follow-up so the asset pipeline
+ships the complete caching story in one PR.
+
+### Fingerprinting decision
+
+**Prod**: URLs are content-hashed (`/app.<hash>.css`,
+`/squire.<hash>.js`), where `<hash>` is the first 10 hex chars of
+`sha256(content)`. Responses ship
+`Cache-Control: public, max-age=31536000, immutable`. The route
+patterns capture the full filename with a regex constraint
+(`/:file{app\.[a-f0-9]+\.css}`) so non-hex paths 404 at the Hono
+router layer before the handler runs. The handler then checks the
+captured filename matches `app.${currentHash}.css` exactly and 404s
+on mismatch — a stale HTML page from a previous deploy that still
+references the old URL will 404 on its CSS, and the browser
+re-fetches the HTML on the next navigation.
+
+**Hono router quirk.** The "obvious" pattern `/app.:hash{[a-f0-9]+}.css`
+(parameter with regex constraint followed by a literal suffix) is
+*not* supported by Hono 4.12's `RegExpRouter`: single-segment
+variants silently 404 even on matching inputs, and multi-segment
+variants (`/assets/:hash{...}.css`) throw an uncaught
+`TypeError: undefined is not iterable` from
+`buildMatcherFromPreprocessedRoutes`. Full-filename regex
+constraints (`/:file{app\.[a-f0-9]+\.css}`) work correctly and
+remain hex-constrained at the match layer, which is all we
+actually needed. Documented here so the next person who reaches
+for the "pretty" syntax doesn't lose an hour debugging 404s.
+
+**Dev**: URLs are bare (`/app.css`, `/squire.js`) with
+`Cache-Control: no-cache`. This is the Rails Propshaft dev mode
+pattern — no hashes in dev URLs, so devtools stays readable, there's
+no hash-mismatch dance when editing `styles.css` between requests,
+and the mtime-keyed cache from the original ADR still works
+unchanged. The hashed routes are registered in the Hono app but
+their handlers 404 in dev, so a stray hashed request (e.g., a
+copied-from-prod link) fails cleanly instead of silently serving
+stale content.
+
+Both route patterns are registered unconditionally; the handlers
+branch on `NODE_ENV` at request time. This lets test files stub
+`NODE_ENV` per test case via `vi.stubEnv` without having to
+re-import the server module, and the branching cost is a single
+string compare per request — negligible next to the cache lookup.
+
+### Promise memoization
+
+A secondary gap eng review flagged: two concurrent requests arriving
+on a cold process both see `cssCache === null`, both enter the
+`compile(...)` path, both pay the 38 ms cost, both allocate a
+Tailwind engine. The fix is Promise memoization — store an in-flight
+`Promise<AssetEntry> | null` alongside the cache. The first caller
+starts the compile and sets the in-flight promise; subsequent
+callers await the same promise. On resolution the cache is populated
+and the in-flight promise is cleared in a `finally` block so a
+failed compile doesn't poison the cache (the next caller retries).
+
+Probability in practice: low, especially behind Cloudflare where
+cache-miss fan-out is one request per PoP. But the fix is ~5 lines,
+it eliminates a whole class of "why did memory spike on deploy"
+forensics, and it makes the concurrent-cold-start behavior
+deterministic. Tested via `_getCssCompileCountForTests` — two
+parallel `getAppCss()` calls assert the counter is exactly 1.
+
+### URL threading into the layout
+
+`layoutShell` in `src/web-ui/layout.ts` used to read a compile-time
+constant (`APP_CSS_HREF = '/app.css'`) from `fonts.ts`. With
+fingerprinting the URL is dynamic (depends on content and env), so
+the constant is deleted and the layout awaits `getAppCssUrl()` /
+`getSquireJsUrl()` internally. `layoutShell` was already returning
+`HtmlEscapedString | Promise<HtmlEscapedString>`, so tightening to
+`Promise<HtmlEscapedString>` is type-level cleanup rather than an
+async propagation — all callers already `await` it.
+
+### Rolling-deploy caveat
+
+Phase 1 ships a single-instance deploy behind Cloudflare, so the
+cache-invalidation story is simple: when a deploy starts, the new
+process computes a new hash, and the `<link>` URL in the HTML
+matches the current compile. Edge cache on the HTML is short-lived
+(default browser + CDN heuristics), so the stale-HTML window is
+measured in seconds. A brief unstyled flash on first page load
+after deploy (old HTML referencing old hash, 404 on CSS) self-heals
+on next navigation.
+
+This story breaks in Phase 3+ multi-instance or blue/green deploys.
+Two instances compiling in parallel can produce the same content
+hash (deterministic) but only if they run the exact same
+`@tailwindcss/node` version against the exact same source files. In
+practice they will, but the assumption is fragile. The robust
+answers for later:
+
+1. **Pre-compile at boot** — run `getAppCss()` once during
+   `startServer()` before the listener opens. Guarantees a
+   deterministic hash at startup and eliminates first-request
+   latency. Trade-off: adds 38 ms to cold-start time, which
+   matters for serverless but not for the long-running single-
+   instance deploy target.
+2. **Per-instance hash broadcast** — each instance computes its
+   own hash and the load balancer routes `/app.<hash>.css`
+   requests to the matching instance via a sticky-session cookie.
+   Overkill for Squire.
+3. **Write compiled assets to a shared object store** at deploy
+   time and serve via Cloudflare directly — bypasses the Node
+   process entirely. The "right" answer at scale but Phase 1
+   doesn't need it.
+
+None of these are in scope for SQR-71. Flagged here so the next
+deployment-model change knows where to start.
+
+### What this does not solve
+
+- **Subresource Integrity (SRI)**. `<link integrity="sha256-...">`
+  is useful for third-party CDN assets but redundant for same-
+  origin content that we already trust end-to-end. Skip.
+- **Asset versioning in service worker cache**. Squire doesn't have
+  a service worker. When one lands, it can key its cache on the
+  same content hash.
+- **Old-compile retention across deploys**. If an in-flight HTML
+  response from deploy N references `/app.<oldhash>.css` and that
+  request lands on deploy N+1, the hashed route 404s. Phase 1's
+  ~second-long restart behind Cloudflare makes this window narrow
+  enough to ignore; flagged above as a Phase 3+ concern.
