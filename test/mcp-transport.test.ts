@@ -46,6 +46,9 @@ vi.mock('../src/auth.ts', () => ({
     token: 'stub',
     clientId: 'stub-client',
     scopes: [],
+    // Match SquireOAuthProvider.verifyAccessToken shape: `expiresAt` is
+    // unix seconds (not a Date). CodeRabbit nitpick on PR #196.
+    expiresAt: Math.floor(Date.now() / 1000) + 3600,
   }),
   getAuthProvider: vi.fn(),
   resetAuthProvider: vi.fn(),
