@@ -204,8 +204,14 @@ server:
 docker compose up -d
 npm run db:migrate
 npm run index        # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
-npm run seed:cards   # upserts data/extracted/*.json into the card_* tables
+npm run seed:dev     # seeds card_* tables + a local dev user
 ```
+
+`npm run seed:dev` is the one-shot local bundle. It chains
+`npm run seed:cards` (the prod-relevant default, also aliased as
+`npm run seed`) and `npm run seed:dev-user` (inserts a predictable dev
+user for testing authenticated paths; refuses to run when
+`NODE_ENV=production`).
 
 `npm run index` is idempotent — re-running it skips PDFs that are
 already in the `embeddings` table. `npm run seed:cards` is also

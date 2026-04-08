@@ -196,8 +196,14 @@ docker compose up -d
 npm ci
 npm run db:migrate
 npm run index              # populates the embeddings table (~2 min)
-npm run seed:cards         # upserts data/extracted/*.json into the card_* tables
+npm run seed:dev           # seeds card_* tables + the local dev user
 ```
+
+`npm run seed:dev` is a convenience bundle for local development that runs
+`seed:cards` (the prod-relevant step, also aliased as `npm run seed`) and
+then `seed:dev-user` (inserts a single predictable dev user into the
+`users` table for testing authenticated paths without the Google OAuth
+round-trip). The dev-user step refuses to run with `NODE_ENV=production`.
 
 `npm run seed:cards` is idempotent — re-run it any time the extracted
 JSON refreshes. It validates each record with the matching `SCHEMAS[type]`
