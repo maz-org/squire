@@ -81,7 +81,7 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 - **Server framework:** Hono (`@hono/node-server`)
 - **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS pre-built via Tailwind CLI
-- **Build pipeline:** no JavaScript bundler. One CSS build step: `tailwindcss -i src/web-ui/styles.css -o public/app.css` runs in the Dockerfile / deploy pipeline. The resulting `app.css` is served as a static file by Hono (and edge-cached by Cloudflare).
+- **Build pipeline:** no JavaScript bundler. One CSS build step (`npm run build:css` → `tailwindcss -i src/web-ui/styles.css -o public/app.css --minify`) runs in CI before tests today and will additionally run in the Dockerfile once SQR-42 lands. `public/app.css` is gitignored (regenerated on every build) and served as a static file by Hono (edge-cached by Cloudflare).
 
 *Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
 

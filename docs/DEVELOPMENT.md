@@ -161,6 +161,7 @@ npm run test:watch    # Watch mode
 npm run typecheck     # TypeScript type checking
 npm run lint          # ESLint
 npm run format:check  # Prettier check
+npm run build:css     # Compile src/web-ui/styles.css → public/app.css (Tailwind CLI, ADR 0008)
 ```
 
 Tests use randomized execution order (`sequence.shuffle` in vitest
