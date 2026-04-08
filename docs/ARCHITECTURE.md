@@ -522,6 +522,7 @@ src/
   schemas.ts                    Zod schemas for all GHS card types
   seed/
     seed-cards.ts               JSON → Zod-validated upserts into card_* tables
+    seed-dev-user.ts            Idempotent single-row dev user for local auth testing
   server.ts                     Hono server (REST + MCP transport + web UI host)
   service.ts                    Service initialization, readiness, graduated /api/ask path
   tools.ts                      Atomic tools: searchRules, searchCards, listCardTypes, listCards, getCard
@@ -583,6 +584,8 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-04-08 (v1.0.4):** SQR-36 shipped the seed bundle. `src/seed/seed-dev-user.ts` is a tiny idempotent helper that upserts a predictable dev user (`dev@squire.local`) via `ON CONFLICT DO NOTHING` (no target — absorbs conflicts on either `email` or `google_sub`). The CLI wrapper `scripts/seed-dev-user.ts` refuses to run with `NODE_ENV=production`. Package scripts gained `seed` (alias for `seed:cards`, the prod default), `seed:dev-user`, and `seed:dev` (chains `seed:cards` then `seed:dev-user`). Local bootstrap is now `docker compose up && npm ci && npm run db:migrate && npm run index && npm run seed:dev`. Tests: 12 new seed-cards contract tests (per-type row counts ×10, idempotency, update-on-conflict revert — with an `afterAll` TRUNCATE + re-seed to keep MVCC row order stable for downstream `ts_rank` parity tests) plus 3 dev-user tests (insert, idempotency, preserve hand-edited rows).
 
 - **2026-04-08 (v1.0.3):** SQR-57 closed out the card-data migration. Added a dynamic parity test that compares `load(type)` against raw `data/extracted/<type>.json` for all 10 types, catching anything the seed→DB→load pipeline silently drops. Surfaced a real Zod/DB gap: 18 solo-class scenarios and the Random Dungeon ship without a printed `complexity`, so the `ScenarioSchema.complexity` field and `card_scenarios.complexity` column are now nullable (`0003_card_scenarios_nullable_complexity.sql`); `ScenarioSchema.requirements` now accepts the full GHS shape (`buildings`, `campaignSticker`, `scenarios`), so no fields are silently stripped. Added a `searchExtracted` fixture parity test over a curated 20-query FTS regression set in `test/fixtures/search-queries/cards.json`. Two known-bad records are explicitly excluded and tracked in SQR-62 (`monster-ability/chaos-spark/undefined`) and SQR-63 (`character-mat/geminate` split handSize). Post-migration eval: 10/15 pass, 0.707 avg correctness vs SQR-55 baseline 10/15 / 0.720 — within judge noise, no regression.
 

@@ -196,8 +196,14 @@ docker compose up -d
 npm ci
 npm run db:migrate
 npm run index              # populates the embeddings table (~2 min)
-npm run seed:cards         # upserts data/extracted/*.json into the card_* tables
+npm run seed:dev           # seeds card_* tables + the local dev user
 ```
+
+`npm run seed:dev` is a convenience bundle for local development that runs
+`seed:cards` (the prod-relevant step, also aliased as `npm run seed`) and
+then `seed:dev-user` (inserts a single predictable dev user into the
+`users` table for testing authenticated paths without the Google OAuth
+round-trip). The dev-user step refuses to run with `NODE_ENV=production`.
 
 `npm run seed:cards` is idempotent — re-run it any time the extracted
 JSON refreshes. It validates each record with the matching `SCHEMAS[type]`
@@ -284,11 +290,13 @@ src/
     schema/         # Drizzle schema (core, auth, cards) — barrel in index.ts
     migrations/     # Numbered SQL migrations (hand-written for FTS generated cols)
   seed/
-    seed-cards.ts   # JSON → Zod validation → upsert into card_* tables
+    seed-cards.ts       # JSON → Zod validation → upsert into card_* tables
+    seed-dev-user.ts    # Idempotent single-row dev user for local auth testing
 ```
 
 ## Changelog
 
+- **2026-04-08:** SQR-36 — local bootstrap flipped to `npm run seed:dev`, which chains `seed:cards` and the new `seed:dev-user` helper. `src/seed/seed-dev-user.ts` upserts a predictable `dev@squire.local` row into `users` via `ON CONFLICT DO NOTHING` (no target, so either `email` or `google_sub` conflicts no-op). CLI wrapper refuses `NODE_ENV=production`. New `seed` alias points at `seed:cards` as the prod-relevant default.
 - **2026-04-08:** SQR-56 — `extracted-data.ts` is Postgres-backed via FTS. The card tables hold the runtime data; `data/extracted/*.json` is now a seed input. The atomic tools became async and gained `opts.game`. `getCard` resolves on canonical `sourceId` (the per-type natural-key map is gone). Removed the "until SQR-56 lands" caveat from the data management section. Updated REST + MCP tables to say "Postgres FTS" instead of "keyword search". Added `src/db/`, `src/seed/` to the project structure tree and corrected the stale "Flat-file vector store" line on `vector-store.ts` (it has been pgvector since SQR-33).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear SQR-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
 - **2026-04-07:** Renamed from `docs/development.md` to `docs/DEVELOPMENT.md` as part of the ALL_CAPS docs consolidation.
