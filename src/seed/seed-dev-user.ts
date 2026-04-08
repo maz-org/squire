@@ -38,6 +38,12 @@ export async function seedDevUser(db: Db): Promise<SeedDevUserResult> {
   // `returning` only yields rows that were actually inserted when combined
   // with `ON CONFLICT DO NOTHING`, so its length tells us whether the row
   // was new without a separate SELECT.
+  //
+  // `onConflictDoNothing()` without a target absorbs a conflict on EITHER
+  // unique constraint (`email` or `google_sub`). Pinning to one would
+  // crash the other path: if a dev hand-edits the email while leaving the
+  // fake `google_sub` in place, a target on `email` would let the insert
+  // through and trip the `google_sub` unique violation instead of no-op.
   const rows = await db
     .insert(users)
     .values({
@@ -45,7 +51,7 @@ export async function seedDevUser(db: Db): Promise<SeedDevUserResult> {
       email: DEV_USER.email,
       name: DEV_USER.name,
     })
-    .onConflictDoNothing({ target: users.email })
+    .onConflictDoNothing()
     .returning({ id: users.id });
 
   return { inserted: rows.length > 0 };
