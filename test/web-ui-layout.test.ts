@@ -326,21 +326,23 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     const rule = css.match(/\.squire-banner--spoiler\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule![0]).toContain('border-left-color: var(--amber)');
-    expect(rule![0]).toMatch(/rgba\(212,\s*161,\s*71,\s*0\.08\)/);
+    // Modern space-separated form — see the rule-term highlighter comment
+    // above for why SQR-70 enforces this.
+    expect(rule![0]).toMatch(/rgb\(212\s+161\s+71\s*\/\s*0\.08\)/);
   });
 
   it('declares .squire-banner--sync with sage left border and 8% sage tint', () => {
     const rule = css.match(/\.squire-banner--sync\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule![0]).toContain('border-left-color: var(--sage)');
-    expect(rule![0]).toMatch(/rgba\(122,\s*140,\s*92,\s*0\.08\)/);
+    expect(rule![0]).toMatch(/rgb\(122\s+140\s+92\s*\/\s*0\.08\)/);
   });
 
   it('declares .squire-banner--error with 8% error tint (Phase 6 bit-rot guard)', () => {
     const rule = css.match(/\.squire-banner--error\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule![0]).toContain('border-left-color: var(--error)');
-    expect(rule![0]).toMatch(/rgba\(139,\s*41,\s*25,\s*0\.08\)/);
+    expect(rule![0]).toMatch(/rgb\(139\s+41\s+25\s*\/\s*0\.08\)/);
   });
 
   it('declares .squire-empty__scope with small-caps, letter-spacing ≥ 0.14em, sepia', () => {

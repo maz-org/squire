@@ -348,29 +348,34 @@ html {
 
 .squire-banner--error {
   border-left-color: var(--error);
+
   /* 8% tint of --error (#8b2919) on top of surface. */
-  background: rgba(139, 41, 25, 0.08);
+  background: rgb(139 41 25 / 0.08);
 }
 
 .squire-banner--error .squire-banner__label {
   color: var(--error);
 }
+
 /* SQR-67 — spoiler warning variant. Amber left border + 8% amber tint.
    DESIGN.md §Spoiler warning banner is authoritative. */
 .squire-banner--spoiler {
   border-left-color: var(--amber);
-  background: rgba(212, 161, 71, 0.08);
+  background: rgb(212 161 71 / 0.08);
 }
+
 .squire-banner--spoiler .squire-banner__label {
   color: var(--amber);
 }
+
 /* SQR-67 — Phase 6 sync status banner variant. Ships the CSS now with a
    hidden <template> fixture so Phase 6's SYNCED banner doesn't need to
    re-derive the styling. Sage accent + 8% sage tint per DESIGN.md. */
 .squire-banner--sync {
   border-left-color: var(--sage);
-  background: rgba(122, 140, 92, 0.08);
+  background: rgb(122 140 92 / 0.08);
 }
+
 .squire-banner--sync .squire-banner__label {
   color: var(--sage);
 }
@@ -384,12 +389,14 @@ html {
 .squire-empty {
   padding: 48px 0 24px;
 }
+
 .squire-empty .squire-question {
   margin-bottom: 20px;
 }
+
 .squire-empty__scope {
   margin: 0;
-  font-family: Geist, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 11px;
   font-weight: 500;
   color: var(--sepia);
@@ -408,7 +415,7 @@ html {
   padding: 6px 12px;
   border: 1px solid var(--rule);
   border-radius: 4px;
-  font-family: Geist, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 12px;
   color: var(--sepia);
   white-space: nowrap;
@@ -428,9 +435,10 @@ html {
   background: var(--surface);
   border-radius: 0 8px 8px 0;
 }
+
 .squire-verdict__label {
   display: block;
-  font-family: Geist, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -438,9 +446,10 @@ html {
   color: var(--wax);
   margin-bottom: 6px;
 }
+
 .squire-verdict__body {
   margin: 0;
-  font-family: Geist, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 15px;
   color: var(--parchment);
 }
@@ -455,7 +464,7 @@ html {
   background: var(--wax);
   color: var(--parchment);
   border-radius: 999px;
-  font-family: Geist, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
