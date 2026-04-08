@@ -50,17 +50,13 @@ function stripInternalKeys(record: Record<string, unknown>): Record<string, unkn
  * Search the rulebook vector index for passages relevant to a query.
  * Returns structured results with text, source, and similarity score.
  *
- * `opts.game` is accepted for API symmetry with the card tools; the vector
- * store does not yet filter on game, so it's currently a no-op. Phase 2
- * will add a game-tagged rulebook index.
+ * `opts.game` is threaded through to `vector-store.search`, which filters
+ * on the `game` column of the embeddings table. Defaults to `'frosthaven'`
+ * when omitted.
  */
-export async function searchRules(
-  query: string,
-  topK = 6,
-  _opts?: ToolOpts,
-): Promise<RuleResult[]> {
+export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
-  const hits: ScoredEntry[] = await search(queryEmbedding, topK);
+  const hits: ScoredEntry[] = await search(queryEmbedding, topK, { game: opts?.game });
 
   return hits.map((h) => ({
     text: h.text,

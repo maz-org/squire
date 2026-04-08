@@ -16,6 +16,21 @@
 -- and we always call `array_to_string` with `text[]`. Query-time FTS in
 -- `src/extracted-data.ts` still calls `websearch_to_tsquery('english', ...)`
 -- directly — these wrappers exist only for the generated columns.
+--
+-- DANGER — DO NOT change the 'english' text-search config without
+-- rebuilding every `card_*.search_vector` column. The stored tsvectors
+-- are frozen lexemes derived from the config at INSERT time; if a future
+-- migration does any of these, the index becomes silently wrong and
+-- search recall degrades without any error:
+--   * `CREATE TEXT SEARCH CONFIGURATION english ...`
+--   * `ALTER TEXT SEARCH CONFIGURATION english ...`
+--   * `ALTER DATABASE squire SET default_text_search_config = ...`
+--   * Dropping or replacing `squire_english_tsv` with a different body
+-- If any of those are needed, the correct recipe is: drop the GIN
+-- indexes, drop the `search_vector` columns, change the config, re-add
+-- the columns (Postgres re-evaluates the generated expression against
+-- every existing row), recreate the GIN indexes. Wrap the whole thing
+-- in a single transaction so queries never see a half-rebuilt index.
 
 CREATE OR REPLACE FUNCTION squire_english_tsv(text) RETURNS tsvector
   LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
