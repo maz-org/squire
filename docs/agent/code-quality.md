@@ -6,6 +6,13 @@
    - Use standard linting and formatting configurations for the programming language
    - All lint errors and warnings must be eliminated before committing
    - Fix all errors/warnings, even if caused by previous work
+   - Linters in this repo: **eslint** (TS/JS, `npm run lint`), **stylelint**
+     (CSS, `npm run lint:css` — `stylelint-config-standard` tuned for Tailwind
+     v4 at-rules in `.stylelintrc.json`), **markdownlint-cli2** (Markdown,
+     `npm run lint:md`), **prettier** (formatting, `npm run format:check`).
+     All four run in CI and via `lint-staged` on pre-commit. CodeRabbit is
+     configured to defer to stylelint for CSS findings (see `.coderabbit.yaml`)
+     — CI is the single source of truth for CSS style.
 
 2. **Document Design Choices**
    - When making a non-obvious design choice, document **why** in a code comment or markdown file — not just in PR descriptions or review replies

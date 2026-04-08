@@ -194,7 +194,7 @@ describe('styles.css — SQR-66 signature component rules', () => {
   const css = readFileSync(new URL('../src/web-ui/styles.css', import.meta.url), 'utf8');
 
   it('declares .squire-question with Fraunces clamp font-size and line-height 1.25', () => {
-    expect(css).toMatch(/\.squire-question\s*\{[^}]*font-family:\s*Fraunces/);
+    expect(css).toMatch(/\.squire-question\s*\{[^}]*font-family:\s*["']?Fraunces["']?/);
     expect(css).toMatch(/\.squire-question\s*\{[^}]*clamp\(\s*22px\s*,\s*5vw\s*,\s*28px\s*\)/);
     expect(css).toMatch(/\.squire-question\s*\{[^}]*line-height:\s*1\.25/);
   });
@@ -204,7 +204,8 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toContain('font-variant-caps: all-small-caps');
-    expect(body).toContain('rgba(212, 161, 71, 0.6');
+    // stylelint normalizes rgba(...) → rgb(...) (identical behavior with 4 args).
+    expect(body).toMatch(/rgba?\(212,\s*161,\s*71,\s*0\.6/);
     expect(body).toContain('75%');
     expect(body).toContain('white-space: nowrap');
   });
@@ -220,7 +221,7 @@ describe('styles.css — SQR-66 signature component rules', () => {
     const rule = css.match(/\.squire-answer\s+p:first-of-type::first-letter\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     const body = rule![0];
-    expect(body).toContain('font-family: Fraunces');
+    expect(body).toMatch(/font-family:\s*["']?Fraunces["']?/);
     expect(body).toMatch(/font-size:\s*(68|70|72)px/);
     expect(body).toContain('color: var(--wax)');
     expect(body).toMatch(/['"]opsz['"]\s*144/);
