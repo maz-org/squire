@@ -38,7 +38,14 @@ function rowToClient(row: OauthClientRow): OAuthClientInformationFull {
 }
 
 export class DrizzleClientsStore implements OAuthRegisteredClientsStore {
-  constructor(private readonly db: Db) {}
+  // Plain field, not a TS parameter property — Node's --experimental-strip-types
+  // loader (used by `npm run serve`) can't handle `constructor(private readonly db)`.
+  // Same reason as AuditableOAuthError in provider.ts.
+  private readonly db: Db;
+
+  constructor(db: Db) {
+    this.db = db;
+  }
 
   async getClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
     const rows = await this.db

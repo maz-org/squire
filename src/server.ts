@@ -8,7 +8,7 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { isReady, initialize, ask } from './service.ts';
 import { sql } from 'drizzle-orm';
@@ -24,6 +24,7 @@ import {
   createAuthorizationCode,
   exchangeAuthorizationCode,
   verifyAccessToken,
+  OAuthError,
 } from './auth.ts';
 
 export const app = new Hono();
@@ -44,7 +45,12 @@ app.get('/.well-known/oauth-authorization-server', (c) => {
     token_endpoint: `${base}/token`,
     registration_endpoint: `${base}/register`,
     response_types_supported: ['code'],
-    grant_types_supported: ['authorization_code', 'refresh_token'],
+    // Squire deliberately does not support refresh_token rotation — access
+    // tokens are long-lived (30 days) as a DX choice for MCP/API clients.
+    // See SECURITY.md §2 and `SquireOAuthProvider.exchangeRefreshToken`
+    // (throws UnsupportedGrantTypeError). Advertising only what the
+    // provider actually honors keeps the discovery metadata truthful.
+    grant_types_supported: ['authorization_code'],
     token_endpoint_auth_methods_supported: ['none'],
     code_challenge_methods_supported: ['S256'],
     scopes_supported: ['squire:read', 'squire:write'],
@@ -69,25 +75,24 @@ app.post('/register', async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json(jsonError('Invalid JSON body', 400), 400);
+    return c.json(oauthError('invalid_request', 'Invalid JSON body'), 400);
   }
 
   if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    return c.json(jsonError('Request body must be a JSON object', 400), 400);
+    return c.json(oauthError('invalid_request', 'Request body must be a JSON object'), 400);
   }
 
   try {
-    const client = registerClient(body as Record<string, unknown>);
+    const client = await registerClient(body as Record<string, unknown>);
     return c.json(client, 201);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Registration failed';
-    return c.json(jsonError(message, 400), 400);
+    return oauthErrorResponse(c, err);
   }
 });
 
 // ─── Authorization endpoint ──────────────────────────────────────────────────
 
-app.get('/authorize', (c) => {
+app.get('/authorize', async (c) => {
   const clientId = c.req.query('client_id');
   const redirectUri = c.req.query('redirect_uri');
   const responseType = c.req.query('response_type');
@@ -96,21 +101,23 @@ app.get('/authorize', (c) => {
   const state = c.req.query('state');
 
   if (!clientId || !redirectUri || responseType !== 'code') {
-    return c.json(jsonError('Missing or invalid required parameters', 400), 400);
+    return c.json(oauthError('invalid_request', 'Missing or invalid required parameters'), 400);
   }
   if (!codeChallenge || codeChallengeMethod !== 'S256') {
-    return c.json(jsonError('PKCE code_challenge with S256 method is required', 400), 400);
+    return c.json(
+      oauthError('invalid_request', 'PKCE code_challenge with S256 method is required'),
+      400,
+    );
   }
 
   try {
-    const authCode = createAuthorizationCode(clientId, redirectUri, codeChallenge, state);
+    const authCode = await createAuthorizationCode(clientId, redirectUri, codeChallenge, state);
     const redirect = new URL(redirectUri);
     redirect.searchParams.set('code', authCode.code);
     if (state) redirect.searchParams.set('state', state);
     return c.redirect(redirect.toString(), 302);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Authorization failed';
-    return c.json(jsonError(message, 400), 400);
+    return oauthErrorResponse(c, err);
   }
 });
 
@@ -120,14 +127,20 @@ app.post('/token', async (c) => {
   const contentType = c.req.header('content-type') || '';
   let params: URLSearchParams;
 
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    const body = await c.req.text();
-    params = new URLSearchParams(body);
-  } else if (contentType.includes('application/json')) {
-    const body = (await c.req.json()) as Record<string, string>;
-    params = new URLSearchParams(body);
-  } else {
-    return c.json(jsonError('Unsupported content type', 400), 400);
+  try {
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const body = await c.req.text();
+      params = new URLSearchParams(body);
+    } else if (contentType.includes('application/json')) {
+      const body = (await c.req.json()) as Record<string, string>;
+      params = new URLSearchParams(body);
+    } else {
+      return c.json(oauthError('invalid_request', 'Unsupported content type'), 400);
+    }
+  } catch {
+    // Malformed JSON / unreadable body — surface as OAuth invalid_request
+    // rather than letting it fall through to the generic 500 handler.
+    return c.json(oauthError('invalid_request', 'Malformed request body'), 400);
   }
 
   const grantType = params.get('grant_type');
@@ -139,19 +152,23 @@ app.post('/token', async (c) => {
     const redirectUri = params.get('redirect_uri');
 
     if (!code || !clientId || !codeVerifier || !redirectUri) {
-      return c.json(jsonError('Missing required parameters', 400), 400);
+      return c.json(oauthError('invalid_request', 'Missing required parameters'), 400);
     }
 
     try {
-      const tokenResponse = exchangeAuthorizationCode(code, clientId, codeVerifier, redirectUri);
+      const tokenResponse = await exchangeAuthorizationCode(
+        code,
+        clientId,
+        codeVerifier,
+        redirectUri,
+      );
       return c.json(tokenResponse);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Token exchange failed';
-      return c.json(jsonError(message, 400), 400);
+      return oauthErrorResponse(c, err);
     }
   }
 
-  return c.json(jsonError(`Unsupported grant_type: ${grantType}`, 400), 400);
+  return c.json(oauthError('unsupported_grant_type', `Unsupported grant_type: ${grantType}`), 400);
 });
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
@@ -165,7 +182,7 @@ function requireBearerAuth() {
     }
 
     const token = authHeader.slice(7);
-    const valid = verifyAccessToken(token);
+    const valid = await verifyAccessToken(token);
     if (!valid) {
       c.header('WWW-Authenticate', 'Bearer error="invalid_token"');
       return c.json(jsonError('Invalid or expired token', 401), 401);
@@ -198,6 +215,35 @@ app.all('/mcp', async (c) => {
 
 function jsonError(message: string, status: number) {
   return { error: message, status };
+}
+
+/**
+ * Build an RFC 6749 §5.2 error body. OAuth endpoints return this shape
+ * (`error`, `error_description`) instead of the generic `{error, status}`
+ * envelope used elsewhere on the API. Keeping the two helpers separate makes
+ * it obvious at the call site which contract a route is honoring.
+ */
+function oauthError(
+  error: string,
+  errorDescription?: string,
+): { error: string; error_description?: string } {
+  return errorDescription === undefined
+    ? { error }
+    : { error: error, error_description: errorDescription };
+}
+
+/**
+ * Translate an SDK `OAuthError` into an RFC 6749 §5.2 JSON response. Only
+ * OAuth-shaped errors are handled here — anything else (DB outage, bug) is
+ * re-thrown so the global `app.onError` surfaces it as a 500. Relabeling
+ * arbitrary exceptions as `invalid_request` would mask real outages as
+ * caller errors. CodeRabbit flagged this on PR #196.
+ */
+function oauthErrorResponse(c: Context, err: unknown) {
+  if (err instanceof OAuthError) {
+    return c.json(err.toResponseObject(), 400);
+  }
+  throw err;
 }
 
 app.notFound((c) => {

@@ -71,12 +71,21 @@ export const AUTHORIZATION_CODE_LIFETIME_SECONDS = 60;
  * connection. Audit rows must survive rollback — if we write them on `tx`
  * they get rolled back along with the state change we're auditing.
  */
+// Plain field declarations, not TypeScript parameter properties. Node's
+// `--experimental-strip-types` loader (used by `npm run serve` → `node
+// src/server.ts`) rejects parameter-property syntax with
+// ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX, which makes the production server
+// refuse to boot. Vitest has its own TS pipeline and masks the issue, so
+// the unit tests pass but the real process crashes on startup. Caught live
+// by /qa on SQR-69.
 class AuditableOAuthError extends Error {
-  constructor(
-    readonly inner: Error,
-    readonly failureReason: string,
-  ) {
+  readonly inner: Error;
+  readonly failureReason: string;
+
+  constructor(inner: Error, failureReason: string) {
     super(inner.message);
+    this.inner = inner;
+    this.failureReason = failureReason;
   }
 }
 
@@ -107,13 +116,16 @@ function verifyPkceS256(codeVerifier: string, codeChallenge: string): boolean {
 }
 
 export class SquireOAuthProvider {
+  // Plain field declarations, not TS parameter properties — see the note on
+  // AuditableOAuthError above. Node's --experimental-strip-types loader
+  // rejects parameter-property syntax, and `npm run serve` would otherwise
+  // crash at module-load time.
+  private readonly db: Db;
   readonly clientsStore: DrizzleClientsStore;
   readonly tokenLifetimeSeconds: number;
 
-  constructor(
-    private readonly db: Db,
-    options: { tokenLifetimeSeconds?: number } = {},
-  ) {
+  constructor(db: Db, options: { tokenLifetimeSeconds?: number } = {}) {
+    this.db = db;
     this.clientsStore = new DrizzleClientsStore(db);
     this.tokenLifetimeSeconds = options.tokenLifetimeSeconds ?? DEFAULT_TOKEN_LIFETIME_SECONDS;
   }
