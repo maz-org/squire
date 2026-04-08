@@ -300,8 +300,8 @@ debugging a single failure without waiting for the full suite.
 The pre-commit hook runs automatically on every commit:
 
 1. `tsc --noEmit` — type checking
-2. `lint-staged` — ESLint + Prettier on staged `.ts`/`.js` files, markdownlint
-   on staged `.md` files
+2. `lint-staged` — ESLint + Prettier on staged `.ts`/`.js` files, Prettier on
+   staged `.json`/`.yml`/`.yaml` files, markdownlint on staged `.md` files
 3. `npm test` — full test suite
 
 If any step fails, the commit is blocked. Fix the issue and try again.
