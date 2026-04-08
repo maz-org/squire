@@ -244,7 +244,8 @@ npm run typecheck
 ### Linting and formatting
 
 ```bash
-npm run lint          # ESLint
+npm run lint          # ESLint (src/ test/ scripts/)
+npm run lint:css      # stylelint (src/web-ui/**/*.css, Tailwind v4 aware)
 npm run lint:md       # markdownlint
 npm run format        # Prettier (auto-fix)
 npm run format:check  # Prettier (check only)
@@ -306,8 +307,9 @@ debugging a single failure without waiting for the full suite.
 The pre-commit hook runs automatically on every commit:
 
 1. `tsc --noEmit` — type checking
-2. `lint-staged` — ESLint + Prettier on staged `.ts`/`.js` files, Prettier on
-   staged `.json`/`.yml`/`.yaml` files, markdownlint on staged `.md` files
+2. `lint-staged` — ESLint + Prettier on staged `.ts`/`.js` files, stylelint +
+   Prettier on staged `.css` files, Prettier on staged `.json`/`.yml`/`.yaml`
+   files, markdownlint on staged `.md` files
 3. `npm test` — full test suite
 
 If any step fails, the commit is blocked. Fix the issue and try again.

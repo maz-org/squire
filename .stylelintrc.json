@@ -1,0 +1,38 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "apply",
+          "config",
+          "custom-media",
+          "import",
+          "layer",
+          "plugin",
+          "reference",
+          "screen",
+          "source",
+          "tailwind",
+          "theme",
+          "utility",
+          "variant",
+          "variants"
+        ]
+      }
+    ],
+    "font-family-name-quotes": "always-unless-keyword",
+    "no-descending-specificity": null,
+    "alpha-value-notation": "number",
+    "color-function-notation": "modern",
+    "media-feature-range-notation": "prefix",
+    "import-notation": "string",
+    "selector-class-pattern": [
+      "^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$",
+      {
+        "message": "Expected class selector to be kebab-case BEM (block, block__element, block--modifier, block__element--modifier)"
+      }
+    ]
+  }
+}

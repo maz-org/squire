@@ -57,6 +57,9 @@ jobs:
       - name: Lint
         run: npx eslint src/ test/ scripts/
 
+      - name: Lint CSS
+        run: npm run lint:css
+
       - name: Lint markdown
         run: npm run lint:md
 

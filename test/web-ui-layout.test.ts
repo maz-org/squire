@@ -187,7 +187,7 @@ describe('styles.css — SQR-66 signature component rules', () => {
   const css = readFileSync(new URL('../src/web-ui/styles.css', import.meta.url), 'utf8');
 
   it('declares .squire-question with Fraunces clamp font-size and line-height 1.25', () => {
-    expect(css).toMatch(/\.squire-question\s*\{[^}]*font-family:\s*Fraunces/);
+    expect(css).toMatch(/\.squire-question\s*\{[^}]*font-family:\s*["']?Fraunces["']?/);
     expect(css).toMatch(/\.squire-question\s*\{[^}]*clamp\(\s*22px\s*,\s*5vw\s*,\s*28px\s*\)/);
     expect(css).toMatch(/\.squire-question\s*\{[^}]*line-height:\s*1\.25/);
   });
@@ -197,7 +197,16 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toContain('font-variant-caps: all-small-caps');
-    expect(body).toContain('rgba(212, 161, 71, 0.6');
+    // stylelint-config-standard enforces `color-function-notation: modern`, so
+    // stylelint autofix rewrote the original `rgba(212, 161, 71, 0.6)` to the
+    // modern space-separated form `rgb(212 161 71 / 0.6)`. An earlier attempt
+    // used `color-function-notation: legacy`, which produced an invalid 4-arg
+    // comma form `rgb(212, 161, 71, 0.6)` (legacy rgb() has no alpha arg);
+    // browsers dropped the whole declaration and the rule-term highlighter
+    // rendered without its amber stripe. Pin the modern syntax here so a
+    // future config regression fails loudly instead of silently shipping
+    // broken CSS.
+    expect(body).toMatch(/rgb\(212\s+161\s+71\s*\/\s*0\.6/);
     expect(body).toContain('75%');
     expect(body).toContain('white-space: nowrap');
   });
@@ -213,7 +222,7 @@ describe('styles.css — SQR-66 signature component rules', () => {
     const rule = css.match(/\.squire-answer\s+p:first-of-type::first-letter\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     const body = rule![0];
-    expect(body).toContain('font-family: Fraunces');
+    expect(body).toMatch(/font-family:\s*["']?Fraunces["']?/);
     expect(body).toMatch(/font-size:\s*(68|70|72)px/);
     expect(body).toContain('color: var(--wax)');
     expect(body).toMatch(/['"]opsz['"]\s*144/);
@@ -317,21 +326,23 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     const rule = css.match(/\.squire-banner--spoiler\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule![0]).toContain('border-left-color: var(--amber)');
-    expect(rule![0]).toMatch(/rgba\(212,\s*161,\s*71,\s*0\.08\)/);
+    // Modern space-separated form — see the rule-term highlighter comment
+    // above for why SQR-70 enforces this.
+    expect(rule![0]).toMatch(/rgb\(212\s+161\s+71\s*\/\s*0\.08\)/);
   });
 
   it('declares .squire-banner--sync with sage left border and 8% sage tint', () => {
     const rule = css.match(/\.squire-banner--sync\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule![0]).toContain('border-left-color: var(--sage)');
-    expect(rule![0]).toMatch(/rgba\(122,\s*140,\s*92,\s*0\.08\)/);
+    expect(rule![0]).toMatch(/rgb\(122\s+140\s+92\s*\/\s*0\.08\)/);
   });
 
   it('declares .squire-banner--error with 8% error tint (Phase 6 bit-rot guard)', () => {
     const rule = css.match(/\.squire-banner--error\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule![0]).toContain('border-left-color: var(--error)');
-    expect(rule![0]).toMatch(/rgba\(139,\s*41,\s*25,\s*0\.08\)/);
+    expect(rule![0]).toMatch(/rgb\(139\s+41\s+25\s*\/\s*0\.08\)/);
   });
 
   it('declares .squire-empty__scope with small-caps, letter-spacing ≥ 0.14em, sepia', () => {
