@@ -236,6 +236,23 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-monogram--masthead\s*\{[^}]*width:\s*56px[^}]*height:\s*56px/);
   });
 
+  it('puts the wax-box styling on the BASE .squire-monogram so all contexts inherit it', () => {
+    // Regression: CodeRabbit on PR #202 caught that the box styling
+    // (display, background, centering) was scoped to .squire-header
+    // .squire-monogram, so the desktop rail's masthead monogram rendered
+    // as a bare Fraunces "S" instead of a wax square. The fix lifts the
+    // box styling to the base selector. This test pins the new structure
+    // so a future cleanup can't accidentally re-scope it.
+    const baseRule = css.match(/^\.squire-monogram\s*\{[^}]*\}/m);
+    expect(baseRule).not.toBeNull();
+    const body = baseRule![0];
+    expect(body).toContain('display: inline-flex');
+    expect(body).toContain('background: var(--wax)');
+    expect(body).toContain('color: var(--parchment)');
+    expect(body).toContain('border-radius: 4px');
+    expect(body).toContain('justify-content: center');
+  });
+
   it('gates hover transitions on .cite under prefers-reduced-motion: reduce', () => {
     // The existing global * { transition: none } rule already satisfies the
     // acceptance criterion; assert it still exists AFTER SQR-66's stylesheet

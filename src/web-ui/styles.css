@@ -194,17 +194,16 @@ html {
   border-bottom: 1px solid var(--rule);
   flex-shrink: 0;
 }
+/* Header monogram is the 28px variant. The box styling (display, background,
+   border-radius, centering, font) lives on the base `.squire-monogram` rule
+   below in the SQR-66 signature components block, so the desktop rail's
+   `.squire-monogram--masthead` and any future surface (sign-in page, channel
+   avatar) inherit it without re-declaring. CodeRabbit caught the missing
+   inheritance on PR #202 — the rail monogram was rendering as a bare glyph
+   because only the header selector had the box. */
 .squire-header .squire-monogram {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 28px;
   height: 28px;
-  background: var(--wax);
-  color: var(--parchment);
-  border-radius: 4px;
-  font-family: Fraunces, Georgia, serif;
-  font-weight: 700;
 }
 .squire-header .squire-wordmark,
 .squire-rail .squire-wordmark {
@@ -388,6 +387,12 @@ html {
    baseline gap, so a few pixels of padding-bottom keep the S optically
    centered instead of floating high. */
 .squire-monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wax);
+  color: var(--parchment);
+  border-radius: 4px;
   font-family: Fraunces, Georgia, serif;
   font-weight: 700;
   font-variation-settings:
