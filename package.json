@@ -10,6 +10,7 @@
     "db:migrate:test": "NODE_ENV=test node scripts/db-migrate.ts",
     "db:reset": "node scripts/db-reset.ts",
     "db:reset:test": "NODE_ENV=test node scripts/db-reset.ts",
+    "seed:cards": "node scripts/seed-cards.ts",
     "query": "node src/query.ts",
     "serve": "node src/server.ts",
     "eval": "node eval/run.ts",

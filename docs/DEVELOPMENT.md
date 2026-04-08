@@ -187,8 +187,18 @@ docker compose up -d
 npm ci
 npm run db:migrate
 npm run index              # populates the embeddings table (~2 min)
-# npm run seed:cards       # lands with SQR-36 (card tables → Postgres)
+npm run seed:cards         # upserts data/extracted/*.json into the card_* tables
 ```
+
+`npm run seed:cards` is idempotent — re-run it any time the extracted
+JSON refreshes. It validates each record with the matching `SCHEMAS[type]`
+Zod schema and skips anything that fails (the failures are warned to
+stderr so you can see what got dropped). Records are upserted on
+`(game, source_id)`, so a stale card row gets overwritten in place.
+
+Note: until SQR-56 lands, the card tables sit alongside the
+JSON-backed `extracted-data.ts` runtime — the seed is the bridge that
+lets SQR-56 swap the loader over without losing parity.
 
 ### Refreshing data
 

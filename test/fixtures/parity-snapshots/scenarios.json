@@ -1,0 +1,4410 @@
+[
+  {
+    "scenarioGroup": "main",
+    "index": "0",
+    "name": "Howling in the Snow",
+    "complexity": 1,
+    "monsters": [
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "You should now be ready to take on scenario 1 on the following page in the Scenario Book. Do not perform an Outpost Phase until you have completed scenario 1.",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2
+    },
+    "flowChartGroup": "intro",
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/000"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "1",
+    "name": "A Town in Flames",
+    "complexity": 1,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Priest",
+      "City Guard"
+    ],
+    "allies": [
+      "City Guard"
+    ],
+    "unlocks": [
+      "2",
+      "3"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "(Gain 2+X morale, where X is the number of City Guards still on the map.)",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 5,
+      "metal": 3,
+      "hide": 3,
+      "rockroot": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "intro",
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/001"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "2",
+    "name": "Algox Scouting",
+    "complexity": 1,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard"
+    ],
+    "allies": [
+      "Algox Priest"
+    ],
+    "unlocks": [
+      "4B"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 4,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "rockroot": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "intro",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/002"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "3",
+    "name": "Algox Offensive",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Priest",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [
+      "4A"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 4,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "rockroot": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "intro",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/003"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "4A",
+    "name": "Heart of Ice A",
+    "complexity": 2,
+    "monsters": [
+      "Algox Guard",
+      "Algox Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1, Morale 1",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 3,
+      "metal": 5,
+      "hide": 2,
+      "rockroot": 2,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "intro",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/004A"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "4B",
+    "name": "Heart of Ice B",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1, Morale 1",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 3,
+      "metal": 5,
+      "hide": 2,
+      "rockroot": 2,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "intro",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/004B"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "5",
+    "name": "Frozen Crypt",
+    "complexity": 2,
+    "monsters": [
+      "Ice Wraith"
+    ],
+    "allies": [],
+    "unlocks": [
+      "9",
+      "10"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "2 lumber",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 1,
+      "rockroot": 2,
+      "corpsecap": 2
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/005"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "6",
+    "name": "Avalanche",
+    "complexity": 2,
+    "monsters": [
+      "Frost Demon",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [
+      "11",
+      "12"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Snowdrift"
+      },
+      {
+        "name": "Snow Rock"
+      }
+    ],
+    "rewards": "2 metal",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 4,
+      "metal": 1,
+      "hide": 1,
+      "snowthistle": 2,
+      "arrowvine": 2,
+      "axenut": 1
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/006"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "7",
+    "name": "Edge of the World",
+    "complexity": 1,
+    "monsters": [
+      "Lurker Clawcrusher",
+      "Lurker Soldier"
+    ],
+    "allies": [],
+    "unlocks": [
+      "13",
+      "14"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP, Campaign sticker: coral-shard",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "axenut": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/007"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "8",
+    "name": "Crystal Trench",
+    "complexity": 1,
+    "monsters": [
+      "Polar Bear",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [
+      "15",
+      "16"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "1 lumber, 2 hide",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 5,
+      "hide": 5,
+      "axenut": 1,
+      "arrowvine": 1,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/008"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "9",
+    "name": "Glowing Catacombs",
+    "complexity": 1,
+    "monsters": [
+      "Ice Wraith",
+      "Living Doom",
+      "Living Spirit",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "2 corpsecap",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 5,
+      "metal": 3,
+      "rockroot": 2,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/009"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "10",
+    "name": "Crystal Enclosure",
+    "complexity": 2,
+    "monsters": [
+      "Algox Guard",
+      "Algox Priest"
+    ],
+    "allies": [],
+    "unlocks": [
+      "18"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      }
+    ],
+    "rewards": "Morale 1, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "hide": 3,
+      "axenut": 2,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/010"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "11",
+    "name": "Snowscorn Peak",
+    "complexity": 2,
+    "monsters": [
+      "Algox Stormcaller",
+      "Frost Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [
+      "19"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Morale 1, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3,
+      "flamefruit": 1,
+      "axenut": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/011"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "12",
+    "name": "Temple Entrance",
+    "complexity": 1,
+    "monsters": [
+      "Ancient Artillery"
+    ],
+    "allies": [],
+    "unlocks": [
+      "20"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 XP",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 4,
+      "rockroot": 2,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/012"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "13",
+    "name": "Frozen Fjord",
+    "complexity": 2,
+    "monsters": [
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [
+      "21",
+      "32"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Scenario",
+        "escort": true
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "hide": 3,
+      "flamefruit": 1,
+      "snowthistle": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/013"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "14",
+    "name": "Jagged Shoals",
+    "complexity": 2,
+    "monsters": [
+      "Abael Herder",
+      "Lightning Eel",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [
+      "22"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Campaign sticker: coral-shard, shard-seeker",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 5,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/014"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "15",
+    "name": "Ancient Spire",
+    "complexity": 2,
+    "monsters": [
+      "Chaos Lieutenant",
+      "Robotic Boltshooter",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [
+      "23",
+      "24"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "1 lumber, 1 metal, 1 hide",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 2,
+      "corpsecap": 1,
+      "flamefruit": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/015"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "16",
+    "name": "Derelict Elevator",
+    "complexity": 3,
+    "monsters": [
+      "Ancient Artillery",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [
+      "25",
+      "26"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "5 XP, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 5,
+      "rockroot": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/016"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "17",
+    "name": "Haunted Vault",
+    "complexity": 3,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [
+      "27"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Spectral Helper",
+        "escort": true
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 5,
+      "metal": 2,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/017"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "18",
+    "name": "Crystal Fields",
+    "complexity": 1,
+    "monsters": [
+      "Frozen Corpse"
+    ],
+    "allies": [
+      "Algox Guard"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 1",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 5,
+      "corpsecap": 1,
+      "arrowvine": 2,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/018"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "19",
+    "name": "Skyhall",
+    "complexity": 3,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Ice Wraith"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 1",
+    "lootDeckConfig": {
+      "money": 11,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "rockroot": 1,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/019"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "20",
+    "name": "Temple of Liberation",
+    "complexity": 3,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Ruined Machine",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Cabinet"
+      },
+      {
+        "name": "Cabinet"
+      }
+    ],
+    "rewards": "15 gold",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 5,
+      "rockroot": 1,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/020"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "21",
+    "name": "Realm of Endless Frost",
+    "complexity": 3,
+    "monsters": [
+      "Frost Demon",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Prosperity 2",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3,
+      "flamefruit": 1,
+      "snowthistle": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/021"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "22",
+    "name": "Ice Floes",
+    "complexity": 2,
+    "monsters": [
+      "Lurker Clawcrusher",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Lose 1 collective Lumber for each set of five hexes with water tiles on tile 7-G",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 5,
+      "hide": 2,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/022"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "23",
+    "name": "Spire Basement",
+    "complexity": 1,
+    "monsters": [
+      "Living Bones",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [
+      "34"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 4,
+      "flamefruit": 1,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/023"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "24",
+    "name": "Upper Spire",
+    "complexity": 2,
+    "monsters": [
+      "Chaos Demon",
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [
+      "34"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 2,
+      "axenut": 2,
+      "flamefruit": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/024"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "25",
+    "name": "Rusted Tunnels",
+    "complexity": 2,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Robotic Boltshooter"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "2 lumber, 2 metal",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 4,
+      "rockroot": 1,
+      "arrowvine": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/025"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "26",
+    "name": "Quatryl Library",
+    "complexity": 2,
+    "monsters": [
+      "Ancient Artillery",
+      "Ruined Machine",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 4,
+      "rockroot": 1,
+      "arrowvine": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/026"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "27",
+    "name": "Depths of Delirium",
+    "complexity": 2,
+    "monsters": [
+      "Deep Terror",
+      "Living Bones",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "shard-seeker"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Altar"
+      }
+    ],
+    "rewards": "10 XP, Campaign sticker: coral-shard",
+    "lootDeckConfig": {
+      "money": 13,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/027"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "28",
+    "name": "Summit Meeting",
+    "complexity": 3,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Icespeaker",
+      "Algox Snowspeaker"
+    ],
+    "allies": [],
+    "unlocks": [
+      "38"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Emissary",
+        "escort": true
+      }
+    ],
+    "rewards": "Morale -1",
+    "lootDeckConfig": {
+      "money": 11,
+      "lumber": 2,
+      "hide": 3,
+      "rockroot": 2,
+      "arrowvine": 1,
+      "axenut": 1
+    },
+    "flowChartGroup": "algox-3",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/028"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "29",
+    "name": "War of the Spire A",
+    "complexity": 2,
+    "monsters": [
+      "Algox Icespeaker",
+      "Algox Priest",
+      "Algox Scout"
+    ],
+    "allies": [
+      "Algox Archer",
+      "Algox Guard"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      },
+      {
+        "name": "Ice Core"
+      }
+    ],
+    "rewards": "Remove all Fh-algox events from all outpost event decks",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 2,
+      "hide": 2,
+      "snowthistle": 2,
+      "arrowvine": 1,
+      "axenut": 1
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/029"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "30",
+    "name": "War of the Spire B",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Icespeaker",
+      "Algox Scout",
+      "Algox Snowspeaker"
+    ],
+    "allies": [
+      "Algox Icespeaker"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Remove all Fh-algox events from all outpost event decks",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 2,
+      "hide": 2,
+      "axenut": 1,
+      "arrowvine": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/030"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "31",
+    "name": "Crackling Tunnel",
+    "complexity": 2,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [
+      "41"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "5 XP, 10 gold",
+    "lootDeckConfig": {
+      "money": 11,
+      "lumber": 2,
+      "metal": 3,
+      "rockroot": 2,
+      "arrowvine": 1,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/031"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "32",
+    "name": "Ravens' Roost",
+    "complexity": 2,
+    "monsters": [
+      "Frozen Corpse Scenario 32"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Campaign sticker: into-the-forest",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "hide": 3,
+      "axenut": 2,
+      "flamefruit": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/032"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "33",
+    "name": "Thawed Wood",
+    "complexity": 3,
+    "monsters": [
+      "Black Imp",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "into-the-forest"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Gain 5 experience for each unrevealed dowsing rune",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 5,
+      "hide": 3,
+      "axenut": 2,
+      "rockroot": 1,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/033"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "34",
+    "name": "Top of the Spire",
+    "complexity": 2,
+    "monsters": [
+      "Chaos Spark",
+      "Lord Of Chaos"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Campaign sticker: coral-shard",
+    "lootDeckConfig": {},
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/034"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "35",
+    "name": "Scrap Pit",
+    "complexity": 2,
+    "monsters": [
+      "Living Bones",
+      "Ruined Machine",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [
+      "43"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Crain",
+        "escort": true
+      }
+    ],
+    "rewards": "2 lumber, 2 metal, 2 hide",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 2,
+      "rockroot": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/035"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "36",
+    "name": "Buried Ducts",
+    "complexity": 1,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Robotic Boltshooter",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [
+      "44"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      },
+      {
+        "name": "Door"
+      },
+      {
+        "name": "Door"
+      },
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": "3 lumber, 3 metal",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 3,
+      "metal": 5,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/036"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "37",
+    "name": "The Dead Mile",
+    "complexity": 1,
+    "monsters": [
+      "Living Bones",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [
+      "44"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "3 lumber, 3 hide",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 3,
+      "metal": 3,
+      "rockroot": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/037"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "38",
+    "name": "The Way Forward",
+    "complexity": 3,
+    "monsters": [
+      "Hound",
+      "Polar Bear"
+    ],
+    "allies": [],
+    "unlocks": [
+      "45",
+      "46"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Emissary",
+        "escort": true
+      },
+      {
+        "name": "Emissary",
+        "escort": true
+      }
+    ],
+    "rewards": "10 XP, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 5,
+      "hide": 3,
+      "axenut": 2,
+      "arrowvine": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-3",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/038"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "39",
+    "name": "Corrupted Camp",
+    "complexity": 3,
+    "monsters": [
+      "Algox Guard",
+      "Algox Scout",
+      "Black Imp",
+      "Frozen Corpse"
+    ],
+    "allies": [
+      "Algox Guard",
+      "Algox Scout"
+    ],
+    "unlocks": [
+      "47"
+    ],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "into-the-forest"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Gain 2 additional loot cards each",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 3,
+      "flamefruit": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/039"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "40",
+    "name": "Relief Effort",
+    "complexity": 2,
+    "monsters": [
+      "Algox Guard",
+      "Ruined Machine",
+      "Steel Automaton"
+    ],
+    "allies": [
+      "Algox Archer",
+      "Algox Guard"
+    ],
+    "unlocks": [
+      "48"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Gain 2 additional loot cards each",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 3,
+      "metal": 4,
+      "hide": 2,
+      "flamefruit": 1,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/040"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "41",
+    "name": "Unfettered Shard",
+    "complexity": 2,
+    "monsters": [
+      "Deep Terror",
+      "Living Doom",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "shard-seeker"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Read Section 36.7 now",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "rockroot": 2,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/041"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "42",
+    "name": "Sunless Trench",
+    "complexity": 1,
+    "monsters": [
+      "Deep Terror",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Campaign sticker: coral-shard",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 2,
+      "metal": 3,
+      "flamefruit": 1,
+      "snowthistle": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/042"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "43",
+    "name": "Overrun Barricade",
+    "complexity": 3,
+    "monsters": [
+      "Robotic Boltshooter",
+      "Ruined Machine",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [
+      "51"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 4,
+      "rockroot": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/043"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "44",
+    "name": "Nerve Center",
+    "complexity": 2,
+    "monsters": [
+      "Flaming Bladespinner"
+    ],
+    "allies": [],
+    "unlocks": [
+      "58",
+      "59"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Metal Cabinet"
+      }
+    ],
+    "rewards": "5 gold",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 4,
+      "rockroot": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/044"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "45",
+    "name": "Living Glacier",
+    "complexity": 1,
+    "monsters": [
+      "Abael Herder",
+      "Abael Scout",
+      "Lightning Eel",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [
+      "52"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Morale 1",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 3,
+      "hide": 5,
+      "rockroot": 1,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "algox-3",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/045"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "46",
+    "name": "Dead Pass",
+    "complexity": 2,
+    "monsters": [
+      "Burrowing Blade",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [
+      "52"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "10 XP, Morale 1",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "rockroot": 1,
+      "corpsecap": 1
+    },
+    "flowChartGroup": "algox-3",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/046"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "47",
+    "name": "Carrion Ridge",
+    "complexity": 1,
+    "monsters": [
+      "Algox Icespeaker",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [
+      "56"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold, 2 lumber",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 2,
+      "rockroot": 2,
+      "flamefruit": 2
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/047"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "48",
+    "name": "Blizzard Island",
+    "complexity": 2,
+    "monsters": [
+      "Abael Scout",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [
+      "57"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "10 XP, 2 metal",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 5,
+      "corpsecap": 2,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/048"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "49",
+    "name": "Beneath Sea and Stone",
+    "complexity": 3,
+    "monsters": [
+      "Deep Terror"
+    ],
+    "allies": [],
+    "unlocks": [
+      "53"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      },
+      {
+        "name": "Large Cave Rock"
+      },
+      {
+        "name": "Stalagmites"
+      }
+    ],
+    "rewards": "5 XP, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 13,
+      "metal": 3,
+      "hide": 2,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/049"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "50",
+    "name": "Explosive Descent",
+    "complexity": 2,
+    "monsters": [
+      "Lightning Eel",
+      "Lurker Clawcrusher",
+      "Lurker Mindsnipper",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [
+      "54"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Pulse Emitter",
+        "escort": true
+      }
+    ],
+    "rewards": "Inspiration -2, 4 lumber, 4 metal",
+    "lootDeckConfig": {
+      "money": 13,
+      "lumber": 2,
+      "hide": 3,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/050"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "51",
+    "name": "Orphan's Halls",
+    "complexity": 3,
+    "monsters": [
+      "Ancient Artillery",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [
+      "58",
+      "59"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 2,
+      "metal": 4,
+      "flamefruit": 1,
+      "arrowvine": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/051"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "52",
+    "name": "Fleeting Permanence",
+    "complexity": 2,
+    "monsters": [
+      "Frost Demon",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [
+      "55"
+    ],
+    "requirements": [
+      {
+        "scenarios": [
+          [
+            "45",
+            "46"
+          ]
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Morale 1, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 5,
+      "corpsecap": 2,
+      "snowthistle": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-3",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/052"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "53",
+    "name": "Underwater Throne",
+    "complexity": 2,
+    "monsters": [
+      "Lurker Clawcrusher",
+      "Lurker Mindsnipper",
+      "Lurker Soldier",
+      "Seeker Of The Abyss"
+    ],
+    "allies": [],
+    "unlocks": [
+      "60"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Campaign sticker: coral-shard",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 3,
+      "arrowvine": 2,
+      "axenut": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/053"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "54",
+    "name": "Among the Wreckage",
+    "complexity": 2,
+    "monsters": [
+      "Lightning Eel",
+      "Lurker Clawcrusher",
+      "Lurker Mindsnipper",
+      "Lurker Soldier",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [
+      "60"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      },
+      {
+        "name": "Large Cave Rock"
+      }
+    ],
+    "rewards": "Campaign sticker: coral-shard",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 3,
+      "axenut": 2,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/054"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "55",
+    "name": "Change of Heart",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Priest"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Remove all Fh-algox events from all outpost event decks",
+    "lootDeckConfig": {
+      "money": 3,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 2,
+      "rockroot": 2,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "algox-3",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/055"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "56",
+    "name": "Call of the Harbinger",
+    "complexity": 3,
+    "monsters": [
+      "Black Imp",
+      "Harbinger Of Shadow 2",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Altar"
+      }
+    ],
+    "rewards": "Morale 1, Inspiration 1, Campaign sticker: friend-of-the-icespeakers",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 2,
+      "rockroot": 2,
+      "flamefruit": 2
+    },
+    "flowChartGroup": "algox-1",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/056"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "57",
+    "name": "Sanctuary of Snow",
+    "complexity": 3,
+    "monsters": [
+      "Render",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Denpang",
+        "escort": true
+      }
+    ],
+    "rewards": "Morale 1, Inspiration 1, Campaign sticker: friend-of-the-snowspeakers",
+    "lootDeckConfig": {},
+    "flowChartGroup": "algox-2",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/057"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "58",
+    "name": "Orphan's Core",
+    "complexity": 3,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Orphan",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Glowing Orb"
+      }
+    ],
+    "rewards": "Remove all Fh-unfettered events from all outpost event decks",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 2,
+      "metal": 4,
+      "corpsecap": 1,
+      "flamefruit": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/058"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "59",
+    "name": "Automaton Uprising",
+    "complexity": 2,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Robotic Boltshooter",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Orphan",
+        "escort": true
+      }
+    ],
+    "rewards": "Remove all Fh-unfettered events from all outpost event decks",
+    "lootDeckConfig": {
+      "money": 11,
+      "metal": 4,
+      "rockroot": 1,
+      "snowthistle": 2,
+      "axenut": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "unfettered",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/059"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "60",
+    "name": "Uniting the Crown",
+    "complexity": 2,
+    "monsters": [
+      "Fracture Of The Deep",
+      "Lightning Eel",
+      "Lurker Clawcrusher",
+      "Lurker Mindsnipper",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ],
+        "campaignSticker": [
+          "coral-shard:6"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Remove all Fh-lurkers events from all outpost event decks",
+    "lootDeckConfig": {
+      "money": 8,
+      "arrowvine": 1,
+      "axenut": 1,
+      "corpsecap": 1,
+      "rockroot": 1,
+      "flamefruit": 1,
+      "snowthistle": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "lurker",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/060"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "61",
+    "name": "Life and Death",
+    "complexity": 2,
+    "monsters": [
+      "Deep Terror",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Moonshard",
+        "escort": true
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "rockroot": 2,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "puzzle-book",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/061"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "62",
+    "name": "The Unfettered Seal",
+    "complexity": 3,
+    "monsters": [
+      "Black Imp",
+      "Chaos Demon",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [
+      "63"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Crain",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "snowthistle": 2,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "puzzle-book",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/062"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "63",
+    "name": "The Savvas Seal",
+    "complexity": 3,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Savvas Icestorm",
+      "Savvas Lavaflow",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [
+      "64"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Crain",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 2",
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "rockroot": 2,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "puzzle-book",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/063"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "64",
+    "name": "The Frosthaven Seal",
+    "complexity": 3,
+    "monsters": [
+      "Burrowing Blade",
+      "Guard Captain",
+      "Living Doom",
+      "Living Spirit",
+      "Shrike Fiend"
+    ],
+    "allies": [
+      "Guard Captain"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Tree",
+        "escort": true
+      },
+      {
+        "name": "Militia",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 3, Morale 3",
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "axenut": 2,
+      "flamefruit": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "puzzle-book",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/064"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "65",
+    "name": "A Strong Foundation",
+    "complexity": 1,
+    "monsters": [
+      "Frozen Corpse",
+      "Living Bones",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "2 lumber, 2 metal",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 4,
+      "snowthistle": 2,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/065"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "66",
+    "name": "Elemental Cores",
+    "complexity": 2,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Note the corresponding elements of the four doors that were opened",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "axenut": 1,
+      "flamefruit": 1,
+      "snowthistle": 1,
+      "corpsecap": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/066"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "67",
+    "name": "Core Attunement",
+    "complexity": 2,
+    "monsters": [
+      "Chaos Demon",
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Night Demon",
+      "Sun Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [
+      "68"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Elemental Core",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 1, Morale 1",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/067"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "68",
+    "name": "The Face of Torment",
+    "complexity": 2,
+    "monsters": [
+      "Chaos Demon",
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Night Demon",
+      "Sun Demon",
+      "Tormentor",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "\"Aesther Outpost\" quest complete",
+    "lootDeckConfig": {
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/068"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "69",
+    "name": "Sacred Soil",
+    "complexity": 2,
+    "monsters": [
+      "Earth Demon",
+      "Forest Imp",
+      "Rending Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "into-the-forest"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "1 arrowvine, 1 axenut, 1 flamefruit",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 5,
+      "hide": 4,
+      "axenut": 2,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/069"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "70",
+    "name": "The True Oak",
+    "complexity": 1,
+    "monsters": [
+      "City Guard",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "The Great Oak",
+        "escort": true
+      }
+    ],
+    "rewards": "\"The True Oak\" quest complete",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "hide": 3,
+      "axenut": 2,
+      "flamefruit": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/070"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "71",
+    "name": "Invasion of the Dock",
+    "complexity": 3,
+    "monsters": [
+      "Abael Scout",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Damage any one even building between 71 and 89",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/071"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "72",
+    "name": "A Giant Block of Ice",
+    "complexity": 2,
+    "monsters": [
+      "Ice Wraith"
+    ],
+    "allies": [],
+    "unlocks": [
+      "73"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 3,
+      "metal": 5,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/072"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "73",
+    "name": "Flotsam",
+    "complexity": 2,
+    "monsters": [
+      "Lightning Eel"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 5,
+      "hide": 3,
+      "flamefruit": 1,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/073"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "74A",
+    "name": "Gaps in the Road A",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Piranha Pig"
+    ],
+    "allies": [
+      "Piranha Pig"
+    ],
+    "unlocks": [
+      "76"
+    ],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "friend-of-the-fish-king"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Small Tree"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 3,
+      "arrowvine": 2,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/074A"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "74B",
+    "name": "Gaps in the Road B",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer"
+    ],
+    "allies": [],
+    "unlocks": [
+      "75"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Small Tree"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 3,
+      "arrowvine": 2,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/074B"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "75",
+    "name": "Infiltrating the Lair",
+    "complexity": 2,
+    "monsters": [
+      "Abael Herder",
+      "Lightning Eel",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [
+      "77"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "10 gold",
+    "lootDeckConfig": {
+      "money": 8,
+      "metal": 2,
+      "hide": 5,
+      "axenut": 1,
+      "snowthistle": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/075"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "76",
+    "name": "Apotheosis",
+    "complexity": 3,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Fish King",
+      "Lurker Mindsnipper",
+      "Piranha Pig"
+    ],
+    "allies": [
+      "Fish King",
+      "Piranha Pig"
+    ],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "metal": 2,
+      "hide": 5,
+      "axenut": 1,
+      "snowthistle": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/076"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "77",
+    "name": "Fish King's Ascension",
+    "complexity": 3,
+    "monsters": [
+      "Fish King",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "\"Threat from the Deep\" quest complete",
+    "lootDeckConfig": {
+      "money": 4,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "corpsecap": 2,
+      "flamefruit": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/077"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "78",
+    "name": "The Lurker Problem",
+    "complexity": 2,
+    "monsters": [
+      "Lurker Soldier",
+      "Lurker Wavethrower",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 4,
+      "rockroot": 2,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/078"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "79",
+    "name": "Relic",
+    "complexity": 3,
+    "monsters": [
+      "Ice Wraith",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Morale 3",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 3,
+      "metal": 5,
+      "hide": 2,
+      "corpsecap": 2
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/079"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "80",
+    "name": "Relic Renewed",
+    "complexity": 2,
+    "monsters": [
+      "Robotic Boltshooter",
+      "Ruined Machine",
+      "Steel Automaton",
+      "The Relic"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Metal Cabinet"
+      },
+      {
+        "name": "Metal Cabinet"
+      },
+      {
+        "name": "Metal Cabinet"
+      },
+      {
+        "name": "Metal Cabinet"
+      }
+    ],
+    "rewards": "Morale 2, 2 lumber, 2 metal, 2 hide",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2,
+      "rockroot": 1,
+      "axenut": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/080"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "81",
+    "name": "Ruinous Research Lab",
+    "complexity": 3,
+    "monsters": [
+      "Aesther Ashblade",
+      "Aesther Scout",
+      "Ancient Artillery",
+      "Ruined Machine",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      },
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 2,
+      "metal": 5,
+      "hide": 2,
+      "rockroot": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/081"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "82",
+    "name": "Expedition North",
+    "complexity": 2,
+    "monsters": [
+      "Frost Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Location"
+      },
+      {
+        "name": "Location"
+      },
+      {
+        "name": "Location"
+      }
+    ],
+    "rewards": "Add the following Forgotten Circles items to the Frosthaven supply: 153, 159, and 161",
+    "lootDeckConfig": {
+      "money": 12,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "snowthistle": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/082"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "83",
+    "name": "Rising Brine",
+    "complexity": 2,
+    "monsters": [
+      "Ancient Artillery",
+      "Giant Piranha Pig",
+      "Giant Piranha Pig Boss",
+      "Lurker Mindsnipper",
+      "Piranha Pig"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "flamefruit": 1,
+      "arrowvine": 2,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/083"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "84",
+    "name": "Here There Be Oozes",
+    "complexity": 3,
+    "monsters": [
+      "Elder Ooze",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Campaign sticker: brummix",
+    "lootDeckConfig": {
+      "money": 15,
+      "lumber": 3,
+      "metal": 3,
+      "corpsecap": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/084"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "85",
+    "name": "Deadly Pastimes",
+    "complexity": 3,
+    "monsters": [
+      "Burrowing Blade",
+      "Polar Bear"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "15 XP",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 4,
+      "rockroot": 2,
+      "snowthistle": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/085"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "86",
+    "name": "The Lady in White",
+    "complexity": 2,
+    "monsters": [
+      "Black Imp",
+      "Earth Demon",
+      "Ice Wraith"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Tree"
+      }
+    ],
+    "rewards": "Morale 2",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 4,
+      "hide": 2,
+      "axenut": 1,
+      "arrowvine": 2,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/086"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "87",
+    "name": "The Collection",
+    "complexity": 1,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard"
+    ],
+    "allies": [],
+    "unlocks": [
+      "88"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Or 2 inspiration if both brothers survived",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 3,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "corpsecap": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/087"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "88",
+    "name": "Collection's Capstone",
+    "complexity": 2,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Savvas Icestorm",
+      "Savvas Lavaflow",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 2",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 3,
+      "metal": 4,
+      "hide": 2,
+      "rockroot": 1,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/088"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "89",
+    "name": "A Contained Fire",
+    "complexity": 2,
+    "monsters": [
+      "Algox Guard"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "2 rockroot, 2 lumber",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "flamefruit": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/089"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "90",
+    "name": "Frozen Treasure",
+    "complexity": 2,
+    "monsters": [
+      "Frozen Corpse",
+      "Ice Wraith",
+      "Polar Bear",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 4,
+      "hide": 4,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/090"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "91",
+    "name": "Shoreline Scramble",
+    "complexity": 2,
+    "monsters": [
+      "Lightning Eel",
+      "Lurker Clawcrusher",
+      "Lurker Mindsnipper",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 1, 2 lumber",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 4,
+      "hide": 4,
+      "flamefruit": 1,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/091"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "92",
+    "name": "Sinking Ship",
+    "complexity": 3,
+    "monsters": [
+      "Lurker Clawcrusher",
+      "Lurker Mindsnipper",
+      "Lurker Soldier",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Collectively lose 5xC/2 loot tokens (rounded down), first taken from HE-RO-IC-S' pile, then taken as evenly as possible from the characters' collected loot tokens. If any loot tokens remain in the HE-RO-IC-S pile, distribute them as evenly as possible to all characters. Loot tokens are then traded in for loot cards",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2,
+      "flamefruit": 1,
+      "axenut": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/092"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "93A",
+    "name": "Midwinter Brawl A",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Scout",
+      "Scabwit",
+      "Yoglang"
+    ],
+    "allies": [
+      "Scabwit"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2,
+      "axenut": 1,
+      "flamefruit": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/093A"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "93B",
+    "name": "Midwinter Brawl B",
+    "complexity": 2,
+    "monsters": [
+      "Hound",
+      "Polar Bear",
+      "Scabwit",
+      "Vermling Scout",
+      "Yoglang"
+    ],
+    "allies": [
+      "Yoglang"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2,
+      "axenut": 1,
+      "flamefruit": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/093B"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "94",
+    "name": "A Grand View",
+    "complexity": 3,
+    "monsters": [
+      "Ancient Artillery",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Flaming Bladespinner"
+      }
+    ],
+    "rewards": "10 XP",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 3,
+      "metal": 5,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/094"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "95",
+    "name": "To Bury the Dead",
+    "complexity": 2,
+    "monsters": [
+      "Ice Wraith"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold, Morale 1",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 2,
+      "corpsecap": 2,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/095"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "96",
+    "name": "Underground Station",
+    "complexity": 2,
+    "monsters": [
+      "Ancient Artillery",
+      "Rending Drake"
+    ],
+    "allies": [],
+    "unlocks": [
+      "97"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Debris"
+      }
+    ],
+    "rewards": "5 XP, Morale 1",
+    "lootDeckConfig": {
+      "money": 14,
+      "lumber": 1,
+      "metal": 3,
+      "axenut": 1,
+      "rockroot": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/096"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "97",
+    "name": "Program Control Nexus",
+    "complexity": 3,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Program Director",
+      "Robotic Boltshooter",
+      "Ruined Machine",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [
+      "98"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 1, 5 metal",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 4,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/097"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "98",
+    "name": "Collapsing Vent",
+    "complexity": 1,
+    "monsters": [
+      "Ancient Artillery",
+      "Black Imp",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 1,
+      "metal": 4,
+      "hide": 3,
+      "rockroot": 2
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/098"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "99",
+    "name": "Prison Break",
+    "complexity": 1,
+    "monsters": [
+      "Frozen Corpse",
+      "Robotic Boltshooter"
+    ],
+    "allies": [],
+    "unlocks": [
+      "100"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 2,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/099"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "100",
+    "name": "Inside the Swarm",
+    "complexity": 3,
+    "monsters": [
+      "Lurker Mindsnipper",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [
+      "101"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP, 5 gold",
+    "lootDeckConfig": {
+      "money": 15
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/100"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "101",
+    "name": "Harrower Library",
+    "complexity": 1,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard"
+    ],
+    "allies": [],
+    "unlocks": [
+      "102"
+    ],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "into-the-forest"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/101"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "102",
+    "name": "Into the Black",
+    "complexity": 3,
+    "monsters": [
+      "Chaos Demon",
+      "Frost Demon",
+      "Living Spirit",
+      "Night Demon",
+      "Savvas Icestorm",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "20 XP",
+    "lootDeckConfig": {
+      "money": 15
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/102"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "103",
+    "name": "The Lead Door",
+    "complexity": 2,
+    "monsters": [
+      "Living Doom",
+      "Living Spirit",
+      "Lurker Clawcrusher",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      }
+    ],
+    "rewards": "30 XP, 10 gold",
+    "lootDeckConfig": {
+      "money": 15,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/103"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "104",
+    "name": "Ruins of the Solstice",
+    "complexity": 2,
+    "monsters": [
+      "Earth Demon",
+      "Frost Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "2 snowthistle",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2,
+      "axenut": 1,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/104"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "105",
+    "name": "Ruins of the Equinox",
+    "complexity": 2,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Savvas Lavaflow",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "2 flamefruit",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2,
+      "corpsecap": 1,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/105"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "106",
+    "name": "The Tempus Forge",
+    "complexity": 2,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 2,
+      "rockroot": 2,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/106"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "107",
+    "name": "My Private Empire",
+    "complexity": 2,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 3,
+      "metal": 3,
+      "flamefruit": 1,
+      "axenut": 1,
+      "arrowvine": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/107"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "108",
+    "name": "Lustrous Pit",
+    "complexity": 2,
+    "monsters": [
+      "Ice Wraith",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 2, Inspiration 2",
+    "lootDeckConfig": {
+      "money": 15,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/108"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "109",
+    "name": "Furious Factory",
+    "complexity": 3,
+    "monsters": [
+      "Ancient Artillery"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Metal Cabinet"
+      }
+    ],
+    "rewards": "5 metal",
+    "lootDeckConfig": {
+      "money": 11,
+      "lumber": 2,
+      "metal": 4,
+      "rockroot": 2,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/109"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "110",
+    "name": "Guardian's Temple",
+    "complexity": 2,
+    "monsters": [
+      "Living Spirit",
+      "Ruined Machine",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      },
+      {
+        "name": "Ice Pillar"
+      },
+      {
+        "name": "Ice Pillar"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2,
+      "rockroot": 1,
+      "corpsecap": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/110"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "111",
+    "name": "Ice Cave",
+    "complexity": 3,
+    "monsters": [
+      "Frost Demon",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 1,
+      "metal": 3,
+      "hide": 3,
+      "corpsecap": 1,
+      "arrowvine": 2
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/111"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "112",
+    "name": "Raised by Wolves",
+    "complexity": 1,
+    "monsters": [
+      "Burrowing Blade",
+      "Earth Demon",
+      "Hound"
+    ],
+    "allies": [
+      "Hound"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 XP",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 1,
+      "metal": 3,
+      "hide": 5,
+      "rockroot": 2,
+      "axenut": 1
+    },
+    "flowChartGroup": "random-scenarios",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/112"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "113",
+    "name": "Lush Grotto",
+    "complexity": 1,
+    "monsters": [
+      "Chaos Demon",
+      "Forest Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Gain any 4 collective herb resources",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "rockroot": 2,
+      "arrowvine": 2,
+      "flamefruit": 1,
+      "snowthistle": 2,
+      "axenut": 1,
+      "corpsecap": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/113"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "114",
+    "name": "Work Freeze",
+    "complexity": 2,
+    "monsters": [
+      "Hound",
+      "Polar Bear",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      },
+      {
+        "name": "Ice Pillar"
+      }
+    ],
+    "rewards": "5 hide",
+    "lootDeckConfig": {
+      "money": 10,
+      "metal": 3,
+      "hide": 4,
+      "axenut": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/114"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "115",
+    "name": "Pylon Problems",
+    "complexity": 2,
+    "monsters": [
+      "Algox Guard",
+      "Algox Snowspeaker",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Ice Pillar"
+      }
+    ],
+    "rewards": "15 XP",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "arrowvine": 1,
+      "rockroot": 1,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/115"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "116",
+    "name": "Caravan Guards",
+    "complexity": 2,
+    "monsters": [
+      "Algox Archer",
+      "Algox Guard",
+      "Algox Icespeaker",
+      "Algox Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Caravan Wagon",
+        "escort": true
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "rockroot": 1,
+      "arrowvine": 1,
+      "axenut": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/116"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "117",
+    "name": "A Waiting Game",
+    "complexity": 2,
+    "monsters": [
+      "Hound",
+      "Polar Bear",
+      "Vermling Priest",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold, 4 hide",
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 4,
+      "hide": 6,
+      "axenut": 1,
+      "arrowvine": 2,
+      "flamefruit": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/117"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "118",
+    "name": "Lurker Necromancy",
+    "complexity": 1,
+    "monsters": [
+      "Frozen Corpse",
+      "Frozen Corpse Scenario 118",
+      "Living Bones",
+      "Living Bones Scenario 118"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "sled"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Trade all numbered and lettered tokens in for loot cards",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "rockroot": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/118"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "119",
+    "name": "Radiant Dust",
+    "complexity": 2,
+    "monsters": [
+      "Burrowing Blade",
+      "Rending Drake",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "into-the-forest"
+        ]
+      }
+    ],
+    "objectives": [
+      {
+        "name": "Infuser",
+        "escort": true
+      }
+    ],
+    "rewards": "Spend any remaining dust to gain the following: Spend seven (once only): Scepter of Control Item #203 Spend one: Any 1 material resource Spend two: Any 1 herb resource",
+    "lootDeckConfig": {},
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/119"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "120",
+    "name": "Under the Influence",
+    "complexity": 1,
+    "monsters": [
+      "City Guard",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 1, 2 lumber",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/120"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "121",
+    "name": "Black Memories",
+    "complexity": 3,
+    "monsters": [
+      "Vermling Priest",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2,
+      "rockroot": 1,
+      "axenut": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/121"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "122",
+    "name": "The Eternal Crave",
+    "complexity": 2,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 4,
+      "rockroot": 2,
+      "axenut": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/122"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "123",
+    "name": "The Titan",
+    "complexity": 3,
+    "monsters": [
+      "Ancient Artillery"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Morale 1, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 2,
+      "metal": 6,
+      "flamefruit": 1,
+      "snowthistle": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/123"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "124",
+    "name": "A Growing Problem",
+    "complexity": 2,
+    "monsters": [
+      "Living Bones",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [
+      "125"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 XP",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2,
+      "snowthistle": 1,
+      "arrowvine": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/124"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "125",
+    "name": "The Longest Second",
+    "complexity": 2,
+    "monsters": [
+      "Robotic Boltshooter",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 9,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 2,
+      "rockroot": 1,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/125"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "126",
+    "name": "Joseph the Lion",
+    "complexity": 2,
+    "monsters": [
+      "Ice Wraith",
+      "Living Spirit",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Helper",
+        "escort": true
+      },
+      {
+        "name": "Helper",
+        "escort": true
+      },
+      {
+        "name": "Helper",
+        "escort": true
+      },
+      {
+        "name": "Crate"
+      },
+      {
+        "name": "Barrel"
+      }
+    ],
+    "rewards": "10 gold",
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2,
+      "flamefruit": 1,
+      "snowthistle": 2
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/126"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "127",
+    "name": "Derelict Freighter",
+    "complexity": 1,
+    "monsters": [
+      "Ancient Artillery",
+      "Ice Wraith"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 5,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 4,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/127"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "128",
+    "name": "A Tall Drunken Tale",
+    "complexity": 3,
+    "monsters": [
+      "Abael Scout",
+      "Lurker Wavethrower",
+      "Steel Automaton"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 2,
+      "lumber": 3,
+      "metal": 1,
+      "hide": 8,
+      "snowthistle": 1,
+      "arrowvine": 1,
+      "flamefruit": 2
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/128"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "129",
+    "name": "How to Lay an Ambush",
+    "complexity": 3,
+    "monsters": [
+      "City Guard"
+    ],
+    "allies": [
+      "City Guard"
+    ],
+    "unlocks": [
+      "130"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Note the amount of remaining sun agates",
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2,
+      "axenut": 1,
+      "snowthistle": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/129"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "130",
+    "name": "And Then, a Stream",
+    "complexity": 3,
+    "monsters": [
+      "Frozen Corpse",
+      "Lightning Eel",
+      "Shrike Fiend"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 6,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 3,
+      "flamefruit": 1,
+      "arrowvine": 2,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/130"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "131",
+    "name": "The Dancing Iceberg",
+    "complexity": 3,
+    "monsters": [
+      "Lurker Mindsnipper",
+      "Lurker Soldier"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/131"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "132",
+    "name": "Temple of Feline Power",
+    "complexity": 2,
+    "monsters": [
+      "Ice Wraith",
+      "Snow Imp"
+    ],
+    "allies": [],
+    "unlocks": [
+      "133"
+    ],
+    "requirements": [
+      {
+        "buildings": [
+          "climbing-gear"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Inspiration 1",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 2,
+      "corpsecap": 1,
+      "arrowvine": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/132"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "133",
+    "name": "Bolt",
+    "complexity": 2,
+    "monsters": [
+      "Forest Imp",
+      "Rending Drake",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3,
+      "rockroot": 2,
+      "corpsecap": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "job-postings",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/133"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "134",
+    "name": "Tower of Knowledge",
+    "complexity": 3,
+    "monsters": [
+      "Flaming Bladespinner",
+      "Robotic Boltshooter",
+      "Ruined Machine"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "campaignSticker": [
+          "into-the-forest"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {
+      "money": 10,
+      "lumber": 2,
+      "metal": 4,
+      "hide": 2,
+      "arrowvine": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/134"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "135",
+    "name": "Belara's Keep",
+    "complexity": 3,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Rending Drake",
+      "Sun Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 2, Morale 2, Inspiration 1",
+    "lootDeckConfig": {
+      "money": 7,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 2,
+      "corpsecap": 1,
+      "flamefruit": 1,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/135"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "136",
+    "name": "Abandoned Hideout",
+    "complexity": 2,
+    "monsters": [
+      "Lightning Eel",
+      "Lurker Wavethrower"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "20 gold",
+    "lootDeckConfig": {
+      "money": 8,
+      "lumber": 4,
+      "hide": 4,
+      "snowthistle": 1,
+      "arrowvine": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/136"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "137",
+    "name": "Pirate Queen's Haul",
+    "complexity": 1,
+    "monsters": [
+      "Forest Imp",
+      "Piranha Pig",
+      "Polar Bear"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [
+      {
+        "buildings": [
+          "boat"
+        ]
+      }
+    ],
+    "objectives": [],
+    "rewards": "Add one +1 sticker to a money loot card (the card gives one extra money token when resolved)",
+    "lootDeckConfig": {
+      "money": 12,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4,
+      "random_item": 1
+    },
+    "flowChartGroup": "other",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/137"
+  }
+]

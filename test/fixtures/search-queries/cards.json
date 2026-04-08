@@ -1,0 +1,222 @@
+[
+  {
+    "query": "algox archer hp",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:monster-stat/algox-archer/0-3",
+      "gloomhavensecretariat:monster-stat/algox-archer/4-7",
+      "gloomhavensecretariat:event/WO-39",
+      "gloomhavensecretariat:event/WO-53",
+      "gloomhavensecretariat:scenario/001",
+      "gloomhavensecretariat:scenario/002"
+    ]
+  },
+  {
+    "query": "drifter level 3 abilities",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:character-ability/drifter/1",
+      "gloomhavensecretariat:character-ability/drifter/2",
+      "gloomhavensecretariat:character-ability/drifter/3",
+      "gloomhavensecretariat:character-ability/drifter/4",
+      "gloomhavensecretariat:character-ability/drifter/5",
+      "gloomhavensecretariat:character-ability/drifter/6"
+    ]
+  },
+  {
+    "query": "prosperity 3 items",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/SO-60",
+      "gloomhavensecretariat:item/60",
+      "gloomhavensecretariat:item/92",
+      "gloomhavensecretariat:item/132",
+      "gloomhavensecretariat:item/156",
+      "gloomhavensecretariat:item/160"
+    ]
+  },
+  {
+    "query": "minor healing potion",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:item/83",
+      "gloomhavensecretariat:item/99",
+      "gloomhavensecretariat:event/SR-25",
+      "gloomhavensecretariat:item/84",
+      "gloomhavensecretariat:item/85",
+      "gloomhavensecretariat:item/86"
+    ]
+  },
+  {
+    "query": "winter outpost event",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/SO-09",
+      "gloomhavensecretariat:event/SO-10",
+      "gloomhavensecretariat:event/SO-12",
+      "gloomhavensecretariat:event/SO-19",
+      "gloomhavensecretariat:event/SO-28",
+      "gloomhavensecretariat:event/SO-30"
+    ]
+  },
+  {
+    "query": "wall building cost",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/SO-15",
+      "gloomhavensecretariat:event/SO-47",
+      "gloomhavensecretariat:event/WO-47",
+      "gloomhavensecretariat:building/wall-j/L1",
+      "gloomhavensecretariat:building/wall-k/L1",
+      "gloomhavensecretariat:building/wall-l/L1"
+    ]
+  },
+  {
+    "query": "scenario temple liberation",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:scenario/020",
+      "gloomhavensecretariat:event/SR-43",
+      "gloomhavensecretariat:building/42/L1",
+      "gloomhavensecretariat:building/42/L2",
+      "gloomhavensecretariat:building/42/L3",
+      "gloomhavensecretariat:scenario/012"
+    ]
+  },
+  {
+    "query": "personal quest envelope",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:personal-quest/581",
+      "gloomhavensecretariat:personal-quest/582",
+      "gloomhavensecretariat:personal-quest/583",
+      "gloomhavensecretariat:personal-quest/584",
+      "gloomhavensecretariat:personal-quest/585",
+      "gloomhavensecretariat:personal-quest/586"
+    ]
+  },
+  {
+    "query": "battle goal assassin",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:battle-goal/1346",
+      "gloomhavensecretariat:item/240",
+      "gloomhavensecretariat:event/SR-03",
+      "gloomhavensecretariat:event/SR-33",
+      "gloomhavensecretariat:event/SR-37",
+      "gloomhavensecretariat:event/WO-48"
+    ]
+  },
+  {
+    "query": "monster initiative low",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:monster-ability/belara/791",
+      "gloomhavensecretariat:monster-ability/burrowing-blade/825",
+      "gloomhavensecretariat:monster-ability/lost-in-seaweed/701",
+      "gloomhavensecretariat:monster-ability/lurker-clawcrusher/694",
+      "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/701",
+      "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-131/701"
+    ]
+  },
+  {
+    "query": "fire elemental immunity",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:monster-ability/belara/786",
+      "gloomhavensecretariat:monster-ability/belara/788",
+      "gloomhavensecretariat:monster-ability/belara/791",
+      "gloomhavensecretariat:monster-ability/belara/793",
+      "gloomhavensecretariat:monster-ability/flame-demon/546",
+      "gloomhavensecretariat:monster-ability/flame-demon/547"
+    ]
+  },
+  {
+    "query": "shield boots small item",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:item/65",
+      "gloomhavensecretariat:item/88",
+      "gloomhavensecretariat:item/105",
+      "gloomhavensecretariat:item/157",
+      "gloomhavensecretariat:character-mat/coral",
+      "gloomhavensecretariat:character-mat/fist"
+    ]
+  },
+  {
+    "query": "boss monster stats",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:monster-ability/boss/874",
+      "gloomhavensecretariat:monster-ability/boss/875",
+      "gloomhavensecretariat:monster-ability/boss/876",
+      "gloomhavensecretariat:monster-ability/boss/877",
+      "gloomhavensecretariat:monster-ability/boss/878",
+      "gloomhavensecretariat:monster-ability/boss/879"
+    ]
+  },
+  {
+    "query": "wood gathering camp",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/SR-40",
+      "gloomhavensecretariat:event/B-07",
+      "gloomhavensecretariat:event/SO-36",
+      "gloomhavensecretariat:event/SO-49",
+      "gloomhavensecretariat:event/SO-50",
+      "gloomhavensecretariat:event/SR-34"
+    ]
+  },
+  {
+    "query": "starting scenario",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:scenario/000",
+      "gloomhavensecretariat:scenario/001",
+      "gloomhavensecretariat:monster-ability/city-guard-scenario-1/752",
+      "gloomhavensecretariat:monster-ability/fish-king-scenario-76/752",
+      "gloomhavensecretariat:monster-ability/hound-scenario-0/846",
+      "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/698"
+    ]
+  },
+  {
+    "query": "two-handed weapon",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/WR-10",
+      "gloomhavensecretariat:event/WR-33",
+      "gloomhavensecretariat:monster-ability/algox-icespeaker/732",
+      "gloomhavensecretariat:character-ability/drifter/5",
+      "gloomhavensecretariat:character-ability/drifter/6",
+      "gloomhavensecretariat:character-ability/drifter/19"
+    ]
+  },
+  {
+    "query": "level 0 monster move",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:monster-stat/abael-herder/0-3",
+      "gloomhavensecretariat:monster-stat/abael-herder/4-7",
+      "gloomhavensecretariat:monster-stat/abael-scout/0-3",
+      "gloomhavensecretariat:monster-stat/abael-scout/4-7",
+      "gloomhavensecretariat:monster-stat/abael-warlord/0-3",
+      "gloomhavensecretariat:monster-stat/abael-warlord/4-7"
+    ]
+  },
+  {
+    "query": "summer road event",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/SO-05",
+      "gloomhavensecretariat:event/SO-07",
+      "gloomhavensecretariat:event/SO-13",
+      "gloomhavensecretariat:event/SO-20",
+      "gloomhavensecretariat:event/SO-42",
+      "gloomhavensecretariat:event/SO-55"
+    ]
+  },
+  {
+    "query": "character mat hand size",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:character-mat/astral",
+      "gloomhavensecretariat:character-mat/banner-spear",
+      "gloomhavensecretariat:character-mat/blinkblade",
+      "gloomhavensecretariat:character-mat/boneshaper",
+      "gloomhavensecretariat:character-mat/coral",
+      "gloomhavensecretariat:character-mat/deathwalker"
+    ]
+  },
+  {
+    "query": "loot deck herbs",
+    "expectedTopSourceIds": [
+      "gloomhavensecretariat:event/WO-30",
+      "gloomhavensecretariat:item/230",
+      "gloomhavensecretariat:event/SO-17",
+      "gloomhavensecretariat:event/SR-20",
+      "gloomhavensecretariat:event/SR-25",
+      "gloomhavensecretariat:event/WR-01"
+    ]
+  }
+]

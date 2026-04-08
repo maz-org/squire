@@ -201,11 +201,14 @@ server:
 ```bash
 docker compose up -d
 npm run db:migrate
-npm run index   # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
+npm run index        # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
+npm run seed:cards   # upserts data/extracted/*.json into the card_* tables
 ```
 
 `npm run index` is idempotent — re-running it skips PDFs that are
-already in the `embeddings` table. If you change chunking logic, bump
+already in the `embeddings` table. `npm run seed:cards` is also
+idempotent — it upserts on `(game, source_id)`, so stale rows get
+overwritten in place. If you change chunking logic, bump
 `EMBEDDING_VERSION` in `src/vector-store.ts` and re-run after clearing
 the affected sources.
 
