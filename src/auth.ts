@@ -100,19 +100,24 @@ export async function registerClient(
 }
 
 /**
- * Safely resolve a client by id. Any error from the store (notably a
- * Postgres `invalid input syntax for type uuid` when the caller passes a
- * non-UUID `client_id`) is folded into `undefined`, which callers then
- * translate into an OAuth `invalid_request` error. Without this, a
- * malformed `client_id` surfaces as a non-OAuthError and the server's
- * generic fallback hides the real reason behind "Token exchange failed".
+ * RFC 4122 UUID (any version). `client_id`s are generated server-side as
+ * UUIDs, so anything that doesn't match this shape can't exist in the
+ * `oauth_clients` table and would otherwise make Postgres throw
+ * `invalid input syntax for type uuid` before we reach a NOT-FOUND path.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve a client by id. Malformed (non-UUID) ids short-circuit to
+ * `undefined` so callers return an OAuth `invalid_request` instead of
+ * leaking a Postgres parse error. Real backend failures (DB outage,
+ * connection loss) are allowed to propagate as 5xx — we must NOT relabel
+ * them as `Unknown client_id`, which would mask outages as caller errors.
+ * CodeRabbit flagged this on PR #196.
  */
 async function lookupClient(clientId: string) {
-  try {
-    return await getAuthProvider().clientsStore.getClient(clientId);
-  } catch {
-    return undefined;
-  }
+  if (!UUID_RE.test(clientId)) return undefined;
+  return getAuthProvider().clientsStore.getClient(clientId);
 }
 
 /**

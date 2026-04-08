@@ -86,7 +86,7 @@ app.post('/register', async (c) => {
     const client = await registerClient(body as Record<string, unknown>);
     return c.json(client, 201);
   } catch (err) {
-    return oauthErrorResponse(c, err, 'Registration failed');
+    return oauthErrorResponse(c, err);
   }
 });
 
@@ -117,7 +117,7 @@ app.get('/authorize', async (c) => {
     if (state) redirect.searchParams.set('state', state);
     return c.redirect(redirect.toString(), 302);
   } catch (err) {
-    return oauthErrorResponse(c, err, 'Authorization failed');
+    return oauthErrorResponse(c, err);
   }
 });
 
@@ -127,14 +127,20 @@ app.post('/token', async (c) => {
   const contentType = c.req.header('content-type') || '';
   let params: URLSearchParams;
 
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    const body = await c.req.text();
-    params = new URLSearchParams(body);
-  } else if (contentType.includes('application/json')) {
-    const body = (await c.req.json()) as Record<string, string>;
-    params = new URLSearchParams(body);
-  } else {
-    return c.json(oauthError('invalid_request', 'Unsupported content type'), 400);
+  try {
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const body = await c.req.text();
+      params = new URLSearchParams(body);
+    } else if (contentType.includes('application/json')) {
+      const body = (await c.req.json()) as Record<string, string>;
+      params = new URLSearchParams(body);
+    } else {
+      return c.json(oauthError('invalid_request', 'Unsupported content type'), 400);
+    }
+  } catch {
+    // Malformed JSON / unreadable body — surface as OAuth invalid_request
+    // rather than letting it fall through to the generic 500 handler.
+    return c.json(oauthError('invalid_request', 'Malformed request body'), 400);
   }
 
   const grantType = params.get('grant_type');
@@ -158,7 +164,7 @@ app.post('/token', async (c) => {
       );
       return c.json(tokenResponse);
     } catch (err) {
-      return oauthErrorResponse(c, err, 'Token exchange failed');
+      return oauthErrorResponse(c, err);
     }
   }
 
@@ -227,16 +233,17 @@ function oauthError(
 }
 
 /**
- * Translate an exception into an OAuth 2.0 error JSON response. SDK
- * `OAuthError`s carry their own `errorCode` and serialize via
- * `toResponseObject()`. Anything else gets coerced to `invalid_request` with
- * the supplied fallback description so internal stack messages don't leak.
+ * Translate an SDK `OAuthError` into an RFC 6749 §5.2 JSON response. Only
+ * OAuth-shaped errors are handled here — anything else (DB outage, bug) is
+ * re-thrown so the global `app.onError` surfaces it as a 500. Relabeling
+ * arbitrary exceptions as `invalid_request` would mask real outages as
+ * caller errors. CodeRabbit flagged this on PR #196.
  */
-function oauthErrorResponse(c: Context, err: unknown, fallbackDescription: string) {
+function oauthErrorResponse(c: Context, err: unknown) {
   if (err instanceof OAuthError) {
     return c.json(err.toResponseObject(), 400);
   }
-  return c.json(oauthError('invalid_request', fallbackDescription), 400);
+  throw err;
 }
 
 app.notFound((c) => {

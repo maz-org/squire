@@ -8,8 +8,12 @@
  *
  * Content/search endpoints live in `test/server-api.test.ts`. The split
  * keeps each file small enough to be worked on in parallel without merge
- * conflicts. Both files still mock `src/service.ts`, `src/db.ts`, and
- * `src/tools.ts` because `src/server.ts` imports them at module-load time.
+ * conflicts. Both files mock `src/service.ts` and `src/tools.ts` (since
+ * `src/server.ts` imports them at module-load time), but `src/db.ts` is
+ * NOT mocked here — SQR-69 wired the OAuth endpoints to the Drizzle-backed
+ * provider, so this file runs against the real test DB via
+ * `setupTestDb` / `resetTestDb`. The IRON RULE (tokens must survive
+ * process restart) cannot be exercised against a fake `db.execute` stub.
  */
 
 import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vitest';
@@ -30,11 +34,6 @@ vi.mock('../src/service.ts', () => ({
   ask: mockAsk,
 }));
 
-// `src/db.ts` is intentionally NOT mocked. SQR-69 wired the OAuth endpoints
-// to the Drizzle-backed provider, so these tests run against the real test
-// DB via `setupTestDb` / `resetTestDb`. The IRON RULE that prompted the
-// rewrite (tokens must survive process restart) cannot be exercised against
-// a fake `db.execute` stub.
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: vi.fn(),

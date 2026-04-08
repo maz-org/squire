@@ -135,12 +135,23 @@ describe('IRON RULE: tokens survive process restart', () => {
     await shutdownServerPool();
     resetAuthProvider();
 
-    // 6. Replay an authenticated `/api/health` call. A fresh pool +
-    //    provider has to verify the bearer purely from DB state.
-    const healthRes = await app.request('http://localhost:3000/api/health', {
+    // 6. Replay a bearer-protected API call. `/api/card-types` sits behind
+    //    `requireBearerAuth()` in server.ts, so reaching it after the pool
+    //    reset proves the token was verified against fresh DB state — not
+    //    against stale in-memory cache. (`/api/health` is unauthenticated,
+    //    so hitting it wouldn't actually exercise token persistence.
+    //    CodeRabbit flagged this on PR #196.)
+    //
+    //    First confirm the route IS gated — no bearer should return 401.
+    const unauthRes = await app.request('http://localhost:3000/api/card-types');
+    expect(unauthRes.status).toBe(401);
+
+    //    Then replay with the bearer. Anything other than 401 means the
+    //    middleware accepted the token from the fresh pool.
+    const protectedRes = await app.request('http://localhost:3000/api/card-types', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    expect(healthRes.status).toBe(200);
+    expect(protectedRes.status).not.toBe(401);
 
     // 7. The bearer also has to gate `/mcp` after the restart. We POST a
     //    minimal JSON-RPC initialize so the transport accepts the body —
