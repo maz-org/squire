@@ -354,6 +354,7 @@ data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 
 ## Changelog
 
+- **2026-04-08:** SQR-36 — local bootstrap swapped from `npm run seed:cards` to `npm run seed:dev`, which chains `seed:cards` and the new idempotent `seed:dev-user` helper (inserts a predictable `dev@squire.local` account for testing authenticated paths). New `seed` alias targets `seed:cards` as the prod-relevant default. The dev-user CLI refuses to run with `NODE_ENV=production`.
 - **2026-04-08:** SQR-56 — clarified that `data/extracted/*.json` is now a seed input, not the runtime store. Card data lives in Postgres `card_*` tables; `npm run seed:cards` is the bridge.
 - **2026-04-07:** Final-pass cleanup. Removed stale Git LFS install step and `--recurse-submodules` clone flag — extracted card data and the vector index are committed as regular files (not LFS, no submodules) since PR #162.
 - **2026-04-07:** Moved from repo root to `docs/CONTRIBUTING.md` as part of the docs consolidation. Added changelog. Updated project layout listing to include CONTRIBUTING alongside the other ALL_CAPS docs.
