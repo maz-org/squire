@@ -41,7 +41,7 @@ async function doInitialize(): Promise<void> {
   const types = await listCardTypes();
   const totalCards = types.reduce((sum, t) => sum + t.count, 0);
   if (totalCards === 0) {
-    throw new Error('No extracted card data found. Run `npm run extract` first.');
+    throw new Error('No card data found in Postgres. Run `npm run seed:cards` first.');
   }
 
   ready = true;
