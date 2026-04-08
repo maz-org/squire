@@ -80,10 +80,12 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 ### Web channel (frontend + server)
 
 - **Server framework:** Hono (`@hono/node-server`)
-- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS via CDN
-- **Build pipeline:** none — no bundler, no client-side build step
+- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS pre-built via Tailwind CLI
+- **Build pipeline:** no JavaScript bundler. One CSS build step: `tailwindcss -i src/web-ui/styles.css -o public/app.css` runs in the Dockerfile / deploy pipeline. The resulting `app.css` is served as a static file by Hono (and edge-cached by Cloudflare).
 
-*Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
+*Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
+
+*Tailwind delivery decision: see [ADR 0008 — Tailwind CLI for production CSS](adr/0008-tailwind-cli-for-production-css.md).*
 
 ### Database
 
@@ -123,7 +125,9 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 *Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing, reuses code that already exists for MCP. Single IdP for the web channel keeps the surface area tiny.*
 
-External MCP / REST clients use OAuth 2.1 via the existing `@modelcontextprotocol/sdk` auth handlers (auth code + PKCE for interactive, client credentials for machine-to-machine, dynamic client registration supported).
+For Phase 1 the web channel additionally enforces a hard-coded email allowlist constant in the OAuth callback — see [ADR 0009 — Google OAuth + hard-coded allowlist](adr/0009-google-oauth-with-hardcoded-allowlist.md).
+
+External MCP / REST clients use OAuth 2.1 via the existing `@modelcontextprotocol/sdk` auth handlers (auth code + PKCE for interactive, client credentials for machine-to-machine, dynamic client registration supported). MCP bearer tokens are long-lived per [ADR 0002](adr/0002-long-lived-oauth-bearer-tokens.md); web sessions follow the same policy with a 30-day cookie.
 
 ### Edge layer
 
