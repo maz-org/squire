@@ -502,7 +502,12 @@ Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. P
 ```text
 src/
   agent.ts                      Conversation + knowledge agent loop, model invocation
-  auth.ts                       Auth middleware (OAuth 2.1 + Google OAuth web)
+  auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1) + Google OAuth web
+  auth/
+    provider.ts                 SquireOAuthProvider — MCP SDK OAuthServerProvider impl (Drizzle-backed)
+    clients-store.ts            DrizzleClientsStore — OAuthRegisteredClientsStore impl
+    audit.ts                    OAuth audit event writer (same txn as mutations)
+    hashing.ts                  Token hashing helpers
   db.ts                         Drizzle client + pool factory (server / cli modes)
   db/
     schema/                     Drizzle schema (core, auth, cards) — barrel in index.ts
