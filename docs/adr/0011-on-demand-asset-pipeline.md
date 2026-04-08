@@ -155,17 +155,30 @@ on mismatch — a stale HTML page from a previous deploy that still
 references the old URL will 404 on its CSS, and the browser
 re-fetches the HTML on the next navigation.
 
-**Hono router quirk.** The "obvious" pattern `/app.:hash{[a-f0-9]+}.css`
-(parameter with regex constraint followed by a literal suffix) is
-*not* supported by Hono 4.12's `RegExpRouter`: single-segment
-variants silently 404 even on matching inputs, and multi-segment
-variants (`/assets/:hash{...}.css`) throw an uncaught
+**Hono route syntax — full-filename regex constraint is the
+documented pattern.** Hono's own routing docs
+([hono.dev/docs/api/routing#parameters](https://hono.dev/docs/api/routing#parameters))
+show this example for matching a file with a literal extension:
+`app.get('/posts/:filename{.+\.png}', ...)` — the literal `.png`
+suffix lives *inside* the regex constraint, not outside it. Our
+`/:file{app\.[a-f0-9]+\.css}` and `/:file{squire\.[a-f0-9]+\.js}`
+patterns follow the same shape, which is the supported approach.
+
+We learned this the hard way. The "obvious" pattern
+`/app.:hash{[a-f0-9]+}.css` (regex constraint followed by a literal
+suffix in the same segment) does not behave as expected in Hono
+4.12's `RegExpRouter`: single-segment variants silently 404 even on
+matching inputs, and multi-segment variants
+(`/assets/:hash{...}.css`) throw an uncaught
 `TypeError: undefined is not iterable` from
-`buildMatcherFromPreprocessedRoutes`. Full-filename regex
-constraints (`/:file{app\.[a-f0-9]+\.css}`) work correctly and
-remain hex-constrained at the match layer, which is all we
-actually needed. Documented here so the next person who reaches
-for the "pretty" syntax doesn't lose an hour debugging 404s.
+`buildMatcherFromPreprocessedRoutes` at first request. The silent
+404 is working-as-designed for an unsupported shape; the
+`TypeError` crash is a bug in the matcher builder's error handling
+(a supported-or-not check should produce a clear error, not
+iterate `undefined`), but either way the workaround is the same:
+put the whole filename inside one regex param. Documented here so
+the next person who reaches for the "pretty" shape doesn't lose an
+hour debugging phantom 404s before finding the docs example.
 
 **Dev**: URLs are bare (`/app.css`, `/squire.js`) with
 `Cache-Control: no-cache`. This is the Rails Propshaft dev mode
