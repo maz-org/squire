@@ -158,10 +158,10 @@
     "expectedTopSourceIds": [
       "gloomhavensecretariat:scenario/000",
       "gloomhavensecretariat:scenario/001",
-      "gloomhavensecretariat:scenario/random",
-      "gloomhavensecretariat:scenario/solo20_drifter",
-      "gloomhavensecretariat:scenario/solo21_blinkblade",
-      "gloomhavensecretariat:scenario/solo22_banner-spear"
+      "gloomhavensecretariat:monster-ability/city-guard-scenario-1/752",
+      "gloomhavensecretariat:monster-ability/fish-king-scenario-76/752",
+      "gloomhavensecretariat:monster-ability/hound-scenario-0/846",
+      "gloomhavensecretariat:monster-ability/lurker-wavethrower-scenario-128/698"
     ]
   },
   {

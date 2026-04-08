@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { getTableColumns, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, notInArray, sql } from 'drizzle-orm';
 import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
 
 /**
@@ -69,6 +69,8 @@ export interface SeedCardsOptions {
 export interface SeedCardsResult {
   type: CardType;
   inserted: number;
+  /** Rows pruned because they no longer appear in the latest extract. */
+  pruned: number;
   skipped: number;
 }
 
@@ -106,11 +108,6 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
       rows.push({ ...(parsed.data as Record<string, unknown>), game });
     }
 
-    if (rows.length === 0) {
-      results.push({ type, inserted: 0, skipped });
-      continue;
-    }
-
     // Build the conflict-update set from all non-key columns. Drizzle's
     // `excluded.<col>` reference uses the schema column name, not the SQL
     // column name, which is exactly what `getTableColumns` returns.
@@ -121,17 +118,35 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
       updateSet[colName] = sql.raw(`excluded."${allCols[colName].name}"`);
     }
 
-    await db.transaction(async (tx) => {
-      await tx
-        .insert(table)
-        .values(rows)
-        .onConflictDoUpdate({
-          target: [table.game, table.sourceId],
-          set: updateSet,
-        });
+    // Prune any rows for this game that no longer appear in the latest
+    // extract (or that started failing Zod validation since the last seed).
+    // Without this, deleted/renamed source records would survive forever
+    // and become live data once SQR-56 swaps the loader to Postgres.
+    const sourceIds = rows.map((row) => row.sourceId as string);
+    const pruned = await db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(table)
+        .where(
+          sourceIds.length === 0
+            ? eq(table.game, game)
+            : and(eq(table.game, game), notInArray(table.sourceId, sourceIds)),
+        )
+        .returning({ sourceId: table.sourceId });
+
+      if (rows.length > 0) {
+        await tx
+          .insert(table)
+          .values(rows)
+          .onConflictDoUpdate({
+            target: [table.game, table.sourceId],
+            set: updateSet,
+          });
+      }
+
+      return deleted.length;
     });
 
-    results.push({ type, inserted: rows.length, skipped });
+    results.push({ type, inserted: rows.length, pruned, skipped });
   }
 
   return results;

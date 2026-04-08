@@ -13,7 +13,7 @@ async function main(): Promise<void> {
   try {
     const results = await seedCards(db);
     for (const r of results) {
-      console.log(`✓ ${r.type}: upserted ${r.inserted}, skipped ${r.skipped}`);
+      console.log(`✓ ${r.type}: upserted ${r.inserted}, pruned ${r.pruned}, skipped ${r.skipped}`);
     }
   } finally {
     await close();
