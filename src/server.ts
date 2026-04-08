@@ -54,12 +54,19 @@ app.use(
 // JS — the fallback path is the same HTML primitive that SQR-6 / SQR-8 will
 // reuse for recoverable runtime errors. See DESIGN.md decisions log
 // "`.squire-banner` is a reusable primitive."
-app.get('/', (c) => {
+app.get('/', async (c) => {
+  // Both `renderHomePage()` and `layoutShell()` return
+  // `HtmlEscapedString | Promise<HtmlEscapedString>` (the Promise variant
+  // is what hono/html falls back to when interpolating arrays). Without
+  // `await`, a rejected promise from either function would bypass this
+  // try/catch and bubble up to `app.onError` as a JSON 500 — losing the
+  // styled HTML fallback that the SQR-65 ticket required. Awaiting both
+  // ensures the catch branch always renders the layout shell.
   try {
-    return c.html(renderHomePage());
+    return c.html(await renderHomePage());
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.html(layoutShell({ errorBanner: { message } }), 500);
+    return c.html(await layoutShell({ errorBanner: { message } }), 500);
   }
 });
 

@@ -16,14 +16,22 @@
  * migration to TSX is mechanical.
  */
 
-import { html, raw } from 'hono/html';
+import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { APP_CSS_HREF, FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 
 export interface LayoutShellOptions {
-  /** Slot content rendered inside `main.squire-surface`. */
-  mainContent?: HtmlEscapedString | string;
+  /**
+   * Slot content rendered inside `main.squire-surface`. Must be an
+   * already-escaped `HtmlEscapedString` produced by hono/html's `html`
+   * tagged template (or `raw()` if the caller has manually escaped). The
+   * type deliberately excludes plain `string` so callers can't accidentally
+   * pass user- or LLM-supplied text into the `raw()` unwrap below — the
+   * compiler enforces escaping at the call site instead of relying on a
+   * comment for safety. See SQR-65 / CodeRabbit review on PR #198.
+   */
+  mainContent?: HtmlEscapedString;
   /**
    * Server-side error fallback. When set, the layout still renders but
    * `main.squire-surface` contains the error banner instead of the normal
@@ -51,20 +59,16 @@ export function layoutShell(
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
-  // strings from a caught exception. The `mainContent` slot, on the other
-  // hand, is unwrapped via `raw()` so callers can pass pre-escaped
-  // `HtmlEscapedString` fragments built by their own `html` templates. The
-  // `string` half of the union is a foot-gun for SQR-6 onward — DO NOT
-  // pass user-supplied or LLM-generated text through this slot without
-  // running it through `html` (which escapes) or `escapeHtml()` first.
+  // strings from a caught exception. `mainContent` is typed as
+  // `HtmlEscapedString` so the compiler guarantees the caller already
+  // escaped it (see the LayoutShellOptions doc comment above) — no `raw()`
+  // wrap needed, the value flows directly into the template.
   const surfaceContent = options.errorBanner
     ? html`<div class="squire-banner squire-banner--error" role="alert">
         <span class="squire-banner__label">SOMETHING WENT WRONG</span>
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
-    : options.mainContent
-      ? raw(String(options.mainContent))
-      : html``;
+    : (options.mainContent ?? html``);
 
   return html`<!doctype html>
     <html lang="en">
