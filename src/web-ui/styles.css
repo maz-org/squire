@@ -359,8 +359,15 @@ html {
   }
   .squire-frame {
     /* Outer 12px border-radius lives on a wrapper container at this
-       breakpoint — DESIGN.md §Spacing border-radius scale. */
+       breakpoint — DESIGN.md §Spacing border-radius scale. `overflow:
+       hidden` is required for the radius to actually clip the rail and
+       column corners — without it, child square corners poke through.
+       The frame keeps `min-height: 100vh`, so the input dock's
+       `position: sticky` still pins to the viewport bottom for short
+       content (the dock's nearest scroll ancestor becomes the frame
+       at this breakpoint, but the frame is at least viewport-tall). */
     border-radius: 12px;
+    overflow: hidden;
   }
 }
 
