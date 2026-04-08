@@ -26,8 +26,49 @@ import {
   verifyAccessToken,
   OAuthError,
 } from './auth.ts';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { layoutShell, renderHomePage } from './web-ui/layout.ts';
 
 export const app = new Hono();
+
+// ─── Web UI: static asset serving ────────────────────────────────────────────
+//
+// SQR-64 promised that the Tailwind CLI build output (`public/app.css`) would
+// be "served at /app.css by Hono as a static file (ADR 0008)" but never
+// actually wired the handler. Without this, the layout shell from SQR-65
+// renders unstyled in a browser even though the HTML structure is correct.
+// Folded into SQR-65 because the layout has no meaning without its CSS.
+app.use(
+  '/app.css',
+  serveStatic({
+    path: './public/app.css',
+  }),
+);
+
+// ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
+//
+// GET / renders the empty layout shell. The handler wraps the renderer in a
+// try/catch so a thrown error (db down, agent down, future content slot
+// throwing during render) still yields a fully-formed layout with an inline
+// error banner instead of a bare 500 page. The layout shell never depends on
+// JS — the fallback path is the same HTML primitive that SQR-6 / SQR-8 will
+// reuse for recoverable runtime errors. See DESIGN.md decisions log
+// "`.squire-banner` is a reusable primitive."
+app.get('/', async (c) => {
+  // Both `renderHomePage()` and `layoutShell()` return
+  // `HtmlEscapedString | Promise<HtmlEscapedString>` (the Promise variant
+  // is what hono/html falls back to when interpolating arrays). Without
+  // `await`, a rejected promise from either function would bypass this
+  // try/catch and bubble up to `app.onError` as a JSON 500 — losing the
+  // styled HTML fallback that the SQR-65 ticket required. Awaiting both
+  // ensures the catch branch always renders the layout shell.
+  try {
+    return c.html(await renderHomePage());
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return c.html(await layoutShell({ errorBanner: { message } }), 500);
+  }
+});
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────
 

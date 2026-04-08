@@ -75,6 +75,10 @@ npm run serve
 The server initializes the vector index and embedder on startup, then
 serves:
 
+- **Web UI** — `GET /` (companion-first layout shell, server-rendered HTML;
+  `GET /app.css` for the Tailwind CLI build output — run
+  `npm run build:css` once before `npm run serve` so `public/app.css` exists,
+  otherwise the layout renders unstyled)
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)
