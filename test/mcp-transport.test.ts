@@ -33,37 +33,32 @@ vi.mock('../src/db.ts', () => ({
   shutdownServerPool: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Bypass the Drizzle-backed auth provider — this file exercises the MCP
+// transport, not OAuth semantics, so we stub `verifyAccessToken` to accept
+// any bearer header. The real OAuth flow is covered by
+// `test/server-oauth.test.ts` against the test DB. Stubbing here keeps the
+// transport tests hermetic from Postgres.
+vi.mock('../src/auth.ts', () => ({
+  registerClient: vi.fn(),
+  createAuthorizationCode: vi.fn(),
+  exchangeAuthorizationCode: vi.fn(),
+  verifyAccessToken: vi.fn().mockResolvedValue({
+    token: 'stub',
+    clientId: 'stub-client',
+    scopes: [],
+  }),
+  getAuthProvider: vi.fn(),
+  resetAuthProvider: vi.fn(),
+  OAuthError: class OAuthError extends Error {},
+}));
+
 import { app } from '../src/server.ts';
-import { registerClient, createAuthorizationCode, exchangeAuthorizationCode } from '../src/auth.ts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { createHash } from 'node:crypto';
-
-// Get a valid access token for MCP transport tests
-function getToken(): string {
-  const verifier = 'test-verifier-for-mcp-transport-tests';
-  const challenge = createHash('sha256').update(verifier).digest('base64url');
-  const client = registerClient({
-    redirect_uris: ['http://localhost/callback'],
-    token_endpoint_auth_method: 'none',
-  });
-  const authCode = createAuthorizationCode(
-    client.client_id,
-    'http://localhost/callback',
-    challenge,
-  );
-  const { access_token } = exchangeAuthorizationCode(
-    authCode.code,
-    client.client_id,
-    verifier,
-    'http://localhost/callback',
-  );
-  return access_token;
-}
 
 // Helper to create an MCP client connected via HTTP to the Hono app
 async function createHttpClient(): Promise<Client> {
-  const token = getToken();
+  const token = 'stub-token';
   const client = new Client({ name: 'test-client', version: '1.0' });
   const transport = new StreamableHTTPClientTransport(new URL('http://localhost/mcp'), {
     fetch: async (url, init) => {

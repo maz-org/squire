@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { makeAuthHelpers, parseSSE } from './helpers/server-oauth-helpers.ts';
+import { parseSSE } from './helpers/server-oauth-helpers.ts';
 
 const {
   mockInitialize,
@@ -61,9 +61,30 @@ vi.mock('../src/tools.ts', () => ({
   getCard: mockGetCard,
 }));
 
+// Bypass the Drizzle-backed auth provider — these tests don't exercise OAuth
+// semantics, so we stub `verifyAccessToken` to accept any bearer header. The
+// real OAuth flow is covered by `test/server-oauth.test.ts` against the test
+// DB. Mocking here keeps this file hermetic from Postgres.
+vi.mock('../src/auth.ts', () => ({
+  registerClient: vi.fn(),
+  createAuthorizationCode: vi.fn(),
+  exchangeAuthorizationCode: vi.fn(),
+  verifyAccessToken: vi.fn().mockResolvedValue({
+    token: 'stub',
+    clientId: 'stub-client',
+    scopes: [],
+  }),
+  getAuthProvider: vi.fn(),
+  resetAuthProvider: vi.fn(),
+  OAuthError: class OAuthError extends Error {},
+}));
+
 import { app } from '../src/server.ts';
 
-const { auth } = makeAuthHelpers(app);
+/** Stub bearer header — the mocked `verifyAccessToken` accepts anything. */
+async function auth(): Promise<Record<string, string>> {
+  return { Authorization: 'Bearer stub-token' };
+}
 
 describe('GET /api/health', () => {
   beforeEach(() => {

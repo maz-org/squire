@@ -1,181 +1,158 @@
 /**
- * OAuth 2.1 auth module.
- * Client registration, token issuance, and bearer auth middleware.
+ * OAuth 2.1 facade — thin wrapper around {@link SquireOAuthProvider}.
+ *
+ * Phase 1 of the storage migration (SQR-68) ported all OAuth state into
+ * Postgres via {@link SquireOAuthProvider}. This file used to hold the
+ * in-memory `Map` state that prompted the IRON RULE incident: tokens were
+ * lost on every process restart because the maps lived only in heap.
+ *
+ * Now this module is a tiny adapter that:
+ *
+ * 1. Lazily constructs a single {@link SquireOAuthProvider} bound to the
+ *    server-mode Drizzle pool from {@link getDb}. Tests that tear the pool
+ *    down call {@link resetAuthProvider} so the next call rehydrates against
+ *    a fresh handle.
+ * 2. Translates the loose `Record<string, unknown>` shape coming from the
+ *    `/register` HTTP handler into the SDK's `OAuthClientInformationFull`
+ *    shape — the only place that performs that translation lives here.
+ * 3. Exposes async wrapper functions matching the call sites in
+ *    `src/server.ts` and `test/mcp-transport.test.ts`. Wrappers stay thin so
+ *    we don't grow a second source of truth for OAuth semantics — anything
+ *    interesting happens in the provider.
+ *
+ * The provider is the only owner of OAuth state. There are no `new Map(...)`
+ * caches in this file by design — see SECURITY.md §2 and the SQR-69 issue
+ * for the IRON RULE rationale.
  */
 
-import { randomUUID, createHash } from 'node:crypto';
+import {
+  InvalidRequestError,
+  InvalidTokenError,
+  OAuthError,
+} from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import type {
+  OAuthClientInformationFull,
+  OAuthTokens,
+} from '@modelcontextprotocol/sdk/shared/auth.js';
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 
-// ─── Client store ────────────────────────────────────────────────────────────
+import { SquireOAuthProvider } from './auth/provider.ts';
+import { getDb } from './db.ts';
 
-export interface RegisteredClient {
-  client_id: string;
-  client_id_issued_at: number;
-  redirect_uris: string[];
-  client_name?: string;
-  grant_types?: string[];
-  response_types?: string[];
-  token_endpoint_auth_method?: string;
-  scope?: string;
-}
+let provider: SquireOAuthProvider | null = null;
 
-const clients = new Map<string, RegisteredClient>();
-
-export function getClient(clientId: string): RegisteredClient | undefined {
-  return clients.get(clientId);
+/**
+ * Lazily build (or return) the singleton provider bound to the server-mode
+ * Drizzle pool. Lazy because importing this module under tests must not
+ * eagerly open a Postgres connection at module-load time.
+ */
+export function getAuthProvider(): SquireOAuthProvider {
+  if (!provider) {
+    const { db } = getDb('server');
+    provider = new SquireOAuthProvider(db);
+  }
+  return provider;
 }
 
 /**
- * Register a new OAuth client. Returns the full client record.
- * Throws if redirect_uris is missing or empty.
+ * Discard the cached provider so the next `getAuthProvider()` call rebuilds
+ * against a fresh `getDb('server')` handle. Used by the restart regression
+ * test, which tears down the server pool to simulate process exit.
  */
-export function registerClient(metadata: Record<string, unknown>): RegisteredClient {
+export function resetAuthProvider(): void {
+  provider = null;
+}
+
+/**
+ * Validate `redirect_uris` from a raw client registration body. The store
+ * itself trusts that the SDK schema parsed the input — we don't have that
+ * parser yet on the `/register` HTTP path, so the check lives here.
+ */
+function coerceRegistrationMetadata(
+  metadata: Record<string, unknown>,
+): Omit<OAuthClientInformationFull, 'client_id' | 'client_id_issued_at'> {
   const redirectUris = metadata.redirect_uris;
   if (!Array.isArray(redirectUris) || redirectUris.length === 0) {
-    throw new Error('redirect_uris is required and must be a non-empty array');
+    throw new InvalidRequestError('redirect_uris is required and must be a non-empty array');
   }
   if (!redirectUris.every((uri) => typeof uri === 'string' && uri.length > 0)) {
-    throw new Error('redirect_uris must contain only non-empty strings');
+    throw new InvalidRequestError('redirect_uris must contain only non-empty strings');
   }
-
-  const client: RegisteredClient = {
-    client_id: randomUUID(),
-    client_id_issued_at: Math.floor(Date.now() / 1000),
-    redirect_uris: redirectUris as string[],
+  return {
+    redirect_uris: redirectUris as [string, ...string[]],
     client_name: metadata.client_name as string | undefined,
     grant_types: metadata.grant_types as string[] | undefined,
     response_types: metadata.response_types as string[] | undefined,
     token_endpoint_auth_method: metadata.token_endpoint_auth_method as string | undefined,
     scope: metadata.scope as string | undefined,
-  };
-
-  clients.set(client.client_id, client);
-  return client;
+  } as Omit<OAuthClientInformationFull, 'client_id' | 'client_id_issued_at'>;
 }
-
-// ─── Authorization codes ─────────────────────────────────────────────────────
-
-interface AuthorizationCode {
-  code: string;
-  clientId: string;
-  redirectUri: string;
-  codeChallenge: string;
-  state?: string;
-  createdAt: number;
-}
-
-const authCodes = new Map<string, AuthorizationCode>();
 
 /**
- * Create an authorization code for the given client and PKCE challenge.
- * Auto-approves for now (no user session/consent required yet).
+ * Register a new OAuth client. Returns the SDK-shaped client record (the
+ * same shape the `/register` endpoint serializes to JSON).
  */
-export function createAuthorizationCode(
+export async function registerClient(
+  metadata: Record<string, unknown>,
+): Promise<OAuthClientInformationFull> {
+  const coerced = coerceRegistrationMetadata(metadata);
+  return getAuthProvider().clientsStore.registerClient(coerced);
+}
+
+/**
+ * Issue an authorization code for `clientId` after exact-match-validating
+ * `redirectUri` against the client's registered URIs. PKCE method is fixed
+ * to S256 — see {@link SquireOAuthProvider.createAuthorizationCode}.
+ */
+export async function createAuthorizationCode(
   clientId: string,
   redirectUri: string,
   codeChallenge: string,
   state?: string,
-): AuthorizationCode {
-  const client = getClient(clientId);
-  if (!client) throw new Error('Unknown client_id');
-  if (!client.redirect_uris.includes(redirectUri)) {
-    throw new Error('redirect_uri does not match registered URIs');
-  }
-
-  const code: AuthorizationCode = {
-    code: randomUUID(),
-    clientId,
+): Promise<{ code: string }> {
+  const p = getAuthProvider();
+  const client = await p.clientsStore.getClient(clientId);
+  if (!client) throw new InvalidRequestError('Unknown client_id');
+  const { code } = await p.createAuthorizationCode({
+    client,
     redirectUri,
     codeChallenge,
+    codeChallengeMethod: 'S256',
     state,
-    createdAt: Date.now(),
-  };
-
-  authCodes.set(code.code, code);
-  return code;
-}
-
-export function getAuthorizationCode(code: string): AuthorizationCode | undefined {
-  return authCodes.get(code);
-}
-
-export function consumeAuthorizationCode(code: string): AuthorizationCode | undefined {
-  const authCode = authCodes.get(code);
-  if (authCode) authCodes.delete(code);
-  return authCode;
-}
-
-// ─── Token issuance ──────────────────────────────────────────────────────────
-
-const ACCESS_TOKEN_EXPIRY = 30 * 24 * 3600; // 30 days in seconds
-
-interface AccessToken {
-  token: string;
-  clientId: string;
-  createdAt: number;
-  expiresIn: number;
-}
-
-const tokens = new Map<string, AccessToken>();
-
-/**
- * Verify PKCE code_verifier against the stored code_challenge.
- * S256: BASE64URL(SHA256(code_verifier)) === code_challenge
- */
-function verifyPkce(codeVerifier: string, codeChallenge: string): boolean {
-  const hash = createHash('sha256').update(codeVerifier).digest('base64url');
-  return hash === codeChallenge;
+  });
+  return { code };
 }
 
 /**
- * Exchange an authorization code for an access token.
- * Validates PKCE code_verifier, consumes the code (one-time use).
+ * Exchange an authorization code for an access token. Returns the SDK
+ * `OAuthTokens` shape directly — `/token` serializes it as-is.
  */
-export function exchangeAuthorizationCode(
+export async function exchangeAuthorizationCode(
   code: string,
   clientId: string,
   codeVerifier: string,
   redirectUri: string,
-): { access_token: string; token_type: string; expires_in: number } {
-  const authCode = consumeAuthorizationCode(code);
-  if (!authCode) throw new Error('Invalid or expired authorization code');
-  if (authCode.clientId !== clientId) throw new Error('client_id mismatch');
-  if (authCode.redirectUri !== redirectUri) throw new Error('redirect_uri mismatch');
-  if (!verifyPkce(codeVerifier, authCode.codeChallenge)) {
-    throw new Error('Invalid code_verifier');
-  }
-
-  const accessToken: AccessToken = {
-    token: randomUUID(),
-    clientId,
-    createdAt: Date.now(),
-    expiresIn: ACCESS_TOKEN_EXPIRY,
-  };
-  tokens.set(accessToken.token, accessToken);
-
-  return {
-    access_token: accessToken.token,
-    token_type: 'bearer',
-    expires_in: accessToken.expiresIn,
-  };
+): Promise<OAuthTokens> {
+  const p = getAuthProvider();
+  const client = await p.clientsStore.getClient(clientId);
+  if (!client) throw new InvalidRequestError('Unknown client_id');
+  return p.exchangeAuthorizationCode(client, code, codeVerifier, redirectUri);
 }
 
 /**
- * Verify an access token. Returns the token record if valid.
+ * Verify a bearer token. Returns `AuthInfo` on success and `undefined` on
+ * any auth failure (`InvalidTokenError`); other errors propagate. The bearer
+ * middleware in `src/server.ts` only needs the present/absent distinction,
+ * so flattening the SDK exception keeps the call site simple.
  */
-export function verifyAccessToken(token: string): AccessToken | undefined {
-  const record = tokens.get(token);
-  if (!record) return undefined;
-  const elapsed = (Date.now() - record.createdAt) / 1000;
-  if (elapsed > record.expiresIn) {
-    tokens.delete(token);
-    return undefined;
+export async function verifyAccessToken(token: string): Promise<AuthInfo | undefined> {
+  try {
+    return await getAuthProvider().verifyAccessToken(token);
+  } catch (err) {
+    if (err instanceof InvalidTokenError) return undefined;
+    throw err;
   }
-  return record;
 }
 
-/** @internal Reset all stores for testing. */
-export function _resetClientsForTesting(): void {
-  clients.clear();
-  authCodes.clear();
-  tokens.clear();
-}
+/** Re-export so server.ts can `instanceof`-check without reaching into the SDK. */
+export { OAuthError };

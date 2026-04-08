@@ -57,7 +57,18 @@ planned as a custom implementation inside the Hono server.
 
 **Mitigations:**
 
-- Use the MCP SDK's auth handlers rather than rolling our own
+- Implement the MCP SDK's `OAuthServerProvider` interface (`SquireOAuthProvider`
+  in `src/auth/provider.ts`) so the security-critical surface — PKCE rules,
+  one-time auth-code semantics, OAuth 2.0 error shapes, exact-match
+  redirect-URI checks, hashing-at-rest invariants — is the SDK's well-trodden
+  contract rather than a hand-rolled state machine. The thin Hono adapter in
+  `src/server.ts` only handles request parsing and JSON serialization. **The
+  SDK's `mcpAuthRouter` Express helper was evaluated and rejected for
+  architectural reasons, not security ones:** mounting it would force Squire
+  to ship a second HTTP framework alongside Hono just to host four
+  endpoints, an innovation-token cost the value (~80 lines of form parsing
+  and error formatting) cannot justify. The valuable part of "use the SDK"
+  is the provider contract, which we wrap directly. Tracking issue: SQR-69.
 - Exact-match redirect URI validation, no wildcards
 - Rate limit client registration (e.g., 10/hour per IP) — tracked in the
   Production Readiness project (SQR-52) alongside other rate-limit configuration
