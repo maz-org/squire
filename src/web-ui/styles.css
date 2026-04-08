@@ -348,10 +348,128 @@ html {
 
 .squire-banner--error {
   border-left-color: var(--error);
+  /* 8% tint of --error (#8b2919) on top of surface. */
+  background: rgba(139, 41, 25, 0.08);
 }
 
 .squire-banner--error .squire-banner__label {
   color: var(--error);
+}
+/* SQR-67 — spoiler warning variant. Amber left border + 8% amber tint.
+   DESIGN.md §Spoiler warning banner is authoritative. */
+.squire-banner--spoiler {
+  border-left-color: var(--amber);
+  background: rgba(212, 161, 71, 0.08);
+}
+.squire-banner--spoiler .squire-banner__label {
+  color: var(--amber);
+}
+/* SQR-67 — Phase 6 sync status banner variant. Ships the CSS now with a
+   hidden <template> fixture so Phase 6's SYNCED banner doesn't need to
+   re-derive the styling. Sage accent + 8% sage tint per DESIGN.md. */
+.squire-banner--sync {
+  border-left-color: var(--sage);
+  background: rgba(122, 140, 92, 0.08);
+}
+.squire-banner--sync .squire-banner__label {
+  color: var(--sage);
+}
+
+/* SQR-67 — first-run empty state. Fraunces hero "At your service." above
+   a Geist small-caps scope line, centered with generous breathing room so
+   the sticky input dock stays the primary affordance. Ticket requires
+   letter-spacing ≥ 0.16em on the scope line. The hero inherits Fraunces
+   22–28px from `.squire-question` (declared above by SQR-66) — don't
+   duplicate the type ramp here. */
+.squire-empty {
+  padding: 48px 0 24px;
+}
+.squire-empty .squire-question {
+  margin-bottom: 20px;
+}
+.squire-empty__scope {
+  margin: 0;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+/* SQR-67 — recent-questions chip row. Pill-shaped outlined chips in the
+   `nav.squire-recent` container (which already handles the horizontal
+   scroll). SQR-6 will populate these from the active session; Phase 1
+   ships styled stubs so the chip row doesn't render as dead space. */
+.squire-recent .squire-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--sepia);
+  white-space: nowrap;
+}
+
+/* SQR-67 — "Squire recommends" verdict block. 3px wax left border rail,
+   surface background, right-side radius only so it reads as a pulled-out
+   callout. DESIGN.md §Squire recommends verdict block is authoritative:
+   Phase 5 wires card-comparison output into this shell; Phase 1 ships the
+   styling with a stub body so later tickets can't accidentally reinvent
+   it. */
+.squire-verdict {
+  display: block;
+  margin: 24px 0;
+  padding: 16px 18px;
+  border-left: 3px solid var(--wax);
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+}
+.squire-verdict__label {
+  display: block;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--wax);
+  margin-bottom: 6px;
+}
+.squire-verdict__body {
+  margin: 0;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--parchment);
+}
+
+/* SQR-67 — picked-card badge. Wax-seal red pill with parchment small-caps
+   label. Phase 5 positions this on the recommended card in comparison
+   mockups; the stub rendering inside the verdict block above gives QA a
+   visible target in Phase 1. DESIGN.md §Picked-card badge is authoritative. */
+.squire-picked {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--wax);
+  color: var(--parchment);
+  border-radius: 999px;
+  font-family: Geist, system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+/* Hidden banner fixture template. `<template>` elements are inert by
+   default — their contents aren't rendered, but JS / test harnesses can
+   still query their innerHTML. Computed-style assertions in QA mode
+   temporarily move the fixture into the DOM to read styles off it. */
+template#squire-banner-fixtures {
+  display: none;
 }
 
 /* Tablet (≥768px and <1024px): main column caps at 640px and centers, but
