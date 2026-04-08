@@ -87,6 +87,8 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 *Tailwind delivery decision: see [ADR 0008 — Tailwind CLI for production CSS](adr/0008-tailwind-cli-for-production-css.md).*
 
+*Chat surface layout decision: the web UI renders ONE turn at a time on `main.squire-surface` — current user question (Fraunces hero) + current answer (drop cap + citations + tool footer) — with prior turns collapsed into the recent-questions chip row. Not a scrolling message list. See [ADR 0010 — Current-turn ledger for multi-turn chat surface](adr/0010-current-turn-ledger.md) and the design system in [DESIGN.md](../DESIGN.md).*
+
 ### Database
 
 - **Primary DB:** PostgreSQL. Rulebook embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
