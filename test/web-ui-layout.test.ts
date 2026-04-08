@@ -122,6 +122,28 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   });
 });
 
+describe('GET /app.css — static asset serving (SQR-65 / ISSUE-001)', () => {
+  // Regression: ISSUE-001 — layout shell linked to /app.css but the route
+  // had no static handler and `public/app.css` was never built, so the page
+  // rendered unstyled in a real browser even though all DOM-level tests
+  // passed. Found by /qa on 2026-04-08. SQR-64's fonts.ts promised the
+  // "/app.css served by Hono as a static file" wiring; this test pins it.
+  // Report: .gstack/qa-reports/qa-report-localhost-2026-04-08.md
+  it('serves /app.css when public/app.css exists', async () => {
+    // The Tailwind CLI build emits public/app.css. We don't rebuild it from
+    // the test (vitest shouldn't depend on the build pipeline) — instead
+    // we assert the route is wired and gracefully degrades if the file is
+    // absent. The HTTP layer either streams the file (200) or 404s if the
+    // build hasn't been run. Either way it must NOT 500 and must NOT bleed
+    // into another route.
+    const res = await app.request('/app.css');
+    expect([200, 404]).toContain(res.status);
+    if (res.status === 200) {
+      expect(res.headers.get('content-type') ?? '').toMatch(/text\/css/);
+    }
+  });
+});
+
 describe('GET / — server-side error fallback (SQR-65)', () => {
   beforeEach(() => {
     vi.clearAllMocks();

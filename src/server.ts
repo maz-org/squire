@@ -25,9 +25,24 @@ import {
   exchangeAuthorizationCode,
   verifyAccessToken,
 } from './auth.ts';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
 
 export const app = new Hono();
+
+// ─── Web UI: static asset serving ────────────────────────────────────────────
+//
+// SQR-64 promised that the Tailwind CLI build output (`public/app.css`) would
+// be "served at /app.css by Hono as a static file (ADR 0008)" but never
+// actually wired the handler. Without this, the layout shell from SQR-65
+// renders unstyled in a browser even though the HTML structure is correct.
+// Folded into SQR-65 because the layout has no meaning without its CSS.
+app.use(
+  '/app.css',
+  serveStatic({
+    path: './public/app.css',
+  }),
+);
 
 // ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
 //
