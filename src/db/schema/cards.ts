@@ -161,7 +161,10 @@ export const cardCharacterMats = pgTable(
     sourceId: text('source_id').notNull(),
     name: text('name').notNull(), // class name, e.g. "Drifter"
     characterClass: text('character_class').notNull(), // race, e.g. "Inox"
-    handSize: integer('hand_size').notNull(),
+    // jsonb to store either a number or a `[form1, form2]` tuple for split
+    // mats (e.g. Geminate). See CharacterMatSchema in src/schemas.ts and
+    // migration 0004; the original SQR-34 column was `integer NOT NULL`.
+    handSize: jsonb('hand_size').notNull(),
     traits: text('traits').array().notNull(),
     hp: jsonb('hp').notNull(), // { "1": 8, "2": 9, ... }
     perks: text('perks').array().notNull(),
