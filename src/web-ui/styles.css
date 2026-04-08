@@ -328,9 +328,10 @@ html {
   font-size: 15px;
   color: var(--parchment-dim);
   /* Long Error.message strings (paths, URLs, stack tokens) need to wrap
-     instead of pushing the layout horizontally on narrow viewports. */
+     instead of pushing the layout horizontally on narrow viewports.
+     `overflow-wrap: anywhere` is sufficient on its own — `word-break:
+     break-word` was deprecated by the CSS WG. */
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 .squire-banner--error {
   border-left-color: var(--error);
