@@ -21,10 +21,29 @@
  *
  * `getCard(type, id)` semantics (for SQR-35): `id` resolves against
  * `source_id`, not the per-type natural key column.
+ *
+ * ## Hand-migrated columns — drizzle-kit generate warning
+ *
+ * The `searchVector` tsvector column on every table is a STORED generated
+ * column whose real expression lives in the hand-written migration
+ * `src/db/migrations/0002_card_fts.sql`. The schema only declares a
+ * placeholder marker (`SV_MARKER`) so drizzle-orm excludes the column
+ * from INSERT/UPDATE.
+ *
+ * If you run `npx drizzle-kit generate` against this schema, drizzle-kit
+ * will see the placeholder and try to "fix" the expression by emitting a
+ * migration that drops and recreates the column with the marker SQL —
+ * which would destroy the FTS index and silently break
+ * `searchExtracted`/`searchCards`. **Always review drizzle-kit output
+ * before committing it.** If drizzle-kit proposes any change to
+ * `search_vector` or to `card_*_search_idx`, discard that hunk and update
+ * `0002_card_fts.sql` by hand instead.
  */
 
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -33,6 +52,32 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+
+/**
+ * Postgres `tsvector` column, used for FTS. The column is always a STORED
+ * generated column built from text/array columns on each table; the app
+ * never writes it directly, it only reads it via `websearch_to_tsquery` /
+ * `ts_rank` in `src/extracted-data.ts`.
+ *
+ * Drizzle has no first-class `tsvector`, so we declare it via `customType`.
+ * The generated expression itself lives in the hand-written migration
+ * (`0002_card_fts.sql`) — that is the single source of truth for the FTS
+ * field lists. We attach `.generatedAlwaysAs(SV_MARKER)`
+ * here only as a marker so `drizzle-orm` excludes the column from INSERTs
+ * and UPDATEs; the SQL in the marker is never emitted (drizzle-kit's
+ * generated-column DDL for custom types is unreliable as of 0.45, so we
+ * don't run it).
+ */
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
+
+// Placeholder expression for `.generatedAlwaysAs`. Drizzle-orm only cares
+// that the column is marked generated so it's excluded from writes; the
+// real expression is in `src/db/migrations/0002_card_fts.sql`.
+const SV_MARKER = sql`''::tsvector`;
 
 // ─── card_monster_stats ─────────────────────────────────────────────────────
 
@@ -48,11 +93,13 @@ export const cardMonsterStats = pgTable(
     elite: jsonb('elite').notNull(),
     immunities: text('immunities').array().notNull(),
     notes: text('notes'),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_monster_stats_game_source_idx').on(t.game, t.sourceId),
     index('card_monster_stats_game_idx').on(t.game),
     index('card_monster_stats_name_idx').on(t.name),
+    index('card_monster_stats_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -68,11 +115,13 @@ export const cardMonsterAbilities = pgTable(
     cardName: text('card_name').notNull(),
     initiative: integer('initiative').notNull(),
     abilities: text('abilities').array().notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_monster_abilities_game_source_idx').on(t.game, t.sourceId),
     index('card_monster_abilities_game_idx').on(t.game),
     index('card_monster_abilities_monster_type_idx').on(t.monsterType),
+    index('card_monster_abilities_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -92,11 +141,13 @@ export const cardCharacterAbilities = pgTable(
     top: jsonb('top').notNull(), // { action, effects[] }
     bottom: jsonb('bottom').notNull(),
     lost: boolean('lost').notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_character_abilities_game_source_idx').on(t.game, t.sourceId),
     index('card_character_abilities_game_idx').on(t.game),
     index('card_character_abilities_character_class_idx').on(t.characterClass),
+    index('card_character_abilities_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -115,11 +166,13 @@ export const cardCharacterMats = pgTable(
     hp: jsonb('hp').notNull(), // { "1": 8, "2": 9, ... }
     perks: text('perks').array().notNull(),
     masteries: text('masteries').array().notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_character_mats_game_source_idx').on(t.game, t.sourceId),
     index('card_character_mats_game_idx').on(t.game),
     index('card_character_mats_name_idx').on(t.name),
+    index('card_character_mats_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -141,12 +194,14 @@ export const cardItems = pgTable(
     uses: integer('uses'), // nullable
     spent: boolean('spent').notNull(),
     lost: boolean('lost').notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_items_game_source_idx').on(t.game, t.sourceId),
     index('card_items_game_idx').on(t.game),
     index('card_items_number_idx').on(t.number),
     index('card_items_slot_idx').on(t.slot),
+    index('card_items_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -165,11 +220,13 @@ export const cardEvents = pgTable(
     optionA: jsonb('option_a').notNull(), // { text, outcome }
     optionB: jsonb('option_b'), // nullable
     optionC: jsonb('option_c'), // nullable
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_events_game_source_idx').on(t.game, t.sourceId),
     index('card_events_game_idx').on(t.game),
     index('card_events_event_type_idx').on(t.eventType),
+    index('card_events_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -184,10 +241,12 @@ export const cardBattleGoals = pgTable(
     name: text('name').notNull(),
     condition: text('condition').notNull(),
     checkmarks: integer('checkmarks').notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_battle_goals_game_source_idx').on(t.game, t.sourceId),
     index('card_battle_goals_game_idx').on(t.game),
+    index('card_battle_goals_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -206,11 +265,13 @@ export const cardBuildings = pgTable(
     buildCost: jsonb('build_cost').notNull(), // { gold, lumber, metal, hide }
     effect: text('effect').notNull(),
     notes: text('notes'),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_buildings_game_source_idx').on(t.game, t.sourceId),
     index('card_buildings_game_idx').on(t.game),
     index('card_buildings_name_idx').on(t.name),
+    index('card_buildings_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -238,11 +299,13 @@ export const cardScenarios = pgTable(
     lootDeckConfig: jsonb('loot_deck_config').notNull(),
     flowChartGroup: text('flow_chart_group'),
     initial: boolean('initial').notNull(),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_scenarios_game_source_idx').on(t.game, t.sourceId),
     index('card_scenarios_game_idx').on(t.game),
     index('card_scenarios_group_index_idx').on(t.scenarioGroup, t.index),
+    index('card_scenarios_search_idx').using('gin', t.searchVector),
   ],
 );
 
@@ -260,9 +323,11 @@ export const cardPersonalQuests = pgTable(
     requirements: jsonb('requirements').notNull(),
     openEnvelope: text('open_envelope').notNull(),
     errata: text('errata'),
+    searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
     uniqueIndex('card_personal_quests_game_source_idx').on(t.game, t.sourceId),
     index('card_personal_quests_game_idx').on(t.game),
+    index('card_personal_quests_search_idx').using('gin', t.searchVector),
   ],
 );

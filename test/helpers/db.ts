@@ -23,7 +23,18 @@ let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 export async function setupTestDb(): Promise<ReturnType<typeof drizzle<typeof schema>>> {
   if (!pool) {
-    pool = new Pool({ connectionString: resolveDatabaseUrl(), max: 2 });
+    const url = resolveDatabaseUrl();
+    // Fail-fast guard mirroring `test/helpers/global-setup.ts` — refuse to
+    // hand back a pool pointing at anything that isn't a *_test database.
+    // Tests truncate via this pool, so a misconfigured env could otherwise
+    // wipe real data.
+    if (!/_test(\?|$)/.test(url) && !/squire_test/.test(url)) {
+      throw new Error(
+        `[setupTestDb] resolved DB URL does not look like a test DB. ` +
+          `Got "${url.replace(/:[^:@]*@/, ':***@')}". Set DATABASE_URL/TEST_DATABASE_URL to a *_test database.`,
+      );
+    }
+    pool = new Pool({ connectionString: url, max: 2 });
     db = drizzle(pool, { schema });
   }
   return db!;

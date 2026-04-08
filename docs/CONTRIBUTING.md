@@ -191,8 +191,10 @@ LANGFUSE_SECRET_KEY=sk-lf-...
 ### Data files
 
 Extracted card data (`data/extracted/`) is committed to the repo as
-regular JSON files — no extra setup needed there. It's refreshed
-automatically by the weekly CI workflow from GHS upstream data.
+regular JSON files. Since SQR-56 these are seed inputs only — the
+runtime store is the `card_*` tables in Postgres, populated by
+`npm run seed:cards`. The JSON files are refreshed automatically by
+the weekly CI workflow from GHS upstream data.
 
 The rulebook vector index lives in Postgres (pgvector), not on disk. On
 a fresh clone, bring up the local DB and populate it before running the
@@ -346,6 +348,7 @@ data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 
 ## Changelog
 
+- **2026-04-08:** SQR-56 — clarified that `data/extracted/*.json` is now a seed input, not the runtime store. Card data lives in Postgres `card_*` tables; `npm run seed:cards` is the bridge.
 - **2026-04-07:** Final-pass cleanup. Removed stale Git LFS install step and `--recurse-submodules` clone flag — extracted card data and the vector index are committed as regular files (not LFS, no submodules) since PR #162.
 - **2026-04-07:** Moved from repo root to `docs/CONTRIBUTING.md` as part of the docs consolidation. Added changelog. Updated project layout listing to include CONTRIBUTING alongside the other ALL_CAPS docs.
 - **2026-04-07:** Updated project layout description for the SPEC v3.0 / ARCHITECTURE v1.0 docs split.

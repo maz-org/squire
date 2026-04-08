@@ -1,56 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
+/**
+ * Tests for `src/tools.ts` — the atomic search tools the agent composes.
+ *
+ * Per tech spec Decision 10: card-data tools run against a real Postgres
+ * test DB seeded from `data/extracted/*.json`. The vector store is mocked
+ * for `searchRules` since the pgvector path has its own integration coverage
+ * in `test/vector-store.test.ts` and we don't want to re-embed the rulebook
+ * for every tools test.
+ */
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 
-// ─── Mock extracted data (fs-level, same pattern as extracted-data.test.ts) ──
-
-const FAKE_MONSTER_STATS = JSON.stringify([
-  {
-    name: 'Algox Archer',
-    levelRange: '0-3',
-    normal: { 0: { hp: 5, move: 2, attack: 3 } },
-    elite: { 0: { hp: 8, move: 3, attack: 4 } },
-    immunities: [],
-    notes: null,
-  },
-]);
-
-const FAKE_ITEMS = JSON.stringify([
-  {
-    number: '001',
-    name: 'Boots of Speed',
-    slot: 'legs',
-    cost: 20,
-    effect: 'Move +1',
-    uses: null,
-    spent: false,
-    lost: false,
-  },
-]);
-
-const { mockExistsSync, mockReadFileSync } = vi.hoisted(() => ({
-  mockExistsSync: vi.fn(),
-  mockReadFileSync: vi.fn(),
-}));
-
-vi.mock('node:fs', () => ({
-  existsSync: mockExistsSync,
-  readFileSync: mockReadFileSync,
-}));
-
-mockExistsSync.mockImplementation((path: string) => {
-  if (path.includes('monster-stats.json')) return true;
-  if (path.includes('items.json')) return true;
-  return false;
-});
-
-mockReadFileSync.mockImplementation((path: string) => {
-  if (typeof path === 'string' && path.includes('monster-stats.json')) return FAKE_MONSTER_STATS;
-  if (typeof path === 'string' && path.includes('items.json')) return FAKE_ITEMS;
-  return '[]';
-});
-
-// Mock the vector store so searchRules tests don't require a real Postgres
-// connection — they are unit tests for the tools layer, integration of the
-// pgvector query path lives in `test/vector-store.test.ts`.
 const { mockSearch } = vi.hoisted(() => ({
   mockSearch: vi.fn(),
 }));
@@ -58,6 +16,15 @@ const { mockSearch } = vi.hoisted(() => ({
 vi.mock('../src/vector-store.ts', () => ({
   search: mockSearch,
 }));
+
+vi.mock('../src/embedder.ts', () => ({
+  embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
+}));
+
+import { searchRules, searchCards, listCardTypes, listCards, getCard } from '../src/tools.ts';
+import type { RuleResult, CardResult, CardTypeInfo } from '../src/tools.ts';
+
+import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
 const FAKE_RULE_HITS = [
   {
@@ -78,16 +45,15 @@ const FAKE_RULE_HITS = [
   },
 ];
 
-mockSearch.mockImplementation(async (_v: number[], k = 6) => FAKE_RULE_HITS.slice(0, k));
+// `card_*` tables are seeded once per run by `test/helpers/global-setup.ts`.
+beforeAll(async () => {
+  await setupTestDb();
+  mockSearch.mockImplementation(async (_v: number[], k = 6) => FAKE_RULE_HITS.slice(0, k));
+});
 
-// ─── Mock embedder ───────────────────────────────────────────────────────────
-
-vi.mock('../src/embedder.ts', () => ({
-  embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
-}));
-
-import { searchRules, searchCards, listCardTypes, listCards, getCard } from '../src/tools.ts';
-import type { RuleResult, CardResult, CardTypeInfo } from '../src/tools.ts';
+afterAll(async () => {
+  await teardownTestDb();
+});
 
 // ─── searchRules ─────────────────────────────────────────────────────────────
 
@@ -114,7 +80,7 @@ describe('searchRules', () => {
     expect(results).toEqual([]);
   });
 
-  it('does not include embedding vectors in results', async () => {
+  it('does not include internal fields in results', async () => {
     const results = await searchRules('loot');
     for (const r of results) {
       expect(r).not.toHaveProperty('embedding');
@@ -122,201 +88,153 @@ describe('searchRules', () => {
       expect(r).not.toHaveProperty('chunkIndex');
     }
   });
+
+  it('threads opts.game through to the vector store', async () => {
+    mockSearch.mockClear();
+    await searchRules('loot', 3, { game: 'gloomhaven' });
+    expect(mockSearch).toHaveBeenCalledTimes(1);
+    const callArgs = mockSearch.mock.calls[0];
+    expect(callArgs[2]).toEqual({ game: 'gloomhaven' });
+  });
 });
 
 // ─── searchCards ─────────────────────────────────────────────────────────────
 
 describe('searchCards', () => {
-  it('returns structured results with type, data, and score', () => {
-    const results: CardResult[] = searchCards('algox archer stats');
+  it('returns structured results with type, data, and score', async () => {
+    const results: CardResult[] = await searchCards('algox archer');
     expect(results.length).toBeGreaterThan(0);
-    expect(results[0]).toHaveProperty('type');
-    expect(results[0]).toHaveProperty('data');
-    expect(results[0]).toHaveProperty('score');
-    expect(typeof results[0].type).toBe('string');
-    expect(typeof results[0].data).toBe('object');
-    expect(typeof results[0].score).toBe('number');
+    const first = results[0];
+    expect(first).toHaveProperty('type');
+    expect(first).toHaveProperty('data');
+    expect(first).toHaveProperty('score');
+    expect(typeof first.type).toBe('string');
+    expect(typeof first.data).toBe('object');
+    expect(typeof first.score).toBe('number');
+    expect(first.score).toBeGreaterThan(0);
   });
 
-  it('does not include _type in data (it is promoted to type)', () => {
-    const results = searchCards('algox archer');
+  it('promotes _type from data into the top-level type field', async () => {
+    const results = await searchCards('algox archer');
     for (const r of results) {
       expect(r.data).not.toHaveProperty('_type');
       expect(r.type).toBeDefined();
     }
   });
 
-  it('returns monster-stats type for monster queries', () => {
-    const results = searchCards('algox archer');
-    expect(results.some((r) => r.type === 'monster-stats')).toBe(true);
+  it('weights name fields above cross-references (monster-stats wins)', async () => {
+    const results = await searchCards('algox archer');
+    expect(results[0].type).toBe('monster-stats');
   });
 
-  it('returns items type for item queries', () => {
-    const results = searchCards('boots speed');
-    expect(results.some((r) => r.type === 'items')).toBe(true);
+  it('respects topK parameter', async () => {
+    const results = await searchCards('attack', 2);
+    expect(results.length).toBeLessThanOrEqual(2);
   });
 
-  it('respects topK parameter', () => {
-    const results = searchCards('attack move', 1);
-    expect(results.length).toBeLessThanOrEqual(1);
-  });
-
-  it('returns empty array for empty query', () => {
-    const results = searchCards('');
+  it('returns empty array for a query that matches nothing', async () => {
+    const results = await searchCards('zzzzzzz-no-such-token-zzzzzzz');
     expect(results).toEqual([]);
-  });
-
-  it('returns empty array for stopword-only queries', () => {
-    const results = searchCards('the and for');
-    expect(results).toEqual([]);
-  });
-
-  it('includes card data fields in data property', () => {
-    const results = searchCards('algox archer');
-    const monster = results.find((r) => r.type === 'monster-stats');
-    expect(monster).toBeDefined();
-    expect(monster!.data).toHaveProperty('name', 'Algox Archer');
-    expect(monster!.data).toHaveProperty('normal');
-    expect(monster!.data).toHaveProperty('elite');
-  });
-
-  it('score is positive for matching results', () => {
-    const results = searchCards('algox archer');
-    for (const r of results) {
-      expect(r.score).toBeGreaterThan(0);
-    }
   });
 });
 
 // ─── listCardTypes ───────────────────────────────────────────────────────────
 
 describe('listCardTypes', () => {
-  it('returns all available card types with counts', () => {
-    const types: CardTypeInfo[] = listCardTypes();
-    expect(types.length).toBeGreaterThan(0);
-    // Our mocks have monster-stats and items with data
-    const monsterStats = types.find((t) => t.type === 'monster-stats');
-    expect(monsterStats).toBeDefined();
-    expect(monsterStats!.count).toBe(1);
+  it('returns all 10 card types', async () => {
+    const types: CardTypeInfo[] = await listCardTypes();
+    expect(types.length).toBe(10);
+    const names = types.map((t) => t.type);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'monster-stats',
+        'monster-abilities',
+        'character-abilities',
+        'character-mats',
+        'items',
+        'events',
+        'battle-goals',
+        'buildings',
+        'scenarios',
+        'personal-quests',
+      ]),
+    );
   });
 
-  it('each entry has type and count fields', () => {
-    const types = listCardTypes();
+  it('each entry has type and numeric count fields', async () => {
+    const types = await listCardTypes();
     for (const t of types) {
-      expect(t).toHaveProperty('type');
-      expect(t).toHaveProperty('count');
       expect(typeof t.type).toBe('string');
       expect(typeof t.count).toBe('number');
+      expect(t.count).toBeGreaterThanOrEqual(0);
     }
   });
 
-  it('includes types with zero records', () => {
-    const types = listCardTypes();
-    // events has no mock data, so count should be 0
-    const events = types.find((t) => t.type === 'events');
-    expect(events).toBeDefined();
-    expect(events!.count).toBe(0);
-  });
-
-  it('returns all 10 card types', () => {
-    const types = listCardTypes();
-    expect(types.length).toBe(10);
-    const typeNames = types.map((t) => t.type);
-    expect(typeNames).toContain('monster-stats');
-    expect(typeNames).toContain('monster-abilities');
-    expect(typeNames).toContain('character-abilities');
-    expect(typeNames).toContain('character-mats');
-    expect(typeNames).toContain('items');
-    expect(typeNames).toContain('events');
-    expect(typeNames).toContain('battle-goals');
-    expect(typeNames).toContain('buildings');
-    expect(typeNames).toContain('scenarios');
-    expect(typeNames).toContain('personal-quests');
+  it('reports non-zero counts for seeded types', async () => {
+    const types = await listCardTypes();
+    const monsterStats = types.find((t) => t.type === 'monster-stats');
+    expect(monsterStats!.count).toBeGreaterThan(0);
   });
 });
 
-// ─── listCards ────────────────────────────────────────────────────────────────
+// ─── listCards ───────────────────────────────────────────────────────────────
 
 describe('listCards', () => {
-  it('returns all cards of a given type', () => {
-    const cards = listCards('monster-stats');
-    expect(cards.length).toBe(1);
-    expect(cards[0]).toHaveProperty('name', 'Algox Archer');
+  it('returns all cards of a given type', async () => {
+    const cards = await listCards('battle-goals');
+    expect(cards.length).toBeGreaterThan(0);
+    expect(cards[0]).toHaveProperty('name');
   });
 
-  it('returns empty array for type with no data', () => {
-    const cards = listCards('events');
-    expect(cards).toEqual([]);
-  });
-
-  it('filters cards by a field value', () => {
-    const cards = listCards('monster-stats', { name: 'Algox Archer' });
-    expect(cards.length).toBe(1);
-    expect(cards[0]).toHaveProperty('name', 'Algox Archer');
-  });
-
-  it('returns empty when filter matches nothing', () => {
-    const cards = listCards('monster-stats', { name: 'Nonexistent Monster' });
-    expect(cards).toEqual([]);
-  });
-
-  it('filters items by slot', () => {
-    const cards = listCards('items', { slot: 'legs' });
-    expect(cards.length).toBe(1);
-    expect(cards[0]).toHaveProperty('name', 'Boots of Speed');
-  });
-
-  it('filters with multiple fields (AND logic)', () => {
-    const cards = listCards('items', { slot: 'legs', name: 'Boots of Speed' });
-    expect(cards.length).toBe(1);
-  });
-
-  it('does not include internal _type or _error fields in results', () => {
-    const cards = listCards('monster-stats');
+  it('strips internal fields from results', async () => {
+    const cards = await listCards('items');
     for (const card of cards) {
       expect(card).not.toHaveProperty('_type');
-      expect(card).not.toHaveProperty('_error');
-      expect(card).not.toHaveProperty('_parseError');
+      expect(card).not.toHaveProperty('id');
+      expect(card).not.toHaveProperty('game');
+      expect(card).not.toHaveProperty('searchVector');
     }
+  });
+
+  it('filters by a single field value (AND logic)', async () => {
+    const all = await listCards('battle-goals');
+    const target = all[0];
+    const filtered = await listCards('battle-goals', { name: target.name });
+    expect(filtered.length).toBeGreaterThan(0);
+    for (const c of filtered) expect(c.name).toBe(target.name);
+  });
+
+  it('returns empty when filter matches nothing', async () => {
+    const cards = await listCards('items', { name: 'No Such Item Exists' });
+    expect(cards).toEqual([]);
   });
 });
 
 // ─── getCard ─────────────────────────────────────────────────────────────────
 
 describe('getCard', () => {
-  it('looks up a monster by name', () => {
-    const card = getCard('monster-stats', 'Algox Archer');
+  it('looks up a card by canonical sourceId', async () => {
+    const card = await getCard('items', 'gloomhavensecretariat:item/1');
     expect(card).not.toBeNull();
-    expect(card!.name).toBe('Algox Archer');
+    expect(card!.sourceId).toBe('gloomhavensecretariat:item/1');
   });
 
-  it('looks up an item by number', () => {
-    const card = getCard('items', '001');
-    expect(card).not.toBeNull();
-    expect(card!.name).toBe('Boots of Speed');
-  });
-
-  it('returns null for non-existent card', () => {
-    const card = getCard('monster-stats', 'Nonexistent Monster');
+  it('returns null for an unknown sourceId', async () => {
+    const card = await getCard('items', 'gloomhavensecretariat:item/does-not-exist');
     expect(card).toBeNull();
   });
 
-  it('returns null for empty type', () => {
-    const card = getCard('events', '999');
-    expect(card).toBeNull();
-  });
-
-  it('does not include internal fields in result', () => {
-    const card = getCard('monster-stats', 'Algox Archer');
+  it('strips internal fields from the result', async () => {
+    const card = await getCard('items', 'gloomhavensecretariat:item/1');
     expect(card).not.toBeNull();
     expect(card).not.toHaveProperty('_type');
-    expect(card).not.toHaveProperty('_error');
-    expect(card).not.toHaveProperty('_parseError');
+    expect(card).not.toHaveProperty('id');
+    expect(card).not.toHaveProperty('game');
+    expect(card).not.toHaveProperty('searchVector');
   });
 
-  it('is case-insensitive for name lookups', () => {
-    const card = getCard('monster-stats', 'algox archer');
-    expect(card).not.toBeNull();
-    expect(card!.name).toBe('Algox Archer');
+  it('is case-sensitive on sourceId', async () => {
+    const card = await getCard('items', 'GLOOMHAVENSECRETARIAT:ITEM/1');
+    expect(card).toBeNull();
   });
 });

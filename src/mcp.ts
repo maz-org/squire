@@ -44,8 +44,8 @@ export function createMcpServer(): McpServer {
         topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),
       },
     },
-    ({ query, topK }) => {
-      const results = searchCards(query, topK);
+    async ({ query, topK }) => {
+      const results = await searchCards(query, topK);
       return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
     },
   );
@@ -57,8 +57,8 @@ export function createMcpServer(): McpServer {
     {
       description: 'List all available card types with record counts.',
     },
-    () => {
-      const types = listCardTypes();
+    async () => {
+      const types = await listCardTypes();
       return { content: [{ type: 'text', text: JSON.stringify(types, null, 2) }] };
     },
   );
@@ -77,7 +77,7 @@ export function createMcpServer(): McpServer {
           .describe('Optional JSON filter object (AND logic), e.g. {"name":"Algox Archer"}'),
       },
     },
-    ({ type, filter }) => {
+    async ({ type, filter }) => {
       let parsed: Record<string, unknown> | undefined;
       if (filter) {
         try {
@@ -89,7 +89,7 @@ export function createMcpServer(): McpServer {
           };
         }
       }
-      const cards = listCards(type as CardType, parsed);
+      const cards = await listCards(type as CardType, parsed);
       return { content: [{ type: 'text', text: JSON.stringify(cards, null, 2) }] };
     },
   );
@@ -99,14 +99,18 @@ export function createMcpServer(): McpServer {
   server.registerTool(
     'get_card',
     {
-      description: 'Look up a single card by type and identifier.',
+      description: 'Look up a single card by type and canonical sourceId.',
       inputSchema: {
         type: z.enum(CARD_TYPES).describe('Card type'),
-        id: z.string().describe('Card identifier (name, number, etc.)'),
+        id: z
+          .string()
+          .describe(
+            'Canonical sourceId (e.g. "gloomhavensecretariat:item/1"). Case-sensitive. Use list_cards or search_cards to discover sourceIds.',
+          ),
       },
     },
-    ({ type, id }) => {
-      const card = getCard(type as CardType, id);
+    async ({ type, id }) => {
+      const card = await getCard(type as CardType, id);
       if (!card) {
         return {
           content: [{ type: 'text', text: `Card not found: ${type}/${id}` }],

@@ -90,7 +90,7 @@ export const AGENT_TOOLS: Tool[] = [
   },
   {
     name: 'get_card',
-    description: 'Look up a single card by type and identifier (name, number, etc.).',
+    description: 'Look up a single card by type and canonical sourceId.',
     input_schema: {
       type: 'object',
       properties: {
@@ -99,7 +99,11 @@ export const AGENT_TOOLS: Tool[] = [
           enum: [...CARD_TYPES],
           description: 'Card type',
         },
-        id: { type: 'string', description: 'Card identifier (name, number, etc.)' },
+        id: {
+          type: 'string',
+          description:
+            'Canonical sourceId (e.g. "gloomhavensecretariat:item/1"). Case-sensitive. Use list_cards or search_cards to discover sourceIds.',
+        },
       },
       required: ['type', 'id'],
     },
@@ -122,22 +126,25 @@ export async function executeToolCall(
       return JSON.stringify(results, null, 2);
     }
     case 'search_cards': {
-      const results = searchCards(input.query as string, (input.topK as number | undefined) ?? 6);
+      const results = await searchCards(
+        input.query as string,
+        (input.topK as number | undefined) ?? 6,
+      );
       return JSON.stringify(results, null, 2);
     }
     case 'list_card_types': {
-      return JSON.stringify(listCardTypes(), null, 2);
+      return JSON.stringify(await listCardTypes(), null, 2);
     }
     case 'list_cards': {
       const filter =
         input.filter && typeof input.filter === 'object' && !Array.isArray(input.filter)
           ? (input.filter as Record<string, unknown>)
           : undefined;
-      const cards = listCards(input.type as CardType, filter);
+      const cards = await listCards(input.type as CardType, filter);
       return JSON.stringify(cards, null, 2);
     }
     case 'get_card': {
-      const card = getCard(input.type as CardType, input.id as string);
+      const card = await getCard(input.type as CardType, input.id as string);
       if (!card) return `Card not found: ${input.type}/${input.id}`;
       return JSON.stringify(card, null, 2);
     }
