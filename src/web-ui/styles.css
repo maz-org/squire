@@ -390,7 +390,9 @@ html {
 .squire-monogram {
   font-family: Fraunces, Georgia, serif;
   font-weight: 700;
-  font-variation-settings: 'opsz' 144, 'SOFT' 80;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 80;
   font-size: 24px;
   line-height: 1;
   padding-bottom: 2px;
@@ -409,7 +411,9 @@ html {
 .squire-wordmark {
   font-family: Fraunces, Georgia, serif;
   font-style: normal;
-  font-variation-settings: 'opsz' 144, 'SOFT' 50;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 50;
 }
 
 /* Hero question — the user's words rendered at the top of the answer
@@ -456,7 +460,9 @@ html {
 .squire-answer p:first-of-type::first-letter {
   font-family: Fraunces, Georgia, serif;
   font-weight: 600;
-  font-variation-settings: 'opsz' 144, 'SOFT' 30;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 30;
   font-size: 72px;
   line-height: 0.85;
   color: var(--wax);
