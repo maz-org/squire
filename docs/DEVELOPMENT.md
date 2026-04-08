@@ -74,7 +74,7 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :3000)`.
 | ------ | ---- | ----------- |
 | GET | `/api/health` | Readiness check with index size |
 | GET | `/api/search/rules?q=&topK=` | Vector search over rulebook passages |
-| GET | `/api/search/cards?q=&topK=` | Keyword search over extracted card data |
+| GET | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
 | GET | `/api/card-types` | List card types with record counts |
 | GET | `/api/cards?type=&filter=` | List cards of a type (filter is JSON) |
 | GET | `/api/cards/:type/:id` | Look up a single card |
@@ -92,7 +92,7 @@ Squire exposes 5 atomic tools via MCP at `/mcp`:
 | Tool | Description |
 | ---- | ----------- |
 | `search_rules` | Vector search over rulebook passages |
-| `search_cards` | Keyword search over extracted card data |
+| `search_cards` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
 | `list_card_types` | List available card categories with counts |
 | `list_cards` | List cards of a type with optional field filter |
 | `get_card` | Look up a single card by type and identifier |
@@ -196,9 +196,10 @@ Zod schema and skips anything that fails (the failures are warned to
 stderr so you can see what got dropped). Records are upserted on
 `(game, source_id)`, so a stale card row gets overwritten in place.
 
-Note: until SQR-56 lands, the card tables sit alongside the
-JSON-backed `extracted-data.ts` runtime — the seed is the bridge that
-lets SQR-56 swap the loader over without losing parity.
+As of SQR-56, `extracted-data.ts` reads exclusively from the `card_*`
+tables. The JSON files in `data/extracted/` are only inputs to
+`seed-cards.ts`. There is no flat-file fallback. If Postgres is
+unreachable, the loader throws.
 
 ### Refreshing data
 
@@ -266,13 +267,20 @@ src/
   import-scenarios.ts
   query.ts          # Thin CLI wrapper over service.ts
   embedder.ts       # Local embedding via all-MiniLM-L6-v2
-  vector-store.ts   # Flat-file vector store with cosine similarity
-  extracted-data.ts # Card data loading, search, and formatting
+  vector-store.ts   # pgvector cosine similarity search
+  extracted-data.ts # Postgres-backed card load + FTS via ts_rank
   schemas.ts        # Zod schemas for all 10 card types
+  db.ts             # Drizzle client + pool factory (server / cli modes)
+  db/
+    schema/         # Drizzle schema (core, auth, cards) — barrel in index.ts
+    migrations/     # Numbered SQL migrations (hand-written for FTS generated cols)
+  seed/
+    seed-cards.ts   # JSON → Zod validation → upsert into card_* tables
 ```
 
 ## Changelog
 
+- **2026-04-08:** SQR-56 — `extracted-data.ts` is Postgres-backed via FTS. The card tables hold the runtime data; `data/extracted/*.json` is now a seed input. The atomic tools became async and gained `opts.game`. `getCard` resolves on canonical `sourceId` (the per-type natural-key map is gone). Removed the "until SQR-56 lands" caveat from the data management section. Updated REST + MCP tables to say "Postgres FTS" instead of "keyword search". Added `src/db/`, `src/seed/` to the project structure tree and corrected the stale "Flat-file vector store" line on `vector-store.ts` (it has been pgvector since SQR-33).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear SQR-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
 - **2026-04-07:** Renamed from `docs/development.md` to `docs/DEVELOPMENT.md` as part of the ALL_CAPS docs consolidation.
 - **2026-04-06:** Retired OCR pipeline and Worldhaven dependency references (commit `34a26a1`).

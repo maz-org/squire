@@ -20,7 +20,7 @@ Question → Embed → Vector Search + Card Search → Claude → Answer
 
 1. Your question is embedded using a local transformer model
 2. The embedding is compared against ~2,100 indexed chunks from the Frosthaven PDFs
-3. Extracted card data is keyword-searched in parallel
+3. Extracted card data is searched in parallel via Postgres full-text search (`ts_rank` over per-table `tsvector` columns)
 4. All retrieved context is sent to Claude, which produces an answer grounded in the source material
 
 All queries are traced with [Langfuse](https://langfuse.com) for observability.

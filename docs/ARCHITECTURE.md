@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0
+**Version:** 1.0.2
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-07
+**Last Refreshed:** 2026-04-08
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -87,7 +87,7 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 ### Database
 
-- **Primary DB:** PostgreSQL. Rulebook embeddings live in the `embeddings` pgvector table as of SQR-33 (storage migration); extracted GHS card data still lives in `data/extracted/*.json` and will move into card tables in SQR-34.
+- **Primary DB:** PostgreSQL. Rulebook embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
 - **Vector DB:** pgvector extension on the same Postgres instance
 - **ORM:** Drizzle, with `drizzle-kit` for migrations
 
@@ -172,7 +172,7 @@ Squire has dedicated import scripts in `src/import-*.ts` for each card type:
 - `import-personal-quests.ts`
 - `import-scenarios.ts`
 
-Output goes to `data/extracted/*.json` (current dev) and to Postgres tables (after the storage migration).
+Output goes to `data/extracted/*.json`, which `src/seed/seed-cards.ts` reads, validates against the matching `SCHEMAS[type]` Zod schema, and upserts into the `card_*` tables in Postgres on `(game, source_id)`. Runtime card lookups all hit Postgres; the JSON files are inputs to the seed, not the runtime store.
 
 GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term recommendation engine. If gaps emerge later, the plan is:
 
@@ -195,7 +195,7 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 | --- | --- | --- |
 | User / campaign / player state | N/A (Phase 4) | Postgres |
 | Vector embeddings | Postgres + pgvector (docker-compose) | Postgres + pgvector |
-| Extracted card data | `data/extracted/*.json` | Postgres tables |
+| Extracted card data | Postgres `card_*` tables (seeded from `data/extracted/*.json`) | Postgres `card_*` tables |
 | OAuth tokens / clients | N/A (Phase 1) | Postgres |
 | Conversation history | In-memory per session | Postgres |
 
@@ -301,11 +301,11 @@ Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that works a
 
 | Tool | Purpose |
 | --- | --- |
-| `searchRules(query, topK)` | Vector search over the rulebook RAG index |
-| `searchCards(query, topK)` | Keyword search across all card types |
-| `listCardTypes()` | Discovery — returns all GHS data types with record counts |
-| `listCards(type, filter)` | List records of a given type with field-level AND filter (including `game` once Phase 2 lands) |
-| `getCard(type, id)` | Exact lookup by natural ID (name, number, cardId, etc.) |
+| `searchRules(query, topK, opts?)` | Vector search over the rulebook RAG index. Accepts `opts.game` to filter on the embeddings table's `game` column. |
+| `searchCards(query, topK, opts?)` | Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights. |
+| `listCardTypes(opts?)` | Discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table. |
+| `listCards(type, filter?, opts?)` | List records of a given type with field-level AND filter, plus optional `opts.game`. |
+| `getCard(type, id, opts?)` | Exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions. |
 
 ```mermaid
 graph TB
@@ -497,18 +497,24 @@ Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. P
 src/
   agent.ts                      Conversation + knowledge agent loop, model invocation
   auth.ts                       Auth middleware (OAuth 2.1 + Google OAuth web)
+  db.ts                         Drizzle client + pool factory (server / cli modes)
+  db/
+    schema/                     Drizzle schema (core, auth, cards) — barrel in index.ts
+    migrations/                 SQL migration files (numbered, hand-written for FTS)
   embedder.ts                   Local embeddings via Xenova all-MiniLM-L6-v2
-  extracted-data.ts             Card data loading, search, formatting
+  extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
   ghs-utils.ts                  Shared helpers for GHS imports
-  index-docs.ts                 PDF → chunks → embeddings → vector store (npm run index)
+  index-docs.ts                 PDF → chunks → embeddings → pgvector (npm run index)
   instrumentation.ts            OpenTelemetry + Langfuse setup
   mcp.ts                        MCP tool registration (Streamable HTTP transport)
   query.ts                      CLI wrapper over the knowledge agent
   schemas.ts                    Zod schemas for all GHS card types
+  seed/
+    seed-cards.ts               JSON → Zod-validated upserts into card_* tables
   server.ts                     Hono server (REST + MCP transport + web UI host)
   service.ts                    Service initialization, readiness, graduated /api/ask path
   tools.ts                      Atomic tools: searchRules, searchCards, listCardTypes, listCards, getCard
-  vector-store.ts               Vector index storage and cosine similarity search
+  vector-store.ts               pgvector cosine similarity search
   types/                        Shared TypeScript types
   import-battle-goals.ts        GHS importer
   import-buildings.ts           GHS importer
@@ -523,7 +529,7 @@ src/
 
 data/
   pdfs/                         Source rulebook + scenario / section PDFs (input to indexing)
-  extracted/*.json              Card data (current dev — migrates to Postgres in SQR-34)
+  extracted/*.json              GHS importer outputs; seed-cards.ts upserts these into the card_* tables
 ```
 
 For developer setup, running the server, working on import scripts locally, and testing, see [DEVELOPMENT.md](DEVELOPMENT.md).
@@ -562,6 +568,8 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-04-08 (v1.0.2):** Card data migration landed (SQR-56). The 10 `card_*` tables in Postgres are now the runtime store; `data/extracted/*.json` is reduced to a seed input. `extracted-data.ts` queries Postgres FTS via `ts_rank` over per-table `search_vector` (tsvector) generated columns with `setweight`-tuned A/B/C/D field weights. The atomic tools (`searchCards`, `listCardTypes`, `listCards`, `getCard`) became async and gained an optional `opts.game` parameter; `getCard` now resolves on canonical `sourceId` rather than per-type natural keys (the old `ID_FIELDS` map is gone). Added `src/seed/`, `src/db/schema/cards.ts` (with `searchVector` markers), and the hand-written `0002_card_fts.sql` migration with two `IMMUTABLE` SQL wrappers (`squire_english_tsv`, `squire_arr_join`) needed because Postgres marks `to_tsvector(regconfig, text)` and `array_to_string` as STABLE.
 
 - **2026-04-07 (v1.0.1):** Final-pass cleanup. Fixed bogus "~34GB+" PDF size to actual ~164MB.
 
