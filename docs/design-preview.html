@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squire — Design System Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=Geist:wght@300..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14100c;
+    --surface: #1c1814;
+    --surface-2: #241e17;
+    --parchment: #f5ebd9;
+    --parchment-dim: #e8dcc4;
+    --sepia: #9a8d74;
+    --sepia-dim: #6b6254;
+    --rule: #3a3227;
+    --wax: #c73e1d;
+    --wax-dim: #a82f13;
+    --sage: #7a8c5c;
+    --amber: #d4a147;
+    --error: #8b2919;
+
+    --font-display: "Fraunces", ui-serif, Georgia, serif;
+    --font-body: "Geist", ui-sans-serif, -apple-system, system-ui, sans-serif;
+    --font-ui: "Geist", ui-sans-serif, -apple-system, system-ui, sans-serif;
+    --display-axes: "opsz" 144, "SOFT" 50;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html[data-theme="light"] {
+    --ink: #f5ebd9;
+    --surface: #ebe0c9;
+    --surface-2: #e0d4b9;
+    --parchment: #14100c;
+    --parchment-dim: #2c241c;
+    --sepia: #6b5c42;
+    --sepia-dim: #8a7b5e;
+    --rule: #c9bd9f;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 18px;
+    line-height: 1.65;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    padding: 64px 24px 128px;
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ───────── masthead ───────── */
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 96px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .monogram {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    background: var(--wax);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 144, "SOFT" 80;
+    font-weight: 700;
+    font-size: 48px;
+    color: var(--parchment);
+    line-height: 1;
+    padding-bottom: 4px;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 48px;
+    color: var(--parchment);
+    line-height: 1;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .wordmark-sub {
+    display: block;
+    font-family: var(--font-ui);
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin-top: 6px;
+  }
+  .theme-toggle {
+    font-family: var(--font-ui);
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--parchment);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 160ms var(--ease), color 160ms var(--ease);
+  }
+  .theme-toggle:hover {
+    border-color: var(--wax);
+    color: var(--wax);
+  }
+
+  /* ───────── section chrome ───────── */
+  .section {
+    margin-bottom: 96px;
+  }
+  .section-label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin: 0 0 12px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 40px;
+    line-height: 1.15;
+    color: var(--parchment);
+    margin: 0 0 8px;
+    letter-spacing: -0.015em;
+  }
+  .section-lede {
+    font-family: var(--font-body);
+    font-size: 18px;
+    color: var(--parchment-dim);
+    margin: 0 0 32px;
+    max-width: 620px;
+  }
+
+  /* ───────── color palette ───────── */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .swatch {
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .swatch-color {
+    height: 96px;
+  }
+  .swatch-body {
+    padding: 12px 14px;
+    font-family: var(--font-ui);
+  }
+  .swatch-name {
+    font-size: 13px;
+    color: var(--parchment);
+    margin: 0 0 2px;
+  }
+  .swatch-hex {
+    font-size: 11px;
+    color: var(--sepia);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ───────── type specimen ───────── */
+  .type-row {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-meta {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin-bottom: 8px;
+  }
+  .type-sample-display {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 56px;
+    line-height: 1.1;
+    color: var(--parchment);
+    margin: 0;
+    letter-spacing: -0.015em;
+  }
+  .type-sample-display-italic {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.2;
+    color: var(--sepia);
+    margin: 12px 0 0;
+  }
+  .type-sample-body {
+    font-family: var(--font-body);
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--parchment);
+    margin: 0;
+    max-width: 640px;
+  }
+  .type-sample-ui {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    color: var(--parchment);
+    margin: 0;
+  }
+  .type-sample-caps {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin: 0;
+  }
+
+  /* ───────── phone mockup frame ───────── */
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 32px;
+    align-items: start;
+  }
+  .phone {
+    width: 100%;
+    max-width: 393px;
+    margin: 0 auto;
+    background: var(--ink);
+    border: 10px solid #2a241c;
+    border-radius: 44px;
+    box-shadow:
+      0 0 0 2px #0a0705,
+      0 40px 80px -20px rgba(0,0,0,0.6),
+      0 20px 40px -10px rgba(0,0,0,0.4);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-caption {
+    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin-top: 16px;
+  }
+
+  /* ───────── Squire in-phone UI ───────── */
+  .squire {
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    position: relative;
+  }
+  .squire-notch {
+    height: 36px;
+    background: var(--ink);
+  }
+  .squire-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .squire-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .squire-monogram {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--wax);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 144, "SOFT" 80;
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--parchment);
+    line-height: 1;
+    padding-bottom: 2px;
+  }
+  .squire-wordmark {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--parchment);
+    letter-spacing: -0.01em;
+  }
+  .squire-context {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    text-align: right;
+    line-height: 1.4;
+  }
+  .squire-context em {
+    display: block;
+    font-style: normal;
+    color: var(--parchment-dim);
+    font-size: 9px;
+    margin-top: 2px;
+  }
+
+  .squire-body {
+    flex: 1;
+    padding: 24px 20px 16px;
+    overflow-y: auto;
+  }
+  .squire-question {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin-bottom: 6px;
+  }
+  .squire-question-text {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--parchment);
+    margin: 0 0 28px;
+    letter-spacing: -0.01em;
+  }
+
+  .squire-answer {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--parchment);
+  }
+  .squire-answer::first-letter,
+  .dropcap::first-letter {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+    font-weight: 600;
+    font-size: 68px;
+    line-height: 0.85;
+    float: left;
+    padding: 6px 10px 0 0;
+    color: var(--wax);
+  }
+  .squire-answer em,
+  .compare-verdict-text em,
+  .desktop-content .squire-answer em,
+  .type-sample-body em {
+    font-style: normal;
+    font-weight: 600;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.04em;
+    color: var(--parchment);
+    background-image: linear-gradient(
+      to top,
+      rgba(212, 161, 71, 0.60) 0,
+      rgba(212, 161, 71, 0.60) 75%,
+      transparent 75%,
+      transparent 100%
+    );
+    padding: 0 2px;
+    white-space: nowrap;
+  }
+  .squire-answer .cite {
+    color: var(--sepia);
+    text-decoration: underline;
+    text-decoration-color: var(--sepia-dim);
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .squire-answer .cite:hover {
+    color: var(--wax);
+    text-decoration-color: var(--wax);
+  }
+
+  .squire-rule {
+    border: 0;
+    height: 1px;
+    background: var(--rule);
+    margin: 24px 0 12px;
+  }
+  .squire-footer-line {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin: 0 0 24px;
+  }
+
+  .squire-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .squire-chip {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    padding: 7px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 9999px;
+    color: var(--sepia);
+    cursor: pointer;
+    transition: all 160ms var(--ease);
+  }
+  .squire-chip:hover {
+    border-color: var(--wax);
+    color: var(--wax);
+  }
+
+  .squire-dock {
+    padding: 14px 20px 28px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .squire-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--parchment);
+    font-style: italic;
+  }
+  .squire-submit {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--wax);
+    color: var(--parchment);
+    font-family: var(--font-ui);
+    font-size: 18px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .squire-submit:hover { background: var(--wax-dim); }
+
+  /* ───────── Phase 5: Card comparison mockup ───────── */
+  .compare {
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: var(--font-body);
+  }
+  .compare-title {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--parchment);
+    margin: 20px 20px 4px;
+    letter-spacing: -0.01em;
+  }
+  .compare-sub {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin: 0 20px 20px;
+  }
+  .card-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    aspect-ratio: 3/4;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+  .card.picked {
+    border-color: var(--wax);
+    box-shadow: 0 0 0 1px var(--wax);
+  }
+  .card-badge {
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    background: var(--wax);
+    color: var(--parchment);
+    font-family: var(--font-ui);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 9999px;
+  }
+  .card-level {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sepia);
+  }
+  .card-name {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1.15;
+    color: var(--parchment);
+    margin: 8px 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .card-type {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--sepia);
+  }
+  .card-stats {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--parchment-dim);
+    line-height: 1.8;
+    border-top: 1px solid var(--rule);
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+  .card-stats b {
+    color: var(--parchment);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .compare-verdict {
+    margin: 24px 20px 16px;
+    padding: 16px 18px;
+    border-left: 3px solid var(--wax);
+    background: var(--surface);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .compare-verdict-label {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--wax);
+    margin-bottom: 6px;
+  }
+  .compare-verdict-text {
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--parchment);
+    margin: 0;
+  }
+  .compare-verdict-text .cite {
+    color: var(--sepia);
+    text-decoration: underline;
+    text-decoration-color: var(--sepia-dim);
+  }
+
+  /* ───────── desktop mockup ───────── */
+  .desktop {
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-top: 24px;
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6);
+  }
+  .desktop-chrome {
+    background: var(--surface-2);
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .desktop-chrome span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--rule);
+  }
+  .desktop-chrome span:first-child { background: var(--wax); }
+  .desktop-main {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 560px;
+  }
+  .ledger-rail {
+    background: var(--surface);
+    border-right: 1px solid var(--rule);
+    padding: 24px 20px;
+  }
+  .ledger-label {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin: 0 0 8px;
+  }
+  .ledger-heading {
+    font-family: var(--font-display);
+    font-variation-settings: var(--display-axes);
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 1.2;
+    color: var(--parchment);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .ledger-sub {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--sepia);
+    margin: 0 0 24px;
+  }
+  .ledger-stat {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ledger-stat:last-of-type { border-bottom: 0; }
+  .ledger-stat-k { color: var(--sepia); }
+  .ledger-stat-v { color: var(--parchment); font-variant-numeric: tabular-nums; }
+  .ledger-section-gap { height: 24px; }
+  .desktop-content {
+    padding: 32px 48px;
+  }
+  .desktop-content .squire-question {
+    font-size: 10px;
+  }
+  .desktop-content .squire-question-text {
+    font-size: 28px;
+    margin-bottom: 24px;
+  }
+  .desktop-content .squire-answer {
+    font-size: 18px;
+    max-width: 560px;
+  }
+
+  /* ───────── spacing scale ───────── */
+  .scale {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px 20px;
+    align-items: center;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    max-width: 560px;
+  }
+  .scale-name { color: var(--sepia); font-variant-numeric: tabular-nums; }
+  .scale-bar { height: 1px; background: var(--rule); position: relative; }
+  .scale-bar > i {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 6px;
+    background: var(--wax);
+  }
+  .scale-val { color: var(--parchment); font-variant-numeric: tabular-nums; }
+
+  /* ───────── components ───────── */
+  .components {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .comp {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    padding: 24px;
+  }
+  .comp-title {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    margin: 0 0 16px;
+  }
+
+  .btn {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 0;
+    transition: all 160ms var(--ease);
+  }
+  .btn-primary {
+    background: var(--wax);
+    color: var(--parchment);
+  }
+  .btn-primary:hover { background: var(--wax-dim); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--parchment);
+    border: 1px solid var(--rule);
+  }
+  .btn-ghost:hover { border-color: var(--wax); color: var(--wax); }
+
+  .banner {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid;
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .banner-spoiler {
+    background: rgba(212,161,71,0.08);
+    border-color: var(--amber);
+    color: var(--parchment-dim);
+  }
+  .banner-spoiler b { color: var(--amber); font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .banner-sync {
+    background: rgba(122,140,92,0.08);
+    border-color: var(--sage);
+    color: var(--parchment-dim);
+  }
+  .banner-sync b { color: var(--sage); font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+  .input-demo {
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-style: italic;
+    color: var(--sepia);
+  }
+
+  .footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 32px;
+    margin-top: 32px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--sepia);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <!-- ───── masthead ───── -->
+  <header class="masthead">
+    <div class="brand">
+      <div class="monogram">S</div>
+      <div>
+        <h1 class="wordmark">Squire</h1>
+        <span class="wordmark-sub">A Frosthaven Companion · Design System v0.3</span>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle Light / Dark</button>
+  </header>
+
+  <!-- ───── section 0: the thesis ───── -->
+  <section class="section">
+    <p class="section-label">Thesis</p>
+    <h2 class="section-title">An attendant at your elbow, not an oracle from the high seat.</h2>
+    <p class="section-lede">
+      Squire is a knight's squire — carrying the gear, tending the horse, remembering the rulebook, knowing the inventory, handing over the right item at the right moment. The design language is a squire's personal ledger: warm ink, cream parchment, a single wax-seal red, literary serifs, and one small illuminated capital on every answer. Modern restraint in the vocabulary of a treasured reference book.
+    </p>
+  </section>
+
+  <!-- ───── section 1: phase 1 mobile mockup ───── -->
+  <section class="section">
+    <p class="section-label">Phase 1 — Rules Q&amp;A</p>
+    <h2 class="section-title">The answer is the hero.</h2>
+    <p class="section-lede">
+      Brian pulls out his phone at the table. Question in, answer out, back to the game. Every element earns its pixels. The drop cap is the one decorative flourish. Citations live inline. The tool-call footer reassures without intruding.
+    </p>
+    <div class="phones">
+      <div>
+        <div class="phone">
+          <div class="squire">
+            <div class="squire-notch"></div>
+            <header class="squire-header">
+              <div class="squire-brand">
+                <div class="squire-monogram">S</div>
+                <div class="squire-wordmark">Squire</div>
+              </div>
+              <div class="squire-context">Frosthaven · Rules<em>signed in as brian</em></div>
+            </header>
+            <div class="squire-body">
+              <div class="squire-question">You asked</div>
+              <p class="squire-question-text">What does the Poison condition do?</p>
+
+              <p class="squire-answer">Poison is a negative condition. While poisoned, all attacks against you deal <em>+1 damage</em> until cleansed. Removed by <em>Heal X</em> actions or by the <em>Restoration</em> ability. Apply Poison via the icon shown on monster attack abilities — see <span class="cite">Rulebook p.47</span> for the full list of conditions and <span class="cite">Scenario 14</span> for an example of poison-heavy encounters.</p>
+
+              <hr class="squire-rule">
+              <p class="squire-footer-line">Consulted · Rulebook p.47 · Scenario Book §14</p>
+
+              <div class="squire-chips">
+                <div class="squire-chip">What does Wound do?</div>
+                <div class="squire-chip">Can I move through allies?</div>
+              </div>
+            </div>
+            <footer class="squire-dock">
+              <div class="squire-input">Ask the Squire…</div>
+              <button class="squire-submit">→</button>
+            </footer>
+          </div>
+        </div>
+        <p class="phone-caption">Phase 1 — Mobile Rules Answer</p>
+      </div>
+
+      <!-- Phase 5 card comparison -->
+      <div>
+        <div class="phone">
+          <div class="compare">
+            <div class="squire-notch"></div>
+            <header class="squire-header">
+              <div class="squire-brand">
+                <div class="squire-monogram">S</div>
+                <div class="squire-wordmark">Squire</div>
+              </div>
+              <div class="squire-context">Drifter L4<em>party of 4 · scen 14</em></div>
+            </header>
+            <h3 class="compare-title">Level 4 card choice</h3>
+            <p class="compare-sub">For your Drifter · following Rage build</p>
+            <div class="card-row">
+              <div class="card picked">
+                <div class="card-badge">Picked</div>
+                <div>
+                  <div class="card-level">Level 4 · Option A</div>
+                  <div class="card-name">Reckless Offense</div>
+                  <div class="card-type">Persistent action</div>
+                </div>
+                <div class="card-stats">
+                  <div><b>Top:</b> Attack 5</div>
+                  <div><b>Bottom:</b> Move 3 · Jump</div>
+                  <div><b>XP:</b> <b>2</b></div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="card-level">Level 4 · Option B</div>
+                  <div class="card-name">Steady Hand</div>
+                  <div class="card-type">Loss action</div>
+                </div>
+                <div class="card-stats">
+                  <div><b>Top:</b> Attack 4 · Range 3</div>
+                  <div><b>Bottom:</b> Heal 2 Self</div>
+                  <div><b>XP:</b> <b>1</b></div>
+                </div>
+              </div>
+            </div>
+            <div class="compare-verdict">
+              <div class="compare-verdict-label">Squire recommends</div>
+              <p class="compare-verdict-text">Take <em>Reckless Offense</em>. It pairs with your existing melee initiative cards and the <em>Rage</em> build guide you're following favors persistent damage over ranged safety. Per <span class="cite">r/Gloomhaven build guide</span>.</p>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption">Phase 5 — Card Comparison (teaser)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── section 2: desktop with left rail ───── -->
+  <section class="section">
+    <p class="section-label">Phase 4 — The Ledger rail (desktop)</p>
+    <h2 class="section-title">Squire knows you.</h2>
+    <p class="section-lede">
+      Once character and campaign state land, a persistent left rail surfaces what the Squire knows — the quick reference you'd expect an attendant to carry. Phase 1 leaves this rail empty or shows the wordmark. The same tokens drive both.
+    </p>
+    <div class="desktop">
+      <div class="desktop-chrome"><span></span><span></span><span></span></div>
+      <div class="desktop-main">
+        <aside class="ledger-rail">
+          <p class="ledger-label">Character</p>
+          <h3 class="ledger-heading">Your Drifter</h3>
+          <p class="ledger-sub">Level 4 · following Rage build</p>
+          <div class="ledger-stat"><span class="ledger-stat-k">XP</span><span class="ledger-stat-v">12 / 45</span></div>
+          <div class="ledger-stat"><span class="ledger-stat-k">Gold</span><span class="ledger-stat-v">47</span></div>
+          <div class="ledger-stat"><span class="ledger-stat-k">Hand size</span><span class="ledger-stat-v">10</span></div>
+          <div class="ledger-stat"><span class="ledger-stat-k">Items</span><span class="ledger-stat-v">6 worn</span></div>
+
+          <div class="ledger-section-gap"></div>
+          <p class="ledger-label">Campaign</p>
+          <h3 class="ledger-heading">Hearth &amp; Ice</h3>
+          <p class="ledger-sub">Party of 4 · Scenario 14</p>
+          <div class="ledger-stat"><span class="ledger-stat-k">Prosperity</span><span class="ledger-stat-v">3</span></div>
+          <div class="ledger-stat"><span class="ledger-stat-k">Outpost</span><span class="ledger-stat-v">Winter</span></div>
+          <div class="ledger-stat"><span class="ledger-stat-k">Synced</span><span class="ledger-stat-v">2h ago</span></div>
+        </aside>
+        <section class="desktop-content">
+          <div class="squire-question">You asked</div>
+          <p class="squire-question-text">What items should I bring to tonight's scenario?</p>
+          <p class="squire-answer">Given your <em>Rage</em> build at level 4 and the party's current composition, three items earn their slots tonight. Bring <em>Heater Shield</em> for the elite Flame Demons you'll encounter in Scenario 14 — the shield 1 reduces their Fire damage by enough to survive a full round. Pair it with <em>Boots of Striding</em> for the mobility your melee build needs to reach the altar before it breaks. Leave <em>Minor Healing Potion</em> at the outpost; your new <em>Restoration</em> ability covers that slot. See <span class="cite">Rulebook p.47</span> and <span class="cite">Scenario Book §14</span>.</p>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── section 3: color ───── -->
+  <section class="section">
+    <p class="section-label">Color — Rubrication</p>
+    <h2 class="section-title">Warm ink, cream parchment, one wax-seal red.</h2>
+    <p class="section-lede">
+      Medieval manuscripts used red ink (rubrication) for initial capitals, rubrics, and important marks — sparingly, against warm vellum. That's the whole color story. Five roles, one accent, zero gradients.
+    </p>
+    <div class="palette">
+      <div class="swatch"><div class="swatch-color" style="background:#14100c"></div><div class="swatch-body"><p class="swatch-name">Ink (background)</p><p class="swatch-hex">#14100C</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#1c1814"></div><div class="swatch-body"><p class="swatch-name">Surface</p><p class="swatch-hex">#1C1814</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#f5ebd9"></div><div class="swatch-body"><p class="swatch-name">Parchment (text)</p><p class="swatch-hex">#F5EBD9</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#9a8d74"></div><div class="swatch-body"><p class="swatch-name">Sepia (muted)</p><p class="swatch-hex">#9A8D74</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#c73e1d"></div><div class="swatch-body"><p class="swatch-name">Wax-seal (accent)</p><p class="swatch-hex">#C73E1D</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#7a8c5c"></div><div class="swatch-body"><p class="swatch-name">Sage (success)</p><p class="swatch-hex">#7A8C5C</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#d4a147"></div><div class="swatch-body"><p class="swatch-name">Amber (warning)</p><p class="swatch-hex">#D4A147</p></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#8b2919"></div><div class="swatch-body"><p class="swatch-name">Deep red (error)</p><p class="swatch-hex">#8B2919</p></div></div>
+    </div>
+  </section>
+
+  <!-- ───── section 4: type ───── -->
+  <section class="section">
+    <p class="section-label">Typography</p>
+    <h2 class="section-title">Two fonts, two jobs.</h2>
+    <p class="section-lede">
+      A literary serif carries Squire's signature moments — the wordmark, the hero question, the drop cap on every answer. A crisp humanist sans handles everything else, optimized for scanning at the table. Both on Google Fonts, neither in the blacklist, zero Inter.
+    </p>
+
+    <div class="type-row">
+      <p class="type-meta">Display · Instrument Serif — wordmark, hero, drop caps</p>
+      <h3 class="type-sample-display">Poison is a negative condition.</h3>
+      <p class="type-sample-display-italic">Fraunces · opsz 144 · SOFT 50 · weight 500</p>
+    </div>
+
+    <div class="type-row">
+      <p class="type-meta">Body + UI · Geist — answers, chrome, everything scannable</p>
+      <p class="type-sample-body">
+        While poisoned, all attacks against you deal <em>+1 damage</em> until cleansed. Removed by <em>Heal X</em> actions or by the <em>Restoration</em> ability. Monsters apply Poison via the icon shown on their attack abilities.
+      </p>
+      <p class="type-sample-ui" style="margin-top:16px;">Ask the Squire &nbsp;·&nbsp; Settings &nbsp;·&nbsp; Sign out &nbsp;·&nbsp; Level 4 · 47g · prosperity 3</p>
+      <p class="type-sample-caps" style="margin-top:12px;">Consulted · Rulebook p.47 · Scenario Book §14</p>
+    </div>
+  </section>
+
+  <!-- ───── section 5: spacing scale ───── -->
+  <section class="section">
+    <p class="section-label">Spacing</p>
+    <h2 class="section-title">Generous by default.</h2>
+    <p class="section-lede">
+      The user is reading on a phone in a dim room. Whitespace is readability, not luxury. 4px base, 1.65 body line-height, max reading column 640px.
+    </p>
+    <div class="scale">
+      <div class="scale-name">2xs</div><div class="scale-bar"><i style="width:2px"></i></div><div class="scale-val">2px</div>
+      <div class="scale-name">xs</div> <div class="scale-bar"><i style="width:4px"></i></div><div class="scale-val">4px</div>
+      <div class="scale-name">sm</div> <div class="scale-bar"><i style="width:8px"></i></div><div class="scale-val">8px</div>
+      <div class="scale-name">md</div> <div class="scale-bar"><i style="width:16px"></i></div><div class="scale-val">16px</div>
+      <div class="scale-name">lg</div> <div class="scale-bar"><i style="width:24px"></i></div><div class="scale-val">24px</div>
+      <div class="scale-name">xl</div> <div class="scale-bar"><i style="width:32px"></i></div><div class="scale-val">32px</div>
+      <div class="scale-name">2xl</div><div class="scale-bar"><i style="width:48px"></i></div><div class="scale-val">48px</div>
+      <div class="scale-name">3xl</div><div class="scale-bar"><i style="width:64px"></i></div><div class="scale-val">64px</div>
+      <div class="scale-name">4xl</div><div class="scale-bar"><i style="width:96px"></i></div><div class="scale-val">96px</div>
+    </div>
+  </section>
+
+  <!-- ───── section 6: components ───── -->
+  <section class="section">
+    <p class="section-label">Components</p>
+    <h2 class="section-title">The kit.</h2>
+    <p class="section-lede">
+      Every component the design system has to cover — Phase 1 ships a subset, but the tokens and rules are defined for everything through Phase 8.
+    </p>
+
+    <div class="components">
+
+      <div class="comp">
+        <p class="comp-title">Buttons</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+          <button class="btn btn-primary">Sign in with Google</button>
+          <button class="btn btn-ghost">Cancel</button>
+        </div>
+      </div>
+
+      <div class="comp">
+        <p class="comp-title">Input</p>
+        <div class="input-demo">Ask the Squire…</div>
+      </div>
+
+      <div class="comp">
+        <p class="comp-title">Spoiler banner (Phase 1)</p>
+        <div class="banner banner-spoiler">
+          <b>Spoiler warning</b>
+          This tool may contain spoilers for Frosthaven content including locked classes, scenarios, and events.
+        </div>
+      </div>
+
+      <div class="comp">
+        <p class="comp-title">Sync status (Phase 6)</p>
+        <div class="banner banner-sync">
+          <b>Synced · 2h ago</b>
+          Character state pulled from storyline.com. Drifter L4, 47g, prosperity 3.
+        </div>
+      </div>
+
+      <div class="comp">
+        <p class="comp-title">Drop cap (the signature)</p>
+        <p class="dropcap" style="font-family:var(--font-body); font-size:17px; line-height:1.65; margin:0;">
+          Poison is a negative condition. While poisoned, all attacks against you deal +1 damage until cleansed.
+        </p>
+      </div>
+
+      <div class="comp">
+        <p class="comp-title">Monogram at scales</p>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div class="monogram" style="width:32px;height:32px;font-size:30px;padding-bottom:3px;">S</div>
+          <div class="monogram" style="width:48px;height:48px;font-size:46px;padding-bottom:5px;">S</div>
+          <div class="monogram" style="width:72px;height:72px;font-size:70px;padding-bottom:8px;">S</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ───── footer ───── -->
+  <footer class="footer">
+    <div>Squire Design System · Preview v0.1 · 2026-04-08</div>
+    <div>Phase 1 MVP ships ~2026-04-17</div>
+  </footer>
+</main>
+
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    const cur = html.getAttribute('data-theme');
+    html.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
+  }
+</script>
+</body>
+</html>
