@@ -251,6 +251,10 @@ deployment-model change knows where to start.
 
 ### What this does not solve
 
+These are trade-offs the adversarial pass of the SQR-71 pre-landing
+review surfaced and we explicitly accepted. Documented here so a
+future agent doesn't spend half an hour "discovering" them.
+
 - **Subresource Integrity (SRI)**. `<link integrity="sha256-...">`
   is useful for third-party CDN assets but redundant for same-
   origin content that we already trust end-to-end. Skip.
@@ -262,3 +266,57 @@ deployment-model change knows where to start.
   request lands on deploy N+1, the hashed route 404s. Phase 1's
   ~second-long restart behind Cloudflare makes this window narrow
   enough to ignore; flagged above as a Phase 3+ concern.
+- **Styled error fallback when asset compile itself fails.** The
+  `/` route wraps `renderHomePage()` in a try/catch that re-invokes
+  `layoutShell({errorBanner})` to render a styled "something went
+  wrong" page on error (SQR-65 requirement). With SQR-71
+  fingerprinting, `layoutShell` now `await`s `getAppCssUrl()`,
+  which in prod calls `getAppCss()` → `compileCssEntry()`. If the
+  original error was an asset-compile failure (missing styles.css,
+  broken `@tailwindcss/node` upgrade, filesystem EACCES), the
+  fallback re-invokes the same broken path and throws inside the
+  catch block, bubbling to `app.onError` which returns the generic
+  JSON 500. The styled fallback is lost in that specific case.
+  We accept this because a prod deploy with an unreadable
+  `styles.css` is already broken end-to-end — CSS is load-bearing,
+  no amount of error-banner HTML saves a page with no styles — and
+  the dev path skips the compile entirely (`getAppCssUrl()` returns
+  the bare `/app.css` without I/O in dev), so dev ergonomics are
+  unaffected. If Phase 3+ tightens this, the fix is a belt-and-
+  suspenders try/catch inside `layoutShell` that falls back to the
+  bare `/app.css` / `/squire.js` paths on asset-helper failure.
+- **First 404-probe on a hashed path triggers a cold compile.**
+  The prod hashed-route handlers call `getAppCss()` / `getSquireJs()`
+  before they check whether the requested hash matches. An
+  unauthenticated scanner hitting `/app.deadbeef01.css` on a cold
+  process thus pays one Tailwind compile (~38 ms) before getting
+  its 404. This is a one-time cost per process lifetime (the second
+  probe hits the cache), not amplifiable, so it's not a DoS vector
+  in the Phase 1 single-instance deploy behind Cloudflare. We
+  accept it rather than adding a separate "current hash" accessor
+  that would let us hash-compare before compile, because the
+  one-time cost is invisible in practice and the accessor would
+  duplicate state. Revisit if Phase 3+ deploys to a model where
+  cold starts happen frequently.
+- **Dev mtime cache invalidation does not track `@source` scans.**
+  `computeCssCacheKey()` keys on the `styles.css` mtime only. If a
+  dev edits a TypeScript or HTML file that contributes Tailwind
+  class candidates via an `@source` directive in `styles.css`, the
+  mtime on `styles.css` itself doesn't change, so the cache hits
+  and the new class doesn't appear in `/app.css` until something
+  actually touches `styles.css`. We accept this because the Scanner
+  walk is the dominant cost per compile, making it cheaper to
+  always rescan on a `styles.css` mtime bump than to stat every
+  source file on every request. The simple workaround for devs who
+  hit it: `touch src/web-ui/styles.css` (or any edit that bumps the
+  mtime). Documented inline in `computeCssCacheKey` too.
+- **`_resetAssetCachesForTests`, `_getCssCompileCountForTests`,
+  `_getJsReadCountForTests` are exported from the prod module.**
+  The underscore prefix is a convention, not a TypeScript boundary
+  — any importer can call them. We accept this because the
+  alternative (a separate test-only entry point) is disproportionate
+  ceremony for three tiny hooks, and the blast radius is contained:
+  a malicious caller in prod could force-reset the CSS cache, which
+  costs one extra compile (~38 ms) per call and has no
+  data-corruption or exfiltration pathway. Documented inline where
+  the hooks are defined.

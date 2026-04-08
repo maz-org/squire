@@ -73,6 +73,12 @@ app.get('/app.css', async (c) => {
 // constraints work fine. Router rejects non-hex at the match layer;
 // the handler then checks the filename matches the current compile
 // exactly and 404s on mismatch.
+//
+// Trade-off: the handler calls getAppCss() *before* comparing the
+// hash, so an unauthenticated 404 probe on a cold process pays one
+// Tailwind compile (~38 ms) before getting its 404. One-time cost
+// per process lifetime, not amplifiable — accepted. See ADR 0009
+// fingerprinting addendum, "What this does not solve".
 app.get('/:file{app\\.[a-f0-9]+\\.css}', async (c) => {
   if (!isProdEnv()) return c.notFound();
   const { content, hash } = await getAppCss();
@@ -112,13 +118,27 @@ app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
 // reuse for recoverable runtime errors. See DESIGN.md decisions log
 // "`.squire-banner` is a reusable primitive."
 app.get('/', async (c) => {
-  // Both `renderHomePage()` and `layoutShell()` return
-  // `HtmlEscapedString | Promise<HtmlEscapedString>` (the Promise variant
-  // is what hono/html falls back to when interpolating arrays). Without
-  // `await`, a rejected promise from either function would bypass this
-  // try/catch and bubble up to `app.onError` as a JSON 500 — losing the
-  // styled HTML fallback that the SQR-65 ticket required. Awaiting both
-  // ensures the catch branch always renders the layout shell.
+  // `renderHomePage()` and `layoutShell()` both return
+  // `Promise<HtmlEscapedString>` (tightened from a union in SQR-71
+  // when layout.ts went async to await the asset URL helpers).
+  // Without `await`, a rejected promise from either function would
+  // bypass this try/catch and bubble up to `app.onError` as a JSON
+  // 500 — losing the styled HTML fallback that the SQR-65 ticket
+  // required. Awaiting both ensures the catch branch always renders
+  // the layout shell.
+  //
+  // Known gap (accepted, SQR-71 eng review): if the ORIGINAL error
+  // was an asset-compile failure in prod (unreadable styles.css,
+  // broken @tailwindcss/node upgrade), the fallback re-invokes
+  // `layoutShell` which re-invokes `getAppCssUrl` → `getAppCss` →
+  // throws again, bypassing this catch. The styled fallback is
+  // lost in that specific case and the user gets the bare
+  // `app.onError` JSON 500. We accept this because a prod deploy
+  // with an unreadable styles.css is already broken end-to-end —
+  // CSS is load-bearing, no error banner saves a page with no
+  // styles. Dev is unaffected because `getAppCssUrl` in dev
+  // returns a constant string without I/O. See ADR 0009
+  // fingerprinting addendum, "What this does not solve".
   try {
     return c.html(await renderHomePage());
   } catch (err) {

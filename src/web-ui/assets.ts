@@ -236,6 +236,18 @@ export async function getSquireJsUrl(): Promise<string> {
 }
 
 // ─── Test-only hooks ─────────────────────────────────────────────────────────
+//
+// Trade-off (accepted, SQR-71 eng review): these three exports are
+// shipped in the prod bundle. The underscore prefix is a convention,
+// not a TypeScript boundary — any importer can call them, including
+// from prod code or a compromised dependency. We accept this because
+// a separate test-only entry point is disproportionate ceremony for
+// three tiny hooks, and the blast radius is contained: a malicious
+// caller in prod could force-reset the CSS cache, which costs one
+// extra ~38 ms compile per call and has no data-corruption or
+// exfiltration pathway. If this ever grows past three hooks, split
+// them into `src/web-ui/assets.test-only.ts` and import from there
+// in the test file. See ADR 0009 fingerprinting addendum.
 
 /**
  * Test-only hook. Vitest re-imports this module per test file, so
