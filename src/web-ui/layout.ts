@@ -61,9 +61,12 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // immediate edit-refresh; prod emits content-hashed paths
   // (`/app.<hash>.css`, `/squire.<hash>.js`) for immutable edge
   // caching. The URL helpers handle both cases — we just await
-  // whatever they return and drop it into the template.
-  const cssUrl = await getAppCssUrl();
-  const jsUrl = await getSquireJsUrl();
+  // whatever they return and drop it into the template. Fetched in
+  // parallel because the two helpers are independent; in dev each
+  // call is microseconds (one fs.stat), in prod each is a cache hit
+  // after the first request, but that's still one avoidable serial
+  // hop per page render.
+  const [cssUrl, jsUrl] = await Promise.all([getAppCssUrl(), getSquireJsUrl()]);
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`

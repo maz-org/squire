@@ -162,7 +162,9 @@ npm run typecheck     # TypeScript type checking
 npm run lint          # ESLint
 npm run lint:css      # stylelint (CSS, Tailwind v4 aware — SQR-70)
 npm run format:check  # Prettier check
-npm run build:css     # Compile src/web-ui/styles.css → public/app.css (Tailwind CLI, ADR 0008)
+# No CSS build step — `/app.css` is compiled in-process on request
+# via @tailwindcss/node. SQR-71 / ADR 0009 replaced the former
+# `npm run build:css` pipeline.
 ```
 
 Tests use randomized execution order (`sequence.shuffle` in vitest

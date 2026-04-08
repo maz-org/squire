@@ -76,9 +76,11 @@ The server initializes the vector index and embedder on startup, then
 serves:
 
 - **Web UI** — `GET /` (companion-first layout shell, server-rendered HTML;
-  `GET /app.css` for the Tailwind CLI build output — run
-  `npm run build:css` once before `npm run serve` so `public/app.css` exists,
-  otherwise the layout renders unstyled)
+  `GET /app.css` compiles `src/web-ui/styles.css` in-process via
+  `@tailwindcss/node` on first request and caches the result — no build
+  step required on a fresh clone. Prod uses content-hashed URLs
+  (`/app.<hash>.css`) with immutable caching. See
+  [ADR 0009](docs/adr/0009-on-demand-asset-pipeline.md))
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)

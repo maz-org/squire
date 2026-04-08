@@ -125,11 +125,23 @@ async function compileCssEntry(): Promise<AssetEntry> {
  * compile instead of racing to populate the cache twice. The in-flight
  * promise is cleared in `finally` so a failed compile doesn't poison
  * the cache — the next caller will retry.
+ *
+ * Key-drift guard: if an in-flight compile was started under a
+ * different cache key (e.g., a dev caller edited styles.css while
+ * another request was mid-compile, bumping the mtime), the later
+ * caller verifies after awaiting that the populated cache matches
+ * its own key. On mismatch it falls through and starts a fresh
+ * compile, so the edit shows up on the next request instead of
+ * lingering for one extra hit.
  */
 export async function getAppCss(): Promise<AssetEntry> {
   const key = await computeCssCacheKey();
   if (cssCache && cssCache.key === key) return cssCache.entry;
-  if (cssInFlight) return cssInFlight;
+  if (cssInFlight) {
+    const entry = await cssInFlight;
+    if (cssCache && cssCache.key === key) return entry;
+    // Key drifted while we were waiting. Fall through to recompile.
+  }
 
   cssInFlight = (async () => {
     try {
@@ -188,13 +200,18 @@ async function readJsEntry(): Promise<AssetEntry> {
 
 /**
  * Read (or fetch cached) `src/web-ui/squire.js`. No bundling, no
- * transform — vanilla file-read-and-cache. Same Promise memoization
- * and cache-key strategy as the CSS pipeline for symmetry.
+ * transform — vanilla file-read-and-cache. Same Promise memoization,
+ * cache-key strategy, and key-drift guard as the CSS pipeline for
+ * symmetry.
  */
 export async function getSquireJs(): Promise<AssetEntry> {
   const key = await computeJsCacheKey();
   if (jsCache && jsCache.key === key) return jsCache.entry;
-  if (jsInFlight) return jsInFlight;
+  if (jsInFlight) {
+    const entry = await jsInFlight;
+    if (jsCache && jsCache.key === key) return entry;
+    // Key drifted while we were waiting. Fall through to re-read.
+  }
 
   jsInFlight = (async () => {
     try {
