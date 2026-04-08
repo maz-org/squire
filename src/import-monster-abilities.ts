@@ -41,22 +41,35 @@ interface ExtractedMonsterAbility {
 
 /**
  * Convert a single GHS ability object into our MonsterAbility format.
+ *
+ * Some upstream monster decks (e.g. fh/chaos-spark) ship a single ability
+ * with no `name` or `cardId` — the deck itself is effectively the card
+ * (see SQR-62). Fall back to the monster type name for `cardName`, and to
+ * a 1-based ordinal within the deck for the sourceId suffix, so the record
+ * still has a stable natural key and passes Zod.
  */
 export function convertMonsterAbility(
   ghs: GhsAbility,
   deckName: string,
   labels: LabelData,
+  ordinal: number = 1,
 ): ExtractedMonsterAbility {
   const abilities = (ghs.actions ?? [])
     .map((a) => formatAction(a, labels))
     .filter((s): s is string => s !== null);
 
+  const monsterType = kebabToTitle(deckName);
+  const rawName: string | undefined = (ghs as { name?: string }).name;
+  const rawCardId: number | undefined = (ghs as { cardId?: number }).cardId;
+  const cardName = rawName ?? monsterType;
+  const cardIdSuffix = rawCardId != null ? String(rawCardId) : `ordinal-${ordinal}`;
+
   return {
-    monsterType: kebabToTitle(deckName),
-    cardName: ghs.name,
+    monsterType,
+    cardName,
     initiative: ghs.initiative,
     abilities,
-    sourceId: `gloomhavensecretariat:monster-ability/${deckName}/${ghs.cardId}`,
+    sourceId: `gloomhavensecretariat:monster-ability/${deckName}/${cardIdSuffix}`,
   };
 }
 
@@ -79,7 +92,13 @@ export function importMonsterAbilities(): ExtractedMonsterAbility[] {
     const deck: GhsDeck = JSON.parse(readFileSync(join(GHS_DECK_DIR, file), 'utf-8'));
 
     // Sort by cardId so dedupe is deterministic — keep the lowest-ID copy.
-    const sortedAbilities = [...deck.abilities].sort((a, b) => a.cardId - b.cardId);
+    // Some decks omit cardId entirely (see SQR-62); treat missing as -Infinity
+    // so those entries sort stably at the front and keep their source order.
+    const sortedAbilities = [...deck.abilities].sort(
+      (a, b) =>
+        ((a as { cardId?: number }).cardId ?? -Infinity) -
+        ((b as { cardId?: number }).cardId ?? -Infinity),
+    );
 
     // Dedupe within a deck by content equivalence. Upstream GHS data contains
     // genuine duplicates (e.g. ancient-artillery cards 627 and 628 both
@@ -89,8 +108,8 @@ export function importMonsterAbilities(): ExtractedMonsterAbility[] {
     // reviewers can spot the upstream dupes.
     const seen = new Set<string>();
 
-    for (const ability of sortedAbilities) {
-      const converted = convertMonsterAbility(ability, deckName, labels);
+    for (const [index, ability] of sortedAbilities.entries()) {
+      const converted = convertMonsterAbility(ability, deckName, labels, index + 1);
 
       // Replace any unresolved label references with a placeholder — some solo
       // scenario trap decks have labels that are legitimately missing upstream

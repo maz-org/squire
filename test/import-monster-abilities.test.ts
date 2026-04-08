@@ -125,6 +125,27 @@ describe('convertMonsterAbility', () => {
     expect(result.abilities).toEqual(['Attack 3', 'Move 2']);
   });
 
+  it('falls back to monster type and ordinal when name/cardId are missing (SQR-62)', () => {
+    // Upstream fh/chaos-spark.json ships a single ability with no name or
+    // cardId. The importer must synthesise both so the record still has a
+    // stable natural key and satisfies the Zod schema.
+    const ghsAbility = {
+      initiative: 90,
+      level: 0 as number | 'X',
+      actions: [{ type: 'move', value: 2 }],
+    } as unknown as Parameters<typeof convertMonsterAbility>[0];
+
+    const result = convertMonsterAbility(ghsAbility, 'chaos-spark', labels, 1);
+
+    expect(result).toEqual({
+      monsterType: 'Chaos Spark',
+      cardName: 'Chaos Spark',
+      initiative: 90,
+      abilities: ['Move 2'],
+      sourceId: 'gloomhavensecretariat:monster-ability/chaos-spark/ordinal-1',
+    });
+  });
+
   it('includes sub-action details', () => {
     const ghsAbility = {
       name: 'Piercing Shot',

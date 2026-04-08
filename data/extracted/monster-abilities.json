@@ -788,13 +788,14 @@
   },
   {
     "monsterType": "Chaos Spark",
+    "cardName": "Chaos Spark",
     "initiative": 90,
     "abilities": [
       "Move 2",
       "Attack (C-2), +(2xT)",
       "where T is the number of damage tokens on the target's character mat"
     ],
-    "sourceId": "gloomhavensecretariat:monster-ability/chaos-spark/undefined"
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-spark/ordinal-1"
   },
   {
     "monsterType": "City Guard Banner Spear Solo",
