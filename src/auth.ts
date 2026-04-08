@@ -100,6 +100,22 @@ export async function registerClient(
 }
 
 /**
+ * Safely resolve a client by id. Any error from the store (notably a
+ * Postgres `invalid input syntax for type uuid` when the caller passes a
+ * non-UUID `client_id`) is folded into `undefined`, which callers then
+ * translate into an OAuth `invalid_request` error. Without this, a
+ * malformed `client_id` surfaces as a non-OAuthError and the server's
+ * generic fallback hides the real reason behind "Token exchange failed".
+ */
+async function lookupClient(clientId: string) {
+  try {
+    return await getAuthProvider().clientsStore.getClient(clientId);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Issue an authorization code for `clientId` after exact-match-validating
  * `redirectUri` against the client's registered URIs. PKCE method is fixed
  * to S256 — see {@link SquireOAuthProvider.createAuthorizationCode}.
@@ -110,10 +126,9 @@ export async function createAuthorizationCode(
   codeChallenge: string,
   state?: string,
 ): Promise<{ code: string }> {
-  const p = getAuthProvider();
-  const client = await p.clientsStore.getClient(clientId);
+  const client = await lookupClient(clientId);
   if (!client) throw new InvalidRequestError('Unknown client_id');
-  const { code } = await p.createAuthorizationCode({
+  const { code } = await getAuthProvider().createAuthorizationCode({
     client,
     redirectUri,
     codeChallenge,
@@ -133,10 +148,9 @@ export async function exchangeAuthorizationCode(
   codeVerifier: string,
   redirectUri: string,
 ): Promise<OAuthTokens> {
-  const p = getAuthProvider();
-  const client = await p.clientsStore.getClient(clientId);
+  const client = await lookupClient(clientId);
   if (!client) throw new InvalidRequestError('Unknown client_id');
-  return p.exchangeAuthorizationCode(client, code, codeVerifier, redirectUri);
+  return getAuthProvider().exchangeAuthorizationCode(client, code, codeVerifier, redirectUri);
 }
 
 /**
