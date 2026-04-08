@@ -19,3 +19,8 @@ Plan reviews and tech specs follow a hybrid lifecycle:
 Plan-eng-review and similar review skills should write to `docs/plans/` by
 default, and surface this lifecycle to the user in the final summary so the
 post-merge cleanup doesn't get forgotten.
+
+**Decisions that come out of a plan review** belong in ADRs, not in
+`docs/plans/`. `docs/plans/` artifacts are implementer-facing and get
+deleted; ADRs are the permanent home for the *why*. See
+[adrs.md](adrs.md).
