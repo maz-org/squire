@@ -63,12 +63,32 @@ export function layoutShell(
   // `HtmlEscapedString` so the compiler guarantees the caller already
   // escaped it (see the LayoutShellOptions doc comment above) — no `raw()`
   // wrap needed, the value flows directly into the template.
+  // SQR-66 placeholder content — a hero question above a sample answer
+  // that exercises every signature component (drop cap, two rule-term
+  // `<em>`s, a citation link). SQR-6 replaces this with real streamed
+  // content; until then the shell renders visually complete so QA can
+  // verify the stylesheet against docs/design-preview.html. The text is
+  // intentionally mundane rather than trying to look like a real ruling
+  // so no one mistakes it for a source-of-truth answer.
+  const placeholderAnswer = html`<h1 class="squire-question">
+      Sample question rendered here by SQR-6.
+    </h1>
+    <section class="squire-answer" aria-label="Sample answer">
+      <p>
+        Sometimes a <em>rule term</em> needs emphasis inside the body copy, and sometimes two terms
+        like <em>loss condition</em> and <em>round end</em>
+        sit on the same line without colliding. Squire cites its sources inline, like the
+        <a class="cite" href="#">Rulebook p.47</a> or the scenario book, so you can verify without
+        leaving the table.
+      </p>
+    </section>`;
+
   const surfaceContent = options.errorBanner
     ? html`<div class="squire-banner squire-banner--error" role="alert">
         <span class="squire-banner__label">SOMETHING WENT WRONG</span>
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
-    : (options.mainContent ?? html``);
+    : (options.mainContent ?? placeholderAnswer);
 
   return html`<!doctype html>
     <html lang="en">
@@ -84,6 +104,7 @@ export function layoutShell(
         <a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>
         <div class="squire-frame">
           <aside class="squire-rail" aria-label="Squire ledger">
+            <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
             <span class="squire-wordmark">Squire</span>
           </aside>
           <div class="squire-column">
@@ -118,6 +139,25 @@ export function layoutShell(
             </form>
           </div>
         </div>
+        <!--
+          SQR-66 cite tap-toggle (plan-design-review Decision #4). Tap on a
+          .squire-answer .cite adds .is-active; tap anywhere else clears it.
+          Five lines of vanilla JS — no framework, no dependency. Keyboard
+          focus is already covered by the global :focus-visible ring.
+        -->
+        <script>
+          document.addEventListener('click', function (e) {
+            var t = e.target;
+            var cite = t && t.closest ? t.closest('.squire-answer .cite') : null;
+            document.querySelectorAll('.squire-answer .cite.is-active').forEach(function (el) {
+              if (el !== cite) el.classList.remove('is-active');
+            });
+            if (cite) {
+              e.preventDefault();
+              cite.classList.toggle('is-active');
+            }
+          });
+        </script>
       </body>
     </html>`;
 }

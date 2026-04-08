@@ -194,17 +194,16 @@ html {
   border-bottom: 1px solid var(--rule);
   flex-shrink: 0;
 }
+/* Header monogram is the 28px variant. The box styling (display, background,
+   border-radius, centering, font) lives on the base `.squire-monogram` rule
+   below in the SQR-66 signature components block, so the desktop rail's
+   `.squire-monogram--masthead` and any future surface (sign-in page, channel
+   avatar) inherit it without re-declaring. CodeRabbit caught the missing
+   inheritance on PR #202 — the rail monogram was rendering as a bare glyph
+   because only the header selector had the box. */
 .squire-header .squire-monogram {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 28px;
   height: 28px;
-  background: var(--wax);
-  color: var(--parchment);
-  border-radius: 4px;
-  font-family: Fraunces, Georgia, serif;
-  font-weight: 700;
 }
 .squire-header .squire-wordmark,
 .squire-rail .squire-wordmark {
@@ -371,9 +370,173 @@ html {
   }
 }
 
+/*
+ * ─── Signature components (SQR-66 / SQR-5c) ────────────────────────────────
+ *
+ * Visual polish on top of the SQR-65 layout shell: monogram glyph, upright
+ * wordmark, hero question, drop cap, rule-term highlighter, citation link
+ * treatment + mobile tap-toggle, global focus-visible ring. Spec lives in
+ * DESIGN.md §Signature Components + §Typography.
+ */
+
+/* Monogram — Fraunces weight 700 "S" inside a wax-seal square. The header
+   tile is 28px (SQR-65 ships that size). The .squire-monogram--masthead
+   modifier is the 56px masthead variant used on the desktop rail / sign-in
+   page / channel avatars. Font size is ~85% of the square so the cap fills
+   the tile without looking squished at either size. Fraunces has a small
+   baseline gap, so a few pixels of padding-bottom keep the S optically
+   centered instead of floating high. */
+.squire-monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wax);
+  color: var(--parchment);
+  border-radius: 4px;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 700;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 80;
+  font-size: 24px;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+.squire-monogram--masthead {
+  width: 56px;
+  height: 56px;
+  font-size: 48px;
+  padding-bottom: 4px;
+  border-radius: 4px;
+}
+
+/* Wordmark stays upright at every scale — italic Fraunces reads precious
+   at brand-mark sizes (DESIGN.md "Never use Fraunces italic for the
+   wordmark or monogram"). */
+.squire-wordmark {
+  font-family: Fraunces, Georgia, serif;
+  font-style: normal;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 50;
+}
+
+/* Hero question — the user's words rendered at the top of the answer
+   region. Owned by SQR-6 for population; styled here per the SQR-66
+   plan-design-review Decision #1. clamp(22, 5vw, 28) scales the hero
+   smoothly between the 375px and 1280px breakpoints without a media
+   query; line-height 1.25 comes straight from DESIGN.md §Typography. */
+.squire-question {
+  font-family: Fraunces, Georgia, serif;
+  font-variation-settings: 'opsz' 144;
+  font-weight: 500;
+  font-size: clamp(22px, 5vw, 28px);
+  line-height: 1.25;
+  color: var(--parchment);
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+}
+
+/* Answer block — the ledger page where the streamed agent answer lives.
+   First paragraph gets a drop cap; <em> becomes a rule-term highlighter;
+   .cite becomes a sepia-underlined citation link. No chat bubble chrome
+   anywhere — this is a ledger, not a messenger. */
+.squire-answer {
+  font-family: Geist, system-ui, sans-serif;
+  color: var(--parchment);
+  max-width: 640px;
+}
+.squire-answer p {
+  margin: 0 0 1em;
+}
+
+/*
+ * Drop cap — DESIGN.md §Signature Components "Drop cap". Uses the
+ * ::first-letter pseudo-element, NOT a wrapping <span>. A span-based drop
+ * cap splits the DOM and causes VoiceOver to read the first word as two
+ * tokens ("S ometimes" instead of "Sometimes"). The pseudo-element is a
+ * render-layer effect that screen readers never see, so the first word
+ * stays intact. If a future Fraunces tweak turns out to be impossible
+ * through ::first-letter (e.g. an axis the pseudo-element can't inherit),
+ * fall back to `<span aria-hidden="true">S</span>ometimes` with the full
+ * word still present in the flow — never a wrapping span that breaks the
+ * word in the DOM. See SQR-66 ticket, plan-eng-review 2026-04-08.
+ */
+.squire-answer p:first-of-type::first-letter {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-variation-settings:
+    'opsz' 144,
+    'SOFT' 30;
+  font-size: 72px;
+  line-height: 0.85;
+  color: var(--wax);
+  float: left;
+  padding: 6px 10px 0 0;
+}
+
+/*
+ * Rule-term highlighter — emphasized <em> inside an answer renders as
+ * small-caps semibold with a translucent amber stripe at 0.60 alpha,
+ * 75% coverage. The stripe is a background-image gradient rather than a
+ * real ::before box so two highlighted terms on the same line don't
+ * push line-height; `white-space: nowrap` keeps a single term from
+ * wrapping mid-phrase. DESIGN.md §Signature Components "Rule-term
+ * highlighter" is authoritative — don't change alpha/coverage without
+ * updating that doc.
+ */
+.squire-answer em {
+  font-style: normal;
+  font-weight: 600;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+  color: var(--parchment);
+  background-image: linear-gradient(
+    to top,
+    rgba(212, 161, 71, 0.6) 0,
+    rgba(212, 161, 71, 0.6) 75%,
+    transparent 75%,
+    transparent 100%
+  );
+  padding: 0 2px;
+  white-space: nowrap;
+}
+
+/* Citation link — sepia underline, wax hover. The mobile tap-toggle
+   (plan-design-review Decision #4) adds `.is-active` on touch so the
+   highlight sticks until the user taps elsewhere. The ~5-line JS that
+   toggles the class lives inline on the page (below). Visually distinct
+   from the amber rule-term highlighter so a reader can tell sources
+   from rule terms at a glance. */
+.squire-answer .cite {
+  color: var(--sepia);
+  text-decoration: underline;
+  text-decoration-color: var(--sepia-dim);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition:
+    color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    text-decoration-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.squire-answer .cite:hover,
+.squire-answer .cite.is-active {
+  color: var(--wax);
+  text-decoration-color: var(--wax);
+}
+
+/* Global focus-visible ring — DESIGN.md a11y bundle. Every interactive
+   element gets a 2px --wax outline with 2px offset. Do not override with
+   `outline: none` without a replacement; the whole point is that keyboard
+   users can always see where focus is. */
+:focus-visible {
+  outline: 2px solid var(--wax);
+  outline-offset: 2px;
+}
+
 /* Reduced-motion: no transitions on the layout shell. (DESIGN.md a11y
-   bundle — SQR-65 ships the structural piece; SQR-5c may add motion that
-   needs to be gated by this query.) */
+   bundle — SQR-65 ships the structural piece; SQR-66 extends it to the
+   cite hover transition and any future streaming-indicator / submit-slide
+   animation that SQR-8 / SQR-65 gate under this query.) */
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
