@@ -204,6 +204,13 @@ export async function searchExtractedRanked(
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
 
+  // `ts_rank`'s weight vector maps to {D, C, B, A} — this gives a direct
+  // name-field match (weight 'A') ~10x the score of a cross-reference
+  // array hit (weight 'D'). Without this, a scenario that lists "Algox
+  // Archer" in its monsters array outranks the actual monster-stats row
+  // for Algox Archer. The weight labels themselves are assigned in the
+  // generated-column expressions in `src/db/migrations/0002_card_fts.sql`.
+  const weightVec = sql`'{0.1, 0.2, 0.4, 1.0}'::float4[]`;
   const branches = TYPES.map((type) => {
     const table = TYPE_TO_TABLE[type];
     const payload = tableToJsonbObject(table);
@@ -211,7 +218,7 @@ export async function searchExtractedRanked(
       SELECT
         ${sql.raw(`'${type}'`)} AS card_type,
         ${payload} AS payload,
-        ts_rank(search_vector, websearch_to_tsquery('english', ${query})) AS score
+        ts_rank(${weightVec}, search_vector, websearch_to_tsquery('english', ${query})) AS score
       FROM ${table}
       WHERE game = ${game} AND search_vector @@ websearch_to_tsquery('english', ${query})
     `;

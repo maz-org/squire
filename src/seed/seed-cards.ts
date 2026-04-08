@@ -108,14 +108,22 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
       rows.push({ ...(parsed.data as Record<string, unknown>), game });
     }
 
-    // Build the conflict-update set from all non-key columns. Drizzle's
-    // `excluded.<col>` reference uses the schema column name, not the SQL
-    // column name, which is exactly what `getTableColumns` returns.
+    // Build the conflict-update set from all non-key, non-generated columns.
+    // Drizzle's `excluded.<col>` reference uses the schema column name, not
+    // the SQL column name, which is exactly what `getTableColumns` returns.
+    //
+    // Generated columns (e.g. `searchVector` from SQR-56's FTS migration)
+    // MUST be excluded — Postgres rejects any INSERT/UPDATE that names a
+    // `GENERATED ALWAYS` column in the target list, even if the value is
+    // `DEFAULT` or `excluded`. Drizzle exposes the generated-column marker
+    // via the column's `generated` field.
     const allCols = getTableColumns(table);
     const updateSet: Record<string, unknown> = {};
     for (const colName of Object.keys(allCols)) {
       if (colName === 'id' || colName === 'game' || colName === 'sourceId') continue;
-      updateSet[colName] = sql.raw(`excluded."${allCols[colName].name}"`);
+      const col = allCols[colName] as AnyPgColumn & { generated?: unknown };
+      if (col.generated) continue;
+      updateSet[colName] = sql.raw(`excluded."${col.name}"`);
     }
 
     // Prune any rows for this game that no longer appear in the latest

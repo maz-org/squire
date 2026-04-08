@@ -8,6 +8,23 @@
 -- See docs/plans/sqr-34-execution.md §Session B step 2 for the per-table
 -- field list rationale.
 --
+-- ## Field weights (ts_rank label → meaning)
+--
+-- Fields are weighted so a user searching "algox archer" gets the monster
+-- stats row first, not a scenario that happens to list Algox Archer in its
+-- `monsters` array. Postgres FTS uses four weight labels:
+--
+--   A — the canonical name of the thing itself (name, card_name)
+--   B — secondary identifiers / categories (class, slot, event_type, ...)
+--   C — prose description (effect, notes, flavor_text, condition, ...)
+--   D — cross-reference arrays (immunities, monsters, allies, perks, ...)
+--
+-- `searchExtractedRanked` in src/extracted-data.ts passes
+-- `'{0.1, 0.2, 0.4, 1.0}'::float4[]` to `ts_rank`, which maps to
+-- `{D, C, B, A}`. A direct name match is ~10x a cross-reference array hit.
+--
+-- ## IMMUTABLE wrapper functions
+--
 -- Two IMMUTABLE wrapper functions are required because Postgres marks
 -- `to_tsvector(regconfig, text)` and `array_to_string(anyarray, text, text)`
 -- as STABLE (both do catalog / element-type lookups), and stored generated
@@ -16,6 +33,8 @@
 -- and we always call `array_to_string` with `text[]`. Query-time FTS in
 -- `src/extracted-data.ts` still calls `websearch_to_tsquery('english', ...)`
 -- directly — these wrappers exist only for the generated columns.
+-- `setweight(tsvector, char)` is already IMMUTABLE in core Postgres, so it
+-- goes directly in the expression.
 --
 -- DANGER — DO NOT change the 'english' text-search config without
 -- rebuilding every `card_*.search_vector` column. The stored tsvectors
@@ -46,12 +65,10 @@ CREATE OR REPLACE FUNCTION squire_arr_join(text[]) RETURNS text
 
 ALTER TABLE card_monster_stats
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(name, '') || ' ' ||
-      coalesce(level_range, '') || ' ' ||
-      squire_arr_join(immunities) || ' ' ||
-      coalesce(notes, '')
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(level_range, '')), 'B') ||
+    setweight(squire_english_tsv(squire_arr_join(immunities)), 'D') ||
+    setweight(squire_english_tsv(coalesce(notes, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_monster_stats_search_idx ON card_monster_stats USING gin(search_vector);
@@ -59,11 +76,9 @@ CREATE INDEX card_monster_stats_search_idx ON card_monster_stats USING gin(searc
 
 ALTER TABLE card_monster_abilities
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(monster_type, '') || ' ' ||
-      coalesce(card_name, '') || ' ' ||
-      squire_arr_join(abilities)
-    )
+    setweight(squire_english_tsv(coalesce(card_name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(monster_type, '')), 'B') ||
+    setweight(squire_english_tsv(squire_arr_join(abilities)), 'D')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_monster_abilities_search_idx ON card_monster_abilities USING gin(search_vector);
@@ -71,11 +86,9 @@ CREATE INDEX card_monster_abilities_search_idx ON card_monster_abilities USING g
 
 ALTER TABLE card_character_abilities
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(card_name, '') || ' ' ||
-      coalesce(character_class, '') || ' ' ||
-      coalesce(level, '')
-    )
+    setweight(squire_english_tsv(coalesce(card_name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(character_class, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(level, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_character_abilities_search_idx ON card_character_abilities USING gin(search_vector);
@@ -83,13 +96,11 @@ CREATE INDEX card_character_abilities_search_idx ON card_character_abilities USI
 
 ALTER TABLE card_character_mats
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(name, '') || ' ' ||
-      coalesce(character_class, '') || ' ' ||
-      squire_arr_join(traits) || ' ' ||
-      squire_arr_join(perks) || ' ' ||
-      squire_arr_join(masteries)
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(character_class, '')), 'B') ||
+    setweight(squire_english_tsv(squire_arr_join(traits)), 'C') ||
+    setweight(squire_english_tsv(squire_arr_join(perks)), 'D') ||
+    setweight(squire_english_tsv(squire_arr_join(masteries)), 'D')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_character_mats_search_idx ON card_character_mats USING gin(search_vector);
@@ -97,12 +108,10 @@ CREATE INDEX card_character_mats_search_idx ON card_character_mats USING gin(sea
 
 ALTER TABLE card_items
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(number, '') || ' ' ||
-      coalesce(name, '') || ' ' ||
-      coalesce(slot, '') || ' ' ||
-      coalesce(effect, '')
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(slot, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(number, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(effect, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_items_search_idx ON card_items USING gin(search_vector);
@@ -110,12 +119,10 @@ CREATE INDEX card_items_search_idx ON card_items USING gin(search_vector);
 
 ALTER TABLE card_events
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(event_type, '') || ' ' ||
-      coalesce(season, '') || ' ' ||
-      coalesce(number, '') || ' ' ||
-      coalesce(flavor_text, '')
-    )
+    setweight(squire_english_tsv(coalesce(flavor_text, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(event_type, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(season, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(number, '')), 'B')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_events_search_idx ON card_events USING gin(search_vector);
@@ -123,10 +130,8 @@ CREATE INDEX card_events_search_idx ON card_events USING gin(search_vector);
 
 ALTER TABLE card_battle_goals
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(name, '') || ' ' ||
-      coalesce(condition, '')
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(condition, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_battle_goals_search_idx ON card_battle_goals USING gin(search_vector);
@@ -134,12 +139,10 @@ CREATE INDEX card_battle_goals_search_idx ON card_battle_goals USING gin(search_
 
 ALTER TABLE card_buildings
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(building_number, '') || ' ' ||
-      coalesce(name, '') || ' ' ||
-      coalesce(effect, '') || ' ' ||
-      coalesce(notes, '')
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(building_number, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(effect, '')), 'C') ||
+    setweight(squire_english_tsv(coalesce(notes, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_buildings_search_idx ON card_buildings USING gin(search_vector);
@@ -147,15 +150,13 @@ CREATE INDEX card_buildings_search_idx ON card_buildings USING gin(search_vector
 
 ALTER TABLE card_scenarios
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(scenario_group, '') || ' ' ||
-      coalesce(index, '') || ' ' ||
-      coalesce(name, '') || ' ' ||
-      squire_arr_join(monsters) || ' ' ||
-      squire_arr_join(allies) || ' ' ||
-      squire_arr_join(unlocks) || ' ' ||
-      coalesce(rewards, '')
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(scenario_group, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(index, '')), 'B') ||
+    setweight(squire_english_tsv(squire_arr_join(monsters)), 'D') ||
+    setweight(squire_english_tsv(squire_arr_join(allies)), 'D') ||
+    setweight(squire_english_tsv(squire_arr_join(unlocks)), 'D') ||
+    setweight(squire_english_tsv(coalesce(rewards, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_scenarios_search_idx ON card_scenarios USING gin(search_vector);
@@ -163,11 +164,9 @@ CREATE INDEX card_scenarios_search_idx ON card_scenarios USING gin(search_vector
 
 ALTER TABLE card_personal_quests
   ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (
-    squire_english_tsv(
-      coalesce(card_id, '') || ' ' ||
-      coalesce(name, '') || ' ' ||
-      coalesce(open_envelope, '')
-    )
+    setweight(squire_english_tsv(coalesce(name, '')), 'A') ||
+    setweight(squire_english_tsv(coalesce(card_id, '')), 'B') ||
+    setweight(squire_english_tsv(coalesce(open_envelope, '')), 'C')
   ) STORED;
 --> statement-breakpoint
 CREATE INDEX card_personal_quests_search_idx ON card_personal_quests USING gin(search_vector);
