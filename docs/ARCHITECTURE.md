@@ -526,6 +526,10 @@ src/
   service.ts                    Service initialization, readiness, graduated /api/ask path
   tools.ts                      Atomic tools: searchRules, searchCards, listCardTypes, listCards, getCard
   vector-store.ts               pgvector cosine similarity search
+  web-ui/
+    layout.ts                   Companion-first layout shell (5 mobile regions + desktop rail)
+    fonts.ts                    Google Fonts URL + preconnect constants
+    styles.css                  Tailwind CLI entry — design tokens + layout shell CSS
   types/                        Shared TypeScript types
   import-battle-goals.ts        GHS importer
   import-buildings.ts           GHS importer
