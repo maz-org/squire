@@ -200,6 +200,8 @@ function loginRedirectWithError(message: string): string {
 }
 
 app.get('/login', optionalSession(), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
   if (c.get('session')) return c.redirect('/');
   return c.html(await renderLoginPage({ errorMessage: c.req.query('error') }));
 });

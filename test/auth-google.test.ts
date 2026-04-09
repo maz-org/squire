@@ -230,6 +230,18 @@ describe('Authenticated web UI', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('vary')).toContain('Cookie');
   });
+
+  it('3b. GET /login redirects authenticated users with cookie-varying no-store headers', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const res = await withSession('http://localhost:3000/login', cookie, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
+  });
 });
 
 describe('Logout', () => {

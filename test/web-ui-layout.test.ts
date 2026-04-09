@@ -108,6 +108,8 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     const res = await app.request('/login');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
   });
