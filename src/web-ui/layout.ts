@@ -41,6 +41,14 @@ export interface LayoutShellOptions {
    * is a reusable primitive."
    */
   errorBanner?: { message: string };
+  /**
+   * When true, render the brand chrome (header, monogram, fonts, colors)
+   * but suppress the interaction chrome (toolcall footer, recent-questions
+   * chips, input dock). Used for logged-out pages: auth errors, login
+   * page, "not invited" page. The user isn't in a session, so showing
+   * "Ask the Squire..." and recent questions is misleading.
+   */
+  loggedOut?: boolean;
 }
 
 /**
@@ -146,33 +154,37 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
             <main class="squire-surface" aria-live="polite" aria-atomic="false">
               ${surfaceContent}
             </main>
-            <footer class="squire-toolcall" aria-live="off">
-              CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
-            </footer>
-            <nav class="squire-recent" aria-label="Recent questions">
-              <span class="squire-chip">Looting</span>
-              <span class="squire-chip">Element infusion</span>
-              <span class="squire-chip">Negative scenario effects</span>
-            </nav>
-            <!--
-          SQR-65 ships the structural form only. The action target points
-          at /api/ask, which is the eventual endpoint, but the API requires
-          Bearer auth and a JSON body — a raw HTML form POST will 401
-          today. SQR-6 wires real submission (HTMX + SSE streaming + the
-          recent-questions chip row), at which point this form gets
-          hx-post, hx-swap, and friends layered on. Do not try to make
-          the form work before SQR-6 lands — it is a layout slot.
-        -->
-            <form class="squire-input-dock" method="post" action="/api/ask">
-              <input
-                id="squire-input"
-                name="question"
-                type="text"
-                autocomplete="off"
-                placeholder="Ask the Squire…"
-              />
-              <button type="submit" class="squire-input-dock__submit" aria-label="Ask">→</button>
-            </form>
+            ${options.loggedOut
+              ? html``
+              : html`<footer class="squire-toolcall" aria-live="off">
+                    CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
+                  </footer>
+                  <nav class="squire-recent" aria-label="Recent questions">
+                    <span class="squire-chip">Looting</span>
+                    <span class="squire-chip">Element infusion</span>
+                    <span class="squire-chip">Negative scenario effects</span>
+                  </nav>
+                  <!--
+                SQR-65 ships the structural form only. The action target points
+                at /api/ask, which is the eventual endpoint, but the API requires
+                Bearer auth and a JSON body — a raw HTML form POST will 401
+                today. SQR-6 wires real submission (HTMX + SSE streaming + the
+                recent-questions chip row), at which point this form gets
+                hx-post, hx-swap, and friends layered on. Do not try to make
+                the form work before SQR-6 lands — it is a layout slot.
+              -->
+                  <form class="squire-input-dock" method="post" action="/api/ask">
+                    <input
+                      id="squire-input"
+                      name="question"
+                      type="text"
+                      autocomplete="off"
+                      placeholder="Ask the Squire…"
+                    />
+                    <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
+                      →
+                    </button>
+                  </form>`}
           </div>
         </div>
         <!--

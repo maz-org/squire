@@ -91,5 +91,5 @@ export async function renderAuthErrorPage(
     </nav>
   `;
 
-  return await layoutShell({ mainContent: content as HtmlEscapedString });
+  return await layoutShell({ mainContent: content as HtmlEscapedString, loggedOut: true });
 }
