@@ -9,7 +9,11 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 
-import { resolveDatabaseUrl } from '../src/db.ts';
+import {
+  getDatabaseNameFromUrl,
+  isManagedLocalDatabaseUrl,
+  resolveDatabaseUrl,
+} from '../src/db.ts';
 
 const { Pool } = pg;
 
@@ -22,13 +26,34 @@ async function main(): Promise<void> {
   // with the rest of the app's URL resolution — no more explicit
   // `DATABASE_URL=...` incantations for the test database.
   const url = resolveDatabaseUrl();
+  await ensureManagedLocalDatabaseExists(url);
   const pool = new Pool({ connectionString: url, max: 1 });
   try {
     const db = drizzle(pool);
+    await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
     await migrate(db, { migrationsFolder: './src/db/migrations' });
     console.log(`✓ migrations applied to ${redact(url)}`);
   } finally {
     await pool.end();
+  }
+}
+
+async function ensureManagedLocalDatabaseExists(url: string): Promise<void> {
+  if (!isManagedLocalDatabaseUrl(url)) return;
+
+  const dbName = getDatabaseNameFromUrl(url);
+  const adminUrl = new URL(url);
+  adminUrl.pathname = '/postgres';
+
+  const admin = new Pool({ connectionString: adminUrl.toString(), max: 1 });
+  try {
+    const result = await admin.query('SELECT 1 FROM pg_database WHERE datname = $1', [dbName]);
+    if (result.rowCount === 0) {
+      await admin.query(`CREATE DATABASE "${dbName}"`);
+      console.log(`✓ created managed local database "${dbName}"`);
+    }
+  } finally {
+    await admin.end();
   }
 }
 

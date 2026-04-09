@@ -7,6 +7,7 @@
  * guidelines, unit tests mock every external service.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import path from 'node:path';
 
 const { mockPoolCtor, mockEnd } = vi.hoisted(() => {
   const mockEnd = vi.fn().mockResolvedValue(undefined);
@@ -26,6 +27,9 @@ import {
   DEFAULT_DATABASE_URL,
   DEFAULT_TEST_DATABASE_URL,
   getDb,
+  getManagedDatabaseNames,
+  getWorktreeRuntime,
+  resolveDatabaseUrl,
   shutdownServerPool,
 } from '../src/db.ts';
 
@@ -39,9 +43,31 @@ describe('getDb', () => {
     await shutdownServerPool();
   });
 
-  it('exposes a default DATABASE_URL pointing at the local docker-compose Postgres', () => {
-    expect(DEFAULT_DATABASE_URL).toBe('postgres://squire:squire@localhost:5432/squire');
-    expect(DEFAULT_TEST_DATABASE_URL).toBe('postgres://squire:squire@localhost:5432/squire_test');
+  it('exposes checkout-local default DATABASE_URL values for the current checkout', () => {
+    const managed = getManagedDatabaseNames();
+
+    expect(DEFAULT_DATABASE_URL).toBe(
+      `postgres://squire:squire@localhost:5432/${managed.devDatabaseName}`,
+    );
+    expect(DEFAULT_TEST_DATABASE_URL).toBe(
+      `postgres://squire:squire@localhost:5432/${managed.testDatabaseName}`,
+    );
+  });
+
+  it('resolves the test database automatically under VITEST', () => {
+    expect(resolveDatabaseUrl()).toBe(DEFAULT_TEST_DATABASE_URL);
+  });
+
+  it('describes the current checkout runtime shape', () => {
+    const runtime = getWorktreeRuntime();
+    const managed = getManagedDatabaseNames();
+
+    expect(path.isAbsolute(runtime.checkoutRoot)).toBe(true);
+    expect(path.basename(runtime.checkoutRoot).length).toBeGreaterThan(0);
+    expect(runtime.checkoutSlug).toMatch(/^[0-9a-f]{8}$/);
+    expect(runtime.defaultPort).toBeGreaterThan(0);
+    expect(runtime.devDatabaseName).toBe(managed.devDatabaseName);
+    expect(runtime.testDatabaseName).toBe(managed.testDatabaseName);
   });
 
   it('returns a Drizzle client and a close() function in cli mode', async () => {
