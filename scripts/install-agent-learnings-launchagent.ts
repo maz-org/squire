@@ -6,6 +6,10 @@ import { execFileSync } from 'node:child_process';
 const LABEL = 'org.maz.squire.agent-learnings';
 
 export function buildLaunchAgentPlist(repoRoot: string): string {
+  const escapedHomeDir = homedir()
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
   const escapedRepoRoot = repoRoot
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -43,9 +47,9 @@ export function buildLaunchAgentPlist(repoRoot: string): string {
     <key>StartInterval</key>
     <integer>604800</integer>
     <key>StandardOutPath</key>
-    <string>${homedir()}/.gstack/analytics/squire-agent-learnings.log</string>
+    <string>${escapedHomeDir}/.gstack/analytics/squire-agent-learnings.log</string>
     <key>StandardErrorPath</key>
-    <string>${homedir()}/.gstack/analytics/squire-agent-learnings.log</string>
+    <string>${escapedHomeDir}/.gstack/analytics/squire-agent-learnings.log</string>
   </dict>
 </plist>
 `;
