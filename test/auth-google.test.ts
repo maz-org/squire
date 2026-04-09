@@ -1,7 +1,7 @@
 /**
  * Google OAuth web login + Postgres session tests (SQR-38).
  *
- * 16 test cases covering all code paths from the eng review and follow-up PR review:
+ * 18 test cases covering all code paths from the eng review and follow-up PR review:
  *
  * Happy paths:
  *   1. Full callback: valid code -> user upserted -> session -> cookie -> redirect /
@@ -527,12 +527,74 @@ describe('PKCE cookie cleanup', () => {
     // (the 5-min cookie expires on its own, but explicit delete is cleaner)
     expect(pkceCookieDelete).toBeDefined();
   });
+
+  it('14. PKCE cookie is deleted when Google returns an error before code exchange', async () => {
+    const startRes = await app.request('http://localhost:3000/auth/google/start', {
+      redirect: 'manual',
+    });
+    const pkceCookie = startRes.headers
+      .getSetCookie()
+      .find((header) => header.includes('squire_oauth_pkce='))!
+      .split(';')[0];
+
+    const callbackRes = await app.request(
+      'http://localhost:3000/auth/google/callback?error=access_denied',
+      {
+        redirect: 'manual',
+        headers: { Cookie: pkceCookie },
+      },
+    );
+
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get('location')).toBe(
+      '/login?error=Google+sign-in+was+cancelled+or+failed.',
+    );
+
+    const setCookies = callbackRes.headers.getSetCookie();
+    const pkceCookieDelete = setCookies.find(
+      (header) =>
+        header.includes('squire_oauth_pkce') &&
+        (header.includes('Max-Age=0') || header.includes('max-age=0')),
+    );
+    expect(pkceCookieDelete).toBeDefined();
+  });
+
+  it('15. PKCE cookie is deleted when callback is missing code or state', async () => {
+    const startRes = await app.request('http://localhost:3000/auth/google/start', {
+      redirect: 'manual',
+    });
+    const pkceCookie = startRes.headers
+      .getSetCookie()
+      .find((header) => header.includes('squire_oauth_pkce='))!
+      .split(';')[0];
+
+    const callbackRes = await app.request(
+      'http://localhost:3000/auth/google/callback?state=only-state',
+      {
+        redirect: 'manual',
+        headers: { Cookie: pkceCookie },
+      },
+    );
+
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get('location')).toBe(
+      '/login?error=Missing+code+or+state+parameter.',
+    );
+
+    const setCookies = callbackRes.headers.getSetCookie();
+    const pkceCookieDelete = setCookies.find(
+      (header) =>
+        header.includes('squire_oauth_pkce') &&
+        (header.includes('Max-Age=0') || header.includes('max-age=0')),
+    );
+    expect(pkceCookieDelete).toBeDefined();
+  });
 });
 
 // ─── Audit event verification ───────────────────────────────────────────────
 
 describe('Audit events', () => {
-  it('15. successful login writes google_login audit event', async () => {
+  it('16. successful login writes google_login audit event', async () => {
     mockGoogleSuccess();
     await walkOAuthFlow();
 
@@ -550,7 +612,7 @@ describe('Audit events', () => {
 // ─── Email/sub conflict (SQR-38 review) ─────────────────────────────────────
 
 describe('Email/sub conflict', () => {
-  it('16. returns opaque 403 when email exists under a different google_sub', async () => {
+  it('17. returns opaque 403 when email exists under a different google_sub', async () => {
     // Seed a user with the test email but a different google_sub
     const { db } = getDb('server');
     const { users } = await import('../src/db/schema/core.ts');

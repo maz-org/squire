@@ -375,12 +375,14 @@ app.get('/auth/google/callback', async (c) => {
   // Check for error from Google (e.g., user clicked Cancel)
   const error = c.req.query('error');
   if (error) {
+    deleteCookie(c, PKCE_COOKIE_NAME, { path: '/' });
     return c.redirect(loginRedirectWithError('Google sign-in was cancelled or failed.'), 302);
   }
 
   const code = c.req.query('code');
   const state = c.req.query('state');
   if (!code || !state) {
+    deleteCookie(c, PKCE_COOKIE_NAME, { path: '/' });
     return c.redirect(loginRedirectWithError('Missing code or state parameter.'), 302);
   }
 
