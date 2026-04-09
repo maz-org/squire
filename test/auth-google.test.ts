@@ -1,7 +1,7 @@
 /**
  * Google OAuth web login + Postgres session tests (SQR-38).
  *
- * 12 test cases covering all code paths from the eng review:
+ * 16 test cases covering all code paths from the eng review and follow-up PR review:
  *
  * Happy paths:
  *   1. Full callback: valid code -> user upserted -> session -> cookie -> redirect /
@@ -10,13 +10,13 @@
  *   4. Logout destroys session, clears cookie, redirects /login
  *
  * Sad paths:
- *   5. Email not in allowlist -> 403 not-invited page, no user, no session
+ *   5. Email not in allowlist -> redirect /not-invited, no user, no session
  *   6. Invalid state -> redirect /login?error=...
  *   7. Google token verification failure -> redirect /login?error=...
  *   8. Google code exchange failure -> redirect /login?error=...
  *   9. Missing cookie on /auth/me -> 401
  *   10. Missing cookie on / and /chat -> redirect /login
- *   11. Expired session -> 401, session row deleted
+ *   11. Expired session -> JSON 401 on /auth/me, browser redirect on page routes
  *
  * Edge cases:
  *   10. Session cookie attributes (HttpOnly, SameSite=Strict, path)
@@ -294,18 +294,28 @@ describe('CSRF protection', () => {
     const { db } = getDb('server');
     expect(await db.select().from(sessions)).toHaveLength(1);
   });
+
+  it('14. POST /auth/logout with a stale or missing cookie redirects to /login', async () => {
+    const logoutRes = await app.request('http://localhost:3000/auth/logout', {
+      method: 'POST',
+      redirect: 'manual',
+    });
+
+    expect(logoutRes.status).toBe(302);
+    expect(logoutRes.headers.get('location')).toBe('/login');
+  });
 });
 
 // ─── Sad paths ──────────────────────────────────────────────────────────────
 
 describe('Callback rejection', () => {
-  it('5. email not in allowlist -> 403 not-invited page, no user or session created', async () => {
+  it('5. email not in allowlist -> redirect /not-invited, no user or session created', async () => {
     process.env.SQUIRE_ALLOWED_EMAILS = 'other@example.com';
     mockGoogleSuccess();
 
     const res = await walkOAuthFlow();
-    expect(res.status).toBe(403);
-    expect(await res.text()).toContain('NOT YET INVITED');
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/not-invited');
 
     const { db } = getDb('server');
     expect(await db.select().from(users)).toHaveLength(0);
@@ -353,7 +363,7 @@ describe('Session middleware rejection', () => {
     expect(chatRes.headers.get('location')).toBe('/login');
   });
 
-  it('11. expired session -> 401, session row deleted', async () => {
+  it('11. expired session -> JSON 401 on /auth/me, browser redirect on page routes', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -364,6 +374,10 @@ describe('Session middleware rejection', () => {
 
     const meRes = await withSession('http://localhost:3000/auth/me', cookie);
     expect(meRes.status).toBe(401);
+
+    const rootRes = await withSession('http://localhost:3000/', cookie, { redirect: 'manual' });
+    expect(rootRes.status).toBe(302);
+    expect(rootRes.headers.get('location')).toBe('/login');
 
     // Session row was cleaned up
     expect(await db.select().from(sessions)).toHaveLength(0);
@@ -455,7 +469,7 @@ describe('PKCE cookie cleanup', () => {
 // ─── Audit event verification ───────────────────────────────────────────────
 
 describe('Audit events', () => {
-  it('14. successful login writes google_login audit event', async () => {
+  it('15. successful login writes google_login audit event', async () => {
     mockGoogleSuccess();
     await walkOAuthFlow();
 
@@ -473,7 +487,7 @@ describe('Audit events', () => {
 // ─── Email/sub conflict (SQR-38 review) ─────────────────────────────────────
 
 describe('Email/sub conflict', () => {
-  it('15. returns opaque 403 when email exists under a different google_sub', async () => {
+  it('16. returns opaque 403 when email exists under a different google_sub', async () => {
     // Seed a user with the test email but a different google_sub
     const { db } = getDb('server');
     const { users } = await import('../src/db/schema/core.ts');

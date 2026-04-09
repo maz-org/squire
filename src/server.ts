@@ -142,7 +142,7 @@ app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
 // render) yields a fully formed HTML page with an inline error banner instead
 // of a bare 500 page. See DESIGN.md decisions log "`.squire-banner` is a
 // reusable primitive."
-app.get('/', optionalSession(), async (c) => {
+app.get('/', requirePageSession(), async (c) => {
   // `renderHomePage()` and `layoutShell()` both return
   // `Promise<HtmlEscapedString>` (tightened from a union in SQR-71
   // when layout.ts went async to await the asset URL helpers).
@@ -165,8 +165,7 @@ app.get('/', optionalSession(), async (c) => {
   // returns a constant string without I/O. See ADR 0011
   // fingerprinting addendum, "What this does not solve".
   try {
-    const session = c.get('session');
-    if (!session) return c.redirect('/login');
+    const session = c.get('session')!;
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
     return c.html(await renderHomePage(session, createCsrfToken(session.id)));
@@ -417,7 +416,7 @@ app.get('/auth/google/callback', async (c) => {
   } catch (err) {
     if (err instanceof GoogleAuthError) {
       if (err.code === 'not_allowed') {
-        return c.html(await renderNotInvitedPage(), 403 as const);
+        return c.redirect('/not-invited', 302);
       }
       return c.redirect(loginRedirectWithError(err.message), 302);
     }
@@ -427,7 +426,7 @@ app.get('/auth/google/callback', async (c) => {
   }
 });
 
-app.post('/auth/logout', requireSession(), requireCsrf(), async (c) => {
+app.post('/auth/logout', requirePageSession(), requireCsrf(), async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   const session = c.get('session')!;
