@@ -372,6 +372,10 @@ app.get('/auth/google/callback', async (c) => {
     }
   }
 
+  // Clean up PKCE cookie on all paths (success and error). It served its
+  // purpose once the callback is reached; leaving it around is untidy.
+  deleteCookie(c, PKCE_COOKIE_NAME, { path: '/' });
+
   try {
     const result = await handleGoogleCallback(
       code,
@@ -382,8 +386,6 @@ app.get('/auth/google/callback', async (c) => {
       c.req.header('user-agent'),
     );
 
-    // Clean up PKCE cookie (served its purpose) and set session cookie
-    deleteCookie(c, PKCE_COOKIE_NAME, { path: '/' });
     await setSessionCookie(c, result.sessionId);
     return c.redirect('/');
   } catch (err) {

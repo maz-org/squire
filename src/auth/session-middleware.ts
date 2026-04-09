@@ -50,7 +50,10 @@ export function optionalSession() {
     try {
       const secret = getSessionSecret();
       const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
-      if (sessionId) {
+      if (sessionId === false) {
+        // Tampered cookie: clear it so the browser stops replaying it
+        deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+      } else if (sessionId) {
         const session = await SessionRepository.findById(sessionId);
         if (session) {
           c.set('session', session);
@@ -77,7 +80,13 @@ export function requireSession() {
     const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
 
     if (!sessionId) {
-      console.debug('[session] no signed cookie found on %s', c.req.path);
+      // getSignedCookie returns false on signature mismatch (tampered cookie),
+      // undefined on missing cookie. Clear tampered cookies so the browser
+      // stops replaying them on every request.
+      if (sessionId === false) {
+        deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+      }
+      console.debug('[session] no valid cookie on %s', c.req.path);
       return c.json({ error: 'Authentication required', status: 401 }, 401);
     }
 

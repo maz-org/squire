@@ -45,11 +45,12 @@ vi.mock('../src/tools.ts', () => ({
   getCard: vi.fn(),
 }));
 
-// Mock google-auth-library at the library boundary. This tests our wrapper
-// functions (exchangeGoogleCode, verifyGoogleIdToken) together with the
-// callback handler, only faking the external HTTP calls to Google.
-const mockVerifyIdToken = vi.fn();
-const mockGetToken = vi.fn();
+// Mock google-auth-library at the library boundary. vi.hoisted() ensures
+// these exist before vi.mock()'s hoisted factory captures them (avoids TDZ).
+const { mockVerifyIdToken, mockGetToken } = vi.hoisted(() => ({
+  mockVerifyIdToken: vi.fn(),
+  mockGetToken: vi.fn(),
+}));
 vi.mock('google-auth-library', () => ({
   OAuth2Client: class MockOAuth2Client {
     verifyIdToken = mockVerifyIdToken;

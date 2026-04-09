@@ -1,5 +1,11 @@
 # Re-Review: SQR-38 Post-Design-Fix Architecture + Tests
 
+> **SUPERSEDED.** This plan was written mid-implementation. The final architecture
+> uses `src/db/repositories/` (not `src/auth/session-store.ts`), passes `Session`
+> domain objects on context (not `userId`), and the layout receives `Session`
+> (not `Context`). See `docs/plans/sqr-38-eng-review.md` for the original plan
+> and the code itself for the final state.
+
 ## Context
 
 SQR-38 shipped the core auth implementation (Google OAuth + Postgres sessions), then a
