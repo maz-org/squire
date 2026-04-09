@@ -48,7 +48,7 @@ The bundled `/api/ask` path doesn't disappear — it becomes an **optimized conv
 
 ### Generalization principle
 
-Per-feature operations are *invocations*, not new tools. "Show me all level-4 character abilities for Drifter" is `listCards('character-abilities', { class: 'drifter', level: 4 })` — not a dedicated `queryCards()` tool. The same handful of tools handle every GHS card type via parameter, instead of one tool per feature. This keeps the tool surface tiny and the agent's decision space simple.
+Per-feature operations are _invocations_, not new tools. "Show me all level-4 character abilities for Drifter" is `listCards('character-abilities', { class: 'drifter', level: 4 })` — not a dedicated `queryCards()` tool. The same handful of tools handle every GHS card type via parameter, instead of one tool per feature. This keeps the tool surface tiny and the agent's decision space simple.
 
 ### Two-agent split: conversation agent + knowledge agent
 
@@ -59,7 +59,7 @@ Squire's web channel separates **conversation** from **knowledge**:
 
 The conversation agent does **not** call atomic tools directly. It delegates all domain reasoning to the knowledge agent via in-process function calls (or `/api/ask` HTTP calls when used for testing or by other channels). This keeps the conversation agent focused on session and UX concerns, and lets the knowledge agent's retrieval strategy evolve independently of the UI.
 
-**Note on transports:** an earlier design considered using **internal MCP** as the transport between the conversation and knowledge agents. That was dropped because internal callers would have needed to bypass auth, which was undesirable. The two-agent *split* remains; only the internal MCP *transport* was rejected. The split uses direct in-process function calls today.
+**Note on transports:** an earlier design considered using **internal MCP** as the transport between the conversation and knowledge agents. That was dropped because internal callers would have needed to bypass auth, which was undesirable. The two-agent _split_ remains; only the internal MCP _transport_ was rejected. The split uses direct in-process function calls today.
 
 This pays off as channels multiply (Phase 8). A future Discord bot or iMessage client can call the same knowledge agent with the same reasoning, instead of each channel reimplementing the agent loop. The knowledge agent becomes the durable core; conversation agents are channel-specific skins.
 
@@ -83,11 +83,11 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 - **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS compiled in-process via `@tailwindcss/node`
 - **Build pipeline:** no JavaScript bundler and no client-side build step. `GET /app.css` compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node` on first request and caches the result in a module-level variable; dev keys the cache on source-file mtime so edits show up on the next request, prod compiles exactly once per process. Prod serves the compiled CSS at a content-hashed URL (`/app.<hash>.css`) with `Cache-Control: public, max-age=31536000, immutable` so Cloudflare and browsers can cache forever and invalidation is automatic on content change; dev serves the bare `/app.css` path with `Cache-Control: no-cache`. A parallel `/squire.js` handler serves vanilla-JS islands (currently the SQR-66 cite tap-toggle) with the same caching pattern. No `public/` build output, no `npm run build:css` — every fresh clone renders correctly without a build prerequisite.
 
-*Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs).*
+_Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs)._
 
-*Tailwind delivery decision: see [ADR 0011 — On-demand asset pipeline via in-process Tailwind JIT](adr/0011-on-demand-asset-pipeline.md) (supersedes [ADR 0008](adr/0008-tailwind-cli-for-production-css.md)).*
+_Tailwind delivery decision: see [ADR 0011 — On-demand asset pipeline via in-process Tailwind JIT](adr/0011-on-demand-asset-pipeline.md) (supersedes [ADR 0008](adr/0008-tailwind-cli-for-production-css.md))._
 
-*Chat surface layout decision: the web UI renders ONE turn at a time on `main.squire-surface` — current user question (Fraunces hero) + current answer (drop cap + citations + tool footer) — with prior turns collapsed into the recent-questions chip row. Not a scrolling message list. See [ADR 0010 — Current-turn ledger for multi-turn chat surface](adr/0010-current-turn-ledger.md) and the design system in [DESIGN.md](../DESIGN.md).*
+_Chat surface layout decision: the web UI renders ONE turn at a time on `main.squire-surface` — current user question (Fraunces hero) + current answer (drop cap + citations + tool footer) — with prior turns collapsed into the recent-questions chip row. Not a scrolling message list. See [ADR 0010 — Current-turn ledger for multi-turn chat surface](adr/0010-current-turn-ledger.md) and the design system in [DESIGN.md](../DESIGN.md)._
 
 ### Database
 
@@ -95,17 +95,17 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 - **Vector DB:** pgvector extension on the same Postgres instance
 - **ORM:** Drizzle, with `drizzle-kit` for migrations
 
-*Rationale for Drizzle: first-class pgvector support (Prisma's is preview-only and forces raw SQL fallbacks), TypeScript-native schema (no DSL, no codegen step — fits the no-build-step theme), lightweight runtime, generates readable SQL.*
+_Rationale for Drizzle: first-class pgvector support (Prisma's is preview-only and forces raw SQL fallbacks), TypeScript-native schema (no DSL, no codegen step — fits the no-build-step theme), lightweight runtime, generates readable SQL._
 
 ### Embeddings
 
 - **Current:** `@xenova/transformers` running in-process. Model `Xenova/all-MiniLM-L6-v2` (384 dimensions, mean-pooled, normalized). See `src/embedder.ts`.
 
-  *Rationale: chosen for simplicity getting started — no API key, no network roundtrip during indexing, no per-token cost.*
+  _Rationale: chosen for simplicity getting started — no API key, no network roundtrip during indexing, no per-token cost._
 
 - **Upgrade path:** if retrieval quality doesn't hold up at production scale, swap to **Voyage AI** (purpose-built for retrieval, strong benchmark performance, integrates cleanly with Anthropic-based stacks). The vector store (pgvector) is independent and doesn't change.
 
-*Note: embedding model and vector store are two independent choices that can evolve separately.*
+_Note: embedding model and vector store are two independent choices that can evolve separately._
 
 ### LLM
 
@@ -123,13 +123,15 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 ### Authentication
 
-- **Approach:** custom Hono middleware. Google OAuth as the only identity provider for the web channel (extends the existing OAuth 2.1 infrastructure already built for the MCP layer). Server-side sessions stored in Postgres. HttpOnly + Secure + SameSite=Strict cookies. CSRF tokens for mutating endpoints.
+Two isolated auth systems, one per channel:
 
-*Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing, reuses code that already exists for MCP. Single IdP for the web channel keeps the surface area tiny.*
+**Web channel: Google OAuth + Postgres sessions** (`src/auth/google.ts`, `src/auth/session-middleware.ts`). Squire acts as an OAuth **client**, redirecting users to Google for consent. The callback verifies the ID token via `google-auth-library`, checks a hard-coded email allowlist (Phase 1, ADR 0009), upserts the user, and creates a server-side session in the `sessions` table. Session cookie: HttpOnly, Secure (production only), SameSite=Strict, signed via `SESSION_SECRET`. 30-day expiry matching the long-lived token DX policy. PKCE state and code_verifier are stored in a short-lived signed cookie during the OAuth flow. CSRF protection for mutating endpoints lands in SQR-39.
 
-For Phase 1 the web channel additionally enforces a hard-coded email allowlist constant in the OAuth callback — see [ADR 0009 — Google OAuth + hard-coded allowlist](adr/0009-google-oauth-with-hardcoded-allowlist.md).
+**MCP/REST channel: OAuth 2.1 bearer tokens** (`src/auth/provider.ts`, `src/auth.ts`). Squire acts as an OAuth **server** via the `@modelcontextprotocol/sdk` auth handlers (auth code + PKCE for interactive, client credentials for machine-to-machine, dynamic client registration). MCP bearer tokens are long-lived per [ADR 0002](adr/0002-long-lived-oauth-bearer-tokens.md).
 
-External MCP / REST clients use OAuth 2.1 via the existing `@modelcontextprotocol/sdk` auth handlers (auth code + PKCE for interactive, client credentials for machine-to-machine, dynamic client registration supported). MCP bearer tokens are long-lived per [ADR 0002](adr/0002-long-lived-oauth-bearer-tokens.md); web sessions follow the same policy with a 30-day cookie.
+The two systems are deliberately isolated: different mechanisms (cookies vs bearer tokens), different threat models, different middleware (`requireSession()` vs `requireBearerAuth()`). Web routes (`/auth/*`, `/chat`) use session cookies. API/MCP routes (`/api/*`, `/mcp`) use bearer tokens. No crossover.
+
+_Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. Single IdP (Google) for the web channel keeps the surface area tiny. See [ADR 0009 — Google OAuth + hard-coded allowlist](adr/0009-google-oauth-with-hardcoded-allowlist.md)._
 
 ### Edge layer
 
@@ -144,9 +146,56 @@ See [Observability](#observability) below.
 
 ---
 
+## Application Layering
+
+Squire's server code is organized in four layers. Dependencies flow down only: a route handler can call middleware and repositories, but a repository never renders HTML and a view never queries the database.
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│  Routes (src/server.ts)                                 │
+│  Hono handlers: parse request, call middleware,         │
+│  pass Session to views, return HTML or JSON             │
+├─────────────────────────────────────────────────────────┤
+│  Middleware (src/auth/session-middleware.ts)             │
+│  Reads signed cookie, calls SessionRepository,          │
+│  stores Session (with user) on Hono context             │
+├─────────────────────────────────────────────────────────┤
+│  Repositories (src/db/repositories/)                    │
+│  Domain types in, domain types out.                     │
+│  Row types and toDomain() mapping stay internal.        │
+│  Accepts DbOrTx for transaction nesting.                │
+├─────────────────────────────────────────────────────────┤
+│  Drizzle ORM + Postgres                                 │
+│  Schema in src/db/schema/, migrations in src/db/        │
+│  Relations enable relational queries (JOINs)            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Repository pattern
+
+Repositories own the persistence boundary. The rest of the app works with domain types, never raw Drizzle rows.
+
+- **Domain types** (`Session`, `User`, `CreateSessionInput`, `CreateUserInput`) live in `src/db/repositories/types.ts`. This is the public contract. If a column is added to the schema, the domain type and the repository mapping are updated together in the same module. No caller changes unless the domain type changes.
+- **Row types** (`typeof sessions.$inferSelect`, `typeof users.$inferSelect`) and `toDomain()` mapping functions are internal to each repository file. Never exported. The Drizzle schema shape does not leak past the repository.
+- **Transaction support:** repository methods accept `DbOrTx` as the first parameter, so callers can nest operations inside existing transactions (e.g., `handleGoogleCallback` upserts user + creates session + writes audit event atomically).
+- **Relational queries:** Drizzle relations defined in `src/db/schema/core.ts` (`sessionsRelations`, `usersRelations`) enable `db.query.sessions.findFirst({ with: { user: true } })`, loading a session with its user in a single JOIN. `SessionRepository.findById` uses this to avoid a second query for the user.
+
+### Session flow
+
+The web channel passes a `Session` domain object through the request lifecycle. Views never touch the Hono context or the database.
+
+1. **Middleware** (`optionalSession` or `requireSession`) reads the signed session cookie, calls `SessionRepository.findById()` (one relational query), and stores the `Session` on the Hono context via `c.set('session', session)`.
+2. **Route handlers** read `c.get('session')` and pass it to views. `/auth/me` reads `session.user` directly, zero extra DB calls.
+3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = full interaction chrome (sidebar, input dock, recent questions). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
+4. **Tests** construct `Session` objects directly. No context faking, no mock modules. The `Session` type ensures tests fail at compile time if the shape changes.
+
+`optionalSession()` runs on public routes (homepage) so the layout can adapt without blocking unauthenticated visitors. `requireSession()` runs on protected routes (`/chat`, `/auth/me`) and returns 401 if no valid session.
+
+---
+
 ## Game Dimension
 
-Squire targets multiple games in the *haven family. Today: Frosthaven. Phase 2: Gloomhaven 2.0. Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
+Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2: Gloomhaven 2.0. Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
 
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 
@@ -185,7 +234,7 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 1. First, contribute upstream to GHS to fill the gap
 2. Failing that, spin up an OCR pipeline as a last resort
 
-*Historical note: an earlier version of Squire used the worldhaven repository plus an OCR pipeline. Both were retired (commit `34a26a1`) once GHS proved sufficient.*
+_Historical note: an earlier version of Squire used the worldhaven repository plus an OCR pipeline. Both were retired (commit `34a26a1`) once GHS proved sufficient._
 
 ### Rules Database
 
@@ -197,19 +246,19 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 
 ### Storage strategy
 
-| Data | Dev (current) | Production |
-| --- | --- | --- |
-| User / campaign / player state | N/A (Phase 4) | Postgres |
-| Vector embeddings | Postgres + pgvector (docker-compose) | Postgres + pgvector |
-| Extracted card data | Postgres `card_*` tables (seeded from `data/extracted/*.json`) | Postgres `card_*` tables |
-| OAuth tokens / clients | N/A (Phase 1) | Postgres |
-| Conversation history | In-memory per session | Postgres |
+| Data                           | Dev (current)                                                  | Production               |
+| ------------------------------ | -------------------------------------------------------------- | ------------------------ |
+| User / campaign / player state | N/A (Phase 4)                                                  | Postgres                 |
+| Vector embeddings              | Postgres + pgvector (docker-compose)                           | Postgres + pgvector      |
+| Extracted card data            | Postgres `card_*` tables (seeded from `data/extracted/*.json`) | Postgres `card_*` tables |
+| OAuth tokens / clients         | N/A (Phase 1)                                                  | Postgres                 |
+| Conversation history           | In-memory per session                                          | Postgres                 |
 
 pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source PDFs (~164MB) are inputs to indexing, not deployed artifacts; they live in `data/pdfs/` for local development and are excluded from the production image.
 
 ### Character State
 
-*Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md) for the user-facing description and the five ingestion options under consideration. The data model is:*
+_Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md) for the user-facing description and the five ingestion options under consideration. The data model is:_
 
 ```typescript
 {
@@ -237,7 +286,7 @@ pgvector handles vector similarity search in the same database — no separate v
 
 ### Build Guides
 
-*Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL list, agent fetches on-demand via `fetchBuildGuide(url)`, no parsing — Claude reads guides in their native format.*
+_Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL list, agent fetches on-demand via `fetchBuildGuide(url)`, no parsing — Claude reads guides in their native format._
 
 ### User Conversations
 
@@ -305,13 +354,13 @@ The conversation agent **never calls atomic tools directly** — it always goes 
 
 Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that works across all GHS card types — monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, personal quests. The same handful of tools handle every card type via parameter, rather than one tool per feature.
 
-| Tool | Purpose |
-| --- | --- |
-| `searchRules(query, topK, opts?)` | Vector search over the rulebook RAG index. Accepts `opts.game` to filter on the embeddings table's `game` column. |
-| `searchCards(query, topK, opts?)` | Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights. |
-| `listCardTypes(opts?)` | Discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table. |
-| `listCards(type, filter?, opts?)` | List records of a given type with field-level AND filter, plus optional `opts.game`. |
-| `getCard(type, id, opts?)` | Exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions. |
+| Tool                              | Purpose                                                                                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `searchRules(query, topK, opts?)` | Vector search over the rulebook RAG index. Accepts `opts.game` to filter on the embeddings table's `game` column.                                                                           |
+| `searchCards(query, topK, opts?)` | Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights.                           |
+| `listCardTypes(opts?)`            | Discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table.                                                                                  |
+| `listCards(type, filter?, opts?)` | List records of a given type with field-level AND filter, plus optional `opts.game`.                                                                                                        |
+| `getCard(type, id, opts?)`        | Exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions. |
 
 ```mermaid
 graph TB
@@ -373,7 +422,7 @@ These are **emergent capabilities** — Squire never built features for them, bu
 }
 ```
 
-`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using only the rulebook and card data. With them it personalizes — "what items should I bring?" depends on which character *you* are playing in *this campaign* of *which game*.
+`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using only the rulebook and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
 
 The knowledge agent:
 
@@ -390,13 +439,13 @@ The conversation agent calls this entry point via in-process function call, not 
 
 ## MCP Server
 
-Squire exposes its atomic knowledge tools via the **Model Context Protocol** over a `/mcp` endpoint (`src/mcp.ts`). Streamable HTTP transport, OAuth 2.1 in production. This makes Squire's *haven knowledge accessible to any MCP-capable agent harness — Claude Code, Claude Desktop, or other AI tools — without going through Squire's own conversation UI.
+Squire exposes its atomic knowledge tools via the **Model Context Protocol** over a `/mcp` endpoint (`src/mcp.ts`). Streamable HTTP transport, OAuth 2.1 in production. This makes Squire's \*haven knowledge accessible to any MCP-capable agent harness — Claude Code, Claude Desktop, or other AI tools — without going through Squire's own conversation UI.
 
 ### Use cases
 
 - Brian uses Claude Code with Squire's MCP tools mounted to ask rules questions during development
 - Future end users may opt to mount Squire as an MCP server in their own agent of choice (treated like a public API surface, with auth)
-- Other AI tools in the *haven ecosystem could compose Squire's knowledge tools into larger workflows
+- Other AI tools in the \*haven ecosystem could compose Squire's knowledge tools into larger workflows
 
 ### Channel framing
 
@@ -422,15 +471,15 @@ An earlier design considered using **internal MCP** as the transport between the
 
 ## Client Types
 
-| Client | Interface | Auth | Identity propagation |
-| --- | --- | --- | --- |
-| Web UI | `/api/ask` (in-process) | Google OAuth session cookie | userId + campaignId from session |
-| Claude Desktop | `/mcp` | OAuth 2.1 (auth code + PKCE) | userId from token |
-| Claude Code | `/mcp` | OAuth 2.1 (auth code + PKCE) | userId from token |
-| Other MCP agents | `/mcp` | OAuth 2.1 | userId from token |
-| CLI / scripts | `/api/*` | OAuth 2.1 | userId from token or service identity |
-| Discord (Phase 8) | `/api/ask` | Service credentials | userId from Discord identity mapping |
-| iMessage (Phase 8) | `/api/ask` | TBD | TBD |
+| Client             | Interface               | Auth                         | Identity propagation                  |
+| ------------------ | ----------------------- | ---------------------------- | ------------------------------------- |
+| Web UI             | `/api/ask` (in-process) | Google OAuth session cookie  | userId + campaignId from session      |
+| Claude Desktop     | `/mcp`                  | OAuth 2.1 (auth code + PKCE) | userId from token                     |
+| Claude Code        | `/mcp`                  | OAuth 2.1 (auth code + PKCE) | userId from token                     |
+| Other MCP agents   | `/mcp`                  | OAuth 2.1                    | userId from token                     |
+| CLI / scripts      | `/api/*`                | OAuth 2.1                    | userId from token or service identity |
+| Discord (Phase 8)  | `/api/ask`              | Service credentials          | userId from Discord identity mapping  |
+| iMessage (Phase 8) | `/api/ask`              | TBD                          | TBD                                   |
 
 **Web UI conversation agent:**
 
@@ -502,8 +551,11 @@ Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. P
 ```text
 src/
   agent.ts                      Conversation + knowledge agent loop, model invocation
-  auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1) + Google OAuth web
+  auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1 for MCP/REST)
   auth/
+    google.ts                   Google OAuth web login: consent URL, callback, allowlist
+    session-middleware.ts       Hono middleware: signed cookie -> Session (with user) on context
+    session.ts                  Context-based session accessors (isAuthenticated, getSession)
     provider.ts                 SquireOAuthProvider — MCP SDK OAuthServerProvider impl (Drizzle-backed)
     clients-store.ts            DrizzleClientsStore — OAuthRegisteredClientsStore impl
     audit.ts                    OAuth audit event writer (same txn as mutations)
@@ -511,6 +563,7 @@ src/
   db.ts                         Drizzle client + pool factory (server / cli modes)
   db/
     schema/                     Drizzle schema (core, auth, cards) — barrel in index.ts
+    repositories/               Domain repositories (Session, User) with row-to-domain mapping
     migrations/                 SQL migration files (numbered, hand-written for FTS)
   embedder.ts                   Local embeddings via Xenova all-MiniLM-L6-v2
   extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
@@ -528,12 +581,14 @@ src/
   tools.ts                      Atomic tools: searchRules, searchCards, listCardTypes, listCards, getCard
   vector-store.ts               pgvector cosine similarity search
   web-ui/
-    layout.ts                   Companion-first layout shell (5 mobile regions + desktop rail)
+    layout.ts                   Session-aware layout shell (5 mobile regions + desktop rail)
+    auth-error-page.ts          Auth error page renderer (design system, retry + home links)
     fonts.ts                    Google Fonts URL + preconnect constants
     assets.ts                   On-demand Tailwind JIT + squire.js pipeline (SQR-71, ADR 0011)
     squire.js                   Vanilla JS islands (SQR-66 cite tap-toggle)
     styles.css                  Tailwind entry point — design tokens + layout shell CSS
-  types/                        Shared TypeScript types
+  types/
+    hono.d.ts                   Hono ContextVariableMap augmentation (Session on context)
   import-battle-goals.ts        GHS importer
   import-buildings.ts           GHS importer
   import-character-abilities.ts GHS importer
@@ -595,4 +650,4 @@ For developer setup, running the server, working on import scripts locally, and 
 
 - **2026-04-07 (v1.0.1):** Final-pass cleanup. Fixed bogus "~34GB+" PDF size to actual ~164MB.
 
-- **2026-04-07 (v1.0):** Born from the v3.0 split of `frosthaven-agent-product-spec.md`. Absorbed all Technical Architecture content (Stack, Data Architecture, Agent Architecture, MCP Server, Observability, Deployment, Cost), tech risks, and tech open questions from the old single-file spec. Absorbed the architectural principles, two-agent split rationale, atomic tools rationale, code structure, and Mermaid diagrams from the old `docs/architecture-plan.md` (which is now deleted). Fixed the v2.1 misstatement about the two-agent split: only the internal MCP *transport* was dropped, not the split itself. Added the `game` dimension section for Frosthaven + Gloomhaven 2.0 support. Updated all code references (`src/*.ts`) including the 10 import scripts. The old `docs/architecture-plan.md` content is preserved in git history before this commit.
+- **2026-04-07 (v1.0):** Born from the v3.0 split of `frosthaven-agent-product-spec.md`. Absorbed all Technical Architecture content (Stack, Data Architecture, Agent Architecture, MCP Server, Observability, Deployment, Cost), tech risks, and tech open questions from the old single-file spec. Absorbed the architectural principles, two-agent split rationale, atomic tools rationale, code structure, and Mermaid diagrams from the old `docs/architecture-plan.md` (which is now deleted). Fixed the v2.1 misstatement about the two-agent split: only the internal MCP _transport_ was dropped, not the split itself. Added the `game` dimension section for Frosthaven + Gloomhaven 2.0 support. Updated all code references (`src/*.ts`) including the 10 import scripts. The old `docs/architecture-plan.md` content is preserved in git history before this commit.

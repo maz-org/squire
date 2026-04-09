@@ -21,6 +21,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
+import type { Session } from '../db/repositories/types.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -41,6 +42,13 @@ export interface LayoutShellOptions {
    * is a reusable primitive."
    */
   errorBanner?: { message: string };
+  /**
+   * Current session (with user), if authenticated. When present, the layout
+   * renders the full interaction surface (sidebar, input dock, recent
+   * questions). When absent, renders brand-only chrome (header, monogram,
+   * fonts, colors). The layout never touches the Hono context or DB.
+   */
+  session?: Session;
 }
 
 /**
@@ -50,6 +58,10 @@ export interface LayoutShellOptions {
  * the acceptance criteria — later tickets target them by class.
  */
 export async function layoutShell(options: LayoutShellOptions = {}): Promise<HtmlEscapedString> {
+  // The layout adapts chrome based on whether a session was provided.
+  // Session present = logged in = full chrome. Absent = brand only.
+  const authenticated = options.session !== undefined;
+
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin
       ? html`<link rel="preconnect" href="${p.href}" crossorigin />`
@@ -131,12 +143,16 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <link rel="stylesheet" href="${cssUrl}" />
       </head>
       <body class="squire-body">
-        <a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>
+        ${!authenticated
+          ? html``
+          : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
         <div class="squire-frame">
-          <aside class="squire-rail" aria-label="Squire ledger">
-            <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
-            <span class="squire-wordmark">Squire</span>
-          </aside>
+          ${!authenticated
+            ? html``
+            : html`<aside class="squire-rail" aria-label="Squire ledger">
+                <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+                <span class="squire-wordmark">Squire</span>
+              </aside>`}
           <div class="squire-column">
             <header class="squire-header">
               <span class="squire-monogram" aria-hidden="true">S</span>
@@ -146,33 +162,37 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
             <main class="squire-surface" aria-live="polite" aria-atomic="false">
               ${surfaceContent}
             </main>
-            <footer class="squire-toolcall" aria-live="off">
-              CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
-            </footer>
-            <nav class="squire-recent" aria-label="Recent questions">
-              <span class="squire-chip">Looting</span>
-              <span class="squire-chip">Element infusion</span>
-              <span class="squire-chip">Negative scenario effects</span>
-            </nav>
-            <!--
-          SQR-65 ships the structural form only. The action target points
-          at /api/ask, which is the eventual endpoint, but the API requires
-          Bearer auth and a JSON body — a raw HTML form POST will 401
-          today. SQR-6 wires real submission (HTMX + SSE streaming + the
-          recent-questions chip row), at which point this form gets
-          hx-post, hx-swap, and friends layered on. Do not try to make
-          the form work before SQR-6 lands — it is a layout slot.
-        -->
-            <form class="squire-input-dock" method="post" action="/api/ask">
-              <input
-                id="squire-input"
-                name="question"
-                type="text"
-                autocomplete="off"
-                placeholder="Ask the Squire…"
-              />
-              <button type="submit" class="squire-input-dock__submit" aria-label="Ask">→</button>
-            </form>
+            ${!authenticated
+              ? html``
+              : html`<footer class="squire-toolcall" aria-live="off">
+                    CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
+                  </footer>
+                  <nav class="squire-recent" aria-label="Recent questions">
+                    <span class="squire-chip">Looting</span>
+                    <span class="squire-chip">Element infusion</span>
+                    <span class="squire-chip">Negative scenario effects</span>
+                  </nav>
+                  <!--
+                SQR-65 ships the structural form only. The action target points
+                at /api/ask, which is the eventual endpoint, but the API requires
+                Bearer auth and a JSON body — a raw HTML form POST will 401
+                today. SQR-6 wires real submission (HTMX + SSE streaming + the
+                recent-questions chip row), at which point this form gets
+                hx-post, hx-swap, and friends layered on. Do not try to make
+                the form work before SQR-6 lands — it is a layout slot.
+              -->
+                  <form class="squire-input-dock" method="post" action="/api/ask">
+                    <input
+                      id="squire-input"
+                      name="question"
+                      type="text"
+                      autocomplete="off"
+                      placeholder="Ask the Squire…"
+                    />
+                    <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
+                      →
+                    </button>
+                  </form>`}
           </div>
         </div>
         <!--
@@ -195,6 +215,6 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
  * point that tests can stub via `vi.mock` to exercise the server-side error
  * fallback branch.
  */
-export async function renderHomePage(): Promise<HtmlEscapedString> {
-  return layoutShell();
+export async function renderHomePage(session?: Session): Promise<HtmlEscapedString> {
+  return layoutShell({ session });
 }

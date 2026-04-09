@@ -41,16 +41,16 @@ From SQR-79:
 
 ## Test matrix
 
-| AC | What to verify | Evidence |
-| --- | --- | --- |
-| 1 | Plan file exists and is Squire-specific | file contents + references to Squire repo paths |
-| 2 | Plan distinguishes `~/.gstack/projects/maz-org-squire/` from repo `.gstack/` | direct text in plan |
-| 3 | Plan names the adapter layer components | direct text in plan |
-| 4 | Plan includes sequenced next steps | implementation-order section |
-| 5 | Branch exists on origin, commit is pushed, no PR opened | git + GitHub evidence |
-| 6 | Plan integrates ADR workflow correctly | ADR/promotion sections in plan |
-| 7 | Plan includes staging-to-permanent-doc cleanup | post-merge cleanup section |
-| 8 | Plan includes concrete parity/learnings commands | workflow section in plan |
+| AC  | What to verify                                                               | Evidence                                        |
+| --- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1   | Plan file exists and is Squire-specific                                      | file contents + references to Squire repo paths |
+| 2   | Plan distinguishes `~/.gstack/projects/maz-org-squire/` from repo `.gstack/` | direct text in plan                             |
+| 3   | Plan names the adapter layer components                                      | direct text in plan                             |
+| 4   | Plan includes sequenced next steps                                           | implementation-order section                    |
+| 5   | Branch exists on origin, commit is pushed, no PR opened                      | git + GitHub evidence                           |
+| 6   | Plan integrates ADR workflow correctly                                       | ADR/promotion sections in plan                  |
+| 7   | Plan includes staging-to-permanent-doc cleanup                               | post-merge cleanup section                      |
+| 8   | Plan includes concrete parity/learnings commands                             | workflow section in plan                        |
 
 ---
 

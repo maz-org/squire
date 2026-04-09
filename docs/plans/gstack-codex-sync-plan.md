@@ -308,7 +308,7 @@ Once the first implementation slice exists, the intended maintenance workflow is
    - `docs/agent/agent-baseline.md`
    - `.mcp.json`
    - `docs/DEVELOPMENT.md`
-   run:
+     run:
 
    ```bash
    npm run agent:check

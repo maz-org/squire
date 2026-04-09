@@ -14,6 +14,7 @@
  * operator classes — see tech spec §pgvector operator sign-flip.
  */
 
+import { relations } from 'drizzle-orm';
 import {
   index,
   integer,
@@ -44,9 +45,22 @@ export const sessions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   },
   (t) => [index('sessions_user_idx').on(t.userId), index('sessions_expires_idx').on(t.expiresAt)],
 );
+
+// ─── Relations (for Drizzle relational queries) ─────────────────────────────
+
+export const usersRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+// ─── Embeddings ─────────────────────────────────────────────────────────────
 
 export const embeddings = pgTable(
   'embeddings',

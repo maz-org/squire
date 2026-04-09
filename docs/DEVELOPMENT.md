@@ -4,9 +4,33 @@
 
 - Node.js 24+ (see `.nvmrc`)
 - Docker (for the Postgres + pgvector dev database)
-- `.env` file with `ANTHROPIC_API_KEY`
+- `.env` file with required environment variables (see below)
 - [gstack](https://github.com/garrytan/gstack) skills for Claude Code (see
   [AI tooling setup](#ai-tooling-setup) below)
+
+### Environment variables
+
+Create a `.env` file in the project root:
+
+```bash
+# Required
+ANTHROPIC_API_KEY=...
+
+# Google OAuth (required for web UI login)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+SESSION_SECRET=<random 32+ character string>
+
+# Email allowlist (comma-separated, controls who can log in)
+SQUIRE_ALLOWED_EMAILS=your-email@example.com
+
+# Optional (Langfuse observability)
+LANGFUSE_PUBLIC_KEY=...
+LANGFUSE_SECRET_KEY=...
+```
+
+For local dev without Google OAuth, the app still starts and serves the homepage. Auth routes will error without valid Google credentials. Run `npm run seed:dev` to create a test user for authenticated code paths.
 
 Extracted card data (`data/extracted/*.json`) is committed to the repo.
 The rulebook vector index lives in Postgres (pgvector) and is populated by
@@ -97,15 +121,15 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 ## REST API endpoints
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| GET | `/api/health` | Readiness check with index size |
-| GET | `/api/search/rules?q=&topK=` | Vector search over rulebook passages |
-| GET | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
-| GET | `/api/card-types` | List card types with record counts |
-| GET | `/api/cards?type=&filter=` | List cards of a type (filter is JSON) |
-| GET | `/api/cards/:type/:id` | Look up a single card |
-| POST | `/api/ask` | Bundled RAG pipeline (`{ question }` → `{ answer }`) |
+| Method | Path                         | Description                                                |
+| ------ | ---------------------------- | ---------------------------------------------------------- |
+| GET    | `/api/health`                | Readiness check with index size                            |
+| GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                       |
+| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
+| GET    | `/api/card-types`            | List card types with record counts                         |
+| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                      |
+| GET    | `/api/cards/:type/:id`       | Look up a single card                                      |
+| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)       |
 
 All errors return `{ error, status }` as JSON.
 
@@ -116,13 +140,13 @@ URL-encoded JSON object with AND-logic field matching.
 
 Squire exposes 5 atomic tools via MCP at `/mcp`:
 
-| Tool | Description |
-| ---- | ----------- |
-| `search_rules` | Vector search over rulebook passages |
-| `search_cards` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
-| `list_card_types` | List available card categories with counts |
-| `list_cards` | List cards of a type with optional field filter |
-| `get_card` | Look up a single card by type and identifier |
+| Tool              | Description                                                |
+| ----------------- | ---------------------------------------------------------- |
+| `search_rules`    | Vector search over rulebook passages                       |
+| `search_cards`    | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
+| `list_card_types` | List available card categories with counts                 |
+| `list_cards`      | List cards of a type with optional field filter            |
+| `get_card`        | Look up a single card by type and identifier               |
 
 The MCP endpoint uses Streamable HTTP transport in stateless mode (no
 auth in development). OAuth ships with the User Accounts work tracked
@@ -293,7 +317,7 @@ config) to catch order-dependent tests. The full suite runs as a
 pre-commit hook along with typecheck and lint.
 
 **Prettier covers everything CI checks.** CI runs `prettier --check src/ test/`
-which walks those directories and formats *every* file type Prettier knows
+which walks those directories and formats _every_ file type Prettier knows
 (`.ts`, `.js`, `.json`, `.yml`, `.md`, etc.). `lint-staged` in `package.json`
 must stay in sync — if CI formats a file type, the pre-commit hook must too,
 otherwise drift slips through locally and fails in CI. When adding a new file

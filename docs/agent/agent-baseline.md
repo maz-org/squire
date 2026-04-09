@@ -18,17 +18,17 @@ live in the focused docs linked below.
 
 Read these on demand:
 
-| When you're about to... | Read |
-| --- | --- |
-| Start work on a Linear issue | [issue-workflow.md](./issue-workflow.md) |
-| Write or modify tests | [testing.md](./testing.md) |
-| Make a non-obvious design choice | [code-quality.md](./code-quality.md) |
-| Touch anything visual — fonts, color, spacing, layout, copy tone | [../../DESIGN.md](../../DESIGN.md) |
-| Ship a PR | [shipping.md](./shipping.md) |
-| Run the pre-push review and watch the PR | [review.md](./review.md) |
-| Write a tech spec or plan-review checkpoint | [planning-artifacts.md](./planning-artifacts.md) |
-| Record a design/eng decision, or implement a feature that might touch one | [adrs.md](./adrs.md) |
-| Check repeated pitfalls and promoted gstack learnings | [learnings.md](./learnings.md) |
+| When you're about to...                                                   | Read                                             |
+| ------------------------------------------------------------------------- | ------------------------------------------------ |
+| Start work on a Linear issue                                              | [issue-workflow.md](./issue-workflow.md)         |
+| Write or modify tests                                                     | [testing.md](./testing.md)                       |
+| Make a non-obvious design choice                                          | [code-quality.md](./code-quality.md)             |
+| Touch anything visual — fonts, color, spacing, layout, copy tone          | [../../DESIGN.md](../../DESIGN.md)               |
+| Ship a PR                                                                 | [shipping.md](./shipping.md)                     |
+| Run the pre-push review and watch the PR                                  | [review.md](./review.md)                         |
+| Write a tech spec or plan-review checkpoint                               | [planning-artifacts.md](./planning-artifacts.md) |
+| Record a design/eng decision, or implement a feature that might touch one | [adrs.md](./adrs.md)                             |
+| Check repeated pitfalls and promoted gstack learnings                     | [learnings.md](./learnings.md)                   |
 
 ## Always-on rules
 
@@ -41,7 +41,7 @@ Read these on demand:
   working on an active feature branch, keep related follow-up changes on that
   branch unless the user explicitly says otherwise.
 - **TDD.** Write a failing test first when changing behavior.
-- **Document *why* in the codebase.** Non-obvious design choices belong in code
+- **Document _why_ in the codebase.** Non-obvious design choices belong in code
   comments, ADRs, or markdown docs, not just chat or PR text.
 - **Conventional Commits.** `<type>(<scope>): <description>`.
 - **Design system.** Always read [../../DESIGN.md](../../DESIGN.md) before

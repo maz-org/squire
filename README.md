@@ -40,7 +40,8 @@ npm install
 
 # Add your API keys
 cp .env.example .env
-# Edit .env with your ANTHROPIC_API_KEY (and optionally LANGFUSE_* keys)
+# Edit .env: ANTHROPIC_API_KEY (required), Google OAuth keys + SESSION_SECRET
+# (required for web UI login). See docs/DEVELOPMENT.md for the full list.
 
 # Start the local Postgres + pgvector database
 docker compose up -d
