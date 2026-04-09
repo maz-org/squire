@@ -15,6 +15,6 @@ export {};
 
 declare module 'hono' {
   interface ContextVariableMap {
-    session: Session;
+    session: Session | undefined;
   }
 }

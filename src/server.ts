@@ -420,7 +420,8 @@ app.post('/auth/logout', async (c) => {
 // /auth/me: returns current user JSON for HTMX header. Behind session middleware.
 // The session (with user) is already loaded by requireSession(). Zero extra DB calls.
 app.get('/auth/me', requireSession(), async (c) => {
-  const session = c.get('session');
+  // requireSession() guarantees session is set; 401 returned otherwise
+  const session = c.get('session')!;
   return c.json({ id: session.user.id, email: session.user.email, name: session.user.name });
 });
 

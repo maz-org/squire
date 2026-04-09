@@ -67,8 +67,14 @@ export async function findById(sessionId: string): Promise<Session | null> {
     return null;
   }
 
+  // Fire-and-forget: a transient write failure here must not invalidate the
+  // session. The session is valid regardless of whether we can bump the timestamp.
   // TODO: debounce for Phase 3 multi-user if write volume becomes a concern
-  await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId));
+  try {
+    await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId));
+  } catch (err) {
+    console.warn('[session] lastSeenAt update failed (non-fatal):', (err as Error).message);
+  }
 
   return toDomain(row);
 }
