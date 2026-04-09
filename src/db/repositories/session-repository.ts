@@ -1,0 +1,90 @@
+/**
+ * Session repository: Postgres-backed session queries (SQR-38).
+ *
+ * All session table access goes through here. Uses Drizzle relational
+ * queries to load sessions with their user in a single JOIN.
+ */
+
+import { randomUUID } from 'node:crypto';
+import { eq } from 'drizzle-orm';
+
+import { getDb } from '../../db.ts';
+import { sessions } from '../schema/core.ts';
+import type { DbOrTx } from '../../auth/audit.ts';
+import type { Session } from './types.ts';
+
+/** 30-day session lifetime, matching the long-lived token DX policy (ADR 0002). */
+export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Load a session with its user in one relational query.
+ * Returns null if not found or expired. Deletes expired rows on read.
+ * Updates lastSeenAt on each successful load.
+ */
+export async function findById(sessionId: string): Promise<Session | null> {
+  const { db } = getDb('server');
+  const now = new Date();
+
+  const row = await db.query.sessions.findFirst({
+    where: eq(sessions.id, sessionId),
+    with: { user: true },
+  });
+
+  if (!row) return null;
+
+  if (row.expiresAt <= now) {
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    return null;
+  }
+
+  // TODO: debounce for Phase 3 multi-user if write volume becomes a concern
+  await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId));
+
+  return row;
+}
+
+/**
+ * Create a new session. Returns the session ID and expiry for cookie setting.
+ *
+ * Accepts DbOrTx so this can run inside handleGoogleCallback's transaction
+ * (user upsert + session create + audit are atomic).
+ */
+export async function create(
+  handle: DbOrTx,
+  userId: string,
+  ipAddress?: string | null,
+  userAgent?: string | null,
+): Promise<{ sessionId: string; expiresAt: Date }> {
+  const sessionId = randomUUID();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_MS);
+
+  await handle.insert(sessions).values({
+    id: sessionId,
+    userId,
+    expiresAt,
+    ipAddress: ipAddress ?? null,
+    userAgent: userAgent ?? null,
+    lastSeenAt: now,
+  });
+
+  return { sessionId, expiresAt };
+}
+
+/**
+ * Destroy a session. Returns the userId of the deleted session (for audit
+ * logging by the caller), or null if the session didn't exist.
+ */
+export async function destroy(sessionId: string): Promise<string | null> {
+  const { db } = getDb('server');
+
+  const rows = await db
+    .select({ userId: sessions.userId })
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .limit(1);
+
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
+
+  return rows[0]?.userId ?? null;
+}

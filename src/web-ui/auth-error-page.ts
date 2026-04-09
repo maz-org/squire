@@ -18,15 +18,14 @@
 import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
-import type { Context } from 'hono';
-
 import { layoutShell } from './layout.ts';
+import type { Session } from '../db/repositories/types.ts';
 
 export interface AuthErrorPageOptions {
   /** Human-readable error message. Auto-escaped by hono/html template. */
   message: string;
-  /** Hono request context. Passed to layoutShell so it can check session state. */
-  context: Context;
+  /** Current session, if any. Auth error pages are typically pre-session (undefined). */
+  session?: Session;
   /** Short machine-readable label shown above the message. */
   label?: string;
   /** URL for the primary retry action. Defaults to /auth/google/start. */
@@ -102,5 +101,5 @@ export async function renderAuthErrorPage(
     </nav>
   `;
 
-  return await layoutShell({ mainContent: content as HtmlEscapedString, context: options.context });
+  return await layoutShell({ mainContent: content as HtmlEscapedString, session: options.session });
 }

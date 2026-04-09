@@ -61,27 +61,34 @@ const actualLayout =
   await vi.importActual<typeof import('../src/web-ui/layout.ts')>('../src/web-ui/layout.ts');
 
 import { app } from '../src/server.ts';
-import type { Context } from 'hono';
+import type { Session } from '../src/db/repositories/types.ts';
 
-/**
- * Simulate a logged-in user by setting userId on the Hono context.
- * The real requireSession() middleware does this; we fake it here
- * because layout tests don't hit the real auth middleware.
- */
-function simulateLoggedIn(ctx: Context): void {
-  ctx.set('userId', 'test-layout-user-id');
+/** A test session object for logged-in layout rendering. */
+const testSession: Session = {
+  id: 'test-session-id',
+  userId: 'test-user-id',
+  expiresAt: new Date(Date.now() + 86400000),
+  createdAt: new Date(),
+  ipAddress: null,
+  userAgent: null,
+  lastSeenAt: new Date(),
+  user: {
+    id: 'test-user-id',
+    googleSub: 'test-google-sub',
+    email: 'test@example.com',
+    name: 'Test User',
+    createdAt: new Date(),
+  },
+};
+
+/** mockRenderHomePage impl that renders as logged-in. */
+function loggedInHomePage() {
+  return actualLayout.renderHomePage(testSession);
 }
 
-/** mockRenderHomePage impl that simulates a logged-in user. */
-function loggedInHomePage(...args: unknown[]) {
-  const ctx = args[0] as Context;
-  if (ctx) simulateLoggedIn(ctx);
-  return actualLayout.renderHomePage(ctx);
-}
-
-/** mockRenderHomePage impl that renders as logged-out (no userId set). */
-function loggedOutHomePage(...args: unknown[]) {
-  return actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]);
+/** mockRenderHomePage impl that renders as logged-out. */
+function loggedOutHomePage() {
+  return actualLayout.renderHomePage(undefined);
 }
 
 describe('GET / — companion-first layout shell (SQR-65)', () => {

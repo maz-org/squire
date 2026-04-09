@@ -15,9 +15,9 @@ import { createHash, randomBytes } from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
 
 import { getDb } from '../db.ts';
-import { users } from '../db/schema/core.ts';
 import { writeAuditEvent } from './audit.ts';
-import { createSession } from './session-store.ts';
+import * as UserRepository from '../db/repositories/user-repository.ts';
+import * as SessionRepository from '../db/repositories/session-repository.ts';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ function getGoogleConfig() {
   return { clientId, clientSecret, redirectUri };
 }
 
-// SESSION_LIFETIME_MS and getSessionSecret() live in session-store.ts
+// SESSION_LIFETIME_MS lives in session-repository.ts; getSessionSecret() in session-middleware.ts
 
 /**
  * Hard-coded email allowlist for Phase 1 single-user MVP (ADR 0009).
@@ -208,21 +208,9 @@ export async function handleGoogleCallback(
   // 5. Upsert user + create session in a transaction
   const { db } = getDb('server');
   const result = await db.transaction(async (tx) => {
-    // Upsert user on google_sub (the stable identifier)
-    const [user] = await tx
-      .insert(users)
-      .values({ googleSub, email, name: name ?? null })
-      .onConflictDoUpdate({
-        target: users.googleSub,
-        set: { email, name: name ?? null },
-      })
-      .returning({ id: users.id });
+    const user = await UserRepository.upsertByGoogleSub(tx, googleSub, email, name ?? null);
+    const { sessionId } = await SessionRepository.create(tx, user.id, ipAddress, userAgent);
 
-    // Create session (nested in this transaction so user upsert + session
-    // + audit are atomic)
-    const { sessionId } = await createSession(tx, user.id, ipAddress, userAgent);
-
-    // Audit: successful login
     await writeAuditEvent(tx, {
       eventType: 'google_login',
       userId: user.id,
@@ -244,8 +232,8 @@ export async function handleGoogleCallback(
   return result;
 }
 
-// Session CRUD (loadSession, destroySession, getUserById) lives in
-// session-store.ts. google.ts only handles the OAuth flow.
+// Session CRUD lives in db/repositories/session-repository.ts and
+// db/repositories/user-repository.ts. google.ts only handles the OAuth flow.
 
 // ─── Allowlist accessor (mockable in tests) ─────────────────────────────────
 

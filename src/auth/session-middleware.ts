@@ -1,24 +1,34 @@
 /**
  * Session cookie middleware for the web UI channel (SQR-38).
  *
- * Reads a signed session cookie, loads the session from Postgres, and
- * attaches the userId to the Hono context. Protected routes (like /chat)
- * get this middleware; unprotected routes (like /, /auth/google/start) don't.
+ * Reads a signed session cookie, loads the session (with user) from Postgres
+ * via SessionRepository, and stores the Session object on the Hono context.
+ * Protected routes (like /chat) get requireSession(); public pages like the
+ * homepage get optionalSession() so the layout can adapt.
  *
  * Cookie attributes: HttpOnly, SameSite=Strict, signed via SESSION_SECRET.
- * Secure is conditional: true in production, false in dev (localhost runs
- * plain HTTP and Secure cookies won't stick over HTTP).
+ * Secure is conditional: true in production, false in dev (localhost HTTP).
  *
  * This is separate from `requireBearerAuth()` in server.ts, which protects
- * the /api/* and /mcp endpoints for MCP/REST clients using OAuth 2.1 bearer
- * tokens. The two auth systems are isolated by design: different mechanisms,
- * different threat models, different cookie/header transports.
+ * /api/* and /mcp with OAuth 2.1 bearer tokens.
  */
 
 import type { Context, Next } from 'hono';
 import { getSignedCookie, setSignedCookie, deleteCookie } from 'hono/cookie';
 
-import { loadSession, getSessionSecret } from './session-store.ts';
+import * as SessionRepository from '../db/repositories/session-repository.ts';
+
+/**
+ * Read SESSION_SECRET from the environment. Throws if not set or too short.
+ * Used for cookie signing (session cookie + PKCE cookie).
+ */
+export function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error('SESSION_SECRET must be set and at least 32 characters');
+  }
+  return secret;
+}
 
 export const SESSION_COOKIE_NAME = 'squire_session';
 
@@ -30,10 +40,9 @@ function isSecureContext(): boolean {
 /**
  * Hono middleware that detects a session without enforcing it.
  *
- * If a valid session cookie exists, sets `c.set('userId', string)` on the
- * context. If not, does nothing (no 401, no redirect). Used on public
- * pages like the homepage so the layout shell can adapt its chrome based
- * on auth state without blocking unauthenticated visitors.
+ * If a valid session cookie exists, loads the full Session (with user) and
+ * sets it on context. If not, does nothing. Used on public pages so the
+ * layout can adapt its chrome based on auth state.
  */
 export function optionalSession() {
   return async (c: Context, next: Next) => {
@@ -41,18 +50,15 @@ export function optionalSession() {
       const secret = getSessionSecret();
       const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
       if (sessionId) {
-        const session = await loadSession(sessionId);
+        const session = await SessionRepository.findById(sessionId);
         if (session) {
-          c.set('userId', session.userId);
+          c.set('session', session);
         } else {
-          // Expired session: clear the stale cookie silently
           deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
         }
       }
     } catch {
-      // Auth check failed (no SECRET configured, DB down, etc.)
-      // Silently continue as unauthenticated. Public pages must not break
-      // because the auth system is misconfigured.
+      // Auth check failed. Silently continue as unauthenticated.
     }
     await next();
   };
@@ -61,9 +67,8 @@ export function optionalSession() {
 /**
  * Hono middleware that enforces session-cookie authentication.
  *
- * On success: sets `c.set('userId', string)` and calls `next()`.
- * On failure: returns 401 JSON. Callers that want an HTML redirect
- * should wrap this middleware or check the response.
+ * On success: loads Session (with user) and sets it on context, calls next().
+ * On failure: returns 401 JSON.
  */
 export function requireSession() {
   return async (c: Context, next: Next) => {
@@ -75,7 +80,7 @@ export function requireSession() {
       return c.json({ error: 'Authentication required', status: 401 }, 401);
     }
 
-    const session = await loadSession(sessionId);
+    const session = await SessionRepository.findById(sessionId);
     if (!session) {
       console.info('[session] expired or missing session for cookie, clearing');
       deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
@@ -83,7 +88,7 @@ export function requireSession() {
     }
 
     console.debug('[session] authenticated userId=%s on %s', session.userId, c.req.path);
-    c.set('userId', session.userId);
+    c.set('session', session);
     await next();
   };
 }
@@ -98,7 +103,7 @@ export async function setSessionCookie(c: Context, sessionId: string): Promise<v
     httpOnly: true,
     secure: isSecureContext(),
     sameSite: 'Strict',
-    maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+    maxAge: 30 * 24 * 60 * 60,
   });
 }
 

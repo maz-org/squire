@@ -34,7 +34,9 @@ import {
   handleGoogleCallback,
   GoogleAuthError,
 } from './auth/google.ts';
-import { destroySession, getUserById, getSessionSecret } from './auth/session-store.ts';
+import { getSessionSecret } from './auth/session-middleware.ts';
+import * as SessionRepository from './db/repositories/session-repository.ts';
+import { writeAuditEvent } from './auth/audit.ts';
 import {
   optionalSession,
   requireSession,
@@ -158,10 +160,10 @@ app.get('/', optionalSession(), async (c) => {
   // returns a constant string without I/O. See ADR 0011
   // fingerprinting addendum, "What this does not solve".
   try {
-    return c.html(await renderHomePage(c));
+    return c.html(await renderHomePage(c.get('session')));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.html(await layoutShell({ errorBanner: { message }, context: c }), 500);
+    return c.html(await layoutShell({ errorBanner: { message }, session: c.get('session') }), 500);
   }
 });
 
@@ -341,7 +343,7 @@ app.get('/auth/google/callback', async (c) => {
   const error = c.req.query('error');
   if (error) {
     return c.html(
-      await renderAuthErrorPage({ context: c, message: 'Google sign-in was cancelled or failed.' }),
+      await renderAuthErrorPage({ message: 'Google sign-in was cancelled or failed.' }),
       400 as const,
     );
   }
@@ -350,7 +352,7 @@ app.get('/auth/google/callback', async (c) => {
   const state = c.req.query('state');
   if (!code || !state) {
     return c.html(
-      await renderAuthErrorPage({ context: c, message: 'Missing code or state parameter.' }),
+      await renderAuthErrorPage({ message: 'Missing code or state parameter.' }),
       400 as const,
     );
   }
@@ -387,7 +389,7 @@ app.get('/auth/google/callback', async (c) => {
   } catch (err) {
     if (err instanceof GoogleAuthError) {
       const status = err.status as 400 | 403;
-      return c.html(await renderAuthErrorPage({ context: c, message: err.message }), status);
+      return c.html(await renderAuthErrorPage({ message: err.message }), status);
     }
     // Log unexpected errors for debugging
     console.error('[auth/google/callback] unexpected error:', err);
@@ -399,24 +401,27 @@ app.post('/auth/logout', async (c) => {
   const secret = getSessionSecret();
   const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
   if (sessionId) {
-    await destroySession(
-      sessionId,
-      c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
-      c.req.header('user-agent'),
-    );
+    const userId = await SessionRepository.destroy(sessionId);
+    if (userId) {
+      const { db } = getDb('server');
+      await writeAuditEvent(db, {
+        eventType: 'google_logout',
+        userId,
+        outcome: 'success',
+        ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+        userAgent: c.req.header('user-agent'),
+      });
+    }
   }
   clearSessionCookie(c);
   return c.redirect('/');
 });
 
 // /auth/me: returns current user JSON for HTMX header. Behind session middleware.
+// The session (with user) is already loaded by requireSession(). Zero extra DB calls.
 app.get('/auth/me', requireSession(), async (c) => {
-  const userId = c.get('userId');
-  const user = await getUserById(userId);
-  if (!user) {
-    return c.json({ error: 'User not found', status: 404 }, 404);
-  }
-  return c.json({ id: user.id, email: user.email, name: user.name });
+  const session = c.get('session');
+  return c.json({ id: session.user.id, email: session.user.email, name: session.user.name });
 });
 
 // Protect /chat routes with session cookie auth

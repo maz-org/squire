@@ -18,11 +18,10 @@
 
 import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
-import type { Context } from 'hono';
 
 import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
-import { isAuthenticated } from '../auth/session.ts';
+import type { Session } from '../db/repositories/types.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -44,14 +43,12 @@ export interface LayoutShellOptions {
    */
   errorBanner?: { message: string };
   /**
-   * Hono request context. When provided, the layout shell checks for a
-   * valid session cookie and adapts its chrome: logged-in users get the
-   * full interaction surface (sidebar, input dock, recent questions),
-   * logged-out users get brand-only chrome (header, monogram, fonts,
-   * colors). If omitted, assumes logged-out for safety (no interaction
-   * chrome shown to users who might not have a session).
+   * Current session (with user), if authenticated. When present, the layout
+   * renders the full interaction surface (sidebar, input dock, recent
+   * questions). When absent, renders brand-only chrome (header, monogram,
+   * fonts, colors). The layout never touches the Hono context or DB.
    */
-  context?: Context;
+  session?: Session;
 }
 
 /**
@@ -61,12 +58,9 @@ export interface LayoutShellOptions {
  * the acceptance criteria — later tickets target them by class.
  */
 export async function layoutShell(options: LayoutShellOptions = {}): Promise<HtmlEscapedString> {
-  // The layout shell adapts its chrome based on auth state. When the
-  // request has a valid session, show the full interaction surface
-  // (sidebar, input dock, recent questions). Otherwise, show brand-only
-  // chrome (header, monogram, fonts, colors). The shell is self-sufficient:
-  // it calls isLoggedIn() rather than relying on callers to pass a flag.
-  const authenticated = options.context ? isAuthenticated(options.context) : false;
+  // The layout adapts chrome based on whether a session was provided.
+  // Session present = logged in = full chrome. Absent = brand only.
+  const authenticated = options.session !== undefined;
 
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin
@@ -221,6 +215,6 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
  * point that tests can stub via `vi.mock` to exercise the server-side error
  * fallback branch.
  */
-export async function renderHomePage(context?: Context): Promise<HtmlEscapedString> {
-  return layoutShell({ context });
+export async function renderHomePage(session?: Session): Promise<HtmlEscapedString> {
+  return layoutShell({ session });
 }
