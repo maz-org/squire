@@ -75,7 +75,9 @@ export async function upsertByGoogleSub(handle: DbOrTx, input: CreateUserInput):
     // Do NOT silently update the existing row's google_sub (account takeover
     // risk). Reject the login with a generic error and log the conflict as
     // a critical data quality event for forensic investigation.
-    const pgError = err as { code?: string; constraint?: string };
+    // Drizzle wraps PG errors as DrizzleQueryError with the original in `cause`.
+    const cause = (err as { cause?: unknown }).cause ?? err;
+    const pgError = cause as { code?: string; constraint?: string };
     if (pgError.code === '23505' && pgError.constraint?.includes('email')) {
       console.error(
         '[CRITICAL] email/google_sub conflict: email=%s has existing row with different sub. New sub=%s. Login rejected.',

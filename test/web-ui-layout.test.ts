@@ -696,3 +696,33 @@ describe('Auth error page rendering (SQR-38)', () => {
     expect(body).not.toContain('class="squire-input-dock"');
   });
 });
+
+// ─── retryUrl security (SQR-38 review) ──────────────────────────────────────
+
+describe('Auth error page retryUrl validation', () => {
+  it('rejects protocol-relative URLs (//evil.com bypass)', async () => {
+    const { renderAuthErrorPage } = await vi.importActual<
+      typeof import('../src/web-ui/auth-error-page.ts')
+    >('../src/web-ui/auth-error-page.ts');
+    await expect(renderAuthErrorPage({ message: 'test', retryUrl: '//evil.com' })).rejects.toThrow(
+      'retryUrl must be a relative path',
+    );
+  });
+
+  it('rejects javascript: URIs', async () => {
+    const { renderAuthErrorPage } = await vi.importActual<
+      typeof import('../src/web-ui/auth-error-page.ts')
+    >('../src/web-ui/auth-error-page.ts');
+    await expect(
+      renderAuthErrorPage({ message: 'test', retryUrl: 'javascript:alert(1)' }),
+    ).rejects.toThrow('retryUrl must be a relative path');
+  });
+
+  it('allows valid relative paths', async () => {
+    const { renderAuthErrorPage } = await vi.importActual<
+      typeof import('../src/web-ui/auth-error-page.ts')
+    >('../src/web-ui/auth-error-page.ts');
+    const result = await renderAuthErrorPage({ message: 'test', retryUrl: '/auth/google/start' });
+    expect(String(result)).toContain('href="/auth/google/start"');
+  });
+});

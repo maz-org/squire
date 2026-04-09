@@ -17,6 +17,7 @@ import type { Context, Next } from 'hono';
 import { getSignedCookie, setSignedCookie, deleteCookie } from 'hono/cookie';
 
 import * as SessionRepository from '../db/repositories/session-repository.ts';
+import { SESSION_LIFETIME_MS } from '../db/repositories/session-repository.ts';
 
 /**
  * Read SESSION_SECRET from the environment. Throws if not set or too short.
@@ -103,7 +104,7 @@ export async function setSessionCookie(c: Context, sessionId: string): Promise<v
     httpOnly: true,
     secure: isSecureContext(),
     sameSite: 'Strict',
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: SESSION_LIFETIME_MS / 1000, // convert ms to seconds for cookie maxAge
   });
 }
 

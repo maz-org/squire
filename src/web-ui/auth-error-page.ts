@@ -50,10 +50,9 @@ export async function renderAuthErrorPage(
     retryLabel = 'Try again',
   } = options;
 
-  // Guard against javascript: URI injection in the retry link.
-  // retryUrl must be a relative path (starts with /). Current callers
-  // only pass the default, but the public interface accepts strings.
-  if (retryUrl && !retryUrl.startsWith('/')) {
+  // Guard against javascript: URI injection and protocol-relative URLs
+  // (//evil.com) in the retry link. Must be a single-slash relative path.
+  if (retryUrl && (!retryUrl.startsWith('/') || retryUrl.startsWith('//'))) {
     throw new Error('retryUrl must be a relative path starting with /');
   }
 

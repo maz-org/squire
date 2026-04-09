@@ -376,3 +376,29 @@ describe('Audit events', () => {
     expect(auditRows[0].outcome).toBe('success');
   });
 });
+
+// ─── Email/sub conflict (SQR-38 review) ─────────────────────────────────────
+
+describe('Email/sub conflict', () => {
+  it('15. returns opaque 403 when email exists under a different google_sub', async () => {
+    // Seed a user with the test email but a different google_sub
+    const { db } = getDb('server');
+    const { users } = await import('../src/db/schema/core.ts');
+    await db.insert(users).values({
+      googleSub: 'different-sub-from-test',
+      email: TEST_USER.email,
+      name: 'Pre-existing User',
+    });
+
+    // Now try to log in with the same email but the mock's google_sub
+    mockGoogleSuccess();
+    const res = await walkOAuthFlow();
+
+    // Should get a 403 with an opaque message (no detail leakage)
+    expect(res.status).toBe(403);
+    const body = await res.text();
+    expect(body).toContain('Unable to sign in');
+    expect(body).not.toContain('different-sub');
+    expect(body).not.toContain('conflict');
+  });
+});
