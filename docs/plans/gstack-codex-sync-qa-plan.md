@@ -33,6 +33,8 @@ From SQR-79:
 3. The plan defines the repo-owned adapter layer at a high level: `CLAUDE.md`, `AGENTS.md`, `.mcp.json`, docs, and helper scripts
 4. The plan includes a concrete implementation order for the next phases of work
 5. The plan is committed and pushed on the SQR-79 feature branch, without opening a PR
+6. The plan acknowledges the repo's ADR workflow and does not treat `docs/plans/` as the permanent home for architecture decisions
+7. The plan includes a post-merge promotion / cleanup path so durable content moves into ADRs and active docs
 
 ---
 
@@ -45,6 +47,8 @@ From SQR-79:
 | 3 | Plan names the adapter layer components | direct text in plan |
 | 4 | Plan includes sequenced next steps | implementation-order section |
 | 5 | Branch exists on origin, commit is pushed, no PR opened | git + GitHub evidence |
+| 6 | Plan integrates ADR workflow correctly | ADR/promotion sections in plan |
+| 7 | Plan includes staging-to-permanent-doc cleanup | post-merge cleanup section |
 
 ---
 
@@ -60,7 +64,7 @@ Open SQR-79 and confirm:
 
 Pass condition:
 
-- all five ACs are present in the issue body
+- all seven ACs are present in the issue body
 
 Failure examples:
 
@@ -208,7 +212,48 @@ Failure examples:
 
 ---
 
-## 8. Lightweight quality checks
+## 8. Verify AC 6: ADR integration
+
+Check the plan for explicit alignment with:
+
+- `docs/agent/adrs.md`
+- `docs/adr/README.md`
+- the repo rule that `docs/plans/` is staging, while ADRs hold durable decisions
+
+Pass condition:
+
+- the plan says implementation should write an ADR if a non-obvious,
+  durable architecture choice is settled
+- the plan does not claim the `docs/plans/` artifact itself is the final
+  architecture memory
+
+Failure examples:
+
+- no mention of ADRs at all
+- the plan treats itself as the permanent home for architecture reasoning
+
+---
+
+## 9. Verify AC 7: post-merge promotion and cleanup
+
+Check the plan for a post-merge lifecycle.
+
+Pass condition:
+
+- the plan says durable guidance should be promoted into active docs like
+  `CLAUDE.md`, `AGENTS.md`, `docs/DEVELOPMENT.md`, and `docs/ARCHITECTURE.md`
+- the plan says the staging artifact in `docs/plans/` should be deleted after
+  promotion
+
+Failure examples:
+
+- no cleanup path
+- permanent docs are not named
+- plan files are implicitly left behind forever
+
+---
+
+## 10. Lightweight quality checks
 
 Run:
 
@@ -239,6 +284,8 @@ Record the QA result as a short checklist in the ticket comment or working notes
 - AC3: pass/fail + one sentence
 - AC4: pass/fail + one sentence
 - AC5: pass/fail + one sentence
+- AC6: pass/fail + one sentence
+- AC7: pass/fail + one sentence
 - overall verdict: ready / not ready
 
 If there is a failure:
@@ -253,7 +300,7 @@ If there is a failure:
 
 SQR-79 is QA-complete when:
 
-- all five ACs pass
+- all seven ACs pass
 - both plan docs lint cleanly
 - the branch is pushed
 - no PR exists yet

@@ -94,6 +94,14 @@ The repo should tell both tools:
 Do not maintain two independent manuals. `CLAUDE.md` and `AGENTS.md` should be
 parallel entrypoints into the same underlying docs.
 
+### 5. Plans are staging, ADRs are decision memory
+
+This repo treats `docs/plans/` as implementer-facing staging, not as permanent
+architecture memory. If the implementation settles a non-obvious boundary
+between `gstack` runtime state, repo adapters, and long-term project memory,
+that decision should graduate into an ADR and the active-state docs should be
+updated accordingly.
+
 ---
 
 ## Target architecture
@@ -145,12 +153,12 @@ source, but do not overbuild that now.
 
 ## Phase 1 — Add a Codex adapter
 
-### Phase 2 goal
+### Phase 1 goal
 
 Give Codex a first-class repo entrypoint that is structurally equivalent to
 `CLAUDE.md`.
 
-### Phase 2 changes
+### Phase 1 changes
 
 1. Add [`AGENTS.md`](../../AGENTS.md)
 2. Mirror the routing model from [`CLAUDE.md`](../../CLAUDE.md):
@@ -164,7 +172,7 @@ Give Codex a first-class repo entrypoint that is structurally equivalent to
    - using `.mcp.json`
    - preserving writeback into code/docs, not just chat history
 
-### Phase 2 success criteria
+### Phase 1 success criteria
 
 - A Codex session started in this repo has a clear, repo-native operating manual
 - The manual points at the same project rules Claude uses
@@ -173,11 +181,11 @@ Give Codex a first-class repo entrypoint that is structurally equivalent to
 
 ## Phase 2 — Clarify the `gstack` contract in repo docs
 
-### Phase 3 goal
+### Phase 2 goal
 
 Remove ambiguity about what lives where.
 
-### Phase 3 changes
+### Phase 2 changes
 
 1. Update [`CLAUDE.md`](../../CLAUDE.md) `gstack` section to say:
    - `gstack` runtime state is machine-local in `~/.gstack/projects/maz-org-squire/`
@@ -190,7 +198,7 @@ Remove ambiguity about what lives where.
    - [`docs/agent/gstack-state.md`](../agent/gstack-state.md)
    - only if `CLAUDE.md` + `AGENTS.md` start getting too dense
 
-### Phase 3 success criteria
+### Phase 2 success criteria
 
 - Future agents do not mistake repo `.gstack/` for the canonical `gstack` memory store
 - The repo docs match how `gstack` actually works today
@@ -199,12 +207,12 @@ Remove ambiguity about what lives where.
 
 ## Phase 3 — Export the useful part of `gstack` learnings into git
 
-### Phase 4 goal
+### Phase 3 goal
 
 Preserve the best compound-engineering learnings in the repo without trying to
 check in the raw `~/.gstack` state.
 
-### Phase 4 changes
+### Phase 3 changes
 
 1. Add a checked-in synthesis doc, likely:
    - [`docs/agent/learnings.md`](../agent/learnings.md)
@@ -231,7 +239,7 @@ check in the raw `~/.gstack` state.
 - chatty timeline events
 - transient branch/session noise
 
-### Phase 4 success criteria
+### Phase 3 success criteria
 
 - Claude and Codex both benefit from `gstack` learnings through checked-in docs
 - The repo gains durable memory without coupling itself to `gstack`'s internal file format
@@ -260,6 +268,31 @@ Prevent the adapter layer from drifting.
 
 - Drift is caught locally and in CI
 - Updating one tool's adapter without the other becomes hard to do accidentally
+
+---
+
+## ADR trigger and architecture promotion
+
+This work should not assume that a `docs/plans/` artifact is the final resting
+place for the decision. During implementation:
+
+- scan `docs/adr/` first for any existing decisions this work might extend or contradict
+- if the implementation settles a non-obvious, durable architecture choice,
+  write a new ADR instead of burying the reasoning in a plan doc
+- if an ADR changes the active architecture description, update
+  `docs/ARCHITECTURE.md` to reflect the new active state
+
+Likely ADR trigger points:
+
+- the canonical boundary between `~/.gstack/projects/maz-org-squire/` and
+  checked-in repo memory
+- the role of `docs/agent/learnings.md` relative to ADRs and
+  `docs/ARCHITECTURE.md`
+- the long-term division of responsibility among `CLAUDE.md`, `AGENTS.md`,
+  `.mcp.json`, and helper scripts
+
+If none of those choices turn out to be non-obvious in implementation, do not
+force an ADR just to satisfy process.
 
 ---
 
@@ -319,3 +352,17 @@ For Squire, the right move is:
 
 That gives Claude and Codex practical parity without pretending their native
 config systems are identical and without fighting `gstack`'s real model.
+
+---
+
+## Post-merge cleanup
+
+This plan file should not become a permanent dumping ground. After the
+implementation lands:
+
+1. Promote durable operating guidance into `CLAUDE.md`, `AGENTS.md`, and
+   `docs/DEVELOPMENT.md`
+2. Promote any active architecture change into `docs/ARCHITECTURE.md`
+3. Capture non-obvious architectural reasoning in an ADR when warranted
+4. Delete the staging plan files in `docs/plans/` once their load-bearing
+   content has been promoted
