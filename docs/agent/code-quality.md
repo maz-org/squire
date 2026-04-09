@@ -13,6 +13,12 @@
      All four run in CI and via `lint-staged` on pre-commit. CodeRabbit is
      configured to defer to stylelint for CSS findings (see `.coderabbit.yaml`)
      — CI is the single source of truth for CSS style.
+   - **Custom layering rules** enforce the application architecture at lint time.
+     See [lint-rules.md](lint-rules.md) for the 6 rules that prevent views from
+     importing auth modules, repositories from leaking row types, inline HTML
+     from bypassing the design system, and authenticated routes from missing
+     cache headers. Error messages include `FIX:` instructions so agents can
+     self-correct.
 
 2. **Document Design Choices**
    - When making a non-obvious design choice, document **why** in a code comment or markdown file — not just in PR descriptions or review replies
