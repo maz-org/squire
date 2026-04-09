@@ -19,7 +19,7 @@
  *   11. Expired session -> JSON 401 on /auth/me, browser redirect on page routes
  *
  * Edge cases:
- *   10. Session cookie attributes (HttpOnly, SameSite=Strict, path)
+ *   10. Session cookie attributes (HttpOnly, SameSite=Lax, path)
  *   11. Sessions survive server pool teardown (Postgres persistence)
  *   12. Cookie auth on /auth/me doesn't leak into bearer-protected /api/*
  *
@@ -450,7 +450,7 @@ describe('Session middleware rejection', () => {
 // ─── Edge cases ─────────────────────────────────────────────────────────────
 
 describe('Cookie attributes', () => {
-  it('10. session cookie is HttpOnly, SameSite=Strict, path=/', async () => {
+  it('10. session cookie is HttpOnly, SameSite=Lax, path=/', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
 
@@ -460,7 +460,7 @@ describe('Cookie attributes', () => {
 
     const lower = sessionHeader!.toLowerCase();
     expect(lower).toContain('httponly');
-    expect(lower).toContain('samesite=strict');
+    expect(lower).toContain('samesite=lax');
     expect(lower).toContain('path=/');
     // Secure is NOT set in test env (NODE_ENV !== 'production')
     // max-age should be ~30 days

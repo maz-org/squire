@@ -205,7 +205,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 - Content Security Policy headers (no inline scripts)
 - If rendering markdown, use a sanitizing renderer that strips HTML
   tags
-- HttpOnly, Secure, SameSite=Strict cookies
+- HttpOnly, Secure, SameSite=Lax cookies
 
 ### 8. Supply Chain / Data Pipeline
 

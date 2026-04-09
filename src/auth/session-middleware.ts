@@ -6,7 +6,7 @@
  * Protected routes (like /chat) get requireSession(); public pages like the
  * homepage get optionalSession() so the layout can adapt.
  *
- * Cookie attributes: HttpOnly, SameSite=Strict, signed via SESSION_SECRET.
+ * Cookie attributes: HttpOnly, SameSite=Lax, signed via SESSION_SECRET.
  * Secure is conditional: true in production, false in dev (localhost HTTP).
  *
  * This is separate from `requireBearerAuth()` in server.ts, which protects
@@ -145,7 +145,10 @@ export async function setSessionCookie(c: Context, sessionId: string): Promise<v
     path: '/',
     httpOnly: true,
     secure: isSecureContext(),
-    sameSite: 'Strict',
+    // OAuth returns from accounts.google.com to our callback, then immediately
+    // redirects to "/". Strict cookies are too aggressive for that flow and
+    // get dropped on the first post-login navigation in real browsers.
+    sameSite: 'Lax',
     maxAge: SESSION_LIFETIME_MS / 1000, // convert ms to seconds for cookie maxAge
   });
 }
