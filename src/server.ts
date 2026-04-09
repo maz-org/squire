@@ -43,8 +43,8 @@ import {
   requireSession,
   setSessionCookie,
   clearSessionCookie,
-  SESSION_COOKIE_NAME,
 } from './auth/session-middleware.ts';
+import { createCsrfToken, requireCsrf } from './auth/csrf.ts';
 import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
 import { renderAuthErrorPage } from './web-ui/auth-error-page.ts';
@@ -161,10 +161,19 @@ app.get('/', optionalSession(), async (c) => {
   // returns a constant string without I/O. See ADR 0011
   // fingerprinting addendum, "What this does not solve".
   try {
-    return c.html(await renderHomePage(c.get('session')));
+    const session = c.get('session');
+    return c.html(await renderHomePage(session, session ? createCsrfToken(session.id) : undefined));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.html(await layoutShell({ errorBanner: { message }, session: c.get('session') }), 500);
+    const session = c.get('session');
+    return c.html(
+      await layoutShell({
+        errorBanner: { message },
+        session,
+        csrfToken: session ? createCsrfToken(session.id) : undefined,
+      }),
+      500,
+    );
   }
 });
 
@@ -400,21 +409,20 @@ app.get('/auth/google/callback', async (c) => {
   }
 });
 
-app.post('/auth/logout', async (c) => {
-  const secret = getSessionSecret();
-  const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
-  if (sessionId) {
-    const userId = await SessionRepository.destroy(sessionId);
-    if (userId) {
-      const { db } = getDb('server');
-      await writeAuditEvent(db, {
-        eventType: 'google_logout',
-        userId,
-        outcome: 'success',
-        ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
-        userAgent: c.req.header('user-agent'),
-      });
-    }
+app.post('/auth/logout', requireSession(), requireCsrf(), async (c) => {
+  const session = c.get('session')!;
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  const userId = await SessionRepository.destroy(session.id);
+  if (userId) {
+    const { db } = getDb('server');
+    await writeAuditEvent(db, {
+      eventType: 'google_logout',
+      userId,
+      outcome: 'success',
+      ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+      userAgent: c.req.header('user-agent'),
+    });
   }
   clearSessionCookie(c);
   return c.redirect('/');
@@ -433,6 +441,8 @@ app.get('/auth/me', requireSession(), async (c) => {
 // Protect /chat routes with session cookie auth
 app.use('/chat/*', requireSession());
 app.use('/chat', requireSession());
+app.use('/chat/*', requireCsrf());
+app.use('/chat', requireCsrf());
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 
