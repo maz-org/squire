@@ -95,11 +95,8 @@ export default {
 
         if (!handler || !handler.body) return;
 
-        // For expression-body handlers, wrap in a synthetic check
-        const bodyNode = handler.body.type === 'BlockStatement' ? handler.body : handler.body;
-
         // AST walk: find c.header('Cache-Control', 'no-store') calls
-        const hasCacheControl = checkForCacheControl(bodyNode, context);
+        const hasCacheControl = checkForCacheControl(handler.body, context);
 
         if (!hasCacheControl) {
           context.report({

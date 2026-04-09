@@ -11,6 +11,7 @@ export default defineConfig({
     // Seed card_* tables ONCE per run. Per-file seeding raced under vitest's
     // parallel runner — see test/helpers/global-setup.ts for the gory details.
     globalSetup: ['./test/helpers/global-setup.ts'],
+    setupFiles: ['./test/helpers/vitest-eslint-setup.js'],
     sequence: { shuffle: true },
     // Every DB-backed test file truncates and repopulates the same
     // `squire_test` database in `beforeEach`. Under vitest's default
