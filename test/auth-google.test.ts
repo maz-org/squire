@@ -132,6 +132,15 @@ function withSession(url: string, cookie: string, init?: RequestInit) {
   });
 }
 
+async function fetchCsrfToken(cookie: string): Promise<string> {
+  const res = await withSession('http://localhost:3000/', cookie);
+  expect(res.status).toBe(200);
+  const body = await res.text();
+  const match = body.match(/<meta name="csrf-token" content="([^"]+)"/);
+  expect(match).toBeTruthy();
+  return match![1];
+}
+
 // ─── Lifecycle ──────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
@@ -207,10 +216,12 @@ describe('Logout', () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
 
     const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
       method: 'POST',
       redirect: 'manual',
+      headers: { 'x-csrf-token': csrfToken },
     });
 
     expect(logoutRes.status).toBe(302);
@@ -223,10 +234,49 @@ describe('Logout', () => {
   });
 });
 
+describe('CSRF protection', () => {
+  it('4. POST /auth/logout without a token returns 403 and keeps the session', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { Accept: 'text/html' },
+    });
+
+    expect(logoutRes.status).toBe(403);
+    expect(await logoutRes.text()).toContain(
+      'Security check failed. Refresh the page and try again.',
+    );
+
+    const { db } = getDb('server');
+    expect(await db.select().from(sessions)).toHaveLength(1);
+  });
+
+  it('5. POST /auth/logout with an invalid token returns 403 and keeps the session', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'x-csrf-token': 'invalid-token' },
+    });
+
+    expect(logoutRes.status).toBe(403);
+
+    const { db } = getDb('server');
+    expect(await db.select().from(sessions)).toHaveLength(1);
+  });
+});
+
 // ─── Sad paths ──────────────────────────────────────────────────────────────
 
 describe('Callback rejection', () => {
-  it('4. email not in allowlist -> 403, no user or session created', async () => {
+  it('6. email not in allowlist -> 403, no user or session created', async () => {
     process.env.SQUIRE_ALLOWED_EMAILS = 'other@example.com';
     mockGoogleSuccess();
 
@@ -238,13 +288,13 @@ describe('Callback rejection', () => {
     expect(await db.select().from(sessions)).toHaveLength(0);
   });
 
-  it('5. invalid state parameter -> 400', async () => {
+  it('7. invalid state parameter -> 400', async () => {
     mockGoogleSuccess();
     const res = await walkOAuthFlow({ overrideState: 'tampered-state' });
     expect(res.status).toBe(400);
   });
 
-  it('6. Google token verification failure -> 400', async () => {
+  it('8. Google token verification failure -> 400', async () => {
     mockGetToken.mockResolvedValueOnce({ tokens: { id_token: 'bad-token' } });
     mockVerifyIdToken.mockRejectedValueOnce(new Error('Verification failed'));
 
@@ -252,7 +302,7 @@ describe('Callback rejection', () => {
     expect(res.status).toBe(400);
   });
 
-  it('7. Google code exchange failure -> 400', async () => {
+  it('9. Google code exchange failure -> 400', async () => {
     mockGetToken.mockRejectedValueOnce(new Error('Exchange failed'));
 
     const res = await walkOAuthFlow();
@@ -261,12 +311,12 @@ describe('Callback rejection', () => {
 });
 
 describe('Session middleware rejection', () => {
-  it('8. missing cookie -> 401', async () => {
+  it('10. missing cookie -> 401', async () => {
     const res = await app.request('http://localhost:3000/auth/me');
     expect(res.status).toBe(401);
   });
 
-  it('9. expired session -> 401, session row deleted', async () => {
+  it('11. expired session -> 401, session row deleted', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;

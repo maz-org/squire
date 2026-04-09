@@ -22,6 +22,9 @@ import {
   getSquireJs,
   getSquireJsUrl,
 } from '../src/web-ui/assets.ts';
+import { createCsrfToken } from '../src/auth/csrf.ts';
+
+process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
 vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
@@ -83,7 +86,7 @@ const testSession: Session = {
 
 /** mockRenderHomePage impl that renders as logged-in. */
 function loggedInHomePage() {
-  return actualLayout.renderHomePage(testSession);
+  return actualLayout.renderHomePage(testSession, createCsrfToken(testSession.id));
 }
 
 /** mockRenderHomePage impl that renders as logged-out. */
@@ -160,6 +163,13 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     const res = await app.request('/');
     const body = await res.text();
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/api\/ask"/);
+  });
+
+  it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toMatch(/<meta name="csrf-token" content="[^"]+"/);
+    expect(body).toMatch(/hx-headers='\{"x-csrf-token":"[^"]+"\}'/);
   });
 });
 

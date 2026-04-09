@@ -49,6 +49,11 @@ export interface LayoutShellOptions {
    * fonts, colors). The layout never touches the Hono context or DB.
    */
   session?: Session;
+  /**
+   * Per-session CSRF token for mutating web UI routes. Rendered into the
+   * document head and inherited by HTMX requests via `hx-headers`.
+   */
+  csrfToken?: string;
 }
 
 /**
@@ -61,6 +66,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // The layout adapts chrome based on whether a session was provided.
   // Session present = logged in = full chrome. Absent = brand only.
   const authenticated = options.session !== undefined;
+  const csrfToken = options.csrfToken;
 
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin
@@ -138,11 +144,15 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <title>Squire</title>
+        ${csrfToken ? html`<meta name="csrf-token" content="${csrfToken}" />` : html``}
         ${preconnects}
         <link rel="stylesheet" href="${GOOGLE_FONTS_HREF}" />
         <link rel="stylesheet" href="${cssUrl}" />
       </head>
-      <body class="squire-body">
+      <body
+        class="squire-body"
+        ${authenticated && csrfToken ? html`hx-headers='{"x-csrf-token":"${csrfToken}"}'` : html``}
+      >
         ${!authenticated
           ? html``
           : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
@@ -215,6 +225,9 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
  * point that tests can stub via `vi.mock` to exercise the server-side error
  * fallback branch.
  */
-export async function renderHomePage(session?: Session): Promise<HtmlEscapedString> {
-  return layoutShell({ session });
+export async function renderHomePage(
+  session?: Session,
+  csrfToken?: string,
+): Promise<HtmlEscapedString> {
+  return layoutShell({ session, csrfToken });
 }
