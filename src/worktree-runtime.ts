@@ -40,7 +40,8 @@ export interface PortClaim {
 const DEFAULT_LOCAL_PORT = 3000;
 const WORKTREE_PORT_BASE = 4000;
 const WORKTREE_PORT_SPAN = 2000;
-const PORT_CLAIM_DIR = path.join(homedir(), '.codex', 'port-claims', 'squire');
+const PORT_CLAIM_DIR =
+  process.env.SQUIRE_PORT_CLAIM_DIR ?? path.join(homedir(), '.codex', 'port-claims', 'squire');
 
 let cachedRuntime: WorktreeRuntime | null = null;
 

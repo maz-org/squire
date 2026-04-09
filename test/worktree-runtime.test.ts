@@ -1,19 +1,37 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  claimWorktreePort,
-  deriveCheckoutSlug,
-  deriveDefaultPort,
-  deriveManagedDatabaseNames,
-} from '../src/worktree-runtime.ts';
+let claimWorktreePort: typeof import('../src/worktree-runtime.ts').claimWorktreePort;
+let deriveCheckoutSlug: typeof import('../src/worktree-runtime.ts').deriveCheckoutSlug;
+let deriveDefaultPort: typeof import('../src/worktree-runtime.ts').deriveDefaultPort;
+let deriveManagedDatabaseNames: typeof import('../src/worktree-runtime.ts').deriveManagedDatabaseNames;
 
-const claimDir = path.join(homedir(), '.codex', 'port-claims', 'squire');
+const originalClaimDir = process.env.SQUIRE_PORT_CLAIM_DIR;
+const claimRoot = await mkdtemp(path.join(tmpdir(), 'squire-port-claims-'));
+const claimDir = path.join(claimRoot, 'squire');
+
+beforeAll(async () => {
+  process.env.SQUIRE_PORT_CLAIM_DIR = claimDir;
+  ({ claimWorktreePort, deriveCheckoutSlug, deriveDefaultPort, deriveManagedDatabaseNames } =
+    await import('../src/worktree-runtime.ts'));
+});
 
 afterEach(async () => {
-  await rm(claimDir, { force: true, recursive: true });
+  await rm(claimRoot, { force: true, recursive: true });
+  await mkdir(claimDir, { recursive: true });
+});
+
+afterAll(async () => {
+  await rm(claimRoot, { force: true, recursive: true });
+
+  if (originalClaimDir === undefined) {
+    delete process.env.SQUIRE_PORT_CLAIM_DIR;
+    return;
+  }
+
+  process.env.SQUIRE_PORT_CLAIM_DIR = originalClaimDir;
 });
 
 describe('worktree runtime derivation', () => {

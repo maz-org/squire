@@ -677,7 +677,7 @@ export async function startServer(): Promise<void> {
       } catch (error) {
         await claim.release();
         const errno = error as NodeJS.ErrnoException;
-        if (errno.code !== 'EADDRINUSE') throw error;
+        if (errno.code !== 'EADDRINUSE' || runtime.isMainCheckout) throw error;
       }
     }
   }
