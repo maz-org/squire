@@ -14,11 +14,19 @@ export type Learning = {
 };
 
 export function parseLearningsJsonl(text: string): Learning[] {
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => JSON.parse(line) as Learning);
+  const records: Learning[] = [];
+
+  for (const line of text.split('\n').map((entry) => entry.trim())) {
+    if (line.length === 0) continue;
+
+    try {
+      records.push(JSON.parse(line) as Learning);
+    } catch {
+      // Ignore malformed local learnings rather than aborting the whole export.
+    }
+  }
+
+  return records;
 }
 
 export function selectCuratedLearnings(records: Learning[]): Learning[] {
@@ -69,7 +77,7 @@ export function renderLearningsMarkdown(records: Learning[]): string {
   }
 
   if (records.length === 0) {
-    sections.push('', '## Current state', '', '- No curated learnings yet.');
+    sections.push('', 'No curated learnings yet.');
   }
 
   return `${sections.join('\n')}\n`;

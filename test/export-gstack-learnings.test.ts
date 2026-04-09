@@ -17,6 +17,16 @@ describe('gstack learnings export', () => {
     expect(records[1]?.key).toBe('two');
   });
 
+  it('skips malformed jsonl lines instead of aborting the export', () => {
+    const records = parseLearningsJsonl(
+      '{"key":"one","insight":"First","confidence":9}\nnot-json\n{"key":"two","insight":"Second","confidence":10}\n',
+    );
+
+    expect(records).toHaveLength(2);
+    expect(records[0]?.key).toBe('one');
+    expect(records[1]?.key).toBe('two');
+  });
+
   it('keeps latest high-confidence unique records by key', () => {
     const records = [
       { key: 'same', insight: 'Old', confidence: 9, ts: '2026-04-08T00:00:00.000Z' },
@@ -53,5 +63,12 @@ describe('gstack learnings export', () => {
     expect(markdown).toContain('## Patterns');
     expect(markdown).toContain('**pitfall-one**');
     expect(markdown).toContain('**pattern-one**');
+  });
+
+  it('renders the documented empty state without an extra section header', () => {
+    const markdown = renderLearningsMarkdown([]);
+
+    expect(markdown).toContain('No curated learnings yet.');
+    expect(markdown).not.toContain('## Current state');
   });
 });

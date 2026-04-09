@@ -255,8 +255,6 @@ Failure examples:
 
 ---
 
-## 10. Lightweight quality checks
-
 ## 10. Verify AC 8: concrete maintenance workflow
 
 Check the plan for explicit command-level guidance.
