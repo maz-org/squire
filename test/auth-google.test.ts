@@ -227,6 +227,8 @@ describe('Authenticated web UI', () => {
     expect(body).toContain('Brian');
     expect(body).toContain('action="/auth/logout"');
     expect(body).toContain('Log out');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
   });
 });
 
@@ -269,6 +271,8 @@ describe('CSRF protection', () => {
     expect(await logoutRes.text()).toContain(
       'Security check failed. Refresh the page and try again.',
     );
+    expect(logoutRes.headers.get('cache-control')).toBe('no-store');
+    expect(logoutRes.headers.get('vary')).toContain('Cookie');
 
     const { db } = getDb('server');
     expect(await db.select().from(sessions)).toHaveLength(1);

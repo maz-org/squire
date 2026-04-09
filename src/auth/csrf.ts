@@ -76,6 +76,10 @@ async function csrfErrorResponse(c: Context) {
 
   const accept = c.req.header('accept') ?? '';
   if (accept.includes('text/html')) {
+    if (c.get('session')) {
+      c.header('Cache-Control', 'no-store');
+      c.header('Vary', 'Cookie');
+    }
     return c.html(
       await layoutShell({
         mainContent: csrfErrorFragment(),

@@ -167,10 +167,16 @@ app.get('/', optionalSession(), async (c) => {
   try {
     const session = c.get('session');
     if (!session) return c.redirect('/login');
+    c.header('Cache-Control', 'no-store');
+    c.header('Vary', 'Cookie');
     return c.html(await renderHomePage(session, createCsrfToken(session.id)));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     const session = c.get('session');
+    if (session) {
+      c.header('Cache-Control', 'no-store');
+      c.header('Vary', 'Cookie');
+    }
     return c.html(
       await layoutShell({
         errorBanner: { message },
