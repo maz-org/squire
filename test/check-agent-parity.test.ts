@@ -20,8 +20,9 @@ Repo-local \`.gstack/\`
 `;
 
     const issues = collectParityIssues({
-      agents: shared,
-      claude: shared,
+      agents: 'docs/agent/agent-baseline.md',
+      baseline: shared,
+      claude: 'docs/agent/agent-baseline.md',
       development: 'AGENTS.md ~/.gstack/projects/maz-org-squire/ .mcp.json',
       mcp: JSON.stringify({ mcpServers: { squire: { url: 'http://localhost:3000/mcp' } } }),
     });
@@ -32,13 +33,16 @@ Repo-local \`.gstack/\`
   it('reports missing shared references and MCP drift', () => {
     const issues = collectParityIssues({
       agents: '',
+      baseline: '',
       claude: '',
       development: '',
       mcp: JSON.stringify({ mcpServers: { squire: { url: 'http://localhost:9999/mcp' } } }),
     });
 
-    expect(issues).toContain('AGENTS.md is missing shared reference: docs/agent/issue-workflow.md');
-    expect(issues).toContain('CLAUDE.md does not mention canonical gstack runtime state');
+    expect(issues).toContain(
+      'docs/agent/agent-baseline.md is missing shared reference: docs/agent/issue-workflow.md',
+    );
+    expect(issues).toContain('CLAUDE.md does not point to the shared baseline');
     expect(issues).toContain('docs/DEVELOPMENT.md does not mention AGENTS.md');
     expect(issues).toContain(
       '.mcp.json expected squire MCP URL http://localhost:3000/mcp, got http://localhost:9999/mcp',
