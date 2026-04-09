@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- checkout-local runtime defaults for dev DBs, test DBs, and local server ports
+  so parallel worktrees stop sharing the same local runtime by accident
+- two planning artifacts for SQR-80: an engineering review checkpoint and a QA
+  plan under `docs/plans/`
+
+- linked worktrees now coordinate local port claims inside the managed
+  `4000-5999` range instead of trusting a pure hash-to-port mapping
+- migration/reset scripts, runtime DB resolution, and tests now share the same
+  checkout-local database naming model
+- README, DEVELOPMENT, and CONTRIBUTING now explain the worktree-local runtime
+  model and bootstrap expectations more clearly
+
 ## [0.1.2] - 2026-04-09
 
 ### Added

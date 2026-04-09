@@ -56,10 +56,9 @@ npm run index             # populate rulebook embeddings from data/pdfs/
 
 Local defaults are now **checkout-local**:
 
-- main checkout: dev DB `squire`, test DB `squire_test`, default port `3000`
+- main checkout: dev DB `squire`, test DB `squire_test`, preferred port `3000`
 - linked worktree: derived defaults based on the checkout path, for example
-  `squire_<slug>`, `squire_<slug>_test`, and a deterministic non-3000 local
-  port
+  `squire_<slug>`, `squire_<slug>_test`, and a preferred non-3000 local port
 
 This lets two worktrees run migrations, tests, and dev servers concurrently
 without sharing the same local runtime resources by accident.
@@ -68,7 +67,7 @@ Environment variables still win:
 
 - `DATABASE_URL` overrides the derived dev DB
 - `TEST_DATABASE_URL` overrides the derived test DB
-- `PORT` overrides the derived default port
+- `PORT` overrides the derived default or claimed port
 
 For a fresh linked worktree, `npm run db:migrate` / `npm run db:migrate:test`
 will create the managed local database automatically if it does not exist yet.
@@ -92,10 +91,11 @@ database target. It refuses unrelated database names.
 npm run serve
 ```
 
-The server uses a deterministic checkout-local default port:
+The server chooses a checkout-local port in two steps:
 
 - main checkout: `3000`
-- linked worktree: derived from the checkout path
+- linked worktree: start from the checkout-derived preferred port, then claim
+  the first available port in the managed `4000-5999` range
 
 Override with `PORT` if you want a specific port. On startup, the server logs
 the final port it selected. It initializes the vector index, verifies
@@ -115,7 +115,9 @@ curl http://localhost:3000/api/health
 # {"ready":true,"index_size":2147}
 ```
 
-For linked worktrees, replace `3000` with that worktree's logged port.
+For linked worktrees, replace `3000` with that worktree's logged port. Do not
+assume the derived preferred port won the race if another worktree or local
+process was already using it.
 
 Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 

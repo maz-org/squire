@@ -210,9 +210,16 @@ server:
 ```bash
 docker compose up -d
 npm run db:migrate
+npm run db:migrate:test   # if you plan to run the test suite in this checkout
 npm run index        # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
 npm run seed:dev     # seeds card_* tables + a local dev user
 ```
+
+Main checkout defaults to the `squire` / `squire_test` databases and port
+`3000`. Linked worktrees derive checkout-local DB names and a preferred local
+port, then coordinate within the managed `4000-5999` range so parallel agents
+can run without manual port surgery. Trust `npm run serve` startup output for
+the final port.
 
 `npm run seed:dev` is the one-shot local bundle. It chains
 `npm run seed:cards` (the prod-relevant default, also aliased as
