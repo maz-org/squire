@@ -194,6 +194,11 @@ describe('/auth/me', () => {
     expect(body.email).toBe(TEST_USER.email);
     expect(body.name).toBe(TEST_USER.name);
     expect(body.id).toBeTruthy();
+
+    // Regression: /auth/me returns per-user PII and must not be cached
+    // by proxies or CDNs. CodeRabbit PR #211 review, fixed in 6ad9313.
+    expect(meRes.headers.get('cache-control')).toBe('no-store');
+    expect(meRes.headers.get('vary')).toContain('Cookie');
   });
 });
 
