@@ -52,11 +52,11 @@ export function buildLaunchAgentPlist(repoRoot: string): string {
 }
 
 export function shouldInstallLaunchAgent(): { install: boolean; reason?: string } {
-  if (process.platform !== 'darwin') {
-    return { install: false, reason: 'non-macOS environment' };
-  }
   if (process.env.CI === 'true') {
     return { install: false, reason: 'CI environment' };
+  }
+  if (process.platform !== 'darwin') {
+    return { install: false, reason: 'non-macOS environment' };
   }
   if (!homedir()) {
     return { install: false, reason: 'HOME is not set' };
