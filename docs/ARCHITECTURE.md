@@ -123,13 +123,15 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 ### Authentication
 
-- **Approach:** custom Hono middleware. Google OAuth as the only identity provider for the web channel (extends the existing OAuth 2.1 infrastructure already built for the MCP layer). Server-side sessions stored in Postgres. HttpOnly + Secure + SameSite=Strict cookies. CSRF tokens for mutating endpoints.
+Two isolated auth systems, one per channel:
 
-*Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing, reuses code that already exists for MCP. Single IdP for the web channel keeps the surface area tiny.*
+**Web channel: Google OAuth + Postgres sessions** (`src/auth/google.ts`, `src/auth/session-middleware.ts`). Squire acts as an OAuth **client**, redirecting users to Google for consent. The callback verifies the ID token via `google-auth-library`, checks a hard-coded email allowlist (Phase 1, ADR 0009), upserts the user, and creates a server-side session in the `sessions` table. Session cookie: HttpOnly, Secure (production only), SameSite=Strict, signed via `SESSION_SECRET`. 30-day expiry matching the long-lived token DX policy. PKCE state and code_verifier are stored in a short-lived signed cookie during the OAuth flow. CSRF protection for mutating endpoints lands in SQR-39.
 
-For Phase 1 the web channel additionally enforces a hard-coded email allowlist constant in the OAuth callback — see [ADR 0009 — Google OAuth + hard-coded allowlist](adr/0009-google-oauth-with-hardcoded-allowlist.md).
+**MCP/REST channel: OAuth 2.1 bearer tokens** (`src/auth/provider.ts`, `src/auth.ts`). Squire acts as an OAuth **server** via the `@modelcontextprotocol/sdk` auth handlers (auth code + PKCE for interactive, client credentials for machine-to-machine, dynamic client registration). MCP bearer tokens are long-lived per [ADR 0002](adr/0002-long-lived-oauth-bearer-tokens.md).
 
-External MCP / REST clients use OAuth 2.1 via the existing `@modelcontextprotocol/sdk` auth handlers (auth code + PKCE for interactive, client credentials for machine-to-machine, dynamic client registration supported). MCP bearer tokens are long-lived per [ADR 0002](adr/0002-long-lived-oauth-bearer-tokens.md); web sessions follow the same policy with a 30-day cookie.
+The two systems are deliberately isolated: different mechanisms (cookies vs bearer tokens), different threat models, different middleware (`requireSession()` vs `requireBearerAuth()`). Web routes (`/auth/*`, `/chat`) use session cookies. API/MCP routes (`/api/*`, `/mcp`) use bearer tokens. No crossover.
+
+*Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. Single IdP (Google) for the web channel keeps the surface area tiny. See [ADR 0009 — Google OAuth + hard-coded allowlist](adr/0009-google-oauth-with-hardcoded-allowlist.md).*
 
 ### Edge layer
 
@@ -502,8 +504,10 @@ Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. P
 ```text
 src/
   agent.ts                      Conversation + knowledge agent loop, model invocation
-  auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1) + Google OAuth web
+  auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1 for MCP/REST)
   auth/
+    google.ts                   Google OAuth web login: consent URL, callback, allowlist, session CRUD
+    session-middleware.ts       Hono middleware: signed cookie -> Postgres session -> userId on context
     provider.ts                 SquireOAuthProvider — MCP SDK OAuthServerProvider impl (Drizzle-backed)
     clients-store.ts            DrizzleClientsStore — OAuthRegisteredClientsStore impl
     audit.ts                    OAuth audit event writer (same txn as mutations)

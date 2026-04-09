@@ -26,6 +26,24 @@ import {
   verifyAccessToken,
   OAuthError,
 } from './auth.ts';
+import {
+  generateState,
+  generateCodeVerifier,
+  computeCodeChallenge,
+  buildGoogleAuthUrl,
+  handleGoogleCallback,
+  destroySession,
+  getUserById,
+  getSessionSecret,
+  GoogleAuthError,
+} from './auth/google.ts';
+import {
+  requireSession,
+  setSessionCookie,
+  clearSessionCookie,
+  SESSION_COOKIE_NAME,
+} from './auth/session-middleware.ts';
+import { setSignedCookie, getSignedCookie } from 'hono/cookie';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
 import { getAppCss, getSquireJs } from './web-ui/assets.ts';
 
@@ -288,6 +306,141 @@ app.post('/token', async (c) => {
 
   return c.json(oauthError('unsupported_grant_type', `Unsupported grant_type: ${grantType}`), 400);
 });
+
+// ─── Google OAuth web login (SQR-38) ────────────────────────────────────────
+//
+// Squire acts as an OAuth CLIENT here (redirecting to Google). This is separate
+// from the OAuth SERVER above (which serves MCP/API clients). The two auth
+// systems use different transports (cookies vs bearer tokens) and are
+// deliberately isolated.
+
+const PKCE_COOKIE_NAME = 'squire_oauth_pkce';
+
+app.get('/auth/google/start', async (c) => {
+  const state = generateState();
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = computeCodeChallenge(codeVerifier);
+
+  // Store state + code_verifier in a short-lived signed cookie (5-min expiry)
+  const secret = getSessionSecret();
+  const pkceData = JSON.stringify({ state, codeVerifier });
+  await setSignedCookie(c, PKCE_COOKIE_NAME, pkceData, secret, {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax', // Lax so the cookie survives the Google redirect back
+    maxAge: 300, // 5 minutes
+  });
+
+  const url = buildGoogleAuthUrl(state, codeChallenge);
+  return c.redirect(url);
+});
+
+app.get('/auth/google/callback', async (c) => {
+  // Check for error from Google (e.g., user clicked Cancel)
+  const error = c.req.query('error');
+  if (error) {
+    return c.html(authErrorPage('Google sign-in was cancelled or failed.'), 400 as const);
+  }
+
+  const code = c.req.query('code');
+  const state = c.req.query('state');
+  if (!code || !state) {
+    return c.html(authErrorPage('Missing code or state parameter.'), 400 as const);
+  }
+
+  // Read and consume the PKCE cookie
+  const secret = getSessionSecret();
+  const pkceCookieRaw = await getSignedCookie(c, secret, PKCE_COOKIE_NAME);
+  let cookieState: string | undefined;
+  let cookieVerifier: string | undefined;
+  if (pkceCookieRaw) {
+    try {
+      const parsed = JSON.parse(pkceCookieRaw);
+      cookieState = parsed.state;
+      cookieVerifier = parsed.codeVerifier;
+    } catch {
+      // Malformed cookie, will fail state check below
+    }
+  }
+
+  try {
+    const result = await handleGoogleCallback(
+      code,
+      state,
+      cookieState,
+      cookieVerifier,
+      c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+      c.req.header('user-agent'),
+    );
+
+    await setSessionCookie(c, result.sessionId);
+    return c.redirect('/');
+  } catch (err) {
+    if (err instanceof GoogleAuthError) {
+      const status = err.status as 400 | 403;
+      return c.html(authErrorPage(err.message), status);
+    }
+    // Log unexpected errors for debugging
+    console.error('[auth/google/callback] unexpected error:', err);
+    throw err;
+  }
+});
+
+app.post('/auth/logout', async (c) => {
+  const secret = getSessionSecret();
+  const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
+  if (sessionId) {
+    await destroySession(
+      sessionId,
+      c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+      c.req.header('user-agent'),
+    );
+  }
+  clearSessionCookie(c);
+  return c.redirect('/');
+});
+
+// /auth/me: returns current user JSON for HTMX header. Behind session middleware.
+app.get('/auth/me', requireSession(), async (c) => {
+  // userId is set by requireSession() middleware via c.set('userId', ...)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userId = (c as any).get('userId') as string;
+  const user = await getUserById(userId);
+  if (!user) {
+    return c.json({ error: 'User not found', status: 404 }, 404);
+  }
+  return c.json({ id: user.id, email: user.email, name: user.name });
+});
+
+// Protect /chat routes with session cookie auth
+app.use('/chat/*', requireSession());
+app.use('/chat', requireSession());
+
+/**
+ * Minimal HTML error page for Google OAuth failures (browser flow).
+ * Separate from oauthError() which returns JSON for MCP/API clients.
+ */
+function authErrorPage(message: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Squire - Sign In Error</title></head>
+<body style="font-family: system-ui, sans-serif; max-width: 480px; margin: 60px auto; padding: 0 20px; text-align: center;">
+  <h1 style="font-size: 1.5rem; color: #333;">Sign In Error</h1>
+  <p style="color: #666;">${escapeHtml(message)}</p>
+  <a href="/auth/google/start" style="display: inline-block; margin-top: 20px; padding: 10px 24px; background: #4285f4; color: white; text-decoration: none; border-radius: 4px;">Try Again</a>
+  <br><a href="/" style="display: inline-block; margin-top: 12px; color: #666; text-decoration: underline;">Back to Home</a>
+</body>
+</html>`;
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 
