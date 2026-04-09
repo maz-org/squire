@@ -148,7 +148,7 @@ See [Observability](#observability) below.
 
 ## Application Layering
 
-Squire's server code is organized in four layers. Dependencies flow down only: a route handler can call middleware and repositories, but a repository never renders HTML and a view never queries the database.
+Squire's server code is organized in four layers. Dependencies flow down only: a route handler can call middleware and repositories, but a repository never renders HTML and a view never queries the database. These boundaries are enforced by custom ESLint rules (see [docs/agent/lint-rules.md](agent/lint-rules.md)).
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
