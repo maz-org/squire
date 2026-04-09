@@ -62,6 +62,13 @@ npm run seed:dev
 
 For the full contributor walkthrough, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
+## Documentation
+
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for local setup, env vars, MCP wiring, and data workflows
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the full macOS contributor walkthrough
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design, auth boundaries, and runtime topology
+- [docs/SECURITY.md](docs/SECURITY.md) for the standing security review and mitigation backlog
+
 ## Usage
 
 ### API server

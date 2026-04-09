@@ -221,6 +221,13 @@ port, then coordinate within the managed `4000-5999` range so parallel agents
 can run without manual port surgery. Trust `npm run serve` startup output for
 the final port.
 
+Fresh linked worktrees need that whole bootstrap, not just `npm run serve`.
+In practice: bring up Docker, run the migrations, build the embeddings index,
+and run `npm run seed:dev` so the checkout has card data plus the predictable
+`dev@squire.local` account. Also make sure `.env` includes `SESSION_SECRET`.
+Without it, the anonymous homepage can still load, but authenticated routes
+and browser QA fail once session cookies or CSRF checks are exercised.
+
 `npm run seed:dev` is the one-shot local bundle. It chains
 `npm run seed:cards` (the prod-relevant default, also aliased as
 `npm run seed`) and `npm run seed:dev-user` (inserts a predictable dev
@@ -370,6 +377,7 @@ data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 
 ## Changelog
 
+- **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated testing needs the full local bootstrap (`docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) plus `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
 - **2026-04-08:** SQR-36 — local bootstrap swapped from `npm run seed:cards` to `npm run seed:dev`, which chains `seed:cards` and the new idempotent `seed:dev-user` helper (inserts a predictable `dev@squire.local` account for testing authenticated paths). New `seed` alias targets `seed:cards` as the prod-relevant default. The dev-user CLI refuses to run with `NODE_ENV=production`.
 - **2026-04-08:** SQR-56 — clarified that `data/extracted/*.json` is now a seed input, not the runtime store. Card data lives in Postgres `card_*` tables; `npm run seed:cards` is the bridge.
 - **2026-04-07:** Final-pass cleanup. Removed stale Git LFS install step and `--recurse-submodules` clone flag — extracted card data and the vector index are committed as regular files (not LFS, no submodules) since PR #162.
