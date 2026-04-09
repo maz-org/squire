@@ -61,11 +61,40 @@ const actualLayout =
   await vi.importActual<typeof import('../src/web-ui/layout.ts')>('../src/web-ui/layout.ts');
 
 import { app } from '../src/server.ts';
+import type { Session } from '../src/db/repositories/types.ts';
+
+/** A test session object for logged-in layout rendering. */
+const testSession: Session = {
+  id: 'test-session-id',
+  userId: 'test-user-id',
+  expiresAt: new Date(Date.now() + 86400000),
+  createdAt: new Date(),
+  ipAddress: null,
+  userAgent: null,
+  lastSeenAt: new Date(),
+  user: {
+    id: 'test-user-id',
+    googleSub: 'test-google-sub',
+    email: 'test@example.com',
+    name: 'Test User',
+    createdAt: new Date(),
+  },
+};
+
+/** mockRenderHomePage impl that renders as logged-in. */
+function loggedInHomePage() {
+  return actualLayout.renderHomePage(testSession);
+}
+
+/** mockRenderHomePage impl that renders as logged-out. */
+function loggedOutHomePage() {
+  return actualLayout.renderHomePage(undefined);
+}
 
 describe('GET / — companion-first layout shell (SQR-65)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
   it('returns 200 and renders the layout document', async () => {
@@ -144,7 +173,8 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 describe('SQR-71 dev asset pipeline — bare paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
     vi.stubEnv('NODE_ENV', 'development');
     // Env transitions within a test file invalidate the cache (prod
     // minifies, dev doesn't → different content, different hash).
@@ -204,7 +234,8 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
 describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
     vi.stubEnv('NODE_ENV', 'production');
     _resetAssetCachesForTests();
   });
@@ -302,7 +333,8 @@ describe('SQR-71 Promise memoization — concurrent cold start', () => {
 describe('GET / — signature components (SQR-66)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
   // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
@@ -419,7 +451,8 @@ describe('styles.css — SQR-66 signature component rules', () => {
 describe('GET / — SQR-67 stub regions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
   it('renders the first-run empty state with "At your service." and the scope line', async () => {
@@ -561,10 +594,11 @@ describe('GET / — server-side error fallback (SQR-65)', () => {
     expect(res.headers.get('content-type')).toContain('text/html');
 
     const body = await res.text();
-    // Layout shell still rendered.
+    // Layout shell still rendered (brand chrome).
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
-    expect(body).toContain('class="squire-input-dock"');
+    // Error fallback renders without auth context (middleware didn't run),
+    // so interaction chrome (input dock, sidebar) is correctly omitted.
     // Error banner primitive present inside the main surface.
     expect(body).toContain('squire-banner squire-banner--error');
     expect(body).toContain('SOMETHING WENT WRONG');
@@ -586,5 +620,109 @@ describe('GET / — server-side error fallback (SQR-65)', () => {
     expect(surfaceStart).toBeGreaterThan(-1);
     expect(bannerStart).toBeGreaterThan(surfaceStart);
     expect(surfaceEnd).toBeGreaterThan(bannerStart);
+  });
+});
+
+// ─── Logged-out layout variant (SQR-38 design review) ───────────────────────
+
+describe('GET / — logged-out layout (SQR-38)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Logged-out: don't set userId on context
+    mockRenderHomePage.mockImplementation(loggedOutHomePage);
+  });
+
+  it('omits interaction chrome when not authenticated', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).not.toContain('class="squire-rail"');
+    expect(body).not.toContain('class="squire-input-dock"');
+    expect(body).not.toContain('class="squire-toolcall"');
+    expect(body).not.toContain('class="squire-recent"');
+    expect(body).not.toContain('class="sr-only-focusable"');
+  });
+
+  it('still renders brand chrome when not authenticated', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toContain('class="squire-header"');
+    expect(body).toContain('class="squire-surface"');
+    expect(body).toContain('class="squire-monogram"');
+    expect(body).toContain('Squire');
+  });
+});
+
+// ─── Auth error page rendering (SQR-38 design review) ───────────────────────
+
+describe('Auth error page rendering (SQR-38)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Auth error pages always render logged-out
+    // (logged-out: don't set userId on context)
+  });
+
+  it('renders squire-banner--error with the error message', async () => {
+    const res = await app.request('/auth/google/callback');
+    expect(res.status).toBe(400);
+    const body = await res.text();
+    expect(body).toContain('squire-banner--error');
+    expect(body).toContain('SIGN IN ERROR');
+  });
+
+  it('includes retry link and back-to-home link', async () => {
+    const res = await app.request('/auth/google/callback');
+    const body = await res.text();
+    expect(body).toContain('href="/auth/google/start"');
+    expect(body).toContain('Try again');
+    expect(body).toContain('href="/"');
+    expect(body).toContain('Back to home');
+  });
+
+  it('uses the layout shell (has header and design system)', async () => {
+    const res = await app.request('/auth/google/callback');
+    const body = await res.text();
+    expect(body).toContain('class="squire-header"');
+    expect(body).toContain('class="squire-monogram"');
+    // Uses design system fonts (not system-ui)
+    expect(body).toContain('fonts.googleapis.com');
+  });
+
+  it('renders logged-out chrome (no sidebar or input dock)', async () => {
+    const res = await app.request('/auth/google/callback');
+    const body = await res.text();
+    expect(body).not.toContain('class="squire-rail"');
+    expect(body).not.toContain('class="squire-input-dock"');
+  });
+});
+
+// ─── retryUrl security (SQR-38 review) ──────────────────────────────────────
+
+describe('Auth error page retryUrl validation', () => {
+  it('rejects protocol-relative URLs (//evil.com bypass)', async () => {
+    const { renderAuthErrorPage } = await vi.importActual<
+      typeof import('../src/web-ui/auth-error-page.ts')
+    >('../src/web-ui/auth-error-page.ts');
+    await expect(renderAuthErrorPage({ message: 'test', retryUrl: '//evil.com' })).rejects.toThrow(
+      'retryUrl must be a relative path',
+    );
+  });
+
+  it('rejects javascript: URIs', async () => {
+    const { renderAuthErrorPage } = await vi.importActual<
+      typeof import('../src/web-ui/auth-error-page.ts')
+    >('../src/web-ui/auth-error-page.ts');
+    await expect(
+      renderAuthErrorPage({ message: 'test', retryUrl: 'javascript:alert(1)' }),
+    ).rejects.toThrow('retryUrl must be a relative path');
+  });
+
+  it('allows valid relative paths', async () => {
+    const { renderAuthErrorPage } = await vi.importActual<
+      typeof import('../src/web-ui/auth-error-page.ts')
+    >('../src/web-ui/auth-error-page.ts');
+    const result = await renderAuthErrorPage({ message: 'test', retryUrl: '/auth/google/start' });
+    expect(String(result)).toContain('href="/auth/google/start"');
   });
 });

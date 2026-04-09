@@ -22,5 +22,20 @@ post-merge cleanup doesn't get forgotten.
 
 **Decisions that come out of a plan review** belong in ADRs, not in
 `docs/plans/`. `docs/plans/` artifacts are implementer-facing and get
-deleted; ADRs are the permanent home for the *why*. See
+deleted; ADRs are the permanent home for the _why_. See
 [adrs.md](adrs.md).
+
+## Markdown formatting
+
+The pre-commit hook runs `prettier --write` then `markdownlint-cli2 --fix`
+on staged `.md` files, so table spacing and most style issues are
+auto-corrected at commit time.
+
+One thing the hook cannot auto-fix: **MD040 (fenced-code-language).**
+Always specify a language on fenced code blocks. Use `text` for ASCII
+diagrams, test lists, and non-executable blocks. Bare ` ``` ` will
+fail the hook and require a manual edit.
+
+This applies to generated artifacts too (plan docs, review docs, design
+docs, test plans). External artifacts written to `~/.gstack/projects/`
+that are later copied into the repo should also follow this rule.
