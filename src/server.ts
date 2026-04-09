@@ -13,7 +13,8 @@ import { streamSSE } from 'hono/streaming';
 import { isReady, initialize, ask } from './service.ts';
 import { sql } from 'drizzle-orm';
 
-import { getDb, getDefaultPort } from './db.ts';
+import { getDb, getWorktreeRuntime } from './db.ts';
+import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
 import { z } from 'zod';
@@ -510,12 +511,52 @@ app.post('/api/ask', async (c) => {
 export async function startServer(): Promise<void> {
   await initialize();
 
-  const fallbackPort = getDefaultPort();
-  const parsed = parseInt(process.env.PORT || String(fallbackPort), 10);
-  const port = Number.isNaN(parsed) ? fallbackPort : parsed;
-  const { serve } = await import('@hono/node-server');
-  serve({ fetch: app.fetch, port });
-  console.log(`Squire server listening on port ${port}`);
+  const configuredPort = parseInt(process.env.PORT || '', 10);
+  const runtime = getWorktreeRuntime();
+  const { createAdaptorServer } = await import('@hono/node-server');
+
+  if (!process.env.PORT || Number.isNaN(configuredPort)) {
+    while (true) {
+      const claim = await claimWorktreePort({
+        checkoutRoot: runtime.checkoutRoot,
+        checkoutSlug: runtime.checkoutSlug,
+        isMainCheckout: runtime.isMainCheckout,
+      });
+      const server = createAdaptorServer({ fetch: app.fetch });
+      try {
+        await listen(server, claim.port);
+        server.once('close', () => {
+          void claim.release();
+        });
+        console.log(`Squire server listening on port ${claim.port}`);
+        return;
+      } catch (error) {
+        await claim.release();
+        const errno = error as NodeJS.ErrnoException;
+        if (errno.code !== 'EADDRINUSE') throw error;
+      }
+    }
+  }
+
+  const server = createAdaptorServer({ fetch: app.fetch });
+  await listen(server, configuredPort);
+  console.log(`Squire server listening on port ${configuredPort}`);
+}
+
+async function listen(server: import('node:net').Server, port: number): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const onError = (error: Error) => {
+      server.off('listening', onListening);
+      reject(error);
+    };
+    const onListening = () => {
+      server.off('error', onError);
+      resolve();
+    };
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(port);
+  });
 }
 
 // CLI entrypoint
