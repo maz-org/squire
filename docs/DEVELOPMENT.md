@@ -153,6 +153,43 @@ Add to your Claude Code MCP settings
 
 Claude Code supports Streamable HTTP natively — no bridge needed.
 
+### Agent tooling state model
+
+Squire has three different categories of agent/tooling state:
+
+1. **Checked-in project guidance** in the repo:
+   - `CLAUDE.md`
+   - `AGENTS.md`
+   - `docs/agent/*`
+   - `docs/ARCHITECTURE.md`
+   - `docs/DEVELOPMENT.md`
+   - `DESIGN.md`
+2. **Canonical gstack runtime state** on the developer machine:
+   - `~/.gstack/projects/maz-org-squire/`
+   - typically includes files like `learnings.jsonl`, `timeline.jsonl`, and
+     `repo-mode.json`
+3. **Repo-local `.gstack/` artifact output**:
+   - QA reports
+   - browser logs
+   - temporary local outputs that are useful during work
+
+Do not treat repo `.gstack/` as canonical project memory. If a learning should
+survive a single machine or tool session, promote it into checked-in docs, and
+into an ADR when it becomes a non-obvious architectural decision.
+
+### Codex and Claude configuration split
+
+- **Machine-level MCP** like Linear belongs in user config:
+  - Claude: user-level Claude config
+  - Codex: `~/.codex/config.toml`
+- **Repo-local MCP** for Squire itself stays in [`.mcp.json`](../.mcp.json)
+- **Repo-local operating guidance** lives in:
+  - [`CLAUDE.md`](../CLAUDE.md) for Claude
+  - [`AGENTS.md`](../AGENTS.md) for Codex
+
+The goal is shared project intent with tool-specific entrypoints, not identical
+vendor config files.
+
 ## Testing
 
 ```bash

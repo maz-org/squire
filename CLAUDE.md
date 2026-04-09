@@ -23,6 +23,7 @@ Read these on demand:
 | Run the pre-push review and watch the PR | [docs/agent/review.md](docs/agent/review.md) |
 | Write a tech spec or plan-review checkpoint | [docs/agent/planning-artifacts.md](docs/agent/planning-artifacts.md) |
 | Record a design/eng decision, or implement a feature that might touch one | [docs/agent/adrs.md](docs/agent/adrs.md) |
+| Check repeated pitfalls and promoted gstack learnings | [docs/agent/learnings.md](docs/agent/learnings.md) |
 
 ## Always-on rules
 
@@ -41,6 +42,17 @@ These are short on purpose. Anything not on this list lives in one of the files 
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
 Available skills: `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`.
+
+State boundary:
+
+- **Canonical gstack runtime state** is machine-local in `~/.gstack/projects/maz-org-squire/`.
+  In practice this includes files like `learnings.jsonl`, `timeline.jsonl`, and
+  `repo-mode.json`.
+- **Repo-local `.gstack/`** is only for artifact output like QA reports and browser
+  logs. It is not canonical project memory.
+- If a learning is durable enough to matter to future work, write it back into the
+  repo, either in active docs or an ADR, rather than assuming tool-local state is
+  enough.
 
 ## Skill routing
 

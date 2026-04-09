@@ -20,6 +20,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "agent:check": "node scripts/check-agent-parity.ts",
+    "agent:export-learnings": "node scripts/export-gstack-learnings.ts",
     "lint": "eslint src/ test/ scripts/",
     "lint:css": "stylelint 'src/web-ui/**/*.css'",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads'",
