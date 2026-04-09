@@ -75,6 +75,13 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
       : html`<link rel="preconnect" href="${p.href}" />`,
   );
 
+  // Rails Propshaft semantics (SQR-71, ADR 0011): dev emits bare
+  // `/app.css` / `/squire.js` for a clean devtools experience and
+  // immediate edit-refresh; prod emits content-hashed paths
+  // (`/app.<hash>.css`, `/squire.<hash>.js`) for immutable edge
+  // caching. The URL helpers handle both cases — we just await
+  // whatever they return and drop them into the document. Fetched
+  // in parallel because the CSS and JS helpers are independent.
   const [cssUrl, jsUrl] = await Promise.all([getAppCssUrl(), getSquireJsUrl()]);
 
   return html`<!doctype html>
@@ -97,6 +104,13 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
           : html``}
       >
         ${options.bodyContent}
+        <!--
+          SQR-66 cite tap-toggle, served from /squire.js (dev) or
+          /squire.<hash>.js (prod) by the on-demand asset pipeline
+          (SQR-71, ADR 0011). Extracted from an inline <script> so
+          SQR-61's CSP can drop 'unsafe-inline' for script-src.
+          The file lives at src/web-ui/squire.js and ships unbundled.
+        -->
         <script src="${jsUrl}" defer></script>
       </body>
     </html>`;
