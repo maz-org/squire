@@ -411,9 +411,7 @@ app.post('/auth/logout', async (c) => {
 
 // /auth/me: returns current user JSON for HTMX header. Behind session middleware.
 app.get('/auth/me', requireSession(), async (c) => {
-  // userId is set by requireSession() middleware via c.set('userId', ...)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userId = (c as any).get('userId') as string;
+  const userId = c.get('userId');
   const user = await getUserById(userId);
   if (!user) {
     return c.json({ error: 'User not found', status: 404 }, 404);

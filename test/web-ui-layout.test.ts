@@ -69,8 +69,7 @@ import type { Context } from 'hono';
  * because layout tests don't hit the real auth middleware.
  */
 function simulateLoggedIn(ctx: Context): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (ctx as any).set('userId', 'test-layout-user-id');
+  ctx.set('userId', 'test-layout-user-id');
 }
 
 /** mockRenderHomePage impl that simulates a logged-in user. */

@@ -25,8 +25,7 @@ import { getUserById } from './session-store.ts';
  * Zero DB calls. O(1) context variable check.
  */
 export function isAuthenticated(c: Context): boolean {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (c as any).get('userId') !== undefined;
+  return c.get('userId') !== undefined;
 }
 
 /**
@@ -38,8 +37,7 @@ export function isAuthenticated(c: Context): boolean {
 export async function getCurrentUser(
   c: Context,
 ): Promise<{ id: string; email: string; name: string | null } | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const userId = (c as any).get('userId') as string | undefined;
+  const userId = c.get('userId');
   if (!userId) return null;
   return getUserById(userId);
 }

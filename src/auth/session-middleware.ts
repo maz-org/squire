@@ -43,8 +43,7 @@ export function optionalSession() {
       if (sessionId) {
         const session = await loadSession(sessionId);
         if (session) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (c as any).set('userId', session.userId);
+          c.set('userId', session.userId);
         } else {
           // Expired session: clear the stale cookie silently
           deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
