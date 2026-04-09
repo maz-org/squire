@@ -45,6 +45,7 @@ import {
 } from './auth/session-middleware.ts';
 import { setSignedCookie, getSignedCookie } from 'hono/cookie';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
+import { renderAuthErrorPage } from './web-ui/auth-error-page.ts';
 import { getAppCss, getSquireJs } from './web-ui/assets.ts';
 
 export const app = new Hono();
@@ -340,13 +341,19 @@ app.get('/auth/google/callback', async (c) => {
   // Check for error from Google (e.g., user clicked Cancel)
   const error = c.req.query('error');
   if (error) {
-    return c.html(authErrorPage('Google sign-in was cancelled or failed.'), 400 as const);
+    return c.html(
+      await renderAuthErrorPage({ message: 'Google sign-in was cancelled or failed.' }),
+      400 as const,
+    );
   }
 
   const code = c.req.query('code');
   const state = c.req.query('state');
   if (!code || !state) {
-    return c.html(authErrorPage('Missing code or state parameter.'), 400 as const);
+    return c.html(
+      await renderAuthErrorPage({ message: 'Missing code or state parameter.' }),
+      400 as const,
+    );
   }
 
   // Read and consume the PKCE cookie
@@ -379,7 +386,7 @@ app.get('/auth/google/callback', async (c) => {
   } catch (err) {
     if (err instanceof GoogleAuthError) {
       const status = err.status as 400 | 403;
-      return c.html(authErrorPage(err.message), status);
+      return c.html(await renderAuthErrorPage({ message: err.message }), status);
     }
     // Log unexpected errors for debugging
     console.error('[auth/google/callback] unexpected error:', err);
@@ -416,31 +423,6 @@ app.get('/auth/me', requireSession(), async (c) => {
 // Protect /chat routes with session cookie auth
 app.use('/chat/*', requireSession());
 app.use('/chat', requireSession());
-
-/**
- * Minimal HTML error page for Google OAuth failures (browser flow).
- * Separate from oauthError() which returns JSON for MCP/API clients.
- */
-function authErrorPage(message: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Squire - Sign In Error</title></head>
-<body style="font-family: system-ui, sans-serif; max-width: 480px; margin: 60px auto; padding: 0 20px; text-align: center;">
-  <h1 style="font-size: 1.5rem; color: #333;">Sign In Error</h1>
-  <p style="color: #666;">${escapeHtml(message)}</p>
-  <a href="/auth/google/start" style="display: inline-block; margin-top: 20px; padding: 10px 24px; background: #4285f4; color: white; text-decoration: none; border-radius: 4px;">Try Again</a>
-  <br><a href="/" style="display: inline-block; margin-top: 12px; color: #666; text-decoration: underline;">Back to Home</a>
-</body>
-</html>`;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 
