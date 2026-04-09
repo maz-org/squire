@@ -177,6 +177,100 @@ Add to your Claude Code MCP settings
 
 Claude Code supports Streamable HTTP natively — no bridge needed.
 
+### Agent tooling state model
+
+Squire has three different categories of agent/tooling state:
+
+1. **Checked-in project guidance** in the repo:
+   - `CLAUDE.md`
+   - `AGENTS.md`
+   - `docs/agent/*`
+   - `docs/ARCHITECTURE.md`
+   - `docs/DEVELOPMENT.md`
+   - `DESIGN.md`
+2. **Canonical gstack runtime state** on the developer machine:
+   - `~/.gstack/projects/maz-org-squire/`
+   - typically includes files like `learnings.jsonl`, `timeline.jsonl`, and
+     `repo-mode.json`
+3. **Repo-local `.gstack/` artifact output**:
+   - QA reports
+   - browser logs
+   - temporary local outputs that are useful during work
+
+Do not treat repo `.gstack/` as canonical project memory. If a learning should
+survive a single machine or tool session, promote it into checked-in docs, and
+into an ADR when it becomes a non-obvious architectural decision.
+
+### Codex and Claude configuration split
+
+- **Machine-level MCP** like Linear belongs in user config:
+  - Claude: user-level Claude config
+  - Codex: `~/.codex/config.toml`
+- **Repo-local MCP** for Squire itself stays in [`.mcp.json`](../.mcp.json)
+- **Repo-local operating guidance** lives in:
+  - [`CLAUDE.md`](../CLAUDE.md) for Claude
+  - [`AGENTS.md`](../AGENTS.md) for Codex
+
+The goal is shared project intent with tool-specific entrypoints, not identical
+vendor config files.
+
+### Agent parity automation
+
+The repo uses a **conditional pre-commit check** for agent parity.
+
+If your staged changes touch any of these files:
+
+- `CLAUDE.md`
+- `AGENTS.md`
+- `docs/agent/agent-baseline.md`
+- `docs/agent/learnings.md`
+- `docs/DEVELOPMENT.md`
+- `.mcp.json`
+- `scripts/check-agent-parity.ts`
+- `scripts/export-gstack-learnings.ts`
+
+then `.husky/pre-commit` automatically runs:
+
+```bash
+npm run agent:check
+```
+
+This is meant to package parity fixes into the same branch and PR as the
+primary change, instead of discovering drift later in CI or a follow-up pass.
+
+`npm run agent:export-learnings` is **not** automated in git hooks. It reads
+machine-local `~/.gstack/projects/maz-org-squire/learnings.jsonl`, generates
+`docs/agent/learnings.md`, and should be run deliberately when the local
+learnings have accumulated enough signal to be worth curating into the repo.
+
+### Weekly learnings export via launchd
+
+On macOS, local setup now also installs a **LaunchAgent** for the current clone
+when you run `npm install` (via the `prepare` script).
+
+The installer script is:
+
+```bash
+npm run agent:install-launchagent
+```
+
+What it does:
+
+- writes `~/Library/LaunchAgents/org.maz.squire.agent-learnings.plist`
+- loads it with `launchctl`
+- runs `npm run agent:export-learnings` at load time and then every 7 days
+- logs output to `~/.gstack/analytics/squire-agent-learnings.log`
+
+Important behavior:
+
+- the job **does not auto-commit or auto-push**
+- it no-ops if `~/.gstack/projects/maz-org-squire/learnings.jsonl` does not exist
+- if you install the repo in a different path on another machine, running
+  `npm install` there rewrites the LaunchAgent to point at that clone
+- if a machine is asleep or closed at the exact scheduled time, the run is not
+  guaranteed to happen at that moment; `RunAtLoad` ensures it runs again the
+  next time the LaunchAgent is loaded (for example after login or reinstall)
+
 ## Testing
 
 ```bash
