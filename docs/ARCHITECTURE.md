@@ -184,12 +184,12 @@ Repositories own the persistence boundary. The rest of the app works with domain
 
 The web channel passes a `Session` domain object through the request lifecycle. Views never touch the Hono context or the database.
 
-1. **Middleware** (`optionalSession` or `requireSession`) reads the signed session cookie, calls `SessionRepository.findById()` (one relational query), and stores the `Session` on the Hono context via `c.set('session', session)`.
+1. **Middleware** (`optionalSession`, `requireSession`, or `requirePageSession`) reads the signed session cookie, calls `SessionRepository.findById()` (one relational query), and stores the `Session` on the Hono context via `c.set('session', session)`.
 2. **Route handlers** read `c.get('session')` and pass it to views. `/auth/me` reads `session.user` directly, zero extra DB calls.
 3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = full interaction chrome (sidebar, input dock, recent questions). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
 4. **Tests** construct `Session` objects directly. No context faking, no mock modules. The `Session` type ensures tests fail at compile time if the shape changes.
 
-`optionalSession()` runs on public routes (homepage) so the layout can adapt without blocking unauthenticated visitors. `requireSession()` runs on protected routes (`/chat`, `/auth/me`) and returns 401 if no valid session.
+`optionalSession()` runs on public routes like `/login` so the layout can adapt without blocking unauthenticated visitors. `requirePageSession()` runs on browser HTML routes (`/`, `/chat`, `/auth/logout`) and redirects to `/login` if no valid session. `requireSession()` remains for machine-readable cookie routes like `/auth/me`, where a missing or expired session should return JSON 401.
 
 ---
 

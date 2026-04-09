@@ -5,12 +5,8 @@ import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getSessionSecret } from './session-middleware.ts';
+import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME } from '../web-ui/csrf.ts';
 import { layoutShell } from '../web-ui/layout.ts';
-
-export const CSRF_HEADER_NAME = 'x-csrf-token';
-export const CSRF_META_NAME = 'csrf-token';
-export const CSRF_FORM_FIELD_NAME = '_csrf';
-
 const CSRF_ERROR_MESSAGE = 'Security check failed. Refresh the page and try again.';
 
 export function createCsrfToken(sessionId: string): string {
@@ -79,6 +75,10 @@ async function csrfErrorResponse(c: Context) {
 
   const accept = c.req.header('accept') ?? '';
   if (accept.includes('text/html')) {
+    if (c.get('session')) {
+      c.header('Cache-Control', 'no-store');
+      c.header('Vary', 'Cookie');
+    }
     return c.html(
       await layoutShell({
         mainContent: csrfErrorFragment(),

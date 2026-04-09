@@ -30,6 +30,12 @@ LANGFUSE_PUBLIC_KEY=...
 LANGFUSE_SECRET_KEY=...
 ```
 
+Generate `SESSION_SECRET` with:
+
+```bash
+openssl rand -base64 48
+```
+
 For local dev without Google OAuth, the app still starts and serves the homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed login still needs working OAuth credentials. Run `npm run seed:dev` to create a test user for authenticated code paths without doing the Google round-trip.
 
 Extracted card data (`data/extracted/*.json`) is committed to the repo.

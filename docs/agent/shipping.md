@@ -30,7 +30,7 @@ Example: `feat(auth): add user login endpoint`
 
 ## Use the `/ship` skill
 
-For the actual ship workflow, invoke the gstack **`/ship`** skill rather than running the steps by hand. `/ship` detects and merges the base branch, runs tests, reviews the diff, bumps `VERSION`, updates `CHANGELOG`, commits, pushes, and opens the PR — wrapping up everything above into one command.
+For the actual ship workflow, invoke the gstack **`/ship`** skill rather than running the steps by hand. In Squire, interpret `/ship` as: detect and merge the base branch, run tests, review the diff, commit, push, and open the PR. Do **not** bump version numbers or edit `CHANGELOG.md` for ordinary feature-branch PRs unless the user explicitly asks for a release/version cut. Open PRs as published PRs, not drafts, unless the user explicitly asks for a draft PR.
 
 The rules in this file still apply — `/ship` doesn't override them, it executes them:
 

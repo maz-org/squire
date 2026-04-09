@@ -22,7 +22,6 @@ import {
   getSquireJs,
   getSquireJsUrl,
 } from '../src/web-ui/assets.ts';
-import { createCsrfToken } from '../src/auth/csrf.ts';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
@@ -66,6 +65,8 @@ const actualLayout =
 import { app } from '../src/server.ts';
 import type { Session } from '../src/db/repositories/types.ts';
 
+process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
+
 /** A test session object for logged-in layout rendering. */
 const testSession: Session = {
   id: 'test-session-id',
@@ -84,14 +85,11 @@ const testSession: Session = {
   },
 };
 
+const testCsrfToken = 'test-csrf-token';
+
 /** mockRenderHomePage impl that renders as logged-in. */
 function loggedInHomePage() {
-  return actualLayout.renderHomePage(testSession, createCsrfToken(testSession.id));
-}
-
-/** mockRenderHomePage impl that renders as logged-out. */
-function loggedOutHomePage() {
-  return actualLayout.renderHomePage(undefined);
+  return actualLayout.renderHomePage(testSession, testCsrfToken);
 }
 
 describe('GET / — companion-first layout shell (SQR-65)', () => {
@@ -100,74 +98,97 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
-  it('returns 200 and renders the layout document', async () => {
-    const res = await app.request('/');
+  it('redirects unauthenticated / requests to /login', async () => {
+    const res = await app.request('/', { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login');
+  });
+
+  it('renders the login page document', async () => {
+    const res = await app.request('/login');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
   });
 
-  it('renders all five named mobile regions with stable selectors', async () => {
-    const res = await app.request('/');
+  it('renders the centered login composition', async () => {
+    const res = await app.request('/login');
     const body = await res.text();
+    expect(body).toContain('class="squire-auth-page"');
+    expect(body).toContain('class="squire-monogram squire-monogram--masthead"');
+    expect(body).toContain('class="squire-wordmark squire-wordmark--auth"');
+    expect(body).toContain('A FROSTHAVEN COMPANION');
+    expect(body).toContain('href="/auth/google/start"');
+    expect(body).toContain('Sign in with Google');
+  });
+
+  it('renders the login error banner from the query string', async () => {
+    const res = await app.request('/login?error=denied');
+    const body = await res.text();
+    expect(body).toContain('COULDN&#39;T SIGN YOU IN');
+    expect(body).toContain('denied');
+    expect(body).toContain('Try again');
+  });
+
+  it('renders the not-invited page without the Google sign-in button', async () => {
+    const res = await app.request('/not-invited');
+    const body = await res.text();
+    expect(body).toContain('NOT YET INVITED');
+    expect(body).toContain(
+      'Squire is single-user during Phase 1. Reach out if you&#39;d like access.',
+    );
+    expect(body).not.toContain('Sign in with Google');
+  });
+
+  it('renders authenticated app chrome with user info and a logout form', async () => {
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
+    expect(body).toContain('class="squire-header"');
+    expect(body).toContain('class="squire-header__brand"');
+    expect(body).toContain('class="squire-context">FROSTHAVEN · RULES<');
+    expect(body).toContain('class="squire-user">Test User</span>');
+    expect(body).toMatch(
+      /<form[^>]*class="squire-logout-form"[^>]*method="post"[^>]*action="\/auth\/logout"/,
+    );
+    expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="_csrf"[^>]*value="[^"]+"/);
+    expect(body).toMatch(/>\s*Log out\s*</);
+  });
+
+  it('falls back to the user email when the session has no display name', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(
+        {
+          ...testSession,
+          user: { ...testSession.user, name: null },
+        },
+        testCsrfToken,
+      ),
+    );
+    expect(body).toContain('test@example.com');
+  });
+
+  it('renders the authenticated shell regions with stable selectors', async () => {
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
     expect(body).toContain('class="squire-toolcall"');
     expect(body).toContain('class="squire-recent"');
     expect(body).toContain('class="squire-input-dock"');
-  });
-
-  it('renders the desktop rail (empty in Phase 1)', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
     expect(body).toContain('class="squire-rail"');
-  });
-
-  it('marks the main surface as a polite aria-live region', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('aria-atomic="false"');
-  });
-
-  it('marks the tool-call footer with aria-live="off"', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
     expect(body).toContain('aria-live="off"');
-  });
-
-  it('renders a skip-link as the first focusable element in <body>', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
     expect(body).toContain('class="sr-only-focusable"');
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
-  });
-
-  it('lands the skip-link on the real <input id="squire-input">', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
-    // The id MUST be on the input element itself, not the form wrapper —
-    // this was an explicit eng-review correction in the ticket.
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
-  });
-
-  it('renders the header context strip with placeholder text', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
-    expect(body).toContain('FROSTHAVEN · RULES');
-  });
-
-  it('renders the form pointing at /api/ask without collapsing the input', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/api\/ask"/);
   });
 
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<meta name="csrf-token" content="[^"]+"/);
     expect(body).toMatch(/hx-headers='\{"x-csrf-token":"[^"]+"\}'/);
   });
@@ -183,8 +204,6 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 describe('SQR-71 dev asset pipeline — bare paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockRenderHomePage.mockImplementation(loggedInHomePage);
     vi.stubEnv('NODE_ENV', 'development');
     // Env transitions within a test file invalidate the cache (prod
     // minifies, dev doesn't → different content, different hash).
@@ -227,8 +246,7 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
   });
 
   it('renders the layout with bare /app.css and /squire.js URLs', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderLoginPage());
     expect(body).toMatch(/<link[^>]+rel="stylesheet"[^>]+href="\/app\.css"/);
     expect(body).toMatch(/<script[^>]+src="\/squire\.js"[^>]*defer/);
     // Inline tap-toggle gone (SQR-66 extraction pin for CSP — SQR-61).
@@ -244,8 +262,6 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
 describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockRenderHomePage.mockImplementation(loggedInHomePage);
     vi.stubEnv('NODE_ENV', 'production');
     _resetAssetCachesForTests();
   });
@@ -299,8 +315,7 @@ describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
   });
 
   it('renders the layout with hashed /app.<hex>.css and /squire.<hex>.js URLs', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderLoginPage());
     expect(body).toMatch(/<link[^>]+rel="stylesheet"[^>]+href="\/app\.[a-f0-9]+\.css"/);
     expect(body).toMatch(/<script[^>]+src="\/squire\.[a-f0-9]+\.js"[^>]*defer/);
     expect(body).not.toMatch(/document\.addEventListener\(\s*['"]click['"]/);
@@ -341,12 +356,6 @@ describe('SQR-71 Promise memoization — concurrent cold start', () => {
 });
 
 describe('GET / — signature components (SQR-66)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    mockRenderHomePage.mockImplementation(loggedInHomePage);
-  });
-
   // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
   // squire-answer sample) with the first-run empty state. The hero question
   // selector `.squire-question` is still rendered inside `.squire-empty`
@@ -356,20 +365,17 @@ describe('GET / — signature components (SQR-66)', () => {
   // `styles.css` block below instead of DOM assertions on the home page.
 
   it('renders the .squire-question hero (now inside the empty state)', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<h1[^>]*class="squire-question"[^>]*>/);
   });
 
   it('does NOT use a wrapping <span class="squire-dropcap"> for the drop cap', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).not.toMatch(/squire-dropcap/);
   });
 
   it('renders the 56px masthead monogram on the desktop rail', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     // The rail gets a second monogram marked as masthead so the 56px size
     // can be tested in the browser. The header monogram stays 28px.
     expect(body).toMatch(
@@ -459,15 +465,8 @@ describe('styles.css — SQR-66 signature component rules', () => {
 });
 
 describe('GET / — SQR-67 stub regions', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    mockRenderHomePage.mockImplementation(loggedInHomePage);
-  });
-
   it('renders the first-run empty state with "At your service." and the scope line', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<section[^>]*class="squire-empty"/);
     expect(body).toContain('At your service.');
     expect(body).toMatch(/class="squire-empty__scope"/);
@@ -475,21 +474,18 @@ describe('GET / — SQR-67 stub regions', () => {
   });
 
   it('renders the spoiler warning banner via the .squire-banner primitive', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/squire-banner squire-banner--spoiler/);
     expect(body).toContain('SPOILER WARNING');
   });
 
   it('renders the tool-call footer with the CONSULTED placeholder line', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[\s\S]*CONSULTED · RULEBOOK P\.47/);
   });
 
   it('renders at least two recent-question chips inside nav.squire-recent', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     const navMatch = body.match(/<nav[^>]*class="squire-recent"[\s\S]*?<\/nav>/);
     expect(navMatch).not.toBeNull();
     const chips = (navMatch![0].match(/class="squire-chip"/g) || []).length;
@@ -497,16 +493,14 @@ describe('GET / — SQR-67 stub regions', () => {
   });
 
   it('renders the .squire-verdict block with label and picked badge', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/class="squire-verdict"/);
     expect(body).toContain('SQUIRE RECOMMENDS');
     expect(body).toMatch(/class="squire-picked"/);
   });
 
   it('ships hidden fixtures for the error and sync banner variants', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     const tpl = body.match(/<template[^>]*id="squire-banner-fixtures"[\s\S]*?<\/template>/);
     expect(tpl).not.toBeNull();
     expect(tpl![0]).toMatch(/squire-banner squire-banner--error/);
@@ -585,125 +579,22 @@ describe('styles.css — SQR-67 stub-region rules', () => {
   });
 });
 
-describe('GET / — server-side error fallback (SQR-65)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('still renders the layout shell when the home page renderer throws', async () => {
-    mockRenderHomePage.mockImplementation(() => {
-      throw new Error('database is on fire');
-    });
-
-    const res = await app.request('/');
-
-    // 5xx with HTML body — the ticket explicitly allows either 200 or 5xx
-    // as long as the layout shell renders. We choose 500 so monitoring
-    // still flags real failures.
-    expect(res.status).toBe(500);
-    expect(res.headers.get('content-type')).toContain('text/html');
-
-    const body = await res.text();
-    // Layout shell still rendered (brand chrome).
-    expect(body).toContain('class="squire-header"');
-    expect(body).toContain('class="squire-surface"');
-    // Error fallback renders without auth context (middleware didn't run),
-    // so interaction chrome (input dock, sidebar) is correctly omitted.
-    // Error banner primitive present inside the main surface.
-    expect(body).toContain('squire-banner squire-banner--error');
-    expect(body).toContain('SOMETHING WENT WRONG');
-    expect(body).toContain('database is on fire');
-  });
-
+describe('layoutShell error banner rendering', () => {
   it('renders the error banner inside the main.squire-surface region', async () => {
-    mockRenderHomePage.mockImplementation(() => {
-      throw new Error('agent unavailable');
-    });
-    const res = await app.request('/');
-    const body = await res.text();
-    // Crude but sufficient: the main surface opens before the banner and
-    // closes after it. (Full DOM parsing would pull in jsdom for one
-    // assertion.)
+    const body = String(
+      await actualLayout.layoutShell({
+        errorBanner: { message: 'agent unavailable' },
+        session: testSession,
+      }),
+    );
     const surfaceStart = body.indexOf('class="squire-surface"');
     const bannerStart = body.indexOf('squire-banner--error');
     const surfaceEnd = body.indexOf('</main>');
     expect(surfaceStart).toBeGreaterThan(-1);
     expect(bannerStart).toBeGreaterThan(surfaceStart);
     expect(surfaceEnd).toBeGreaterThan(bannerStart);
-  });
-});
-
-// ─── Logged-out layout variant (SQR-38 design review) ───────────────────────
-
-describe('GET / — logged-out layout (SQR-38)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Logged-out: don't set userId on context
-    mockRenderHomePage.mockImplementation(loggedOutHomePage);
-  });
-
-  it('omits interaction chrome when not authenticated', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
-    expect(body).not.toContain('class="squire-rail"');
-    expect(body).not.toContain('class="squire-input-dock"');
-    expect(body).not.toContain('class="squire-toolcall"');
-    expect(body).not.toContain('class="squire-recent"');
-    expect(body).not.toContain('class="sr-only-focusable"');
-  });
-
-  it('still renders brand chrome when not authenticated', async () => {
-    const res = await app.request('/');
-    const body = await res.text();
-    expect(body).toContain('class="squire-header"');
-    expect(body).toContain('class="squire-surface"');
-    expect(body).toContain('class="squire-monogram"');
-    expect(body).toContain('Squire');
-  });
-});
-
-// ─── Auth error page rendering (SQR-38 design review) ───────────────────────
-
-describe('Auth error page rendering (SQR-38)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Auth error pages always render logged-out
-    // (logged-out: don't set userId on context)
-  });
-
-  it('renders squire-banner--error with the error message', async () => {
-    const res = await app.request('/auth/google/callback');
-    expect(res.status).toBe(400);
-    const body = await res.text();
-    expect(body).toContain('squire-banner--error');
-    expect(body).toContain('SIGN IN ERROR');
-  });
-
-  it('includes retry link and back-to-home link', async () => {
-    const res = await app.request('/auth/google/callback');
-    const body = await res.text();
-    expect(body).toContain('href="/auth/google/start"');
-    expect(body).toContain('Try again');
-    expect(body).toContain('href="/"');
-    expect(body).toContain('Back to home');
-  });
-
-  it('uses the layout shell (has header and design system)', async () => {
-    const res = await app.request('/auth/google/callback');
-    const body = await res.text();
-    expect(body).toContain('class="squire-header"');
-    expect(body).toContain('class="squire-monogram"');
-    // Uses design system fonts (not system-ui)
-    expect(body).toContain('fonts.googleapis.com');
-  });
-
-  it('renders logged-out chrome (no sidebar or input dock)', async () => {
-    const res = await app.request('/auth/google/callback');
-    const body = await res.text();
-    expect(body).not.toContain('class="squire-rail"');
-    expect(body).not.toContain('class="squire-input-dock"');
+    expect(body).toContain('SOMETHING WENT WRONG');
+    expect(body).toContain('agent unavailable');
   });
 });
 

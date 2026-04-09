@@ -118,6 +118,10 @@ html {
   overflow-x: hidden;
 }
 
+.squire-body--auth {
+  background: var(--ink);
+}
+
 /* Skip-link: visually hidden until focused, then becomes a wax-outlined
    button at the top of the viewport so keyboard users land directly on the
    real `<input id="squire-input">` inside `.squire-input-dock`. */
@@ -189,12 +193,25 @@ html {
 
 /* 1. Header bar — thin, with bottom hairline rule. */
 .squire-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--rule);
   flex-shrink: 0;
+}
+
+.squire-header__brand,
+.squire-header__account {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.squire-header__account {
+  justify-self: end;
 }
 
 /* Header monogram is the 28px variant. The box styling (display, background,
@@ -217,12 +234,27 @@ html {
 }
 
 .squire-header .squire-context {
-  margin-left: auto;
+  justify-self: center;
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 11px;
   color: var(--sepia);
   text-transform: uppercase;
   letter-spacing: 0.16em;
+}
+
+.squire-user {
+  min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--parchment-dim);
+}
+
+.squire-logout-form {
+  margin: 0;
 }
 
 /* 2. Main surface — flexes to fill. NOT a chat column — content modes
@@ -311,6 +343,113 @@ html {
 
 .squire-input-dock__submit:hover {
   background: var(--wax-dim);
+}
+
+.squire-auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+}
+
+.squire-auth-page__stack {
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.squire-auth-page__stack > .squire-monogram {
+  margin-bottom: 24px;
+}
+
+.squire-auth-page__stack > .squire-banner {
+  width: 100%;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.squire-wordmark--auth {
+  display: block;
+  margin-bottom: 8px;
+  font-size: clamp(36px, 8vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--parchment);
+}
+
+.squire-tagline {
+  margin: 0 0 32px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.squire-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.squire-button--primary {
+  background: var(--wax);
+  color: var(--parchment);
+}
+
+.squire-button--primary:hover {
+  background: var(--wax-dim);
+}
+
+.squire-button--ghost {
+  background: transparent;
+  border-color: var(--rule);
+  color: var(--parchment);
+}
+
+.squire-button--ghost:hover {
+  color: var(--wax);
+}
+
+.squire-button--small {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.squire-button--google {
+  width: 100%;
+  max-width: 320px;
+}
+
+.squire-google-mark {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.squire-banner__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 12px;
 }
 
 /* `.squire-banner` reusable primitive (SQR-67 ships the full set of
@@ -491,6 +630,31 @@ template#squire-banner-fixtures {
   body,
   html {
     font-size: 18px;
+  }
+}
+
+@media (max-width: 767px) {
+  .squire-header {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+
+  .squire-header__brand {
+    grid-column: 1 / 2;
+  }
+
+  .squire-header__account {
+    grid-column: 2 / 3;
+    justify-content: end;
+  }
+
+  .squire-header .squire-context {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .squire-user {
+    max-width: 140px;
   }
 }
 

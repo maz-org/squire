@@ -104,6 +104,39 @@ export function requireSession() {
 }
 
 /**
+ * Session enforcement for server-rendered web pages.
+ *
+ * Uses the same cookie/session lookup as `requireSession()`, but redirects to
+ * the login page instead of returning JSON. This keeps browser navigation on
+ * the HTML auth flow while `/auth/me` and `/api/*` retain machine-readable
+ * 401 behavior.
+ */
+export function requirePageSession(loginPath = '/login') {
+  return async (c: Context, next: Next) => {
+    const secret = getSessionSecret();
+    const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
+
+    if (!sessionId) {
+      if (sessionId === false) {
+        deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+      }
+      console.debug('[session] redirecting unauthenticated browser request on %s', c.req.path);
+      return c.redirect(loginPath, 302);
+    }
+
+    const session = await SessionRepository.findById(sessionId);
+    if (!session) {
+      console.info('[session] expired or missing session for browser request, clearing');
+      deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+      return c.redirect(loginPath, 302);
+    }
+
+    c.set('session', session);
+    await next();
+  };
+}
+
+/**
  * Set the session cookie after a successful Google OAuth callback.
  */
 export async function setSessionCookie(c: Context, sessionId: string): Promise<void> {

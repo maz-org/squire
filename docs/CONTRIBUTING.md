@@ -195,6 +195,12 @@ LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
 ```
 
+Generate `SESSION_SECRET` with:
+
+```bash
+openssl rand -base64 48
+```
+
 ### Data files
 
 Extracted card data (`data/extracted/`) is committed to the repo as

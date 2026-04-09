@@ -1,20 +1,22 @@
 /**
  * Google OAuth web login + Postgres session tests (SQR-38).
  *
- * 12 test cases covering all code paths from the eng review:
+ * 18 test cases covering all code paths from the eng review and follow-up PR review:
  *
  * Happy paths:
  *   1. Full callback: valid code -> user upserted -> session -> cookie -> redirect /
  *   2. /auth/me returns user JSON when authenticated
- *   3. Logout destroys session, clears cookie, redirects /
+ *   3. Authenticated GET / renders the signed-in header
+ *   4. Logout destroys session, clears cookie, redirects /login
  *
  * Sad paths:
- *   4. Email not in allowlist -> 403, no user, no session
- *   5. Invalid state -> 400
- *   6. Google token verification failure -> 400
- *   7. Google code exchange failure -> 400
- *   8. Missing cookie on /auth/me -> 401
- *   9. Expired session -> 401, session row deleted
+ *   5. Email not in allowlist -> redirect /not-invited, no user, no session
+ *   6. Invalid state -> redirect /login?error=...
+ *   7. Google token verification failure -> redirect /login?error=...
+ *   8. Google code exchange failure -> redirect /login?error=...
+ *   9. Missing cookie on /auth/me -> 401
+ *   10. Missing cookie on / and /chat -> redirect /login
+ *   11. Expired session -> JSON 401 on /auth/me, browser redirect on page routes
  *
  * Edge cases:
  *   10. Session cookie attributes (HttpOnly, SameSite=Strict, path)
@@ -211,8 +213,39 @@ describe('/auth/me', () => {
   });
 });
 
+describe('Authenticated web UI', () => {
+  it('3. GET / renders the signed-in header with user info and logout affordance', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const res = await withSession('http://localhost:3000/', cookie);
+    expect(res.status).toBe(200);
+
+    const body = await res.text();
+    expect(body).toContain('FROSTHAVEN · RULES');
+    expect(body).toContain('Brian');
+    expect(body).toContain('action="/auth/logout"');
+    expect(body).toContain('Log out');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
+  });
+
+  it('3b. GET /login redirects authenticated users with cookie-varying no-store headers', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const res = await withSession('http://localhost:3000/login', cookie, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
+  });
+});
+
 describe('Logout', () => {
-  it('3. POST /auth/logout destroys session, clears cookie, redirects /', async () => {
+  it('4. POST /auth/logout destroys session, clears cookie, redirects /login', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -225,7 +258,7 @@ describe('Logout', () => {
     });
 
     expect(logoutRes.status).toBe(302);
-    expect(logoutRes.headers.get('location')).toBe('/');
+    expect(logoutRes.headers.get('location')).toBe('/login');
 
     // Session gone from DB
     const { db } = getDb('server');
@@ -235,7 +268,7 @@ describe('Logout', () => {
 });
 
 describe('CSRF protection', () => {
-  it('4. POST /auth/logout without a token returns 403 and keeps the session', async () => {
+  it('12. POST /auth/logout without a token returns 403 and keeps the session', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -250,12 +283,14 @@ describe('CSRF protection', () => {
     expect(await logoutRes.text()).toContain(
       'Security check failed. Refresh the page and try again.',
     );
+    expect(logoutRes.headers.get('cache-control')).toBe('no-store');
+    expect(logoutRes.headers.get('vary')).toContain('Cookie');
 
     const { db } = getDb('server');
     expect(await db.select().from(sessions)).toHaveLength(1);
   });
 
-  it('5. POST /auth/logout with an invalid token returns 403 and keeps the session', async () => {
+  it('13. POST /auth/logout with an invalid token returns 403 and keeps the session', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -270,6 +305,16 @@ describe('CSRF protection', () => {
 
     const { db } = getDb('server');
     expect(await db.select().from(sessions)).toHaveLength(1);
+  });
+
+  it('14. POST /auth/logout with a stale or missing cookie redirects to /login', async () => {
+    const logoutRes = await app.request('http://localhost:3000/auth/logout', {
+      method: 'POST',
+      redirect: 'manual',
+    });
+
+    expect(logoutRes.status).toBe(302);
+    expect(logoutRes.headers.get('location')).toBe('/login');
   });
 
   it('6. HTMX requests get the fragment error response when CSRF validation fails', async () => {
@@ -303,7 +348,7 @@ describe('CSRF protection', () => {
     });
 
     expect(logoutRes.status).toBe(302);
-    expect(logoutRes.headers.get('location')).toBe('/');
+    expect(logoutRes.headers.get('location')).toBe('/login');
   });
 
   it('8. POST /auth/logout accepts a JSON _csrf token', async () => {
@@ -320,54 +365,68 @@ describe('CSRF protection', () => {
     });
 
     expect(logoutRes.status).toBe(302);
-    expect(logoutRes.headers.get('location')).toBe('/');
+    expect(logoutRes.headers.get('location')).toBe('/login');
   });
 });
 
 // ─── Sad paths ──────────────────────────────────────────────────────────────
 
 describe('Callback rejection', () => {
-  it('9. email not in allowlist -> 403, no user or session created', async () => {
+  it('5. email not in allowlist -> redirect /not-invited, no user or session created', async () => {
     process.env.SQUIRE_ALLOWED_EMAILS = 'other@example.com';
     mockGoogleSuccess();
 
     const res = await walkOAuthFlow();
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/not-invited');
 
     const { db } = getDb('server');
     expect(await db.select().from(users)).toHaveLength(0);
     expect(await db.select().from(sessions)).toHaveLength(0);
   });
 
-  it('10. invalid state parameter -> 400', async () => {
+  it('6. invalid state parameter -> redirect /login?error=...', async () => {
     mockGoogleSuccess();
     const res = await walkOAuthFlow({ overrideState: 'tampered-state' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login?error=State+parameter+mismatch');
   });
 
-  it('11. Google token verification failure -> 400', async () => {
+  it('7. Google token verification failure -> redirect /login?error=...', async () => {
     mockGetToken.mockResolvedValueOnce({ tokens: { id_token: 'bad-token' } });
     mockVerifyIdToken.mockRejectedValueOnce(new Error('Verification failed'));
 
     const res = await walkOAuthFlow();
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login?error=Failed+to+verify+Google+ID+token');
   });
 
-  it('12. Google code exchange failure -> 400', async () => {
+  it('8. Google code exchange failure -> redirect /login?error=...', async () => {
     mockGetToken.mockRejectedValueOnce(new Error('Exchange failed'));
 
     const res = await walkOAuthFlow();
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login?error=Failed+to+exchange+authorization+code');
   });
 });
 
 describe('Session middleware rejection', () => {
-  it('13. missing cookie -> 401', async () => {
+  it('9. missing cookie -> 401', async () => {
     const res = await app.request('http://localhost:3000/auth/me');
     expect(res.status).toBe(401);
   });
 
-  it('14. expired session -> 401, session row deleted', async () => {
+  it('10. missing cookie on / and /chat -> redirect /login', async () => {
+    const rootRes = await app.request('http://localhost:3000/', { redirect: 'manual' });
+    expect(rootRes.status).toBe(302);
+    expect(rootRes.headers.get('location')).toBe('/login');
+
+    const chatRes = await app.request('http://localhost:3000/chat', { redirect: 'manual' });
+    expect(chatRes.status).toBe(302);
+    expect(chatRes.headers.get('location')).toBe('/login');
+  });
+
+  it('11. expired session -> JSON 401 on /auth/me, browser redirect on page routes', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -378,6 +437,10 @@ describe('Session middleware rejection', () => {
 
     const meRes = await withSession('http://localhost:3000/auth/me', cookie);
     expect(meRes.status).toBe(401);
+
+    const rootRes = await withSession('http://localhost:3000/', cookie, { redirect: 'manual' });
+    expect(rootRes.status).toBe(302);
+    expect(rootRes.headers.get('location')).toBe('/login');
 
     // Session row was cleaned up
     expect(await db.select().from(sessions)).toHaveLength(0);
@@ -464,12 +527,74 @@ describe('PKCE cookie cleanup', () => {
     // (the 5-min cookie expires on its own, but explicit delete is cleaner)
     expect(pkceCookieDelete).toBeDefined();
   });
+
+  it('14. PKCE cookie is deleted when Google returns an error before code exchange', async () => {
+    const startRes = await app.request('http://localhost:3000/auth/google/start', {
+      redirect: 'manual',
+    });
+    const pkceCookie = startRes.headers
+      .getSetCookie()
+      .find((header) => header.includes('squire_oauth_pkce='))!
+      .split(';')[0];
+
+    const callbackRes = await app.request(
+      'http://localhost:3000/auth/google/callback?error=access_denied',
+      {
+        redirect: 'manual',
+        headers: { Cookie: pkceCookie },
+      },
+    );
+
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get('location')).toBe(
+      '/login?error=Google+sign-in+was+cancelled+or+failed.',
+    );
+
+    const setCookies = callbackRes.headers.getSetCookie();
+    const pkceCookieDelete = setCookies.find(
+      (header) =>
+        header.includes('squire_oauth_pkce') &&
+        (header.includes('Max-Age=0') || header.includes('max-age=0')),
+    );
+    expect(pkceCookieDelete).toBeDefined();
+  });
+
+  it('15. PKCE cookie is deleted when callback is missing code or state', async () => {
+    const startRes = await app.request('http://localhost:3000/auth/google/start', {
+      redirect: 'manual',
+    });
+    const pkceCookie = startRes.headers
+      .getSetCookie()
+      .find((header) => header.includes('squire_oauth_pkce='))!
+      .split(';')[0];
+
+    const callbackRes = await app.request(
+      'http://localhost:3000/auth/google/callback?state=only-state',
+      {
+        redirect: 'manual',
+        headers: { Cookie: pkceCookie },
+      },
+    );
+
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get('location')).toBe(
+      '/login?error=Missing+code+or+state+parameter.',
+    );
+
+    const setCookies = callbackRes.headers.getSetCookie();
+    const pkceCookieDelete = setCookies.find(
+      (header) =>
+        header.includes('squire_oauth_pkce') &&
+        (header.includes('Max-Age=0') || header.includes('max-age=0')),
+    );
+    expect(pkceCookieDelete).toBeDefined();
+  });
 });
 
 // ─── Audit event verification ───────────────────────────────────────────────
 
 describe('Audit events', () => {
-  it('14. successful login writes google_login audit event', async () => {
+  it('16. successful login writes google_login audit event', async () => {
     mockGoogleSuccess();
     await walkOAuthFlow();
 
@@ -487,7 +612,7 @@ describe('Audit events', () => {
 // ─── Email/sub conflict (SQR-38 review) ─────────────────────────────────────
 
 describe('Email/sub conflict', () => {
-  it('15. returns opaque 403 when email exists under a different google_sub', async () => {
+  it('17. returns opaque 403 when email exists under a different google_sub', async () => {
     // Seed a user with the test email but a different google_sub
     const { db } = getDb('server');
     const { users } = await import('../src/db/schema/core.ts');
@@ -501,11 +626,9 @@ describe('Email/sub conflict', () => {
     mockGoogleSuccess();
     const res = await walkOAuthFlow();
 
-    // Should get a 403 with an opaque message (no detail leakage)
-    expect(res.status).toBe(403);
-    const body = await res.text();
-    expect(body).toContain('Unable to sign in');
-    expect(body).not.toContain('different-sub');
-    expect(body).not.toContain('conflict');
+    // Conflict still stays opaque, but the browser flow now redirects back to
+    // /login with the upstream message in the query string.
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login?error=Unable+to+sign+in.+Please+try+again.');
   });
 });
