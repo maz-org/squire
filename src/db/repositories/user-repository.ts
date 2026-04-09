@@ -12,6 +12,19 @@ import { users } from '../schema/core.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
 import type { User, CreateUserInput } from './types.ts';
 
+/**
+ * Thrown when a Google login presents an email that already exists under a
+ * different google_sub. This is a data integrity anomaly, not a normal user
+ * error. The caller should return an opaque error to the user (no detail
+ * leakage) and the console.error log provides forensic context.
+ */
+export class EmailConflictError extends Error {
+  constructor(email: string) {
+    super(`Email conflict: ${email} exists with a different Google account`);
+    this.name = 'EmailConflictError';
+  }
+}
+
 // ─── Row types (Drizzle boundary, not exported) ─────────────────────────────
 
 type UserRow = typeof users.$inferSelect;
@@ -57,17 +70,19 @@ export async function upsertByGoogleSub(handle: DbOrTx, input: CreateUserInput):
       .returning();
     return toDomain(row);
   } catch (err: unknown) {
-    // Handle email uniqueness collision: a row exists with the same email
-    // but a different google_sub (e.g., dev seed user). Update that row's
-    // google_sub to the real one from the Google token.
+    // Email uniqueness collision: a row exists with the same email but a
+    // different google_sub. This should never happen in normal operation.
+    // Do NOT silently update the existing row's google_sub (account takeover
+    // risk). Reject the login with a generic error and log the conflict as
+    // a critical data quality event for forensic investigation.
     const pgError = err as { code?: string; constraint?: string };
     if (pgError.code === '23505' && pgError.constraint?.includes('email')) {
-      const [row] = await handle
-        .update(users)
-        .set({ googleSub: input.googleSub, name: input.name })
-        .where(eq(users.email, input.email))
-        .returning();
-      return toDomain(row);
+      console.error(
+        '[CRITICAL] email/google_sub conflict: email=%s has existing row with different sub. New sub=%s. Login rejected.',
+        input.email,
+        input.googleSub,
+      );
+      throw new EmailConflictError(input.email);
     }
     throw err;
   }

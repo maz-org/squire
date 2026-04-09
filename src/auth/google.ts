@@ -17,6 +17,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { getDb } from '../db.ts';
 import { writeAuditEvent } from './audit.ts';
 import * as UserRepository from '../db/repositories/user-repository.ts';
+import { EmailConflictError } from '../db/repositories/user-repository.ts';
 import * as SessionRepository from '../db/repositories/session-repository.ts';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
@@ -207,29 +208,40 @@ export async function handleGoogleCallback(
 
   // 5. Upsert user + create session in a transaction
   const { db } = getDb('server');
-  const result = await db.transaction(async (tx) => {
-    const user = await UserRepository.upsertByGoogleSub(tx, {
-      googleSub,
-      email,
-      name: name ?? null,
-    });
-    const { sessionId } = await SessionRepository.create(tx, {
-      userId: user.id,
-      ipAddress,
-      userAgent,
-    });
+  let result: { sessionId: string; userId: string; email: string; name: string | null };
+  try {
+    result = await db.transaction(async (tx) => {
+      const user = await UserRepository.upsertByGoogleSub(tx, {
+        googleSub,
+        email,
+        name: name ?? null,
+      });
+      const { sessionId } = await SessionRepository.create(tx, {
+        userId: user.id,
+        ipAddress,
+        userAgent,
+      });
 
-    await writeAuditEvent(tx, {
-      eventType: 'google_login',
-      userId: user.id,
-      outcome: 'success',
-      ipAddress,
-      userAgent,
-      metadata: { email, googleSub },
-    });
+      await writeAuditEvent(tx, {
+        eventType: 'google_login',
+        userId: user.id,
+        outcome: 'success',
+        ipAddress,
+        userAgent,
+        metadata: { email, googleSub },
+      });
 
-    return { sessionId, userId: user.id, email, name: name ?? null };
-  });
+      return { sessionId, userId: user.id, email, name: name ?? null };
+    });
+  } catch (err) {
+    // EmailConflictError: email exists under a different google_sub.
+    // Return an opaque error to the user (no detail leakage about existing accounts).
+    // The critical log was already emitted by the repository.
+    if (err instanceof EmailConflictError) {
+      throw new GoogleAuthError('login_failed', 'Unable to sign in. Please try again.', 403);
+    }
+    throw err;
+  }
 
   // Log truncated session ID only (full ID is a session secret)
   console.info(
