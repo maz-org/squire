@@ -28,6 +28,38 @@ function isSecureContext(): boolean {
 }
 
 /**
+ * Hono middleware that detects a session without enforcing it.
+ *
+ * If a valid session cookie exists, sets `c.set('userId', string)` on the
+ * context. If not, does nothing (no 401, no redirect). Used on public
+ * pages like the homepage so the layout shell can adapt its chrome based
+ * on auth state without blocking unauthenticated visitors.
+ */
+export function optionalSession() {
+  return async (c: Context, next: Next) => {
+    try {
+      const secret = getSessionSecret();
+      const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
+      if (sessionId) {
+        const session = await loadSession(sessionId);
+        if (session) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (c as any).set('userId', session.userId);
+        } else {
+          // Expired session: clear the stale cookie silently
+          deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+        }
+      }
+    } catch {
+      // Auth check failed (no SECRET configured, DB down, etc.)
+      // Silently continue as unauthenticated. Public pages must not break
+      // because the auth system is misconfigured.
+    }
+    await next();
+  };
+}
+
+/**
  * Hono middleware that enforces session-cookie authentication.
  *
  * On success: sets `c.set('userId', string)` and calls `next()`.

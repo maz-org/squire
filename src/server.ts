@@ -36,6 +36,7 @@ import {
 } from './auth/google.ts';
 import { destroySession, getUserById, getSessionSecret } from './auth/session-store.ts';
 import {
+  optionalSession,
   requireSession,
   setSessionCookie,
   clearSessionCookie,
@@ -134,7 +135,7 @@ app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
 // JS — the fallback path is the same HTML primitive that SQR-6 / SQR-8 will
 // reuse for recoverable runtime errors. See DESIGN.md decisions log
 // "`.squire-banner` is a reusable primitive."
-app.get('/', async (c) => {
+app.get('/', optionalSession(), async (c) => {
   // `renderHomePage()` and `layoutShell()` both return
   // `Promise<HtmlEscapedString>` (tightened from a union in SQR-71
   // when layout.ts went async to await the asset URL helpers).

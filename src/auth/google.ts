@@ -17,7 +17,6 @@ import { OAuth2Client } from 'google-auth-library';
 import { getDb } from '../db.ts';
 import { users } from '../db/schema/core.ts';
 import { writeAuditEvent } from './audit.ts';
-import type { AuditEventType } from './audit.ts';
 import { createSession } from './session-store.ts';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
@@ -196,7 +195,7 @@ export async function handleGoogleCallback(
     console.warn('[auth:google] email not in allowlist: %s', email);
     const { db } = getDb('server');
     await writeAuditEvent(db, {
-      eventType: 'google_login_denied' as AuditEventType,
+      eventType: 'google_login_denied',
       outcome: 'failure',
       failureReason: 'email_not_allowed',
       ipAddress,
@@ -225,7 +224,7 @@ export async function handleGoogleCallback(
 
     // Audit: successful login
     await writeAuditEvent(tx, {
-      eventType: 'google_login' as AuditEventType,
+      eventType: 'google_login',
       userId: user.id,
       outcome: 'success',
       ipAddress,
@@ -236,7 +235,12 @@ export async function handleGoogleCallback(
     return { sessionId, userId: user.id, email, name: name ?? null };
   });
 
-  console.info('[auth:google] login succeeded: email=%s sessionId=%s', email, result.sessionId);
+  // Log truncated session ID only (full ID is a session secret)
+  console.info(
+    '[auth:google] login succeeded: email=%s session=%s...',
+    email,
+    result.sessionId.slice(0, 8),
+  );
   return result;
 }
 

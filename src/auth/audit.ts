@@ -29,7 +29,10 @@ export type AuditEventType =
   | 'token_issue'
   | 'token_verify'
   | 'token_revoke'
-  | 'token_expired';
+  | 'token_expired'
+  | 'google_login'
+  | 'google_login_denied'
+  | 'google_logout';
 
 export type AuditOutcome = 'success' | 'failure';
 

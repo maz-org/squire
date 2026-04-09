@@ -16,7 +16,7 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '../db.ts';
 import { users, sessions } from '../db/schema/core.ts';
 import { writeAuditEvent } from './audit.ts';
-import type { AuditEventType, DbOrTx } from './audit.ts';
+import type { DbOrTx } from './audit.ts';
 
 /** 30-day session lifetime, matching the long-lived token DX policy (ADR 0002). */
 export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
@@ -117,7 +117,7 @@ export async function destroySession(
 
   if (rows.length > 0) {
     await writeAuditEvent(db, {
-      eventType: 'google_logout' as AuditEventType,
+      eventType: 'google_logout',
       userId: rows[0].userId,
       outcome: 'success',
       ipAddress,

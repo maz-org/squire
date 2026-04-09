@@ -51,6 +51,13 @@ export async function renderAuthErrorPage(
     retryLabel = 'Try again',
   } = options;
 
+  // Guard against javascript: URI injection in the retry link.
+  // retryUrl must be a relative path (starts with /). Current callers
+  // only pass the default, but the public interface accepts strings.
+  if (retryUrl && !retryUrl.startsWith('/')) {
+    throw new Error('retryUrl must be a relative path starting with /');
+  }
+
   // The error banner + navigation links as the main surface content.
   // Uses the same .squire-banner--error component from DESIGN.md,
   // plus a nav block with the retry CTA and a home link styled to
