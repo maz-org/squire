@@ -9,12 +9,42 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
-import { sessions } from '../schema/core.ts';
+import { sessions, users } from '../schema/core.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
-import type { Session } from './types.ts';
+import type { Session, CreateSessionInput, User } from './types.ts';
 
 /** 30-day session lifetime, matching the long-lived token DX policy (ADR 0002). */
 export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+
+// ─── Row types (Drizzle boundary, not exported) ─────────────────────────────
+
+type SessionRow = typeof sessions.$inferSelect;
+type UserRow = typeof users.$inferSelect;
+
+function userToDomain(row: UserRow): User {
+  return {
+    id: row.id,
+    googleSub: row.googleSub,
+    email: row.email,
+    name: row.name,
+    createdAt: row.createdAt,
+  };
+}
+
+function toDomain(row: SessionRow & { user: UserRow }): Session {
+  return {
+    id: row.id,
+    userId: row.userId,
+    expiresAt: row.expiresAt,
+    createdAt: row.createdAt,
+    ipAddress: row.ipAddress,
+    userAgent: row.userAgent,
+    lastSeenAt: row.lastSeenAt,
+    user: userToDomain(row.user),
+  };
+}
+
+// ─── Queries ────────────────────────────────────────────────────────────────
 
 /**
  * Load a session with its user in one relational query.
@@ -40,7 +70,7 @@ export async function findById(sessionId: string): Promise<Session | null> {
   // TODO: debounce for Phase 3 multi-user if write volume becomes a concern
   await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId));
 
-  return row;
+  return toDomain(row);
 }
 
 /**
@@ -51,9 +81,7 @@ export async function findById(sessionId: string): Promise<Session | null> {
  */
 export async function create(
   handle: DbOrTx,
-  userId: string,
-  ipAddress?: string | null,
-  userAgent?: string | null,
+  input: CreateSessionInput,
 ): Promise<{ sessionId: string; expiresAt: Date }> {
   const sessionId = randomUUID();
   const now = new Date();
@@ -61,10 +89,10 @@ export async function create(
 
   await handle.insert(sessions).values({
     id: sessionId,
-    userId,
+    userId: input.userId,
     expiresAt,
-    ipAddress: ipAddress ?? null,
-    userAgent: userAgent ?? null,
+    ipAddress: input.ipAddress ?? null,
+    userAgent: input.userAgent ?? null,
     lastSeenAt: now,
   });
 

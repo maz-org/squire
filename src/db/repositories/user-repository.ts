@@ -10,34 +10,49 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '../../db.ts';
 import { users } from '../schema/core.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
-import type { User } from './types.ts';
+import type { User, CreateUserInput } from './types.ts';
+
+// ─── Row types (Drizzle boundary, not exported) ─────────────────────────────
+
+type UserRow = typeof users.$inferSelect;
+
+function toDomain(row: UserRow): User {
+  return {
+    id: row.id,
+    googleSub: row.googleSub,
+    email: row.email,
+    name: row.name,
+    createdAt: row.createdAt,
+  };
+}
+
+// ─── Queries ────────────────────────────────────────────────────────────────
 
 export async function findById(userId: string): Promise<User | null> {
   const { db } = getDb('server');
   const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  return rows[0] ?? null;
+  if (rows.length === 0) return null;
+  return toDomain(rows[0]);
 }
 
 /**
  * Upsert a user by Google sub (stable identifier). On conflict with
  * google_sub, updates email and name (they can change on the Google side).
- * Returns the user's id.
  *
  * Accepts DbOrTx so this can run inside handleGoogleCallback's transaction.
  */
-export async function upsertByGoogleSub(
-  handle: DbOrTx,
-  googleSub: string,
-  email: string,
-  name: string | null,
-): Promise<{ id: string }> {
-  const [user] = await handle
+export async function upsertByGoogleSub(handle: DbOrTx, input: CreateUserInput): Promise<User> {
+  const [row] = await handle
     .insert(users)
-    .values({ googleSub, email, name })
+    .values({
+      googleSub: input.googleSub,
+      email: input.email,
+      name: input.name,
+    })
     .onConflictDoUpdate({
       target: users.googleSub,
-      set: { email, name },
+      set: { email: input.email, name: input.name },
     })
-    .returning({ id: users.id });
-  return user;
+    .returning();
+  return toDomain(row);
 }

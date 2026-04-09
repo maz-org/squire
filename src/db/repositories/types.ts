@@ -2,12 +2,16 @@
  * Domain types for core data models (SQR-38).
  *
  * These are the shapes the rest of the app works with: layout, middleware,
- * route handlers, tests. Repository methods return these types. The Drizzle
- * schema defines the DB columns; these types define the domain contract.
+ * route handlers, tests. Repository methods return domain types and accept
+ * input types. The Drizzle schema defines the DB columns; these types
+ * define the domain contract.
  *
- * If a column is added to the schema, update the matching type here and
- * the repository mapping in the same commit.
+ * Row types ($inferSelect / $inferInsert) and toDomain() mapping functions
+ * live inside each repository file, not here. This file is the public
+ * contract; the repositories own the persistence boundary.
  */
+
+// ─── User ───────────────────────────────────────────────────────────────────
 
 export interface User {
   id: string;
@@ -16,6 +20,14 @@ export interface User {
   name: string | null;
   createdAt: Date;
 }
+
+export interface CreateUserInput {
+  googleSub: string;
+  email: string;
+  name: string | null;
+}
+
+// ─── Session ────────────────────────────────────────────────────────────────
 
 export interface Session {
   id: string;
@@ -26,4 +38,10 @@ export interface Session {
   userAgent: string | null;
   lastSeenAt: Date | null;
   user: User;
+}
+
+export interface CreateSessionInput {
+  userId: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }

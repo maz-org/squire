@@ -208,8 +208,16 @@ export async function handleGoogleCallback(
   // 5. Upsert user + create session in a transaction
   const { db } = getDb('server');
   const result = await db.transaction(async (tx) => {
-    const user = await UserRepository.upsertByGoogleSub(tx, googleSub, email, name ?? null);
-    const { sessionId } = await SessionRepository.create(tx, user.id, ipAddress, userAgent);
+    const user = await UserRepository.upsertByGoogleSub(tx, {
+      googleSub,
+      email,
+      name: name ?? null,
+    });
+    const { sessionId } = await SessionRepository.create(tx, {
+      userId: user.id,
+      ipAddress,
+      userAgent,
+    });
 
     await writeAuditEvent(tx, {
       eventType: 'google_login',
