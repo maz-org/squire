@@ -218,6 +218,7 @@ check in the raw `~/.gstack` state.
    - [`docs/agent/learnings.md`](../agent/learnings.md)
 2. Add a small export script, for example:
    - `scripts/export-gstack-learnings.ts`
+   - repo command: `npm run agent:export-learnings`
 3. First version of the exporter should be simple:
    - read `~/.gstack/projects/maz-org-squire/learnings.jsonl`
    - select only high-signal entries
@@ -255,6 +256,7 @@ Prevent the adapter layer from drifting.
 ### Changes
 
 1. Add a script such as `scripts/check-agent-parity.ts`
+   - repo command: `npm run agent:check`
 2. Verify:
    - `CLAUDE.md` and `AGENTS.md` point at the same core docs
    - `.mcp.json` includes the expected Squire MCP endpoint
@@ -293,6 +295,38 @@ Likely ADR trigger points:
 
 If none of those choices turn out to be non-obvious in implementation, do not
 force an ADR just to satisfy process.
+
+---
+
+## Working workflow
+
+Once the first implementation slice exists, the intended maintenance workflow is:
+
+1. If you change agent entrypoints or shared adapter docs:
+   - `CLAUDE.md`
+   - `AGENTS.md`
+   - `docs/agent/agent-baseline.md`
+   - `.mcp.json`
+   - `docs/DEVELOPMENT.md`
+   run:
+
+   ```bash
+   npm run agent:check
+   ```
+
+2. If high-signal learnings have accumulated in
+   `~/.gstack/projects/maz-org-squire/learnings.jsonl`, run:
+
+   ```bash
+   npm run agent:export-learnings
+   ```
+
+3. Review the generated `docs/agent/learnings.md` before committing it. This is
+   a curated synthesis layer, not a raw log dump.
+
+4. If a generated learning becomes a durable architecture rule, promote it into
+   an ADR or `docs/ARCHITECTURE.md` rather than leaving it only in
+   `docs/agent/learnings.md`.
 
 ---
 

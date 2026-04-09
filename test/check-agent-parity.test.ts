@@ -16,7 +16,7 @@ DESIGN.md
 docs/ARCHITECTURE.md
 docs/DEVELOPMENT.md
 ~/.gstack/projects/maz-org-squire/
-Repo-local \`.gstack/\`
+Repo \`.gstack/\`
 `;
 
     const issues = collectParityIssues({
@@ -40,7 +40,7 @@ Repo-local \`.gstack/\`
     });
 
     expect(issues).toContain(
-      'docs/agent/agent-baseline.md is missing shared reference: docs/agent/issue-workflow.md',
+      'docs/agent/agent-baseline.md is missing shared reference: issue-workflow.md',
     );
     expect(issues).toContain('CLAUDE.md does not point to the shared baseline');
     expect(issues).toContain('docs/DEVELOPMENT.md does not mention AGENTS.md');

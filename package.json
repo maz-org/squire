@@ -22,12 +22,13 @@
     "test:watch": "vitest",
     "agent:check": "node scripts/check-agent-parity.ts",
     "agent:export-learnings": "node scripts/export-gstack-learnings.ts",
+    "agent:install-launchagent": "node scripts/install-agent-learnings-launchagent.ts",
     "lint": "eslint src/ test/ scripts/",
     "lint:css": "stylelint 'src/web-ui/**/*.css'",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads'",
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
-    "prepare": "husky"
+    "prepare": "husky && npm run agent:install-launchagent"
   },
   "lint-staged": {
     "*.{ts,js}": [

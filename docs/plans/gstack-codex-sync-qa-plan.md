@@ -35,6 +35,7 @@ From SQR-79:
 5. The plan is committed and pushed on the SQR-79 feature branch, without opening a PR
 6. The plan acknowledges the repo's ADR workflow and does not treat `docs/plans/` as the permanent home for architecture decisions
 7. The plan includes a post-merge promotion / cleanup path so durable content moves into ADRs and active docs
+8. The plan includes the concrete maintenance workflow for `npm run agent:check` and `npm run agent:export-learnings`
 
 ---
 
@@ -49,6 +50,7 @@ From SQR-79:
 | 5 | Branch exists on origin, commit is pushed, no PR opened | git + GitHub evidence |
 | 6 | Plan integrates ADR workflow correctly | ADR/promotion sections in plan |
 | 7 | Plan includes staging-to-permanent-doc cleanup | post-merge cleanup section |
+| 8 | Plan includes concrete parity/learnings commands | workflow section in plan |
 
 ---
 
@@ -64,7 +66,7 @@ Open SQR-79 and confirm:
 
 Pass condition:
 
-- all seven ACs are present in the issue body
+- all eight ACs are present in the issue body
 
 Failure examples:
 
@@ -255,6 +257,26 @@ Failure examples:
 
 ## 10. Lightweight quality checks
 
+## 10. Verify AC 8: concrete maintenance workflow
+
+Check the plan for explicit command-level guidance.
+
+Pass condition:
+
+- the plan names `npm run agent:check`
+- the plan names `npm run agent:export-learnings`
+- the plan says when to run each command
+- the plan says the exported learnings doc must be reviewed before commit
+
+Failure examples:
+
+- commands exist in the repo but are not mentioned in the plan
+- the plan describes ideas at a high level but does not name the actual workflow
+
+---
+
+## 11. Lightweight quality checks
+
 Run:
 
 ```bash
@@ -286,6 +308,7 @@ Record the QA result as a short checklist in the ticket comment or working notes
 - AC5: pass/fail + one sentence
 - AC6: pass/fail + one sentence
 - AC7: pass/fail + one sentence
+- AC8: pass/fail + one sentence
 - overall verdict: ready / not ready
 
 If there is a failure:
@@ -300,7 +323,7 @@ If there is a failure:
 
 SQR-79 is QA-complete when:
 
-- all seven ACs pass
+- all eight ACs pass
 - both plan docs lint cleanly
 - the branch is pushed
 - no PR exists yet
