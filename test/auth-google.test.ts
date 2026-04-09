@@ -338,3 +338,41 @@ describe('Route isolation', () => {
     expect(bareRes.status).toBe(401);
   });
 });
+
+// ─── PKCE cookie cleanup ────────────────────────────────────────────────────
+
+describe('PKCE cookie cleanup', () => {
+  it('13. PKCE cookie is deleted after successful callback', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    expect(loginRes.status).toBe(302);
+
+    // The response should clear the PKCE cookie (Max-Age=0 or explicit delete)
+    const setCookies = loginRes.headers.getSetCookie();
+    const pkceCookieDelete = setCookies.find(
+      (h) =>
+        h.includes('squire_oauth_pkce') && (h.includes('Max-Age=0') || h.includes('max-age=0')),
+    );
+    // Either the PKCE cookie is explicitly deleted, or it's not re-set
+    // (the 5-min cookie expires on its own, but explicit delete is cleaner)
+    expect(pkceCookieDelete).toBeDefined();
+  });
+});
+
+// ─── Audit event verification ───────────────────────────────────────────────
+
+describe('Audit events', () => {
+  it('14. successful login writes google_login audit event', async () => {
+    mockGoogleSuccess();
+    await walkOAuthFlow();
+
+    const { db } = getDb('server');
+    const { oauthAuditLog } = await import('../src/db/schema/auth.ts');
+    const auditRows = await db
+      .select()
+      .from(oauthAuditLog)
+      .where(eq(oauthAuditLog.eventType, 'google_login'));
+    expect(auditRows).toHaveLength(1);
+    expect(auditRows[0].outcome).toBe('success');
+  });
+});

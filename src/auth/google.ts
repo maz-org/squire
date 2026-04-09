@@ -11,14 +11,14 @@
  * in Phase 3 (multi-user). See ADR 0009.
  */
 
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
-import { eq } from 'drizzle-orm';
 
 import { getDb } from '../db.ts';
-import { users, sessions } from '../db/schema/core.ts';
+import { users } from '../db/schema/core.ts';
 import { writeAuditEvent } from './audit.ts';
 import type { AuditEventType } from './audit.ts';
+import { createSession } from './session-store.ts';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
@@ -32,16 +32,7 @@ function getGoogleConfig() {
   return { clientId, clientSecret, redirectUri };
 }
 
-function getSessionSecret(): string {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error('SESSION_SECRET must be set and at least 32 characters');
-  }
-  return secret;
-}
-
-/** 30-day session lifetime, matching the long-lived token DX policy (ADR 0002). */
-export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+// SESSION_LIFETIME_MS and getSessionSecret() live in session-store.ts
 
 /**
  * Hard-coded email allowlist for Phase 1 single-user MVP (ADR 0009).
@@ -228,19 +219,9 @@ export async function handleGoogleCallback(
       })
       .returning({ id: users.id });
 
-    // Create session
-    const sessionId = randomUUID();
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_MS);
-
-    await tx.insert(sessions).values({
-      id: sessionId,
-      userId: user.id,
-      expiresAt,
-      ipAddress: ipAddress ?? null,
-      userAgent: userAgent ?? null,
-      lastSeenAt: now,
-    });
+    // Create session (nested in this transaction so user upsert + session
+    // + audit are atomic)
+    const { sessionId } = await createSession(tx, user.id, ipAddress, userAgent);
 
     // Audit: successful login
     await writeAuditEvent(tx, {
@@ -259,84 +240,8 @@ export async function handleGoogleCallback(
   return result;
 }
 
-// ─── Session operations ─────────────────────────────────────────────────────
-
-/**
- * Load a session from Postgres. Returns null if not found or expired.
- * If expired, deletes the row (cleanup on read).
- */
-export async function loadSession(
-  sessionId: string,
-): Promise<{ userId: string; expiresAt: Date } | null> {
-  const { db } = getDb('server');
-  const now = new Date();
-
-  const rows = await db
-    .select({ userId: sessions.userId, expiresAt: sessions.expiresAt })
-    .from(sessions)
-    .where(eq(sessions.id, sessionId))
-    .limit(1);
-
-  if (rows.length === 0) return null;
-
-  const session = rows[0];
-  if (session.expiresAt <= now) {
-    // Expired: delete and return null
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
-    return null;
-  }
-
-  // Update last_seen_at (no debounce for single-user Phase 1)
-  // TODO: debounce for Phase 3 multi-user if write volume becomes a concern
-  await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId));
-
-  return session;
-}
-
-/**
- * Destroy a session (logout). Deletes the row from Postgres.
- */
-export async function destroySession(
-  sessionId: string,
-  ipAddress?: string,
-  userAgent?: string,
-): Promise<void> {
-  const { db } = getDb('server');
-
-  // Look up session to get userId for audit
-  const rows = await db
-    .select({ userId: sessions.userId })
-    .from(sessions)
-    .where(eq(sessions.id, sessionId))
-    .limit(1);
-
-  await db.delete(sessions).where(eq(sessions.id, sessionId));
-
-  if (rows.length > 0) {
-    await writeAuditEvent(db, {
-      eventType: 'google_logout' as AuditEventType,
-      userId: rows[0].userId,
-      outcome: 'success',
-      ipAddress,
-      userAgent,
-    });
-  }
-}
-
-/**
- * Get user info by ID (for /auth/me endpoint).
- */
-export async function getUserById(
-  userId: string,
-): Promise<{ id: string; email: string; name: string | null } | null> {
-  const { db } = getDb('server');
-  const rows = await db
-    .select({ id: users.id, email: users.email, name: users.name })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  return rows[0] ?? null;
-}
+// Session CRUD (loadSession, destroySession, getUserById) lives in
+// session-store.ts. google.ts only handles the OAuth flow.
 
 // ─── Allowlist accessor (mockable in tests) ─────────────────────────────────
 
@@ -370,7 +275,3 @@ export class GoogleAuthError extends Error {
     this.status = status;
   }
 }
-
-// ─── Re-exports ─────────────────────────────────────────────────────────────
-
-export { getSessionSecret };

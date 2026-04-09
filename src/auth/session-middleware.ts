@@ -18,7 +18,7 @@
 import type { Context, Next } from 'hono';
 import { getSignedCookie, setSignedCookie, deleteCookie } from 'hono/cookie';
 
-import { loadSession, getSessionSecret } from './google.ts';
+import { loadSession, getSessionSecret } from './session-store.ts';
 
 export const SESSION_COOKIE_NAME = 'squire_session';
 

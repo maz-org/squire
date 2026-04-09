@@ -22,7 +22,7 @@ import type { Context } from 'hono';
 
 import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
-import { isLoggedIn } from '../auth/session.ts';
+import { isAuthenticated } from '../auth/session.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -66,7 +66,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // (sidebar, input dock, recent questions). Otherwise, show brand-only
   // chrome (header, monogram, fonts, colors). The shell is self-sufficient:
   // it calls isLoggedIn() rather than relying on callers to pass a flag.
-  const authenticated = options.context ? await isLoggedIn(options.context) : false;
+  const authenticated = options.context ? isAuthenticated(options.context) : false;
 
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin

@@ -48,13 +48,6 @@ const { mockRenderHomePage } = vi.hoisted(() => ({
   mockRenderHomePage: vi.fn(),
 }));
 
-// Mock isLoggedIn to return true so layout tests see the full interaction
-// chrome (sidebar, input dock, chips). These tests verify layout rendering,
-// not auth behavior. Auth-aware layout behavior is tested in auth-google.test.ts.
-vi.mock('../src/auth/session.ts', () => ({
-  isLoggedIn: vi.fn().mockResolvedValue(true),
-}));
-
 vi.mock('../src/web-ui/layout.ts', async () => {
   const actual =
     await vi.importActual<typeof import('../src/web-ui/layout.ts')>('../src/web-ui/layout.ts');
@@ -68,13 +61,34 @@ const actualLayout =
   await vi.importActual<typeof import('../src/web-ui/layout.ts')>('../src/web-ui/layout.ts');
 
 import { app } from '../src/server.ts';
+import type { Context } from 'hono';
+
+/**
+ * Simulate a logged-in user by setting userId on the Hono context.
+ * The real requireSession() middleware does this; we fake it here
+ * because layout tests don't hit the real auth middleware.
+ */
+function simulateLoggedIn(ctx: Context): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (ctx as any).set('userId', 'test-layout-user-id');
+}
+
+/** mockRenderHomePage impl that simulates a logged-in user. */
+function loggedInHomePage(...args: unknown[]) {
+  const ctx = args[0] as Context;
+  if (ctx) simulateLoggedIn(ctx);
+  return actualLayout.renderHomePage(ctx);
+}
+
+/** mockRenderHomePage impl that renders as logged-out (no userId set). */
+function loggedOutHomePage(...args: unknown[]) {
+  return actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]);
+}
 
 describe('GET / — companion-first layout shell (SQR-65)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
-      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
-    );
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
   it('returns 200 and renders the layout document', async () => {
@@ -153,9 +167,8 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 describe('SQR-71 dev asset pipeline — bare paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
-      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
-    );
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
     vi.stubEnv('NODE_ENV', 'development');
     // Env transitions within a test file invalidate the cache (prod
     // minifies, dev doesn't → different content, different hash).
@@ -215,9 +228,8 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
 describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
-      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
-    );
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
     vi.stubEnv('NODE_ENV', 'production');
     _resetAssetCachesForTests();
   });
@@ -315,9 +327,8 @@ describe('SQR-71 Promise memoization — concurrent cold start', () => {
 describe('GET / — signature components (SQR-66)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
-      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
-    );
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
   // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
@@ -434,9 +445,8 @@ describe('styles.css — SQR-66 signature component rules', () => {
 describe('GET / — SQR-67 stub regions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
-      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
-    );
+
+    mockRenderHomePage.mockImplementation(loggedInHomePage);
   });
 
   it('renders the first-run empty state with "At your service." and the scope line', async () => {
@@ -578,10 +588,11 @@ describe('GET / — server-side error fallback (SQR-65)', () => {
     expect(res.headers.get('content-type')).toContain('text/html');
 
     const body = await res.text();
-    // Layout shell still rendered.
+    // Layout shell still rendered (brand chrome).
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
-    expect(body).toContain('class="squire-input-dock"');
+    // Error fallback renders without auth context (middleware didn't run),
+    // so interaction chrome (input dock, sidebar) is correctly omitted.
     // Error banner primitive present inside the main surface.
     expect(body).toContain('squire-banner squire-banner--error');
     expect(body).toContain('SOMETHING WENT WRONG');
@@ -603,5 +614,79 @@ describe('GET / — server-side error fallback (SQR-65)', () => {
     expect(surfaceStart).toBeGreaterThan(-1);
     expect(bannerStart).toBeGreaterThan(surfaceStart);
     expect(surfaceEnd).toBeGreaterThan(bannerStart);
+  });
+});
+
+// ─── Logged-out layout variant (SQR-38 design review) ───────────────────────
+
+describe('GET / — logged-out layout (SQR-38)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Logged-out: don't set userId on context
+    mockRenderHomePage.mockImplementation(loggedOutHomePage);
+  });
+
+  it('omits interaction chrome when not authenticated', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).not.toContain('class="squire-rail"');
+    expect(body).not.toContain('class="squire-input-dock"');
+    expect(body).not.toContain('class="squire-toolcall"');
+    expect(body).not.toContain('class="squire-recent"');
+    expect(body).not.toContain('class="sr-only-focusable"');
+  });
+
+  it('still renders brand chrome when not authenticated', async () => {
+    const res = await app.request('/');
+    const body = await res.text();
+    expect(body).toContain('class="squire-header"');
+    expect(body).toContain('class="squire-surface"');
+    expect(body).toContain('class="squire-monogram"');
+    expect(body).toContain('Squire');
+  });
+});
+
+// ─── Auth error page rendering (SQR-38 design review) ───────────────────────
+
+describe('Auth error page rendering (SQR-38)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Auth error pages always render logged-out
+    // (logged-out: don't set userId on context)
+  });
+
+  it('renders squire-banner--error with the error message', async () => {
+    const res = await app.request('/auth/google/callback');
+    expect(res.status).toBe(400);
+    const body = await res.text();
+    expect(body).toContain('squire-banner--error');
+    expect(body).toContain('SIGN IN ERROR');
+  });
+
+  it('includes retry link and back-to-home link', async () => {
+    const res = await app.request('/auth/google/callback');
+    const body = await res.text();
+    expect(body).toContain('href="/auth/google/start"');
+    expect(body).toContain('Try again');
+    expect(body).toContain('href="/"');
+    expect(body).toContain('Back to home');
+  });
+
+  it('uses the layout shell (has header and design system)', async () => {
+    const res = await app.request('/auth/google/callback');
+    const body = await res.text();
+    expect(body).toContain('class="squire-header"');
+    expect(body).toContain('class="squire-monogram"');
+    // Uses design system fonts (not system-ui)
+    expect(body).toContain('fonts.googleapis.com');
+  });
+
+  it('renders logged-out chrome (no sidebar or input dock)', async () => {
+    const res = await app.request('/auth/google/callback');
+    const body = await res.text();
+    expect(body).not.toContain('class="squire-rail"');
+    expect(body).not.toContain('class="squire-input-dock"');
   });
 });

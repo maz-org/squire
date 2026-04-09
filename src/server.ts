@@ -32,18 +32,16 @@ import {
   computeCodeChallenge,
   buildGoogleAuthUrl,
   handleGoogleCallback,
-  destroySession,
-  getUserById,
-  getSessionSecret,
   GoogleAuthError,
 } from './auth/google.ts';
+import { destroySession, getUserById, getSessionSecret } from './auth/session-store.ts';
 import {
   requireSession,
   setSessionCookie,
   clearSessionCookie,
   SESSION_COOKIE_NAME,
 } from './auth/session-middleware.ts';
-import { setSignedCookie, getSignedCookie } from 'hono/cookie';
+import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import { layoutShell, renderHomePage } from './web-ui/layout.ts';
 import { renderAuthErrorPage } from './web-ui/auth-error-page.ts';
 import { getAppCss, getSquireJs } from './web-ui/assets.ts';
@@ -381,6 +379,8 @@ app.get('/auth/google/callback', async (c) => {
       c.req.header('user-agent'),
     );
 
+    // Clean up PKCE cookie (served its purpose) and set session cookie
+    deleteCookie(c, PKCE_COOKIE_NAME, { path: '/' });
     await setSessionCookie(c, result.sessionId);
     return c.redirect('/');
   } catch (err) {
