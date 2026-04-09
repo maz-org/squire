@@ -271,12 +271,63 @@ describe('CSRF protection', () => {
     const { db } = getDb('server');
     expect(await db.select().from(sessions)).toHaveLength(1);
   });
+
+  it('6. HTMX requests get the fragment error response when CSRF validation fails', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'hx-request': 'true' },
+    });
+
+    expect(logoutRes.status).toBe(403);
+    const body = await logoutRes.text();
+    expect(body).toContain('squire-banner--error');
+    expect(body).not.toContain('<!doctype html>');
+  });
+
+  it('7. POST /auth/logout accepts a form _csrf token', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ _csrf: csrfToken }).toString(),
+    });
+
+    expect(logoutRes.status).toBe(302);
+    expect(logoutRes.headers.get('location')).toBe('/');
+  });
+
+  it('8. POST /auth/logout accepts a JSON _csrf token', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ _csrf: csrfToken }),
+    });
+
+    expect(logoutRes.status).toBe(302);
+    expect(logoutRes.headers.get('location')).toBe('/');
+  });
 });
 
 // ─── Sad paths ──────────────────────────────────────────────────────────────
 
 describe('Callback rejection', () => {
-  it('6. email not in allowlist -> 403, no user or session created', async () => {
+  it('9. email not in allowlist -> 403, no user or session created', async () => {
     process.env.SQUIRE_ALLOWED_EMAILS = 'other@example.com';
     mockGoogleSuccess();
 
@@ -288,13 +339,13 @@ describe('Callback rejection', () => {
     expect(await db.select().from(sessions)).toHaveLength(0);
   });
 
-  it('7. invalid state parameter -> 400', async () => {
+  it('10. invalid state parameter -> 400', async () => {
     mockGoogleSuccess();
     const res = await walkOAuthFlow({ overrideState: 'tampered-state' });
     expect(res.status).toBe(400);
   });
 
-  it('8. Google token verification failure -> 400', async () => {
+  it('11. Google token verification failure -> 400', async () => {
     mockGetToken.mockResolvedValueOnce({ tokens: { id_token: 'bad-token' } });
     mockVerifyIdToken.mockRejectedValueOnce(new Error('Verification failed'));
 
@@ -302,7 +353,7 @@ describe('Callback rejection', () => {
     expect(res.status).toBe(400);
   });
 
-  it('9. Google code exchange failure -> 400', async () => {
+  it('12. Google code exchange failure -> 400', async () => {
     mockGetToken.mockRejectedValueOnce(new Error('Exchange failed'));
 
     const res = await walkOAuthFlow();
@@ -311,12 +362,12 @@ describe('Callback rejection', () => {
 });
 
 describe('Session middleware rejection', () => {
-  it('10. missing cookie -> 401', async () => {
+  it('13. missing cookie -> 401', async () => {
     const res = await app.request('http://localhost:3000/auth/me');
     expect(res.status).toBe(401);
   });
 
-  it('11. expired session -> 401, session row deleted', async () => {
+  it('14. expired session -> 401, session row deleted', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
