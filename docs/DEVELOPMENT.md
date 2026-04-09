@@ -30,7 +30,7 @@ LANGFUSE_PUBLIC_KEY=...
 LANGFUSE_SECRET_KEY=...
 ```
 
-For local dev without Google OAuth, the app still starts and serves the homepage. Auth routes will error without valid Google credentials. Run `npm run seed:dev` to create a test user for authenticated code paths.
+For local dev without Google OAuth, the app still starts and serves the homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed login still needs working OAuth credentials. Run `npm run seed:dev` to create a test user for authenticated code paths without doing the Google round-trip.
 
 Extracted card data (`data/extracted/*.json`) is committed to the repo.
 The rulebook vector index lives in Postgres (pgvector) and is populated by
@@ -71,6 +71,23 @@ Environment variables still win:
 
 For a fresh linked worktree, `npm run db:migrate` / `npm run db:migrate:test`
 will create the managed local database automatically if it does not exist yet.
+
+Fresh linked worktree checklist before authenticated browser testing or QA:
+
+```bash
+npm install
+docker compose up -d
+npm run db:migrate
+npm run db:migrate:test   # if you will run tests in this checkout
+npm run index
+npm run seed:dev
+```
+
+That bootstrap is enough to make the worktree self-contained: checkout-local
+DBs exist, embeddings are indexed, card tables are seeded, and the predictable
+`dev@squire.local` user exists. Make sure the worktree's `.env` also includes
+`SESSION_SECRET`. Without it, the homepage can still render, but session-backed
+routes and authenticated QA will fail once cookies or CSRF checks are involved.
 
 **If `npm run db:migrate` fails because a managed local database is missing or
 the Docker volume is stale:** the Postgres image only runs init scripts on a
@@ -355,6 +372,12 @@ then `seed:dev-user` (inserts a single predictable dev user into the
 `users` table for testing authenticated paths without the Google OAuth
 round-trip). The dev-user step refuses to run with `NODE_ENV=production`.
 
+Fresh linked worktrees need the same bootstrap sequence. The subtle part is
+`SESSION_SECRET`: the server can still boot and serve the anonymous homepage
+without it, which makes the checkout look healthy at first glance, but
+authenticated routes and browser QA will break as soon as session cookies or
+CSRF validation enter the path.
+
 `npm run seed:cards` is idempotent — re-run it any time the extracted
 JSON refreshes. It validates each record with the matching `SCHEMAS[type]`
 Zod schema and skips anything that fails (the failures are warned to
@@ -447,6 +470,7 @@ src/
 ## Changelog
 
 - **2026-04-08:** SQR-36 — local bootstrap flipped to `npm run seed:dev`, which chains `seed:cards` and the new `seed:dev-user` helper. `src/seed/seed-dev-user.ts` upserts a predictable `dev@squire.local` row into `users` via `ON CONFLICT DO NOTHING` (no target, so either `email` or `google_sub` conflicts no-op). CLI wrapper refuses `NODE_ENV=production`. New `seed` alias points at `seed:cards` as the prod-relevant default.
+- **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated QA needs local dependencies installed plus the full local bootstrap (`npm install`, `docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) and `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
 - **2026-04-08:** SQR-56 — `extracted-data.ts` is Postgres-backed via FTS. The card tables hold the runtime data; `data/extracted/*.json` is now a seed input. The atomic tools became async and gained `opts.game`. `getCard` resolves on canonical `sourceId` (the per-type natural-key map is gone). Removed the "until SQR-56 lands" caveat from the data management section. Updated REST + MCP tables to say "Postgres FTS" instead of "keyword search". Added `src/db/`, `src/seed/` to the project structure tree and corrected the stale "Flat-file vector store" line on `vector-store.ts` (it has been pgvector since SQR-33).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear SQR-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
 - **2026-04-07:** Renamed from `docs/development.md` to `docs/DEVELOPMENT.md` as part of the ALL_CAPS docs consolidation.

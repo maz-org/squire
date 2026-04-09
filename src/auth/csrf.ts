@@ -7,7 +7,6 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 import { getSessionSecret } from './session-middleware.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME } from '../web-ui/csrf.ts';
 import { layoutShell } from '../web-ui/layout.ts';
-
 const CSRF_ERROR_MESSAGE = 'Security check failed. Refresh the page and try again.';
 
 export function createCsrfToken(sessionId: string): string {

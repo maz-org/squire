@@ -427,9 +427,9 @@ app.get('/auth/google/callback', async (c) => {
 });
 
 app.post('/auth/logout', requirePageSession(), requireCsrf(), async (c) => {
+  const session = c.get('session')!;
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
-  const session = c.get('session')!;
   const userId = await SessionRepository.destroy(session.id);
   if (userId) {
     const { db } = getDb('server');

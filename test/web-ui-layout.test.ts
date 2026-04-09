@@ -23,6 +23,8 @@ import {
   getSquireJsUrl,
 } from '../src/web-ui/assets.ts';
 
+process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
+
 vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
   isReady: vi.fn(),

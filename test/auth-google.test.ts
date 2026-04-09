@@ -304,6 +304,57 @@ describe('CSRF protection', () => {
     expect(logoutRes.status).toBe(302);
     expect(logoutRes.headers.get('location')).toBe('/login');
   });
+
+  it('6. HTMX requests get the fragment error response when CSRF validation fails', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'hx-request': 'true' },
+    });
+
+    expect(logoutRes.status).toBe(403);
+    const body = await logoutRes.text();
+    expect(body).toContain('squire-banner--error');
+    expect(body).not.toContain('<!doctype html>');
+  });
+
+  it('7. POST /auth/logout accepts a form _csrf token', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ _csrf: csrfToken }).toString(),
+    });
+
+    expect(logoutRes.status).toBe(302);
+    expect(logoutRes.headers.get('location')).toBe('/login');
+  });
+
+  it('8. POST /auth/logout accepts a JSON _csrf token', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
+
+    const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ _csrf: csrfToken }),
+    });
+
+    expect(logoutRes.status).toBe(302);
+    expect(logoutRes.headers.get('location')).toBe('/login');
+  });
 });
 
 // ─── Sad paths ──────────────────────────────────────────────────────────────
