@@ -424,6 +424,8 @@ app.post('/auth/logout', async (c) => {
 app.get('/auth/me', requireSession(), async (c) => {
   // requireSession() guarantees session is set; 401 returned otherwise
   const session = c.get('session')!;
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
   return c.json({ id: session.user.id, email: session.user.email, name: session.user.name });
 });
 
