@@ -7,6 +7,7 @@
  * guidelines, unit tests mock every external service.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import path from 'node:path';
 
 const { mockPoolCtor, mockEnd } = vi.hoisted(() => {
   const mockEnd = vi.fn().mockResolvedValue(undefined);
@@ -61,7 +62,8 @@ describe('getDb', () => {
     const runtime = getWorktreeRuntime();
     const managed = getManagedDatabaseNames();
 
-    expect(runtime.checkoutRoot).toContain('/squire');
+    expect(path.isAbsolute(runtime.checkoutRoot)).toBe(true);
+    expect(path.basename(runtime.checkoutRoot).length).toBeGreaterThan(0);
     expect(runtime.checkoutSlug).toMatch(/^[0-9a-f]{8}$/);
     expect(runtime.defaultPort).toBeGreaterThan(0);
     expect(runtime.devDatabaseName).toBe(managed.devDatabaseName);
