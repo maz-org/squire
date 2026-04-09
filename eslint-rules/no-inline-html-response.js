@@ -40,10 +40,15 @@ export default {
         const firstArg = node.arguments[0];
         if (!firstArg) return;
 
-        // Flag template literals and string literals (inline HTML)
+        // Flag template literals, string literals, and tagged templates (inline HTML).
+        // html`<p>...</p>` is a TaggedTemplateExpression — still inline HTML.
         // Allow: function calls (renderAuthErrorPage, layoutShell, etc.)
         // Allow: await expressions wrapping function calls
-        if (firstArg.type === 'TemplateLiteral' || firstArg.type === 'Literal') {
+        if (
+          firstArg.type === 'TemplateLiteral' ||
+          firstArg.type === 'Literal' ||
+          firstArg.type === 'TaggedTemplateExpression'
+        ) {
           context.report({ node: firstArg, messageId: 'noInlineHtml' });
         }
       },

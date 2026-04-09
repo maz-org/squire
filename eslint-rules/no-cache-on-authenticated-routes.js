@@ -24,6 +24,45 @@ export default {
     schema: [],
   },
   create(context) {
+    // AST walk to find c.header('Cache-Control', 'no-store') calls.
+    // Verifies both the header name AND the value, not just a string match.
+    function checkForCacheControl(node, ctx) {
+      const source = ctx.sourceCode.getText(node);
+      // Quick pre-check to avoid expensive AST walk on nodes that clearly don't have it
+      if (!source.includes('Cache-Control')) return false;
+
+      let found = false;
+      function visit(n) {
+        if (found || !n || typeof n !== 'object') return;
+        if (
+          n.type === 'CallExpression' &&
+          n.callee?.type === 'MemberExpression' &&
+          n.callee?.property?.name === 'header' &&
+          n.arguments?.length >= 2
+        ) {
+          const nameArg = n.arguments[0];
+          const valueArg = n.arguments[1];
+          if (
+            nameArg?.type === 'Literal' &&
+            nameArg?.value === 'Cache-Control' &&
+            valueArg?.type === 'Literal' &&
+            valueArg?.value === 'no-store'
+          ) {
+            found = true;
+            return;
+          }
+        }
+        for (const key of Object.keys(n)) {
+          if (key === 'parent') continue;
+          const child = n[key];
+          if (Array.isArray(child)) child.forEach(visit);
+          else if (child && typeof child.type === 'string') visit(child);
+        }
+      }
+      visit(node);
+      return found;
+    }
+
     return {
       CallExpression(node) {
         // Match: app.get('/path', requireSession(), async (c) => { ... })
@@ -54,12 +93,13 @@ export default {
             (arg) => arg.type === 'ArrowFunctionExpression' || arg.type === 'FunctionExpression',
           );
 
-        if (!handler || !handler.body || handler.body.type !== 'BlockStatement') return;
+        if (!handler || !handler.body) return;
 
-        // Check if the handler body contains c.header('Cache-Control', ...)
-        const source = context.sourceCode.getText(handler.body);
-        const hasCacheControl =
-          source.includes("'Cache-Control'") || source.includes('"Cache-Control"');
+        // For expression-body handlers, wrap in a synthetic check
+        const bodyNode = handler.body.type === 'BlockStatement' ? handler.body : handler.body;
+
+        // AST walk: find c.header('Cache-Control', 'no-store') calls
+        const hasCacheControl = checkForCacheControl(bodyNode, context);
 
         if (!hasCacheControl) {
           context.report({

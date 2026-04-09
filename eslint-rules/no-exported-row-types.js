@@ -37,14 +37,23 @@ export default {
     return {
       // export type FooRow = ...
       ExportNamedDeclaration(node) {
-        if (!node.declaration) return;
-
-        if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id) {
-          checkName(node.declaration.id.name, node.declaration.id);
+        // Direct declaration: export type FooRow = ...
+        if (node.declaration) {
+          if (node.declaration.type === 'TSTypeAliasDeclaration' && node.declaration.id) {
+            checkName(node.declaration.id.name, node.declaration.id);
+          }
+          if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id) {
+            checkName(node.declaration.id.name, node.declaration.id);
+          }
         }
 
-        if (node.declaration.type === 'TSInterfaceDeclaration' && node.declaration.id) {
-          checkName(node.declaration.id.name, node.declaration.id);
+        // Re-export specifiers: export { FooRow } or export { type FooRow }
+        if (node.specifiers) {
+          for (const spec of node.specifiers) {
+            if (spec.exported && spec.exported.name) {
+              checkName(spec.exported.name, spec.exported);
+            }
+          }
         }
       },
     };

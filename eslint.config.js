@@ -81,12 +81,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: [
-                '**/auth/google*',
-                '**/auth/session*',
-                '**/auth/provider*',
-                '**/auth/hashing*',
-              ],
+              group: ['**/auth/*', '!**/auth/audit*'],
               message:
                 'Repositories must not import from auth modules. FIX: If you need DbOrTx, import it from src/auth/audit.ts (the one allowed exception). For everything else, the persistence layer depends down only: schema and db.ts.',
             },
