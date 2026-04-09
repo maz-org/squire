@@ -146,6 +146,53 @@ See [Observability](#observability) below.
 
 ---
 
+## Application Layering
+
+Squire's server code is organized in four layers. Dependencies flow down only: a route handler can call middleware and repositories, but a repository never renders HTML and a view never queries the database.
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│  Routes (src/server.ts)                                 │
+│  Hono handlers: parse request, call middleware,         │
+│  pass Session to views, return HTML or JSON             │
+├─────────────────────────────────────────────────────────┤
+│  Middleware (src/auth/session-middleware.ts)             │
+│  Reads signed cookie, calls SessionRepository,          │
+│  stores Session (with user) on Hono context             │
+├─────────────────────────────────────────────────────────┤
+│  Repositories (src/db/repositories/)                    │
+│  Domain types in, domain types out.                     │
+│  Row types and toDomain() mapping stay internal.        │
+│  Accepts DbOrTx for transaction nesting.                │
+├─────────────────────────────────────────────────────────┤
+│  Drizzle ORM + Postgres                                 │
+│  Schema in src/db/schema/, migrations in src/db/        │
+│  Relations enable relational queries (JOINs)            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Repository pattern
+
+Repositories own the persistence boundary. The rest of the app works with domain types, never raw Drizzle rows.
+
+- **Domain types** (`Session`, `User`, `CreateSessionInput`, `CreateUserInput`) live in `src/db/repositories/types.ts`. This is the public contract. If a column is added to the schema, the domain type and the repository mapping are updated together in the same module. No caller changes unless the domain type changes.
+- **Row types** (`typeof sessions.$inferSelect`, `typeof users.$inferSelect`) and `toDomain()` mapping functions are internal to each repository file. Never exported. The Drizzle schema shape does not leak past the repository.
+- **Transaction support:** repository methods accept `DbOrTx` as the first parameter, so callers can nest operations inside existing transactions (e.g., `handleGoogleCallback` upserts user + creates session + writes audit event atomically).
+- **Relational queries:** Drizzle relations defined in `src/db/schema/core.ts` (`sessionsRelations`, `usersRelations`) enable `db.query.sessions.findFirst({ with: { user: true } })`, loading a session with its user in a single JOIN. `SessionRepository.findById` uses this to avoid a second query for the user.
+
+### Session flow
+
+The web channel passes a `Session` domain object through the request lifecycle. Views never touch the Hono context or the database.
+
+1. **Middleware** (`optionalSession` or `requireSession`) reads the signed session cookie, calls `SessionRepository.findById()` (one relational query), and stores the `Session` on the Hono context via `c.set('session', session)`.
+2. **Route handlers** read `c.get('session')` and pass it to views. `/auth/me` reads `session.user` directly, zero extra DB calls.
+3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = full interaction chrome (sidebar, input dock, recent questions). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
+4. **Tests** construct `Session` objects directly. No context faking, no mock modules. The `Session` type ensures tests fail at compile time if the shape changes.
+
+`optionalSession()` runs on public routes (homepage) so the layout can adapt without blocking unauthenticated visitors. `requireSession()` runs on protected routes (`/chat`, `/auth/me`) and returns 401 if no valid session.
+
+---
+
 ## Game Dimension
 
 Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2: Gloomhaven 2.0. Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
@@ -507,7 +554,7 @@ src/
   auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1 for MCP/REST)
   auth/
     google.ts                   Google OAuth web login: consent URL, callback, allowlist
-    session-middleware.ts       Hono middleware: signed cookie -> Postgres session on context
+    session-middleware.ts       Hono middleware: signed cookie -> Session (with user) on context
     session.ts                  Context-based session accessors (isAuthenticated, getSession)
     provider.ts                 SquireOAuthProvider — MCP SDK OAuthServerProvider impl (Drizzle-backed)
     clients-store.ts            DrizzleClientsStore — OAuthRegisteredClientsStore impl
