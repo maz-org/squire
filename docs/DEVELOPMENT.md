@@ -44,7 +44,7 @@ Squire uses Postgres + pgvector for rulebook embeddings, card data, and
 OAuth state. Local dev runs it via docker-compose:
 
 ```bash
-docker compose up -d      # first run: creates the squire + squire_test DBs
+docker compose up -d      # first run: creates the main-checkout DBs
 npm run db:migrate        # apply Drizzle migrations to the dev DB
 npm run db:migrate:test   # apply Drizzle migrations to the test DB
 npm run index             # populate rulebook embeddings from data/pdfs/
@@ -54,15 +54,27 @@ npm run index             # populate rulebook embeddings from data/pdfs/
 `src/db.ts`, so the test variant just sets `NODE_ENV=test` — no manual
 `DATABASE_URL=...` incantation required.
 
-The connection string defaults to
-`postgres://squire:squire@localhost:5432/squire` — no `.env` edit needed.
-Under vitest the default flips to `squire_test`. Override either by
-setting `DATABASE_URL` / `TEST_DATABASE_URL` in `.env`.
+Local defaults are now **checkout-local**:
 
-**If `npm run db:migrate` fails with "database squire_test does not exist":**
-you have a pre-existing data volume from before `scripts/init-db.sql` was
-added. The Postgres image only runs init scripts on a fresh volume, so you
-need to wipe and reprovision:
+- main checkout: dev DB `squire`, test DB `squire_test`, preferred port `3000`
+- linked worktree: derived defaults based on the checkout path, for example
+  `squire_<slug>`, `squire_<slug>_test`, and a preferred non-3000 local port
+
+This lets two worktrees run migrations, tests, and dev servers concurrently
+without sharing the same local runtime resources by accident.
+
+Environment variables still win:
+
+- `DATABASE_URL` overrides the derived dev DB
+- `TEST_DATABASE_URL` overrides the derived test DB
+- `PORT` overrides the derived default or claimed port
+
+For a fresh linked worktree, `npm run db:migrate` / `npm run db:migrate:test`
+will create the managed local database automatically if it does not exist yet.
+
+**If `npm run db:migrate` fails because a managed local database is missing or
+the Docker volume is stale:** the Postgres image only runs init scripts on a
+fresh volume, so you may need to wipe and reprovision:
 
 ```bash
 docker compose down -v   # destroys the data volume
@@ -70,8 +82,8 @@ docker compose up -d     # re-runs scripts/init-db.sql
 npm run db:migrate
 ```
 
-`npm run db:reset` drops and recreates the current `DATABASE_URL` target
-(guarded to refuse anything that isn't `squire` or `squire_test`).
+`npm run db:reset` drops and recreates the current checkout's managed local
+database target. It refuses unrelated database names.
 
 ## Running the dev server
 
@@ -79,18 +91,35 @@ npm run db:migrate
 npm run serve
 ```
 
-The server starts on port 3000 (override with `PORT` env var). It
-initializes the vector index, verifies extracted card data, and warms
-the embedder before accepting requests.
+The server chooses a checkout-local port in two steps:
 
-Health check:
+- main checkout: `3000`
+- linked worktree: start from the checkout-derived preferred port, then claim
+  the first available port in the managed `4000-5999` range
+
+Override with `PORT` if you want a specific port. On startup, the server logs
+the final port it selected. It initializes the vector index, verifies
+extracted card data, and warms the embedder before accepting requests.
+
+To discover the current worktree's runtime settings, use startup logs or ask
+the app directly by checking:
+
+- `git rev-parse --show-toplevel`
+- `git worktree list --porcelain`
+- `npm run serve` startup output
+
+Example health check for the main checkout:
 
 ```bash
 curl http://localhost:3000/api/health
 # {"ready":true,"index_size":2147}
 ```
 
-Stop the server with Ctrl-C or `kill $(lsof -ti :3000)`.
+For linked worktrees, replace `3000` with that worktree's logged port. Do not
+assume the derived preferred port won the race if another worktree or local
+process was already using it.
+
+Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 ## REST API endpoints
 

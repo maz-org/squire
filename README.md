@@ -70,7 +70,7 @@ Start the server to expose REST endpoints and MCP tools:
 
 ```bash
 npm run serve
-# Squire server listening on port 3000
+# Squire server listening on port <derived-port>
 ```
 
 The server initializes the vector index and embedder on startup, then
@@ -86,7 +86,10 @@ serves:
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)
 
-Set `PORT` env var to change the listen port (default 3000).
+Set `PORT` to force a specific listen port. By default, the main checkout uses
+`3000`. Linked worktrees start from a checkout-local derived port and then
+coordinate within the managed `4000-5999` range so parallel agents do not land
+on the same default by accident. Trust the startup log for the final port.
 
 ### CLI
 
