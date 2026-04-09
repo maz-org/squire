@@ -75,6 +75,7 @@ will create the managed local database automatically if it does not exist yet.
 Fresh linked worktree checklist before authenticated browser testing or QA:
 
 ```bash
+npm install
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test   # if you will run tests in this checkout
@@ -469,7 +470,7 @@ src/
 ## Changelog
 
 - **2026-04-08:** SQR-36 — local bootstrap flipped to `npm run seed:dev`, which chains `seed:cards` and the new `seed:dev-user` helper. `src/seed/seed-dev-user.ts` upserts a predictable `dev@squire.local` row into `users` via `ON CONFLICT DO NOTHING` (no target, so either `email` or `google_sub` conflicts no-op). CLI wrapper refuses `NODE_ENV=production`. New `seed` alias points at `seed:cards` as the prod-relevant default.
-- **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated QA needs the full local bootstrap (`docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) plus `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
+- **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated QA needs local dependencies installed plus the full local bootstrap (`npm install`, `docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) and `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
 - **2026-04-08:** SQR-56 — `extracted-data.ts` is Postgres-backed via FTS. The card tables hold the runtime data; `data/extracted/*.json` is now a seed input. The atomic tools became async and gained `opts.game`. `getCard` resolves on canonical `sourceId` (the per-type natural-key map is gone). Removed the "until SQR-56 lands" caveat from the data management section. Updated REST + MCP tables to say "Postgres FTS" instead of "keyword search". Added `src/db/`, `src/seed/` to the project structure tree and corrected the stale "Flat-file vector store" line on `vector-store.ts` (it has been pgvector since SQR-33).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear SQR-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
 - **2026-04-07:** Renamed from `docs/development.md` to `docs/DEVELOPMENT.md` as part of the ALL_CAPS docs consolidation.
