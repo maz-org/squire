@@ -15,6 +15,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 
 import * as schema from './db/schema/index.ts';
+import { getWorktreeRuntime } from './worktree-runtime.ts';
 
 const { Pool } = pg;
 
@@ -35,15 +36,31 @@ export interface DbHandle {
 let serverPool: pg.Pool | null = null;
 let serverDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-/**
- * Default to the local docker-compose Postgres. These URLs are constant
- * across dev machines (the docker-compose service binds to localhost:5432
- * with fixed credentials), so we don't force every contributor to copy them
- * into a `.env` file. Production hosts override `DATABASE_URL` via real env
- * vars; tests override `TEST_DATABASE_URL` the same way.
- */
-export const DEFAULT_DATABASE_URL = 'postgres://squire:squire@localhost:5432/squire';
-export const DEFAULT_TEST_DATABASE_URL = 'postgres://squire:squire@localhost:5432/squire_test';
+function buildLocalDatabaseUrl(dbName: string): string {
+  return `postgres://squire:squire@localhost:5432/${dbName}`;
+}
+
+export function getManagedDatabaseNames(): {
+  devDatabaseName: string;
+  testDatabaseName: string;
+} {
+  const runtime = getWorktreeRuntime();
+  return {
+    devDatabaseName: runtime.devDatabaseName,
+    testDatabaseName: runtime.testDatabaseName,
+  };
+}
+
+export const DEFAULT_DATABASE_URL = buildLocalDatabaseUrl(
+  getManagedDatabaseNames().devDatabaseName,
+);
+export const DEFAULT_TEST_DATABASE_URL = buildLocalDatabaseUrl(
+  getManagedDatabaseNames().testDatabaseName,
+);
+
+export function getDefaultPort(): number {
+  return getWorktreeRuntime().defaultPort;
+}
 
 /**
  * Resolve the connection string. Under vitest (`VITEST=true`) we default to
@@ -57,6 +74,21 @@ export function resolveDatabaseUrl(): string {
     return process.env.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL;
   }
   return process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
+}
+
+export function getDatabaseNameFromUrl(url: string): string {
+  return new URL(url).pathname.replace(/^\//, '');
+}
+
+export function isManagedLocalDatabaseUrl(url: string): boolean {
+  const parsed = new URL(url);
+  const { devDatabaseName, testDatabaseName } = getManagedDatabaseNames();
+  const dbName = getDatabaseNameFromUrl(url);
+  return (
+    ['localhost', '127.0.0.1'].includes(parsed.hostname) &&
+    parsed.port === '5432' &&
+    [devDatabaseName, testDatabaseName].includes(dbName)
+  );
 }
 
 /**
@@ -107,3 +139,4 @@ export async function shutdownServerPool(): Promise<void> {
 }
 
 export { schema };
+export { getWorktreeRuntime } from './worktree-runtime.ts';

@@ -13,7 +13,7 @@ import { streamSSE } from 'hono/streaming';
 import { isReady, initialize, ask } from './service.ts';
 import { sql } from 'drizzle-orm';
 
-import { getDb } from './db.ts';
+import { getDb, getDefaultPort } from './db.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
 import { z } from 'zod';
@@ -510,8 +510,9 @@ app.post('/api/ask', async (c) => {
 export async function startServer(): Promise<void> {
   await initialize();
 
-  const parsed = parseInt(process.env.PORT || '3000', 10);
-  const port = Number.isNaN(parsed) ? 3000 : parsed;
+  const fallbackPort = getDefaultPort();
+  const parsed = parseInt(process.env.PORT || String(fallbackPort), 10);
+  const port = Number.isNaN(parsed) ? fallbackPort : parsed;
   const { serve } = await import('@hono/node-server');
   serve({ fetch: app.fetch, port });
   console.log(`Squire server listening on port ${port}`);

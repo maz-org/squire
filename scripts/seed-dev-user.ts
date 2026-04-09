@@ -7,7 +7,7 @@
  */
 import 'dotenv/config';
 
-import { getDb } from '../src/db.ts';
+import { getDb, getManagedDatabaseNames } from '../src/db.ts';
 import { DEV_USER, seedDevUser } from '../src/seed/seed-dev-user.ts';
 
 async function main(): Promise<void> {
@@ -25,7 +25,8 @@ async function main(): Promise<void> {
     const { hostname, pathname } = new URL(databaseUrl);
     const dbName = pathname.replace(/^\//, '');
     const localHost = hostname === 'localhost' || hostname === '127.0.0.1';
-    const allowedDb = dbName === 'squire' || dbName === 'squire_test';
+    const managedDbNames = new Set(Object.values(getManagedDatabaseNames()));
+    const allowedDb = managedDbNames.has(dbName);
     if (!localHost || !allowedDb) {
       console.error(
         `[seed-dev-user] refusing to run against non-local database: ${hostname}/${dbName}`,
