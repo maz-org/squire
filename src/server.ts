@@ -40,14 +40,19 @@ import * as SessionRepository from './db/repositories/session-repository.ts';
 import { writeAuditEvent } from './auth/audit.ts';
 import {
   optionalSession,
+  requirePageSession,
   requireSession,
   setSessionCookie,
   clearSessionCookie,
-  SESSION_COOKIE_NAME,
 } from './auth/session-middleware.ts';
+import { createCsrfToken, requireCsrf } from './auth/csrf.ts';
 import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
-import { layoutShell, renderHomePage } from './web-ui/layout.ts';
-import { renderAuthErrorPage } from './web-ui/auth-error-page.ts';
+import {
+  layoutShell,
+  renderHomePage,
+  renderLoginPage,
+  renderNotInvitedPage,
+} from './web-ui/layout.ts';
 import { getAppCss, getSquireJs } from './web-ui/assets.ts';
 
 export const app = new Hono();
@@ -131,13 +136,12 @@ app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
 
 // ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
 //
-// GET / renders the empty layout shell. The handler wraps the renderer in a
-// try/catch so a thrown error (db down, agent down, future content slot
-// throwing during render) still yields a fully-formed layout with an inline
-// error banner instead of a bare 500 page. The layout shell never depends on
-// JS — the fallback path is the same HTML primitive that SQR-6 / SQR-8 will
-// reuse for recoverable runtime errors. See DESIGN.md decisions log
-// "`.squire-banner` is a reusable primitive."
+// GET / renders the authenticated app shell and redirects unauthenticated
+// browsers to /login. The handler still wraps the renderer in a try/catch so
+// a thrown error (db down, agent down, future content slot throwing during
+// render) yields a fully formed HTML page with an inline error banner instead
+// of a bare 500 page. See DESIGN.md decisions log "`.squire-banner` is a
+// reusable primitive."
 app.get('/', optionalSession(), async (c) => {
   // `renderHomePage()` and `layoutShell()` both return
   // `Promise<HtmlEscapedString>` (tightened from a union in SQR-71
@@ -161,10 +165,20 @@ app.get('/', optionalSession(), async (c) => {
   // returns a constant string without I/O. See ADR 0011
   // fingerprinting addendum, "What this does not solve".
   try {
-    return c.html(await renderHomePage(c.get('session')));
+    const session = c.get('session');
+    if (!session) return c.redirect('/login');
+    return c.html(await renderHomePage(session, createCsrfToken(session.id)));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.html(await layoutShell({ errorBanner: { message }, session: c.get('session') }), 500);
+    const session = c.get('session');
+    return c.html(
+      await layoutShell({
+        errorBanner: { message },
+        session,
+        csrfToken: session ? createCsrfToken(session.id) : undefined,
+      }),
+      500,
+    );
   }
 });
 
@@ -175,6 +189,17 @@ function getBaseUrl(): string {
   if (env && env.length > 0) return env.replace(/\/+$/, '');
   return 'http://localhost:3000';
 }
+
+function loginRedirectWithError(message: string): string {
+  return `/login?${new URLSearchParams({ error: message }).toString()}`;
+}
+
+app.get('/login', optionalSession(), async (c) => {
+  if (c.get('session')) return c.redirect('/');
+  return c.html(await renderLoginPage({ errorMessage: c.req.query('error') }));
+});
+
+app.get('/not-invited', async (c) => c.html(await renderNotInvitedPage(), 403));
 
 app.get('/.well-known/oauth-authorization-server', (c) => {
   const base = getBaseUrl();
@@ -343,19 +368,13 @@ app.get('/auth/google/callback', async (c) => {
   // Check for error from Google (e.g., user clicked Cancel)
   const error = c.req.query('error');
   if (error) {
-    return c.html(
-      await renderAuthErrorPage({ message: 'Google sign-in was cancelled or failed.' }),
-      400 as const,
-    );
+    return c.redirect(loginRedirectWithError('Google sign-in was cancelled or failed.'), 302);
   }
 
   const code = c.req.query('code');
   const state = c.req.query('state');
   if (!code || !state) {
-    return c.html(
-      await renderAuthErrorPage({ message: 'Missing code or state parameter.' }),
-      400 as const,
-    );
+    return c.redirect(loginRedirectWithError('Missing code or state parameter.'), 302);
   }
 
   // Read and consume the PKCE cookie
@@ -391,8 +410,10 @@ app.get('/auth/google/callback', async (c) => {
     return c.redirect('/');
   } catch (err) {
     if (err instanceof GoogleAuthError) {
-      const status = err.status as 400 | 403;
-      return c.html(await renderAuthErrorPage({ message: err.message }), status);
+      if (err.code === 'not_allowed') {
+        return c.html(await renderNotInvitedPage(), 403 as const);
+      }
+      return c.redirect(loginRedirectWithError(err.message), 302);
     }
     // Log unexpected errors for debugging
     console.error('[auth/google/callback] unexpected error:', err);
@@ -400,24 +421,23 @@ app.get('/auth/google/callback', async (c) => {
   }
 });
 
-app.post('/auth/logout', async (c) => {
-  const secret = getSessionSecret();
-  const sessionId = await getSignedCookie(c, secret, SESSION_COOKIE_NAME);
-  if (sessionId) {
-    const userId = await SessionRepository.destroy(sessionId);
-    if (userId) {
-      const { db } = getDb('server');
-      await writeAuditEvent(db, {
-        eventType: 'google_logout',
-        userId,
-        outcome: 'success',
-        ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
-        userAgent: c.req.header('user-agent'),
-      });
-    }
+app.post('/auth/logout', requireSession(), requireCsrf(), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  const session = c.get('session')!;
+  const userId = await SessionRepository.destroy(session.id);
+  if (userId) {
+    const { db } = getDb('server');
+    await writeAuditEvent(db, {
+      eventType: 'google_logout',
+      userId,
+      outcome: 'success',
+      ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+      userAgent: c.req.header('user-agent'),
+    });
   }
   clearSessionCookie(c);
-  return c.redirect('/');
+  return c.redirect('/login');
 });
 
 // /auth/me: returns current user JSON for HTMX header. Behind session middleware.
@@ -431,8 +451,10 @@ app.get('/auth/me', requireSession(), async (c) => {
 });
 
 // Protect /chat routes with session cookie auth
-app.use('/chat/*', requireSession());
-app.use('/chat', requireSession());
+app.use('/chat/*', requirePageSession());
+app.use('/chat', requirePageSession());
+app.use('/chat/*', requireCsrf());
+app.use('/chat', requireCsrf());
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 

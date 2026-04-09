@@ -20,6 +20,7 @@ import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
+import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 import type { Session } from '../db/repositories/types.ts';
 
@@ -49,6 +50,56 @@ export interface LayoutShellOptions {
    * fonts, colors). The layout never touches the Hono context or DB.
    */
   session?: Session;
+  /**
+   * Per-session CSRF token for mutating web UI routes. Rendered into the
+   * document head and inherited by HTMX requests via `hx-headers`.
+   */
+  csrfToken?: string;
+}
+
+interface DocumentOptions {
+  bodyContent: HtmlEscapedString;
+  bodyClass?: string;
+  authenticated?: boolean;
+  csrfToken?: string;
+}
+
+function getDisplayName(session: Session): string {
+  return session.user.name?.trim() || session.user.email;
+}
+
+async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedString> {
+  const preconnects = FONT_PRECONNECTS.map((p) =>
+    p.crossorigin
+      ? html`<link rel="preconnect" href="${p.href}" crossorigin />`
+      : html`<link rel="preconnect" href="${p.href}" />`,
+  );
+
+  const [cssUrl, jsUrl] = await Promise.all([getAppCssUrl(), getSquireJsUrl()]);
+
+  return html`<!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <title>Squire</title>
+        ${options.csrfToken
+          ? html`<meta name="${CSRF_META_NAME}" content="${options.csrfToken}" />`
+          : html``}
+        ${preconnects}
+        <link rel="stylesheet" href="${GOOGLE_FONTS_HREF}" />
+        <link rel="stylesheet" href="${cssUrl}" />
+      </head>
+      <body
+        class="${options.bodyClass ?? 'squire-body'}"
+        ${options.authenticated && options.csrfToken
+          ? html`hx-headers='{"${CSRF_HEADER_NAME}":"${options.csrfToken}"}'`
+          : html``}
+      >
+        ${options.bodyContent}
+        <script src="${jsUrl}" defer></script>
+      </body>
+    </html>`;
 }
 
 /**
@@ -61,24 +112,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // The layout adapts chrome based on whether a session was provided.
   // Session present = logged in = full chrome. Absent = brand only.
   const authenticated = options.session !== undefined;
-
-  const preconnects = FONT_PRECONNECTS.map((p) =>
-    p.crossorigin
-      ? html`<link rel="preconnect" href="${p.href}" crossorigin />`
-      : html`<link rel="preconnect" href="${p.href}" />`,
-  );
-
-  // Rails Propshaft semantics (SQR-71, ADR 0011): dev emits bare
-  // `/app.css` / `/squire.js` for a clean devtools experience and
-  // immediate edit-refresh; prod emits content-hashed paths
-  // (`/app.<hash>.css`, `/squire.<hash>.js`) for immutable edge
-  // caching. The URL helpers handle both cases — we just await
-  // whatever they return and drop it into the template. Fetched in
-  // parallel because the two helpers are independent; in dev each
-  // call is microseconds (one fs.stat), in prod each is a cache hit
-  // after the first request, but that's still one avoidable serial
-  // hop per page render.
-  const [cssUrl, jsUrl] = await Promise.all([getAppCssUrl(), getSquireJsUrl()]);
+  const csrfToken = options.csrfToken;
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
@@ -132,89 +166,191 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
       </div>`
     : (options.mainContent ?? emptyStateAndStubs);
 
-  return html`<!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <title>Squire</title>
-        ${preconnects}
-        <link rel="stylesheet" href="${GOOGLE_FONTS_HREF}" />
-        <link rel="stylesheet" href="${cssUrl}" />
-      </head>
-      <body class="squire-body">
+  return renderDocument({
+    authenticated,
+    csrfToken,
+    bodyClass: 'squire-body',
+    bodyContent: html`${!authenticated
+        ? html``
+        : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
+      <div class="squire-frame">
         ${!authenticated
           ? html``
-          : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
-        <div class="squire-frame">
+          : html`<aside class="squire-rail" aria-label="Squire ledger">
+              <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+              <span class="squire-wordmark">Squire</span>
+            </aside>`}
+        <div class="squire-column">
+          <header class="squire-header">
+            ${authenticated && options.session
+              ? html`<div class="squire-header__brand">
+                    <span class="squire-monogram" aria-hidden="true">S</span>
+                    <span class="squire-wordmark">Squire</span>
+                  </div>
+                  <span class="squire-context">FROSTHAVEN · RULES</span>
+                  <div class="squire-header__account">
+                    <span class="squire-user">${getDisplayName(options.session)}</span>
+                    <form class="squire-logout-form" method="post" action="/auth/logout">
+                      <input
+                        type="hidden"
+                        name="${CSRF_FORM_FIELD_NAME}"
+                        value="${csrfToken ?? ''}"
+                      />
+                      <button
+                        type="submit"
+                        class="squire-button squire-button--ghost squire-button--small"
+                      >
+                        Log out
+                      </button>
+                    </form>
+                  </div>`
+              : html`<span class="squire-monogram" aria-hidden="true">S</span>
+                  <span class="squire-wordmark">Squire</span>
+                  <span class="squire-context">FROSTHAVEN · RULES</span>`}
+          </header>
+          <main class="squire-surface" aria-live="polite" aria-atomic="false">
+            ${surfaceContent}
+          </main>
           ${!authenticated
             ? html``
-            : html`<aside class="squire-rail" aria-label="Squire ledger">
-                <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
-                <span class="squire-wordmark">Squire</span>
-              </aside>`}
-          <div class="squire-column">
-            <header class="squire-header">
-              <span class="squire-monogram" aria-hidden="true">S</span>
-              <span class="squire-wordmark">Squire</span>
-              <span class="squire-context">FROSTHAVEN · RULES</span>
-            </header>
-            <main class="squire-surface" aria-live="polite" aria-atomic="false">
-              ${surfaceContent}
-            </main>
-            ${!authenticated
-              ? html``
-              : html`<footer class="squire-toolcall" aria-live="off">
-                    CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
-                  </footer>
-                  <nav class="squire-recent" aria-label="Recent questions">
-                    <span class="squire-chip">Looting</span>
-                    <span class="squire-chip">Element infusion</span>
-                    <span class="squire-chip">Negative scenario effects</span>
-                  </nav>
-                  <!--
-                SQR-65 ships the structural form only. The action target points
-                at /api/ask, which is the eventual endpoint, but the API requires
-                Bearer auth and a JSON body — a raw HTML form POST will 401
-                today. SQR-6 wires real submission (HTMX + SSE streaming + the
-                recent-questions chip row), at which point this form gets
-                hx-post, hx-swap, and friends layered on. Do not try to make
-                the form work before SQR-6 lands — it is a layout slot.
-              -->
-                  <form class="squire-input-dock" method="post" action="/api/ask">
-                    <input
-                      id="squire-input"
-                      name="question"
-                      type="text"
-                      autocomplete="off"
-                      placeholder="Ask the Squire…"
-                    />
-                    <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                      →
-                    </button>
-                  </form>`}
-          </div>
+            : html`<footer class="squire-toolcall" aria-live="off">
+                  CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
+                </footer>
+                <nav class="squire-recent" aria-label="Recent questions">
+                  <span class="squire-chip">Looting</span>
+                  <span class="squire-chip">Element infusion</span>
+                  <span class="squire-chip">Negative scenario effects</span>
+                </nav>
+                <!--
+              SQR-65 ships the structural form only. The action target points
+              at /api/ask, which is the eventual endpoint, but the API requires
+              Bearer auth and a JSON body — a raw HTML form POST will 401
+              today. SQR-6 wires real submission (HTMX + SSE streaming + the
+              recent-questions chip row), at which point this form gets
+              hx-post, hx-swap, and friends layered on. Do not try to make
+              the form work before SQR-6 lands — it is a layout slot.
+            -->
+                <form class="squire-input-dock" method="post" action="/api/ask">
+                  <input
+                    id="squire-input"
+                    name="question"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Ask the Squire…"
+                  />
+                  <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
+                    →
+                  </button>
+                </form>`}
         </div>
-        <!--
-          SQR-66 cite tap-toggle, served from /squire.js (dev) or
-          /squire.<hash>.js (prod) by the on-demand asset pipeline
-          (SQR-71, ADR 0011). Extracted from an inline <script> so
-          SQR-61's CSP can drop 'unsafe-inline' for script-src.
-          The file lives at src/web-ui/squire.js and ships unbundled.
-        -->
-        <script src="${jsUrl}" defer></script>
-      </body>
-    </html>`;
+      </div>` as HtmlEscapedString,
+  });
+}
+
+interface LoginPageOptions {
+  errorMessage?: string;
+}
+
+const GOOGLE_G_MARK = html`<svg
+  class="squire-google-mark"
+  viewBox="0 0 18 18"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    fill="#4285F4"
+    d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.13 4.13 0 0 1-1.8 2.7v2.24h2.9c1.7-1.56 2.7-3.86 2.7-6.58Z"
+  />
+  <path
+    fill="#34A853"
+    d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.24c-.8.54-1.82.86-3.06.86-2.35 0-4.34-1.58-5.05-3.7H.96v2.31A9 9 0 0 0 9 18Z"
+  />
+  <path
+    fill="#FBBC05"
+    d="M3.95 10.74A5.41 5.41 0 0 1 3.67 9c0-.6.1-1.18.28-1.74V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.05l2.99-2.31Z"
+  />
+  <path
+    fill="#EA4335"
+    d="M9 3.58c1.32 0 2.5.45 3.44 1.33l2.58-2.58C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.95l2.99 2.31C4.66 5.16 6.65 3.58 9 3.58Z"
+  />
+</svg>`;
+
+function renderAuthBanner(options: {
+  label: string;
+  message: string;
+  retry?: { href: string; label: string };
+}): HtmlEscapedString {
+  return html`<div class="squire-banner squire-banner--error" role="alert">
+    <span class="squire-banner__label">${options.label}</span>
+    <p class="squire-banner__body">${options.message}</p>
+    ${options.retry
+      ? html`<div class="squire-banner__actions">
+          <a href="${options.retry.href}" class="squire-button squire-button--ghost">
+            ${options.retry.label}
+          </a>
+        </div>`
+      : html``}
+  </div>` as HtmlEscapedString;
+}
+
+async function renderAuthPage(content: HtmlEscapedString): Promise<HtmlEscapedString> {
+  return renderDocument({
+    bodyClass: 'squire-body squire-body--auth',
+    bodyContent: content,
+  });
+}
+
+export async function renderLoginPage(options: LoginPageOptions = {}): Promise<HtmlEscapedString> {
+  return renderAuthPage(
+    html`<main class="squire-auth-page">
+      <section class="squire-auth-page__stack" aria-label="Sign in to Squire">
+        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+        <span class="squire-wordmark squire-wordmark--auth">Squire</span>
+        <p class="squire-tagline">A FROSTHAVEN COMPANION</p>
+        <a
+          href="/auth/google/start"
+          class="squire-button squire-button--primary squire-button--google"
+        >
+          ${GOOGLE_G_MARK}
+          <span>Sign in with Google</span>
+        </a>
+        ${options.errorMessage
+          ? renderAuthBanner({
+              label: "COULDN'T SIGN YOU IN",
+              message: options.errorMessage,
+              retry: { href: '/auth/google/start', label: 'Try again' },
+            })
+          : html``}
+      </section>
+    </main>` as HtmlEscapedString,
+  );
+}
+
+export async function renderNotInvitedPage(): Promise<HtmlEscapedString> {
+  return renderAuthPage(
+    html`<main class="squire-auth-page">
+      <section class="squire-auth-page__stack" aria-label="Not invited to Squire">
+        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+        <span class="squire-wordmark squire-wordmark--auth">Squire</span>
+        <p class="squire-tagline">A FROSTHAVEN COMPANION</p>
+        ${renderAuthBanner({
+          label: 'NOT YET INVITED',
+          message: "Squire is single-user during Phase 1. Reach out if you'd like access.",
+        })}
+      </section>
+    </main>` as HtmlEscapedString,
+  );
 }
 
 /**
- * Default home page renderer. Phase 1 ships the empty layout shell with no
- * content slotted into the main surface — SQR-67 ships the first-run empty
- * state, SQR-6 ships the streaming answer slot. Exported as a separate
- * function so the route handler in `src/server.ts` has a single override
- * point that tests can stub via `vi.mock` to exercise the server-side error
- * fallback branch.
+ * Default authenticated home page renderer. Phase 1 still uses the empty
+ * ledger surface — SQR-67 ships the first-run empty state, SQR-6 ships the
+ * streaming answer slot. Exported as a separate function so the route handler
+ * in `src/server.ts` has a single override point in tests.
  */
-export async function renderHomePage(session?: Session): Promise<HtmlEscapedString> {
-  return layoutShell({ session });
+export async function renderHomePage(
+  session?: Session,
+  csrfToken?: string,
+): Promise<HtmlEscapedString> {
+  return layoutShell({ session, csrfToken });
 }
