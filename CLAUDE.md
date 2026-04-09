@@ -35,6 +35,7 @@ These are short on purpose. Anything not on this list lives in one of the files 
 - **Document *why* in the codebase.** When making a non-obvious design choice, the rationale goes in a code comment or markdown file — not just in PR descriptions or review replies. Future agents and humans won't see PR discussions.
 - **Conventional Commits.** `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`.
 - **Design system.** Always read [DESIGN.md](DESIGN.md) before making any visual or UI decision. Fonts, colors, spacing, layout, components, voice — all defined there. Do not deviate without explicit user approval and a DESIGN.md update. In QA mode, flag any code that doesn't match DESIGN.md.
+- **Format markdown before staging.** Run `npx prettier --write <file>` on any `.md` file you create or modify before `git add`. The pre-commit hook runs `markdownlint-cli2` which rejects table spacing errors (MD060), missing fenced-code languages (MD040), and other style violations. Formatting proactively avoids hook failures. This applies to generated artifacts (plan docs, review docs, design docs) as well as hand-written markdown.
 
 ## gstack
 
