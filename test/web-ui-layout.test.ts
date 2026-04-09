@@ -48,6 +48,13 @@ const { mockRenderHomePage } = vi.hoisted(() => ({
   mockRenderHomePage: vi.fn(),
 }));
 
+// Mock isLoggedIn to return true so layout tests see the full interaction
+// chrome (sidebar, input dock, chips). These tests verify layout rendering,
+// not auth behavior. Auth-aware layout behavior is tested in auth-google.test.ts.
+vi.mock('../src/auth/session.ts', () => ({
+  isLoggedIn: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock('../src/web-ui/layout.ts', async () => {
   const actual =
     await vi.importActual<typeof import('../src/web-ui/layout.ts')>('../src/web-ui/layout.ts');
@@ -65,7 +72,9 @@ import { app } from '../src/server.ts';
 describe('GET / — companion-first layout shell (SQR-65)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
+      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
+    );
   });
 
   it('returns 200 and renders the layout document', async () => {
@@ -144,7 +153,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 describe('SQR-71 dev asset pipeline — bare paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
+      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
+    );
     vi.stubEnv('NODE_ENV', 'development');
     // Env transitions within a test file invalidate the cache (prod
     // minifies, dev doesn't → different content, different hash).
@@ -204,7 +215,9 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
 describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
+      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
+    );
     vi.stubEnv('NODE_ENV', 'production');
     _resetAssetCachesForTests();
   });
@@ -302,7 +315,9 @@ describe('SQR-71 Promise memoization — concurrent cold start', () => {
 describe('GET / — signature components (SQR-66)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
+      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
+    );
   });
 
   // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
@@ -419,7 +434,9 @@ describe('styles.css — SQR-66 signature component rules', () => {
 describe('GET / — SQR-67 stub regions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRenderHomePage.mockImplementation(() => actualLayout.renderHomePage());
+    mockRenderHomePage.mockImplementation((...args: unknown[]) =>
+      actualLayout.renderHomePage(args[0] as Parameters<typeof actualLayout.renderHomePage>[0]),
+    );
   });
 
   it('renders the first-run empty state with "At your service." and the scope line', async () => {

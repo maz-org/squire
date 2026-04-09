@@ -18,9 +18,11 @@
 
 import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
+import type { Context } from 'hono';
 
 import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
+import { isLoggedIn } from '../auth/session.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -42,13 +44,14 @@ export interface LayoutShellOptions {
    */
   errorBanner?: { message: string };
   /**
-   * When true, render the brand chrome (header, monogram, fonts, colors)
-   * but suppress the interaction chrome (toolcall footer, recent-questions
-   * chips, input dock). Used for logged-out pages: auth errors, login
-   * page, "not invited" page. The user isn't in a session, so showing
-   * "Ask the Squire..." and recent questions is misleading.
+   * Hono request context. When provided, the layout shell checks for a
+   * valid session cookie and adapts its chrome: logged-in users get the
+   * full interaction surface (sidebar, input dock, recent questions),
+   * logged-out users get brand-only chrome (header, monogram, fonts,
+   * colors). If omitted, assumes logged-out for safety (no interaction
+   * chrome shown to users who might not have a session).
    */
-  loggedOut?: boolean;
+  context?: Context;
 }
 
 /**
@@ -58,6 +61,13 @@ export interface LayoutShellOptions {
  * the acceptance criteria — later tickets target them by class.
  */
 export async function layoutShell(options: LayoutShellOptions = {}): Promise<HtmlEscapedString> {
+  // The layout shell adapts its chrome based on auth state. When the
+  // request has a valid session, show the full interaction surface
+  // (sidebar, input dock, recent questions). Otherwise, show brand-only
+  // chrome (header, monogram, fonts, colors). The shell is self-sufficient:
+  // it calls isLoggedIn() rather than relying on callers to pass a flag.
+  const authenticated = options.context ? await isLoggedIn(options.context) : false;
+
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin
       ? html`<link rel="preconnect" href="${p.href}" crossorigin />`
@@ -139,12 +149,16 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <link rel="stylesheet" href="${cssUrl}" />
       </head>
       <body class="squire-body">
-        <a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>
+        ${!authenticated
+          ? html``
+          : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
         <div class="squire-frame">
-          <aside class="squire-rail" aria-label="Squire ledger">
-            <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
-            <span class="squire-wordmark">Squire</span>
-          </aside>
+          ${!authenticated
+            ? html``
+            : html`<aside class="squire-rail" aria-label="Squire ledger">
+                <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+                <span class="squire-wordmark">Squire</span>
+              </aside>`}
           <div class="squire-column">
             <header class="squire-header">
               <span class="squire-monogram" aria-hidden="true">S</span>
@@ -154,7 +168,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
             <main class="squire-surface" aria-live="polite" aria-atomic="false">
               ${surfaceContent}
             </main>
-            ${options.loggedOut
+            ${!authenticated
               ? html``
               : html`<footer class="squire-toolcall" aria-live="off">
                     CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
@@ -207,6 +221,6 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
  * point that tests can stub via `vi.mock` to exercise the server-side error
  * fallback branch.
  */
-export async function renderHomePage(): Promise<HtmlEscapedString> {
-  return layoutShell();
+export async function renderHomePage(context?: Context): Promise<HtmlEscapedString> {
+  return layoutShell({ context });
 }

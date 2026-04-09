@@ -159,10 +159,10 @@ app.get('/', async (c) => {
   // returns a constant string without I/O. See ADR 0011
   // fingerprinting addendum, "What this does not solve".
   try {
-    return c.html(await renderHomePage());
+    return c.html(await renderHomePage(c));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.html(await layoutShell({ errorBanner: { message } }), 500);
+    return c.html(await layoutShell({ errorBanner: { message }, context: c }), 500);
   }
 });
 
@@ -342,7 +342,7 @@ app.get('/auth/google/callback', async (c) => {
   const error = c.req.query('error');
   if (error) {
     return c.html(
-      await renderAuthErrorPage({ message: 'Google sign-in was cancelled or failed.' }),
+      await renderAuthErrorPage({ context: c, message: 'Google sign-in was cancelled or failed.' }),
       400 as const,
     );
   }
@@ -351,7 +351,7 @@ app.get('/auth/google/callback', async (c) => {
   const state = c.req.query('state');
   if (!code || !state) {
     return c.html(
-      await renderAuthErrorPage({ message: 'Missing code or state parameter.' }),
+      await renderAuthErrorPage({ context: c, message: 'Missing code or state parameter.' }),
       400 as const,
     );
   }
@@ -386,7 +386,7 @@ app.get('/auth/google/callback', async (c) => {
   } catch (err) {
     if (err instanceof GoogleAuthError) {
       const status = err.status as 400 | 403;
-      return c.html(await renderAuthErrorPage({ message: err.message }), status);
+      return c.html(await renderAuthErrorPage({ context: c, message: err.message }), status);
     }
     // Log unexpected errors for debugging
     console.error('[auth/google/callback] unexpected error:', err);
