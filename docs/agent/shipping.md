@@ -7,9 +7,8 @@
    - Use the `gitBranchName` field Linear pre-computes for each issue (format: `bcm/sqr-XX-<short-description>`)
 
 2. **Pull Request Metadata**
-   - PR titles must start with the full Linear issue id and exact issue title: `SQR-XX: <Linear issue title>`
-   - Example: `SQR-8: Streaming chat protocol: text deltas, tool indicators, citations`
-   - Use the exact Linear title so Linear auto-links the PR to the issue
+   - PR titles may follow the normal `/ship` format or another sensible summary
+   - The PR body must include an explicit Linear closing line such as `Fixes SQR-84` or `Closes SQR-84`
    - Do not use branch-name slugs or `gh pr create --fill` defaults as the final PR title/body
 
 3. **Commit Practices**
@@ -38,7 +37,7 @@ Example: `feat(auth): add user login endpoint`
 
 For the actual ship workflow, invoke the gstack **`/ship`** skill rather than running the steps by hand. In Squire, interpret `/ship` as: detect and merge the base branch, run tests, review the diff, commit, push, and open the PR. Do **not** bump version numbers or edit `CHANGELOG.md` for ordinary feature-branch PRs unless the user explicitly asks for a release/version cut. Open PRs as published PRs, not drafts, unless the user explicitly asks for a draft PR.
 
-When `/ship` opens the PR, set the PR title explicitly to `SQR-XX: <Linear issue title>` instead of accepting GitHub's branch-derived default. Write a short body that explains the user-visible or architectural change plus the validation you ran; do not use the raw commit list as the PR description.
+When `/ship` opens the PR, keep the title human-readable, but make sure the PR body includes a `Fixes SQR-XX` or `Closes SQR-XX` line so Linear links the PR back to the issue. Write a structured body that explains the shipped change and the validation you ran; do not use the raw commit list as the PR description.
 
 Before pushing, run `npm run check` (or ensure `/ship` does). This is the
 canonical local gate and must stay aligned with CI's formatting, lint, and test
@@ -47,7 +46,7 @@ expectations.
 The rules in this file still apply — `/ship` doesn't override them, it executes them:
 
 - Branch must follow the naming convention above (Linear's `gitBranchName` already does).
-- PR title must be `SQR-XX: <exact Linear issue title>` so Linear auto-links the PR.
+- PR body must include `Fixes SQR-XX` or `Closes SQR-XX` so Linear auto-links the PR.
 - Commits must follow Conventional Commits.
 - One logical change per PR.
 - Never force-push, never push to main directly. `/ship` always goes through a PR.
