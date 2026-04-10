@@ -130,7 +130,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const authenticated = options.session !== undefined;
   const csrfToken = options.csrfToken;
   const chatFormAction = options.chatFormAction ?? '/chat';
-  const chatFormHiddenFields = options.chatFormHiddenFields ?? [];
+  const chatFormHiddenFields = [
+    ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
+    ...(options.chatFormHiddenFields ?? []),
+  ];
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
