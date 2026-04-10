@@ -27,9 +27,9 @@ deleted; ADRs are the permanent home for the _why_. See
 
 ## Markdown formatting
 
-The pre-commit hook runs `prettier --write` then `markdownlint-cli2 --fix`
-on staged `.md` files, so table spacing and most style issues are
-auto-corrected at commit time.
+The pre-commit hook runs staged Markdown fixers (`prettier --write` then
+`markdownlint-cli2 --fix`) on staged `.md` files, so table spacing and most
+style issues are auto-corrected at commit time.
 
 One thing the hook cannot auto-fix: **MD040 (fenced-code-language).**
 Always specify a language on fenced code blocks. Use `text` for ASCII

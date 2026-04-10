@@ -394,16 +394,18 @@ npm run check         # local CI gate: typecheck + lint + format + tests
 ```
 
 Tests use randomized execution order (`sequence.shuffle` in vitest
-config) to catch order-dependent tests. The pre-commit hook runs typecheck,
-lint-staged, and the full test suite. The pre-push hook runs `npm run check`,
-which is the canonical local gate before CI.
+config) to catch order-dependent tests. The pre-commit hook is intentionally
+cheap: it runs the conditional agent parity check above plus `lint-staged` on
+staged files. There is no pre-push hook. Use `npm run check` as the canonical
+local gate before `/ship` or any manual push you expect to survive CI.
 
 **Prettier covers everything CI checks.** CI runs `prettier --check src/ test/`
 which walks those directories and formats _every_ file type Prettier knows
 (`.ts`, `.js`, `.json`, `.yml`, `.md`, etc.). `lint-staged` in `package.json`
-must stay in sync with CI, and `npm run check` is the single local entry point
-for that contract. When adding a new file type under `src/` or `test/`, add it
-to `lint-staged` and leave `format:check` alone (it already globs everything).
+must stay in sync with the staged-file auto-fix workflow, and `npm run check`
+is the single full-repo local entry point used before shipping. When adding a
+new file type under `src/` or `test/`, add it to `lint-staged` and leave
+`format:check` alone (it already globs everything).
 
 ## Data management
 

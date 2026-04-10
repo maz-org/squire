@@ -10,9 +10,10 @@
      (CSS, `npm run lint:css` — `stylelint-config-standard` tuned for Tailwind
      v4 at-rules in `.stylelintrc.json`), **markdownlint-cli2** (Markdown,
      `npm run lint:md`), **prettier** (formatting, `npm run format:check`).
-     All four run in CI and via `lint-staged` on pre-commit. CodeRabbit is
-     configured to defer to stylelint for CSS findings (see `.coderabbit.yaml`)
-     — CI is the single source of truth for CSS style.
+     All four run in CI. On pre-commit, `lint-staged` runs the staged-file
+     subset; the full-repo equivalent is `npm run check` and should run before
+     shipping. CodeRabbit is configured to defer to stylelint for CSS findings
+     (see `.coderabbit.yaml`) — CI is the single source of truth for CSS style.
    - **Custom layering rules** enforce the application architecture at lint time.
      See [lint-rules.md](lint-rules.md) for the 6 rules that prevent views from
      importing auth modules, repositories from leaking row types, inline HTML
@@ -31,7 +32,7 @@
    - Keep cleanups in scope — don't snowball a bug fix into a refactor. If the cleanup is bigger than the change that brought you there, open a separate PR
 
 4. **Test Integrity**
-   - All tests must pass before committing
+   - All tests must pass before shipping or before pushing changes you expect to pass CI
    - Never delete tests to achieve 100% pass rate
    - Never ignore failing tests, regardless of origin
    - When fixing failing tests, reason about correctness:
