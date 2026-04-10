@@ -8,7 +8,7 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { Hono, type Context } from 'hono';
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import {
   ask,
@@ -674,24 +674,28 @@ async function bootstrapErrorResponse(
   );
 }
 
-app.get('/api/search/rules', async (c) => {
+function requireBootstrapCapability(
+  scope: 'rules' | 'cards' | 'ask',
+): MiddlewareHandler {
+  return async (c, next) => {
+    const bootstrapError = await bootstrapErrorResponse(c, scope);
+    if (bootstrapError) return bootstrapError;
+    await next();
+  };
+}
+
+app.get('/api/search/rules', requireBootstrapCapability('rules'), async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
-
-  const bootstrapError = await bootstrapErrorResponse(c, 'rules');
-  if (bootstrapError) return bootstrapError;
 
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchRules(q, topK);
   return c.json({ results });
 });
 
-app.get('/api/search/cards', async (c) => {
+app.get('/api/search/cards', requireBootstrapCapability('cards'), async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
-
-  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
-  if (bootstrapError) return bootstrapError;
 
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchCards(q, topK);
@@ -700,18 +704,12 @@ app.get('/api/search/cards', async (c) => {
 
 // ─── Card discovery and lookup endpoints ─────────────────────────────────────
 
-app.get('/api/card-types', async (c) => {
-  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
-  if (bootstrapError) return bootstrapError;
-
+app.get('/api/card-types', requireBootstrapCapability('cards'), async (c) => {
   const types = await listCardTypes();
   return c.json({ types });
 });
 
-app.get('/api/cards/:type/:id', async (c) => {
-  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
-  if (bootstrapError) return bootstrapError;
-
+app.get('/api/cards/:type/:id', requireBootstrapCapability('cards'), async (c) => {
   const type = c.req.param('type') as CardType;
   const id = decodeURIComponent(c.req.param('id'));
   const card = await getCard(type, id);
@@ -719,12 +717,9 @@ app.get('/api/cards/:type/:id', async (c) => {
   return c.json({ card });
 });
 
-app.get('/api/cards', async (c) => {
+app.get('/api/cards', requireBootstrapCapability('cards'), async (c) => {
   const type = c.req.query('type');
   if (!type) return c.json(jsonError('Missing required query parameter: type', 400), 400);
-
-  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
-  if (bootstrapError) return bootstrapError;
 
   const filterRaw = c.req.query('filter');
   let filter: Record<string, unknown> | undefined;
@@ -761,7 +756,7 @@ const AskRequestSchema = z.object({
   userId: z.string().uuid().optional(),
 });
 
-app.post('/api/ask', async (c) => {
+app.post('/api/ask', requireBootstrapCapability('ask'), async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -773,9 +768,6 @@ app.post('/api/ask', async (c) => {
   if (!result.success) {
     return c.json(jsonError('Invalid request: ' + result.error.issues[0].message, 400), 400);
   }
-
-  const bootstrapError = await bootstrapErrorResponse(c, 'ask');
-  if (bootstrapError) return bootstrapError;
 
   const { question, ...options } = result.data;
   return streamSSE(c, async (stream) => {

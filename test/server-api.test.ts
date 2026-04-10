@@ -645,6 +645,41 @@ describe('bootstrapErrorResponse fast path', () => {
     await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(mockGetBootstrapStatus).not.toHaveBeenCalled();
   });
+
+  it('lets a ready request reach the handler via capability middleware', async () => {
+    await app.request('/api/search/rules?q=loot', { headers: await auth() });
+    expect(mockSearchRules).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks the handler when capability middleware denies the route', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    mockGetBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'boot_blocked',
+        ready: false,
+        bootstrapReady: false,
+        ruleQueriesReady: false,
+        askReady: false,
+        capabilities: {
+          rules: {
+            allowed: false,
+            reason: 'missing_index',
+            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          },
+          cards: { allowed: true, reason: null, message: null },
+          ask: {
+            allowed: false,
+            reason: 'missing_index',
+            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          },
+        },
+      }),
+    );
+
+    const res = await app.request('/api/search/rules?q=loot', { headers: await auth() });
+    expect(res.status).toBe(503);
+    expect(mockSearchRules).not.toHaveBeenCalled();
+  });
 });
 
 // ─── Error handling ──────────────────────────────────────────────────────────
