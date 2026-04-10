@@ -2,10 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const { mockRunAgentLoop, mockEmbed, mockInitializeRetrieval } = vi.hoisted(() => ({
+const {
+  mockRunAgentLoop,
+  mockEmbed,
+  mockInitializeRetrieval,
+  mockGetRetrievalBootstrapStatus,
+  mockListCardTypes,
+} = vi.hoisted(() => ({
   mockRunAgentLoop: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
+  mockGetRetrievalBootstrapStatus: vi.fn(),
+  mockListCardTypes: vi.fn(),
 }));
 
 vi.mock('../src/agent.ts', () => ({
@@ -13,10 +21,7 @@ vi.mock('../src/agent.ts', () => ({
 }));
 
 vi.mock('../src/tools.ts', () => ({
-  listCardTypes: vi.fn(() => [
-    { type: 'monster-stats', count: 5 },
-    { type: 'items', count: 3 },
-  ]),
+  listCardTypes: mockListCardTypes,
 }));
 
 vi.mock('../src/embedder.ts', () => ({
@@ -24,6 +29,9 @@ vi.mock('../src/embedder.ts', () => ({
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
+  EMBEDDINGS_BOOTSTRAP_MESSAGE:
+    'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+  getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
   initializeRetrieval: mockInitializeRetrieval,
 }));
 
@@ -32,7 +40,26 @@ vi.mock('../src/extracted-data.ts', () => ({
   load: vi.fn(() => [{ name: 'test' }]),
 }));
 
-import { initialize, isReady, ask, _resetForTesting } from '../src/service.ts';
+import {
+  initialize,
+  isReady,
+  ask,
+  ensureBootstrapStatus,
+  getBootstrapStatus,
+  refreshBootstrapState,
+  refreshInitializationIfReady,
+  _resetForTesting,
+} from '../src/service.ts';
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 // ─── initialize / isReady ────────────────────────────────────────────────────
 
@@ -41,6 +68,11 @@ describe('initialize', () => {
     vi.clearAllMocks();
     _resetForTesting();
     mockInitializeRetrieval.mockResolvedValue(undefined);
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 8 });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
   });
 
@@ -65,6 +97,147 @@ describe('initialize', () => {
     mockInitializeRetrieval.mockRejectedValueOnce(new Error('Vector index is empty.'));
     await expect(initialize()).rejects.toThrow(/index is empty/i);
   });
+
+  it('reports missing bootstrap steps when embeddings or cards are absent', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValueOnce({
+      ready: false,
+      indexSize: 0,
+      error:
+        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+      missingStep: 'npm run index',
+      reason: 'missing_index',
+    });
+    mockListCardTypes.mockResolvedValueOnce([
+      { type: 'monster-stats', count: 0 },
+      { type: 'items', count: 0 },
+    ]);
+
+    await refreshBootstrapState();
+    const status = getBootstrapStatus();
+    expect(status.ready).toBe(false);
+    expect(status.lifecycle).toBe('boot_blocked');
+    expect(status.missingBootstrapSteps).toEqual(['npm run index', 'npm run seed:cards']);
+  });
+
+  it('returns an immediate starting snapshot before the first live probe', () => {
+    const status = getBootstrapStatus();
+    expect(status.lifecycle).toBe('starting');
+    expect(status.ready).toBe(false);
+    expect(status.errors).toEqual([]);
+  });
+
+  it('populates the first bootstrap snapshot only through the live probe path', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: false,
+      indexSize: 0,
+      error: 'database unavailable',
+      reason: 'dependency_unavailable',
+    });
+    mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    const status = await ensureBootstrapStatus();
+    expect(status.lifecycle).toBe('dependency_failed');
+    expect(status.errors[0]).toMatch(/database unavailable/);
+  });
+
+  it('retries initialization when bootstrap prerequisites later become available', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: true,
+      indexSize: 8,
+    });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
+
+    await refreshInitializationIfReady();
+
+    await vi.waitFor(() => expect(mockInitializeRetrieval).toHaveBeenCalledWith(mockEmbed));
+    expect(isReady()).toBe(true);
+  });
+
+  it('reports warming_up immediately while initialization is in flight', async () => {
+    const warmup = createDeferred<void>();
+    mockInitializeRetrieval.mockImplementation(() => warmup.promise);
+
+    const init = initialize();
+    await vi.waitFor(async () => {
+      expect(getBootstrapStatus().lifecycle).toBe('warming_up');
+    });
+
+    const status = getBootstrapStatus();
+    expect(status.lifecycle).toBe('warming_up');
+    expect(status.warmingUp).toBe(true);
+    expect(status.capabilities.ask).toEqual({
+      allowed: false,
+      reason: 'warming_up',
+      message: 'Service is warming up. Retry in a moment.',
+    });
+
+    warmup.resolve();
+    await init;
+  });
+
+  it('reports warming_up when retrying after an init failure', async () => {
+    let failWarmup = true;
+    const retryWarmup = createDeferred<void>();
+    mockInitializeRetrieval.mockImplementation(() => {
+      if (failWarmup) {
+        failWarmup = false;
+        return Promise.reject(new Error('embedder cold start failed'));
+      }
+      return retryWarmup.promise;
+    });
+
+    await expect(initialize()).rejects.toThrow(/embedder cold start failed/i);
+    expect(getBootstrapStatus().lifecycle).toBe('init_failed');
+
+    const retry = initialize();
+    await vi.waitFor(() => {
+      expect(getBootstrapStatus().lifecycle).toBe('warming_up');
+    });
+
+    retryWarmup.resolve();
+    await retry;
+    expect(getBootstrapStatus().lifecycle).toBe('ready');
+  });
+
+  it('keeps rule queries available when only card bootstrap probing fails', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: true,
+      indexSize: 8,
+    });
+    mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    const status = await ensureBootstrapStatus();
+    expect(status.lifecycle).toBe('dependency_failed');
+    expect(status.capabilities.rules).toEqual({
+      allowed: true,
+      reason: null,
+      message: null,
+    });
+    expect(status.capabilities.cards.allowed).toBe(false);
+    expect(status.capabilities.ask.allowed).toBe(false);
+  });
+
+  it('blocks rule queries when warmup has failed', async () => {
+    mockInitializeRetrieval.mockRejectedValueOnce(new Error('embedder cold start failed'));
+
+    await expect(initialize()).rejects.toThrow(/embedder cold start failed/i);
+
+    const status = await ensureBootstrapStatus();
+    expect(status.lifecycle).toBe('init_failed');
+    expect(status.capabilities.rules).toEqual({
+      allowed: false,
+      reason: 'init_failed',
+      message: 'embedder cold start failed',
+    });
+    expect(status.capabilities.ask).toEqual({
+      allowed: false,
+      reason: 'init_failed',
+      message: 'embedder cold start failed',
+    });
+  });
 });
 
 // ─── ask ─────────────────────────────────────────────────────────────────────
@@ -74,6 +247,11 @@ describe('ask', () => {
     vi.clearAllMocks();
     _resetForTesting();
     mockInitializeRetrieval.mockResolvedValue(undefined);
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 8 });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
     mockRunAgentLoop.mockResolvedValue('You pick up loot tokens in your hex.');
   });
@@ -96,22 +274,26 @@ describe('ask', () => {
     expect(mockRunAgentLoop).toHaveBeenCalledWith('Follow-up', options);
   });
 
-  it('throws if not initialized', async () => {
-    vi.resetModules();
-    vi.doMock('../src/agent.ts', () => ({ runAgentLoop: mockRunAgentLoop }));
-    vi.doMock('../src/tools.ts', () => ({
-      listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
-    }));
-    vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
-    vi.doMock('../src/vector-store.ts', () => ({
-      initializeRetrieval: mockInitializeRetrieval,
-    }));
-    vi.doMock('../src/extracted-data.ts', () => ({
-      TYPES: ['monster-stats'],
-      load: vi.fn(() => [{ name: 'test' }]),
-    }));
+  it('initializes lazily when asked before warmup', async () => {
+    await ask('test');
+    expect(mockInitializeRetrieval).toHaveBeenCalled();
+    expect(mockRunAgentLoop).toHaveBeenCalledWith('test', undefined);
+  });
 
-    const { ask: freshAsk } = await import('../src/service.ts');
-    await expect(freshAsk('test')).rejects.toThrow(/not initialized/i);
+  it('does not run the agent loop after readiness has regressed', async () => {
+    await initialize();
+
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: false,
+      indexSize: 0,
+      error: 'database unavailable',
+      reason: 'dependency_unavailable',
+    });
+    mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    await refreshBootstrapState();
+
+    await expect(ask('test after regression')).rejects.toThrow(/database unavailable/i);
+    expect(mockRunAgentLoop).not.toHaveBeenCalledWith('test after regression', undefined);
   });
 });

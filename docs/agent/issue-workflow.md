@@ -44,6 +44,23 @@ branch), not when opening the PR.
 GitHub Issues is only used for repo-level concerns (Dependabot, security
 advisories) — not for work tracking.
 
+## Pull requests: explicitly close the Linear issue in the PR body
+
+When you open the PR for a Linear issue, include a closing line in the PR body:
+
+```text
+Fixes SQR-XX
+```
+
+Example:
+
+```text
+Fixes SQR-8
+```
+
+`Closes SQR-XX` is also acceptable. The important part is that the PR body
+explicitly references the Linear issue so the PR is linked back to the ticket.
+
 ## Dependencies: capture in BOTH Linear Relations AND description text
 
 When a ticket depends on other work, record the dependency in **both** places:

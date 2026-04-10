@@ -8,10 +8,15 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { Hono, type Context } from 'hono';
+import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { isReady, initialize, ask } from './service.ts';
-import { sql } from 'drizzle-orm';
+import {
+  ask,
+  ensureBootstrapStatus,
+  getBootstrapStatus,
+  isReady,
+  startBootstrapLifecycle,
+} from './service.ts';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
@@ -631,20 +636,12 @@ app.onError((err, c) => {
 // ─── Health endpoint ─────────────────────────────────────────────────────────
 
 app.get('/api/health', async (c) => {
-  let indexSize = 0;
-  try {
-    const { db } = getDb('server');
-    const result = await db.execute<{ count: string }>(
-      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
-    );
-    indexSize = Number(result.rows[0]?.count ?? 0);
-  } catch {
-    // Health endpoint stays best-effort — if the DB is down, report ready:false
-    // via isReady() and leave index_size at 0 rather than 500ing.
-  }
+  // Health is a pure snapshot read. Do not await live bootstrap probes here.
+  const status = getBootstrapStatus();
   return c.json({
-    ready: isReady(),
-    index_size: indexSize,
+    lifecycle: status.lifecycle,
+    ready: status.ready,
+    warming_up: status.warmingUp,
   });
 });
 
@@ -657,9 +654,46 @@ function parseTopK(raw: string | undefined): number {
   return n;
 }
 
+async function bootstrapErrorResponse(
+  c: Context,
+  scope: 'rules' | 'cards' | 'ask',
+): Promise<Response | null> {
+  if (isReady()) return null;
+
+  const status = await ensureBootstrapStatus();
+  const capability = status.capabilities[scope];
+
+  if (capability.allowed) return null;
+
+  const message =
+    status.lifecycle === 'warming_up'
+      ? 'Service is warming up. Retry in a moment.'
+      : 'Service unavailable.';
+
+  return c.json(jsonError(message, 503), 503);
+}
+
+function requireBootstrapCapability(scope: 'rules' | 'cards' | 'ask'): MiddlewareHandler {
+  return async (c, next) => {
+    const bootstrapError = await bootstrapErrorResponse(c, scope);
+    if (bootstrapError) return bootstrapError;
+    await next();
+  };
+}
+
+async function ensureBootstrapCapability(
+  c: Context,
+  scope: 'rules' | 'cards' | 'ask',
+): Promise<Response | null> {
+  return bootstrapErrorResponse(c, scope);
+}
+
 app.get('/api/search/rules', async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
+
+  const bootstrapError = await ensureBootstrapCapability(c, 'rules');
+  if (bootstrapError) return bootstrapError;
 
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchRules(q, topK);
@@ -670,6 +704,9 @@ app.get('/api/search/cards', async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
 
+  const bootstrapError = await ensureBootstrapCapability(c, 'cards');
+  if (bootstrapError) return bootstrapError;
+
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchCards(q, topK);
   return c.json({ results });
@@ -677,12 +714,12 @@ app.get('/api/search/cards', async (c) => {
 
 // ─── Card discovery and lookup endpoints ─────────────────────────────────────
 
-app.get('/api/card-types', async (c) => {
+app.get('/api/card-types', requireBootstrapCapability('cards'), async (c) => {
   const types = await listCardTypes();
   return c.json({ types });
 });
 
-app.get('/api/cards/:type/:id', async (c) => {
+app.get('/api/cards/:type/:id', requireBootstrapCapability('cards'), async (c) => {
   const type = c.req.param('type') as CardType;
   const id = decodeURIComponent(c.req.param('id'));
   const card = await getCard(type, id);
@@ -707,6 +744,9 @@ app.get('/api/cards', async (c) => {
       return c.json(jsonError('Invalid filter JSON', 400), 400);
     }
   }
+
+  const bootstrapError = await ensureBootstrapCapability(c, 'cards');
+  if (bootstrapError) return bootstrapError;
 
   const cards = await listCards(type as CardType, filter);
   return c.json({ cards });
@@ -742,6 +782,9 @@ app.post('/api/ask', async (c) => {
     return c.json(jsonError('Invalid request: ' + result.error.issues[0].message, 400), 400);
   }
 
+  const bootstrapError = await ensureBootstrapCapability(c, 'ask');
+  if (bootstrapError) return bootstrapError;
+
   const { question, ...options } = result.data;
   return streamSSE(c, async (stream) => {
     try {
@@ -763,8 +806,6 @@ app.post('/api/ask', async (c) => {
 // ─── Server startup ──────────────────────────────────────────────────────────
 
 export async function startServer(): Promise<void> {
-  await initialize();
-
   const configuredPort = parseInt(process.env.PORT || '', 10);
   const runtime = getWorktreeRuntime();
   const { createAdaptorServer } = await import('@hono/node-server');
@@ -782,6 +823,7 @@ export async function startServer(): Promise<void> {
         server.once('close', () => {
           void claim.release();
         });
+        startBootstrapLifecycle();
         console.log(`Squire server listening on port ${claim.port}`);
         return;
       } catch (error) {
@@ -794,6 +836,7 @@ export async function startServer(): Promise<void> {
 
   const server = createAdaptorServer({ fetch: app.fetch });
   await listen(server, configuredPort);
+  startBootstrapLifecycle();
   console.log(`Squire server listening on port ${configuredPort}`);
 }
 
