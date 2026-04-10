@@ -10,13 +10,18 @@ const RETRY_DELAY_MS = 200;
 export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that. Please try again.";
 
 function isRetryableTransportError(err: unknown): boolean {
-  const error = err as {
+  if (typeof err !== 'object' || err === null) {
+    return false;
+  }
+
+  const errObj = err as {
     code?: string;
     cause?: { code?: string };
     name?: string;
     message?: string;
   };
-  const code = error.code ?? error.cause?.code;
+  const code = errObj.code ?? errObj.cause?.code;
+  const message = errObj.message ?? '';
   if (
     code &&
     ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED'].includes(code)
@@ -24,7 +29,7 @@ function isRetryableTransportError(err: unknown): boolean {
     return true;
   }
 
-  return error.name === 'AbortError' || /network|socket|timed out/i.test(error.message ?? '');
+  return errObj.name === 'AbortError' || /network|socket|timed out/i.test(message);
 }
 
 function toHistory(messages: ConversationMessage[]): HistoryMessage[] {
@@ -168,7 +173,10 @@ export async function startConversation(input: {
     }
   }
 
-  return result.conversation;
+  return (
+    (await ConversationRepository.findOwnedById(input.userId, result.conversation.id)) ??
+    result.conversation
+  );
 }
 
 export async function appendMessage(input: {
