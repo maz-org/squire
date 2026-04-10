@@ -18,7 +18,7 @@ import {
   startBootstrapLifecycle,
 } from './service.ts';
 
-import { getWorktreeRuntime } from './db.ts';
+import { getDb, getWorktreeRuntime } from './db.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -670,15 +670,10 @@ async function bootstrapErrorResponse(
       ? 'Service is warming up. Retry in a moment.'
       : 'Service unavailable.';
 
-  return c.json(
-    jsonError(message, 503),
-    503,
-  );
+  return c.json(jsonError(message, 503), 503);
 }
 
-function requireBootstrapCapability(
-  scope: 'rules' | 'cards' | 'ask',
-): MiddlewareHandler {
+function requireBootstrapCapability(scope: 'rules' | 'cards' | 'ask'): MiddlewareHandler {
   return async (c, next) => {
     const bootstrapError = await bootstrapErrorResponse(c, scope);
     if (bootstrapError) return bootstrapError;

@@ -14,8 +14,7 @@ import { listCardTypes } from './tools.ts';
 import { runAgentLoop } from './agent.ts';
 
 const CARD_BOOTSTRAP_MESSAGE = 'No card data found in Postgres. Run `npm run seed:cards` first.';
-const CARD_DB_HINT =
-  'Is Postgres running? Try `docker compose up -d` and `npm run db:migrate`.';
+const CARD_DB_HINT = 'Is Postgres running? Try `docker compose up -d` and `npm run db:migrate`.';
 const WARMING_UP_MESSAGE = 'Service is warming up. Retry in a moment.';
 const INIT_FAILED_MESSAGE = 'Service warmup failed. Check server logs and retry.';
 const BOOTSTRAP_POLL_MS = 5000;
@@ -174,7 +173,9 @@ export async function initialize(): Promise<void> {
 
   const snapshot = await refreshBootstrapState();
   if (!snapshot.bootstrapReady) {
-    throw new Error(snapshot.capabilities.ask.message ?? snapshot.errors[0] ?? EMBEDDINGS_BOOTSTRAP_MESSAGE);
+    throw new Error(
+      snapshot.capabilities.ask.message ?? snapshot.errors[0] ?? EMBEDDINGS_BOOTSTRAP_MESSAGE,
+    );
   }
 
   // A retry is a fresh warmup attempt, so clear the stale terminal error

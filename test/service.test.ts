@@ -12,9 +12,9 @@ const {
   mockRunAgentLoop: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
-    mockGetRetrievalBootstrapStatus: vi.fn(),
+  mockGetRetrievalBootstrapStatus: vi.fn(),
   mockListCardTypes: vi.fn(),
-  }));
+}));
 
 vi.mock('../src/agent.ts', () => ({
   runAgentLoop: mockRunAgentLoop,
@@ -50,6 +50,16 @@ import {
   refreshInitializationIfReady,
   _resetForTesting,
 } from '../src/service.ts';
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 // ─── initialize / isReady ────────────────────────────────────────────────────
 
@@ -92,7 +102,8 @@ describe('initialize', () => {
     mockGetRetrievalBootstrapStatus.mockResolvedValueOnce({
       ready: false,
       indexSize: 0,
-      error: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+      error:
+        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
       missingStep: 'npm run index',
       reason: 'missing_index',
     });
@@ -146,13 +157,8 @@ describe('initialize', () => {
   });
 
   it('reports warming_up immediately while initialization is in flight', async () => {
-    let resolveWarmup: (() => void) | null = null;
-    mockInitializeRetrieval.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveWarmup = resolve;
-        }),
-    );
+    const warmup = createDeferred<void>();
+    mockInitializeRetrieval.mockImplementation(() => warmup.promise);
 
     const init = initialize();
     await vi.waitFor(async () => {
@@ -168,21 +174,19 @@ describe('initialize', () => {
       message: 'Service is warming up. Retry in a moment.',
     });
 
-    resolveWarmup?.();
+    warmup.resolve();
     await init;
   });
 
   it('reports warming_up when retrying after an init failure', async () => {
     let failWarmup = true;
-    let resolveRetry: (() => void) | null = null;
+    const retryWarmup = createDeferred<void>();
     mockInitializeRetrieval.mockImplementation(() => {
       if (failWarmup) {
         failWarmup = false;
         return Promise.reject(new Error('embedder cold start failed'));
       }
-      return new Promise<void>((resolve) => {
-        resolveRetry = resolve;
-      });
+      return retryWarmup.promise;
     });
 
     await expect(initialize()).rejects.toThrow(/embedder cold start failed/i);
@@ -193,7 +197,7 @@ describe('initialize', () => {
       expect(getBootstrapStatus().lifecycle).toBe('warming_up');
     });
 
-    resolveRetry?.();
+    retryWarmup.resolve();
     await retry;
     expect(getBootstrapStatus().lifecycle).toBe('ready');
   });

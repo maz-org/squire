@@ -1,6 +1,16 @@
 import { EventEmitter } from 'node:events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 class FakeServer extends EventEmitter {
   listenCalls: number[] = [];
 
@@ -60,7 +70,8 @@ async function loadStartServer(options: {
         rules: {
           allowed: false,
           reason: 'missing_index',
-          message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          message:
+            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
         },
         cards: {
           allowed: false,
@@ -70,7 +81,8 @@ async function loadStartServer(options: {
         ask: {
           allowed: false,
           reason: 'missing_index',
-          message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          message:
+            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
         },
       },
     }),
@@ -93,7 +105,8 @@ async function loadStartServer(options: {
         rules: {
           allowed: false,
           reason: 'missing_index',
-          message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          message:
+            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
         },
         cards: {
           allowed: false,
@@ -103,7 +116,8 @@ async function loadStartServer(options: {
         ask: {
           allowed: false,
           reason: 'missing_index',
-          message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          message:
+            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
         },
       },
     }),
@@ -163,13 +177,10 @@ describe('startServer', () => {
   });
 
   it('binds the configured port without awaiting bootstrap warmup', async () => {
-    let resolveBootstrap: (() => void) | null = null;
+    const bootstrap = createDeferred<void>();
     const { startServer, fakeServer, startBootstrapLifecycle } = await loadStartServer({
       configuredPort: '4123',
-      bootstrapImpl: () =>
-        new Promise<void>((resolve) => {
-          resolveBootstrap = resolve;
-        }),
+      bootstrapImpl: () => bootstrap.promise,
     });
 
     await expect(startServer()).resolves.toBeUndefined();
@@ -177,7 +188,7 @@ describe('startServer', () => {
     expect(fakeServer.listenCalls).toEqual([4123]);
     expect(startBootstrapLifecycle).toHaveBeenCalledTimes(1);
 
-    resolveBootstrap?.();
+    bootstrap.resolve();
   });
 
   it('binds a claimed worktree port even when bootstrap prerequisites are missing', async () => {

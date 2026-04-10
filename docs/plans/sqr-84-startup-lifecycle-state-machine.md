@@ -21,7 +21,7 @@ This is not a one-line bug. It is a lifecycle-modeling problem.
 Model bootstrap explicitly in `src/service.ts` and make that module the single
 owner of startup/readiness state.
 
-```
+```text
 LIFECYCLE
 =========
 starting
@@ -63,7 +63,7 @@ An explicit lifecycle snapshot makes those questions separable and testable.
 
 Routes should consume typed capability state, not parse prose from `errors[]`.
 
-```
+```text
 capabilities:
   rules -> allowed + reason + message
   cards -> allowed + reason + message
@@ -100,7 +100,7 @@ present if the request still touches another subsystem at runtime.
 
 ## Endpoint Policy
 
-```
+```text
 STATE              /api/health   rules   cards   ask
 ----------------------------------------------------
 starting              yes         wait    wait    wait
@@ -138,7 +138,7 @@ service snapshot for route gating and logs, not the public health payload.
 
 The service layer owns state transitions.
 
-```
+```text
 WRITERS
 =======
 - startup bootstrap loop

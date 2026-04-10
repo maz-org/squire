@@ -160,7 +160,11 @@ describe('GET /api/health', () => {
         capabilities: {
           rules: { allowed: true, reason: null, message: null },
           cards: { allowed: true, reason: null, message: null },
-          ask: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
+          ask: {
+            allowed: false,
+            reason: 'warming_up',
+            message: 'Service is warming up. Retry in a moment.',
+          },
         },
         askReady: false,
       }),
@@ -182,9 +186,21 @@ describe('GET /api/health', () => {
         cardQueriesReady: false,
         askReady: false,
         capabilities: {
-          rules: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
-          cards: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
-          ask: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
+          rules: {
+            allowed: false,
+            reason: 'warming_up',
+            message: 'Service is warming up. Retry in a moment.',
+          },
+          cards: {
+            allowed: false,
+            reason: 'warming_up',
+            message: 'Service is warming up. Retry in a moment.',
+          },
+          ask: {
+            allowed: false,
+            reason: 'warming_up',
+            message: 'Service is warming up. Retry in a moment.',
+          },
         },
       }),
     );
@@ -272,18 +288,22 @@ describe('GET /api/search/rules', () => {
         ruleQueriesReady: false,
         askReady: false,
         missingBootstrapSteps: ['npm run index'],
-        errors: ['Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.'],
+        errors: [
+          'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        ],
         capabilities: {
           rules: {
             allowed: false,
             reason: 'missing_index',
-            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            message:
+              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
           },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
             reason: 'missing_index',
-            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            message:
+              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
           },
         },
       }),
@@ -647,7 +667,8 @@ describe('POST /api/ask', () => {
           rules: {
             allowed: false,
             reason: 'missing_index',
-            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            message:
+              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
           },
           cards: {
             allowed: false,
@@ -657,7 +678,8 @@ describe('POST /api/ask', () => {
           ask: {
             allowed: false,
             reason: 'missing_index',
-            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            message:
+              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
           },
         },
       }),
@@ -725,13 +747,15 @@ describe('bootstrapErrorResponse fast path', () => {
           rules: {
             allowed: false,
             reason: 'missing_index',
-            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            message:
+              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
           },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
             reason: 'missing_index',
-            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            message:
+              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
           },
         },
       }),

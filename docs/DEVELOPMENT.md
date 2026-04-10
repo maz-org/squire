@@ -161,15 +161,15 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 ## REST API endpoints
 
-| Method | Path                         | Description                                                |
-| ------ | ---------------------------- | ---------------------------------------------------------- |
+| Method | Path                         | Description                                                        |
+| ------ | ---------------------------- | ------------------------------------------------------------------ |
 | GET    | `/api/health`                | Snapshot-only readiness check (`lifecycle`, `ready`, `warming_up`) |
-| GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                       |
-| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
-| GET    | `/api/card-types`            | List card types with record counts                         |
-| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                      |
-| GET    | `/api/cards/:type/:id`       | Look up a single card                                      |
-| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)       |
+| GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                               |
+| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank`         |
+| GET    | `/api/card-types`            | List card types with record counts                                 |
+| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                              |
+| GET    | `/api/cards/:type/:id`       | Look up a single card                                              |
+| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)               |
 
 All errors return `{ error, status }` as JSON. Bootstrap and dependency details
 are logged server-side rather than returned from public endpoints.
