@@ -215,6 +215,25 @@ describe('initialize', () => {
     expect(status.capabilities.cards.allowed).toBe(false);
     expect(status.capabilities.ask.allowed).toBe(false);
   });
+
+  it('blocks rule queries when warmup has failed', async () => {
+    mockInitializeRetrieval.mockRejectedValueOnce(new Error('embedder cold start failed'));
+
+    await expect(initialize()).rejects.toThrow(/embedder cold start failed/i);
+
+    const status = await ensureBootstrapStatus();
+    expect(status.lifecycle).toBe('init_failed');
+    expect(status.capabilities.rules).toEqual({
+      allowed: false,
+      reason: 'init_failed',
+      message: 'embedder cold start failed',
+    });
+    expect(status.capabilities.ask).toEqual({
+      allowed: false,
+      reason: 'init_failed',
+      message: 'embedder cold start failed',
+    });
+  });
 });
 
 // ─── ask ─────────────────────────────────────────────────────────────────────

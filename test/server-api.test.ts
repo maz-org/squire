@@ -772,6 +772,37 @@ describe('bootstrapErrorResponse fast path', () => {
     expect(res.status).toBe(200);
     expect(mockSearchRules).toHaveBeenCalledTimes(1);
   });
+
+  it('blocks rule routes when warmup has failed', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'init_failed',
+        ready: false,
+        bootstrapReady: true,
+        ruleQueriesReady: false,
+        cardQueriesReady: true,
+        askReady: false,
+        capabilities: {
+          rules: {
+            allowed: false,
+            reason: 'init_failed',
+            message: 'embedder cold start failed',
+          },
+          cards: { allowed: true, reason: null, message: null },
+          ask: {
+            allowed: false,
+            reason: 'init_failed',
+            message: 'embedder cold start failed',
+          },
+        },
+      }),
+    );
+
+    const res = await app.request('/api/search/rules?q=loot', { headers: await auth() });
+    expect(res.status).toBe(503);
+    expect(mockSearchRules).not.toHaveBeenCalled();
+  });
 });
 
 // ─── Error handling ──────────────────────────────────────────────────────────

@@ -81,6 +81,23 @@ Suggested typed reasons:
 This is the important part. `errors[]` is diagnostics. It should never be
 control flow.
 
+Capability design rule:
+
+- A capability is allowed only if every dependency exercised on that request
+  path is healthy right now.
+
+Examples:
+
+- `rules` requires retrieval data plus the embedder, because each request calls
+  `embed(query)` before vector search.
+- `cards` depends on card tables, but not on embedder warmup.
+- `ask` depends on both retrieval and card bootstrap, plus successful warmup.
+
+This is the easiest place to make subtle mistakes. If a new route or tool calls
+into a dependency on the request path, that dependency must be reflected in the
+capability decision table. Do not infer capability from "related" data being
+present if the request still touches another subsystem at runtime.
+
 ## Endpoint Policy
 
 ```
@@ -169,6 +186,15 @@ And these regressions need dedicated coverage:
 - `startServer()` binds even when bootstrap prerequisites are absent
 - route gating is driven by typed capability reasons, not error-string parsing
 
+For future feature work:
+
+- when adding a new capability, add at least one test for each lifecycle that
+  should block it
+- add one test proving malformed requests still return their normal `400`
+  validation errors before bootstrap gating
+- add one test for any partial-availability claim, for example "cards still
+  work while ask is blocked"
+
 ## Minimal Implementation Plan
 
 1. Add a typed lifecycle snapshot to `src/service.ts`.
@@ -177,6 +203,23 @@ And these regressions need dedicated coverage:
 4. Make route gating consume typed capability status.
 5. Keep background bootstrap attempts in the service layer, not in health.
 6. Add lifecycle-matrix tests and startup regressions.
+
+## Future Development Checklist
+
+When adding a new capability, endpoint, or dependency:
+
+1. Identify every runtime dependency that endpoint touches on the request path.
+2. Decide which lifecycle states should block it and which should allow it.
+3. Update `ServiceBootstrapStatus.capabilities` in `src/service.ts`.
+4. Update the endpoint policy table in this doc if the public contract changes.
+5. Keep `/api/health` snapshot-only. If you need richer diagnostics, use logs or
+   a separate internal surface instead of adding probes to health.
+6. Add regression tests for:
+   - startup / `starting`
+   - blocked bootstrap
+   - dependency failure
+   - init failure
+   - malformed-request validation order when applicable
 
 ## Not In Scope
 

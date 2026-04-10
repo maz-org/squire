@@ -70,6 +70,39 @@ export interface ServiceBootstrapStatus {
   };
 }
 
+/**
+ * Lifecycle contract
+ *
+ * starting
+ *   Process is listening, but no live probe has completed yet.
+ * boot_blocked
+ *   Dependencies are reachable, but required bootstrap data is missing.
+ * warming_up
+ *   Bootstrap prerequisites exist and warmup is currently in flight.
+ * ready
+ *   Warmup completed successfully.
+ * dependency_failed
+ *   A required dependency probe failed.
+ * init_failed
+ *   Warmup itself failed after prerequisites were available.
+ *
+ * Transition sketch
+ *   starting -> boot_blocked | warming_up | dependency_failed
+ *   boot_blocked -> warming_up | dependency_failed
+ *   warming_up -> ready | init_failed | dependency_failed
+ *   ready -> boot_blocked | dependency_failed
+ *   dependency_failed -> boot_blocked | warming_up
+ *   init_failed -> warming_up | dependency_failed | boot_blocked
+ *
+ * Extension rules
+ *   1. Keep health on snapshot reads only. Do not add live probes to
+ *      getBootstrapStatus().
+ *   2. A capability may be allowed only if every dependency it exercises on
+ *      the request path is healthy. Example: rules require embeddings AND the
+ *      embedder, so init_failed must block them.
+ *   3. When adding a capability, update the capability map, endpoint policy,
+ *      and lifecycle tests together.
+ */
 let initialized = false;
 let initPromise: Promise<void> | null = null;
 let initErrorMessage: string | null = null;
@@ -230,6 +263,14 @@ function buildCapabilityStatus(
   cards: CardBootstrapStatus,
 ): CapabilityStatus {
   if (kind === 'ready') return { allowed: true, reason: null, message: null };
+
+  if (kind === 'init_failed' && scope !== 'cards') {
+    return {
+      allowed: false,
+      reason: 'init_failed',
+      message: initErrorMessage ?? INIT_FAILED_MESSAGE,
+    };
+  }
 
   if (scope === 'rules') {
     if (retrieval.ready) return { allowed: true, reason: null, message: null };

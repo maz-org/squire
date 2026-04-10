@@ -177,6 +177,31 @@ are logged server-side rather than returned from public endpoints.
 `topK` defaults to 6, must be 1–100. The `filter` parameter is a
 URL-encoded JSON object with AND-logic field matching.
 
+### Bootstrap design guardrails
+
+Startup and readiness are modeled as an explicit lifecycle in
+[`src/service.ts`](../src/service.ts), not as route-local booleans. If you are
+adding a new endpoint or capability:
+
+- keep `/api/health` snapshot-only; do not add live DB probes or warmup waits
+  to the health path
+- map the endpoint to a capability based on the dependencies it actually uses
+  on the request path, not just on nearby data being present
+- preserve request validation order: malformed requests should still return
+  their normal `400` responses before bootstrap gating when validation is
+  independent of readiness
+- add lifecycle tests for any new partial-availability claim
+
+Examples:
+
+- rule search depends on both the embeddings table and the embedder, because it
+  calls `embed(query)` on every request
+- card lookup depends on seeded card tables, but not on embedder warmup
+- ask depends on successful warmup as well as bootstrap data
+
+For the full state-machine rationale and endpoint policy table, see
+[docs/plans/sqr-84-startup-lifecycle-state-machine.md](plans/sqr-84-startup-lifecycle-state-machine.md).
+
 ## MCP server
 
 Squire exposes 5 atomic tools via MCP at `/mcp`:
