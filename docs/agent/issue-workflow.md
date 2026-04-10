@@ -44,6 +44,23 @@ branch), not when opening the PR.
 GitHub Issues is only used for repo-level concerns (Dependabot, security
 advisories) — not for work tracking.
 
+## Pull requests: mirror the Linear issue id and title
+
+When you open the PR for a Linear issue, the PR title must be:
+
+```text
+SQR-XX: <exact Linear issue title>
+```
+
+Example:
+
+```text
+SQR-8: Streaming chat protocol: text deltas, tool indicators, citations
+```
+
+Use the issue id and exact title from Linear, not the git branch slug. This is
+required so Linear auto-links the PR attachment back to the issue.
+
 ## Dependencies: capture in BOTH Linear Relations AND description text
 
 When a ticket depends on other work, record the dependency in **both** places:

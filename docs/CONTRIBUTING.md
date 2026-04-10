@@ -378,8 +378,12 @@ main CI gate:
 
    ```bash
    git push -u origin feat/my-change
-   gh pr create
+   gh pr create --title "SQR-XX: <exact Linear issue title>"
    ```
+
+   Replace `SQR-XX` and the title with the exact Linear issue id and issue
+   title. Do not use the branch slug as the PR title. This is how Linear
+   automatically links the PR back to the issue.
 
 4. Wait for CI and [CodeRabbit](https://coderabbit.ai) review.
 
@@ -388,6 +392,8 @@ main CI gate:
 ### PR guidelines
 
 - Keep PRs small and focused — one logical change per PR.
+- PR titles must be `SQR-XX: <exact Linear issue title>` so Linear links the PR
+  to the issue automatically.
 - Use [Conventional Commits](https://www.conventionalcommits.org/) for commit
   messages (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`, `ci:`).
 - All CI checks must pass before merging.
