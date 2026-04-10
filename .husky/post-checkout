@@ -1,4 +1,13 @@
+#!/usr/bin/env sh
+set -e
+
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
   nvm use >/dev/null 2>&1 || true
+fi
+
+hook_path=$(git config --get core.hooksPath 2>/dev/null || true)
+if [ "$hook_path" != ".husky" ]; then
+  echo "WARNING: Git hooks are not installed for this worktree."
+  echo "Run 'npm install' or 'npm run hooks:install' to restore local checks."
 fi
