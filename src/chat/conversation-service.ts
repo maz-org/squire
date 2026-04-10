@@ -60,6 +60,9 @@ async function generateAssistantReply(
     if (!isRetryableTransportError(err)) {
       throw err;
     }
+    if (onEvent) {
+      throw err;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     return ask(question, {
@@ -87,6 +90,14 @@ async function persistAssistantOutcome(input: {
   );
 
   try {
+    const existingAssistantMessage = await MessageRepository.findAssistantResponse({
+      conversationId: input.conversationId,
+      responseToMessageId: input.currentUserMessageId,
+    });
+    if (existingAssistantMessage) {
+      return existingAssistantMessage;
+    }
+
     const answer = await generateAssistantReply(
       input.question,
       history,

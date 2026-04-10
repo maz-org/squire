@@ -392,6 +392,52 @@ describe('conversation web backend', () => {
     expect(mockAsk).toHaveBeenCalledTimes(2);
   });
 
+  it('reuses an already-persisted assistant response without calling ask again', async () => {
+    const { streamAssistantTurn } = await import('../src/chat/conversation-service.ts');
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        userId: auth.userId,
+      })
+      .returning();
+
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Existing question',
+      })
+      .returning();
+
+    const [assistantMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'assistant',
+        content: 'Existing answer',
+        responseToMessageId: userMessage.id,
+      })
+      .returning();
+
+    const onEvent = vi.fn();
+    const result = await streamAssistantTurn({
+      conversationId: conversation.id,
+      question: userMessage.content,
+      userId: auth.userId,
+      currentUserMessageId: userMessage.id,
+      onEvent,
+    });
+
+    expect(result.id).toBe(assistantMessage.id);
+    expect(result.content).toBe('Existing answer');
+    expect(onEvent).not.toHaveBeenCalled();
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
   it('caps forwarded history to the most recent 20 non-error messages', async () => {
     mockAsk.mockResolvedValueOnce('Capped answer.');
     const auth = await createAuthContext();
@@ -512,9 +558,6 @@ describe('conversation web backend', () => {
       },
     ]);
 
-    const pageRes = await requestWithAuth(auth, 'http://localhost:3000/chat');
-    expect(pageRes.status).toBe(404);
-
     const { db } = getDb('server');
     const storedMessages = await db.execute(sql`
       select role, content, is_error as "isError"
@@ -529,6 +572,12 @@ describe('conversation web backend', () => {
         isError: false,
       },
     ]);
+  });
+
+  it('returns 404 for GET /chat because only conversation-specific pages are routable', async () => {
+    const auth = await createAuthContext();
+    const pageRes = await requestWithAuth(auth, 'http://localhost:3000/chat');
+    expect(pageRes.status).toBe(404);
   });
 
   it('returns the full transcript plus a pending answer shell for HTMX follow-ups', async () => {
@@ -677,5 +726,51 @@ describe('conversation web backend', () => {
       order by created_at asc, id asc
     `);
     expect(storedMessages.rows).toEqual([{ role: 'user', content: 'Will this wait?' }]);
+  });
+
+  it('does not retry a streamed ask after a retryable transport failure', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: 'Partial answer.' });
+      const err = new Error('socket timed out') as Error & { code?: string };
+      err.code = 'ETIMEDOUT';
+      throw err;
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Question with partial stream failure',
+        idempotencyKey: 'idem-stream-no-retry',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'text-delta',
+        data: { delta: 'Partial answer.' },
+      },
+      {
+        event: 'error',
+        data: {
+          kind: 'transport',
+          message: 'Trouble connecting. Please try again.',
+          recoverable: true,
+        },
+      },
+    ]);
+    expect(mockAsk).toHaveBeenCalledTimes(1);
   });
 });

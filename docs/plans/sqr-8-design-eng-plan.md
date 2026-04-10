@@ -264,9 +264,9 @@ state.
 - current question block
 - current answer block with:
   - `.squire-answer`
-  - `.squire-answer .content`
-  - `.squire-answer .skeleton`
-  - `.squire-answer .tools`
+  - `.squire-answer__content`
+  - `.squire-answer__skeleton`
+  - `.squire-answer__tools`
 - footer source line target
 - `data-stream-url` for the specific pending turn
 
@@ -324,30 +324,34 @@ single boolean.
 
 SQR-8 must integrate with that contract:
 
-- the pending-shell POST path must not bypass service bootstrap state
+- the pending-shell POST path may render before `ask` capability is checked
 - the SSE route must check whether `ask` is currently allowed before streaming
 - a blocked or warming service must render a truthful Squire error state rather
   than falling through to a generic internal failure
 
 ### Required behaviors
 
-- If `ask` capability is unavailable because the service is `warming_up`, render
-  the warming message as a recoverable answer-slot failure state.
+- If `ask` capability is unavailable because the service is `warming_up`, the
+  SSE route should render the warming message as a recoverable answer-slot
+  failure state.
 - If `ask` capability is unavailable because bootstrap is blocked or a
-  dependency failed, render a non-streaming failure state that explains the
-  service is not ready.
+  dependency failed, the SSE route should render a non-streaming failure state
+  that explains the service is not ready.
 - Do not open a long-lived SSE stream only to discover mid-handler that `ask`
   was never permitted.
 
 ## Rendering Boundary
 
-Server owns formatting and sanitization of streamed answer fragments.
+Server owns formatting and sanitization of persisted answer content. The stream
+contract itself is plain text.
 
 ### Implications
 
-- The browser appends trusted HTML fragments into `.squire-answer .content`
-- Citation markup arrives already rendered in a safe form
-- Footer source labels arrive in display-ready form
+- The browser appends plain-text deltas into `.squire-answer__content` using
+  `textContent` or an equivalent safe text insertion path
+- Citation and footer labels in the stream contract arrive as display-ready
+  plain text, not HTML fragments
+- Persisted transcript rendering remains server-rendered
 - The browser never turns raw tool metadata into arbitrary HTML
 
 This is required so SQR-61 can enforce one trust boundary instead of splitting
@@ -377,7 +381,7 @@ In [src/web-ui/squire.js](../../src/web-ui/squire.js):
 - read `data-stream-url`
 - open `EventSource`
 - perform the atomic skeleton replacement on first content event
-- append trusted answer fragments
+- append plain-text answer fragments
 - update tool-status labels in place
 - update footer accumulation state
 - close on `done`
@@ -397,10 +401,14 @@ In [src/web-ui/squire.js](../../src/web-ui/squire.js):
 
 ## Observability
 
-Add a chat-stream span around the streaming route covering:
+Add a pre-stream span around the POST phase covering:
 
 - session lookup
 - user turn persistence
+
+Add a chat-stream span around the streaming route covering:
+
+- session lookup
 - stream start
 - first SSE byte
 - final SSE byte

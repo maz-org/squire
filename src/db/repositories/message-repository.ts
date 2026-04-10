@@ -96,3 +96,22 @@ export async function findById(messageId: string): Promise<ConversationMessage |
   const rows = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
   return rows[0] ? toDomain(rows[0]) : null;
 }
+
+export async function findAssistantResponse(input: {
+  conversationId: string;
+  responseToMessageId: string;
+}): Promise<ConversationMessage | null> {
+  const { db } = getDb('server');
+  const rows = await db
+    .select()
+    .from(messages)
+    .where(
+      and(
+        eq(messages.conversationId, input.conversationId),
+        eq(messages.responseToMessageId, input.responseToMessageId),
+        eq(messages.role, 'assistant'),
+      ),
+    )
+    .limit(1);
+  return rows[0] ? toDomain(rows[0]) : null;
+}

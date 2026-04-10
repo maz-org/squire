@@ -128,6 +128,40 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
     </html>`;
 }
 
+function renderQuestionTurn(content: string): HtmlEscapedString {
+  return html`<article class="squire-turn squire-question">
+    <p>${content}</p>
+  </article>` as HtmlEscapedString;
+}
+
+function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
+  return html`<article
+    class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
+  >
+    <p>${message.content}</p>
+  </article>` as HtmlEscapedString;
+}
+
+function renderConversationTurn(message: ConversationMessage): HtmlEscapedString {
+  return message.role === 'user' ? renderQuestionTurn(message.content) : renderAnswerTurn(message);
+}
+
+function renderPendingAnswerSkeleton(): HtmlEscapedString {
+  return html`<article
+    class="squire-turn squire-answer squire-answer--pending"
+    data-stream-state="pending"
+  >
+    <div class="squire-answer__content"></div>
+    <div class="squire-answer__tools" aria-live="off"></div>
+    <div class="squire-answer__skeleton" aria-hidden="true">
+      <div class="squire-answer__skeleton-dropcap"></div>
+      <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>
+      <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
+      <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
+    </div>
+  </article>` as HtmlEscapedString;
+}
+
 /**
  * Render the full HTML document for the companion-first layout. Stable
  * selectors (`squire-header`, `squire-surface`, `squire-toolcall`,
@@ -424,17 +458,7 @@ export function renderConversationTranscript(
     aria-label="Conversation transcript"
     data-conversation-id="${conversationId}"
   >
-    ${messages.map((message) =>
-      message.role === 'user'
-        ? html`<article class="squire-turn squire-question">
-            <p>${message.content}</p>
-          </article>`
-        : html`<article
-            class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
-          >
-            <p>${message.content}</p>
-          </article>`,
-    )}
+    ${messages.map((message) => renderConversationTurn(message))}
   </section>` as HtmlEscapedString;
 }
 
@@ -449,27 +473,8 @@ export function renderConversationTranscriptWithPendingTurn(options: {
     data-conversation-id="${options.conversationId}"
     data-stream-url="${options.streamUrl}"
   >
-    ${options.messages.map((message) =>
-      message.role === 'user'
-        ? html`<article class="squire-turn squire-question">
-            <p>${message.content}</p>
-          </article>`
-        : html`<article
-            class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
-          >
-            <p>${message.content}</p>
-          </article>`,
-    )}
-    <article class="squire-turn squire-answer squire-answer--pending" data-stream-state="pending">
-      <div class="squire-answer__content"></div>
-      <div class="squire-answer__tools" aria-live="off"></div>
-      <div class="squire-answer__skeleton" aria-hidden="true">
-        <div class="squire-answer__skeleton-dropcap"></div>
-        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>
-        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
-        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
-      </div>
-    </article>
+    ${options.messages.map((message) => renderConversationTurn(message))}
+    ${renderPendingAnswerSkeleton()}
   </section>` as HtmlEscapedString;
 }
 
@@ -479,18 +484,6 @@ export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEs
     aria-label="Conversation transcript"
     data-stream-url="${options.streamUrl}"
   >
-    <article class="squire-turn squire-question">
-      <p>${options.question}</p>
-    </article>
-    <article class="squire-turn squire-answer squire-answer--pending" data-stream-state="pending">
-      <div class="squire-answer__content"></div>
-      <div class="squire-answer__tools" aria-live="off"></div>
-      <div class="squire-answer__skeleton" aria-hidden="true">
-        <div class="squire-answer__skeleton-dropcap"></div>
-        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>
-        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
-        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
-      </div>
-    </article>
+    ${renderQuestionTurn(options.question)} ${renderPendingAnswerSkeleton()}
   </section>` as HtmlEscapedString;
 }
