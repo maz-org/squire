@@ -15,13 +15,12 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 
 import * as schema from './db/schema/index.ts';
+import { relations } from './db/schema/relations.ts';
 import { getWorktreeRuntime } from './worktree-runtime.ts';
-
-const { Pool } = pg;
 
 export type DbMode = 'server' | 'cli';
 
-export type Db = ReturnType<typeof drizzle<typeof schema>>;
+export type Db = ReturnType<typeof drizzle<typeof schema, typeof relations>>;
 
 export interface DbHandle {
   db: Db;
@@ -34,7 +33,57 @@ export interface DbHandle {
 }
 
 let serverPool: pg.Pool | null = null;
-let serverDb: ReturnType<typeof drizzle<typeof schema>> | null = null;
+let serverDb: ReturnType<typeof drizzle<typeof schema, typeof relations>> | null = null;
+
+interface DbConnectionOptions {
+  url?: string;
+  max?: number;
+  idleTimeoutMillis?: number;
+}
+
+function createDrizzleClient({
+  url = resolveDatabaseUrl(),
+  max = 1,
+  idleTimeoutMillis,
+}: DbConnectionOptions = {}): Db {
+  const connection: pg.PoolConfig = {
+    connectionString: url,
+    max,
+  };
+  if (idleTimeoutMillis !== undefined) {
+    connection.idleTimeoutMillis = idleTimeoutMillis;
+  }
+  return drizzle({ connection, schema, relations });
+}
+
+export function createStandaloneDb(
+  options: Omit<DbConnectionOptions, 'idleTimeoutMillis'> = {},
+): DbHandle {
+  const db = createDrizzleClient({
+    url: options.url,
+    max: options.max ?? 1,
+  });
+  return {
+    db,
+    close: async () => {
+      await db.$client.end();
+    },
+  };
+}
+
+export function createPooledDb(options: DbConnectionOptions = {}): DbHandle {
+  const db = createDrizzleClient({
+    url: options.url,
+    max: options.max ?? 10,
+    idleTimeoutMillis: options.idleTimeoutMillis ?? 30_000,
+  });
+  return {
+    db,
+    close: async () => {
+      await db.$client.end();
+    },
+  };
+}
 
 function buildLocalDatabaseUrl(dbName: string): string {
   return `postgres://squire:squire@localhost:5432/${dbName}`;
@@ -97,12 +146,9 @@ export function isManagedLocalDatabaseUrl(url: string): boolean {
 export function getDb(mode: DbMode = 'server'): DbHandle {
   if (mode === 'server') {
     if (!serverPool) {
-      serverPool = new Pool({
-        connectionString: resolveDatabaseUrl(),
-        max: 10,
-        idleTimeoutMillis: 30_000,
-      });
-      serverDb = drizzle(serverPool, { schema });
+      const handle = createPooledDb();
+      serverDb = handle.db;
+      serverPool = handle.db.$client;
     }
     return {
       // Non-null assertion is safe: serverDb is set in lockstep with serverPool.
@@ -113,16 +159,7 @@ export function getDb(mode: DbMode = 'server'): DbHandle {
     };
   }
 
-  const pool = new Pool({
-    connectionString: resolveDatabaseUrl(),
-    max: 1,
-  });
-  return {
-    db: drizzle(pool, { schema }),
-    close: async () => {
-      await pool.end();
-    },
-  };
+  return createStandaloneDb();
 }
 
 /**
@@ -139,4 +176,5 @@ export async function shutdownServerPool(): Promise<void> {
 }
 
 export { schema };
+export { relations };
 export { getWorktreeRuntime } from './worktree-runtime.ts';

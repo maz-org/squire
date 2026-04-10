@@ -1,4 +1,3 @@
-import { relations } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   boolean,
@@ -52,15 +51,3 @@ export const messages = pgTable(
     uniqueIndex('messages_response_to_message_id_idx').on(t.responseToMessageId),
   ],
 );
-
-export const conversationsRelations = relations(conversations, ({ one, many }) => ({
-  user: one(users, { fields: [conversations.userId], references: [users.id] }),
-  messages: many(messages),
-}));
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  conversation: one(conversations, {
-    fields: [messages.conversationId],
-    references: [conversations.id],
-  }),
-}));

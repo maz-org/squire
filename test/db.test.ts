@@ -9,18 +9,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 
-const { mockPoolCtor, mockEnd } = vi.hoisted(() => {
+const { mockDrizzle, mockEnd } = vi.hoisted(() => {
   const mockEnd = vi.fn().mockResolvedValue(undefined);
-  // Must be a real constructor — src/db.ts uses `new Pool(...)`.
-  function MockPool(this: { end: typeof mockEnd }) {
-    this.end = mockEnd;
-  }
-  const mockPoolCtor = vi.fn(MockPool as unknown as new () => { end: typeof mockEnd });
-  return { mockPoolCtor, mockEnd };
+  const mockDrizzle = vi.fn(() => ({
+    $client: { end: mockEnd },
+  }));
+  return { mockDrizzle, mockEnd };
 });
 
-vi.mock('pg', () => ({
-  default: { Pool: mockPoolCtor },
+vi.mock('drizzle-orm/node-postgres', () => ({
+  drizzle: mockDrizzle,
 }));
 
 import {
@@ -35,7 +33,7 @@ import {
 
 describe('getDb', () => {
   beforeEach(() => {
-    mockPoolCtor.mockClear();
+    mockDrizzle.mockClear();
     mockEnd.mockClear();
   });
 
@@ -85,8 +83,8 @@ describe('getDb', () => {
     // Contract: server mode memoizes the pool AND the drizzle wrapper, so
     // repeated calls return the identical db handle.
     expect(a.db).toBe(b.db);
-    // And only one Pool was ever constructed.
-    expect(mockPoolCtor).toHaveBeenCalledTimes(1);
+    // And only one Drizzle client was ever constructed.
+    expect(mockDrizzle).toHaveBeenCalledTimes(1);
   });
 
   it('server-mode close() is a no-op — shutdownServerPool owns the pool lifetime', async () => {
@@ -102,7 +100,7 @@ describe('getDb', () => {
 
     // After shutdown, a fresh getDb('server') call must build a new pool.
     getDb('server');
-    expect(mockPoolCtor).toHaveBeenCalledTimes(2);
+    expect(mockDrizzle).toHaveBeenCalledTimes(2);
   });
 
   it('shutdownServerPool is idempotent', async () => {

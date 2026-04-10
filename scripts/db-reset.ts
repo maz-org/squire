@@ -10,11 +10,12 @@ import 'dotenv/config';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 
 import {
+  createStandaloneDb,
   getDatabaseNameFromUrl,
   getManagedDatabaseNames,
   isManagedLocalDatabaseUrl,
@@ -64,14 +65,13 @@ async function main(): Promise<void> {
   }
 
   // Reapply migrations against the fresh DB.
-  const pool = new Pool({ connectionString: url, max: 1 });
+  const handle = createStandaloneDb({ url, max: 1 });
   try {
-    await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
-    const db = drizzle(pool);
-    await migrate(db, { migrationsFolder: './src/db/migrations' });
+    await handle.db.execute(sql.raw('CREATE EXTENSION IF NOT EXISTS vector'));
+    await migrate(handle.db, { migrationsFolder: './src/db/migrations' });
     console.log(`✓ reset "${dbName}" and applied migrations`);
   } finally {
-    await pool.end();
+    await handle.close();
   }
 }
 
