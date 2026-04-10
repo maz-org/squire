@@ -2,21 +2,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const { mockRunAgentLoop, mockEmbed, mockInitializeRetrieval } = vi.hoisted(() => ({
+const {
+  mockRunAgentLoop,
+  mockEmbed,
+  mockInitializeRetrieval,
+  mockGetRetrievalBootstrapStatus,
+  mockListCardTypes,
+} = vi.hoisted(() => ({
   mockRunAgentLoop: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
-}));
+    mockGetRetrievalBootstrapStatus: vi.fn(),
+  mockListCardTypes: vi.fn(),
+  }));
 
 vi.mock('../src/agent.ts', () => ({
   runAgentLoop: mockRunAgentLoop,
 }));
 
 vi.mock('../src/tools.ts', () => ({
-  listCardTypes: vi.fn(() => [
-    { type: 'monster-stats', count: 5 },
-    { type: 'items', count: 3 },
-  ]),
+  listCardTypes: mockListCardTypes,
 }));
 
 vi.mock('../src/embedder.ts', () => ({
@@ -24,6 +29,9 @@ vi.mock('../src/embedder.ts', () => ({
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
+  EMBEDDINGS_BOOTSTRAP_MESSAGE:
+    'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+  getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
   initializeRetrieval: mockInitializeRetrieval,
 }));
 
@@ -32,7 +40,14 @@ vi.mock('../src/extracted-data.ts', () => ({
   load: vi.fn(() => [{ name: 'test' }]),
 }));
 
-import { initialize, isReady, ask, _resetForTesting } from '../src/service.ts';
+import {
+  initialize,
+  isReady,
+  ask,
+  getBootstrapStatus,
+  refreshInitializationIfReady,
+  _resetForTesting,
+} from '../src/service.ts';
 
 // ─── initialize / isReady ────────────────────────────────────────────────────
 
@@ -41,6 +56,11 @@ describe('initialize', () => {
     vi.clearAllMocks();
     _resetForTesting();
     mockInitializeRetrieval.mockResolvedValue(undefined);
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 8 });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
   });
 
@@ -65,6 +85,39 @@ describe('initialize', () => {
     mockInitializeRetrieval.mockRejectedValueOnce(new Error('Vector index is empty.'));
     await expect(initialize()).rejects.toThrow(/index is empty/i);
   });
+
+  it('reports missing bootstrap steps when embeddings or cards are absent', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValueOnce({
+      ready: false,
+      indexSize: 0,
+      error: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+      missingStep: 'npm run index',
+    });
+    mockListCardTypes.mockResolvedValueOnce([
+      { type: 'monster-stats', count: 0 },
+      { type: 'items', count: 0 },
+    ]);
+
+    const status = await getBootstrapStatus();
+    expect(status.ready).toBe(false);
+    expect(status.missingBootstrapSteps).toEqual(['npm run index', 'npm run seed:cards']);
+  });
+
+  it('retries initialization when bootstrap prerequisites later become available', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: true,
+      indexSize: 8,
+    });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
+
+    await refreshInitializationIfReady();
+
+    expect(mockInitializeRetrieval).toHaveBeenCalledWith(mockEmbed);
+    expect(isReady()).toBe(true);
+  });
 });
 
 // ─── ask ─────────────────────────────────────────────────────────────────────
@@ -74,6 +127,11 @@ describe('ask', () => {
     vi.clearAllMocks();
     _resetForTesting();
     mockInitializeRetrieval.mockResolvedValue(undefined);
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 8 });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
     mockRunAgentLoop.mockResolvedValue('You pick up loot tokens in your hex.');
   });
@@ -96,22 +154,9 @@ describe('ask', () => {
     expect(mockRunAgentLoop).toHaveBeenCalledWith('Follow-up', options);
   });
 
-  it('throws if not initialized', async () => {
-    vi.resetModules();
-    vi.doMock('../src/agent.ts', () => ({ runAgentLoop: mockRunAgentLoop }));
-    vi.doMock('../src/tools.ts', () => ({
-      listCardTypes: vi.fn(() => [{ type: 'monster-stats', count: 5 }]),
-    }));
-    vi.doMock('../src/embedder.ts', () => ({ embed: mockEmbed }));
-    vi.doMock('../src/vector-store.ts', () => ({
-      initializeRetrieval: mockInitializeRetrieval,
-    }));
-    vi.doMock('../src/extracted-data.ts', () => ({
-      TYPES: ['monster-stats'],
-      load: vi.fn(() => [{ name: 'test' }]),
-    }));
-
-    const { ask: freshAsk } = await import('../src/service.ts');
-    await expect(freshAsk('test')).rejects.toThrow(/not initialized/i);
+  it('initializes lazily when asked before warmup', async () => {
+    await ask('test');
+    expect(mockInitializeRetrieval).toHaveBeenCalled();
+    expect(mockRunAgentLoop).toHaveBeenCalledWith('test', undefined);
   });
 });

@@ -10,10 +10,9 @@ import 'dotenv/config';
 import './instrumentation.ts';
 import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { isReady, initialize, ask } from './service.ts';
-import { sql } from 'drizzle-orm';
+import { ask, getBootstrapStatus, initialize, refreshInitializationIfReady } from './service.ts';
 
-import { getDb, getWorktreeRuntime } from './db.ts';
+import { getWorktreeRuntime } from './db.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -631,20 +630,16 @@ app.onError((err, c) => {
 // ─── Health endpoint ─────────────────────────────────────────────────────────
 
 app.get('/api/health', async (c) => {
-  let indexSize = 0;
-  try {
-    const { db } = getDb('server');
-    const result = await db.execute<{ count: string }>(
-      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
-    );
-    indexSize = Number(result.rows[0]?.count ?? 0);
-  } catch {
-    // Health endpoint stays best-effort — if the DB is down, report ready:false
-    // via isReady() and leave index_size at 0 rather than 500ing.
-  }
+  await refreshInitializationIfReady();
+  const status = await getBootstrapStatus();
   return c.json({
-    ready: isReady(),
-    index_size: indexSize,
+    ready: status.ready,
+    bootstrap_ready: status.bootstrapReady,
+    warming_up: status.warmingUp,
+    index_size: status.indexSize,
+    card_count: status.cardCount,
+    missing_bootstrap_steps: status.missingBootstrapSteps,
+    errors: status.errors,
   });
 });
 
@@ -657,9 +652,42 @@ function parseTopK(raw: string | undefined): number {
   return n;
 }
 
+async function bootstrapErrorResponse(
+  c: Context,
+  scope: 'rules' | 'cards' | 'ask',
+): Promise<Response | null> {
+  const status = await getBootstrapStatus();
+  const isReady =
+    scope === 'rules'
+      ? status.ruleQueriesReady
+      : scope === 'cards'
+        ? status.cardQueriesReady
+        : status.askReady;
+
+  if (isReady) return null;
+
+  const message =
+    scope === 'rules'
+      ? status.errors.find((err) => err.includes('npm run index') || err.includes('vector-store'))
+      : scope === 'cards'
+        ? status.errors.find((err) => err.includes('npm run seed:cards') || err.includes('card data'))
+        : status.errors[0];
+
+  return c.json(
+    {
+      ...jsonError(message ?? 'Service bootstrap incomplete', 503),
+      missing_bootstrap_steps: status.missingBootstrapSteps,
+    },
+    503,
+  );
+}
+
 app.get('/api/search/rules', async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
+
+  const bootstrapError = await bootstrapErrorResponse(c, 'rules');
+  if (bootstrapError) return bootstrapError;
 
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchRules(q, topK);
@@ -670,6 +698,9 @@ app.get('/api/search/cards', async (c) => {
   const q = c.req.query('q');
   if (!q) return c.json(jsonError('Missing required query parameter: q', 400), 400);
 
+  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
+  if (bootstrapError) return bootstrapError;
+
   const topK = parseTopK(c.req.query('topK'));
   const results = await searchCards(q, topK);
   return c.json({ results });
@@ -678,11 +709,17 @@ app.get('/api/search/cards', async (c) => {
 // ─── Card discovery and lookup endpoints ─────────────────────────────────────
 
 app.get('/api/card-types', async (c) => {
+  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
+  if (bootstrapError) return bootstrapError;
+
   const types = await listCardTypes();
   return c.json({ types });
 });
 
 app.get('/api/cards/:type/:id', async (c) => {
+  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
+  if (bootstrapError) return bootstrapError;
+
   const type = c.req.param('type') as CardType;
   const id = decodeURIComponent(c.req.param('id'));
   const card = await getCard(type, id);
@@ -693,6 +730,9 @@ app.get('/api/cards/:type/:id', async (c) => {
 app.get('/api/cards', async (c) => {
   const type = c.req.query('type');
   if (!type) return c.json(jsonError('Missing required query parameter: type', 400), 400);
+
+  const bootstrapError = await bootstrapErrorResponse(c, 'cards');
+  if (bootstrapError) return bootstrapError;
 
   const filterRaw = c.req.query('filter');
   let filter: Record<string, unknown> | undefined;
@@ -742,6 +782,9 @@ app.post('/api/ask', async (c) => {
     return c.json(jsonError('Invalid request: ' + result.error.issues[0].message, 400), 400);
   }
 
+  const bootstrapError = await bootstrapErrorResponse(c, 'ask');
+  if (bootstrapError) return bootstrapError;
+
   const { question, ...options } = result.data;
   return streamSSE(c, async (stream) => {
     try {
@@ -763,8 +806,6 @@ app.post('/api/ask', async (c) => {
 // ─── Server startup ──────────────────────────────────────────────────────────
 
 export async function startServer(): Promise<void> {
-  await initialize();
-
   const configuredPort = parseInt(process.env.PORT || '', 10);
   const runtime = getWorktreeRuntime();
   const { createAdaptorServer } = await import('@hono/node-server');
@@ -782,6 +823,9 @@ export async function startServer(): Promise<void> {
         server.once('close', () => {
           void claim.release();
         });
+        void initialize().catch((err: unknown) => {
+          console.warn('Server bootstrap incomplete:', err instanceof Error ? err.message : err);
+        });
         console.log(`Squire server listening on port ${claim.port}`);
         return;
       } catch (error) {
@@ -794,6 +838,9 @@ export async function startServer(): Promise<void> {
 
   const server = createAdaptorServer({ fetch: app.fetch });
   await listen(server, configuredPort);
+  void initialize().catch((err: unknown) => {
+    console.warn('Server bootstrap incomplete:', err instanceof Error ? err.message : err);
+  });
   console.log(`Squire server listening on port ${configuredPort}`);
 }
 

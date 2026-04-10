@@ -132,8 +132,11 @@ The server chooses a checkout-local port in two steps:
   the first available port in the managed `4000-5999` range
 
 Override with `PORT` if you want a specific port. On startup, the server logs
-the final port it selected. It initializes the vector index, verifies
-extracted card data, and warms the embedder before accepting requests.
+the final port it selected. It binds the port immediately, then warms the
+retrieval stack in the background. If embeddings or card data are missing,
+startup no longer crashes; `/api/health` reports the missing bootstrap step(s)
+and query endpoints return `503` JSON errors until `npm run index` and/or
+`npm run seed:cards` has been run.
 
 To discover the current worktree's runtime settings, use startup logs or ask
 the app directly by checking:
@@ -146,7 +149,7 @@ Example health check for the main checkout:
 
 ```bash
 curl http://localhost:3000/api/health
-# {"ready":true,"index_size":2147}
+# {"ready":true,"bootstrap_ready":true,"warming_up":false,"index_size":2147,"card_count":1234,"missing_bootstrap_steps":[],"errors":[]}
 ```
 
 For linked worktrees, replace `3000` with that worktree's logged port. Do not
@@ -159,7 +162,7 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 | Method | Path                         | Description                                                |
 | ------ | ---------------------------- | ---------------------------------------------------------- |
-| GET    | `/api/health`                | Readiness check with index size                            |
+| GET    | `/api/health`                | Readiness check with bootstrap details and index/card size |
 | GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                       |
 | GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
 | GET    | `/api/card-types`            | List card types with record counts                         |
@@ -167,7 +170,10 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 | GET    | `/api/cards/:type/:id`       | Look up a single card                                      |
 | POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)       |
 
-All errors return `{ error, status }` as JSON.
+All errors return `{ error, status }` as JSON. Bootstrap-related `503`
+responses also include `missing_bootstrap_steps` so local dev and QA can see
+whether the checkout still needs `npm run index`, `npm run seed:cards`, or
+both.
 
 `topK` defaults to 6, must be 1–100. The `filter` parameter is a
 URL-encoded JSON object with AND-logic field matching.

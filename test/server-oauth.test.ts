@@ -21,16 +21,24 @@ import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vites
 import { CODE_VERIFIER, CODE_CHALLENGE, makeAuthHelpers } from './helpers/server-oauth-helpers.ts';
 import { setupTestDb, resetTestDb, teardownTestDb } from './helpers/db.ts';
 
-const { mockInitialize, mockIsReady, mockAsk, mockSearchRules } = vi.hoisted(() => ({
+const {
+  mockInitialize,
+  mockGetBootstrapStatus,
+  mockRefreshInitializationIfReady,
+  mockAsk,
+  mockSearchRules,
+} = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
-  mockIsReady: vi.fn(),
+  mockGetBootstrapStatus: vi.fn(),
+  mockRefreshInitializationIfReady: vi.fn(),
   mockAsk: vi.fn(),
   mockSearchRules: vi.fn(),
 }));
 
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
-  isReady: mockIsReady,
+  getBootstrapStatus: mockGetBootstrapStatus,
+  refreshInitializationIfReady: mockRefreshInitializationIfReady,
   ask: mockAsk,
 }));
 
@@ -50,6 +58,22 @@ const { auth, resetTestToken } = makeAuthHelpers(app);
 
 beforeAll(async () => {
   await setupTestDb();
+});
+
+beforeEach(() => {
+  mockRefreshInitializationIfReady.mockResolvedValue(undefined);
+  mockGetBootstrapStatus.mockResolvedValue({
+    ready: true,
+    bootstrapReady: true,
+    warmingUp: false,
+    indexSize: 3,
+    cardCount: 15,
+    ruleQueriesReady: true,
+    cardQueriesReady: true,
+    askReady: true,
+    missingBootstrapSteps: [],
+    errors: [],
+  });
 });
 
 afterAll(async () => {
