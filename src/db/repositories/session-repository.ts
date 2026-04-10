@@ -62,10 +62,7 @@ export async function findById(sessionId: string): Promise<Session | null> {
 
   if (!row) return null;
   if (!row.user) {
-    console.warn(
-      '[session] session row missing joined user; deleting orphaned session:',
-      sessionId,
-    );
+    console.warn('[session] session row missing joined user; deleting orphaned session');
     await db.delete(sessions).where(eq(sessions.id, sessionId));
     return null;
   }

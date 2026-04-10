@@ -11,16 +11,13 @@
  * explicit `DATABASE_URL=...` incantation required.
  */
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
 
-import { createStandaloneDb, relations, resolveDatabaseUrl, schema } from '../../src/db.ts';
+import { createStandaloneDb, resolveDatabaseUrl } from '../../src/db.ts';
 
-let db: ReturnType<typeof drizzle<typeof schema, typeof relations>> | null = null;
+let db: ReturnType<typeof createStandaloneDb>['db'] | null = null;
 let closeDb: (() => Promise<void>) | null = null;
 
-export async function setupTestDb(): Promise<
-  ReturnType<typeof drizzle<typeof schema, typeof relations>>
-> {
+export async function setupTestDb(): Promise<ReturnType<typeof createStandaloneDb>['db']> {
   if (!db) {
     const url = resolveDatabaseUrl();
     // Fail-fast guard mirroring `test/helpers/global-setup.ts` — refuse to
@@ -56,7 +53,7 @@ export async function resetTestDb(): Promise<void> {
 export async function teardownTestDb(): Promise<void> {
   if (closeDb) {
     await closeDb();
-    closeDb = null;
-    db = null;
   }
+  closeDb = null;
+  db = null;
 }
