@@ -26,15 +26,7 @@ document.addEventListener('submit', function (e) {
 
   var questionInput = form.querySelector('input[name="question"]');
   var submitButton = form.querySelector('button[type="submit"]');
-  var idempotencyInput = form.querySelector('input[name="idempotencyKey"]');
-
-  if (idempotencyInput && !idempotencyInput.value) {
-    if (window.crypto && window.crypto.randomUUID) {
-      idempotencyInput.value = window.crypto.randomUUID();
-    } else {
-      idempotencyInput.value = String(Date.now()) + '-' + Math.random().toString(16).slice(2);
-    }
-  }
+  ensureIdempotencyKey(form);
 
   form.dataset.submitting = 'true';
   if (questionInput) questionInput.setAttribute('readonly', 'true');
@@ -45,6 +37,23 @@ document.addEventListener('submit', function (e) {
 });
 
 var activeStream = null;
+
+function generateIdempotencyKey() {
+  if (window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+}
+
+function ensureIdempotencyKey(form) {
+  if (!form || !form.querySelector) return null;
+  var idempotencyInput = form.querySelector('input[name="idempotencyKey"]');
+  if (!idempotencyInput) return null;
+  if (!idempotencyInput.value) {
+    idempotencyInput.value = generateIdempotencyKey();
+  }
+  return idempotencyInput.value;
+}
 
 function setFormPendingState(form, pending) {
   if (!form) return;
@@ -194,6 +203,16 @@ function handlePendingTranscript(transcript) {
     finishStream();
   });
 }
+
+document.addEventListener('htmx:configRequest', function (event) {
+  var form = event.detail && event.detail.elt;
+  if (!form || !form.matches || !form.matches('.squire-input-dock')) return;
+
+  var idempotencyKey = ensureIdempotencyKey(form);
+  if (idempotencyKey && event.detail && event.detail.parameters) {
+    event.detail.parameters.idempotencyKey = idempotencyKey;
+  }
+});
 
 document.addEventListener('htmx:afterSwap', function (event) {
   var target = event.detail && event.detail.target;
