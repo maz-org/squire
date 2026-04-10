@@ -47,8 +47,8 @@ export async function setupTestDb(): Promise<ReturnType<typeof drizzle<typeof sc
 export async function resetTestDb(): Promise<void> {
   if (!db) throw new Error('resetTestDb called before setupTestDb');
   await db.execute(sql`
-    TRUNCATE embeddings, oauth_audit_log, oauth_tokens, oauth_authorization_codes,
-             oauth_clients, sessions, users
+    TRUNCATE messages, conversations, embeddings, oauth_audit_log, oauth_tokens,
+             oauth_authorization_codes, oauth_clients, sessions, users
              RESTART IDENTITY CASCADE
   `);
 }

@@ -43,6 +43,13 @@
       "when": 1776297600000,
       "tag": "0005_sessions_last_seen_at",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776384000000,
+      "tag": "0006_conversations_messages",
+      "breakpoints": true
     }
   ]
 }

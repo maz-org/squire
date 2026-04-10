@@ -1,0 +1,336 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { sql } from 'drizzle-orm';
+import { generateSignedCookie } from 'hono/cookie';
+
+import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
+
+const { mockAsk } = vi.hoisted(() => ({
+  mockAsk: vi.fn(),
+}));
+
+vi.mock('../src/service.ts', () => ({
+  initialize: vi.fn(),
+  isReady: vi.fn(() => true),
+  ask: mockAsk,
+}));
+
+vi.mock('../src/tools.ts', () => ({
+  searchRules: vi.fn(),
+  searchCards: vi.fn(),
+  listCardTypes: vi.fn(),
+  listCards: vi.fn(),
+  getCard: vi.fn(),
+}));
+
+process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
+
+import { app } from '../src/server.ts';
+import { shutdownServerPool, getDb } from '../src/db.ts';
+import { createCsrfToken } from '../src/auth/csrf.ts';
+import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
+import * as SessionRepository from '../src/db/repositories/session-repository.ts';
+import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
+import { users } from '../src/db/schema/core.ts';
+import { conversations, messages } from '../src/db/schema/conversations.ts';
+
+interface AuthContext {
+  cookie: string;
+  sessionId: string;
+  userId: string;
+}
+
+async function createAuthContext(overrides?: {
+  email?: string;
+  googleSub?: string;
+  name?: string | null;
+}): Promise<AuthContext> {
+  const { db } = getDb('server');
+  const email = overrides?.email ?? 'alice@example.com';
+  const googleSub = overrides?.googleSub ?? 'google-sub-alice';
+  const name = overrides?.name ?? 'Alice';
+
+  const [user] = await db
+    .insert(users)
+    .values({
+      email,
+      googleSub,
+      name,
+    })
+    .returning();
+
+  const { sessionId } = await SessionRepository.create(db, { userId: user.id });
+  const signedCookie = await generateSignedCookie(
+    SESSION_COOKIE_NAME,
+    sessionId,
+    getSessionSecret(),
+    {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+      maxAge: SESSION_LIFETIME_MS / 1000,
+    },
+  );
+
+  return {
+    cookie: signedCookie.split(';')[0],
+    sessionId,
+    userId: user.id,
+  };
+}
+
+async function requestWithAuth(
+  auth: AuthContext,
+  url: string,
+  init?: RequestInit & { csrf?: boolean },
+): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  headers.set('Cookie', auth.cookie);
+  if (init?.csrf) {
+    headers.set('x-csrf-token', createCsrfToken(auth.sessionId));
+  }
+
+  return app.request(url, {
+    ...init,
+    headers,
+  });
+}
+
+function formBody(data: Record<string, string>): string {
+  return new URLSearchParams(data).toString();
+}
+
+function requireLocation(response: Response): string {
+  const location = response.headers.get('location');
+  expect(location).toBeTruthy();
+  return location!;
+}
+
+beforeAll(async () => {
+  await setupTestDb();
+});
+
+beforeEach(async () => {
+  await resetTestDb();
+  vi.clearAllMocks();
+});
+
+afterAll(async () => {
+  await teardownTestDb();
+  await shutdownServerPool();
+});
+
+describe('conversation web backend', () => {
+  it('creates a conversation on first message and reload restores ordered history', async () => {
+    mockAsk.mockResolvedValueOnce('Loot tokens in your hex are picked up.');
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'How does looting work?',
+        idempotencyKey: 'idem-1',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(createRes.status).toBe(302);
+    const location = requireLocation(createRes);
+    expect(location).toMatch(/^\/chat\/[0-9a-f-]+$/);
+
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000${location}`);
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    expect(page).toContain('How does looting work?');
+    expect(page).toContain('Loot tokens in your hex are picked up.');
+
+    const { db } = getDb('server');
+    const messages = await db.execute(sql`
+      select role, content
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(messages.rows).toEqual([
+      { role: 'user', content: 'How does looting work?' },
+      { role: 'assistant', content: 'Loot tokens in your hex are picked up.' },
+    ]);
+  });
+
+  it("returns 404 when one user requests another user's conversation URL", async () => {
+    mockAsk.mockResolvedValueOnce('First answer.');
+    const owner = await createAuthContext();
+    const intruder = await createAuthContext({
+      email: 'mallory@example.com',
+      googleSub: 'google-sub-mallory',
+      name: 'Mallory',
+    });
+
+    const createRes = await requestWithAuth(owner, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Owner-only question',
+        idempotencyKey: 'idem-owner',
+      }),
+      redirect: 'manual',
+    });
+
+    const location = requireLocation(createRes);
+    const intruderRes = await requestWithAuth(intruder, `http://localhost:3000${location}`);
+    expect(intruderRes.status).toBe(404);
+  });
+
+  it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
+    mockAsk.mockRejectedValueOnce(new Error('upstream exploded'));
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Will this fail?',
+        idempotencyKey: 'idem-failure',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(createRes.status).toBe(302);
+    const location = requireLocation(createRes);
+
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000${location}`);
+    const page = await pageRes.text();
+    expect(page).toContain('Will this fail?');
+    expect(page).toContain('I hit an error and couldn&#39;t answer that. Please try again.');
+
+    const { db } = getDb('server');
+    const messages = await db.execute(sql`
+      select role, content
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(messages.rows).toEqual([
+      { role: 'user', content: 'Will this fail?' },
+      {
+        role: 'assistant',
+        content: "I hit an error and couldn't answer that. Please try again.",
+      },
+    ]);
+  });
+
+  it('forwards prior stored history unchanged on follow-up messages', async () => {
+    mockAsk
+      .mockResolvedValueOnce('First answer.')
+      .mockResolvedValueOnce('Second answer.');
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'First question',
+        idempotencyKey: 'idem-history',
+      }),
+      redirect: 'manual',
+    });
+    const location = requireLocation(createRes);
+
+    const followUpRes = await requestWithAuth(auth, `http://localhost:3000${location}/messages`, {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Second question',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(followUpRes.status).toBe(302);
+    expect(mockAsk).toHaveBeenNthCalledWith(2, 'Second question', {
+      history: [
+        { role: 'user', content: 'First question' },
+        { role: 'assistant', content: 'First answer.' },
+      ],
+      userId: auth.userId,
+    });
+  });
+
+  it('reuses the same conversation for repeated first-send idempotency keys', async () => {
+    mockAsk.mockResolvedValue('One answer only.');
+    const auth = await createAuthContext();
+
+    const firstRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Start one conversation',
+        idempotencyKey: 'idem-repeat',
+      }),
+      redirect: 'manual',
+    });
+    const secondRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Start one conversation',
+        idempotencyKey: 'idem-repeat',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(requireLocation(firstRes)).toBe(requireLocation(secondRes));
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+
+    const { db } = getDb('server');
+    const conversationCount = await db.execute(sql`select count(*)::int as count from conversations`);
+    const messageCount = await db.execute(sql`select count(*)::int as count from messages`);
+    expect(conversationCount.rows[0].count).toBe(1);
+    expect(messageCount.rows[0].count).toBe(2);
+  });
+
+  it('caps forwarded history to the most recent 20 non-error messages', async () => {
+    mockAsk.mockResolvedValueOnce('Capped answer.');
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        userId: auth.userId,
+      })
+      .returning();
+
+    const baseTime = new Date('2026-04-10T10:00:00.000Z').getTime();
+    const seededMessages = Array.from({ length: 24 }, (_, index) => ({
+      conversationId: conversation.id,
+      role: index % 2 === 0 ? ('user' as const) : ('assistant' as const),
+      content: `Seed message ${index + 1}`,
+      isError: false,
+      createdAt: new Date(baseTime + index * 1000),
+    }));
+    await db.insert(messages).values(seededMessages);
+
+    const res = await requestWithAuth(auth, `http://localhost:3000/chat/${conversation.id}/messages`, {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({ question: 'Newest question' }),
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledWith('Newest question', {
+      history: Array.from({ length: 20 }, (_, index) => ({
+        role: (index + 5) % 2 === 1 ? 'user' : 'assistant',
+        content: `Seed message ${index + 5}`,
+      })),
+      userId: auth.userId,
+    });
+  });
+});

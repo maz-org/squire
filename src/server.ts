@@ -49,11 +49,17 @@ import { createCsrfToken, requireCsrf } from './auth/csrf.ts';
 import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
+  renderConversationPage,
   renderHomePage,
   renderLoginPage,
   renderNotInvitedPage,
 } from './web-ui/layout.ts';
 import { getAppCss, getSquireJs } from './web-ui/assets.ts';
+import {
+  appendMessage,
+  loadConversation,
+  startConversation,
+} from './chat/conversation-service.ts';
 
 export const app = new Hono();
 
@@ -464,6 +470,79 @@ app.use('/chat/*', requirePageSession());
 app.use('/chat', requirePageSession());
 app.use('/chat/*', requireCsrf());
 app.use('/chat', requireCsrf());
+
+function badChatRequest(c: Context, message: string) {
+  return c.json(jsonError(message, 400), 400);
+}
+
+async function readQuestionForm(c: Context): Promise<{ question: string; idempotencyKey?: string }> {
+  const form = await c.req.formData();
+  const questionValue = form.get('question');
+  const idempotencyValue = form.get('idempotencyKey');
+
+  return {
+    question: typeof questionValue === 'string' ? questionValue.trim() : '',
+    idempotencyKey:
+      typeof idempotencyValue === 'string' && idempotencyValue.trim().length > 0
+        ? idempotencyValue.trim()
+        : undefined,
+  };
+}
+
+app.get('/chat/:conversationId', async (c) => {
+  const session = c.get('session')!;
+  const loaded = await loadConversation({
+    conversationId: c.req.param('conversationId'),
+    userId: session.userId,
+  });
+  if (!loaded) return c.notFound();
+
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.html(
+    await renderConversationPage({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      conversationId: loaded.conversation.id,
+      messages: loaded.messages,
+    }),
+  );
+});
+
+app.post('/chat', async (c) => {
+  const session = c.get('session')!;
+  const { question, idempotencyKey } = await readQuestionForm(c);
+
+  if (!question) return badChatRequest(c, 'Question is required');
+  if (!idempotencyKey) return badChatRequest(c, 'Idempotency key is required');
+
+  const conversation = await startConversation({
+    userId: session.userId,
+    question,
+    idempotencyKey,
+  });
+
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.redirect(`/chat/${conversation.id}`, 302);
+});
+
+app.post('/chat/:conversationId/messages', async (c) => {
+  const session = c.get('session')!;
+  const { question } = await readQuestionForm(c);
+  if (!question) return badChatRequest(c, 'Question is required');
+
+  const conversation = await appendMessage({
+    conversationId: c.req.param('conversationId'),
+    userId: session.userId,
+    question,
+  });
+  if (!conversation) return c.notFound();
+
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.redirect(`/chat/${conversation.id}`, 302);
+});
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 

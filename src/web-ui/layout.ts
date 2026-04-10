@@ -22,7 +22,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
-import type { Session } from '../db/repositories/types.ts';
+import type { ConversationMessage, Session } from '../db/repositories/types.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -55,6 +55,8 @@ export interface LayoutShellOptions {
    * document head and inherited by HTMX requests via `hx-headers`.
    */
   csrfToken?: string;
+  chatFormAction?: string;
+  chatFormHiddenFields?: Array<{ name: string; value: string }>;
 }
 
 interface DocumentOptions {
@@ -127,6 +129,8 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // Session present = logged in = full chrome. Absent = brand only.
   const authenticated = options.session !== undefined;
   const csrfToken = options.csrfToken;
+  const chatFormAction = options.chatFormAction ?? '/chat';
+  const chatFormHiddenFields = options.chatFormHiddenFields ?? [];
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
@@ -235,16 +239,11 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   <span class="squire-chip">Element infusion</span>
                   <span class="squire-chip">Negative scenario effects</span>
                 </nav>
-                <!--
-              SQR-65 ships the structural form only. The action target points
-              at /api/ask, which is the eventual endpoint, but the API requires
-              Bearer auth and a JSON body — a raw HTML form POST will 401
-              today. SQR-6 wires real submission (HTMX + SSE streaming + the
-              recent-questions chip row), at which point this form gets
-              hx-post, hx-swap, and friends layered on. Do not try to make
-              the form work before SQR-6 lands — it is a layout slot.
-            -->
-                <form class="squire-input-dock" method="post" action="/api/ask">
+                <form class="squire-input-dock" method="post" action="${chatFormAction}">
+                  ${chatFormHiddenFields.map(
+                    (field) =>
+                      html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
+                  )}
                   <input
                     id="squire-input"
                     name="question"
@@ -366,5 +365,47 @@ export async function renderHomePage(
   session?: Session,
   csrfToken?: string,
 ): Promise<HtmlEscapedString> {
-  return layoutShell({ session, csrfToken });
+  return layoutShell({
+    session,
+    csrfToken,
+    chatFormAction: '/chat',
+    chatFormHiddenFields: [{ name: 'idempotencyKey', value: '' }],
+  });
+}
+
+export async function renderConversationPage(options: {
+  session: Session;
+  csrfToken: string;
+  conversationId: string;
+  messages: ConversationMessage[];
+}): Promise<HtmlEscapedString> {
+  const transcript =
+    options.messages.length === 0
+      ? html`<section class="squire-empty" aria-label="Conversation">
+          <h1 class="squire-question">Conversation is empty.</h1>
+        </section>`
+      : html`<section
+          class="squire-transcript"
+          aria-label="Conversation transcript"
+          data-conversation-id="${options.conversationId}"
+        >
+          ${options.messages.map((message) =>
+            message.role === 'user'
+              ? html`<article class="squire-turn squire-question">
+                  <p>${message.content}</p>
+                </article>`
+              : html`<article
+                  class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
+                >
+                  <p>${message.content}</p>
+                </article>`,
+          )}
+        </section>`;
+
+  return layoutShell({
+    session: options.session,
+    csrfToken: options.csrfToken,
+    mainContent: transcript as HtmlEscapedString,
+    chatFormAction: `/chat/${options.conversationId}/messages`,
+  });
 }
