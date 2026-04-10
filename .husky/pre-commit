@@ -12,6 +12,4 @@ then
   npm run agent:check
 fi
 
-npm run typecheck
 npx lint-staged
-npm test

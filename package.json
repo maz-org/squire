@@ -65,6 +65,7 @@
     "dotenv": "^17.4.0",
     "drizzle-orm": "1.0.0-beta.21",
     "google-auth-library": "^10.6.2",
+    "htmx.org": "^2.0.7",
     "hono": "^4.12.12",
     "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",

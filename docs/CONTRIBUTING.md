@@ -168,8 +168,9 @@ npm install
 ```
 
 This also sets up [Husky](https://typicode.github.io/husky/) git hooks via the
-`prepare` script. The pre-commit hook runs typechecking, linting, and tests
-automatically.
+`prepare` script. The pre-commit hook is intentionally lightweight and runs
+staged-file checks only; the full repo gate runs at ship time via
+`npm run check`.
 
 ### Configure environment
 
@@ -346,15 +347,17 @@ different checkout. If hook setup ever drifts in a worktree, repair it with
 
 The pre-commit hook runs automatically on every commit:
 
-1. `npm run typecheck` — type checking
+1. Conditional `npm run agent:check` when staged files touch the shared
+   agent/config surface (`CLAUDE.md`, `AGENTS.md`, `docs/agent/*`, `.mcp.json`,
+   or the agent parity/export scripts)
 2. `lint-staged` — ESLint + Prettier on staged `.ts`/`.js` files, stylelint +
    Prettier on staged `.css` files, Prettier on staged `.json`/`.yml`/`.yaml`
    files, markdownlint on staged `.md` files
-3. `npm test` — full test suite
 
 If any step fails, the commit is blocked. Fix the issue and try again.
 
-The pre-push hook runs `npm run check`, which is the local equivalent of the
+There is no pre-push hook. Before `/ship` or before a manual push that you
+expect to survive CI, run `npm run check`, which is the local equivalent of the
 main CI gate:
 
 - `npm run typecheck`
@@ -372,9 +375,15 @@ main CI gate:
    git checkout -b feat/my-change
    ```
 
-2. Make your changes and commit (pre-commit hooks will validate).
+2. Make your changes and commit (the pre-commit hook will run staged-file checks).
 
-3. Push and open a pull request:
+3. Run the full local gate before pushing:
+
+   ```bash
+   npm run check
+   ```
+
+4. Push and open a pull request:
 
    ```bash
    git push -u origin feat/my-change
@@ -385,9 +394,9 @@ main CI gate:
    `Closes SQR-XX` line for the Linear issue you are shipping. That is how
    Linear links the PR back to the issue.
 
-4. Wait for CI and [CodeRabbit](https://coderabbit.ai) review.
+5. Wait for CI and [CodeRabbit](https://coderabbit.ai) review.
 
-5. Address any review comments, then merge via squash.
+6. Address any review comments, then merge via squash.
 
 ### PR guidelines
 

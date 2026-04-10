@@ -7,7 +7,7 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..');
 const hookDir = path.join(repoRoot, '.husky');
 const gitMetadataPath = path.join(repoRoot, '.git');
-const hookFiles = ['post-checkout', 'pre-commit', 'pre-push'];
+const hookFiles = ['post-checkout', 'pre-commit'];
 
 if (!existsSync(gitMetadataPath) || !existsSync(hookDir)) {
   console.warn(`Skipping git hook setup outside a full git worktree: ${repoRoot}`);

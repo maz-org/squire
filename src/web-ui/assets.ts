@@ -2,20 +2,21 @@
  * Squire web UI — on-demand asset pipeline (SQR-71, ADR 0011).
  *
  * Compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node`
- * and reads `src/web-ui/squire.js` from disk. Exposes both content
- * getters (`getAppCss` / `getSquireJs`, returning `{content, hash}`)
- * and URL helpers (`getAppCssUrl` / `getSquireJsUrl`) that follow
+ * and reads `src/web-ui/squire.js` plus vendored `htmx.org` from disk.
+ * Exposes both content getters (`getAppCss` / `getSquireJs` /
+ * `getHtmxJs`, returning `{content, hash}`) and URL helpers
+ * (`getAppCssUrl` / `getSquireJsUrl` / `getHtmxJsUrl`) that follow
  * Rails Propshaft semantics:
  *
  *   - **dev**: bare paths, `Cache-Control: no-cache`, mtime-keyed
  *     cache so edits to the source files show up on the next
- *     request without a rebuild. URL helpers return `/app.css`
- *     and `/squire.js`.
+ *     request without a rebuild. URL helpers return `/app.css`,
+ *     `/squire.js`, and `/htmx.js`.
  *   - **prod**: content-hashed paths, `Cache-Control: public,
  *     max-age=31536000, immutable`, compile-once-per-process. URL
- *     helpers return `/app.<hash>.css` and `/squire.<hash>.js` so
- *     Cloudflare and browsers can cache forever and invalidation
- *     is automatic on content change.
+ *     helpers return `/app.<hash>.css`, `/squire.<hash>.js`, and
+ *     `/htmx.<hash>.js` so Cloudflare and browsers can cache forever
+ *     and invalidation is automatic on content change.
  *
  * Promise memoization on the compile/read paths collapses two
  * concurrent cold-start callers into a single compile instead of
@@ -35,6 +36,15 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB_UI_DIR = HERE;
 const STYLES_PATH = path.join(WEB_UI_DIR, 'styles.css');
 const SQUIRE_JS_PATH = path.join(WEB_UI_DIR, 'squire.js');
+const HTMX_JS_PATH = path.join(
+  WEB_UI_DIR,
+  '..',
+  '..',
+  'node_modules',
+  'htmx.org',
+  'dist',
+  'htmx.js',
+);
 
 function isProd(): boolean {
   return process.env.NODE_ENV === 'production';
@@ -62,6 +72,7 @@ export interface AssetEntry {
 // compile. Reset by _resetAssetCachesForTests.
 let cssCompileCount = 0;
 let jsReadCount = 0;
+let htmxReadCount = 0;
 
 // ─── CSS pipeline ────────────────────────────────────────────────────────────
 
@@ -181,6 +192,8 @@ interface JsCache {
 
 let jsCache: JsCache | null = null;
 let jsInFlight: Promise<AssetEntry> | null = null;
+let htmxCache: JsCache | null = null;
+let htmxInFlight: Promise<AssetEntry> | null = null;
 
 async function computeJsCacheKey(): Promise<string> {
   if (isProd()) return 'static';
@@ -235,6 +248,48 @@ export async function getSquireJsUrl(): Promise<string> {
   return `/squire.${hash}.js`;
 }
 
+async function computeHtmxCacheKey(): Promise<string> {
+  if (isProd()) return 'static';
+  try {
+    const s = await stat(HTMX_JS_PATH);
+    return `dev-${s.mtimeMs}`;
+  } catch {
+    return 'dev-missing';
+  }
+}
+
+async function readHtmxEntry(): Promise<AssetEntry> {
+  htmxReadCount += 1;
+  const content = await readFile(HTMX_JS_PATH, 'utf8');
+  return { content, hash: hashContent(content) };
+}
+
+export async function getHtmxJs(): Promise<AssetEntry> {
+  const key = await computeHtmxCacheKey();
+  if (htmxCache && htmxCache.key === key) return htmxCache.entry;
+  if (htmxInFlight) {
+    const entry = await htmxInFlight;
+    if (htmxCache && htmxCache.key === key) return entry;
+  }
+
+  htmxInFlight = (async () => {
+    try {
+      const entry = await readHtmxEntry();
+      htmxCache = { key, entry };
+      return entry;
+    } finally {
+      htmxInFlight = null;
+    }
+  })();
+  return htmxInFlight;
+}
+
+export async function getHtmxJsUrl(): Promise<string> {
+  if (!isProd()) return '/htmx.js';
+  const { hash } = await getHtmxJs();
+  return `/htmx.${hash}.js`;
+}
+
 // ─── Test-only hooks ─────────────────────────────────────────────────────────
 //
 // Trade-off (accepted, SQR-71 eng review): these three exports are
@@ -263,6 +318,9 @@ export function _resetAssetCachesForTests(): void {
   jsCache = null;
   jsInFlight = null;
   jsReadCount = 0;
+  htmxCache = null;
+  htmxInFlight = null;
+  htmxReadCount = 0;
 }
 
 /** Test-only accessor for the CSS compile counter. */
@@ -273,4 +331,9 @@ export function _getCssCompileCountForTests(): number {
 /** Test-only accessor for the JS read counter. */
 export function _getJsReadCountForTests(): number {
   return jsReadCount;
+}
+
+/** Test-only accessor for the HTMX read counter. */
+export function _getHtmxReadCountForTests(): number {
+  return htmxReadCount;
 }
