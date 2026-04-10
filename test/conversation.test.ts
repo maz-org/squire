@@ -222,9 +222,7 @@ describe('conversation web backend', () => {
   });
 
   it('forwards prior stored history unchanged on follow-up messages', async () => {
-    mockAsk
-      .mockResolvedValueOnce('First answer.')
-      .mockResolvedValueOnce('Second answer.');
+    mockAsk.mockResolvedValueOnce('First answer.').mockResolvedValueOnce('Second answer.');
     const auth = await createAuthContext();
 
     const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
@@ -288,7 +286,9 @@ describe('conversation web backend', () => {
     expect(mockAsk).toHaveBeenCalledTimes(1);
 
     const { db } = getDb('server');
-    const conversationCount = await db.execute(sql`select count(*)::int as count from conversations`);
+    const conversationCount = await db.execute(
+      sql`select count(*)::int as count from conversations`,
+    );
     const messageCount = await db.execute(sql`select count(*)::int as count from messages`);
     expect(conversationCount.rows[0].count).toBe(1);
     expect(messageCount.rows[0].count).toBe(2);
@@ -375,13 +375,17 @@ describe('conversation web backend', () => {
     }));
     await db.insert(messages).values(seededMessages);
 
-    const res = await requestWithAuth(auth, `http://localhost:3000/chat/${conversation.id}/messages`, {
-      method: 'POST',
-      csrf: true,
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: formBody({ question: 'Newest question' }),
-      redirect: 'manual',
-    });
+    const res = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${conversation.id}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: formBody({ question: 'Newest question' }),
+        redirect: 'manual',
+      },
+    );
 
     expect(res.status).toBe(302);
     expect(mockAsk).toHaveBeenCalledWith('Newest question', {

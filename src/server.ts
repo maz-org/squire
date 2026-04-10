@@ -56,11 +56,7 @@ import {
   renderNotInvitedPage,
 } from './web-ui/layout.ts';
 import { getAppCss, getSquireJs } from './web-ui/assets.ts';
-import {
-  appendMessage,
-  loadConversation,
-  startConversation,
-} from './chat/conversation-service.ts';
+import { appendMessage, loadConversation, startConversation } from './chat/conversation-service.ts';
 
 export const app = new Hono();
 
@@ -477,7 +473,9 @@ function badChatRequest(c: Context, message: string) {
   return c.json(jsonError(message, 400), 400);
 }
 
-async function readQuestionForm(c: Context): Promise<{ question: string; idempotencyKey?: string }> {
+async function readQuestionForm(
+  c: Context,
+): Promise<{ question: string; idempotencyKey?: string }> {
   const form = await c.req.formData();
   const questionValue = form.get('question');
   const idempotencyValue = form.get('idempotencyKey');

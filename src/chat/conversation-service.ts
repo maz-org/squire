@@ -6,13 +6,20 @@ import type { Conversation, ConversationMessage } from '../db/repositories/types
 
 const HISTORY_LIMIT = 20;
 
-export const GENERIC_FAILURE_MESSAGE =
-  "I hit an error and couldn't answer that. Please try again.";
+export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that. Please try again.";
 
 function isRetryableTransportError(err: unknown): boolean {
-  const error = err as { code?: string; cause?: { code?: string }; name?: string; message?: string };
+  const error = err as {
+    code?: string;
+    cause?: { code?: string };
+    name?: string;
+    message?: string;
+  };
   const code = error.code ?? error.cause?.code;
-  if (code && ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED'].includes(code)) {
+  if (
+    code &&
+    ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED'].includes(code)
+  ) {
     return true;
   }
 
@@ -54,7 +61,9 @@ async function persistAssistantOutcome(input: {
     includeErrors: false,
     limit: HISTORY_LIMIT + 1,
   });
-  const history = toHistory(priorMessages.filter((message) => message.id !== input.currentUserMessageId));
+  const history = toHistory(
+    priorMessages.filter((message) => message.id !== input.currentUserMessageId),
+  );
 
   try {
     const answer = await generateAssistantReply(input.question, history, input.userId);
@@ -65,7 +74,11 @@ async function persistAssistantOutcome(input: {
         content: answer,
         responseToMessageId: input.currentUserMessageId,
       });
-      await ConversationRepository.touchLastMessageAt(tx, input.conversationId, assistantMessage.createdAt);
+      await ConversationRepository.touchLastMessageAt(
+        tx,
+        input.conversationId,
+        assistantMessage.createdAt,
+      );
     });
   } catch (err) {
     console.error('[conversation] ask failed:', err instanceof Error ? err.message : err);
@@ -77,17 +90,25 @@ async function persistAssistantOutcome(input: {
         isError: true,
         responseToMessageId: input.currentUserMessageId,
       });
-      await ConversationRepository.touchLastMessageAt(tx, input.conversationId, failureMessage.createdAt);
+      await ConversationRepository.touchLastMessageAt(
+        tx,
+        input.conversationId,
+        failureMessage.createdAt,
+      );
     });
   }
 }
 
-async function findRepairableInitialUserMessage(conversationId: string): Promise<ConversationMessage | null> {
+async function findRepairableInitialUserMessage(
+  conversationId: string,
+): Promise<ConversationMessage | null> {
   const storedMessages = await MessageRepository.listByConversationId(conversationId, {
     includeErrors: true,
   });
 
-  return storedMessages.length === 1 && storedMessages[0]?.role === 'user' ? storedMessages[0] : null;
+  return storedMessages.length === 1 && storedMessages[0]?.role === 'user'
+    ? storedMessages[0]
+    : null;
 }
 
 export async function startConversation(input: {
@@ -102,7 +123,11 @@ export async function startConversation(input: {
     });
 
     if (!existingOrCreated.created) {
-      return { conversation: existingOrCreated.conversation, currentUserMessageId: null, created: false };
+      return {
+        conversation: existingOrCreated.conversation,
+        currentUserMessageId: null,
+        created: false,
+      };
     }
 
     const userMessage = await MessageRepository.create(tx, {
@@ -110,7 +135,11 @@ export async function startConversation(input: {
       role: 'user',
       content: input.question,
     });
-    await ConversationRepository.touchLastMessageAt(tx, existingOrCreated.conversation.id, userMessage.createdAt);
+    await ConversationRepository.touchLastMessageAt(
+      tx,
+      existingOrCreated.conversation.id,
+      userMessage.createdAt,
+    );
     return {
       conversation: existingOrCreated.conversation,
       currentUserMessageId: userMessage.id,
@@ -145,7 +174,10 @@ export async function appendMessage(input: {
   userId: string;
   question: string;
 }): Promise<Conversation | null> {
-  const conversation = await ConversationRepository.findOwnedById(input.userId, input.conversationId);
+  const conversation = await ConversationRepository.findOwnedById(
+    input.userId,
+    input.conversationId,
+  );
   if (!conversation) return null;
 
   const result = await getDb('server').db.transaction(async (tx) => {
@@ -154,7 +186,11 @@ export async function appendMessage(input: {
       role: 'user',
       content: input.question,
     });
-    await ConversationRepository.touchLastMessageAt(tx, input.conversationId, userMessage.createdAt);
+    await ConversationRepository.touchLastMessageAt(
+      tx,
+      input.conversationId,
+      userMessage.createdAt,
+    );
     return userMessage;
   });
 
@@ -172,7 +208,10 @@ export async function loadConversation(input: {
   conversationId: string;
   userId: string;
 }): Promise<{ conversation: Conversation; messages: ConversationMessage[] } | null> {
-  const conversation = await ConversationRepository.findOwnedById(input.userId, input.conversationId);
+  const conversation = await ConversationRepository.findOwnedById(
+    input.userId,
+    input.conversationId,
+  );
   if (!conversation) return null;
 
   const messages = await MessageRepository.listByConversationId(conversation.id, {

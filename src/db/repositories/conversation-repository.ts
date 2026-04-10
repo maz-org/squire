@@ -17,7 +17,10 @@ function toDomain(row: ConversationRow): Conversation {
   };
 }
 
-export async function findOwnedById(userId: string, conversationId: string): Promise<Conversation | null> {
+export async function findOwnedById(
+  userId: string,
+  conversationId: string,
+): Promise<Conversation | null> {
   const { db } = getDb('server');
   const rows = await db
     .select()
@@ -27,7 +30,10 @@ export async function findOwnedById(userId: string, conversationId: string): Pro
   return rows[0] ? toDomain(rows[0]) : null;
 }
 
-export async function create(handle: DbOrTx, input: CreateConversationInput): Promise<Conversation> {
+export async function create(
+  handle: DbOrTx,
+  input: CreateConversationInput,
+): Promise<Conversation> {
   const [row] = await handle
     .insert(conversations)
     .values({
@@ -66,10 +72,7 @@ export async function getOrCreateByIdempotencyKey(
     .select()
     .from(conversations)
     .where(
-      and(
-        eq(conversations.userId, input.userId),
-        eq(conversations.creationIdempotencyKey, key),
-      ),
+      and(eq(conversations.userId, input.userId), eq(conversations.creationIdempotencyKey, key)),
     )
     .limit(1);
 

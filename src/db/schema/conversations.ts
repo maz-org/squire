@@ -42,12 +42,9 @@ export const messages = pgTable(
     role: text('role').notNull(),
     content: text('content').notNull(),
     isError: boolean('is_error').notNull().default(false),
-    responseToMessageId: uuid('response_to_message_id').references(
-      (): AnyPgColumn => messages.id,
-      {
-        onDelete: 'cascade',
-      },
-    ),
+    responseToMessageId: uuid('response_to_message_id').references((): AnyPgColumn => messages.id, {
+      onDelete: 'cascade',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
