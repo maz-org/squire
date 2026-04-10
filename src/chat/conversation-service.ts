@@ -1,3 +1,5 @@
+import { sql } from 'drizzle-orm';
+
 import { ask, type HistoryMessage } from '../service.ts';
 import { getDb } from '../db.ts';
 import * as ConversationRepository from '../db/repositories/conversation-repository.ts';
@@ -89,7 +91,14 @@ async function persistAssistantOutcome(input: {
     priorMessages.filter((message) => message.id !== input.currentUserMessageId),
   );
 
-  try {
+  return getDb('server').db.transaction(async (tx) => {
+    await tx.execute(sql`
+      select pg_advisory_xact_lock(
+        hashtext(${input.conversationId}),
+        hashtext(${input.currentUserMessageId})
+      )
+    `);
+
     const existingAssistantMessage = await MessageRepository.findAssistantResponse({
       conversationId: input.conversationId,
       responseToMessageId: input.currentUserMessageId,
@@ -98,13 +107,13 @@ async function persistAssistantOutcome(input: {
       return existingAssistantMessage;
     }
 
-    const answer = await generateAssistantReply(
-      input.question,
-      history,
-      input.userId,
-      input.onEvent,
-    );
-    return getDb('server').db.transaction(async (tx) => {
+    try {
+      const answer = await generateAssistantReply(
+        input.question,
+        history,
+        input.userId,
+        input.onEvent,
+      );
       const assistantMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,
         role: 'assistant',
@@ -117,10 +126,8 @@ async function persistAssistantOutcome(input: {
         assistantMessage.createdAt,
       );
       return assistantMessage;
-    });
-  } catch (err) {
-    console.error('[conversation] ask failed:', err instanceof Error ? err.message : err);
-    return getDb('server').db.transaction(async (tx) => {
+    } catch (err) {
+      console.error('[conversation] ask failed:', err instanceof Error ? err.message : err);
       const failureMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,
         role: 'assistant',
@@ -134,8 +141,8 @@ async function persistAssistantOutcome(input: {
         failureMessage.createdAt,
       );
       return failureMessage;
-    });
-  }
+    }
+  });
 }
 
 async function findRepairableInitialUserMessage(
@@ -302,7 +309,9 @@ export async function loadConversationMessage(input: {
   if (!conversation) return null;
 
   const message = await MessageRepository.findById(input.messageId);
-  if (!message || message.conversationId !== conversation.id) return null;
+  if (!message || message.conversationId !== conversation.id || message.role !== 'user') {
+    return null;
+  }
 
   return { conversation, message };
 }

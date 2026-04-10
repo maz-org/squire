@@ -150,6 +150,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTestDb();
+  mockAsk.mockReset();
   vi.clearAllMocks();
 });
 
@@ -333,13 +334,13 @@ describe('conversation web backend', () => {
     expect(messageCount.rows[0].count).toBe(2);
   });
 
-  it('repairs an interrupted first send on same-key retry without duplicating assistant turns', async () => {
+  it('serializes same-key first-send retries behind the in-flight assistant generation', async () => {
     let resolveFirstAsk!: (value: string) => void;
     const firstAsk = new Promise<string>((resolve) => {
       resolveFirstAsk = resolve;
     });
 
-    mockAsk.mockImplementationOnce(() => firstAsk).mockResolvedValueOnce('Recovered answer.');
+    mockAsk.mockImplementationOnce(() => firstAsk);
     const auth = await createAuthContext();
 
     const firstResPromise = requestWithAuth(auth, 'http://localhost:3000/chat', {
@@ -359,7 +360,7 @@ describe('conversation web backend', () => {
       expect(count.rows[0].count).toBe(1);
     });
 
-    const retryRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+    const retryResPromise = requestWithAuth(auth, 'http://localhost:3000/chat', {
       method: 'POST',
       csrf: true,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -370,6 +371,12 @@ describe('conversation web backend', () => {
       redirect: 'manual',
     });
 
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+
+    resolveFirstAsk('Recovered answer.');
+
+    const retryRes = await retryResPromise;
     expect(retryRes.status).toBe(302);
     const location = requireLocation(retryRes);
 
@@ -377,7 +384,6 @@ describe('conversation web backend', () => {
     const page = await pageRes.text();
     expect(page).toContain('Recovered answer.');
 
-    resolveFirstAsk('Late original answer.');
     await firstResPromise;
 
     const storedMessages = await db.execute(sql`
@@ -389,7 +395,7 @@ describe('conversation web backend', () => {
       { role: 'user', content: 'Start one conversation' },
       { role: 'assistant', content: 'Recovered answer.' },
     ]);
-    expect(mockAsk).toHaveBeenCalledTimes(2);
+    expect(mockAsk).toHaveBeenCalledTimes(1);
   });
 
   it('reuses an already-persisted assistant response without calling ask again', async () => {
@@ -726,6 +732,51 @@ describe('conversation web backend', () => {
       order by created_at asc, id asc
     `);
     expect(storedMessages.rows).toEqual([{ role: 'user', content: 'Will this wait?' }]);
+  });
+
+  it('rejects SSE stream requests that target an assistant message id', async () => {
+    mockAsk.mockResolvedValueOnce('Assistant answer.');
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Original question',
+        idempotencyKey: 'idem-assistant-stream-reject',
+      }),
+      redirect: 'manual',
+    });
+    const location = requireLocation(createRes);
+
+    const { db } = getDb('server');
+    const storedBefore = await db.execute(sql`
+      select id, role, content
+      from messages
+      order by created_at asc, id asc
+    `);
+    const assistantMessageId = storedBefore.rows.find((row) => row.role === 'assistant')?.id;
+    expect(assistantMessageId).toBeTruthy();
+
+    mockAsk.mockClear();
+
+    const streamRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000${location}/messages/${assistantMessageId}/stream`,
+    );
+    expect(streamRes.status).toBe(404);
+    expect(mockAsk).not.toHaveBeenCalled();
+
+    const storedAfter = await db.execute(sql`
+      select role, content
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedAfter.rows).toEqual([
+      { role: 'user', content: 'Original question' },
+      { role: 'assistant', content: 'Assistant answer.' },
+    ]);
   });
 
   it('does not retry a streamed ask after a retryable transport failure', async () => {
