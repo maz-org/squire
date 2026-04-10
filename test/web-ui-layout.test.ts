@@ -437,6 +437,53 @@ describe('renderPendingTurnShell', () => {
   });
 });
 
+describe('renderConversationTranscriptWithPendingTurn', () => {
+  it('renders prior turns and appends a pending answer shell for the latest turn', () => {
+    const body = String(
+      actualLayout.renderConversationTranscriptWithPendingTurn({
+        conversationId: 'conv-123',
+        streamUrl: '/chat/conv-123/messages/msg-456/stream',
+        messages: [
+          {
+            id: 'm1',
+            conversationId: 'conv-123',
+            role: 'user',
+            content: 'First question',
+            isError: false,
+            responseToMessageId: null,
+            createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          },
+          {
+            id: 'm2',
+            conversationId: 'conv-123',
+            role: 'assistant',
+            content: 'First answer.',
+            isError: false,
+            responseToMessageId: 'm1',
+            createdAt: new Date('2026-01-01T00:00:01.000Z'),
+          },
+          {
+            id: 'm3',
+            conversationId: 'conv-123',
+            role: 'user',
+            content: 'Second question',
+            isError: false,
+            responseToMessageId: null,
+            createdAt: new Date('2026-01-01T00:00:02.000Z'),
+          },
+        ],
+      }),
+    );
+
+    expect(body).toContain('First question');
+    expect(body).toContain('First answer.');
+    expect(body).toContain('Second question');
+    expect(body).toContain('data-conversation-id="conv-123"');
+    expect(body).toContain('data-stream-url="/chat/conv-123/messages/msg-456/stream"');
+    expect(body).toMatch(/class="squire-turn squire-answer squire-answer--pending"/);
+  });
+});
+
 describe('GET / — signature components (SQR-66)', () => {
   // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
   // squire-answer sample) with the first-run empty state. The hero question

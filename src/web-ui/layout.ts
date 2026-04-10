@@ -438,6 +438,41 @@ export function renderConversationTranscript(
   </section>` as HtmlEscapedString;
 }
 
+export function renderConversationTranscriptWithPendingTurn(options: {
+  conversationId: string;
+  messages: ConversationMessage[];
+  streamUrl: string;
+}): HtmlEscapedString {
+  return html`<section
+    class="squire-transcript squire-transcript--pending"
+    aria-label="Conversation transcript"
+    data-conversation-id="${options.conversationId}"
+    data-stream-url="${options.streamUrl}"
+  >
+    ${options.messages.map((message) =>
+      message.role === 'user'
+        ? html`<article class="squire-turn squire-question">
+            <p>${message.content}</p>
+          </article>`
+        : html`<article
+            class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
+          >
+            <p>${message.content}</p>
+          </article>`,
+    )}
+    <article class="squire-turn squire-answer squire-answer--pending" data-stream-state="pending">
+      <div class="squire-answer__content"></div>
+      <div class="squire-answer__tools" aria-live="off"></div>
+      <div class="squire-answer__skeleton" aria-hidden="true">
+        <div class="squire-answer__skeleton-dropcap"></div>
+        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>
+        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
+        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
+      </div>
+    </article>
+  </section>` as HtmlEscapedString;
+}
+
 export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEscapedString {
   return html`<section
     class="squire-transcript squire-transcript--pending"

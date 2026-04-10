@@ -531,6 +531,88 @@ describe('conversation web backend', () => {
     ]);
   });
 
+  it('returns the full transcript plus a pending answer shell for HTMX follow-ups', async () => {
+    mockAsk.mockResolvedValueOnce('First answer.');
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'First question',
+        idempotencyKey: 'idem-htmx-follow-up',
+      }),
+      redirect: 'manual',
+    });
+    const location = requireLocation(createRes);
+
+    const followUpRes = await requestWithAuth(auth, `http://localhost:3000${location}/messages`, {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Second question',
+      }),
+    });
+
+    expect(followUpRes.status).toBe(200);
+    const body = await followUpRes.text();
+    expect(body).toContain('First question');
+    expect(body).toContain('First answer.');
+    expect(body).toContain('Second question');
+    expect(body).toContain('squire-transcript squire-transcript--pending');
+    expect(body).toMatch(/data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/);
+  });
+
+  it('propagates failed tool results into the browser-facing SSE payload', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('tool_result', { name: 'search_rules', ok: false });
+      await options?.emit?.('done', {});
+      return 'Fallback answer.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Question with tool failure',
+        idempotencyKey: 'idem-tool-failure',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'tool-start',
+        data: { id: 'search_rules-1', label: 'SEARCH RULES' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: false },
+      },
+      {
+        event: 'done',
+        data: {},
+      },
+    ]);
+  });
+
   it('emits a bootstrap error before streaming and does not persist an assistant turn', async () => {
     const { ensureBootstrapStatus } = await import('../src/service.ts');
     vi.mocked(ensureBootstrapStatus).mockResolvedValueOnce({

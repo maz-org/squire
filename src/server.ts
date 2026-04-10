@@ -57,6 +57,7 @@ import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
   renderConversationTranscript,
+  renderConversationTranscriptWithPendingTurn,
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
@@ -626,9 +627,15 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
+    const loaded = await loadConversation({
+      conversationId: pending.conversation.id,
+      userId: session.userId,
+    });
+    if (!loaded) return c.notFound();
     return c.html(
-      renderPendingTurnShell({
-        question: pending.currentUserMessage.content,
+      renderConversationTranscriptWithPendingTurn({
+        conversationId: loaded.conversation.id,
+        messages: loaded.messages,
         streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
       }),
     );
@@ -719,14 +726,14 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         }
 
         if (event === 'tool_result') {
-          const payload = data as { name?: string };
+          const payload = data as { name?: string; ok?: boolean };
           const name = payload.name ?? 'tool';
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
               id: consumeToolId(name),
               label: buildToolLabel(name),
-              ok: true,
+              ok: payload.ok ?? true,
             }),
           });
           return;

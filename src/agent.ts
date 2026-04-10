@@ -247,7 +247,7 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
           }
 
           if (emit) {
-            await emit('tool_result', { name: block.name });
+            await emit('tool_result', { name: block.name, ok: !isError });
           }
 
           toolResults.push({

@@ -337,7 +337,7 @@ describe('runAgentLoop with emit (streaming)', () => {
       name: 'search_rules',
       input: { query: 'loot' },
     });
-    expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules' });
+    expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules', ok: true });
     expect(emit).toHaveBeenCalledWith('done', {});
   });
 });
