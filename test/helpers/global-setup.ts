@@ -11,13 +11,9 @@
  * (`embeddings`, oauth_*, etc.) are still reset per-test by `resetTestDb`.
  */
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
 
-import { resolveDatabaseUrl, schema } from '../../src/db.ts';
+import { createStandaloneDb, resolveDatabaseUrl } from '../../src/db.ts';
 import { seedCards } from '../../src/seed/seed-cards.ts';
-
-const { Pool } = pg;
 
 export default async function globalSetup(): Promise<void> {
   const url = resolveDatabaseUrl();
@@ -31,9 +27,9 @@ export default async function globalSetup(): Promise<void> {
         `Got "${url.replace(/:[^:@]*@/, ':***@')}". Set DATABASE_URL/TEST_DATABASE_URL to a *_test database.`,
     );
   }
-  const pool = new Pool({ connectionString: url, max: 2 });
+  const handle = createStandaloneDb({ url, max: 2 });
   try {
-    const db = drizzle(pool, { schema });
+    const { db } = handle;
     await db.execute(sql`
       TRUNCATE
         card_monster_stats, card_monster_abilities,
@@ -44,6 +40,6 @@ export default async function globalSetup(): Promise<void> {
     `);
     await seedCards(db);
   } finally {
-    await pool.end();
+    await handle.close();
   }
 }

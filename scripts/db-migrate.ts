@@ -5,11 +5,12 @@
  */
 import 'dotenv/config';
 
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 
 import {
+  createStandaloneDb,
   getDatabaseNameFromUrl,
   isManagedLocalDatabaseUrl,
   resolveDatabaseUrl,
@@ -27,14 +28,13 @@ async function main(): Promise<void> {
   // `DATABASE_URL=...` incantations for the test database.
   const url = resolveDatabaseUrl();
   await ensureManagedLocalDatabaseExists(url);
-  const pool = new Pool({ connectionString: url, max: 1 });
+  const handle = createStandaloneDb({ url, max: 1 });
   try {
-    const db = drizzle(pool);
-    await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
-    await migrate(db, { migrationsFolder: './src/db/migrations' });
+    await handle.db.execute(sql.raw('CREATE EXTENSION IF NOT EXISTS vector'));
+    await migrate(handle.db, { migrationsFolder: './src/db/migrations' });
     console.log(`✓ migrations applied to ${redact(url)}`);
   } finally {
-    await pool.end();
+    await handle.close();
   }
 }
 

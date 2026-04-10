@@ -12,17 +12,16 @@
  */
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
 
-import { resolveDatabaseUrl, schema } from '../../src/db.ts';
+import { createStandaloneDb, relations, resolveDatabaseUrl, schema } from '../../src/db.ts';
 
-const { Pool } = pg;
+let db: ReturnType<typeof drizzle<typeof schema, typeof relations>> | null = null;
+let closeDb: (() => Promise<void>) | null = null;
 
-let pool: pg.Pool | null = null;
-let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
-
-export async function setupTestDb(): Promise<ReturnType<typeof drizzle<typeof schema>>> {
-  if (!pool) {
+export async function setupTestDb(): Promise<
+  ReturnType<typeof drizzle<typeof schema, typeof relations>>
+> {
+  if (!db) {
     const url = resolveDatabaseUrl();
     // Fail-fast guard mirroring `test/helpers/global-setup.ts` — refuse to
     // hand back a pool pointing at anything that isn't a *_test database.
@@ -34,8 +33,9 @@ export async function setupTestDb(): Promise<ReturnType<typeof drizzle<typeof sc
           `Got "${url.replace(/:[^:@]*@/, ':***@')}". Set DATABASE_URL/TEST_DATABASE_URL to a *_test database.`,
       );
     }
-    pool = new Pool({ connectionString: url, max: 2 });
-    db = drizzle(pool, { schema });
+    const handle = createStandaloneDb({ url, max: 2 });
+    db = handle.db;
+    closeDb = handle.close;
   }
   return db!;
 }
@@ -54,9 +54,9 @@ export async function resetTestDb(): Promise<void> {
 }
 
 export async function teardownTestDb(): Promise<void> {
-  if (pool) {
-    await pool.end();
-    pool = null;
+  if (closeDb) {
+    await closeDb();
+    closeDb = null;
     db = null;
   }
 }
