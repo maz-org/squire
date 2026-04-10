@@ -371,8 +371,9 @@ describe('conversation web backend', () => {
       redirect: 'manual',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(mockAsk).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(mockAsk).toHaveBeenCalledTimes(1);
+    });
 
     resolveFirstAsk('Recovered answer.');
 
