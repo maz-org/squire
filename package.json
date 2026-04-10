@@ -4,6 +4,7 @@
   "description": "Frosthaven AI assistant with RAG over rulebooks",
   "type": "module",
   "scripts": {
+    "check": "npm run typecheck && npm run lint && npm run lint:css && npm run lint:md && npm run format:check && npm test",
     "index": "node src/index-docs.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/db-migrate.ts",
@@ -28,7 +29,8 @@
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads'",
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
-    "prepare": "husky && npm run agent:install-launchagent"
+    "hooks:install": "node scripts/setup-git-hooks.ts",
+    "prepare": "npm run hooks:install && npm run agent:install-launchagent"
   },
   "lint-staged": {
     "*.{ts,js}": [

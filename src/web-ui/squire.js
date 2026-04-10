@@ -19,3 +19,27 @@ document.addEventListener('click', function (e) {
     cite.classList.toggle('is-active');
   }
 });
+
+document.addEventListener('submit', function (e) {
+  var form = e.target;
+  if (!form || !form.matches || !form.matches('.squire-input-dock')) return;
+
+  var questionInput = form.querySelector('input[name="question"]');
+  var submitButton = form.querySelector('button[type="submit"]');
+  var idempotencyInput = form.querySelector('input[name="idempotencyKey"]');
+
+  if (idempotencyInput && !idempotencyInput.value) {
+    if (window.crypto && window.crypto.randomUUID) {
+      idempotencyInput.value = window.crypto.randomUUID();
+    } else {
+      idempotencyInput.value = String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+    }
+  }
+
+  form.dataset.submitting = 'true';
+  if (questionInput) questionInput.setAttribute('readonly', 'true');
+  if (submitButton) submitButton.setAttribute('disabled', 'true');
+  if (submitButton) {
+    submitButton.textContent = '...';
+  }
+});

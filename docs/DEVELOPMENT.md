@@ -36,7 +36,18 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-For local dev without Google OAuth, the app still starts and serves the homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed login still needs working OAuth credentials. Run `npm run seed:dev` to create a test user for authenticated code paths without doing the Google round-trip.
+`GOOGLE_REDIRECT_URI` is still the configured fallback callback. In local
+development, `/auth/google/start` and `/auth/google/callback` reuse the current
+`localhost` origin so linked worktrees can log in on their own ports. Google
+still requires exact redirect-URI matches, so add every localhost callback port
+you use, such as `http://localhost:4450/auth/google/callback`, to the OAuth
+client in Google Cloud Console.
+
+For local dev without Google OAuth, the app still starts and serves the
+homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed
+login still needs working OAuth credentials. Run `npm run seed:dev` to create a
+test user for authenticated code paths without doing the Google round-trip, but
+note that the browser sign-in UI still follows the real Google OAuth flow.
 
 Extracted card data (`data/extracted/*.json`) is committed to the repo.
 The rulebook vector index lives in Postgres (pgvector) and is populated by
@@ -290,6 +301,16 @@ npm run agent:check
 This is meant to package parity fixes into the same branch and PR as the
 primary change, instead of discovering drift later in CI or a follow-up pass.
 
+Git hooks are installed by `npm install` via the `prepare` script. Squire now
+pins `core.hooksPath` to the checked-in `.husky` directory instead of Husky's
+generated `._` shim path, so linked worktrees do not depend on generated hook
+files from another checkout. If a fresh worktree warns that hooks are missing,
+repair them with:
+
+```bash
+npm run hooks:install
+```
+
 `npm run agent:export-learnings` is **not** automated in git hooks. It reads
 machine-local `~/.gstack/projects/maz-org-squire/learnings.jsonl`, generates
 `docs/agent/learnings.md`, and should be run deliberately when the local
@@ -331,23 +352,25 @@ npm run test:watch    # Watch mode
 npm run typecheck     # TypeScript type checking
 npm run lint          # ESLint
 npm run lint:css      # stylelint (CSS, Tailwind v4 aware — SQR-70)
+npm run lint:md       # markdownlint
 npm run format:check  # Prettier check
+npm run check         # local CI gate: typecheck + lint + format + tests
 # No CSS build step — `/app.css` is compiled in-process on request
 # via @tailwindcss/node. SQR-71 / ADR 0011 replaced the former
 # `npm run build:css` pipeline.
 ```
 
 Tests use randomized execution order (`sequence.shuffle` in vitest
-config) to catch order-dependent tests. The full suite runs as a
-pre-commit hook along with typecheck and lint.
+config) to catch order-dependent tests. The pre-commit hook runs typecheck,
+lint-staged, and the full test suite. The pre-push hook runs `npm run check`,
+which is the canonical local gate before CI.
 
 **Prettier covers everything CI checks.** CI runs `prettier --check src/ test/`
 which walks those directories and formats _every_ file type Prettier knows
 (`.ts`, `.js`, `.json`, `.yml`, `.md`, etc.). `lint-staged` in `package.json`
-must stay in sync — if CI formats a file type, the pre-commit hook must too,
-otherwise drift slips through locally and fails in CI. When adding a new file
-type under `src/` or `test/`, add it to both `lint-staged` and leave
-`format:check` alone (it already globs everything).
+must stay in sync with CI, and `npm run check` is the single local entry point
+for that contract. When adding a new file type under `src/` or `test/`, add it
+to `lint-staged` and leave `format:check` alone (it already globs everything).
 
 ## Data management
 

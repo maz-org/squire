@@ -45,3 +45,36 @@ export interface CreateSessionInput {
   ipAddress?: string | null;
   userAgent?: string | null;
 }
+
+// ─── Conversation ───────────────────────────────────────────────────────────
+
+export interface Conversation {
+  id: string;
+  userId: string;
+  creationIdempotencyKey: string | null;
+  createdAt: Date;
+  lastMessageAt: Date;
+}
+
+export interface CreateConversationInput {
+  userId: string;
+  creationIdempotencyKey?: string | null;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversationId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  isError: boolean;
+  responseToMessageId: string | null;
+  createdAt: Date;
+}
+
+export interface CreateConversationMessageInput {
+  conversationId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  isError?: boolean;
+  responseToMessageId?: string | null;
+}

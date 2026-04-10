@@ -1,8 +1,14 @@
 # Squire Project
 
-Start with the shared baseline:
+## Required first read
+
+Before doing any repo work, read the shared baseline:
 
 - [docs/agent/agent-baseline.md](docs/agent/agent-baseline.md)
+
+Do not start task-specific workflows, including `/ship`, `/review`, code
+changes, or repo investigation, until you have read that baseline and then
+loaded any task-specific docs it routes to.
 
 This file only records Claude-specific adapter details.
 

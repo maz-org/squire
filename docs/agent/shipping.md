@@ -32,6 +32,10 @@ Example: `feat(auth): add user login endpoint`
 
 For the actual ship workflow, invoke the gstack **`/ship`** skill rather than running the steps by hand. In Squire, interpret `/ship` as: detect and merge the base branch, run tests, review the diff, commit, push, and open the PR. Do **not** bump version numbers or edit `CHANGELOG.md` for ordinary feature-branch PRs unless the user explicitly asks for a release/version cut. Open PRs as published PRs, not drafts, unless the user explicitly asks for a draft PR.
 
+Before pushing, run `npm run check` (or ensure `/ship` does). This is the
+canonical local gate and must stay aligned with CI's formatting, lint, and test
+expectations.
+
 The rules in this file still apply — `/ship` doesn't override them, it executes them:
 
 - Branch must follow the naming convention above (Linear's `gitBranchName` already does).

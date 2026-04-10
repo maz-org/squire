@@ -30,6 +30,9 @@ to Claude. Every input path is a prompt injection surface.
 
 - Clearly delimit user input vs system context in prompts (XML tags,
   not just prose boundaries)
+- Persist generic assistant-visible failure turns instead of raw error
+  text, and exclude those error turns from future history passed back
+  into the model
 - Never include the system prompt or tool schemas in LLM output
 - Input length limits on questions and history
 - Anomaly detection via Langfuse traces (e.g., responses that contain
@@ -70,6 +73,9 @@ planned as a custom implementation inside the Hono server.
   and error formatting) cannot justify. The valuable part of "use the SDK"
   is the provider contract, which we wrap directly. Tracking issue: SQR-69.
 - Exact-match redirect URI validation, no wildcards
+- For the web channel, local dev may derive the Google callback from the
+  current `localhost` origin, but only for `localhost` / `127.0.0.1`;
+  non-local hosts still use the configured redirect URI
 - Rate limit client registration (e.g., 10/hour per IP) — tracked in the
   Production Readiness project (SQR-52) alongside other rate-limit configuration
 - **Long-lived access tokens (30-day default)** stored as SHA-256 hashes at rest.
@@ -206,6 +212,8 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 - If rendering markdown, use a sanitizing renderer that strips HTML
   tags
 - HttpOnly, Secure, SameSite=Lax cookies
+- User-owned conversation lookups return indistinguishable `404`s, so a
+  guessed conversation ID does not disclose whether the resource exists
 
 ### 8. Supply Chain / Data Pipeline
 

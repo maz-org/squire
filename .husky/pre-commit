@@ -1,5 +1,10 @@
-. "$HOME/.nvm/nvm.sh"
-nvm use >/dev/null 2>&1
+#!/usr/bin/env sh
+set -e
+
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+  nvm use >/dev/null 2>&1 || true
+fi
 
 staged_files=$(git diff --cached --name-only)
 if printf '%s\n' "$staged_files" | grep -Eq '^(CLAUDE\.md|AGENTS\.md|docs/agent/agent-baseline\.md|docs/agent/learnings\.md|docs/DEVELOPMENT\.md|\.mcp\.json|scripts/check-agent-parity\.ts|scripts/export-gstack-learnings\.ts)$'
@@ -7,6 +12,6 @@ then
   npm run agent:check
 fi
 
-npx tsc --noEmit
+npm run typecheck
 npx lint-staged
 npm test

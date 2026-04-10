@@ -201,6 +201,12 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
+Keep `GOOGLE_REDIRECT_URI` on the main-checkout callback unless you want to
+move your primary local login flow. Linked worktrees now build the callback URL
+from their current localhost origin at runtime, but Google still requires exact
+redirect-URI matches, so every localhost callback port you use for browser QA
+must be pre-registered in the OAuth client in Google Cloud Console.
+
 ### Data files
 
 Extracted card data (`data/extracted/`) is committed to the repo as
@@ -332,15 +338,31 @@ debugging a single failure without waiting for the full suite.
 
 ## Pre-commit hooks
 
+Git hooks are installed automatically when you run `npm install`. Squire pins
+`core.hooksPath` to the checked-in `.husky` directory so linked worktrees use
+their own repo-local hooks instead of depending on generated Husky shims from a
+different checkout. If hook setup ever drifts in a worktree, repair it with
+`npm run hooks:install`.
+
 The pre-commit hook runs automatically on every commit:
 
-1. `tsc --noEmit` — type checking
+1. `npm run typecheck` — type checking
 2. `lint-staged` — ESLint + Prettier on staged `.ts`/`.js` files, stylelint +
    Prettier on staged `.css` files, Prettier on staged `.json`/`.yml`/`.yaml`
    files, markdownlint on staged `.md` files
 3. `npm test` — full test suite
 
 If any step fails, the commit is blocked. Fix the issue and try again.
+
+The pre-push hook runs `npm run check`, which is the local equivalent of the
+main CI gate:
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run lint:css`
+- `npm run lint:md`
+- `npm run format:check`
+- `npm test`
 
 ## Submitting changes
 

@@ -184,7 +184,8 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
-    expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/api\/ask"/);
+    expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/chat"/);
+    expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="idempotencyKey"[^>]*value=""/);
   });
 
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
@@ -233,6 +234,8 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
     const body = await res.text();
     expect(body).toContain('squire-answer');
     expect(body).toContain('is-active');
+    expect(body).toContain("submitButton.textContent = '...'");
+    expect(body).not.toContain("action === '/chat'");
   });
 
   it('404s the hashed CSS route in dev (it is prod-only)', async () => {

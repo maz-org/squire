@@ -41,7 +41,11 @@ npm install
 # Add your API keys
 cp .env.example .env
 # Edit .env: ANTHROPIC_API_KEY (required), Google OAuth keys + SESSION_SECRET
-# (required for web UI login). See docs/DEVELOPMENT.md for the full list.
+# (required for web UI login). `GOOGLE_REDIRECT_URI` can stay on
+# `http://localhost:3000/auth/google/callback`; linked worktrees reuse the
+# current localhost origin at runtime, but every localhost callback port you use
+# still has to be pre-registered in Google Cloud Console. See
+# docs/DEVELOPMENT.md for the full list.
 
 # Start the local Postgres + pgvector database
 docker compose up -d
@@ -88,7 +92,9 @@ serves:
   `@tailwindcss/node` on first request and caches the result — no build
   step required on a fresh clone. Prod uses content-hashed URLs
   (`/app.<hash>.css`) with immutable caching. See
-  [ADR 0011](docs/adr/0011-on-demand-asset-pipeline.md))
+  [ADR 0011](docs/adr/0011-on-demand-asset-pipeline.md)). Authenticated chat
+  runs on `/chat` and `/chat/:conversationId`, with persisted per-user
+  conversations in Postgres.
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)
