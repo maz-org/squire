@@ -14,6 +14,7 @@ function toDomain(row: MessageRow): ConversationMessage {
     role: row.role as 'user' | 'assistant',
     content: row.content,
     isError: row.isError,
+    responseToMessageId: row.responseToMessageId,
     createdAt: row.createdAt,
   };
 }
@@ -29,9 +30,45 @@ export async function create(
       role: input.role,
       content: input.content,
       isError: input.isError ?? false,
+      responseToMessageId: input.responseToMessageId ?? null,
     })
     .returning();
   return toDomain(row);
+}
+
+export async function createResponse(
+  handle: DbOrTx,
+  input: CreateConversationMessageInput & { responseToMessageId: string },
+): Promise<ConversationMessage> {
+  const inserted = await handle
+    .insert(messages)
+    .values({
+      conversationId: input.conversationId,
+      role: input.role,
+      content: input.content,
+      isError: input.isError ?? false,
+      responseToMessageId: input.responseToMessageId,
+    })
+    .onConflictDoNothing({
+      target: messages.responseToMessageId,
+    })
+    .returning();
+
+  if (inserted[0]) {
+    return toDomain(inserted[0]);
+  }
+
+  const existing = await handle
+    .select()
+    .from(messages)
+    .where(eq(messages.responseToMessageId, input.responseToMessageId))
+    .limit(1);
+
+  if (!existing[0]) {
+    throw new Error('Failed to load existing response message');
+  }
+
+  return toDomain(existing[0]);
 }
 
 export async function listByConversationId(

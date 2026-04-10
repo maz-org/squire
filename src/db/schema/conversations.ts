@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   boolean,
   index,
   pgTable,
@@ -41,9 +42,18 @@ export const messages = pgTable(
     role: text('role').notNull(),
     content: text('content').notNull(),
     isError: boolean('is_error').notNull().default(false),
+    responseToMessageId: uuid('response_to_message_id').references(
+      (): AnyPgColumn => messages.id,
+      {
+        onDelete: 'cascade',
+      },
+    ),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('messages_conversation_created_at_idx').on(t.conversationId, t.createdAt)],
+  (t) => [
+    index('messages_conversation_created_at_idx').on(t.conversationId, t.createdAt),
+    uniqueIndex('messages_response_to_message_id_idx').on(t.responseToMessageId),
+  ],
 );
 
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({

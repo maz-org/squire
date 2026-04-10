@@ -234,6 +234,8 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
     const body = await res.text();
     expect(body).toContain('squire-answer');
     expect(body).toContain('is-active');
+    expect(body).toContain("submitButton.textContent = '...'");
+    expect(body).not.toContain("action === '/chat'");
   });
 
   it('404s the hashed CSS route in dev (it is prod-only)', async () => {

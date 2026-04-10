@@ -59,25 +59,35 @@ async function persistAssistantOutcome(input: {
   try {
     const answer = await generateAssistantReply(input.question, history, input.userId);
     await getDb('server').db.transaction(async (tx) => {
-      const assistantMessage = await MessageRepository.create(tx, {
+      const assistantMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,
         role: 'assistant',
         content: answer,
+        responseToMessageId: input.currentUserMessageId,
       });
       await ConversationRepository.touchLastMessageAt(tx, input.conversationId, assistantMessage.createdAt);
     });
   } catch (err) {
     console.error('[conversation] ask failed:', err instanceof Error ? err.message : err);
     await getDb('server').db.transaction(async (tx) => {
-      const failureMessage = await MessageRepository.create(tx, {
+      const failureMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,
         role: 'assistant',
         content: GENERIC_FAILURE_MESSAGE,
         isError: true,
+        responseToMessageId: input.currentUserMessageId,
       });
       await ConversationRepository.touchLastMessageAt(tx, input.conversationId, failureMessage.createdAt);
     });
   }
+}
+
+async function findRepairableInitialUserMessage(conversationId: string): Promise<ConversationMessage | null> {
+  const storedMessages = await MessageRepository.listByConversationId(conversationId, {
+    includeErrors: true,
+  });
+
+  return storedMessages.length === 1 && storedMessages[0]?.role === 'user' ? storedMessages[0] : null;
 }
 
 export async function startConversation(input: {
@@ -115,6 +125,16 @@ export async function startConversation(input: {
       userId: input.userId,
       currentUserMessageId: result.currentUserMessageId,
     });
+  } else {
+    const repairableMessage = await findRepairableInitialUserMessage(result.conversation.id);
+    if (repairableMessage) {
+      await persistAssistantOutcome({
+        conversationId: result.conversation.id,
+        question: repairableMessage.content,
+        userId: input.userId,
+        currentUserMessageId: repairableMessage.id,
+      });
+    }
   }
 
   return result.conversation;

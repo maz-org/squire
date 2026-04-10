@@ -34,6 +34,7 @@ import {
   buildGoogleAuthUrl,
   handleGoogleCallback,
   GoogleAuthError,
+  resolveGoogleRedirectUri,
 } from './auth/google.ts';
 import { getSessionSecret } from './auth/session-middleware.ts';
 import * as SessionRepository from './db/repositories/session-repository.ts';
@@ -373,7 +374,7 @@ app.get('/auth/google/start', async (c) => {
     maxAge: 300, // 5 minutes
   });
 
-  const url = buildGoogleAuthUrl(state, codeChallenge);
+  const url = buildGoogleAuthUrl(state, codeChallenge, resolveGoogleRedirectUri(c.req.url));
   return c.redirect(url);
 });
 
@@ -419,6 +420,7 @@ app.get('/auth/google/callback', async (c) => {
       cookieVerifier,
       c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
       c.req.header('user-agent'),
+      resolveGoogleRedirectUri(c.req.url),
     );
 
     await setSessionCookie(c, result.sessionId);

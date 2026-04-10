@@ -190,6 +190,30 @@ describe('Google OAuth callback', () => {
     expect(sessionRows[0].expiresAt.getTime()).toBeGreaterThan(Date.now());
     expect(sessionRows[0].lastSeenAt).not.toBeNull();
   });
+
+  it('1b. uses the request host for localhost worktree OAuth start URLs', async () => {
+    const res = await app.request('http://localhost:4450/auth/google/start', {
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(302);
+    const redirectUrl = new URL(res.headers.get('location')!);
+    expect(redirectUrl.searchParams.get('redirect_uri')).toBe(
+      'http://localhost:4450/auth/google/callback',
+    );
+  });
+
+  it('1c. keeps the configured callback for non-local hosts', async () => {
+    const res = await app.request('http://example.com/auth/google/start', {
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(302);
+    const redirectUrl = new URL(res.headers.get('location')!);
+    expect(redirectUrl.searchParams.get('redirect_uri')).toBe(
+      'http://localhost:3000/auth/google/callback',
+    );
+  });
 });
 
 describe('/auth/me', () => {

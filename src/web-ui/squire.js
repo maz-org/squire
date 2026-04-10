@@ -26,7 +26,6 @@ document.addEventListener('submit', function (e) {
 
   var questionInput = form.querySelector('input[name="question"]');
   var submitButton = form.querySelector('button[type="submit"]');
-  var action = form.getAttribute('action') || '';
   var idempotencyInput = form.querySelector('input[name="idempotencyKey"]');
 
   if (idempotencyInput && !idempotencyInput.value) {
@@ -40,7 +39,7 @@ document.addEventListener('submit', function (e) {
   form.dataset.submitting = 'true';
   if (questionInput) questionInput.setAttribute('readonly', 'true');
   if (submitButton) submitButton.setAttribute('disabled', 'true');
-  if (action === '/chat' && submitButton) {
+  if (submitButton) {
     submitButton.textContent = '...';
   }
 });

@@ -67,6 +67,7 @@ export interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
   isError: boolean;
+  responseToMessageId: string | null;
   createdAt: Date;
 }
 
@@ -75,4 +76,5 @@ export interface CreateConversationMessageInput {
   role: 'user' | 'assistant';
   content: string;
   isError?: boolean;
+  responseToMessageId?: string | null;
 }

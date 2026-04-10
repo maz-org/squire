@@ -294,6 +294,65 @@ describe('conversation web backend', () => {
     expect(messageCount.rows[0].count).toBe(2);
   });
 
+  it('repairs an interrupted first send on same-key retry without duplicating assistant turns', async () => {
+    let resolveFirstAsk!: (value: string) => void;
+    const firstAsk = new Promise<string>((resolve) => {
+      resolveFirstAsk = resolve;
+    });
+
+    mockAsk.mockImplementationOnce(() => firstAsk).mockResolvedValueOnce('Recovered answer.');
+    const auth = await createAuthContext();
+
+    const firstResPromise = requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Start one conversation',
+        idempotencyKey: 'idem-repair',
+      }),
+      redirect: 'manual',
+    });
+
+    const { db } = getDb('server');
+    await vi.waitFor(async () => {
+      const count = await db.execute(sql`select count(*)::int as count from messages`);
+      expect(count.rows[0].count).toBe(1);
+    });
+
+    const retryRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Start one conversation',
+        idempotencyKey: 'idem-repair',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(retryRes.status).toBe(302);
+    const location = requireLocation(retryRes);
+
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000${location}`);
+    const page = await pageRes.text();
+    expect(page).toContain('Recovered answer.');
+
+    resolveFirstAsk('Late original answer.');
+    await firstResPromise;
+
+    const storedMessages = await db.execute(sql`
+      select role, content
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'Start one conversation' },
+      { role: 'assistant', content: 'Recovered answer.' },
+    ]);
+    expect(mockAsk).toHaveBeenCalledTimes(2);
+  });
+
   it('caps forwarded history to the most recent 20 non-error messages', async () => {
     mockAsk.mockResolvedValueOnce('Capped answer.');
     const auth = await createAuthContext();

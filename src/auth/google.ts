@@ -22,14 +22,30 @@ import * as SessionRepository from '../db/repositories/session-repository.ts';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
-function getGoogleConfig() {
+function getGoogleConfig(redirectUriOverride?: string) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-  if (!clientId || !clientSecret || !redirectUri) {
+  if (!clientId || !clientSecret || (!redirectUri && !redirectUriOverride)) {
     throw new Error('Missing GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, or GOOGLE_REDIRECT_URI');
   }
-  return { clientId, clientSecret, redirectUri };
+  return { clientId, clientSecret, redirectUri: redirectUriOverride ?? redirectUri! };
+}
+
+export function resolveGoogleRedirectUri(requestUrl?: string): string {
+  const { redirectUri } = getGoogleConfig();
+
+  if (!requestUrl || process.env.NODE_ENV === 'production') {
+    return redirectUri;
+  }
+
+  const request = new URL(requestUrl);
+  const isLocalHost = request.hostname === 'localhost' || request.hostname === '127.0.0.1';
+  if (!isLocalHost) {
+    return redirectUri;
+  }
+
+  return `${request.origin}/auth/google/callback`;
 }
 
 // SESSION_LIFETIME_MS lives in session-repository.ts; getSessionSecret() in session-middleware.ts
@@ -92,8 +108,12 @@ export function computeCodeChallenge(verifier: string): string {
  * Build the Google consent URL with PKCE and state parameters.
  * Returns the URL to redirect to and the state + verifier to store in a cookie.
  */
-export function buildGoogleAuthUrl(state: string, codeChallenge: string): string {
-  const { clientId, redirectUri } = getGoogleConfig();
+export function buildGoogleAuthUrl(
+  state: string,
+  codeChallenge: string,
+  redirectUriOverride?: string,
+): string {
+  const { clientId, redirectUri } = getGoogleConfig(redirectUriOverride);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -117,8 +137,9 @@ export function buildGoogleAuthUrl(state: string, codeChallenge: string): string
 export async function exchangeGoogleCode(
   code: string,
   codeVerifier: string,
+  redirectUriOverride?: string,
 ): Promise<{ id_token: string }> {
-  const { clientId, clientSecret, redirectUri } = getGoogleConfig();
+  const { clientId, clientSecret, redirectUri } = getGoogleConfig(redirectUriOverride);
   const client = new OAuth2Client(clientId, clientSecret, redirectUri);
   const { tokens } = await client.getToken({
     code,
@@ -152,6 +173,7 @@ export async function handleGoogleCallback(
   cookieVerifier: string | undefined,
   ipAddress?: string,
   userAgent?: string,
+  redirectUriOverride?: string,
 ): Promise<HandleCallbackResult> {
   // 1. Verify state matches
   if (!cookieState || !cookieVerifier || state !== cookieState) {
@@ -162,7 +184,7 @@ export async function handleGoogleCallback(
   // 2. Exchange code for tokens
   let idToken: string;
   try {
-    const tokens = await exchangeGoogleCode(code, cookieVerifier);
+    const tokens = await exchangeGoogleCode(code, cookieVerifier, redirectUriOverride);
     idToken = tokens.id_token;
   } catch (err) {
     console.warn('[auth:google] token exchange failed:', (err as Error).message);
