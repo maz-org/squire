@@ -9,6 +9,7 @@ import 'dotenv/config';
 // reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
+import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
 import {
   ask,
@@ -55,13 +56,24 @@ import { createCsrfToken, requireCsrf } from './auth/csrf.ts';
 import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
+  renderConversationTranscript,
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
   renderNotInvitedPage,
+  renderPendingTurnShell,
 } from './web-ui/layout.ts';
-import { getAppCss, getSquireJs } from './web-ui/assets.ts';
-import { appendMessage, loadConversation, startConversation } from './chat/conversation-service.ts';
+import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
+import {
+  appendMessage,
+  createPendingConversation,
+  createPendingFollowUp,
+  GENERIC_FAILURE_MESSAGE,
+  loadConversation,
+  loadConversationMessage,
+  startConversation,
+  streamAssistantTurn,
+} from './chat/conversation-service.ts';
 
 export const app = new Hono();
 
@@ -131,12 +143,29 @@ app.get('/squire.js', async (c) => {
   return c.body(content);
 });
 
+app.get('/htmx.js', async (c) => {
+  if (isProdEnv()) return c.notFound();
+  const { content } = await getHtmxJs();
+  c.header('content-type', 'text/javascript; charset=utf-8');
+  c.header('cache-control', DEV_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
 // Prod-only hashed JS path. Same full-filename-as-param pattern as
 // the CSS handler for the same Hono router reason.
 app.get('/:file{squire\\.[a-f0-9]+\\.js}', async (c) => {
   if (!isProdEnv()) return c.notFound();
   const { content, hash } = await getSquireJs();
   if (c.req.param('file') !== `squire.${hash}.js`) return c.notFound();
+  c.header('content-type', 'text/javascript; charset=utf-8');
+  c.header('cache-control', PROD_ASSET_CACHE_CONTROL);
+  return c.body(content);
+});
+
+app.get('/:file{htmx\\.[a-f0-9]+\\.js}', async (c) => {
+  if (!isProdEnv()) return c.notFound();
+  const { content, hash } = await getHtmxJs();
+  if (c.req.param('file') !== `htmx.${hash}.js`) return c.notFound();
   c.header('content-type', 'text/javascript; charset=utf-8');
   c.header('cache-control', PROD_ASSET_CACHE_CONTROL);
   return c.body(content);
@@ -475,7 +504,29 @@ app.use('/chat/*', requireCsrf());
 app.use('/chat', requireCsrf());
 
 function badChatRequest(c: Context, message: string) {
+  if (isHtmxRequest(c)) {
+    return c.html(renderChatErrorFragment(message), 400);
+  }
   return c.json(jsonError(message, 400), 400);
+}
+
+function isHtmxRequest(c: Context): boolean {
+  return c.req.header('hx-request') === 'true';
+}
+
+function renderChatErrorFragment(message: string) {
+  return html`<div class="squire-banner squire-banner--error" role="alert">
+    <span class="squire-banner__label">SOMETHING WENT WRONG</span>
+    <p class="squire-banner__body">${message}</p>
+  </div>`;
+}
+
+function buildStreamUrl(conversationId: string, messageId: string): string {
+  return `/chat/${conversationId}/messages/${messageId}/stream`;
+}
+
+function buildToolLabel(name: string): string {
+  return name.replaceAll('_', ' ').toUpperCase();
 }
 
 async function readQuestionForm(
@@ -521,6 +572,34 @@ app.post('/chat', async (c) => {
   if (!question) return badChatRequest(c, 'Question is required');
   if (!idempotencyKey) return badChatRequest(c, 'Idempotency key is required');
 
+  if (isHtmxRequest(c)) {
+    const pending = await createPendingConversation({
+      userId: session.userId,
+      question,
+      idempotencyKey,
+    });
+
+    c.header('Cache-Control', 'no-store');
+    c.header('Vary', 'Cookie');
+    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+
+    if (!pending.currentUserMessage) {
+      const loaded = await loadConversation({
+        conversationId: pending.conversation.id,
+        userId: session.userId,
+      });
+      if (!loaded) return c.notFound();
+      return c.html(renderConversationTranscript(loaded.conversation.id, loaded.messages));
+    }
+
+    return c.html(
+      renderPendingTurnShell({
+        question: pending.currentUserMessage.content,
+        streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+      }),
+    );
+  }
+
   const conversation = await startConversation({
     userId: session.userId,
     question,
@@ -537,6 +616,24 @@ app.post('/chat/:conversationId/messages', async (c) => {
   const { question } = await readQuestionForm(c);
   if (!question) return badChatRequest(c, 'Question is required');
 
+  if (isHtmxRequest(c)) {
+    const pending = await createPendingFollowUp({
+      conversationId: c.req.param('conversationId'),
+      userId: session.userId,
+      question,
+    });
+    if (!pending?.currentUserMessage) return c.notFound();
+
+    c.header('Cache-Control', 'no-store');
+    c.header('Vary', 'Cookie');
+    return c.html(
+      renderPendingTurnShell({
+        question: pending.currentUserMessage.content,
+        streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+      }),
+    );
+  }
+
   const conversation = await appendMessage({
     conversationId: c.req.param('conversationId'),
     userId: session.userId,
@@ -547,6 +644,117 @@ app.post('/chat/:conversationId/messages', async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.redirect(`/chat/${conversation.id}`, 302);
+});
+
+app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
+  const session = c.get('session')!;
+  const loaded = await loadConversationMessage({
+    conversationId: c.req.param('conversationId'),
+    messageId: c.req.param('messageId'),
+    userId: session.userId,
+  });
+  if (!loaded) return c.notFound();
+  if (loaded.message.role !== 'user') return c.notFound();
+
+  const bootstrapStatus = await ensureBootstrapStatus();
+  const askCapability = bootstrapStatus.capabilities.ask;
+  if (!askCapability.allowed) {
+    return streamSSE(c, async (stream) => {
+      await stream.writeSSE({
+        event: 'error',
+        data: JSON.stringify({
+          kind: 'bootstrap',
+          message: askCapability.message ?? 'Service unavailable.',
+          recoverable: bootstrapStatus.lifecycle === 'warming_up',
+        }),
+      });
+    });
+  }
+
+  return streamSSE(c, async (stream) => {
+    const toolIds = new Map<string, string[]>();
+    const nextToolId = (name: string) => {
+      const queue = toolIds.get(name) ?? [];
+      const id = `${name}-${queue.length + 1}`;
+      queue.push(id);
+      toolIds.set(name, queue);
+      return id;
+    };
+    const consumeToolId = (name: string) => {
+      const queue = toolIds.get(name) ?? [];
+      const id = queue.shift() ?? `${name}-1`;
+      if (queue.length === 0) {
+        toolIds.delete(name);
+      } else {
+        toolIds.set(name, queue);
+      }
+      return id;
+    };
+
+    const assistantMessage = await streamAssistantTurn({
+      conversationId: loaded.conversation.id,
+      question: loaded.message.content,
+      userId: session.userId,
+      currentUserMessageId: loaded.message.id,
+      onEvent: async (event, data) => {
+        if (event === 'text') {
+          await stream.writeSSE({
+            event: 'text-delta',
+            data: JSON.stringify(data),
+          });
+          return;
+        }
+
+        if (event === 'tool_call') {
+          const payload = data as { name?: string };
+          const name = payload.name ?? 'tool';
+          await stream.writeSSE({
+            event: 'tool-start',
+            data: JSON.stringify({
+              id: nextToolId(name),
+              label: buildToolLabel(name),
+            }),
+          });
+          return;
+        }
+
+        if (event === 'tool_result') {
+          const payload = data as { name?: string };
+          const name = payload.name ?? 'tool';
+          await stream.writeSSE({
+            event: 'tool-result',
+            data: JSON.stringify({
+              id: consumeToolId(name),
+              label: buildToolLabel(name),
+              ok: true,
+            }),
+          });
+          return;
+        }
+
+        if (event === 'done') {
+          await stream.writeSSE({
+            event: 'done',
+            data: JSON.stringify({}),
+          });
+        }
+      },
+    });
+
+    if (assistantMessage.isError) {
+      await stream.writeSSE({
+        event: 'error',
+        data: JSON.stringify({
+          kind: 'transport',
+          message:
+            assistantMessage.content === GENERIC_FAILURE_MESSAGE
+              ? 'Trouble connecting. Please try again.'
+              : assistantMessage.content,
+          recoverable: true,
+        }),
+      });
+    }
+  });
 });
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────

@@ -90,3 +90,9 @@ export async function listByConversationId(
   const rows = options?.limit ? await query.limit(options.limit) : await query;
   return rows.reverse().map(toDomain);
 }
+
+export async function findById(messageId: string): Promise<ConversationMessage | null> {
+  const { db } = getDb('server');
+  const rows = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
+  return rows[0] ? toDomain(rows[0]) : null;
+}

@@ -746,6 +746,16 @@ template#squire-banner-fixtures {
   margin: 0 0 16px;
 }
 
+.squire-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.squire-turn {
+  width: 100%;
+}
+
 /* Answer block — the ledger page where the streamed agent answer lives.
    First paragraph gets a drop cap; <em> becomes a rule-term highlighter;
    .cite becomes a sepia-underlined citation link. No chat bubble chrome
@@ -758,6 +768,79 @@ template#squire-banner-fixtures {
 
 .squire-answer p {
   margin: 0 0 1em;
+}
+
+.squire-answer__content:empty + .squire-answer__tools {
+  margin-top: 0;
+}
+
+.squire-answer__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 0 0 16px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-answer__tool {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+}
+
+.squire-answer__tool.is-complete {
+  color: var(--parchment-dim);
+}
+
+.squire-answer__tool.is-error {
+  color: var(--amber);
+}
+
+.squire-answer--pending .squire-answer__content {
+  min-height: 0;
+}
+
+.squire-answer__skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.squire-answer__skeleton-dropcap {
+  width: 42px;
+  height: 58px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgb(199 62 29 / 0.22), rgb(199 62 29 / 0.1));
+}
+
+.squire-answer__skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgb(245 235 217 / 0.08), rgb(245 235 217 / 0.16));
+}
+
+.squire-answer__skeleton-line--full {
+  width: 100%;
+}
+
+.squire-answer__skeleton-line--mid {
+  width: 84%;
+}
+
+.squire-answer__skeleton-line--short {
+  width: 63%;
+}
+
+.squire-answer[data-stream-state='streaming'] .squire-answer__skeleton,
+.squire-answer[data-stream-state='done'] .squire-answer__skeleton,
+.squire-answer[data-stream-state='error'] .squire-answer__skeleton {
+  display: none;
+}
+
+.squire-input-dock[data-submitting='true'] .squire-input-dock__submit {
+  opacity: 0.8;
 }
 
 /*
@@ -814,8 +897,8 @@ template#squire-banner-fixtures {
 
 /* Citation link — sepia underline, wax hover. The mobile tap-toggle
    (plan-design-review Decision #4) adds `.is-active` on touch so the
-   highlight sticks until the user taps elsewhere. The ~5-line JS that
-   toggles the class lives inline on the page (below). Visually distinct
+   highlight sticks until the user taps elsewhere. The toggle logic lives
+   in `src/web-ui/squire.js`. Visually distinct
    from the amber rule-term highlighter so a reader can tell sources
    from rule terms at a glance. */
 .squire-answer .cite {

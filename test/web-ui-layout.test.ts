@@ -15,10 +15,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import {
   _getCssCompileCountForTests,
+  _getHtmxReadCountForTests,
   _getJsReadCountForTests,
   _resetAssetCachesForTests,
   getAppCss,
   getAppCssUrl,
+  getHtmxJs,
+  getHtmxJsUrl,
   getSquireJs,
   getSquireJsUrl,
 } from '../src/web-ui/assets.ts';
@@ -173,6 +176,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
+    expect(body).toContain('id="squire-surface"');
     expect(body).toContain('class="squire-toolcall"');
     expect(body).toContain('class="squire-recent"');
     expect(body).toContain('class="squire-input-dock"');
@@ -185,6 +189,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/chat"/);
+    expect(body).toMatch(/hx-post="\/chat"/);
+    expect(body).toMatch(/hx-target="#squire-surface"/);
+    expect(body).toMatch(/hx-swap="innerHTML"/);
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="idempotencyKey"[^>]*value=""/);
   });
 
@@ -234,8 +241,19 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
     const body = await res.text();
     expect(body).toContain('squire-answer');
     expect(body).toContain('is-active');
+    expect(body).toContain('EventSource');
     expect(body).toContain("submitButton.textContent = '...'");
     expect(body).not.toContain("action === '/chat'");
+  });
+
+  it('serves /htmx.js with no-cache and the htmx runtime body', async () => {
+    const res = await app.request('/htmx.js');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/javascript/);
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = await res.text();
+    expect(body).toContain('htmx');
+    expect(body).toContain('XMLHttpRequest');
   });
 
   it('404s the hashed CSS route in dev (it is prod-only)', async () => {
@@ -248,16 +266,23 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
     expect(res.status).toBe(404);
   });
 
-  it('renders the layout with bare /app.css and /squire.js URLs', async () => {
+  it('404s the hashed HTMX route in dev (it is prod-only)', async () => {
+    const res = await app.request('/htmx.abc123def0.js');
+    expect(res.status).toBe(404);
+  });
+
+  it('renders the layout with bare /app.css, /htmx.js, and /squire.js URLs', async () => {
     const body = String(await actualLayout.renderLoginPage());
     expect(body).toMatch(/<link[^>]+rel="stylesheet"[^>]+href="\/app\.css"/);
+    expect(body).toMatch(/<script[^>]+src="\/htmx\.js"[^>]*defer/);
     expect(body).toMatch(/<script[^>]+src="\/squire\.js"[^>]*defer/);
     // Inline tap-toggle gone (SQR-66 extraction pin for CSP — SQR-61).
     expect(body).not.toMatch(/document\.addEventListener\(\s*['"]click['"]/);
   }, 15000);
 
-  it('getAppCssUrl and getSquireJsUrl return bare paths in dev', async () => {
+  it('getAppCssUrl, getHtmxJsUrl, and getSquireJsUrl return bare paths in dev', async () => {
     expect(await getAppCssUrl()).toBe('/app.css');
+    expect(await getHtmxJsUrl()).toBe('/htmx.js');
     expect(await getSquireJsUrl()).toBe('/squire.js');
   });
 });
@@ -293,6 +318,16 @@ describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
     expect(body).toContain('squire-answer');
   });
 
+  it('serves /htmx.<hash>.js with immutable cache on correct hash', async () => {
+    const { hash } = await getHtmxJs();
+    const res = await app.request(`/htmx.${hash}.js`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type') ?? '').toMatch(/javascript/);
+    expect(res.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+    const body = await res.text();
+    expect(body).toContain('htmx');
+  });
+
   it('404s /app.<hash>.css on hash mismatch', async () => {
     const res = await app.request('/app.deadbeef01.css');
     expect(res.status).toBe(404);
@@ -303,6 +338,11 @@ describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
     expect(res.status).toBe(404);
   });
 
+  it('404s /htmx.<hash>.js on hash mismatch', async () => {
+    const res = await app.request('/htmx.deadbeef01.js');
+    expect(res.status).toBe(404);
+  });
+
   it('404s non-hex hash paths at the router layer', async () => {
     // `NOTAHASH!!` contains non-hex chars — the route regex
     // [a-f0-9]+ rejects it before the handler sees it.
@@ -310,24 +350,30 @@ describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
     expect(cssRes.status).toBe(404);
     const jsRes = await app.request('/squire.NOTAHASH.js');
     expect(jsRes.status).toBe(404);
+    const htmxRes = await app.request('/htmx.NOTAHASH.js');
+    expect(htmxRes.status).toBe(404);
   });
 
-  it('404s the bare /app.css and /squire.js paths in prod', async () => {
+  it('404s the bare /app.css, /htmx.js, and /squire.js paths in prod', async () => {
     expect((await app.request('/app.css')).status).toBe(404);
+    expect((await app.request('/htmx.js')).status).toBe(404);
     expect((await app.request('/squire.js')).status).toBe(404);
   });
 
-  it('renders the layout with hashed /app.<hex>.css and /squire.<hex>.js URLs', async () => {
+  it('renders the layout with hashed asset URLs in prod', async () => {
     const body = String(await actualLayout.renderLoginPage());
     expect(body).toMatch(/<link[^>]+rel="stylesheet"[^>]+href="\/app\.[a-f0-9]+\.css"/);
+    expect(body).toMatch(/<script[^>]+src="\/htmx\.[a-f0-9]+\.js"[^>]*defer/);
     expect(body).toMatch(/<script[^>]+src="\/squire\.[a-f0-9]+\.js"[^>]*defer/);
     expect(body).not.toMatch(/document\.addEventListener\(\s*['"]click['"]/);
   }, 15000);
 
-  it('getAppCssUrl and getSquireJsUrl return hashed paths in prod', async () => {
+  it('getAppCssUrl, getHtmxJsUrl, and getSquireJsUrl return hashed paths in prod', async () => {
     const cssUrl = await getAppCssUrl();
+    const htmxUrl = await getHtmxJsUrl();
     const jsUrl = await getSquireJsUrl();
     expect(cssUrl).toMatch(/^\/app\.[a-f0-9]{10}\.css$/);
+    expect(htmxUrl).toMatch(/^\/htmx\.[a-f0-9]{10}\.js$/);
     expect(jsUrl).toMatch(/^\/squire\.[a-f0-9]{10}\.js$/);
   }, 15000);
 });
@@ -355,6 +401,39 @@ describe('SQR-71 Promise memoization — concurrent cold start', () => {
     expect(a.hash).toBe(b.hash);
     expect(a.content).toBe(b.content);
     expect(_getJsReadCountForTests()).toBe(1);
+  });
+
+  it('reads htmx.js exactly once when two callers race a cold cache', async () => {
+    const [a, b] = await Promise.all([getHtmxJs(), getHtmxJs()]);
+    expect(a.hash).toBe(b.hash);
+    expect(a.content).toBe(b.content);
+    expect(_getHtmxReadCountForTests()).toBe(1);
+  });
+});
+
+describe('renderPendingTurnShell', () => {
+  it('renders a turn-scoped pending transcript shell with a skeleton and tool region', () => {
+    const body = String(
+      actualLayout.renderPendingTurnShell({
+        question: 'Can I loot through a doorway?',
+        streamUrl: '/chat/conv-123/turns/turn-456/stream',
+      }),
+    );
+
+    expect(body).toMatch(/class="squire-transcript squire-transcript--pending"/);
+    expect(body).toContain('data-stream-url="/chat/conv-123/turns/turn-456/stream"');
+    expect(body).toMatch(/<article[^>]*class="squire-turn squire-question"/);
+    expect(body).toContain('Can I loot through a doorway?');
+    expect(body).toMatch(
+      /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-state="pending"/,
+    );
+    expect(body).toMatch(/<div[^>]*class="squire-answer__content"><\/div>/);
+    expect(body).toMatch(/<div[^>]*class="squire-answer__tools"[^>]*aria-live="off"><\/div>/);
+    expect(body).toMatch(/class="squire-answer__skeleton"[^>]*aria-hidden="true"/);
+    expect(body).toContain('squire-answer__skeleton-dropcap');
+    expect(body).toContain('squire-answer__skeleton-line squire-answer__skeleton-line--full');
+    expect(body).toContain('squire-answer__skeleton-line squire-answer__skeleton-line--mid');
+    expect(body).toContain('squire-answer__skeleton-line squire-answer__skeleton-line--short');
   });
 });
 

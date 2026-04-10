@@ -43,3 +43,171 @@ document.addEventListener('submit', function (e) {
     submitButton.textContent = '...';
   }
 });
+
+var activeStream = null;
+
+function setFormPendingState(form, pending) {
+  if (!form) return;
+  var questionInput = form.querySelector('input[name="question"]');
+  var submitButton = form.querySelector('button[type="submit"]');
+
+  if (pending) {
+    form.dataset.submitting = 'true';
+    if (questionInput) questionInput.setAttribute('readonly', 'true');
+    if (submitButton) submitButton.setAttribute('disabled', 'true');
+    if (submitButton) submitButton.textContent = '...';
+    return;
+  }
+
+  delete form.dataset.submitting;
+  if (questionInput) questionInput.removeAttribute('readonly');
+  if (submitButton) submitButton.removeAttribute('disabled');
+  if (submitButton) submitButton.textContent = '→';
+}
+
+function syncChatFormAction() {
+  var form = document.querySelector('.squire-input-dock');
+  if (!form) return;
+
+  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)$/);
+  var action = match ? '/chat/' + match[1] + '/messages' : '/chat';
+  form.setAttribute('action', action);
+  form.setAttribute('hx-post', action);
+}
+
+function closeActiveStream() {
+  if (!activeStream) return;
+  activeStream.source.close();
+  activeStream = null;
+}
+
+function ensureAnswerParagraph(contentEl) {
+  var paragraph = contentEl.querySelector('p');
+  if (paragraph) return paragraph;
+
+  paragraph = document.createElement('p');
+  contentEl.appendChild(paragraph);
+  return paragraph;
+}
+
+function renderPendingError(answerEl, label, message) {
+  answerEl.classList.remove('squire-answer--pending');
+  answerEl.setAttribute('data-stream-state', 'error');
+  answerEl.innerHTML =
+    '<div class="squire-banner squire-banner--error" role="alert">' +
+    '<span class="squire-banner__label">' +
+    label +
+    '</span>' +
+    '<p class="squire-banner__body">' +
+    message +
+    '</p>' +
+    '</div>';
+}
+
+function handlePendingTranscript(transcript) {
+  if (!transcript) return;
+
+  var streamUrl = transcript.getAttribute('data-stream-url');
+  if (!streamUrl) return;
+  if (activeStream && activeStream.url === streamUrl) return;
+
+  closeActiveStream();
+
+  var answerEl = transcript.querySelector('.squire-answer--pending');
+  if (!answerEl) return;
+
+  var contentEl = answerEl.querySelector('.squire-answer__content');
+  var toolsEl = answerEl.querySelector('.squire-answer__tools');
+  var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
+  var toolEntries = {};
+  var seenFirstDelta = false;
+  var source = new window.EventSource(streamUrl);
+
+  activeStream = {
+    url: streamUrl,
+    source: source,
+  };
+
+  function finishStream() {
+    if (activeStream && activeStream.source === source) {
+      activeStream = null;
+    }
+    source.close();
+  }
+
+  source.addEventListener('text-delta', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    if (!seenFirstDelta) {
+      seenFirstDelta = true;
+      answerEl.setAttribute('data-stream-state', 'streaming');
+      if (skeletonEl) skeletonEl.hidden = true;
+    }
+
+    if (!contentEl) return;
+    var paragraph = ensureAnswerParagraph(contentEl);
+    paragraph.textContent += payload.delta || '';
+  });
+
+  source.addEventListener('tool-start', function (event) {
+    if (!toolsEl) return;
+    var payload = JSON.parse(event.data || '{}');
+    var row = document.createElement('div');
+    row.className = 'squire-answer__tool';
+    row.dataset.toolId = payload.id;
+    row.textContent = payload.label + '...';
+    toolEntries[payload.id] = row;
+    toolsEl.appendChild(row);
+  });
+
+  source.addEventListener('tool-result', function (event) {
+    if (!toolsEl) return;
+    var payload = JSON.parse(event.data || '{}');
+    var row = toolEntries[payload.id];
+    if (!row) {
+      row = document.createElement('div');
+      row.className = 'squire-answer__tool';
+      row.dataset.toolId = payload.id;
+      toolsEl.appendChild(row);
+      toolEntries[payload.id] = row;
+    }
+    row.classList.add(payload.ok ? 'is-complete' : 'is-error');
+    row.textContent = payload.label + (payload.ok ? ' done' : ' failed');
+  });
+
+  source.addEventListener('done', function () {
+    answerEl.classList.remove('squire-answer--pending');
+    answerEl.setAttribute('data-stream-state', 'done');
+    if (skeletonEl) skeletonEl.hidden = true;
+    finishStream();
+  });
+
+  source.addEventListener('error', function (event) {
+    var payload = { kind: 'transport', message: 'Trouble connecting. Please try again.' };
+    if (event.data) {
+      payload = JSON.parse(event.data);
+    }
+    renderPendingError(
+      answerEl,
+      payload.kind === 'session' ? 'SESSION ENDED' : 'TROUBLE CONNECTING',
+      payload.message || 'Trouble connecting. Please try again.',
+    );
+    finishStream();
+  });
+}
+
+document.addEventListener('htmx:afterSwap', function (event) {
+  var target = event.detail && event.detail.target;
+  if (!target || target.id !== 'squire-surface') return;
+
+  var form = document.querySelector('.squire-input-dock');
+  var questionInput = form && form.querySelector('input[name="question"]');
+  if (questionInput) questionInput.value = '';
+  setFormPendingState(form, false);
+  syncChatFormAction();
+  handlePendingTranscript(target.querySelector('.squire-transcript--pending'));
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  syncChatFormAction();
+  handlePendingTranscript(document.querySelector('.squire-transcript--pending'));
+});

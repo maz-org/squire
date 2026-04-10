@@ -19,7 +19,7 @@
 import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
-import { getAppCssUrl, getSquireJsUrl } from './assets.ts';
+import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 import type { ConversationMessage, Session } from '../db/repositories/types.ts';
@@ -59,6 +59,11 @@ export interface LayoutShellOptions {
   chatFormHiddenFields?: Array<{ name: string; value: string }>;
 }
 
+export interface PendingTurnShellOptions {
+  question: string;
+  streamUrl: string;
+}
+
 interface DocumentOptions {
   bodyContent: HtmlEscapedString;
   bodyClass?: string;
@@ -84,7 +89,11 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
   // caching. The URL helpers handle both cases — we just await
   // whatever they return and drop them into the document. Fetched
   // in parallel because the CSS and JS helpers are independent.
-  const [cssUrl, jsUrl] = await Promise.all([getAppCssUrl(), getSquireJsUrl()]);
+  const [cssUrl, htmxUrl, jsUrl] = await Promise.all([
+    getAppCssUrl(),
+    getHtmxJsUrl(),
+    getSquireJsUrl(),
+  ]);
 
   return html`<!doctype html>
     <html lang="en">
@@ -106,6 +115,7 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
           : html``}
       >
         ${options.bodyContent}
+        <script src="${htmxUrl}" defer></script>
         <!--
           SQR-66 cite tap-toggle, served from /squire.js (dev) or
           /squire.<hash>.js (prod) by the on-demand asset pipeline
@@ -229,7 +239,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   <span class="squire-wordmark">Squire</span>
                   <span class="squire-context">FROSTHAVEN · RULES</span>`}
           </header>
-          <main class="squire-surface" aria-live="polite" aria-atomic="false">
+          <main id="squire-surface" class="squire-surface" aria-live="polite" aria-atomic="false">
             ${surfaceContent}
           </main>
           ${!authenticated
@@ -242,7 +252,14 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   <span class="squire-chip">Element infusion</span>
                   <span class="squire-chip">Negative scenario effects</span>
                 </nav>
-                <form class="squire-input-dock" method="post" action="${chatFormAction}">
+                <form
+                  class="squire-input-dock"
+                  method="post"
+                  action="${chatFormAction}"
+                  hx-post="${chatFormAction}"
+                  hx-target="#squire-surface"
+                  hx-swap="innerHTML"
+                >
                   ${chatFormHiddenFields.map(
                     (field) =>
                       html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
@@ -382,28 +399,7 @@ export async function renderConversationPage(options: {
   conversationId: string;
   messages: ConversationMessage[];
 }): Promise<HtmlEscapedString> {
-  const transcript =
-    options.messages.length === 0
-      ? html`<section class="squire-empty" aria-label="Conversation">
-          <h1 class="squire-question">Conversation is empty.</h1>
-        </section>`
-      : html`<section
-          class="squire-transcript"
-          aria-label="Conversation transcript"
-          data-conversation-id="${options.conversationId}"
-        >
-          ${options.messages.map((message) =>
-            message.role === 'user'
-              ? html`<article class="squire-turn squire-question">
-                  <p>${message.content}</p>
-                </article>`
-              : html`<article
-                  class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
-                >
-                  <p>${message.content}</p>
-                </article>`,
-          )}
-        </section>`;
+  const transcript = renderConversationTranscript(options.conversationId, options.messages);
 
   return layoutShell({
     session: options.session,
@@ -411,4 +407,55 @@ export async function renderConversationPage(options: {
     mainContent: transcript as HtmlEscapedString,
     chatFormAction: `/chat/${options.conversationId}/messages`,
   });
+}
+
+export function renderConversationTranscript(
+  conversationId: string,
+  messages: ConversationMessage[],
+): HtmlEscapedString {
+  if (messages.length === 0) {
+    return html`<section class="squire-empty" aria-label="Conversation">
+      <h1 class="squire-question">Conversation is empty.</h1>
+    </section>` as HtmlEscapedString;
+  }
+
+  return html`<section
+    class="squire-transcript"
+    aria-label="Conversation transcript"
+    data-conversation-id="${conversationId}"
+  >
+    ${messages.map((message) =>
+      message.role === 'user'
+        ? html`<article class="squire-turn squire-question">
+            <p>${message.content}</p>
+          </article>`
+        : html`<article
+            class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
+          >
+            <p>${message.content}</p>
+          </article>`,
+    )}
+  </section>` as HtmlEscapedString;
+}
+
+export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEscapedString {
+  return html`<section
+    class="squire-transcript squire-transcript--pending"
+    aria-label="Conversation transcript"
+    data-stream-url="${options.streamUrl}"
+  >
+    <article class="squire-turn squire-question">
+      <p>${options.question}</p>
+    </article>
+    <article class="squire-turn squire-answer squire-answer--pending" data-stream-state="pending">
+      <div class="squire-answer__content"></div>
+      <div class="squire-answer__tools" aria-live="off"></div>
+      <div class="squire-answer__skeleton" aria-hidden="true">
+        <div class="squire-answer__skeleton-dropcap"></div>
+        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>
+        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
+        <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
+      </div>
+    </article>
+  </section>` as HtmlEscapedString;
 }

@@ -10,8 +10,32 @@ const { mockAsk } = vi.hoisted(() => ({
 
 vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
+  ensureBootstrapStatus: vi.fn(async () => ({
+    lifecycle: 'ready',
+    ready: true,
+    bootstrapReady: true,
+    warmingUp: false,
+    indexSize: 1,
+    cardCount: 1,
+    ruleQueriesReady: true,
+    cardQueriesReady: true,
+    askReady: true,
+    missingBootstrapSteps: [],
+    errors: [],
+    capabilities: {
+      rules: { allowed: true, reason: null, message: null },
+      cards: { allowed: true, reason: null, message: null },
+      ask: { allowed: true, reason: null, message: null },
+    },
+  })),
+  getBootstrapStatus: vi.fn(() => ({
+    lifecycle: 'ready',
+    ready: true,
+    warmingUp: false,
+  })),
   isReady: vi.fn(() => true),
   ask: mockAsk,
+  startBootstrapLifecycle: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({
@@ -103,6 +127,21 @@ function requireLocation(response: Response): string {
   const location = response.headers.get('location');
   expect(location).toBeTruthy();
   return location!;
+}
+
+function parseSse(text: string): Array<{ event: string; data: unknown }> {
+  return text
+    .trim()
+    .split('\n\n')
+    .filter(Boolean)
+    .map((chunk) => {
+      const event = chunk.match(/^event:\s*(.+)$/m)?.[1] ?? 'message';
+      const rawData = chunk.match(/^data:\s*(.+)$/m)?.[1] ?? '{}';
+      return {
+        event,
+        data: JSON.parse(rawData),
+      };
+    });
 }
 
 beforeAll(async () => {
@@ -395,5 +434,166 @@ describe('conversation web backend', () => {
       })),
       userId: auth.userId,
     });
+  });
+
+  it('returns a pending HTMX shell for the first turn and pushes the conversation URL', async () => {
+    const auth = await createAuthContext();
+
+    const res = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Can I loot through a doorway?',
+        idempotencyKey: 'idem-htmx-first',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('HX-Push-Url')).toMatch(/^\/chat\/[0-9a-f-]+$/);
+    const body = await res.text();
+    expect(body).toContain('squire-transcript squire-transcript--pending');
+    expect(body).toContain('Can I loot through a doorway?');
+    expect(body).toMatch(/data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/);
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
+  it('streams one turn with translated SSE events and persists the final assistant answer', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('text', { delta: 'Loot tokens in your hex are picked up.' });
+      await options?.emit?.('tool_result', { name: 'search_rules' });
+      await options?.emit?.('done', {});
+      return 'Loot tokens in your hex are picked up.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'How does looting work?',
+        idempotencyKey: 'idem-stream-success',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'tool-start',
+        data: { id: 'search_rules-1', label: 'SEARCH RULES' },
+      },
+      {
+        event: 'text-delta',
+        data: { delta: 'Loot tokens in your hex are picked up.' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: true },
+      },
+      {
+        event: 'done',
+        data: {},
+      },
+    ]);
+
+    const pageRes = await requestWithAuth(auth, 'http://localhost:3000/chat');
+    expect(pageRes.status).toBe(404);
+
+    const { db } = getDb('server');
+    const storedMessages = await db.execute(sql`
+      select role, content, is_error as "isError"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'How does looting work?', isError: false },
+      {
+        role: 'assistant',
+        content: 'Loot tokens in your hex are picked up.',
+        isError: false,
+      },
+    ]);
+  });
+
+  it('emits a bootstrap error before streaming and does not persist an assistant turn', async () => {
+    const { ensureBootstrapStatus } = await import('../src/service.ts');
+    vi.mocked(ensureBootstrapStatus).mockResolvedValueOnce({
+      lifecycle: 'warming_up',
+      ready: false,
+      bootstrapReady: true,
+      warmingUp: true,
+      indexSize: 1,
+      cardCount: 1,
+      ruleQueriesReady: true,
+      cardQueriesReady: true,
+      askReady: false,
+      missingBootstrapSteps: [],
+      errors: [],
+      capabilities: {
+        rules: { allowed: true, reason: null, message: null },
+        cards: { allowed: true, reason: null, message: null },
+        ask: {
+          allowed: false,
+          reason: 'warming_up',
+          message: 'Service is warming up. Retry in a moment.',
+        },
+      },
+    });
+
+    const auth = await createAuthContext();
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Will this wait?',
+        idempotencyKey: 'idem-stream-bootstrap',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'error',
+        data: {
+          kind: 'bootstrap',
+          message: 'Service is warming up. Retry in a moment.',
+          recoverable: true,
+        },
+      },
+    ]);
+    expect(mockAsk).not.toHaveBeenCalled();
+
+    const { db } = getDb('server');
+    const storedMessages = await db.execute(sql`
+      select role, content
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([{ role: 'user', content: 'Will this wait?' }]);
   });
 });

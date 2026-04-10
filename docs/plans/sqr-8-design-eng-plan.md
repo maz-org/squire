@@ -38,6 +38,7 @@ Relevant existing code:
 
 - [src/server.ts](../../src/server.ts)
 - [src/chat/conversation-service.ts](../../src/chat/conversation-service.ts)
+- [src/service.ts](../../src/service.ts)
 - [src/web-ui/layout.ts](../../src/web-ui/layout.ts)
 - [src/web-ui/squire.js](../../src/web-ui/squire.js)
 - [src/web-ui/styles.css](../../src/web-ui/styles.css)
@@ -168,14 +169,17 @@ These are locked unless implementation reveals a concrete problem.
 
 - `ask()` already supports `emit`. SQR-8 widens the internal streaming payload
   shape so the conversation layer can translate it into the browser contract.
+- [src/service.ts](../../src/service.ts) now owns bootstrap lifecycle and
+  capability gating. SQR-8 must respect `ask` capability state instead of
+  assuming the service is simply "up" or "down".
 - [src/web-ui/squire.js](../../src/web-ui/squire.js) already owns small web UI
   behavior and is the right home for the stream controller.
 
 ### New dependency note
 
 The repo currently carries HTMX headers in HTML but does **not** actually ship
- the HTMX runtime yet. SQR-8 must add HTMX as a locally served asset, not a CDN
- script, so SQR-61 can keep CSP sane.
+the HTMX runtime yet. SQR-8 must add HTMX as a locally served asset, not a CDN
+script, so SQR-61 can keep CSP sane.
 
 ## Route Model
 
@@ -213,8 +217,9 @@ This route:
 
 1. validates auth ownership for the conversation
 2. verifies that `messageId` belongs to the conversation and user
-3. streams exactly one assistant response for that user turn
-4. persists the final assistant outcome once the stream completes or fails
+3. verifies that the service currently allows `ask`
+4. streams exactly one assistant response for that user turn
+5. persists the final assistant outcome once the stream completes or fails
 
 This route never multiplexes multiple turns.
 
@@ -222,14 +227,14 @@ This route never multiplexes multiple turns.
 
 The browser-facing event vocabulary remains the SQR-8 contract:
 
-| Event | Payload | Purpose |
-| --- | --- | --- |
-| `text-delta` | rendered fragment payload | append trusted answer content |
-| `tool-start` | `{ id, label }` | add quiet tool metadata |
-| `tool-result` | `{ id, label, ok }` | update tool metadata in place |
-| `citation` | citation/footer payload | update final consulted-source accumulator |
-| `done` | `{}` | finalize answer, collapse footer, close stream |
-| `error` | `{ kind, message, recoverable }` | render correct failure state |
+| Event         | Payload                          | Purpose                                        |
+| ------------- | -------------------------------- | ---------------------------------------------- |
+| `text-delta`  | rendered fragment payload        | append trusted answer content                  |
+| `tool-start`  | `{ id, label }`                  | add quiet tool metadata                        |
+| `tool-result` | `{ id, label, ok }`              | update tool metadata in place                  |
+| `citation`    | citation/footer payload          | update final consulted-source accumulator      |
+| `done`        | `{}`                             | finalize answer, collapse footer, close stream |
+| `error`       | `{ kind, message, recoverable }` | render correct failure state                   |
 
 ### Internal translation boundary
 
@@ -312,6 +317,28 @@ That preserves:
 - deterministic tests
 - simpler future retry logic
 
+## Bootstrap Lifecycle Dependency
+
+`main` now treats service readiness as a lifecycle with capability gating, not a
+single boolean.
+
+SQR-8 must integrate with that contract:
+
+- the pending-shell POST path must not bypass service bootstrap state
+- the SSE route must check whether `ask` is currently allowed before streaming
+- a blocked or warming service must render a truthful Squire error state rather
+  than falling through to a generic internal failure
+
+### Required behaviors
+
+- If `ask` capability is unavailable because the service is `warming_up`, render
+  the warming message as a recoverable answer-slot failure state.
+- If `ask` capability is unavailable because bootstrap is blocked or a
+  dependency failed, render a non-streaming failure state that explains the
+  service is not ready.
+- Do not open a long-lived SSE stream only to discover mid-handler that `ask`
+  was never permitted.
+
 ## Rendering Boundary
 
 Server owns formatting and sanitization of streamed answer fragments.
@@ -359,13 +386,14 @@ In [src/web-ui/squire.js](../../src/web-ui/squire.js):
 
 ## Failure Modes
 
-| Failure | Server behavior | UI behavior | Persistence |
-| --- | --- | --- | --- |
-| Transport failure before first delta | emit `error { kind: "transport", recoverable: true }` | replace pending answer with `TROUBLE CONNECTING` banner + retry affordance | persist final assistant error turn |
-| Session expires mid-stream | emit `error { kind: "session", recoverable: false }` | `SESSION ENDED` banner, redirect after delay | persist final assistant error turn |
-| Tool call fails but answer can continue | emit tool-scoped recoverable error | softer `COULDN'T CHECK ONE SOURCE` treatment, answer may continue | final assistant answer persists; tool failure not as partial message |
-| Empty final answer | emit fallback final content, then `done` | no blank answer slot | persist fallback assistant message |
-| Client disconnect | stop work and clean up stream | no further UI updates | no partial assistant fragments |
+| Failure                                               | Server behavior                                       | UI behavior                                                                | Persistence                                                          |
+| ----------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Transport failure before first delta                  | emit `error { kind: "transport", recoverable: true }` | replace pending answer with `TROUBLE CONNECTING` banner + retry affordance | persist final assistant error turn                                   |
+| Session expires mid-stream                            | emit `error { kind: "session", recoverable: false }`  | `SESSION ENDED` banner, redirect after delay                               | persist final assistant error turn                                   |
+| Tool call fails but answer can continue               | emit tool-scoped recoverable error                    | softer `COULDN'T CHECK ONE SOURCE` treatment, answer may continue          | final assistant answer persists; tool failure not as partial message |
+| Empty final answer                                    | emit fallback final content, then `done`              | no blank answer slot                                                       | persist fallback assistant message                                   |
+| Client disconnect                                     | stop work and clean up stream                         | no further UI updates                                                      | no partial assistant fragments                                       |
+| Service warming up / ask blocked before stream starts | do not enter normal stream path                       | render truthful bootstrap-state failure in answer slot                     | no assistant message created                                         |
 
 ## Observability
 
@@ -418,13 +446,14 @@ all covered.
 2. HTMX existing-conversation POST returns pending shell without redirect
 3. SSE stream is scoped to one `(conversationId, messageId)` pair
 4. Non-owned conversation or message ids still return indistinguishable `404`
-5. User message persists before stream begins
-6. Assistant message persists once on final success
-7. Failure persists one final assistant error turn, not partial text
-8. Client disconnect triggers cleanup and no partial assistant persistence
-9. Browser-facing event translation preserves ordering constraints:
-   no answer text leaks between `tool-start` and its matching `tool-result`
-10. OTel span emits `time_to_first_byte_ms`
+5. SSE route respects service bootstrap capability gating for `ask`
+6. User message persists before stream begins
+7. Assistant message persists once on final success
+8. Failure persists one final assistant error turn, not partial text
+9. Client disconnect triggers cleanup and no partial assistant persistence
+10. Browser-facing event translation preserves ordering constraints:
+    no answer text leaks between `tool-start` and its matching `tool-result`
+11. OTel span emits `time_to_first_byte_ms`
 
 ### Required DOM and controller tests
 
@@ -462,10 +491,11 @@ all covered.
 6. Widen internal emit payloads in `ask()` / `runAgentLoop()` as needed for
    conversation-layer translation
 7. Add the turn-scoped SSE route
-8. Add the `squire.js` stream controller
-9. Add styling for skeleton and tool-status metadata
-10. Add server and DOM tests
-11. Verify non-HTMX fallback still works
+8. Integrate bootstrap-capability handling into the POST and SSE paths
+9. Add the `squire.js` stream controller
+10. Add styling for skeleton and tool-status metadata
+11. Add server and DOM tests
+12. Verify non-HTMX fallback still works
 
 ## Not In Scope But Worth Tracking
 
