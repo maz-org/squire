@@ -107,6 +107,20 @@ describe('initialize', () => {
     expect(status.missingBootstrapSteps).toEqual(['npm run index', 'npm run seed:cards']);
   });
 
+  it('populates the first bootstrap snapshot on demand', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: false,
+      indexSize: 0,
+      error: 'database unavailable',
+      reason: 'dependency_unavailable',
+    });
+    mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    const status = await getBootstrapStatus();
+    expect(status.lifecycle).toBe('dependency_failed');
+    expect(status.errors[0]).toMatch(/database unavailable/);
+  });
+
   it('retries initialization when bootstrap prerequisites later become available', async () => {
     mockGetRetrievalBootstrapStatus.mockResolvedValue({
       ready: true,
@@ -189,5 +203,22 @@ describe('ask', () => {
     await ask('test');
     expect(mockInitializeRetrieval).toHaveBeenCalled();
     expect(mockRunAgentLoop).toHaveBeenCalledWith('test', undefined);
+  });
+
+  it('does not run the agent loop after readiness has regressed', async () => {
+    await initialize();
+
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: false,
+      indexSize: 0,
+      error: 'database unavailable',
+      reason: 'dependency_unavailable',
+    });
+    mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    await refreshBootstrapState();
+
+    await expect(ask('test after regression')).rejects.toThrow(/database unavailable/i);
+    expect(mockRunAgentLoop).not.toHaveBeenCalledWith('test after regression', undefined);
   });
 });

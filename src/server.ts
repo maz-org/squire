@@ -639,12 +639,7 @@ app.get('/api/health', async (c) => {
   return c.json({
     lifecycle: status.lifecycle,
     ready: status.ready,
-    bootstrap_ready: status.bootstrapReady,
     warming_up: status.warmingUp,
-    index_size: status.indexSize,
-    card_count: status.cardCount,
-    missing_bootstrap_steps: status.missingBootstrapSteps,
-    errors: status.errors,
   });
 });
 
@@ -668,13 +663,13 @@ async function bootstrapErrorResponse(
 
   if (capability.allowed) return null;
 
+  const message =
+    status.lifecycle === 'warming_up'
+      ? 'Service is warming up. Retry in a moment.'
+      : 'Service unavailable.';
+
   return c.json(
-    {
-      ...jsonError(capability.message ?? 'Service bootstrap incomplete', 503),
-      lifecycle: status.lifecycle,
-      capability_reason: capability.reason,
-      missing_bootstrap_steps: status.missingBootstrapSteps,
-    },
+    jsonError(message, 503),
     503,
   );
 }

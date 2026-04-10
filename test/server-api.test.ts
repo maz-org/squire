@@ -142,9 +142,9 @@ describe('GET /api/health', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveProperty('ready', true);
-    expect(body).toHaveProperty('bootstrap_ready', true);
-    expect(body).toHaveProperty('index_size');
-    expect(typeof body.index_size).toBe('number');
+    expect(body).toHaveProperty('lifecycle', 'ready');
+    expect(body).toHaveProperty('warming_up', false);
+    expect(body).not.toHaveProperty('errors');
   });
 
   it('returns ready=false when service is not initialized', async () => {
@@ -166,12 +166,6 @@ describe('GET /api/health', () => {
     const body = await res.json();
     expect(body.ready).toBe(false);
     expect(body.warming_up).toBe(true);
-  });
-
-  it('includes index_size in response', async () => {
-    const res = await app.request('/api/health');
-    const body = await res.json();
-    expect(body.index_size).toBe(3);
   });
 
   it('returns JSON content type', async () => {
@@ -262,8 +256,8 @@ describe('GET /api/search/rules', () => {
     const res = await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(res.status).toBe(503);
     const body = await res.json();
-    expect(body.error).toMatch(/npm run index/);
-    expect(body.missing_bootstrap_steps).toEqual(['npm run index']);
+    expect(body.error).toBe('Service unavailable.');
+    expect(body).not.toHaveProperty('missing_bootstrap_steps');
   });
 });
 
@@ -344,7 +338,7 @@ describe('GET /api/search/cards', () => {
     const res = await app.request('/api/search/cards?q=algox', { headers: await auth() });
     expect(res.status).toBe(503);
     const body = await res.json();
-    expect(body.error).toMatch(/npm run seed:cards/);
+    expect(body.error).toBe('Service unavailable.');
   });
 });
 
@@ -618,7 +612,8 @@ describe('POST /api/ask', () => {
     expect(res.status).toBe(503);
     expect(res.headers.get('content-type')).toContain('application/json');
     const body = await res.json();
-    expect(body.missing_bootstrap_steps).toEqual(['npm run index', 'npm run seed:cards']);
+    expect(body.error).toBe('Service unavailable.');
+    expect(body).not.toHaveProperty('missing_bootstrap_steps');
   });
 
   it('emits error event when ask() throws', async () => {

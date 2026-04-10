@@ -74,6 +74,9 @@ let initPromise: Promise<void> | null = null;
 let initErrorMessage: string | null = null;
 let lifecycle: BootstrapLifecycle = 'boot_blocked';
 let bootstrapPoller: ReturnType<typeof setInterval> | null = null;
+let bootstrapRefreshPromise: Promise<ServiceBootstrapStatus> | null = null;
+let bootstrapStatusReady = false;
+let lastBootstrapLogSignature: string | null = null;
 
 let bootstrapStatus: ServiceBootstrapStatus = {
   lifecycle,
@@ -100,6 +103,9 @@ export function _resetForTesting(): void {
   initPromise = null;
   initErrorMessage = null;
   lifecycle = 'boot_blocked';
+  bootstrapRefreshPromise = null;
+  bootstrapStatusReady = false;
+  lastBootstrapLogSignature = null;
   if (bootstrapPoller) {
     clearInterval(bootstrapPoller);
     bootstrapPoller = null;
@@ -129,7 +135,7 @@ export function _resetForTesting(): void {
  * verify extracted data is available. Safe to call concurrently.
  */
 export async function initialize(): Promise<void> {
-  if (initialized) return;
+  if (initialized && lifecycle === 'ready') return;
   if (initPromise) return initPromise;
 
   const snapshot = await refreshBootstrapState();
@@ -332,16 +338,51 @@ function buildBootstrapStatus(
   };
 }
 
+function logBootstrapTransition(status: ServiceBootstrapStatus): void {
+  const signature = `${status.lifecycle}|${status.errors.join('|')}`;
+  if (signature === lastBootstrapLogSignature) return;
+  lastBootstrapLogSignature = signature;
+
+  if (status.lifecycle === 'ready') {
+    console.log('Squire bootstrap ready.');
+    return;
+  }
+
+  const detail = status.errors[0];
+  if (detail) {
+    console.warn(`Squire bootstrap ${status.lifecycle}: ${detail}`);
+    return;
+  }
+
+  if (status.lifecycle === 'warming_up') {
+    console.log('Squire bootstrap warming up.');
+    return;
+  }
+
+  console.warn(`Squire bootstrap ${status.lifecycle}.`);
+}
+
 export async function refreshBootstrapState(): Promise<ServiceBootstrapStatus> {
+  if (bootstrapRefreshPromise) return bootstrapRefreshPromise;
+
+  bootstrapRefreshPromise = (async () => {
   const [retrieval, cards] = await Promise.all([
     getRetrievalBootstrapStatus(),
     getCardBootstrapStatus(),
   ]);
-  bootstrapStatus = buildBootstrapStatus(retrieval, cards);
-  return bootstrapStatus;
+    bootstrapStatus = buildBootstrapStatus(retrieval, cards);
+    bootstrapStatusReady = true;
+    logBootstrapTransition(bootstrapStatus);
+    return bootstrapStatus;
+  })().finally(() => {
+    bootstrapRefreshPromise = null;
+  });
+
+  return bootstrapRefreshPromise;
 }
 
 export async function getBootstrapStatus(): Promise<ServiceBootstrapStatus> {
+  if (!bootstrapStatusReady) return refreshBootstrapState();
   return bootstrapStatus;
 }
 

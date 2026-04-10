@@ -149,7 +149,7 @@ Example health check for the main checkout:
 
 ```bash
 curl http://localhost:3000/api/health
-# {"lifecycle":"ready","ready":true,"bootstrap_ready":true,"warming_up":false,"index_size":2147,"card_count":1234,"missing_bootstrap_steps":[],"errors":[]}
+# {"lifecycle":"ready","ready":true,"warming_up":false}
 ```
 
 For linked worktrees, replace `3000` with that worktree's logged port. Do not
@@ -170,10 +170,8 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 | GET    | `/api/cards/:type/:id`       | Look up a single card                                      |
 | POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)       |
 
-All errors return `{ error, status }` as JSON. Bootstrap-related `503`
-responses also include `missing_bootstrap_steps` so local dev and QA can see
-whether the checkout still needs `npm run index`, `npm run seed:cards`, or
-both, plus `lifecycle` and `capability_reason` for typed denial state.
+All errors return `{ error, status }` as JSON. Bootstrap and dependency details
+are logged server-side rather than returned from public endpoints.
 
 `topK` defaults to 6, must be 1–100. The `filter` parameter is a
 URL-encoded JSON object with AND-logic field matching.
