@@ -56,11 +56,17 @@ export async function findById(sessionId: string): Promise<Session | null> {
   const now = new Date();
 
   const row = await db.query.sessions.findFirst({
-    where: eq(sessions.id, sessionId),
+    where: { id: sessionId },
     with: { user: true },
   });
 
   if (!row) return null;
+  if (!row.user) {
+    console.warn('[session] session row missing joined user; deleting orphaned session');
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    return null;
+  }
+  const user = row.user;
 
   if (row.expiresAt <= now) {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
@@ -76,7 +82,7 @@ export async function findById(sessionId: string): Promise<Session | null> {
     console.warn('[session] lastSeenAt update failed (non-fatal):', (err as Error).message);
   }
 
-  return toDomain(row);
+  return toDomain({ ...row, user });
 }
 
 /**

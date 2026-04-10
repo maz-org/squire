@@ -11,3 +11,4 @@ export * from './core.ts';
 export * from './auth.ts';
 export * from './cards.ts';
 export * from './conversations.ts';
+export * from './relations.ts';

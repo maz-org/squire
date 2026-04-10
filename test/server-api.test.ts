@@ -132,9 +132,24 @@ async function auth(): Promise<Record<string, string>> {
   return { Authorization: 'Bearer stub-token' };
 }
 
+function resetRouteMocks() {
+  vi.clearAllMocks();
+  mockInitialize.mockReset();
+  mockEnsureBootstrapStatus.mockReset();
+  mockGetBootstrapStatus.mockReset();
+  mockIsReady.mockReset();
+  mockRefreshInitializationIfReady.mockReset();
+  mockAsk.mockReset();
+  mockSearchRules.mockReset();
+  mockSearchCards.mockReset();
+  mockListCardTypes.mockReset();
+  mockListCards.mockReset();
+  mockGetCard.mockReset();
+}
+
 describe('GET /api/health', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockRefreshInitializationIfReady.mockResolvedValue(undefined);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
@@ -226,7 +241,7 @@ describe('GET /api/health', () => {
 
 describe('GET /api/search/rules', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -320,7 +335,7 @@ describe('GET /api/search/rules', () => {
 
 describe('GET /api/search/cards', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -402,7 +417,7 @@ describe('GET /api/search/cards', () => {
 
 describe('GET /api/card-types', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -426,7 +441,7 @@ describe('GET /api/card-types', () => {
 
 describe('GET /api/cards', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -471,7 +486,7 @@ describe('GET /api/cards', () => {
 
 describe('GET /api/cards/:type/:id', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -501,7 +516,7 @@ describe('GET /api/cards/:type/:id', () => {
 
 describe('POST /api/ask', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -714,7 +729,7 @@ describe('POST /api/ask', () => {
 
 describe('bootstrapErrorResponse fast path', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
@@ -833,7 +848,7 @@ describe('bootstrapErrorResponse fast path', () => {
 
 describe('error handling', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetRouteMocks();
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
