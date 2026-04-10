@@ -315,6 +315,9 @@ npm run hooks:install
 machine-local `~/.gstack/projects/maz-org-squire/learnings.jsonl`, generates
 `docs/agent/learnings.md`, and should be run deliberately when the local
 learnings have accumulated enough signal to be worth curating into the repo.
+Normal flow: use gstack `/learn` to inspect or search the local learnings, then
+run `npm run agent:export-learnings` to promote the durable ones into the
+checked-in summary.
 
 ### Weekly learnings export via launchd
 
