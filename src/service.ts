@@ -23,6 +23,7 @@ const BOOTSTRAP_POLL_MS = 5000;
 type MissingBootstrapStep = 'npm run index' | 'npm run seed:cards';
 
 export type BootstrapLifecycle =
+  | 'starting'
   | 'boot_blocked'
   | 'warming_up'
   | 'ready'
@@ -72,7 +73,7 @@ export interface ServiceBootstrapStatus {
 let initialized = false;
 let initPromise: Promise<void> | null = null;
 let initErrorMessage: string | null = null;
-let lifecycle: BootstrapLifecycle = 'boot_blocked';
+let lifecycle: BootstrapLifecycle = 'starting';
 let bootstrapPoller: ReturnType<typeof setInterval> | null = null;
 let bootstrapRefreshPromise: Promise<ServiceBootstrapStatus> | null = null;
 let bootstrapStatusReady = false;
@@ -91,9 +92,9 @@ let bootstrapStatus: ServiceBootstrapStatus = {
   missingBootstrapSteps: [],
   errors: [],
   capabilities: {
-    rules: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
-    cards: { allowed: false, reason: 'missing_cards', message: CARD_BOOTSTRAP_MESSAGE },
-    ask: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
+    rules: { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE },
+    cards: { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE },
+    ask: { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE },
   },
 };
 
@@ -102,7 +103,7 @@ export function _resetForTesting(): void {
   initialized = false;
   initPromise = null;
   initErrorMessage = null;
-  lifecycle = 'boot_blocked';
+  lifecycle = 'starting';
   bootstrapRefreshPromise = null;
   bootstrapStatusReady = false;
   lastBootstrapLogSignature = null;
@@ -123,9 +124,9 @@ export function _resetForTesting(): void {
     missingBootstrapSteps: [],
     errors: [],
     capabilities: {
-      rules: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
-      cards: { allowed: false, reason: 'missing_cards', message: CARD_BOOTSTRAP_MESSAGE },
-      ask: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
+      rules: { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE },
+      cards: { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE },
+      ask: { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE },
     },
   };
 }
@@ -143,6 +144,9 @@ export async function initialize(): Promise<void> {
     throw new Error(snapshot.capabilities.ask.message ?? snapshot.errors[0] ?? EMBEDDINGS_BOOTSTRAP_MESSAGE);
   }
 
+  // A retry is a fresh warmup attempt, so clear the stale terminal error
+  // before rebuilding the in-flight snapshot.
+  initErrorMessage = null;
   lifecycle = 'warming_up';
   bootstrapStatus = buildBootstrapStatus(
     snapshot.lifecycle === 'dependency_failed'
@@ -226,11 +230,6 @@ function buildCapabilityStatus(
   cards: CardBootstrapStatus,
 ): CapabilityStatus {
   if (kind === 'ready') return { allowed: true, reason: null, message: null };
-
-  if (kind === 'dependency_failed') {
-    const message = retrieval.error ?? cards.error ?? CARD_DB_HINT;
-    return { allowed: false, reason: 'dependency_unavailable', message };
-  }
 
   if (scope === 'rules') {
     if (retrieval.ready) return { allowed: true, reason: null, message: null };
@@ -366,10 +365,10 @@ export async function refreshBootstrapState(): Promise<ServiceBootstrapStatus> {
   if (bootstrapRefreshPromise) return bootstrapRefreshPromise;
 
   bootstrapRefreshPromise = (async () => {
-  const [retrieval, cards] = await Promise.all([
-    getRetrievalBootstrapStatus(),
-    getCardBootstrapStatus(),
-  ]);
+    const [retrieval, cards] = await Promise.all([
+      getRetrievalBootstrapStatus(),
+      getCardBootstrapStatus(),
+    ]);
     bootstrapStatus = buildBootstrapStatus(retrieval, cards);
     bootstrapStatusReady = true;
     logBootstrapTransition(bootstrapStatus);
@@ -381,7 +380,19 @@ export async function refreshBootstrapState(): Promise<ServiceBootstrapStatus> {
   return bootstrapRefreshPromise;
 }
 
-export async function getBootstrapStatus(): Promise<ServiceBootstrapStatus> {
+/**
+ * Snapshot-only read for health and other observers. This must never trigger
+ * live bootstrap probes or await dependency checks on the request path.
+ */
+export function getBootstrapStatus(): ServiceBootstrapStatus {
+  return bootstrapStatus;
+}
+
+/**
+ * Resolve bootstrap status for admission-control paths. This may perform live
+ * dependency probes until the first real snapshot has been established.
+ */
+export async function ensureBootstrapStatus(): Promise<ServiceBootstrapStatus> {
   if (!bootstrapStatusReady) return refreshBootstrapState();
   return bootstrapStatus;
 }

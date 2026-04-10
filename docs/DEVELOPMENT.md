@@ -134,9 +134,10 @@ The server chooses a checkout-local port in two steps:
 Override with `PORT` if you want a specific port. On startup, the server logs
 the final port it selected. It binds the port immediately, then warms the
 retrieval stack in the background. If embeddings or card data are missing,
-startup no longer crashes; `/api/health` reports the missing bootstrap step(s)
-and query endpoints return `503` JSON errors until `npm run index` and/or
-`npm run seed:cards` has been run.
+startup no longer crashes; `/api/health` returns a coarse lifecycle snapshot
+immediately and query endpoints return `503` JSON errors until `npm run index`
+and/or `npm run seed:cards` has been run. Detailed bootstrap and dependency
+reasons are logged server-side.
 
 To discover the current worktree's runtime settings, use startup logs or ask
 the app directly by checking:
@@ -162,7 +163,7 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 | Method | Path                         | Description                                                |
 | ------ | ---------------------------- | ---------------------------------------------------------- |
-| GET    | `/api/health`                | Readiness check with bootstrap details and index/card size |
+| GET    | `/api/health`                | Snapshot-only readiness check (`lifecycle`, `ready`, `warming_up`) |
 | GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                       |
 | GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
 | GET    | `/api/card-types`            | List card types with record counts                         |

@@ -24,6 +24,10 @@ owner of startup/readiness state.
 ```
 LIFECYCLE
 =========
+starting
+  Process is listening, but the bootstrap loop has not produced the first
+  dependency snapshot yet. Health may report this briefly after bind.
+
 boot_blocked
   Dependencies reachable, but required bootstrap data is missing.
   Example: embeddings table empty or cards not seeded.
@@ -82,21 +86,25 @@ control flow.
 ```
 STATE              /api/health   rules   cards   ask
 ----------------------------------------------------
+starting              yes         wait    wait    wait
 boot_blocked          yes        maybe   maybe   no
 warming_up            yes        yes*    yes*    no
 ready                 yes        yes     yes     yes
-dependency_failed     yes        no      no      no
+dependency_failed     yes        maybe   maybe   no
 init_failed           yes        no      yes*    no
 ```
 
 `yes*` means the capability can be served if its own prerequisites are already
 valid. Example: card endpoints can still work while ask remains blocked.
+`wait` means admission-control paths may await the first live probe, while
+health still returns the cached `starting` snapshot immediately.
 
 ## Health Rules
 
 `/api/health` should be a pure snapshot read:
 
 - never start warmup
+- never perform bootstrap probes
 - never wait on warmup
 - always return immediately
 
@@ -104,12 +112,10 @@ If the state machine is modeled correctly, health can report:
 
 - `lifecycle`
 - `ready`
-- `bootstrap_ready`
 - `warming_up`
-- `missing_bootstrap_steps`
-- typed capability denial reasons
 
-without doing work on the request path.
+without doing work on the request path. Richer capability details stay in the
+service snapshot for route gating and logs, not the public health payload.
 
 ## Writer / Reader Split
 

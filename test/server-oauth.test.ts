@@ -44,6 +44,7 @@ function makeStatus() {
 
 const {
   mockInitialize,
+  mockEnsureBootstrapStatus,
   mockGetBootstrapStatus,
   mockIsReady,
   mockRefreshInitializationIfReady,
@@ -51,6 +52,7 @@ const {
   mockSearchRules,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
+  mockEnsureBootstrapStatus: vi.fn(),
   mockGetBootstrapStatus: vi.fn(),
   mockIsReady: vi.fn(),
   mockRefreshInitializationIfReady: vi.fn(),
@@ -60,6 +62,7 @@ const {
 
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
+  ensureBootstrapStatus: mockEnsureBootstrapStatus,
   getBootstrapStatus: mockGetBootstrapStatus,
   isReady: mockIsReady,
   refreshInitializationIfReady: mockRefreshInitializationIfReady,
@@ -87,7 +90,8 @@ beforeAll(async () => {
 beforeEach(() => {
   mockIsReady.mockReturnValue(true);
   mockRefreshInitializationIfReady.mockResolvedValue(undefined);
-  mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+  mockGetBootstrapStatus.mockReturnValue(makeStatus());
+  mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
 });
 
 afterAll(async () => {

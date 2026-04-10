@@ -44,6 +44,7 @@ import {
   initialize,
   isReady,
   ask,
+  ensureBootstrapStatus,
   getBootstrapStatus,
   refreshBootstrapState,
   refreshInitializationIfReady,
@@ -101,13 +102,20 @@ describe('initialize', () => {
     ]);
 
     await refreshBootstrapState();
-    const status = await getBootstrapStatus();
+    const status = getBootstrapStatus();
     expect(status.ready).toBe(false);
     expect(status.lifecycle).toBe('boot_blocked');
     expect(status.missingBootstrapSteps).toEqual(['npm run index', 'npm run seed:cards']);
   });
 
-  it('populates the first bootstrap snapshot on demand', async () => {
+  it('returns an immediate starting snapshot before the first live probe', () => {
+    const status = getBootstrapStatus();
+    expect(status.lifecycle).toBe('starting');
+    expect(status.ready).toBe(false);
+    expect(status.errors).toEqual([]);
+  });
+
+  it('populates the first bootstrap snapshot only through the live probe path', async () => {
     mockGetRetrievalBootstrapStatus.mockResolvedValue({
       ready: false,
       indexSize: 0,
@@ -116,7 +124,7 @@ describe('initialize', () => {
     });
     mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
 
-    const status = await getBootstrapStatus();
+    const status = await ensureBootstrapStatus();
     expect(status.lifecycle).toBe('dependency_failed');
     expect(status.errors[0]).toMatch(/database unavailable/);
   });
@@ -148,10 +156,10 @@ describe('initialize', () => {
 
     const init = initialize();
     await vi.waitFor(async () => {
-      expect((await getBootstrapStatus()).lifecycle).toBe('warming_up');
+      expect(getBootstrapStatus().lifecycle).toBe('warming_up');
     });
 
-    const status = await getBootstrapStatus();
+    const status = getBootstrapStatus();
     expect(status.lifecycle).toBe('warming_up');
     expect(status.warmingUp).toBe(true);
     expect(status.capabilities.ask).toEqual({
@@ -162,6 +170,50 @@ describe('initialize', () => {
 
     resolveWarmup?.();
     await init;
+  });
+
+  it('reports warming_up when retrying after an init failure', async () => {
+    let failWarmup = true;
+    let resolveRetry: (() => void) | null = null;
+    mockInitializeRetrieval.mockImplementation(() => {
+      if (failWarmup) {
+        failWarmup = false;
+        return Promise.reject(new Error('embedder cold start failed'));
+      }
+      return new Promise<void>((resolve) => {
+        resolveRetry = resolve;
+      });
+    });
+
+    await expect(initialize()).rejects.toThrow(/embedder cold start failed/i);
+    expect(getBootstrapStatus().lifecycle).toBe('init_failed');
+
+    const retry = initialize();
+    await vi.waitFor(() => {
+      expect(getBootstrapStatus().lifecycle).toBe('warming_up');
+    });
+
+    resolveRetry?.();
+    await retry;
+    expect(getBootstrapStatus().lifecycle).toBe('ready');
+  });
+
+  it('keeps rule queries available when only card bootstrap probing fails', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({
+      ready: true,
+      indexSize: 8,
+    });
+    mockListCardTypes.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+    const status = await ensureBootstrapStatus();
+    expect(status.lifecycle).toBe('dependency_failed');
+    expect(status.capabilities.rules).toEqual({
+      allowed: true,
+      reason: null,
+      message: null,
+    });
+    expect(status.capabilities.cards.allowed).toBe(false);
+    expect(status.capabilities.ask.allowed).toBe(false);
   });
 });
 

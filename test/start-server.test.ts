@@ -41,7 +41,40 @@ async function loadStartServer(options: {
   }));
   vi.doMock('../src/service.ts', () => ({
     ask: vi.fn(),
-    getBootstrapStatus: vi.fn().mockResolvedValue({
+    ensureBootstrapStatus: vi.fn().mockResolvedValue({
+      lifecycle: 'boot_blocked',
+      ready: false,
+      bootstrapReady: false,
+      warmingUp: false,
+      indexSize: 0,
+      cardCount: 0,
+      ruleQueriesReady: false,
+      cardQueriesReady: false,
+      askReady: false,
+      missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
+      errors: [
+        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        'No card data found in Postgres. Run `npm run seed:cards` first.',
+      ],
+      capabilities: {
+        rules: {
+          allowed: false,
+          reason: 'missing_index',
+          message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        },
+        cards: {
+          allowed: false,
+          reason: 'missing_cards',
+          message: 'No card data found in Postgres. Run `npm run seed:cards` first.',
+        },
+        ask: {
+          allowed: false,
+          reason: 'missing_index',
+          message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        },
+      },
+    }),
+    getBootstrapStatus: vi.fn().mockReturnValue({
       lifecycle: 'boot_blocked',
       ready: false,
       bootstrapReady: false,

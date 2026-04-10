@@ -58,6 +58,7 @@ function makeStatus(
 
 const {
   mockInitialize,
+  mockEnsureBootstrapStatus,
   mockGetBootstrapStatus,
   mockIsReady,
   mockRefreshInitializationIfReady,
@@ -69,6 +70,7 @@ const {
   mockGetCard,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
+  mockEnsureBootstrapStatus: vi.fn(),
   mockGetBootstrapStatus: vi.fn(),
   mockIsReady: vi.fn(),
   mockRefreshInitializationIfReady: vi.fn(),
@@ -82,6 +84,7 @@ const {
 
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
+  ensureBootstrapStatus: mockEnsureBootstrapStatus,
   getBootstrapStatus: mockGetBootstrapStatus,
   isReady: mockIsReady,
   refreshInitializationIfReady: mockRefreshInitializationIfReady,
@@ -134,7 +137,8 @@ describe('GET /api/health', () => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
     mockRefreshInitializationIfReady.mockResolvedValue(undefined);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
   });
 
   it('returns 200 with ready status', async () => {
@@ -148,7 +152,7 @@ describe('GET /api/health', () => {
   });
 
   it('returns ready=false when service is not initialized', async () => {
-    mockGetBootstrapStatus.mockResolvedValueOnce(
+    mockGetBootstrapStatus.mockReturnValueOnce(
       makeStatus({
         lifecycle: 'warming_up',
         ready: false,
@@ -168,6 +172,29 @@ describe('GET /api/health', () => {
     expect(body.warming_up).toBe(true);
   });
 
+  it('returns the starting snapshot immediately before probes complete', async () => {
+    mockGetBootstrapStatus.mockReturnValueOnce(
+      makeStatus({
+        lifecycle: 'starting',
+        ready: false,
+        warmingUp: false,
+        ruleQueriesReady: false,
+        cardQueriesReady: false,
+        askReady: false,
+        capabilities: {
+          rules: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
+          cards: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
+          ask: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
+        },
+      }),
+    );
+
+    const res = await app.request('/api/health');
+    const body = await res.json();
+    expect(body.lifecycle).toBe('starting');
+    expect(body.ready).toBe(false);
+  });
+
   it('returns JSON content type', async () => {
     const res = await app.request('/api/health');
     expect(res.headers.get('content-type')).toContain('application/json');
@@ -185,7 +212,8 @@ describe('GET /api/search/rules', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchRules.mockResolvedValue([
       { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
     ]);
@@ -216,6 +244,13 @@ describe('GET /api/search/rules', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 400 for missing q before bootstrap gating during startup', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    const res = await app.request('/api/search/rules', { headers: await auth() });
+    expect(res.status).toBe(400);
+    expect(mockEnsureBootstrapStatus).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when q is empty', async () => {
     const res = await app.request('/api/search/rules?q=', { headers: await auth() });
     expect(res.status).toBe(400);
@@ -228,7 +263,7 @@ describe('GET /api/search/rules', () => {
 
   it('returns 503 with an actionable bootstrap error when embeddings are missing', async () => {
     mockIsReady.mockReturnValueOnce(false);
-    mockGetBootstrapStatus.mockResolvedValueOnce(
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
       makeStatus({
         lifecycle: 'boot_blocked',
         ready: false,
@@ -267,7 +302,8 @@ describe('GET /api/search/cards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchCards.mockReturnValue([
       { type: 'monster-stats', data: { name: 'Algox Archer' }, score: 2 },
     ]);
@@ -310,7 +346,7 @@ describe('GET /api/search/cards', () => {
 
   it('returns 503 with an actionable bootstrap error when card data is missing', async () => {
     mockIsReady.mockReturnValueOnce(false);
-    mockGetBootstrapStatus.mockResolvedValueOnce(
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
       makeStatus({
         lifecycle: 'boot_blocked',
         ready: false,
@@ -348,7 +384,8 @@ describe('GET /api/card-types', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockListCardTypes.mockReturnValue([
       { type: 'monster-stats', count: 10 },
       { type: 'items', count: 5 },
@@ -371,7 +408,8 @@ describe('GET /api/cards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockListCards.mockReturnValue([{ name: 'Algox Archer' }]);
   });
 
@@ -386,6 +424,13 @@ describe('GET /api/cards', () => {
   it('returns 400 when type is missing', async () => {
     const res = await app.request('/api/cards', { headers: await auth() });
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for missing type before bootstrap gating during startup', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    const res = await app.request('/api/cards', { headers: await auth() });
+    expect(res.status).toBe(400);
+    expect(mockEnsureBootstrapStatus).not.toHaveBeenCalled();
   });
 
   it('passes filter as parsed JSON', async () => {
@@ -408,7 +453,8 @@ describe('GET /api/cards/:type/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockGetCard.mockReturnValue({ name: 'Algox Archer', levelRange: '0-3' });
   });
 
@@ -437,7 +483,8 @@ describe('POST /api/ask', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
-    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockAsk.mockResolvedValue('Loot tokens are picked up in your hex.');
   });
 
@@ -470,6 +517,17 @@ describe('POST /api/ask', () => {
       body: JSON.stringify({}),
     });
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for invalid JSON before bootstrap gating during startup', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: '{',
+    });
+    expect(res.status).toBe(400);
+    expect(mockEnsureBootstrapStatus).not.toHaveBeenCalled();
   });
 
   it('returns 400 when question is empty', async () => {
@@ -570,7 +628,7 @@ describe('POST /api/ask', () => {
 
   it('returns 503 JSON before opening the stream when bootstrap is incomplete', async () => {
     mockIsReady.mockReturnValueOnce(false);
-    mockGetBootstrapStatus.mockResolvedValueOnce(
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
       makeStatus({
         lifecycle: 'boot_blocked',
         ready: false,
@@ -636,6 +694,8 @@ describe('bootstrapErrorResponse fast path', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchRules.mockResolvedValue([
       { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
     ]);
@@ -644,6 +704,7 @@ describe('bootstrapErrorResponse fast path', () => {
   it('skips bootstrap probes for ready search requests', async () => {
     await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(mockGetBootstrapStatus).not.toHaveBeenCalled();
+    expect(mockEnsureBootstrapStatus).not.toHaveBeenCalled();
   });
 
   it('lets a ready request reach the handler via capability middleware', async () => {
@@ -653,7 +714,7 @@ describe('bootstrapErrorResponse fast path', () => {
 
   it('blocks the handler when capability middleware denies the route', async () => {
     mockIsReady.mockReturnValueOnce(false);
-    mockGetBootstrapStatus.mockResolvedValueOnce(
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
       makeStatus({
         lifecycle: 'boot_blocked',
         ready: false,
@@ -680,11 +741,49 @@ describe('bootstrapErrorResponse fast path', () => {
     expect(res.status).toBe(503);
     expect(mockSearchRules).not.toHaveBeenCalled();
   });
+
+  it('allows rule routes when only card probing has degraded', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'dependency_failed',
+        ready: false,
+        bootstrapReady: false,
+        ruleQueriesReady: true,
+        cardQueriesReady: false,
+        askReady: false,
+        capabilities: {
+          rules: { allowed: true, reason: null, message: null },
+          cards: {
+            allowed: false,
+            reason: 'dependency_unavailable',
+            message: 'card data query failed: connect ECONNREFUSED.',
+          },
+          ask: {
+            allowed: false,
+            reason: 'dependency_unavailable',
+            message: 'card data query failed: connect ECONNREFUSED.',
+          },
+        },
+      }),
+    );
+
+    const res = await app.request('/api/search/rules?q=loot', { headers: await auth() });
+    expect(res.status).toBe(200);
+    expect(mockSearchRules).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ─── Error handling ──────────────────────────────────────────────────────────
 
 describe('error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockReturnValue(makeStatus());
+    mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
+  });
+
   it('returns structured 404 for unknown paths', async () => {
     const res = await app.request('/api/nonexistent');
     expect(res.status).toBe(404);
