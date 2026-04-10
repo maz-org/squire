@@ -8,8 +8,8 @@ channel.
 This ticket does **not** add a second reasoning engine. The only reasoning path
 remains:
 
-- [src/service.ts](/Users/bcm/.codex/worktrees/e628/squire/src/service.ts) `ask()`
-- [src/agent.ts](/Users/bcm/.codex/worktrees/e628/squire/src/agent.ts) `runAgentLoop()`
+- [src/service.ts](../../src/service.ts) `ask()`
+- [src/agent.ts](../../src/agent.ts) `runAgentLoop()`
 
 SQR-7 adds a thin conversation orchestration layer around that path:
 
@@ -20,12 +20,12 @@ SQR-7 adds a thin conversation orchestration layer around that path:
 
 Relevant existing code:
 
-- [src/server.ts](/Users/bcm/.codex/worktrees/e628/squire/src/server.ts)
-- [src/auth/session-middleware.ts](/Users/bcm/.codex/worktrees/e628/squire/src/auth/session-middleware.ts)
-- [src/db/repositories/session-repository.ts](/Users/bcm/.codex/worktrees/e628/squire/src/db/repositories/session-repository.ts)
-- [src/db/repositories/user-repository.ts](/Users/bcm/.codex/worktrees/e628/squire/src/db/repositories/user-repository.ts)
-- [docs/ARCHITECTURE.md](/Users/bcm/.codex/worktrees/e628/squire/docs/ARCHITECTURE.md)
-- [docs/SECURITY.md](/Users/bcm/.codex/worktrees/e628/squire/docs/SECURITY.md)
+- [src/server.ts](../../src/server.ts)
+- [src/auth/session-middleware.ts](../../src/auth/session-middleware.ts)
+- [src/db/repositories/session-repository.ts](../../src/db/repositories/session-repository.ts)
+- [src/db/repositories/user-repository.ts](../../src/db/repositories/user-repository.ts)
+- [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
+- [docs/SECURITY.md](../SECURITY.md)
 
 ## Scope
 
@@ -195,7 +195,7 @@ return updated conversation response
 ## History Window
 
 - In SQR-7, cap loaded persisted history to the same 20-message limit already
-  enforced by [src/agent.ts](/Users/bcm/.codex/worktrees/e628/squire/src/agent.ts).
+  enforced by [src/agent.ts](../../src/agent.ts).
 - This is a Phase 1 guardrail only.
 - SQR-12 replaces this with real compaction/summarization.
 
@@ -215,7 +215,8 @@ return updated conversation response
 - `src/db/repositories/types.ts` if shared domain types belong there
 - `src/server.ts`
 - relevant test helpers if truncate/reset coverage must expand
-- [docs/ARCHITECTURE.md](/Users/bcm/.codex/worktrees/e628/squire/docs/ARCHITECTURE.md) post-merge if any load-bearing pattern should graduate out of `docs/plans`
+- [docs/ARCHITECTURE.md](../ARCHITECTURE.md) post-merge if any load-bearing
+  pattern should graduate out of `docs/plans`
 
 ## Testing
 
@@ -239,9 +240,7 @@ deferred.
 
 ### QA artifact
 
-Primary QA input already written to:
-
-- [bcm-bcm-sqr-7-conversation-agent-backend-eng-review-test-plan-20260410-100636.md](/Users/bcm/.gstack/projects/maz-org-squire/bcm-bcm-sqr-7-conversation-agent-backend-eng-review-test-plan-20260410-100636.md)
+Primary QA input exists in the local gstack project artifacts for this branch.
 
 ## Production Risks and Follow-ups
 
@@ -269,6 +268,6 @@ Primary QA input already written to:
 ## Review Outcome
 
 - Scope reduced and clarified during eng review
-- Outside voice used Claude CLI, not Codex, for actual independence
-- Durable checkpoint:
-  - [20260410-103406-bcm-sqr-7-conversation-agent-backend-plan-eng-review-sqr7.md](/Users/bcm/.gstack/projects/maz-org-squire/checkpoints/20260410-103406-bcm-sqr-7-conversation-agent-backend-plan-eng-review-sqr7.md)
+- Outside voice used a local CLI review pass for actual independence
+- Durable checkpoint exists in the local gstack checkpoint artifacts for this
+  branch

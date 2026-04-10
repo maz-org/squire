@@ -5,6 +5,7 @@ import * as MessageRepository from '../db/repositories/message-repository.ts';
 import type { Conversation, ConversationMessage } from '../db/repositories/types.ts';
 
 const HISTORY_LIMIT = 20;
+const RETRY_DELAY_MS = 200;
 
 export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that. Please try again.";
 
@@ -44,6 +45,7 @@ async function generateAssistantReply(question: string, history: HistoryMessage[
       throw err;
     }
 
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     return ask(question, {
       history,
       userId,
@@ -174,11 +176,11 @@ export async function appendMessage(input: {
   userId: string;
   question: string;
 }): Promise<Conversation | null> {
-  const conversation = await ConversationRepository.findOwnedById(
+  const existingConversation = await ConversationRepository.findOwnedById(
     input.userId,
     input.conversationId,
   );
-  if (!conversation) return null;
+  if (!existingConversation) return null;
 
   const result = await getDb('server').db.transaction(async (tx) => {
     const userMessage = await MessageRepository.create(tx, {
@@ -201,7 +203,7 @@ export async function appendMessage(input: {
     currentUserMessageId: result.id,
   });
 
-  return conversation;
+  return ConversationRepository.findOwnedById(input.userId, input.conversationId);
 }
 
 export async function loadConversation(input: {
