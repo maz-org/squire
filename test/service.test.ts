@@ -45,6 +45,7 @@ import {
   isReady,
   ask,
   getBootstrapStatus,
+  refreshBootstrapState,
   refreshInitializationIfReady,
   _resetForTesting,
 } from '../src/service.ts';
@@ -92,14 +93,17 @@ describe('initialize', () => {
       indexSize: 0,
       error: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
       missingStep: 'npm run index',
+      reason: 'missing_index',
     });
     mockListCardTypes.mockResolvedValueOnce([
       { type: 'monster-stats', count: 0 },
       { type: 'items', count: 0 },
     ]);
 
+    await refreshBootstrapState();
     const status = await getBootstrapStatus();
     expect(status.ready).toBe(false);
+    expect(status.lifecycle).toBe('boot_blocked');
     expect(status.missingBootstrapSteps).toEqual(['npm run index', 'npm run seed:cards']);
   });
 
@@ -115,8 +119,35 @@ describe('initialize', () => {
 
     await refreshInitializationIfReady();
 
-    expect(mockInitializeRetrieval).toHaveBeenCalledWith(mockEmbed);
+    await vi.waitFor(() => expect(mockInitializeRetrieval).toHaveBeenCalledWith(mockEmbed));
     expect(isReady()).toBe(true);
+  });
+
+  it('reports warming_up immediately while initialization is in flight', async () => {
+    let resolveWarmup: (() => void) | null = null;
+    mockInitializeRetrieval.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveWarmup = resolve;
+        }),
+    );
+
+    const init = initialize();
+    await vi.waitFor(async () => {
+      expect((await getBootstrapStatus()).lifecycle).toBe('warming_up');
+    });
+
+    const status = await getBootstrapStatus();
+    expect(status.lifecycle).toBe('warming_up');
+    expect(status.warmingUp).toBe(true);
+    expect(status.capabilities.ask).toEqual({
+      allowed: false,
+      reason: 'warming_up',
+      message: 'Service is warming up. Retry in a moment.',
+    });
+
+    resolveWarmup?.();
+    await init;
   });
 });
 

@@ -6,27 +6,52 @@
 import { embed } from './embedder.ts';
 import {
   EMBEDDINGS_BOOTSTRAP_MESSAGE,
+  type RetrievalBootstrapStatus,
   getRetrievalBootstrapStatus,
   initializeRetrieval,
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
 import { runAgentLoop } from './agent.ts';
 
-let ready = false;
-let initPromise: Promise<void> | null = null;
-
 const CARD_BOOTSTRAP_MESSAGE = 'No card data found in Postgres. Run `npm run seed:cards` first.';
 const CARD_DB_HINT =
   'Is Postgres running? Try `docker compose up -d` and `npm run db:migrate`.';
+const WARMING_UP_MESSAGE = 'Service is warming up. Retry in a moment.';
+const INIT_FAILED_MESSAGE = 'Service warmup failed. Check server logs and retry.';
+const BOOTSTRAP_POLL_MS = 5000;
+
+type MissingBootstrapStep = 'npm run index' | 'npm run seed:cards';
+
+export type BootstrapLifecycle =
+  | 'boot_blocked'
+  | 'warming_up'
+  | 'ready'
+  | 'dependency_failed'
+  | 'init_failed';
+
+export type CapabilityReason =
+  | 'missing_index'
+  | 'missing_cards'
+  | 'dependency_unavailable'
+  | 'warming_up'
+  | 'init_failed';
 
 interface CardBootstrapStatus {
   ready: boolean;
   cardCount: number;
   error?: string;
   missingStep?: 'npm run seed:cards';
+  reason?: 'missing_cards' | 'dependency_unavailable';
+}
+
+export interface CapabilityStatus {
+  allowed: boolean;
+  reason: CapabilityReason | null;
+  message: string | null;
 }
 
 export interface ServiceBootstrapStatus {
+  lifecycle: BootstrapLifecycle;
   ready: boolean;
   bootstrapReady: boolean;
   warmingUp: boolean;
@@ -35,49 +60,132 @@ export interface ServiceBootstrapStatus {
   ruleQueriesReady: boolean;
   cardQueriesReady: boolean;
   askReady: boolean;
-  missingBootstrapSteps: Array<'npm run index' | 'npm run seed:cards'>;
+  missingBootstrapSteps: MissingBootstrapStep[];
   errors: string[];
+  capabilities: {
+    rules: CapabilityStatus;
+    cards: CapabilityStatus;
+    ask: CapabilityStatus;
+  };
 }
+
+let initialized = false;
+let initPromise: Promise<void> | null = null;
+let initErrorMessage: string | null = null;
+let lifecycle: BootstrapLifecycle = 'boot_blocked';
+let bootstrapPoller: ReturnType<typeof setInterval> | null = null;
+
+let bootstrapStatus: ServiceBootstrapStatus = {
+  lifecycle,
+  ready: false,
+  bootstrapReady: false,
+  warmingUp: false,
+  indexSize: 0,
+  cardCount: 0,
+  ruleQueriesReady: false,
+  cardQueriesReady: false,
+  askReady: false,
+  missingBootstrapSteps: [],
+  errors: [],
+  capabilities: {
+    rules: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
+    cards: { allowed: false, reason: 'missing_cards', message: CARD_BOOTSTRAP_MESSAGE },
+    ask: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
+  },
+};
 
 /** @internal Reset service state for testing. */
 export function _resetForTesting(): void {
-  ready = false;
+  initialized = false;
   initPromise = null;
+  initErrorMessage = null;
+  lifecycle = 'boot_blocked';
+  if (bootstrapPoller) {
+    clearInterval(bootstrapPoller);
+    bootstrapPoller = null;
+  }
+  bootstrapStatus = {
+    lifecycle,
+    ready: false,
+    bootstrapReady: false,
+    warmingUp: false,
+    indexSize: 0,
+    cardCount: 0,
+    ruleQueriesReady: false,
+    cardQueriesReady: false,
+    askReady: false,
+    missingBootstrapSteps: [],
+    errors: [],
+    capabilities: {
+      rules: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
+      cards: { allowed: false, reason: 'missing_cards', message: CARD_BOOTSTRAP_MESSAGE },
+      ask: { allowed: false, reason: 'missing_index', message: EMBEDDINGS_BOOTSTRAP_MESSAGE },
+    },
+  };
 }
 
 /**
  * Initialize the service: load the vector index, warm the embedder, and
- * verify extracted data is available. Throws if the index is empty.
- * Safe to call concurrently — only the first call does work.
+ * verify extracted data is available. Safe to call concurrently.
  */
 export async function initialize(): Promise<void> {
-  if (ready) return;
+  if (initialized) return;
   if (initPromise) return initPromise;
 
-  initPromise = doInitialize().catch((err) => {
-    initPromise = null;
-    throw err;
-  });
+  const snapshot = await refreshBootstrapState();
+  if (!snapshot.bootstrapReady) {
+    throw new Error(snapshot.capabilities.ask.message ?? snapshot.errors[0] ?? EMBEDDINGS_BOOTSTRAP_MESSAGE);
+  }
+
+  lifecycle = 'warming_up';
+  bootstrapStatus = buildBootstrapStatus(
+    snapshot.lifecycle === 'dependency_failed'
+      ? {
+          ready: false,
+          indexSize: snapshot.indexSize,
+          error: snapshot.errors[0],
+          reason: 'dependency_unavailable',
+        }
+      : { ready: true, indexSize: snapshot.indexSize },
+    snapshot.lifecycle === 'dependency_failed'
+      ? {
+          ready: false,
+          cardCount: snapshot.cardCount,
+          error: snapshot.errors[0],
+          reason: 'dependency_unavailable',
+        }
+      : { ready: true, cardCount: snapshot.cardCount },
+  );
+
+  initPromise = doInitialize()
+    .then(() => {
+      initialized = true;
+      initErrorMessage = null;
+      lifecycle = 'ready';
+    })
+    .catch((err) => {
+      initialized = false;
+      initErrorMessage = err instanceof Error ? err.message : String(err);
+      lifecycle = 'init_failed';
+      throw err;
+    })
+    .finally(async () => {
+      initPromise = null;
+      await refreshBootstrapState();
+    });
+
   return initPromise;
 }
 
 async function doInitialize(): Promise<void> {
-  const bootstrap = await getBootstrapStatus();
-  if (!bootstrap.bootstrapReady) {
-    throw new Error(bootstrap.errors[0] ?? EMBEDDINGS_BOOTSTRAP_MESSAGE);
-  }
-
-  // Retrieval layer owns vector index + embedder warmup + drift guard.
   await initializeRetrieval(embed);
-
-  ready = true;
 }
 
 /**
  * Whether the service has been initialized and is ready to serve requests.
  */
 export function isReady(): boolean {
-  return ready;
+  return initialized && lifecycle === 'ready';
 }
 
 async function getCardBootstrapStatus(): Promise<CardBootstrapStatus> {
@@ -90,6 +198,7 @@ async function getCardBootstrapStatus(): Promise<CardBootstrapStatus> {
         cardCount: 0,
         error: CARD_BOOTSTRAP_MESSAGE,
         missingStep: 'npm run seed:cards',
+        reason: 'missing_cards',
       };
     }
     return { ready: true, cardCount: totalCards };
@@ -99,16 +208,78 @@ async function getCardBootstrapStatus(): Promise<CardBootstrapStatus> {
       ready: false,
       cardCount: 0,
       error: `card data query failed: ${message}. ${CARD_DB_HINT}`,
+      reason: 'dependency_unavailable',
     };
   }
 }
 
-export async function getBootstrapStatus(): Promise<ServiceBootstrapStatus> {
-  const [retrieval, cards] = await Promise.all([
-    getRetrievalBootstrapStatus(),
-    getCardBootstrapStatus(),
-  ]);
-  const missingBootstrapSteps: Array<'npm run index' | 'npm run seed:cards'> = [];
+function buildCapabilityStatus(
+  kind: BootstrapLifecycle,
+  scope: 'rules' | 'cards' | 'ask',
+  retrieval: RetrievalBootstrapStatus,
+  cards: CardBootstrapStatus,
+): CapabilityStatus {
+  if (kind === 'ready') return { allowed: true, reason: null, message: null };
+
+  if (kind === 'dependency_failed') {
+    const message = retrieval.error ?? cards.error ?? CARD_DB_HINT;
+    return { allowed: false, reason: 'dependency_unavailable', message };
+  }
+
+  if (scope === 'rules') {
+    if (retrieval.ready) return { allowed: true, reason: null, message: null };
+    return {
+      allowed: false,
+      reason: retrieval.reason ?? 'missing_index',
+      message: retrieval.error ?? EMBEDDINGS_BOOTSTRAP_MESSAGE,
+    };
+  }
+
+  if (scope === 'cards') {
+    if (cards.ready) return { allowed: true, reason: null, message: null };
+    return {
+      allowed: false,
+      reason: cards.reason ?? 'missing_cards',
+      message: cards.error ?? CARD_BOOTSTRAP_MESSAGE,
+    };
+  }
+
+  if (kind === 'warming_up') {
+    return { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE };
+  }
+
+  if (kind === 'init_failed') {
+    return {
+      allowed: false,
+      reason: 'init_failed',
+      message: initErrorMessage ?? INIT_FAILED_MESSAGE,
+    };
+  }
+
+  if (!retrieval.ready) {
+    return {
+      allowed: false,
+      reason: retrieval.reason ?? 'missing_index',
+      message: retrieval.error ?? EMBEDDINGS_BOOTSTRAP_MESSAGE,
+    };
+  }
+
+  if (!cards.ready) {
+    return {
+      allowed: false,
+      reason: cards.reason ?? 'missing_cards',
+      message: cards.error ?? CARD_BOOTSTRAP_MESSAGE,
+    };
+  }
+
+  return { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE };
+}
+
+function buildBootstrapStatus(
+  retrieval: RetrievalBootstrapStatus,
+  cards: CardBootstrapStatus,
+): ServiceBootstrapStatus {
+  const missingBootstrapSteps: MissingBootstrapStep[] = [];
   const errors: string[] = [];
 
   if (!retrieval.ready) {
@@ -121,40 +292,86 @@ export async function getBootstrapStatus(): Promise<ServiceBootstrapStatus> {
     if (cards.error) errors.push(cards.error);
   }
 
-  const bootstrapReady = missingBootstrapSteps.length === 0 && errors.length === 0;
+  const dependencyUnavailable =
+    retrieval.reason === 'dependency_unavailable' || cards.reason === 'dependency_unavailable';
+  const bootstrapReady = retrieval.ready && cards.ready;
+
+  if (dependencyUnavailable) {
+    lifecycle = 'dependency_failed';
+  } else if (!bootstrapReady) {
+    lifecycle = 'boot_blocked';
+  } else if (initialized) {
+    lifecycle = 'ready';
+  } else if (initPromise) {
+    lifecycle = 'warming_up';
+  } else if (initErrorMessage) {
+    lifecycle = 'init_failed';
+  } else {
+    lifecycle = 'warming_up';
+  }
+
+  const capabilities = {
+    rules: buildCapabilityStatus(lifecycle, 'rules', retrieval, cards),
+    cards: buildCapabilityStatus(lifecycle, 'cards', retrieval, cards),
+    ask: buildCapabilityStatus(lifecycle, 'ask', retrieval, cards),
+  };
 
   return {
-    ready: ready && bootstrapReady,
+    lifecycle,
+    ready: lifecycle === 'ready',
     bootstrapReady,
-    warmingUp: bootstrapReady && !ready,
+    warmingUp: lifecycle === 'warming_up',
     indexSize: retrieval.indexSize,
     cardCount: cards.cardCount,
-    ruleQueriesReady: retrieval.ready,
-    cardQueriesReady: cards.ready,
-    askReady: retrieval.ready && cards.ready,
+    ruleQueriesReady: capabilities.rules.allowed,
+    cardQueriesReady: capabilities.cards.allowed,
+    askReady: capabilities.ask.allowed,
     missingBootstrapSteps,
     errors,
+    capabilities,
   };
 }
 
+export async function refreshBootstrapState(): Promise<ServiceBootstrapStatus> {
+  const [retrieval, cards] = await Promise.all([
+    getRetrievalBootstrapStatus(),
+    getCardBootstrapStatus(),
+  ]);
+  bootstrapStatus = buildBootstrapStatus(retrieval, cards);
+  return bootstrapStatus;
+}
+
+export async function getBootstrapStatus(): Promise<ServiceBootstrapStatus> {
+  return bootstrapStatus;
+}
+
+export function startBootstrapLifecycle(): void {
+  if (bootstrapPoller) return;
+
+  const tick = async (): Promise<void> => {
+    const status = await refreshBootstrapState();
+    if (status.bootstrapReady && !status.ready && !initPromise) {
+      void initialize().catch(() => {});
+    }
+  };
+
+  void tick();
+  bootstrapPoller = setInterval(() => {
+    void tick();
+  }, BOOTSTRAP_POLL_MS);
+  bootstrapPoller.unref?.();
+}
+
 /**
- * Best-effort recovery hook for health checks. If bootstrap prerequisites now
- * exist but the process has not finished initializing yet, kick initialization
- * once so `/api/health` can converge back to ready without waiting for an
- * `/api/ask` request.
+ * Deprecated compatibility hook for earlier tests and callers. Performs a
+ * non-blocking state refresh and kicks background initialization when
+ * prerequisites are available.
  */
 export async function refreshInitializationIfReady(): Promise<void> {
-  if (ready || initPromise) {
-    if (initPromise) {
-      await initPromise.catch(() => {});
-    }
-    return;
+  const status = await refreshBootstrapState();
+  if (status.bootstrapReady && !status.ready && !initPromise) {
+    void initialize().catch(() => {});
   }
-
-  const status = await getBootstrapStatus();
-  if (!status.bootstrapReady) return;
-
-  await initialize().catch(() => {});
 }
 
 export interface HistoryMessage {
@@ -180,7 +397,6 @@ export interface AskOptions {
  * iterates until it has enough context, then produces a grounded answer.
  */
 export async function ask(question: string, options?: AskOptions): Promise<string> {
-  if (!ready) await initialize();
-
+  if (!isReady()) await initialize();
   return runAgentLoop(question, options);
 }

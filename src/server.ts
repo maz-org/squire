@@ -10,7 +10,12 @@ import 'dotenv/config';
 import './instrumentation.ts';
 import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { ask, getBootstrapStatus, initialize, refreshInitializationIfReady } from './service.ts';
+import {
+  ask,
+  getBootstrapStatus,
+  isReady,
+  startBootstrapLifecycle,
+} from './service.ts';
 
 import { getWorktreeRuntime } from './db.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
@@ -630,9 +635,9 @@ app.onError((err, c) => {
 // ─── Health endpoint ─────────────────────────────────────────────────────────
 
 app.get('/api/health', async (c) => {
-  await refreshInitializationIfReady();
   const status = await getBootstrapStatus();
   return c.json({
+    lifecycle: status.lifecycle,
     ready: status.ready,
     bootstrap_ready: status.bootstrapReady,
     warming_up: status.warmingUp,
@@ -656,26 +661,18 @@ async function bootstrapErrorResponse(
   c: Context,
   scope: 'rules' | 'cards' | 'ask',
 ): Promise<Response | null> {
+  if (isReady()) return null;
+
   const status = await getBootstrapStatus();
-  const isReady =
-    scope === 'rules'
-      ? status.ruleQueriesReady
-      : scope === 'cards'
-        ? status.cardQueriesReady
-        : status.askReady;
+  const capability = status.capabilities[scope];
 
-  if (isReady) return null;
-
-  const message =
-    scope === 'rules'
-      ? status.errors.find((err) => err.includes('npm run index') || err.includes('vector-store'))
-      : scope === 'cards'
-        ? status.errors.find((err) => err.includes('npm run seed:cards') || err.includes('card data'))
-        : status.errors[0];
+  if (capability.allowed) return null;
 
   return c.json(
     {
-      ...jsonError(message ?? 'Service bootstrap incomplete', 503),
+      ...jsonError(capability.message ?? 'Service bootstrap incomplete', 503),
+      lifecycle: status.lifecycle,
+      capability_reason: capability.reason,
       missing_bootstrap_steps: status.missingBootstrapSteps,
     },
     503,
@@ -823,9 +820,7 @@ export async function startServer(): Promise<void> {
         server.once('close', () => {
           void claim.release();
         });
-        void initialize().catch((err: unknown) => {
-          console.warn('Server bootstrap incomplete:', err instanceof Error ? err.message : err);
-        });
+        startBootstrapLifecycle();
         console.log(`Squire server listening on port ${claim.port}`);
         return;
       } catch (error) {
@@ -838,9 +833,7 @@ export async function startServer(): Promise<void> {
 
   const server = createAdaptorServer({ fetch: app.fetch });
   await listen(server, configuredPort);
-  void initialize().catch((err: unknown) => {
-    console.warn('Server bootstrap incomplete:', err instanceof Error ? err.message : err);
-  });
+  startBootstrapLifecycle();
   console.log(`Squire server listening on port ${configuredPort}`);
 }
 

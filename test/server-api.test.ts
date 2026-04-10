@@ -15,9 +15,51 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { parseSSE } from './helpers/server-oauth-helpers.ts';
 
+function makeStatus(
+  overrides: Partial<{
+    lifecycle: string;
+    ready: boolean;
+    bootstrapReady: boolean;
+    warmingUp: boolean;
+    indexSize: number;
+    cardCount: number;
+    ruleQueriesReady: boolean;
+    cardQueriesReady: boolean;
+    askReady: boolean;
+    missingBootstrapSteps: string[];
+    errors: string[];
+    capabilities: {
+      rules: { allowed: boolean; reason: string | null; message: string | null };
+      cards: { allowed: boolean; reason: string | null; message: string | null };
+      ask: { allowed: boolean; reason: string | null; message: string | null };
+    };
+  }> = {},
+) {
+  return {
+    lifecycle: 'ready',
+    ready: true,
+    bootstrapReady: true,
+    warmingUp: false,
+    indexSize: 3,
+    cardCount: 15,
+    ruleQueriesReady: true,
+    cardQueriesReady: true,
+    askReady: true,
+    missingBootstrapSteps: [],
+    errors: [],
+    capabilities: {
+      rules: { allowed: true, reason: null, message: null },
+      cards: { allowed: true, reason: null, message: null },
+      ask: { allowed: true, reason: null, message: null },
+    },
+    ...overrides,
+  };
+}
+
 const {
   mockInitialize,
   mockGetBootstrapStatus,
+  mockIsReady,
   mockRefreshInitializationIfReady,
   mockAsk,
   mockSearchRules,
@@ -28,6 +70,7 @@ const {
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockGetBootstrapStatus: vi.fn(),
+  mockIsReady: vi.fn(),
   mockRefreshInitializationIfReady: vi.fn(),
   mockAsk: vi.fn(),
   mockSearchRules: vi.fn(),
@@ -40,6 +83,7 @@ const {
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
   getBootstrapStatus: mockGetBootstrapStatus,
+  isReady: mockIsReady,
   refreshInitializationIfReady: mockRefreshInitializationIfReady,
   ask: mockAsk,
 }));
@@ -88,19 +132,9 @@ async function auth(): Promise<Record<string, string>> {
 describe('GET /api/health', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsReady.mockReturnValue(true);
     mockRefreshInitializationIfReady.mockResolvedValue(undefined);
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
   });
 
   it('returns 200 with ready status', async () => {
@@ -114,18 +148,19 @@ describe('GET /api/health', () => {
   });
 
   it('returns ready=false when service is not initialized', async () => {
-    mockGetBootstrapStatus.mockResolvedValueOnce({
-      ready: false,
-      bootstrapReady: true,
-      warmingUp: true,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockGetBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'warming_up',
+        ready: false,
+        warmingUp: true,
+        capabilities: {
+          rules: { allowed: true, reason: null, message: null },
+          cards: { allowed: true, reason: null, message: null },
+          ask: { allowed: false, reason: 'warming_up', message: 'Service is warming up. Retry in a moment.' },
+        },
+        askReady: false,
+      }),
+    );
     const res = await app.request('/api/health');
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -144,9 +179,9 @@ describe('GET /api/health', () => {
     expect(res.headers.get('content-type')).toContain('application/json');
   });
 
-  it('asks the service to recover readiness before reporting health', async () => {
+  it('reports lifecycle state without invoking recovery hooks', async () => {
     await app.request('/api/health');
-    expect(mockRefreshInitializationIfReady).toHaveBeenCalled();
+    expect(mockRefreshInitializationIfReady).not.toHaveBeenCalled();
   });
 });
 
@@ -155,18 +190,8 @@ describe('GET /api/health', () => {
 describe('GET /api/search/rules', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchRules.mockResolvedValue([
       { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
     ]);
@@ -208,18 +233,32 @@ describe('GET /api/search/rules', () => {
   });
 
   it('returns 503 with an actionable bootstrap error when embeddings are missing', async () => {
-    mockGetBootstrapStatus.mockResolvedValueOnce({
-      ready: false,
-      bootstrapReady: false,
-      warmingUp: false,
-      indexSize: 0,
-      cardCount: 15,
-      ruleQueriesReady: false,
-      cardQueriesReady: true,
-      askReady: false,
-      missingBootstrapSteps: ['npm run index'],
-      errors: ['Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.'],
-    });
+    mockIsReady.mockReturnValueOnce(false);
+    mockGetBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'boot_blocked',
+        ready: false,
+        bootstrapReady: false,
+        indexSize: 0,
+        ruleQueriesReady: false,
+        askReady: false,
+        missingBootstrapSteps: ['npm run index'],
+        errors: ['Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.'],
+        capabilities: {
+          rules: {
+            allowed: false,
+            reason: 'missing_index',
+            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          },
+          cards: { allowed: true, reason: null, message: null },
+          ask: {
+            allowed: false,
+            reason: 'missing_index',
+            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          },
+        },
+      }),
+    );
     const res = await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(res.status).toBe(503);
     const body = await res.json();
@@ -233,18 +272,8 @@ describe('GET /api/search/rules', () => {
 describe('GET /api/search/cards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchCards.mockReturnValue([
       { type: 'monster-stats', data: { name: 'Algox Archer' }, score: 2 },
     ]);
@@ -286,18 +315,32 @@ describe('GET /api/search/cards', () => {
   });
 
   it('returns 503 with an actionable bootstrap error when card data is missing', async () => {
-    mockGetBootstrapStatus.mockResolvedValueOnce({
-      ready: false,
-      bootstrapReady: false,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 0,
-      ruleQueriesReady: true,
-      cardQueriesReady: false,
-      askReady: false,
-      missingBootstrapSteps: ['npm run seed:cards'],
-      errors: ['No card data found in Postgres. Run `npm run seed:cards` first.'],
-    });
+    mockIsReady.mockReturnValueOnce(false);
+    mockGetBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'boot_blocked',
+        ready: false,
+        bootstrapReady: false,
+        cardCount: 0,
+        cardQueriesReady: false,
+        askReady: false,
+        missingBootstrapSteps: ['npm run seed:cards'],
+        errors: ['No card data found in Postgres. Run `npm run seed:cards` first.'],
+        capabilities: {
+          rules: { allowed: true, reason: null, message: null },
+          cards: {
+            allowed: false,
+            reason: 'missing_cards',
+            message: 'No card data found in Postgres. Run `npm run seed:cards` first.',
+          },
+          ask: {
+            allowed: false,
+            reason: 'missing_cards',
+            message: 'No card data found in Postgres. Run `npm run seed:cards` first.',
+          },
+        },
+      }),
+    );
     const res = await app.request('/api/search/cards?q=algox', { headers: await auth() });
     expect(res.status).toBe(503);
     const body = await res.json();
@@ -310,18 +353,8 @@ describe('GET /api/search/cards', () => {
 describe('GET /api/card-types', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
     mockListCardTypes.mockReturnValue([
       { type: 'monster-stats', count: 10 },
       { type: 'items', count: 5 },
@@ -343,18 +376,8 @@ describe('GET /api/card-types', () => {
 describe('GET /api/cards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
     mockListCards.mockReturnValue([{ name: 'Algox Archer' }]);
   });
 
@@ -390,18 +413,8 @@ describe('GET /api/cards', () => {
 describe('GET /api/cards/:type/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
     mockGetCard.mockReturnValue({ name: 'Algox Archer', levelRange: '0-3' });
   });
 
@@ -429,18 +442,8 @@ describe('GET /api/cards/:type/:id', () => {
 describe('POST /api/ask', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBootstrapStatus.mockResolvedValue({
-      ready: true,
-      bootstrapReady: true,
-      warmingUp: false,
-      indexSize: 3,
-      cardCount: 15,
-      ruleQueriesReady: true,
-      cardQueriesReady: true,
-      askReady: true,
-      missingBootstrapSteps: [],
-      errors: [],
-    });
+    mockIsReady.mockReturnValue(true);
+    mockGetBootstrapStatus.mockResolvedValue(makeStatus());
     mockAsk.mockResolvedValue('Loot tokens are picked up in your hex.');
   });
 
@@ -572,21 +575,41 @@ describe('POST /api/ask', () => {
   });
 
   it('returns 503 JSON before opening the stream when bootstrap is incomplete', async () => {
-    mockGetBootstrapStatus.mockResolvedValueOnce({
-      ready: false,
-      bootstrapReady: false,
-      warmingUp: false,
-      indexSize: 0,
-      cardCount: 0,
-      ruleQueriesReady: false,
-      cardQueriesReady: false,
-      askReady: false,
-      missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
-      errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
-        'No card data found in Postgres. Run `npm run seed:cards` first.',
-      ],
-    });
+    mockIsReady.mockReturnValueOnce(false);
+    mockGetBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'boot_blocked',
+        ready: false,
+        bootstrapReady: false,
+        indexSize: 0,
+        cardCount: 0,
+        ruleQueriesReady: false,
+        cardQueriesReady: false,
+        askReady: false,
+        missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
+        errors: [
+          'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          'No card data found in Postgres. Run `npm run seed:cards` first.',
+        ],
+        capabilities: {
+          rules: {
+            allowed: false,
+            reason: 'missing_index',
+            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          },
+          cards: {
+            allowed: false,
+            reason: 'missing_cards',
+            message: 'No card data found in Postgres. Run `npm run seed:cards` first.',
+          },
+          ask: {
+            allowed: false,
+            reason: 'missing_index',
+            message: 'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          },
+        },
+      }),
+    );
     const res = await app.request('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
@@ -611,6 +634,21 @@ describe('POST /api/ask', () => {
     const errorEvent = events.find((e) => e.event === 'error');
     expect(errorEvent).toBeDefined();
     expect(JSON.parse(errorEvent!.data)).toHaveProperty('message', 'Internal server error');
+  });
+});
+
+describe('bootstrapErrorResponse fast path', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsReady.mockReturnValue(true);
+    mockSearchRules.mockResolvedValue([
+      { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
+    ]);
+  });
+
+  it('skips bootstrap probes for ready search requests', async () => {
+    await app.request('/api/search/rules?q=loot', { headers: await auth() });
+    expect(mockGetBootstrapStatus).not.toHaveBeenCalled();
   });
 });
 

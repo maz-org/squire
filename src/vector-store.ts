@@ -201,6 +201,7 @@ export interface RetrievalBootstrapStatus {
   indexSize: number;
   error?: string;
   missingStep?: 'npm run index';
+  reason?: 'missing_index' | 'dependency_unavailable';
 }
 
 export async function getRetrievalBootstrapStatus(): Promise<RetrievalBootstrapStatus> {
@@ -216,6 +217,7 @@ export async function getRetrievalBootstrapStatus(): Promise<RetrievalBootstrapS
         indexSize: 0,
         error: EMBEDDINGS_BOOTSTRAP_MESSAGE,
         missingStep: 'npm run index',
+        reason: 'missing_index',
       };
     }
     return { ready: true, indexSize: count };
@@ -224,6 +226,7 @@ export async function getRetrievalBootstrapStatus(): Promise<RetrievalBootstrapS
       ready: false,
       indexSize: 0,
       error: wrapDbError(err).message,
+      reason: 'dependency_unavailable',
     };
   }
 }
