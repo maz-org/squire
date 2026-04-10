@@ -132,8 +132,12 @@ The server chooses a checkout-local port in two steps:
   the first available port in the managed `4000-5999` range
 
 Override with `PORT` if you want a specific port. On startup, the server logs
-the final port it selected. It initializes the vector index, verifies
-extracted card data, and warms the embedder before accepting requests.
+the final port it selected. It binds the port immediately, then warms the
+retrieval stack in the background. If embeddings or card data are missing,
+startup no longer crashes; `/api/health` returns a coarse lifecycle snapshot
+immediately and query endpoints return `503` JSON errors until `npm run index`
+and/or `npm run seed:cards` has been run. Detailed bootstrap and dependency
+reasons are logged server-side.
 
 To discover the current worktree's runtime settings, use startup logs or ask
 the app directly by checking:
@@ -146,7 +150,7 @@ Example health check for the main checkout:
 
 ```bash
 curl http://localhost:3000/api/health
-# {"ready":true,"index_size":2147}
+# {"lifecycle":"ready","ready":true,"warming_up":false}
 ```
 
 For linked worktrees, replace `3000` with that worktree's logged port. Do not
@@ -157,20 +161,46 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 ## REST API endpoints
 
-| Method | Path                         | Description                                                |
-| ------ | ---------------------------- | ---------------------------------------------------------- |
-| GET    | `/api/health`                | Readiness check with index size                            |
-| GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                       |
-| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
-| GET    | `/api/card-types`            | List card types with record counts                         |
-| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                      |
-| GET    | `/api/cards/:type/:id`       | Look up a single card                                      |
-| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)       |
+| Method | Path                         | Description                                                        |
+| ------ | ---------------------------- | ------------------------------------------------------------------ |
+| GET    | `/api/health`                | Snapshot-only readiness check (`lifecycle`, `ready`, `warming_up`) |
+| GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                               |
+| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank`         |
+| GET    | `/api/card-types`            | List card types with record counts                                 |
+| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                              |
+| GET    | `/api/cards/:type/:id`       | Look up a single card                                              |
+| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)               |
 
-All errors return `{ error, status }` as JSON.
+All errors return `{ error, status }` as JSON. Bootstrap and dependency details
+are logged server-side rather than returned from public endpoints.
 
 `topK` defaults to 6, must be 1–100. The `filter` parameter is a
 URL-encoded JSON object with AND-logic field matching.
+
+### Bootstrap design guardrails
+
+Startup and readiness are modeled as an explicit lifecycle in
+[`src/service.ts`](../src/service.ts), not as route-local booleans. If you are
+adding a new endpoint or capability:
+
+- keep `/api/health` snapshot-only; do not add live DB probes or warmup waits
+  to the health path
+- map the endpoint to a capability based on the dependencies it actually uses
+  on the request path, not just on nearby data being present
+- preserve request validation order: malformed requests should still return
+  their normal `400` responses before bootstrap gating when validation is
+  independent of readiness
+- add lifecycle tests for any new partial-availability claim
+
+Examples:
+
+- rule search depends on both the embeddings table and the embedder, because it
+  calls `embed(query)` on every request
+- card lookup depends on seeded card tables, but not on embedder warmup
+- ask depends on successful warmup as well as bootstrap data
+
+For the full state-machine rationale and endpoint policy table, see
+[docs/plans/sqr-84-startup-lifecycle-state-machine.md](plans/sqr-84-startup-lifecycle-state-machine.md).
 
 ## MCP server
 

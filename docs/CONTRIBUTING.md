@@ -381,6 +381,10 @@ main CI gate:
    gh pr create
    ```
 
+   Before submitting, edit the PR body so it includes a `Fixes SQR-XX` or
+   `Closes SQR-XX` line for the Linear issue you are shipping. That is how
+   Linear links the PR back to the issue.
+
 4. Wait for CI and [CodeRabbit](https://coderabbit.ai) review.
 
 5. Address any review comments, then merge via squash.
@@ -388,6 +392,8 @@ main CI gate:
 ### PR guidelines
 
 - Keep PRs small and focused — one logical change per PR.
+- PR bodies must include `Fixes SQR-XX` or `Closes SQR-XX` so Linear links the
+  PR to the issue automatically.
 - Use [Conventional Commits](https://www.conventionalcommits.org/) for commit
   messages (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`, `ci:`).
 - All CI checks must pass before merging.

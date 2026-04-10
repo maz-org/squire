@@ -193,6 +193,44 @@ function wrapDbError(err: unknown): Error {
   );
 }
 
+export const EMBEDDINGS_BOOTSTRAP_MESSAGE =
+  'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.';
+
+export interface RetrievalBootstrapStatus {
+  ready: boolean;
+  indexSize: number;
+  error?: string;
+  missingStep?: 'npm run index';
+  reason?: 'missing_index' | 'dependency_unavailable';
+}
+
+export async function getRetrievalBootstrapStatus(): Promise<RetrievalBootstrapStatus> {
+  try {
+    const { db } = getDb('server');
+    const result = await db.execute<{ count: string }>(
+      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
+    );
+    const count = Number(result.rows[0]?.count ?? 0);
+    if (count === 0) {
+      return {
+        ready: false,
+        indexSize: 0,
+        error: EMBEDDINGS_BOOTSTRAP_MESSAGE,
+        missingStep: 'npm run index',
+        reason: 'missing_index',
+      };
+    }
+    return { ready: true, indexSize: count };
+  } catch (err) {
+    return {
+      ready: false,
+      indexSize: 0,
+      error: wrapDbError(err).message,
+      reason: 'dependency_unavailable',
+    };
+  }
+}
+
 /**
  * Bring the retrieval layer into a ready state: verify the embeddings table
  * is populated, warm the embedder, and run the embedding-version drift guard.
@@ -203,21 +241,9 @@ function wrapDbError(err: unknown): Error {
 export async function initializeRetrieval(
   warmupEmbed: (text: string) => Promise<unknown>,
 ): Promise<void> {
-  try {
-    const { db } = getDb('server');
-    const result = await db.execute<{ count: string }>(
-      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
-    );
-    const count = Number(result.rows[0]?.count ?? 0);
-    if (count === 0) {
-      throw new Error(
-        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
-      );
-    }
-  } catch (err) {
-    // Surface DB connectivity problems with the same friendly hint as search().
-    if ((err as Error).message?.startsWith('Embeddings table is empty')) throw err;
-    throw wrapDbError(err);
+  const status = await getRetrievalBootstrapStatus();
+  if (!status.ready) {
+    throw new Error(status.error ?? EMBEDDINGS_BOOTSTRAP_MESSAGE);
   }
 
   // Pay the embedder cold-start cost now so the first real query is fast.
