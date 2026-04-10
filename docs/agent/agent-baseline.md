@@ -70,6 +70,10 @@ There are three different kinds of state in this repo. Do not conflate them.
 
 Repo `.gstack/` is **not** canonical project memory. If a learning is durable
 enough to matter to future work, promote it into checked-in docs or an ADR.
+The normal path is: run gstack `/learn` to inspect the local runtime learnings,
+then run `npm run agent:export-learnings` to refresh
+[`docs/agent/learnings.md`](./learnings.md) before deciding whether a deeper
+doc or ADR update is needed.
 
 ## MCP
 
