@@ -36,7 +36,18 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-For local dev without Google OAuth, the app still starts and serves the homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed login still needs working OAuth credentials. Run `npm run seed:dev` to create a test user for authenticated code paths without doing the Google round-trip.
+`GOOGLE_REDIRECT_URI` is still the configured fallback callback. In local
+development, `/auth/google/start` and `/auth/google/callback` reuse the current
+`localhost` origin so linked worktrees can log in on their own ports. Google
+still requires exact redirect-URI matches, so add every localhost callback port
+you use, such as `http://localhost:4450/auth/google/callback`, to the OAuth
+client in Google Cloud Console.
+
+For local dev without Google OAuth, the app still starts and serves the
+homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed
+login still needs working OAuth credentials. Run `npm run seed:dev` to create a
+test user for authenticated code paths without doing the Google round-trip, but
+note that the browser sign-in UI still follows the real Google OAuth flow.
 
 Extracted card data (`data/extracted/*.json`) is committed to the repo.
 The rulebook vector index lives in Postgres (pgvector) and is populated by

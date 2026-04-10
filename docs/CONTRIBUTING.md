@@ -201,6 +201,12 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
+Keep `GOOGLE_REDIRECT_URI` on the main-checkout callback unless you want to
+move your primary local login flow. Linked worktrees now build the callback URL
+from their current localhost origin at runtime, but Google still requires exact
+redirect-URI matches, so every localhost callback port you use for browser QA
+must be pre-registered in the OAuth client in Google Cloud Console.
+
 ### Data files
 
 Extracted card data (`data/extracted/`) is committed to the repo as

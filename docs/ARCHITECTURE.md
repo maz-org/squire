@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0.2
+**Version:** 1.0.3
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-08
+**Last Refreshed:** 2026-04-10
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -54,7 +54,11 @@ Per-feature operations are _invocations_, not new tools. "Show me all level-4 ch
 
 Squire's web channel separates **conversation** from **knowledge**:
 
-- **Conversation agent** — thin session manager. Owns chat history, context compaction (summarizing older messages to keep the window bounded), streaming via Server-Sent Events, and presentation (Hono JSX rendering, citations, tool call visibility). One per client session.
+- **Conversation agent** — thin session manager. Owns persisted chat history,
+  failure persistence, ownership checks, streaming via Server-Sent Events, and
+  presentation (Hono JSX rendering, citations, tool call visibility). Real
+  context compaction and summarization remain future work (SQR-12). One per
+  client session.
 - **Knowledge agent** — the actual agent loop. Owns retrieval strategy (which atomic tools to call, in what order), reference resolution (turning "what items work with it?" into "Blinkblade items" via conversation history), campaign context loading (per Phase 4+), and answer generation. Stateless per request. Shared by all clients.
 
 The conversation agent does **not** call atomic tools directly. It delegates all domain reasoning to the knowledge agent via in-process function calls (or `/api/ask` HTTP calls when used for testing or by other channels). This keeps the conversation agent focused on session and UX concerns, and lets the knowledge agent's retrieval strategy evolve independently of the UI.
@@ -252,7 +256,7 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 | Vector embeddings              | Postgres + pgvector (docker-compose)                           | Postgres + pgvector      |
 | Extracted card data            | Postgres `card_*` tables (seeded from `data/extracted/*.json`) | Postgres `card_*` tables |
 | OAuth tokens / clients         | N/A (Phase 1)                                                  | Postgres                 |
-| Conversation history           | In-memory per session                                          | Postgres                 |
+| Conversation history           | Postgres `conversations` + `messages`                          | Postgres                 |
 
 pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source PDFs (~164MB) are inputs to indexing, not deployed artifacts; they live in `data/pdfs/` for local development and are excluded from the production image.
 
@@ -290,9 +294,14 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
 
 ### User Conversations
 
-- Stored in Postgres (after Phase 3 multi-user platform), scoped to user
-- Bounded context window via summarization of older messages
-- Used as context for future turns
+- Stored in Postgres today via `conversations` and `messages`, scoped to user
+- Addressable on the web channel as `/chat/:conversationId`
+- Web writes persist the user turn first, then either the assistant answer or a
+  generic persisted failure turn
+- Failure turns are excluded from future history passed back into the knowledge
+  agent
+- History forwarded into `ask()` is capped to the most recent 20 non-error
+  messages. Real compaction and summarization remain deferred to SQR-12
 
 ---
 
@@ -301,7 +310,9 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
 ### Core agent loop
 
 1. **Input:** User message (text)
-2. **Context gathering:** Load conversation history (with bounded summarization), identify caller identity from session, load campaign context if available
+2. **Context gathering:** Load recent conversation history (currently the most
+   recent 20 non-error messages), identify caller identity from session, load
+   campaign context if available
 3. **Tool use:** Claude calls atomic tools to retrieve relevant rules, cards, items, monsters, or scenarios
 4. **Reasoning:** Claude synthesizes a response from tool results
 5. **Response:** Stream back to the channel (web UI via SSE, MCP via protocol response)
@@ -483,9 +494,11 @@ An earlier design considered using **internal MCP** as the transport between the
 
 **Web UI conversation agent:**
 
-- Calls the knowledge agent's in-process entry point with question, conversation history, campaign ID
+- Calls the knowledge agent's in-process entry point with question, recent
+  stored conversation history, campaign ID
 - Does **not** call MCP tools directly — delegates domain reasoning to the knowledge agent
-- Owns session management: chat history, context compaction, streaming, presentation
+- Owns session management: persisted chat history, ownership checks, failure
+  persistence, and presentation. Context compaction remains future work
 
 **External MCP clients:**
 
@@ -625,7 +638,11 @@ For developer setup, running the server, working on import scripts locally, and 
 
 7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
 
-8. **OAuth implementation surface.** Custom auth is a real trust boundary. Use MCP SDK auth handlers, exact-match redirect URI validation, rate limit client registration, short-lived tokens with refresh rotation, encrypt at rest. See [SECURITY.md](SECURITY.md).
+8. **OAuth implementation surface.** Custom auth is a real trust boundary. Use
+   MCP SDK auth handlers, exact-match redirect URI validation, rate limit
+   client registration, hash bearer secrets at rest, and keep the long-lived
+   token policy under review as the threat model changes. See
+   [SECURITY.md](SECURITY.md).
 
 9. **Campaign data isolation (Phase 4).** Multiplayer campaigns require strict horizontal privilege separation — User A must not see User B's personal quest or battle goals, even via LLM-mediated leaks. The data isolation design must come **before** building the campaign data model, not after. See [SECURITY.md](SECURITY.md).
 
