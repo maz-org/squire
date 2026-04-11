@@ -78,7 +78,7 @@ function syncChatFormAction() {
   var form = document.querySelector('.squire-input-dock');
   if (!form) return;
 
-  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)$/);
+  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)(?:\/messages\/[0-9a-f-]+)?$/);
   var action = match ? '/chat/' + match[1] + '/messages' : '/chat';
   form.setAttribute('action', action);
   form.setAttribute('hx-post', action);
