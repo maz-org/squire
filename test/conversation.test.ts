@@ -1311,7 +1311,91 @@ describe('selected-message projection', () => {
     });
 
     expect(projection).not.toBeNull();
-    expect(projection?.selectedTurn.isEarlierQuestion).toBe(false);
+    expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
     expect(projection?.recentQuestions).toEqual([]);
+  });
+
+  it('excludes error assistant turns from selected-message history', async () => {
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+
+    const [olderUserMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Older completed question',
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'Older completed answer',
+      responseToMessageId: olderUserMessage.id,
+    });
+    const [failedUserMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Failed question',
+      })
+      .returning();
+    const [failedAssistantMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'assistant',
+        content: 'I hit an error and could not answer that.',
+        isError: true,
+        responseToMessageId: failedUserMessage.id,
+      })
+      .returning();
+
+    await db
+      .update(conversations)
+      .set({ lastMessageAt: failedAssistantMessage.createdAt })
+      .where(sql`${conversations.id} = ${conversation.id}`);
+
+    const selectedFailedTurn = await loadSelectedConversation({
+      conversationId: conversation.id,
+      messageId: failedUserMessage.id,
+      userId: auth.userId,
+    });
+    expect(selectedFailedTurn).toBeNull();
+
+    const projection = await loadSelectedConversation({
+      conversationId: conversation.id,
+      messageId: olderUserMessage.id,
+      userId: auth.userId,
+    });
+
+    expect(projection).not.toBeNull();
+    expect(projection?.recentQuestions).toEqual([]);
+  });
+
+  it('marks the latest completed turn as earlier when a newer user question is pending', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Oldest completed question', answer: 'Oldest completed answer' },
+      { question: 'Latest completed question', answer: 'Latest completed answer' },
+      { question: 'Newest pending question' },
+    ]);
+
+    const projection = await loadSelectedConversation({
+      conversationId: seeded.conversationId,
+      messageId: seeded.userMessages[1]!.id,
+      userId: auth.userId,
+    });
+
+    expect(projection).not.toBeNull();
+    expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
+    expect(projection?.recentQuestions.map((question) => question.messageId)).toEqual([
+      seeded.userMessages[0]!.id,
+    ]);
   });
 });

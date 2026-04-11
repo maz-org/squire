@@ -369,7 +369,7 @@ export async function loadSelectedConversation(input: {
   }> = [];
 
   for (const message of loaded.messages) {
-    if (message.role === 'assistant' && message.responseToMessageId) {
+    if (message.role === 'assistant' && message.responseToMessageId && !message.isError) {
       assistantResponses.set(message.responseToMessageId, message);
     }
   }
@@ -390,6 +390,8 @@ export async function loadSelectedConversation(input: {
   if (selectedIndex === -1) return null;
 
   const selectedTurn = completedTurns[selectedIndex]!;
+  const userMessages = loaded.messages.filter((message) => message.role === 'user');
+  const latestUserMessage = userMessages.at(-1);
   const recentQuestions = completedTurns
     .filter((turn) => turn.userMessage.id !== input.messageId)
     .slice()
@@ -410,7 +412,7 @@ export async function loadSelectedConversation(input: {
     selectedTurn: {
       userMessage: selectedTurn.userMessage,
       assistantMessage: selectedTurn.assistantMessage,
-      isEarlierQuestion: selectedIndex !== completedTurns.length - 1,
+      isEarlierQuestion: latestUserMessage?.id !== selectedTurn.userMessage.id,
     },
     recentQuestions,
   };
