@@ -148,6 +148,273 @@ Reason:
 - fixes the regression where a follow-up from a selected-message URL would
   otherwise post back to `/chat` and start a new conversation
 
+## Design Review Checkpoints
+
+### Checkpoint 1
+
+Selected prior-question state gets an explicit context label near the hero
+question.
+
+- show the label only when viewing an earlier question
+- hide it on the latest/current turn
+- do not use mechanism language like "reload"
+- preferred copy: `EARLIER QUESTION`
+
+Reason:
+
+- tells the user they are looking at history without making the chip row carry
+  all the meaning
+- keeps the explanation where the eye already is, near the main question
+
+### Checkpoint 2
+
+The chip row is an explicit secondary region, not a loose strip of pills.
+
+- render a heading: `Recent questions`
+- render chips beneath that heading
+
+Reason:
+
+- makes the ledger hierarchy scannable
+- preserves the chip row as lightweight history, not random controls
+
+### Checkpoint 3
+
+The currently viewed question is excluded from the chip row.
+
+- if the user is viewing an earlier question, that question does not also
+  appear as a chip
+- the `EARLIER QUESTION` label near the hero question carries the state cue
+
+Reason:
+
+- avoids dead or redundant chip interactions
+- keeps the secondary history row focused on other places the user can go next
+
+### Checkpoint 4
+
+Recent-question chips are ordered newest-to-oldest, left to right.
+
+Reason:
+
+- matches the meaning of `Recent questions`
+- makes the most likely next destination the easiest one to reach
+
+### Checkpoint 5
+
+Finished answers must use one shared visual contract across all answer states.
+
+- streamed-final answer
+- persisted current conversation answer
+- persisted selected prior-question answer
+
+All three must render with the same answer presentation, not degraded variants.
+
+Reason:
+
+- prevents the SQR-89 class of bug where persisted answers feel rougher than
+  the streamed result
+- preserves trust by making the answer feel like the same artifact everywhere
+
+### Checkpoint 6
+
+Tool-status UI is a quiet transient status area, not an event log.
+
+- at most one row per tool id
+- rows deduplicate in place instead of accumulating
+- each row stays legible as a distinct line item, never concatenated text noise
+- streaming may show transient status, but the area should stay visually quiet
+- when streaming ends, the tool-status area collapses to the final clean state
+
+Reason:
+
+- matches the intended feel that the user notices reassurance, not mechanics
+- prevents the SQR-90 class of bug where duplicate rows become noisy enough to
+  feel like a separate interface
+
+### Checkpoint 7
+
+Earlier selected answers remain first-class answers.
+
+- selected prior-question answers use the same answer presentation as current
+  answers
+- the only historical cue is the subtle `EARLIER QUESTION` label near the hero
+  question
+- do not add dimming, stale-state badges, or reduced-emphasis chrome
+
+Reason:
+
+- keeps historical answers trustworthy and readable
+- avoids making an earlier answer feel like a degraded or archival mode
+
+### Checkpoint 8
+
+Hide the entire `Recent questions` region when there are no eligible prior
+questions.
+
+Reason:
+
+- avoids empty-section chrome
+- keeps the screen focused on the current ledger surface when history does not
+  yet exist
+
+### Checkpoint 9
+
+Chip taps are framed as revisiting an earlier ruling.
+
+- copy and motion should support recall, not "reload" mechanics
+- the interaction should feel like quickly returning to something already asked
+- avoid language that suggests a broken refresh, hard navigation, or technical
+  restore flow
+
+Reason:
+
+- matches the user mental model at the table
+- keeps the ledger experience focused on finding the ruling again, not on how
+  the page transport works
+
+### Checkpoint 10
+
+Asking a new question from an earlier-question view should feel like continuing
+the same conversation naturally from the revisited context.
+
+Reason:
+
+- avoids the feeling of branching into a separate timeline
+- aligns the product feel with the technical requirement that follow-ups remain
+  in the same conversation
+
+### Checkpoint 11
+
+Future overflow history must extend the ledger model, not replace it with a
+transcript-manager experience.
+
+Reason:
+
+- preserves the calm "revisit an earlier ruling" feel as history grows
+- prevents the eventual SQR-92 overflow solution from accidentally turning
+  Squire into a general chat workspace
+
+### Checkpoint 12
+
+Support copy on the ledger surface stays minimal, but never cryptic.
+
+- prefer short labels over helper sentences
+- avoid instructional prose unless the user is actually blocked
+- optimize for immediate comprehension by a new user, not just for repeat use
+
+Reason:
+
+- protects the surface from generic AI-app explanatory clutter
+- keeps the page fast to scan without making it harder for a first-time user
+  to understand
+
+### Checkpoint 13
+
+User-facing ledger copy must avoid mechanism language.
+
+- ban labels and helper copy like `reload`, `restore`, `thread`, `message view`
+  and similar implementation-oriented wording
+- prefer plain user language that describes the outcome instead of the transport
+
+Reason:
+
+- keeps the product from sounding like developer tooling
+- reinforces the ledger metaphor instead of exposing internal mechanics
+
+### Checkpoint 14
+
+The selected-state cue remains one small text label near the hero question.
+
+- no additional badge cluster
+- no extra pills near the hero
+- no dashboard-style selected-state chrome
+
+Reason:
+
+- preserves the quiet ledger feel of the surface
+- prevents clarity fixes from turning into generic app chrome
+
+### Checkpoint 15
+
+The `DESIGN.md` guidance of two to three recent-question chips describes the
+intended visual rhythm for Phase 1, not a hard maximum history count.
+
+Reason:
+
+- keeps the implementation aligned with the approved visual target
+- avoids accidentally turning a design cue into a product limitation before
+  SQR-92 handles overflow explicitly
+
+### Checkpoint 16
+
+The wax-seal treatment is the actual submit button and must be explicitly
+labeled `Ask`.
+
+- do not make the seal a decorative icon users must interpret
+- the button should read as the primary ask action immediately
+
+Reason:
+
+- preserves the approved visual character without sacrificing first-use
+  comprehension
+- turns a strong visual motif into a clear control instead of ambiguous chrome
+
+### Checkpoint 17
+
+`Recent questions` is a normal labeled navigation region with standard
+interactive elements.
+
+- use natural tab order
+- use standard button or link semantics
+- do not invent a custom keyboard interaction model for the chip row
+
+Reason:
+
+- keeps the history affordance accessible without adding unnecessary widget
+  complexity
+- makes future overflow work easier to extend cleanly
+
+### Checkpoint 18
+
+The input field may stay visually minimal, but it still needs explicit
+accessibility and gentle first-use guidance.
+
+- a blank visible field is acceptable if the control remains clearly related to
+  the `Ask` action and has an explicit accessible label
+- if a visible placeholder or other guidance is needed, it should stay simple
+  and in-mood, for example `Ask a question...`
+- avoid guidance text that breaks the mood or sounds like technical/manual
+  tooling, for example references to rulebooks, engines, or lookup mechanics
+
+Reason:
+
+- preserves the quiet visual direction without sacrificing clarity
+- protects the input from drifting into awkward explanatory product copy
+
+### Checkpoint 19
+
+Final selected-state label copy: `EARLIER QUESTION`.
+
+Reason:
+
+- shortest and clearest wording for fast phone scanning
+- preserves the subtle cue without adding extra explanation
+
+### Checkpoint 20
+
+Input guidance defaults to no visible placeholder, but a minimal fallback is
+allowed if implementation testing shows first-use clarity needs it.
+
+- acceptable fallback copy: `Ask a question...`
+- do not require a visible placeholder unless the blank field proves too opaque
+
+Reason:
+
+- preserves the cleaner visual direction you preferred
+- keeps room for a small usability correction without reopening the whole input
+  design
+
 ## Architecture Review
 
 ### Locked architecture
@@ -315,3 +582,66 @@ Eng review verdict: CLEAR WITH REQUIRED TEST SHAPE
 
 This should land as a lean extension to the shipped ledger chat architecture,
 not as a second chat system.
+
+## Existing UI Assets
+
+- [`DESIGN.md`](../DESIGN.md) already defines the ledger metaphor, type system,
+  color tokens, chip vocabulary, and input-dock character.
+- [`docs/adr/0010-current-turn-ledger.md`](../adr/0010-current-turn-ledger.md)
+  already locks the one-current-turn surface model.
+- [`src/web-ui/layout.ts`](../../src/web-ui/layout.ts) already provides the
+  ledger shell, `#squire-surface`, `nav.squire-recent`, input dock, and error
+  banner primitives.
+- [`src/web-ui/squire.js`](../../src/web-ui/squire.js) already owns the
+  follow-up retargeting and streaming-state client behavior.
+- [`src/web-ui/styles.css`](../../src/web-ui/styles.css) already contains the
+  established answer, chip, footer, and input styling primitives that the
+  reviewed plan should extend rather than replace.
+
+## Approved Mockups
+
+Approved direction notes:
+
+- use variant B as the base
+- keep the wax-seal submit treatment, but make it the explicit `Ask` button
+- remove `tap to reload` style wording from the UI
+- keep the chip region visually separate from the current answer
+- default to no visible placeholder, but allow `Ask a question...` if
+  implementation testing shows first-use clarity needs it
+
+Note:
+
+- the mockup artifacts used during review live in repo-local `.gstack/`, which
+  is intentionally gitignored and not a durable cross-clone reference
+- the durable source of truth is the approved direction summarized here plus the
+  checkpointed decisions above
+
+## Design Review Summary
+
++====================================================================+
+| DESIGN PLAN REVIEW — COMPLETION SUMMARY |
++====================================================================+
+| System Audit | DESIGN.md present, real UI scope, parent |
+| | ticket was stale vs refreshed plan |
+| Step 0 | 6/10 initial score, full 7-pass review |
+| Pass 1 (Info Arch) | 6/10 -> 9/10 |
+| Pass 2 (States) | 5/10 -> 10/10 |
+| Pass 3 (Journey) | 6/10 -> 10/10 |
+| Pass 4 (AI Slop) | 7/10 -> 10/10 |
+| Pass 5 (Design Sys) | 8/10 -> 10/10 |
+| Pass 6 (Responsive) | 7/10 -> 10/10 |
+| Pass 7 (Decisions) | 2 unresolved -> 0 unresolved |
++--------------------------------------------------------------------+
+| NOT in scope | written |
+| What already exists | written |
+| Approved Mockups | generated, reviewed, direction approved |
+| Decisions made | 20 checkpoints added to plan |
+| Decisions deferred | overflow UX remains in SQR-92 |
+| Overall design score | 6/10 -> 9.5/10 |
++====================================================================+
+
+Design review verdict: PLAN IS DESIGN-COMPLETE FOR SQR-6 EXECUTION.
+
+The remaining work is implementation and QA, not more design discovery. The
+main follow-on risk is ticket drift, which was addressed by updating `SQR-6`,
+`SQR-89`, `SQR-90`, `SQR-92`, `SQR-93`, and `SQR-94` to match this plan.
