@@ -196,9 +196,14 @@ function renderRecentQuestionChip(options: {
     hx-get="/chat/${options.conversationId}/messages/${options.question.id}"
     hx-target="#squire-surface"
     hx-swap="innerHTML"
+    hx-push-url="true"
   >
     ${options.question.content}
   </a>` as HtmlEscapedString;
+}
+
+function renderStaticRecentQuestionChip(label: string): HtmlEscapedString {
+  return html`<span class="squire-chip">${label}</span>` as HtmlEscapedString;
 }
 
 export function renderRecentQuestionsNav(options: RecentQuestionsNavOptions): HtmlEscapedString {
@@ -255,36 +260,6 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
     ...(options.chatFormHiddenFields ?? []),
   ];
-  const defaultRecentQuestions: ConversationMessage[] = [
-    {
-      id: 'placeholder-looting',
-      conversationId: 'placeholder-conversation',
-      role: 'user',
-      content: 'Looting',
-      isError: false,
-      responseToMessageId: null,
-      createdAt: new Date(0),
-    },
-    {
-      id: 'placeholder-element-infusion',
-      conversationId: 'placeholder-conversation',
-      role: 'user',
-      content: 'Element infusion',
-      isError: false,
-      responseToMessageId: null,
-      createdAt: new Date(0),
-    },
-    {
-      id: 'placeholder-negative-effects',
-      conversationId: 'placeholder-conversation',
-      role: 'user',
-      content: 'Negative scenario effects',
-      isError: false,
-      responseToMessageId: null,
-      createdAt: new Date(0),
-    },
-  ];
-
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
   // strings from a caught exception. `mainContent` is typed as
@@ -387,10 +362,14 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
             : html`<footer class="squire-toolcall" aria-live="off">
                   CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
                 </footer>
-                ${renderRecentQuestionsNav({
-                  conversationId: 'placeholder-conversation',
-                  questions: defaultRecentQuestions,
-                })}
+                <nav class="squire-recent" id="squire-recent" aria-label="Recent questions">
+                  <span class="squire-recent__label">Recent questions</span>
+                  <div class="squire-recent__chips">
+                    ${renderStaticRecentQuestionChip('Looting')}
+                    ${renderStaticRecentQuestionChip('Element infusion')}
+                    ${renderStaticRecentQuestionChip('Negative scenario effects')}
+                  </div>
+                </nav>
                 <form
                   class="squire-input-dock"
                   method="post"
