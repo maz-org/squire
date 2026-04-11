@@ -513,7 +513,7 @@ describe('conversation web backend', () => {
       `http://localhost:3000/chat/${conversation.id}/messages/${userMessage.id}/stream`,
     );
     expect(streamRes.status).toBe(200);
-    expect(parseSse(await streamRes.text())).toEqual([]);
+    expect(parseSse(await streamRes.text())).toEqual([{ event: 'done', data: {} }]);
 
     const storedMessages = await db.execute(sql`
       select role, content, response_to_message_id as "responseToMessageId"

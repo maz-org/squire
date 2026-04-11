@@ -680,6 +680,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
 
   return streamSSE(c, async (stream) => {
     const toolIds = new Map<string, string[]>();
+    let sentDoneEvent = false;
     const nextToolId = (name: string) => {
       const queue = toolIds.get(name) ?? [];
       const id = `${name}-${queue.length + 1}`;
@@ -740,6 +741,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         }
 
         if (event === 'done') {
+          sentDoneEvent = true;
           await stream.writeSSE({
             event: 'done',
             data: JSON.stringify({}),
@@ -759,6 +761,11 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
               : assistantMessage.content,
           recoverable: true,
         }),
+      });
+    } else if (!sentDoneEvent) {
+      await stream.writeSSE({
+        event: 'done',
+        data: JSON.stringify({}),
       });
     }
   });
