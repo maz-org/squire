@@ -56,7 +56,9 @@ Squire's web channel separates **conversation** from **knowledge**:
 
 - **Conversation agent** — thin session manager. Owns persisted chat history,
   failure persistence, ownership checks, streaming via Server-Sent Events, and
-  presentation (Hono JSX rendering, citations, tool call visibility). Real
+  presentation (Hono JSX rendering, citations, tool call visibility). In the
+  web UI, live deltas stay plain text until the stream completes; the terminal
+  `done` event swaps in one sanitized server-rendered HTML fragment. Real
   context compaction and summarization remain future work (SQR-12). One per
   client session.
 - **Knowledge agent** — the actual agent loop. Owns retrieval strategy (which atomic tools to call, in what order), reference resolution (turning "what items work with it?" into "Blinkblade items" via conversation history), campaign context loading (per Phase 4+), and answer generation. Stateless per request. Shared by all clients.
@@ -89,7 +91,15 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 
 - **Server framework:** Hono (`@hono/node-server`)
 - **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS compiled in-process via `@tailwindcss/node`
+- **Assistant rendering boundary:** `markdown-it` on the server, with raw HTML
+  disabled, non-HTTPS links rejected, and one shared renderer reused for both
+  persisted transcript pages and final post-stream answer fragments
 - **Build pipeline:** no JavaScript bundler and no client-side build step. `GET /app.css` compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node` on first request and caches the result in a module-level variable; dev keys the cache on source-file mtime so edits show up on the next request, prod compiles exactly once per process. Prod serves the compiled CSS at a content-hashed URL (`/app.<hash>.css`) with `Cache-Control: public, max-age=31536000, immutable` so Cloudflare and browsers can cache forever and invalidation is automatic on content change; dev serves the bare `/app.css` path with `Cache-Control: no-cache`. A parallel `/squire.js` handler serves vanilla-JS islands (currently the SQR-66 cite tap-toggle) with the same caching pattern. No `public/` build output, no `npm run build:css` — every fresh clone renders correctly without a build prerequisite.
+
+HTML responses also carry a shared Content Security Policy set in
+`src/server.ts`. The policy is `self`-only except for the current Google Fonts
+carve-out in `style-src` / `font-src`. JSON, SSE, and JS/CSS asset responses do
+not get the HTML CSP header.
 
 _Rationale: chosen to keep the stack simple and lightweight — single language end-to-end, no JS bundler, no client build pipeline. Secondary goal: learn new application tech (already deeply familiar with React SPAs)._
 
@@ -306,6 +316,11 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   agent
 - History forwarded into `ask()` is capped to the most recent 20 non-error
   messages. Real compaction and summarization remain deferred to SQR-12
+- Browser streaming contract:
+  - `text-delta` appends inert plain text only
+  - terminal `done` carries the sanitized final HTML fragment
+  - the same server-side renderer is used for persisted reloads and final
+    post-stream replacement
 
 ---
 
@@ -502,7 +517,13 @@ An earlier design considered using **internal MCP** as the transport between the
   stored conversation history, campaign ID
 - Does **not** call MCP tools directly — delegates domain reasoning to the knowledge agent
 - Owns session management: persisted chat history, ownership checks, failure
-  persistence, and presentation. Context compaction remains future work
+  persistence, and presentation
+- Maintains the web trust boundary:
+  - incremental stream text is inserted as plain text only
+  - final answer formatting is derived on the server and inserted as sanitized
+    HTML at stream completion
+  - persisted reloads use that same renderer rather than a separate browser path
+- Context compaction remains future work
 
 **External MCP clients:**
 

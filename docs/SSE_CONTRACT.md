@@ -27,7 +27,7 @@ The browser consumes these SSE event names:
   - Payload: `{ "id": string, "label": string, "ok": boolean }`
 - `done`
   - Marks the stream complete and clears the pending answer UI.
-  - Payload: `{}`
+  - Payload: `{ "html": string }`
 - `error`
   - Replaces the pending answer UI with an error banner.
   - Payload: `{ "kind": string, "message": string, "recoverable": boolean }`
@@ -42,14 +42,17 @@ For every successful stream:
 3. Any `text-delta` events must arrive before `done`.
 4. Tool events may appear before completion, but they do not count as answer
    text.
+5. The terminal `done` event carries the final server-rendered sanitized HTML
+   fragment, which replaces the pending plain-text transcript in the browser.
 
 Important:
 
 - A provider/backend success does not imply that incremental text events were
   emitted.
-- If the backend returns a final persisted assistant message without any prior
-  `text` emits, the stream route must synthesize a fallback `text-delta` from
-  the persisted message before sending `done`.
+- The browser treats `text-delta` as inert plain text only; rich formatting is
+  introduced exclusively through the final sanitized `done.html` fragment.
+- If the backend finishes without any prior incremental text, the route may
+  still complete successfully with only a terminal `done.html` payload.
 
 ## Error-path invariants
 
@@ -71,16 +74,17 @@ The route, not the provider, owns the final browser ordering guarantees:
 - provider/internal `tool_call` -> browser `tool-start`
 - provider/internal `tool_result` -> browser `tool-result`
 - provider/internal `done` is only a completion signal
-- browser `done` is emitted by the route after it has confirmed whether
-  fallback answer text is needed
+- browser `done` is emitted by the route with the final sanitized HTML derived
+  from the persisted assistant message
 
 ## Testing guidance
 
 Regression tests should assert browser-visible behavior, not only persistence:
 
-- successful streams without incremental text still send visible answer content
-  plus `done`
-- tool-only success paths still send fallback answer text if the assistant
-  message contains content
+- successful streams without incremental text still end with a visible
+  `done.html` fragment
+- `text-delta` content remains inert plain text even when it contains hostile
+  markup
+- `done.html` is sanitized before browser insertion
 - transport/bootstrap failures end in `error`
 - repaired first-send retries satisfy the same stream contract as normal flows
