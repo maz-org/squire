@@ -623,7 +623,9 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
   const recentQuestionsNav = renderRecentQuestionsNav(
     loaded.recentQuestions.map((question) => ({
       href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+      hxGet: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
       label: question.question,
+      pushUrl: true,
     })),
     { oob: isHtmxRequest(c) },
   );

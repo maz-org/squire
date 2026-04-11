@@ -69,6 +69,8 @@ export interface PendingTurnShellOptions {
 export interface RecentQuestionNavItem {
   href: string;
   label: string;
+  hxGet?: string;
+  pushUrl?: boolean;
 }
 
 export interface RecentQuestionsNavOptions {
@@ -245,7 +247,9 @@ export function renderRecentQuestionsNav(
       chips: optionsOrItems.map((item) =>
         renderRecentQuestionChip({
           href: item.href,
+          hxGet: item.hxGet,
           label: item.label,
+          pushUrl: item.pushUrl,
         }),
       ),
       hidden: optionsOrItems.length === 0,

@@ -629,6 +629,28 @@ describe('selected-message rendering helpers', () => {
     expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*hx-swap-oob="outerHTML"/);
     expect(body).toContain('Recent questions');
   });
+
+  it('renders explicit nav items with HTMX attributes when provided', () => {
+    const body = String(
+      actualLayout.renderRecentQuestionsNav(
+        [
+          {
+            href: '/chat/conv-123/messages/m1',
+            hxGet: '/chat/conv-123/messages/m1',
+            label: 'Oldest question',
+            pushUrl: true,
+          },
+        ],
+        { oob: true },
+      ),
+    );
+
+    expect(body).toContain('href="/chat/conv-123/messages/m1"');
+    expect(body).toContain('hx-get="/chat/conv-123/messages/m1"');
+    expect(body).toContain('hx-target="#squire-surface"');
+    expect(body).toContain('hx-swap="innerHTML"');
+    expect(body).toContain('hx-push-url="true"');
+  });
 });
 
 describe('GET / — signature components (SQR-66)', () => {

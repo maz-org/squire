@@ -319,6 +319,8 @@ describe('conversation web backend', () => {
     const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
     expect(recentNav).toContain('When do elements wane?');
     expect(recentNav).not.toContain('How does looting work?');
+    expect(recentNav).toContain('hx-get="/chat/');
+    expect(recentNav).toContain('hx-push-url="true"');
   });
 
   it('renders the canonical selected-message route as an HTMX fragment', async () => {
@@ -352,6 +354,8 @@ describe('conversation web backend', () => {
     expect(recentNav).toContain('hx-swap-oob="outerHTML"');
     expect(recentNav).toContain('What does muddle do?');
     expect(recentNav).not.toContain('What does strengthen do?');
+    expect(recentNav).toContain('hx-get="/chat/');
+    expect(recentNav).toContain('hx-push-url="true"');
   });
 
   it("returns 404 when one user requests another user's selected-message URL", async () => {
