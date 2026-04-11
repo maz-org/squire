@@ -471,6 +471,10 @@ Avoid:
 - `GET /chat/:conversationId/messages/:messageId`
   - owner gets 200 full page
   - HTMX request gets fragment response
+  - full-page response sets `Cache-Control: no-store`
+  - full-page response sets `Vary: Cookie`
+  - HTMX fragment response sets `Cache-Control: no-store`
+  - HTMX fragment response sets `Vary: Cookie`
   - foreign user gets 404
   - assistant message id gets 404
   - mismatched conversation/message ids get 404
@@ -481,11 +485,21 @@ Avoid:
 - recent-chip row excludes the currently selected message
 - recent-chip ordering is stable and matches the intended chronology
 - HTMX fragment includes OOB update for `nav.squire-recent`
+- `Recent questions` renders as a labeled navigation landmark when present
+- recent-question chips render as standard focusable links or buttons, not a
+  custom keyboard widget
+- empty history state hides the entire `Recent questions` region
 
 #### Client regression coverage
 
 - when browser URL is `/chat/:conversationId/messages/:messageId`, follow-up
   submit still posts to `/chat/:conversationId/messages`
+- natural tab order reaches the `Recent questions` controls when present
+- natural tab order reaches the question input and `Ask` action
+- input exposes an explicit accessible label even when the visible field is
+  blank
+- if a placeholder is used, it stays minimal and in-mood, for example
+  `Ask a question...`
 
 This is a **mandatory regression test**.
 
