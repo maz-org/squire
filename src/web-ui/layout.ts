@@ -20,6 +20,7 @@ import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
+import { renderAssistantContent } from './assistant-content.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 import type { ConversationMessage, Session } from '../db/repositories/types.ts';
@@ -135,10 +136,13 @@ function renderQuestionTurn(content: string): HtmlEscapedString {
 }
 
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
+  const content = message.isError
+    ? (html`<p>${message.content}</p>` as HtmlEscapedString)
+    : renderAssistantContent(message.content);
   return html`<article
     class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
   >
-    <p>${message.content}</p>
+    ${content}
   </article>` as HtmlEscapedString;
 }
 

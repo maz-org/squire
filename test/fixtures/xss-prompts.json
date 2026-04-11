@@ -1,0 +1,42 @@
+[
+  {
+    "name": "img-onerror",
+    "input": "<img src=x onerror=alert(1)>"
+  },
+  {
+    "name": "javascript-link",
+    "input": "[click me](javascript:alert(1))"
+  },
+  {
+    "name": "script-tag",
+    "input": "<script>alert(1)</script>"
+  },
+  {
+    "name": "iframe-tag",
+    "input": "<iframe src=\"https://evil.example\"></iframe>"
+  },
+  {
+    "name": "inline-style-expression",
+    "input": "<div style=\"width: expression(alert(1))\">hello</div>"
+  },
+  {
+    "name": "svg-onload",
+    "input": "<svg onload=\"alert(1)\"></svg>"
+  },
+  {
+    "name": "data-uri-link",
+    "input": "[payload](data:text/html,<script>alert(1)</script>)"
+  },
+  {
+    "name": "cross-origin-form",
+    "input": "<form action=\"https://evil.com\" method=\"post\"><button>go</button></form>"
+  },
+  {
+    "name": "entity-smuggled-script",
+    "input": "&#x3C;script&#x3E;alert(1)&#x3C;/script&#x3E;"
+  },
+  {
+    "name": "meta-refresh",
+    "input": "<meta http-equiv=\"refresh\" content=\"0;url=https://evil.com\">"
+  }
+]

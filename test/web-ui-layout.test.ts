@@ -112,6 +112,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
     expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('content-security-policy')).toBe(
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    );
     expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
@@ -138,6 +141,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 
   it('renders the not-invited page without the Google sign-in button', async () => {
     const res = await app.request('/not-invited');
+    expect(res.headers.get('content-security-policy')).toBe(
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    );
     const body = await res.text();
     expect(body).toContain('NOT YET INVITED');
     expect(body).toContain(
