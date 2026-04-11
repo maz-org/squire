@@ -198,7 +198,7 @@ function handlePendingTranscript(transcript) {
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
     var payload = JSON.parse(event.data || '{}');
-    if (contentEl && payload.html) {
+    if (contentEl && typeof payload.html === 'string') {
       contentEl.innerHTML = payload.html;
     }
     finishStream();

@@ -23,4 +23,10 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain("var action = form.getAttribute('action');");
     expect(squireJs).toContain('event.detail.path = action;');
   });
+
+  it('applies the terminal HTML swap even when the final fragment is empty', () => {
+    expect(squireJs).toContain("source.addEventListener('done'");
+    expect(squireJs).toContain("typeof payload.html === 'string'");
+    expect(squireJs).toContain('contentEl.innerHTML = payload.html;');
+  });
 });
