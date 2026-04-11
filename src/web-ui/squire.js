@@ -102,15 +102,23 @@ function ensureAnswerParagraph(contentEl) {
 function renderPendingError(answerEl, label, message) {
   answerEl.classList.remove('squire-answer--pending');
   answerEl.setAttribute('data-stream-state', 'error');
-  answerEl.innerHTML =
-    '<div class="squire-banner squire-banner--error" role="alert">' +
-    '<span class="squire-banner__label">' +
-    label +
-    '</span>' +
-    '<p class="squire-banner__body">' +
-    message +
-    '</p>' +
-    '</div>';
+  answerEl.replaceChildren();
+
+  var banner = document.createElement('div');
+  banner.className = 'squire-banner squire-banner--error';
+  banner.setAttribute('role', 'alert');
+
+  var labelEl = document.createElement('span');
+  labelEl.className = 'squire-banner__label';
+  labelEl.textContent = label;
+
+  var messageEl = document.createElement('p');
+  messageEl.className = 'squire-banner__body';
+  messageEl.textContent = message;
+
+  banner.appendChild(labelEl);
+  banner.appendChild(messageEl);
+  answerEl.appendChild(banner);
 }
 
 function handlePendingTranscript(transcript) {
@@ -185,10 +193,14 @@ function handlePendingTranscript(transcript) {
     row.textContent = payload.label + (payload.ok ? ' done' : ' failed');
   });
 
-  source.addEventListener('done', function () {
+  source.addEventListener('done', function (event) {
     answerEl.classList.remove('squire-answer--pending');
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
+    var payload = JSON.parse(event.data || '{}');
+    if (contentEl && typeof payload.html === 'string') {
+      contentEl.innerHTML = payload.html;
+    }
     finishStream();
   });
 

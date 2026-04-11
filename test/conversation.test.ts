@@ -185,6 +185,9 @@ describe('conversation web backend', () => {
     expect(pageRes.status).toBe(200);
 
     const page = await pageRes.text();
+    expect(pageRes.headers.get('content-security-policy')).toBe(
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    );
     expect(page).toContain('How does looting work?');
     expect(page).toContain('Loot tokens in your hex are picked up.');
 
@@ -516,8 +519,7 @@ describe('conversation web backend', () => {
     );
     expect(streamRes.status).toBe(200);
     expect(parseSse(await streamRes.text())).toEqual([
-      { event: 'text-delta', data: { delta: 'Recovered over SSE.' } },
-      { event: 'done', data: {} },
+      { event: 'done', data: { html: '<p>Recovered over SSE.</p>\n' } },
     ]);
 
     const storedMessages = await db.execute(sql`
@@ -723,10 +725,12 @@ describe('conversation web backend', () => {
   it('streams one turn with translated SSE events and persists the final assistant answer', async () => {
     mockAsk.mockImplementationOnce(async (_question, options) => {
       await options?.emit?.('tool_call', { name: 'search_rules' });
-      await options?.emit?.('text', { delta: 'Loot tokens in your hex are picked up.' });
+      await options?.emit?.('text', {
+        delta: 'Loot tokens in your hex are picked up with **style**.',
+      });
       await options?.emit?.('tool_result', { name: 'search_rules' });
       await options?.emit?.('done', {});
-      return 'Loot tokens in your hex are picked up.';
+      return 'Loot tokens in your hex are picked up with **style**.';
     });
 
     const auth = await createAuthContext();
@@ -750,6 +754,7 @@ describe('conversation web backend', () => {
 
     const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
     expect(streamRes.status).toBe(200);
+    expect(streamRes.headers.get('content-security-policy')).toBeNull();
     const events = parseSse(await streamRes.text());
     expect(events).toEqual([
       {
@@ -758,7 +763,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'text-delta',
-        data: { delta: 'Loot tokens in your hex are picked up.' },
+        data: { delta: 'Loot tokens in your hex are picked up with **style**.' },
       },
       {
         event: 'tool-result',
@@ -766,7 +771,9 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: {},
+        data: {
+          html: '<p>Loot tokens in your hex are picked up with <strong>style</strong>.</p>\n',
+        },
       },
     ]);
 
@@ -780,8 +787,78 @@ describe('conversation web backend', () => {
       { role: 'user', content: 'How does looting work?', isError: false },
       {
         role: 'assistant',
-        content: 'Loot tokens in your hex are picked up.',
+        content: 'Loot tokens in your hex are picked up with **style**.',
         isError: false,
+      },
+    ]);
+  });
+
+  it('renders persisted hostile assistant content as inert text on reload', async () => {
+    mockAsk.mockResolvedValueOnce(
+      '<script>alert(1)</script>[click](javascript:alert(1))<img src=x onerror=alert(1)>',
+    );
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Is this safe?',
+        idempotencyKey: 'idem-xss-reload',
+      }),
+      redirect: 'manual',
+    });
+
+    const location = requireLocation(createRes);
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000${location}`);
+    const page = await pageRes.text();
+
+    expect(page).not.toContain('<script>alert(1)</script>');
+    expect(page).not.toContain('<img');
+    expect(page).not.toContain('href="javascript:');
+    expect(page).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+
+  it('keeps hostile streamed content inert until the final sanitized done fragment', async () => {
+    const hostile =
+      '<script>alert(1)</script>[click](javascript:alert(1))<img src=x onerror=alert(1)>';
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: hostile });
+      await options?.emit?.('done', {});
+      return hostile;
+    });
+
+    const auth = await createAuthContext();
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Stream hostile content',
+        idempotencyKey: 'idem-xss-stream',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'text-delta',
+        data: { delta: hostile },
+      },
+      {
+        event: 'done',
+        data: {
+          html: '<p>&lt;script&gt;alert(1)&lt;/script&gt;[click](javascript:alert(1))&lt;img src=x onerror=alert(1)&gt;</p>\n',
+        },
       },
     ]);
   });
@@ -868,12 +945,8 @@ describe('conversation web backend', () => {
         data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: false },
       },
       {
-        event: 'text-delta',
-        data: { delta: 'Fallback answer.' },
-      },
-      {
         event: 'done',
-        data: {},
+        data: { html: '<p>Fallback answer.</p>\n' },
       },
     ]);
   });

@@ -855,7 +855,10 @@ template#squire-banner-fixtures {
  * word still present in the flow — never a wrapping span that breaks the
  * word in the DOM. See SQR-66 ticket, plan-eng-review 2026-04-08.
  */
-.squire-answer p:first-of-type::first-letter {
+.squire-answer
+  p:first-of-type:not(
+    :has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)
+  )::first-letter {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 600;
   font-variation-settings:

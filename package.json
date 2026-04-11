@@ -65,8 +65,9 @@
     "dotenv": "^17.4.0",
     "drizzle-orm": "1.0.0-beta.21",
     "google-auth-library": "^10.6.2",
-    "htmx.org": "^2.0.7",
     "hono": "^4.12.12",
+    "htmx.org": "^2.0.7",
+    "markdown-it": "^14.1.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",
     "tailwindcss": "^4.2.2",
@@ -74,6 +75,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.5.2",
     "@types/pg": "^8.20.0",
     "@vitest/coverage-v8": "^4.1.2",

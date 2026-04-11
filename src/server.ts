@@ -64,6 +64,7 @@ import {
   renderNotInvitedPage,
   renderPendingTurnShell,
 } from './web-ui/layout.ts';
+import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
 import {
   appendMessage,
@@ -77,6 +78,28 @@ import {
 } from './chat/conversation-service.ts';
 
 export const app = new Hono();
+
+const HTML_CSP =
+  "default-src 'self'; " +
+  "script-src 'self'; " +
+  "style-src 'self' https://fonts.googleapis.com; " +
+  "img-src 'self' data:; " +
+  "connect-src 'self'; " +
+  "font-src 'self' https://fonts.gstatic.com; " +
+  "object-src 'none'; " +
+  "base-uri 'none'; " +
+  "frame-ancestors 'none'; " +
+  "form-action 'self'";
+
+const cspMiddleware: MiddlewareHandler = async (c, next) => {
+  await next();
+  const contentType = c.res.headers.get('content-type') ?? '';
+  if (contentType.includes('text/html')) {
+    c.res.headers.set('content-security-policy', HTML_CSP);
+  }
+};
+
+app.use('*', cspMiddleware);
 
 // ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0011) ─────────────────────
 //
@@ -679,12 +702,10 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   }
 
   // Browser SSE semantics are documented in docs/SSE_CONTRACT.md. This route
-  // owns the final user-visible ordering guarantees, including fallback
-  // text-delta emission when the provider returns a persisted answer without
-  // incremental text events.
+  // owns the final user-visible ordering guarantees, including the final
+  // sanitized-html swap on `done`.
   return streamSSE(c, async (stream) => {
     const toolIds = new Map<string, string[]>();
-    let sentTextDelta = false;
     const nextToolId = (name: string) => {
       const queue = toolIds.get(name) ?? [];
       const id = `${name}-${queue.length + 1}`;
@@ -710,7 +731,6 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       currentUserMessageId: loaded.message.id,
       onEvent: async (event, data) => {
         if (event === 'text') {
-          sentTextDelta = true;
           await stream.writeSSE({
             event: 'text-delta',
             data: JSON.stringify(data),
@@ -744,10 +764,6 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           });
           return;
         }
-
-        if (event === 'done') {
-          return;
-        }
       },
     });
 
@@ -763,19 +779,15 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           recoverable: true,
         }),
       });
-    } else {
-      if (!sentTextDelta && assistantMessage.content) {
-        await stream.writeSSE({
-          event: 'text-delta',
-          data: JSON.stringify({ delta: assistantMessage.content }),
-        });
-      }
-
-      await stream.writeSSE({
-        event: 'done',
-        data: JSON.stringify({}),
-      });
+      return;
     }
+
+    await stream.writeSSE({
+      event: 'done',
+      data: JSON.stringify({
+        html: renderAssistantContentHtml(assistantMessage.content),
+      }),
+    });
   });
 });
 

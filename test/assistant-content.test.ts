@@ -1,0 +1,70 @@
+import { readFileSync } from 'node:fs';
+
+import { describe, expect, it } from 'vitest';
+
+import {
+  renderAssistantContent,
+  renderAssistantContentHtml,
+} from '../src/web-ui/assistant-content.ts';
+
+const adversarialCases = JSON.parse(
+  readFileSync(new URL('./fixtures/xss-prompts.json', import.meta.url), 'utf8'),
+) as Array<{ name: string; input: string }>;
+
+describe('assistant content renderer', () => {
+  it.each(adversarialCases)('strips executable content from $name', ({ input }) => {
+    const html = renderAssistantContentHtml(input).toLowerCase();
+    expect(html).not.toContain('<script');
+    expect(html).not.toContain('<img');
+    expect(html).not.toContain('<iframe');
+    expect(html).not.toContain('<svg');
+    expect(html).not.toContain('<meta');
+    expect(html).not.toContain('<form');
+    expect(html).not.toMatch(/<[^>]+\son[a-z]+\s*=/);
+    expect(html).not.toContain('href="javascript:');
+    expect(html).not.toContain('href="data:text/html');
+    expect(html).not.toContain('style="');
+  });
+
+  it('preserves the allowed markdown subset', () => {
+    const html = renderAssistantContentHtml(
+      [
+        'Paragraph one with **strong** and *emphasis*.',
+        '',
+        '- first',
+        '- second',
+        '',
+        '> quoted',
+        '',
+        '`inline`',
+        '',
+        '```',
+        'block code',
+        '```',
+        '',
+        '[safe link](https://example.com)',
+      ].join('\n'),
+    );
+
+    expect(html).toContain(
+      '<p>Paragraph one with <strong>strong</strong> and <em>emphasis</em>.</p>',
+    );
+    expect(html).toContain('<ul>');
+    expect(html).toContain('<li>first</li>');
+    expect(html).toContain('<blockquote>');
+    expect(html).toContain('<code>inline</code>');
+    expect(html).toContain('<pre><code>block code');
+    expect(html).toContain('<a href="https://example.com" rel="noopener noreferrer">safe link</a>');
+  });
+
+  it('renders unsafe markdown links as inert literal text without a dangling closing tag', () => {
+    const html = renderAssistantContentHtml('[click](javascript:alert(1))');
+    expect(html).toBe('<p>[click](javascript:alert(1))</p>\n');
+    expect(html).not.toContain('</a>');
+  });
+
+  it('returns a trusted fragment for Hono templates', () => {
+    const html = String(renderAssistantContent('**Bold** answer.'));
+    expect(html).toContain('<p><strong>Bold</strong> answer.</p>');
+  });
+});

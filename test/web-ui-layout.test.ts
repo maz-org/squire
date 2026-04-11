@@ -112,6 +112,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
     expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('content-security-policy')).toBe(
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    );
     expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
@@ -138,6 +141,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 
   it('renders the not-invited page without the Google sign-in button', async () => {
     const res = await app.request('/not-invited');
+    expect(res.headers.get('content-security-policy')).toBe(
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    );
     const body = await res.text();
     expect(body).toContain('NOT YET INVITED');
     expect(body).toContain(
@@ -198,6 +204,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<meta name="csrf-token" content="[^"]+"/);
+    expect(body).toContain(
+      `<meta name="htmx-config" content='{"includeIndicatorStyles":false}' />`,
+    );
     expect(body).toMatch(/hx-headers='\{"x-csrf-token":"[^"]+"\}'/);
   });
 });
@@ -548,8 +557,13 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-answer\s+\.cite\.is-active\s*\{[^}]*var\(--wax\)/);
   });
 
-  it('declares a .squire-answer p:first-of-type::first-letter drop cap in Fraunces', () => {
-    const rule = css.match(/\.squire-answer\s+p:first-of-type::first-letter\s*\{[^}]*\}/);
+  it('declares a guarded .squire-answer first-paragraph drop cap in Fraunces', () => {
+    expect(css).toContain('.squire-answer');
+    expect(css).toContain('p:first-of-type:not(');
+    expect(css).toContain(
+      ':has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)',
+    );
+    const rule = css.match(/::first-letter\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toMatch(/font-family:\s*["']?Fraunces["']?/);
