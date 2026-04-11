@@ -509,6 +509,15 @@ export function renderConversationTranscriptWithPendingTurn(options: {
   </section>` as HtmlEscapedString;
 }
 
+export function renderConversationTranscriptWithPendingTurnAndRecentQuestions(options: {
+  conversationId: string;
+  messages: ConversationMessage[];
+  streamUrl: string;
+  recentQuestionsNav: HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`${renderConversationTranscriptWithPendingTurn(options)} ${options.recentQuestionsNav}` as HtmlEscapedString;
+}
+
 export function renderConversationTranscriptWithRecentQuestions(options: {
   conversationId: string;
   messages: ConversationMessage[];
