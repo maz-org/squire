@@ -678,6 +678,10 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
     });
   }
 
+  // Browser SSE semantics are documented in docs/SSE_CONTRACT.md. This route
+  // owns the final user-visible ordering guarantees, including fallback
+  // text-delta emission when the provider returns a persisted answer without
+  // incremental text events.
   return streamSSE(c, async (stream) => {
     const toolIds = new Map<string, string[]>();
     let sentTextDelta = false;

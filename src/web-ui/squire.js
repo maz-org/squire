@@ -116,6 +116,8 @@ function renderPendingError(answerEl, label, message) {
 function handlePendingTranscript(transcript) {
   if (!transcript) return;
 
+  // Browser event expectations live in docs/SSE_CONTRACT.md. Text is rendered
+  // only from text-delta, while done/error are terminal UI state changes.
   var streamUrl = transcript.getAttribute('data-stream-url');
   if (!streamUrl) return;
   if (activeStream && activeStream.url === streamUrl) return;

@@ -130,6 +130,8 @@ function requireLocation(response: Response): string {
 }
 
 function parseSse(text: string): Array<{ event: string; data: unknown }> {
+  // Keep these assertions aligned with docs/SSE_CONTRACT.md, which defines the
+  // browser-visible event model rather than the service's internal emit API.
   return text
     .trim()
     .split('\n\n')
