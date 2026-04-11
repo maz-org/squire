@@ -59,10 +59,12 @@ import {
   renderConversationTranscript,
   renderConversationTranscriptWithPendingTurn,
   renderConversationPage,
+  renderConversationTranscriptWithRecentQuestions,
   renderHomePage,
   renderLoginPage,
   renderNotInvitedPage,
   renderPendingTurnShell,
+  renderRecentQuestionsNav,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
@@ -600,12 +602,25 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
   if (!loaded) return c.notFound();
 
   const selectedMessages = [loaded.selectedTurn.userMessage, loaded.selectedTurn.assistantMessage];
+  const recentQuestionsNav = renderRecentQuestionsNav(
+    loaded.recentQuestions.map((question) => ({
+      href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+      label: question.question,
+    })),
+    { oob: isHtmxRequest(c) },
+  );
 
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
 
   if (isHtmxRequest(c)) {
-    return c.html(renderConversationTranscript(loaded.conversation.id, selectedMessages));
+    return c.html(
+      renderConversationTranscriptWithRecentQuestions({
+        conversationId: loaded.conversation.id,
+        messages: selectedMessages,
+        recentQuestionsNav,
+      }),
+    );
   }
 
   return c.html(
@@ -614,6 +629,7 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: selectedMessages,
+      recentQuestionsNav,
     }),
   );
 });
