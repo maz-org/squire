@@ -7,6 +7,7 @@ import * as MessageRepository from '../db/repositories/message-repository.ts';
 import type { Conversation, ConversationMessage } from '../db/repositories/types.ts';
 
 const HISTORY_LIMIT = 20;
+const RECENT_QUESTIONS_LIMIT = 5;
 const RETRY_DELAY_MS = 200;
 
 export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that. Please try again.";
@@ -14,6 +15,24 @@ export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that.
 export interface PendingConversationTurn {
   conversation: Conversation;
   currentUserMessage: ConversationMessage | null;
+}
+
+export interface SelectedConversationQuestion {
+  messageId: string;
+  question: string;
+  askedAt: Date;
+}
+
+export interface SelectedConversationTurn {
+  userMessage: ConversationMessage;
+  assistantMessage: ConversationMessage;
+  isEarlierQuestion: boolean;
+}
+
+export interface SelectedConversationProjection {
+  conversation: Conversation;
+  selectedTurn: SelectedConversationTurn;
+  recentQuestions: SelectedConversationQuestion[];
 }
 
 function isRetryableTransportError(err: unknown): boolean {
@@ -331,4 +350,72 @@ export async function loadConversation(input: {
   });
 
   return { conversation, messages };
+}
+
+export async function loadSelectedConversation(input: {
+  conversationId: string;
+  messageId: string;
+  userId: string;
+}): Promise<SelectedConversationProjection | null> {
+  const loaded = await loadConversation({
+    conversationId: input.conversationId,
+    userId: input.userId,
+  });
+  if (!loaded) return null;
+
+  const assistantResponses = new Map<string, ConversationMessage>();
+  const completedTurns: Array<{
+    userMessage: ConversationMessage;
+    assistantMessage: ConversationMessage;
+  }> = [];
+
+  for (const message of loaded.messages) {
+    if (message.role === 'assistant' && message.responseToMessageId && !message.isError) {
+      assistantResponses.set(message.responseToMessageId, message);
+    }
+  }
+
+  for (const message of loaded.messages) {
+    if (message.role !== 'user') continue;
+
+    const assistantMessage = assistantResponses.get(message.id);
+    if (!assistantMessage) continue;
+
+    completedTurns.push({
+      userMessage: message,
+      assistantMessage,
+    });
+  }
+
+  const selectedIndex = completedTurns.findIndex((turn) => turn.userMessage.id === input.messageId);
+  if (selectedIndex === -1) return null;
+
+  const selectedTurn = completedTurns[selectedIndex]!;
+  const userMessages = loaded.messages.filter((message) => message.role === 'user');
+  const latestUserMessage = userMessages.at(-1);
+  const recentQuestions = completedTurns
+    .filter((turn) => turn.userMessage.id !== input.messageId)
+    .slice()
+    .sort((left, right) => {
+      const timestampDiff =
+        right.userMessage.createdAt.getTime() - left.userMessage.createdAt.getTime();
+      if (timestampDiff !== 0) return timestampDiff;
+      return right.userMessage.id.localeCompare(left.userMessage.id);
+    })
+    .slice(0, RECENT_QUESTIONS_LIMIT)
+    .map((turn) => ({
+      messageId: turn.userMessage.id,
+      question: turn.userMessage.content,
+      askedAt: turn.userMessage.createdAt,
+    }));
+
+  return {
+    conversation: loaded.conversation,
+    selectedTurn: {
+      userMessage: selectedTurn.userMessage,
+      assistantMessage: selectedTurn.assistantMessage,
+      isEarlierQuestion: latestUserMessage?.id !== selectedTurn.userMessage.id,
+    },
+    recentQuestions,
+  };
 }

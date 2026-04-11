@@ -58,11 +58,14 @@ import {
   layoutShell,
   renderConversationTranscript,
   renderConversationTranscriptWithPendingTurn,
+  renderConversationTranscriptWithPendingTurnAndRecentQuestions,
   renderConversationPage,
+  renderConversationTranscriptWithRecentQuestions,
   renderHomePage,
   renderLoginPage,
   renderNotInvitedPage,
   renderPendingTurnShell,
+  renderRecentQuestionsNav,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
@@ -73,6 +76,7 @@ import {
   GENERIC_FAILURE_MESSAGE,
   loadConversation,
   loadConversationMessage,
+  loadSelectedConversation,
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
@@ -538,6 +542,18 @@ function isHtmxRequest(c: Context): boolean {
   return c.req.header('hx-request') === 'true';
 }
 
+function isSelectedMessagePageRequest(c: Context): boolean {
+  const currentUrl = c.req.header('hx-current-url');
+  if (!currentUrl) return false;
+
+  try {
+    const pathname = new URL(currentUrl).pathname;
+    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(pathname);
+  } catch {
+    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(currentUrl);
+  }
+}
+
 function renderChatErrorFragment(message: string) {
   return html`<div class="squire-banner squire-banner--error" role="alert">
     <span class="squire-banner__label">SOMETHING WENT WRONG</span>
@@ -585,6 +601,48 @@ app.get('/chat/:conversationId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
+    }),
+  );
+});
+
+app.get('/chat/:conversationId/messages/:messageId', async (c) => {
+  const session = c.get('session')!;
+  const loaded = await loadSelectedConversation({
+    conversationId: c.req.param('conversationId'),
+    messageId: c.req.param('messageId'),
+    userId: session.userId,
+  });
+  if (!loaded) return c.notFound();
+
+  const selectedMessages = [loaded.selectedTurn.userMessage, loaded.selectedTurn.assistantMessage];
+  const recentQuestionsNav = renderRecentQuestionsNav(
+    loaded.recentQuestions.map((question) => ({
+      href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+      label: question.question,
+    })),
+    { oob: isHtmxRequest(c) },
+  );
+
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+
+  if (isHtmxRequest(c)) {
+    return c.html(
+      renderConversationTranscriptWithRecentQuestions({
+        conversationId: loaded.conversation.id,
+        messages: selectedMessages,
+        recentQuestionsNav,
+      }),
+    );
+  }
+
+  return c.html(
+    await renderConversationPage({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      conversationId: loaded.conversation.id,
+      messages: selectedMessages,
+      recentQuestionsNav,
     }),
   );
 });
@@ -650,11 +708,23 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
+    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
     const loaded = await loadConversation({
       conversationId: pending.conversation.id,
       userId: session.userId,
     });
     if (!loaded) return c.notFound();
+    if (isSelectedMessagePageRequest(c)) {
+      return c.html(
+        renderConversationTranscriptWithPendingTurnAndRecentQuestions({
+          conversationId: loaded.conversation.id,
+          messages: loaded.messages,
+          streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+          recentQuestionsNav: renderRecentQuestionsNav([], { oob: true }),
+        }),
+      );
+    }
+
     return c.html(
       renderConversationTranscriptWithPendingTurn({
         conversationId: loaded.conversation.id,

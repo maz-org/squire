@@ -194,7 +194,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
-    expect(body).toMatch(/<nav[^>]*class="squire-recent"[^>]*id="squire-recent"/);
+    expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*class="squire-recent"/);
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/chat"/);
     expect(body).toMatch(/hx-post="\/chat"/);
     expect(body).toMatch(/hx-target="#squire-surface"/);
@@ -626,7 +626,7 @@ describe('selected-message rendering helpers', () => {
       }),
     );
 
-    expect(body).toMatch(/<nav[^>]*id="squire-recent"[^>]*hx-swap-oob="outerHTML"/);
+    expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*hx-swap-oob="outerHTML"/);
     expect(body).toContain('Recent questions');
   });
 });
