@@ -695,6 +695,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
+    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
     const loaded = await loadConversation({
       conversationId: pending.conversation.id,
       userId: session.userId,

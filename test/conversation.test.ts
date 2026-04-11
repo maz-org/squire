@@ -396,6 +396,31 @@ describe('conversation web backend', () => {
     expect(response.status).toBe(404);
   });
 
+  it('pushes the canonical conversation URL when posting a follow-up from a selected-message page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+        },
+        body: formBody({ question: 'Newest question' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('HX-Push-Url')).toBe(`/chat/${seeded.conversationId}`);
+  });
+
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
     mockAsk.mockRejectedValueOnce(new Error('upstream exploded'));
     const auth = await createAuthContext();
