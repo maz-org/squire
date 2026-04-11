@@ -36,8 +36,9 @@ The browser consumes these SSE event names:
 
 For every successful stream:
 
-1. The browser must receive the full assistant answer text through one or more
-   `text-delta` events.
+1. The browser may receive zero or more `text-delta` events before completion.
+   If present, their concatenation represents the plain-text incremental
+   answer.
 2. The browser must receive exactly one terminal `done` event.
 3. Any `text-delta` events must arrive before `done`.
 4. Tool events may appear before completion, but they do not count as answer
