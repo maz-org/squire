@@ -678,8 +678,13 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
     });
   }
 
+  // Browser SSE semantics are documented in docs/SSE_CONTRACT.md. This route
+  // owns the final user-visible ordering guarantees, including fallback
+  // text-delta emission when the provider returns a persisted answer without
+  // incremental text events.
   return streamSSE(c, async (stream) => {
     const toolIds = new Map<string, string[]>();
+    let sentTextDelta = false;
     const nextToolId = (name: string) => {
       const queue = toolIds.get(name) ?? [];
       const id = `${name}-${queue.length + 1}`;
@@ -705,6 +710,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       currentUserMessageId: loaded.message.id,
       onEvent: async (event, data) => {
         if (event === 'text') {
+          sentTextDelta = true;
           await stream.writeSSE({
             event: 'text-delta',
             data: JSON.stringify(data),
@@ -740,10 +746,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         }
 
         if (event === 'done') {
-          await stream.writeSSE({
-            event: 'done',
-            data: JSON.stringify({}),
-          });
+          return;
         }
       },
     });
@@ -759,6 +762,18 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
               : assistantMessage.content,
           recoverable: true,
         }),
+      });
+    } else {
+      if (!sentTextDelta && assistantMessage.content) {
+        await stream.writeSSE({
+          event: 'text-delta',
+          data: JSON.stringify({ delta: assistantMessage.content }),
+        });
+      }
+
+      await stream.writeSSE({
+        event: 'done',
+        data: JSON.stringify({}),
       });
     }
   });
