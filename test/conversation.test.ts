@@ -130,6 +130,8 @@ function requireLocation(response: Response): string {
 }
 
 function parseSse(text: string): Array<{ event: string; data: unknown }> {
+  // Keep these assertions aligned with docs/SSE_CONTRACT.md, which defines the
+  // browser-visible event model rather than the service's internal emit API.
   return text
     .trim()
     .split('\n\n')
@@ -400,6 +402,208 @@ describe('conversation web backend', () => {
       { role: 'assistant', content: 'Recovered answer.' },
     ]);
     expect(mockAsk).toHaveBeenCalledTimes(1);
+  });
+
+  it('repairs a stranded classic first-send retry after only the user turn was persisted', async () => {
+    mockAsk.mockResolvedValueOnce('Recovered after retry.');
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        userId: auth.userId,
+        creationIdempotencyKey: 'idem-stranded-classic',
+      })
+      .returning();
+
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Stranded question',
+      })
+      .returning();
+
+    await db
+      .update(conversations)
+      .set({ lastMessageAt: userMessage.createdAt })
+      .where(sql`${conversations.id} = ${conversation.id}`);
+
+    const retryRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Stranded question',
+        idempotencyKey: 'idem-stranded-classic',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(retryRes.status).toBe(302);
+    expect(requireLocation(retryRes)).toBe(`/chat/${conversation.id}`);
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+    expect(mockAsk).toHaveBeenCalledWith('Stranded question', {
+      history: [],
+      userId: auth.userId,
+    });
+
+    const storedMessages = await db.execute(sql`
+      select role, content, response_to_message_id as "responseToMessageId"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'Stranded question', responseToMessageId: null },
+      {
+        role: 'assistant',
+        content: 'Recovered after retry.',
+        responseToMessageId: userMessage.id,
+      },
+    ]);
+  });
+
+  it('repairs a stranded HTMX first send by returning a pending shell and completing the stream', async () => {
+    mockAsk.mockResolvedValueOnce('Recovered over SSE.');
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        userId: auth.userId,
+        creationIdempotencyKey: 'idem-stranded-htmx',
+      })
+      .returning();
+
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Recover this pending turn',
+      })
+      .returning();
+
+    await db
+      .update(conversations)
+      .set({ lastMessageAt: userMessage.createdAt })
+      .where(sql`${conversations.id} = ${conversation.id}`);
+
+    const retryRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Recover this pending turn',
+        idempotencyKey: 'idem-stranded-htmx',
+      }),
+    });
+
+    expect(retryRes.status).toBe(200);
+    expect(retryRes.headers.get('HX-Push-Url')).toBe(`/chat/${conversation.id}`);
+    const body = await retryRes.text();
+    expect(body).toContain('Recover this pending turn');
+    expect(body).toContain(
+      `data-stream-url="/chat/${conversation.id}/messages/${userMessage.id}/stream"`,
+    );
+
+    const streamRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${conversation.id}/messages/${userMessage.id}/stream`,
+    );
+    expect(streamRes.status).toBe(200);
+    expect(parseSse(await streamRes.text())).toEqual([
+      { event: 'done', data: { html: '<p>Recovered over SSE.</p>\n' } },
+    ]);
+
+    const storedMessages = await db.execute(sql`
+      select role, content, response_to_message_id as "responseToMessageId"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'Recover this pending turn', responseToMessageId: null },
+      {
+        role: 'assistant',
+        content: 'Recovered over SSE.',
+        responseToMessageId: userMessage.id,
+      },
+    ]);
+  });
+
+  it('does not duplicate the assistant turn across repeated same-key recovery attempts', async () => {
+    mockAsk.mockResolvedValueOnce('One repaired answer.');
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        userId: auth.userId,
+        creationIdempotencyKey: 'idem-repair-repeat',
+      })
+      .returning();
+
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Recover me once',
+      })
+      .returning();
+
+    await db
+      .update(conversations)
+      .set({ lastMessageAt: userMessage.createdAt })
+      .where(sql`${conversations.id} = ${conversation.id}`);
+
+    const firstRetry = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Recover me once',
+        idempotencyKey: 'idem-repair-repeat',
+      }),
+      redirect: 'manual',
+    });
+    const secondRetry = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Recover me once',
+        idempotencyKey: 'idem-repair-repeat',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(firstRetry.status).toBe(302);
+    expect(secondRetry.status).toBe(302);
+    expect(requireLocation(firstRetry)).toBe(`/chat/${conversation.id}`);
+    expect(requireLocation(secondRetry)).toBe(`/chat/${conversation.id}`);
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+
+    const assistantMessages = await db.execute(sql`
+      select id, content, response_to_message_id as "responseToMessageId"
+      from messages
+      where role = 'assistant'
+      order by created_at asc, id asc
+    `);
+    expect(assistantMessages.rows).toEqual([
+      {
+        id: assistantMessages.rows[0].id,
+        content: 'One repaired answer.',
+        responseToMessageId: userMessage.id,
+      },
+    ]);
   });
 
   it('reuses an already-persisted assistant response without calling ask again', async () => {

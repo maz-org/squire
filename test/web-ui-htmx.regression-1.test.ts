@@ -14,4 +14,13 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain('event.detail.parameters.idempotencyKey = idempotencyKey');
     expect(squireJs).toContain('ensureIdempotencyKey(form)');
   });
+
+  it('retargets HTMX follow-up submits from the live form action', () => {
+    // Regression: ISSUE-002 — follow-up chat submits kept posting to /chat
+    // Found by /qa on 2026-04-11
+    // Report: .gstack/qa-reports/qa-report-localhost-5018-2026-04-11.md
+    expect(squireJs).toContain("document.addEventListener('htmx:configRequest'");
+    expect(squireJs).toContain("var action = form.getAttribute('action');");
+    expect(squireJs).toContain('event.detail.path = action;');
+  });
 });

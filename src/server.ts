@@ -701,6 +701,9 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
     });
   }
 
+  // Browser SSE semantics are documented in docs/SSE_CONTRACT.md. This route
+  // owns the final user-visible ordering guarantees, including the final
+  // sanitized-html swap on `done`.
   return streamSSE(c, async (stream) => {
     const toolIds = new Map<string, string[]>();
     const nextToolId = (name: string) => {

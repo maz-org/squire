@@ -2,7 +2,7 @@
 
 **Version:** 1.0.3
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-10
+**Last Refreshed:** 2026-04-11
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -62,6 +62,10 @@ Squire's web channel separates **conversation** from **knowledge**:
 - **Knowledge agent** — the actual agent loop. Owns retrieval strategy (which atomic tools to call, in what order), reference resolution (turning "what items work with it?" into "Blinkblade items" via conversation history), campaign context loading (per Phase 4+), and answer generation. Stateless per request. Shared by all clients.
 
 The conversation agent does **not** call atomic tools directly. It delegates all domain reasoning to the knowledge agent via in-process function calls (or `/api/ask` HTTP calls when used for testing or by other channels). This keeps the conversation agent focused on session and UX concerns, and lets the knowledge agent's retrieval strategy evolve independently of the UI.
+
+The browser-visible SSE event vocabulary and ordering guarantees live in
+[SSE_CONTRACT.md](SSE_CONTRACT.md). Treat that as the contract source of truth
+when changing stream routes, browser rendering, or regression coverage.
 
 **Note on transports:** an earlier design considered using **internal MCP** as the transport between the conversation and knowledge agents. That was dropped because internal callers would have needed to bypass auth, which was undesirable. The two-agent _split_ remains; only the internal MCP _transport_ was rejected. The split uses direct in-process function calls today.
 
