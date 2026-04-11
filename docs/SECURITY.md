@@ -196,6 +196,27 @@ exposed.
 The web UI renders LLM responses with HTMX. If responses contain
 HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
+**Current state (SQR-61 shipped):**
+
+- HTML responses now carry a shared Content Security Policy:
+  - `default-src 'self'`
+  - `script-src 'self'`
+  - `style-src 'self' https://fonts.googleapis.com`
+  - `img-src 'self' data:`
+  - `connect-src 'self'`
+  - `font-src 'self' https://fonts.gstatic.com`
+  - `object-src 'none'`
+  - `base-uri 'none'`
+  - `frame-ancestors 'none'`
+  - `form-action 'self'`
+- Live assistant streaming stays plain text in the browser via `textContent`.
+- Final assistant rendering is server-owned: the browser swaps in one sanitized
+  HTML fragment only at SSE completion.
+- Persisted assistant messages are re-rendered through the same shared
+  sanitizing renderer on reload.
+- Adversarial regression tests cover hostile `<script>`, `<img onerror>`,
+  `javascript:` links, stored reloads, and streamed completion payloads.
+
 **Attack scenarios:**
 
 - Attacker crafts a prompt injection that causes the LLM to output
@@ -214,6 +235,13 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 - HttpOnly, Secure, SameSite=Lax cookies
 - User-owned conversation lookups return indistinguishable `404`s, so a
   guessed conversation ID does not disclose whether the resource exists
+
+**Residual risk / follow-up work:**
+
+- The web UI still allows Google Fonts domains in CSP (`fonts.googleapis.com`,
+  `fonts.gstatic.com`) rather than serving fonts from `self`.
+- Safe markdown is preserved, so the sanitizing renderer remains a security
+  boundary and must keep adversarial test coverage as it evolves.
 
 ### 8. Supply Chain / Data Pipeline
 

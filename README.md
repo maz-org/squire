@@ -95,7 +95,9 @@ serves:
   (`/app.<hash>.css`) with immutable caching. See
   [ADR 0011](docs/adr/0011-on-demand-asset-pipeline.md)). Authenticated chat
   runs on `/chat` and `/chat/:conversationId`, with persisted per-user
-  conversations in Postgres.
+  conversations in Postgres. Live streaming stays plain text until completion;
+  the final assistant answer is then swapped in as server-rendered sanitized
+  HTML under an HTML-only Content Security Policy.
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)
