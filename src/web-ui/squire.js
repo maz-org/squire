@@ -210,6 +210,15 @@ document.addEventListener('htmx:configRequest', function (event) {
   var form = event.detail && event.detail.elt;
   if (!form || !form.matches || !form.matches('.squire-input-dock')) return;
 
+  // HTMX can hold onto the original hx-post path even after the form action is
+  // retargeted from "/chat" to "/chat/:conversationId/messages". Force the
+  // request path from the live DOM action on every submit so Enter-key follow-ups
+  // hit the current conversation instead of starting over.
+  var action = form.getAttribute('action');
+  if (action && event.detail) {
+    event.detail.path = action;
+  }
+
   var idempotencyKey = ensureIdempotencyKey(form);
   if (idempotencyKey && event.detail && event.detail.parameters) {
     event.detail.parameters.idempotencyKey = idempotencyKey;
