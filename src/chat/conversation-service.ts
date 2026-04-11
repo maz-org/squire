@@ -7,6 +7,7 @@ import * as MessageRepository from '../db/repositories/message-repository.ts';
 import type { Conversation, ConversationMessage } from '../db/repositories/types.ts';
 
 const HISTORY_LIMIT = 20;
+const RECENT_QUESTIONS_LIMIT = 5;
 const RETRY_DELAY_MS = 200;
 
 export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that. Please try again.";
@@ -401,6 +402,7 @@ export async function loadSelectedConversation(input: {
       if (timestampDiff !== 0) return timestampDiff;
       return right.userMessage.id.localeCompare(left.userMessage.id);
     })
+    .slice(0, RECENT_QUESTIONS_LIMIT)
     .map((turn) => ({
       messageId: turn.userMessage.id,
       question: turn.userMessage.content,

@@ -58,6 +58,7 @@ import {
   layoutShell,
   renderConversationTranscript,
   renderConversationTranscriptWithPendingTurn,
+  renderConversationTranscriptWithPendingTurnAndRecentQuestions,
   renderConversationPage,
   renderConversationTranscriptWithRecentQuestions,
   renderHomePage,
@@ -541,6 +542,18 @@ function isHtmxRequest(c: Context): boolean {
   return c.req.header('hx-request') === 'true';
 }
 
+function isSelectedMessagePageRequest(c: Context): boolean {
+  const currentUrl = c.req.header('hx-current-url');
+  if (!currentUrl) return false;
+
+  try {
+    const pathname = new URL(currentUrl).pathname;
+    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(pathname);
+  } catch {
+    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(currentUrl);
+  }
+}
+
 function renderChatErrorFragment(message: string) {
   return html`<div class="squire-banner squire-banner--error" role="alert">
     <span class="squire-banner__label">SOMETHING WENT WRONG</span>
@@ -701,6 +714,17 @@ app.post('/chat/:conversationId/messages', async (c) => {
       userId: session.userId,
     });
     if (!loaded) return c.notFound();
+    if (isSelectedMessagePageRequest(c)) {
+      return c.html(
+        renderConversationTranscriptWithPendingTurnAndRecentQuestions({
+          conversationId: loaded.conversation.id,
+          messages: loaded.messages,
+          streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+          recentQuestionsNav: renderRecentQuestionsNav([], { oob: true }),
+        }),
+      );
+    }
+
     return c.html(
       renderConversationTranscriptWithPendingTurn({
         conversationId: loaded.conversation.id,

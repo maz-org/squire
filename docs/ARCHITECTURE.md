@@ -207,7 +207,7 @@ The web channel passes a `Session` domain object through the request lifecycle. 
 3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = full interaction chrome (sidebar, input dock, recent questions). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
 4. **Tests** construct `Session` objects directly. No context faking, no mock modules. The `Session` type ensures tests fail at compile time if the shape changes.
 
-`optionalSession()` runs on public routes like `/login` so the layout can adapt without blocking unauthenticated visitors. `requirePageSession()` runs on browser HTML routes (`/`, `/chat`, `/auth/logout`) and redirects to `/login` if no valid session. `requireSession()` remains for machine-readable cookie routes like `/auth/me`, where a missing or expired session should return JSON 401.
+`optionalSession()` runs on public routes like `/login` so the layout can adapt without blocking unauthenticated visitors. `requirePageSession()` runs on browser HTML routes (`/`, `/chat`, `/chat/:conversationId/messages/:messageId`, `/auth/logout`) and redirects to `/login` if no valid session. `requireSession()` remains for machine-readable cookie routes like `/auth/me`, where a missing or expired session should return JSON 401.
 
 ---
 
@@ -683,6 +683,8 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-04-11 (v1.0.5):** SQR-93 shipped canonical selected-message history in the web chat. Added `GET /chat/:conversationId/messages/:messageId` as a conversation-scoped page state that projects one completed user/assistant pair plus a recent-questions rail, with HTMX requests returning the selected transcript and an OOB replacement for `nav.squire-recent`. Follow-up submits from selected-message URLs now preserve the conversation-scoped `POST /chat/:conversationId/messages` target and push the browser back to the canonical conversation URL after submit. QA also locked the flow with a browser-found regression test for selected-message follow-up retargeting.
 
 - **2026-04-08 (v1.0.4):** SQR-36 shipped the seed bundle. `src/seed/seed-dev-user.ts` is a tiny idempotent helper that upserts a predictable dev user (`dev@squire.local`) via `ON CONFLICT DO NOTHING` (no target — absorbs conflicts on either `email` or `google_sub`). The CLI wrapper `scripts/seed-dev-user.ts` refuses to run with `NODE_ENV=production`. Package scripts gained `seed` (alias for `seed:cards`, the prod default), `seed:dev-user`, and `seed:dev` (chains `seed:cards` then `seed:dev-user`). Local bootstrap is now `docker compose up && npm ci && npm run db:migrate && npm run index && npm run seed:dev`. Tests: 12 new seed-cards contract tests (per-type row counts ×10, idempotency, update-on-conflict revert — with an `afterAll` TRUNCATE + re-seed to keep MVCC row order stable for downstream `ts_rank` parity tests) plus 3 dev-user tests (insert, idempotency, preserve hand-edited rows).
 

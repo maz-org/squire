@@ -144,20 +144,25 @@ async function seedConversationWithTurns(
   const userMessages: Array<{ id: string; content: string }> = [];
   const assistantMessages: Array<{ id: string; content: string; responseToMessageId: string }> = [];
   let lastMessageAt = conversation.lastMessageAt;
+  const baseTime = new Date('2026-01-01T00:00:00.000Z').getTime();
+  let tick = 0;
 
   for (const turn of turns) {
+    const userCreatedAt = new Date(baseTime + tick++ * 1000);
     const [userMessage] = await db
       .insert(messages)
       .values({
         conversationId: conversation.id,
         role: 'user',
         content: turn.question,
+        createdAt: userCreatedAt,
       })
       .returning();
     userMessages.push({ id: userMessage.id, content: userMessage.content });
     lastMessageAt = userMessage.createdAt;
 
     if (turn.answer !== undefined) {
+      const assistantCreatedAt = new Date(baseTime + tick++ * 1000);
       const [assistantMessage] = await db
         .insert(messages)
         .values({
@@ -165,6 +170,7 @@ async function seedConversationWithTurns(
           role: 'assistant',
           content: turn.answer,
           responseToMessageId: userMessage.id,
+          createdAt: assistantCreatedAt,
         })
         .returning();
       assistantMessages.push({
@@ -412,6 +418,7 @@ describe('conversation web backend', () => {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
           'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
         },
         body: formBody({ question: 'Newest question' }),
       },
@@ -419,6 +426,37 @@ describe('conversation web backend', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('HX-Push-Url')).toBe(`/chat/${seeded.conversationId}`);
+    const body = await response.text();
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
+    expect(recentNav).toContain('hidden');
+  });
+
+  it('does not clear the recent-questions rail on a normal conversation follow-up', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}`,
+        },
+        body: formBody({ question: 'Newest question' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).not.toContain('id="squire-recent-questions"');
   });
 
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
@@ -1431,6 +1469,34 @@ describe('selected-message projection', () => {
     expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
     expect(projection?.recentQuestions.map((question) => question.messageId)).toEqual([
       seeded.userMessages[0]!.id,
+    ]);
+  });
+
+  it('caps recent questions to the newest five completed turns', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Question 1', answer: 'Answer 1' },
+      { question: 'Question 2', answer: 'Answer 2' },
+      { question: 'Question 3', answer: 'Answer 3' },
+      { question: 'Question 4', answer: 'Answer 4' },
+      { question: 'Question 5', answer: 'Answer 5' },
+      { question: 'Question 6', answer: 'Answer 6' },
+      { question: 'Question 7', answer: 'Answer 7' },
+    ]);
+
+    const projection = await loadSelectedConversation({
+      conversationId: seeded.conversationId,
+      messageId: seeded.userMessages[0]!.id,
+      userId: auth.userId,
+    });
+
+    expect(projection).not.toBeNull();
+    expect(projection?.recentQuestions.map((question) => question.question)).toEqual([
+      'Question 7',
+      'Question 6',
+      'Question 5',
+      'Question 4',
+      'Question 3',
     ]);
   });
 });
