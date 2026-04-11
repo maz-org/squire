@@ -858,8 +858,7 @@ template#squire-banner-fixtures {
 .squire-answer
   p:first-of-type:not(
     :has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)
-  )
-  ::first-letter {
+  )::first-letter {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 600;
   font-variation-settings:

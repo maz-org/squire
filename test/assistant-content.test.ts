@@ -57,6 +57,12 @@ describe('assistant content renderer', () => {
     expect(html).toContain('<a href="https://example.com" rel="noopener noreferrer">safe link</a>');
   });
 
+  it('renders unsafe markdown links as inert literal text without a dangling closing tag', () => {
+    const html = renderAssistantContentHtml('[click](javascript:alert(1))');
+    expect(html).toBe('<p>[click](javascript:alert(1))</p>\n');
+    expect(html).not.toContain('</a>');
+  });
+
   it('returns a trusted fragment for Hono templates', () => {
     const html = String(renderAssistantContent('**Bold** answer.'));
     expect(html).toContain('<p><strong>Bold</strong> answer.</p>');

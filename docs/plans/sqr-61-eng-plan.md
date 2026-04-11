@@ -17,11 +17,11 @@ This ticket has three linked deliverables:
 
 Relevant codepaths today:
 
-- [`src/web-ui/layout.ts`](/Users/bcm/.codex/worktrees/e628/squire/src/web-ui/layout.ts)
+- [`src/web-ui/layout.ts`](../../src/web-ui/layout.ts)
   renders persisted assistant messages as plain `<p>${message.content}</p>`.
-- [`src/web-ui/squire.js`](/Users/bcm/.codex/worktrees/e628/squire/src/web-ui/squire.js)
+- [`src/web-ui/squire.js`](../../src/web-ui/squire.js)
   appends live stream deltas with `paragraph.textContent += payload.delta`.
-- [`src/server.ts`](/Users/bcm/.codex/worktrees/e628/squire/src/server.ts)
+- [`src/server.ts`](../../src/server.ts)
   serves the HTML shell and all web routes, but does not yet apply a CSP header policy.
 
 What this means:
@@ -208,15 +208,15 @@ decided the live stream remains plain text until completion.
 
 Minimal-change implementation plan:
 
-1. Add an HTML-response security middleware in [`src/server.ts`](/Users/bcm/.codex/worktrees/e628/squire/src/server.ts) that attaches the SQR-61 CSP to `text/html` responses.
+1. Add an HTML-response security middleware in [`src/server.ts`](../../src/server.ts) that attaches the SQR-61 CSP to `text/html` responses.
 2. Add a server-side assistant renderer module that:
    - accepts raw assistant text
    - converts allowed markdown to HTML
    - sanitizes to a strict safelist
    - returns an escaped/safe fragment for Hono templates
-3. Update [`src/web-ui/layout.ts`](/Users/bcm/.codex/worktrees/e628/squire/src/web-ui/layout.ts) persisted assistant rendering to use that renderer.
+3. Update [`src/web-ui/layout.ts`](../../src/web-ui/layout.ts) persisted assistant rendering to use that renderer.
 4. Add one HTML fragment endpoint or reuse an existing server path so the browser can replace the pending answer with the sanitized final fragment after stream completion.
-5. Keep [`src/web-ui/squire.js`](/Users/bcm/.codex/worktrees/e628/squire/src/web-ui/squire.js) on plain-text deltas during streaming.
+5. Keep [`src/web-ui/squire.js`](../../src/web-ui/squire.js) on plain-text deltas during streaming.
 6. Add adversarial fixtures and route/header regression tests.
 
 ## Verdict

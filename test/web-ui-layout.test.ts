@@ -204,6 +204,9 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<meta name="csrf-token" content="[^"]+"/);
+    expect(body).toContain(
+      `<meta name="htmx-config" content='{"includeIndicatorStyles":false}' />`,
+    );
     expect(body).toMatch(/hx-headers='\{"x-csrf-token":"[^"]+"\}'/);
   });
 });

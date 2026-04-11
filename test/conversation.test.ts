@@ -820,6 +820,49 @@ describe('conversation web backend', () => {
     expect(page).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
 
+  it('keeps hostile streamed content inert until the final sanitized done fragment', async () => {
+    const hostile =
+      '<script>alert(1)</script>[click](javascript:alert(1))<img src=x onerror=alert(1)>';
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: hostile });
+      await options?.emit?.('done', {});
+      return hostile;
+    });
+
+    const auth = await createAuthContext();
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Stream hostile content',
+        idempotencyKey: 'idem-xss-stream',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'text-delta',
+        data: { delta: hostile },
+      },
+      {
+        event: 'done',
+        data: {
+          html: '<p>&lt;script&gt;alert(1)&lt;/script&gt;[click](javascript:alert(1))&lt;img src=x onerror=alert(1)&gt;</p>\n',
+        },
+      },
+    ]);
+  });
+
   it('returns 404 for GET /chat because only conversation-specific pages are routable', async () => {
     const auth = await createAuthContext();
     const pageRes = await requestWithAuth(auth, 'http://localhost:3000/chat');
