@@ -680,7 +680,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
 
   return streamSSE(c, async (stream) => {
     const toolIds = new Map<string, string[]>();
-    let sentDoneEvent = false;
+    let sentTextDelta = false;
     const nextToolId = (name: string) => {
       const queue = toolIds.get(name) ?? [];
       const id = `${name}-${queue.length + 1}`;
@@ -706,6 +706,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       currentUserMessageId: loaded.message.id,
       onEvent: async (event, data) => {
         if (event === 'text') {
+          sentTextDelta = true;
           await stream.writeSSE({
             event: 'text-delta',
             data: JSON.stringify(data),
@@ -741,11 +742,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         }
 
         if (event === 'done') {
-          sentDoneEvent = true;
-          await stream.writeSSE({
-            event: 'done',
-            data: JSON.stringify({}),
-          });
+          return;
         }
       },
     });
@@ -762,7 +759,14 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           recoverable: true,
         }),
       });
-    } else if (!sentDoneEvent) {
+    } else {
+      if (!sentTextDelta && assistantMessage.content) {
+        await stream.writeSSE({
+          event: 'text-delta',
+          data: JSON.stringify({ delta: assistantMessage.content }),
+        });
+      }
+
       await stream.writeSSE({
         event: 'done',
         data: JSON.stringify({}),

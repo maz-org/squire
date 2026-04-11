@@ -513,7 +513,10 @@ describe('conversation web backend', () => {
       `http://localhost:3000/chat/${conversation.id}/messages/${userMessage.id}/stream`,
     );
     expect(streamRes.status).toBe(200);
-    expect(parseSse(await streamRes.text())).toEqual([{ event: 'done', data: {} }]);
+    expect(parseSse(await streamRes.text())).toEqual([
+      { event: 'text-delta', data: { delta: 'Recovered over SSE.' } },
+      { event: 'done', data: {} },
+    ]);
 
     const storedMessages = await db.execute(sql`
       select role, content, response_to_message_id as "responseToMessageId"
@@ -861,6 +864,10 @@ describe('conversation web backend', () => {
       {
         event: 'tool-result',
         data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: false },
+      },
+      {
+        event: 'text-delta',
+        data: { delta: 'Fallback answer.' },
       },
       {
         event: 'done',
