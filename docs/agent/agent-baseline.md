@@ -23,6 +23,7 @@ Read these on demand:
 | Start work in a fresh checkout or linked worktree, or get one bootstrapped | [../DEVELOPMENT.md](../DEVELOPMENT.md)           |
 | Start work on a Linear issue                                               | [issue-workflow.md](./issue-workflow.md)         |
 | Write or modify tests                                                      | [testing.md](./testing.md)                       |
+| Run QA, browser verification, or ship-readiness testing                    | [qa.md](./qa.md)                                 |
 | Make a non-obvious design choice                                           | [code-quality.md](./code-quality.md)             |
 | Touch anything visual — fonts, color, spacing, layout, copy tone           | [../../DESIGN.md](../../DESIGN.md)               |
 | Ship a PR                                                                  | [shipping.md](./shipping.md)                     |
