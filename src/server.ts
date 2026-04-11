@@ -73,6 +73,7 @@ import {
   GENERIC_FAILURE_MESSAGE,
   loadConversation,
   loadConversationMessage,
+  loadSelectedConversation,
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
@@ -585,6 +586,34 @@ app.get('/chat/:conversationId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
+    }),
+  );
+});
+
+app.get('/chat/:conversationId/messages/:messageId', async (c) => {
+  const session = c.get('session')!;
+  const loaded = await loadSelectedConversation({
+    conversationId: c.req.param('conversationId'),
+    messageId: c.req.param('messageId'),
+    userId: session.userId,
+  });
+  if (!loaded) return c.notFound();
+
+  const selectedMessages = [loaded.selectedTurn.userMessage, loaded.selectedTurn.assistantMessage];
+
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+
+  if (isHtmxRequest(c)) {
+    return c.html(renderConversationTranscript(loaded.conversation.id, selectedMessages));
+  }
+
+  return c.html(
+    await renderConversationPage({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      conversationId: loaded.conversation.id,
+      messages: selectedMessages,
     }),
   );
 });

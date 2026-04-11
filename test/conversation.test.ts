@@ -54,6 +54,7 @@ import { createCsrfToken } from '../src/auth/csrf.ts';
 import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
+import { loadSelectedConversation } from '../src/chat/conversation-service.ts';
 import { users } from '../src/db/schema/core.ts';
 import { conversations, messages } from '../src/db/schema/conversations.ts';
 
@@ -127,6 +128,64 @@ function requireLocation(response: Response): string {
   const location = response.headers.get('location');
   expect(location).toBeTruthy();
   return location!;
+}
+
+async function seedConversationWithTurns(
+  auth: AuthContext,
+  turns: Array<{ question: string; answer?: string }>,
+): Promise<{
+  conversationId: string;
+  userMessages: Array<{ id: string; content: string }>;
+  assistantMessages: Array<{ id: string; content: string; responseToMessageId: string }>;
+}> {
+  const { db } = getDb('server');
+  const [conversation] = await db.insert(conversations).values({ userId: auth.userId }).returning();
+
+  const userMessages: Array<{ id: string; content: string }> = [];
+  const assistantMessages: Array<{ id: string; content: string; responseToMessageId: string }> = [];
+  let lastMessageAt = conversation.lastMessageAt;
+
+  for (const turn of turns) {
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: turn.question,
+      })
+      .returning();
+    userMessages.push({ id: userMessage.id, content: userMessage.content });
+    lastMessageAt = userMessage.createdAt;
+
+    if (turn.answer !== undefined) {
+      const [assistantMessage] = await db
+        .insert(messages)
+        .values({
+          conversationId: conversation.id,
+          role: 'assistant',
+          content: turn.answer,
+          responseToMessageId: userMessage.id,
+        })
+        .returning();
+      assistantMessages.push({
+        id: assistantMessage.id,
+        content: assistantMessage.content,
+        responseToMessageId: assistantMessage.responseToMessageId!,
+      });
+      lastMessageAt = assistantMessage.createdAt;
+    }
+  }
+
+  await db
+    .update(conversations)
+    .set({ lastMessageAt })
+    .where(sql`${conversations.id} = ${conversation.id}`);
+
+  return {
+    conversationId: conversation.id,
+    userMessages,
+    assistantMessages,
+  };
 }
 
 function parseSse(text: string): Array<{ event: string; data: unknown }> {
@@ -226,6 +285,105 @@ describe('conversation web backend', () => {
     const location = requireLocation(createRes);
     const intruderRes = await requestWithAuth(intruder, `http://localhost:3000${location}`);
     expect(intruderRes.status).toBe(404);
+  });
+
+  it('renders the canonical selected-message page for the conversation owner', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
+      { question: 'When do elements wane?', answer: 'At end of round.' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+    expect(pageRes.headers.get('cache-control')).toBe('no-store');
+    expect(pageRes.headers.get('vary')).toBe('Cookie');
+
+    const page = await pageRes.text();
+    expect(page).toContain('How does looting work?');
+    expect(page).toContain('Loot tokens in your hex are picked up.');
+    expect(page).not.toContain('When do elements wane?');
+    expect(page).not.toContain('At end of round.');
+  });
+
+  it('renders the canonical selected-message route as an HTMX fragment', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'What does muddle do?', answer: 'It forces disadvantage on attacks.' },
+      { question: 'What does strengthen do?', answer: 'It grants advantage on attacks.' },
+    ]);
+
+    const fragmentRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[1]!.id}`,
+      {
+        headers: { 'hx-request': 'true' },
+      },
+    );
+
+    expect(fragmentRes.status).toBe(200);
+    expect(fragmentRes.headers.get('cache-control')).toBe('no-store');
+    expect(fragmentRes.headers.get('vary')).toBe('Cookie');
+
+    const fragment = await fragmentRes.text();
+    expect(fragment).toContain('What does strengthen do?');
+    expect(fragment).toContain('It grants advantage on attacks.');
+    expect(fragment).not.toContain('<!doctype html>');
+    expect(fragment).not.toContain('What does muddle do?');
+  });
+
+  it("returns 404 when one user requests another user's selected-message URL", async () => {
+    const owner = await createAuthContext();
+    const intruder = await createAuthContext({
+      email: 'mallory@example.com',
+      googleSub: 'google-sub-mallory',
+      name: 'Mallory',
+    });
+    const seeded = await seedConversationWithTurns(owner, [
+      { question: 'Owner-only question', answer: 'Owner-only answer.' },
+    ]);
+
+    const response = await requestWithAuth(
+      intruder,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('returns 404 when the selected-message URL targets an assistant message id', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Question', answer: 'Answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.assistantMessages[0]!.id}`,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('returns 404 when the selected-message URL mixes conversation and message ids', async () => {
+    const auth = await createAuthContext();
+    const firstConversation = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+    ]);
+    const secondConversation = await seedConversationWithTurns(auth, [
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${firstConversation.conversationId}/messages/${secondConversation.userMessages[0]!.id}`,
+    );
+
+    expect(response.status).toBe(404);
   });
 
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
@@ -1106,5 +1264,54 @@ describe('conversation web backend', () => {
       },
     ]);
     expect(mockAsk).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('selected-message projection', () => {
+  it('returns the selected completed turn and recent completed questions newest-to-oldest', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Oldest completed question', answer: 'Oldest completed answer' },
+      { question: 'Middle completed question', answer: 'Middle completed answer' },
+      { question: 'Newest completed question', answer: 'Newest completed answer' },
+      { question: 'Pending question only' },
+    ]);
+
+    const projection = await loadSelectedConversation({
+      conversationId: seeded.conversationId,
+      messageId: seeded.userMessages[1]!.id,
+      userId: auth.userId,
+    });
+
+    expect(projection).not.toBeNull();
+    expect(projection?.selectedTurn.userMessage.content).toBe('Middle completed question');
+    expect(projection?.selectedTurn.assistantMessage.content).toBe('Middle completed answer');
+    expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
+    expect(projection?.recentQuestions.map((question) => question.messageId)).toEqual([
+      seeded.userMessages[2]!.id,
+      seeded.userMessages[0]!.id,
+    ]);
+    expect(projection?.recentQuestions.map((question) => question.question)).toEqual([
+      'Newest completed question',
+      'Oldest completed question',
+    ]);
+  });
+
+  it('returns no recent questions when there are no other completed questions', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Only completed question', answer: 'Only completed answer' },
+      { question: 'Still pending' },
+    ]);
+
+    const projection = await loadSelectedConversation({
+      conversationId: seeded.conversationId,
+      messageId: seeded.userMessages[0]!.id,
+      userId: auth.userId,
+    });
+
+    expect(projection).not.toBeNull();
+    expect(projection?.selectedTurn.isEarlierQuestion).toBe(false);
+    expect(projection?.recentQuestions).toEqual([]);
   });
 });
