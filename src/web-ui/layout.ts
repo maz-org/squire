@@ -624,6 +624,20 @@ export function renderConversationTranscriptWithRecentQuestions(options: {
   ${options.recentQuestionsNav}` as HtmlEscapedString;
 }
 
+export function renderSelectedMessageSurfaceWithRecentQuestions(options: {
+  selectedQuestion: ConversationMessage;
+  selectedAnswer: ConversationMessage;
+  isEarlierQuestion: boolean;
+  recentQuestionsNav: HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`${renderSelectedMessageSurface({
+    selectedQuestion: options.selectedQuestion,
+    selectedAnswer: options.selectedAnswer,
+    isEarlierQuestion: options.isEarlierQuestion,
+  })}
+  ${options.recentQuestionsNav}` as HtmlEscapedString;
+}
+
 export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEscapedString {
   return html`<section
     class="squire-transcript squire-transcript--pending"

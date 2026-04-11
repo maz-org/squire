@@ -313,6 +313,7 @@ describe('conversation web backend', () => {
     const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
     expect(transcript).toContain('How does looting work?');
     expect(transcript).toContain('Loot tokens in your hex are picked up.');
+    expect(transcript).toContain('EARLIER QUESTION');
     expect(transcript).not.toContain('When do elements wane?');
     expect(transcript).not.toContain('At end of round.');
     const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
@@ -345,6 +346,7 @@ describe('conversation web backend', () => {
     )?.[0];
     expect(transcript).toContain('What does strengthen do?');
     expect(transcript).toContain('It grants advantage on attacks.');
+    expect(transcript).not.toContain('EARLIER QUESTION');
     expect(fragment).not.toContain('<!doctype html>');
     const recentNav = fragment.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
     expect(recentNav).toContain('hx-swap-oob="outerHTML"');
