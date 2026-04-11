@@ -20,6 +20,10 @@ document.addEventListener('click', function (e) {
   }
 });
 
+if (window.htmx && window.htmx.config) {
+  window.htmx.config.includeIndicatorStyles = false;
+}
+
 document.addEventListener('submit', function (e) {
   var form = e.target;
   if (!form || !form.matches || !form.matches('.squire-input-dock')) return;
