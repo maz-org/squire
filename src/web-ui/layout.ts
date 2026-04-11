@@ -65,6 +65,19 @@ export interface PendingTurnShellOptions {
   streamUrl: string;
 }
 
+export interface RecentQuestionsNavOptions {
+  conversationId: string;
+  questions: ConversationMessage[];
+  selectedMessageId?: string;
+  outOfBand?: boolean;
+}
+
+export interface SelectedMessageSurfaceOptions {
+  selectedQuestion: ConversationMessage;
+  selectedAnswer: ConversationMessage;
+  isEarlierQuestion: boolean;
+}
+
 interface DocumentOptions {
   bodyContent: HtmlEscapedString;
   bodyClass?: string;
@@ -130,8 +143,14 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
     </html>`;
 }
 
-function renderQuestionTurn(content: string): HtmlEscapedString {
+function renderQuestionTurn(
+  content: string,
+  options: { eyebrowLabel?: string } = {},
+): HtmlEscapedString {
   return html`<article class="squire-turn squire-question">
+    ${options.eyebrowLabel
+      ? html`<span class="squire-question__eyebrow">${options.eyebrowLabel}</span>`
+      : html``}
     <p>${content}</p>
   </article>` as HtmlEscapedString;
 }
@@ -167,6 +186,59 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
   </article>` as HtmlEscapedString;
 }
 
+function renderRecentQuestionChip(options: {
+  conversationId: string;
+  question: ConversationMessage;
+}): HtmlEscapedString {
+  return html`<a
+    class="squire-chip"
+    href="/chat/${options.conversationId}/messages/${options.question.id}"
+    hx-get="/chat/${options.conversationId}/messages/${options.question.id}"
+    hx-target="#squire-surface"
+    hx-swap="innerHTML"
+  >
+    ${options.question.content}
+  </a>` as HtmlEscapedString;
+}
+
+export function renderRecentQuestionsNav(options: RecentQuestionsNavOptions): HtmlEscapedString {
+  const eligibleQuestions = options.questions.filter(
+    (question) => question.id !== options.selectedMessageId,
+  );
+
+  if (eligibleQuestions.length === 0) {
+    return html`` as HtmlEscapedString;
+  }
+
+  return html`<nav
+    class="squire-recent"
+    id="squire-recent"
+    aria-label="Recent questions"
+    ${options.outOfBand ? html`hx-swap-oob="outerHTML"` : html``}
+  >
+    <span class="squire-recent__label">Recent questions</span>
+    <div class="squire-recent__chips">
+      ${eligibleQuestions.map((question) =>
+        renderRecentQuestionChip({
+          conversationId: options.conversationId,
+          question,
+        }),
+      )}
+    </div>
+  </nav>` as HtmlEscapedString;
+}
+
+export function renderSelectedMessageSurface(
+  options: SelectedMessageSurfaceOptions,
+): HtmlEscapedString {
+  return html`<section class="squire-transcript" aria-label="Conversation transcript">
+    ${renderQuestionTurn(options.selectedQuestion.content, {
+      eyebrowLabel: options.isEarlierQuestion ? 'EARLIER QUESTION' : undefined,
+    })}
+    ${renderAnswerTurn(options.selectedAnswer)}
+  </section>` as HtmlEscapedString;
+}
+
 /**
  * Render the full HTML document for the companion-first layout. Stable
  * selectors (`squire-header`, `squire-surface`, `squire-toolcall`,
@@ -182,6 +254,35 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const chatFormHiddenFields = [
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
     ...(options.chatFormHiddenFields ?? []),
+  ];
+  const defaultRecentQuestions: ConversationMessage[] = [
+    {
+      id: 'placeholder-looting',
+      conversationId: 'placeholder-conversation',
+      role: 'user',
+      content: 'Looting',
+      isError: false,
+      responseToMessageId: null,
+      createdAt: new Date(0),
+    },
+    {
+      id: 'placeholder-element-infusion',
+      conversationId: 'placeholder-conversation',
+      role: 'user',
+      content: 'Element infusion',
+      isError: false,
+      responseToMessageId: null,
+      createdAt: new Date(0),
+    },
+    {
+      id: 'placeholder-negative-effects',
+      conversationId: 'placeholder-conversation',
+      role: 'user',
+      content: 'Negative scenario effects',
+      isError: false,
+      responseToMessageId: null,
+      createdAt: new Date(0),
+    },
   ];
 
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
@@ -286,11 +387,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
             : html`<footer class="squire-toolcall" aria-live="off">
                   CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
                 </footer>
-                <nav class="squire-recent" aria-label="Recent questions">
-                  <span class="squire-chip">Looting</span>
-                  <span class="squire-chip">Element infusion</span>
-                  <span class="squire-chip">Negative scenario effects</span>
-                </nav>
+                ${renderRecentQuestionsNav({
+                  conversationId: 'placeholder-conversation',
+                  questions: defaultRecentQuestions,
+                })}
                 <form
                   class="squire-input-dock"
                   method="post"
@@ -308,10 +408,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     name="question"
                     type="text"
                     autocomplete="off"
-                    placeholder="Ask the Squire…"
+                    placeholder="Ask a question..."
                   />
                   <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                    →
+                    Ask
                   </button>
                 </form>`}
         </div>

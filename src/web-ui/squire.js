@@ -71,14 +71,14 @@ function setFormPendingState(form, pending) {
   delete form.dataset.submitting;
   if (questionInput) questionInput.removeAttribute('readonly');
   if (submitButton) submitButton.removeAttribute('disabled');
-  if (submitButton) submitButton.textContent = '→';
+  if (submitButton) submitButton.textContent = 'Ask';
 }
 
 function syncChatFormAction() {
   var form = document.querySelector('.squire-input-dock');
   if (!form) return;
 
-  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)$/);
+  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)(?:\/messages\/[0-9a-f-]+)?$/);
   var action = match ? '/chat/' + match[1] + '/messages' : '/chat';
   form.setAttribute('action', action);
   form.setAttribute('hx-post', action);
@@ -170,6 +170,8 @@ function handlePendingTranscript(transcript) {
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
     var payload = JSON.parse(event.data || '{}');
+    var existing = toolEntries[payload.id];
+    if (existing) return;
     var row = document.createElement('div');
     row.className = 'squire-answer__tool';
     row.dataset.toolId = payload.id;
@@ -197,6 +199,7 @@ function handlePendingTranscript(transcript) {
     answerEl.classList.remove('squire-answer--pending');
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
+    if (toolsEl) toolsEl.replaceChildren();
     var payload = JSON.parse(event.data || '{}');
     if (contentEl && typeof payload.html === 'string') {
       contentEl.innerHTML = payload.html;
