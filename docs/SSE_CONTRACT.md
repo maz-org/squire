@@ -6,11 +6,11 @@ Squire chat streams.
 Scope:
 
 - `GET /chat/:conversationId/messages/:messageId/stream` in
-  [src/server.ts](/Users/bcm/.codex/worktrees/059e/squire/src/server.ts)
+  [src/server.ts](../src/server.ts)
 - pending transcript handling in
-  [src/web-ui/squire.js](/Users/bcm/.codex/worktrees/059e/squire/src/web-ui/squire.js)
+  [src/web-ui/squire.js](../src/web-ui/squire.js)
 - regression coverage in
-  [test/conversation.test.ts](/Users/bcm/.codex/worktrees/059e/squire/test/conversation.test.ts)
+  [test/conversation.test.ts](../test/conversation.test.ts)
 
 ## Browser-visible events
 
