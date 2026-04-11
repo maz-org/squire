@@ -58,11 +58,17 @@ export interface LayoutShellOptions {
   csrfToken?: string;
   chatFormAction?: string;
   chatFormHiddenFields?: Array<{ name: string; value: string }>;
+  recentQuestionsNav?: HtmlEscapedString;
 }
 
 export interface PendingTurnShellOptions {
   question: string;
   streamUrl: string;
+}
+
+export interface RecentQuestionNavItem {
+  href: string;
+  label: string;
 }
 
 interface DocumentOptions {
@@ -167,6 +173,21 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
   </article>` as HtmlEscapedString;
 }
 
+export function renderRecentQuestionsNav(
+  items: RecentQuestionNavItem[],
+  options?: { oob?: boolean },
+): HtmlEscapedString {
+  return html`<nav
+    id="squire-recent-questions"
+    class="squire-recent"
+    aria-label="Recent questions"
+    ${options?.oob ? html`hx-swap-oob="outerHTML"` : html``}
+    ${items.length === 0 ? html`hidden` : html``}
+  >
+    ${items.map((item) => html`<a class="squire-chip" href="${item.href}">${item.label}</a>`)}
+  </nav>` as HtmlEscapedString;
+}
+
 /**
  * Render the full HTML document for the companion-first layout. Stable
  * selectors (`squire-header`, `squire-surface`, `squire-toolcall`,
@@ -235,6 +256,13 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
     : (options.mainContent ?? emptyStateAndStubs);
+  const recentQuestionsNav =
+    options.recentQuestionsNav ??
+    renderRecentQuestionsNav([
+      { href: '#', label: 'Looting' },
+      { href: '#', label: 'Element infusion' },
+      { href: '#', label: 'Negative scenario effects' },
+    ]);
 
   return renderDocument({
     authenticated,
@@ -286,11 +314,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
             : html`<footer class="squire-toolcall" aria-live="off">
                   CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
                 </footer>
-                <nav class="squire-recent" aria-label="Recent questions">
-                  <span class="squire-chip">Looting</span>
-                  <span class="squire-chip">Element infusion</span>
-                  <span class="squire-chip">Negative scenario effects</span>
-                </nav>
+                ${recentQuestionsNav}
                 <form
                   class="squire-input-dock"
                   method="post"
@@ -437,6 +461,7 @@ export async function renderConversationPage(options: {
   csrfToken: string;
   conversationId: string;
   messages: ConversationMessage[];
+  recentQuestionsNav?: HtmlEscapedString;
 }): Promise<HtmlEscapedString> {
   const transcript = renderConversationTranscript(options.conversationId, options.messages);
 
@@ -445,6 +470,7 @@ export async function renderConversationPage(options: {
     csrfToken: options.csrfToken,
     mainContent: transcript as HtmlEscapedString,
     chatFormAction: `/chat/${options.conversationId}/messages`,
+    recentQuestionsNav: options.recentQuestionsNav,
   });
 }
 
@@ -481,6 +507,15 @@ export function renderConversationTranscriptWithPendingTurn(options: {
     ${options.messages.map((message) => renderConversationTurn(message))}
     ${renderPendingAnswerSkeleton()}
   </section>` as HtmlEscapedString;
+}
+
+export function renderConversationTranscriptWithRecentQuestions(options: {
+  conversationId: string;
+  messages: ConversationMessage[];
+  recentQuestionsNav: HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`${renderConversationTranscript(options.conversationId, options.messages)}
+  ${options.recentQuestionsNav}` as HtmlEscapedString;
 }
 
 export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEscapedString {

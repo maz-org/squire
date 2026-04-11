@@ -59,10 +59,12 @@ import {
   renderConversationTranscript,
   renderConversationTranscriptWithPendingTurn,
   renderConversationPage,
+  renderConversationTranscriptWithRecentQuestions,
   renderHomePage,
   renderLoginPage,
   renderNotInvitedPage,
   renderPendingTurnShell,
+  renderRecentQuestionsNav,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
@@ -73,6 +75,7 @@ import {
   GENERIC_FAILURE_MESSAGE,
   loadConversation,
   loadConversationMessage,
+  loadSelectedConversation,
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
@@ -589,6 +592,48 @@ app.get('/chat/:conversationId', async (c) => {
   );
 });
 
+app.get('/chat/:conversationId/messages/:messageId', async (c) => {
+  const session = c.get('session')!;
+  const loaded = await loadSelectedConversation({
+    conversationId: c.req.param('conversationId'),
+    messageId: c.req.param('messageId'),
+    userId: session.userId,
+  });
+  if (!loaded) return c.notFound();
+
+  const selectedMessages = [loaded.selectedTurn.userMessage, loaded.selectedTurn.assistantMessage];
+  const recentQuestionsNav = renderRecentQuestionsNav(
+    loaded.recentQuestions.map((question) => ({
+      href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+      label: question.question,
+    })),
+    { oob: isHtmxRequest(c) },
+  );
+
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+
+  if (isHtmxRequest(c)) {
+    return c.html(
+      renderConversationTranscriptWithRecentQuestions({
+        conversationId: loaded.conversation.id,
+        messages: selectedMessages,
+        recentQuestionsNav,
+      }),
+    );
+  }
+
+  return c.html(
+    await renderConversationPage({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      conversationId: loaded.conversation.id,
+      messages: selectedMessages,
+      recentQuestionsNav,
+    }),
+  );
+});
+
 app.post('/chat', async (c) => {
   const session = c.get('session')!;
   const { question, idempotencyKey } = await readQuestionForm(c);
@@ -650,6 +695,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
+    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
     const loaded = await loadConversation({
       conversationId: pending.conversation.id,
       userId: session.userId,
