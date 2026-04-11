@@ -554,8 +554,13 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-answer\s+\.cite\.is-active\s*\{[^}]*var\(--wax\)/);
   });
 
-  it('declares a .squire-answer p:first-of-type::first-letter drop cap in Fraunces', () => {
-    const rule = css.match(/\.squire-answer\s+p:first-of-type::first-letter\s*\{[^}]*\}/);
+  it('declares a guarded .squire-answer first-paragraph drop cap in Fraunces', () => {
+    expect(css).toContain('.squire-answer');
+    expect(css).toContain('p:first-of-type:not(');
+    expect(css).toContain(
+      ':has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)',
+    );
+    const rule = css.match(/::first-letter\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toMatch(/font-family:\s*["']?Fraunces["']?/);
