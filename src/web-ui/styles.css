@@ -1091,6 +1091,18 @@ template#squire-banner-fixtures {
   margin-bottom: 0;
 }
 
+/* Full quoted passages often come through as `> *"...long rule quote..."*`.
+   Treat those as readable quotations, not highlighted rule-term chips. */
+.squire-markdown blockquote em {
+  font-style: italic;
+  font-weight: inherit;
+  font-variant-caps: normal;
+  letter-spacing: normal;
+  background-image: none;
+  padding: 0;
+  white-space: normal;
+}
+
 .squire-markdown code {
   font-family:
     ui-monospace, 'SFMono-Regular', 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;

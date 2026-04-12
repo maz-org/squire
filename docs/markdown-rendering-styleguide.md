@@ -84,6 +84,8 @@ recent-questions rail, consulted footer, input dock, or drop cap treatment.
 
 - Inline citations (`.cite`): keep the same sepia-underlined family as links,
   but retain the richer tap-toggle behavior from the ledger answer design.
+- Blockquote emphasis: quoted passages should wrap and read like quotations,
+  not inherit the amber small-caps rule-term highlighter.
 - First paragraph: stays eligible for the Fraunces wax-red drop cap only when
   a `.squire-answer .squire-markdown` surface itself starts with a paragraph,
   and that paragraph does not start with strong, emphasis, code, or link

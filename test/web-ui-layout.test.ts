@@ -768,6 +768,19 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(body).toContain('white-space: nowrap');
   });
 
+  it('renders blockquote emphasis as a normal wrapping quote instead of a term chip', () => {
+    const rule = css.match(/\.squire-markdown\s+blockquote\s+em\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('font-style: italic');
+    expect(body).toContain('font-weight: inherit');
+    expect(body).toContain('font-variant-caps: normal');
+    expect(body).toContain('letter-spacing: normal');
+    expect(body).toContain('background-image: none');
+    expect(body).toContain('padding: 0');
+    expect(body).toContain('white-space: normal');
+  });
+
   it('styles .squire-markdown .cite as sepia underline with wax hover + tap-toggle', () => {
     expect(css).toMatch(/\.squire-markdown\s+\.cite\s*\{[^}]*color:\s*var\(--sepia\)/);
     expect(css).toMatch(/\.squire-markdown\s+\.cite\s*\{[^}]*text-underline-offset:\s*3px/);
