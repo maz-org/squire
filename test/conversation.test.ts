@@ -345,6 +345,35 @@ describe('conversation web backend', () => {
     expect(recentNav).not.toContain('href="/chat/');
   });
 
+  it('keeps five prior recent-question chips on the canonical conversation page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Question 1', answer: 'Answer 1' },
+      { question: 'Question 2', answer: 'Answer 2' },
+      { question: 'Question 3', answer: 'Answer 3' },
+      { question: 'Question 4', answer: 'Answer 4' },
+      { question: 'Question 5', answer: 'Answer 5' },
+      { question: 'Question 6', answer: 'Answer 6' },
+      { question: 'Question 7', answer: 'Answer 7' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    const chipCount = (recentNav?.match(/class="squire-chip"/g) || []).length;
+    expect(chipCount).toBe(5);
+    expect(recentNav).toContain('Question 6');
+    expect(recentNav).toContain('Question 2');
+    expect(recentNav).not.toContain('Question 7');
+    expect(recentNav).not.toContain('Question 1');
+  });
+
   it('renders the canonical selected-message page for the conversation owner', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [

@@ -751,6 +751,18 @@ template#squire-banner-fixtures {
   margin: 0 0 16px;
 }
 
+.squire-question__eyebrow {
+  display: block;
+  margin: 0 0 8px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
 .squire-transcript {
   display: flex;
   flex-direction: column;

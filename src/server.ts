@@ -576,17 +576,17 @@ function buildConversationRecentQuestionsNav(
   messages: Parameters<typeof listRecentCompletedQuestions>[0],
   options: { oob?: boolean } = {},
 ) {
-  const recentCompletedQuestions = listRecentCompletedQuestions(messages);
-  const latestCompletedQuestionId = recentCompletedQuestions[0]?.messageId;
+  const latestCompletedQuestionId = listRecentCompletedQuestions(messages)[0]?.messageId;
+  const recentCompletedQuestions = listRecentCompletedQuestions(messages, {
+    excludeMessageId: latestCompletedQuestionId,
+  });
   return renderRecentQuestionsNav(
-    recentCompletedQuestions
-      .filter((question) => question.messageId !== latestCompletedQuestionId)
-      .map((question) => ({
-        href: `/chat/${conversationId}/messages/${question.messageId}`,
-        hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
-        label: question.question,
-        pushUrl: true,
-      })),
+    recentCompletedQuestions.map((question) => ({
+      href: `/chat/${conversationId}/messages/${question.messageId}`,
+      hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
+      label: question.question,
+      pushUrl: true,
+    })),
     options,
   );
 }

@@ -865,6 +865,17 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(body).toContain('gap: 8px');
   });
 
+  it('declares .squire-question__eyebrow as small metadata instead of hero text', () => {
+    const rule = css.match(/\.squire-question__eyebrow\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('display: block');
+    expect(body).toContain("font-family: 'Geist', system-ui, sans-serif");
+    expect(body).toContain('font-size: 12px');
+    expect(body).toContain('text-transform: uppercase');
+    expect(body).toContain('color: var(--sepia)');
+  });
+
   it('declares .squire-verdict with 3px wax left border', () => {
     const rule = css.match(/\.squire-verdict\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
