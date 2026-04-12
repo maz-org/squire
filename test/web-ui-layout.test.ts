@@ -188,6 +188,12 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/>\s*Log out\s*</);
   });
 
+  it('requires a csrf token when rendering authenticated chrome', async () => {
+    await expect(actualLayout.renderHomePage(testSession)).rejects.toThrow(
+      'layoutShell requires a csrfToken when rendering authenticated chrome',
+    );
+  });
+
   it('falls back to the user email when the session has no display name', async () => {
     const body = String(
       await actualLayout.renderHomePage(
@@ -797,6 +803,7 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-markdown\s+code\s*\{/);
     expect(css).toMatch(/\.squire-markdown\s+pre\s*\{/);
     expect(css).toMatch(/\.squire-markdown\s+a\s*\{/);
+    expect(css).toMatch(/\.squire-markdown__table-scroll\s*\{/);
     expect(css).toMatch(/\.squire-markdown\s+table\s*\{/);
     expect(css).toMatch(/\.squire-markdown\s+hr\s*\{/);
     expect(css).toMatch(/\.squire-markdown\s+img\s*\{/);
@@ -809,12 +816,20 @@ describe('styles.css — SQR-66 signature component rules', () => {
   });
 
   it('lets narrow markdown tables hug their content instead of stretching full width', () => {
+    const wrapperRule = css.match(/\.squire-markdown__table-scroll\s*\{[^}]*\}/);
+    const tableRule = css.match(/\.squire-markdown\s+table\s*\{[^}]*\}/);
+    expect(wrapperRule).not.toBeNull();
+    expect(tableRule).not.toBeNull();
+    expect(wrapperRule![0]).toContain('width: fit-content');
+    expect(wrapperRule![0]).toContain('max-width: 100%');
+    expect(tableRule![0]).toContain('width: max-content');
+    expect(tableRule![0]).not.toContain('min-width: 100%');
+  });
+
+  it('preserves native table display semantics on markdown tables', () => {
     const rule = css.match(/\.squire-markdown\s+table\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
-    const body = rule![0];
-    expect(body).toContain('width: max-content');
-    expect(body).toContain('max-width: 100%');
-    expect(body).not.toContain('min-width: 100%');
+    expect(rule![0]).not.toContain('display: block');
   });
 
   it('declares a guarded q&a-only first-paragraph drop cap in Fraunces', () => {
@@ -1041,6 +1056,7 @@ describe('layoutShell error banner rendering', () => {
     const body = String(
       await actualLayout.layoutShell({
         errorBanner: { message: 'agent unavailable' },
+        csrfToken: testCsrfToken,
         session: testSession,
       }),
     );

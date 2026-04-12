@@ -84,7 +84,7 @@ describe('assistant content renderer', () => {
     expect(html).toContain('<code>inline</code>');
     expect(html).toContain('<pre><code>block code');
     expect(html).toContain('<a href="https://example.com" rel="noopener noreferrer">safe link</a>');
-    expect(html).toContain('<table>');
+    expect(html).toContain('<div class="squire-markdown__table-scroll"><table>');
     expect(html).toContain('<th class="squire-markdown__align-left">Column A</th>');
     expect(html).toContain('<td class="squire-markdown__align-right">2</td>');
     expect(html).not.toContain('style="text-align:');

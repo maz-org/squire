@@ -382,6 +382,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const showRail = options.showRail ?? authenticated;
   const showChatChrome = options.showChatChrome ?? authenticated;
   const csrfToken = options.csrfToken;
+  if (authenticated && !csrfToken) {
+    throw new Error('layoutShell requires a csrfToken when rendering authenticated chrome');
+  }
+  const authenticatedCsrfToken = csrfToken ?? '';
   const chatFormAction = options.chatFormAction ?? '/chat';
   const headerContext = options.headerContext ?? 'FROSTHAVEN · RULES';
   const columnClassName = options.columnClassName ?? 'squire-column';
@@ -473,7 +477,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   </a>
                   <span class="squire-context">${headerContext}</span>
                   <div class="squire-header__account">
-                    ${renderAccountMenu(options.session, csrfToken ?? '')}
+                    ${renderAccountMenu(options.session, authenticatedCsrfToken)}
                   </div>`
               : html`<span class="squire-monogram" aria-hidden="true">S</span>
                   <span class="squire-wordmark">Squire</span>

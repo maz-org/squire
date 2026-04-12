@@ -1132,17 +1132,22 @@ template#squire-banner-fixtures {
   white-space: pre;
 }
 
-.squire-markdown table {
+.squire-markdown__table-scroll {
   display: block;
-  width: max-content;
+  width: fit-content;
   max-width: 100%;
   margin: 0 0 1.1em;
   overflow-x: auto;
   border: 1px solid var(--rule);
-  border-collapse: separate;
-  border-spacing: 0;
   border-radius: 8px;
   background: rgb(0 0 0 / 0.08);
+}
+
+.squire-markdown table {
+  width: max-content;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .squire-markdown thead {

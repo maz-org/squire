@@ -19,7 +19,9 @@ ANTHROPIC_API_KEY=...
 # Google OAuth (required for web UI login)
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+# Fallback callback for non-local hosts. For localhost sign-in, run on an
+# allowlisted port and the app derives the callback URI from request origin.
+GOOGLE_REDIRECT_URI=http://localhost:4450/auth/google/callback
 SESSION_SECRET=<random 32+ character string>
 
 # Email allowlist (comma-separated, controls who can log in)
@@ -36,11 +38,12 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-`GOOGLE_REDIRECT_URI` is still the configured fallback callback. In local
-development, `/auth/google/start` and `/auth/google/callback` reuse the current
-`localhost` origin so linked worktrees can log in on their own ports. Google
-still requires exact redirect-URI matches. The localhost callback ports
-currently allowlisted for sign-in are:
+`GOOGLE_REDIRECT_URI` is still the configured fallback callback for production
+and non-local hosts. In local development, `/auth/google/start` and
+`/auth/google/callback` reuse the current `localhost` origin so linked
+worktrees can log in on their own ports. Google still requires exact
+redirect-URI matches. The localhost callback ports currently allowlisted for
+sign-in are:
 
 - `http://localhost:4450/auth/google/callback`
 - `http://localhost:5018/auth/google/callback`

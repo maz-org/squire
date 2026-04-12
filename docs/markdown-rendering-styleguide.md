@@ -6,13 +6,13 @@ security-bounded subset rendered through a reusable markdown surface.
 This file is the human-readable contract for that subset.
 
 If you change the renderer in
-[src/web-ui/assistant-content.ts](/Users/bcm/.codex/worktrees/2b1e/squire/src/web-ui/assistant-content.ts)
+[src/web-ui/assistant-content.ts](../src/web-ui/assistant-content.ts)
 or the answer styling in
-[src/web-ui/styles.css](/Users/bcm/.codex/worktrees/2b1e/squire/src/web-ui/styles.css),
+[src/web-ui/styles.css](../src/web-ui/styles.css),
 update this doc and the coverage in
-[test/assistant-content.test.ts](/Users/bcm/.codex/worktrees/2b1e/squire/test/assistant-content.test.ts)
+[test/assistant-content.test.ts](../test/assistant-content.test.ts)
 and
-[test/web-ui-layout.test.ts](/Users/bcm/.codex/worktrees/2b1e/squire/test/web-ui-layout.test.ts).
+[test/web-ui-layout.test.ts](../test/web-ui-layout.test.ts).
 
 ## Shared DOM Contract
 
@@ -69,8 +69,8 @@ recent-questions rail, consulted footer, input dock, or drop cap treatment.
   corners, and horizontal scroll.
 - Safe HTTPS links: render as `<a href="https://...">` with a sepia underline
   and wax hover/focus state.
-- Tables: render as `<table>` with a bordered ledger treatment, header row,
-  and horizontal scroll on narrow screens.
+- Tables: render as `<table>` inside a scroll wrapper with a bordered ledger
+  treatment, header row, and horizontal scroll on narrow screens.
 - Horizontal rules: render as a muted rule-line divider inside the answer
   flow.
 - Allowlisted HTTPS images: render as `<img src="https://...">` only when the

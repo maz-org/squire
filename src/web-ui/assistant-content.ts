@@ -125,6 +125,10 @@ markdown.renderer.rules.th_open = (tokens: Token[], idx: number) =>
 markdown.renderer.rules.td_open = (tokens: Token[], idx: number) =>
   renderAlignedTableCell('td', tokens, idx);
 
+markdown.renderer.rules.table_open = () => '<div class="squire-markdown__table-scroll"><table>';
+
+markdown.renderer.rules.table_close = () => '</table></div>';
+
 markdown.renderer.rules.image = (tokens: Token[], idx: number) => {
   const token = tokens[idx];
   const src = token?.attrGet('src');
