@@ -10,8 +10,6 @@ const markdown = new MarkdownIt({
   typographer: false,
 });
 
-markdown.disable(['image', 'heading', 'lheading', 'table', 'hr']);
-
 markdown.validateLink = (url: string) => {
   try {
     return new URL(url).protocol === 'https:';
@@ -48,6 +46,20 @@ markdown.renderer.rules.link_open = (tokens: Token[], idx: number) => {
 
 markdown.renderer.rules.link_close = (tokens: Token[], idx: number) =>
   tokens[idx]?.meta?.suppressed ? '' : '</a>';
+
+markdown.renderer.rules.image = (tokens: Token[], idx: number) => {
+  const token = tokens[idx];
+  const src = token?.attrGet('src');
+  if (!src || !markdown.validateLink(src)) {
+    return markdown.utils.escapeHtml(token?.markup ? `${token.markup}${token.content}` : '');
+  }
+
+  const alt = markdown.utils.escapeHtml(token?.content ?? '');
+  const title = token?.attrGet('title');
+  const titleAttr = title ? ` title="${markdown.utils.escapeHtml(title)}"` : '';
+
+  return `<img src="${markdown.utils.escapeHtml(src)}" alt="${alt}"${titleAttr} loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+};
 
 export function renderAssistantContentHtml(content: string): string {
   return markdown.render(content);

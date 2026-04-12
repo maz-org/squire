@@ -202,7 +202,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
   - `default-src 'self'`
   - `script-src 'self'`
   - `style-src 'self' https://fonts.googleapis.com`
-  - `img-src 'self' data:`
+  - `img-src 'self' data: https:`
   - `connect-src 'self'`
   - `font-src 'self' https://fonts.gstatic.com`
   - `object-src 'none'`

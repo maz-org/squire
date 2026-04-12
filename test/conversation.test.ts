@@ -251,8 +251,11 @@ describe('conversation web backend', () => {
 
     const page = await pageRes.text();
     expect(pageRes.headers.get('content-security-policy')).toBe(
-      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
+    expect(page).toContain('class="squire-account-menu"');
+    expect(page).toContain('href="/styleguide/markdown"');
+    expect(page).toContain('action="/auth/logout"');
     expect(page).toContain('How does looting work?');
     expect(page).toContain('Loot tokens in your hex are picked up.');
 
@@ -391,6 +394,8 @@ describe('conversation web backend', () => {
     expect(pageRes.headers.get('vary')).toBe('Cookie');
 
     const page = await pageRes.text();
+    expect(page).toContain('class="squire-account-menu"');
+    expect(page).toContain('href="/styleguide/markdown"');
     const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
     expect(transcript).toContain('How does looting work?');
     expect(transcript).toContain('Loot tokens in your hex are picked up.');

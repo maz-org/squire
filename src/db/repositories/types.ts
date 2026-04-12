@@ -18,6 +18,7 @@ export interface User {
   googleSub: string;
   email: string;
   name: string | null;
+  avatarUrl: string | null;
   createdAt: Date;
 }
 
@@ -25,6 +26,7 @@ export interface CreateUserInput {
   googleSub: string;
   email: string;
   name: string | null;
+  avatarUrl?: string | null;
 }
 
 // ─── Session ────────────────────────────────────────────────────────────────

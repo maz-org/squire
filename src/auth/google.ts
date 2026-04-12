@@ -70,7 +70,7 @@ export const ALLOWED_EMAILS: readonly string[] = [
 export async function verifyGoogleIdToken(
   idToken: string,
   clientId: string,
-): Promise<{ sub: string; email: string; name?: string }> {
+): Promise<{ sub: string; email: string; name?: string; picture?: string }> {
   const client = new OAuth2Client(clientId);
   const ticket = await client.verifyIdToken({
     idToken,
@@ -84,7 +84,17 @@ export async function verifyGoogleIdToken(
     sub: payload.sub,
     email: payload.email,
     name: payload.name,
+    picture: payload.picture,
   };
+}
+
+function sanitizeAvatarUrl(url?: string): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
 }
 
 // ─── PKCE + state helpers ───────────────────────────────────────────────────
@@ -158,6 +168,7 @@ export interface HandleCallbackResult {
   userId: string;
   email: string;
   name: string | null;
+  avatarUrl: string | null;
 }
 
 /**
@@ -197,7 +208,7 @@ export async function handleGoogleCallback(
 
   // 3. Verify ID token
   const { clientId } = getGoogleConfig();
-  let tokenPayload: { sub: string; email: string; name?: string };
+  let tokenPayload: { sub: string; email: string; name?: string; picture?: string };
   try {
     tokenPayload = await verifyGoogleIdToken(idToken, clientId);
   } catch (err) {
@@ -206,6 +217,7 @@ export async function handleGoogleCallback(
   }
 
   const { sub: googleSub, email, name } = tokenPayload;
+  const avatarUrl = sanitizeAvatarUrl(tokenPayload.picture);
 
   // 4. Check allowlist
   const allowedEmails = getAllowedEmails();
@@ -230,13 +242,20 @@ export async function handleGoogleCallback(
 
   // 5. Upsert user + create session in a transaction
   const { db } = getDb('server');
-  let result: { sessionId: string; userId: string; email: string; name: string | null };
+  let result: {
+    sessionId: string;
+    userId: string;
+    email: string;
+    name: string | null;
+    avatarUrl: string | null;
+  };
   try {
     result = await db.transaction(async (tx) => {
       const user = await UserRepository.upsertByGoogleSub(tx, {
         googleSub,
         email,
         name: name ?? null,
+        avatarUrl,
       });
       const { sessionId } = await SessionRepository.create(tx, {
         userId: user.id,
@@ -253,7 +272,13 @@ export async function handleGoogleCallback(
         metadata: { email, googleSub },
       });
 
-      return { sessionId, userId: user.id, email, name: name ?? null };
+      return {
+        sessionId,
+        userId: user.id,
+        email,
+        name: name ?? null,
+        avatarUrl: user.avatarUrl,
+      };
     });
   } catch (err) {
     // EmailConflictError: email exists under a different google_sub.

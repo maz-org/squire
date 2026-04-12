@@ -30,6 +30,7 @@ export const users = pgTable('users', {
   googleSub: text('google_sub').notNull().unique(),
   email: text('email').notNull().unique(),
   name: text('name'),
+  avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

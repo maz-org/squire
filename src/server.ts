@@ -62,6 +62,7 @@ import {
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
+  renderMarkdownStyleguidePage,
   renderNotInvitedPage,
   renderPendingTurnShell,
   renderRecentQuestionsNav,
@@ -89,7 +90,7 @@ const HTML_CSP =
   "default-src 'self'; " +
   "script-src 'self'; " +
   "style-src 'self' https://fonts.googleapis.com; " +
-  "img-src 'self' data:; " +
+  "img-src 'self' data: https:; " +
   "connect-src 'self'; " +
   "font-src 'self' https://fonts.gstatic.com; " +
   "object-src 'none'; " +
@@ -252,6 +253,13 @@ app.get('/', requirePageSession(), async (c) => {
       500,
     );
   }
+});
+
+app.get('/styleguide/markdown', requirePageSession(), async (c) => {
+  const session = c.get('session')!;
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.html(await renderMarkdownStyleguidePage(session, createCsrfToken(session.id)));
 });
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────

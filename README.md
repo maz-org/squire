@@ -44,8 +44,9 @@ cp .env.example .env
 # (required for web UI login). `GOOGLE_REDIRECT_URI` can stay on
 # `http://localhost:3000/auth/google/callback`; linked worktrees reuse the
 # current localhost origin at runtime, but every localhost callback port you use
-# still has to be pre-registered in Google Cloud Console. See
-# docs/DEVELOPMENT.md for the full list.
+# still has to be pre-registered in Google Cloud Console. The currently
+# allowlisted localhost callback ports are `4450` and `5018`. See
+# docs/DEVELOPMENT.md for the full auth notes.
 
 # Start the local Postgres + pgvector database
 docker compose up -d
@@ -107,7 +108,9 @@ serves:
 Set `PORT` to force a specific listen port. By default, the main checkout uses
 `3000`. Linked worktrees start from a checkout-local derived port and then
 coordinate within the managed `4000-5999` range so parallel agents do not land
-on the same default by accident. Trust the startup log for the final port.
+on the same default by accident. Trust the startup log for the final port. If
+you need Google sign-in locally, prefer `PORT=4450` or `PORT=5018`; those are
+the localhost callback ports currently allowlisted in Google Cloud Console.
 
 ### CLI
 

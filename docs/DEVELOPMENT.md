@@ -39,9 +39,14 @@ openssl rand -base64 48
 `GOOGLE_REDIRECT_URI` is still the configured fallback callback. In local
 development, `/auth/google/start` and `/auth/google/callback` reuse the current
 `localhost` origin so linked worktrees can log in on their own ports. Google
-still requires exact redirect-URI matches, so add every localhost callback port
-you use, such as `http://localhost:4450/auth/google/callback`, to the OAuth
-client in Google Cloud Console.
+still requires exact redirect-URI matches. The localhost callback ports
+currently allowlisted for sign-in are:
+
+- `http://localhost:4450/auth/google/callback`
+- `http://localhost:5018/auth/google/callback`
+
+If you run the app on another port, Google sign-in will fail until that
+callback URI is added to the OAuth client in Google Cloud Console.
 
 For local dev without Google OAuth, the app still starts and serves the
 homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed
@@ -138,6 +143,9 @@ startup no longer crashes; `/api/health` returns a coarse lifecycle snapshot
 immediately and query endpoints return `503` JSON errors until `npm run index`
 and/or `npm run seed:cards` has been run. Detailed bootstrap and dependency
 reasons are logged server-side.
+
+If you need Google sign-in locally, use `PORT=4450` or `PORT=5018`. Those are
+the only localhost ports currently allowlisted in Google Cloud Console.
 
 To discover the current worktree's runtime settings, use startup logs or ask
 the app directly by checking:
