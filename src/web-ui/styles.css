@@ -292,6 +292,11 @@ html {
   overflow-x: auto;
 }
 
+.squire-recent__chips {
+  display: flex;
+  gap: 8px;
+}
+
 /* 5. Input dock — sticky at the bottom of the viewport, never collapses,
    respects iOS safe-area-inset-bottom so the home indicator doesn't sit on
    top of the submit button. */
@@ -744,6 +749,18 @@ template#squire-banner-fixtures {
   color: var(--parchment);
   letter-spacing: -0.01em;
   margin: 0 0 16px;
+}
+
+.squire-question__eyebrow {
+  display: block;
+  margin: 0 0 8px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia);
 }
 
 .squire-transcript {

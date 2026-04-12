@@ -293,6 +293,87 @@ describe('conversation web backend', () => {
     expect(intruderRes.status).toBe(404);
   });
 
+  it('renders real recent-question chips on the canonical conversation page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
+      { question: 'When do elements wane?', answer: 'At end of round.' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(recentNav).toContain('How does looting work?');
+    expect(recentNav).not.toContain('Looting');
+    expect(recentNav).not.toContain('Element infusion');
+    expect(recentNav).not.toContain('Negative scenario effects');
+    expect(recentNav).toContain(
+      `href="/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}"`,
+    );
+    expect(recentNav).toContain(
+      `hx-get="/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}"`,
+    );
+    expect(recentNav).toContain('hx-push-url="true"');
+    expect(recentNav).not.toContain('When do elements wane?');
+  });
+
+  it('hides recent questions on the canonical conversation page when there is no prior turn', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Only question', answer: 'Only answer' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(page).not.toContain('Looting');
+    expect(page).not.toContain('Element infusion');
+    expect(page).not.toContain('Negative scenario effects');
+    expect(recentNav).toContain('hidden');
+    expect(recentNav).not.toContain('href="/chat/');
+  });
+
+  it('keeps five prior recent-question chips on the canonical conversation page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Question 1', answer: 'Answer 1' },
+      { question: 'Question 2', answer: 'Answer 2' },
+      { question: 'Question 3', answer: 'Answer 3' },
+      { question: 'Question 4', answer: 'Answer 4' },
+      { question: 'Question 5', answer: 'Answer 5' },
+      { question: 'Question 6', answer: 'Answer 6' },
+      { question: 'Question 7', answer: 'Answer 7' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    const chipCount = (recentNav?.match(/class="squire-chip"/g) || []).length;
+    expect(chipCount).toBe(5);
+    expect(recentNav).toContain('Question 6');
+    expect(recentNav).toContain('Question 2');
+    expect(recentNav).not.toContain('Question 7');
+    expect(recentNav).not.toContain('Question 1');
+  });
+
   it('renders the canonical selected-message page for the conversation owner', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
@@ -313,11 +394,14 @@ describe('conversation web backend', () => {
     const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
     expect(transcript).toContain('How does looting work?');
     expect(transcript).toContain('Loot tokens in your hex are picked up.');
+    expect(transcript).toContain('EARLIER QUESTION');
     expect(transcript).not.toContain('When do elements wane?');
     expect(transcript).not.toContain('At end of round.');
     const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
     expect(recentNav).toContain('When do elements wane?');
     expect(recentNav).not.toContain('How does looting work?');
+    expect(recentNav).toContain('hx-get="/chat/');
+    expect(recentNav).toContain('hx-push-url="true"');
   });
 
   it('renders the canonical selected-message route as an HTMX fragment', async () => {
@@ -345,11 +429,14 @@ describe('conversation web backend', () => {
     )?.[0];
     expect(transcript).toContain('What does strengthen do?');
     expect(transcript).toContain('It grants advantage on attacks.');
+    expect(transcript).not.toContain('EARLIER QUESTION');
     expect(fragment).not.toContain('<!doctype html>');
     const recentNav = fragment.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
     expect(recentNav).toContain('hx-swap-oob="outerHTML"');
     expect(recentNav).toContain('What does muddle do?');
     expect(recentNav).not.toContain('What does strengthen do?');
+    expect(recentNav).toContain('hx-get="/chat/');
+    expect(recentNav).toContain('hx-push-url="true"');
   });
 
   it("returns 404 when one user requests another user's selected-message URL", async () => {
@@ -457,6 +544,52 @@ describe('conversation web backend', () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).not.toContain('id="squire-recent-questions"');
+  });
+
+  it('restores canonical recent-question chips after streaming a follow-up from a selected-message page', async () => {
+    mockAsk.mockResolvedValueOnce('Third answer.');
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+        },
+        body: formBody({ question: 'Third question' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events.at(-1)).toEqual({
+      event: 'done',
+      data: expect.objectContaining({
+        html: '<p>Third answer.</p>\n',
+        recentQuestionsNavHtml: expect.stringContaining('Second question'),
+      }),
+    });
+
+    const doneData = events.at(-1)?.data as { recentQuestionsNavHtml: string };
+    expect(doneData.recentQuestionsNavHtml).toContain('First question');
+    expect(doneData.recentQuestionsNavHtml).not.toContain('Third question');
+    expect(doneData.recentQuestionsNavHtml).not.toContain('Looting');
+    expect(doneData.recentQuestionsNavHtml).toContain('hx-get="/chat/');
+    expect(doneData.recentQuestionsNavHtml).toContain('hx-push-url="true"');
   });
 
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
@@ -750,7 +883,13 @@ describe('conversation web backend', () => {
     );
     expect(streamRes.status).toBe(200);
     expect(parseSse(await streamRes.text())).toEqual([
-      { event: 'done', data: { html: '<p>Recovered over SSE.</p>\n' } },
+      {
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>Recovered over SSE.</p>\n',
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
+      },
     ]);
 
     const storedMessages = await db.execute(sql`
@@ -1002,9 +1141,10 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: {
+        data: expect.objectContaining({
           html: '<p>Loot tokens in your hex are picked up with <strong>style</strong>.</p>\n',
-        },
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
       },
     ]);
 
@@ -1087,9 +1227,10 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: {
+        data: expect.objectContaining({
           html: '<p>&lt;script&gt;alert(1)&lt;/script&gt;[click](javascript:alert(1))&lt;img src=x onerror=alert(1)&gt;</p>\n',
-        },
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
       },
     ]);
   });
@@ -1177,7 +1318,10 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: { html: '<p>Fallback answer.</p>\n' },
+        data: expect.objectContaining({
+          html: '<p>Fallback answer.</p>\n',
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
       },
     ]);
   });

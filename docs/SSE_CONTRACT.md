@@ -27,7 +27,7 @@ The browser consumes these SSE event names:
   - Payload: `{ "id": string, "label": string, "ok": boolean }`
 - `done`
   - Marks the stream complete and clears the pending answer UI.
-  - Payload: `{ "html": string }`
+  - Payload: `{ "html": string, "recentQuestionsNavHtml": string }`
 - `error`
   - Replaces the pending answer UI with an error banner.
   - Payload: `{ "kind": string, "message": string, "recoverable": boolean }`
@@ -45,6 +45,10 @@ For every successful stream:
    text.
 5. The terminal `done` event carries the final server-rendered sanitized HTML
    fragment, which replaces the pending plain-text transcript in the browser.
+6. The terminal `done` event also carries the final server-rendered
+   `recentQuestionsNavHtml` fragment for the canonical conversation page, so
+   the browser can restore or refresh the recent-question rail immediately
+   after streaming completes.
 
 Important:
 
@@ -53,7 +57,8 @@ Important:
 - The browser treats `text-delta` as inert plain text only; rich formatting is
   introduced exclusively through the final sanitized `done.html` fragment.
 - If the backend finishes without any prior incremental text, the route may
-  still complete successfully with only a terminal `done.html` payload.
+  still complete successfully with only a terminal `done` payload containing
+  the final HTML fragments.
 
 ## Error-path invariants
 
@@ -76,14 +81,15 @@ The route, not the provider, owns the final browser ordering guarantees:
 - provider/internal `tool_result` -> browser `tool-result`
 - provider/internal `done` is only a completion signal
 - browser `done` is emitted by the route with the final sanitized HTML derived
-  from the persisted assistant message
+  from the persisted assistant message, plus the canonical recent-question rail
+  HTML derived from the refreshed persisted conversation state
 
 ## Testing guidance
 
 Regression tests should assert browser-visible behavior, not only persistence:
 
 - successful streams without incremental text still end with a visible
-  `done.html` fragment
+  `done.html` fragment and the refreshed recent-question rail payload
 - `text-delta` content remains inert plain text even when it contains hostile
   markup
 - `done.html` is sanitized before browser insertion

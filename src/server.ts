@@ -60,12 +60,13 @@ import {
   renderConversationTranscriptWithPendingTurn,
   renderConversationTranscriptWithPendingTurnAndRecentQuestions,
   renderConversationPage,
-  renderConversationTranscriptWithRecentQuestions,
   renderHomePage,
   renderLoginPage,
   renderNotInvitedPage,
   renderPendingTurnShell,
   renderRecentQuestionsNav,
+  renderSelectedMessageSurface,
+  renderSelectedMessageSurfaceWithRecentQuestions,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
@@ -74,6 +75,7 @@ import {
   createPendingConversation,
   createPendingFollowUp,
   GENERIC_FAILURE_MESSAGE,
+  listRecentCompletedQuestions,
   loadConversation,
   loadConversationMessage,
   loadSelectedConversation,
@@ -569,6 +571,26 @@ function buildToolLabel(name: string): string {
   return name.replaceAll('_', ' ').toUpperCase();
 }
 
+function buildConversationRecentQuestionsNav(
+  conversationId: string,
+  messages: Parameters<typeof listRecentCompletedQuestions>[0],
+  options: { oob?: boolean } = {},
+) {
+  const latestCompletedQuestionId = listRecentCompletedQuestions(messages)[0]?.messageId;
+  const recentCompletedQuestions = listRecentCompletedQuestions(messages, {
+    excludeMessageId: latestCompletedQuestionId,
+  });
+  return renderRecentQuestionsNav(
+    recentCompletedQuestions.map((question) => ({
+      href: `/chat/${conversationId}/messages/${question.messageId}`,
+      hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
+      label: question.question,
+      pushUrl: true,
+    })),
+    options,
+  );
+}
+
 async function readQuestionForm(
   c: Context,
 ): Promise<{ question: string; idempotencyKey?: string }> {
@@ -593,6 +615,11 @@ app.get('/chat/:conversationId', async (c) => {
   });
   if (!loaded) return c.notFound();
 
+  const recentQuestionsNav = buildConversationRecentQuestionsNav(
+    loaded.conversation.id,
+    loaded.messages,
+  );
+
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.html(
@@ -601,6 +628,7 @@ app.get('/chat/:conversationId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
+      recentQuestionsNav,
     }),
   );
 });
@@ -614,11 +642,17 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
   });
   if (!loaded) return c.notFound();
 
-  const selectedMessages = [loaded.selectedTurn.userMessage, loaded.selectedTurn.assistantMessage];
+  const selectedMessageSurface = renderSelectedMessageSurface({
+    selectedQuestion: loaded.selectedTurn.userMessage,
+    selectedAnswer: loaded.selectedTurn.assistantMessage,
+    isEarlierQuestion: loaded.selectedTurn.isEarlierQuestion,
+  });
   const recentQuestionsNav = renderRecentQuestionsNav(
     loaded.recentQuestions.map((question) => ({
       href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+      hxGet: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
       label: question.question,
+      pushUrl: true,
     })),
     { oob: isHtmxRequest(c) },
   );
@@ -628,20 +662,21 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
 
   if (isHtmxRequest(c)) {
     return c.html(
-      renderConversationTranscriptWithRecentQuestions({
-        conversationId: loaded.conversation.id,
-        messages: selectedMessages,
+      renderSelectedMessageSurfaceWithRecentQuestions({
+        selectedQuestion: loaded.selectedTurn.userMessage,
+        selectedAnswer: loaded.selectedTurn.assistantMessage,
+        isEarlierQuestion: loaded.selectedTurn.isEarlierQuestion,
         recentQuestionsNav,
       }),
     );
   }
 
   return c.html(
-    await renderConversationPage({
+    await layoutShell({
       session,
       csrfToken: createCsrfToken(session.id),
-      conversationId: loaded.conversation.id,
-      messages: selectedMessages,
+      mainContent: selectedMessageSurface,
+      chatFormAction: `/chat/${loaded.conversation.id}/messages`,
       recentQuestionsNav,
     }),
   );
@@ -852,10 +887,19 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       return;
     }
 
+    const refreshedConversation = await loadConversation({
+      conversationId: loaded.conversation.id,
+      userId: session.userId,
+    });
+
     await stream.writeSSE({
       event: 'done',
       data: JSON.stringify({
         html: renderAssistantContentHtml(assistantMessage.content),
+        recentQuestionsNavHtml: buildConversationRecentQuestionsNav(
+          loaded.conversation.id,
+          refreshedConversation?.messages ?? [loaded.message, assistantMessage],
+        ),
       }),
     });
   });

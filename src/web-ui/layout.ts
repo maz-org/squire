@@ -69,6 +69,21 @@ export interface PendingTurnShellOptions {
 export interface RecentQuestionNavItem {
   href: string;
   label: string;
+  hxGet?: string;
+  pushUrl?: boolean;
+}
+
+export interface RecentQuestionsNavOptions {
+  conversationId: string;
+  questions: ConversationMessage[];
+  selectedMessageId?: string;
+  outOfBand?: boolean;
+}
+
+export interface SelectedMessageSurfaceOptions {
+  selectedQuestion: ConversationMessage;
+  selectedAnswer: ConversationMessage;
+  isEarlierQuestion: boolean;
 }
 
 interface DocumentOptions {
@@ -136,8 +151,14 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
     </html>`;
 }
 
-function renderQuestionTurn(content: string): HtmlEscapedString {
+function renderQuestionTurn(
+  content: string,
+  options: { eyebrowLabel?: string } = {},
+): HtmlEscapedString {
   return html`<article class="squire-turn squire-question">
+    ${options.eyebrowLabel
+      ? html`<span class="squire-question__eyebrow">${options.eyebrowLabel}</span>`
+      : html``}
     <p>${content}</p>
   </article>` as HtmlEscapedString;
 }
@@ -173,21 +194,100 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
   </article>` as HtmlEscapedString;
 }
 
-export function renderRecentQuestionsNav(
-  items: RecentQuestionNavItem[],
-  options?: { oob?: boolean },
-): HtmlEscapedString {
+function renderRecentQuestionChip(options: {
+  href: string;
+  label: string;
+  hxGet?: string;
+  pushUrl?: boolean;
+}): HtmlEscapedString {
+  return html`<a
+    class="squire-chip"
+    href="${options.href}"
+    ${options.hxGet ? html`hx-get="${options.hxGet}"` : html``}
+    ${options.hxGet ? html`hx-target="#squire-surface"` : html``}
+    ${options.hxGet ? html`hx-swap="innerHTML"` : html``}
+    ${options.hxGet && options.pushUrl ? html`hx-push-url="true"` : html``}
+  >
+    ${options.label}
+  </a>` as HtmlEscapedString;
+}
+
+function renderStaticRecentQuestionChip(label: string): HtmlEscapedString {
+  return html`<span class="squire-chip">${label}</span>` as HtmlEscapedString;
+}
+
+function renderRecentQuestionsContainer(options: {
+  chips: HtmlEscapedString[];
+  hidden?: boolean;
+  outOfBand?: boolean;
+}): HtmlEscapedString {
   return html`<nav
     id="squire-recent-questions"
     class="squire-recent"
     aria-label="Recent questions"
-    ${options?.oob ? html`hx-swap-oob="outerHTML"` : html``}
-    ${items.length === 0 ? html`hidden` : html``}
+    ${options.outOfBand ? html`hx-swap-oob="outerHTML"` : html``}
+    ${options.hidden ? html`hidden` : html``}
   >
-    ${items.map((item) => html`<a class="squire-chip" href="${item.href}">${item.label}</a>`)}
+    <span class="squire-recent__label">Recent questions</span>
+    <div class="squire-recent__chips">${options.chips}</div>
   </nav>` as HtmlEscapedString;
 }
 
+export function renderRecentQuestionsNav(options: RecentQuestionsNavOptions): HtmlEscapedString;
+export function renderRecentQuestionsNav(
+  items: RecentQuestionNavItem[],
+  options?: { oob?: boolean },
+): HtmlEscapedString;
+export function renderRecentQuestionsNav(
+  optionsOrItems: RecentQuestionsNavOptions | RecentQuestionNavItem[],
+  options?: { oob?: boolean },
+): HtmlEscapedString {
+  if (Array.isArray(optionsOrItems)) {
+    return renderRecentQuestionsContainer({
+      chips: optionsOrItems.map((item) =>
+        renderRecentQuestionChip({
+          href: item.href,
+          hxGet: item.hxGet,
+          label: item.label,
+          pushUrl: item.pushUrl,
+        }),
+      ),
+      hidden: optionsOrItems.length === 0,
+      outOfBand: options?.oob,
+    });
+  }
+
+  const eligibleQuestions = optionsOrItems.questions.filter(
+    (question) => question.id !== optionsOrItems.selectedMessageId,
+  );
+
+  if (eligibleQuestions.length === 0) {
+    return html`` as HtmlEscapedString;
+  }
+
+  return renderRecentQuestionsContainer({
+    chips: eligibleQuestions.map((question) =>
+      renderRecentQuestionChip({
+        href: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
+        hxGet: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
+        pushUrl: true,
+        label: question.content,
+      }),
+    ),
+    outOfBand: optionsOrItems.outOfBand,
+  });
+}
+
+export function renderSelectedMessageSurface(
+  options: SelectedMessageSurfaceOptions,
+): HtmlEscapedString {
+  return html`<section class="squire-transcript" aria-label="Conversation transcript">
+    ${renderQuestionTurn(options.selectedQuestion.content, {
+      eyebrowLabel: options.isEarlierQuestion ? 'EARLIER QUESTION' : undefined,
+    })}
+    ${renderAnswerTurn(options.selectedAnswer)}
+  </section>` as HtmlEscapedString;
+}
 /**
  * Render the full HTML document for the companion-first layout. Stable
  * selectors (`squire-header`, `squire-surface`, `squire-toolcall`,
@@ -204,7 +304,6 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
     ...(options.chatFormHiddenFields ?? []),
   ];
-
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
   // template, which auto-escapes — safe to receive raw `Error.message`
   // strings from a caught exception. `mainContent` is typed as
@@ -258,11 +357,13 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     : (options.mainContent ?? emptyStateAndStubs);
   const recentQuestionsNav =
     options.recentQuestionsNav ??
-    renderRecentQuestionsNav([
-      { href: '#', label: 'Looting' },
-      { href: '#', label: 'Element infusion' },
-      { href: '#', label: 'Negative scenario effects' },
-    ]);
+    renderRecentQuestionsContainer({
+      chips: [
+        renderStaticRecentQuestionChip('Looting'),
+        renderStaticRecentQuestionChip('Element infusion'),
+        renderStaticRecentQuestionChip('Negative scenario effects'),
+      ],
+    });
 
   return renderDocument({
     authenticated,
@@ -332,10 +433,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     name="question"
                     type="text"
                     autocomplete="off"
-                    placeholder="Ask the Squire…"
+                    placeholder="Ask a question..."
                   />
                   <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                    →
+                    Ask
                   </button>
                 </form>`}
         </div>
@@ -524,6 +625,20 @@ export function renderConversationTranscriptWithRecentQuestions(options: {
   recentQuestionsNav: HtmlEscapedString;
 }): HtmlEscapedString {
   return html`${renderConversationTranscript(options.conversationId, options.messages)}
+  ${options.recentQuestionsNav}` as HtmlEscapedString;
+}
+
+export function renderSelectedMessageSurfaceWithRecentQuestions(options: {
+  selectedQuestion: ConversationMessage;
+  selectedAnswer: ConversationMessage;
+  isEarlierQuestion: boolean;
+  recentQuestionsNav: HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`${renderSelectedMessageSurface({
+    selectedQuestion: options.selectedQuestion,
+    selectedAnswer: options.selectedAnswer,
+    isEarlierQuestion: options.isEarlierQuestion,
+  })}
   ${options.recentQuestionsNav}` as HtmlEscapedString;
 }
 

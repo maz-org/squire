@@ -35,6 +35,57 @@ export interface SelectedConversationProjection {
   recentQuestions: SelectedConversationQuestion[];
 }
 
+interface CompletedConversationTurn {
+  userMessage: ConversationMessage;
+  assistantMessage: ConversationMessage;
+}
+
+function listCompletedTurns(messages: ConversationMessage[]): CompletedConversationTurn[] {
+  const assistantResponses = new Map<string, ConversationMessage>();
+  const completedTurns: CompletedConversationTurn[] = [];
+
+  for (const message of messages) {
+    if (message.role === 'assistant' && message.responseToMessageId && !message.isError) {
+      assistantResponses.set(message.responseToMessageId, message);
+    }
+  }
+
+  for (const message of messages) {
+    if (message.role !== 'user') continue;
+
+    const assistantMessage = assistantResponses.get(message.id);
+    if (!assistantMessage) continue;
+
+    completedTurns.push({
+      userMessage: message,
+      assistantMessage,
+    });
+  }
+
+  return completedTurns;
+}
+
+export function listRecentCompletedQuestions(
+  messages: ConversationMessage[],
+  options: { excludeMessageId?: string } = {},
+): SelectedConversationQuestion[] {
+  return listCompletedTurns(messages)
+    .filter((turn) => turn.userMessage.id !== options.excludeMessageId)
+    .slice()
+    .sort((left, right) => {
+      const timestampDiff =
+        right.userMessage.createdAt.getTime() - left.userMessage.createdAt.getTime();
+      if (timestampDiff !== 0) return timestampDiff;
+      return right.userMessage.id.localeCompare(left.userMessage.id);
+    })
+    .slice(0, RECENT_QUESTIONS_LIMIT)
+    .map((turn) => ({
+      messageId: turn.userMessage.id,
+      question: turn.userMessage.content,
+      askedAt: turn.userMessage.createdAt,
+    }));
+}
+
 function isRetryableTransportError(err: unknown): boolean {
   if (typeof err !== 'object' || err === null) {
     return false;
@@ -363,29 +414,7 @@ export async function loadSelectedConversation(input: {
   });
   if (!loaded) return null;
 
-  const assistantResponses = new Map<string, ConversationMessage>();
-  const completedTurns: Array<{
-    userMessage: ConversationMessage;
-    assistantMessage: ConversationMessage;
-  }> = [];
-
-  for (const message of loaded.messages) {
-    if (message.role === 'assistant' && message.responseToMessageId && !message.isError) {
-      assistantResponses.set(message.responseToMessageId, message);
-    }
-  }
-
-  for (const message of loaded.messages) {
-    if (message.role !== 'user') continue;
-
-    const assistantMessage = assistantResponses.get(message.id);
-    if (!assistantMessage) continue;
-
-    completedTurns.push({
-      userMessage: message,
-      assistantMessage,
-    });
-  }
+  const completedTurns = listCompletedTurns(loaded.messages);
 
   const selectedIndex = completedTurns.findIndex((turn) => turn.userMessage.id === input.messageId);
   if (selectedIndex === -1) return null;
@@ -393,21 +422,9 @@ export async function loadSelectedConversation(input: {
   const selectedTurn = completedTurns[selectedIndex]!;
   const userMessages = loaded.messages.filter((message) => message.role === 'user');
   const latestUserMessage = userMessages.at(-1);
-  const recentQuestions = completedTurns
-    .filter((turn) => turn.userMessage.id !== input.messageId)
-    .slice()
-    .sort((left, right) => {
-      const timestampDiff =
-        right.userMessage.createdAt.getTime() - left.userMessage.createdAt.getTime();
-      if (timestampDiff !== 0) return timestampDiff;
-      return right.userMessage.id.localeCompare(left.userMessage.id);
-    })
-    .slice(0, RECENT_QUESTIONS_LIMIT)
-    .map((turn) => ({
-      messageId: turn.userMessage.id,
-      question: turn.userMessage.content,
-      askedAt: turn.userMessage.createdAt,
-    }));
+  const recentQuestions = listRecentCompletedQuestions(loaded.messages, {
+    excludeMessageId: input.messageId,
+  });
 
   return {
     conversation: loaded.conversation,

@@ -194,11 +194,16 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
+    expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*class="squire-recent"/);
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/chat"/);
     expect(body).toMatch(/hx-post="\/chat"/);
     expect(body).toMatch(/hx-target="#squire-surface"/);
     expect(body).toMatch(/hx-swap="innerHTML"/);
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="idempotencyKey"[^>]*value=""/);
+    expect(body).toMatch(/placeholder="Ask a question\.\.\."/);
+    expect(body).toMatch(
+      /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*Ask\s*<\/button>/,
+    );
   });
 
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
@@ -493,6 +498,161 @@ describe('renderConversationTranscriptWithPendingTurn', () => {
   });
 });
 
+describe('selected-message rendering helpers', () => {
+  const messages = [
+    {
+      id: 'm1',
+      conversationId: 'conv-123',
+      role: 'user' as const,
+      content: 'Oldest question',
+      isError: false,
+      responseToMessageId: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    },
+    {
+      id: 'm2',
+      conversationId: 'conv-123',
+      role: 'assistant' as const,
+      content: 'Oldest answer.',
+      isError: false,
+      responseToMessageId: 'm1',
+      createdAt: new Date('2026-01-01T00:00:01.000Z'),
+    },
+    {
+      id: 'm3',
+      conversationId: 'conv-123',
+      role: 'user' as const,
+      content: 'Middle question',
+      isError: false,
+      responseToMessageId: null,
+      createdAt: new Date('2026-01-01T00:00:02.000Z'),
+    },
+    {
+      id: 'm4',
+      conversationId: 'conv-123',
+      role: 'assistant' as const,
+      content: 'Middle answer.',
+      isError: false,
+      responseToMessageId: 'm3',
+      createdAt: new Date('2026-01-01T00:00:03.000Z'),
+    },
+    {
+      id: 'm5',
+      conversationId: 'conv-123',
+      role: 'user' as const,
+      content: 'Newest question',
+      isError: false,
+      responseToMessageId: null,
+      createdAt: new Date('2026-01-01T00:00:04.000Z'),
+    },
+    {
+      id: 'm6',
+      conversationId: 'conv-123',
+      role: 'assistant' as const,
+      content: 'Newest answer.',
+      isError: false,
+      responseToMessageId: 'm5',
+      createdAt: new Date('2026-01-01T00:00:05.000Z'),
+    },
+  ];
+
+  it('renders a selected earlier question and answer with the EARLIER QUESTION cue', () => {
+    const body = String(
+      actualLayout.renderSelectedMessageSurface({
+        selectedQuestion: messages[2],
+        selectedAnswer: messages[3],
+        isEarlierQuestion: true,
+      }),
+    );
+
+    expect(body).toContain('Middle question');
+    expect(body).toContain('Middle answer.');
+    expect(body).toContain('EARLIER QUESTION');
+    expect(body).toMatch(/class="squire-turn squire-question"/);
+    expect(body).toMatch(/class="squire-turn squire-answer"/);
+  });
+
+  it('omits the EARLIER QUESTION cue when rendering the newest question', () => {
+    const body = String(
+      actualLayout.renderSelectedMessageSurface({
+        selectedQuestion: messages[4],
+        selectedAnswer: messages[5],
+        isEarlierQuestion: false,
+      }),
+    );
+
+    expect(body).toContain('Newest question');
+    expect(body).toContain('Newest answer.');
+    expect(body).not.toContain('EARLIER QUESTION');
+  });
+
+  it('renders recent questions newest-to-oldest and excludes the selected question', () => {
+    const body = String(
+      actualLayout.renderRecentQuestionsNav({
+        conversationId: 'conv-123',
+        questions: [messages[4], messages[2], messages[0]],
+        selectedMessageId: 'm3',
+      }),
+    );
+
+    expect(body).toContain('Recent questions');
+    expect(body).toContain('href="/chat/conv-123/messages/m5"');
+    expect(body).toContain('Newest question');
+    expect(body).toContain('href="/chat/conv-123/messages/m1"');
+    expect(body).toContain('Oldest question');
+    expect(body).not.toContain('Middle question');
+    expect(body.indexOf('Newest question')).toBeLessThan(body.indexOf('Oldest question'));
+  });
+
+  it('hides the recent questions region when there are no eligible prior questions', () => {
+    const body = String(
+      actualLayout.renderRecentQuestionsNav({
+        conversationId: 'conv-123',
+        questions: [messages[2]],
+        selectedMessageId: 'm3',
+      }),
+    );
+
+    expect(body).toBe('');
+  });
+
+  it('renders the recent questions region as an out-of-band HTMX update when requested', () => {
+    const body = String(
+      actualLayout.renderRecentQuestionsNav({
+        conversationId: 'conv-123',
+        questions: [messages[4], messages[0]],
+        selectedMessageId: 'm5',
+        outOfBand: true,
+      }),
+    );
+
+    expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*hx-swap-oob="outerHTML"/);
+    expect(body).toContain('Recent questions');
+  });
+
+  it('renders explicit nav items with HTMX attributes when provided', () => {
+    const body = String(
+      actualLayout.renderRecentQuestionsNav(
+        [
+          {
+            href: '/chat/conv-123/messages/m1',
+            hxGet: '/chat/conv-123/messages/m1',
+            label: 'Oldest question',
+            pushUrl: true,
+          },
+        ],
+        { oob: true },
+      ),
+    );
+
+    expect(body).toContain('href="/chat/conv-123/messages/m1"');
+    expect(body).toContain('hx-get="/chat/conv-123/messages/m1"');
+    expect(body).toContain('hx-target="#squire-surface"');
+    expect(body).toContain('hx-swap="innerHTML"');
+    expect(body).toContain('hx-push-url="true"');
+  });
+});
+
 describe('GET / — signature components (SQR-66)', () => {
   // Note: SQR-67 replaced the SQR-66 placeholderAnswer (squire-question +
   // squire-answer sample) with the first-run empty state. The hero question
@@ -694,6 +854,25 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     const body = rule![0];
     expect(body).toMatch(/border:\s*1px\s+solid\s+var\(--rule\)/);
     expect(body).toMatch(/border-radius:\s*4px/);
+    expect(body).toContain('color: var(--sepia)');
+  });
+
+  it('declares .squire-recent__chips as a flex row with an 8px gap', () => {
+    const rule = css.match(/\.squire-recent__chips\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('display: flex');
+    expect(body).toContain('gap: 8px');
+  });
+
+  it('declares .squire-question__eyebrow as small metadata instead of hero text', () => {
+    const rule = css.match(/\.squire-question__eyebrow\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('display: block');
+    expect(body).toContain("font-family: 'Geist', system-ui, sans-serif");
+    expect(body).toContain('font-size: 12px');
+    expect(body).toContain('text-transform: uppercase');
     expect(body).toContain('color: var(--sepia)');
   });
 
