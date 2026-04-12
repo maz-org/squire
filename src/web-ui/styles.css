@@ -1135,7 +1135,6 @@ template#squire-banner-fixtures {
 .squire-markdown table {
   display: block;
   width: max-content;
-  min-width: 100%;
   max-width: 100%;
   margin: 0 0 1.1em;
   overflow-x: auto;

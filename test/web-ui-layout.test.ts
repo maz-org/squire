@@ -808,6 +808,15 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-markdown__align-right\s*\{[^}]*text-align:\s*right/);
   });
 
+  it('lets narrow markdown tables hug their content instead of stretching full width', () => {
+    const rule = css.match(/\.squire-markdown\s+table\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('width: max-content');
+    expect(body).toContain('max-width: 100%');
+    expect(body).not.toContain('min-width: 100%');
+  });
+
   it('declares a guarded q&a-only first-paragraph drop cap in Fraunces', () => {
     expect(css).toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-child:not\(/);
     expect(css).toContain(
