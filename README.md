@@ -74,6 +74,7 @@ For the full contributor walkthrough, see [docs/CONTRIBUTING.md](docs/CONTRIBUTI
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design, auth boundaries, and runtime topology
 - [docs/SSE_CONTRACT.md](docs/SSE_CONTRACT.md) for the browser-visible chat streaming contract (`text-delta`, `done`, `error`, tool events)
 - [docs/SECURITY.md](docs/SECURITY.md) for the standing security review and mitigation backlog
+- [docs/markdown-rendering-styleguide.md](docs/markdown-rendering-styleguide.md) for the supported markdown subset and the shared `.squire-markdown` contract
 
 ## Usage
 
@@ -101,6 +102,8 @@ serves:
   completed turns. Live streaming stays plain text until completion; the final
   assistant answer and refreshed recent-question rail are then swapped in as
   server-rendered sanitized HTML under an HTML-only Content Security Policy.
+  The authenticated internal markdown renderer reference page lives at
+  `/styleguide/markdown`.
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,
   `/api/card-types`, `/api/cards`, `/api/cards/:type/:id`, `POST /api/ask`
 - **MCP endpoint** — `POST/GET/DELETE /mcp` (Streamable HTTP transport)

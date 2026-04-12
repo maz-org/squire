@@ -150,6 +150,10 @@ reasons are logged server-side.
 If you need Google sign-in locally, use `PORT=4450` or `PORT=5018`. Those are
 the only localhost ports currently allowlisted in Google Cloud Console.
 
+After signing in, `/styleguide/markdown` renders the in-app markdown contract
+through the real server renderer. Use it to QA headings, tables, links, and
+allowlisted images without depending on a live conversation.
+
 To discover the current worktree's runtime settings, use startup logs or ask
 the app directly by checking:
 

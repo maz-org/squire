@@ -28,6 +28,10 @@ branch/PR.
    - If fixed: briefly say what you changed
    - If not fixing: explain why (e.g., "intentional for readability", "out of
      scope", "disagree — X is preferred here")
+   - Some CodeRabbit outside-diff findings only appear in the review body, not
+     as replyable inline threads. When that happens, keep replying inline on
+     real thread comments, and add a top-level PR comment for the review-body
+     note instead of pretending there is a thread to resolve.
 5. **Push fixes** as a follow-up commit
 6. **Repeat** — keep polling until all of the following are true:
    - No unaddressed review comments remain
@@ -35,7 +39,9 @@ branch/PR.
    - CodeRabbit has approved the PR
    - The PR has been auto-merged and closed
 7. **Clean up** — after merge, close the issue if GitHub didn't auto-close it,
-   switch to main, pull, prune remote refs, and delete the local feature branch
+   switch to main, pull, prune remote refs, check `git diff main..branch` (or
+   equivalent) for any local-only follow-up commits, then delete the local
+   feature branch
 
 Use `/loop` to watch for new comments and check status. Do not stop watching early.
 
