@@ -71,6 +71,7 @@ import {
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
+import { getFaviconSvg } from './web-ui/favicon.ts';
 import {
   appendMessage,
   createPendingConversation,
@@ -132,6 +133,12 @@ const DEV_ASSET_CACHE_CONTROL = 'no-cache';
 function isProdEnv(): boolean {
   return process.env.NODE_ENV === 'production';
 }
+
+app.get('/favicon.svg', (c) => {
+  c.header('content-type', 'image/svg+xml; charset=utf-8');
+  c.header('cache-control', 'no-cache');
+  return c.body(getFaviconSvg());
+});
 
 // Dev-only bare CSS path. In prod the HTML references the hashed
 // URL, so the bare path 404s there.

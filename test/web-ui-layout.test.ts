@@ -122,6 +122,19 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
+    expect(body).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
+  });
+
+  it('serves the favicon svg asset', async () => {
+    const res = await app.request('/favicon.svg');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('image/svg+xml');
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain('<rect');
+    expect(body).toContain('<text');
+    expect(body).toMatch(/>\s*S\s*</);
   });
 
   it('renders the centered login composition', async () => {
@@ -776,6 +789,12 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-markdown\s+img\s*\{/);
   });
 
+  it('styles markdown table alignment through classes instead of inline styles', () => {
+    expect(css).toMatch(/\.squire-markdown__align-left\s*\{[^}]*text-align:\s*left/);
+    expect(css).toMatch(/\.squire-markdown__align-center\s*\{[^}]*text-align:\s*center/);
+    expect(css).toMatch(/\.squire-markdown__align-right\s*\{[^}]*text-align:\s*right/);
+  });
+
   it('declares a guarded q&a-only first-paragraph drop cap in Fraunces', () => {
     expect(css).toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-child:not\(/);
     expect(css).toContain(
@@ -894,6 +913,9 @@ describe('renderMarkdownStyleguidePage', () => {
     expect(body).toContain('<pre><code>block code');
     expect(body).toContain('<a href="https://example.com" rel="noopener noreferrer">safe link</a>');
     expect(body).toContain('<table>');
+    expect(body).toContain('<th class="squire-markdown__align-left">Column A</th>');
+    expect(body).toContain('<td class="squire-markdown__align-right">2</td>');
+    expect(body).not.toContain('style="text-align:');
     expect(body).toContain('<hr>');
     expect(body).toContain(
       `<img src="${worldhavenDividerImageUrl}" alt="Worldhaven Frosthaven divider" loading="lazy" decoding="async" referrerpolicy="no-referrer">`,

@@ -51,6 +51,45 @@ function isAllowedMarkdownImageUrl(url: string): boolean {
   }
 }
 
+function tableAlignmentClass(style: string | null | undefined): string | null {
+  switch (style?.trim().toLowerCase()) {
+    case 'text-align:left':
+      return 'squire-markdown__align-left';
+    case 'text-align:center':
+      return 'squire-markdown__align-center';
+    case 'text-align:right':
+      return 'squire-markdown__align-right';
+    default:
+      return null;
+  }
+}
+
+function stripInlineStyleAttr(token: Token): void {
+  if (!token.attrs) return;
+  token.attrs = token.attrs.filter(([name]) => name !== 'style');
+  if (token.attrs.length === 0) {
+    token.attrs = null;
+  }
+}
+
+function appendTokenClass(token: Token, className: string): void {
+  const existing = token.attrGet('class');
+  token.attrSet('class', existing ? `${existing} ${className}` : className);
+}
+
+function renderAlignedTableCell(tagName: 'th' | 'td', tokens: Token[], idx: number): string {
+  const token = tokens[idx];
+  if (!token) return `<${tagName}>`;
+
+  const alignmentClass = tableAlignmentClass(token.attrGet('style'));
+  if (alignmentClass) {
+    stripInlineStyleAttr(token);
+    appendTokenClass(token, alignmentClass);
+  }
+
+  return `<${tagName}${markdown.renderer.renderAttrs(token)}>`;
+}
+
 markdown.renderer.rules.code_inline = (tokens: Token[], idx: number) =>
   `<code>${markdown.utils.escapeHtml(tokens[idx]?.content ?? '')}</code>`;
 
@@ -79,6 +118,12 @@ markdown.renderer.rules.link_open = (tokens: Token[], idx: number) => {
 
 markdown.renderer.rules.link_close = (tokens: Token[], idx: number) =>
   tokens[idx]?.meta?.suppressed ? '' : '</a>';
+
+markdown.renderer.rules.th_open = (tokens: Token[], idx: number) =>
+  renderAlignedTableCell('th', tokens, idx);
+
+markdown.renderer.rules.td_open = (tokens: Token[], idx: number) =>
+  renderAlignedTableCell('td', tokens, idx);
 
 markdown.renderer.rules.image = (tokens: Token[], idx: number) => {
   const token = tokens[idx];

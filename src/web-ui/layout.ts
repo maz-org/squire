@@ -174,6 +174,7 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="htmx-config" content='{"includeIndicatorStyles":false}' />
         <title>Squire</title>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         ${options.csrfToken
           ? html`<meta name="${CSRF_META_NAME}" content="${options.csrfToken}" />`
           : html``}

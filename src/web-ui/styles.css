@@ -1154,6 +1154,18 @@ template#squire-banner-fixtures {
   color: var(--parchment);
 }
 
+.squire-markdown__align-left {
+  text-align: left;
+}
+
+.squire-markdown__align-center {
+  text-align: center;
+}
+
+.squire-markdown__align-right {
+  text-align: right;
+}
+
 .squire-markdown tbody tr:last-child td {
   border-bottom: 0;
 }
