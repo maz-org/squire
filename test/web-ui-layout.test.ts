@@ -857,6 +857,14 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(body).toContain('color: var(--sepia)');
   });
 
+  it('declares .squire-recent__chips as a flex row with an 8px gap', () => {
+    const rule = css.match(/\.squire-recent__chips\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('display: flex');
+    expect(body).toContain('gap: 8px');
+  });
+
   it('declares .squire-verdict with 3px wax left border', () => {
     const rule = css.match(/\.squire-verdict\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();

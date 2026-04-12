@@ -293,6 +293,58 @@ describe('conversation web backend', () => {
     expect(intruderRes.status).toBe(404);
   });
 
+  it('renders real recent-question chips on the canonical conversation page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
+      { question: 'When do elements wane?', answer: 'At end of round.' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(recentNav).toContain('How does looting work?');
+    expect(recentNav).not.toContain('Looting');
+    expect(recentNav).not.toContain('Element infusion');
+    expect(recentNav).not.toContain('Negative scenario effects');
+    expect(recentNav).toContain(
+      `href="/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}"`,
+    );
+    expect(recentNav).toContain(
+      `hx-get="/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}"`,
+    );
+    expect(recentNav).toContain('hx-push-url="true"');
+    expect(recentNav).not.toContain('When do elements wane?');
+  });
+
+  it('hides recent questions on the canonical conversation page when there is no prior turn', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Only question', answer: 'Only answer' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(page).not.toContain('Looting');
+    expect(page).not.toContain('Element infusion');
+    expect(page).not.toContain('Negative scenario effects');
+    expect(recentNav).toContain('hidden');
+    expect(recentNav).not.toContain('href="/chat/');
+  });
+
   it('renders the canonical selected-message page for the conversation owner', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [

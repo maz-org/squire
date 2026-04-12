@@ -292,6 +292,11 @@ html {
   overflow-x: auto;
 }
 
+.squire-recent__chips {
+  display: flex;
+  gap: 8px;
+}
+
 /* 5. Input dock — sticky at the bottom of the viewport, never collapses,
    respects iOS safe-area-inset-bottom so the home indicator doesn't sit on
    top of the submit button. */

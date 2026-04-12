@@ -75,6 +75,7 @@ import {
   createPendingConversation,
   createPendingFollowUp,
   GENERIC_FAILURE_MESSAGE,
+  listRecentCompletedQuestions,
   loadConversation,
   loadConversationMessage,
   loadSelectedConversation,
@@ -594,6 +595,19 @@ app.get('/chat/:conversationId', async (c) => {
   });
   if (!loaded) return c.notFound();
 
+  const recentCompletedQuestions = listRecentCompletedQuestions(loaded.messages);
+  const latestCompletedQuestionId = recentCompletedQuestions[0]?.messageId;
+  const recentQuestionsNav = renderRecentQuestionsNav(
+    recentCompletedQuestions
+      .filter((question) => question.messageId !== latestCompletedQuestionId)
+      .map((question) => ({
+        href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+        hxGet: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
+        label: question.question,
+        pushUrl: true,
+      })),
+  );
+
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.html(
@@ -602,6 +616,7 @@ app.get('/chat/:conversationId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
+      recentQuestionsNav,
     }),
   );
 });
