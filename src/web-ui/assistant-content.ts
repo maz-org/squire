@@ -10,6 +10,15 @@ const markdown = new MarkdownIt({
   typographer: false,
 });
 
+// Built-in hosts are limited to common Gloomhaven/Frosthaven asset sources we
+// observed in the wild.
+const DEFAULT_ALLOWED_MARKDOWN_IMAGE_HOSTS = [
+  'raw.githubusercontent.com',
+  'any2cards.github.io',
+  'gloomhaven-secretariat.de',
+  'us.gloomhaven-secretariat.de',
+] as const;
+
 markdown.validateLink = (url: string) => {
   try {
     return new URL(url).protocol === 'https:';
@@ -17,6 +26,30 @@ markdown.validateLink = (url: string) => {
     return false;
   }
 };
+
+function getAllowedMarkdownImageHosts(): Set<string> {
+  const raw = process.env.SQUIRE_ALLOWED_MARKDOWN_IMAGE_HOSTS;
+  const hosts = raw
+    ? raw
+        .split(',')
+        .map((host) => host.trim().toLowerCase())
+        .filter(Boolean)
+    : [...DEFAULT_ALLOWED_MARKDOWN_IMAGE_HOSTS];
+
+  return new Set(hosts);
+}
+
+function isAllowedMarkdownImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === 'https:' &&
+      getAllowedMarkdownImageHosts().has(parsed.hostname.toLowerCase())
+    );
+  } catch {
+    return false;
+  }
+}
 
 markdown.renderer.rules.code_inline = (tokens: Token[], idx: number) =>
   `<code>${markdown.utils.escapeHtml(tokens[idx]?.content ?? '')}</code>`;
@@ -50,8 +83,8 @@ markdown.renderer.rules.link_close = (tokens: Token[], idx: number) =>
 markdown.renderer.rules.image = (tokens: Token[], idx: number) => {
   const token = tokens[idx];
   const src = token?.attrGet('src');
-  if (!src || !markdown.validateLink(src)) {
-    return markdown.utils.escapeHtml(token?.markup ? `${token.markup}${token.content}` : '');
+  if (!src || !isAllowedMarkdownImageUrl(src)) {
+    return markdown.utils.escapeHtml(`![${token?.content ?? ''}](${src ?? ''})`);
   }
 
   const alt = markdown.utils.escapeHtml(token?.content ?? '');

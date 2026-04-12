@@ -183,6 +183,7 @@ function handlePendingTranscript(transcript) {
     }
 
     if (!contentEl) return;
+    contentEl.classList.add('squire-markdown');
     var paragraph = ensureAnswerParagraph(contentEl);
     paragraph.textContent += payload.delta || '';
   });
@@ -222,6 +223,7 @@ function handlePendingTranscript(transcript) {
     if (toolsEl) toolsEl.replaceChildren();
     var payload = JSON.parse(event.data || '{}');
     if (contentEl && typeof payload.html === 'string') {
+      contentEl.classList.add('squire-markdown');
       contentEl.innerHTML = payload.html;
     }
     updateRecentQuestionsNav(payload.recentQuestionsNavHtml);

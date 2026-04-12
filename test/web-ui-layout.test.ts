@@ -68,6 +68,9 @@ const actualLayout =
 import { app } from '../src/server.ts';
 import type { Session } from '../src/db/repositories/types.ts';
 
+const worldhavenDividerImageUrl =
+  'https://any2cards.github.io/worldhaven/images/art/frosthaven/card-dividers/fh-available-pets.png';
+
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
 /** A test session object for logged-in layout rendering. */
@@ -464,7 +467,7 @@ describe('renderPendingTurnShell', () => {
     expect(body).toMatch(
       /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-state="pending"/,
     );
-    expect(body).toMatch(/<div[^>]*class="squire-answer__content"><\/div>/);
+    expect(body).toMatch(/<div[^>]*class="squire-answer__content squire-markdown"><\/div>/);
     expect(body).toMatch(/<div[^>]*class="squire-answer__tools"[^>]*aria-live="off"><\/div>/);
     expect(body).toMatch(/class="squire-answer__skeleton"[^>]*aria-hidden="true"/);
     expect(body).toContain('squire-answer__skeleton-dropcap');
@@ -893,7 +896,7 @@ describe('renderMarkdownStyleguidePage', () => {
     expect(body).toContain('<table>');
     expect(body).toContain('<hr>');
     expect(body).toContain(
-      '<img src="https://placehold.co/640x360/png?text=Squire+Markdown+Image" alt="Styleguide reference image" loading="lazy" decoding="async" referrerpolicy="no-referrer">',
+      `<img src="${worldhavenDividerImageUrl}" alt="Worldhaven Frosthaven divider" loading="lazy" decoding="async" referrerpolicy="no-referrer">`,
     );
     expect(body).toContain('[unsafe link](http://example.com)');
     expect(body).toContain('![alt](http://example.com/image.png)');

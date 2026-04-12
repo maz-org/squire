@@ -28,7 +28,7 @@ export const SUPPORTED_MARKDOWN_SPECIMEN = [
   '',
   '---',
   '',
-  '![Styleguide reference image](https://placehold.co/640x360/png?text=Squire+Markdown+Image)',
+  '![Worldhaven Frosthaven divider](https://any2cards.github.io/worldhaven/images/art/frosthaven/card-dividers/fh-available-pets.png)',
 ].join('\n');
 
 export const UNSUPPORTED_MARKDOWN_SPECIMEN = [
@@ -54,11 +54,12 @@ export const SUPPORTED_MARKDOWN_FEATURES = [
   'Safe HTTPS links',
   'Tables',
   'Horizontal rules',
-  'HTTPS images',
+  'Allowlisted HTTPS images',
 ] as const;
 
 export const UNSUPPORTED_MARKDOWN_FEATURES = [
   'Raw HTML',
   'Non-HTTPS links',
   'Non-HTTPS images',
+  'Non-allowlisted HTTPS images',
 ] as const;

@@ -214,6 +214,10 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
   HTML fragment only at SSE completion.
 - Persisted assistant messages are re-rendered through the same shared
   sanitizing renderer on reload.
+- Markdown images are not arbitrary remote fetches: the renderer only emits
+  `<img>` tags for allowlisted HTTPS hosts tied to common GH/FH asset sources
+  like `raw.githubusercontent.com`, `any2cards.github.io`, and the public
+  Gloomhaven Secretariat hosts.
 - Adversarial regression tests cover hostile `<script>`, `<img onerror>`,
   `javascript:` links, stored reloads, and streamed completion payloads.
 

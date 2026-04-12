@@ -73,8 +73,12 @@ recent-questions rail, consulted footer, input dock, or drop cap treatment.
   and horizontal scroll on narrow screens.
 - Horizontal rules: render as a muted rule-line divider inside the answer
   flow.
-- HTTPS images: render as `<img src="https://...">` with lazy loading,
-  rounded corners, and the existing ledger framing.
+- Allowlisted HTTPS images: render as `<img src="https://...">` only when the
+  host is explicitly allowlisted for markdown images. Built-in defaults cover
+  common community-hosted GH/FH assets on `raw.githubusercontent.com`,
+  `any2cards.github.io`, `gloomhaven-secretariat.de`, and
+  `us.gloomhaven-secretariat.de`, with lazy loading, rounded corners, and the
+  existing ledger framing.
 
 ## Special-Case Content
 
@@ -94,6 +98,7 @@ These constructs are intentionally outside the supported subset:
 - raw HTML
 - non-HTTPS links
 - non-HTTPS images
+- non-allowlisted HTTPS images
 
 Unsupported syntax should stay inert. In practice that means:
 
@@ -136,7 +141,7 @@ block code
 
 ---
 
-![Styleguide reference image](https://placehold.co/640x360/png?text=Squire+Markdown+Image)
+![Worldhaven Frosthaven divider](https://any2cards.github.io/worldhaven/images/art/frosthaven/card-dividers/fh-available-pets.png)
 ````
 
 ## Design Intent

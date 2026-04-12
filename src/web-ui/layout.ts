@@ -263,7 +263,7 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
     class="squire-turn squire-answer squire-answer--pending"
     data-stream-state="pending"
   >
-    <div class="squire-answer__content"></div>
+    <div class="squire-answer__content squire-markdown"></div>
     <div class="squire-answer__tools" aria-live="off"></div>
     <div class="squire-answer__skeleton" aria-hidden="true">
       <div class="squire-answer__skeleton-dropcap"></div>

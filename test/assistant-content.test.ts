@@ -11,6 +11,15 @@ const adversarialCases = JSON.parse(
   readFileSync(new URL('./fixtures/xss-prompts.json', import.meta.url), 'utf8'),
 ) as Array<{ name: string; input: string }>;
 
+const worldhavenDividerImageUrl =
+  'https://any2cards.github.io/worldhaven/images/art/frosthaven/card-dividers/fh-available-pets.png';
+const gloomhavenCardsRawImageUrl =
+  'https://raw.githubusercontent.com/cmlenius/gloomhaven-card-browser/images/images/icons/characters/fh/BB.png';
+const secretariatImageUrl =
+  'https://gloomhaven-secretariat.de/assets/images/attackmodifier/plus0.png';
+const usSecretariatImageUrl =
+  'https://us.gloomhaven-secretariat.de/assets/images/attackmodifier/plus0.png';
+
 const supportedMarkdownSample = [
   '# Heading one',
   '',
@@ -41,7 +50,7 @@ const supportedMarkdownSample = [
   '',
   '---',
   '',
-  '![Styleguide reference image](https://placehold.co/640x360/png?text=Squire+Markdown+Image)',
+  `![Worldhaven Frosthaven divider](${worldhavenDividerImageUrl})`,
 ].join('\n');
 
 describe('assistant content renderer', () => {
@@ -80,7 +89,20 @@ describe('assistant content renderer', () => {
     expect(html).toContain('<td style="text-align:right">2</td>');
     expect(html).toContain('<hr>');
     expect(html).toContain(
-      '<img src="https://placehold.co/640x360/png?text=Squire+Markdown+Image" alt="Styleguide reference image" loading="lazy" decoding="async" referrerpolicy="no-referrer">',
+      `<img src="${worldhavenDividerImageUrl}" alt="Worldhaven Frosthaven divider" loading="lazy" decoding="async" referrerpolicy="no-referrer">`,
+    );
+  });
+
+  it.each([
+    ['Worldhaven GitHub Pages', worldhavenDividerImageUrl],
+    ['Gloomhaven Cards raw GitHub assets', gloomhavenCardsRawImageUrl],
+    ['Gloomhaven Secretariat', secretariatImageUrl],
+    ['Gloomhaven Secretariat US mirror', usSecretariatImageUrl],
+  ])('renders allowlisted %s images', (_label, url) => {
+    const html = renderAssistantContentHtml(`![reference](${url})`);
+
+    expect(html).toContain(
+      `<img src="${url}" alt="reference" loading="lazy" decoding="async" referrerpolicy="no-referrer">`,
     );
   });
 
@@ -101,6 +123,13 @@ describe('assistant content renderer', () => {
     expect(html).toContain('&lt;script&gt;alert(&quot;nope&quot;)&lt;/script&gt;');
     expect(html).toContain('[unsafe link](http://example.com)');
     expect(html).toContain('![alt](http://example.com/image.png)');
+  });
+
+  it('treats non-allowlisted https images as inert text instead of rich HTML', () => {
+    const html = renderAssistantContentHtml('![remote](https://example.com/image.png)');
+
+    expect(html).not.toContain('<img');
+    expect(html).toContain('![remote](https://example.com/image.png)');
   });
 
   it('renders unsafe markdown links as inert literal text without a dangling closing tag', () => {
