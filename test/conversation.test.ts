@@ -517,6 +517,52 @@ describe('conversation web backend', () => {
     expect(body).not.toContain('id="squire-recent-questions"');
   });
 
+  it('restores canonical recent-question chips after streaming a follow-up from a selected-message page', async () => {
+    mockAsk.mockResolvedValueOnce('Third answer.');
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+        },
+        body: formBody({ question: 'Third question' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events.at(-1)).toEqual({
+      event: 'done',
+      data: expect.objectContaining({
+        html: '<p>Third answer.</p>\n',
+        recentQuestionsNavHtml: expect.stringContaining('Second question'),
+      }),
+    });
+
+    const doneData = events.at(-1)?.data as { recentQuestionsNavHtml: string };
+    expect(doneData.recentQuestionsNavHtml).toContain('First question');
+    expect(doneData.recentQuestionsNavHtml).not.toContain('Third question');
+    expect(doneData.recentQuestionsNavHtml).not.toContain('Looting');
+    expect(doneData.recentQuestionsNavHtml).toContain('hx-get="/chat/');
+    expect(doneData.recentQuestionsNavHtml).toContain('hx-push-url="true"');
+  });
+
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
     mockAsk.mockRejectedValueOnce(new Error('upstream exploded'));
     const auth = await createAuthContext();
@@ -808,7 +854,13 @@ describe('conversation web backend', () => {
     );
     expect(streamRes.status).toBe(200);
     expect(parseSse(await streamRes.text())).toEqual([
-      { event: 'done', data: { html: '<p>Recovered over SSE.</p>\n' } },
+      {
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>Recovered over SSE.</p>\n',
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
+      },
     ]);
 
     const storedMessages = await db.execute(sql`
@@ -1060,9 +1112,10 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: {
+        data: expect.objectContaining({
           html: '<p>Loot tokens in your hex are picked up with <strong>style</strong>.</p>\n',
-        },
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
       },
     ]);
 
@@ -1145,9 +1198,10 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: {
+        data: expect.objectContaining({
           html: '<p>&lt;script&gt;alert(1)&lt;/script&gt;[click](javascript:alert(1))&lt;img src=x onerror=alert(1)&gt;</p>\n',
-        },
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
       },
     ]);
   });
@@ -1235,7 +1289,10 @@ describe('conversation web backend', () => {
       },
       {
         event: 'done',
-        data: { html: '<p>Fallback answer.</p>\n' },
+        data: expect.objectContaining({
+          html: '<p>Fallback answer.</p>\n',
+          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
+        }),
       },
     ]);
   });

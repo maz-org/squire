@@ -571,6 +571,26 @@ function buildToolLabel(name: string): string {
   return name.replaceAll('_', ' ').toUpperCase();
 }
 
+function buildConversationRecentQuestionsNav(
+  conversationId: string,
+  messages: Parameters<typeof listRecentCompletedQuestions>[0],
+  options: { oob?: boolean } = {},
+) {
+  const recentCompletedQuestions = listRecentCompletedQuestions(messages);
+  const latestCompletedQuestionId = recentCompletedQuestions[0]?.messageId;
+  return renderRecentQuestionsNav(
+    recentCompletedQuestions
+      .filter((question) => question.messageId !== latestCompletedQuestionId)
+      .map((question) => ({
+        href: `/chat/${conversationId}/messages/${question.messageId}`,
+        hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
+        label: question.question,
+        pushUrl: true,
+      })),
+    options,
+  );
+}
+
 async function readQuestionForm(
   c: Context,
 ): Promise<{ question: string; idempotencyKey?: string }> {
@@ -595,17 +615,9 @@ app.get('/chat/:conversationId', async (c) => {
   });
   if (!loaded) return c.notFound();
 
-  const recentCompletedQuestions = listRecentCompletedQuestions(loaded.messages);
-  const latestCompletedQuestionId = recentCompletedQuestions[0]?.messageId;
-  const recentQuestionsNav = renderRecentQuestionsNav(
-    recentCompletedQuestions
-      .filter((question) => question.messageId !== latestCompletedQuestionId)
-      .map((question) => ({
-        href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
-        hxGet: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
-        label: question.question,
-        pushUrl: true,
-      })),
+  const recentQuestionsNav = buildConversationRecentQuestionsNav(
+    loaded.conversation.id,
+    loaded.messages,
   );
 
   c.header('Cache-Control', 'no-store');
@@ -875,10 +887,19 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       return;
     }
 
+    const refreshedConversation = await loadConversation({
+      conversationId: loaded.conversation.id,
+      userId: session.userId,
+    });
+
     await stream.writeSSE({
       event: 'done',
       data: JSON.stringify({
         html: renderAssistantContentHtml(assistantMessage.content),
+        recentQuestionsNavHtml: buildConversationRecentQuestionsNav(
+          loaded.conversation.id,
+          refreshedConversation?.messages ?? [loaded.message, assistantMessage],
+        ),
       }),
     });
   });

@@ -90,6 +90,26 @@ function closeActiveStream() {
   activeStream = null;
 }
 
+function updateRecentQuestionsNav(html) {
+  if (typeof html !== 'string' || !html) return;
+
+  var template = document.createElement('template');
+  template.innerHTML = html.trim();
+  var nextNav = template.content.firstElementChild;
+  if (!nextNav) return;
+
+  var currentNav = document.querySelector('#squire-recent-questions');
+  if (currentNav && currentNav.parentNode) {
+    currentNav.replaceWith(nextNav);
+    return;
+  }
+
+  var form = document.querySelector('.squire-input-dock');
+  if (form && form.parentNode) {
+    form.parentNode.insertBefore(nextNav, form);
+  }
+}
+
 function ensureAnswerParagraph(contentEl) {
   var paragraph = contentEl.querySelector('p');
   if (paragraph) return paragraph;
@@ -204,6 +224,7 @@ function handlePendingTranscript(transcript) {
     if (contentEl && typeof payload.html === 'string') {
       contentEl.innerHTML = payload.html;
     }
+    updateRecentQuestionsNav(payload.recentQuestionsNavHtml);
     finishStream();
   });
 
