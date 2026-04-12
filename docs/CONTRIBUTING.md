@@ -187,7 +187,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 # Google OAuth (required for web UI login — see ADR 0009)
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:4450/auth/google/callback
 SESSION_SECRET=<random 32+ character string>
 SQUIRE_ALLOWED_EMAILS=your-email@example.com
 
@@ -202,11 +202,13 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-Keep `GOOGLE_REDIRECT_URI` on the main-checkout callback unless you want to
-move your primary local login flow. Linked worktrees now build the callback URL
-from their current localhost origin at runtime, but Google still requires exact
+`GOOGLE_REDIRECT_URI` is the fallback callback for production and non-local
+hosts. In local development, `/auth/google/start` and
+`/auth/google/callback` reuse the current `localhost` origin so linked
+worktrees can sign in on their own ports. Google still requires exact
 redirect-URI matches, so every localhost callback port you use for browser QA
-must be pre-registered in the OAuth client in Google Cloud Console.
+must be pre-registered in the OAuth client in Google Cloud Console. The
+currently allowlisted localhost callback ports are `4450` and `5018`.
 
 ### Data files
 
@@ -232,7 +234,8 @@ Main checkout defaults to the `squire` / `squire_test` databases and port
 `3000`. Linked worktrees derive checkout-local DB names and a preferred local
 port, then coordinate within the managed `4000-5999` range so parallel agents
 can run without manual port surgery. Trust `npm run serve` startup output for
-the final port.
+the final port. If you need Google sign-in locally, prefer `PORT=4450` or
+`PORT=5018`.
 
 Fresh linked worktrees need that whole bootstrap, not just `npm run serve`.
 In practice: install dependencies if this worktree does not have them yet, bring
