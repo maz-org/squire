@@ -27,6 +27,7 @@ function userToDomain(row: UserRow): User {
     googleSub: row.googleSub,
     email: row.email,
     name: row.name,
+    avatarUrl: row.avatarUrl,
     createdAt: row.createdAt,
   };
 }

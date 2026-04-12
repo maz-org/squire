@@ -17,6 +17,7 @@ const testSession: Session = {
     googleSub: 'test-google-sub',
     email: 'test@example.com',
     name: 'Test User',
+    avatarUrl: 'https://example.com/test-user.png',
     createdAt: new Date(),
   },
 };

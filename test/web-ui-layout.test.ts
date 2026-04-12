@@ -68,6 +68,9 @@ const actualLayout =
 import { app } from '../src/server.ts';
 import type { Session } from '../src/db/repositories/types.ts';
 
+const worldhavenDividerImageUrl =
+  'https://any2cards.github.io/worldhaven/images/art/frosthaven/card-dividers/fh-available-pets.png';
+
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
 /** A test session object for logged-in layout rendering. */
@@ -84,6 +87,7 @@ const testSession: Session = {
     googleSub: 'test-google-sub',
     email: 'test@example.com',
     name: 'Test User',
+    avatarUrl: 'https://example.com/test-user.png',
     createdAt: new Date(),
   },
 };
@@ -113,11 +117,24 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(res.headers.get('content-type')).toContain('text/html');
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('content-security-policy')).toBe(
-      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
     expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
+    expect(body).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
+  });
+
+  it('serves the favicon svg asset', async () => {
+    const res = await app.request('/favicon.svg');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('image/svg+xml');
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain('<rect');
+    expect(body).toContain('<text');
+    expect(body).toMatch(/>\s*S\s*</);
   });
 
   it('renders the centered login composition', async () => {
@@ -142,7 +159,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   it('renders the not-invited page without the Google sign-in button', async () => {
     const res = await app.request('/not-invited');
     expect(res.headers.get('content-security-policy')).toBe(
-      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
     const body = await res.text();
     expect(body).toContain('NOT YET INVITED');
@@ -152,17 +169,29 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).not.toContain('Sign in with Google');
   });
 
-  it('renders authenticated app chrome with user info and a logout form', async () => {
+  it('renders authenticated app chrome with an account dropdown', async () => {
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-header__brand"');
+    expect(body).toMatch(/<a[^>]*class="squire-header__brand"[^>]*href="\/"[^>]*>/);
     expect(body).toContain('class="squire-context">FROSTHAVEN · RULES<');
-    expect(body).toContain('class="squire-user">Test User</span>');
+    expect(body).toContain('class="squire-account-menu"');
+    expect(body).toContain('class="squire-account-menu__avatar"');
+    expect(body).toContain('Open account menu for Test User');
+    expect(body).toContain('Internal tools');
+    expect(body).toContain('href="/styleguide/markdown"');
+    expect(body).toContain('Account');
     expect(body).toMatch(
-      /<form[^>]*class="squire-logout-form"[^>]*method="post"[^>]*action="\/auth\/logout"/,
+      /<form[^>]*(class="squire-account-menu__form"[^>]*action="\/auth\/logout"|action="\/auth\/logout"[^>]*class="squire-account-menu__form")[^>]*method="post"|<form[^>]*method="post"[^>]*(class="squire-account-menu__form"[^>]*action="\/auth\/logout"|action="\/auth\/logout"[^>]*class="squire-account-menu__form")/,
     );
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="_csrf"[^>]*value="[^"]+"/);
     expect(body).toMatch(/>\s*Log out\s*</);
+  });
+
+  it('requires a csrf token when rendering authenticated chrome', async () => {
+    await expect(actualLayout.renderHomePage(testSession)).rejects.toThrow(
+      'layoutShell requires a csrfToken when rendering authenticated chrome',
+    );
   });
 
   it('falls back to the user email when the session has no display name', async () => {
@@ -175,7 +204,23 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
         testCsrfToken,
       ),
     );
-    expect(body).toContain('test@example.com');
+    expect(body).toContain('Open account menu for test@example.com');
+  });
+
+  it('renders an initial fallback when the session has no avatar url', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(
+        {
+          ...testSession,
+          user: { ...testSession.user, avatarUrl: null },
+        },
+        testCsrfToken,
+      ),
+    );
+
+    expect(body).not.toContain('class="squire-account-menu__avatar"');
+    expect(body).toContain('class="squire-account-menu__avatar-fallback"');
+    expect(body).toMatch(/squire-account-menu__avatar-fallback"[^>]*>\s*T\s*<\/span>/);
   });
 
   it('renders the authenticated shell regions with stable selectors', async () => {
@@ -441,7 +486,7 @@ describe('renderPendingTurnShell', () => {
     expect(body).toMatch(
       /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-state="pending"/,
     );
-    expect(body).toMatch(/<div[^>]*class="squire-answer__content"><\/div>/);
+    expect(body).toMatch(/<div[^>]*class="squire-answer__content squire-markdown"><\/div>/);
     expect(body).toMatch(/<div[^>]*class="squire-answer__tools"[^>]*aria-live="off"><\/div>/);
     expect(body).toMatch(/class="squire-answer__skeleton"[^>]*aria-hidden="true"/);
     expect(body).toContain('squire-answer__skeleton-dropcap');
@@ -572,6 +617,25 @@ describe('selected-message rendering helpers', () => {
     expect(body).toMatch(/class="squire-turn squire-answer"/);
   });
 
+  it('wraps persisted selected-answer markdown in the shared answer content container', () => {
+    const body = String(
+      actualLayout.renderSelectedMessageSurface({
+        selectedQuestion: messages[2],
+        selectedAnswer: {
+          ...messages[3],
+          content: 'Paragraph with **strong** and *emphasis*.',
+        },
+        isEarlierQuestion: true,
+      }),
+    );
+
+    expect(body).toMatch(
+      /class="squire-turn squire-answer"[\s\S]*class="squire-answer__content squire-markdown"/,
+    );
+    expect(body).toContain('<strong>strong</strong>');
+    expect(body).toContain('<em>emphasis</em>');
+  });
+
   it('omits the EARLIER QUESTION cue when rendering the newest question', () => {
     const body = String(
       actualLayout.renderSelectedMessageSurface({
@@ -691,8 +755,8 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-question\s*\{[^}]*line-height:\s*1\.25/);
   });
 
-  it('styles .squire-answer em as the amber rule-term highlighter at 0.60 alpha, 75% coverage', () => {
-    const rule = css.match(/\.squire-answer\s+em\s*\{[^}]*\}/);
+  it('styles .squire-markdown em as the amber rule-term highlighter at 0.60 alpha, 75% coverage', () => {
+    const rule = css.match(/\.squire-markdown\s+em\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toContain('font-variant-caps: all-small-caps');
@@ -710,16 +774,66 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(body).toContain('white-space: nowrap');
   });
 
-  it('styles .squire-answer .cite as sepia underline with wax hover + tap-toggle', () => {
-    expect(css).toMatch(/\.squire-answer\s+\.cite\s*\{[^}]*color:\s*var\(--sepia\)/);
-    expect(css).toMatch(/\.squire-answer\s+\.cite\s*\{[^}]*text-underline-offset:\s*3px/);
-    expect(css).toMatch(/\.squire-answer\s+\.cite:hover/);
-    expect(css).toMatch(/\.squire-answer\s+\.cite\.is-active\s*\{[^}]*var\(--wax\)/);
+  it('renders blockquote emphasis as a normal wrapping quote instead of a term chip', () => {
+    const rule = css.match(/\.squire-markdown\s+blockquote\s+em\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('font-style: italic');
+    expect(body).toContain('font-weight: inherit');
+    expect(body).toContain('font-variant-caps: normal');
+    expect(body).toContain('letter-spacing: normal');
+    expect(body).toContain('background-image: none');
+    expect(body).toContain('padding: 0');
+    expect(body).toContain('white-space: normal');
   });
 
-  it('declares a guarded .squire-answer first-paragraph drop cap in Fraunces', () => {
-    expect(css).toContain('.squire-answer');
-    expect(css).toContain('p:first-of-type:not(');
+  it('styles .squire-markdown .cite as sepia underline with wax hover + tap-toggle', () => {
+    expect(css).toMatch(/\.squire-markdown\s+\.cite\s*\{[^}]*color:\s*var\(--sepia\)/);
+    expect(css).toMatch(/\.squire-markdown\s+\.cite\s*\{[^}]*text-underline-offset:\s*3px/);
+    expect(css).toMatch(/\.squire-markdown\s+\.cite:hover/);
+    expect(css).toMatch(/\.squire-markdown\s+\.cite\.is-active\s*\{[^}]*var\(--wax\)/);
+  });
+
+  it('styles the supported markdown subset on the reusable markdown surface', () => {
+    expect(css).toMatch(/\.squire-markdown\s+h1\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+h2\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+strong\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+(ul|ol)\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+blockquote\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+code\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+pre\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+a\s*\{/);
+    expect(css).toMatch(/\.squire-markdown__table-scroll\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+table\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+hr\s*\{/);
+    expect(css).toMatch(/\.squire-markdown\s+img\s*\{/);
+  });
+
+  it('styles markdown table alignment through classes instead of inline styles', () => {
+    expect(css).toMatch(/\.squire-markdown__align-left\s*\{[^}]*text-align:\s*left/);
+    expect(css).toMatch(/\.squire-markdown__align-center\s*\{[^}]*text-align:\s*center/);
+    expect(css).toMatch(/\.squire-markdown__align-right\s*\{[^}]*text-align:\s*right/);
+  });
+
+  it('lets narrow markdown tables hug their content instead of stretching full width', () => {
+    const wrapperRule = css.match(/\.squire-markdown__table-scroll\s*\{[^}]*\}/);
+    const tableRule = css.match(/\.squire-markdown\s+table\s*\{[^}]*\}/);
+    expect(wrapperRule).not.toBeNull();
+    expect(tableRule).not.toBeNull();
+    expect(wrapperRule![0]).toContain('width: fit-content');
+    expect(wrapperRule![0]).toContain('max-width: 100%');
+    expect(tableRule![0]).toContain('width: max-content');
+    expect(tableRule![0]).not.toContain('min-width: 100%');
+  });
+
+  it('preserves native table display semantics on markdown tables', () => {
+    const rule = css.match(/\.squire-markdown\s+table\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![0]).not.toContain('display: block');
+  });
+
+  it('declares a guarded q&a-only first-paragraph drop cap in Fraunces', () => {
+    expect(css).toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-child:not\(/);
     expect(css).toContain(
       ':has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)',
     );
@@ -809,6 +923,42 @@ describe('GET / — SQR-67 stub regions', () => {
     expect(tpl![0]).toMatch(/squire-banner squire-banner--error/);
     expect(tpl![0]).toMatch(/squire-banner squire-banner--sync/);
     expect(tpl![0]).toContain('SYNCED · 2H AGO');
+  });
+});
+
+describe('renderMarkdownStyleguidePage', () => {
+  it('renders a styleguide page with supported and unsupported markdown specimens', async () => {
+    const body = String(
+      await actualLayout.renderMarkdownStyleguidePage(testSession, testCsrfToken),
+    );
+
+    expect(body).toContain('Markdown rendering styleguide');
+    expect(body).toContain('Supported subset specimen');
+    expect(body).toContain('Unsafe syntax stays inert');
+    expect(body).toMatch(/<a[^>]*class="squire-header__brand"[^>]*href="\/"[^>]*>/);
+    expect(body).toContain('class="squire-internal-shell"');
+    expect(body).not.toContain('class="squire-toolcall"');
+    expect(body).not.toContain('class="squire-recent"');
+    expect(body).not.toContain('class="squire-input-dock"');
+    expect(body).not.toContain('class="squire-answer"');
+    expect(body).toContain('<h1>Heading one</h1>');
+    expect(body).toContain('Paragraph one with <strong>strong</strong> and <em>emphasis</em>.');
+    expect(body).toContain('<h2>Heading two</h2>');
+    expect(body).toContain('<ul>');
+    expect(body).toContain('<ol>');
+    expect(body).toContain('<blockquote>');
+    expect(body).toContain('<pre><code>block code');
+    expect(body).toContain('<a href="https://example.com" rel="noopener noreferrer">safe link</a>');
+    expect(body).toContain('<table>');
+    expect(body).toContain('<th class="squire-markdown__align-left">Column A</th>');
+    expect(body).toContain('<td class="squire-markdown__align-right">2</td>');
+    expect(body).not.toContain('style="text-align:');
+    expect(body).toContain('<hr>');
+    expect(body).toContain(
+      `<img src="${worldhavenDividerImageUrl}" alt="Worldhaven Frosthaven divider" loading="lazy" decoding="async" referrerpolicy="no-referrer">`,
+    );
+    expect(body).toContain('[unsafe link](http://example.com)');
+    expect(body).toContain('![alt](http://example.com/image.png)');
   });
 });
 
@@ -906,6 +1056,7 @@ describe('layoutShell error banner rendering', () => {
     const body = String(
       await actualLayout.layoutShell({
         errorBanner: { message: 'agent unavailable' },
+        csrfToken: testCsrfToken,
         session: testSession,
       }),
     );

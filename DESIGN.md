@@ -126,16 +126,16 @@ Inter.
 
 <!-- markdownlint-disable MD060 -->
 
-| Role                   | Size     | Line-height | Font      |
-| ---------------------- | -------- | ----------- | --------- |
-| Display hero           | 40–48px  | 1.15        | Fraunces  |
-| Hero question          | 22–28px  | 1.25        | Fraunces  |
-| Section title          | 24px     | 1.2         | Fraunces  |
-| Body answer (mobile)   | 16px     | 1.55        | Geist 400 |
-| Body answer (desktop)  | 18px     | 1.6         | Geist 400 |
-| UI chrome / buttons    | 14px     | 1.4         | Geist 500 |
-| Small caps / metadata  | 10–11px  | 1.4         | Geist 500 `text-transform: uppercase; letter-spacing: 0.14–0.18em` |
-| Drop cap               | 68–72px  | 0.85        | Fraunces 600 `opsz 144 SOFT 30` |
+| Role                  | Size    | Line-height | Font                                                               |
+| --------------------- | ------- | ----------- | ------------------------------------------------------------------ |
+| Display hero          | 40–48px | 1.15        | Fraunces                                                           |
+| Hero question         | 22–28px | 1.25        | Fraunces                                                           |
+| Section title         | 24px    | 1.2         | Fraunces                                                           |
+| Body answer (mobile)  | 16px    | 1.55        | Geist 400                                                          |
+| Body answer (desktop) | 18px    | 1.6         | Geist 400                                                          |
+| UI chrome / buttons   | 14px    | 1.4         | Geist 500                                                          |
+| Small caps / metadata | 10–11px | 1.4         | Geist 500 `text-transform: uppercase; letter-spacing: 0.14–0.18em` |
+| Drop cap              | 68–72px | 0.85        | Fraunces 600 `opsz 144 SOFT 30`                                    |
 
 <!-- markdownlint-enable MD060 -->
 
@@ -149,23 +149,23 @@ Five roles, one accent, zero gradients, dark mode default.
 
 ### Tokens
 
-| Token            | Hex        | Role                                                            |
-| ---------------- | ---------- | --------------------------------------------------------------- |
-| `--ink`          | `#14100c`  | Page background. Warm near-black, NOT pure `#000` (too cold).   |
-| `--surface`      | `#1c1814`  | Elevated surfaces (answer panels, cards, input field).          |
-| `--surface-2`    | `#241e17`  | Double-elevated (desktop chrome, left rail).                    |
-| `--parchment`    | `#f5ebd9`  | Primary text. Warm ivory, NOT pure white.                       |
-| `--parchment-dim`| `#e8dcc4`  | Dimmed text (secondary prose, lede copy).                       |
-| `--sepia`        | `#9a8d74`  | Muted text: metadata, timestamps, page numbers, labels.         |
-| `--sepia-dim`    | `#6b6254`  | Citation underline color (subdued version of sepia).            |
-| `--rule`         | `#3a3227`  | Hairline rules, card borders, footnote separators.              |
-| `--wax`          | `#c73e1d`  | **The** accent. Drop caps, submit button, citation hover,       |
-|                  |            | "Squire recommends" left rail, monogram background, streaming   |
-|                  |            | indicator. When you see red, it means something.                |
-| `--wax-dim`      | `#a82f13`  | Wax-seal red, hover state.                                      |
-| `--sage`         | `#7a8c5c`  | Success / verified. Used rarely.                                |
-| `--amber`        | `#d4a147`  | Warning (spoiler banners) AND rule-term highlighter (see below).|
-| `--error`        | `#8b2919`  | Error. Distinct from `--wax` so error and accent never confuse. |
+| Token             | Hex       | Role                                                             |
+| ----------------- | --------- | ---------------------------------------------------------------- |
+| `--ink`           | `#14100c` | Page background. Warm near-black, NOT pure `#000` (too cold).    |
+| `--surface`       | `#1c1814` | Elevated surfaces (answer panels, cards, input field).           |
+| `--surface-2`     | `#241e17` | Double-elevated (desktop chrome, left rail).                     |
+| `--parchment`     | `#f5ebd9` | Primary text. Warm ivory, NOT pure white.                        |
+| `--parchment-dim` | `#e8dcc4` | Dimmed text (secondary prose, lede copy).                        |
+| `--sepia`         | `#9a8d74` | Muted text: metadata, timestamps, page numbers, labels.          |
+| `--sepia-dim`     | `#6b6254` | Citation underline color (subdued version of sepia).             |
+| `--rule`          | `#3a3227` | Hairline rules, card borders, footnote separators.               |
+| `--wax`           | `#c73e1d` | **The** accent. Drop caps, submit button, citation hover,        |
+|                   |           | "Squire recommends" left rail, monogram background, streaming    |
+|                   |           | indicator. When you see red, it means something.                 |
+| `--wax-dim`       | `#a82f13` | Wax-seal red, hover state.                                       |
+| `--sage`          | `#7a8c5c` | Success / verified. Used rarely.                                 |
+| `--amber`         | `#d4a147` | Warning (spoiler banners) AND rule-term highlighter (see below). |
+| `--error`         | `#8b2919` | Error. Distinct from `--wax` so error and accent never confuse.  |
 
 ### Rules
 
@@ -214,9 +214,9 @@ Top to bottom:
 
 1. **Thin header bar** — small "S" monogram (28px square, `--wax` background)
    - "Squire" wordmark on the left; context strip on the right showing
-   `FROSTHAVEN · RULES` in Phase 1, expanding to `DRIFTER L4 / PARTY OF 4 /
-   SCEN 14` once Phase 4 character state lands. Always visible. One line,
-   scannable in half a second. This is the "Squire knows you" signal.
+     `FROSTHAVEN · RULES` in Phase 1, expanding to `DRIFTER L4 / PARTY OF 4 /
+SCEN 14` once Phase 4 character state lands. Always visible. One line,
+     scannable in half a second. This is the "Squire knows you" signal.
 2. **Flexible main surface** — occupies the bulk of the viewport. In Phase 1
    hosts the streaming answer (with drop cap + inline citations + tool-call
    footer). In Phase 5 hosts two card mockups side-by-side with a "Squire
@@ -297,8 +297,8 @@ metaphor.
   color: var(--parchment);
   background-image: linear-gradient(
     to top,
-    rgba(212, 161, 71, 0.60) 0,
-    rgba(212, 161, 71, 0.60) 75%,
+    rgba(212, 161, 71, 0.6) 0,
+    rgba(212, 161, 71, 0.6) 75%,
     transparent 75%,
     transparent 100%
   );
@@ -323,6 +323,7 @@ physical highlighters are yellow/amber, which makes the metaphor literal.
 **Never put rule-term highlighters on:**
 
 - The hero question (that's the user's own words, not a rule term)
+- Full-sentence quotations, especially blockquotes from the rulebook
 - Citation links (those have their own sepia-underline treatment)
 - Card names, button labels, metadata
 - Anywhere outside an `.squire-answer`, `.compare-verdict-text`, or similar
@@ -502,25 +503,25 @@ attribute on `<html>`. That's the extent of the per-game theming.
 
 <!-- markdownlint-disable MD060 -->
 
-| Date       | Decision                                                                 | Rationale                                                                                   |
-| ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| 2026-04-08 | Design system created via `/design-consultation`                         | Covers all eight phases, not just Phase 1 rules Q&A.                                         |
-| 2026-04-08 | **Metaphor: attendant/ledger, not oracle**                               | Name "Squire" is literal. Serves phases 4–8 (character state, recs, sync, channels). |
-| 2026-04-08 | Display font: Fraunces (rejected Instrument Serif)                       | Instrument Serif felt tall/thin and had a compressed capital S that made the monogram look squished. Fraunces has wider shoulders, variable softness axis, more confident presence. |
-| 2026-04-08 | Body font: Geist (rejected Newsreader)                                   | Newsreader is a long-form reading font; Squire's use case is 10-15s scanning. Geist is already in the system for UI chrome; promoting it drops a font from the payload. |
-| 2026-04-08 | Wordmark and monogram are NOT italic                                     | Italic Fraunces at wordmark scale read as precious.                                          |
-| 2026-04-08 | Oracle-first layout rejected in favor of companion-first flexible surface | Oracle layout only served Phase 1 and broke for Phase 4+ uses.                              |
-| 2026-04-08 | Rule-term treatment: small-caps + highlighter stripe (rejected pill, italic) | Pills ate line spacing. Plain italic didn't stand out from surrounding body text. Highlighter stripe matches the "marked-up rulebook" metaphor and uses the palette's amber without stealing from the wax-seal red accent. |
-| 2026-04-08 | Rule-term highlighter: amber 0.60 alpha, 75% height coverage             | Alpha and coverage are independent dials. 0.60 is visible without becoming a solid box; 75% reads as a marker stripe, not an underline. |
-| 2026-04-08 | Voice stays modern / professional, NOT medieval cosplay                  | Per SPEC.md agent persona. The dissonance between manuscript visuals and terse modern voice is the signature. |
-| 2026-04-08 | **Multi-turn ledger: current-turn focus** (rejected scrolling chat column, rejected per-turn drop caps) | The main surface shows ONE turn at a time: current question (Fraunces hero) + current answer (drop cap). Prior turns collapse into the recent-questions chip row; tapping a chip re-loads that turn into the current-turn slot. The drop cap and rule-term highlighter NEVER appear on more than one answer at a time. Honors "ledger not chat column" (DESIGN.md §Layout) and keeps the drop cap precious. From plan-design-review Decision #1. |
-| 2026-04-08 | **Citations: inline `<span class="cite">` AND tool-call footer aggregate** (rejected chip-row-only, rejected inline-only) | Sources appear inline as sepia-underlined spans within the answer prose AND the tool-call footer line below the answer doubles as the "sources consulted" index. No separate chip row. Matches the existing `docs/design-preview.html` reference and the printed-book footnotes metaphor. From plan-design-review Decision #3. |
-| 2026-04-08 | **First-run empty state**: "At your service." Fraunces hero + "ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO" Geist sepia small-caps | Empty states are features. The placeholder gives Squire a professional, terse voice on first contact and uses the Fraunces hero-question scale that would otherwise be dead typography on first load. Rejected: italic placeholder only, tutorial chip row (too onboarding-card). From plan-design-review Decision #2. |
-| 2026-04-08 | **No emoji in tool indicators or anywhere else.** Tool-start renders as `--sepia` Geist 10–11px small-caps `CONSULTING · RULEBOOK` (during) → `CONSULTED · RULEBOOK P.47` (after). | The Modern Codex aesthetic does not allow magnifying-glass glyphs. The sepia small-caps treatment is the same vocabulary as the tool-call footer line, so the streaming indicators collapse into the footer naturally. Earlier SQR-8 draft used 🔎 — flagged in plan-design-review Pass 4. |
-| 2026-04-08 | **Mobile cite tap behavior**: tap toggles `.is-active` wax highlight on the cite span; tap elsewhere clears | Desktop has hover; mobile has nothing. Rather than build a modal or scroll, the cite gets a wax highlight on tap. The user can see "this phrase came from this source" without leaving the answer. Rejected: bottom-sheet modal (scope creep), no-op (degrades mobile). From plan-design-review Decision #4. |
-| 2026-04-08 | **`.squire-banner` is a reusable primitive** with `--spoiler` (amber), `--error` (#8b2919), `--sync` (sage) modifiers | Spoiler banner, error banners (recoverable + non-recoverable), and Phase 6 sync banner all share one CSS component with different accent colors. SQR-67 ships the primitive; SQR-6 / SQR-8 / SQR-13 / SQR-65 reuse it. From plan-design-review Pass 2. |
-| 2026-04-08 | **A11y bundle for SQR-5**: `aria-live="polite"` on `main.squire-surface`, `aria-live="off"` on `footer.squire-toolcall`, skip-link to input dock, `:focus-visible` 2px wax outline, `prefers-reduced-motion` disables pulse/transitions, `env(safe-area-inset-bottom)` on input dock, contrast ratio doc comment in styles.css | Phase 1 ships with WCAG-AA-passing dark-mode contrast, keyboard-navigable, screen-reader-friendly streaming, and iOS home-indicator-aware input dock. From plan-design-review Pass 6. |
-| 2026-04-08 | **Dark mode is unconditional in Phase 1.** `prefers-color-scheme` is NOT honored. Light mode tokens exist via `[data-theme="light"]` for the Phase 7 user toggle | Per SPEC's phone-at-the-table primary surface and DESIGN.md §Color "Dark mode is the default." A user-controlled toggle in Phase 7 is the right path; auto-flipping in Phase 1 would surprise users in dim rooms. From plan-design-review Pass 6. |
+| Date       | Decision                                                                                                                                                                                                                                                                                                                       | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-04-08 | Design system created via `/design-consultation`                                                                                                                                                                                                                                                                               | Covers all eight phases, not just Phase 1 rules Q&A.                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-04-08 | **Metaphor: attendant/ledger, not oracle**                                                                                                                                                                                                                                                                                     | Name "Squire" is literal. Serves phases 4–8 (character state, recs, sync, channels).                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-04-08 | Display font: Fraunces (rejected Instrument Serif)                                                                                                                                                                                                                                                                             | Instrument Serif felt tall/thin and had a compressed capital S that made the monogram look squished. Fraunces has wider shoulders, variable softness axis, more confident presence.                                                                                                                                                                                                                                                              |
+| 2026-04-08 | Body font: Geist (rejected Newsreader)                                                                                                                                                                                                                                                                                         | Newsreader is a long-form reading font; Squire's use case is 10-15s scanning. Geist is already in the system for UI chrome; promoting it drops a font from the payload.                                                                                                                                                                                                                                                                          |
+| 2026-04-08 | Wordmark and monogram are NOT italic                                                                                                                                                                                                                                                                                           | Italic Fraunces at wordmark scale read as precious.                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2026-04-08 | Oracle-first layout rejected in favor of companion-first flexible surface                                                                                                                                                                                                                                                      | Oracle layout only served Phase 1 and broke for Phase 4+ uses.                                                                                                                                                                                                                                                                                                                                                                                   |
+| 2026-04-08 | Rule-term treatment: small-caps + highlighter stripe (rejected pill, italic)                                                                                                                                                                                                                                                   | Pills ate line spacing. Plain italic didn't stand out from surrounding body text. Highlighter stripe matches the "marked-up rulebook" metaphor and uses the palette's amber without stealing from the wax-seal red accent.                                                                                                                                                                                                                       |
+| 2026-04-08 | Rule-term highlighter: amber 0.60 alpha, 75% height coverage                                                                                                                                                                                                                                                                   | Alpha and coverage are independent dials. 0.60 is visible without becoming a solid box; 75% reads as a marker stripe, not an underline.                                                                                                                                                                                                                                                                                                          |
+| 2026-04-08 | Voice stays modern / professional, NOT medieval cosplay                                                                                                                                                                                                                                                                        | Per SPEC.md agent persona. The dissonance between manuscript visuals and terse modern voice is the signature.                                                                                                                                                                                                                                                                                                                                    |
+| 2026-04-08 | **Multi-turn ledger: current-turn focus** (rejected scrolling chat column, rejected per-turn drop caps)                                                                                                                                                                                                                        | The main surface shows ONE turn at a time: current question (Fraunces hero) + current answer (drop cap). Prior turns collapse into the recent-questions chip row; tapping a chip re-loads that turn into the current-turn slot. The drop cap and rule-term highlighter NEVER appear on more than one answer at a time. Honors "ledger not chat column" (DESIGN.md §Layout) and keeps the drop cap precious. From plan-design-review Decision #1. |
+| 2026-04-08 | **Citations: inline `<span class="cite">` AND tool-call footer aggregate** (rejected chip-row-only, rejected inline-only)                                                                                                                                                                                                      | Sources appear inline as sepia-underlined spans within the answer prose AND the tool-call footer line below the answer doubles as the "sources consulted" index. No separate chip row. Matches the existing `docs/design-preview.html` reference and the printed-book footnotes metaphor. From plan-design-review Decision #3.                                                                                                                   |
+| 2026-04-08 | **First-run empty state**: "At your service." Fraunces hero + "ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO" Geist sepia small-caps                                                                                                                                                                                      | Empty states are features. The placeholder gives Squire a professional, terse voice on first contact and uses the Fraunces hero-question scale that would otherwise be dead typography on first load. Rejected: italic placeholder only, tutorial chip row (too onboarding-card). From plan-design-review Decision #2.                                                                                                                           |
+| 2026-04-08 | **No emoji in tool indicators or anywhere else.** Tool-start renders as `--sepia` Geist 10–11px small-caps `CONSULTING · RULEBOOK` (during) → `CONSULTED · RULEBOOK P.47` (after).                                                                                                                                             | The Modern Codex aesthetic does not allow magnifying-glass glyphs. The sepia small-caps treatment is the same vocabulary as the tool-call footer line, so the streaming indicators collapse into the footer naturally. Earlier SQR-8 draft used 🔎 — flagged in plan-design-review Pass 4.                                                                                                                                                       |
+| 2026-04-08 | **Mobile cite tap behavior**: tap toggles `.is-active` wax highlight on the cite span; tap elsewhere clears                                                                                                                                                                                                                    | Desktop has hover; mobile has nothing. Rather than build a modal or scroll, the cite gets a wax highlight on tap. The user can see "this phrase came from this source" without leaving the answer. Rejected: bottom-sheet modal (scope creep), no-op (degrades mobile). From plan-design-review Decision #4.                                                                                                                                     |
+| 2026-04-08 | **`.squire-banner` is a reusable primitive** with `--spoiler` (amber), `--error` (#8b2919), `--sync` (sage) modifiers                                                                                                                                                                                                          | Spoiler banner, error banners (recoverable + non-recoverable), and Phase 6 sync banner all share one CSS component with different accent colors. SQR-67 ships the primitive; SQR-6 / SQR-8 / SQR-13 / SQR-65 reuse it. From plan-design-review Pass 2.                                                                                                                                                                                           |
+| 2026-04-08 | **A11y bundle for SQR-5**: `aria-live="polite"` on `main.squire-surface`, `aria-live="off"` on `footer.squire-toolcall`, skip-link to input dock, `:focus-visible` 2px wax outline, `prefers-reduced-motion` disables pulse/transitions, `env(safe-area-inset-bottom)` on input dock, contrast ratio doc comment in styles.css | Phase 1 ships with WCAG-AA-passing dark-mode contrast, keyboard-navigable, screen-reader-friendly streaming, and iOS home-indicator-aware input dock. From plan-design-review Pass 6.                                                                                                                                                                                                                                                            |
+| 2026-04-08 | **Dark mode is unconditional in Phase 1.** `prefers-color-scheme` is NOT honored. Light mode tokens exist via `[data-theme="light"]` for the Phase 7 user toggle                                                                                                                                                               | Per SPEC's phone-at-the-table primary surface and DESIGN.md §Color "Dark mode is the default." A user-controlled toggle in Phase 7 is the right path; auto-flipping in Phase 1 would surprise users in dim rooms. From plan-design-review Pass 6.                                                                                                                                                                                                |
 
 <!-- markdownlint-enable MD060 -->
 

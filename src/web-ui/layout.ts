@@ -23,6 +23,12 @@ import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { renderAssistantContent } from './assistant-content.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
+import {
+  SUPPORTED_MARKDOWN_FEATURES,
+  SUPPORTED_MARKDOWN_SPECIMEN,
+  UNSUPPORTED_MARKDOWN_FEATURES,
+  UNSUPPORTED_MARKDOWN_SPECIMEN,
+} from './markdown-styleguide.ts';
 import type { ConversationMessage, Session } from '../db/repositories/types.ts';
 
 export interface LayoutShellOptions {
@@ -59,6 +65,10 @@ export interface LayoutShellOptions {
   chatFormAction?: string;
   chatFormHiddenFields?: Array<{ name: string; value: string }>;
   recentQuestionsNav?: HtmlEscapedString;
+  showRail?: boolean;
+  showChatChrome?: boolean;
+  headerContext?: string;
+  columnClassName?: string;
 }
 
 export interface PendingTurnShellOptions {
@@ -97,6 +107,46 @@ function getDisplayName(session: Session): string {
   return session.user.name?.trim() || session.user.email;
 }
 
+function getAvatarFallbackLabel(session: Session): string {
+  return (session.user.name?.trim() || session.user.email).slice(0, 1).toUpperCase();
+}
+
+function renderAccountMenu(session: Session, csrfToken: string): HtmlEscapedString {
+  const displayName = getDisplayName(session);
+
+  return html`<details class="squire-account-menu">
+    <summary class="squire-account-menu__trigger" aria-label="Open account menu for ${displayName}">
+      ${session.user.avatarUrl
+        ? html`<img
+            class="squire-account-menu__avatar"
+            src="${session.user.avatarUrl}"
+            alt="${displayName}"
+            loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
+          />`
+        : html`<span class="squire-account-menu__avatar-fallback" aria-hidden="true">
+            ${getAvatarFallbackLabel(session)}
+          </span>`}
+    </summary>
+    <div class="squire-account-menu__panel">
+      <section class="squire-account-menu__group" aria-label="Internal tools">
+        <span class="squire-account-menu__group-label">Internal tools</span>
+        <a class="squire-account-menu__item" href="/styleguide/markdown">Markdown styleguide</a>
+      </section>
+      <section class="squire-account-menu__group" aria-label="Account">
+        <span class="squire-account-menu__group-label">Account</span>
+        <form method="post" action="/auth/logout" class="squire-account-menu__form">
+          <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+          <button type="submit" class="squire-account-menu__item squire-account-menu__item--button">
+            Log out
+          </button>
+        </form>
+      </section>
+    </div>
+  </details>` as HtmlEscapedString;
+}
+
 async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedString> {
   const preconnects = FONT_PRECONNECTS.map((p) =>
     p.crossorigin
@@ -124,6 +174,7 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="htmx-config" content='{"includeIndicatorStyles":false}' />
         <title>Squire</title>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         ${options.csrfToken
           ? html`<meta name="${CSRF_META_NAME}" content="${options.csrfToken}" />`
           : html``}
@@ -163,6 +214,36 @@ function renderQuestionTurn(
   </article>` as HtmlEscapedString;
 }
 
+function renderAnswerContent(content: HtmlEscapedString): HtmlEscapedString {
+  return html`<div class="squire-answer__content squire-markdown">
+    ${content}
+  </div>` as HtmlEscapedString;
+}
+
+function renderMarkdownSpecimenCard(options: {
+  title: string;
+  description: string;
+  source: string;
+  rendered: HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`<section class="squire-styleguide__specimen">
+    <div class="squire-styleguide__specimen-header">
+      <h2 class="squire-styleguide__specimen-title">${options.title}</h2>
+      <p class="squire-styleguide__specimen-copy">${options.description}</p>
+    </div>
+    <div class="squire-styleguide__specimen-grid">
+      <section class="squire-styleguide__panel" aria-label="${options.title} markdown source">
+        <span class="squire-styleguide__panel-label">Markdown</span>
+        <pre><code>${options.source}</code></pre>
+      </section>
+      <section class="squire-styleguide__panel" aria-label="${options.title} rendered output">
+        <span class="squire-styleguide__panel-label">Rendered</span>
+        <section class="squire-styleguide__rendered squire-markdown">${options.rendered}</section>
+      </section>
+    </div>
+  </section>` as HtmlEscapedString;
+}
+
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   const content = message.isError
     ? (html`<p>${message.content}</p>` as HtmlEscapedString)
@@ -170,7 +251,7 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   return html`<article
     class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
   >
-    ${content}
+    ${renderAnswerContent(content)}
   </article>` as HtmlEscapedString;
 }
 
@@ -183,7 +264,7 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
     class="squire-turn squire-answer squire-answer--pending"
     data-stream-state="pending"
   >
-    <div class="squire-answer__content"></div>
+    <div class="squire-answer__content squire-markdown"></div>
     <div class="squire-answer__tools" aria-live="off"></div>
     <div class="squire-answer__skeleton" aria-hidden="true">
       <div class="squire-answer__skeleton-dropcap"></div>
@@ -298,8 +379,16 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // The layout adapts chrome based on whether a session was provided.
   // Session present = logged in = full chrome. Absent = brand only.
   const authenticated = options.session !== undefined;
+  const showRail = options.showRail ?? authenticated;
+  const showChatChrome = options.showChatChrome ?? authenticated;
   const csrfToken = options.csrfToken;
+  if (authenticated && !csrfToken) {
+    throw new Error('layoutShell requires a csrfToken when rendering authenticated chrome');
+  }
+  const authenticatedCsrfToken = csrfToken ?? '';
   const chatFormAction = options.chatFormAction ?? '/chat';
+  const headerContext = options.headerContext ?? 'FROSTHAVEN · RULES';
+  const columnClassName = options.columnClassName ?? 'squire-column';
   const chatFormHiddenFields = [
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
     ...(options.chatFormHiddenFields ?? []),
@@ -369,48 +458,40 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     authenticated,
     csrfToken,
     bodyClass: 'squire-body',
-    bodyContent: html`${!authenticated
+    bodyContent: html`${!authenticated || !showChatChrome
         ? html``
         : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
       <div class="squire-frame">
-        ${!authenticated
+        ${!authenticated || !showRail
           ? html``
           : html`<aside class="squire-rail" aria-label="Squire ledger">
               <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
               <span class="squire-wordmark">Squire</span>
             </aside>`}
-        <div class="squire-column">
+        <div class="${columnClassName}">
           <header class="squire-header">
             ${authenticated && options.session
-              ? html`<div class="squire-header__brand">
+              ? html`<a class="squire-header__brand" href="/" aria-label="Go to Squire home">
                     <span class="squire-monogram" aria-hidden="true">S</span>
                     <span class="squire-wordmark">Squire</span>
-                  </div>
-                  <span class="squire-context">FROSTHAVEN · RULES</span>
+                  </a>
+                  <span class="squire-context">${headerContext}</span>
                   <div class="squire-header__account">
-                    <span class="squire-user">${getDisplayName(options.session)}</span>
-                    <form class="squire-logout-form" method="post" action="/auth/logout">
-                      <input
-                        type="hidden"
-                        name="${CSRF_FORM_FIELD_NAME}"
-                        value="${csrfToken ?? ''}"
-                      />
-                      <button
-                        type="submit"
-                        class="squire-button squire-button--ghost squire-button--small"
-                      >
-                        Log out
-                      </button>
-                    </form>
+                    ${renderAccountMenu(options.session, authenticatedCsrfToken)}
                   </div>`
               : html`<span class="squire-monogram" aria-hidden="true">S</span>
                   <span class="squire-wordmark">Squire</span>
-                  <span class="squire-context">FROSTHAVEN · RULES</span>`}
+                  <span class="squire-context">${headerContext}</span>`}
           </header>
-          <main id="squire-surface" class="squire-surface" aria-live="polite" aria-atomic="false">
+          <main
+            id="squire-surface"
+            class="squire-surface"
+            aria-live="${showChatChrome ? 'polite' : 'off'}"
+            aria-atomic="${showChatChrome ? 'false' : 'true'}"
+          >
             ${surfaceContent}
           </main>
-          ${!authenticated
+          ${!authenticated || !showChatChrome
             ? html``
             : html`<footer class="squire-toolcall" aria-live="off">
                   CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
@@ -572,6 +653,64 @@ export async function renderConversationPage(options: {
     mainContent: transcript as HtmlEscapedString,
     chatFormAction: `/chat/${options.conversationId}/messages`,
     recentQuestionsNav: options.recentQuestionsNav,
+  });
+}
+
+export async function renderMarkdownStyleguidePage(
+  session: Session,
+  csrfToken: string,
+): Promise<HtmlEscapedString> {
+  const mainContent = html`<section class="squire-internal-shell">
+    <section class="squire-styleguide" aria-label="Markdown rendering styleguide">
+      <header class="squire-styleguide__intro">
+        <span class="squire-question__eyebrow">Styleguide</span>
+        <h1 class="squire-question">Markdown rendering styleguide</h1>
+        <p class="squire-styleguide__lede">
+          This page is the in-app contract for Squire's supported markdown subset. One source
+          specimen, one rendered answer, no mystery meat.
+        </p>
+      </header>
+
+      <section class="squire-styleguide__summary">
+        <div class="squire-styleguide__summary-block">
+          <h2 class="squire-styleguide__summary-title">Supported constructs</h2>
+          <ul class="squire-styleguide__feature-list">
+            ${SUPPORTED_MARKDOWN_FEATURES.map((feature) => html`<li>${feature}</li>`)}
+          </ul>
+        </div>
+        <div class="squire-styleguide__summary-block">
+          <h2 class="squire-styleguide__summary-title">Unsafe stays inert</h2>
+          <ul class="squire-styleguide__feature-list">
+            ${UNSUPPORTED_MARKDOWN_FEATURES.map((feature) => html`<li>${feature}</li>`)}
+          </ul>
+        </div>
+      </section>
+
+      ${renderMarkdownSpecimenCard({
+        title: 'Supported subset specimen',
+        description:
+          'A single answer specimen that exercises every markdown construct Squire intentionally supports.',
+        source: SUPPORTED_MARKDOWN_SPECIMEN,
+        rendered: renderAssistantContent(SUPPORTED_MARKDOWN_SPECIMEN),
+      })}
+      ${renderMarkdownSpecimenCard({
+        title: 'Unsafe syntax stays inert',
+        description:
+          'These constructs should remain literal text instead of turning into partially trusted rich content.',
+        source: UNSUPPORTED_MARKDOWN_SPECIMEN,
+        rendered: renderAssistantContent(UNSUPPORTED_MARKDOWN_SPECIMEN),
+      })}
+    </section>
+  </section>` as HtmlEscapedString;
+
+  return layoutShell({
+    session,
+    csrfToken,
+    mainContent,
+    showRail: false,
+    showChatChrome: false,
+    headerContext: 'INTERNAL · STYLEGUIDE',
+    columnClassName: 'squire-column squire-column--wide',
   });
 }
 

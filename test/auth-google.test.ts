@@ -79,6 +79,7 @@ const TEST_USER = {
   email: 'brian@example.com',
   name: 'Brian',
   sub: 'google-sub-12345',
+  picture: 'https://example.com/brian.png',
 };
 
 function mockGoogleSuccess(user = TEST_USER) {
@@ -86,7 +87,12 @@ function mockGoogleSuccess(user = TEST_USER) {
     tokens: { id_token: 'fake-id-token' },
   });
   mockVerifyIdToken.mockResolvedValueOnce({
-    getPayload: () => ({ sub: user.sub, email: user.email, name: user.name }),
+    getPayload: () => ({
+      sub: user.sub,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+    }),
   });
 }
 
@@ -183,12 +189,29 @@ describe('Google OAuth callback', () => {
     const userRows = await db.select().from(users).where(eq(users.email, TEST_USER.email));
     expect(userRows).toHaveLength(1);
     expect(userRows[0].googleSub).toBe(TEST_USER.sub);
+    expect(userRows[0].avatarUrl).toBe(TEST_USER.picture);
 
     // Session was created
     const sessionRows = await db.select().from(sessions).where(eq(sessions.userId, userRows[0].id));
     expect(sessionRows).toHaveLength(1);
     expect(sessionRows[0].expiresAt.getTime()).toBeGreaterThan(Date.now());
     expect(sessionRows[0].lastSeenAt).not.toBeNull();
+  });
+
+  it('1a. ignores non-https google profile photos', async () => {
+    mockGoogleSuccess({
+      ...TEST_USER,
+      picture: 'http://example.com/brian.png',
+    });
+
+    const res = await walkOAuthFlow();
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/');
+
+    const { db } = getDb('server');
+    const userRows = await db.select().from(users).where(eq(users.email, TEST_USER.email));
+    expect(userRows).toHaveLength(1);
+    expect(userRows[0].avatarUrl).toBeNull();
   });
 
   it('1b. uses the request host for localhost worktree OAuth start URLs', async () => {
@@ -238,7 +261,7 @@ describe('/auth/me', () => {
 });
 
 describe('Authenticated web UI', () => {
-  it('3. GET / renders the signed-in header with user info and logout affordance', async () => {
+  it('3. GET / renders the signed-in header with the account dropdown', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -248,14 +271,48 @@ describe('Authenticated web UI', () => {
 
     const body = await res.text();
     expect(body).toContain('FROSTHAVEN · RULES');
-    expect(body).toContain('Brian');
+    expect(body).toContain('class="squire-account-menu"');
+    expect(body).toContain('src="https://example.com/brian.png"');
+    expect(body).toContain('href="/styleguide/markdown"');
     expect(body).toContain('action="/auth/logout"');
-    expect(body).toContain('Log out');
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect(res.headers.get('vary')).toContain('Cookie');
   });
 
-  it('3b. GET /login redirects authenticated users with cookie-varying no-store headers', async () => {
+  it('3a. GET /styleguide/markdown renders the markdown styleguide page', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const res = await withSession('http://localhost:3000/styleguide/markdown', cookie);
+    expect(res.status).toBe(200);
+
+    const body = await res.text();
+    expect(body).toContain('Markdown rendering styleguide');
+    expect(body).toContain('Supported subset specimen');
+    expect(body).toContain('Unsafe syntax stays inert');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('vary')).toContain('Cookie');
+  });
+
+  it('3b. GET / renders the signed-in header with an avatar fallback when no safe photo is stored', async () => {
+    mockGoogleSuccess({
+      ...TEST_USER,
+      picture: 'http://example.com/brian.png',
+    });
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+
+    const res = await withSession('http://localhost:3000/', cookie);
+    expect(res.status).toBe(200);
+
+    const body = await res.text();
+    expect(body).toContain('class="squire-account-menu__avatar-fallback"');
+    expect(body).not.toContain('class="squire-account-menu__avatar"');
+    expect(body).not.toContain('src="http://example.com/brian.png"');
+  });
+
+  it('3c. GET /login redirects authenticated users with cookie-varying no-store headers', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;

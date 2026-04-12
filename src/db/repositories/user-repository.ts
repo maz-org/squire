@@ -35,6 +35,7 @@ function toDomain(row: UserRow): User {
     googleSub: row.googleSub,
     email: row.email,
     name: row.name,
+    avatarUrl: row.avatarUrl,
     createdAt: row.createdAt,
   };
 }
@@ -62,10 +63,15 @@ export async function upsertByGoogleSub(handle: DbOrTx, input: CreateUserInput):
         googleSub: input.googleSub,
         email: input.email,
         name: input.name,
+        avatarUrl: input.avatarUrl ?? null,
       })
       .onConflictDoUpdate({
         target: users.googleSub,
-        set: { email: input.email, name: input.name },
+        set: {
+          email: input.email,
+          name: input.name,
+          avatarUrl: input.avatarUrl ?? null,
+        },
       })
       .returning();
     return toDomain(row);

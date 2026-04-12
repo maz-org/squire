@@ -75,14 +75,16 @@ async function csrfErrorResponse(c: Context) {
 
   const accept = c.req.header('accept') ?? '';
   if (accept.includes('text/html')) {
-    if (c.get('session')) {
+    const session = c.get('session');
+    if (session) {
       c.header('Cache-Control', 'no-store');
       c.header('Vary', 'Cookie');
     }
     return c.html(
       await layoutShell({
         mainContent: csrfErrorFragment(),
-        session: c.get('session'),
+        session,
+        csrfToken: session ? createCsrfToken(session.id) : undefined,
       }),
       403,
     );

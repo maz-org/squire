@@ -191,6 +191,10 @@ html {
   margin: 0 auto;
 }
 
+.squire-column--wide {
+  max-width: 1120px;
+}
+
 /* 1. Header bar — thin, with bottom hairline rule. */
 .squire-header {
   display: grid;
@@ -210,8 +214,125 @@ html {
   min-width: 0;
 }
 
+.squire-header__brand {
+  color: inherit;
+  text-decoration: none;
+}
+
 .squire-header__account {
   justify-self: end;
+}
+
+.squire-header__brand:hover .squire-wordmark,
+.squire-header__brand:focus-visible .squire-wordmark {
+  color: var(--wax);
+}
+
+.squire-account-menu {
+  position: relative;
+}
+
+.squire-account-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.squire-account-menu__trigger::-webkit-details-marker {
+  display: none;
+}
+
+.squire-account-menu__avatar,
+.squire-account-menu__avatar-fallback {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+
+.squire-account-menu__avatar {
+  display: block;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.squire-account-menu__avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--parchment);
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.squire-account-menu[open] .squire-account-menu__panel {
+  display: block;
+}
+
+.squire-account-menu__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  display: none;
+  width: min(240px, 80vw);
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.35);
+}
+
+.squire-account-menu__group + .squire-account-menu__group {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.squire-account-menu__group-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-account-menu__form {
+  margin: 0;
+}
+
+.squire-account-menu__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--parchment);
+  text-decoration: none;
+}
+
+.squire-account-menu__item:hover,
+.squire-account-menu__item:focus-visible {
+  background: var(--surface-2);
+  color: var(--wax);
+}
+
+.squire-account-menu__item--button {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 /* Header monogram is the 28px variant. The box styling (display, background,
@@ -240,21 +361,6 @@ html {
   color: var(--sepia);
   text-transform: uppercase;
   letter-spacing: 0.16em;
-}
-
-.squire-user {
-  min-width: 0;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 14px;
-  color: var(--parchment-dim);
-}
-
-.squire-logout-form {
-  margin: 0;
 }
 
 /* 2. Main surface — flexes to fill. NOT a chat column — content modes
@@ -632,6 +738,11 @@ template#squire-banner-fixtures {
     padding: 32px 24px;
   }
 
+  .squire-styleguide__summary,
+  .squire-styleguide__specimen-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   body,
   html {
     font-size: 18px;
@@ -763,10 +874,126 @@ template#squire-banner-fixtures {
   color: var(--sepia);
 }
 
+.squire-styleguide {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.squire-styleguide__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.squire-styleguide__lede {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--parchment-dim);
+}
+
+.squire-styleguide__summary {
+  display: grid;
+  gap: 16px;
+}
+
+.squire-styleguide__summary-block,
+.squire-styleguide__panel,
+.squire-styleguide__specimen {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.squire-styleguide__summary-block {
+  padding: 18px 20px;
+}
+
+.squire-styleguide__summary-title,
+.squire-styleguide__specimen-title {
+  margin: 0 0 12px;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.squire-styleguide__summary-title {
+  font-size: 22px;
+}
+
+.squire-styleguide__feature-list {
+  margin: 0;
+  padding-inline-start: 1.2em;
+  color: var(--parchment-dim);
+}
+
+.squire-styleguide__feature-list li + li {
+  margin-top: 0.35em;
+}
+
+.squire-styleguide__specimen {
+  padding: 20px;
+}
+
+.squire-styleguide__specimen-header {
+  margin-bottom: 18px;
+}
+
+.squire-styleguide__specimen-copy {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--parchment-dim);
+}
+
+.squire-styleguide__specimen-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.squire-styleguide__panel {
+  padding: 16px;
+}
+
+.squire-styleguide__rendered {
+  color: var(--parchment);
+}
+
+.squire-styleguide__panel-label {
+  display: block;
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-styleguide__panel pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.12);
+}
+
+.squire-styleguide__panel pre code {
+  font-family:
+    ui-monospace, 'SFMono-Regular', 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  font-size: 0.92em;
+  white-space: pre;
+}
+
 .squire-transcript {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.squire-internal-shell {
+  width: min(100%, 960px);
+  margin: 0 auto;
 }
 
 .squire-turn {
@@ -778,13 +1005,200 @@ template#squire-banner-fixtures {
    .cite becomes a sepia-underlined citation link. No chat bubble chrome
    anywhere — this is a ledger, not a messenger. */
 .squire-answer {
-  font-family: 'Geist', system-ui, sans-serif;
-  color: var(--parchment);
   max-width: 640px;
 }
 
-.squire-answer p {
+.squire-markdown {
+  font-family: 'Geist', system-ui, sans-serif;
+  color: var(--parchment);
+}
+
+.squire-markdown > :first-child {
+  margin-top: 0;
+}
+
+.squire-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.squire-markdown p {
   margin: 0 0 1em;
+}
+
+.squire-markdown h1,
+.squire-markdown h2,
+.squire-markdown h3,
+.squire-markdown h4,
+.squire-markdown h5,
+.squire-markdown h6 {
+  margin: 0 0 0.7em;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 550;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--parchment);
+}
+
+.squire-markdown h1 {
+  font-size: clamp(26px, 4.4vw, 32px);
+}
+
+.squire-markdown h2 {
+  font-size: clamp(22px, 3.8vw, 27px);
+}
+
+.squire-markdown h3 {
+  font-size: clamp(19px, 3vw, 23px);
+}
+
+.squire-markdown h4,
+.squire-markdown h5,
+.squire-markdown h6 {
+  font-size: 17px;
+}
+
+.squire-markdown strong {
+  font-weight: 650;
+  color: var(--parchment);
+}
+
+.squire-markdown ul,
+.squire-markdown ol {
+  margin: 0 0 1.1em;
+  padding-inline-start: 1.4em;
+}
+
+.squire-markdown ul {
+  list-style: disc;
+}
+
+.squire-markdown ol {
+  list-style: decimal;
+}
+
+.squire-markdown li + li {
+  margin-top: 0.4em;
+}
+
+.squire-markdown blockquote {
+  margin: 0 0 1.1em;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--rule);
+  color: var(--parchment-dim);
+}
+
+.squire-markdown blockquote p {
+  margin-bottom: 0;
+}
+
+/* Full quoted passages often come through as `> *"...long rule quote..."*`.
+   Treat those as readable quotations, not highlighted rule-term chips. */
+.squire-markdown blockquote em {
+  font-style: italic;
+  font-weight: inherit;
+  font-variant-caps: normal;
+  letter-spacing: normal;
+  background-image: none;
+  padding: 0;
+  white-space: normal;
+}
+
+.squire-markdown code {
+  font-family:
+    ui-monospace, 'SFMono-Regular', 'SF Mono', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  font-size: 0.92em;
+  color: var(--parchment);
+  background: rgb(245 235 217 / 0.06);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.12em 0.35em;
+}
+
+.squire-markdown pre {
+  margin: 0 0 1.1em;
+  padding: 14px 16px;
+  background: rgb(0 0 0 / 0.12);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.squire-markdown pre code {
+  display: block;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  white-space: pre;
+}
+
+.squire-markdown__table-scroll {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 1.1em;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.08);
+}
+
+.squire-markdown table {
+  width: max-content;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.squire-markdown thead {
+  background: rgb(245 235 217 / 0.05);
+}
+
+.squire-markdown th,
+.squire-markdown td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-markdown th + th,
+.squire-markdown td + td {
+  border-left: 1px solid var(--rule);
+}
+
+.squire-markdown th {
+  font-weight: 650;
+  color: var(--parchment);
+}
+
+.squire-markdown__align-left {
+  text-align: left;
+}
+
+.squire-markdown__align-center {
+  text-align: center;
+}
+
+.squire-markdown__align-right {
+  text-align: right;
+}
+
+.squire-markdown tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.squire-markdown hr {
+  margin: 0 0 1.4em;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.squire-markdown img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface-2);
 }
 
 .squire-answer__content:empty + .squire-answer__tools {
@@ -873,7 +1287,8 @@ template#squire-banner-fixtures {
  * word in the DOM. See SQR-66 ticket, plan-eng-review 2026-04-08.
  */
 .squire-answer
-  p:first-of-type:not(
+  .squire-markdown
+  > p:first-child:not(
     :has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)
   )::first-letter {
   font-family: 'Fraunces', 'Georgia', serif;
@@ -898,7 +1313,7 @@ template#squire-banner-fixtures {
  * highlighter" is authoritative — don't change alpha/coverage without
  * updating that doc.
  */
-.squire-answer em {
+.squire-markdown em {
   font-style: normal;
   font-weight: 600;
   font-variant-caps: all-small-caps;
@@ -915,25 +1330,33 @@ template#squire-banner-fixtures {
   white-space: nowrap;
 }
 
-/* Citation link — sepia underline, wax hover. The mobile tap-toggle
-   (plan-design-review Decision #4) adds `.is-active` on touch so the
-   highlight sticks until the user taps elsewhere. The toggle logic lives
-   in `src/web-ui/squire.js`. Visually distinct
-   from the amber rule-term highlighter so a reader can tell sources
-   from rule terms at a glance. */
-.squire-answer .cite {
+/* Answer links keep the same understated ledger voice as citations: sepia
+   text, muted underline, wax on interaction. `.cite` remains the richer
+   citation primitive with tap-toggle behavior, but safe markdown links
+   should still look intentional rather than like browser defaults. */
+.squire-markdown a,
+.squire-markdown .cite {
   color: var(--sepia);
   text-decoration: underline;
   text-decoration-color: var(--sepia-dim);
   text-underline-offset: 3px;
-  cursor: pointer;
   transition:
     color 160ms cubic-bezier(0.22, 1, 0.36, 1),
     text-decoration-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.squire-answer .cite:hover,
-.squire-answer .cite.is-active {
+.squire-markdown a {
+  overflow-wrap: anywhere;
+}
+
+.squire-markdown .cite {
+  cursor: pointer;
+}
+
+.squire-markdown a:hover,
+.squire-markdown a:focus-visible,
+.squire-markdown .cite:hover,
+.squire-markdown .cite.is-active {
   color: var(--wax);
   text-decoration-color: var(--wax);
 }

@@ -62,6 +62,7 @@ import {
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
+  renderMarkdownStyleguidePage,
   renderNotInvitedPage,
   renderPendingTurnShell,
   renderRecentQuestionsNav,
@@ -70,6 +71,7 @@ import {
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
+import { getFaviconSvg } from './web-ui/favicon.ts';
 import {
   appendMessage,
   createPendingConversation,
@@ -89,7 +91,7 @@ const HTML_CSP =
   "default-src 'self'; " +
   "script-src 'self'; " +
   "style-src 'self' https://fonts.googleapis.com; " +
-  "img-src 'self' data:; " +
+  "img-src 'self' data: https:; " +
   "connect-src 'self'; " +
   "font-src 'self' https://fonts.gstatic.com; " +
   "object-src 'none'; " +
@@ -131,6 +133,12 @@ const DEV_ASSET_CACHE_CONTROL = 'no-cache';
 function isProdEnv(): boolean {
   return process.env.NODE_ENV === 'production';
 }
+
+app.get('/favicon.svg', (c) => {
+  c.header('content-type', 'image/svg+xml; charset=utf-8');
+  c.header('cache-control', 'no-cache');
+  return c.body(getFaviconSvg());
+});
 
 // Dev-only bare CSS path. In prod the HTML references the hashed
 // URL, so the bare path 404s there.
@@ -252,6 +260,13 @@ app.get('/', requirePageSession(), async (c) => {
       500,
     );
   }
+});
+
+app.get('/styleguide/markdown', requirePageSession(), async (c) => {
+  const session = c.get('session')!;
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.html(await renderMarkdownStyleguidePage(session, createCsrfToken(session.id)));
 });
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────
