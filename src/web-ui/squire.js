@@ -141,6 +141,10 @@ function renderPendingError(answerEl, label, message) {
   answerEl.appendChild(banner);
 }
 
+function shouldSuppressPreToolDelta(delta) {
+  return /^\s*(let me|i'?ll|i will|i'm going to|i am going to|great news\b|here'?s\b)/i.test(delta);
+}
+
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
   var row = toolEntries[toolId];
   if (row) return row;
@@ -226,30 +230,33 @@ function handlePendingTranscript(transcript) {
     source.close();
   }
 
-  source.addEventListener('text-delta', function (event) {
-    var payload = JSON.parse(event.data || '{}');
-    var delta = payload.delta || '';
-    if (!delta) return;
-
-    // Assistant turns that are about to call tools often contain generic
-    // throat-clearing ("let me check that"). Keep those off-screen unless no
-    // tool phase ever materializes. Once lookup starts, the transient ledger
-    // row is the only narrator until real answer prose begins.
-    if (!toolPhaseStarted) {
-      return;
-    }
-
+  function materializeStreamingDelta(delta) {
     if (!seenFirstDelta) {
       seenFirstDelta = true;
       answerEl.setAttribute('data-stream-state', 'streaming');
       if (skeletonEl) skeletonEl.hidden = true;
-      if (toolsEl) toolsEl.replaceChildren();
+      if (toolPhaseStarted && toolsEl) toolsEl.replaceChildren();
     }
 
     if (!contentEl) return;
     contentEl.classList.add('squire-markdown');
     var paragraph = ensureAnswerParagraph(contentEl);
     paragraph.textContent += delta;
+  }
+
+  source.addEventListener('text-delta', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    var delta = payload.delta || '';
+    if (!delta) return;
+
+    // Tool-free answers should still materialize live. The only thing we keep
+    // off-screen before a lookup starts is obvious assistant throat-clearing
+    // like "let me check that", which only adds a second fake narrator.
+    if (!toolPhaseStarted && !seenFirstDelta && shouldSuppressPreToolDelta(delta)) {
+      return;
+    }
+
+    materializeStreamingDelta(delta);
   });
 
   source.addEventListener('tool-start', function (event) {

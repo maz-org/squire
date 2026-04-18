@@ -42,7 +42,10 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain("labelEl.textContent = 'CONSULTING';");
     expect(squireJs).not.toContain("labelEl.textContent = 'CONSULTED';");
     expect(squireJs).toContain("stateEl.textContent = 'ONE SOURCE';");
-    expect(squireJs).toContain('if (!toolPhaseStarted) {');
+    expect(squireJs).toContain('function shouldSuppressPreToolDelta(delta) {');
+    expect(squireJs).toContain(
+      'if (!toolPhaseStarted && !seenFirstDelta && shouldSuppressPreToolDelta(delta)) {',
+    );
     expect(squireJs).toContain('toolsEl.replaceChildren();');
   });
 

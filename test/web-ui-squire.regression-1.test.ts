@@ -288,4 +288,16 @@ describe('squire.js selected-message retargeting', () => {
     expect(footerEl.hidden).toBe(false);
     expect(source.closed).toBe(true);
   });
+
+  it('streams tool-free answers immediately instead of waiting for done', () => {
+    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+
+    source.emit('text-delta', { delta: 'Closed doors block line-of-sight for looting.' });
+
+    expect(skeletonEl.hidden).toBe(true);
+    expect(toolsEl.children).toHaveLength(0);
+    expect(contentEl.querySelector('p')?.textContent).toBe(
+      'Closed doors block line-of-sight for looting.',
+    );
+  });
 });

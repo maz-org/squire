@@ -558,18 +558,6 @@ function isHtmxRequest(c: Context): boolean {
   return c.req.header('hx-request') === 'true';
 }
 
-function isSelectedMessagePageRequest(c: Context): boolean {
-  const currentUrl = c.req.header('hx-current-url');
-  if (!currentUrl) return false;
-
-  try {
-    const pathname = new URL(currentUrl).pathname;
-    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(pathname);
-  } catch {
-    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(currentUrl);
-  }
-}
-
 function renderChatErrorFragment(message: string) {
   return html`<div class="squire-banner squire-banner--error" role="alert">
     <span class="squire-banner__label">SOMETHING WENT WRONG</span>
@@ -602,12 +590,16 @@ function buildConversationRecentQuestionsNav(
   messages: Parameters<typeof listRecentCompletedQuestions>[0],
   options: { oob?: boolean } = {},
 ) {
-  const latestCompletedQuestionId = listRecentCompletedQuestions(messages)[0]?.messageId;
-  const recentCompletedQuestions = listRecentCompletedQuestions(messages, {
-    excludeMessageId: latestCompletedQuestionId,
-  });
+  const recentCompletedQuestions = listRecentCompletedQuestions(messages);
+  const latestUserMessageId = [...messages]
+    .reverse()
+    .find((message) => message.role === 'user')?.id;
+  const visibleQuestions =
+    recentCompletedQuestions[0]?.messageId === latestUserMessageId
+      ? recentCompletedQuestions.slice(1)
+      : recentCompletedQuestions;
   return renderRecentQuestionsNav(
-    recentCompletedQuestions.map((question) => ({
+    visibleQuestions.map((question) => ({
       href: `/chat/${conversationId}/messages/${question.messageId}`,
       hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
       label: question.question,
@@ -770,24 +762,26 @@ app.post('/chat/:conversationId/messages', async (c) => {
       question,
     });
     if (!pending?.currentUserMessage) return c.notFound();
+    const loaded = await loadConversation({
+      conversationId: pending.conversation.id,
+      userId: session.userId,
+    });
+    if (!loaded) return c.notFound();
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
     c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
-    if (isSelectedMessagePageRequest(c)) {
-      return c.html(
-        renderPendingTurnShellWithRecentQuestions({
-          question: pending.currentUserMessage.content,
-          streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
-          recentQuestionsNav: renderRecentQuestionsNav([], { oob: true }),
-        }),
-      );
-    }
-
     return c.html(
-      renderPendingTurnShell({
+      renderPendingTurnShellWithRecentQuestions({
         question: pending.currentUserMessage.content,
         streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+        recentQuestionsNav: buildConversationRecentQuestionsNav(
+          loaded.conversation.id,
+          loaded.messages,
+          {
+            oob: true,
+          },
+        ),
       }),
     );
   }

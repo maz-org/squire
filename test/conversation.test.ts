@@ -398,7 +398,7 @@ describe('conversation web backend', () => {
     expect(pageRes.status).toBe(200);
 
     const page = await pageRes.text();
-    const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
     expect(transcript).toContain('Second question');
     expect(transcript).toContain('Second answer');
     expect(transcript).not.toContain('First question');
@@ -424,7 +424,7 @@ describe('conversation web backend', () => {
     const page = await pageRes.text();
     expect(page).toContain('class="squire-account-menu"');
     expect(page).toContain('href="/styleguide/markdown"');
-    const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
     expect(transcript).toContain('How does looting work?');
     expect(transcript).toContain('Loot tokens in your hex are picked up.');
     expect(transcript).toContain('EARLIER QUESTION');
@@ -435,6 +435,32 @@ describe('conversation web backend', () => {
     expect(recentNav).not.toContain('How does looting work?');
     expect(recentNav).toContain('hx-get="/chat/');
     expect(recentNav).toContain('hx-push-url="true"');
+  });
+
+  it('keeps the latest completed turn in the rail when the canonical page is showing a pending turn', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
+      { question: 'When do elements wane?', answer: 'At end of round.' },
+      { question: 'Can I loot through a wall?' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toContain('Can I loot through a wall?');
+    expect(transcript).toContain('class="squire-answer__skeleton"');
+
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(recentNav).toContain('When do elements wane?');
+    expect(recentNav).toContain('How does looting work?');
+    expect(recentNav).not.toContain('Can I loot through a wall?');
   });
 
   it('renders the canonical selected-message route as an HTMX fragment', async () => {
@@ -549,7 +575,8 @@ describe('conversation web backend', () => {
     const body = await response.text();
     const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
     expect(recentNav).toContain('hx-swap-oob="outerHTML"');
-    expect(recentNav).toContain('hidden');
+    expect(recentNav).toContain('Second question');
+    expect(recentNav).toContain('First question');
   });
 
   it('renders only the new pending turn when a selected-message page submits a follow-up', async () => {
@@ -579,15 +606,19 @@ describe('conversation web backend', () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
-    expect(body).toContain('Newest question');
-    expect(body).toContain('class="squire-answer__skeleton"');
-    expect(body).not.toContain('First question');
-    expect(body).not.toContain('First answer');
-    expect(body).not.toContain('Second question');
-    expect(body).not.toContain('Second answer');
+    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(transcript).toContain('Newest question');
+    expect(transcript).toContain('class="squire-answer__skeleton"');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer');
+    expect(transcript).not.toContain('Second question');
+    expect(transcript).not.toContain('Second answer');
+    expect(recentNav).toContain('Second question');
+    expect(recentNav).toContain('First question');
   });
 
-  it('does not clear the recent-questions rail on a normal conversation follow-up', async () => {
+  it('refreshes the recent-questions rail alongside a normal conversation follow-up', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'First question', answer: 'First answer' },
@@ -611,13 +642,18 @@ describe('conversation web backend', () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
-    expect(body).toContain('Newest question');
-    expect(body).toContain('class="squire-answer__skeleton"');
-    expect(body).not.toContain('First question');
-    expect(body).not.toContain('First answer');
-    expect(body).not.toContain('Second question');
-    expect(body).not.toContain('Second answer');
-    expect(body).not.toContain('id="squire-recent-questions"');
+    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(transcript).toContain('Newest question');
+    expect(transcript).toContain('class="squire-answer__skeleton"');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer');
+    expect(transcript).not.toContain('Second question');
+    expect(transcript).not.toContain('Second answer');
+    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
+    expect(recentNav).toContain('First question');
+    expect(recentNav).toContain('Second question');
+    expect(recentNav).not.toContain('Newest question');
   });
 
   it('restores canonical recent-question chips after streaming a follow-up from a selected-message page', async () => {
@@ -1410,11 +1446,18 @@ describe('conversation web backend', () => {
 
     expect(followUpRes.status).toBe(200);
     const body = await followUpRes.text();
-    expect(body).toContain('Second question');
-    expect(body).not.toContain('First question');
-    expect(body).not.toContain('First answer.');
-    expect(body).toContain('squire-transcript squire-transcript--pending');
-    expect(body).toMatch(/data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/);
+    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(transcript).toContain('Second question');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer.');
+    expect(transcript).toContain('squire-transcript squire-transcript--pending');
+    expect(transcript).toMatch(
+      /data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/,
+    );
+    expect(recentNav).toContain('id="squire-recent-questions"');
+    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
+    expect(recentNav).toContain('First question');
   });
 
   it('propagates failed tool results into the browser-facing SSE payload', async () => {
