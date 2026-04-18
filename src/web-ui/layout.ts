@@ -96,6 +96,8 @@ export interface SelectedMessageSurfaceOptions {
   isEarlierQuestion: boolean;
 }
 
+const VISIBLE_RECENT_QUESTION_LIMIT = 3;
+
 interface DocumentOptions {
   bodyContent: HtmlEscapedString;
   bodyClass?: string;
@@ -259,6 +261,31 @@ function renderConversationTurn(message: ConversationMessage): HtmlEscapedString
   return message.role === 'user' ? renderQuestionTurn(message.content) : renderAnswerTurn(message);
 }
 
+function findCurrentConversationTurn(messages: ConversationMessage[]): {
+  userMessage: ConversationMessage;
+  assistantMessage: ConversationMessage | null;
+} | null {
+  const assistantResponses = new Map<string, ConversationMessage>();
+
+  for (const message of messages) {
+    if (message.role === 'assistant' && message.responseToMessageId) {
+      assistantResponses.set(message.responseToMessageId, message);
+    }
+  }
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.role !== 'user') continue;
+
+    return {
+      userMessage: message,
+      assistantMessage: assistantResponses.get(message.id) ?? null,
+    };
+  }
+
+  return null;
+}
+
 function renderPendingAnswerSkeleton(): HtmlEscapedString {
   return html`<article
     class="squire-turn squire-answer squire-answer--pending"
@@ -284,6 +311,7 @@ function renderRecentQuestionChip(options: {
   return html`<a
     class="squire-chip"
     href="${options.href}"
+    title="${options.label}"
     ${options.hxGet ? html`hx-get="${options.hxGet}"` : html``}
     ${options.hxGet ? html`hx-target="#squire-surface"` : html``}
     ${options.hxGet ? html`hx-swap="innerHTML"` : html``}
@@ -294,11 +322,28 @@ function renderRecentQuestionChip(options: {
 }
 
 function renderStaticRecentQuestionChip(label: string): HtmlEscapedString {
-  return html`<span class="squire-chip">${label}</span>` as HtmlEscapedString;
+  return html`<span class="squire-chip" title="${label}">${label}</span>` as HtmlEscapedString;
+}
+
+function renderRecentQuestionsOverflow(options: {
+  hiddenChipCount: number;
+  chips: HtmlEscapedString[];
+}): HtmlEscapedString {
+  const questionLabel = options.hiddenChipCount === 1 ? 'question' : 'questions';
+  const summaryLabel = `${options.hiddenChipCount} older ${questionLabel}`;
+
+  return html`<details class="squire-recent__overflow">
+    <summary class="squire-chip squire-chip--overflow" aria-label="Show ${summaryLabel}">
+      <span class="squire-chip__overflow-copy">More history</span>
+      <span class="squire-chip__overflow-count">${summaryLabel}</span>
+    </summary>
+    <div class="squire-recent__overflow-panel">${options.chips}</div>
+  </details>` as HtmlEscapedString;
 }
 
 function renderRecentQuestionsContainer(options: {
-  chips: HtmlEscapedString[];
+  visibleChips: HtmlEscapedString[];
+  overflowChips?: HtmlEscapedString[];
   hidden?: boolean;
   outOfBand?: boolean;
 }): HtmlEscapedString {
@@ -310,7 +355,13 @@ function renderRecentQuestionsContainer(options: {
     ${options.hidden ? html`hidden` : html``}
   >
     <span class="squire-recent__label">Recent questions</span>
-    <div class="squire-recent__chips">${options.chips}</div>
+    <div class="squire-recent__chips">${options.visibleChips}</div>
+    ${options.overflowChips && options.overflowChips.length > 0
+      ? renderRecentQuestionsOverflow({
+          hiddenChipCount: options.overflowChips.length,
+          chips: options.overflowChips,
+        })
+      : html``}
   </nav>` as HtmlEscapedString;
 }
 
@@ -323,9 +374,20 @@ export function renderRecentQuestionsNav(
   optionsOrItems: RecentQuestionsNavOptions | RecentQuestionNavItem[],
   options?: { oob?: boolean },
 ): HtmlEscapedString {
+  const items = Array.isArray(optionsOrItems)
+    ? optionsOrItems
+    : optionsOrItems.questions
+        .filter((question) => question.id !== optionsOrItems.selectedMessageId)
+        .map((question) => ({
+          href: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
+          hxGet: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
+          label: question.content,
+          pushUrl: true,
+        }));
+
   if (Array.isArray(optionsOrItems)) {
     return renderRecentQuestionsContainer({
-      chips: optionsOrItems.map((item) =>
+      visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
         renderRecentQuestionChip({
           href: item.href,
           hxGet: item.hxGet,
@@ -333,26 +395,38 @@ export function renderRecentQuestionsNav(
           pushUrl: item.pushUrl,
         }),
       ),
-      hidden: optionsOrItems.length === 0,
+      overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
+        renderRecentQuestionChip({
+          href: item.href,
+          hxGet: item.hxGet,
+          label: item.label,
+          pushUrl: item.pushUrl,
+        }),
+      ),
+      hidden: items.length === 0,
       outOfBand: options?.oob,
     });
   }
 
-  const eligibleQuestions = optionsOrItems.questions.filter(
-    (question) => question.id !== optionsOrItems.selectedMessageId,
-  );
-
-  if (eligibleQuestions.length === 0) {
+  if (items.length === 0) {
     return html`` as HtmlEscapedString;
   }
 
   return renderRecentQuestionsContainer({
-    chips: eligibleQuestions.map((question) =>
+    visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
       renderRecentQuestionChip({
-        href: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
-        hxGet: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
-        pushUrl: true,
-        label: question.content,
+        href: item.href,
+        hxGet: item.hxGet,
+        pushUrl: item.pushUrl,
+        label: item.label,
+      }),
+    ),
+    overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
+      renderRecentQuestionChip({
+        href: item.href,
+        hxGet: item.hxGet,
+        pushUrl: item.pushUrl,
+        label: item.label,
       }),
     ),
     outOfBand: optionsOrItems.outOfBand,
@@ -447,7 +521,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const recentQuestionsNav =
     options.recentQuestionsNav ??
     renderRecentQuestionsContainer({
-      chips: [
+      visibleChips: [
         renderStaticRecentQuestionChip('Looting'),
         renderStaticRecentQuestionChip('Element infusion'),
         renderStaticRecentQuestionChip('Negative scenario effects'),
@@ -644,8 +718,24 @@ export async function renderConversationPage(options: {
   conversationId: string;
   messages: ConversationMessage[];
   recentQuestionsNav?: HtmlEscapedString;
+  pendingStreamUrl?: string;
 }): Promise<HtmlEscapedString> {
-  const transcript = renderConversationTranscript(options.conversationId, options.messages);
+  const currentTurn = findCurrentConversationTurn(options.messages);
+  const transcript = !currentTurn
+    ? renderConversationTranscript(options.conversationId, options.messages)
+    : currentTurn.assistantMessage
+      ? renderSelectedMessageSurface({
+          selectedQuestion: currentTurn.userMessage,
+          selectedAnswer: currentTurn.assistantMessage,
+          isEarlierQuestion: false,
+        })
+      : (html`<section
+          class="squire-transcript squire-transcript--pending"
+          aria-label="Conversation transcript"
+          ${options.pendingStreamUrl ? html`data-stream-url="${options.pendingStreamUrl}"` : html``}
+        >
+          ${renderQuestionTurn(currentTurn.userMessage.content)} ${renderPendingAnswerSkeleton()}
+        </section>` as HtmlEscapedString);
 
   return layoutShell({
     session: options.session,
@@ -789,4 +879,12 @@ export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEs
   >
     ${renderQuestionTurn(options.question)} ${renderPendingAnswerSkeleton()}
   </section>` as HtmlEscapedString;
+}
+
+export function renderPendingTurnShellWithRecentQuestions(
+  options: PendingTurnShellOptions & {
+    recentQuestionsNav: HtmlEscapedString;
+  },
+): HtmlEscapedString {
+  return html`${renderPendingTurnShell(options)} ${options.recentQuestionsNav}` as HtmlEscapedString;
 }

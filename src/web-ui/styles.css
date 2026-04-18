@@ -391,16 +391,28 @@ html {
 /* 4. Recent-questions chip row — empty in SQR-65 (SQR-6 populates it). */
 .squire-recent {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
   padding: 8px 16px;
-  min-height: 36px;
+  min-height: 52px;
   flex-shrink: 0;
-  overflow-x: auto;
+}
+
+.squire-recent__label {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
 }
 
 .squire-recent__chips {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
 }
 
 /* 5. Input dock — sticky at the bottom of the viewport, never collapses,
@@ -669,6 +681,48 @@ html {
   font-size: 12px;
   color: var(--sepia);
   white-space: nowrap;
+  max-width: min(100%, 22rem);
+  overflow: hidden;
+  text-decoration: none;
+  text-overflow: ellipsis;
+}
+
+.squire-recent__overflow {
+  width: 100%;
+}
+
+.squire-recent__overflow > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.squire-recent__overflow > summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-recent .squire-chip--overflow {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.squire-chip__overflow-copy {
+  color: var(--parchment-dim);
+}
+
+.squire-chip__overflow-count {
+  color: var(--sepia);
+}
+
+.squire-recent__overflow-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
 }
 
 /* SQR-67 — "Squire recommends" verdict block. 3px wax left border rail,
@@ -1206,11 +1260,10 @@ template#squire-banner-fixtures {
 }
 
 .squire-answer__tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  margin: 0 0 16px;
-  font-size: 11px;
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--sepia);
@@ -1218,12 +1271,27 @@ template#squire-banner-fixtures {
 
 .squire-answer__tool {
   display: inline-flex;
-  align-items: center;
-  min-height: 20px;
+  align-items: baseline;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 18px;
 }
 
-.squire-answer__tool.is-complete {
-  color: var(--parchment-dim);
+.squire-answer__tool-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.squire-answer__tool-state {
+  color: inherit;
+  white-space: nowrap;
+}
+
+.squire-answer__tool-state::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--sepia-dim);
 }
 
 .squire-answer__tool.is-error {
