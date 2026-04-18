@@ -11,6 +11,9 @@ import { getDb } from './db.ts';
 import { traversalLinks, traversalScenarios, traversalSections } from './db/schema/traversal.ts';
 import type { TraversalKind, TraversalLinkType } from './traversal-schemas.ts';
 
+export const TRAVERSAL_BOOTSTRAP_MESSAGE =
+  'No traversal data found in Postgres. Run `npm run seed:traversal` first.';
+
 export interface TraversalScenario extends Record<string, unknown> {
   ref: string;
   scenarioGroup: string;
@@ -48,6 +51,16 @@ export interface TraversalLink extends Record<string, unknown> {
 
 interface LoadOpts {
   game?: string;
+}
+
+export interface TraversalBootstrapStatus {
+  ready: boolean;
+  scenarioCount: number;
+  sectionCount: number;
+  linkCount: number;
+  error?: string;
+  missingStep?: 'npm run seed:traversal';
+  reason?: 'missing_traversal' | 'dependency_unavailable';
 }
 
 function normalizeJsonObject(value: unknown): Record<string, unknown> {
@@ -204,4 +217,46 @@ export async function followLinks(
   `);
 
   return rows.rows;
+}
+
+export async function getTraversalBootstrapStatus(
+  opts: LoadOpts = {},
+): Promise<TraversalBootstrapStatus> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+
+  try {
+    const rows = await db.execute<{
+      scenarioCount: number;
+      sectionCount: number;
+      linkCount: number;
+    }>(sql`
+      SELECT
+        (SELECT count(*)::int FROM ${traversalScenarios} WHERE game = ${game}) AS "scenarioCount",
+        (SELECT count(*)::int FROM ${traversalSections} WHERE game = ${game}) AS "sectionCount",
+        (SELECT count(*)::int FROM ${traversalLinks} WHERE game = ${game}) AS "linkCount"
+    `);
+    const counts = rows.rows[0] ?? { scenarioCount: 0, sectionCount: 0, linkCount: 0 };
+    const ready = counts.scenarioCount > 0 && counts.sectionCount > 0 && counts.linkCount > 0;
+    if (ready) {
+      return { ready, ...counts };
+    }
+    return {
+      ready: false,
+      ...counts,
+      error: TRAVERSAL_BOOTSTRAP_MESSAGE,
+      missingStep: 'npm run seed:traversal',
+      reason: 'missing_traversal',
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      ready: false,
+      scenarioCount: 0,
+      sectionCount: 0,
+      linkCount: 0,
+      error: `traversal data query failed: ${message}`,
+      reason: 'dependency_unavailable',
+    };
+  }
 }

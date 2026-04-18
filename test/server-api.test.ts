@@ -717,6 +717,37 @@ describe('POST /api/ask', () => {
     expect(body).not.toHaveProperty('missing_bootstrap_steps');
   });
 
+  it('returns 503 when traversal data is missing for ask', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'boot_blocked',
+        ready: false,
+        bootstrapReady: false,
+        askReady: false,
+        missingBootstrapSteps: ['npm run seed:traversal'],
+        errors: ['No traversal data found in Postgres. Run `npm run seed:traversal` first.'],
+        capabilities: {
+          rules: { allowed: true, reason: null, message: null },
+          cards: { allowed: true, reason: null, message: null },
+          ask: {
+            allowed: false,
+            reason: 'missing_traversal',
+            message: 'No traversal data found in Postgres. Run `npm run seed:traversal` first.',
+          },
+        },
+      }),
+    );
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'show the full text of section 90.2' }),
+    });
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe('Service unavailable.');
+  });
+
   it('emits error event when ask() throws', async () => {
     mockAsk.mockRejectedValue(new Error('Claude API error'));
     const res = await app.request('/api/ask', {

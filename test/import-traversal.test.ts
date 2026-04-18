@@ -34,4 +34,16 @@ describe('importTraversal', () => {
     expect(synthetic).toBeDefined();
     expect(synthetic!.name).toBe('Gaps in the Road');
   });
+
+  it('recovers spaced OCR section refs like 37.1 from the section book', () => {
+    const section = extract.sections.find((record) => record.ref === '37.1');
+    expect(section).toBeDefined();
+    expect(section!.text).toContain('harsh trek through deep');
+  });
+
+  it('repairs obviously broken section bodies like 80.1 from linear PDF text', () => {
+    const section = extract.sections.find((record) => record.ref === '80.1');
+    expect(section).toBeDefined();
+    expect(section!.text).toContain('You settle into a booth at the Boiled Crab');
+  });
 });

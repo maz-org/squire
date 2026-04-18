@@ -33,8 +33,9 @@ const PAGE_SENTINEL = '__SQUIRE_PAGE__';
 const FOOTER_RE = /2023\s+CEPHALOFAIR|ALL\s+RIGHTS\s+RESERVED|USED\s+WITH\s+PERMISSION/i;
 const HEADING_RE =
   /^(Section Links|Special Rules|Rewards|Conclusion|Scenario Goals|Scenario Key|Map Layout|Loot|Introduction|Goal)$/i;
-const SECTION_LINK_RE = /^(\d+\.\d+)\s*•\s*(.+?)(?:\((\d+)\))?$/;
+const SECTION_LINK_RE = /^([\d\s]+\.\s*\d+)\s*•\s*(.+?)(?:\((\d+)\))?$/;
 const BOOK_RANGE_RE = /^fh-(scenario|section)-book-(\d+)-(\d+)\.pdf$/;
+const SINGLE_MARKER_RE = /^[A-Z#]$/;
 
 interface SourceScenarioRecord {
   scenarioGroup: 'main' | 'solo' | 'random';
@@ -84,6 +85,7 @@ interface PdfPage {
 interface PdfLine {
   text: string;
   x: number;
+  xEnd: number;
   y: number;
 }
 
@@ -92,6 +94,7 @@ interface SectionEntry {
   label: string;
   targetScenarioIndex: string | null;
   x: number;
+  xEnd: number;
   y: number;
   rawText: string;
 }
@@ -100,6 +103,11 @@ interface BookRange {
   kind: 'scenario' | 'section';
   start: number;
   end: number;
+}
+
+interface SectionMatchPosition {
+  ref: string;
+  index: number;
 }
 
 function parseBookRange(pdfName: string): BookRange {
@@ -193,6 +201,7 @@ function buildLines(items: PdfItem[]): PdfLine[] {
 
       return segments.map((segment) => ({
         x: segment[0].x,
+        xEnd: segment.at(-1)!.x,
         y: line.y,
         text: normalizeInlineText(segment.map((item) => item.text).join('')),
       }));
@@ -204,6 +213,15 @@ function normalizeBlockText(lines: PdfLine[]): string {
   return lines
     .map((line) => line.text)
     .join('\n')
+    .replace(/([A-Za-z])-\n([A-Za-z])/g, '$1$2')
+    .replace(/([A-Za-z])\n([a-z])/g, '$1$2')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function normalizeRawBlockText(text: string): string {
+  return text
     .replace(/([A-Za-z])-\n([A-Za-z])/g, '$1$2')
     .replace(/([A-Za-z])\n([a-z])/g, '$1$2')
     .replace(/[ \t]+\n/g, '\n')
@@ -291,10 +309,11 @@ function parseSectionEntries(lines: PdfLine[]): SectionEntry[] {
     const match = line.text.match(SECTION_LINK_RE);
     if (!match) continue;
     entries.push({
-      ref: match[1],
+      ref: match[1].replace(/\s+/g, ''),
       label: normalizeInlineText(match[2]),
       targetScenarioIndex: match[3] ?? null,
       x: line.x,
+      xEnd: line.xEnd,
       y: line.y,
       rawText: line.text,
     });
@@ -302,13 +321,17 @@ function parseSectionEntries(lines: PdfLine[]): SectionEntry[] {
   return entries;
 }
 
+function horizontalCenter(entry: { x: number; xEnd: number }): number {
+  return (entry.x + entry.xEnd) / 2;
+}
+
 function quadrantFor(
-  entry: { x: number; y: number },
+  entry: { x: number; xEnd: number; y: number },
   xThreshold: number,
   yThreshold: number,
 ): string {
   const row = entry.y > yThreshold ? 'top' : 'bottom';
-  const col = entry.x < xThreshold ? 'left' : 'right';
+  const col = horizontalCenter(entry) < xThreshold ? 'left' : 'right';
   return `${row}-${col}`;
 }
 
@@ -324,56 +347,66 @@ function buildSectionsFromPage(
   const entries = parseSectionEntries(lines);
   if (entries.length === 0) return { sections: [], entryLinks: [] };
 
-  const entryXs = entries.map((entry) => entry.x).sort((a, b) => a - b);
+  const entryXs = entries.map((entry) => horizontalCenter(entry)).sort((a, b) => a - b);
   const entryYs = entries.map((entry) => entry.y).sort((a, b) => a - b);
   const xThreshold = (entryXs[0] + entryXs.at(-1)!) / 2;
   const yThreshold = (entryYs[0] + entryYs.at(-1)!) / 2;
-  const entriesByQuadrant = new Map(
-    entries.map((entry) => [quadrantFor(entry, xThreshold, yThreshold), entry]),
-  );
+  const entriesByQuadrant = new Map<string, SectionEntry[]>();
+  for (const entry of entries) {
+    const quadrant = quadrantFor(entry, xThreshold, yThreshold);
+    const quadrantEntries = entriesByQuadrant.get(quadrant) ?? [];
+    quadrantEntries.push(entry);
+    entriesByQuadrant.set(quadrant, quadrantEntries);
+  }
 
   const sections: TraversalSectionRecord[] = [];
   const entryLinks: Array<{ entry: SectionEntry; link: Omit<TraversalLinkRecord, 'sequence'> }> =
     [];
 
-  for (const [quadrant, entry] of entriesByQuadrant.entries()) {
-    const quadrantLines = lines.filter((line) => {
-      if (line.text === entry.rawText) return false;
-      if (HEADING_RE.test(line.text)) return false;
-      const lineQuadrant = quadrantFor(line, xThreshold, yThreshold);
-      if (lineQuadrant !== quadrant) return false;
-      return line.y < entry.y - 8;
-    });
+  for (const [quadrant, quadrantEntries] of entriesByQuadrant.entries()) {
+    const sortedEntries = [...quadrantEntries].sort((a, b) => b.y - a.y);
+    for (const [index, entry] of sortedEntries.entries()) {
+      const nextEntry = sortedEntries[index + 1] ?? null;
+      const quadrantLines = lines.filter((line) => {
+        if (line.text === entry.rawText) return false;
+        if (HEADING_RE.test(line.text)) return false;
+        const lineQuadrant = quadrantFor(line, xThreshold, yThreshold);
+        if (lineQuadrant !== quadrant) return false;
+        if (line.y >= entry.y - 8) return false;
+        if (nextEntry && line.y <= nextEntry.y + 8) return false;
+        return true;
+      });
 
-    const bodyText = normalizeBlockText(quadrantLines);
-    if (!bodyText) continue;
+      const bodyText = normalizeBlockText(quadrantLines);
+      if (!bodyText) continue;
 
-    const [sectionNumber, sectionVariant] = entry.ref.split('.').map(Number);
-    sections.push({
-      ref: entry.ref,
-      sectionNumber,
-      sectionVariant,
-      sourcePdf: pdfName,
-      sourcePage: pageNumber,
-      text: bodyText,
-      metadata: {
-        quadrant,
-      },
-    });
-
-    if (entry.targetScenarioIndex) {
-      entryLinks.push({
-        entry,
-        link: {
-          fromKind: 'section',
-          fromRef: entry.ref,
-          toKind: 'scenario',
-          toRef: entry.targetScenarioIndex,
-          linkType: 'section_link',
-          rawLabel: entry.label,
-          rawContext: entry.rawText,
+      const [sectionNumber, sectionVariant] = entry.ref.split('.').map(Number);
+      sections.push({
+        ref: entry.ref,
+        sectionNumber,
+        sectionVariant,
+        sourcePdf: pdfName,
+        sourcePage: pageNumber,
+        text: bodyText,
+        metadata: {
+          quadrant,
         },
       });
+
+      if (entry.targetScenarioIndex) {
+        entryLinks.push({
+          entry,
+          link: {
+            fromKind: 'section',
+            fromRef: entry.ref,
+            toKind: 'scenario',
+            toRef: entry.targetScenarioIndex,
+            linkType: 'section_link',
+            rawLabel: entry.label,
+            rawContext: entry.rawText,
+          },
+        });
+      }
     }
   }
 
@@ -386,6 +419,103 @@ function addSequencedLinks(
 ): void {
   for (const [sequence, link] of links.entries()) {
     target.push({ ...link, sequence });
+  }
+}
+
+function isSuspiciousSectionText(text: string): boolean {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (normalized.length < 20) return true;
+  if (!/[A-Za-z]{4}/.test(normalized)) return true;
+  return false;
+}
+
+function buildSectionRefRegex(ref: string): RegExp {
+  const [sectionNumber, sectionVariant] = ref.split('.');
+  const spacedSectionNumber = sectionNumber.split('').join('\\s*');
+  const spacedSectionVariant = sectionVariant.split('').join('\\s*');
+  return new RegExp(`(?<!\\d)${spacedSectionNumber}\\s*\\.\\s*${spacedSectionVariant}(?!\\d)`, 'm');
+}
+
+const linearPdfTextCache = new Map<string, Promise<string>>();
+
+async function loadLinearPdfText(pdfName: string): Promise<string> {
+  const cached = linearPdfTextCache.get(pdfName);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    const pdfPath = join(PDFS_DIR, pdfName);
+    const buffer = readFileSync(pdfPath);
+    const parsePdf = pdfParse as unknown as (data: Buffer) => Promise<{ text: string }>;
+    const parsed = await parsePdf(buffer);
+    return parsed.text;
+  })();
+
+  linearPdfTextCache.set(pdfName, promise);
+  return promise;
+}
+
+function findSectionMatchPosition(text: string, ref: string): SectionMatchPosition | null {
+  const match = buildSectionRefRegex(ref).exec(text);
+  if (!match || match.index === undefined) return null;
+  return { ref, index: match.index };
+}
+
+function extractLinearSectionText(
+  pdfText: string,
+  ref: string,
+  nextRefIndex: number,
+): string | null {
+  const match = buildSectionRefRegex(ref).exec(pdfText);
+  if (!match || match.index === undefined) return null;
+
+  let slice = pdfText.slice(match.index, nextRefIndex);
+  slice = slice.replace(buildSectionRefRegex(ref), '').trimStart();
+
+  const lines = slice
+    .split('\n')
+    .map((line) => normalizeInlineText(line))
+    .filter(Boolean)
+    .filter((line) => !FOOTER_RE.test(line))
+    .filter((line) => !/^\d+$/.test(line))
+    .filter((line) => !SINGLE_MARKER_RE.test(line));
+
+  while (lines[0]?.startsWith('•')) {
+    lines.shift();
+  }
+
+  const cleaned = normalizeRawBlockText(lines.join('\n'));
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+async function repairSuspiciousSectionBodies(
+  sectionsByRef: Map<string, TraversalSectionRecord>,
+): Promise<void> {
+  const sectionsByPdf = new Map<string, TraversalSectionRecord[]>();
+  for (const section of sectionsByRef.values()) {
+    const sections = sectionsByPdf.get(section.sourcePdf) ?? [];
+    sections.push(section);
+    sectionsByPdf.set(section.sourcePdf, sections);
+  }
+
+  for (const [pdfName, pdfSections] of sectionsByPdf.entries()) {
+    const suspicious = pdfSections.filter((section) => isSuspiciousSectionText(section.text));
+    if (suspicious.length === 0) continue;
+
+    const pdfText = await loadLinearPdfText(pdfName);
+    const positions = pdfSections
+      .map((section) => findSectionMatchPosition(pdfText, section.ref))
+      .filter((position): position is SectionMatchPosition => position !== null)
+      .sort((a, b) => a.index - b.index);
+    const positionIndexByRef = new Map(positions.map((position, index) => [position.ref, index]));
+
+    for (const section of suspicious) {
+      const positionIndex = positionIndexByRef.get(section.ref);
+      if (positionIndex === undefined) continue;
+      const nextRefIndex = positions[positionIndex + 1]?.index ?? pdfText.length;
+      const repairedText = extractLinearSectionText(pdfText, section.ref, nextRefIndex);
+      if (!repairedText || isSuspiciousSectionText(repairedText)) continue;
+      section.text = repairedText;
+    }
   }
 }
 
@@ -570,6 +700,8 @@ function buildTraversalExtract(): Promise<TraversalExtract> {
         );
       }
     }
+
+    await repairSuspiciousSectionBodies(sectionsByRef);
 
     const validatedLinks = links.filter((link) => {
       if (link.fromKind === 'scenario' && !scenariosByRef.has(link.fromRef)) {
