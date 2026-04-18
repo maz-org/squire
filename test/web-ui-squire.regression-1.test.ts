@@ -325,4 +325,15 @@ describe('squire.js selected-message retargeting', () => {
     expect(toolsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('This assistant is for Frosthaven.');
   });
+
+  it('ignores late tool-status events once answer prose is already on screen', () => {
+    const { contentEl, source, toolsEl } = bootPendingTranscript();
+
+    source.emit('text-delta', { delta: 'Monsters cannot loot treasure tiles.' });
+    source.emit('tool-start', { id: 'rulebook', label: 'RULEBOOK' });
+    source.emit('tool-result', { id: 'rulebook', label: 'RULEBOOK', ok: true });
+
+    expect(toolsEl.children).toHaveLength(0);
+    expect(contentEl.querySelector('p')?.textContent).toBe('Monsters cannot loot treasure tiles.');
+  });
 });

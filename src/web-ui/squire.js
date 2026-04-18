@@ -246,8 +246,6 @@ function renderToolStatusRow(row, label, state) {
   row.dataset.toolState = state;
 
   var labelEl = row.querySelector('.squire-answer__tool-label');
-  if (labelEl) labelEl.textContent = label || 'REFERENCE';
-
   var stateEl = row.querySelector('.squire-answer__tool-state');
   if (!stateEl) return;
 
@@ -262,6 +260,17 @@ function renderToolStatusRow(row, label, state) {
     if (labelEl) labelEl.textContent = "COULDN'T CHECK";
     stateEl.textContent = 'ONE SOURCE';
     return;
+  }
+
+  if (labelEl) labelEl.textContent = label || 'REFERENCE';
+}
+
+function clearToolStatusRows(toolsEl, toolEntries) {
+  if (!toolsEl) return;
+
+  toolsEl.replaceChildren();
+  for (var toolId in toolEntries) {
+    delete toolEntries[toolId];
   }
 }
 
@@ -309,7 +318,7 @@ function handlePendingTranscript(transcript) {
       seenFirstDelta = true;
       answerEl.setAttribute('data-stream-state', 'streaming');
       if (skeletonEl) skeletonEl.hidden = true;
-      if (toolPhaseStarted && toolsEl) toolsEl.replaceChildren();
+      if (toolPhaseStarted) clearToolStatusRows(toolsEl, toolEntries);
     }
 
     if (!contentEl) return;
@@ -348,6 +357,10 @@ function handlePendingTranscript(transcript) {
 
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
+    if (seenFirstDelta) {
+      clearToolStatusRows(toolsEl, toolEntries);
+      return;
+    }
     var payload = JSON.parse(event.data || '{}');
     preToolBuffer = '';
     toolPhaseStarted = true;
@@ -357,6 +370,10 @@ function handlePendingTranscript(transcript) {
 
   source.addEventListener('tool-result', function (event) {
     if (!toolsEl) return;
+    if (seenFirstDelta) {
+      clearToolStatusRows(toolsEl, toolEntries);
+      return;
+    }
     var payload = JSON.parse(event.data || '{}');
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
