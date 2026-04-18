@@ -524,6 +524,41 @@ describe('conversation web backend', () => {
     expect(recentNav).toContain('hidden');
   });
 
+  it('renders only the new pending turn when a selected-message page submits a follow-up', async () => {
+    // Regression: ISSUE-001 — selected-message follow-up fell back to transcript mode
+    // Found by /qa on 2026-04-18
+    // Report: .gstack/qa-reports/qa-report-localhost-5018-2026-04-18.md
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+        },
+        body: formBody({ question: 'Newest question' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('Newest question');
+    expect(body).toContain('class="squire-answer__skeleton"');
+    expect(body).not.toContain('First question');
+    expect(body).not.toContain('First answer');
+    expect(body).not.toContain('Second question');
+    expect(body).not.toContain('Second answer');
+  });
+
   it('does not clear the recent-questions rail on a normal conversation follow-up', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [

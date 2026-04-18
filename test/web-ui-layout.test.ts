@@ -715,6 +715,22 @@ describe('selected-message rendering helpers', () => {
     expect(body).toContain('hx-swap="innerHTML"');
     expect(body).toContain('hx-push-url="true"');
   });
+
+  it('renders selected-message follow-up pending state as only the new question plus pending answer', () => {
+    const body = String(
+      actualLayout.renderPendingTurnShellWithRecentQuestions({
+        question: 'Newest question',
+        streamUrl: '/chat/conv-123/messages/m7/stream',
+        recentQuestionsNav: actualLayout.renderRecentQuestionsNav([], { oob: true }),
+      }),
+    );
+
+    expect(body).toContain('Newest question');
+    expect(body).toContain('class="squire-answer__skeleton"');
+    expect(body).not.toContain('Oldest question');
+    expect(body).not.toContain('Newest answer.');
+    expect(body).toContain('id="squire-recent-questions"');
+  });
 });
 
 describe('GET / — signature components (SQR-66)', () => {
