@@ -790,3 +790,11 @@ export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEs
     ${renderQuestionTurn(options.question)} ${renderPendingAnswerSkeleton()}
   </section>` as HtmlEscapedString;
 }
+
+export function renderPendingTurnShellWithRecentQuestions(
+  options: PendingTurnShellOptions & {
+    recentQuestionsNav: HtmlEscapedString;
+  },
+): HtmlEscapedString {
+  return html`${renderPendingTurnShell(options)} ${options.recentQuestionsNav}` as HtmlEscapedString;
+}

@@ -58,13 +58,13 @@ import {
   layoutShell,
   renderConversationTranscript,
   renderConversationTranscriptWithPendingTurn,
-  renderConversationTranscriptWithPendingTurnAndRecentQuestions,
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
   renderMarkdownStyleguidePage,
   renderNotInvitedPage,
   renderPendingTurnShell,
+  renderPendingTurnShellWithRecentQuestions,
   renderRecentQuestionsNav,
   renderSelectedMessageSurface,
   renderSelectedMessageSurfaceWithRecentQuestions,
@@ -778,9 +778,8 @@ app.post('/chat/:conversationId/messages', async (c) => {
     if (!loaded) return c.notFound();
     if (isSelectedMessagePageRequest(c)) {
       return c.html(
-        renderConversationTranscriptWithPendingTurnAndRecentQuestions({
-          conversationId: loaded.conversation.id,
-          messages: loaded.messages,
+        renderPendingTurnShellWithRecentQuestions({
+          question: pending.currentUserMessage.content,
           streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
           recentQuestionsNav: renderRecentQuestionsNav([], { oob: true }),
         }),
