@@ -30,18 +30,26 @@ const FAKE_RULE_HITS = [
   {
     id: 'chunk-1',
     text: 'Loot action: pick up all loot tokens in your hex.',
-    source: 'rulebook.pdf:42',
+    source: 'fh-rule-book.pdf',
     chunkIndex: 0,
     game: 'frosthaven',
     score: 0.92,
   },
   {
     id: 'chunk-2',
-    text: 'Movement rules: a figure must move at least one hex.',
-    source: 'rulebook.pdf:15',
+    text: 'Scenario setup: place the overlay tiles shown in the diagram.',
+    source: 'fh-scenario-book-42-61.pdf',
     chunkIndex: 1,
     game: 'frosthaven',
     score: 0.61,
+  },
+  {
+    id: 'chunk-3',
+    text: 'Section 67.1 links to Life and Death (scenario 61).',
+    source: 'fh-section-book-62-81.pdf',
+    chunkIndex: 2,
+    game: 'frosthaven',
+    score: 0.58,
   },
 ];
 
@@ -58,15 +66,26 @@ afterAll(async () => {
 // ─── searchRules ─────────────────────────────────────────────────────────────
 
 describe('searchRules', () => {
-  it('returns structured results with text, source, and score', async () => {
+  it('returns structured results with text, source, sourceLabel, and score', async () => {
     const results: RuleResult[] = await searchRules('loot action');
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]).toHaveProperty('text');
     expect(results[0]).toHaveProperty('source');
+    expect(results[0]).toHaveProperty('sourceLabel');
     expect(results[0]).toHaveProperty('score');
     expect(typeof results[0].text).toBe('string');
     expect(typeof results[0].source).toBe('string');
+    expect(typeof results[0].sourceLabel).toBe('string');
     expect(typeof results[0].score).toBe('number');
+  });
+
+  it('adds source labels that distinguish rulebook, scenario, and section books', async () => {
+    const results = await searchRules('scenario 61');
+    expect(results.map((r) => [r.source, r.sourceLabel])).toEqual([
+      ['fh-rule-book.pdf', 'Rulebook'],
+      ['fh-scenario-book-42-61.pdf', 'Scenario Book 42-61'],
+      ['fh-section-book-62-81.pdf', 'Section Book 62-81'],
+    ]);
   });
 
   it('respects topK parameter', async () => {

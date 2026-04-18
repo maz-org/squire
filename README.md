@@ -28,7 +28,7 @@ All queries are traced with [Langfuse](https://langfuse.com) for observability.
 ## Setup
 
 Requires Node.js 24+ (uses native TypeScript execution) and Docker (for the
-local Postgres + pgvector database that holds the rulebook embeddings).
+local Postgres + pgvector database that holds the indexed Frosthaven book embeddings).
 
 ```bash
 # Clone the repo
@@ -57,7 +57,7 @@ npm run db:migrate
 # Optional: migrate the test DB too if you plan to run the test suite
 npm run db:migrate:test
 
-# Index the rulebooks into pgvector (one-time, ~1 minute)
+# Index the Frosthaven books into pgvector (one-time, ~1 minute)
 npm run index
 
 # Seed the card tables + a local dev user (idempotent)

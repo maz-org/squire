@@ -4,6 +4,7 @@
  */
 
 import { embed } from './embedder.ts';
+import { formatRetrievalSourceLabel } from './retrieval-source.ts';
 import { search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
 import { countsByType, load, loadOne, searchExtractedRanked, TYPES } from './extracted-data.ts';
@@ -14,6 +15,7 @@ import type { CardType } from './schemas.ts';
 export interface RuleResult {
   text: string;
   source: string;
+  sourceLabel: string;
   score: number;
 }
 
@@ -47,8 +49,9 @@ function stripInternalKeys(record: Record<string, unknown>): Record<string, unkn
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
 /**
- * Search the rulebook vector index for passages relevant to a query.
- * Returns structured results with text, source, and similarity score.
+ * Search the indexed Frosthaven book corpus for passages relevant to a query.
+ * Returns structured results with text, raw source, display label, and
+ * similarity score.
  *
  * `opts.game` is threaded through to `vector-store.search`, which filters
  * on the `game` column of the embeddings table. Defaults to `'frosthaven'`
@@ -61,6 +64,7 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
   return hits.map((h) => ({
     text: h.text,
     source: h.source,
+    sourceLabel: formatRetrievalSourceLabel(h.source),
     score: h.score,
   }));
 }

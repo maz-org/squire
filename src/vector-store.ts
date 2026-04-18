@@ -1,5 +1,5 @@
 /**
- * Retrieval layer: rulebook vector store backed by Postgres + pgvector.
+ * Retrieval layer: Frosthaven book-corpus vector store backed by Postgres + pgvector.
  *
  * Replaces the previous flat-file `data/index.json` implementation. Everything
  * this module exports — including `EMBEDDING_VERSION` and the drift guard —
@@ -76,7 +76,7 @@ export async function ensureHnswIndex(): Promise<void> {
 }
 
 /**
- * Upsert rulebook chunk embeddings into the `embeddings` table.
+ * Upsert indexed-book chunk embeddings into the `embeddings` table.
  *
  * Idempotent: uses `ON CONFLICT (source, chunk_index) DO NOTHING`, so
  * reindexing the same PDF twice is a no-op. If chunking changes for an
@@ -194,7 +194,7 @@ function wrapDbError(err: unknown): Error {
 }
 
 export const EMBEDDINGS_BOOTSTRAP_MESSAGE =
-  'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.';
+  'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.';
 
 export interface RetrievalBootstrapStatus {
   ready: boolean;

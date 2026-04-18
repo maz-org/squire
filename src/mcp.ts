@@ -21,7 +21,8 @@ export function createMcpServer(): McpServer {
   server.registerTool(
     'search_rules',
     {
-      description: 'Search the Frosthaven rulebook for passages relevant to a query.',
+      description:
+        'Search the indexed Frosthaven books (rulebook, scenario book, section book, puzzle book) for passages relevant to a query.',
       inputSchema: {
         query: z.string().describe('Search query'),
         topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),

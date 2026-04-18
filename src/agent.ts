@@ -23,10 +23,10 @@ export const MAX_AGENT_ITERATIONS = 10;
 const MAX_HISTORY_TURNS = 20;
 
 export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \
-for searching the rulebook and looking up card data. Use the tools to find relevant information before answering.
+for searching the indexed Frosthaven books and looking up card data. Use the tools to find relevant information before answering.
 
 Guidelines:
-- Use search_rules for rulebook questions (rules, mechanics, timing, etc.)
+- Use search_rules for book-corpus questions (rules, mechanics, timing, scenario text, section text, etc.)
 - Use search_cards for questions about specific cards, monsters, items, or abilities
 - Use get_card for precise lookups when you know the card type and name/number
 - Use list_card_types to discover what data is available
@@ -39,7 +39,8 @@ Guidelines:
 export const AGENT_TOOLS: Tool[] = [
   {
     name: 'search_rules',
-    description: 'Search the Frosthaven rulebook for passages relevant to a query.',
+    description:
+      'Search the indexed Frosthaven books (rulebook, scenario book, section book, puzzle book) for passages relevant to a query.',
     input_schema: {
       type: 'object',
       properties: {

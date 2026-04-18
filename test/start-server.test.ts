@@ -63,7 +63,7 @@ async function loadStartServer(options: {
       askReady: false,
       missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
       errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         'No card data found in Postgres. Run `npm run seed:cards` first.',
       ],
       capabilities: {
@@ -71,7 +71,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         },
         cards: {
           allowed: false,
@@ -82,7 +82,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         },
       },
     }),
@@ -98,7 +98,7 @@ async function loadStartServer(options: {
       askReady: false,
       missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
       errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         'No card data found in Postgres. Run `npm run seed:cards` first.',
       ],
       capabilities: {
@@ -106,7 +106,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         },
         cards: {
           allowed: false,
@@ -117,7 +117,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+            'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         },
       },
     }),

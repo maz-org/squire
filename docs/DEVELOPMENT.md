@@ -58,21 +58,21 @@ test user for authenticated code paths without doing the Google round-trip, but
 note that the browser sign-in UI still follows the real Google OAuth flow.
 
 Extracted card data (`data/extracted/*.json`) is committed to the repo.
-The rulebook vector index lives in Postgres (pgvector) and is populated by
+The Frosthaven book vector index lives in Postgres (pgvector) and is populated by
 running `npm run index` against a local docker-compose Postgres — see the
 [Database setup](#database-setup) and [Data management](#data-management)
 sections below.
 
 ## Database setup
 
-Squire uses Postgres + pgvector for rulebook embeddings, card data, and
+Squire uses Postgres + pgvector for indexed Frosthaven book embeddings, card data, and
 OAuth state. Local dev runs it via docker-compose:
 
 ```bash
 docker compose up -d      # first run: creates the main-checkout DBs
 npm run db:migrate        # apply Drizzle migrations to the dev DB
 npm run db:migrate:test   # apply Drizzle migrations to the test DB
-npm run index             # populate rulebook embeddings from data/pdfs/
+npm run index             # populate Frosthaven book embeddings from data/pdfs/
 ```
 
 `db:migrate` and `db:migrate:test` both go through `resolveDatabaseUrl()` in
@@ -179,7 +179,7 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 | Method | Path                         | Description                                                        |
 | ------ | ---------------------------- | ------------------------------------------------------------------ |
 | GET    | `/api/health`                | Snapshot-only readiness check (`lifecycle`, `ready`, `warming_up`) |
-| GET    | `/api/search/rules?q=&topK=` | Vector search over rulebook passages                               |
+| GET    | `/api/search/rules?q=&topK=` | Vector search over indexed Frosthaven book passages                |
 | GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank`         |
 | GET    | `/api/card-types`            | List card types with record counts                                 |
 | GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                              |
@@ -223,7 +223,7 @@ Squire exposes 5 atomic tools via MCP at `/mcp`:
 
 | Tool              | Description                                                |
 | ----------------- | ---------------------------------------------------------- |
-| `search_rules`    | Vector search over rulebook passages                       |
+| `search_rules`    | Vector search over indexed Frosthaven book passages        |
 | `search_cards`    | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
 | `list_card_types` | List available card categories with counts                 |
 | `list_cards`      | List cards of a type with optional field filter            |
@@ -424,7 +424,7 @@ new file type under `src/` or `test/`, add it to `lint-staged` and leave
 
 ## Data management
 
-Frosthaven rulebook PDFs live in `data/pdfs/`. `src/index-docs.ts`
+Indexed Frosthaven books live in `data/pdfs/`. `src/index-docs.ts`
 (`npm run index`) chunks them, embeds each chunk with the local Xenova
 model, and upserts the result into the `embeddings` pgvector table. The
 flat-file `data/index.json` that used to hold this data was removed in
@@ -521,7 +521,7 @@ src/
   server.ts         # Hono HTTP server (REST + MCP transport)
   mcp.ts            # MCP tool registration (Streamable HTTP transport)
   agent.ts          # Knowledge agent loop (Claude Sonnet 4.6 + atomic tools)
-  index-docs.ts     # Rulebook PDF chunker + indexer (data/pdfs/)
+  index-docs.ts     # Frosthaven book PDF chunker + indexer (data/pdfs/)
   import-battle-goals.ts
   import-buildings.ts
   import-character-abilities.ts

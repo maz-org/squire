@@ -109,7 +109,7 @@ _Chat surface layout decision: the web UI renders ONE turn at a time on `main.sq
 
 ### Database
 
-- **Primary DB:** PostgreSQL. Rulebook embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
+- **Primary DB:** PostgreSQL. Indexed Frosthaven book embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
 - **Vector DB:** pgvector extension on the same Postgres instance
 - **ORM:** Drizzle, with `drizzle-kit` for migrations
 
@@ -137,7 +137,7 @@ _Note: embedding model and vector store are two independent choices that can evo
 
 ### Document parsing
 
-- **Rulebook ingestion:** `pdf-parse` for the Frosthaven and (forthcoming) Gloomhaven 2.0 rulebook PDFs in `data/pdfs/`, chunked and embedded into pgvector via `src/index-docs.ts`.
+- **Book-corpus ingestion:** `pdf-parse` for the Frosthaven PDFs in `data/pdfs/` (rulebook, scenario books, section books, puzzle book), chunked and embedded into pgvector via `src/index-docs.ts`.
 
 ### Authentication
 
@@ -218,7 +218,7 @@ Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2:
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 
 - **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2'` (extensible)
-- **Rule chunks** are implicitly tagged via filename prefix in `data/pdfs/`: `fh-rule-book.pdf`, `gh2-rule-book.pdf`, etc. The `source` field in the vector store carries the basename.
+- **Book chunks** are implicitly tagged via filename prefix in `data/pdfs/`: `fh-rule-book.pdf`, `fh-scenario-book-42-61.pdf`, `fh-section-book-62-81.pdf`, etc. The `source` field in the vector store carries the basename.
 - **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2', prosperity: 4 })`)
 - **Agent system prompt** is told which game the user is asking about. Phase 2 uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
 
@@ -256,7 +256,7 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 
 ### Rules Database
 
-- Extract text from rulebook PDFs in `data/pdfs/` using `pdf-parse`
+- Extract text from indexed Frosthaven book PDFs in `data/pdfs/` using `pdf-parse`
 - Chunk into semantic sections in `src/index-docs.ts`
 - Generate embeddings via the local Xenova model (see [Stack → Embeddings](#embeddings))
 - Store in the `embeddings` pgvector table (populated by `npm run index`; idempotent per-source upserts)
@@ -386,7 +386,7 @@ Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that works a
 
 | Tool                              | Purpose                                                                                                                                                                                     |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `searchRules(query, topK, opts?)` | Vector search over the rulebook RAG index. Accepts `opts.game` to filter on the embeddings table's `game` column.                                                                           |
+| `searchRules(query, topK, opts?)` | Vector search over the indexed Frosthaven book corpus. Returns raw `source`, display `sourceLabel`, and supports `opts.game`.                                                               |
 | `searchCards(query, topK, opts?)` | Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights.                           |
 | `listCardTypes(opts?)`            | Discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table.                                                                                  |
 | `listCards(type, filter?, opts?)` | List records of a given type with field-level AND filter, plus optional `opts.game`.                                                                                                        |
@@ -452,7 +452,7 @@ These are **emergent capabilities** — Squire never built features for them, bu
 }
 ```
 
-`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using only the rulebook and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
+`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using the indexed Frosthaven books and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
 
 The knowledge agent:
 

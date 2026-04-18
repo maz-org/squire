@@ -218,7 +218,7 @@ runtime store is the `card_*` tables in Postgres, populated by
 `npm run seed:cards`. The JSON files are refreshed automatically by
 the weekly CI workflow from GHS upstream data.
 
-The rulebook vector index lives in Postgres (pgvector), not on disk. On
+The Frosthaven book vector index lives in Postgres (pgvector), not on disk. On
 a fresh clone, bring up the local DB and populate it before running the
 server:
 
@@ -226,7 +226,7 @@ server:
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test   # if you plan to run the test suite in this checkout
-npm run index        # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
+npm run index        # chunks + embeds Frosthaven book PDFs into the embeddings table (~2 min)
 npm run seed:dev     # seeds card_* tables + a local dev user
 ```
 
