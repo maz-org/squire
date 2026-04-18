@@ -1134,7 +1134,7 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES' },
+        data: { id: 'search_rules', label: 'RULEBOOK' },
       },
       {
         event: 'text-delta',
@@ -1142,7 +1142,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: true },
+        data: { id: 'search_rules', label: 'RULEBOOK', ok: true },
       },
       {
         event: 'done',
@@ -1165,6 +1165,71 @@ describe('conversation web backend', () => {
         role: 'assistant',
         content: 'Loot tokens in your hex are picked up with **style**.',
         isError: false,
+      },
+    ]);
+  });
+
+  it('reuses one tool-status id when the same tool runs multiple times in one answer', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('tool_result', { name: 'search_rules' });
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('text', {
+        delta: 'You loot when the token is in your hex at end of turn.',
+      });
+      await options?.emit?.('tool_result', { name: 'search_rules' });
+      await options?.emit?.('done', {});
+      return 'You loot when the token is in your hex at end of turn.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'When do I loot?',
+        idempotencyKey: 'idem-stream-tool-dedupe',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'tool-start',
+        data: { id: 'search_rules', label: 'RULEBOOK' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'search_rules', label: 'RULEBOOK', ok: true },
+      },
+      {
+        event: 'tool-start',
+        data: { id: 'search_rules', label: 'RULEBOOK' },
+      },
+      {
+        event: 'text-delta',
+        data: { delta: 'You loot when the token is in your hex at end of turn.' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'search_rules', label: 'RULEBOOK', ok: true },
+      },
+      {
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>You loot when the token is in your hex at end of turn.</p>\n',
+        }),
       },
     ]);
   });
@@ -1315,11 +1380,11 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES' },
+        data: { id: 'search_rules', label: 'RULEBOOK' },
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: false },
+        data: { id: 'search_rules', label: 'RULEBOOK', ok: false },
       },
       {
         event: 'done',

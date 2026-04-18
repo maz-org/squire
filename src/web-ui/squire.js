@@ -141,6 +141,57 @@ function renderPendingError(answerEl, label, message) {
   answerEl.appendChild(banner);
 }
 
+function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
+  var row = toolEntries[toolId];
+  if (row) return row;
+
+  row = document.createElement('div');
+  row.className = 'squire-answer__tool';
+  row.dataset.toolId = toolId;
+
+  var labelEl = document.createElement('span');
+  labelEl.className = 'squire-answer__tool-label';
+  row.appendChild(labelEl);
+
+  var stateEl = document.createElement('span');
+  stateEl.className = 'squire-answer__tool-state';
+  row.appendChild(stateEl);
+
+  toolEntries[toolId] = row;
+  toolsEl.appendChild(row);
+  return row;
+}
+
+function renderToolStatusRow(row, label, state) {
+  if (!row) return;
+
+  row.classList.remove('is-complete', 'is-error');
+  row.dataset.toolState = state;
+
+  var labelEl = row.querySelector('.squire-answer__tool-label');
+  if (labelEl) labelEl.textContent = label || 'REFERENCE';
+
+  var stateEl = row.querySelector('.squire-answer__tool-state');
+  if (!stateEl) return;
+
+  if (state === 'running') {
+    if (labelEl) labelEl.textContent = 'CONSULTING';
+    stateEl.textContent = label || 'REFERENCE';
+    return;
+  }
+
+  if (state === 'error') {
+    row.classList.add('is-error');
+    if (labelEl) labelEl.textContent = "COULDN'T CHECK";
+    stateEl.textContent = 'ONE SOURCE';
+    return;
+  }
+
+  row.classList.add('is-complete');
+  if (labelEl) labelEl.textContent = 'CONSULTED';
+  stateEl.textContent = label || 'REFERENCE';
+}
+
 function handlePendingTranscript(transcript) {
   if (!transcript) return;
 
@@ -191,29 +242,15 @@ function handlePendingTranscript(transcript) {
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
     var payload = JSON.parse(event.data || '{}');
-    var existing = toolEntries[payload.id];
-    if (existing) return;
-    var row = document.createElement('div');
-    row.className = 'squire-answer__tool';
-    row.dataset.toolId = payload.id;
-    row.textContent = payload.label + '...';
-    toolEntries[payload.id] = row;
-    toolsEl.appendChild(row);
+    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
+    renderToolStatusRow(row, payload.label, 'running');
   });
 
   source.addEventListener('tool-result', function (event) {
     if (!toolsEl) return;
     var payload = JSON.parse(event.data || '{}');
-    var row = toolEntries[payload.id];
-    if (!row) {
-      row = document.createElement('div');
-      row.className = 'squire-answer__tool';
-      row.dataset.toolId = payload.id;
-      toolsEl.appendChild(row);
-      toolEntries[payload.id] = row;
-    }
-    row.classList.add(payload.ok ? 'is-complete' : 'is-error');
-    row.textContent = payload.label + (payload.ok ? ' done' : ' failed');
+    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
+    renderToolStatusRow(row, payload.label, payload.ok ? 'complete' : 'error');
   });
 
   source.addEventListener('done', function (event) {

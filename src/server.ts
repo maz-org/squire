@@ -582,8 +582,20 @@ function buildStreamUrl(conversationId: string, messageId: string): string {
   return `/chat/${conversationId}/messages/${messageId}/stream`;
 }
 
-function buildToolLabel(name: string): string {
-  return name.replaceAll('_', ' ').toUpperCase();
+// DESIGN.md wants streaming tool metadata to read like ledger provenance
+// ("CONSULTING · RULEBOOK"), not raw implementation names like search_rules.
+function buildToolSourceLabel(name: string): string {
+  switch (name) {
+    case 'search_rules':
+      return 'RULEBOOK';
+    case 'search_cards':
+    case 'list_card_types':
+    case 'list_cards':
+    case 'get_card':
+      return 'CARD INDEX';
+    default:
+      return 'REFERENCE';
+  }
 }
 
 function buildConversationRecentQuestionsNav(
@@ -825,24 +837,9 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // owns the final user-visible ordering guarantees, including the final
   // sanitized-html swap on `done`.
   return streamSSE(c, async (stream) => {
-    const toolIds = new Map<string, string[]>();
-    const nextToolId = (name: string) => {
-      const queue = toolIds.get(name) ?? [];
-      const id = `${name}-${queue.length + 1}`;
-      queue.push(id);
-      toolIds.set(name, queue);
-      return id;
-    };
-    const consumeToolId = (name: string) => {
-      const queue = toolIds.get(name) ?? [];
-      const id = queue.shift() ?? `${name}-1`;
-      if (queue.length === 0) {
-        toolIds.delete(name);
-      } else {
-        toolIds.set(name, queue);
-      }
-      return id;
-    };
+    // Tool status is quiet reassurance, not an event log. Reusing one stable
+    // id per tool kind keeps repeated calls updating the same transient row.
+    const toolStatusId = (name: string) => name;
 
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
@@ -864,8 +861,8 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           await stream.writeSSE({
             event: 'tool-start',
             data: JSON.stringify({
-              id: nextToolId(name),
-              label: buildToolLabel(name),
+              id: toolStatusId(name),
+              label: buildToolSourceLabel(name),
             }),
           });
           return;
@@ -877,8 +874,8 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
-              id: consumeToolId(name),
-              label: buildToolLabel(name),
+              id: toolStatusId(name),
+              label: buildToolSourceLabel(name),
               ok: payload.ok ?? true,
             }),
           });

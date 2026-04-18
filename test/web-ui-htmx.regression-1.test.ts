@@ -37,8 +37,10 @@ describe('squire.js HTMX first-turn submit regression', () => {
   });
 
   it('deduplicates tool status rows in place and clears them on the final swap', () => {
-    expect(squireJs).toContain('var existing = toolEntries[payload.id];');
-    expect(squireJs).toContain('if (existing) return;');
+    expect(squireJs).toContain('function ensureToolStatusRow(toolsEl, toolEntries, toolId) {');
+    expect(squireJs).toContain("labelEl.textContent = 'CONSULTING';");
+    expect(squireJs).toContain("labelEl.textContent = 'CONSULTED';");
+    expect(squireJs).toContain("stateEl.textContent = 'ONE SOURCE';");
     expect(squireJs).toContain('toolsEl.replaceChildren();');
   });
 
