@@ -165,7 +165,7 @@ function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
 function renderToolStatusRow(row, label, state) {
   if (!row) return;
 
-  row.classList.remove('is-complete', 'is-error');
+  row.classList.remove('is-error');
   row.dataset.toolState = state;
 
   var labelEl = row.querySelector('.squire-answer__tool-label');
@@ -186,10 +186,6 @@ function renderToolStatusRow(row, label, state) {
     stateEl.textContent = 'ONE SOURCE';
     return;
   }
-
-  row.classList.add('is-complete');
-  if (labelEl) labelEl.textContent = 'CONSULTED';
-  stateEl.textContent = label || 'REFERENCE';
 }
 
 function handlePendingTranscript(transcript) {
@@ -209,8 +205,10 @@ function handlePendingTranscript(transcript) {
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
+  var footerEl = document.querySelector('.squire-toolcall');
   var toolEntries = {};
   var seenFirstDelta = false;
+  var toolPhaseStarted = false;
   var source = new window.EventSource(streamUrl);
 
   activeStream = {
@@ -218,30 +216,46 @@ function handlePendingTranscript(transcript) {
     source: source,
   };
 
+  if (footerEl) footerEl.hidden = true;
+
   function finishStream() {
     if (activeStream && activeStream.source === source) {
       activeStream = null;
     }
+    if (footerEl) footerEl.hidden = false;
     source.close();
   }
 
   source.addEventListener('text-delta', function (event) {
     var payload = JSON.parse(event.data || '{}');
+    var delta = payload.delta || '';
+    if (!delta) return;
+
+    // Assistant turns that are about to call tools often contain generic
+    // throat-clearing ("let me check that"). Keep those off-screen unless no
+    // tool phase ever materializes. Once lookup starts, the transient ledger
+    // row is the only narrator until real answer prose begins.
+    if (!toolPhaseStarted) {
+      return;
+    }
+
     if (!seenFirstDelta) {
       seenFirstDelta = true;
       answerEl.setAttribute('data-stream-state', 'streaming');
       if (skeletonEl) skeletonEl.hidden = true;
+      if (toolsEl) toolsEl.replaceChildren();
     }
 
     if (!contentEl) return;
     contentEl.classList.add('squire-markdown');
     var paragraph = ensureAnswerParagraph(contentEl);
-    paragraph.textContent += payload.delta || '';
+    paragraph.textContent += delta;
   });
 
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
     var payload = JSON.parse(event.data || '{}');
+    toolPhaseStarted = true;
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, 'running');
   });
@@ -250,7 +264,7 @@ function handlePendingTranscript(transcript) {
     if (!toolsEl) return;
     var payload = JSON.parse(event.data || '{}');
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
-    renderToolStatusRow(row, payload.label, payload.ok ? 'complete' : 'error');
+    renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
   });
 
   source.addEventListener('done', function (event) {

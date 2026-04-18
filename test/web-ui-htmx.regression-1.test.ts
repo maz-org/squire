@@ -36,11 +36,13 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).not.toContain("submitButton.textContent = '→';");
   });
 
-  it('deduplicates tool status rows in place and clears them on the final swap', () => {
+  it('keeps lookup status present-tense and clears it once real answer prose starts', () => {
     expect(squireJs).toContain('function ensureToolStatusRow(toolsEl, toolEntries, toolId) {');
+    expect(squireJs).toContain('var toolPhaseStarted = false;');
     expect(squireJs).toContain("labelEl.textContent = 'CONSULTING';");
-    expect(squireJs).toContain("labelEl.textContent = 'CONSULTED';");
+    expect(squireJs).not.toContain("labelEl.textContent = 'CONSULTED';");
     expect(squireJs).toContain("stateEl.textContent = 'ONE SOURCE';");
+    expect(squireJs).toContain('if (!toolPhaseStarted) {');
     expect(squireJs).toContain('toolsEl.replaceChildren();');
   });
 

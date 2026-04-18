@@ -1240,10 +1240,6 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
-.squire-answer__tool.is-complete {
-  color: var(--parchment-dim);
-}
-
 .squire-answer__tool.is-error {
   color: var(--amber);
 }
