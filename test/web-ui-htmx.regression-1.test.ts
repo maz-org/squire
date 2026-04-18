@@ -36,9 +36,17 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).not.toContain("submitButton.textContent = '→';");
   });
 
-  it('deduplicates tool status rows in place and clears them on the final swap', () => {
-    expect(squireJs).toContain('var existing = toolEntries[payload.id];');
-    expect(squireJs).toContain('if (existing) return;');
+  it('keeps lookup status present-tense and clears it once real answer prose starts', () => {
+    expect(squireJs).toContain('function ensureToolStatusRow(toolsEl, toolEntries, toolId) {');
+    expect(squireJs).toContain('var toolPhaseStarted = false;');
+    expect(squireJs).toContain("var preToolBuffer = '';");
+    expect(squireJs).toContain("labelEl.textContent = 'CONSULTING';");
+    expect(squireJs).not.toContain("labelEl.textContent = 'CONSULTED';");
+    expect(squireJs).toContain("stateEl.textContent = 'ONE SOURCE';");
+    expect(squireJs).toContain('function shouldSuppressPreToolDelta(delta) {');
+    expect(squireJs).toContain('preToolBuffer += delta;');
+    expect(squireJs).toContain('delta = preToolBuffer;');
+    expect(squireJs).toContain("preToolBuffer = '';");
     expect(squireJs).toContain('toolsEl.replaceChildren();');
   });
 

@@ -383,6 +383,28 @@ describe('conversation web backend', () => {
     expect(recentNav).not.toContain('Question 7');
   });
 
+  it('renders only the latest completed turn on the canonical conversation page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toContain('Second question');
+    expect(transcript).toContain('Second answer');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer');
+  });
+
   it('renders the canonical selected-message page for the conversation owner', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
@@ -402,7 +424,7 @@ describe('conversation web backend', () => {
     const page = await pageRes.text();
     expect(page).toContain('class="squire-account-menu"');
     expect(page).toContain('href="/styleguide/markdown"');
-    const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
     expect(transcript).toContain('How does looting work?');
     expect(transcript).toContain('Loot tokens in your hex are picked up.');
     expect(transcript).toContain('EARLIER QUESTION');
@@ -413,6 +435,32 @@ describe('conversation web backend', () => {
     expect(recentNav).not.toContain('How does looting work?');
     expect(recentNav).toContain('hx-get="/chat/');
     expect(recentNav).toContain('hx-push-url="true"');
+  });
+
+  it('keeps the latest completed turn in the rail when the canonical page is showing a pending turn', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
+      { question: 'When do elements wane?', answer: 'At end of round.' },
+      { question: 'Can I loot through a wall?' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toContain('Can I loot through a wall?');
+    expect(transcript).toContain('class="squire-answer__skeleton"');
+
+    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(recentNav).toContain('When do elements wane?');
+    expect(recentNav).toContain('How does looting work?');
+    expect(recentNav).not.toContain('Can I loot through a wall?');
   });
 
   it('renders the canonical selected-message route as an HTMX fragment', async () => {
@@ -527,10 +575,50 @@ describe('conversation web backend', () => {
     const body = await response.text();
     const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
     expect(recentNav).toContain('hx-swap-oob="outerHTML"');
-    expect(recentNav).toContain('hidden');
+    expect(recentNav).toContain('Second question');
+    expect(recentNav).toContain('First question');
   });
 
-  it('does not clear the recent-questions rail on a normal conversation follow-up', async () => {
+  it('renders only the new pending turn when a selected-message page submits a follow-up', async () => {
+    // Regression: ISSUE-001 — selected-message follow-up fell back to transcript mode
+    // Found by /qa on 2026-04-18
+    // Report: .gstack/qa-reports/qa-report-localhost-5018-2026-04-18.md
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+        },
+        body: formBody({ question: 'Newest question' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(transcript).toContain('Newest question');
+    expect(transcript).toContain('class="squire-answer__skeleton"');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer');
+    expect(transcript).not.toContain('Second question');
+    expect(transcript).not.toContain('Second answer');
+    expect(recentNav).toContain('Second question');
+    expect(recentNav).toContain('First question');
+  });
+
+  it('refreshes the recent-questions rail alongside a normal conversation follow-up', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'First question', answer: 'First answer' },
@@ -554,7 +642,18 @@ describe('conversation web backend', () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
-    expect(body).not.toContain('id="squire-recent-questions"');
+    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(transcript).toContain('Newest question');
+    expect(transcript).toContain('class="squire-answer__skeleton"');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer');
+    expect(transcript).not.toContain('Second question');
+    expect(transcript).not.toContain('Second answer');
+    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
+    expect(recentNav).toContain('First question');
+    expect(recentNav).toContain('Second question');
+    expect(recentNav).not.toContain('Newest question');
   });
 
   it('restores canonical recent-question chips after streaming a follow-up from a selected-message page', async () => {
@@ -1140,7 +1239,7 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES' },
+        data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
         event: 'text-delta',
@@ -1148,7 +1247,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: true },
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
       },
       {
         event: 'done',
@@ -1171,6 +1270,129 @@ describe('conversation web backend', () => {
         role: 'assistant',
         content: 'Loot tokens in your hex are picked up with **style**.',
         isError: false,
+      },
+    ]);
+  });
+
+  it('reuses one tool-status id when the same tool runs multiple times in one answer', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('tool_result', { name: 'search_rules' });
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('text', {
+        delta: 'You loot when the token is in your hex at end of turn.',
+      });
+      await options?.emit?.('tool_result', { name: 'search_rules' });
+      await options?.emit?.('done', {});
+      return 'You loot when the token is in your hex at end of turn.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'When do I loot?',
+        idempotencyKey: 'idem-stream-tool-dedupe',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'tool-start',
+        data: { id: 'rulebook', label: 'RULEBOOK' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
+      },
+      {
+        event: 'tool-start',
+        data: { id: 'rulebook', label: 'RULEBOOK' },
+      },
+      {
+        event: 'text-delta',
+        data: { delta: 'You loot when the token is in your hex at end of turn.' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
+      },
+      {
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>You loot when the token is in your hex at end of turn.</p>\n',
+        }),
+      },
+    ]);
+  });
+
+  it('reuses one tool-status id when multiple card tools share the same visible source', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_cards' });
+      await options?.emit?.('tool_result', { name: 'search_cards' });
+      await options?.emit?.('tool_call', { name: 'get_card' });
+      await options?.emit?.('tool_result', { name: 'get_card' });
+      await options?.emit?.('done', {});
+      return 'Card details.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'What does this card do?',
+        idempotencyKey: 'idem-stream-card-tool-dedupe',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'tool-start',
+        data: { id: 'card-index', label: 'CARD INDEX' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'card-index', label: 'CARD INDEX', ok: true },
+      },
+      {
+        event: 'tool-start',
+        data: { id: 'card-index', label: 'CARD INDEX' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'card-index', label: 'CARD INDEX', ok: true },
+      },
+      {
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>Card details.</p>\n',
+        }),
       },
     ]);
   });
@@ -1252,7 +1474,7 @@ describe('conversation web backend', () => {
     expect(pageRes.status).toBe(404);
   });
 
-  it('returns the full transcript plus a pending answer shell for HTMX follow-ups', async () => {
+  it('returns only the new pending turn for HTMX follow-ups', async () => {
     mockAsk.mockResolvedValueOnce('First answer.');
     const auth = await createAuthContext();
 
@@ -1282,11 +1504,18 @@ describe('conversation web backend', () => {
 
     expect(followUpRes.status).toBe(200);
     const body = await followUpRes.text();
-    expect(body).toContain('First question');
-    expect(body).toContain('First answer.');
-    expect(body).toContain('Second question');
-    expect(body).toContain('squire-transcript squire-transcript--pending');
-    expect(body).toMatch(/data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/);
+    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
+    expect(transcript).toContain('Second question');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer.');
+    expect(transcript).toContain('squire-transcript squire-transcript--pending');
+    expect(transcript).toMatch(
+      /data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/,
+    );
+    expect(recentNav).toContain('id="squire-recent-questions"');
+    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
+    expect(recentNav).toContain('First question');
   });
 
   it('propagates failed tool results into the browser-facing SSE payload', async () => {
@@ -1321,11 +1550,11 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES' },
+        data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules-1', label: 'SEARCH RULES', ok: false },
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: false },
       },
       {
         event: 'done',

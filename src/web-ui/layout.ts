@@ -261,6 +261,31 @@ function renderConversationTurn(message: ConversationMessage): HtmlEscapedString
   return message.role === 'user' ? renderQuestionTurn(message.content) : renderAnswerTurn(message);
 }
 
+function findCurrentConversationTurn(messages: ConversationMessage[]): {
+  userMessage: ConversationMessage;
+  assistantMessage: ConversationMessage | null;
+} | null {
+  const assistantResponses = new Map<string, ConversationMessage>();
+
+  for (const message of messages) {
+    if (message.role === 'assistant' && message.responseToMessageId) {
+      assistantResponses.set(message.responseToMessageId, message);
+    }
+  }
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.role !== 'user') continue;
+
+    return {
+      userMessage: message,
+      assistantMessage: assistantResponses.get(message.id) ?? null,
+    };
+  }
+
+  return null;
+}
+
 function renderPendingAnswerSkeleton(): HtmlEscapedString {
   return html`<article
     class="squire-turn squire-answer squire-answer--pending"
@@ -693,8 +718,24 @@ export async function renderConversationPage(options: {
   conversationId: string;
   messages: ConversationMessage[];
   recentQuestionsNav?: HtmlEscapedString;
+  pendingStreamUrl?: string;
 }): Promise<HtmlEscapedString> {
-  const transcript = renderConversationTranscript(options.conversationId, options.messages);
+  const currentTurn = findCurrentConversationTurn(options.messages);
+  const transcript = !currentTurn
+    ? renderConversationTranscript(options.conversationId, options.messages)
+    : currentTurn.assistantMessage
+      ? renderSelectedMessageSurface({
+          selectedQuestion: currentTurn.userMessage,
+          selectedAnswer: currentTurn.assistantMessage,
+          isEarlierQuestion: false,
+        })
+      : (html`<section
+          class="squire-transcript squire-transcript--pending"
+          aria-label="Conversation transcript"
+          ${options.pendingStreamUrl ? html`data-stream-url="${options.pendingStreamUrl}"` : html``}
+        >
+          ${renderQuestionTurn(currentTurn.userMessage.content)} ${renderPendingAnswerSkeleton()}
+        </section>` as HtmlEscapedString);
 
   return layoutShell({
     session: options.session,
@@ -838,4 +879,12 @@ export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEs
   >
     ${renderQuestionTurn(options.question)} ${renderPendingAnswerSkeleton()}
   </section>` as HtmlEscapedString;
+}
+
+export function renderPendingTurnShellWithRecentQuestions(
+  options: PendingTurnShellOptions & {
+    recentQuestionsNav: HtmlEscapedString;
+  },
+): HtmlEscapedString {
+  return html`${renderPendingTurnShell(options)} ${options.recentQuestionsNav}` as HtmlEscapedString;
 }
