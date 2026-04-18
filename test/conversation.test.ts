@@ -348,7 +348,7 @@ describe('conversation web backend', () => {
     expect(recentNav).not.toContain('href="/chat/');
   });
 
-  it('keeps five prior recent-question chips on the canonical conversation page', async () => {
+  it('keeps older recent questions discoverable behind an explicit overflow affordance', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'Question 1', answer: 'Answer 1' },
@@ -369,12 +369,18 @@ describe('conversation web backend', () => {
 
     const page = await pageRes.text();
     const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    const chipCount = (recentNav?.match(/class="squire-chip"/g) || []).length;
-    expect(chipCount).toBe(5);
+    const questionLinkCount = (recentNav?.match(/href="\/chat\/[^"]+\/messages\/[^"]+"/g) || [])
+      .length;
+    expect(questionLinkCount).toBe(6);
     expect(recentNav).toContain('Question 6');
+    expect(recentNav).toContain('Question 5');
+    expect(recentNav).toContain('Question 4');
+    expect(recentNav).toContain('More history');
+    expect(recentNav).toContain('3 older questions');
+    expect(recentNav).toContain('Question 3');
     expect(recentNav).toContain('Question 2');
+    expect(recentNav).toContain('Question 1');
     expect(recentNav).not.toContain('Question 7');
-    expect(recentNav).not.toContain('Question 1');
   });
 
   it('renders only the latest completed turn on the canonical conversation page', async () => {
@@ -1749,7 +1755,7 @@ describe('selected-message projection', () => {
     ]);
   });
 
-  it('caps recent questions to the newest five completed turns', async () => {
+  it('keeps all other completed turns available for recent-question overflow', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'Question 1', answer: 'Answer 1' },
@@ -1774,6 +1780,7 @@ describe('selected-message projection', () => {
       'Question 5',
       'Question 4',
       'Question 3',
+      'Question 2',
     ]);
   });
 });

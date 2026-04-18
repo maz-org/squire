@@ -766,6 +766,55 @@ describe('selected-message rendering helpers', () => {
     expect(body).not.toContain('Newest answer.');
     expect(body).toContain('id="squire-recent-questions"');
   });
+
+  it('renders older recent questions behind an explicit overflow control', () => {
+    const body = String(
+      actualLayout.renderRecentQuestionsNav(
+        [
+          {
+            href: '/chat/conv-123/messages/m7',
+            hxGet: '/chat/conv-123/messages/m7',
+            label: 'Question 7',
+            pushUrl: true,
+          },
+          {
+            href: '/chat/conv-123/messages/m6',
+            hxGet: '/chat/conv-123/messages/m6',
+            label: 'Question 6',
+            pushUrl: true,
+          },
+          {
+            href: '/chat/conv-123/messages/m5',
+            hxGet: '/chat/conv-123/messages/m5',
+            label: 'Question 5',
+            pushUrl: true,
+          },
+          {
+            href: '/chat/conv-123/messages/m4',
+            hxGet: '/chat/conv-123/messages/m4',
+            label: 'Question 4',
+            pushUrl: true,
+          },
+          {
+            href: '/chat/conv-123/messages/m3',
+            hxGet: '/chat/conv-123/messages/m3',
+            label: 'Question 3',
+            pushUrl: true,
+          },
+        ],
+        { oob: true },
+      ),
+    );
+
+    expect(body).toContain('Question 7');
+    expect(body).toContain('Question 6');
+    expect(body).toContain('Question 5');
+    expect(body).toContain('More history');
+    expect(body).toContain('2 older questions');
+    expect(body).toContain('Question 4');
+    expect(body).toContain('Question 3');
+    expect(body).toMatch(/<details[^>]*class="squire-recent__overflow"/);
+  });
 });
 
 describe('GET / — signature components (SQR-66)', () => {
