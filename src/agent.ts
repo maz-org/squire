@@ -202,6 +202,7 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
 
   for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
     const response = await callClaude(messages, emit);
+    const hasToolUse = response.content.some((block) => block.type === 'tool_use');
 
     // Collect all text content from this response
     const texts: string[] = [];
@@ -210,7 +211,10 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
         texts.push(block.text);
       }
     }
-    if (texts.length > 0) {
+    // Text emitted alongside `tool_use` is scratch narration for the live
+    // stream, not the final persisted answer. Only pure text turns count as
+    // the assistant's saved answer content.
+    if (texts.length > 0 && !hasToolUse) {
       lastTextContent = texts.join('\n\n');
     }
 

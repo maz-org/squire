@@ -75,6 +75,23 @@ function toolUseResponse(toolName: string, toolInput: Record<string, unknown>, i
   };
 }
 
+/** Create a mock response where Claude emits scratch text before a tool call. */
+function textAndToolUseResponse(
+  text: string,
+  toolName: string,
+  toolInput: Record<string, unknown>,
+  id = 'tool_1',
+) {
+  return {
+    content: [
+      { type: 'text', text },
+      { type: 'tool_use', id, name: toolName, input: toolInput },
+    ],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 100, output_tokens: 50 },
+  };
+}
+
 // ─── runAgentLoop ────────────────────────────────────────────────────────────
 
 describe('runAgentLoop', () => {
@@ -117,6 +134,19 @@ describe('runAgentLoop', () => {
     expect(result).toBe('You pick up loot tokens.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
     expect(mockSearchRules).toHaveBeenCalledWith('loot action', 6);
+  });
+
+  it('does not persist scratch text from a tool-use turn as the final answer', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        textAndToolUseResponse('Let me check the scenario book.', 'search_rules', {
+          query: 'scenario 61 conclusion',
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Read section 67.1.'));
+
+    const result = await runAgentLoop('What section unlocks scenario 61?');
+    expect(result).toBe('Read section 67.1.');
   });
 
   it('handles multiple tool calls in a single turn', async () => {
@@ -339,5 +369,19 @@ describe('runAgentLoop with emit (streaming)', () => {
     });
     expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules', ok: true });
     expect(emit).toHaveBeenCalledWith('done', {});
+  });
+
+  it('does not treat streamed scratch text before tool use as the final answer', async () => {
+    const toolMsg = textAndToolUseResponse('Let me look that up.', 'search_rules', {
+      query: 'scenario 61 conclusion',
+    });
+    const finalMsg = textResponse('Read section 67.1.');
+    mockMessagesStream
+      .mockReturnValueOnce(mockStream(toolMsg, ['Let me ', 'look that up.']))
+      .mockReturnValueOnce(mockStream(finalMsg, ['Read section 67.1.']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    const result = await runAgentLoop('test', { emit });
+    expect(result).toBe('Read section 67.1.');
   });
 });
