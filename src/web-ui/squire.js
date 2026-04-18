@@ -292,6 +292,7 @@ function renderToolStatusRow(row, label, state) {
   }
 
   if (labelEl) labelEl.textContent = label || 'REFERENCE';
+  stateEl.textContent = '';
 }
 
 function clearToolStatusRows(toolsEl, toolEntries) {
