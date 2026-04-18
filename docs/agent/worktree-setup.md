@@ -71,10 +71,14 @@ script.
 
 Defined in [`.claude/hooks/worktree-setup.sh`](../../.claude/hooks/worktree-setup.sh)
 and wired via `SessionStart` matcher `"startup"` in
-[`.claude/settings.json`](../../.claude/settings.json). Claude Code has no
-dedicated "worktree created" event, so the hook fires on first session startup
-in the worktree. Each step is idempotent, so subsequent startups are a ~2 s
-no-op (migrations are the only part that runs every time).
+[`.claude/settings.json`](../../.claude/settings.json). Claude Code does
+expose a `WorktreeCreate` hook, but configuring it **replaces** Claude's
+default `git worktree` flow — the hook becomes responsible for actually
+producing the worktree and emitting its path. We want Claude's built-in
+worktree creation, just with bootstrap on top, so we run the same
+idempotent setup on the first `SessionStart` in the new worktree instead.
+Subsequent startups are a ~2 s no-op (migrations are the only part that
+runs every time).
 
 Two intentional differences from the Codex script:
 

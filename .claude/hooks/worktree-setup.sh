@@ -5,6 +5,15 @@
 
 set -euo pipefail
 
+# Anchor to the project root before doing anything with relative paths. Claude
+# Code hooks inherit the cwd at the time the event fires, which can be any
+# subdirectory of the checkout. CLAUDE_PROJECT_DIR is the absolute repo-root
+# path Claude Code sets for project hooks; fall back to two levels up from
+# this script if the hook is invoked outside Claude Code (e.g., manual run).
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+project_root="${CLAUDE_PROJECT_DIR:-$(cd "$script_dir/../.." && pwd)}"
+cd "$project_root"
+
 git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"
 git_common_dir="$(git rev-parse --git-common-dir 2>/dev/null || true)"
 
@@ -13,7 +22,7 @@ git_common_dir="$(git rev-parse --git-common-dir 2>/dev/null || true)"
 [[ "$(cd "$git_dir" && pwd)" != "$(cd "$git_common_dir" && pwd)" ]] || exit 0
 
 source_tree="$(cd "$git_common_dir/.." && pwd)"
-worktree="$(pwd)"
+worktree="$project_root"
 
 log() { printf '[worktree-setup] %s\n' "$*" >&2; }
 
