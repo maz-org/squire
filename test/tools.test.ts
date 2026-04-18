@@ -21,8 +21,25 @@ vi.mock('../src/embedder.ts', () => ({
   embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
 }));
 
-import { searchRules, searchCards, listCardTypes, listCards, getCard } from '../src/tools.ts';
-import type { RuleResult, CardResult, CardTypeInfo } from '../src/tools.ts';
+import {
+  searchRules,
+  searchCards,
+  listCardTypes,
+  listCards,
+  getCard,
+  findScenario,
+  getScenario,
+  getSection,
+  followLinks,
+} from '../src/tools.ts';
+import type {
+  RuleResult,
+  CardResult,
+  CardTypeInfo,
+  TraversalScenarioResult,
+  TraversalSectionResult,
+  TraversalLinkResult,
+} from '../src/tools.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -226,6 +243,48 @@ describe('listCards', () => {
   it('returns empty when filter matches nothing', async () => {
     const cards = await listCards('items', { name: 'No Such Item Exists' });
     expect(cards).toEqual([]);
+  });
+});
+
+describe('traversal tools', () => {
+  it('findScenario resolves an exact scenario-number query', async () => {
+    const results: TraversalScenarioResult[] = await findScenario('scenario 61');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].scenarioIndex).toBe('61');
+    expect(results[0].name).toBe('Life and Death');
+    expect(results[0].ref).toBe('gloomhavensecretariat:scenario/061');
+  });
+
+  it('getScenario returns the seeded traversal scenario record', async () => {
+    const scenario = await getScenario('gloomhavensecretariat:scenario/061');
+    expect(scenario).not.toBeNull();
+    expect(scenario!.sourcePdf).toBe('fh-scenario-book-42-61.pdf');
+    expect(scenario!.rawText).toContain('90.2');
+  });
+
+  it('getSection returns exact section text for a known section ref', async () => {
+    const section: TraversalSectionResult | null = await getSection('90.2');
+    expect(section).not.toBeNull();
+    expect(section!.sectionNumber).toBe(90);
+    expect(section!.sectionVariant).toBe(2);
+    expect(section!.text).toContain('The ritual and the battle');
+  });
+
+  it('followLinks returns the scenario 61 conclusion link to section 90.2', async () => {
+    const links: TraversalLinkResult[] = await followLinks(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      'conclusion',
+    );
+    expect(links).toEqual([
+      expect.objectContaining({
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        toKind: 'section',
+        toRef: '90.2',
+        linkType: 'conclusion',
+      }),
+    ]);
   });
 });
 

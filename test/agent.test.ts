@@ -9,6 +9,10 @@ const {
   mockSearchCards,
   mockListCardTypes,
   mockGetCard,
+  mockFindScenario,
+  mockGetScenario,
+  mockGetSection,
+  mockFollowLinks,
 } = vi.hoisted(() => ({
   mockMessagesCreate: vi.fn(),
   mockMessagesStream: vi.fn(),
@@ -16,6 +20,10 @@ const {
   mockSearchCards: vi.fn(),
   mockListCardTypes: vi.fn(),
   mockGetCard: vi.fn(),
+  mockFindScenario: vi.fn(),
+  mockGetScenario: vi.fn(),
+  mockGetSection: vi.fn(),
+  mockFollowLinks: vi.fn(),
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -30,6 +38,10 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: vi.fn(() => []),
   getCard: mockGetCard,
+  findScenario: mockFindScenario,
+  getScenario: mockGetScenario,
+  getSection: mockGetSection,
+  followLinks: mockFollowLinks,
 }));
 
 import { runAgentLoop, executeToolCall, AGENT_TOOLS, MAX_AGENT_ITERATIONS } from '../src/agent.ts';
@@ -103,6 +115,32 @@ describe('runAgentLoop', () => {
     mockSearchCards.mockReturnValue([]);
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 10 }]);
     mockGetCard.mockReturnValue({ name: 'Boots of Speed', effect: 'Move +1' });
+    mockFindScenario.mockResolvedValue([
+      { ref: 'gloomhavensecretariat:scenario/061', scenarioIndex: '61', name: 'Life and Death' },
+    ]);
+    mockGetScenario.mockResolvedValue({
+      ref: 'gloomhavensecretariat:scenario/061',
+      scenarioIndex: '61',
+      name: 'Life and Death',
+    });
+    mockGetSection.mockResolvedValue({
+      ref: '90.2',
+      sectionNumber: 90,
+      sectionVariant: 2,
+      text: 'The ritual and the battle...',
+    });
+    mockFollowLinks.mockResolvedValue([
+      {
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        toKind: 'section',
+        toRef: '90.2',
+        linkType: 'conclusion',
+        rawLabel: null,
+        rawContext: null,
+        sequence: 0,
+      },
+    ]);
   });
 
   it('returns text immediately when Claude responds without tool use', async () => {
@@ -185,6 +223,32 @@ describe('runAgentLoop', () => {
     const result = await runAgentLoop('What card types are available?');
     expect(result).toBe('There are items and more.');
     expect(mockListCardTypes).toHaveBeenCalled();
+  });
+
+  it('uses traversal tools for an exact scenario conclusion lookup', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('find_scenario', { query: 'scenario 61' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('follow_links', {
+          fromKind: 'scenario',
+          fromRef: 'gloomhavensecretariat:scenario/061',
+          linkType: 'conclusion',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '90.2' }))
+      .mockResolvedValueOnce(textResponse('Read section 90.2.'));
+
+    const result = await runAgentLoop(
+      'show the full text of the section to read at the conclusion of scenario 61',
+    );
+    expect(result).toBe('Read section 90.2.');
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+    expect(mockFollowLinks).toHaveBeenCalledWith(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      'conclusion',
+    );
+    expect(mockGetSection).toHaveBeenCalledWith('90.2');
   });
 
   it('handles max_tokens by continuing', async () => {
@@ -275,6 +339,10 @@ describe('executeToolCall', () => {
     mockSearchCards.mockReturnValue([{ type: 'items', data: { name: 'Test' }, score: 1 }]);
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 5 }]);
     mockGetCard.mockReturnValue({ name: 'Test Item' });
+    mockFindScenario.mockResolvedValue([{ ref: 'gloomhavensecretariat:scenario/061' }]);
+    mockGetScenario.mockResolvedValue({ ref: 'gloomhavensecretariat:scenario/061' });
+    mockGetSection.mockResolvedValue({ ref: '90.2' });
+    mockFollowLinks.mockResolvedValue([{ toRef: '90.2' }]);
   });
 
   it('dispatches search_rules', async () => {
@@ -305,6 +373,40 @@ describe('executeToolCall', () => {
     mockGetCard.mockReturnValue(null);
     const result = await executeToolCall('get_card', { type: 'items', id: 'missing' });
     expect(result).toContain('Card not found');
+  });
+
+  it('dispatches find_scenario', async () => {
+    const result = await executeToolCall('find_scenario', { query: 'scenario 61' });
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+    expect(JSON.parse(result)).toEqual([{ ref: 'gloomhavensecretariat:scenario/061' }]);
+  });
+
+  it('dispatches get_scenario', async () => {
+    const result = await executeToolCall('get_scenario', {
+      ref: 'gloomhavensecretariat:scenario/061',
+    });
+    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061');
+    expect(JSON.parse(result)).toEqual({ ref: 'gloomhavensecretariat:scenario/061' });
+  });
+
+  it('dispatches get_section', async () => {
+    const result = await executeToolCall('get_section', { ref: '90.2' });
+    expect(mockGetSection).toHaveBeenCalledWith('90.2');
+    expect(JSON.parse(result)).toEqual({ ref: '90.2' });
+  });
+
+  it('dispatches follow_links', async () => {
+    const result = await executeToolCall('follow_links', {
+      fromKind: 'scenario',
+      fromRef: 'gloomhavensecretariat:scenario/061',
+      linkType: 'conclusion',
+    });
+    expect(mockFollowLinks).toHaveBeenCalledWith(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      'conclusion',
+    );
+    expect(JSON.parse(result)).toEqual([{ toRef: '90.2' }]);
   });
 
   it('returns error for unknown tool', async () => {
