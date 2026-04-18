@@ -694,38 +694,12 @@ export async function renderConversationPage(options: {
   messages: ConversationMessage[];
   recentQuestionsNav?: HtmlEscapedString;
 }): Promise<HtmlEscapedString> {
-  const assistantResponses = new Map(
-    options.messages
-      .filter(
-        (message): message is ConversationMessage & { responseToMessageId: string } =>
-          message.role === 'assistant' && message.responseToMessageId !== null,
-      )
-      .map((message) => [message.responseToMessageId, message]),
-  );
-  const userMessages = options.messages.filter((message) => message.role === 'user');
-  const latestUserMessage = userMessages.at(-1);
-  const mainContent =
-    latestUserMessage === undefined
-      ? renderConversationTranscript(options.conversationId, options.messages)
-      : (() => {
-          const assistantMessage = assistantResponses.get(latestUserMessage.id);
-          if (assistantMessage) {
-            return renderSelectedMessageSurface({
-              selectedQuestion: latestUserMessage,
-              selectedAnswer: assistantMessage,
-              isEarlierQuestion: false,
-            });
-          }
-
-          return html`<section class="squire-transcript" aria-label="Conversation transcript">
-            ${renderQuestionTurn(latestUserMessage.content)} ${renderPendingAnswerSkeleton()}
-          </section>` as HtmlEscapedString;
-        })();
+  const transcript = renderConversationTranscript(options.conversationId, options.messages);
 
   return layoutShell({
     session: options.session,
     csrfToken: options.csrfToken,
-    mainContent,
+    mainContent: transcript as HtmlEscapedString,
     chatFormAction: `/chat/${options.conversationId}/messages`,
     recentQuestionsNav: options.recentQuestionsNav,
   });
