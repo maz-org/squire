@@ -650,6 +650,41 @@ describe('selected-message rendering helpers', () => {
     expect(body).not.toContain('EARLIER QUESTION');
   });
 
+  it('renders the canonical conversation page with only the latest turn in the surface', async () => {
+    const body = String(
+      await actualLayout.renderConversationPage({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        conversationId: 'conv-123',
+        messages,
+        recentQuestionsNav: actualLayout.renderRecentQuestionsNav([
+          {
+            href: '/chat/conv-123/messages/m3',
+            hxGet: '/chat/conv-123/messages/m3',
+            label: 'Middle question',
+            pushUrl: true,
+          },
+          {
+            href: '/chat/conv-123/messages/m1',
+            hxGet: '/chat/conv-123/messages/m1',
+            label: 'Oldest question',
+            pushUrl: true,
+          },
+        ]),
+      }),
+    );
+
+    const transcript = body.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toContain('Newest question');
+    expect(transcript).toContain('Newest answer.');
+    expect(transcript).not.toContain('Middle question');
+    expect(transcript).not.toContain('Middle answer.');
+    expect(transcript).not.toContain('Oldest question');
+    expect(transcript).not.toContain('Oldest answer.');
+    expect(body).toContain('Middle question');
+    expect(body).toContain('Oldest question');
+  });
+
   it('renders recent questions newest-to-oldest and excludes the selected question', () => {
     const body = String(
       actualLayout.renderRecentQuestionsNav({
@@ -714,6 +749,22 @@ describe('selected-message rendering helpers', () => {
     expect(body).toContain('hx-target="#squire-surface"');
     expect(body).toContain('hx-swap="innerHTML"');
     expect(body).toContain('hx-push-url="true"');
+  });
+
+  it('renders selected-message follow-up pending state as only the new question plus pending answer', () => {
+    const body = String(
+      actualLayout.renderPendingTurnShellWithRecentQuestions({
+        question: 'Newest question',
+        streamUrl: '/chat/conv-123/messages/m7/stream',
+        recentQuestionsNav: actualLayout.renderRecentQuestionsNav([], { oob: true }),
+      }),
+    );
+
+    expect(body).toContain('Newest question');
+    expect(body).toContain('class="squire-answer__skeleton"');
+    expect(body).not.toContain('Oldest question');
+    expect(body).not.toContain('Newest answer.');
+    expect(body).toContain('id="squire-recent-questions"');
   });
 
   it('renders older recent questions behind an explicit overflow control', () => {

@@ -1260,11 +1260,10 @@ template#squire-banner-fixtures {
 }
 
 .squire-answer__tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  margin: 0 0 16px;
-  font-size: 11px;
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--sepia);
@@ -1272,12 +1271,27 @@ template#squire-banner-fixtures {
 
 .squire-answer__tool {
   display: inline-flex;
-  align-items: center;
-  min-height: 20px;
+  align-items: baseline;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 18px;
 }
 
-.squire-answer__tool.is-complete {
-  color: var(--parchment-dim);
+.squire-answer__tool-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.squire-answer__tool-state {
+  color: inherit;
+  white-space: nowrap;
+}
+
+.squire-answer__tool-state::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--sepia-dim);
 }
 
 .squire-answer__tool.is-error {

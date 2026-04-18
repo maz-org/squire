@@ -57,14 +57,13 @@ import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
   renderConversationTranscript,
-  renderConversationTranscriptWithPendingTurn,
-  renderConversationTranscriptWithPendingTurnAndRecentQuestions,
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
   renderMarkdownStyleguidePage,
   renderNotInvitedPage,
   renderPendingTurnShell,
+  renderPendingTurnShellWithRecentQuestions,
   renderRecentQuestionsNav,
   renderSelectedMessageSurface,
   renderSelectedMessageSurfaceWithRecentQuestions,
@@ -559,18 +558,6 @@ function isHtmxRequest(c: Context): boolean {
   return c.req.header('hx-request') === 'true';
 }
 
-function isSelectedMessagePageRequest(c: Context): boolean {
-  const currentUrl = c.req.header('hx-current-url');
-  if (!currentUrl) return false;
-
-  try {
-    const pathname = new URL(currentUrl).pathname;
-    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(pathname);
-  } catch {
-    return /^\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+$/.test(currentUrl);
-  }
-}
-
 function renderChatErrorFragment(message: string) {
   return html`<div class="squire-banner squire-banner--error" role="alert">
     <span class="squire-banner__label">SOMETHING WENT WRONG</span>
@@ -582,8 +569,30 @@ function buildStreamUrl(conversationId: string, messageId: string): string {
   return `/chat/${conversationId}/messages/${messageId}/stream`;
 }
 
-function buildToolLabel(name: string): string {
-  return name.replaceAll('_', ' ').toUpperCase();
+// DESIGN.md wants streaming tool metadata to read like ledger provenance
+// ("CONSULTING · RULEBOOK"), not raw implementation names like search_rules.
+function buildToolSourceLabel(name: string): string {
+  switch (name) {
+    case 'search_rules':
+      return 'RULEBOOK';
+    case 'search_cards':
+    case 'list_card_types':
+    case 'list_cards':
+    case 'get_card':
+      return 'CARD INDEX';
+    default:
+      return 'REFERENCE';
+  }
+}
+
+function buildToolStatusId(name: string): string {
+  const label = buildToolSourceLabel(name);
+  if (label === 'REFERENCE') return name;
+
+  return label
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function buildConversationRecentQuestionsNav(
@@ -591,12 +600,16 @@ function buildConversationRecentQuestionsNav(
   messages: Parameters<typeof listRecentCompletedQuestions>[0],
   options: { oob?: boolean } = {},
 ) {
-  const latestCompletedQuestionId = listRecentCompletedQuestions(messages)[0]?.messageId;
-  const recentCompletedQuestions = listRecentCompletedQuestions(messages, {
-    excludeMessageId: latestCompletedQuestionId,
-  });
+  const recentCompletedQuestions = listRecentCompletedQuestions(messages);
+  const latestUserMessageId = [...messages]
+    .reverse()
+    .find((message) => message.role === 'user')?.id;
+  const visibleQuestions =
+    recentCompletedQuestions[0]?.messageId === latestUserMessageId
+      ? recentCompletedQuestions.slice(1)
+      : recentCompletedQuestions;
   return renderRecentQuestionsNav(
-    recentCompletedQuestions.map((question) => ({
+    visibleQuestions.map((question) => ({
       href: `/chat/${conversationId}/messages/${question.messageId}`,
       hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
       label: question.question,
@@ -629,6 +642,7 @@ app.get('/chat/:conversationId', async (c) => {
     userId: session.userId,
   });
   if (!loaded) return c.notFound();
+  const latestUserMessage = loaded.messages.filter((message) => message.role === 'user').at(-1);
 
   const recentQuestionsNav = buildConversationRecentQuestionsNav(
     loaded.conversation.id,
@@ -644,6 +658,9 @@ app.get('/chat/:conversationId', async (c) => {
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
       recentQuestionsNav,
+      pendingStreamUrl: latestUserMessage
+        ? buildStreamUrl(loaded.conversation.id, latestUserMessage.id)
+        : undefined,
     }),
   );
 });
@@ -755,31 +772,26 @@ app.post('/chat/:conversationId/messages', async (c) => {
       question,
     });
     if (!pending?.currentUserMessage) return c.notFound();
-
-    c.header('Cache-Control', 'no-store');
-    c.header('Vary', 'Cookie');
-    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
     const loaded = await loadConversation({
       conversationId: pending.conversation.id,
       userId: session.userId,
     });
     if (!loaded) return c.notFound();
-    if (isSelectedMessagePageRequest(c)) {
-      return c.html(
-        renderConversationTranscriptWithPendingTurnAndRecentQuestions({
-          conversationId: loaded.conversation.id,
-          messages: loaded.messages,
-          streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
-          recentQuestionsNav: renderRecentQuestionsNav([], { oob: true }),
-        }),
-      );
-    }
 
+    c.header('Cache-Control', 'no-store');
+    c.header('Vary', 'Cookie');
+    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
     return c.html(
-      renderConversationTranscriptWithPendingTurn({
-        conversationId: loaded.conversation.id,
-        messages: loaded.messages,
+      renderPendingTurnShellWithRecentQuestions({
+        question: pending.currentUserMessage.content,
         streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+        recentQuestionsNav: buildConversationRecentQuestionsNav(
+          loaded.conversation.id,
+          loaded.messages,
+          {
+            oob: true,
+          },
+        ),
       }),
     );
   }
@@ -825,25 +837,6 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // owns the final user-visible ordering guarantees, including the final
   // sanitized-html swap on `done`.
   return streamSSE(c, async (stream) => {
-    const toolIds = new Map<string, string[]>();
-    const nextToolId = (name: string) => {
-      const queue = toolIds.get(name) ?? [];
-      const id = `${name}-${queue.length + 1}`;
-      queue.push(id);
-      toolIds.set(name, queue);
-      return id;
-    };
-    const consumeToolId = (name: string) => {
-      const queue = toolIds.get(name) ?? [];
-      const id = queue.shift() ?? `${name}-1`;
-      if (queue.length === 0) {
-        toolIds.delete(name);
-      } else {
-        toolIds.set(name, queue);
-      }
-      return id;
-    };
-
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
@@ -864,8 +857,8 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           await stream.writeSSE({
             event: 'tool-start',
             data: JSON.stringify({
-              id: nextToolId(name),
-              label: buildToolLabel(name),
+              id: buildToolStatusId(name),
+              label: buildToolSourceLabel(name),
             }),
           });
           return;
@@ -877,8 +870,8 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
-              id: consumeToolId(name),
-              label: buildToolLabel(name),
+              id: buildToolStatusId(name),
+              label: buildToolSourceLabel(name),
               ok: payload.ok ?? true,
             }),
           });

@@ -141,6 +141,169 @@ function renderPendingError(answerEl, label, message) {
   answerEl.appendChild(banner);
 }
 
+var PRE_TOOL_STARTERS = ['let me', "i'll", 'i will', "i'm going to", 'i am going to'];
+var PRE_TOOL_LOOKUP_VERBS = [
+  'check',
+  'look',
+  'pull',
+  'find',
+  'confirm',
+  'verify',
+  'consult',
+  'search',
+];
+var PRE_TOOL_ANSWER_BOUNDARIES = [/:\s+/, /[.!?]\s+/, /\s[—-]\s+/];
+var PRE_TOOL_SCAFFOLDING_TAIL_PATTERNS = [
+  /^(?:that|this|it)\b(?:\s+(?:up|for|carefully|specifically|before|first|more|real|out)\b)?/i,
+  /^the\s+(?:quick|short|exact|specific)\b/i,
+  /^(?:up|carefully|specifically|before|first|more|real)\b/i,
+  /^(?:whether|if)\b/i,
+];
+var PRE_TOOL_SUPPRESSED_ANSWER_PATTERN = new RegExp(
+  '^\\s*(?:' +
+    PRE_TOOL_STARTERS.map(escapeRegExp).join('|') +
+    ')\\s+(?:' +
+    PRE_TOOL_LOOKUP_VERBS.map(escapeRegExp).join('|') +
+    ')\\b([\\s\\S]*)$',
+  'i',
+);
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getPreToolLookupRemainder(delta) {
+  var normalized = delta.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  for (var index = 0; index < PRE_TOOL_STARTERS.length; index += 1) {
+    var starter = PRE_TOOL_STARTERS[index];
+    if (normalized === starter || normalized.indexOf(starter + ' ') === 0) {
+      return normalized.slice(starter.length).trim();
+    }
+  }
+
+  return null;
+}
+
+function shouldDelayPreToolDelta(delta) {
+  var remainder = getPreToolLookupRemainder(delta);
+  if (remainder === null) return false;
+  if (!remainder) return true;
+
+  for (var index = 0; index < PRE_TOOL_LOOKUP_VERBS.length; index += 1) {
+    if (PRE_TOOL_LOOKUP_VERBS[index].indexOf(remainder) === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function shouldSuppressPreToolDelta(delta) {
+  var remainder = getPreToolLookupRemainder(delta);
+  if (remainder === null || !remainder) return false;
+
+  for (var index = 0; index < PRE_TOOL_LOOKUP_VERBS.length; index += 1) {
+    var verb = PRE_TOOL_LOOKUP_VERBS[index];
+    if (remainder === verb || remainder.indexOf(verb + ' ') === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
+  var match = delta.match(PRE_TOOL_SUPPRESSED_ANSWER_PATTERN);
+  if (!match) return null;
+
+  var tail = (match[1] || '').trim();
+  if (!tail) return null;
+  var earliestBoundary = null;
+
+  for (var index = 0; index < PRE_TOOL_ANSWER_BOUNDARIES.length; index += 1) {
+    var boundary = PRE_TOOL_ANSWER_BOUNDARIES[index].exec(tail);
+    if (!boundary) continue;
+    if (!earliestBoundary || boundary.index < earliestBoundary.index) {
+      earliestBoundary = boundary;
+    }
+  }
+
+  if (earliestBoundary) {
+    var answer = tail.slice(earliestBoundary.index + earliestBoundary[0].length).trim();
+    return answer || null;
+  }
+
+  for (
+    var patternIndex = 0;
+    patternIndex < PRE_TOOL_SCAFFOLDING_TAIL_PATTERNS.length;
+    patternIndex += 1
+  ) {
+    if (PRE_TOOL_SCAFFOLDING_TAIL_PATTERNS[patternIndex].test(tail)) {
+      return null;
+    }
+  }
+
+  return tail;
+}
+
+function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
+  var row = toolEntries[toolId];
+  if (row) return row;
+
+  row = document.createElement('div');
+  row.className = 'squire-answer__tool';
+  row.dataset.toolId = toolId;
+
+  var labelEl = document.createElement('span');
+  labelEl.className = 'squire-answer__tool-label';
+  row.appendChild(labelEl);
+
+  var stateEl = document.createElement('span');
+  stateEl.className = 'squire-answer__tool-state';
+  row.appendChild(stateEl);
+
+  toolEntries[toolId] = row;
+  toolsEl.appendChild(row);
+  return row;
+}
+
+function renderToolStatusRow(row, label, state) {
+  if (!row) return;
+
+  row.classList.remove('is-error');
+  row.dataset.toolState = state;
+
+  var labelEl = row.querySelector('.squire-answer__tool-label');
+  var stateEl = row.querySelector('.squire-answer__tool-state');
+  if (!stateEl) return;
+
+  if (state === 'running') {
+    if (labelEl) labelEl.textContent = 'CONSULTING';
+    stateEl.textContent = label || 'REFERENCE';
+    return;
+  }
+
+  if (state === 'error') {
+    row.classList.add('is-error');
+    if (labelEl) labelEl.textContent = "COULDN'T CHECK";
+    stateEl.textContent = 'ONE SOURCE';
+    return;
+  }
+
+  if (labelEl) labelEl.textContent = label || 'REFERENCE';
+  stateEl.textContent = '';
+}
+
+function clearToolStatusRows(toolsEl, toolEntries) {
+  if (!toolsEl) return;
+
+  toolsEl.replaceChildren();
+  for (var toolId in toolEntries) {
+    delete toolEntries[toolId];
+  }
+}
+
 function handlePendingTranscript(transcript) {
   if (!transcript) return;
 
@@ -158,8 +321,11 @@ function handlePendingTranscript(transcript) {
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
+  var footerEl = document.querySelector('.squire-toolcall');
   var toolEntries = {};
+  var preToolBuffer = '';
   var seenFirstDelta = false;
+  var toolPhaseStarted = false;
   var source = new window.EventSource(streamUrl);
 
   activeStream = {
@@ -167,53 +333,80 @@ function handlePendingTranscript(transcript) {
     source: source,
   };
 
+  if (footerEl) footerEl.hidden = true;
+
   function finishStream() {
     if (activeStream && activeStream.source === source) {
       activeStream = null;
     }
+    if (footerEl) footerEl.hidden = false;
     source.close();
   }
 
-  source.addEventListener('text-delta', function (event) {
-    var payload = JSON.parse(event.data || '{}');
+  function materializeStreamingDelta(delta) {
     if (!seenFirstDelta) {
       seenFirstDelta = true;
       answerEl.setAttribute('data-stream-state', 'streaming');
       if (skeletonEl) skeletonEl.hidden = true;
+      if (toolPhaseStarted) clearToolStatusRows(toolsEl, toolEntries);
     }
 
     if (!contentEl) return;
     contentEl.classList.add('squire-markdown');
     var paragraph = ensureAnswerParagraph(contentEl);
-    paragraph.textContent += payload.delta || '';
+    paragraph.textContent += delta;
+  }
+
+  source.addEventListener('text-delta', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    var delta = payload.delta || '';
+    if (!delta) return;
+
+    if (!toolPhaseStarted && !seenFirstDelta) {
+      preToolBuffer += delta;
+
+      // Keep obvious lookup throat-clearing off-screen until a tool event
+      // confirms it was scaffolding, but preserve real tool-free answers even
+      // when their opening phrase arrives across multiple deltas.
+      if (shouldDelayPreToolDelta(preToolBuffer)) {
+        return;
+      }
+
+      if (shouldSuppressPreToolDelta(preToolBuffer)) {
+        delta = extractToolFreeAnswerFromSuppressedPreToolDelta(preToolBuffer);
+        if (!delta) return;
+      } else {
+        delta = preToolBuffer;
+      }
+
+      preToolBuffer = '';
+    }
+
+    materializeStreamingDelta(delta);
   });
 
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
+    if (seenFirstDelta) {
+      clearToolStatusRows(toolsEl, toolEntries);
+      return;
+    }
     var payload = JSON.parse(event.data || '{}');
-    var existing = toolEntries[payload.id];
-    if (existing) return;
-    var row = document.createElement('div');
-    row.className = 'squire-answer__tool';
-    row.dataset.toolId = payload.id;
-    row.textContent = payload.label + '...';
-    toolEntries[payload.id] = row;
-    toolsEl.appendChild(row);
+    preToolBuffer = '';
+    toolPhaseStarted = true;
+    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
+    renderToolStatusRow(row, payload.label, 'running');
   });
 
   source.addEventListener('tool-result', function (event) {
     if (!toolsEl) return;
-    var payload = JSON.parse(event.data || '{}');
-    var row = toolEntries[payload.id];
-    if (!row) {
-      row = document.createElement('div');
-      row.className = 'squire-answer__tool';
-      row.dataset.toolId = payload.id;
-      toolsEl.appendChild(row);
-      toolEntries[payload.id] = row;
+    if (seenFirstDelta) {
+      clearToolStatusRows(toolsEl, toolEntries);
+      return;
     }
-    row.classList.add(payload.ok ? 'is-complete' : 'is-error');
-    row.textContent = payload.label + (payload.ok ? ' done' : ' failed');
+    var payload = JSON.parse(event.data || '{}');
+    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
+    renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
   });
 
   source.addEventListener('done', function (event) {
