@@ -4,11 +4,11 @@ name = "squire"
 
 [setup]
 script = '''
-  source "$HOME/.nvm/nvm.sh"
-  nvm use
-  ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
-  npm install --ignore-scripts
-  docker compose up -d
-  npm run db:migrate
-  npm run db:migrate:test
+source "$HOME/.nvm/nvm.sh"
+nvm use
+ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
+npm install --ignore-scripts
+docker compose up -d
+npm run db:migrate
+npm run db:migrate:test
 '''
