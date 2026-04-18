@@ -21,6 +21,7 @@ Read these on demand:
 | When you're about to...                                                    | Read                                             |
 | -------------------------------------------------------------------------- | ------------------------------------------------ |
 | Start work in a fresh checkout or linked worktree, or get one bootstrapped | [../DEVELOPMENT.md](../DEVELOPMENT.md)           |
+| Add/change a command in the Codex or Claude Code worktree bootstrap script | [worktree-setup.md](./worktree-setup.md)         |
 | Start work on a Linear issue                                               | [issue-workflow.md](./issue-workflow.md)         |
 | Write or modify tests                                                      | [testing.md](./testing.md)                       |
 | Run QA, browser verification, or ship-readiness testing                    | [qa.md](./qa.md)                                 |
