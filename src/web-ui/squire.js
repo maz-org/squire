@@ -153,6 +153,18 @@ var PRE_TOOL_LOOKUP_VERBS = [
   'search',
 ];
 var PRE_TOOL_ANSWER_BOUNDARIES = [/:\s+/, /[.!?]\s+/, /\s[—-]\s+/];
+var PRE_TOOL_SUPPRESSED_ANSWER_PATTERN = new RegExp(
+  '^\\s*(?:' +
+    PRE_TOOL_STARTERS.map(escapeRegExp).join('|') +
+    ')\\s+(?:' +
+    PRE_TOOL_LOOKUP_VERBS.map(escapeRegExp).join('|') +
+    ')\\b([\\s\\S]*)$',
+  'i',
+);
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 function getPreToolLookupRemainder(delta) {
   var normalized = delta.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -196,9 +208,7 @@ function shouldSuppressPreToolDelta(delta) {
 }
 
 function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
-  var match = delta.match(
-    /^\s*(?:let me|i'll|i will|i'm going to|i am going to)\s+(?:check|look|pull|find|confirm|verify|consult|search)\b([\s\S]*)$/i,
-  );
+  var match = delta.match(PRE_TOOL_SUPPRESSED_ANSWER_PATTERN);
   if (!match) return null;
 
   var tail = match[1] || '';

@@ -16,17 +16,27 @@ class FakeClassList {
     this.sync();
   }
 
+  private readFromOwner() {
+    this.tokens.clear();
+    for (const token of this.owner.className.split(/\s+/).filter(Boolean)) {
+      this.tokens.add(token);
+    }
+  }
+
   add(...tokens: string[]) {
+    this.readFromOwner();
     for (const token of tokens) this.tokens.add(token);
     this.sync();
   }
 
   remove(...tokens: string[]) {
+    this.readFromOwner();
     for (const token of tokens) this.tokens.delete(token);
     this.sync();
   }
 
   contains(token: string) {
+    this.readFromOwner();
     return this.tokens.has(token);
   }
 
@@ -324,6 +334,18 @@ describe('squire.js selected-message retargeting', () => {
     expect(skeletonEl.hidden).toBe(true);
     expect(toolsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('This assistant is for Frosthaven.');
+  });
+
+  it('renders error state when tool-result reports failure', () => {
+    const { source, toolsEl } = bootPendingTranscript();
+
+    source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
+    source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: false });
+
+    const row = toolsEl.children[0];
+    expect(row?.classList.contains('is-error')).toBe(true);
+    expect(row?.querySelector('.squire-answer__tool-label')?.textContent).toBe("COULDN'T CHECK");
+    expect(row?.querySelector('.squire-answer__tool-state')?.textContent).toBe('ONE SOURCE');
   });
 
   it('ignores late tool-status events once answer prose is already on screen', () => {
