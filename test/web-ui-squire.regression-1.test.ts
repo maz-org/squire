@@ -336,6 +336,16 @@ describe('squire.js selected-message retargeting', () => {
     expect(contentEl.querySelector('p')?.textContent).toBe('This assistant is for Frosthaven.');
   });
 
+  it('treats a one-sentence tool-free lookupy opening as answer text', () => {
+    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+
+    source.emit('text-delta', { delta: "I'll confirm monsters cannot loot treasure tiles." });
+
+    expect(skeletonEl.hidden).toBe(true);
+    expect(toolsEl.children).toHaveLength(0);
+    expect(contentEl.querySelector('p')?.textContent).toBe('monsters cannot loot treasure tiles.');
+  });
+
   it('renders error state when tool-result reports failure', () => {
     const { source, toolsEl } = bootPendingTranscript();
 

@@ -153,6 +153,12 @@ var PRE_TOOL_LOOKUP_VERBS = [
   'search',
 ];
 var PRE_TOOL_ANSWER_BOUNDARIES = [/:\s+/, /[.!?]\s+/, /\s[—-]\s+/];
+var PRE_TOOL_SCAFFOLDING_TAIL_PATTERNS = [
+  /^(?:that|this|it)\b(?:\s+(?:up|for|carefully|specifically|before|first|more|real|out)\b)?/i,
+  /^the\s+(?:quick|short|exact|specific)\b/i,
+  /^(?:up|carefully|specifically|before|first|more|real)\b/i,
+  /^(?:whether|if)\b/i,
+];
 var PRE_TOOL_SUPPRESSED_ANSWER_PATTERN = new RegExp(
   '^\\s*(?:' +
     PRE_TOOL_STARTERS.map(escapeRegExp).join('|') +
@@ -211,7 +217,8 @@ function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
   var match = delta.match(PRE_TOOL_SUPPRESSED_ANSWER_PATTERN);
   if (!match) return null;
 
-  var tail = match[1] || '';
+  var tail = (match[1] || '').trim();
+  if (!tail) return null;
   var earliestBoundary = null;
 
   for (var index = 0; index < PRE_TOOL_ANSWER_BOUNDARIES.length; index += 1) {
@@ -222,10 +229,22 @@ function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
     }
   }
 
-  if (!earliestBoundary) return null;
+  if (earliestBoundary) {
+    var answer = tail.slice(earliestBoundary.index + earliestBoundary[0].length).trim();
+    return answer || null;
+  }
 
-  var answer = tail.slice(earliestBoundary.index + earliestBoundary[0].length).trim();
-  return answer || null;
+  for (
+    var patternIndex = 0;
+    patternIndex < PRE_TOOL_SCAFFOLDING_TAIL_PATTERNS.length;
+    patternIndex += 1
+  ) {
+    if (PRE_TOOL_SCAFFOLDING_TAIL_PATTERNS[patternIndex].test(tail)) {
+      return null;
+    }
+  }
+
+  return tail;
 }
 
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
