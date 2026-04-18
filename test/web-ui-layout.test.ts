@@ -650,6 +650,41 @@ describe('selected-message rendering helpers', () => {
     expect(body).not.toContain('EARLIER QUESTION');
   });
 
+  it('renders the canonical conversation page with only the latest turn in the surface', async () => {
+    const body = String(
+      await actualLayout.renderConversationPage({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        conversationId: 'conv-123',
+        messages,
+        recentQuestionsNav: actualLayout.renderRecentQuestionsNav([
+          {
+            href: '/chat/conv-123/messages/m3',
+            hxGet: '/chat/conv-123/messages/m3',
+            label: 'Middle question',
+            pushUrl: true,
+          },
+          {
+            href: '/chat/conv-123/messages/m1',
+            hxGet: '/chat/conv-123/messages/m1',
+            label: 'Oldest question',
+            pushUrl: true,
+          },
+        ]),
+      }),
+    );
+
+    const transcript = body.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toContain('Newest question');
+    expect(transcript).toContain('Newest answer.');
+    expect(transcript).not.toContain('Middle question');
+    expect(transcript).not.toContain('Middle answer.');
+    expect(transcript).not.toContain('Oldest question');
+    expect(transcript).not.toContain('Oldest answer.');
+    expect(body).toContain('Middle question');
+    expect(body).toContain('Oldest question');
+  });
+
   it('renders recent questions newest-to-oldest and excludes the selected question', () => {
     const body = String(
       actualLayout.renderRecentQuestionsNav({

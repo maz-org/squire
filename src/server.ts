@@ -57,7 +57,6 @@ import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
   renderConversationTranscript,
-  renderConversationTranscriptWithPendingTurn,
   renderConversationPage,
   renderHomePage,
   renderLoginPage,
@@ -641,6 +640,7 @@ app.get('/chat/:conversationId', async (c) => {
     userId: session.userId,
   });
   if (!loaded) return c.notFound();
+  const latestUserMessage = loaded.messages.filter((message) => message.role === 'user').at(-1);
 
   const recentQuestionsNav = buildConversationRecentQuestionsNav(
     loaded.conversation.id,
@@ -656,6 +656,9 @@ app.get('/chat/:conversationId', async (c) => {
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
       recentQuestionsNav,
+      pendingStreamUrl: latestUserMessage
+        ? buildStreamUrl(loaded.conversation.id, latestUserMessage.id)
+        : undefined,
     }),
   );
 });
@@ -771,11 +774,6 @@ app.post('/chat/:conversationId/messages', async (c) => {
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
     c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
-    const loaded = await loadConversation({
-      conversationId: pending.conversation.id,
-      userId: session.userId,
-    });
-    if (!loaded) return c.notFound();
     if (isSelectedMessagePageRequest(c)) {
       return c.html(
         renderPendingTurnShellWithRecentQuestions({
@@ -787,9 +785,8 @@ app.post('/chat/:conversationId/messages', async (c) => {
     }
 
     return c.html(
-      renderConversationTranscriptWithPendingTurn({
-        conversationId: loaded.conversation.id,
-        messages: loaded.messages,
+      renderPendingTurnShell({
+        question: pending.currentUserMessage.content,
         streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
       }),
     );

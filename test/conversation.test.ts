@@ -377,6 +377,28 @@ describe('conversation web backend', () => {
     expect(recentNav).not.toContain('Question 1');
   });
 
+  it('renders only the latest completed turn on the canonical conversation page', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const pageRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}`,
+    );
+
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toContain('Second question');
+    expect(transcript).toContain('Second answer');
+    expect(transcript).not.toContain('First question');
+    expect(transcript).not.toContain('First answer');
+  });
+
   it('renders the canonical selected-message page for the conversation owner', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
@@ -583,6 +605,12 @@ describe('conversation web backend', () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain('Newest question');
+    expect(body).toContain('class="squire-answer__skeleton"');
+    expect(body).not.toContain('First question');
+    expect(body).not.toContain('First answer');
+    expect(body).not.toContain('Second question');
+    expect(body).not.toContain('Second answer');
     expect(body).not.toContain('id="squire-recent-questions"');
   });
 
@@ -1346,7 +1374,7 @@ describe('conversation web backend', () => {
     expect(pageRes.status).toBe(404);
   });
 
-  it('returns the full transcript plus a pending answer shell for HTMX follow-ups', async () => {
+  it('returns only the new pending turn for HTMX follow-ups', async () => {
     mockAsk.mockResolvedValueOnce('First answer.');
     const auth = await createAuthContext();
 
@@ -1376,9 +1404,9 @@ describe('conversation web backend', () => {
 
     expect(followUpRes.status).toBe(200);
     const body = await followUpRes.text();
-    expect(body).toContain('First question');
-    expect(body).toContain('First answer.');
     expect(body).toContain('Second question');
+    expect(body).not.toContain('First question');
+    expect(body).not.toContain('First answer.');
     expect(body).toContain('squire-transcript squire-transcript--pending');
     expect(body).toMatch(/data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/);
   });
