@@ -311,4 +311,18 @@ describe('squire.js selected-message retargeting', () => {
     expect(toolsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe("Here's how looting works.");
   });
+
+  it('strips lookupy filler once a tool-free answer reveals itself', () => {
+    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+
+    // Question: What game is this assistant for?
+    source.emit('text-delta', { delta: 'Let me check the quick version: ' });
+    expect(contentEl.querySelector('p')).toBeNull();
+
+    source.emit('text-delta', { delta: 'This assistant is for Frosthaven.' });
+
+    expect(skeletonEl.hidden).toBe(true);
+    expect(toolsEl.children).toHaveLength(0);
+    expect(contentEl.querySelector('p')?.textContent).toBe('This assistant is for Frosthaven.');
+  });
 });

@@ -152,6 +152,7 @@ var PRE_TOOL_LOOKUP_VERBS = [
   'consult',
   'search',
 ];
+var PRE_TOOL_ANSWER_BOUNDARIES = [/:\s+/, /[.!?]\s+/, /\s[—-]\s+/];
 
 function getPreToolLookupRemainder(delta) {
   var normalized = delta.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -192,6 +193,29 @@ function shouldSuppressPreToolDelta(delta) {
   }
 
   return false;
+}
+
+function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
+  var match = delta.match(
+    /^\s*(?:let me|i'll|i will|i'm going to|i am going to)\s+(?:check|look|pull|find|confirm|verify|consult|search)\b([\s\S]*)$/i,
+  );
+  if (!match) return null;
+
+  var tail = match[1] || '';
+  var earliestBoundary = null;
+
+  for (var index = 0; index < PRE_TOOL_ANSWER_BOUNDARIES.length; index += 1) {
+    var boundary = PRE_TOOL_ANSWER_BOUNDARIES[index].exec(tail);
+    if (!boundary) continue;
+    if (!earliestBoundary || boundary.index < earliestBoundary.index) {
+      earliestBoundary = boundary;
+    }
+  }
+
+  if (!earliestBoundary) return null;
+
+  var answer = tail.slice(earliestBoundary.index + earliestBoundary[0].length).trim();
+  return answer || null;
 }
 
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
@@ -310,10 +334,12 @@ function handlePendingTranscript(transcript) {
       }
 
       if (shouldSuppressPreToolDelta(preToolBuffer)) {
-        return;
+        delta = extractToolFreeAnswerFromSuppressedPreToolDelta(preToolBuffer);
+        if (!delta) return;
+      } else {
+        delta = preToolBuffer;
       }
 
-      delta = preToolBuffer;
       preToolBuffer = '';
     }
 
