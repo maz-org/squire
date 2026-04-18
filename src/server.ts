@@ -585,6 +585,16 @@ function buildToolSourceLabel(name: string): string {
   }
 }
 
+function buildToolStatusId(name: string): string {
+  const label = buildToolSourceLabel(name);
+  if (label === 'REFERENCE') return name;
+
+  return label
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 function buildConversationRecentQuestionsNav(
   conversationId: string,
   messages: Parameters<typeof listRecentCompletedQuestions>[0],
@@ -827,10 +837,6 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // owns the final user-visible ordering guarantees, including the final
   // sanitized-html swap on `done`.
   return streamSSE(c, async (stream) => {
-    // Tool status is quiet reassurance, not an event log. Reusing one stable
-    // id per tool kind keeps repeated calls updating the same transient row.
-    const toolStatusId = (name: string) => name;
-
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
@@ -851,7 +857,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           await stream.writeSSE({
             event: 'tool-start',
             data: JSON.stringify({
-              id: toolStatusId(name),
+              id: buildToolStatusId(name),
               label: buildToolSourceLabel(name),
             }),
           });
@@ -864,7 +870,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
-              id: toolStatusId(name),
+              id: buildToolStatusId(name),
               label: buildToolSourceLabel(name),
               ok: payload.ok ?? true,
             }),

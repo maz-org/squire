@@ -259,7 +259,8 @@ describe('squire.js selected-message retargeting', () => {
   it('suppresses pre-tool filler, keeps lookup metadata present-tense, and clears it when the answer starts', () => {
     const { contentEl, footerEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
 
-    source.emit('text-delta', { delta: 'Let me look that up carefully before answering.' });
+    source.emit('text-delta', { delta: 'Let me ' });
+    source.emit('text-delta', { delta: 'look that up carefully before answering.' });
     expect(contentEl.querySelector('p')).toBeNull();
     expect(footerEl.hidden).toBe(true);
 
@@ -299,5 +300,15 @@ describe('squire.js selected-message retargeting', () => {
     expect(contentEl.querySelector('p')?.textContent).toBe(
       'Closed doors block line-of-sight for looting.',
     );
+  });
+
+  it('does not suppress normal tool-free answers that open with a conversational phrase', () => {
+    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+
+    source.emit('text-delta', { delta: "Here's how looting works." });
+
+    expect(skeletonEl.hidden).toBe(true);
+    expect(toolsEl.children).toHaveLength(0);
+    expect(contentEl.querySelector('p')?.textContent).toBe("Here's how looting works.");
   });
 });

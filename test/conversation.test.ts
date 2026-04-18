@@ -1239,7 +1239,7 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules', label: 'RULEBOOK' },
+        data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
         event: 'text-delta',
@@ -1247,7 +1247,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules', label: 'RULEBOOK', ok: true },
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
       },
       {
         event: 'done',
@@ -1312,15 +1312,15 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules', label: 'RULEBOOK' },
+        data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules', label: 'RULEBOOK', ok: true },
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
       },
       {
         event: 'tool-start',
-        data: { id: 'search_rules', label: 'RULEBOOK' },
+        data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
         event: 'text-delta',
@@ -1328,12 +1328,70 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules', label: 'RULEBOOK', ok: true },
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
       },
       {
         event: 'done',
         data: expect.objectContaining({
           html: '<p>You loot when the token is in your hex at end of turn.</p>\n',
+        }),
+      },
+    ]);
+  });
+
+  it('reuses one tool-status id when multiple card tools share the same visible source', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_cards' });
+      await options?.emit?.('tool_result', { name: 'search_cards' });
+      await options?.emit?.('tool_call', { name: 'get_card' });
+      await options?.emit?.('tool_result', { name: 'get_card' });
+      await options?.emit?.('done', {});
+      return 'Card details.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'What does this card do?',
+        idempotencyKey: 'idem-stream-card-tool-dedupe',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    const events = parseSse(await streamRes.text());
+    expect(events).toEqual([
+      {
+        event: 'tool-start',
+        data: { id: 'card-index', label: 'CARD INDEX' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'card-index', label: 'CARD INDEX', ok: true },
+      },
+      {
+        event: 'tool-start',
+        data: { id: 'card-index', label: 'CARD INDEX' },
+      },
+      {
+        event: 'tool-result',
+        data: { id: 'card-index', label: 'CARD INDEX', ok: true },
+      },
+      {
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>Card details.</p>\n',
         }),
       },
     ]);
@@ -1492,11 +1550,11 @@ describe('conversation web backend', () => {
     expect(events).toEqual([
       {
         event: 'tool-start',
-        data: { id: 'search_rules', label: 'RULEBOOK' },
+        data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
         event: 'tool-result',
-        data: { id: 'search_rules', label: 'RULEBOOK', ok: false },
+        data: { id: 'rulebook', label: 'RULEBOOK', ok: false },
       },
       {
         event: 'done',

@@ -141,8 +141,57 @@ function renderPendingError(answerEl, label, message) {
   answerEl.appendChild(banner);
 }
 
+var PRE_TOOL_STARTERS = ['let me', "i'll", 'i will', "i'm going to", 'i am going to'];
+var PRE_TOOL_LOOKUP_VERBS = [
+  'check',
+  'look',
+  'pull',
+  'find',
+  'confirm',
+  'verify',
+  'consult',
+  'search',
+];
+
+function getPreToolLookupRemainder(delta) {
+  var normalized = delta.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  for (var index = 0; index < PRE_TOOL_STARTERS.length; index += 1) {
+    var starter = PRE_TOOL_STARTERS[index];
+    if (normalized === starter || normalized.indexOf(starter + ' ') === 0) {
+      return normalized.slice(starter.length).trim();
+    }
+  }
+
+  return null;
+}
+
+function shouldDelayPreToolDelta(delta) {
+  var remainder = getPreToolLookupRemainder(delta);
+  if (remainder === null) return false;
+  if (!remainder) return true;
+
+  for (var index = 0; index < PRE_TOOL_LOOKUP_VERBS.length; index += 1) {
+    if (PRE_TOOL_LOOKUP_VERBS[index].indexOf(remainder) === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function shouldSuppressPreToolDelta(delta) {
-  return /^\s*(let me|i'?ll|i will|i'm going to|i am going to|great news\b|here'?s\b)/i.test(delta);
+  var remainder = getPreToolLookupRemainder(delta);
+  if (remainder === null || !remainder) return false;
+
+  for (var index = 0; index < PRE_TOOL_LOOKUP_VERBS.length; index += 1) {
+    var verb = PRE_TOOL_LOOKUP_VERBS[index];
+    if (remainder === verb || remainder.indexOf(verb + ' ') === 0) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
@@ -211,6 +260,7 @@ function handlePendingTranscript(transcript) {
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
   var footerEl = document.querySelector('.squire-toolcall');
   var toolEntries = {};
+  var preToolBuffer = '';
   var seenFirstDelta = false;
   var toolPhaseStarted = false;
   var source = new window.EventSource(streamUrl);
@@ -249,11 +299,22 @@ function handlePendingTranscript(transcript) {
     var delta = payload.delta || '';
     if (!delta) return;
 
-    // Tool-free answers should still materialize live. The only thing we keep
-    // off-screen before a lookup starts is obvious assistant throat-clearing
-    // like "let me check that", which only adds a second fake narrator.
-    if (!toolPhaseStarted && !seenFirstDelta && shouldSuppressPreToolDelta(delta)) {
-      return;
+    if (!toolPhaseStarted && !seenFirstDelta) {
+      preToolBuffer += delta;
+
+      // Keep obvious lookup throat-clearing off-screen until a tool event
+      // confirms it was scaffolding, but preserve real tool-free answers even
+      // when their opening phrase arrives across multiple deltas.
+      if (shouldDelayPreToolDelta(preToolBuffer)) {
+        return;
+      }
+
+      if (shouldSuppressPreToolDelta(preToolBuffer)) {
+        return;
+      }
+
+      delta = preToolBuffer;
+      preToolBuffer = '';
     }
 
     materializeStreamingDelta(delta);
@@ -262,6 +323,7 @@ function handlePendingTranscript(transcript) {
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
     var payload = JSON.parse(event.data || '{}');
+    preToolBuffer = '';
     toolPhaseStarted = true;
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, 'running');
