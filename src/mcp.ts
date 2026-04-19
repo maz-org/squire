@@ -7,8 +7,23 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { z } from 'zod';
-import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
+import {
+  searchRules,
+  searchCards,
+  listCardTypes,
+  listCards,
+  getCard,
+  findScenario,
+  getScenario,
+  getSection,
+  followLinks,
+} from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
+import {
+  BOOK_RECORD_KINDS,
+  BOOK_REFERENCE_TYPES,
+  type BookRecordKind,
+} from './scenario-section-schemas.ts';
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -21,7 +36,8 @@ export function createMcpServer(): McpServer {
   server.registerTool(
     'search_rules',
     {
-      description: 'Search the Frosthaven rulebook for passages relevant to a query.',
+      description:
+        'Search the indexed Frosthaven books (rulebook, scenario book, section book, puzzle book) for passages relevant to a query.',
       inputSchema: {
         query: z.string().describe('Search query'),
         topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),
@@ -118,6 +134,85 @@ export function createMcpServer(): McpServer {
         };
       }
       return { content: [{ type: 'text', text: JSON.stringify(card, null, 2) }] };
+    },
+  );
+
+  server.registerTool(
+    'find_scenario',
+    {
+      description:
+        'Resolve a scenario query like "scenario 61" or "Life and Death" to matching scenario records.',
+      inputSchema: {
+        query: z.string().describe('Scenario query'),
+      },
+    },
+    async ({ query }) => {
+      const scenarios = await findScenario(query);
+      return { content: [{ type: 'text', text: JSON.stringify(scenarios, null, 2) }] };
+    },
+  );
+
+  server.registerTool(
+    'get_scenario',
+    {
+      description: 'Fetch an exact scenario record by canonical scenario ref.',
+      inputSchema: {
+        ref: z
+          .string()
+          .describe(
+            'Canonical scenario ref like "gloomhavensecretariat:scenario/061". Use find_scenario if you only know the number or name.',
+          ),
+      },
+    },
+    async ({ ref }) => {
+      const scenario = await getScenario(ref);
+      if (!scenario) {
+        return {
+          content: [{ type: 'text', text: `Scenario not found: ${ref}` }],
+          isError: true,
+        };
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(scenario, null, 2) }] };
+    },
+  );
+
+  server.registerTool(
+    'get_section',
+    {
+      description: 'Fetch an exact section record by section ref like "90.2".',
+      inputSchema: {
+        ref: z.string().describe('Section ref like "90.2"'),
+      },
+    },
+    async ({ ref }) => {
+      const section = await getSection(ref);
+      if (!section) {
+        return {
+          content: [{ type: 'text', text: `Section not found: ${ref}` }],
+          isError: true,
+        };
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(section, null, 2) }] };
+    },
+  );
+
+  server.registerTool(
+    'follow_links',
+    {
+      description:
+        'Follow explicit scenario/section book references from a known scenario or section.',
+      inputSchema: {
+        fromKind: z.enum(BOOK_RECORD_KINDS).describe('Entity kind to follow from'),
+        fromRef: z.string().describe('Canonical scenario or section ref'),
+        linkType: z
+          .enum(BOOK_REFERENCE_TYPES)
+          .optional()
+          .describe('Optional link-type filter like "conclusion" or "section_link"'),
+      },
+    },
+    async ({ fromKind, fromRef, linkType }) => {
+      const links = await followLinks(fromKind as BookRecordKind, fromRef, linkType);
+      return { content: [{ type: 'text', text: JSON.stringify(links, null, 2) }] };
     },
   );
 

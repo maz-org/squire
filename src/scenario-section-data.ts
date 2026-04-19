@@ -1,0 +1,271 @@
+/**
+ * DB-backed scenario/section book data access.
+ *
+ * This is the deterministic book-data layer for scenario/section research:
+ * exact scenario lookup, exact section fetch, and explicit references between them.
+ */
+
+import { sql } from 'drizzle-orm';
+
+import { getDb } from './db.ts';
+import {
+  bookReferences,
+  scenarioBookScenarios,
+  sectionBookSections,
+} from './db/schema/scenario-section-books.ts';
+import type { BookRecordKind, BookReferenceType } from './scenario-section-schemas.ts';
+
+export const SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE =
+  'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.';
+
+export interface ScenarioBookScenario extends Record<string, unknown> {
+  ref: string;
+  scenarioGroup: string;
+  scenarioIndex: string;
+  name: string;
+  complexity: number | null;
+  flowChartGroup: string | null;
+  initial: boolean;
+  sourcePdf: string | null;
+  sourcePage: number | null;
+  rawText: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface SectionBookSection extends Record<string, unknown> {
+  ref: string;
+  sectionNumber: number;
+  sectionVariant: number;
+  sourcePdf: string;
+  sourcePage: number;
+  text: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface BookReference extends Record<string, unknown> {
+  fromKind: BookRecordKind;
+  fromRef: string;
+  toKind: BookRecordKind;
+  toRef: string;
+  linkType: BookReferenceType;
+  rawLabel: string | null;
+  rawContext: string | null;
+  sequence: number;
+}
+
+interface LoadOpts {
+  game?: string;
+}
+
+export interface ScenarioSectionBooksBootstrapStatus {
+  ready: boolean;
+  scenarioCount: number;
+  sectionCount: number;
+  linkCount: number;
+  error?: string;
+  missingStep?: 'npm run seed:scenario-section-books';
+  reason?: 'missing_scenario_section_books' | 'dependency_unavailable';
+}
+
+function normalizeJsonObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // fall through
+    }
+  }
+  return {};
+}
+
+function extractScenarioIndex(query: string): string | null {
+  const scenarioMatch = query.match(/\bscenario\s*0*(\d{1,3})\b/i);
+  if (scenarioMatch) return String(Number(scenarioMatch[1]));
+
+  const anyNumber = query.match(/\b0*(\d{1,3})\b/);
+  return anyNumber ? String(Number(anyNumber[1])) : null;
+}
+
+export async function findScenarios(
+  query: string,
+  limit = 6,
+  opts: LoadOpts = {},
+): Promise<ScenarioBookScenario[]> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+  const normalized = query.trim();
+  if (normalized.length === 0) return [];
+  const lowered = normalized.toLowerCase();
+  const scenarioIndex = extractScenarioIndex(normalized);
+  const indexCondition = scenarioIndex ? sql`scenario_index = ${scenarioIndex}` : sql`false`;
+  const likePattern = `%${lowered}%`;
+
+  const rows = await db.execute<ScenarioBookScenario>(sql`
+    SELECT
+      ref,
+      scenario_group AS "scenarioGroup",
+      scenario_index AS "scenarioIndex",
+      name,
+      complexity,
+      flow_chart_group AS "flowChartGroup",
+      initial,
+      source_pdf AS "sourcePdf",
+      source_page AS "sourcePage",
+      raw_text AS "rawText",
+      metadata
+    FROM ${scenarioBookScenarios}
+    WHERE game = ${game}
+      AND (${indexCondition} OR lower(name) LIKE ${likePattern})
+    ORDER BY
+      CASE
+        WHEN ${indexCondition} THEN 0
+        WHEN lower(name) = ${lowered} THEN 1
+        WHEN lower(name) LIKE ${`${lowered}%`} THEN 2
+        ELSE 3
+      END,
+      CASE
+        WHEN scenario_index ~ '^[0-9]+$' THEN CAST(scenario_index AS INTEGER)
+        ELSE 10000
+      END,
+      scenario_index
+    LIMIT ${limit}
+  `);
+
+  return rows.rows.map((row) => ({
+    ...row,
+    metadata: normalizeJsonObject(row.metadata),
+  }));
+}
+
+export async function getScenario(
+  ref: string,
+  opts: LoadOpts = {},
+): Promise<ScenarioBookScenario | null> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+
+  const rows = await db.execute<ScenarioBookScenario>(sql`
+    SELECT
+      ref,
+      scenario_group AS "scenarioGroup",
+      scenario_index AS "scenarioIndex",
+      name,
+      complexity,
+      flow_chart_group AS "flowChartGroup",
+      initial,
+      source_pdf AS "sourcePdf",
+      source_page AS "sourcePage",
+      raw_text AS "rawText",
+      metadata
+    FROM ${scenarioBookScenarios}
+    WHERE game = ${game} AND ref = ${ref}
+    LIMIT 1
+  `);
+
+  const row = rows.rows[0];
+  return row ? { ...row, metadata: normalizeJsonObject(row.metadata) } : null;
+}
+
+export async function getSection(
+  ref: string,
+  opts: LoadOpts = {},
+): Promise<SectionBookSection | null> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+
+  const rows = await db.execute<SectionBookSection>(sql`
+    SELECT
+      ref,
+      section_number AS "sectionNumber",
+      section_variant AS "sectionVariant",
+      source_pdf AS "sourcePdf",
+      source_page AS "sourcePage",
+      text,
+      metadata
+    FROM ${sectionBookSections}
+    WHERE game = ${game} AND ref = ${ref}
+    LIMIT 1
+  `);
+
+  const row = rows.rows[0];
+  return row ? { ...row, metadata: normalizeJsonObject(row.metadata) } : null;
+}
+
+export async function followReferences(
+  fromKind: BookRecordKind,
+  fromRef: string,
+  referenceType?: BookReferenceType,
+  opts: LoadOpts = {},
+): Promise<BookReference[]> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+  const referenceTypeClause = referenceType ? sql`AND link_type = ${referenceType}` : sql``;
+
+  const rows = await db.execute<BookReference>(sql`
+    SELECT
+      from_kind AS "fromKind",
+      from_ref AS "fromRef",
+      to_kind AS "toKind",
+      to_ref AS "toRef",
+      link_type AS "linkType",
+      raw_label AS "rawLabel",
+      raw_context AS "rawContext",
+      sequence
+    FROM ${bookReferences}
+    WHERE game = ${game}
+      AND from_kind = ${fromKind}
+      AND from_ref = ${fromRef}
+      ${referenceTypeClause}
+    ORDER BY sequence, to_ref
+  `);
+
+  return rows.rows;
+}
+
+export async function getScenarioSectionBooksBootstrapStatus(
+  opts: LoadOpts = {},
+): Promise<ScenarioSectionBooksBootstrapStatus> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+
+  try {
+    const rows = await db.execute<{
+      scenarioCount: number;
+      sectionCount: number;
+      linkCount: number;
+    }>(sql`
+      SELECT
+        (SELECT count(*)::int FROM ${scenarioBookScenarios} WHERE game = ${game}) AS "scenarioCount",
+        (SELECT count(*)::int FROM ${sectionBookSections} WHERE game = ${game}) AS "sectionCount",
+        (SELECT count(*)::int FROM ${bookReferences} WHERE game = ${game}) AS "linkCount"
+    `);
+    const counts = rows.rows[0] ?? { scenarioCount: 0, sectionCount: 0, linkCount: 0 };
+    const ready = counts.scenarioCount > 0 && counts.sectionCount > 0 && counts.linkCount > 0;
+    if (ready) {
+      return { ready, ...counts };
+    }
+    return {
+      ready: false,
+      ...counts,
+      error: SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE,
+      missingStep: 'npm run seed:scenario-section-books',
+      reason: 'missing_scenario_section_books',
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      ready: false,
+      scenarioCount: 0,
+      sectionCount: 0,
+      linkCount: 0,
+      error: `scenario/section book data query failed: ${message}`,
+      reason: 'dependency_unavailable',
+    };
+  }
+}

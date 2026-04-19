@@ -4,16 +4,25 @@
  */
 
 import { embed } from './embedder.ts';
+import { formatRetrievalSourceLabel } from './retrieval-source.ts';
 import { search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
 import { countsByType, load, loadOne, searchExtractedRanked, TYPES } from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
+import {
+  findScenarios,
+  getScenario as loadScenario,
+  getSection as loadSection,
+  followReferences as loadReferences,
+} from './scenario-section-data.ts';
+import type { BookRecordKind, BookReferenceType } from './scenario-section-schemas.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
 export interface RuleResult {
   text: string;
   source: string;
+  sourceLabel: string;
   score: number;
 }
 
@@ -26,6 +35,41 @@ export interface CardResult {
 export interface CardTypeInfo {
   type: CardType;
   count: number;
+}
+
+export interface ScenarioResult {
+  ref: string;
+  scenarioGroup: string;
+  scenarioIndex: string;
+  name: string;
+  complexity: number | null;
+  flowChartGroup: string | null;
+  initial: boolean;
+  sourcePdf: string | null;
+  sourcePage: number | null;
+  rawText: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface SectionResult {
+  ref: string;
+  sectionNumber: number;
+  sectionVariant: number;
+  sourcePdf: string;
+  sourcePage: number;
+  text: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ReferenceResult {
+  fromKind: BookRecordKind;
+  fromRef: string;
+  toKind: BookRecordKind;
+  toRef: string;
+  linkType: BookReferenceType;
+  rawLabel: string | null;
+  rawContext: string | null;
+  sequence: number;
 }
 
 interface ToolOpts {
@@ -47,8 +91,9 @@ function stripInternalKeys(record: Record<string, unknown>): Record<string, unkn
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
 /**
- * Search the rulebook vector index for passages relevant to a query.
- * Returns structured results with text, source, and similarity score.
+ * Search the indexed Frosthaven book corpus for passages relevant to a query.
+ * Returns structured results with text, raw source, display label, and
+ * similarity score.
  *
  * `opts.game` is threaded through to `vector-store.search`, which filters
  * on the `game` column of the embeddings table. Defaults to `'frosthaven'`
@@ -61,6 +106,7 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
   return hits.map((h) => ({
     text: h.text,
     source: h.source,
+    sourceLabel: formatRetrievalSourceLabel(h.source),
     score: h.score,
   }));
 }
@@ -133,4 +179,25 @@ export async function getCard(
   const match = await loadOne(type, id, opts);
   if (!match) return null;
   return stripInternalKeys(match);
+}
+
+export async function findScenario(query: string, opts?: ToolOpts): Promise<ScenarioResult[]> {
+  return findScenarios(query, 6, opts);
+}
+
+export async function getScenario(ref: string, opts?: ToolOpts): Promise<ScenarioResult | null> {
+  return loadScenario(ref, opts);
+}
+
+export async function getSection(ref: string, opts?: ToolOpts): Promise<SectionResult | null> {
+  return loadSection(ref, opts);
+}
+
+export async function followLinks(
+  fromKind: BookRecordKind,
+  fromRef: string,
+  linkType?: BookReferenceType,
+  opts?: ToolOpts,
+): Promise<ReferenceResult[]> {
+  return loadReferences(fromKind, fromRef, linkType, opts);
 }

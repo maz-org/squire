@@ -1,13 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockSearchRules, mockSearchCards, mockListCardTypes, mockListCards, mockGetCard } =
-  vi.hoisted(() => ({
-    mockSearchRules: vi.fn(),
-    mockSearchCards: vi.fn(),
-    mockListCardTypes: vi.fn(),
-    mockListCards: vi.fn(),
-    mockGetCard: vi.fn(),
-  }));
+const {
+  mockSearchRules,
+  mockSearchCards,
+  mockListCardTypes,
+  mockListCards,
+  mockGetCard,
+  mockFindScenario,
+  mockGetScenario,
+  mockGetSection,
+  mockFollowLinks,
+} = vi.hoisted(() => ({
+  mockSearchRules: vi.fn(),
+  mockSearchCards: vi.fn(),
+  mockListCardTypes: vi.fn(),
+  mockListCards: vi.fn(),
+  mockGetCard: vi.fn(),
+  mockFindScenario: vi.fn(),
+  mockGetScenario: vi.fn(),
+  mockGetSection: vi.fn(),
+  mockFollowLinks: vi.fn(),
+}));
 
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
@@ -15,6 +28,10 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  findScenario: mockFindScenario,
+  getScenario: mockGetScenario,
+  getSection: mockGetSection,
+  followLinks: mockFollowLinks,
 }));
 
 import { createMcpServer } from '../src/mcp.ts';
@@ -39,16 +56,107 @@ async function connectClient() {
 }
 
 describe('MCP tool registration', () => {
-  it('registers all 5 tools', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFindScenario.mockResolvedValue([
+      {
+        ref: 'gloomhavensecretariat:scenario/061',
+        scenarioGroup: 'main',
+        scenarioIndex: '61',
+        name: 'Life and Death',
+        complexity: 2,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: 'fh-scenario-book-42-61.pdf',
+        sourcePage: 0,
+        rawText: 'Scenario 61',
+        metadata: {},
+      },
+    ]);
+    mockGetScenario.mockResolvedValue({
+      ref: 'gloomhavensecretariat:scenario/061',
+      scenarioGroup: 'main',
+      scenarioIndex: '61',
+      name: 'Life and Death',
+      complexity: 2,
+      flowChartGroup: null,
+      initial: false,
+      sourcePdf: 'fh-scenario-book-42-61.pdf',
+      sourcePage: 0,
+      rawText: 'Scenario 61',
+      metadata: {},
+    });
+    mockGetSection.mockResolvedValue({
+      ref: '67.1',
+      title: 'Conclusion',
+      body: 'Section text',
+      sourcePdf: 'fh-section-book-62-81.pdf',
+      sourcePage: 0,
+      rawText: 'Section text',
+      metadata: {},
+    });
+    mockFollowLinks.mockResolvedValue([
+      {
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        toKind: 'section',
+        toRef: '67.1',
+        linkType: 'conclusion',
+        label: 'Read Section 67.1',
+        context: null,
+        metadata: {},
+      },
+    ]);
+  });
+
+  it('registers all 9 tools', async () => {
     const client = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     expect(names).toContain('search_rules');
+    expect(names).toContain('find_scenario');
+    expect(names).toContain('get_scenario');
+    expect(names).toContain('get_section');
+    expect(names).toContain('follow_links');
     expect(names).toContain('search_cards');
     expect(names).toContain('list_card_types');
     expect(names).toContain('list_cards');
     expect(names).toContain('get_card');
-    expect(tools).toHaveLength(5);
+    expect(tools).toHaveLength(9);
+  });
+
+  it('wires the traversal tools through to handlers', async () => {
+    const client = await connectClient();
+
+    await expect(
+      client.callTool({ name: 'find_scenario', arguments: { query: 'scenario 61' } }),
+    ).resolves.toBeDefined();
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+
+    await expect(
+      client.callTool({
+        name: 'get_scenario',
+        arguments: { ref: 'gloomhavensecretariat:scenario/061' },
+      }),
+    ).resolves.toBeDefined();
+    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061');
+
+    await expect(
+      client.callTool({ name: 'get_section', arguments: { ref: '67.1' } }),
+    ).resolves.toBeDefined();
+    expect(mockGetSection).toHaveBeenCalledWith('67.1');
+
+    await expect(
+      client.callTool({
+        name: 'follow_links',
+        arguments: { fromKind: 'scenario', fromRef: 'gloomhavensecretariat:scenario/061' },
+      }),
+    ).resolves.toBeDefined();
+    expect(mockFollowLinks).toHaveBeenCalledWith(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      undefined,
+    );
   });
 });
 

@@ -212,13 +212,16 @@ currently allowlisted localhost callback ports are `4450` and `5018`.
 
 ### Data files
 
-Extracted card data (`data/extracted/`) is committed to the repo as
-regular JSON files. Since SQR-56 these are seed inputs only — the
-runtime store is the `card_*` tables in Postgres, populated by
-`npm run seed:cards`. The JSON files are refreshed automatically by
-the weekly CI workflow from GHS upstream data.
+The checked-in extracts under `data/extracted/` are seed inputs and inspection
+artifacts, not the runtime store. At runtime, Postgres holds:
 
-The rulebook vector index lives in Postgres (pgvector), not on disk. On
+- `card_*` tables for GHS card data (`npm run seed:cards`)
+- `scenario_book_scenarios`, `section_book_sections`, and `book_references`
+  for exact scenario/section-book lookup (`npm run seed:scenario-section-books`)
+
+The GHS card JSON files are refreshed automatically by the weekly CI workflow.
+
+The Frosthaven book vector index lives in Postgres (pgvector), not on disk. On
 a fresh clone, bring up the local DB and populate it before running the
 server:
 
@@ -226,8 +229,8 @@ server:
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test   # if you plan to run the test suite in this checkout
-npm run index        # chunks + embeds rulebook PDFs into the embeddings table (~2 min)
-npm run seed:dev     # seeds card_* tables + a local dev user
+npm run index        # chunks + embeds Frosthaven book PDFs into the embeddings table (~2 min)
+npm run seed:dev     # seeds card_* tables, scenario/section-book tables, and a local dev user
 ```
 
 Main checkout defaults to the `squire` / `squire_test` databases and port
@@ -240,21 +243,24 @@ the final port. If you need Google sign-in locally, prefer `PORT=4450` or
 Fresh linked worktrees need that whole bootstrap, not just `npm run serve`.
 In practice: install dependencies if this worktree does not have them yet, bring
 up Docker, run the migrations, build the embeddings index, and run
-`npm run seed:dev` so the checkout has card data plus the predictable
-`dev@squire.local` account. Also make sure `.env` includes `SESSION_SECRET`.
+`npm run seed:dev` so the checkout has card data, scenario/section-book data,
+and the predictable `dev@squire.local` account. Also make sure `.env`
+includes `SESSION_SECRET`.
 Without it, the anonymous homepage can still load, but authenticated routes
 and browser QA fail once session cookies or CSRF checks are exercised.
 
 `npm run seed:dev` is the one-shot local bundle. It chains
-`npm run seed:cards` (the prod-relevant default, also aliased as
-`npm run seed`) and `npm run seed:dev-user` (inserts a predictable dev
-user for testing authenticated paths; refuses to run when
-`NODE_ENV=production`).
+`npm run seed` (the prod-relevant default, which runs both
+`seed:cards` and `seed:scenario-section-books`) and
+`npm run seed:dev-user` (inserts a predictable dev user for testing
+authenticated paths; refuses to run when `NODE_ENV=production`).
 
 `npm run index` is idempotent — re-running it skips PDFs that are
 already in the `embeddings` table. `npm run seed:cards` is also
 idempotent — it upserts on `(game, source_id)`, so stale rows get
-overwritten in place. If you change chunking logic, bump
+overwritten in place. `npm run seed:scenario-section-books` is
+idempotent too — it refreshes the scenario/section-book runtime tables
+from the checked-in extract. If you change chunking logic, bump
 `EMBEDDING_VERSION` in `src/vector-store.ts` and re-run after clearing
 the affected sources.
 
@@ -425,8 +431,9 @@ data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
 
 ## Changelog
 
+- **2026-04-19:** SQR-103 documented the exact scenario/section-book layer. Contributor bootstrap now calls out `npm run seed` / `npm run seed:scenario-section-books`, and the data-files section now explains that Postgres holds both the GHS card tables and the scenario/section-book tables.
 - **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated testing needs local dependencies installed plus the full local bootstrap (`npm install`, `docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) and `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
-- **2026-04-08:** SQR-36 — local bootstrap swapped from `npm run seed:cards` to `npm run seed:dev`, which chains `seed:cards` and the new idempotent `seed:dev-user` helper (inserts a predictable `dev@squire.local` account for testing authenticated paths). New `seed` alias targets `seed:cards` as the prod-relevant default. The dev-user CLI refuses to run with `NODE_ENV=production`.
+- **2026-04-08:** SQR-36 — local bootstrap swapped from `npm run seed:cards` to `npm run seed:dev`, which now chains `npm run seed` and the new idempotent `seed:dev-user` helper (inserts a predictable `dev@squire.local` account for testing authenticated paths). `npm run seed` is the prod-relevant default. The dev-user CLI refuses to run with `NODE_ENV=production`.
 - **2026-04-08:** SQR-56 — clarified that `data/extracted/*.json` is now a seed input, not the runtime store. Card data lives in Postgres `card_*` tables; `npm run seed:cards` is the bridge.
 - **2026-04-07:** Final-pass cleanup. Removed stale Git LFS install step and `--recurse-submodules` clone flag — extracted card data and the vector index are committed as regular files (not LFS, no submodules) since PR #162.
 - **2026-04-07:** Moved from repo root to `docs/CONTRIBUTING.md` as part of the docs consolidation. Added changelog. Updated project layout listing to include CONTRIBUTING alongside the other ALL_CAPS docs.

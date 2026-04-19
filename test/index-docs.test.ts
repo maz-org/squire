@@ -316,6 +316,29 @@ describe('main', () => {
     expect(newEntries[0].embedding).toEqual([0.1, 0.2]);
   });
 
+  it('indexes scenario and section books alongside the rulebook corpus', async () => {
+    const longText = 'A'.repeat(900);
+    mockReaddirSync.mockReturnValue([
+      'fh-rule-book.pdf',
+      'fh-scenario-book-42-61.pdf',
+      'fh-section-book-62-81.pdf',
+    ]);
+    mockReadFileSync.mockReturnValue(Buffer.from('pdf'));
+    mockPdfParse.mockResolvedValue({ text: longText });
+    mockGetIndexedSources.mockResolvedValue(new Set(['fh-rule-book.pdf']));
+    mockEmbedBatch.mockResolvedValue([[0.1, 0.2]]);
+    mockAddEntries.mockResolvedValue(undefined);
+
+    await main();
+
+    expect(mockPdfParse).toHaveBeenCalledTimes(2);
+    const newEntries = mockAddEntries.mock.calls[0][0];
+    expect(newEntries.map((entry: { source: string }) => entry.source)).toEqual([
+      'fh-scenario-book-42-61.pdf',
+      'fh-section-book-62-81.pdf',
+    ]);
+  });
+
   it('logs nothing new for empty docs directory', async () => {
     mockReaddirSync.mockReturnValue([]);
     mockGetIndexedSources.mockResolvedValue(new Set<string>());

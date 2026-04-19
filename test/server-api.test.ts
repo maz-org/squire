@@ -246,7 +246,12 @@ describe('GET /api/search/rules', () => {
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchRules.mockResolvedValue([
-      { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
+      {
+        text: 'Loot: pick up all loot tokens.',
+        source: 'fh-rule-book.pdf',
+        sourceLabel: 'Rulebook',
+        score: 0.9,
+      },
     ]);
   });
 
@@ -257,6 +262,7 @@ describe('GET /api/search/rules', () => {
     expect(body.results).toHaveLength(1);
     expect(body.results[0]).toHaveProperty('text');
     expect(body.results[0]).toHaveProperty('source');
+    expect(body.results[0]).toHaveProperty('sourceLabel');
     expect(body.results[0]).toHaveProperty('score');
   });
 
@@ -304,21 +310,21 @@ describe('GET /api/search/rules', () => {
         askReady: false,
         missingBootstrapSteps: ['npm run index'],
         errors: [
-          'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
         ],
         capabilities: {
           rules: {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           },
         },
       }),
@@ -675,7 +681,7 @@ describe('POST /api/ask', () => {
         askReady: false,
         missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
         errors: [
-          'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+          'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           'No card data found in Postgres. Run `npm run seed:cards` first.',
         ],
         capabilities: {
@@ -683,7 +689,7 @@ describe('POST /api/ask', () => {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           },
           cards: {
             allowed: false,
@@ -694,7 +700,7 @@ describe('POST /api/ask', () => {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           },
         },
       }),
@@ -709,6 +715,41 @@ describe('POST /api/ask', () => {
     const body = await res.json();
     expect(body.error).toBe('Service unavailable.');
     expect(body).not.toHaveProperty('missing_bootstrap_steps');
+  });
+
+  it('returns 503 when traversal data is missing for ask', async () => {
+    mockIsReady.mockReturnValueOnce(false);
+    mockEnsureBootstrapStatus.mockResolvedValueOnce(
+      makeStatus({
+        lifecycle: 'boot_blocked',
+        ready: false,
+        bootstrapReady: false,
+        askReady: false,
+        missingBootstrapSteps: ['npm run seed:scenario-section-books'],
+        errors: [
+          'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+        ],
+        capabilities: {
+          rules: { allowed: true, reason: null, message: null },
+          cards: { allowed: true, reason: null, message: null },
+          ask: {
+            allowed: false,
+            reason: 'missing_scenario_section_books',
+            message:
+              'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+          },
+        },
+      }),
+    );
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'show the full text of section 90.2' }),
+    });
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe('Service unavailable.');
+    expect(mockAsk).not.toHaveBeenCalled();
   });
 
   it('emits error event when ask() throws', async () => {
@@ -734,7 +775,12 @@ describe('bootstrapErrorResponse fast path', () => {
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
     mockSearchRules.mockResolvedValue([
-      { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
+      {
+        text: 'Loot: pick up all loot tokens.',
+        source: 'fh-rule-book.pdf',
+        sourceLabel: 'Rulebook',
+        score: 0.9,
+      },
     ]);
   });
 
@@ -763,14 +809,14 @@ describe('bootstrapErrorResponse fast path', () => {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
           },
         },
       }),

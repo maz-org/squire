@@ -8,12 +8,14 @@ const {
   mockInitializeRetrieval,
   mockGetRetrievalBootstrapStatus,
   mockListCardTypes,
+  mockGetScenarioSectionBooksBootstrapStatus,
 } = vi.hoisted(() => ({
   mockRunAgentLoop: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
   mockGetRetrievalBootstrapStatus: vi.fn(),
   mockListCardTypes: vi.fn(),
+  mockGetScenarioSectionBooksBootstrapStatus: vi.fn(),
 }));
 
 vi.mock('../src/agent.ts', () => ({
@@ -30,9 +32,15 @@ vi.mock('../src/embedder.ts', () => ({
 
 vi.mock('../src/vector-store.ts', () => ({
   EMBEDDINGS_BOOTSTRAP_MESSAGE:
-    'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+    'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
   getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
   initializeRetrieval: mockInitializeRetrieval,
+}));
+
+vi.mock('../src/scenario-section-data.ts', () => ({
+  SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE:
+    'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+  getScenarioSectionBooksBootstrapStatus: mockGetScenarioSectionBooksBootstrapStatus,
 }));
 
 vi.mock('../src/extracted-data.ts', () => ({
@@ -73,6 +81,12 @@ describe('initialize', () => {
       { type: 'monster-stats', count: 5 },
       { type: 'items', count: 3 },
     ]);
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
+      ready: true,
+      scenarioCount: 162,
+      sectionCount: 699,
+      linkCount: 817,
+    });
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
   });
 
@@ -103,7 +117,7 @@ describe('initialize', () => {
       ready: false,
       indexSize: 0,
       error:
-        'Embeddings table is empty. Run `npm run index` to populate the rulebook vector store.',
+        'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
       missingStep: 'npm run index',
       reason: 'missing_index',
     });
@@ -220,6 +234,39 @@ describe('initialize', () => {
     expect(status.capabilities.ask.allowed).toBe(false);
   });
 
+  it('blocks ask when traversal data is missing while keeping rules and cards available', async () => {
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
+      ready: false,
+      scenarioCount: 0,
+      sectionCount: 0,
+      linkCount: 0,
+      error:
+        'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+      missingStep: 'npm run seed:scenario-section-books',
+      reason: 'missing_scenario_section_books',
+    });
+
+    const status = await ensureBootstrapStatus();
+    expect(status.lifecycle).toBe('boot_blocked');
+    expect(status.missingBootstrapSteps).toEqual(['npm run seed:scenario-section-books']);
+    expect(status.capabilities.rules).toEqual({
+      allowed: true,
+      reason: null,
+      message: null,
+    });
+    expect(status.capabilities.cards).toEqual({
+      allowed: true,
+      reason: null,
+      message: null,
+    });
+    expect(status.capabilities.ask).toEqual({
+      allowed: false,
+      reason: 'missing_scenario_section_books',
+      message:
+        'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+    });
+  });
+
   it('blocks rule queries when warmup has failed', async () => {
     mockInitializeRetrieval.mockRejectedValueOnce(new Error('embedder cold start failed'));
 
@@ -252,6 +299,12 @@ describe('ask', () => {
       { type: 'monster-stats', count: 5 },
       { type: 'items', count: 3 },
     ]);
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
+      ready: true,
+      scenarioCount: 162,
+      sectionCount: 699,
+      linkCount: 817,
+    });
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
     mockRunAgentLoop.mockResolvedValue('You pick up loot tokens in your hex.');
   });

@@ -1,34 +1,34 @@
 # Squire
 
-An AI-powered rules assistant for [Frosthaven](https://cephalofair.com/pages/frosthaven), the tactical dungeon-crawling board game. Ask it rules questions and get accurate, sourced answers.
+An AI-powered knowledge agent for [Frosthaven](https://cephalofair.com/pages/frosthaven), the tactical dungeon-crawling board game. Ask it rules, scenario, section, or card questions and get grounded answers.
 
 ## What it does
 
-Squire uses retrieval-augmented generation (RAG) to answer Frosthaven rules questions. It searches across:
+Squire answers Frosthaven questions with a mix of semantic search, deterministic scenario/section traversal, and exact card lookup. It works across:
 
 - **Rulebook** — the complete Frosthaven rule book
-- **Scenario & section books** — all 166 scenarios and 197 sections
-- **Card data** — 1,900+ cards from structured game data (monster stats, abilities, items, events, battle goals, buildings)
+- **Scenario & section books** — exact scenario records, exact section text, and explicit links between them
+- **Card data** — 1,900+ structured records from Gloomhaven Secretariat (monster stats, abilities, items, events, battle goals, buildings)
 
-When you ask a question, Squire embeds it, searches the vector index and card database for relevant context, then sends everything to Claude for a grounded answer.
+When you ask a question, Claude can either follow exact scenario/section references, search the indexed book corpus, search card data, or mix those paths before answering.
 
 ## How it works
 
 ```text
-Question → Embed → Vector Search + Card Search → Claude → Answer
+Question → Claude tool loop → exact scenario/section lookup and/or semantic search → Answer
 ```
 
-1. Your question is embedded using a local transformer model
-2. The embedding is compared against ~2,100 indexed chunks from the Frosthaven PDFs
-3. Extracted card data is searched in parallel via Postgres full-text search (`ts_rank` over per-table `tsvector` columns)
-4. All retrieved context is sent to Claude, which produces an answer grounded in the source material
+1. Claude decides whether the question is best served by exact scenario/section tools, semantic book search, card search, or some combination
+2. Anchored scenario/section questions use `find_scenario`, `get_scenario`, `get_section`, and `follow_links`
+3. Fuzzy book-corpus questions use `search_rules`, and card queries use Postgres full-text search over the `card_*` tables
+4. Claude writes the final answer from the retrieved source material
 
 All queries are traced with [Langfuse](https://langfuse.com) for observability.
 
 ## Setup
 
 Requires Node.js 24+ (uses native TypeScript execution) and Docker (for the
-local Postgres + pgvector database that holds the rulebook embeddings).
+local Postgres + pgvector database that holds embeddings, seeded game data, and app state).
 
 ```bash
 # Clone the repo
@@ -57,11 +57,11 @@ npm run db:migrate
 # Optional: migrate the test DB too if you plan to run the test suite
 npm run db:migrate:test
 
-# Index the rulebooks into pgvector (one-time, ~1 minute)
+# Index the Frosthaven books into pgvector (one-time, ~1 minute)
 npm run index
 
-# Seed the card tables + a local dev user (idempotent)
-# Use `npm run seed:cards` (or the `seed` alias) if you don't want the dev user.
+# Seed card data, scenario/section-book data, and a local dev user (idempotent)
+# Use `npm run seed` for the prod-relevant seed without the dev user.
 npm run seed:dev
 ```
 

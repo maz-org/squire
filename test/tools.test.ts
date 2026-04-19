@@ -8,6 +8,7 @@
  * for every tools test.
  */
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+import { sql } from 'drizzle-orm';
 
 const { mockSearch } = vi.hoisted(() => ({
   mockSearch: vi.fn(),
@@ -21,8 +22,28 @@ vi.mock('../src/embedder.ts', () => ({
   embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
 }));
 
-import { searchRules, searchCards, listCardTypes, listCards, getCard } from '../src/tools.ts';
-import type { RuleResult, CardResult, CardTypeInfo } from '../src/tools.ts';
+import {
+  searchRules,
+  searchCards,
+  listCardTypes,
+  listCards,
+  getCard,
+  findScenario,
+  getScenario,
+  getSection,
+  followLinks,
+} from '../src/tools.ts';
+import type {
+  RuleResult,
+  CardResult,
+  CardTypeInfo,
+  ScenarioResult,
+  SectionResult,
+  ReferenceResult,
+} from '../src/tools.ts';
+import { findScenarios } from '../src/scenario-section-data.ts';
+import { getDb } from '../src/db.ts';
+import { scenarioBookScenarios } from '../src/db/schema/scenario-section-books.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -30,18 +51,26 @@ const FAKE_RULE_HITS = [
   {
     id: 'chunk-1',
     text: 'Loot action: pick up all loot tokens in your hex.',
-    source: 'rulebook.pdf:42',
+    source: 'fh-rule-book.pdf',
     chunkIndex: 0,
     game: 'frosthaven',
     score: 0.92,
   },
   {
     id: 'chunk-2',
-    text: 'Movement rules: a figure must move at least one hex.',
-    source: 'rulebook.pdf:15',
+    text: 'Scenario setup: place the overlay tiles shown in the diagram.',
+    source: 'fh-scenario-book-42-61.pdf',
     chunkIndex: 1,
     game: 'frosthaven',
     score: 0.61,
+  },
+  {
+    id: 'chunk-3',
+    text: 'Section 67.1 links to Life and Death (scenario 61).',
+    source: 'fh-section-book-62-81.pdf',
+    chunkIndex: 2,
+    game: 'frosthaven',
+    score: 0.58,
   },
 ];
 
@@ -58,15 +87,26 @@ afterAll(async () => {
 // ─── searchRules ─────────────────────────────────────────────────────────────
 
 describe('searchRules', () => {
-  it('returns structured results with text, source, and score', async () => {
+  it('returns structured results with text, source, sourceLabel, and score', async () => {
     const results: RuleResult[] = await searchRules('loot action');
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]).toHaveProperty('text');
     expect(results[0]).toHaveProperty('source');
+    expect(results[0]).toHaveProperty('sourceLabel');
     expect(results[0]).toHaveProperty('score');
     expect(typeof results[0].text).toBe('string');
     expect(typeof results[0].source).toBe('string');
+    expect(typeof results[0].sourceLabel).toBe('string');
     expect(typeof results[0].score).toBe('number');
+  });
+
+  it('adds source labels that distinguish rulebook, scenario, and section books', async () => {
+    const results = await searchRules('scenario 61');
+    expect(results.map((r) => [r.source, r.sourceLabel])).toEqual([
+      ['fh-rule-book.pdf', 'Rulebook'],
+      ['fh-scenario-book-42-61.pdf', 'Scenario Book 42-61'],
+      ['fh-section-book-62-81.pdf', 'Section Book 62-81'],
+    ]);
   });
 
   it('respects topK parameter', async () => {
@@ -207,6 +247,174 @@ describe('listCards', () => {
   it('returns empty when filter matches nothing', async () => {
     const cards = await listCards('items', { name: 'No Such Item Exists' });
     expect(cards).toEqual([]);
+  });
+});
+
+describe('scenario/section book tools', () => {
+  it('findScenario returns no matches for a blank query', async () => {
+    await expect(findScenario('   ')).resolves.toEqual([]);
+  });
+
+  it('findScenario resolves an exact scenario-number query', async () => {
+    const results: ScenarioResult[] = await findScenario('scenario 61');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].scenarioIndex).toBe('61');
+    expect(results[0].name).toBe('Life and Death');
+    expect(results[0].ref).toBe('gloomhavensecretariat:scenario/061');
+  });
+
+  it('findScenarios sorts exact-name matches by numeric scenario index', async () => {
+    const { db } = getDb();
+    const refs = ['test:sort-probe/061', 'test:sort-probe/100', 'test:sort-probe/4A'];
+    await db.insert(scenarioBookScenarios).values([
+      {
+        game: 'frosthaven',
+        ref: refs[0],
+        scenarioGroup: 'main',
+        scenarioIndex: '61',
+        name: 'Sort Probe',
+        complexity: null,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: null,
+        sourcePage: null,
+        rawText: null,
+        metadata: {},
+      },
+      {
+        game: 'frosthaven',
+        ref: refs[1],
+        scenarioGroup: 'main',
+        scenarioIndex: '100',
+        name: 'Sort Probe',
+        complexity: null,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: null,
+        sourcePage: null,
+        rawText: null,
+        metadata: {},
+      },
+      {
+        game: 'frosthaven',
+        ref: refs[2],
+        scenarioGroup: 'main',
+        scenarioIndex: '4A',
+        name: 'Sort Probe',
+        complexity: null,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: null,
+        sourcePage: null,
+        rawText: null,
+        metadata: {},
+      },
+    ]);
+
+    try {
+      const results = await findScenarios('Sort Probe', 20);
+      const interesting = results
+        .filter((result) => refs.includes(result.ref))
+        .map((result) => result.scenarioIndex);
+
+      expect(interesting).toEqual(['61', '100', '4A']);
+    } finally {
+      await db.execute(sql`DELETE FROM scenario_book_scenarios WHERE ref LIKE 'test:sort-probe/%'`);
+    }
+  });
+
+  it('getScenario returns the seeded traversal scenario record', async () => {
+    const scenario = await getScenario('gloomhavensecretariat:scenario/061');
+    expect(scenario).not.toBeNull();
+    expect(scenario!.sourcePdf).toBe('fh-scenario-book-62-81.pdf');
+    expect(scenario!.rawText).toContain('67.1');
+  });
+
+  it('getSection returns exact section text for a known section ref', async () => {
+    const section: SectionResult | null = await getSection('67.1');
+    expect(section).not.toBeNull();
+    expect(section!.sectionNumber).toBe(67);
+    expect(section!.sectionVariant).toBe(1);
+    expect(section!.text).toContain('Your ears fill with the sound of your own breathing');
+    expect(section!.text).toContain('Moonshard answers.');
+    expect(section!.text).toContain('the seals grow weak.');
+    expect(section!.text).not.toContain('ownbreathing');
+    expect(section!.text).not.toContain('Moonshardanswers');
+  });
+
+  it('followLinks returns the scenario 61 conclusion link to section 67.1', async () => {
+    const links: ReferenceResult[] = await followLinks(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      'conclusion',
+    );
+    expect(links).toEqual([
+      expect.objectContaining({
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        toKind: 'section',
+        toRef: '67.1',
+        linkType: 'conclusion',
+      }),
+    ]);
+  });
+
+  it('supports repeated section chasing across a real two-hop read_now chain', async () => {
+    const firstHop = await followLinks('section', '103.1', 'read_now');
+    expect(firstHop).toEqual([
+      expect.objectContaining({
+        fromKind: 'section',
+        fromRef: '103.1',
+        toKind: 'section',
+        toRef: '11.5',
+        linkType: 'read_now',
+      }),
+    ]);
+
+    const secondHop = await followLinks('section', '11.5', 'read_now');
+    expect(secondHop).toEqual([
+      expect.objectContaining({
+        fromKind: 'section',
+        fromRef: '11.5',
+        toKind: 'section',
+        toRef: '155.1',
+        linkType: 'read_now',
+      }),
+    ]);
+
+    const finalSection = await getSection('155.1');
+    expect(finalSection).not.toBeNull();
+    expect(finalSection!.text).toContain('made short work of them');
+  });
+
+  it('follows unlock links recovered from repaired section prose like 66.2', async () => {
+    const links = await followLinks('section', '66.2', 'unlock');
+    expect(links).toEqual([
+      expect.objectContaining({
+        fromKind: 'section',
+        fromRef: '66.2',
+        toKind: 'scenario',
+        toRef: 'gloomhavensecretariat:scenario/116',
+        linkType: 'unlock',
+      }),
+    ]);
+  });
+
+  it('keeps scenario-box links whose section refs are OCR-spaced around the dot', async () => {
+    const links: ReferenceResult[] = await followLinks(
+      'scenario',
+      'gloomhavensecretariat:scenario/087',
+      'read_now',
+    );
+    expect(links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromRef: 'gloomhavensecretariat:scenario/087',
+          toRef: '77.2',
+          linkType: 'read_now',
+        }),
+      ]),
+    );
   });
 });
 

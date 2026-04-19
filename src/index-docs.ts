@@ -1,5 +1,6 @@
 /**
- * One-time indexer: reads all PDFs from data/pdfs/, chunks text, embeds, saves to data/index.json.
+ * One-time indexer: reads all PDFs from `data/pdfs/`, chunks text, embeds,
+ * and upserts the results into Postgres.
  * Run with: npm run index
  */
 

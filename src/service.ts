@@ -12,6 +12,11 @@ import {
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
 import { runAgentLoop } from './agent.ts';
+import {
+  SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE,
+  type ScenarioSectionBooksBootstrapStatus,
+  getScenarioSectionBooksBootstrapStatus,
+} from './scenario-section-data.ts';
 
 const CARD_BOOTSTRAP_MESSAGE = 'No card data found in Postgres. Run `npm run seed:cards` first.';
 const CARD_DB_HINT = 'Is Postgres running? Try `docker compose up -d` and `npm run db:migrate`.';
@@ -19,7 +24,10 @@ const WARMING_UP_MESSAGE = 'Service is warming up. Retry in a moment.';
 const INIT_FAILED_MESSAGE = 'Service warmup failed. Check server logs and retry.';
 const BOOTSTRAP_POLL_MS = 5000;
 
-type MissingBootstrapStep = 'npm run index' | 'npm run seed:cards';
+type MissingBootstrapStep =
+  | 'npm run index'
+  | 'npm run seed:cards'
+  | 'npm run seed:scenario-section-books';
 
 export type BootstrapLifecycle =
   | 'starting'
@@ -32,6 +40,7 @@ export type BootstrapLifecycle =
 export type CapabilityReason =
   | 'missing_index'
   | 'missing_cards'
+  | 'missing_scenario_section_books'
   | 'dependency_unavailable'
   | 'warming_up'
   | 'init_failed';
@@ -199,6 +208,16 @@ export async function initialize(): Promise<void> {
           reason: 'dependency_unavailable',
         }
       : { ready: true, cardCount: snapshot.cardCount },
+    snapshot.lifecycle === 'dependency_failed'
+      ? {
+          ready: false,
+          scenarioCount: 0,
+          sectionCount: 0,
+          linkCount: 0,
+          error: snapshot.errors[0],
+          reason: 'dependency_unavailable',
+        }
+      : { ready: true, scenarioCount: 1, sectionCount: 1, linkCount: 1 },
   );
 
   initPromise = doInitialize()
@@ -262,6 +281,7 @@ function buildCapabilityStatus(
   scope: 'rules' | 'cards' | 'ask',
   retrieval: RetrievalBootstrapStatus,
   cards: CardBootstrapStatus,
+  scenarioSectionBooks: ScenarioSectionBooksBootstrapStatus,
 ): CapabilityStatus {
   if (kind === 'ready') return { allowed: true, reason: null, message: null };
 
@@ -319,12 +339,21 @@ function buildCapabilityStatus(
     };
   }
 
+  if (!scenarioSectionBooks.ready) {
+    return {
+      allowed: false,
+      reason: scenarioSectionBooks.reason ?? 'missing_scenario_section_books',
+      message: scenarioSectionBooks.error ?? SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE,
+    };
+  }
+
   return { allowed: false, reason: 'warming_up', message: WARMING_UP_MESSAGE };
 }
 
 function buildBootstrapStatus(
   retrieval: RetrievalBootstrapStatus,
   cards: CardBootstrapStatus,
+  scenarioSectionBooks: ScenarioSectionBooksBootstrapStatus,
 ): ServiceBootstrapStatus {
   const missingBootstrapSteps: MissingBootstrapStep[] = [];
   const errors: string[] = [];
@@ -339,9 +368,17 @@ function buildBootstrapStatus(
     if (cards.error) errors.push(cards.error);
   }
 
+  if (!scenarioSectionBooks.ready) {
+    if (scenarioSectionBooks.missingStep)
+      missingBootstrapSteps.push(scenarioSectionBooks.missingStep);
+    if (scenarioSectionBooks.error) errors.push(scenarioSectionBooks.error);
+  }
+
   const dependencyUnavailable =
-    retrieval.reason === 'dependency_unavailable' || cards.reason === 'dependency_unavailable';
-  const bootstrapReady = retrieval.ready && cards.ready;
+    retrieval.reason === 'dependency_unavailable' ||
+    cards.reason === 'dependency_unavailable' ||
+    scenarioSectionBooks.reason === 'dependency_unavailable';
+  const bootstrapReady = retrieval.ready && cards.ready && scenarioSectionBooks.ready;
 
   if (dependencyUnavailable) {
     lifecycle = 'dependency_failed';
@@ -358,9 +395,9 @@ function buildBootstrapStatus(
   }
 
   const capabilities = {
-    rules: buildCapabilityStatus(lifecycle, 'rules', retrieval, cards),
-    cards: buildCapabilityStatus(lifecycle, 'cards', retrieval, cards),
-    ask: buildCapabilityStatus(lifecycle, 'ask', retrieval, cards),
+    rules: buildCapabilityStatus(lifecycle, 'rules', retrieval, cards, scenarioSectionBooks),
+    cards: buildCapabilityStatus(lifecycle, 'cards', retrieval, cards, scenarioSectionBooks),
+    ask: buildCapabilityStatus(lifecycle, 'ask', retrieval, cards, scenarioSectionBooks),
   };
 
   return {
@@ -407,11 +444,12 @@ export async function refreshBootstrapState(): Promise<ServiceBootstrapStatus> {
   if (bootstrapRefreshPromise) return bootstrapRefreshPromise;
 
   bootstrapRefreshPromise = (async () => {
-    const [retrieval, cards] = await Promise.all([
+    const [retrieval, cards, scenarioSectionBooks] = await Promise.all([
       getRetrievalBootstrapStatus(),
       getCardBootstrapStatus(),
+      getScenarioSectionBooksBootstrapStatus(),
     ]);
-    bootstrapStatus = buildBootstrapStatus(retrieval, cards);
+    bootstrapStatus = buildBootstrapStatus(retrieval, cards, scenarioSectionBooks);
     bootstrapStatusReady = true;
     logBootstrapTransition(bootstrapStatus);
     return bootstrapStatus;

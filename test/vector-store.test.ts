@@ -204,6 +204,40 @@ describe('search', () => {
     const gh2Hits = await search(axisVector(0), 10, { game: 'gloomhaven-2' });
     expect(gh2Hits.map((h) => h.id)).toEqual(['gh2::0']);
   });
+
+  it('can retrieve scenario-book and section-book sources as nearest matches', async () => {
+    await addEntries([
+      {
+        id: 'fh-rule-book.pdf::0',
+        text: 'Rulebook entry',
+        embedding: axisVector(0),
+        source: 'fh-rule-book.pdf',
+        chunkIndex: 0,
+      },
+      {
+        id: 'fh-scenario-book-42-61.pdf::0',
+        text: 'Scenario book entry',
+        embedding: axisVector(1),
+        source: 'fh-scenario-book-42-61.pdf',
+        chunkIndex: 0,
+      },
+      {
+        id: 'fh-section-book-62-81.pdf::0',
+        text: 'Section book entry',
+        embedding: axisVector(2),
+        source: 'fh-section-book-62-81.pdf',
+        chunkIndex: 0,
+      },
+    ]);
+
+    const scenarioHits = await search(axisVector(1), 1);
+    expect(scenarioHits).toHaveLength(1);
+    expect(scenarioHits[0].source).toBe('fh-scenario-book-42-61.pdf');
+
+    const sectionHits = await search(axisVector(2), 1);
+    expect(sectionHits).toHaveLength(1);
+    expect(sectionHits[0].source).toBe('fh-section-book-62-81.pdf');
+  });
 });
 
 // ─── Parity regression (IRON RULE) ───────────────────────────────────────────
@@ -252,5 +286,30 @@ describe('parity regression vs flat-file vector store', () => {
       const gotIds = hits.map((h) => h.id).sort();
       expect(gotIds, `query="${query}"`).toEqual([...expectedTopIds].sort());
     }
+  }, 240_000);
+
+  it('surfaces section-book passages for the scenario 61 unlock question', async () => {
+    const { embed } = await import('../src/embedder.ts');
+
+    const entries: ParityEntry[] = JSON.parse(
+      readFileSync(join(FIXTURES, 'vector-parity-fixture.json'), 'utf-8'),
+    );
+
+    await addEntries(
+      entries.map((e) => ({
+        id: e.id,
+        text: e.text,
+        embedding: e.embedding,
+        source: e.source,
+        chunkIndex: e.chunkIndex,
+      })),
+    );
+
+    const hits = await search(
+      await embed('What section text unlocks scenario 61 (Life and Death) in Frosthaven?'),
+      6,
+    );
+
+    expect(hits.some((hit) => hit.source === 'fh-section-book-62-81.pdf')).toBe(true);
   }, 240_000);
 });

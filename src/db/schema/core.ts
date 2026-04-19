@@ -4,7 +4,7 @@
  * - `users` and `sessions` are shells in Phase 1 — populated a day later by the
  *   User Accounts project. They exist now so the auth tables can `references()`
  *   them and so SQR-32's migration can create everything in one shot.
- * - `embeddings` holds the rulebook RAG vectors (replaces `data/index.json`).
+ * - `embeddings` holds the indexed-book RAG vectors (replaces `data/index.json`).
  *   Includes `game` (default 'frosthaven') from day 1 — pulled forward from
  *   Phase 2 to avoid an ALTER TABLE later. Includes `embedding_version` as a
  *   code-vs-data drift guard (see tech spec §Drift guard).

@@ -9,6 +9,10 @@ const {
   mockSearchCards,
   mockListCardTypes,
   mockGetCard,
+  mockFindScenario,
+  mockGetScenario,
+  mockGetSection,
+  mockFollowLinks,
 } = vi.hoisted(() => ({
   mockMessagesCreate: vi.fn(),
   mockMessagesStream: vi.fn(),
@@ -16,6 +20,10 @@ const {
   mockSearchCards: vi.fn(),
   mockListCardTypes: vi.fn(),
   mockGetCard: vi.fn(),
+  mockFindScenario: vi.fn(),
+  mockGetScenario: vi.fn(),
+  mockGetSection: vi.fn(),
+  mockFollowLinks: vi.fn(),
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -30,6 +38,10 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: vi.fn(() => []),
   getCard: mockGetCard,
+  findScenario: mockFindScenario,
+  getScenario: mockGetScenario,
+  getSection: mockGetSection,
+  followLinks: mockFollowLinks,
 }));
 
 import { runAgentLoop, executeToolCall, AGENT_TOOLS, MAX_AGENT_ITERATIONS } from '../src/agent.ts';
@@ -75,6 +87,23 @@ function toolUseResponse(toolName: string, toolInput: Record<string, unknown>, i
   };
 }
 
+/** Create a mock response where Claude emits scratch text before a tool call. */
+function textAndToolUseResponse(
+  text: string,
+  toolName: string,
+  toolInput: Record<string, unknown>,
+  id = 'tool_1',
+) {
+  return {
+    content: [
+      { type: 'text', text },
+      { type: 'tool_use', id, name: toolName, input: toolInput },
+    ],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 100, output_tokens: 50 },
+  };
+}
+
 // ─── runAgentLoop ────────────────────────────────────────────────────────────
 
 describe('runAgentLoop', () => {
@@ -86,6 +115,32 @@ describe('runAgentLoop', () => {
     mockSearchCards.mockReturnValue([]);
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 10 }]);
     mockGetCard.mockReturnValue({ name: 'Boots of Speed', effect: 'Move +1' });
+    mockFindScenario.mockResolvedValue([
+      { ref: 'gloomhavensecretariat:scenario/061', scenarioIndex: '61', name: 'Life and Death' },
+    ]);
+    mockGetScenario.mockResolvedValue({
+      ref: 'gloomhavensecretariat:scenario/061',
+      scenarioIndex: '61',
+      name: 'Life and Death',
+    });
+    mockGetSection.mockResolvedValue({
+      ref: '67.1',
+      sectionNumber: 67,
+      sectionVariant: 1,
+      text: 'sits on a traveling stool...',
+    });
+    mockFollowLinks.mockResolvedValue([
+      {
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        toKind: 'section',
+        toRef: '67.1',
+        linkType: 'conclusion',
+        rawLabel: null,
+        rawContext: null,
+        sequence: 0,
+      },
+    ]);
   });
 
   it('returns text immediately when Claude responds without tool use', async () => {
@@ -117,6 +172,19 @@ describe('runAgentLoop', () => {
     expect(result).toBe('You pick up loot tokens.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
     expect(mockSearchRules).toHaveBeenCalledWith('loot action', 6);
+  });
+
+  it('does not persist scratch text from a tool-use turn as the final answer', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        textAndToolUseResponse('Let me check the scenario book.', 'search_rules', {
+          query: 'scenario 61 conclusion',
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Read section 67.1.'));
+
+    const result = await runAgentLoop('What section unlocks scenario 61?');
+    expect(result).toBe('Read section 67.1.');
   });
 
   it('handles multiple tool calls in a single turn', async () => {
@@ -155,6 +223,85 @@ describe('runAgentLoop', () => {
     const result = await runAgentLoop('What card types are available?');
     expect(result).toBe('There are items and more.');
     expect(mockListCardTypes).toHaveBeenCalled();
+  });
+
+  it('uses traversal tools for an exact scenario conclusion lookup', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('find_scenario', { query: 'scenario 61' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('follow_links', {
+          fromKind: 'scenario',
+          fromRef: 'gloomhavensecretariat:scenario/061',
+          linkType: 'conclusion',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '67.1' }))
+      .mockResolvedValueOnce(textResponse('Read section 67.1.'));
+
+    const result = await runAgentLoop(
+      'show the full text of the section to read at the conclusion of scenario 61',
+    );
+    expect(result).toBe('Read section 67.1.');
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+    expect(mockFollowLinks).toHaveBeenCalledWith(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      'conclusion',
+    );
+    expect(mockGetSection).toHaveBeenCalledWith('67.1');
+  });
+
+  it('can keep following section-to-section references across multiple hops', async () => {
+    mockGetSection
+      .mockResolvedValueOnce({
+        ref: '103.1',
+        sectionNumber: 103,
+        sectionVariant: 1,
+        text: 'When the third episode is overcome, read 11.5.',
+      })
+      .mockResolvedValueOnce({
+        ref: '11.5',
+        sectionNumber: 11,
+        sectionVariant: 5,
+        text: 'The next time any character enters C, read 155.1.',
+      })
+      .mockResolvedValueOnce({
+        ref: '155.1',
+        sectionNumber: 155,
+        sectionVariant: 1,
+        text: 'My lovely dancers made short work of them.',
+      });
+
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '103.1' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('follow_links', {
+          fromKind: 'section',
+          fromRef: '103.1',
+          linkType: 'read_now',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '11.5' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('follow_links', {
+          fromKind: 'section',
+          fromRef: '11.5',
+          linkType: 'read_now',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '155.1' }))
+      .mockResolvedValueOnce(textResponse('The chain goes 103.1 -> 11.5 -> 155.1.'));
+
+    const result = await runAgentLoop(
+      'Starting from section 103.1, which section do I end up reading after following the next two explicit read instructions?',
+    );
+
+    expect(result).toBe('The chain goes 103.1 -> 11.5 -> 155.1.');
+    expect(mockFollowLinks).toHaveBeenNthCalledWith(1, 'section', '103.1', 'read_now');
+    expect(mockFollowLinks).toHaveBeenNthCalledWith(2, 'section', '11.5', 'read_now');
+    expect(mockGetSection).toHaveBeenNthCalledWith(1, '103.1');
+    expect(mockGetSection).toHaveBeenNthCalledWith(2, '11.5');
+    expect(mockGetSection).toHaveBeenNthCalledWith(3, '155.1');
   });
 
   it('handles max_tokens by continuing', async () => {
@@ -245,6 +392,10 @@ describe('executeToolCall', () => {
     mockSearchCards.mockReturnValue([{ type: 'items', data: { name: 'Test' }, score: 1 }]);
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 5 }]);
     mockGetCard.mockReturnValue({ name: 'Test Item' });
+    mockFindScenario.mockResolvedValue([{ ref: 'gloomhavensecretariat:scenario/061' }]);
+    mockGetScenario.mockResolvedValue({ ref: 'gloomhavensecretariat:scenario/061' });
+    mockGetSection.mockResolvedValue({ ref: '67.1' });
+    mockFollowLinks.mockResolvedValue([{ toRef: '67.1' }]);
   });
 
   it('dispatches search_rules', async () => {
@@ -275,6 +426,40 @@ describe('executeToolCall', () => {
     mockGetCard.mockReturnValue(null);
     const result = await executeToolCall('get_card', { type: 'items', id: 'missing' });
     expect(result).toContain('Card not found');
+  });
+
+  it('dispatches find_scenario', async () => {
+    const result = await executeToolCall('find_scenario', { query: 'scenario 61' });
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+    expect(JSON.parse(result)).toEqual([{ ref: 'gloomhavensecretariat:scenario/061' }]);
+  });
+
+  it('dispatches get_scenario', async () => {
+    const result = await executeToolCall('get_scenario', {
+      ref: 'gloomhavensecretariat:scenario/061',
+    });
+    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061');
+    expect(JSON.parse(result)).toEqual({ ref: 'gloomhavensecretariat:scenario/061' });
+  });
+
+  it('dispatches get_section', async () => {
+    const result = await executeToolCall('get_section', { ref: '67.1' });
+    expect(mockGetSection).toHaveBeenCalledWith('67.1');
+    expect(JSON.parse(result)).toEqual({ ref: '67.1' });
+  });
+
+  it('dispatches follow_links', async () => {
+    const result = await executeToolCall('follow_links', {
+      fromKind: 'scenario',
+      fromRef: 'gloomhavensecretariat:scenario/061',
+      linkType: 'conclusion',
+    });
+    expect(mockFollowLinks).toHaveBeenCalledWith(
+      'scenario',
+      'gloomhavensecretariat:scenario/061',
+      'conclusion',
+    );
+    expect(JSON.parse(result)).toEqual([{ toRef: '67.1' }]);
   });
 
   it('returns error for unknown tool', async () => {
@@ -339,5 +524,19 @@ describe('runAgentLoop with emit (streaming)', () => {
     });
     expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules', ok: true });
     expect(emit).toHaveBeenCalledWith('done', {});
+  });
+
+  it('does not treat streamed scratch text before tool use as the final answer', async () => {
+    const toolMsg = textAndToolUseResponse('Let me look that up.', 'search_rules', {
+      query: 'scenario 61 conclusion',
+    });
+    const finalMsg = textResponse('Read section 67.1.');
+    mockMessagesStream
+      .mockReturnValueOnce(mockStream(toolMsg, ['Let me ', 'look that up.']))
+      .mockReturnValueOnce(mockStream(finalMsg, ['Read section 67.1.']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    const result = await runAgentLoop('test', { emit });
+    expect(result).toBe('Read section 67.1.');
   });
 });

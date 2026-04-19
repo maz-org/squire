@@ -1,13 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockSearchRules, mockSearchCards, mockListCardTypes, mockListCards, mockGetCard } =
-  vi.hoisted(() => ({
-    mockSearchRules: vi.fn(),
-    mockSearchCards: vi.fn(),
-    mockListCardTypes: vi.fn(),
-    mockListCards: vi.fn(),
-    mockGetCard: vi.fn(),
-  }));
+const {
+  mockSearchRules,
+  mockSearchCards,
+  mockListCardTypes,
+  mockListCards,
+  mockGetCard,
+  mockFindScenario,
+  mockGetScenario,
+  mockGetSection,
+  mockFollowLinks,
+} = vi.hoisted(() => ({
+  mockSearchRules: vi.fn(),
+  mockSearchCards: vi.fn(),
+  mockListCardTypes: vi.fn(),
+  mockListCards: vi.fn(),
+  mockGetCard: vi.fn(),
+  mockFindScenario: vi.fn(),
+  mockGetScenario: vi.fn(),
+  mockGetSection: vi.fn(),
+  mockFollowLinks: vi.fn(),
+}));
 
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
@@ -15,6 +28,10 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  findScenario: mockFindScenario,
+  getScenario: mockGetScenario,
+  getSection: mockGetSection,
+  followLinks: mockFollowLinks,
 }));
 
 import { createInProcessClient } from '../src/mcp.ts';
@@ -41,9 +58,13 @@ describe('in-process MCP client', () => {
   it('lists tools via in-process transport', async () => {
     const client = await createInProcessClient();
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(5);
+    expect(tools.length).toBe(9);
     const names = tools.map((t) => t.name);
     expect(names).toContain('search_rules');
+    expect(names).toContain('find_scenario');
+    expect(names).toContain('get_scenario');
+    expect(names).toContain('get_section');
+    expect(names).toContain('follow_links');
     expect(names).toContain('list_card_types');
     expect(names).toContain('get_card');
     await client.close();

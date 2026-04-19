@@ -5,9 +5,24 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
+import {
+  searchRules,
+  searchCards,
+  listCardTypes,
+  listCards,
+  getCard,
+  findScenario,
+  getScenario,
+  getSection,
+  followLinks,
+} from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
 import type { AskOptions, HistoryMessage, EmitFn } from './service.ts';
+import {
+  BOOK_RECORD_KINDS,
+  BOOK_REFERENCE_TYPES,
+  type BookRecordKind,
+} from './scenario-section-schemas.ts';
 
 type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
@@ -23,10 +38,16 @@ export const MAX_AGENT_ITERATIONS = 10;
 const MAX_HISTORY_TURNS = 20;
 
 export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \
-for searching the rulebook and looking up card data. Use the tools to find relevant information before answering.
+for searching the indexed Frosthaven books and looking up card data. Use the tools to find relevant information before answering.
 
 Guidelines:
-- Use search_rules for rulebook questions (rules, mechanics, timing, etc.)
+- Use find_scenario when the user names a scenario number or scenario title
+- Use get_scenario once you know the exact canonical scenario ref
+- Use get_section for exact section refs or when a traversal link points to a section
+- Use follow_links to inspect explicit scenario/section reference chains
+- For chained scenario/section questions, keep following explicit references until you reach the exact grounded text you need
+- Prefer explicit scenario/section references over search_rules when the question already names a scenario number, scenario title, or section ref
+- Use search_rules for fuzzy book-corpus questions (rules, mechanics, open-ended discovery, or when traversal runs out)
 - Use search_cards for questions about specific cards, monsters, items, or abilities
 - Use get_card for precise lookups when you know the card type and name/number
 - Use list_card_types to discover what data is available
@@ -39,7 +60,8 @@ Guidelines:
 export const AGENT_TOOLS: Tool[] = [
   {
     name: 'search_rules',
-    description: 'Search the Frosthaven rulebook for passages relevant to a query.',
+    description:
+      'Search the indexed Frosthaven books (rulebook, scenario book, section book, puzzle book) for passages relevant to a query.',
     input_schema: {
       type: 'object',
       properties: {
@@ -108,6 +130,69 @@ export const AGENT_TOOLS: Tool[] = [
       required: ['type', 'id'],
     },
   },
+  {
+    name: 'find_scenario',
+    description:
+      'Resolve a scenario query like "scenario 61" or "Life and Death" to matching scenario records.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Scenario query' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'get_scenario',
+    description: 'Fetch an exact scenario record by canonical scenario ref.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ref: {
+          type: 'string',
+          description:
+            'Canonical scenario ref like "gloomhavensecretariat:scenario/061". Use find_scenario if you only know the number or name.',
+        },
+      },
+      required: ['ref'],
+    },
+  },
+  {
+    name: 'get_section',
+    description: 'Fetch an exact section record by section ref like "90.2".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ref: { type: 'string', description: 'Section ref like "90.2"' },
+      },
+      required: ['ref'],
+    },
+  },
+  {
+    name: 'follow_links',
+    description:
+      'Follow explicit scenario/section book references from a known scenario or section.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        fromKind: {
+          type: 'string',
+          enum: [...BOOK_RECORD_KINDS],
+          description: 'Entity kind to follow from',
+        },
+        fromRef: {
+          type: 'string',
+          description: 'Canonical scenario or section ref',
+        },
+        linkType: {
+          type: 'string',
+          enum: [...BOOK_REFERENCE_TYPES],
+          description: 'Optional link-type filter like "conclusion" or "section_link"',
+        },
+      },
+      required: ['fromKind', 'fromRef'],
+    },
+  },
 ];
 
 /**
@@ -147,6 +232,28 @@ export async function executeToolCall(
       const card = await getCard(input.type as CardType, input.id as string);
       if (!card) return `Card not found: ${input.type}/${input.id}`;
       return JSON.stringify(card, null, 2);
+    }
+    case 'find_scenario': {
+      const scenarios = await findScenario(input.query as string);
+      return JSON.stringify(scenarios, null, 2);
+    }
+    case 'get_scenario': {
+      const scenario = await getScenario(input.ref as string);
+      if (!scenario) return `Scenario not found: ${input.ref}`;
+      return JSON.stringify(scenario, null, 2);
+    }
+    case 'get_section': {
+      const section = await getSection(input.ref as string);
+      if (!section) return `Section not found: ${input.ref}`;
+      return JSON.stringify(section, null, 2);
+    }
+    case 'follow_links': {
+      const links = await followLinks(
+        input.fromKind as BookRecordKind,
+        input.fromRef as string,
+        input.linkType as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
+      );
+      return JSON.stringify(links, null, 2);
     }
     default:
       return `Unknown tool: ${name}`;
@@ -201,6 +308,7 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
 
   for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
     const response = await callClaude(messages, emit);
+    const hasToolUse = response.content.some((block) => block.type === 'tool_use');
 
     // Collect all text content from this response
     const texts: string[] = [];
@@ -209,7 +317,10 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
         texts.push(block.text);
       }
     }
-    if (texts.length > 0) {
+    // Text emitted alongside `tool_use` is scratch narration for the live
+    // stream, not the final persisted answer. Only pure text turns count as
+    // the assistant's saved answer content.
+    if (texts.length > 0 && !hasToolUse) {
       lastTextContent = texts.join('\n\n');
     }
 
