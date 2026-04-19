@@ -24,8 +24,11 @@ describe('importScenarioSectionBooks', () => {
     expect(scenario).toBeDefined();
     expect(link).toBeDefined();
     expect(section).toBeDefined();
-    expect(section!.text).toContain('Your ears fill with the sound of your own');
-    expect(section!.text).toContain('seals grow weak.');
+    expect(section!.text).toContain('Your ears fill with the sound of your own breathing');
+    expect(section!.text).toContain('Moonshard answers.');
+    expect(section!.text).toContain('the seals grow weak.');
+    expect(section!.text).not.toContain('ownbreathing');
+    expect(section!.text).not.toContain('Moonshardanswers');
   });
 
   it('synthesizes printed-only scenarios when the checked-in scenario extract lacks them', () => {
@@ -42,10 +45,11 @@ describe('importScenarioSectionBooks', () => {
     expect(section!.text).toContain('harsh trek through deep');
   });
 
-  it('repairs obviously broken section bodies like 80.1 from linear PDF text', () => {
-    const section = extract.sections.find((record) => record.ref === '80.1');
+  it('preserves spaces when flattening wrapped section prose like 80.4', () => {
+    const section = extract.sections.find((record) => record.ref === '80.4');
     expect(section).toBeDefined();
-    expect(section!.text).toContain('You settle into a booth at the Boiled Crab');
+    expect(section!.text).toContain('You settle into a booth at the Boiled Crab tavern');
+    expect(section!.text).not.toContain('Boiled Crabtavern');
   });
 
   it('captures spaced section refs from scenario link boxes like scenario 87 door 3', () => {
@@ -56,5 +60,13 @@ describe('importScenarioSectionBooks', () => {
         record.toRef === '77.2',
     );
     expect(link).toBeDefined();
+  });
+
+  it('does not let a repaired section absorb later section prose', () => {
+    const section = extract.sections.find((record) => record.ref === '66.3');
+    expect(section).toBeDefined();
+    expect(section!.text).not.toContain('Your ears fill with the sound of your own breathing');
+    expect(section!.text).not.toContain('Add section 140.3');
+    expect(section!.text).not.toContain('Section Links');
   });
 });

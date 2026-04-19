@@ -239,8 +239,8 @@ function normalizeBlockText(lines: PdfLine[]): string {
     .map((line) => line.text)
     .join('\n')
     .replace(/([A-Za-z])-\n([A-Za-z])/g, '$1$2')
-    .replace(/([A-Za-z])\n([a-z])/g, '$1$2')
     .replace(/[ \t]+\n/g, '\n')
+    .replace(/([A-Za-z])\n([a-z])/g, '$1 $2')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -248,8 +248,8 @@ function normalizeBlockText(lines: PdfLine[]): string {
 function normalizeRawBlockText(text: string): string {
   return text
     .replace(/([A-Za-z])-\n([A-Za-z])/g, '$1$2')
-    .replace(/([A-Za-z])\n([a-z])/g, '$1$2')
     .replace(/[ \t]+\n/g, '\n')
+    .replace(/([A-Za-z])\n([a-z])/g, '$1 $2')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -426,6 +426,18 @@ function parseSectionEntries(lines: PdfLine[]): SectionEntry[] {
   for (const line of lines) {
     const match = line.text.match(SECTION_LINK_RE);
     if (!match) continue;
+    const nearestHeadingAbove = lines
+      .filter(
+        (candidate) =>
+          candidate.y > line.y &&
+          candidate.x >= line.x - 40 &&
+          candidate.x <= line.x + 80 &&
+          HEADING_RE.test(candidate.text),
+      )
+      .sort((a, b) => a.y - b.y)[0];
+    if (nearestHeadingAbove && nearestHeadingAbove.text === 'Section Links') {
+      continue;
+    }
     entries.push({
       ref: match[1].replace(/\s+/g, ''),
       label: normalizeInlineText(match[2]),
@@ -636,6 +648,13 @@ function isSuspiciousSectionText(text: string): boolean {
   return false;
 }
 
+function containsStandaloneHeading(text: string): boolean {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .some((line) => HEADING_RE.test(line));
+}
+
 function buildSectionRefRegex(ref: string): RegExp {
   const [sectionNumber, sectionVariant] = ref.split('.');
   const spacedSectionNumber = sectionNumber.split('').join('\\s*');
@@ -721,6 +740,7 @@ async function repairSuspiciousSectionBodies(
       const nextRefIndex = positions[positionIndex + 1]?.index ?? pdfText.length;
       const repairedText = extractLinearSectionText(pdfText, section.ref, nextRefIndex);
       if (!repairedText || isSuspiciousSectionText(repairedText)) continue;
+      if (containsStandaloneHeading(repairedText)) continue;
       section.text = repairedText;
     }
   }

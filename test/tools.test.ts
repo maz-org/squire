@@ -267,8 +267,11 @@ describe('scenario/section book tools', () => {
     expect(section).not.toBeNull();
     expect(section!.sectionNumber).toBe(67);
     expect(section!.sectionVariant).toBe(1);
-    expect(section!.text).toContain('Your ears fill with the sound of your own');
-    expect(section!.text).toContain('seals grow weak.');
+    expect(section!.text).toContain('Your ears fill with the sound of your own breathing');
+    expect(section!.text).toContain('Moonshard answers.');
+    expect(section!.text).toContain('the seals grow weak.');
+    expect(section!.text).not.toContain('ownbreathing');
+    expect(section!.text).not.toContain('Moonshardanswers');
   });
 
   it('followLinks returns the scenario 61 conclusion link to section 67.1', async () => {
