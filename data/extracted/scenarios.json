@@ -4411,6 +4411,7 @@
     "scenarioGroup": "random",
     "index": "rnd",
     "name": "Random Dungeon",
+    "complexity": null,
     "monsters": [],
     "allies": [],
     "unlocks": [],
@@ -4437,6 +4438,7 @@
     "scenarioGroup": "solo",
     "index": "20",
     "name": "Wonder of Nature",
+    "complexity": null,
     "monsters": [
       "Forest Imp",
       "Hound"
@@ -4457,6 +4459,7 @@
     "scenarioGroup": "solo",
     "index": "21",
     "name": "Race Against the Clock",
+    "complexity": null,
     "monsters": [
       "Robotic Boltshooter",
       "Ruined Machine"
@@ -4477,6 +4480,7 @@
     "scenarioGroup": "solo",
     "index": "22",
     "name": "Scouting Ambush",
+    "complexity": null,
     "monsters": [
       "City Guard Banner Spear Solo",
       "Polar Bear",
@@ -4500,6 +4504,7 @@
     "scenarioGroup": "solo",
     "index": "23",
     "name": "The Dead of Night",
+    "complexity": null,
     "monsters": [
       "Black Imp Deathwalker Solo",
       "Night Demon Deathwalker Solo"
@@ -4525,6 +4530,7 @@
     "scenarioGroup": "solo",
     "index": "24",
     "name": "Bones in the Dirt",
+    "complexity": null,
     "monsters": [
       "Earth Demon",
       "Hollow Scholar",
@@ -4546,6 +4552,7 @@
     "scenarioGroup": "solo",
     "index": "25",
     "name": "Divide and Conquer",
+    "complexity": null,
     "monsters": [
       "Flaming Bladespinner",
       "Ice Wraith",
@@ -4570,6 +4577,7 @@
     "scenarioGroup": "solo",
     "index": "26",
     "name": "Path of Ancestry",
+    "complexity": null,
     "monsters": [
       "Incarnation Of Ancestors"
     ],
@@ -4602,6 +4610,7 @@
     "scenarioGroup": "solo",
     "index": "27",
     "name": "Crumbling Descent",
+    "complexity": null,
     "monsters": [
       "Burrowing Blade",
       "Mountains Heart",
@@ -4623,6 +4632,7 @@
     "scenarioGroup": "solo",
     "index": "28",
     "name": "Tuning the Resonance",
+    "complexity": null,
     "monsters": [
       "Algox Icespeaker Shards Solo"
     ],
@@ -4650,6 +4660,7 @@
     "scenarioGroup": "solo",
     "index": "29",
     "name": "A Magnificent Trap",
+    "complexity": null,
     "monsters": [
       "Algox Guard",
       "Algox Snowspeaker Trap Solo",
@@ -4671,6 +4682,7 @@
     "scenarioGroup": "solo",
     "index": "30",
     "name": "A Collection of Suffering",
+    "complexity": null,
     "monsters": [
       "Chaos Demon",
       "Earth Demon",
@@ -4693,6 +4705,7 @@
     "scenarioGroup": "solo",
     "index": "31",
     "name": "Fighting Snow with Snow",
+    "complexity": null,
     "monsters": [
       "Algox Snowspeaker",
       "Frost Demon",
@@ -4723,6 +4736,7 @@
     "scenarioGroup": "solo",
     "index": "32",
     "name": "Under the Ice",
+    "complexity": null,
     "monsters": [
       "Ancient Artillery",
       "Flaming Bladespinner",
@@ -4745,6 +4759,7 @@
     "scenarioGroup": "solo",
     "index": "33",
     "name": "Recharge",
+    "complexity": null,
     "monsters": [
       "Energized Corpse",
       "Frozen Corpse",
@@ -4767,6 +4782,7 @@
     "scenarioGroup": "solo",
     "index": "34",
     "name": "Boiler Room",
+    "complexity": null,
     "monsters": [
       "Ancient Artillery",
       "Flaming Bladespinner",
@@ -4789,6 +4805,7 @@
     "scenarioGroup": "solo",
     "index": "35",
     "name": "Wet Work",
+    "complexity": null,
     "monsters": [
       "Abael Scout",
       "Abael Warlord",
@@ -4811,6 +4828,7 @@
     "scenarioGroup": "solo",
     "index": "36",
     "name": "Crash Against the Waves",
+    "complexity": null,
     "monsters": [
       "Lightning Eel",
       "Lost In Seaweed"
