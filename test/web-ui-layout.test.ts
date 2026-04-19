@@ -645,30 +645,47 @@ describe('selected-message rendering helpers', () => {
   // rendered as a sibling <h2>, first top-level <p> intact, both direct
   // children of `.squire-markdown`) is what the `> p:first-of-type` drop
   // cap selector now targets — keep these two in sync.
-  it('preserves the top-level first paragraph drop-cap target when the answer opens with a heading', () => {
-    const body = String(
-      actualLayout.renderSelectedMessageSurface({
-        selectedQuestion: messages[4],
-        selectedAnswer: {
-          ...messages[5],
-          content: '## Short answer\n\nYes, you can rest on the same round.',
-        },
-        isEarlierQuestion: false,
-      }),
-    );
+  it.each([
+    [
+      'heading',
+      '## Short answer\n\nYes, you can rest on the same round.',
+      '<h2>Short answer</h2>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+    [
+      'unordered list',
+      '- Item one\n- Item two\n\nYes, you can rest on the same round.',
+      '<ul>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+    [
+      'blockquote',
+      '> Quoted rule text.\n\nYes, you can rest on the same round.',
+      '<blockquote>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+  ])(
+    'preserves the top-level first paragraph drop-cap target when the answer opens with a %s',
+    (_label, content, leadElement, paragraph) => {
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: messages[4],
+          selectedAnswer: { ...messages[5], content },
+          isEarlierQuestion: false,
+        }),
+      );
 
-    const answerMatch = body.match(
-      /<div class="squire-answer__content squire-markdown">([\s\S]*?)<\/div>/,
-    );
-    expect(answerMatch).not.toBeNull();
-    const answerInner = answerMatch![1];
-    expect(answerInner).toContain('<h2>Short answer</h2>');
-    expect(answerInner).toContain('<p>Yes, you can rest on the same round.</p>');
-    // The <h2> precedes the <p>, so `> p:first-child` would not match. The
-    // fixed `> p:first-of-type` selector still pins the drop cap to the
-    // first top-level <p>.
-    expect(answerInner.indexOf('<h2>')).toBeLessThan(answerInner.indexOf('<p>'));
-  });
+      const contentStart = body.indexOf('squire-answer__content squire-markdown">');
+      expect(contentStart).not.toBe(-1);
+      const contentSlice = body.slice(contentStart);
+      expect(contentSlice).toContain(leadElement);
+      expect(contentSlice).toContain(paragraph);
+      // Lead element precedes the follow-up paragraph, so `> p:first-child`
+      // would not match it. The fixed `> p:first-of-type` still pins the
+      // drop cap to the first top-level <p>.
+      expect(contentSlice.indexOf(leadElement)).toBeLessThan(contentSlice.indexOf(paragraph));
+    },
+  );
 
   it('omits the EARLIER QUESTION cue when rendering the newest question', () => {
     const body = String(
