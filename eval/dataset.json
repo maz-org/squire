@@ -118,5 +118,13 @@
     "expected": "The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.",
     "grading": "Must mention 1 damage at start of turns and removal by healing.",
     "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "tool-free-assistant-game",
+    "category": "tool-free",
+    "question": "What game is this assistant for? Answer in one short sentence.",
+    "expected": "This assistant is for Frosthaven.",
+    "grading": "Must clearly say the assistant is for Frosthaven in one short sentence. Answers that hedge, mention another game, or say it does not know should fail.",
+    "source": "src/agent.ts"
   }
 ]

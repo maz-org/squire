@@ -334,8 +334,9 @@ npm run eval -- --category=rulebook
 ```
 
 Only runs questions in that category (`rulebook`, `monster-stats`, `items`,
-`buildings`, `scenarios`). Useful when you're working on a specific part of the
-pipeline — e.g., run `--category=items` after fixing item number extraction.
+`buildings`, `scenarios`, `tool-free`). Useful when you're working on a
+specific part of the pipeline — e.g., run `--category=items` after fixing item
+number extraction.
 
 **Run a single question:**
 

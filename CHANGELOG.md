@@ -1,16 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.3] - 2026-04-19
 
-### Added (Unreleased)
+### Fixed
 
-- Deterministic scenario/section-book research data in Postgres via `scenario_book_scenarios`, `section_book_sections`, and `book_references`
-- Four exact research tools: `find_scenario`, `get_scenario`, `get_section`, and `follow_links`
-
-### Changed (Unreleased)
-
-- `search_rules` now sits alongside exact scenario/section traversal instead of carrying the whole story-book lookup path by itself
-- `npm run seed` now seeds both card data and scenario/section-book data, and `npm run seed:dev` adds the local dev user on top
+- Drop cap (Fraunces wax-red `::first-letter`) now renders on completed and persisted answers that open with a heading, unordered list, ordered list, or blockquote before their first paragraph. The previous `p:first-child` selector suppressed the drop cap whenever a non-`<p>` block appeared first — a common LLM response shape. The selector is now `p:first-of-type`, which targets the first top-level paragraph regardless of preceding sibling elements. Regression tests cover heading, list, and blockquote leads.
 
 ## [0.1.2] - 2026-04-09
 
