@@ -432,7 +432,7 @@ function parseScenarioUnlockLinks(
       candidate = [candidate, lines[lookahead]].filter(Boolean).join(' ').trim();
     }
 
-    const scenarioMatch = candidate.match(/^(.*?)(\d{1,3})$/);
+    const scenarioMatch = candidate.match(/^(.*?)(\d{1,3})(?:\D.*)?$/);
     if (!scenarioMatch) continue;
     const rawLabel = scenarioMatch[1].trim();
     if (!rawLabel) continue;
@@ -882,7 +882,12 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
 
       const syntheticRef = `printed-book:scenario/${scenarioIndex.padStart(3, '0')}`;
       const existing = scenariosByRef.get(syntheticRef);
-      if (existing) return existing;
+      if (existing) {
+        if (fallbackName && /^Scenario \d+$/.test(existing.name)) {
+          existing.name = fallbackName;
+        }
+        return existing;
+      }
 
       warnings.push(
         `Printed traversal data referenced scenario ${scenarioIndex} (${fallbackName ?? 'unknown title'}) without a matching GHS scenario record; synthesized ${syntheticRef}.`,
@@ -931,46 +936,24 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
           );
           continue;
         }
-        const source = mainScenariosByIndex.get(scenarioNumber);
-        if (!source) {
-          warnings.push(
-            `No main scenario record found for printed scenario ${scenarioNumber} in ${pdfName} page ${page.pageIndex}`,
-          );
-          continue;
-        }
 
         const rawText = scenarioPageText(lines);
+        const source = ensureScenarioRecord(scenarioNumber, null);
         const scenarioGoalsText = extractScenarioBoxText(lines, SCENARIO_GOALS_HEADING_RE);
         const sectionLinksText = extractScenarioBoxText(lines, SCENARIO_SECTION_LINKS_HEADING_RE);
-        const existing = scenariosByRef.get(source.sourceId);
-        scenariosByRef.set(source.sourceId, {
-          ref: source.sourceId,
-          scenarioGroup: source.scenarioGroup,
-          scenarioIndex: source.index,
-          name: source.name,
-          complexity: source.complexity ?? null,
-          flowChartGroup: source.flowChartGroup,
-          initial: source.initial,
+        const existing = scenariosByRef.get(source.ref);
+        scenariosByRef.set(source.ref, {
+          ...source,
           sourcePdf: existing?.sourcePdf ?? pdfName,
           sourcePage: existing?.sourcePage ?? page.pageIndex + 1,
           rawText: existing?.rawText ? `${existing.rawText}\n\n${rawText}` : rawText,
-          metadata: {
-            sourceId: source.sourceId,
-            monsters: source.monsters,
-            allies: source.allies,
-            unlocks: source.unlocks,
-            requirements: source.requirements,
-            objectives: source.objectives,
-            rewards: source.rewards,
-            lootDeckConfig: source.lootDeckConfig,
-          },
         });
 
         if (scenarioGoalsText) {
-          addSequencedLinks(links, parseScenarioGoalLinks(source.sourceId, scenarioGoalsText));
+          addSequencedLinks(links, parseScenarioGoalLinks(source.ref, scenarioGoalsText));
         }
         if (sectionLinksText) {
-          addSequencedLinks(links, parseScenarioSectionLinks(source.sourceId, sectionLinksText));
+          addSequencedLinks(links, parseScenarioSectionLinks(source.ref, sectionLinksText));
         }
       }
     }
@@ -1017,14 +1000,6 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
         );
         for (const section of sections) {
           sectionsByRef.set(section.ref, section);
-          addSequencedLinks(links, parseInstructionLinks('section', section.ref, section.text));
-          addSequencedLinks(
-            links,
-            parseScenarioUnlockLinks(section.ref, section.text).map((link) => ({
-              ...link,
-              toRef: ensureScenarioRecord(link.toRef, link.rawLabel).ref,
-            })),
-          );
         }
         addSequencedLinks(links, instructionLinks);
 
@@ -1040,7 +1015,31 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
 
     await repairSuspiciousSectionBodies(sectionsByRef);
 
+    for (const section of sectionsByRef.values()) {
+      addSequencedLinks(links, parseInstructionLinks('section', section.ref, section.text));
+      addSequencedLinks(
+        links,
+        parseScenarioUnlockLinks(section.ref, section.text).map((link) => ({
+          ...link,
+          toRef: ensureScenarioRecord(link.toRef, link.rawLabel).ref,
+        })),
+      );
+    }
+
+    const validatedLinkKeys = new Set<string>();
     const validatedLinks = links.filter((link) => {
+      const dedupeKey = [
+        link.fromKind,
+        link.fromRef,
+        link.toKind,
+        link.toRef,
+        link.linkType,
+        link.sequence,
+      ].join('|');
+      if (validatedLinkKeys.has(dedupeKey)) {
+        warnings.push(`Dropped duplicate book reference ${dedupeKey}`);
+        return false;
+      }
       if (link.fromKind === 'scenario' && !scenariosByRef.has(link.fromRef)) {
         throw new Error(
           `Scenario/section book import produced a reference from missing scenario ${link.fromRef}`,
@@ -1061,6 +1060,7 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
         warnings.push(`Dropped book reference to missing section ${link.fromRef} -> ${link.toRef}`);
         return false;
       }
+      validatedLinkKeys.add(dedupeKey);
       return true;
     });
 

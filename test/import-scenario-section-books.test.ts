@@ -37,6 +37,9 @@ describe('importScenarioSectionBooks', () => {
     );
     expect(synthetic).toBeDefined();
     expect(synthetic!.name).toBe('Gaps in the Road');
+    expect(synthetic!.sourcePdf).toMatch(/^fh-scenario-book-\d+-\d+\.pdf$/);
+    expect(synthetic!.sourcePage).not.toBeNull();
+    expect(synthetic!.rawText).toContain('Gaps in the Road');
   });
 
   it('recovers spaced OCR section refs like 37.1 from the section book', () => {
@@ -81,6 +84,18 @@ describe('importScenarioSectionBooks', () => {
     expect(section!.text).toContain('60');
     expect(unlock).toBeDefined();
     expect(unlock!.toRef).toBe('gloomhavensecretariat:scenario/060');
+  });
+
+  it('extracts unlock links from repaired section prose like 66.2', () => {
+    const section = extract.sections.find((record) => record.ref === '66.2');
+    const unlock = extract.links.find(
+      (record) => record.fromRef === '66.2' && record.linkType === 'unlock',
+    );
+
+    expect(section).toBeDefined();
+    expect(section!.text).toContain('Caravan Guards');
+    expect(unlock).toBeDefined();
+    expect(unlock!.toRef).toBe('gloomhavensecretariat:scenario/116');
   });
 
   it('does not let later section prose overwrite 66.3 while keeping its own links', () => {

@@ -129,6 +129,10 @@ export async function findScenarios(
         WHEN lower(name) LIKE ${`${lowered}%`} THEN 2
         ELSE 3
       END,
+      CASE
+        WHEN scenario_index ~ '^[0-9]+$' THEN CAST(scenario_index AS INTEGER)
+        ELSE 10000
+      END,
       scenario_index
     LIMIT ${limit}
   `);

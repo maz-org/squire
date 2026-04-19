@@ -8,6 +8,7 @@
  * for every tools test.
  */
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+import { sql } from 'drizzle-orm';
 
 const { mockSearch } = vi.hoisted(() => ({
   mockSearch: vi.fn(),
@@ -40,6 +41,9 @@ import type {
   SectionResult,
   ReferenceResult,
 } from '../src/tools.ts';
+import { findScenarios } from '../src/scenario-section-data.ts';
+import { getDb } from '../src/db.ts';
+import { scenarioBookScenarios } from '../src/db/schema/scenario-section-books.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -259,6 +263,66 @@ describe('scenario/section book tools', () => {
     expect(results[0].ref).toBe('gloomhavensecretariat:scenario/061');
   });
 
+  it('findScenarios sorts exact-name matches by numeric scenario index', async () => {
+    const { db } = getDb();
+    const refs = ['test:sort-probe/061', 'test:sort-probe/100', 'test:sort-probe/4A'];
+    await db.insert(scenarioBookScenarios).values([
+      {
+        game: 'frosthaven',
+        ref: refs[0],
+        scenarioGroup: 'main',
+        scenarioIndex: '61',
+        name: 'Sort Probe',
+        complexity: null,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: null,
+        sourcePage: null,
+        rawText: null,
+        metadata: {},
+      },
+      {
+        game: 'frosthaven',
+        ref: refs[1],
+        scenarioGroup: 'main',
+        scenarioIndex: '100',
+        name: 'Sort Probe',
+        complexity: null,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: null,
+        sourcePage: null,
+        rawText: null,
+        metadata: {},
+      },
+      {
+        game: 'frosthaven',
+        ref: refs[2],
+        scenarioGroup: 'main',
+        scenarioIndex: '4A',
+        name: 'Sort Probe',
+        complexity: null,
+        flowChartGroup: null,
+        initial: false,
+        sourcePdf: null,
+        sourcePage: null,
+        rawText: null,
+        metadata: {},
+      },
+    ]);
+
+    try {
+      const results = await findScenarios('Sort Probe', 20);
+      const interesting = results
+        .filter((result) => refs.includes(result.ref))
+        .map((result) => result.scenarioIndex);
+
+      expect(interesting).toEqual(['61', '100', '4A']);
+    } finally {
+      await db.execute(sql`DELETE FROM scenario_book_scenarios WHERE ref LIKE 'test:sort-probe/%'`);
+    }
+  });
+
   it('getScenario returns the seeded traversal scenario record', async () => {
     const scenario = await getScenario('gloomhavensecretariat:scenario/061');
     expect(scenario).not.toBeNull();
@@ -321,6 +385,19 @@ describe('scenario/section book tools', () => {
     const finalSection = await getSection('155.1');
     expect(finalSection).not.toBeNull();
     expect(finalSection!.text).toContain('made short work of them');
+  });
+
+  it('follows unlock links recovered from repaired section prose like 66.2', async () => {
+    const links = await followLinks('section', '66.2', 'unlock');
+    expect(links).toEqual([
+      expect.objectContaining({
+        fromKind: 'section',
+        fromRef: '66.2',
+        toKind: 'scenario',
+        toRef: 'gloomhavensecretariat:scenario/116',
+        linkType: 'unlock',
+      }),
+    ]);
   });
 
   it('keeps scenario-box links whose section refs are OCR-spaced around the dot', async () => {
