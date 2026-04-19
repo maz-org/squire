@@ -286,6 +286,34 @@ describe('scenario/section book tools', () => {
       }),
     ]);
   });
+
+  it('supports repeated section chasing across a real two-hop read_now chain', async () => {
+    const firstHop = await followLinks('section', '103.1', 'read_now');
+    expect(firstHop).toEqual([
+      expect.objectContaining({
+        fromKind: 'section',
+        fromRef: '103.1',
+        toKind: 'section',
+        toRef: '11.5',
+        linkType: 'read_now',
+      }),
+    ]);
+
+    const secondHop = await followLinks('section', '11.5', 'read_now');
+    expect(secondHop).toEqual([
+      expect.objectContaining({
+        fromKind: 'section',
+        fromRef: '11.5',
+        toKind: 'section',
+        toRef: '155.1',
+        linkType: 'read_now',
+      }),
+    ]);
+
+    const finalSection = await getSection('155.1');
+    expect(finalSection).not.toBeNull();
+    expect(finalSection!.text).toContain('made short work of them');
+  });
 });
 
 // ─── getCard ─────────────────────────────────────────────────────────────────

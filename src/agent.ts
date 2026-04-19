@@ -45,6 +45,8 @@ Guidelines:
 - Use get_scenario once you know the exact canonical scenario ref
 - Use get_section for exact section refs or when a traversal link points to a section
 - Use follow_links to inspect explicit scenario/section reference chains
+- For chained scenario/section questions, keep following explicit references until you reach the exact grounded text you need
+- Prefer explicit scenario/section references over search_rules when the question already names a scenario number, scenario title, or section ref
 - Use search_rules for fuzzy book-corpus questions (rules, mechanics, open-ended discovery, or when traversal runs out)
 - Use search_cards for questions about specific cards, monsters, items, or abilities
 - Use get_card for precise lookups when you know the card type and name/number

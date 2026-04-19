@@ -251,6 +251,59 @@ describe('runAgentLoop', () => {
     expect(mockGetSection).toHaveBeenCalledWith('90.2');
   });
 
+  it('can keep following section-to-section references across multiple hops', async () => {
+    mockGetSection
+      .mockResolvedValueOnce({
+        ref: '103.1',
+        sectionNumber: 103,
+        sectionVariant: 1,
+        text: 'When the third episode is overcome, read 11.5.',
+      })
+      .mockResolvedValueOnce({
+        ref: '11.5',
+        sectionNumber: 11,
+        sectionVariant: 5,
+        text: 'The next time any character enters C, read 155.1.',
+      })
+      .mockResolvedValueOnce({
+        ref: '155.1',
+        sectionNumber: 155,
+        sectionVariant: 1,
+        text: 'My lovely dancers made short work of them.',
+      });
+
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '103.1' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('follow_links', {
+          fromKind: 'section',
+          fromRef: '103.1',
+          linkType: 'read_now',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '11.5' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('follow_links', {
+          fromKind: 'section',
+          fromRef: '11.5',
+          linkType: 'read_now',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '155.1' }))
+      .mockResolvedValueOnce(textResponse('The chain goes 103.1 -> 11.5 -> 155.1.'));
+
+    const result = await runAgentLoop(
+      'Starting from section 103.1, which section do I end up reading after following the next two explicit read instructions?',
+    );
+
+    expect(result).toBe('The chain goes 103.1 -> 11.5 -> 155.1.');
+    expect(mockFollowLinks).toHaveBeenNthCalledWith(1, 'section', '103.1', 'read_now');
+    expect(mockFollowLinks).toHaveBeenNthCalledWith(2, 'section', '11.5', 'read_now');
+    expect(mockGetSection).toHaveBeenNthCalledWith(1, '103.1');
+    expect(mockGetSection).toHaveBeenNthCalledWith(2, '11.5');
+    expect(mockGetSection).toHaveBeenNthCalledWith(3, '155.1');
+  });
+
   it('handles max_tokens by continuing', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce({
