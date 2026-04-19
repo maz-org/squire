@@ -14,7 +14,7 @@ import { sql } from 'drizzle-orm';
 
 import { createStandaloneDb, resolveDatabaseUrl } from '../../src/db.ts';
 import { seedCards } from '../../src/seed/seed-cards.ts';
-import { seedTraversal } from '../../src/seed/seed-traversal.ts';
+import { seedScenarioSectionBooks } from '../../src/seed/seed-scenario-section-books.ts';
 
 export default async function globalSetup(): Promise<void> {
   const url = resolveDatabaseUrl();
@@ -37,11 +37,11 @@ export default async function globalSetup(): Promise<void> {
         card_character_abilities, card_character_mats,
         card_items, card_events, card_battle_goals,
         card_buildings, card_scenarios, card_personal_quests,
-        traversal_links, traversal_sections, traversal_scenarios
+        book_references, section_book_sections, scenario_book_scenarios
         RESTART IDENTITY CASCADE
     `);
     await seedCards(db);
-    await seedTraversal(db);
+    await seedScenarioSectionBooks(db);
   } finally {
     await handle.close();
   }

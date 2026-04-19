@@ -18,7 +18,11 @@ import {
 } from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
 import type { AskOptions, HistoryMessage, EmitFn } from './service.ts';
-import { TRAVERSAL_KINDS, TRAVERSAL_LINK_TYPES, type TraversalKind } from './traversal-schemas.ts';
+import {
+  BOOK_RECORD_KINDS,
+  BOOK_REFERENCE_TYPES,
+  type BookRecordKind,
+} from './scenario-section-schemas.ts';
 
 type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
@@ -164,13 +168,14 @@ export const AGENT_TOOLS: Tool[] = [
   },
   {
     name: 'follow_links',
-    description: 'Follow explicit traversal links from a known scenario or section.',
+    description:
+      'Follow explicit scenario/section book references from a known scenario or section.',
     input_schema: {
       type: 'object',
       properties: {
         fromKind: {
           type: 'string',
-          enum: [...TRAVERSAL_KINDS],
+          enum: [...BOOK_RECORD_KINDS],
           description: 'Entity kind to follow from',
         },
         fromRef: {
@@ -179,7 +184,7 @@ export const AGENT_TOOLS: Tool[] = [
         },
         linkType: {
           type: 'string',
-          enum: [...TRAVERSAL_LINK_TYPES],
+          enum: [...BOOK_REFERENCE_TYPES],
           description: 'Optional link-type filter like "conclusion" or "section_link"',
         },
       },
@@ -242,9 +247,9 @@ export async function executeToolCall(
     }
     case 'follow_links': {
       const links = await followLinks(
-        input.fromKind as TraversalKind,
+        input.fromKind as BookRecordKind,
         input.fromRef as string,
-        input.linkType as (typeof TRAVERSAL_LINK_TYPES)[number] | undefined,
+        input.linkType as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
       );
       return JSON.stringify(links, null, 2);
     }

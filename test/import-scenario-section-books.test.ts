@@ -1,12 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { importTraversal } from '../src/import-traversal.ts';
+import { importScenarioSectionBooks } from '../src/import-scenario-section-books.ts';
 
-describe('importTraversal', () => {
-  let extract: Awaited<ReturnType<typeof importTraversal>>;
+describe('importScenarioSectionBooks', () => {
+  let extract: Awaited<ReturnType<typeof importScenarioSectionBooks>>;
 
   beforeAll(async () => {
-    extract = await importTraversal();
+    extract = await importScenarioSectionBooks();
   });
 
   it('builds the scenario 61 conclusion path to section 90.2', () => {

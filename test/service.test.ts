@@ -8,14 +8,14 @@ const {
   mockInitializeRetrieval,
   mockGetRetrievalBootstrapStatus,
   mockListCardTypes,
-  mockGetTraversalBootstrapStatus,
+  mockGetScenarioSectionBooksBootstrapStatus,
 } = vi.hoisted(() => ({
   mockRunAgentLoop: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
   mockGetRetrievalBootstrapStatus: vi.fn(),
   mockListCardTypes: vi.fn(),
-  mockGetTraversalBootstrapStatus: vi.fn(),
+  mockGetScenarioSectionBooksBootstrapStatus: vi.fn(),
 }));
 
 vi.mock('../src/agent.ts', () => ({
@@ -37,10 +37,10 @@ vi.mock('../src/vector-store.ts', () => ({
   initializeRetrieval: mockInitializeRetrieval,
 }));
 
-vi.mock('../src/traversal-data.ts', () => ({
-  TRAVERSAL_BOOTSTRAP_MESSAGE:
-    'No traversal data found in Postgres. Run `npm run seed:traversal` first.',
-  getTraversalBootstrapStatus: mockGetTraversalBootstrapStatus,
+vi.mock('../src/scenario-section-data.ts', () => ({
+  SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE:
+    'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+  getScenarioSectionBooksBootstrapStatus: mockGetScenarioSectionBooksBootstrapStatus,
 }));
 
 vi.mock('../src/extracted-data.ts', () => ({
@@ -81,7 +81,7 @@ describe('initialize', () => {
       { type: 'monster-stats', count: 5 },
       { type: 'items', count: 3 },
     ]);
-    mockGetTraversalBootstrapStatus.mockResolvedValue({
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
       ready: true,
       scenarioCount: 162,
       sectionCount: 699,
@@ -235,19 +235,20 @@ describe('initialize', () => {
   });
 
   it('blocks ask when traversal data is missing while keeping rules and cards available', async () => {
-    mockGetTraversalBootstrapStatus.mockResolvedValue({
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
       ready: false,
       scenarioCount: 0,
       sectionCount: 0,
       linkCount: 0,
-      error: 'No traversal data found in Postgres. Run `npm run seed:traversal` first.',
-      missingStep: 'npm run seed:traversal',
-      reason: 'missing_traversal',
+      error:
+        'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+      missingStep: 'npm run seed:scenario-section-books',
+      reason: 'missing_scenario_section_books',
     });
 
     const status = await ensureBootstrapStatus();
     expect(status.lifecycle).toBe('boot_blocked');
-    expect(status.missingBootstrapSteps).toEqual(['npm run seed:traversal']);
+    expect(status.missingBootstrapSteps).toEqual(['npm run seed:scenario-section-books']);
     expect(status.capabilities.rules).toEqual({
       allowed: true,
       reason: null,
@@ -260,8 +261,9 @@ describe('initialize', () => {
     });
     expect(status.capabilities.ask).toEqual({
       allowed: false,
-      reason: 'missing_traversal',
-      message: 'No traversal data found in Postgres. Run `npm run seed:traversal` first.',
+      reason: 'missing_scenario_section_books',
+      message:
+        'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
     });
   });
 
@@ -297,7 +299,7 @@ describe('ask', () => {
       { type: 'monster-stats', count: 5 },
       { type: 'items', count: 3 },
     ]);
-    mockGetTraversalBootstrapStatus.mockResolvedValue({
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
       ready: true,
       scenarioCount: 162,
       sectionCount: 699,

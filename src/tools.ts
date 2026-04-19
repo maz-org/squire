@@ -13,9 +13,9 @@ import {
   findScenarios,
   getScenario as loadScenario,
   getSection as loadSection,
-  followLinks as loadLinks,
-} from './traversal-data.ts';
-import type { TraversalKind, TraversalLinkType } from './traversal-schemas.ts';
+  followReferences as loadReferences,
+} from './scenario-section-data.ts';
+import type { BookRecordKind, BookReferenceType } from './scenario-section-schemas.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -37,7 +37,7 @@ export interface CardTypeInfo {
   count: number;
 }
 
-export interface TraversalScenarioResult {
+export interface ScenarioResult {
   ref: string;
   scenarioGroup: string;
   scenarioIndex: string;
@@ -51,7 +51,7 @@ export interface TraversalScenarioResult {
   metadata: Record<string, unknown>;
 }
 
-export interface TraversalSectionResult {
+export interface SectionResult {
   ref: string;
   sectionNumber: number;
   sectionVariant: number;
@@ -61,12 +61,12 @@ export interface TraversalSectionResult {
   metadata: Record<string, unknown>;
 }
 
-export interface TraversalLinkResult {
-  fromKind: TraversalKind;
+export interface ReferenceResult {
+  fromKind: BookRecordKind;
   fromRef: string;
-  toKind: TraversalKind;
+  toKind: BookRecordKind;
   toRef: string;
-  linkType: TraversalLinkType;
+  linkType: BookReferenceType;
   rawLabel: string | null;
   rawContext: string | null;
   sequence: number;
@@ -181,32 +181,23 @@ export async function getCard(
   return stripInternalKeys(match);
 }
 
-export async function findScenario(
-  query: string,
-  opts?: ToolOpts,
-): Promise<TraversalScenarioResult[]> {
+export async function findScenario(query: string, opts?: ToolOpts): Promise<ScenarioResult[]> {
   return findScenarios(query, 6, opts);
 }
 
-export async function getScenario(
-  ref: string,
-  opts?: ToolOpts,
-): Promise<TraversalScenarioResult | null> {
+export async function getScenario(ref: string, opts?: ToolOpts): Promise<ScenarioResult | null> {
   return loadScenario(ref, opts);
 }
 
-export async function getSection(
-  ref: string,
-  opts?: ToolOpts,
-): Promise<TraversalSectionResult | null> {
+export async function getSection(ref: string, opts?: ToolOpts): Promise<SectionResult | null> {
   return loadSection(ref, opts);
 }
 
 export async function followLinks(
-  fromKind: TraversalKind,
+  fromKind: BookRecordKind,
   fromRef: string,
-  linkType?: TraversalLinkType,
+  linkType?: BookReferenceType,
   opts?: ToolOpts,
-): Promise<TraversalLinkResult[]> {
-  return loadLinks(fromKind, fromRef, linkType, opts);
+): Promise<ReferenceResult[]> {
+  return loadReferences(fromKind, fromRef, linkType, opts);
 }

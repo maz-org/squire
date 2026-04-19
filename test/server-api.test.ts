@@ -725,15 +725,18 @@ describe('POST /api/ask', () => {
         ready: false,
         bootstrapReady: false,
         askReady: false,
-        missingBootstrapSteps: ['npm run seed:traversal'],
-        errors: ['No traversal data found in Postgres. Run `npm run seed:traversal` first.'],
+        missingBootstrapSteps: ['npm run seed:scenario-section-books'],
+        errors: [
+          'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
+        ],
         capabilities: {
           rules: { allowed: true, reason: null, message: null },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
-            reason: 'missing_traversal',
-            message: 'No traversal data found in Postgres. Run `npm run seed:traversal` first.',
+            reason: 'missing_scenario_section_books',
+            message:
+              'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.',
           },
         },
       }),

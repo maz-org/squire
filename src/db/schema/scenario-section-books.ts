@@ -1,10 +1,9 @@
 /**
- * Traversal schema: deterministic scenario/section research data.
+ * Scenario/section book schema: deterministic story-book research data.
  *
- * This is the explicit navigation layer for chained scenario/section lookups:
- * - `traversal_scenarios` stores canonical scenario records plus page text
- * - `traversal_sections` stores canonical section records plus full text
- * - `traversal_links` stores normalized edges between scenarios and sections
+ * - `scenario_book_scenarios` stores canonical scenario records plus page text
+ * - `section_book_sections` stores canonical section records plus full text
+ * - `book_references` stores explicit references between scenarios and sections
  *
  * Runtime reads come from Postgres; the checked-in JSON extract is seed
  * material and an inspection artifact, not the production read path.
@@ -21,8 +20,8 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-export const traversalScenarios = pgTable(
-  'traversal_scenarios',
+export const scenarioBookScenarios = pgTable(
+  'scenario_book_scenarios',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     game: text('game').notNull().default('frosthaven'),
@@ -39,15 +38,15 @@ export const traversalScenarios = pgTable(
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull(),
   },
   (t) => [
-    uniqueIndex('traversal_scenarios_game_ref_idx').on(t.game, t.ref),
-    index('traversal_scenarios_game_idx').on(t.game),
-    index('traversal_scenarios_index_idx').on(t.scenarioIndex),
-    index('traversal_scenarios_name_idx').on(t.name),
+    uniqueIndex('scenario_book_scenarios_game_ref_idx').on(t.game, t.ref),
+    index('scenario_book_scenarios_game_idx').on(t.game),
+    index('scenario_book_scenarios_index_idx').on(t.scenarioIndex),
+    index('scenario_book_scenarios_name_idx').on(t.name),
   ],
 );
 
-export const traversalSections = pgTable(
-  'traversal_sections',
+export const sectionBookSections = pgTable(
+  'section_book_sections',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     game: text('game').notNull().default('frosthaven'),
@@ -60,14 +59,14 @@ export const traversalSections = pgTable(
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull(),
   },
   (t) => [
-    uniqueIndex('traversal_sections_game_ref_idx').on(t.game, t.ref),
-    index('traversal_sections_game_idx').on(t.game),
-    index('traversal_sections_number_idx').on(t.sectionNumber),
+    uniqueIndex('section_book_sections_game_ref_idx').on(t.game, t.ref),
+    index('section_book_sections_game_idx').on(t.game),
+    index('section_book_sections_number_idx').on(t.sectionNumber),
   ],
 );
 
-export const traversalLinks = pgTable(
-  'traversal_links',
+export const bookReferences = pgTable(
+  'book_references',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     game: text('game').notNull().default('frosthaven'),
@@ -81,7 +80,7 @@ export const traversalLinks = pgTable(
     sequence: integer('sequence').notNull().default(0),
   },
   (t) => [
-    uniqueIndex('traversal_links_game_unique_idx').on(
+    uniqueIndex('book_references_game_unique_idx').on(
       t.game,
       t.fromKind,
       t.fromRef,
@@ -90,8 +89,8 @@ export const traversalLinks = pgTable(
       t.linkType,
       t.sequence,
     ),
-    index('traversal_links_from_idx').on(t.game, t.fromKind, t.fromRef),
-    index('traversal_links_to_idx').on(t.game, t.toKind, t.toRef),
-    index('traversal_links_type_idx').on(t.linkType),
+    index('book_references_from_idx').on(t.game, t.fromKind, t.fromRef),
+    index('book_references_to_idx').on(t.game, t.toKind, t.toRef),
+    index('book_references_type_idx').on(t.linkType),
   ],
 );

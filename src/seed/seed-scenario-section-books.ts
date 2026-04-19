@@ -1,5 +1,5 @@
 /**
- * Seed traversal tables from `data/extracted/traversal.json`.
+ * Seed scenario/section book tables from `data/extracted/scenario-section-books.json`.
  *
  * This is deterministic generated data, not user state, so the seed uses a
  * replace-by-game transaction instead of row-by-row upserts: delete current
@@ -14,29 +14,42 @@ import { fileURLToPath } from 'node:url';
 import { eq } from 'drizzle-orm';
 
 import type { Db } from '../db.ts';
-import { traversalLinks, traversalScenarios, traversalSections } from '../db/schema/traversal.ts';
-import { TraversalExtractSchema } from '../traversal-schemas.ts';
+import {
+  bookReferences,
+  scenarioBookScenarios,
+  sectionBookSections,
+} from '../db/schema/scenario-section-books.ts';
+import { ScenarioSectionBooksExtractSchema } from '../scenario-section-schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const EXTRACTED_PATH = join(__dirname, '..', '..', 'data', 'extracted', 'traversal.json');
+const EXTRACTED_PATH = join(
+  __dirname,
+  '..',
+  '..',
+  'data',
+  'extracted',
+  'scenario-section-books.json',
+);
 
-export interface SeedTraversalOptions {
+export interface SeedScenarioSectionBooksOptions {
   game?: string;
 }
 
-export interface SeedTraversalResult {
+export interface SeedScenarioSectionBooksResult {
   type: 'scenarios' | 'sections' | 'links';
   inserted: number;
   pruned: number;
   skipped: number;
 }
 
-export async function seedTraversal(
+export async function seedScenarioSectionBooks(
   db: Db,
-  opts: SeedTraversalOptions = {},
-): Promise<SeedTraversalResult[]> {
+  opts: SeedScenarioSectionBooksOptions = {},
+): Promise<SeedScenarioSectionBooksResult[]> {
   const game = opts.game ?? 'frosthaven';
-  const extract = TraversalExtractSchema.parse(JSON.parse(readFileSync(EXTRACTED_PATH, 'utf-8')));
+  const extract = ScenarioSectionBooksExtractSchema.parse(
+    JSON.parse(readFileSync(EXTRACTED_PATH, 'utf-8')),
+  );
 
   const scenarioRows = extract.scenarios.map((scenario) => ({ game, ...scenario }));
   const sectionRows = extract.sections.map((section) => ({ game, ...section }));
@@ -44,26 +57,26 @@ export async function seedTraversal(
 
   return db.transaction(async (tx) => {
     const deletedLinks = await tx
-      .delete(traversalLinks)
-      .where(eq(traversalLinks.game, game))
-      .returning({ id: traversalLinks.id });
+      .delete(bookReferences)
+      .where(eq(bookReferences.game, game))
+      .returning({ id: bookReferences.id });
     const deletedSections = await tx
-      .delete(traversalSections)
-      .where(eq(traversalSections.game, game))
-      .returning({ id: traversalSections.id });
+      .delete(sectionBookSections)
+      .where(eq(sectionBookSections.game, game))
+      .returning({ id: sectionBookSections.id });
     const deletedScenarios = await tx
-      .delete(traversalScenarios)
-      .where(eq(traversalScenarios.game, game))
-      .returning({ id: traversalScenarios.id });
+      .delete(scenarioBookScenarios)
+      .where(eq(scenarioBookScenarios.game, game))
+      .returning({ id: scenarioBookScenarios.id });
 
     if (scenarioRows.length > 0) {
-      await tx.insert(traversalScenarios).values(scenarioRows);
+      await tx.insert(scenarioBookScenarios).values(scenarioRows);
     }
     if (sectionRows.length > 0) {
-      await tx.insert(traversalSections).values(sectionRows);
+      await tx.insert(sectionBookSections).values(sectionRows);
     }
     if (linkRows.length > 0) {
-      await tx.insert(traversalLinks).values(linkRows);
+      await tx.insert(bookReferences).values(linkRows);
     }
 
     return [

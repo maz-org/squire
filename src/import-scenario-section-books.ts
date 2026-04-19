@@ -1,13 +1,13 @@
 /**
- * Build the deterministic traversal extract that powers scenario/section
+ * Build the deterministic scenario/section book extract that powers
  * research. This joins:
  * - checked-in GHS-derived scenario identity from `data/extracted/scenarios.json`
  * - printed scenario-book links and prose
  * - printed section-book links and section bodies
  *
- * Run with: npx tsx src/import-traversal.ts
+ * Run with: npx tsx src/import-scenario-section-books.ts
  *
- * Output: data/extracted/traversal.json
+ * Output: data/extracted/scenario-section-books.json
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -17,17 +17,17 @@ import { fileURLToPath } from 'node:url';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
 import type {
-  TraversalExtract,
-  TraversalLinkRecord,
-  TraversalLinkType,
-  TraversalScenarioRecord,
-  TraversalSectionRecord,
-} from './traversal-schemas.ts';
+  BookReferenceRecord,
+  BookReferenceType,
+  ScenarioBookScenarioRecord,
+  ScenarioSectionBooksExtract,
+  SectionBookSectionRecord,
+} from './scenario-section-schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXTRACTED_SCENARIOS_PATH = join(__dirname, '..', 'data', 'extracted', 'scenarios.json');
 const PDFS_DIR = join(__dirname, '..', 'data', 'pdfs');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'traversal.json');
+const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'scenario-section-books.json');
 const PAGE_SENTINEL = '__SQUIRE_PAGE__';
 
 const FOOTER_RE = /2023\s+CEPHALOFAIR|ALL\s+RIGHTS\s+RESERVED|USED\s+WITH\s+PERMISSION/i;
@@ -238,11 +238,11 @@ function parseInstructionLinks(
   fromKind: 'scenario' | 'section',
   fromRef: string,
   text: string,
-): Array<Omit<TraversalLinkRecord, 'sequence'>> {
+): Array<Omit<BookReferenceRecord, 'sequence'>> {
   const flat = text.replace(/\s+/g, ' ').trim();
-  const links: Array<Omit<TraversalLinkRecord, 'sequence'>> = [];
+  const links: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
 
-  const addLink = (matchIndex: number, targetRef: string, linkType: TraversalLinkType) => {
+  const addLink = (matchIndex: number, targetRef: string, linkType: BookReferenceType) => {
     const rawContext = flat.slice(
       Math.max(0, matchIndex - 80),
       Math.min(flat.length, matchIndex + 120),
@@ -280,14 +280,16 @@ function parseScenarioUnlockLinks(
   fromRef: string,
   text: string,
   mainScenariosByIndex: Map<string, SourceScenarioRecord>,
-): Array<Omit<TraversalLinkRecord, 'sequence'>> {
+): Array<Omit<BookReferenceRecord, 'sequence'>> {
   const flat = text.replace(/\s+/g, ' ').trim();
-  const links: Array<Omit<TraversalLinkRecord, 'sequence'>> = [];
+  const links: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
 
   for (const match of flat.matchAll(/New Scenario:\s*(.+?)\s+(\d{1,3})\b/g)) {
     const target = mainScenariosByIndex.get(match[2]);
     if (!target) {
-      throw new Error(`Traversal import could not resolve scenario ${match[2]} from scenario text`);
+      throw new Error(
+        `Scenario/section book import could not resolve scenario ${match[2]} from scenario text`,
+      );
     }
     links.push({
       fromKind: 'section',
@@ -340,8 +342,8 @@ function buildSectionsFromPage(
   pageNumber: number,
   items: PdfItem[],
 ): {
-  sections: TraversalSectionRecord[];
-  entryLinks: Array<{ entry: SectionEntry; link: Omit<TraversalLinkRecord, 'sequence'> }>;
+  sections: SectionBookSectionRecord[];
+  entryLinks: Array<{ entry: SectionEntry; link: Omit<BookReferenceRecord, 'sequence'> }>;
 } {
   const lines = buildLines(items).filter((line) => line.y > 40 && !FOOTER_RE.test(line.text));
   const entries = parseSectionEntries(lines);
@@ -359,8 +361,8 @@ function buildSectionsFromPage(
     entriesByQuadrant.set(quadrant, quadrantEntries);
   }
 
-  const sections: TraversalSectionRecord[] = [];
-  const entryLinks: Array<{ entry: SectionEntry; link: Omit<TraversalLinkRecord, 'sequence'> }> =
+  const sections: SectionBookSectionRecord[] = [];
+  const entryLinks: Array<{ entry: SectionEntry; link: Omit<BookReferenceRecord, 'sequence'> }> =
     [];
 
   for (const [quadrant, quadrantEntries] of entriesByQuadrant.entries()) {
@@ -414,8 +416,8 @@ function buildSectionsFromPage(
 }
 
 function addSequencedLinks(
-  target: TraversalLinkRecord[],
-  links: Array<Omit<TraversalLinkRecord, 'sequence'>>,
+  target: BookReferenceRecord[],
+  links: Array<Omit<BookReferenceRecord, 'sequence'>>,
 ): void {
   for (const [sequence, link] of links.entries()) {
     target.push({ ...link, sequence });
@@ -488,9 +490,9 @@ function extractLinearSectionText(
 }
 
 async function repairSuspiciousSectionBodies(
-  sectionsByRef: Map<string, TraversalSectionRecord>,
+  sectionsByRef: Map<string, SectionBookSectionRecord>,
 ): Promise<void> {
-  const sectionsByPdf = new Map<string, TraversalSectionRecord[]>();
+  const sectionsByPdf = new Map<string, SectionBookSectionRecord[]>();
   for (const section of sectionsByRef.values()) {
     const sections = sectionsByPdf.get(section.sourcePdf) ?? [];
     sections.push(section);
@@ -519,7 +521,7 @@ async function repairSuspiciousSectionBodies(
   }
 }
 
-function buildTraversalExtract(): Promise<TraversalExtract> {
+function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract> {
   return (async () => {
     if (!existsSync(PDFS_DIR)) {
       throw new Error(`Missing PDF directory at ${PDFS_DIR}`);
@@ -530,15 +532,15 @@ function buildTraversalExtract(): Promise<TraversalExtract> {
     const mainScenariosByIndex = new Map(
       mainScenarios.map((scenario) => [scenario.index, scenario]),
     );
-    const scenariosByRef = new Map<string, TraversalScenarioRecord>();
-    const sectionsByRef = new Map<string, TraversalSectionRecord>();
-    const links: TraversalLinkRecord[] = [];
+    const scenariosByRef = new Map<string, ScenarioBookScenarioRecord>();
+    const sectionsByRef = new Map<string, SectionBookSectionRecord>();
+    const links: BookReferenceRecord[] = [];
     const warnings: string[] = [];
 
     function ensureScenarioRecord(
       scenarioIndex: string,
       fallbackName: string | null,
-    ): TraversalScenarioRecord {
+    ): ScenarioBookScenarioRecord {
       const structured = mainScenariosByIndex.get(scenarioIndex);
       if (structured) {
         return (
@@ -575,7 +577,7 @@ function buildTraversalExtract(): Promise<TraversalExtract> {
         `Printed traversal data referenced scenario ${scenarioIndex} (${fallbackName ?? 'unknown title'}) without a matching GHS scenario record; synthesized ${syntheticRef}.`,
       );
 
-      const synthetic: TraversalScenarioRecord = {
+      const synthetic: ScenarioBookScenarioRecord = {
         ref: syntheticRef,
         scenarioGroup: 'main',
         scenarioIndex,
@@ -705,19 +707,23 @@ function buildTraversalExtract(): Promise<TraversalExtract> {
 
     const validatedLinks = links.filter((link) => {
       if (link.fromKind === 'scenario' && !scenariosByRef.has(link.fromRef)) {
-        throw new Error(`Traversal import produced a link from missing scenario ${link.fromRef}`);
+        throw new Error(
+          `Scenario/section book import produced a reference from missing scenario ${link.fromRef}`,
+        );
       }
       if (link.fromKind === 'section' && !sectionsByRef.has(link.fromRef)) {
         warnings.push(
-          `Dropped traversal link from missing section ${link.fromRef} -> ${link.toRef}`,
+          `Dropped book reference from missing section ${link.fromRef} -> ${link.toRef}`,
         );
         return false;
       }
       if (link.toKind === 'scenario' && !scenariosByRef.has(link.toRef)) {
-        throw new Error(`Traversal import produced a link to missing scenario ${link.toRef}`);
+        throw new Error(
+          `Scenario/section book import produced a reference to missing scenario ${link.toRef}`,
+        );
       }
       if (link.toKind === 'section' && !sectionsByRef.has(link.toRef)) {
-        warnings.push(`Dropped traversal link to missing section ${link.fromRef} -> ${link.toRef}`);
+        warnings.push(`Dropped book reference to missing section ${link.fromRef} -> ${link.toRef}`);
         return false;
       }
       return true;
@@ -732,12 +738,12 @@ function buildTraversalExtract(): Promise<TraversalExtract> {
   })();
 }
 
-export async function importTraversal(): Promise<TraversalExtract> {
-  return buildTraversalExtract();
+export async function importScenarioSectionBooks(): Promise<ScenarioSectionBooksExtract> {
+  return buildScenarioSectionBooksExtract();
 }
 
-if (process.argv[1]?.endsWith('import-traversal.ts')) {
-  importTraversal()
+if (process.argv[1]?.endsWith('import-scenario-section-books.ts')) {
+  importScenarioSectionBooks()
     .then((extract) => {
       mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
       writeFileSync(OUTPUT_PATH, JSON.stringify(extract, null, 2), 'utf-8');
@@ -745,7 +751,7 @@ if (process.argv[1]?.endsWith('import-traversal.ts')) {
         `Wrote ${extract.scenarios.length} scenarios, ${extract.sections.length} sections, and ${extract.links.length} links to ${OUTPUT_PATH}`,
       );
       for (const warning of extract.warnings) {
-        console.warn(`[import-traversal] ${warning}`);
+        console.warn(`[import-scenario-section-books] ${warning}`);
       }
     })
     .catch((err) => {

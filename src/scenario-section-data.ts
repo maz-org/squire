@@ -1,20 +1,24 @@
 /**
- * DB-backed traversal data access.
+ * DB-backed scenario/section book data access.
  *
- * This is the deterministic navigation layer for scenario/section research:
- * exact scenario lookup, exact section fetch, and explicit outbound links.
+ * This is the deterministic book-data layer for scenario/section research:
+ * exact scenario lookup, exact section fetch, and explicit references between them.
  */
 
 import { sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
-import { traversalLinks, traversalScenarios, traversalSections } from './db/schema/traversal.ts';
-import type { TraversalKind, TraversalLinkType } from './traversal-schemas.ts';
+import {
+  bookReferences,
+  scenarioBookScenarios,
+  sectionBookSections,
+} from './db/schema/scenario-section-books.ts';
+import type { BookRecordKind, BookReferenceType } from './scenario-section-schemas.ts';
 
-export const TRAVERSAL_BOOTSTRAP_MESSAGE =
-  'No traversal data found in Postgres. Run `npm run seed:traversal` first.';
+export const SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE =
+  'No scenario and section book data found in Postgres. Run `npm run seed:scenario-section-books` first.';
 
-export interface TraversalScenario extends Record<string, unknown> {
+export interface ScenarioBookScenario extends Record<string, unknown> {
   ref: string;
   scenarioGroup: string;
   scenarioIndex: string;
@@ -28,7 +32,7 @@ export interface TraversalScenario extends Record<string, unknown> {
   metadata: Record<string, unknown>;
 }
 
-export interface TraversalSection extends Record<string, unknown> {
+export interface SectionBookSection extends Record<string, unknown> {
   ref: string;
   sectionNumber: number;
   sectionVariant: number;
@@ -38,12 +42,12 @@ export interface TraversalSection extends Record<string, unknown> {
   metadata: Record<string, unknown>;
 }
 
-export interface TraversalLink extends Record<string, unknown> {
-  fromKind: TraversalKind;
+export interface BookReference extends Record<string, unknown> {
+  fromKind: BookRecordKind;
   fromRef: string;
-  toKind: TraversalKind;
+  toKind: BookRecordKind;
   toRef: string;
-  linkType: TraversalLinkType;
+  linkType: BookReferenceType;
   rawLabel: string | null;
   rawContext: string | null;
   sequence: number;
@@ -53,14 +57,14 @@ interface LoadOpts {
   game?: string;
 }
 
-export interface TraversalBootstrapStatus {
+export interface ScenarioSectionBooksBootstrapStatus {
   ready: boolean;
   scenarioCount: number;
   sectionCount: number;
   linkCount: number;
   error?: string;
-  missingStep?: 'npm run seed:traversal';
-  reason?: 'missing_traversal' | 'dependency_unavailable';
+  missingStep?: 'npm run seed:scenario-section-books';
+  reason?: 'missing_scenario_section_books' | 'dependency_unavailable';
 }
 
 function normalizeJsonObject(value: unknown): Record<string, unknown> {
@@ -92,7 +96,7 @@ export async function findScenarios(
   query: string,
   limit = 6,
   opts: LoadOpts = {},
-): Promise<TraversalScenario[]> {
+): Promise<ScenarioBookScenario[]> {
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
   const normalized = query.trim();
@@ -101,7 +105,7 @@ export async function findScenarios(
   const indexCondition = scenarioIndex ? sql`scenario_index = ${scenarioIndex}` : sql`false`;
   const likePattern = `%${lowered}%`;
 
-  const rows = await db.execute<TraversalScenario>(sql`
+  const rows = await db.execute<ScenarioBookScenario>(sql`
     SELECT
       ref,
       scenario_group AS "scenarioGroup",
@@ -114,7 +118,7 @@ export async function findScenarios(
       source_page AS "sourcePage",
       raw_text AS "rawText",
       metadata
-    FROM ${traversalScenarios}
+    FROM ${scenarioBookScenarios}
     WHERE game = ${game}
       AND (${indexCondition} OR lower(name) LIKE ${likePattern})
     ORDER BY
@@ -137,11 +141,11 @@ export async function findScenarios(
 export async function getScenario(
   ref: string,
   opts: LoadOpts = {},
-): Promise<TraversalScenario | null> {
+): Promise<ScenarioBookScenario | null> {
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
 
-  const rows = await db.execute<TraversalScenario>(sql`
+  const rows = await db.execute<ScenarioBookScenario>(sql`
     SELECT
       ref,
       scenario_group AS "scenarioGroup",
@@ -154,7 +158,7 @@ export async function getScenario(
       source_page AS "sourcePage",
       raw_text AS "rawText",
       metadata
-    FROM ${traversalScenarios}
+    FROM ${scenarioBookScenarios}
     WHERE game = ${game} AND ref = ${ref}
     LIMIT 1
   `);
@@ -166,11 +170,11 @@ export async function getScenario(
 export async function getSection(
   ref: string,
   opts: LoadOpts = {},
-): Promise<TraversalSection | null> {
+): Promise<SectionBookSection | null> {
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
 
-  const rows = await db.execute<TraversalSection>(sql`
+  const rows = await db.execute<SectionBookSection>(sql`
     SELECT
       ref,
       section_number AS "sectionNumber",
@@ -179,7 +183,7 @@ export async function getSection(
       source_page AS "sourcePage",
       text,
       metadata
-    FROM ${traversalSections}
+    FROM ${sectionBookSections}
     WHERE game = ${game} AND ref = ${ref}
     LIMIT 1
   `);
@@ -188,17 +192,17 @@ export async function getSection(
   return row ? { ...row, metadata: normalizeJsonObject(row.metadata) } : null;
 }
 
-export async function followLinks(
-  fromKind: TraversalKind,
+export async function followReferences(
+  fromKind: BookRecordKind,
   fromRef: string,
-  linkType?: TraversalLinkType,
+  referenceType?: BookReferenceType,
   opts: LoadOpts = {},
-): Promise<TraversalLink[]> {
+): Promise<BookReference[]> {
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
-  const linkTypeClause = linkType ? sql`AND link_type = ${linkType}` : sql``;
+  const referenceTypeClause = referenceType ? sql`AND link_type = ${referenceType}` : sql``;
 
-  const rows = await db.execute<TraversalLink>(sql`
+  const rows = await db.execute<BookReference>(sql`
     SELECT
       from_kind AS "fromKind",
       from_ref AS "fromRef",
@@ -208,20 +212,20 @@ export async function followLinks(
       raw_label AS "rawLabel",
       raw_context AS "rawContext",
       sequence
-    FROM ${traversalLinks}
+    FROM ${bookReferences}
     WHERE game = ${game}
       AND from_kind = ${fromKind}
       AND from_ref = ${fromRef}
-      ${linkTypeClause}
+      ${referenceTypeClause}
     ORDER BY sequence, to_ref
   `);
 
   return rows.rows;
 }
 
-export async function getTraversalBootstrapStatus(
+export async function getScenarioSectionBooksBootstrapStatus(
   opts: LoadOpts = {},
-): Promise<TraversalBootstrapStatus> {
+): Promise<ScenarioSectionBooksBootstrapStatus> {
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
 
@@ -232,9 +236,9 @@ export async function getTraversalBootstrapStatus(
       linkCount: number;
     }>(sql`
       SELECT
-        (SELECT count(*)::int FROM ${traversalScenarios} WHERE game = ${game}) AS "scenarioCount",
-        (SELECT count(*)::int FROM ${traversalSections} WHERE game = ${game}) AS "sectionCount",
-        (SELECT count(*)::int FROM ${traversalLinks} WHERE game = ${game}) AS "linkCount"
+        (SELECT count(*)::int FROM ${scenarioBookScenarios} WHERE game = ${game}) AS "scenarioCount",
+        (SELECT count(*)::int FROM ${sectionBookSections} WHERE game = ${game}) AS "sectionCount",
+        (SELECT count(*)::int FROM ${bookReferences} WHERE game = ${game}) AS "linkCount"
     `);
     const counts = rows.rows[0] ?? { scenarioCount: 0, sectionCount: 0, linkCount: 0 };
     const ready = counts.scenarioCount > 0 && counts.sectionCount > 0 && counts.linkCount > 0;
@@ -244,9 +248,9 @@ export async function getTraversalBootstrapStatus(
     return {
       ready: false,
       ...counts,
-      error: TRAVERSAL_BOOTSTRAP_MESSAGE,
-      missingStep: 'npm run seed:traversal',
-      reason: 'missing_traversal',
+      error: SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE,
+      missingStep: 'npm run seed:scenario-section-books',
+      reason: 'missing_scenario_section_books',
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -255,7 +259,7 @@ export async function getTraversalBootstrapStatus(
       scenarioCount: 0,
       sectionCount: 0,
       linkCount: 0,
-      error: `traversal data query failed: ${message}`,
+      error: `scenario/section book data query failed: ${message}`,
       reason: 'dependency_unavailable',
     };
   }

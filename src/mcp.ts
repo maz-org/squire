@@ -19,7 +19,11 @@ import {
   followLinks,
 } from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
-import { TRAVERSAL_KINDS, TRAVERSAL_LINK_TYPES, type TraversalKind } from './traversal-schemas.ts';
+import {
+  BOOK_RECORD_KINDS,
+  BOOK_REFERENCE_TYPES,
+  type BookRecordKind,
+} from './scenario-section-schemas.ts';
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({
@@ -195,18 +199,19 @@ export function createMcpServer(): McpServer {
   server.registerTool(
     'follow_links',
     {
-      description: 'Follow explicit traversal links from a known scenario or section.',
+      description:
+        'Follow explicit scenario/section book references from a known scenario or section.',
       inputSchema: {
-        fromKind: z.enum(TRAVERSAL_KINDS).describe('Entity kind to follow from'),
+        fromKind: z.enum(BOOK_RECORD_KINDS).describe('Entity kind to follow from'),
         fromRef: z.string().describe('Canonical scenario or section ref'),
         linkType: z
-          .enum(TRAVERSAL_LINK_TYPES)
+          .enum(BOOK_REFERENCE_TYPES)
           .optional()
           .describe('Optional link-type filter like "conclusion" or "section_link"'),
       },
     },
     async ({ fromKind, fromRef, linkType }) => {
-      const links = await followLinks(fromKind as TraversalKind, fromRef, linkType);
+      const links = await followLinks(fromKind as BookRecordKind, fromRef, linkType);
       return { content: [{ type: 'text', text: JSON.stringify(links, null, 2) }] };
     },
   );

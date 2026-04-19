@@ -36,9 +36,9 @@ import type {
   RuleResult,
   CardResult,
   CardTypeInfo,
-  TraversalScenarioResult,
-  TraversalSectionResult,
-  TraversalLinkResult,
+  ScenarioResult,
+  SectionResult,
+  ReferenceResult,
 } from '../src/tools.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
@@ -246,9 +246,9 @@ describe('listCards', () => {
   });
 });
 
-describe('traversal tools', () => {
+describe('scenario/section book tools', () => {
   it('findScenario resolves an exact scenario-number query', async () => {
-    const results: TraversalScenarioResult[] = await findScenario('scenario 61');
+    const results: ScenarioResult[] = await findScenario('scenario 61');
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].scenarioIndex).toBe('61');
     expect(results[0].name).toBe('Life and Death');
@@ -263,7 +263,7 @@ describe('traversal tools', () => {
   });
 
   it('getSection returns exact section text for a known section ref', async () => {
-    const section: TraversalSectionResult | null = await getSection('90.2');
+    const section: SectionResult | null = await getSection('90.2');
     expect(section).not.toBeNull();
     expect(section!.sectionNumber).toBe(90);
     expect(section!.sectionVariant).toBe(2);
@@ -271,7 +271,7 @@ describe('traversal tools', () => {
   });
 
   it('followLinks returns the scenario 61 conclusion link to section 90.2', async () => {
-    const links: TraversalLinkResult[] = await followLinks(
+    const links: ReferenceResult[] = await followLinks(
       'scenario',
       'gloomhavensecretariat:scenario/061',
       'conclusion',

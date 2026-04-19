@@ -4,14 +4,14 @@ import * as auth from './auth.ts';
 import * as cards from './cards.ts';
 import * as conversations from './conversations.ts';
 import * as core from './core.ts';
-import * as traversal from './traversal.ts';
+import * as scenarioSectionBooks from './scenario-section-books.ts';
 
 const schema = {
   ...core,
   ...auth,
   ...cards,
   ...conversations,
-  ...traversal,
+  ...scenarioSectionBooks,
 };
 
 export const relations = defineRelations(schema, (r) => ({
