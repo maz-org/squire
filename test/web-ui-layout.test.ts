@@ -247,7 +247,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="idempotencyKey"[^>]*value=""/);
     expect(body).toMatch(/placeholder="Ask a question\.\.\."/);
     expect(body).toMatch(
-      /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*Ask\s*<\/button>/,
+      /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*<span aria-hidden="true">S<\/span>\s*<\/button>/,
     );
   });
 

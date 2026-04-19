@@ -591,7 +591,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     placeholder="Ask a question..."
                   />
                   <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                    Ask
+                    <span aria-hidden="true">S</span>
                   </button>
                 </form>`}
         </div>
