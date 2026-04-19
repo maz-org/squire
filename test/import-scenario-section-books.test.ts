@@ -9,7 +9,7 @@ describe('importScenarioSectionBooks', () => {
     extract = await importScenarioSectionBooks();
   });
 
-  it('builds the scenario 61 conclusion path to section 90.2', () => {
+  it('builds the scenario 61 conclusion path to section 67.1', () => {
     const scenario = extract.scenarios.find(
       (record) => record.ref === 'gloomhavensecretariat:scenario/061',
     );
@@ -17,14 +17,14 @@ describe('importScenarioSectionBooks', () => {
       (record) =>
         record.fromRef === 'gloomhavensecretariat:scenario/061' &&
         record.linkType === 'conclusion' &&
-        record.toRef === '90.2',
+        record.toRef === '67.1',
     );
-    const section = extract.sections.find((record) => record.ref === '90.2');
+    const section = extract.sections.find((record) => record.ref === '67.1');
 
     expect(scenario).toBeDefined();
     expect(link).toBeDefined();
     expect(section).toBeDefined();
-    expect(section!.text).toContain('The ritual and the battle');
+    expect(section!.text).toContain('sits on a traveling stool');
   });
 
   it('synthesizes printed-only scenarios when the checked-in scenario extract lacks them', () => {

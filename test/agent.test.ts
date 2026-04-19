@@ -124,17 +124,17 @@ describe('runAgentLoop', () => {
       name: 'Life and Death',
     });
     mockGetSection.mockResolvedValue({
-      ref: '90.2',
-      sectionNumber: 90,
-      sectionVariant: 2,
-      text: 'The ritual and the battle...',
+      ref: '67.1',
+      sectionNumber: 67,
+      sectionVariant: 1,
+      text: 'sits on a traveling stool...',
     });
     mockFollowLinks.mockResolvedValue([
       {
         fromKind: 'scenario',
         fromRef: 'gloomhavensecretariat:scenario/061',
         toKind: 'section',
-        toRef: '90.2',
+        toRef: '67.1',
         linkType: 'conclusion',
         rawLabel: null,
         rawContext: null,
@@ -235,20 +235,20 @@ describe('runAgentLoop', () => {
           linkType: 'conclusion',
         }),
       )
-      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '90.2' }))
-      .mockResolvedValueOnce(textResponse('Read section 90.2.'));
+      .mockResolvedValueOnce(toolUseResponse('get_section', { ref: '67.1' }))
+      .mockResolvedValueOnce(textResponse('Read section 67.1.'));
 
     const result = await runAgentLoop(
       'show the full text of the section to read at the conclusion of scenario 61',
     );
-    expect(result).toBe('Read section 90.2.');
+    expect(result).toBe('Read section 67.1.');
     expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
     expect(mockFollowLinks).toHaveBeenCalledWith(
       'scenario',
       'gloomhavensecretariat:scenario/061',
       'conclusion',
     );
-    expect(mockGetSection).toHaveBeenCalledWith('90.2');
+    expect(mockGetSection).toHaveBeenCalledWith('67.1');
   });
 
   it('can keep following section-to-section references across multiple hops', async () => {
@@ -394,8 +394,8 @@ describe('executeToolCall', () => {
     mockGetCard.mockReturnValue({ name: 'Test Item' });
     mockFindScenario.mockResolvedValue([{ ref: 'gloomhavensecretariat:scenario/061' }]);
     mockGetScenario.mockResolvedValue({ ref: 'gloomhavensecretariat:scenario/061' });
-    mockGetSection.mockResolvedValue({ ref: '90.2' });
-    mockFollowLinks.mockResolvedValue([{ toRef: '90.2' }]);
+    mockGetSection.mockResolvedValue({ ref: '67.1' });
+    mockFollowLinks.mockResolvedValue([{ toRef: '67.1' }]);
   });
 
   it('dispatches search_rules', async () => {
@@ -443,9 +443,9 @@ describe('executeToolCall', () => {
   });
 
   it('dispatches get_section', async () => {
-    const result = await executeToolCall('get_section', { ref: '90.2' });
-    expect(mockGetSection).toHaveBeenCalledWith('90.2');
-    expect(JSON.parse(result)).toEqual({ ref: '90.2' });
+    const result = await executeToolCall('get_section', { ref: '67.1' });
+    expect(mockGetSection).toHaveBeenCalledWith('67.1');
+    expect(JSON.parse(result)).toEqual({ ref: '67.1' });
   });
 
   it('dispatches follow_links', async () => {
@@ -459,7 +459,7 @@ describe('executeToolCall', () => {
       'gloomhavensecretariat:scenario/061',
       'conclusion',
     );
-    expect(JSON.parse(result)).toEqual([{ toRef: '90.2' }]);
+    expect(JSON.parse(result)).toEqual([{ toRef: '67.1' }]);
   });
 
   it('returns error for unknown tool', async () => {

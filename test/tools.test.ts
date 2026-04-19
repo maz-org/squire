@@ -258,19 +258,19 @@ describe('scenario/section book tools', () => {
   it('getScenario returns the seeded traversal scenario record', async () => {
     const scenario = await getScenario('gloomhavensecretariat:scenario/061');
     expect(scenario).not.toBeNull();
-    expect(scenario!.sourcePdf).toBe('fh-scenario-book-42-61.pdf');
-    expect(scenario!.rawText).toContain('90.2');
+    expect(scenario!.sourcePdf).toBe('fh-scenario-book-62-81.pdf');
+    expect(scenario!.rawText).toContain('67.1');
   });
 
   it('getSection returns exact section text for a known section ref', async () => {
-    const section: SectionResult | null = await getSection('90.2');
+    const section: SectionResult | null = await getSection('67.1');
     expect(section).not.toBeNull();
-    expect(section!.sectionNumber).toBe(90);
-    expect(section!.sectionVariant).toBe(2);
-    expect(section!.text).toContain('The ritual and the battle');
+    expect(section!.sectionNumber).toBe(67);
+    expect(section!.sectionVariant).toBe(1);
+    expect(section!.text).toContain('sits on a traveling stool');
   });
 
-  it('followLinks returns the scenario 61 conclusion link to section 90.2', async () => {
+  it('followLinks returns the scenario 61 conclusion link to section 67.1', async () => {
     const links: ReferenceResult[] = await followLinks(
       'scenario',
       'gloomhavensecretariat:scenario/061',
@@ -281,7 +281,7 @@ describe('scenario/section book tools', () => {
         fromKind: 'scenario',
         fromRef: 'gloomhavensecretariat:scenario/061',
         toKind: 'section',
-        toRef: '90.2',
+        toRef: '67.1',
         linkType: 'conclusion',
       }),
     ]);

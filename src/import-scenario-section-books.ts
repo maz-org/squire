@@ -36,6 +36,8 @@ const HEADING_RE =
 const SECTION_LINK_RE = /^([\d\s]+\.\s*\d+)\s*•\s*(.+?)(?:\((\d+)\))?$/;
 const BOOK_RANGE_RE = /^fh-(scenario|section)-book-(\d+)-(\d+)\.pdf$/;
 const SINGLE_MARKER_RE = /^[A-Z#]$/;
+const SCENARIO_GOALS_HEADING_RE = /^Scenario Goals$/i;
+const SCENARIO_SECTION_LINKS_HEADING_RE = /^Section Links$/i;
 
 interface SourceScenarioRecord {
   scenarioGroup: 'main' | 'solo' | 'random';
@@ -229,9 +231,46 @@ function normalizeRawBlockText(text: string): string {
     .trim();
 }
 
-function scenarioPageText(items: PdfItem[]): string {
-  const lines = buildLines(items).filter((line) => line.y > 40 && !FOOTER_RE.test(line.text));
+function scenarioPageText(lines: PdfLine[]): string {
   return normalizeBlockText(lines);
+}
+
+function parseScenarioPageIndex(items: PdfItem[]): string | null {
+  const candidates = items
+    .filter((item) => item.y > 740)
+    .map((item) => normalizeInlineText(item.text))
+    .filter((text) => /^\d{1,3}$/.test(text));
+
+  if (candidates.length === 0) return null;
+  return String(Number(candidates[0]));
+}
+
+function extractScenarioBoxText(lines: PdfLine[], headingPattern: RegExp): string | null {
+  const heading = lines.find((line) => headingPattern.test(line.text));
+  if (!heading) return null;
+
+  const columnMin = heading.x - 20;
+  const columnMax = heading.x + 190;
+  const nextHeading =
+    lines
+      .filter(
+        (line) =>
+          line.y < heading.y - 4 &&
+          line.x >= columnMin &&
+          line.x <= columnMax &&
+          HEADING_RE.test(line.text),
+      )
+      .sort((a, b) => b.y - a.y)[0] ?? null;
+
+  const boxLines = lines.filter((line) => {
+    if (HEADING_RE.test(line.text)) return false;
+    if (line.y >= heading.y - 8) return false;
+    if (nextHeading && line.y <= nextHeading.y + 8) return false;
+    return line.x >= columnMin && line.x <= columnMax;
+  });
+
+  const text = normalizeBlockText(boxLines);
+  return text.length > 0 ? text : null;
 }
 
 function parseInstructionLinks(
@@ -271,6 +310,56 @@ function parseInstructionLinks(
       ? 'conclusion'
       : 'read_now';
     addLink(match.index ?? 0, match[1], linkType);
+  }
+
+  return links;
+}
+
+function parseScenarioGoalLinks(
+  fromRef: string,
+  text: string,
+): Array<Omit<BookReferenceRecord, 'sequence'>> {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  const links: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
+
+  for (const match of flat.matchAll(/read\s+(\d+\.\d+)/gi)) {
+    const start = Math.max(0, (match.index ?? 0) - 80);
+    const rawContext = flat.slice(start, Math.min(flat.length, (match.index ?? 0) + 120)).trim();
+    links.push({
+      fromKind: 'scenario',
+      fromRef,
+      toKind: 'section',
+      toRef: match[1],
+      linkType: 'conclusion',
+      rawLabel: null,
+      rawContext,
+    });
+  }
+
+  return links;
+}
+
+function parseScenarioSectionLinks(
+  fromRef: string,
+  text: string,
+): Array<Omit<BookReferenceRecord, 'sequence'>> {
+  const links: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
+
+  for (const line of text
+    .split('\n')
+    .map((entry) => entry.trim())
+    .filter(Boolean)) {
+    const match = line.match(/read\s+(\d+\.\d+)/i);
+    if (!match) continue;
+    links.push({
+      fromKind: 'scenario',
+      fromRef,
+      toKind: 'section',
+      toRef: match[1],
+      linkType: 'read_now',
+      rawLabel: null,
+      rawContext: line,
+    });
   }
 
   return links;
@@ -607,20 +696,31 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
       .filter((name) => /^fh-scenario-book-\d+-\d+\.pdf$/.test(name))
       .sort();
     for (const pdfName of scenarioBookPdfs) {
-      const range = parseBookRange(pdfName);
       const pages = await extractPdfPages(pdfName);
 
       for (const page of pages) {
-        const scenarioNumber = String(range.start + page.pageIndex);
+        const lines = buildLines(page.items).filter(
+          (line) => line.y > 40 && !FOOTER_RE.test(line.text),
+        );
+        const scenarioNumber = parseScenarioPageIndex(page.items);
+        if (!scenarioNumber) {
+          warnings.push(
+            `Could not resolve printed scenario header for ${pdfName} page ${page.pageIndex}`,
+          );
+          continue;
+        }
         const source = mainScenariosByIndex.get(scenarioNumber);
         if (!source) {
           warnings.push(
-            `No main scenario record found for scenario-book page ${scenarioNumber} (${pdfName})`,
+            `No main scenario record found for printed scenario ${scenarioNumber} in ${pdfName} page ${page.pageIndex}`,
           );
           continue;
         }
 
-        const rawText = scenarioPageText(page.items);
+        const rawText = scenarioPageText(lines);
+        const scenarioGoalsText = extractScenarioBoxText(lines, SCENARIO_GOALS_HEADING_RE);
+        const sectionLinksText = extractScenarioBoxText(lines, SCENARIO_SECTION_LINKS_HEADING_RE);
+        const existing = scenariosByRef.get(source.sourceId);
         scenariosByRef.set(source.sourceId, {
           ref: source.sourceId,
           scenarioGroup: source.scenarioGroup,
@@ -629,9 +729,9 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
           complexity: source.complexity ?? null,
           flowChartGroup: source.flowChartGroup,
           initial: source.initial,
-          sourcePdf: pdfName,
-          sourcePage: range.start + page.pageIndex,
-          rawText,
+          sourcePdf: existing?.sourcePdf ?? pdfName,
+          sourcePage: existing?.sourcePage ?? page.pageIndex + 1,
+          rawText: existing?.rawText ? `${existing.rawText}\n\n${rawText}` : rawText,
           metadata: {
             sourceId: source.sourceId,
             monsters: source.monsters,
@@ -644,7 +744,12 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
           },
         });
 
-        addSequencedLinks(links, parseInstructionLinks('scenario', source.sourceId, rawText));
+        if (scenarioGoalsText) {
+          addSequencedLinks(links, parseScenarioGoalLinks(source.sourceId, scenarioGoalsText));
+        }
+        if (sectionLinksText) {
+          addSequencedLinks(links, parseScenarioSectionLinks(source.sourceId, sectionLinksText));
+        }
       }
     }
 
