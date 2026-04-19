@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0.3
+**Version:** 1.0.6
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-11
+**Last Refreshed:** 2026-04-19
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -21,7 +21,7 @@ The system is organized as a single Hono server that hosts:
 - A **web UI channel** (server-rendered HTML for the human at the table)
 - A **knowledge agent** (the agent loop that answers questions)
 - A **conversation agent** (a thin session manager for the web UI that wraps the knowledge agent)
-- A set of **atomic tools** (`searchRules`, `searchCards`, `listCardTypes`, `listCards`, `getCard`) over a generalized GHS-backed data layer
+- A set of **atomic tools** over three retrieval surfaces: semantic book search (`searchRules`), exact scenario/section-book research (`findScenario`, `getScenario`, `getSection`, `followLinks`), and generalized GHS card lookup (`searchCards`, `listCardTypes`, `listCards`, `getCard`)
 - An **MCP server** (`/mcp`) exposing the same atomic tools to external agent harnesses
 - A **REST API** (`/api/*`) for non-MCP programmatic clients
 
@@ -41,8 +41,9 @@ Following [agent-native architecture principles][agent-native]: features are out
 
 The earliest version of Squire bundled embedding, vector search, card search, context assembly, and LLM generation into one `askFrosthaven()` function. This is the anti-pattern of "agent executes your workflow." The current architecture exposes atomic data access primitives that agents compose:
 
-- `searchRules`, `searchCards` for content retrieval
-- `listCardTypes`, `listCards`, `getCard` for discovery and exact lookup
+- `searchRules` for semantic book-corpus retrieval
+- `findScenario`, `getScenario`, `getSection`, `followLinks` for deterministic scenario/section-book traversal
+- `searchCards`, `listCardTypes`, `listCards`, `getCard` for GHS card discovery and exact lookup
 
 The bundled `/api/ask` path doesn't disappear — it becomes an **optimized convenience path** for simple Q&A. Atomic tools are the foundation; the pipeline is a shortcut for the common case (graduated optimization).
 
@@ -254,13 +255,26 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 
 _Historical note: an earlier version of Squire used the worldhaven repository plus an OCR pipeline. Both were retired (commit `34a26a1`) once GHS proved sufficient._
 
-### Rules Database
+### Book Retrieval Data
+
+#### Semantic book search
 
 - Extract text from indexed Frosthaven book PDFs in `data/pdfs/` using `pdf-parse`
 - Chunk into semantic sections in `src/index-docs.ts`
 - Generate embeddings via the local Xenova model (see [Stack → Embeddings](#embeddings))
 - Store in the `embeddings` pgvector table (populated by `npm run index`; idempotent per-source upserts)
-- RAG retrieval via `searchRules()` (see [Atomic Tools](#atomic-tools))
+- Query through `searchRules()` for fuzzy rules/mechanics questions and other open-ended book-corpus lookups
+
+#### Scenario/section-book research data
+
+- Parse the printed scenario and section books in `src/import-scenario-section-books.ts`
+- Merge printed book structure with GHS scenario identity where possible
+- Generate a checked-in extract at `data/extracted/scenario-section-books.json`
+- Seed Postgres runtime tables via `npm run seed:scenario-section-books`:
+  - `scenario_book_scenarios`
+  - `section_book_sections`
+  - `book_references`
+- Query that deterministic layer through `findScenario()`, `getScenario()`, `getSection()`, and `followLinks()` for exact scenario/section questions and multi-hop section chasing
 
 ### Storage strategy
 
@@ -269,6 +283,7 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 | User / campaign / player state | N/A (Phase 4)                                                  | Postgres                 |
 | Vector embeddings              | Postgres + pgvector (docker-compose)                           | Postgres + pgvector      |
 | Extracted card data            | Postgres `card_*` tables (seeded from `data/extracted/*.json`) | Postgres `card_*` tables |
+| Scenario / section book data   | Postgres `scenario_book_*` + `book_references` tables          | Postgres                 |
 | OAuth tokens / clients         | N/A (Phase 1)                                                  | Postgres                 |
 | Conversation history           | Postgres `conversations` + `messages`                          | Postgres                 |
 
@@ -332,7 +347,7 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
 2. **Context gathering:** Load recent conversation history (currently the most
    recent 20 non-error messages), identify caller identity from session, load
    campaign context if available
-3. **Tool use:** Claude calls atomic tools to retrieve relevant rules, cards, items, monsters, or scenarios
+3. **Tool use:** Claude calls atomic tools to retrieve relevant book passages, exact scenarios, exact sections, explicit book references, cards, items, monsters, or scenarios
 4. **Reasoning:** Claude synthesizes a response from tool results
 5. **Response:** Stream back to the channel (web UI via SSE, MCP via protocol response)
 6. **Memory:** Persist conversation turn for future context
@@ -358,6 +373,10 @@ graph TB
             t3["listCardTypes"]
             t4["listCards"]
             t5["getCard"]
+            t6["findScenario"]
+            t7["getScenario"]
+            t8["getSection"]
+            t9["followLinks"]
         end
         subgraph mcp["MCP Server (src/mcp.ts)"]
             mcpep["/mcp"]
@@ -366,10 +385,10 @@ graph TB
             restep["/api/*"]
         end
         conv -->|in-process function call| ask
-        agentloop --> t1 & t2 & t3 & t4 & t5
-        mcpep --> t1 & t2 & t3 & t4 & t5
+        agentloop --> t1 & t2 & t3 & t4 & t5 & t6 & t7 & t8 & t9
+        mcpep --> t1 & t2 & t3 & t4 & t5 & t6 & t7 & t8 & t9
         restep --> agentloop
-        restep --> t1 & t2 & t3 & t4 & t5
+        restep --> t1 & t2 & t3 & t4 & t5 & t6 & t7 & t8 & t9
     end
 
     claudecode["Claude Code"] -->|OAuth 2.1| mcpep
@@ -382,15 +401,23 @@ The conversation agent **never calls atomic tools directly** — it always goes 
 
 ### Atomic tools
 
-Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that works across all GHS card types — monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, personal quests. The same handful of tools handle every card type via parameter, rather than one tool per feature.
+Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that covers three retrieval surfaces:
 
-| Tool                              | Purpose                                                                                                                                                                                     |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `searchRules(query, topK, opts?)` | Vector search over the indexed Frosthaven book corpus. Returns raw `source`, display `sourceLabel`, and supports `opts.game`.                                                               |
-| `searchCards(query, topK, opts?)` | Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights.                           |
-| `listCardTypes(opts?)`            | Discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table.                                                                                  |
-| `listCards(type, filter?, opts?)` | List records of a given type with field-level AND filter, plus optional `opts.game`.                                                                                                        |
-| `getCard(type, id, opts?)`        | Exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions. |
+- semantic search over the indexed Frosthaven books
+- deterministic scenario/section-book research data
+- generalized GHS card data across monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, and personal quests
+
+The same handful of tools handle every card type via parameter, rather than one tool per feature.
+
+- `searchRules(query, topK, opts?)` — vector search over the indexed Frosthaven book corpus. Returns raw `source`, display `sourceLabel`, and supports `opts.game`.
+- `findScenario(query, opts?)` — resolve a human query like `scenario 61` or `Life and Death` to matching scenario records from the deterministic scenario-book layer.
+- `getScenario(ref, opts?)` — fetch an exact scenario record by canonical scenario ref, including printed-page metadata and raw page text.
+- `getSection(ref, opts?)` — fetch an exact section record by section ref like `67.1`, including canonical section text and source-page metadata.
+- `followLinks(fromKind, fromRef, linkType?, opts?)` — follow explicit printed scenario/section-book references, optionally filtered by link type such as `conclusion` or `section_link`.
+- `searchCards(query, topK, opts?)` — Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights.
+- `listCardTypes(opts?)` — discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table.
+- `listCards(type, filter?, opts?)` — list records of a given type with field-level AND filter, plus optional `opts.game`.
+- `getCard(type, id, opts?)` — exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions.
 
 ```mermaid
 graph TB
@@ -402,6 +429,10 @@ graph TB
         gc["getCard(type, id)"]
         sr["searchRules(query, topK?)"]
         sc["searchCards(query, topK?)"]
+        fs["findScenario(query)"]
+        gs["getScenario(ref)"]
+        gsec["getSection(ref)"]
+        fl["followLinks(kind, ref, type?)"]
     end
     subgraph campaign["Campaign State (Phase 4+)"]
         gcmp["getCharacterState()"]
@@ -413,6 +444,10 @@ graph TB
     gc --> ed
     lct --> ed
     lc --> ed
+    fs --> ssd["Scenario/Section Books<br/>(Postgres)"]
+    gs --> ssd
+    gsec --> ssd
+    fl --> ssd
     gcmp --> ps["Player State<br/>(Postgres)"]
     gpi --> ps
 ```
@@ -452,7 +487,7 @@ These are **emergent capabilities** — Squire never built features for them, bu
 }
 ```
 
-`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using the indexed Frosthaven books and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
+`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using the indexed Frosthaven books, the deterministic scenario/section-book layer, and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
 
 The knowledge agent:
 
@@ -461,7 +496,7 @@ The knowledge agent:
 3. **Loads context** (if campaign / user provided) — shared campaign state plus the player's character, items, and personal quest
 4. **Generates a grounded answer** — from source material, personalized to this player's situation when campaign context is available
 
-Today this is a fixed pipeline (search rules + search cards + one LLM call). It evolves into a real agent loop using atomic tools with judgment over time (graduated optimization).
+Today this is already a real tool loop. The system prompt nudges Claude to prefer deterministic scenario/section traversal when a question is anchored to a scenario number, title, or section ref, and to fall back to semantic book search for fuzzier questions. The HTTP entry point is still a convenience path; the retrieval strategy is no longer a hard-coded `searchRules + searchCards` bundle.
 
 The conversation agent calls this entry point via in-process function call, not HTTP. The HTTP endpoint exists for testing and for other channels (CLI, scripts, future Discord bot).
 
@@ -598,11 +633,11 @@ src/
     clients-store.ts            DrizzleClientsStore — OAuthRegisteredClientsStore impl
     audit.ts                    OAuth audit event writer (same txn as mutations)
     hashing.ts                  Token hashing helpers
-  db.ts                         Drizzle client + pool factory (server / cli modes)
-  db/
-    schema/                     Drizzle schema (core, auth, cards) — barrel in index.ts
-    repositories/               Domain repositories (Session, User) with row-to-domain mapping
-    migrations/                 SQL migration files (numbered, hand-written for FTS)
+    db.ts                         Drizzle client + pool factory (server / cli modes)
+    db/
+      schema/                     Drizzle schema (core, auth, cards, scenario/section books) — barrel in index.ts
+      repositories/               Domain repositories (Session, User) with row-to-domain mapping
+      migrations/                 SQL migration files (numbered, hand-written for FTS)
   embedder.ts                   Local embeddings via Xenova all-MiniLM-L6-v2
   extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
   ghs-utils.ts                  Shared helpers for GHS imports
@@ -611,13 +646,16 @@ src/
   mcp.ts                        MCP tool registration (Streamable HTTP transport)
   query.ts                      CLI wrapper over the knowledge agent
   schemas.ts                    Zod schemas for all GHS card types
-  seed/
-    seed-cards.ts               JSON → Zod-validated upserts into card_* tables
-    seed-dev-user.ts            Idempotent single-row dev user for local auth testing
-  server.ts                     Hono server (REST + MCP transport + web UI host)
-  service.ts                    Service initialization, readiness, graduated /api/ask path
-  tools.ts                      Atomic tools: searchRules, searchCards, listCardTypes, listCards, getCard
-  vector-store.ts               pgvector cosine similarity search
+    seed/
+      seed-cards.ts               JSON → Zod-validated upserts into card_* tables
+      seed-scenario-section-books.ts  Scenario/section-book extract → Postgres tables
+      seed-dev-user.ts            Idempotent single-row dev user for local auth testing
+    server.ts                     Hono server (REST + MCP transport + web UI host)
+    service.ts                    Service initialization, readiness, and model-led /api/ask entry
+    tools.ts                      Atomic tools across book search, scenario/section research, and card data
+    scenario-section-data.ts      Postgres-backed exact scenario/section lookups + link following
+    scenario-section-schemas.ts   Zod enums / types for scenario/section records and links
+    vector-store.ts               pgvector cosine similarity search
   web-ui/
     layout.ts                   Session-aware layout shell (5 mobile regions + desktop rail)
     auth-error-page.ts          Auth error page renderer (design system, retry + home links)
@@ -634,13 +672,14 @@ src/
   import-events.ts              GHS importer
   import-items.ts               GHS importer
   import-monster-abilities.ts   GHS importer
-  import-monster-stats.ts       GHS importer
-  import-personal-quests.ts     GHS importer
-  import-scenarios.ts           GHS importer
+    import-monster-stats.ts       GHS importer
+    import-personal-quests.ts     GHS importer
+    import-scenarios.ts           GHS importer
+    import-scenario-section-books.ts   Printed scenario/section book importer
 
-data/
-  pdfs/                         Source rulebook + scenario / section PDFs (input to indexing)
-  extracted/*.json              GHS importer outputs; seed-cards.ts upserts these into the card_* tables
+  data/
+    pdfs/                         Source rulebook + scenario / section PDFs (input to indexing)
+    extracted/*.json              GHS card extracts plus scenario-section-books.json seed / inspection artifact
 ```
 
 For developer setup, running the server, working on import scripts locally, and testing, see [DEVELOPMENT.md](DEVELOPMENT.md).
@@ -661,7 +700,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 6. **frosthaven-storyline.com may not support Gloomhaven 2.0 (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
 
-7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
+7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, scenario/section books, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
 
 8. **OAuth implementation surface.** Custom auth is a real trust boundary. Use
    MCP SDK auth handlers, exact-match redirect URI validation, rate limit
@@ -684,6 +723,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 ## Changelog
 
+- **2026-04-19 (v1.0.6):** SQR-103 broadened the retrieval stack beyond semantic rulebook search. `src/import-scenario-section-books.ts` now parses the printed scenario and section books into a checked-in extract, and `src/seed/seed-scenario-section-books.ts` seeds three new runtime tables: `scenario_book_scenarios`, `section_book_sections`, and `book_references`. The atomic tool surface grew by four deterministic research tools — `findScenario`, `getScenario`, `getSection`, and `followLinks` — and the knowledge agent now prefers that exact path for anchored scenario/section questions before falling back to `searchRules`. Local bootstrap also changed: `npm run seed` now seeds both card data and scenario/section-book data, while `npm run seed:dev` adds the dev user on top.
 - **2026-04-11 (v1.0.5):** SQR-93 shipped canonical selected-message history in the web chat. Added `GET /chat/:conversationId/messages/:messageId` as a conversation-scoped page state that projects one completed user/assistant pair plus a recent-questions rail, with HTMX requests returning the selected transcript and an OOB replacement for `nav.squire-recent`. Follow-up submits from selected-message URLs now preserve the conversation-scoped `POST /chat/:conversationId/messages` target and push the browser back to the canonical conversation URL after submit. QA also locked the flow with a browser-found regression test for selected-message follow-up retargeting.
 
 - **2026-04-08 (v1.0.4):** SQR-36 shipped the seed bundle. `src/seed/seed-dev-user.ts` is a tiny idempotent helper that upserts a predictable dev user (`dev@squire.local`) via `ON CONFLICT DO NOTHING` (no target — absorbs conflicts on either `email` or `google_sub`). The CLI wrapper `scripts/seed-dev-user.ts` refuses to run with `NODE_ENV=production`. Package scripts gained `seed` (alias for `seed:cards`, the prod default), `seed:dev-user`, and `seed:dev` (chains `seed:cards` then `seed:dev-user`). Local bootstrap is now `docker compose up && npm ci && npm run db:migrate && npm run index && npm run seed:dev`. Tests: 12 new seed-cards contract tests (per-type row counts ×10, idempotency, update-on-conflict revert — with an `afterAll` TRUNCATE + re-seed to keep MVCC row order stable for downstream `ts_rank` parity tests) plus 3 dev-user tests (insert, idempotency, preserve hand-edited rows).

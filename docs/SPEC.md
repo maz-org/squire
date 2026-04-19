@@ -1,8 +1,8 @@
 # Squire — Frosthaven Knowledge Agent Product Specification
 
-**Version:** 3.0
+**Version:** 3.1
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-07
+**Last Refreshed:** 2026-04-19
 **Owner:** Product (PM)
 **Companion doc:** [docs/ARCHITECTURE.md](ARCHITECTURE.md) — architect-owned tech spec (how / with-what / where)
 **Status:** Phase 1 in progress, MVP scoped. GH2 content expansion (Phase 2) deadline ~mid-2026.
@@ -15,7 +15,7 @@ Squire is a deep game-knowledge agent for Gloomhaven and Frosthaven. It answers 
 
 Squire is **the agent**, not a specific app. It's reachable through multiple **channels** — primarily its own web UI today, with MCP-capable agent harnesses (Claude Code, Claude Desktop) as a second channel, and Discord / iMessage clients planned for the far future. All channels talk to the same underlying knowledge agent.
 
-**MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly behind Cloudflare WAF. The agent answers using a rulebook RAG pipeline and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
+**MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly behind Cloudflare WAF. The agent answers using semantic search across the Frosthaven books, deterministic scenario/section-book traversal for anchored story-book questions, and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
 
 **Long-term product (Phases 2–8):** Gloomhaven 2.0 content expansion, multi-user platform, campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion, polish (voice input, share/export, spoiler protection), and additional channels (Discord, iMessage).
 
@@ -98,8 +98,9 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 
 **Requirements:**
 
-- RAG system over Frosthaven rulebook
+- Retrieval across the Frosthaven rulebook plus scenario, section, and puzzle books
 - Fast semantic search for rules queries
+- Exact scenario/section lookup and link-following for anchored story-book questions
 - Return relevant rule sections with page references
 - Handle ambiguous questions with clarifying questions
 - Provide examples when helpful
@@ -131,14 +132,14 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 
 ## Character State Management
 
-Squire's MVP (Phase 1) does not track any character or campaign state. The agent answers rules questions using a generalized knowledge layer over the rulebook RAG and GHS static game data.
+Squire's MVP (Phase 1) does not track any character or campaign state. The agent answers rules questions using a generalized knowledge layer over semantic book search, deterministic scenario/section-book traversal, and GHS static game data.
 
 Character and campaign state lands in **Phase 4 (Campaign & character state)** with a Postgres data model and manual entry. **Phase 6 (Character state ingestion)** adds automated state ingestion from a third-party source — see that phase for the five ingestion options under consideration (browser extension, JSON export, sync protocol, Claude Vision on screenshots, or reading directly from a campaign tracker like GHS).
 
 ### Data Sources (current)
 
 - **Static game data:** Gloomhaven Secretariat (GHS) structured data — see Data Architecture section. Imported via dedicated `src/import-*.ts` scripts.
-- **Rulebook:** the official Frosthaven rulebook PDF, chunked and embedded into pgvector for retrieval. Gloomhaven 2.0 rulebook ingestion lands in Phase 2.
+- **Book corpus:** the official Frosthaven rulebook, scenario books, section books, and puzzle book PDFs. The book corpus supports both semantic retrieval and exact scenario/section lookup. Gloomhaven 2.0 book ingestion lands in Phase 2.
 
 ### Data Sources (future, by phase)
 
@@ -161,7 +162,7 @@ Mobile-responsive web app, server-rendered (Hono JSX + HTMX + Tailwind compiled 
 
 **Phase 1 MVP:** text input only. Brian uses iOS speech-to-text apps like Monologue externally when he wants to talk instead of type — no native voice input is wired up.
 
-**Phase 7 (Polish):** Web Speech API voice input lands as a Phase 7 enhancement, Chrome-first with progressive enhancement and graceful fallback to text. Voice is one input *method* within the web channel, not a separate product surface.
+**Phase 7 (Polish):** Web Speech API voice input lands as a Phase 7 enhancement, Chrome-first with progressive enhancement and graceful fallback to text. Voice is one input _method_ within the web channel, not a separate product surface.
 
 ### Output Format
 
@@ -206,7 +207,7 @@ The full technical architecture — stack choices, data layer, agent loop, atomi
 Quick pointers for product readers:
 
 - **Stack and rationale:** [ARCHITECTURE.md → Stack](ARCHITECTURE.md#stack)
-- **Game data sources (GHS, rulebook RAG):** [ARCHITECTURE.md → Data Architecture](ARCHITECTURE.md#data-architecture)
+- **Game data sources (GHS, semantic book search, scenario/section lookup):** [ARCHITECTURE.md → Data Architecture](ARCHITECTURE.md#data-architecture)
 - **Agent design and atomic tools:** [ARCHITECTURE.md → Agent Architecture](ARCHITECTURE.md#agent-architecture)
 - **MCP server (third channel type):** [ARCHITECTURE.md → MCP Server](ARCHITECTURE.md#mcp-server)
 - **Observability and evals:** [ARCHITECTURE.md → Observability](ARCHITECTURE.md#observability)
@@ -251,7 +252,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 - Any recommendations beyond rules answers
 - Discord, iMessage, or other channels beyond the web UI and MCP
 
-**Deliverable:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. The agent answers using the rulebook RAG pipeline and the GHS atomic tools (`searchRules`, `searchCards`, `listCards`, `getCard`). Hosted publicly behind Cloudflare WAF. Test suite passing.
+**Deliverable:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. The agent answers using semantic book search, deterministic scenario/section traversal (`findScenario`, `getScenario`, `getSection`, `followLinks`), and the GHS card tools (`searchRules`, `searchCards`, `listCards`, `getCard`). Hosted publicly behind Cloudflare WAF. Test suite passing.
 
 ---
 
@@ -263,9 +264,9 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 **Tasks:**
 
-- Ingest the Gloomhaven 2.0 rulebook PDFs into `data/pdfs/` and reindex (`npm run index`)
+- Ingest the Gloomhaven 2.0 rulebook, scenario-book, and section-book PDFs into `data/pdfs/` and reindex / reseed (`npm run index`, `npm run seed:scenario-section-books`)
 - Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven 2nd Edition, so the import path is unblocked.
-- **Turn on the `game` dimension** so the agent doesn't mix Frosthaven and GH2 rules in the same answer. The Storage & Data Migration project (Phase 1) ships the `game` column on every `card_*` table and the `embeddings` table with `default 'frosthaven'`, so existing rows are tagged correctly. The runtime code that *populates* and *filters* on the column is Phase 2 work — none of this exists today. Phase 2 will:
+- **Turn on the `game` dimension** so the agent doesn't mix Frosthaven and GH2 rules in the same answer. The Storage & Data Migration project (Phase 1) ships the `game` column on every `card_*` table and the `embeddings` table with `default 'frosthaven'`, so existing rows are tagged correctly. The runtime code that _populates_ and _filters_ on the column is Phase 2 work — none of this exists today. Phase 2 will:
   - Update the GH2 import scripts to write `game: 'gloomhaven-2'` on each new row (the existing Frosthaven importers don't yet write a `game` field; they rely on the column default)
   - Add filename-prefix → `game` derivation in `src/index-docs.ts` so rule chunks from `fh-*.pdf` get `game: 'frosthaven'` and chunks from `gh2-*.pdf` get `game: 'gloomhaven-2'`. Today `IndexEntry` in `src/vector-store.ts` has no `game` field at all — Phase 2 adds it alongside the index-docs.ts changes.
   - Wire the optional `game` filter parameter on the atomic tools through to the agent system prompt and through every call site that knows the active game
@@ -413,7 +414,7 @@ All channels talk to the same underlying knowledge agent via the same atomic too
 ### Phase 1 (MVP)
 
 - Brian uses Squire at the table during a real Frosthaven session
-- Rules lookup answers are accurate enough that Brian doesn't have to re-check the rulebook
+- Rules and story-book lookup answers are accurate enough that Brian doesn't have to re-check the books by hand
 - Average response time < 5 seconds end-to-end (cold start excluded)
 - Mobile UI is readable and usable on a phone without zooming
 - Uptime > 99% for the hosted service
@@ -434,11 +435,11 @@ Tech risks (browser-extension fragility, build guide fetch reliability, embeddin
 
 ### Product Risks
 
-1. **User adoption.** Frosthaven players might prefer forums and existing guide PDFs. Mitigation: focus on convenience (mobile, fast, no flipping through 100-page rulebooks), personalized context, integration with the campaign tools they already use.
+1. **User adoption.** Frosthaven players might prefer forums and existing guide PDFs. Mitigation: focus on convenience (mobile, fast, no flipping through 100-page rulebooks or chasing section chains by hand), personalized context, integration with the campaign tools they already use.
 
-2. **Rules answer accuracy as a trust risk.** If Squire gives wrong rules interpretations, Brian stops trusting it at the table and the product dies. Mitigation: always cite rulebook source passages so the user can verify, allow user feedback on wrong answers, expand the daily E2E suite. (Underlying RAG quality work tracked in ARCHITECTURE.md.)
+2. **Rules answer accuracy as a trust risk.** If Squire gives wrong rules interpretations, Brian stops trusting it at the table and the product dies. Mitigation: always cite the relevant book passages so the user can verify, allow user feedback on wrong answers, expand the daily E2E suite. (Underlying retrieval quality work tracked in ARCHITECTURE.md.)
 
-3. **Rules edge cases and errata.** Frosthaven has complex interactions and ongoing errata. The agent might give answers that are correct per the rulebook PDF but outdated per official errata. Mitigation: cite sources, allow user feedback, plan for an errata-update workflow eventually.
+3. **Rules edge cases and errata.** Frosthaven has complex interactions and ongoing errata. The agent might give answers that are correct per the printed PDFs but outdated per official errata. Mitigation: cite sources, allow user feedback, plan for an errata-update workflow eventually.
 
 4. **Spoiler concerns.** MVP has no spoiler protection. Users may be concerned about being spoiled on locked classes, scenarios, or events. Mitigation: clear warning on first use; add spoiler protection in Phase 7 (Polish) if user feedback indicates it is valuable.
 
@@ -492,7 +493,7 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
     - **Critical Non-Functional Requirements** — Spoiler Protection kept (deferred), Offline Capability dropped entirely (PWA / IndexedDB / service worker — none of which fit a server-rendered Hono stack), Share & Export reframed as a Phase 7 forward reference.
 
 - **2026-04-07 (v2.0):** Major refresh after the first month of real building.
-  - **Product reframe:** Squire is the agent, not an app. Reachable via multiple channels (web UI today, MCP, future Discord / iMessage). Stopped conflating "personal assistant chatbot" with "*haven game-knowledge agent" — Squire is only the latter.
+  - **Product reframe:** Squire is the agent, not an app. Reachable via multiple channels (web UI today, MCP, future Discord / iMessage). Stopped conflating "personal assistant chatbot" with "\*haven game-knowledge agent" — Squire is only the latter.
   - **MVP redefined:** rules Q&A at the table, on a phone, with Google login behind Cloudflare WAF. Recommendation engine, screenshot extraction, voice, PWA, multi-user — all moved to later phases.
   - **Stack updates:** Hono JSX + HTMX + Tailwind CDN (no React, no Next.js, no build step). Drizzle (no Prisma). pgvector (no Pinecone). Custom Google OAuth (no NextAuth / Clerk). Sonnet 4.6. Local Xenova embeddings (`Xenova/all-MiniLM-L6-v2`) with Voyage AI as the planned upgrade path. Cloudflare WAF as edge layer.
   - **Game data:** Worldhaven and OCR pipeline retired (commit `34a26a1`). Replaced with Gloomhaven Secretariat (GHS) structured data — 10 import scripts in `src/import-*.ts`.
@@ -518,4 +519,4 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
 
 ---
 
-*This spec is refreshed every 1–2 months. Next refresh expected: ~2026-06.*
+_This spec is refreshed every 1–2 months. Next refresh expected: ~2026-06._

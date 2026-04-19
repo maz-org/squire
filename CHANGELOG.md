@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Added (Unreleased)
+
+- Deterministic scenario/section-book research data in Postgres via `scenario_book_scenarios`, `section_book_sections`, and `book_references`
+- Four exact research tools: `find_scenario`, `get_scenario`, `get_section`, and `follow_links`
+
+### Changed (Unreleased)
+
+- `search_rules` now sits alongside exact scenario/section traversal instead of carrying the whole story-book lookup path by itself
+- `npm run seed` now seeds both card data and scenario/section-book data, and `npm run seed:dev` adds the local dev user on top
+
 ## [0.1.2] - 2026-04-09
 
 ### Added

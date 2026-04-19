@@ -57,22 +57,30 @@ login still needs working OAuth credentials. Run `npm run seed:dev` to create a
 test user for authenticated code paths without doing the Google round-trip, but
 note that the browser sign-in UI still follows the real Google OAuth flow.
 
-Extracted card data (`data/extracted/*.json`) is committed to the repo.
-The Frosthaven book vector index lives in Postgres (pgvector) and is populated by
-running `npm run index` against a local docker-compose Postgres — see the
-[Database setup](#database-setup) and [Data management](#data-management)
-sections below.
+The checked-in extracts under `data/extracted/` are committed seed inputs and
+inspection artifacts, not the runtime store. At runtime, Postgres holds three
+separate retrieval layers:
+
+- `embeddings` for semantic book search (`npm run index`)
+- `card_*` tables for GHS card data (`npm run seed:cards`)
+- `scenario_book_scenarios`, `section_book_sections`, and `book_references`
+  for exact scenario/section lookup (`npm run seed:scenario-section-books`)
+
+See [Database setup](#database-setup) and [Data management](#data-management)
+below.
 
 ## Database setup
 
-Squire uses Postgres + pgvector for indexed Frosthaven book embeddings, card data, and
-OAuth state. Local dev runs it via docker-compose:
+Squire uses Postgres + pgvector for indexed Frosthaven book embeddings, card
+data, scenario/section-book data, and OAuth state. Local dev runs it via
+docker-compose:
 
 ```bash
 docker compose up -d      # first run: creates the main-checkout DBs
 npm run db:migrate        # apply Drizzle migrations to the dev DB
 npm run db:migrate:test   # apply Drizzle migrations to the test DB
 npm run index             # populate Frosthaven book embeddings from data/pdfs/
+npm run seed:dev          # seed cards + scenario/section books + dev user
 ```
 
 `db:migrate` and `db:migrate:test` both go through `resolveDatabaseUrl()` in
@@ -141,10 +149,12 @@ The server chooses a checkout-local port in two steps:
 
 Override with `PORT` if you want a specific port. On startup, the server logs
 the final port it selected. It binds the port immediately, then warms the
-retrieval stack in the background. If embeddings or card data are missing,
-startup no longer crashes; `/api/health` returns a coarse lifecycle snapshot
-immediately and query endpoints return `503` JSON errors until `npm run index`
-and/or `npm run seed:cards` has been run. Detailed bootstrap and dependency
+retrieval stack in the background. If embeddings, card data, or
+scenario/section-book data are missing, startup no longer crashes;
+`/api/health` returns a coarse lifecycle snapshot immediately and query
+endpoints return `503` JSON errors until `npm run index` and the relevant
+seed step has been run (`npm run seed`, `npm run seed:cards`, or
+`npm run seed:scenario-section-books`). Detailed bootstrap and dependency
 reasons are logged server-side.
 
 If you need Google sign-in locally, use `PORT=4450` or `PORT=5018`. Those are
@@ -219,15 +229,17 @@ For the full state-machine rationale and endpoint policy table, see
 
 ## MCP server
 
-Squire exposes 5 atomic tools via MCP at `/mcp`:
+Squire exposes 9 atomic tools via MCP at `/mcp`:
 
-| Tool              | Description                                                |
-| ----------------- | ---------------------------------------------------------- |
-| `search_rules`    | Vector search over indexed Frosthaven book passages        |
-| `search_cards`    | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
-| `list_card_types` | List available card categories with counts                 |
-| `list_cards`      | List cards of a type with optional field filter            |
-| `get_card`        | Look up a single card by type and identifier               |
+- `search_rules` — vector search over indexed Frosthaven book passages
+- `find_scenario` — resolve a scenario query like `scenario 61` to matching scenario records
+- `get_scenario` — fetch an exact scenario record by canonical scenario ref
+- `get_section` — fetch an exact section record by section ref like `67.1`
+- `follow_links` — follow explicit scenario/section-book references from a known scenario or section
+- `search_cards` — Postgres FTS over the `card_*` tables, ranked by `ts_rank`
+- `list_card_types` — list available card categories with counts
+- `list_cards` — list cards of a type with optional field filter
+- `get_card` — look up a single card by type and canonical `sourceId`
 
 The MCP endpoint uses Streamable HTTP transport in stateless mode (no
 auth in development). OAuth ships with the User Accounts work tracked
@@ -442,14 +454,18 @@ docker compose up -d
 npm ci
 npm run db:migrate
 npm run index              # populates the embeddings table (~2 min)
-npm run seed:dev           # seeds card_* tables + the local dev user
+npm run seed:dev           # seeds card_* tables, scenario/section-book tables, and the local dev user
 ```
 
 `npm run seed:dev` is a convenience bundle for local development that runs
-`seed:cards` (the prod-relevant step, also aliased as `npm run seed`) and
-then `seed:dev-user` (inserts a single predictable dev user into the
+`npm run seed` (the prod-relevant seed bundle) and then `seed:dev-user`
+(inserts a single predictable dev user into the
 `users` table for testing authenticated paths without the Google OAuth
 round-trip). The dev-user step refuses to run with `NODE_ENV=production`.
+
+`npm run seed` runs both `seed:cards` and `seed:scenario-section-books`, so a
+fresh checkout gets the GHS card tables and the exact scenario/section-book
+tables together.
 
 Fresh linked worktrees need the same bootstrap sequence. The subtle part is
 `SESSION_SECRET`: the server can still boot and serve the anonymous homepage
@@ -458,15 +474,24 @@ authenticated routes and browser QA will break as soon as session cookies or
 CSRF validation enter the path.
 
 `npm run seed:cards` is idempotent — re-run it any time the extracted
-JSON refreshes. It validates each record with the matching `SCHEMAS[type]`
-Zod schema and skips anything that fails (the failures are warned to
-stderr so you can see what got dropped). Records are upserted on
+card JSON refreshes. It validates each record with the matching
+`SCHEMAS[type]` Zod schema and skips anything that fails (the failures are
+warned to stderr so you can see what got dropped). Records are upserted on
 `(game, source_id)`, so a stale card row gets overwritten in place.
 
-As of SQR-56, `extracted-data.ts` reads exclusively from the `card_*`
-tables. The JSON files in `data/extracted/` are only inputs to
-`seed-cards.ts`. There is no flat-file fallback. If Postgres is
-unreachable, the loader throws.
+`npm run seed:scenario-section-books` is also idempotent. It replaces the
+`scenario_book_scenarios`, `section_book_sections`, and `book_references`
+rows for the active game from `data/extracted/scenario-section-books.json`.
+
+As of SQR-56 and SQR-103, runtime reads come from Postgres only:
+
+- `extracted-data.ts` reads the `card_*` tables
+- `scenario-section-data.ts` reads `scenario_book_scenarios`,
+  `section_book_sections`, and `book_references`
+
+The JSON files in `data/extracted/` are seed inputs and inspection artifacts.
+There is no flat-file runtime fallback. If Postgres is unreachable, the
+loaders throw.
 
 ### Refreshing data
 
@@ -516,8 +541,8 @@ auto-updates at the start of each Claude Code session. See the
 
 ```text
 src/
-  tools.ts          # Atomic data access primitives (search, list, get)
-  service.ts        # Service initialization + bundled RAG convenience path
+  tools.ts          # Atomic data access primitives across books, scenarios/sections, and cards
+  service.ts        # Service initialization + model-led /api/ask entry
   server.ts         # Hono HTTP server (REST + MCP transport)
   mcp.ts            # MCP tool registration (Streamable HTTP transport)
   agent.ts          # Knowledge agent loop (Claude Sonnet 4.6 + atomic tools)
@@ -532,23 +557,28 @@ src/
   import-monster-stats.ts
   import-personal-quests.ts
   import-scenarios.ts
+  import-scenario-section-books.ts
   query.ts          # Thin CLI wrapper over service.ts
   embedder.ts       # Local embedding via all-MiniLM-L6-v2
   vector-store.ts   # pgvector cosine similarity search
   extracted-data.ts # Postgres-backed card load + FTS via ts_rank
+  scenario-section-data.ts    # Postgres-backed exact scenario/section lookups + link following
+  scenario-section-schemas.ts # Shared types for scenario/section records and links
   schemas.ts        # Zod schemas for all 10 card types
   db.ts             # Drizzle client + pool factory (server / cli modes)
   db/
-    schema/         # Drizzle schema (core, auth, cards) — barrel in index.ts
+    schema/         # Drizzle schema (core, auth, cards, scenario/section books) — barrel in index.ts
     migrations/     # Numbered SQL migrations (hand-written for FTS generated cols)
   seed/
     seed-cards.ts       # JSON → Zod validation → upsert into card_* tables
+    seed-scenario-section-books.ts # Scenario/section-book extract → Postgres tables
     seed-dev-user.ts    # Idempotent single-row dev user for local auth testing
 ```
 
 ## Changelog
 
-- **2026-04-08:** SQR-36 — local bootstrap flipped to `npm run seed:dev`, which chains `seed:cards` and the new `seed:dev-user` helper. `src/seed/seed-dev-user.ts` upserts a predictable `dev@squire.local` row into `users` via `ON CONFLICT DO NOTHING` (no target, so either `email` or `google_sub` conflicts no-op). CLI wrapper refuses `NODE_ENV=production`. New `seed` alias points at `seed:cards` as the prod-relevant default.
+- **2026-04-19:** SQR-103 documented the scenario/section-book retrieval layer. Local bootstrap now needs both semantic indexing (`npm run index`) and the deterministic book-data seed (`npm run seed`, or `npm run seed:scenario-section-books` by itself). The MCP tool table and project structure now include `find_scenario`, `get_scenario`, `get_section`, `follow_links`, `scenario-section-data.ts`, `import-scenario-section-books.ts`, and the new scenario/section-book tables.
+- **2026-04-08:** SQR-36 — local bootstrap flipped to `npm run seed:dev`, which now runs `npm run seed` and then the new `seed:dev-user` helper. `src/seed/seed-dev-user.ts` upserts a predictable `dev@squire.local` row into `users` via `ON CONFLICT DO NOTHING` (no target, so either `email` or `google_sub` conflicts no-op). CLI wrapper refuses `NODE_ENV=production`. `npm run seed` is now the prod-relevant default.
 - **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated QA needs local dependencies installed plus the full local bootstrap (`npm install`, `docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) and `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
 - **2026-04-08:** SQR-56 — `extracted-data.ts` is Postgres-backed via FTS. The card tables hold the runtime data; `data/extracted/*.json` is now a seed input. The atomic tools became async and gained `opts.game`. `getCard` resolves on canonical `sourceId` (the per-type natural-key map is gone). Removed the "until SQR-56 lands" caveat from the data management section. Updated REST + MCP tables to say "Postgres FTS" instead of "keyword search". Added `src/db/`, `src/seed/` to the project structure tree and corrected the stale "Flat-file vector store" line on `vector-store.ts` (it has been pgvector since SQR-33).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Removed the vestigial in-process MCP client section (the two-agent split uses direct in-process function calls, not internal MCP). Updated project structure to list all 10 `src/import-*.ts` scripts plus `agent.ts` and `index-docs.ts`. Documented `data/pdfs/` as the rulebook PDF location. Replaced "Auth Module epic" references with Linear SQR-37/38/39/40 (User Accounts project). Added forward reference to `ARCHITECTURE.md` for architectural detail.
