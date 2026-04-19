@@ -80,4 +80,10 @@ describe('seedScenarioSectionBooks', () => {
       .where(eq(bookReferences.game, 'frosthaven'));
     expect(after).toHaveLength(before.length);
   });
+
+  it('rejects unsupported game seeds until the extract is game-aware', async () => {
+    await expect(seedScenarioSectionBooks(db, { game: 'gloomhaven-2' })).rejects.toThrow(
+      'seedScenarioSectionBooks currently supports only "frosthaven"',
+    );
+  });
 });

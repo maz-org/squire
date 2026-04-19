@@ -47,6 +47,11 @@ export async function seedScenarioSectionBooks(
   opts: SeedScenarioSectionBooksOptions = {},
 ): Promise<SeedScenarioSectionBooksResult[]> {
   const game = opts.game ?? 'frosthaven';
+  if (game !== 'frosthaven') {
+    throw new Error(
+      `seedScenarioSectionBooks currently supports only "frosthaven"; got ${JSON.stringify(game)}`,
+    );
+  }
   const extract = ScenarioSectionBooksExtractSchema.parse(
     JSON.parse(readFileSync(EXTRACTED_PATH, 'utf-8')),
   );

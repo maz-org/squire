@@ -247,6 +247,10 @@ describe('listCards', () => {
 });
 
 describe('scenario/section book tools', () => {
+  it('findScenario returns no matches for a blank query', async () => {
+    await expect(findScenario('   ')).resolves.toEqual([]);
+  });
+
   it('findScenario resolves an exact scenario-number query', async () => {
     const results: ScenarioResult[] = await findScenario('scenario 61');
     expect(results.length).toBeGreaterThan(0);

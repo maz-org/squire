@@ -100,6 +100,7 @@ export async function findScenarios(
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
   const normalized = query.trim();
+  if (normalized.length === 0) return [];
   const lowered = normalized.toLowerCase();
   const scenarioIndex = extractScenarioIndex(normalized);
   const indexCondition = scenarioIndex ? sql`scenario_index = ${scenarioIndex}` : sql`false`;

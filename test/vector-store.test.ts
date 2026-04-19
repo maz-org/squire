@@ -231,9 +231,11 @@ describe('search', () => {
     ]);
 
     const scenarioHits = await search(axisVector(1), 1);
+    expect(scenarioHits).toHaveLength(1);
     expect(scenarioHits[0].source).toBe('fh-scenario-book-42-61.pdf');
 
     const sectionHits = await search(axisVector(2), 1);
+    expect(sectionHits).toHaveLength(1);
     expect(sectionHits[0].source).toBe('fh-section-book-62-81.pdf');
   });
 });

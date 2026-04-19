@@ -19,5 +19,5 @@ export function formatRetrievalSourceLabel(source: string): string {
   const sectionMatch = basename.match(/-section-book-(.+)$/i);
   if (sectionMatch) return `Section Book ${sectionMatch[1]}`;
 
-  return source;
+  return basename;
 }

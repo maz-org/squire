@@ -749,6 +749,7 @@ describe('POST /api/ask', () => {
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toBe('Service unavailable.');
+    expect(mockAsk).not.toHaveBeenCalled();
   });
 
   it('emits error event when ask() throws', async () => {

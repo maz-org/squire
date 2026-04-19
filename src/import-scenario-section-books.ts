@@ -16,12 +16,13 @@ import { fileURLToPath } from 'node:url';
 
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
-import type {
-  BookReferenceRecord,
-  BookReferenceType,
-  ScenarioBookScenarioRecord,
-  ScenarioSectionBooksExtract,
-  SectionBookSectionRecord,
+import {
+  ScenarioSectionBooksExtractSchema,
+  type BookReferenceRecord,
+  type BookReferenceType,
+  type ScenarioBookScenarioRecord,
+  type ScenarioSectionBooksExtract,
+  type SectionBookSectionRecord,
 } from './scenario-section-schemas.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -1063,12 +1064,12 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
       return true;
     });
 
-    return {
+    return ScenarioSectionBooksExtractSchema.parse({
       scenarios: [...scenariosByRef.values()].sort((a, b) => a.ref.localeCompare(b.ref)),
       sections: [...sectionsByRef.values()].sort((a, b) => a.ref.localeCompare(b.ref)),
       links: validatedLinks,
       warnings,
-    };
+    });
   })();
 }
 

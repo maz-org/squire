@@ -633,11 +633,11 @@ src/
     clients-store.ts            DrizzleClientsStore — OAuthRegisteredClientsStore impl
     audit.ts                    OAuth audit event writer (same txn as mutations)
     hashing.ts                  Token hashing helpers
-    db.ts                         Drizzle client + pool factory (server / cli modes)
-    db/
-      schema/                     Drizzle schema (core, auth, cards, scenario/section books) — barrel in index.ts
-      repositories/               Domain repositories (Session, User) with row-to-domain mapping
-      migrations/                 SQL migration files (numbered, hand-written for FTS)
+  db.ts                         Drizzle client + pool factory (server / cli modes)
+  db/
+    schema/                     Drizzle schema (core, auth, cards, scenario/section books) — barrel in index.ts
+    repositories/               Domain repositories (Session, User) with row-to-domain mapping
+    migrations/                 SQL migration files (numbered, hand-written for FTS)
   embedder.ts                   Local embeddings via Xenova all-MiniLM-L6-v2
   extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
   ghs-utils.ts                  Shared helpers for GHS imports
@@ -646,16 +646,16 @@ src/
   mcp.ts                        MCP tool registration (Streamable HTTP transport)
   query.ts                      CLI wrapper over the knowledge agent
   schemas.ts                    Zod schemas for all GHS card types
-    seed/
-      seed-cards.ts               JSON → Zod-validated upserts into card_* tables
-      seed-scenario-section-books.ts  Scenario/section-book extract → Postgres tables
-      seed-dev-user.ts            Idempotent single-row dev user for local auth testing
-    server.ts                     Hono server (REST + MCP transport + web UI host)
-    service.ts                    Service initialization, readiness, and model-led /api/ask entry
-    tools.ts                      Atomic tools across book search, scenario/section research, and card data
-    scenario-section-data.ts      Postgres-backed exact scenario/section lookups + link following
-    scenario-section-schemas.ts   Zod enums / types for scenario/section records and links
-    vector-store.ts               pgvector cosine similarity search
+  seed/
+    seed-cards.ts               JSON → Zod-validated upserts into card_* tables
+    seed-scenario-section-books.ts  Scenario/section-book extract → Postgres tables
+    seed-dev-user.ts            Idempotent single-row dev user for local auth testing
+  server.ts                     Hono server (REST + MCP transport + web UI host)
+  service.ts                    Service initialization, readiness, and model-led /api/ask entry
+  tools.ts                      Atomic tools across book search, scenario/section research, and card data
+  scenario-section-data.ts      Postgres-backed exact scenario/section lookups + link following
+  scenario-section-schemas.ts   Zod enums / types for scenario/section records and links
+  vector-store.ts               pgvector cosine similarity search
   web-ui/
     layout.ts                   Session-aware layout shell (5 mobile regions + desktop rail)
     auth-error-page.ts          Auth error page renderer (design system, retry + home links)
@@ -672,10 +672,10 @@ src/
   import-events.ts              GHS importer
   import-items.ts               GHS importer
   import-monster-abilities.ts   GHS importer
-    import-monster-stats.ts       GHS importer
-    import-personal-quests.ts     GHS importer
-    import-scenarios.ts           GHS importer
-    import-scenario-section-books.ts   Printed scenario/section book importer
+  import-monster-stats.ts       GHS importer
+  import-personal-quests.ts     GHS importer
+  import-scenarios.ts           GHS importer
+  import-scenario-section-books.ts   Printed scenario/section book importer
 
   data/
     pdfs/                         Source rulebook + scenario / section PDFs (input to indexing)
