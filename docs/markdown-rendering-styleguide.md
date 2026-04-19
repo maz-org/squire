@@ -86,10 +86,13 @@ recent-questions rail, consulted footer, input dock, or drop cap treatment.
   but retain the richer tap-toggle behavior from the ledger answer design.
 - Blockquote emphasis: quoted passages should wrap and read like quotations,
   not inherit the amber small-caps rule-term highlighter.
-- First paragraph: stays eligible for the Fraunces wax-red drop cap only when
-  a `.squire-answer .squire-markdown` surface itself starts with a paragraph,
-  and that paragraph does not start with strong, emphasis, code, or link
-  content.
+- First paragraph: the first top-level `<p>` inside a
+  `.squire-answer .squire-markdown` surface is eligible for the Fraunces
+  wax-red drop cap, whether or not the answer opens with a preceding heading,
+  list, or blockquote block. The drop cap is suppressed when that paragraph
+  starts with strong, emphasis, code, or link content. A `<p>` nested inside a
+  blockquote or list item is never drop-capped — the `>` direct-child selector
+  keeps the treatment pinned to the top of the answer surface.
 - Tool status rows: not markdown. They live outside
   `.squire-answer__content` as transient streaming chrome.
 

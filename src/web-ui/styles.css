@@ -1353,10 +1353,18 @@ template#squire-banner-fixtures {
  * fall back to `<span aria-hidden="true">S</span>ometimes` with the full
  * word still present in the flow — never a wrapping span that breaks the
  * word in the DOM. See SQR-66 ticket, plan-eng-review 2026-04-08.
+ *
+ * Use `:first-of-type` (not `:first-child`) so the first top-level <p>
+ * still receives the drop cap when the answer opens with a <h2>, <ul>,
+ * <ol>, or <blockquote> that precedes it — a common LLM shape that
+ * previously degraded completed/persisted answers to plain paragraphs
+ * (SQR-100). The `>` combinator keeps the target pinned to a direct child
+ * of `.squire-markdown`, so a <p> nested inside a <blockquote> or list
+ * item is never drop-capped.
  */
 .squire-answer
   .squire-markdown
-  > p:first-child:not(
+  > p:first-of-type:not(
     :has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)
   )::first-letter {
   font-family: 'Fraunces', 'Georgia', serif;

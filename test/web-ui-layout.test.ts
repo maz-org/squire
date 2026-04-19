@@ -636,6 +636,57 @@ describe('selected-message rendering helpers', () => {
     expect(body).toContain('<em>emphasis</em>');
   });
 
+  // SQR-100: when a completed/persisted answer opens with a heading (or a
+  // list/blockquote) before its first paragraph, the first top-level <p>
+  // must still be the drop-cap target. Earlier the stylesheet pinned the
+  // drop cap to `> p:first-child`, so any non-<p> lead element pushed the
+  // paragraph out of first-child position and the answer rendered as a
+  // plain fallback text block. The DOM contract asserted here (heading
+  // rendered as a sibling <h2>, first top-level <p> intact, both direct
+  // children of `.squire-markdown`) is what the `> p:first-of-type` drop
+  // cap selector now targets — keep these two in sync.
+  it.each([
+    [
+      'heading',
+      '## Short answer\n\nYes, you can rest on the same round.',
+      '<h2>Short answer</h2>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+    [
+      'unordered list',
+      '- Item one\n- Item two\n\nYes, you can rest on the same round.',
+      '<ul>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+    [
+      'blockquote',
+      '> Quoted rule text.\n\nYes, you can rest on the same round.',
+      '<blockquote>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+  ])(
+    'preserves the top-level first paragraph drop-cap target when the answer opens with a %s',
+    (_label, content, leadElement, paragraph) => {
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: messages[4],
+          selectedAnswer: { ...messages[5], content },
+          isEarlierQuestion: false,
+        }),
+      );
+
+      const contentStart = body.indexOf('squire-answer__content squire-markdown">');
+      expect(contentStart).not.toBe(-1);
+      const contentSlice = body.slice(contentStart);
+      expect(contentSlice).toContain(leadElement);
+      expect(contentSlice).toContain(paragraph);
+      // Lead element precedes the follow-up paragraph, so `> p:first-child`
+      // would not match it. The fixed `> p:first-of-type` still pins the
+      // drop cap to the first top-level <p>.
+      expect(contentSlice.indexOf(leadElement)).toBeLessThan(contentSlice.indexOf(paragraph));
+    },
+  );
+
   it('omits the EARLIER QUESTION cue when rendering the newest question', () => {
     const body = String(
       actualLayout.renderSelectedMessageSurface({
@@ -933,7 +984,13 @@ describe('styles.css — SQR-66 signature component rules', () => {
   });
 
   it('declares a guarded q&a-only first-paragraph drop cap in Fraunces', () => {
-    expect(css).toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-child:not\(/);
+    // SQR-100: use `:first-of-type` (not `:first-child`) so the first top-level
+    // <p> still receives the drop cap when the answer opens with a heading,
+    // list, or blockquote — the previous `:first-child` variant suppressed the
+    // drop cap on completed/persisted answers whose markdown opened with any
+    // non-<p> block element, leaving them as plain fallback text blocks.
+    expect(css).toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-of-type:not\(/);
+    expect(css).not.toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-child:not\(/);
     expect(css).toContain(
       ':has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)',
     );
