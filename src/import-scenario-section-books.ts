@@ -38,7 +38,6 @@ const BOOK_RANGE_RE = /^fh-(scenario|section)-book-(\d+)-(\d+)\.pdf$/;
 const SINGLE_MARKER_RE = /^[A-Z#]$/;
 const SCENARIO_GOALS_HEADING_RE = /^Scenario Goals$/i;
 const SCENARIO_SECTION_LINKS_HEADING_RE = /^Section Links$/i;
-const MAIN_SECTION_BODY_HEADING_RE = /^(Conclusion|Introduction|Goal)$/i;
 const DANGLING_SECTION_END_WORDS = new Set([
   'a',
   'an',
@@ -78,11 +77,15 @@ interface PdfItem {
   text: string;
   x: number;
   y: number;
+  fontName: string;
+  height: number;
 }
 
 interface PdfParseTextItem {
   str: string;
   transform: number[];
+  fontName: string;
+  height: number;
 }
 
 interface PdfParseTextContent {
@@ -107,6 +110,8 @@ interface PdfLine {
   x: number;
   xEnd: number;
   y: number;
+  maxHeight: number;
+  fontNames: string[];
 }
 
 interface SectionEntry {
@@ -172,6 +177,8 @@ async function extractPdfPages(pdfName: string): Promise<PdfPage[]> {
           text: item.str as string,
           x: Math.round(item.transform[4]),
           y: Math.round(item.transform[5]),
+          fontName: item.fontName,
+          height: Math.round(item.height),
         }))
         .filter((item) => item.text.trim().length > 0);
       return `${PAGE_SENTINEL}${JSON.stringify({ pageIndex: pageData.pageIndex, items })}`;
@@ -217,7 +224,7 @@ function buildLines(items: PdfItem[]): PdfLine[] {
           continue;
         }
         const previous = current.at(-1)!;
-        if (item.x - previous.x > 120) {
+        if (item.x - previous.x > 90) {
           segments.push([item]);
           continue;
         }
@@ -229,6 +236,8 @@ function buildLines(items: PdfItem[]): PdfLine[] {
         xEnd: segment.at(-1)!.x,
         y: line.y,
         text: normalizeInlineText(segment.map((item) => item.text).join('')),
+        maxHeight: Math.max(...segment.map((item) => item.height)),
+        fontNames: [...new Set(segment.map((item) => item.fontName))],
       }));
     })
     .filter((line) => line.text.length > 0);
@@ -241,6 +250,8 @@ function normalizeBlockText(lines: PdfLine[]): string {
     .replace(/([A-Za-z])-\n([A-Za-z])/g, '$1$2')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/([A-Za-z])\n([a-z])/g, '$1 $2')
+    .replace(/([A-Za-z])\n(\d+\s+(?:is|has|are|was|were|to|of|on|at|in))/gi, '$1 $2')
+    .replace(/\n(\d+\s+(?:is|has|are|was|were|to|of|on|at|in))\n/gi, ' $1 ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -250,6 +261,8 @@ function normalizeRawBlockText(text: string): string {
     .replace(/([A-Za-z])-\n([A-Za-z])/g, '$1$2')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/([A-Za-z])\n([a-z])/g, '$1 $2')
+    .replace(/([A-Za-z])\n(\d+\s+(?:is|has|are|was|were|to|of|on|at|in))/gi, '$1 $2')
+    .replace(/\n(\d+\s+(?:is|has|are|was|were|to|of|on|at|in))\n/gi, ' $1 ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -395,26 +408,42 @@ function parseScenarioSectionLinks(
 function parseScenarioUnlockLinks(
   fromRef: string,
   text: string,
-  mainScenariosByIndex: Map<string, SourceScenarioRecord>,
 ): Array<Omit<BookReferenceRecord, 'sequence'>> {
-  const flat = text.replace(/\s+/g, ' ').trim();
   const links: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
 
-  for (const match of flat.matchAll(/New Scenario:\s*(.+?)\s+(\d{1,3})\b/g)) {
-    const target = mainScenariosByIndex.get(match[2]);
-    if (!target) {
-      throw new Error(
-        `Scenario/section book import could not resolve scenario ${match[2]} from scenario text`,
-      );
+  const lines = text
+    .split('\n')
+    .map((line) => normalizeInlineText(line))
+    .filter(Boolean);
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const match = line.match(/^New Scenario:\s*(.*)$/i);
+    if (!match) continue;
+
+    const consumedLines = [line];
+    let candidate = match[1]?.trim() ?? '';
+
+    for (let lookahead = index + 1; lookahead < Math.min(lines.length, index + 3); lookahead += 1) {
+      if (/\b\d{1,3}$/.test(candidate)) break;
+      if (HEADING_RE.test(lines[lookahead])) break;
+      consumedLines.push(lines[lookahead]);
+      candidate = [candidate, lines[lookahead]].filter(Boolean).join(' ').trim();
     }
+
+    const scenarioMatch = candidate.match(/^(.*?)(\d{1,3})$/);
+    if (!scenarioMatch) continue;
+    const rawLabel = scenarioMatch[1].trim();
+    if (!rawLabel) continue;
+
     links.push({
       fromKind: 'section',
       fromRef,
       toKind: 'scenario',
-      toRef: target.sourceId,
+      toRef: String(Number(scenarioMatch[2])),
       linkType: 'unlock',
-      rawLabel: match[1].trim(),
-      rawContext: match[0].trim(),
+      rawLabel,
+      rawContext: consumedLines.join(' '),
     });
   }
 
@@ -426,18 +455,6 @@ function parseSectionEntries(lines: PdfLine[]): SectionEntry[] {
   for (const line of lines) {
     const match = line.text.match(SECTION_LINK_RE);
     if (!match) continue;
-    const nearestHeadingAbove = lines
-      .filter(
-        (candidate) =>
-          candidate.y > line.y &&
-          candidate.x >= line.x - 40 &&
-          candidate.x <= line.x + 80 &&
-          HEADING_RE.test(candidate.text),
-      )
-      .sort((a, b) => a.y - b.y)[0];
-    if (nearestHeadingAbove && nearestHeadingAbove.text === 'Section Links') {
-      continue;
-    }
     entries.push({
       ref: match[1].replace(/\s+/g, ''),
       label: normalizeInlineText(match[2]),
@@ -449,10 +466,6 @@ function parseSectionEntries(lines: PdfLine[]): SectionEntry[] {
     });
   }
   return entries;
-}
-
-function horizontalCenter(entry: { x: number; xEnd: number }): number {
-  return (entry.x + entry.xEnd) / 2;
 }
 
 function groupSectionEntriesIntoRows(entries: SectionEntry[]): SectionEntryRow[] {
@@ -481,7 +494,7 @@ function groupLinesIntoColumns(lines: PdfLine[]): PdfLine[][] {
 
   for (const line of sorted) {
     const current = columns.at(-1);
-    if (!current || line.x - current.anchorX > 110) {
+    if (!current || line.x - current.anchorX > 115) {
       columns.push({ anchorX: line.x, lines: [line] });
       continue;
     }
@@ -495,50 +508,87 @@ function groupLinesIntoColumns(lines: PdfLine[]): PdfLine[][] {
   return columns.map((column) => column.lines.sort((a, b) => b.y - a.y || a.x - b.x));
 }
 
-function extractSectionBody(lines: PdfLine[]): { text: string; columnCount: number } {
+function clusterLinesIntoColumns(lines: PdfLine[]): Array<{ anchorX: number; lines: PdfLine[] }> {
+  const sorted = [...lines].sort((a, b) => a.x - b.x || b.y - a.y);
+  const columns: Array<{ anchorX: number; lines: PdfLine[] }> = [];
+
+  for (const line of sorted) {
+    const current = columns.at(-1);
+    if (!current || line.x - current.anchorX > 115) {
+      columns.push({ anchorX: line.x, lines: [line] });
+      continue;
+    }
+
+    current.lines.push(line);
+    current.anchorX = Math.round(
+      current.lines.reduce((sum, candidate) => sum + candidate.x, 0) / current.lines.length,
+    );
+  }
+
+  return columns.map((column) => ({
+    anchorX: column.anchorX,
+    lines: column.lines.sort((a, b) => b.y - a.y || a.x - b.x),
+  }));
+}
+
+function findEntryIndexForX(entries: SectionEntry[], x: number): number {
+  for (let index = 0; index < entries.length - 1; index += 1) {
+    const nextEntry = entries[index + 1];
+    if (x < (entries[index].x + nextEntry.x) / 2) {
+      return index;
+    }
+  }
+
+  return entries.length - 1;
+}
+
+function isArtifactLine(line: PdfLine): boolean {
+  const normalized = line.text.replace(/\s+/g, ' ').trim();
+  if (normalized.length === 0) return true;
+  if (/^\d{1,2}$/.test(normalized)) return true;
+  if (/^\d+\.$/.test(normalized)) return true;
+  if (SINGLE_MARKER_RE.test(normalized)) return true;
+  if (/^[A-Z0-9#@$]{1,4}$/.test(normalized)) return true;
+  return false;
+}
+
+function shouldKeepTextLine(columnLines: PdfLine[], lineIndex: number): boolean {
+  const line = columnLines[lineIndex];
+  if (!isArtifactLine(line)) return true;
+
+  const normalized = line.text.replace(/\s+/g, ' ').trim();
+  if (!/^\d{1,3}$/.test(normalized)) return false;
+
+  const previous = columnLines[lineIndex - 1] ?? null;
+  const next = columnLines[lineIndex + 1] ?? null;
+  const previousSharesRow = previous !== null && Math.abs(previous.y - line.y) <= 3;
+  const nextSharesRow = next !== null && Math.abs(next.y - line.y) <= 3;
+  const previousHasWords = previous !== null && /[A-Za-z]/.test(previous.text);
+  const nextHasWords = next !== null && /[A-Za-z]/.test(next.text);
+
+  return (previousSharesRow && previousHasWords) || (nextSharesRow && nextHasWords);
+}
+
+function extractSectionText(lines: PdfLine[]): {
+  text: string;
+  columnCount: number;
+  mapOnly: boolean;
+} {
   const columnTexts = groupLinesIntoColumns(lines)
     .map((columnLines) => {
-      const bodyLines: PdfLine[] = [];
-      let allowedLeadHeadingSeen = false;
-
-      for (const line of columnLines) {
-        if (HEADING_RE.test(line.text)) {
-          if (!allowedLeadHeadingSeen && MAIN_SECTION_BODY_HEADING_RE.test(line.text)) {
-            allowedLeadHeadingSeen = true;
-            continue;
-          }
-          break;
-        }
-        bodyLines.push(line);
-      }
-
-      if (bodyLines.length === 0) return null;
-      return normalizeBlockText(bodyLines);
+      const textLines = columnLines.filter((_, lineIndex) =>
+        shouldKeepTextLine(columnLines, lineIndex),
+      );
+      if (textLines.length === 0) return null;
+      return normalizeBlockText(textLines);
     })
     .filter((text): text is string => Boolean(text));
 
   return {
     text: normalizeRawBlockText(columnTexts.join('\n\n')),
     columnCount: columnTexts.length,
+    mapOnly: columnTexts.length === 0,
   };
-}
-
-function extractSectionBoxText(lines: PdfLine[], headingPattern: RegExp): string | null {
-  for (const columnLines of groupLinesIntoColumns(lines)) {
-    const headingIndex = columnLines.findIndex((line) => headingPattern.test(line.text));
-    if (headingIndex === -1) continue;
-
-    const boxLines: PdfLine[] = [];
-    for (const line of columnLines.slice(headingIndex + 1)) {
-      if (HEADING_RE.test(line.text)) break;
-      boxLines.push(line);
-    }
-
-    const text = normalizeBlockText(boxLines);
-    if (text.length > 0) return text;
-  }
-
-  return null;
 }
 
 function buildSectionsFromPage(
@@ -551,6 +601,9 @@ function buildSectionsFromPage(
   instructionLinks: Array<Omit<BookReferenceRecord, 'sequence'>>;
 } {
   const lines = buildLines(items).filter((line) => line.y > 40 && !FOOTER_RE.test(line.text));
+  const contentLines = buildLines(items.filter((item) => item.height <= 150)).filter(
+    (line) => line.y > 40 && !FOOTER_RE.test(line.text),
+  );
   const entries = parseSectionEntries(lines);
   if (entries.length === 0) return { sections: [], entryLinks: [], instructionLinks: [] };
 
@@ -565,33 +618,66 @@ function buildSectionsFromPage(
   // split horizontally within that row by entry position.
   const rows = groupSectionEntriesIntoRows(entries);
   for (const [rowIndex, row] of rows.entries()) {
+    const previousRow = rows[rowIndex - 1] ?? null;
     const nextRow = rows[rowIndex + 1] ?? null;
     const rowEntries = [...row.entries].sort((a, b) => a.x - b.x);
-    const rowLines = lines.filter((line) => {
+    const rowContentLines = contentLines.filter((line) => {
       if (line.y >= row.anchorY - 8) return false;
       if (nextRow && line.y <= nextRow.anchorY + 8) return false;
       return true;
     });
+    const seedColumns = clusterLinesIntoColumns(
+      rowContentLines.filter((line) => !isArtifactLine(line) && line.y > row.anchorY - 140),
+    );
+    const seedAnchorsByEntry = rowEntries.map(() => [] as number[]);
+    for (const column of seedColumns) {
+      seedAnchorsByEntry[findEntryIndexForX(rowEntries, column.anchorX)].push(column.anchorX);
+    }
+    const boundaries = rowEntries.slice(0, -1).map((entry, entryIndex) => {
+      const leftAnchors = seedAnchorsByEntry[entryIndex];
+      const rightAnchors = seedAnchorsByEntry[entryIndex + 1];
+      const leftAnchor =
+        leftAnchors.length > 0 ? Math.max(...leftAnchors) : rowEntries[entryIndex].x;
+      const rightAnchor =
+        rightAnchors.length > 0 ? Math.min(...rightAnchors) : rowEntries[entryIndex + 1].x;
+      return (leftAnchor + rightAnchor) / 2;
+    });
 
     for (const [entryIndex, entry] of rowEntries.entries()) {
-      const previousEntry = rowEntries[entryIndex - 1] ?? null;
-      const nextEntry = rowEntries[entryIndex + 1] ?? null;
-      const leftBoundary = previousEntry
-        ? (horizontalCenter(previousEntry) + horizontalCenter(entry)) / 2
-        : Number.NEGATIVE_INFINITY;
-      const rightBoundary = nextEntry
-        ? (horizontalCenter(entry) + horizontalCenter(nextEntry)) / 2
-        : Number.POSITIVE_INFINITY;
+      let leftBoundary = boundaries[entryIndex - 1] ?? Number.NEGATIVE_INFINITY;
+      let rightBoundary = boundaries[entryIndex] ?? Number.POSITIVE_INFINITY;
 
-      const sectionBandLines = rowLines.filter((line) => {
-        if (line.text === entry.rawText) return false;
-        const lineCenter = horizontalCenter(line);
-        return lineCenter > leftBoundary && lineCenter <= rightBoundary;
+      if (rowEntries.length === 1 && previousRow) {
+        const previousEntries = [...previousRow.entries].sort((a, b) => a.x - b.x);
+        const nearestLeft = [...previousEntries]
+          .reverse()
+          .find((candidate) => candidate.x < entry.x);
+        const nearestRight = previousEntries.find((candidate) => candidate.x > entry.x);
+
+        if (nearestLeft) {
+          leftBoundary = Math.max(leftBoundary, (nearestLeft.x + entry.x) / 2);
+        }
+        if (nearestRight) {
+          rightBoundary = Math.min(rightBoundary, (entry.x + nearestRight.x) / 2);
+        }
+      }
+
+      const sectionBandContentLines = rowContentLines.filter((line) => {
+        if (line.x > leftBoundary && line.x <= rightBoundary) return true;
+        const normalized = line.text.replace(/\s+/g, ' ').trim();
+        if (!/^(?:\d{1,3}|[A-Z]\.)$/.test(normalized)) return false;
+        if (line.x <= rightBoundary || line.x > rightBoundary + 60) return false;
+
+        return rowContentLines.some(
+          (candidate) =>
+            candidate.y === line.y &&
+            candidate.x > leftBoundary &&
+            candidate.x <= rightBoundary &&
+            !isArtifactLine(candidate),
+        );
       });
 
-      const { text: bodyText, columnCount } = extractSectionBody(sectionBandLines);
-      if (!bodyText) continue;
-      const sectionLinksText = extractSectionBoxText(sectionBandLines, /^Section Links$/i);
+      const { text: bodyText, columnCount, mapOnly } = extractSectionText(sectionBandContentLines);
 
       const [sectionNumber, sectionVariant] = entry.ref.split('.').map(Number);
       sections.push({
@@ -603,11 +689,10 @@ function buildSectionsFromPage(
         text: bodyText,
         metadata: {
           columns: columnCount,
+          label: entry.label,
+          mapOnly,
         },
       });
-      if (sectionLinksText) {
-        instructionLinks.push(...parseInstructionLinks('section', entry.ref, sectionLinksText));
-      }
 
       if (entry.targetScenarioIndex) {
         entryLinks.push({
@@ -934,7 +1019,10 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
           addSequencedLinks(links, parseInstructionLinks('section', section.ref, section.text));
           addSequencedLinks(
             links,
-            parseScenarioUnlockLinks(section.ref, section.text, mainScenariosByIndex),
+            parseScenarioUnlockLinks(section.ref, section.text).map((link) => ({
+              ...link,
+              toRef: ensureScenarioRecord(link.toRef, link.rawLabel).ref,
+            })),
           );
         }
         addSequencedLinks(links, instructionLinks);

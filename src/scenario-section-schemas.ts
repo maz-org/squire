@@ -47,7 +47,7 @@ export const SectionBookSectionRecordSchema = z.object({
   sectionVariant: z.number().int(),
   sourcePdf: z.string(),
   sourcePage: z.number().int(),
-  text: z.string().min(1),
+  text: z.string(),
   metadata: z.record(z.string(), z.unknown()),
 });
 

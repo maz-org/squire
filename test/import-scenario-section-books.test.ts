@@ -62,11 +62,33 @@ describe('importScenarioSectionBooks', () => {
     expect(link).toBeDefined();
   });
 
-  it('does not let a repaired section absorb later section prose', () => {
+  it('restores real section entries that sit below section-link boxes', () => {
+    expect(extract.sections.find((record) => record.ref === '33.3')).toBeDefined();
+    expect(extract.sections.find((record) => record.ref === '33.4')).toBeDefined();
+    expect(extract.sections.find((record) => record.ref === '94.3')).toBeDefined();
+    expect(extract.sections.find((record) => record.ref === '136.4')).toBeDefined();
+  });
+
+  it('keeps reward unlock numbers with the owning section text and links', () => {
+    const section = extract.sections.find((record) => record.ref === '21.3');
+    const unlock = extract.links.find(
+      (record) => record.fromRef === '21.3' && record.linkType === 'unlock',
+    );
+
+    expect(section).toBeDefined();
+    expect(section!.text).toContain('New Scenario:');
+    expect(section!.text).toContain('Uniting the Crown');
+    expect(section!.text).toContain('60');
+    expect(unlock).toBeDefined();
+    expect(unlock!.toRef).toBe('gloomhavensecretariat:scenario/060');
+  });
+
+  it('does not let later section prose overwrite 66.3 while keeping its own links', () => {
     const section = extract.sections.find((record) => record.ref === '66.3');
     expect(section).toBeDefined();
     expect(section!.text).not.toContain('Your ears fill with the sound of your own breathing');
     expect(section!.text).not.toContain('Add section 140.3');
-    expect(section!.text).not.toContain('Section Links');
+    expect(section!.text).toContain('Section Links');
+    expect(section!.text).toContain('The Harbinger of Shadow 1 is now active.');
   });
 });

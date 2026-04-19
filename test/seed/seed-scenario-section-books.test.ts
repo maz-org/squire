@@ -46,6 +46,7 @@ describe('seedScenarioSectionBooks', () => {
 
   it('seeds row counts that match the scenario/section book extract', async () => {
     const extract = readScenarioSectionBooksExtract();
+    await seedScenarioSectionBooks(db);
     const scenarios = await db
       .select({ id: scenarioBookScenarios.id })
       .from(scenarioBookScenarios)
@@ -65,6 +66,7 @@ describe('seedScenarioSectionBooks', () => {
   });
 
   it('is idempotent when re-run against the same extract', async () => {
+    await seedScenarioSectionBooks(db);
     const before = await db
       .select({ id: bookReferences.id })
       .from(bookReferences)
