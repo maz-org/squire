@@ -231,7 +231,11 @@ SCEN 14` once Phase 4 character state lands. Always visible. One line,
 5. **Input dock (bottom)** — slim rounded-rectangle input field in `--surface`
    with italic placeholder "Ask the Squire…" in Geist (italic is OK for
    placeholder ephemera; not OK for brand moments). A 44×44 square submit
-   button in `--wax` with a cream arrow glyph. Input is always reachable — we
+   button in `--wax` rendered as the Squire seal — the same monogram "S"
+   (Fraunces 700, `opsz 144 SOFT 80`, cream glyph filling ~85% of the
+   square) as the header mark, scaled to the tap target so the ask
+   affordance reads as a signature interaction rather than a generic
+   button. Input is always reachable — we
    do NOT collapse it after submit. (Earlier "oracle" proposal had the input
    collapse; rejected because the companion posture needs the attendant
    always reachable.)
@@ -523,6 +527,7 @@ attribute on `<html>`. That's the extent of the per-game theming.
 | 2026-04-08 | **`.squire-banner` is a reusable primitive** with `--spoiler` (amber), `--error` (#8b2919), `--sync` (sage) modifiers                                                                                                                                                                                                          | Spoiler banner, error banners (recoverable + non-recoverable), and Phase 6 sync banner all share one CSS component with different accent colors. SQR-67 ships the primitive; SQR-6 / SQR-8 / SQR-13 / SQR-65 reuse it. From plan-design-review Pass 2.                                                                                                                                                                                           |
 | 2026-04-08 | **A11y bundle for SQR-5**: `aria-live="polite"` on `main.squire-surface`, `aria-live="off"` on `footer.squire-toolcall`, skip-link to input dock, `:focus-visible` 2px wax outline, `prefers-reduced-motion` disables pulse/transitions, `env(safe-area-inset-bottom)` on input dock, contrast ratio doc comment in styles.css | Phase 1 ships with WCAG-AA-passing dark-mode contrast, keyboard-navigable, screen-reader-friendly streaming, and iOS home-indicator-aware input dock. From plan-design-review Pass 6.                                                                                                                                                                                                                                                            |
 | 2026-04-08 | **Dark mode is unconditional in Phase 1.** `prefers-color-scheme` is NOT honored. Light mode tokens exist via `[data-theme="light"]` for the Phase 7 user toggle                                                                                                                                                               | Per SPEC's phone-at-the-table primary surface and DESIGN.md §Color "Dark mode is the default." A user-controlled toggle in Phase 7 is the right path; auto-flipping in Phase 1 would surprise users in dim rooms. From plan-design-review Pass 6.                                                                                                                                                                                                |
+| 2026-04-18 | **Submit button is the Squire seal** — same wax-seal monogram "S" (Fraunces 700, `opsz 144 SOFT 80`) as the header mark, scaled to the 44×44 tap target. Rejected plain `Ask` text and the earlier arrow-glyph variant.                                                                                                        | The ask affordance is the single most-used control; making it the brand mark (not a generic arrow or fallback text) turns the primary interaction into a signature moment and keeps the monogram the only thing saying "Squire" at every surface. Text `Ask` read as a generic fallback; a lone arrow read as a developer placeholder. From SQR-99.                                                                                              |
 
 <!-- markdownlint-enable MD060 -->
 
