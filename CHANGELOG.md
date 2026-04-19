@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3] - 2026-04-19
+
+### Fixed
+
+- Drop cap (Fraunces wax-red `::first-letter`) now renders on completed and persisted answers that open with a heading, unordered list, ordered list, or blockquote before their first paragraph. The previous `p:first-child` selector suppressed the drop cap whenever a non-`<p>` block appeared first — a common LLM response shape. The selector is now `p:first-of-type`, which targets the first top-level paragraph regardless of preceding sibling elements. Regression tests cover heading, list, and blockquote leads.
+
 ## [0.1.2] - 2026-04-09
 
 ### Added
