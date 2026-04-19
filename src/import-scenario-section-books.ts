@@ -38,6 +38,24 @@ const BOOK_RANGE_RE = /^fh-(scenario|section)-book-(\d+)-(\d+)\.pdf$/;
 const SINGLE_MARKER_RE = /^[A-Z#]$/;
 const SCENARIO_GOALS_HEADING_RE = /^Scenario Goals$/i;
 const SCENARIO_SECTION_LINKS_HEADING_RE = /^Section Links$/i;
+const MAIN_SECTION_BODY_HEADING_RE = /^(Conclusion|Introduction|Goal)$/i;
+const DANGLING_SECTION_END_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'at',
+  'for',
+  'from',
+  'in',
+  'into',
+  'of',
+  'on',
+  'or',
+  'the',
+  'to',
+  'with',
+  'within',
+]);
 
 interface SourceScenarioRecord {
   scenarioGroup: 'main' | 'solo' | 'random';
@@ -110,6 +128,11 @@ interface BookRange {
 interface SectionMatchPosition {
   ref: string;
   index: number;
+}
+
+interface SectionEntryRow {
+  anchorY: number;
+  entries: SectionEntry[];
 }
 
 function parseBookRange(pdfName: string): BookRange {
@@ -235,6 +258,10 @@ function scenarioPageText(lines: PdfLine[]): string {
   return normalizeBlockText(lines);
 }
 
+function normalizeSectionRef(ref: string): string {
+  return ref.replace(/\s+/g, '');
+}
+
 function parseScenarioPageIndex(items: PdfItem[]): string | null {
   const candidates = items
     .filter((item) => item.y > 740)
@@ -297,11 +324,11 @@ function parseInstructionLinks(
     });
   };
 
-  for (const match of flat.matchAll(/return to\s+(\d+\.\d+)/gi)) {
-    addLink(match.index ?? 0, match[1], 'cross_reference');
+  for (const match of flat.matchAll(/return to\s+(\d+\s*\.\s*\d+)/gi)) {
+    addLink(match.index ?? 0, normalizeSectionRef(match[1]), 'cross_reference');
   }
 
-  for (const match of flat.matchAll(/read\s+(\d+\.\d+)/gi)) {
+  for (const match of flat.matchAll(/read\s+(\d+\s*\.\s*\d+)/gi)) {
     const contextStart = Math.max(0, (match.index ?? 0) - 80);
     const context = flat.slice(contextStart, (match.index ?? 0) + 120);
     const linkType = /scenario is complete|the scenario is complete|at the end of that round/i.test(
@@ -309,7 +336,7 @@ function parseInstructionLinks(
     )
       ? 'conclusion'
       : 'read_now';
-    addLink(match.index ?? 0, match[1], linkType);
+    addLink(match.index ?? 0, normalizeSectionRef(match[1]), linkType);
   }
 
   return links;
@@ -322,14 +349,14 @@ function parseScenarioGoalLinks(
   const flat = text.replace(/\s+/g, ' ').trim();
   const links: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
 
-  for (const match of flat.matchAll(/read\s+(\d+\.\d+)/gi)) {
+  for (const match of flat.matchAll(/read\s+(\d+\s*\.\s*\d+)/gi)) {
     const start = Math.max(0, (match.index ?? 0) - 80);
     const rawContext = flat.slice(start, Math.min(flat.length, (match.index ?? 0) + 120)).trim();
     links.push({
       fromKind: 'scenario',
       fromRef,
       toKind: 'section',
-      toRef: match[1],
+      toRef: normalizeSectionRef(match[1]),
       linkType: 'conclusion',
       rawLabel: null,
       rawContext,
@@ -349,13 +376,13 @@ function parseScenarioSectionLinks(
     .split('\n')
     .map((entry) => entry.trim())
     .filter(Boolean)) {
-    const match = line.match(/read\s+(\d+\.\d+)/i);
+    const match = line.match(/read\s+(\d+\s*\.\s*\d+)/i);
     if (!match) continue;
     links.push({
       fromKind: 'scenario',
       fromRef,
       toKind: 'section',
-      toRef: match[1],
+      toRef: normalizeSectionRef(match[1]),
       linkType: 'read_now',
       rawLabel: null,
       rawContext: line,
@@ -416,14 +443,90 @@ function horizontalCenter(entry: { x: number; xEnd: number }): number {
   return (entry.x + entry.xEnd) / 2;
 }
 
-function quadrantFor(
-  entry: { x: number; xEnd: number; y: number },
-  xThreshold: number,
-  yThreshold: number,
-): string {
-  const row = entry.y > yThreshold ? 'top' : 'bottom';
-  const col = horizontalCenter(entry) < xThreshold ? 'left' : 'right';
-  return `${row}-${col}`;
+function groupSectionEntriesIntoRows(entries: SectionEntry[]): SectionEntryRow[] {
+  const sorted = [...entries].sort((a, b) => b.y - a.y || a.x - b.x);
+  const rows: SectionEntryRow[] = [];
+
+  for (const entry of sorted) {
+    const current = rows.at(-1);
+    if (!current || Math.abs(current.anchorY - entry.y) > 80) {
+      rows.push({ anchorY: entry.y, entries: [entry] });
+      continue;
+    }
+
+    current.entries.push(entry);
+    current.anchorY = Math.round(
+      current.entries.reduce((sum, candidate) => sum + candidate.y, 0) / current.entries.length,
+    );
+  }
+
+  return rows;
+}
+
+function groupLinesIntoColumns(lines: PdfLine[]): PdfLine[][] {
+  const sorted = [...lines].sort((a, b) => a.x - b.x || b.y - a.y);
+  const columns: Array<{ anchorX: number; lines: PdfLine[] }> = [];
+
+  for (const line of sorted) {
+    const current = columns.at(-1);
+    if (!current || line.x - current.anchorX > 110) {
+      columns.push({ anchorX: line.x, lines: [line] });
+      continue;
+    }
+
+    current.lines.push(line);
+    current.anchorX = Math.round(
+      current.lines.reduce((sum, candidate) => sum + candidate.x, 0) / current.lines.length,
+    );
+  }
+
+  return columns.map((column) => column.lines.sort((a, b) => b.y - a.y || a.x - b.x));
+}
+
+function extractSectionBody(lines: PdfLine[]): { text: string; columnCount: number } {
+  const columnTexts = groupLinesIntoColumns(lines)
+    .map((columnLines) => {
+      const bodyLines: PdfLine[] = [];
+      let allowedLeadHeadingSeen = false;
+
+      for (const line of columnLines) {
+        if (HEADING_RE.test(line.text)) {
+          if (!allowedLeadHeadingSeen && MAIN_SECTION_BODY_HEADING_RE.test(line.text)) {
+            allowedLeadHeadingSeen = true;
+            continue;
+          }
+          break;
+        }
+        bodyLines.push(line);
+      }
+
+      if (bodyLines.length === 0) return null;
+      return normalizeBlockText(bodyLines);
+    })
+    .filter((text): text is string => Boolean(text));
+
+  return {
+    text: normalizeRawBlockText(columnTexts.join('\n\n')),
+    columnCount: columnTexts.length,
+  };
+}
+
+function extractSectionBoxText(lines: PdfLine[], headingPattern: RegExp): string | null {
+  for (const columnLines of groupLinesIntoColumns(lines)) {
+    const headingIndex = columnLines.findIndex((line) => headingPattern.test(line.text));
+    if (headingIndex === -1) continue;
+
+    const boxLines: PdfLine[] = [];
+    for (const line of columnLines.slice(headingIndex + 1)) {
+      if (HEADING_RE.test(line.text)) break;
+      boxLines.push(line);
+    }
+
+    const text = normalizeBlockText(boxLines);
+    if (text.length > 0) return text;
+  }
+
+  return null;
 }
 
 function buildSectionsFromPage(
@@ -433,43 +536,50 @@ function buildSectionsFromPage(
 ): {
   sections: SectionBookSectionRecord[];
   entryLinks: Array<{ entry: SectionEntry; link: Omit<BookReferenceRecord, 'sequence'> }>;
+  instructionLinks: Array<Omit<BookReferenceRecord, 'sequence'>>;
 } {
   const lines = buildLines(items).filter((line) => line.y > 40 && !FOOTER_RE.test(line.text));
   const entries = parseSectionEntries(lines);
-  if (entries.length === 0) return { sections: [], entryLinks: [] };
-
-  const entryXs = entries.map((entry) => horizontalCenter(entry)).sort((a, b) => a - b);
-  const entryYs = entries.map((entry) => entry.y).sort((a, b) => a - b);
-  const xThreshold = (entryXs[0] + entryXs.at(-1)!) / 2;
-  const yThreshold = (entryYs[0] + entryYs.at(-1)!) / 2;
-  const entriesByQuadrant = new Map<string, SectionEntry[]>();
-  for (const entry of entries) {
-    const quadrant = quadrantFor(entry, xThreshold, yThreshold);
-    const quadrantEntries = entriesByQuadrant.get(quadrant) ?? [];
-    quadrantEntries.push(entry);
-    entriesByQuadrant.set(quadrant, quadrantEntries);
-  }
+  if (entries.length === 0) return { sections: [], entryLinks: [], instructionLinks: [] };
 
   const sections: SectionBookSectionRecord[] = [];
   const entryLinks: Array<{ entry: SectionEntry; link: Omit<BookReferenceRecord, 'sequence'> }> =
     [];
+  const instructionLinks: Array<Omit<BookReferenceRecord, 'sequence'>> = [];
 
-  for (const [quadrant, quadrantEntries] of entriesByQuadrant.entries()) {
-    const sortedEntries = [...quadrantEntries].sort((a, b) => b.y - a.y);
-    for (const [index, entry] of sortedEntries.entries()) {
-      const nextEntry = sortedEntries[index + 1] ?? null;
-      const quadrantLines = lines.filter((line) => {
+  // Frosthaven mixes two layouts in the same PDFs:
+  // some pages have left/right sibling sections, while others have one section
+  // spanning multiple prose columns. Split vertically by entry row first, then
+  // split horizontally within that row by entry position.
+  const rows = groupSectionEntriesIntoRows(entries);
+  for (const [rowIndex, row] of rows.entries()) {
+    const nextRow = rows[rowIndex + 1] ?? null;
+    const rowEntries = [...row.entries].sort((a, b) => a.x - b.x);
+    const rowLines = lines.filter((line) => {
+      if (line.y >= row.anchorY - 8) return false;
+      if (nextRow && line.y <= nextRow.anchorY + 8) return false;
+      return true;
+    });
+
+    for (const [entryIndex, entry] of rowEntries.entries()) {
+      const previousEntry = rowEntries[entryIndex - 1] ?? null;
+      const nextEntry = rowEntries[entryIndex + 1] ?? null;
+      const leftBoundary = previousEntry
+        ? (horizontalCenter(previousEntry) + horizontalCenter(entry)) / 2
+        : Number.NEGATIVE_INFINITY;
+      const rightBoundary = nextEntry
+        ? (horizontalCenter(entry) + horizontalCenter(nextEntry)) / 2
+        : Number.POSITIVE_INFINITY;
+
+      const sectionBandLines = rowLines.filter((line) => {
         if (line.text === entry.rawText) return false;
-        if (HEADING_RE.test(line.text)) return false;
-        const lineQuadrant = quadrantFor(line, xThreshold, yThreshold);
-        if (lineQuadrant !== quadrant) return false;
-        if (line.y >= entry.y - 8) return false;
-        if (nextEntry && line.y <= nextEntry.y + 8) return false;
-        return true;
+        const lineCenter = horizontalCenter(line);
+        return lineCenter > leftBoundary && lineCenter <= rightBoundary;
       });
 
-      const bodyText = normalizeBlockText(quadrantLines);
+      const { text: bodyText, columnCount } = extractSectionBody(sectionBandLines);
       if (!bodyText) continue;
+      const sectionLinksText = extractSectionBoxText(sectionBandLines, /^Section Links$/i);
 
       const [sectionNumber, sectionVariant] = entry.ref.split('.').map(Number);
       sections.push({
@@ -480,9 +590,12 @@ function buildSectionsFromPage(
         sourcePage: pageNumber,
         text: bodyText,
         metadata: {
-          quadrant,
+          columns: columnCount,
         },
       });
+      if (sectionLinksText) {
+        instructionLinks.push(...parseInstructionLinks('section', entry.ref, sectionLinksText));
+      }
 
       if (entry.targetScenarioIndex) {
         entryLinks.push({
@@ -501,7 +614,7 @@ function buildSectionsFromPage(
     }
   }
 
-  return { sections, entryLinks };
+  return { sections, entryLinks, instructionLinks };
 }
 
 function addSequencedLinks(
@@ -517,6 +630,9 @@ function isSuspiciousSectionText(text: string): boolean {
   const normalized = text.replace(/\s+/g, ' ').trim();
   if (normalized.length < 20) return true;
   if (!/[A-Za-z]{4}/.test(normalized)) return true;
+  if (/^[a-z]/.test(normalized)) return true;
+  const lastWord = normalized.match(/([A-Za-z]+)[^A-Za-z]*$/)?.[1]?.toLowerCase() ?? null;
+  if (lastWord && DANGLING_SECTION_END_WORDS.has(lastWord)) return true;
   return false;
 }
 
@@ -788,7 +904,11 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
 
       for (const page of pages) {
         const pageNumber = range.start + page.pageIndex;
-        const { sections, entryLinks } = buildSectionsFromPage(pdfName, pageNumber, page.items);
+        const { sections, entryLinks, instructionLinks } = buildSectionsFromPage(
+          pdfName,
+          pageNumber,
+          page.items,
+        );
         for (const section of sections) {
           sectionsByRef.set(section.ref, section);
           addSequencedLinks(links, parseInstructionLinks('section', section.ref, section.text));
@@ -797,6 +917,7 @@ function buildScenarioSectionBooksExtract(): Promise<ScenarioSectionBooksExtract
             parseScenarioUnlockLinks(section.ref, section.text, mainScenariosByIndex),
           );
         }
+        addSequencedLinks(links, instructionLinks);
 
         addSequencedLinks(
           links,

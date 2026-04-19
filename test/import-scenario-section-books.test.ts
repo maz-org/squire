@@ -24,7 +24,8 @@ describe('importScenarioSectionBooks', () => {
     expect(scenario).toBeDefined();
     expect(link).toBeDefined();
     expect(section).toBeDefined();
-    expect(section!.text).toContain('sits on a traveling stool');
+    expect(section!.text).toContain('Your ears fill with the sound of your own');
+    expect(section!.text).toContain('seals grow weak.');
   });
 
   it('synthesizes printed-only scenarios when the checked-in scenario extract lacks them', () => {
@@ -45,5 +46,15 @@ describe('importScenarioSectionBooks', () => {
     const section = extract.sections.find((record) => record.ref === '80.1');
     expect(section).toBeDefined();
     expect(section!.text).toContain('You settle into a booth at the Boiled Crab');
+  });
+
+  it('captures spaced section refs from scenario link boxes like scenario 87 door 3', () => {
+    const link = extract.links.find(
+      (record) =>
+        record.fromRef === 'gloomhavensecretariat:scenario/087' &&
+        record.linkType === 'read_now' &&
+        record.toRef === '77.2',
+    );
+    expect(link).toBeDefined();
   });
 });

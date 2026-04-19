@@ -267,7 +267,8 @@ describe('scenario/section book tools', () => {
     expect(section).not.toBeNull();
     expect(section!.sectionNumber).toBe(67);
     expect(section!.sectionVariant).toBe(1);
-    expect(section!.text).toContain('sits on a traveling stool');
+    expect(section!.text).toContain('Your ears fill with the sound of your own');
+    expect(section!.text).toContain('seals grow weak.');
   });
 
   it('followLinks returns the scenario 61 conclusion link to section 67.1', async () => {
@@ -313,6 +314,23 @@ describe('scenario/section book tools', () => {
     const finalSection = await getSection('155.1');
     expect(finalSection).not.toBeNull();
     expect(finalSection!.text).toContain('made short work of them');
+  });
+
+  it('keeps scenario-box links whose section refs are OCR-spaced around the dot', async () => {
+    const links: ReferenceResult[] = await followLinks(
+      'scenario',
+      'gloomhavensecretariat:scenario/087',
+      'read_now',
+    );
+    expect(links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fromRef: 'gloomhavensecretariat:scenario/087',
+          toRef: '77.2',
+          linkType: 'read_now',
+        }),
+      ]),
+    );
   });
 });
 
