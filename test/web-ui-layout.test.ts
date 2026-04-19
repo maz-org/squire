@@ -659,6 +659,12 @@ describe('selected-message rendering helpers', () => {
       '<p>Yes, you can rest on the same round.</p>',
     ],
     [
+      'ordered list',
+      '1. Item one\n2. Item two\n\nYes, you can rest on the same round.',
+      '<ol>',
+      '<p>Yes, you can rest on the same round.</p>',
+    ],
+    [
       'blockquote',
       '> Quoted rule text.\n\nYes, you can rest on the same round.',
       '<blockquote>',
