@@ -1,13 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockSearchRules, mockSearchCards, mockListCardTypes, mockListCards, mockGetCard } =
-  vi.hoisted(() => ({
-    mockSearchRules: vi.fn(),
-    mockSearchCards: vi.fn(),
-    mockListCardTypes: vi.fn(),
-    mockListCards: vi.fn(),
-    mockGetCard: vi.fn(),
-  }));
+const {
+  mockSearchRules,
+  mockSearchCards,
+  mockListCardTypes,
+  mockListCards,
+  mockGetCard,
+  mockFindScenario,
+  mockGetScenario,
+  mockGetSection,
+  mockFollowLinks,
+} = vi.hoisted(() => ({
+  mockSearchRules: vi.fn(),
+  mockSearchCards: vi.fn(),
+  mockListCardTypes: vi.fn(),
+  mockListCards: vi.fn(),
+  mockGetCard: vi.fn(),
+  mockFindScenario: vi.fn(),
+  mockGetScenario: vi.fn(),
+  mockGetSection: vi.fn(),
+  mockFollowLinks: vi.fn(),
+}));
 
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
@@ -15,6 +28,10 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  findScenario: mockFindScenario,
+  getScenario: mockGetScenario,
+  getSection: mockGetSection,
+  followLinks: mockFollowLinks,
 }));
 
 import { createMcpServer } from '../src/mcp.ts';
@@ -39,16 +56,20 @@ async function connectClient() {
 }
 
 describe('MCP tool registration', () => {
-  it('registers all 5 tools', async () => {
+  it('registers all 9 tools', async () => {
     const client = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     expect(names).toContain('search_rules');
+    expect(names).toContain('find_scenario');
+    expect(names).toContain('get_scenario');
+    expect(names).toContain('get_section');
+    expect(names).toContain('follow_links');
     expect(names).toContain('search_cards');
     expect(names).toContain('list_card_types');
     expect(names).toContain('list_cards');
     expect(names).toContain('get_card');
-    expect(tools).toHaveLength(5);
+    expect(tools).toHaveLength(9);
   });
 });
 
