@@ -59,4 +59,13 @@ log "running migrations"
 npm run --silent db:migrate
 npm run --silent db:migrate:test
 
+# seed:cards + seed:scenario-section-books are upsert-idempotent, index is
+# hash-keyed per source PDF ("Skipping (already indexed): ..."). First-run in
+# a fresh worktree populates the card/scenario tables and vector store so
+# /chat actually works; subsequent startups are a fast no-op.
+log "seeding card + scenario data"
+npm run --silent seed
+log "indexing Frosthaven books"
+npm run --silent index
+
 log "done"

@@ -11,4 +11,6 @@ npm install --ignore-scripts
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test
+npm run seed
+npm run index
 '''
