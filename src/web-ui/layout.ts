@@ -624,6 +624,16 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
 
 interface LoginPageOptions {
   errorMessage?: string;
+  /**
+   * When true, renders a local-only "Sign in as Dev User" button that
+   * posts to /dev/login. The server only passes true when
+   * `shouldRegisterDevLogin()` is satisfied (non-production + managed-local
+   * DB), so the button is literally not present in production HTML.
+   * Exists because Claude Code's preview sandbox blocks off-localhost
+   * navigation, which means the real Google OAuth round-trip can't
+   * complete inside the preview tab.
+   */
+  devLoginEnabled?: boolean;
 }
 
 const GOOGLE_G_MARK = html`<svg
@@ -689,6 +699,13 @@ export async function renderLoginPage(options: LoginPageOptions = {}): Promise<H
           ${GOOGLE_G_MARK}
           <span>Sign in with Google</span>
         </a>
+        ${options.devLoginEnabled
+          ? html`<form method="post" action="/dev/login" class="squire-auth-page__dev-login">
+              <button type="submit" class="squire-button squire-button--secondary">
+                <span>Sign in as Dev User (local only)</span>
+              </button>
+            </form>`
+          : html``}
         ${options.errorMessage
           ? renderAuthBanner({
               label: "COULDN'T SIGN YOU IN",

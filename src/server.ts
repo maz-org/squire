@@ -20,6 +20,7 @@ import {
 } from './service.ts';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
+import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
 import { toolSourceLabel } from './web-ui/consulted-footer.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
@@ -281,11 +282,24 @@ function loginRedirectWithError(message: string): string {
   return `/login?${new URLSearchParams({ error: message }).toString()}`;
 }
 
+const DEV_LOGIN_ENABLED = shouldRegisterDevLogin();
+if (DEV_LOGIN_ENABLED) {
+  console.warn(
+    '[dev] POST /dev/login route is registered (NODE_ENV !== production and DATABASE_URL points at a managed-local DB). This route never ships to production.',
+  );
+  registerDevLoginRoute(app);
+}
+
 app.get('/login', optionalSession(), async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   if (c.get('session')) return c.redirect('/');
-  return c.html(await renderLoginPage({ errorMessage: c.req.query('error') }));
+  return c.html(
+    await renderLoginPage({
+      errorMessage: c.req.query('error'),
+      devLoginEnabled: DEV_LOGIN_ENABLED,
+    }),
+  );
 });
 
 app.get('/not-invited', async (c) => c.html(await renderNotInvitedPage(), 403));

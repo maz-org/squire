@@ -148,6 +148,24 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('Sign in with Google');
   });
 
+  it('renders the dev-login button on /login when devLoginEnabled is true (SQR-98 preview workaround)', async () => {
+    const body = String(await actualLayout.renderLoginPage({ devLoginEnabled: true }));
+    expect(body).toContain('action="/dev/login"');
+    expect(body).toContain('Sign in as Dev User');
+    expect(body).toContain('local only');
+  });
+
+  it('omits the dev-login button on /login when devLoginEnabled is false (production)', async () => {
+    const body = String(await actualLayout.renderLoginPage({ devLoginEnabled: false }));
+    expect(body).not.toContain('action="/dev/login"');
+    expect(body).not.toContain('Sign in as Dev User');
+  });
+
+  it('omits the dev-login button on /login when devLoginEnabled is undefined', async () => {
+    const body = String(await actualLayout.renderLoginPage());
+    expect(body).not.toContain('action="/dev/login"');
+  });
+
   it('renders the login error banner from the query string', async () => {
     const res = await app.request('/login?error=denied');
     const body = await res.text();
