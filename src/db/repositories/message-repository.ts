@@ -15,6 +15,7 @@ function toDomain(row: MessageRow): ConversationMessage {
     content: row.content,
     isError: row.isError,
     responseToMessageId: row.responseToMessageId,
+    consultedSources: row.consultedSources ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -31,6 +32,7 @@ export async function create(
       content: input.content,
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId ?? null,
+      consultedSources: input.consultedSources ?? null,
     })
     .returning();
   return toDomain(row);
@@ -48,6 +50,7 @@ export async function createResponse(
       content: input.content,
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId,
+      consultedSources: input.consultedSources ?? null,
     })
     .onConflictDoNothing({
       target: messages.responseToMessageId,

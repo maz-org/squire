@@ -57,7 +57,12 @@ Guidelines:
 - Do not invent rules, stats, or item numbers.
 - Be concise but complete.`;
 
-export const AGENT_TOOLS: Tool[] = [
+// `as const satisfies readonly Tool[]` lets us derive `AgentToolName` below
+// as a literal union of the tool names. That union is what powers the
+// compile-time drift guard on `TOOL_SOURCE_LABELS` in src/server.ts —
+// adding a tool here without also extending the label map is a typecheck
+// error, so the consulted-sources footer can never silently drop a tool.
+export const AGENT_TOOLS = [
   {
     name: 'search_rules',
     description:
@@ -193,7 +198,10 @@ export const AGENT_TOOLS: Tool[] = [
       required: ['fromKind', 'fromRef'],
     },
   },
-];
+] as const satisfies readonly Tool[];
+
+/** Union of every tool name exposed to the agent. Keeps dependent maps honest. */
+export type AgentToolName = (typeof AGENT_TOOLS)[number]['name'];
 
 /**
  * Execute a single tool call and return the result as a string.
@@ -269,7 +277,10 @@ async function callClaude(messages: MessageParam[], emit?: EmitFn): Promise<Mess
     model: 'claude-sonnet-4-6' as const,
     max_tokens: 4096,
     system: AGENT_SYSTEM_PROMPT,
-    tools: AGENT_TOOLS,
+    // Spread into a mutable array so the readonly AGENT_TOOLS tuple
+    // (declared `as const` to power the AgentToolName union) satisfies
+    // the Anthropic SDK's `ToolUnion[]` signature.
+    tools: [...AGENT_TOOLS],
     messages,
   };
 

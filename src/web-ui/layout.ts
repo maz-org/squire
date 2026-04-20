@@ -21,6 +21,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { renderAssistantContent } from './assistant-content.ts';
+import { aggregateSourceLabels, formatConsultedFooter } from './consulted-footer.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 import {
@@ -246,6 +247,30 @@ function renderMarkdownSpecimenCard(options: {
   </section>` as HtmlEscapedString;
 }
 
+function renderConsultedFooter(message: ConversationMessage): HtmlEscapedString {
+  // SQR-98: hydrate the consulted-sources footer from persisted tool names
+  // on this message. Null, empty, or all-null-mapped sources → hidden.
+  // Error messages never show a footer (the turn didn't produce an answer).
+  if (message.isError || !message.consultedSources || message.consultedSources.length === 0) {
+    return html`<footer
+      class="squire-toolcall"
+      aria-live="off"
+      hidden
+    ></footer>` as HtmlEscapedString;
+  }
+  const labels = aggregateSourceLabels(message.consultedSources);
+  if (labels.length === 0) {
+    return html`<footer
+      class="squire-toolcall"
+      aria-live="off"
+      hidden
+    ></footer>` as HtmlEscapedString;
+  }
+  return html`<footer class="squire-toolcall" aria-live="off">
+    ${formatConsultedFooter(labels)}
+  </footer>` as HtmlEscapedString;
+}
+
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   const content = message.isError
     ? (html`<p>${message.content}</p>` as HtmlEscapedString)
@@ -253,7 +278,7 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   return html`<article
     class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
   >
-    ${renderAnswerContent(content)}
+    ${renderAnswerContent(content)} ${renderConsultedFooter(message)}
   </article>` as HtmlEscapedString;
 }
 
@@ -299,6 +324,7 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
     </div>
+    <footer class="squire-toolcall" aria-live="off" hidden></footer>
   </article>` as HtmlEscapedString;
 }
 
@@ -567,10 +593,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           </main>
           ${!authenticated || !showChatChrome
             ? html``
-            : html`<footer class="squire-toolcall" aria-live="off">
-                  CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
-                </footer>
-                ${recentQuestionsNav}
+            : html`${recentQuestionsNav}
                 <form
                   class="squire-input-dock"
                   method="post"

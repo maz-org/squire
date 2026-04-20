@@ -228,13 +228,19 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
     expect(body).toContain('id="squire-surface"');
-    expect(body).toContain('class="squire-toolcall"');
+    // SQR-98: the consulted footer is no longer page chrome — it lives
+    // inside each answer element now. The home page has no answer so no
+    // footer should be rendered. See separate SQR-98 test below.
+    expect(body).not.toContain('class="squire-toolcall"');
     expect(body).toContain('class="squire-recent"');
     expect(body).toContain('class="squire-input-dock"');
     expect(body).toContain('class="squire-rail"');
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('aria-atomic="false"');
-    expect(body).toContain('aria-live="off"');
+    // SQR-98: the old aria-live="off" assertion came from the page-chrome
+    // footer that's now rendered per-answer instead. The home page has
+    // no answer and no footer to opt out of aria-live. Per-answer footer
+    // aria-live behavior is exercised by the SQR-98 test suite below.
     expect(body).toContain('class="sr-only-focusable"');
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
@@ -510,6 +516,7 @@ describe('renderConversationTranscriptWithPendingTurn', () => {
             content: 'First question',
             isError: false,
             responseToMessageId: null,
+            consultedSources: null,
             createdAt: new Date('2026-01-01T00:00:00.000Z'),
           },
           {
@@ -519,6 +526,7 @@ describe('renderConversationTranscriptWithPendingTurn', () => {
             content: 'First answer.',
             isError: false,
             responseToMessageId: 'm1',
+            consultedSources: null,
             createdAt: new Date('2026-01-01T00:00:01.000Z'),
           },
           {
@@ -528,6 +536,7 @@ describe('renderConversationTranscriptWithPendingTurn', () => {
             content: 'Second question',
             isError: false,
             responseToMessageId: null,
+            consultedSources: null,
             createdAt: new Date('2026-01-01T00:00:02.000Z'),
           },
         ],
@@ -552,6 +561,7 @@ describe('selected-message rendering helpers', () => {
       content: 'Oldest question',
       isError: false,
       responseToMessageId: null,
+      consultedSources: null,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
     },
     {
@@ -561,6 +571,7 @@ describe('selected-message rendering helpers', () => {
       content: 'Oldest answer.',
       isError: false,
       responseToMessageId: 'm1',
+      consultedSources: null,
       createdAt: new Date('2026-01-01T00:00:01.000Z'),
     },
     {
@@ -570,6 +581,7 @@ describe('selected-message rendering helpers', () => {
       content: 'Middle question',
       isError: false,
       responseToMessageId: null,
+      consultedSources: null,
       createdAt: new Date('2026-01-01T00:00:02.000Z'),
     },
     {
@@ -579,6 +591,7 @@ describe('selected-message rendering helpers', () => {
       content: 'Middle answer.',
       isError: false,
       responseToMessageId: 'm3',
+      consultedSources: null,
       createdAt: new Date('2026-01-01T00:00:03.000Z'),
     },
     {
@@ -588,6 +601,7 @@ describe('selected-message rendering helpers', () => {
       content: 'Newest question',
       isError: false,
       responseToMessageId: null,
+      consultedSources: null,
       createdAt: new Date('2026-01-01T00:00:04.000Z'),
     },
     {
@@ -597,6 +611,7 @@ describe('selected-message rendering helpers', () => {
       content: 'Newest answer.',
       isError: false,
       responseToMessageId: 'm5',
+      consultedSources: null,
       createdAt: new Date('2026-01-01T00:00:05.000Z'),
     },
   ];
@@ -1053,9 +1068,154 @@ describe('GET / — SQR-67 stub regions', () => {
     expect(body).toContain('SPOILER WARNING');
   });
 
-  it('renders the tool-call footer with the CONSULTED placeholder line', async () => {
+  it('no longer ships the hardcoded CONSULTED placeholder in page chrome (SQR-98)', async () => {
+    // Regression: the old footer lied — it always said "CONSULTED · RULEBOOK
+    // P.47 · SCENARIO BOOK §14" regardless of what the answer actually
+    // consulted. The new footer lives inside each answer element and is
+    // populated from real per-turn source data. The home page has no
+    // current answer, so it should not render a consulted footer at all.
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
-    expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[\s\S]*CONSULTED · RULEBOOK P\.47/);
+    expect(body).not.toContain('CONSULTED · RULEBOOK P.47');
+    expect(body).not.toContain('SCENARIO BOOK §14');
+    expect(body).not.toMatch(/<footer[^>]*class="squire-toolcall"/);
+  });
+
+  describe('SQR-98: per-answer consulted footer', () => {
+    const userMessage = {
+      id: 'user-1',
+      conversationId: 'conv-sqr98',
+      role: 'user' as const,
+      content: 'How does looting work?',
+      isError: false,
+      responseToMessageId: null,
+      consultedSources: null,
+      createdAt: new Date('2026-04-20T00:00:00.000Z'),
+    };
+
+    function answerWith(
+      consultedSources: string[] | null,
+      overrides: Record<string, unknown> = {},
+    ) {
+      return {
+        id: 'assistant-1',
+        conversationId: 'conv-sqr98',
+        role: 'assistant' as const,
+        content: 'Loot tokens in your hex are picked up.',
+        isError: false,
+        responseToMessageId: 'user-1',
+        consultedSources,
+        createdAt: new Date('2026-04-20T00:00:01.000Z'),
+        ...overrides,
+      };
+    }
+
+    it('renders the consulted footer inside the answer element for a single source', () => {
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: userMessage,
+          selectedAnswer: answerWith(['search_rules']),
+          isEarlierQuestion: false,
+        }),
+      );
+      // Template whitespace is nondeterministic across hono/html versions,
+      // so match the shape with \s* tolerance between tokens rather than
+      // asserting byte-for-byte equality.
+      expect(body).toMatch(
+        /class="squire-turn squire-answer"[\s\S]*<footer[^>]*class="squire-toolcall"[^>]*>\s*CONSULTED · RULEBOOK\s*<\/footer>/,
+      );
+    });
+
+    it('aggregates multiple tool names into deduped labels, preserving insertion order', () => {
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: userMessage,
+          selectedAnswer: answerWith([
+            'search_rules',
+            'search_cards',
+            'search_rules',
+            'get_card',
+            'get_section',
+          ]),
+          isEarlierQuestion: false,
+        }),
+      );
+      expect(body).toContain('CONSULTED · RULEBOOK · CARD INDEX · SECTION BOOK');
+      // The RULEBOOK-first ordering is the insertion-order contract — ensure
+      // CARD INDEX doesn't leapfrog ahead of RULEBOOK just because more
+      // card-family tools were called.
+      expect(body.indexOf('RULEBOOK')).toBeLessThan(body.indexOf('CARD INDEX'));
+    });
+
+    it('renders the footer hidden when consultedSources is null (pre-SQR-98 rows)', () => {
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: userMessage,
+          selectedAnswer: answerWith(null),
+          isEarlierQuestion: false,
+        }),
+      );
+      expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
+    });
+
+    it('renders the footer hidden when the only tool used was a traversal tool', () => {
+      // follow_links is a utility/traversal tool — the actual content came
+      // from whatever tool resolved the link, so it never contributes a
+      // provenance label on its own. An answer that "only" used follow_links
+      // shouldn't show any consulted sources.
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: userMessage,
+          selectedAnswer: answerWith(['follow_links']),
+          isEarlierQuestion: false,
+        }),
+      );
+      expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
+    });
+
+    it('renders the footer hidden for error messages even if sources exist', () => {
+      // An error turn didn't produce a real answer. The footer would lie
+      // about the error being the result of consulting a source.
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: userMessage,
+          selectedAnswer: answerWith(['search_rules'], {
+            isError: true,
+            content: 'Trouble connecting. Please try again.',
+          }),
+          isEarlierQuestion: false,
+        }),
+      );
+      expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
+    });
+
+    it('maps scenario-family and section-family tools to the right labels', () => {
+      const body = String(
+        actualLayout.renderSelectedMessageSurface({
+          selectedQuestion: userMessage,
+          selectedAnswer: answerWith(['find_scenario', 'get_scenario', 'get_section']),
+          isEarlierQuestion: false,
+        }),
+      );
+      expect(body).toContain('CONSULTED · SCENARIO BOOK · SECTION BOOK');
+    });
+
+    it('renders a hidden empty footer slot inside the pending answer skeleton', async () => {
+      // The JS relies on answerEl.querySelector('.squire-toolcall') to find
+      // and populate the footer during the live stream, so the pending
+      // skeleton must always ship one in the DOM — just hidden until `done`.
+      const body = String(
+        await actualLayout.renderConversationPage({
+          session: testSession,
+          csrfToken: testCsrfToken,
+          conversationId: 'conv-sqr98',
+          messages: [userMessage],
+          recentQuestionsNav: actualLayout.renderRecentQuestionsNav([]),
+        }),
+      );
+      expect(body).toMatch(
+        /squire-answer--pending[\s\S]*<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/,
+      );
+    });
   });
 
   it('renders at least two recent-question chips inside nav.squire-recent', async () => {

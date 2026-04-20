@@ -20,6 +20,7 @@ import {
 } from './service.ts';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
+import { toolSourceLabel } from './web-ui/consulted-footer.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -571,23 +572,11 @@ function buildStreamUrl(conversationId: string, messageId: string): string {
 
 // DESIGN.md wants streaming tool metadata to read like ledger provenance
 // ("CONSULTING · RULEBOOK"), not raw implementation names like search_rules.
-function buildToolSourceLabel(name: string): string {
-  switch (name) {
-    case 'search_rules':
-      return 'RULEBOOK';
-    case 'search_cards':
-    case 'list_card_types':
-    case 'list_cards':
-    case 'get_card':
-      return 'CARD INDEX';
-    default:
-      return 'REFERENCE';
-  }
-}
-
+// The provenance mapping itself lives in ./web-ui/consulted-footer.ts so the
+// layout render path can reuse it when hydrating historical answers.
 function buildToolStatusId(name: string): string {
-  const label = buildToolSourceLabel(name);
-  if (label === 'REFERENCE') return name;
+  const label = toolSourceLabel(name);
+  if (label === null) return name;
 
   return label
     .toLowerCase()
@@ -836,12 +825,21 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // Browser SSE semantics are documented in docs/SSE_CONTRACT.md. This route
   // owns the final user-visible ordering guarantees, including the final
   // sanitized-html swap on `done`.
+  //
+  // SQR-98: `turnSources` collects the raw tool names for every tool call
+  // that resolved with ok:true during this turn. The list is persisted on
+  // the assistant message (with insertion order preserved, dedup happens
+  // at render time) so historical answers can rebuild the consulted
+  // footer from DB state. Failed tool calls (ok:false) are excluded —
+  // they weren't actually consulted.
+  const turnSources: string[] = [];
   return streamSSE(c, async (stream) => {
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
       userId: session.userId,
       currentUserMessageId: loaded.message.id,
+      consultedSources: turnSources,
       onEvent: async (event, data) => {
         if (event === 'text') {
           await stream.writeSSE({
@@ -858,7 +856,10 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             event: 'tool-start',
             data: JSON.stringify({
               id: buildToolStatusId(name),
-              label: buildToolSourceLabel(name),
+              // Keep the SSE wire contract: always send a string label
+              // (REFERENCE fallback for utility/traversal tools) so the
+              // tool-indicator UI doesn't need to know about nulls.
+              label: toolSourceLabel(name) ?? 'REFERENCE',
             }),
           });
           return;
@@ -867,12 +868,14 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         if (event === 'tool_result') {
           const payload = data as { name?: string; ok?: boolean };
           const name = payload.name ?? 'tool';
+          const ok = payload.ok ?? true;
+          if (ok) turnSources.push(name);
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
               id: buildToolStatusId(name),
-              label: buildToolSourceLabel(name),
-              ok: payload.ok ?? true,
+              label: toolSourceLabel(name) ?? 'REFERENCE',
+              ok,
             }),
           });
           return;

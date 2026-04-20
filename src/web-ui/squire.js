@@ -247,6 +247,25 @@ function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
   return tail;
 }
 
+// SQR-98: the set of provenance labels that are allowed to appear in the
+// consulted footer. Keep this in sync with ToolSourceLabel in
+// src/web-ui/consulted-footer.ts. REFERENCE is intentionally excluded —
+// it's the wire-level fallback for utility/traversal tools and isn't a
+// real source. Anything else (e.g. a typo or a server-side drift) is
+// silently dropped rather than leaked into the UI.
+var KNOWN_CONSULTED_LABELS = {
+  RULEBOOK: true,
+  'CARD INDEX': true,
+  'SCENARIO BOOK': true,
+  'SECTION BOOK': true,
+};
+
+function isKnownConsultedLabel(label) {
+  return (
+    typeof label === 'string' && Object.prototype.hasOwnProperty.call(KNOWN_CONSULTED_LABELS, label)
+  );
+}
+
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
   var row = toolEntries[toolId];
   if (row) return row;
@@ -321,11 +340,20 @@ function handlePendingTranscript(transcript) {
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
-  var footerEl = document.querySelector('.squire-toolcall');
+  // SQR-98: the consulted footer now lives inside the answer element so
+  // each turn owns its own provenance slot. Historical turns render the
+  // footer server-side from messages.consulted_sources; this stream-side
+  // path populates the footer for the live turn only.
+  var footerEl = answerEl.querySelector('.squire-toolcall');
   var toolEntries = {};
   var preToolBuffer = '';
   var seenFirstDelta = false;
   var toolPhaseStarted = false;
+  // Ordered-dedup set of provenance labels collected from tool-result
+  // events during this turn. `Map` preserves insertion order, which we
+  // rely on so the footer reads "CONSULTED · RULEBOOK · CARD INDEX" in
+  // the order the agent actually consulted the sources.
+  var consultedLabels = new Map();
   var source = new window.EventSource(streamUrl);
 
   activeStream = {
@@ -339,7 +367,6 @@ function handlePendingTranscript(transcript) {
     if (activeStream && activeStream.source === source) {
       activeStream = null;
     }
-    if (footerEl) footerEl.hidden = false;
     source.close();
   }
 
@@ -399,12 +426,22 @@ function handlePendingTranscript(transcript) {
   });
 
   source.addEventListener('tool-result', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    // SQR-98: accumulate provenance labels for the consulted footer. Only
+    // successful tool calls contribute, only known provenance labels
+    // (REFERENCE is the wire-level fallback for utility tools — treat it
+    // as "no source"), and the Map preserves insertion order for the
+    // render step on `done`.
+    if (payload.ok !== false && isKnownConsultedLabel(payload.label)) {
+      if (!consultedLabels.has(payload.label)) {
+        consultedLabels.set(payload.label, true);
+      }
+    }
     if (!toolsEl) return;
     if (seenFirstDelta) {
       clearToolStatusRows(toolsEl, toolEntries);
       return;
     }
-    var payload = JSON.parse(event.data || '{}');
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
   });
@@ -418,6 +455,20 @@ function handlePendingTranscript(transcript) {
     if (contentEl && typeof payload.html === 'string') {
       contentEl.classList.add('squire-markdown');
       contentEl.innerHTML = payload.html;
+    }
+    // SQR-98: write the accumulated provenance labels into the footer.
+    // Empty map → leave the footer hidden (AC #3: no source data, no lie).
+    if (footerEl) {
+      if (consultedLabels.size > 0) {
+        var labels = [];
+        consultedLabels.forEach(function (_value, label) {
+          labels.push(label);
+        });
+        footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
+        footerEl.hidden = false;
+      } else {
+        footerEl.hidden = true;
+      }
     }
     updateRecentQuestionsNav(payload.recentQuestionsNavHtml);
     finishStream();

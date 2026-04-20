@@ -205,8 +205,12 @@ function bootPendingTranscript() {
   transcript.setAttribute('data-stream-url', '/chat/stream');
   transcript.appendChild(answerEl);
 
+  // SQR-98: the footer now lives inside the answer element, not page
+  // chrome. Attach it to answerEl so `answerEl.querySelector('.squire-toolcall')`
+  // in squire.js resolves the same way the real render path does.
   const footerEl = new FakeElement('footer');
   footerEl.classList.add('squire-toolcall');
+  answerEl.appendChild(footerEl);
 
   const document = {
     addEventListener(event: string, callback: () => void) {
@@ -218,7 +222,6 @@ function bootPendingTranscript() {
     querySelector(selector: string) {
       if (selector === '.squire-input-dock') return form;
       if (selector === '.squire-transcript--pending') return transcript;
-      if (selector === '.squire-toolcall') return footerEl;
       return null;
     },
     querySelectorAll() {
@@ -296,8 +299,83 @@ describe('squire.js selected-message retargeting', () => {
       html: '<p>Loot 2 can reach up to two hexes away.</p>',
       recentQuestionsNavHtml: '',
     });
+    // SQR-98: the single successful tool-result fed RULEBOOK into the
+    // consulted set. The done handler writes the real provenance line.
     expect(footerEl.hidden).toBe(false);
+    expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK');
     expect(source.closed).toBe(true);
+  });
+
+  // SQR-98: the consulted footer must reflect the actual tool calls this
+  // turn made — never placeholder text, never stale data from a prior
+  // turn. These tests cover the ok:false exclusion, dedup + insertion
+  // order, the REFERENCE fallback filter (utility tools shouldn't leak
+  // into the footer), and the empty/error paths.
+  describe('SQR-98 consulted footer', () => {
+    it('renders CONSULTED · RULEBOOK · CARD INDEX in insertion order', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
+      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('tool-start', { id: 'card-index', label: 'CARD INDEX' });
+      source.emit('tool-result', { id: 'card-index', label: 'CARD INDEX', ok: true });
+      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+
+      expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
+      expect(footerEl.hidden).toBe(false);
+    });
+
+    it('dedupes repeated labels and preserves first-seen order', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('tool-result', { id: 'card-index', label: 'CARD INDEX', ok: true });
+      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+
+      expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
+    });
+
+    it('excludes labels from failed tool calls', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: false });
+      source.emit('tool-result', { id: 'card-index', label: 'CARD INDEX', ok: true });
+      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+
+      expect(footerEl.textContent).toBe('CONSULTED · CARD INDEX');
+    });
+
+    it('ignores the REFERENCE fallback label (utility/traversal tools)', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      // follow_links emits label=REFERENCE on the wire — our footer
+      // aggregator should treat that as "not a real source".
+      source.emit('tool-result', { id: 'follow_links', label: 'REFERENCE', ok: true });
+      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+
+      expect(footerEl.textContent).toBe('');
+      expect(footerEl.hidden).toBe(true);
+    });
+
+    it('leaves the footer hidden on done when no tools fired', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      source.emit('text-delta', { delta: 'Short direct answer.' });
+      source.emit('done', { html: '<p>Short direct answer.</p>', recentQuestionsNavHtml: '' });
+
+      expect(footerEl.hidden).toBe(true);
+      expect(footerEl.textContent).toBe('');
+    });
+
+    it('leaves the footer hidden when the stream errors', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('error', { kind: 'transport', message: 'Trouble connecting.' });
+
+      expect(footerEl.hidden).toBe(true);
+    });
   });
 
   it('streams tool-free answers immediately instead of waiting for done', () => {

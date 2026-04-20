@@ -70,6 +70,13 @@ export interface ConversationMessage {
   content: string;
   isError: boolean;
   responseToMessageId: string | null;
+  /**
+   * SQR-98: tool names (from AGENT_TOOLS in src/agent.ts) that fired with
+   * ok:true during this assistant answer's turn. Rendered as provenance
+   * labels in the tool-call footer. Always null for user messages and
+   * for assistant messages written before SQR-98 landed.
+   */
+  consultedSources: string[] | null;
   createdAt: Date;
 }
 
@@ -79,4 +86,5 @@ export interface CreateConversationMessageInput {
   content: string;
   isError?: boolean;
   responseToMessageId?: string | null;
+  consultedSources?: string[] | null;
 }
