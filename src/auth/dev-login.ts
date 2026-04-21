@@ -6,21 +6,27 @@
  *
  * Production safety (belt and suspenders):
  *
- * 1. `shouldRegisterDevLogin()` returns false when `NODE_ENV === 'production'`
- *    OR when the active `DATABASE_URL` points at anything other than a
- *    managed-local dev/test database. `src/server.ts` only calls
- *    `registerDevLoginRoute()` when this returns true, so the route does
- *    not even exist in production — you can grep prod logs / the route
- *    table and find nothing.
+ * 1. `shouldRegisterDevLogin()` returns false unless `SQUIRE_DEV_LOGIN=1` is
+ *    explicitly set in the environment. On a shared dev host (CI runner,
+ *    cloud IDE, LAN-exposed machine) this prevents the route from appearing
+ *    just because NODE_ENV happens to be "development". `scripts/preview-serve.sh`
+ *    sets this automatically; plain `npm run serve` does not.
  *
- * 2. The handler itself re-checks the local-DB gate at request time, so
+ * 2. `shouldRegisterDevLogin()` also returns false when `NODE_ENV !== 'development'`
+ *    and `NODE_ENV !== 'test'`, and when the active `DATABASE_URL` points at
+ *    anything other than a managed-local dev/test database. `src/server.ts` only
+ *    calls `registerDevLoginRoute()` when this returns true, so the route does
+ *    not even exist in production — you can grep prod logs / the route table
+ *    and find nothing.
+ *
+ * 3. The handler itself re-checks the local-DB gate at request time, so
  *    a config-only change (e.g., setting `DATABASE_URL` to a remote host
  *    after the server started) neutralises the route without a restart.
  *
- * 3. A same-origin Origin-header check blocks cross-site POSTs. The NODE_ENV
- *    + local-DB gate is already enough to keep this route out of any
- *    hostile network, but the check costs nothing and protects the dev
- *    machine from a malicious tab.
+ * 4. A same-origin Origin-header check blocks cross-site POSTs. The three-gate
+ *    registration check is already enough to keep this route out of any hostile
+ *    network, but the check costs nothing and protects the dev machine from a
+ *    malicious tab.
  *
  * The real security boundary is the registration gate — the other two are
  * defence in depth.
@@ -42,19 +48,21 @@ import { eq } from 'drizzle-orm';
  * tables are part of the server's attack surface. A non-existent route is
  * strictly safer than a registered one with runtime checks.
  *
- * Hardened after a pre-landing adversarial review 2026-04-21 flagged that
- * the prior `NODE_ENV !== 'production'` gate was a deny-list:
+ * Hardened in two rounds:
  *
- * - Unset or empty NODE_ENV would pass the check
- * - If the default managed-local DB URL also matched (fresh machine with a
- *   stray local Postgres instance), the route would register on a host that
- *   the operator may not have realised was running in dev mode
+ * Round 1 (2026-04-21 adversarial review): tightened from `!== 'production'`
+ * deny-list to an allowlist requiring `NODE_ENV === 'development' | 'test'`
+ * plus a managed-local DB URL.
  *
- * This check is now a positive allowlist — `NODE_ENV` must explicitly be
- * `development` or `test`, and the DB URL must still resolve to a
- * managed-local name. Both conditions have to hold.
+ * Round 2 (SQR-106, 2026-04-21): added a third positive gate —
+ * `SQUIRE_DEV_LOGIN=1`. On a shared dev host (CI runner, cloud IDE, LAN-exposed
+ * machine) the NODE_ENV + DB checks alone don't prevent exposure: any process
+ * with `NODE_ENV=development` and a local Postgres instance would pass them.
+ * The explicit opt-in closes that window without breaking LAN testing (unlike
+ * binding 127.0.0.1 would).
  */
 export function shouldRegisterDevLogin(): boolean {
+  if (process.env.SQUIRE_DEV_LOGIN !== '1') return false;
   const nodeEnv = process.env.NODE_ENV;
   if (nodeEnv !== 'development' && nodeEnv !== 'test') return false;
   try {

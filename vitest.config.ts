@@ -2,6 +2,11 @@ import { defineConfig, configDefaults } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    // SQUIRE_DEV_LOGIN=1 is required since SQR-106 for the dev-login route to
+    // register. Setting it here (not in .env) keeps the gate meaningful: the
+    // test suite always has the route live against the test DB, but plain
+    // `npm run serve` does not expose it unless the operator explicitly opts in.
+    env: { SQUIRE_DEV_LOGIN: '1' },
     // `.claude/worktrees/**` keeps gstack worktrees from being picked up by
     // the parent repo's vitest run. Without this, a stale worktree at a
     // pre-migration commit would silently double the suite and run its older

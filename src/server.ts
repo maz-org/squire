@@ -285,7 +285,7 @@ function loginRedirectWithError(message: string): string {
 const DEV_LOGIN_ENABLED = shouldRegisterDevLogin();
 if (DEV_LOGIN_ENABLED) {
   console.warn(
-    '[dev] POST /dev/login route is registered (NODE_ENV !== production and DATABASE_URL points at a managed-local DB). This route never ships to production.',
+    '[dev] POST /dev/login route is registered (SQUIRE_DEV_LOGIN=1, NODE_ENV=development/test, DATABASE_URL points at a managed-local DB). This route never ships to production.',
   );
   registerDevLoginRoute(app);
 }
