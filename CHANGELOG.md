@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4] - 2026-04-21
+
+### Fixed
+
+- The "consulted" footer now shows the actual Frosthaven books that were searched rather than always displaying "Rulebook". When a rules search hits the Section Book, Scenario Book, or Puzzle Book, those books are now correctly attributed. Empty searches no longer falsely claim any book was consulted.
+- Added Puzzle Book as a recognised provenance source in the consulted footer (it was missing despite being indexed).
+- Answers replayed from the database now carry accurate per-book provenance (pre-existing answers continue to display as before).
+
 ## [0.1.3] - 2026-04-19
 
 ### Fixed
