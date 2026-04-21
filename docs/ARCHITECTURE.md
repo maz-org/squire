@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0.6
+**Version:** 1.0.7
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-19
+**Last Refreshed:** 2026-04-20
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -331,9 +331,20 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   agent
 - History forwarded into `ask()` is capped to the most recent 20 non-error
   messages. Real compaction and summarization remain deferred to SQR-12
+- Each assistant message carries `consulted_sources` (jsonb array of agent
+  tool names, added in SQR-98). `persistAssistantOutcome` captures these
+  from the agent's `tool_result` events on every write path (SSE and the
+  plain-form POST fallback), so the `CONSULTED · …` footer reflects real
+  per-answer provenance rather than a hardcoded line. The tool-name →
+  provenance-label map lives in `src/web-ui/consulted-footer.ts` and is
+  pinned to `AgentToolName` so adding a tool to `AGENT_TOOLS` without
+  extending the label map is a typecheck failure. `null` means "no source
+  tools fired" or "pre-SQR-98 row"; both render with the footer hidden
 - Browser streaming contract:
   - `text-delta` appends inert plain text only
-  - terminal `done` carries the sanitized final HTML fragment
+  - terminal `done` carries the sanitized final HTML fragment, the
+    refreshed recent-question rail, and the persisted `consultedSources`
+    for replay
   - the same server-side renderer is used for persisted reloads and final
     post-stream replacement
 
@@ -722,6 +733,8 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-04-20 (v1.0.7):** SQR-98 replaced the hardcoded `CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14` placeholder with real per-answer source persistence. Added the `messages.consulted_sources` jsonb column and wired capture into `persistAssistantOutcome` so every write path (SSE + plain-form POST fallback) records which agent tools fired with `ok:true`. Layout hydrates the footer from the persisted column on historical turns; the SSE `done` event now also carries `consultedSources` so browser replay paths (duplicate `/stream`, reconnects) rebuild the footer without a full page reload. Tool-name → provenance-label map lives in `src/web-ui/consulted-footer.ts`, pinned to `AgentToolName` from `src/agent.ts` so future tool additions can't silently drop from the footer.
 
 - **2026-04-19 (v1.0.6):** SQR-103 broadened the retrieval stack beyond semantic rulebook search. `src/import-scenario-section-books.ts` now parses the printed scenario and section books into a checked-in extract, and `src/seed/seed-scenario-section-books.ts` seeds three new runtime tables: `scenario_book_scenarios`, `section_book_sections`, and `book_references`. The atomic tool surface grew by four deterministic research tools — `findScenario`, `getScenario`, `getSection`, and `followLinks` — and the knowledge agent now prefers that exact path for anchored scenario/section questions before falling back to `searchRules`. Local bootstrap also changed: `npm run seed` now seeds both card data and scenario/section-book data, while `npm run seed:dev` adds the dev user on top.
 - **2026-04-11 (v1.0.5):** SQR-93 shipped canonical selected-message history in the web chat. Added `GET /chat/:conversationId/messages/:messageId` as a conversation-scoped page state that projects one completed user/assistant pair plus a recent-questions rail, with HTMX requests returning the selected transcript and an OOB replacement for `nav.squire-recent`. Follow-up submits from selected-message URLs now preserve the conversation-scoped `POST /chat/:conversationId/messages` target and push the browser back to the canonical conversation URL after submit. QA also locked the flow with a browser-found regression test for selected-message follow-up retargeting.

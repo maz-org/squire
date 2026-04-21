@@ -54,8 +54,18 @@ callback URI is added to the OAuth client in Google Cloud Console.
 For local dev without Google OAuth, the app still starts and serves the
 homepage. Auth routes still need a valid `SESSION_SECRET`, and Google-backed
 login still needs working OAuth credentials. Run `npm run seed:dev` to create a
-test user for authenticated code paths without doing the Google round-trip, but
-note that the browser sign-in UI still follows the real Google OAuth flow.
+test user for authenticated code paths without doing the Google round-trip.
+
+In non-production checkouts running against a managed-local dev DB, `/login`
+also renders a **"Sign in as Dev User (local only)"** button that posts to
+`POST /dev/login` and mints a session for that seeded user directly — no
+Google round-trip. The route is only registered when `NODE_ENV` is
+`development` or `test` AND the resolved `DATABASE_URL` points at a
+managed-local database (both checked in `src/auth/dev-login.ts`); it
+literally does not exist in production. This is the auth bypass Claude
+Code's preview tab relies on, since that sandbox blocks off-localhost
+navigation. See [docs/agent/preview-testing.md](agent/preview-testing.md)
+for the full preview-tab runbook.
 
 The checked-in extracts under `data/extracted/` are committed seed inputs and
 inspection artifacts, not the runtime store. At runtime, Postgres holds three
@@ -577,6 +587,7 @@ src/
 
 ## Changelog
 
+- **2026-04-20:** Documented the dev-only `POST /dev/login` route and the "Sign in as Dev User" button on `/login`. The route is only registered when `NODE_ENV` is `development`/`test` and `DATABASE_URL` resolves to a managed-local database — not a runtime toggle, a registration-time gate. Added a forward link to `docs/agent/preview-testing.md` for the Claude Code preview-tab runbook, since that sandbox is the main reason the bypass exists.
 - **2026-04-19:** SQR-103 documented the scenario/section-book retrieval layer. Local bootstrap now needs both semantic indexing (`npm run index`) and the deterministic book-data seed (`npm run seed`, or `npm run seed:scenario-section-books` by itself). The MCP tool table and project structure now include `find_scenario`, `get_scenario`, `get_section`, `follow_links`, `scenario-section-data.ts`, `import-scenario-section-books.ts`, and the new scenario/section-book tables.
 - **2026-04-08:** SQR-36 — local bootstrap flipped to `npm run seed:dev`, which now runs `npm run seed` and then the new `seed:dev-user` helper. `src/seed/seed-dev-user.ts` upserts a predictable `dev@squire.local` row into `users` via `ON CONFLICT DO NOTHING` (no target, so either `email` or `google_sub` conflicts no-op). CLI wrapper refuses `NODE_ENV=production`. `npm run seed` is now the prod-relevant default.
 - **2026-04-09:** Clarified fresh linked-worktree bootstrap. Authenticated QA needs local dependencies installed plus the full local bootstrap (`npm install`, `docker compose up -d`, migrations, `npm run index`, `npm run seed:dev`) and `SESSION_SECRET`; otherwise the homepage can load while session-backed routes still fail.
