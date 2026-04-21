@@ -5,6 +5,7 @@ import { getDb } from '../db.ts';
 import * as ConversationRepository from '../db/repositories/conversation-repository.ts';
 import * as MessageRepository from '../db/repositories/message-repository.ts';
 import type { Conversation, ConversationMessage } from '../db/repositories/types.ts';
+import { retrievalSourceLabelToFooterLabel } from '../web-ui/consulted-footer.ts';
 
 const HISTORY_LIMIT = 20;
 const RETRY_DELAY_MS = 200;
@@ -165,12 +166,23 @@ async function persistAssistantOutcome(input: {
   const capturedSources: string[] = [];
   const captureOnEvent = async (event: string, data: unknown) => {
     if (event === 'tool_result') {
-      const payload = data as { name?: string; ok?: boolean };
+      const payload = data as { name?: string; ok?: boolean; sourceBooks?: string[] };
       // Require explicit ok === true. Absence-of-failure (ok undefined) is
       // NOT the same as success — a future tool event that forgets to set
       // ok would silently leak a failed source into the footer otherwise.
-      if (payload.ok === true && typeof payload.name === 'string' && payload.name.length > 0) {
-        capturedSources.push(payload.name);
+      if (payload.ok === true) {
+        if (payload.sourceBooks && payload.sourceBooks.length > 0) {
+          // search_rules: store the actual book labels (ToolSourceLabel strings)
+          // so the replay path renders the right books without a mapping step.
+          for (const rawLabel of payload.sourceBooks) {
+            const label = retrievalSourceLabelToFooterLabel(rawLabel);
+            if (label !== null) capturedSources.push(label);
+          }
+        } else if (typeof payload.name === 'string' && payload.name.length > 0) {
+          // All other tools: store the tool name (pre-SQR-105 format).
+          // aggregateSourceLabels maps tool names to labels at render time.
+          capturedSources.push(payload.name);
+        }
       }
     }
     if (input.onEvent) await input.onEvent(event, data);

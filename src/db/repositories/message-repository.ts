@@ -1,7 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
-import type { AgentToolName } from '../../agent.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
 import { messages } from '../schema/conversations.ts';
 import type { ConversationMessage, CreateConversationMessageInput } from './types.ts';
@@ -17,11 +16,10 @@ function toDomain(row: MessageRow): ConversationMessage {
     isError: row.isError,
     responseToMessageId: row.responseToMessageId,
     // Narrow jsonb string[] → AgentToolName[] at the domain boundary.
-    // The write side (persistAssistantOutcome capture wrapper) only ever
-    // persists names from AGENT_TOOLS, so this cast is safe for rows
-    // written by SQR-98+. Pre-SQR-98 rows are NULL and hit the ?? null
-    // branch — no cast applies.
-    consultedSources: (row.consultedSources as AgentToolName[] | null) ?? null,
+    // Post-SQR-105: may contain ToolSourceLabel strings for search_rules hits,
+    // or AgentToolName strings for other tools. Both are plain strings; the
+    // aggregateSourceLabels render helper handles both formats.
+    consultedSources: (row.consultedSources as string[] | null) ?? null,
     createdAt: row.createdAt,
   };
 }

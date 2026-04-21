@@ -284,7 +284,7 @@ describe('squire.js selected-message retargeting', () => {
     expect(row.querySelector('.squire-answer__tool-label')?.textContent).toBe('CONSULTING');
     expect(row.querySelector('.squire-answer__tool-state')?.textContent).toBe('RULEBOOK');
 
-    source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+    source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
     expect(row.querySelector('.squire-answer__tool-label')?.textContent).toBe('CONSULTING');
     expect(row.querySelector('.squire-answer__tool-state')?.textContent).toBe('RULEBOOK');
 
@@ -316,9 +316,9 @@ describe('squire.js selected-message retargeting', () => {
       const { footerEl, source } = bootPendingTranscript();
 
       source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
-      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('tool-start', { id: 'card-index', label: 'CARD INDEX' });
-      source.emit('tool-result', { id: 'card-index', label: 'CARD INDEX', ok: true });
+      source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
 
       expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
@@ -328,9 +328,9 @@ describe('squire.js selected-message retargeting', () => {
     it('dedupes repeated labels and preserves first-seen order', () => {
       const { footerEl, source } = bootPendingTranscript();
 
-      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
-      source.emit('tool-result', { id: 'card-index', label: 'CARD INDEX', ok: true });
-      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
+      source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
+      source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
 
       expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
@@ -339,8 +339,8 @@ describe('squire.js selected-message retargeting', () => {
     it('excludes labels from failed tool calls', () => {
       const { footerEl, source } = bootPendingTranscript();
 
-      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: false });
-      source.emit('tool-result', { id: 'card-index', label: 'CARD INDEX', ok: true });
+      source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: false });
+      source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
 
       expect(footerEl.textContent).toBe('CONSULTED · CARD INDEX');
@@ -351,11 +351,26 @@ describe('squire.js selected-message retargeting', () => {
 
       // follow_links emits label=REFERENCE on the wire — our footer
       // aggregator should treat that as "not a real source".
-      source.emit('tool-result', { id: 'follow_links', label: 'REFERENCE', ok: true });
+      source.emit('tool-result', { id: 'follow_links', labels: ['REFERENCE'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
 
       expect(footerEl.textContent).toBe('');
       expect(footerEl.hidden).toBe(true);
+    });
+
+    it('accumulates multiple labels from a single tool-result (post-SQR-105 search_rules)', () => {
+      const { footerEl, source } = bootPendingTranscript();
+
+      // search_rules hit both the rulebook and section book in one call
+      source.emit('tool-result', {
+        id: 'search_rules',
+        labels: ['RULEBOOK', 'SECTION BOOK'],
+        ok: true,
+      });
+      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+
+      expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · SECTION BOOK');
+      expect(footerEl.hidden).toBe(false);
     });
 
     it('leaves the footer hidden on done when no tools fired', () => {
@@ -371,7 +386,7 @@ describe('squire.js selected-message retargeting', () => {
     it('leaves the footer hidden when the stream errors', () => {
       const { footerEl, source } = bootPendingTranscript();
 
-      source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: true });
+      source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('error', { kind: 'transport', message: 'Trouble connecting.' });
 
       expect(footerEl.hidden).toBe(true);
@@ -428,7 +443,7 @@ describe('squire.js selected-message retargeting', () => {
     const { source, toolsEl } = bootPendingTranscript();
 
     source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
-    source.emit('tool-result', { id: 'search_rules', label: 'RULEBOOK', ok: false });
+    source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: false });
 
     const row = toolsEl.children[0];
     expect(row?.classList.contains('is-error')).toBe(true);
@@ -441,7 +456,7 @@ describe('squire.js selected-message retargeting', () => {
 
     source.emit('text-delta', { delta: 'Monsters cannot loot treasure tiles.' });
     source.emit('tool-start', { id: 'rulebook', label: 'RULEBOOK' });
-    source.emit('tool-result', { id: 'rulebook', label: 'RULEBOOK', ok: true });
+    source.emit('tool-result', { id: 'rulebook', labels: ['RULEBOOK'], ok: true });
 
     expect(toolsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('Monsters cannot loot treasure tiles.');

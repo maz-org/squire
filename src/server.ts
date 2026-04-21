@@ -21,7 +21,11 @@ import {
 
 import { getDb, getWorktreeRuntime } from './db.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
-import { toolSourceLabel, TOOL_SOURCE_FALLBACK_LABEL } from './web-ui/consulted-footer.ts';
+import {
+  toolSourceLabel,
+  TOOL_SOURCE_FALLBACK_LABEL,
+  retrievalSourceLabelToFooterLabel,
+} from './web-ui/consulted-footer.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -877,13 +881,21 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         }
 
         if (event === 'tool_result') {
-          const payload = data as { name?: string; ok?: boolean };
+          const payload = data as { name?: string; ok?: boolean; sourceBooks?: string[] };
           const name = payload.name ?? 'tool';
+          // Use the actual books hit when available (search_rules); otherwise
+          // fall back to the static label for the tool.
+          const labels: string[] =
+            payload.sourceBooks && payload.sourceBooks.length > 0
+              ? payload.sourceBooks
+                  .map(retrievalSourceLabelToFooterLabel)
+                  .filter((l): l is NonNullable<typeof l> => l !== null)
+              : [toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL];
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
               id: buildToolStatusId(name),
-              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+              labels: labels.length > 0 ? labels : [TOOL_SOURCE_FALLBACK_LABEL],
               ok: payload.ok ?? true,
             }),
           });

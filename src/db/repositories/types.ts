@@ -63,8 +63,6 @@ export interface CreateConversationInput {
   creationIdempotencyKey?: string | null;
 }
 
-import type { AgentToolName } from '../../agent.ts';
-
 export interface ConversationMessage {
   id: string;
   conversationId: string;
@@ -84,7 +82,10 @@ export interface ConversationMessage {
    * the write-side only ever inserts tool names from AGENT_TOOLS, which
    * is enforced by the capture wrapper in persistAssistantOutcome.
    */
-  consultedSources: AgentToolName[] | null;
+  // Post-SQR-105: may contain ToolSourceLabel strings ("RULEBOOK", "SECTION BOOK")
+  // for search_rules hits, or AgentToolName strings for all other tools.
+  // aggregateSourceLabels handles both formats.
+  consultedSources: string[] | null;
   createdAt: Date;
 }
 

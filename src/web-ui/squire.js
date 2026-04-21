@@ -255,6 +255,7 @@ function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
 // silently dropped rather than leaked into the UI.
 var KNOWN_CONSULTED_LABELS = {
   RULEBOOK: true,
+  'PUZZLE BOOK': true,
   'CARD INDEX': true,
   'SCENARIO BOOK': true,
   'SECTION BOOK': true,
@@ -285,6 +286,9 @@ var TOOL_NAME_TO_LABEL = {
 
 function toolNameToConsultedLabel(name) {
   if (typeof name !== 'string') return null;
+  // Post-SQR-105: new rows store ToolSourceLabel strings directly in
+  // consultedSources. Pass them through unchanged.
+  if (isKnownConsultedLabel(name)) return name;
   return Object.prototype.hasOwnProperty.call(TOOL_NAME_TO_LABEL, name)
     ? TOOL_NAME_TO_LABEL[name]
     : null;
@@ -466,14 +470,19 @@ function handlePendingTranscript(transcript) {
     // tool calls contribute, only known provenance labels (REFERENCE is the
     // wire-level fallback for utility tools — treat it as "no source"), and
     // the Map preserves insertion order for the render step on `done`.
-    if (payload.ok !== false && isKnownConsultedLabel(payload.label)) {
-      if (!consultedLabels.has(payload.label)) {
-        consultedLabels.set(payload.label, true);
+    // Post-SQR-105: payload.labels is an array (search_rules may return
+    // multiple book labels); all other tools send a single-element array.
+    var resultLabels = Array.isArray(payload.labels) ? payload.labels : [];
+    if (payload.ok !== false) {
+      for (var li = 0; li < resultLabels.length; li += 1) {
+        if (isKnownConsultedLabel(resultLabels[li]) && !consultedLabels.has(resultLabels[li])) {
+          consultedLabels.set(resultLabels[li], true);
+        }
       }
     }
     if (!toolsEl) return;
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
-    renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
+    renderToolStatusRow(row, resultLabels[0] || null, payload.ok === false ? 'error' : 'running');
   });
 
   source.addEventListener('done', function (event) {

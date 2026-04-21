@@ -16,7 +16,9 @@ import { AGENT_TOOLS } from '../src/agent.ts';
 import {
   aggregateSourceLabels,
   formatConsultedFooter,
+  retrievalSourceLabelToFooterLabel,
   TOOL_SOURCE_FALLBACK_LABEL,
+  TOOL_SOURCE_LABEL_VALUES,
   toolSourceLabel,
 } from '../src/web-ui/consulted-footer.ts';
 
@@ -44,13 +46,46 @@ describe('toolSourceLabel', () => {
   });
 });
 
+describe('retrievalSourceLabelToFooterLabel', () => {
+  it.each([
+    ['Rulebook', 'RULEBOOK'],
+    ['Puzzle Book', 'PUZZLE BOOK'],
+    ['Scenario Book 1', 'SCENARIO BOOK'],
+    ['Scenario Book A', 'SCENARIO BOOK'],
+    ['Section Book A', 'SECTION BOOK'],
+    ['Section Book 1', 'SECTION BOOK'],
+  ])('maps %s → %s', (raw, expected) => {
+    expect(retrievalSourceLabelToFooterLabel(raw)).toBe(expected);
+  });
+
+  it('returns null for unrecognised labels', () => {
+    expect(retrievalSourceLabelToFooterLabel('unknown')).toBeNull();
+    expect(retrievalSourceLabelToFooterLabel('')).toBeNull();
+  });
+});
+
 describe('aggregateSourceLabels', () => {
   it('returns an empty list for empty input', () => {
     expect(aggregateSourceLabels([])).toEqual([]);
   });
 
-  it('maps raw tool names to provenance labels', () => {
+  it('maps raw tool names to provenance labels (old format)', () => {
     expect(aggregateSourceLabels(['search_rules'])).toEqual(['RULEBOOK']);
+  });
+
+  it('passes through ToolSourceLabel strings directly (new post-SQR-105 format)', () => {
+    expect(aggregateSourceLabels(['RULEBOOK'])).toEqual(['RULEBOOK']);
+    expect(aggregateSourceLabels(['SECTION BOOK', 'SCENARIO BOOK'])).toEqual([
+      'SECTION BOOK',
+      'SCENARIO BOOK',
+    ]);
+    expect(aggregateSourceLabels(['PUZZLE BOOK'])).toEqual(['PUZZLE BOOK']);
+  });
+
+  it('dedupes across old and new storage formats', () => {
+    // Old row had "search_rules" stored; new row stores "RULEBOOK" — both
+    // should render as a single RULEBOOK entry.
+    expect(aggregateSourceLabels(['search_rules', 'RULEBOOK'])).toEqual(['RULEBOOK']);
   });
 
   it('dedupes labels that come from different tool names in the same family', () => {
@@ -103,19 +138,12 @@ describe('JS ↔ TS label drift guard', () => {
       jsLabels.add((label[1] ?? label[2])!);
     }
 
-    // Collect every label produced by toolSourceLabel across every tool
-    // name in TOOL_SOURCE_LABELS. Null-mapped tools are skipped (they
-    // aren't provenance sources).
-    const tsLabels = new Set<string>();
-    // Derive the tool list from AGENT_TOOLS itself so adding a new tool
-    // without updating squire.js is a test failure — not a silent pass
-    // because the hardcoded list forgot to learn the new name. CodeRabbit
-    // caught the drift hole on 2026-04-21.
-    const toolNames = AGENT_TOOLS.map((tool) => tool.name);
-    for (const name of toolNames) {
-      const label = toolSourceLabel(name);
-      if (label !== null) tsLabels.add(label);
-    }
+    // Post-SQR-105: compare against the full ToolSourceLabel union, not
+    // just the subset reachable via toolSourceLabel(toolName). PUZZLE BOOK
+    // is only surfaced via per-result sourceLabel from search_rules — no
+    // tool name maps to it statically — so deriving tsLabels from tool
+    // names would silently exclude it.
+    const tsLabels = new Set<string>(TOOL_SOURCE_LABEL_VALUES);
 
     expect(jsLabels).toEqual(tsLabels);
     // The fallback label must NEVER appear in the known-labels set — it's
