@@ -37,6 +37,7 @@ process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters
 // now," which is what `shouldRegisterDevLogin` actually inspects.
 const originalNodeEnv = process.env.NODE_ENV;
 const originalTestDatabaseUrl = process.env.TEST_DATABASE_URL;
+const originalSquireDevLogin = process.env.SQUIRE_DEV_LOGIN;
 
 describe('shouldRegisterDevLogin', () => {
   afterEach(() => {
@@ -44,6 +45,8 @@ describe('shouldRegisterDevLogin', () => {
     else process.env.NODE_ENV = originalNodeEnv;
     if (originalTestDatabaseUrl === undefined) delete process.env.TEST_DATABASE_URL;
     else process.env.TEST_DATABASE_URL = originalTestDatabaseUrl;
+    if (originalSquireDevLogin === undefined) delete process.env.SQUIRE_DEV_LOGIN;
+    else process.env.SQUIRE_DEV_LOGIN = originalSquireDevLogin;
   });
 
   it('returns false when NODE_ENV is production, regardless of DB', () => {
@@ -82,10 +85,26 @@ describe('shouldRegisterDevLogin', () => {
     expect(shouldRegisterDevLogin()).toBe(false);
   });
 
-  it('returns true when NODE_ENV is development and DB is a managed-local test DB', () => {
-    // Default TEST_DATABASE_URL under vitest is the managed-local test DB,
-    // so the gate should open. This mirrors the shape of `npm run serve`
-    // pointed at the worktree's dev DB.
+  it('returns false when SQUIRE_DEV_LOGIN is unset, even with development NODE_ENV and managed-local DB', () => {
+    // SQR-106: explicit opt-in required. NODE_ENV + DB alone is not enough —
+    // a shared dev host with NODE_ENV=development and a local Postgres would
+    // otherwise pass those two gates without the operator realising the route
+    // is exposed.
+    delete process.env.SQUIRE_DEV_LOGIN;
+    process.env.NODE_ENV = 'development';
+    delete process.env.TEST_DATABASE_URL;
+    expect(shouldRegisterDevLogin()).toBe(false);
+  });
+
+  it('returns false when SQUIRE_DEV_LOGIN is set to a non-"1" truthy value', () => {
+    process.env.SQUIRE_DEV_LOGIN = 'true';
+    process.env.NODE_ENV = 'development';
+    delete process.env.TEST_DATABASE_URL;
+    expect(shouldRegisterDevLogin()).toBe(false);
+  });
+
+  it('returns true when SQUIRE_DEV_LOGIN=1, NODE_ENV is development, and DB is managed-local', () => {
+    process.env.SQUIRE_DEV_LOGIN = '1';
     process.env.NODE_ENV = 'development';
     delete process.env.TEST_DATABASE_URL;
     expect(shouldRegisterDevLogin()).toBe(true);

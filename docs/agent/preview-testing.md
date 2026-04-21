@@ -46,18 +46,32 @@ The preview sandbox refuses to follow the Google OAuth redirect:
 directly. No round-trip to Google.
 
 Production safety is enforced at registration time by
-`shouldRegisterDevLogin()` in [../../src/auth/dev-login.ts](../../src/auth/dev-login.ts)
-— the route is only attached to the app when `NODE_ENV` is explicitly
-`development` or `test` AND `DATABASE_URL` resolves to a managed-local
-DB. Anything else (unset, empty, `staging`, `production`) fails the
-gate. A same-origin `Origin` header check stands in for CSRF. See the
-module header for the full security argument.
+`shouldRegisterDevLogin()` in [../../src/auth/dev-login.ts](../../src/auth/dev-login.ts).
+The route is only attached to the app when **all three** conditions hold:
 
-If the dev-login button is missing, it means the gate refused to
-register the route on startup. The server only logs a `[dev]` line
-when the route IS live — no log line means either `NODE_ENV` isn't
-`development`/`test` or your DB URL isn't a managed-local one. Check
-`echo $NODE_ENV` and `cat .env | grep DATABASE_URL`.
+1. `SQUIRE_DEV_LOGIN=1` is explicitly set in the environment.
+2. `NODE_ENV` is exactly `development` or `test`.
+3. `DATABASE_URL` resolves to a managed-local DB.
+
+`scripts/preview-serve.sh` exports `SQUIRE_DEV_LOGIN=1` automatically, so
+preview mode works without any extra config. Plain `npm run serve` does
+**not** set it — a developer on a shared/exposed host won't accidentally
+open the route. A same-origin `Origin` header check stands in for CSRF.
+See the module header for the full security argument.
+
+If the dev-login button is missing, the gate refused to register the route
+on startup. The server only logs a `[dev]` line when the route IS live — no
+log line means one of the three conditions failed. Check:
+
+```sh
+echo $SQUIRE_DEV_LOGIN   # must be "1"
+echo $NODE_ENV           # must be "development" or "test"
+cat .env | grep DATABASE_URL
+```
+
+If you're running via `preview-serve.sh` this is handled for you. If running
+`npm run serve` directly, add `SQUIRE_DEV_LOGIN=1` to your `.env` (see
+`.env.example` for the commented-out template).
 
 ## Verify without browser DevTools
 

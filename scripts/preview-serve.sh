@@ -18,4 +18,9 @@ if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
 fi
 
 export PORT="$port"
+# Opt in to the dev-login route (SQUIRE_DEV_LOGIN gate added in SQR-106).
+# preview-serve.sh is the only launcher that sets this — plain `npm run serve`
+# does not, so a developer on a shared/exposed host won't accidentally open
+# the route without knowing they've opted in.
+export SQUIRE_DEV_LOGIN=1
 exec npm run serve
