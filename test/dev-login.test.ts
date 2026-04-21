@@ -100,10 +100,14 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
   beforeEach(async () => {
     const { db } = getDb('server');
     // Wipe any prior dev-user sessions so each test starts clean.
+    // Key off googleSub, not email: the "hand-edited email" regression
+    // test below leaves the email rewritten mid-suite, and the dev-login
+    // route itself treats googleSub as canonical (see src/auth/dev-login.ts).
+    // CodeRabbit caught this on 2026-04-21.
     const existing = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, DEV_USER.email));
+      .where(eq(users.googleSub, DEV_USER.googleSub));
     for (const row of existing) {
       await db.delete(sessions).where(eq(sessions.userId, row.id));
     }

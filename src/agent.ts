@@ -59,9 +59,10 @@ Guidelines:
 
 // `as const satisfies readonly Tool[]` lets us derive `AgentToolName` below
 // as a literal union of the tool names. That union is what powers the
-// compile-time drift guard on `TOOL_SOURCE_LABELS` in src/server.ts —
-// adding a tool here without also extending the label map is a typecheck
-// error, so the consulted-sources footer can never silently drop a tool.
+// compile-time drift guard on `TOOL_SOURCE_LABELS` in
+// src/web-ui/consulted-footer.ts — adding a tool here without also
+// extending the label map is a typecheck error, so the consulted-sources
+// footer can never silently drop a tool.
 export const AGENT_TOOLS = [
   {
     name: 'search_rules',

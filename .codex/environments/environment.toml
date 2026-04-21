@@ -17,6 +17,6 @@ npm run db:migrate:test
 # whole bootstrap. Indexing downloads ~40MB of embedding model on first
 # run. Dev server still comes up in either case; /chat errors until the
 # failing step succeeds.
-npm run seed:dev || echo "[worktree-setup] WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds"
-npm run index || echo "[worktree-setup] WARN: indexing failed — /chat will error until 'npm run index' succeeds"
+npm run seed:dev || echo "[worktree-setup] WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds" >&2
+npm run index || echo "[worktree-setup] WARN: indexing failed — /chat will error until 'npm run index' succeeds" >&2
 '''

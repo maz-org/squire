@@ -226,6 +226,24 @@ afterAll(async () => {
   await shutdownServerPool();
 });
 
+/**
+ * Returns each assistant message's `consulted_sources` jsonb value,
+ * ordered oldest-first. SQR-98 tests repeatedly query this column to
+ * assert the footer-provenance persistence contract — this helper keeps
+ * the query shape in one place so the assertion sites only own what
+ * they actually care about (the expected array of source-lists).
+ */
+async function assistantConsultedSources(): Promise<Array<string[] | null>> {
+  const { db } = getDb('server');
+  const rows = await db.execute(sql`
+    select consulted_sources as "consultedSources"
+    from messages
+    where role = 'assistant'
+    order by created_at asc, id asc
+  `);
+  return rows.rows.map((row) => (row as { consultedSources: string[] | null }).consultedSources);
+}
+
 describe('conversation web backend', () => {
   it('creates a conversation on first message and reload restores ordered history', async () => {
     mockAsk.mockResolvedValueOnce('Loot tokens in your hex are picked up.');
@@ -301,17 +319,7 @@ describe('conversation web backend', () => {
       redirect: 'manual',
     });
     expect(createRes.status).toBe(302);
-
-    const { db } = getDb('server');
-    const rows = await db.execute(sql`
-      select role, consulted_sources as "consultedSources"
-      from messages
-      where role = 'assistant'
-      order by created_at asc, id asc
-    `);
-    expect(rows.rows).toEqual([
-      { role: 'assistant', consultedSources: ['search_rules', 'get_card'] },
-    ]);
+    expect(await assistantConsultedSources()).toEqual([['search_rules', 'get_card']]);
   });
 
   it('excludes failed tool calls from consulted_sources on the non-SSE path', async () => {
@@ -333,14 +341,7 @@ describe('conversation web backend', () => {
       redirect: 'manual',
     });
 
-    const { db } = getDb('server');
-    const rows = await db.execute(sql`
-      select consulted_sources as "consultedSources"
-      from messages
-      where role = 'assistant'
-      order by created_at asc, id asc
-    `);
-    expect(rows.rows).toEqual([{ consultedSources: ['get_card'] }]);
+    expect(await assistantConsultedSources()).toEqual([['get_card']]);
   });
 
   it('retries transient transport errors on the non-SSE path (regression: SQR-98 capture wrapper)', async () => {
@@ -429,14 +430,7 @@ describe('conversation web backend', () => {
       redirect: 'manual',
     });
 
-    const { db } = getDb('server');
-    const rows = await db.execute(sql`
-      select consulted_sources as "consultedSources"
-      from messages
-      where role = 'assistant'
-      order by created_at asc, id asc
-    `);
-    expect(rows.rows).toEqual([{ consultedSources: null }]);
+    expect(await assistantConsultedSources()).toEqual([null]);
   });
 
   it("returns 404 when one user requests another user's conversation URL", async () => {

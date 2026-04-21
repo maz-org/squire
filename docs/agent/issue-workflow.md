@@ -80,3 +80,34 @@ powers filtering and graph traversal.
 **When querying relations,** pass `includeRelations: true` to
 `mcp__claude_ai_Linear__get_issue`. The field is off by default and it's
 easy to mistakenly conclude a repo doesn't use relations when it does.
+
+## Deferred work: always file an issue before merging
+
+When code review, QA, adversarial review, or any other in-flight process
+surfaces something worth fixing but not in the current PR's scope, **file
+a Linear issue for it before the PR merges**. Leaving the item only in
+a PR body note or a commit message buries it — those artifacts aren't
+trackable and drop out of backlog views as soon as the PR lands.
+
+**Default metadata** (don't ask, just apply):
+
+- **Project:** same project as the parent issue being worked on. Look
+  it up via `get_issue` on the parent if it isn't already in context.
+- **Assignee:** `me` (the current user).
+- **Status:** `Todo`.
+- **Team:** inherited from the project (SQR for Squire).
+- **Relations:** link the new issue back to the parent via
+  `relatedTo: ["SQR-XX"]`.
+- **Labels / priority / blockedBy:** leave unset unless there's a
+  specific reason. The user can tune later.
+
+**Still do:**
+
+- Reference the parent issue and the specific file:line in the
+  description so a fresh reviewer has context.
+- Explain the reasoning behind the defer (why out of scope here, what
+  the full fix looks like) so the next engineer doesn't re-derive it.
+
+If there's no parent issue in context (deferrals from standalone code
+review, one-off observations), ask the user for project assignment
+once. Otherwise inherit.
