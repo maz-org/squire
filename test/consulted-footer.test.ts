@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+import { AGENT_TOOLS } from '../src/agent.ts';
 import {
   aggregateSourceLabels,
   formatConsultedFooter,
@@ -106,17 +107,11 @@ describe('JS ↔ TS label drift guard', () => {
     // name in TOOL_SOURCE_LABELS. Null-mapped tools are skipped (they
     // aren't provenance sources).
     const tsLabels = new Set<string>();
-    const toolNames = [
-      'search_rules',
-      'search_cards',
-      'list_card_types',
-      'list_cards',
-      'get_card',
-      'find_scenario',
-      'get_scenario',
-      'get_section',
-      'follow_links',
-    ];
+    // Derive the tool list from AGENT_TOOLS itself so adding a new tool
+    // without updating squire.js is a test failure — not a silent pass
+    // because the hardcoded list forgot to learn the new name. CodeRabbit
+    // caught the drift hole on 2026-04-21.
+    const toolNames = AGENT_TOOLS.map((tool) => tool.name);
     for (const name of toolNames) {
       const label = toolSourceLabel(name);
       if (label !== null) tsLabels.add(label);
@@ -148,23 +143,27 @@ describe('JS ↔ TS label drift guard', () => {
       jsMap.set((entry[1] ?? entry[2])!, entry[3]!);
     }
 
-    const toolNames = [
-      'search_rules',
-      'search_cards',
-      'list_card_types',
-      'list_cards',
-      'get_card',
-      'find_scenario',
-      'get_scenario',
-      'get_section',
-    ];
+    // Derive from AGENT_TOOLS, filtering to the tools that actually map to
+    // a provenance label. Same drift guarantee as the first drift test:
+    // a new tool added to AGENT_TOOLS that should surface in the footer
+    // must also be added to TOOL_NAME_TO_LABEL, or this loop fails.
+    const toolNames = AGENT_TOOLS.map((tool) => tool.name).filter(
+      (name) => toolSourceLabel(name) !== null,
+    );
     for (const name of toolNames) {
       const tsLabel = toolSourceLabel(name);
       expect(jsMap.get(name), `JS TOOL_NAME_TO_LABEL missing mapping for ${name}`).toBe(tsLabel);
     }
-    // follow_links must NOT appear — it's a traversal tool that shouldn't
-    // contribute a provenance label on either side.
-    expect(jsMap.has('follow_links')).toBe(false);
+    // Null-mapped tools (traversal/utility like follow_links) must NOT appear
+    // in the JS map — they aren't provenance sources on either side.
+    for (const tool of AGENT_TOOLS) {
+      if (toolSourceLabel(tool.name) === null) {
+        expect(
+          jsMap.has(tool.name),
+          `${tool.name} maps to null in TS but is present in JS TOOL_NAME_TO_LABEL`,
+        ).toBe(false);
+      }
+    }
   });
 });
 

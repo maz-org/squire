@@ -451,21 +451,27 @@ function handlePendingTranscript(transcript) {
 
   source.addEventListener('tool-result', function (event) {
     var payload = JSON.parse(event.data || '{}');
-    // SQR-98: accumulate provenance labels for the consulted footer. Only
-    // successful tool calls contribute, only known provenance labels
-    // (REFERENCE is the wire-level fallback for utility tools — treat it
-    // as "no source"), and the Map preserves insertion order for the
-    // render step on `done`.
+    // SQR-98: once the answer text has started streaming, any subsequent
+    // tool events are late-arriving stragglers (agent loop finishing
+    // up), not actual sources for this answer. Ignore them both for the
+    // tool-indicator row AND for the consulted-footer accumulator —
+    // otherwise the footer would show stale labels that weren't really
+    // consulted for the answer the user is reading. CodeRabbit caught
+    // the accumulator leak on 2026-04-21.
+    if (seenFirstDelta) {
+      if (toolsEl) clearToolStatusRows(toolsEl, toolEntries);
+      return;
+    }
+    // Accumulate provenance labels for the consulted footer. Only successful
+    // tool calls contribute, only known provenance labels (REFERENCE is the
+    // wire-level fallback for utility tools — treat it as "no source"), and
+    // the Map preserves insertion order for the render step on `done`.
     if (payload.ok !== false && isKnownConsultedLabel(payload.label)) {
       if (!consultedLabels.has(payload.label)) {
         consultedLabels.set(payload.label, true);
       }
     }
     if (!toolsEl) return;
-    if (seenFirstDelta) {
-      clearToolStatusRows(toolsEl, toolEntries);
-      return;
-    }
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
   });

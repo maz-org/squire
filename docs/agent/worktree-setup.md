@@ -37,8 +37,9 @@ Given the app handles isolation, bootstrap is small:
    `squire_<slug>` / `squire_<slug>_test` on first run.
 6. `npm run seed:dev` — upsert card data, scenario/section book records, and
    the dev user used by the `/dev/login` preview-mode bypass. All three
-   seed scripts are idempotent (targetless `ON CONFLICT DO NOTHING`), so
-   re-running on subsequent startups no-ops.
+   seed scripts are idempotent: card + scenario/section seeds upsert by
+   canonical source id, and the dev-user seed uses targetless
+   `ON CONFLICT DO NOTHING`. Re-running on subsequent startups is a no-op.
 7. `npm run index` — extract + embed the Frosthaven PDFs into the per-worktree
    dev DB's vector store. Hash-keyed per source file, so the first run takes a
    minute or two and subsequent runs are an instant "Skipping (already

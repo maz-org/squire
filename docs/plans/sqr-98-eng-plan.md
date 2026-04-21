@@ -318,7 +318,7 @@ All required before merge:
      `'CONSULTED · RULEBOOK · CARD INDEX'`
 
 3. **Persistence round-trip**
-   ([test/chat-conversation-service.test.ts](../../test/) or similar):
+   ([test/conversation.test.ts](../../test/conversation.test.ts) or similar):
    run a turn with a fake agent that calls `search_rules` once and
    `search_cards` twice, assert the persisted message row has
    `consulted_sources = ['search_rules', 'search_cards', 'search_cards']`

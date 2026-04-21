@@ -114,7 +114,7 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
   });
 
   it('creates a session for DEV_USER and sets the signed cookie on same-origin POST', async () => {
-    const res = await app.request('/dev/login', {
+    const res = await app.request('http://localhost:3000/dev/login', {
       method: 'POST',
       headers: {
         origin: 'http://localhost:3000',
@@ -136,7 +136,7 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
   });
 
   it('responds with HX-Redirect when the request is HTMX-driven', async () => {
-    const res = await app.request('/dev/login', {
+    const res = await app.request('http://localhost:3000/dev/login', {
       method: 'POST',
       headers: {
         origin: 'http://localhost:3000',
@@ -150,7 +150,7 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
   });
 
   it('blocks cross-origin POSTs', async () => {
-    const res = await app.request('/dev/login', {
+    const res = await app.request('http://localhost:3000/dev/login', {
       method: 'POST',
       headers: {
         origin: 'http://evil.example.com',
@@ -162,7 +162,7 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
   });
 
   it('blocks a request with no Origin header', async () => {
-    const res = await app.request('/dev/login', {
+    const res = await app.request('http://localhost:3000/dev/login', {
       method: 'POST',
       headers: { host: 'localhost:3000' },
     });
@@ -199,18 +199,23 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
         .where(eq(users.googleSub, DEV_USER.googleSub));
     }
 
-    const res = await app.request('/dev/login', {
-      method: 'POST',
-      headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
-    });
+    try {
+      const res = await app.request('http://localhost:3000/dev/login', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
+      });
 
-    expect(res.status).toBe(302);
-    expect(res.headers.get('location')).toBe('/');
-
-    // Restore canonical email so later tests are unaffected.
-    await db
-      .update(users)
-      .set({ email: DEV_USER.email })
-      .where(eq(users.googleSub, DEV_USER.googleSub));
+      expect(res.status).toBe(302);
+      expect(res.headers.get('location')).toBe('/');
+    } finally {
+      // Restore canonical email even if the request or assertions above
+      // throw, so a failure in this test doesn't leak into later tests
+      // that assume DEV_USER.email is current. CodeRabbit caught this
+      // on 2026-04-21.
+      await db
+        .update(users)
+        .set({ email: DEV_USER.email })
+        .where(eq(users.googleSub, DEV_USER.googleSub));
+    }
   });
 });

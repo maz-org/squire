@@ -66,6 +66,7 @@ const actualLayout =
   await vi.importActual<typeof import('../src/web-ui/layout.ts')>('../src/web-ui/layout.ts');
 
 import { app } from '../src/server.ts';
+import type { AgentToolName } from '../src/agent.ts';
 import type { Session } from '../src/db/repositories/types.ts';
 
 const worldhavenDividerImageUrl =
@@ -1111,7 +1112,7 @@ describe('GET / — SQR-67 stub regions', () => {
     };
 
     function answerWith(
-      consultedSources: string[] | null,
+      consultedSources: AgentToolName[] | null,
       overrides: Record<string, unknown> = {},
     ) {
       return {

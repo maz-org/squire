@@ -47,13 +47,17 @@ directly. No round-trip to Google.
 
 Production safety is enforced at registration time by
 `shouldRegisterDevLogin()` in [../../src/auth/dev-login.ts](../../src/auth/dev-login.ts)
-— the route is only attached to the app when `NODE_ENV !== 'production'`
-AND `DATABASE_URL` resolves to a managed-local DB. A same-origin
-`Origin` header check stands in for CSRF. See the module header for the
-full security argument.
+— the route is only attached to the app when `NODE_ENV` is explicitly
+`development` or `test` AND `DATABASE_URL` resolves to a managed-local
+DB. Anything else (unset, empty, `staging`, `production`) fails the
+gate. A same-origin `Origin` header check stands in for CSRF. See the
+module header for the full security argument.
 
-If the dev-login button is missing, the server startup log should tell
-you why (it prints a `[dev]` warning when the route is registered).
+If the dev-login button is missing, it means the gate refused to
+register the route on startup. The server only logs a `[dev]` line
+when the route IS live — no log line means either `NODE_ENV` isn't
+`development`/`test` or your DB URL isn't a managed-local one. Check
+`echo $NODE_ENV` and `cat .env | grep DATABASE_URL`.
 
 ## Verify without browser DevTools
 

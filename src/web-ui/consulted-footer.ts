@@ -41,7 +41,11 @@ const TOOL_SOURCE_LABELS: Record<AgentToolName, ToolSourceLabel | null> = {
 };
 
 function isKnownAgentToolName(name: string): name is AgentToolName {
-  return name in TOOL_SOURCE_LABELS;
+  // Object.hasOwn ignores the prototype chain — plain `in` would match
+  // inherited properties like '__proto__', 'toString', 'hasOwnProperty',
+  // which would then return `undefined` from TOOL_SOURCE_LABELS and
+  // silently break the `ToolSourceLabel | null` type contract.
+  return Object.hasOwn(TOOL_SOURCE_LABELS, name);
 }
 
 /**

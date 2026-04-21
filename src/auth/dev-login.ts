@@ -68,10 +68,16 @@ export function shouldRegisterDevLogin(): boolean {
 
 function isSameOriginRequest(c: Context): boolean {
   const origin = c.req.header('origin');
-  const host = c.req.header('host');
-  if (!origin || !host) return false;
+  if (!origin) return false;
   try {
-    return new URL(origin).host === host;
+    // Compare full origins (scheme + host + port) against the request URL's
+    // own origin. Comparing origin.host to the Host header alone ignores the
+    // scheme, so `https://localhost:3000` could pass for an `http://localhost:3000`
+    // request — CodeRabbit caught this on 2026-04-21. Using c.req.url's origin
+    // ties the check to what the server actually served, not to a
+    // caller-supplied Host header.
+    const requestOrigin = new URL(c.req.url).origin;
+    return new URL(origin).origin === requestOrigin;
   } catch {
     return false;
   }
