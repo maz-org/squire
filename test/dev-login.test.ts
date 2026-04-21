@@ -52,6 +52,18 @@ describe('shouldRegisterDevLogin', () => {
     expect(shouldRegisterDevLogin()).toBe(false);
   });
 
+  it('returns false when NODE_ENV is unset (deny-list → allowlist hardening)', () => {
+    delete process.env.NODE_ENV;
+    delete process.env.TEST_DATABASE_URL;
+    expect(shouldRegisterDevLogin()).toBe(false);
+  });
+
+  it('returns false when NODE_ENV is an unexpected value (e.g. "staging")', () => {
+    process.env.NODE_ENV = 'staging';
+    delete process.env.TEST_DATABASE_URL;
+    expect(shouldRegisterDevLogin()).toBe(false);
+  });
+
   it('returns false when the resolved DB URL points at a remote host', () => {
     process.env.NODE_ENV = 'development';
     process.env.TEST_DATABASE_URL = 'postgres://user:pw@prod-host.example.com:5432/squire';

@@ -920,6 +920,13 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           loaded.conversation.id,
           refreshedConversation?.messages ?? [loaded.message, assistantMessage],
         ),
+        // SQR-98: send the persisted consulted_sources along with `done` so
+        // the client can rebuild the footer on replay — duplicate /stream
+        // hits, HTMX reconnects, or any path where persistAssistantOutcome
+        // returns an already-persisted row return here with no tool_result
+        // events fired. Without this, the footer would stay hidden on the
+        // reconnected turn until a full page reload.
+        consultedSources: assistantMessage.consultedSources,
       }),
     });
   });

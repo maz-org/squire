@@ -343,6 +343,80 @@ describe('conversation web backend', () => {
     expect(rows.rows).toEqual([{ consultedSources: ['get_card'] }]);
   });
 
+  it('retries transient transport errors on the non-SSE path (regression: SQR-98 capture wrapper)', async () => {
+    // Regression: the SQR-98 capture-emit wrapper is always installed inside
+    // persistAssistantOutcome, which would have silently disabled the
+    // retryable-transport-error path if the retry gate kept checking emit
+    // truthiness. The retry gate now checks input.onEvent === undefined
+    // explicitly so the non-SSE plain-form POST path still retries once
+    // on transient failures. Also asserts capturedSources is reset on retry
+    // so the persisted sources reflect the successful attempt only.
+    const econnreset = Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' });
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      // First attempt: emit a tool event (simulating a partial stream), then
+      // fail with a transient error. The reset hook should drop this source.
+      await options?.emit?.('tool_result', { name: 'search_rules', ok: true });
+      throw econnreset;
+    });
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_result', { name: 'get_card', ok: true });
+      return 'Recovered after retry.';
+    });
+
+    const auth = await createAuthContext();
+    const res = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({ question: 'Retry me', idempotencyKey: 'idem-retry-regression' }),
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledTimes(2);
+
+    const { db } = getDb('server');
+    const rows = await db.execute(sql`
+      select content, consulted_sources as "consultedSources"
+      from messages
+      where role = 'assistant'
+      order by created_at asc, id asc
+    `);
+    expect(rows.rows).toEqual([
+      {
+        content: 'Recovered after retry.',
+        consultedSources: ['get_card'],
+      },
+    ]);
+  });
+
+  it('does NOT retry on the SSE path (regression: partial stream must not be silently re-run)', async () => {
+    const econnreset = Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' });
+    mockAsk.mockImplementationOnce(async () => {
+      throw econnreset;
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({ question: 'SSE no retry', idempotencyKey: 'idem-sse-no-retry' }),
+    });
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    await streamRes.text();
+
+    // Exactly one ask — the SSE path must not silently retry a partial stream.
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+  });
+
   it('leaves consulted_sources NULL when the agent used no tools', async () => {
     mockAsk.mockResolvedValueOnce('Tool-free direct answer.');
 

@@ -41,9 +41,22 @@ import { eq } from 'drizzle-orm';
  * the route in production, even behind a handler-level guard, because route
  * tables are part of the server's attack surface. A non-existent route is
  * strictly safer than a registered one with runtime checks.
+ *
+ * Hardened after a pre-landing adversarial review 2026-04-21 flagged that
+ * the prior `NODE_ENV !== 'production'` gate was a deny-list:
+ *
+ * - Unset or empty NODE_ENV would pass the check
+ * - If the default managed-local DB URL also matched (fresh machine with a
+ *   stray local Postgres instance), the route would register on a host that
+ *   the operator may not have realised was running in dev mode
+ *
+ * This check is now a positive allowlist — `NODE_ENV` must explicitly be
+ * `development` or `test`, and the DB URL must still resolve to a
+ * managed-local name. Both conditions have to hold.
  */
 export function shouldRegisterDevLogin(): boolean {
-  if (process.env.NODE_ENV === 'production') return false;
+  const nodeEnv = process.env.NODE_ENV;
+  if (nodeEnv !== 'development' && nodeEnv !== 'test') return false;
   try {
     return isManagedLocalDatabaseUrl(resolveDatabaseUrl());
   } catch {

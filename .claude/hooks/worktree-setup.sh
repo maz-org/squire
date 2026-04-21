@@ -63,8 +63,10 @@ npm run --silent db:migrate:test
 # hash-keyed per source PDF ("Skipping (already indexed): ..."). First-run in
 # a fresh worktree populates the card/scenario tables and vector store so
 # /chat actually works; subsequent startups are a fast no-op.
-log "seeding card + scenario data"
-npm run --silent seed:dev
+log "seeding card + scenario data (best-effort)"
+if ! npm run --silent seed:dev; then
+  log "WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds"
+fi
 # Indexing is best-effort: the first run downloads Xenova/all-MiniLM-L6-v2
 # (~40MB) to embed the Frosthaven PDFs. Offline, sandboxed, or slow
 # networks would otherwise block the whole bootstrap. /chat won't work

@@ -129,6 +129,43 @@ describe('JS ↔ TS label drift guard', () => {
     expect(jsLabels.has(TOOL_SOURCE_FALLBACK_LABEL)).toBe(false);
     expect(tsLabels.has(TOOL_SOURCE_FALLBACK_LABEL as never)).toBe(false);
   });
+
+  it('squire.js TOOL_NAME_TO_LABEL matches the TS tool-name → label mapping', () => {
+    // The replay path in the done handler maps raw tool names (persisted
+    // in messages.consulted_sources) back to labels without going through
+    // the server. This JS map must stay in sync with TOOL_SOURCE_LABELS
+    // in src/web-ui/consulted-footer.ts. If a new tool is added to
+    // AGENT_TOOLS + TOOL_SOURCE_LABELS but not to TOOL_NAME_TO_LABEL,
+    // replayed turns that used the new tool render a blank footer.
+    const jsSrc = readFileSync(
+      fileURLToPath(new URL('../src/web-ui/squire.js', import.meta.url)),
+      'utf8',
+    );
+    const match = jsSrc.match(/TOOL_NAME_TO_LABEL\s*=\s*\{([\s\S]*?)\};/);
+    expect(match, 'could not locate TOOL_NAME_TO_LABEL in squire.js').not.toBeNull();
+    const jsMap = new Map<string, string>();
+    for (const entry of match![1]!.matchAll(/(?:['"]([^'"]+)['"]|(\w+))\s*:\s*['"]([^'"]+)['"]/g)) {
+      jsMap.set((entry[1] ?? entry[2])!, entry[3]!);
+    }
+
+    const toolNames = [
+      'search_rules',
+      'search_cards',
+      'list_card_types',
+      'list_cards',
+      'get_card',
+      'find_scenario',
+      'get_scenario',
+      'get_section',
+    ];
+    for (const name of toolNames) {
+      const tsLabel = toolSourceLabel(name);
+      expect(jsMap.get(name), `JS TOOL_NAME_TO_LABEL missing mapping for ${name}`).toBe(tsLabel);
+    }
+    // follow_links must NOT appear — it's a traversal tool that shouldn't
+    // contribute a provenance label on either side.
+    expect(jsMap.has('follow_links')).toBe(false);
+  });
 });
 
 describe('formatConsultedFooter', () => {

@@ -266,6 +266,30 @@ function isKnownConsultedLabel(label) {
   );
 }
 
+// Mirrors TOOL_SOURCE_LABELS in src/web-ui/consulted-footer.ts. Only used
+// on the replay path (done event carrying payload.consultedSources for an
+// already-persisted assistant message — duplicate /stream hits, reconnects).
+// The live-stream path aggregates from the tool-result event's `label`
+// field instead. The JS/TS drift test in test/consulted-footer.test.ts
+// keeps both sides honest.
+var TOOL_NAME_TO_LABEL = {
+  search_rules: 'RULEBOOK',
+  search_cards: 'CARD INDEX',
+  list_card_types: 'CARD INDEX',
+  list_cards: 'CARD INDEX',
+  get_card: 'CARD INDEX',
+  find_scenario: 'SCENARIO BOOK',
+  get_scenario: 'SCENARIO BOOK',
+  get_section: 'SECTION BOOK',
+};
+
+function toolNameToConsultedLabel(name) {
+  if (typeof name !== 'string') return null;
+  return Object.prototype.hasOwnProperty.call(TOOL_NAME_TO_LABEL, name)
+    ? TOOL_NAME_TO_LABEL[name]
+    : null;
+}
+
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
   var row = toolEntries[toolId];
   if (row) return row;
@@ -458,12 +482,26 @@ function handlePendingTranscript(transcript) {
     }
     // SQR-98: write the accumulated provenance labels into the footer.
     // Empty map → leave the footer hidden (AC #3: no source data, no lie).
+    //
+    // Replay fallback: if the stream completed without emitting any
+    // tool_result events (e.g., duplicate /stream hit that hit the
+    // idempotent already-persisted path), the server now includes the
+    // row's persisted consultedSources in the done payload so we can
+    // still rebuild the footer. Live-stream labels take precedence — if
+    // consultedLabels has entries, they came from this actual turn.
     if (footerEl) {
+      var labels = [];
       if (consultedLabels.size > 0) {
-        var labels = [];
         consultedLabels.forEach(function (_value, label) {
           labels.push(label);
         });
+      } else if (Array.isArray(payload.consultedSources)) {
+        for (var i = 0; i < payload.consultedSources.length; i += 1) {
+          var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
+          if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
+        }
+      }
+      if (labels.length > 0) {
         footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
         footerEl.hidden = false;
       } else {

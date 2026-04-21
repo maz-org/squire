@@ -118,28 +118,25 @@ async function generateAssistantReply(
   question: string,
   history: HistoryMessage[],
   userId: string,
-  onEvent?: (event: string, data: unknown) => Promise<void>,
+  emit: (event: string, data: unknown) => Promise<void>,
+  options: { retryOnTransportError: boolean; onRetry?: () => void } = {
+    retryOnTransportError: true,
+  },
 ) {
   try {
-    return await ask(question, {
-      history,
-      userId,
-      emit: onEvent,
-    });
+    return await ask(question, { history, userId, emit });
   } catch (err) {
-    if (!isRetryableTransportError(err)) {
-      throw err;
-    }
-    if (onEvent) {
+    if (!isRetryableTransportError(err) || !options.retryOnTransportError) {
       throw err;
     }
 
+    // SQR-98 regression: capture-emit wrapper is always installed so we
+    // can't use emit-truthiness as the "is streaming?" gate any more.
+    // Caller passes the explicit flag and, if retrying, resets any
+    // accumulator state populated by the failed first attempt.
+    options.onRetry?.();
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return ask(question, {
-      history,
-      userId,
-      emit: onEvent,
-    });
+    return ask(question, { history, userId, emit });
   }
 }
 
@@ -169,7 +166,10 @@ async function persistAssistantOutcome(input: {
   const captureOnEvent = async (event: string, data: unknown) => {
     if (event === 'tool_result') {
       const payload = data as { name?: string; ok?: boolean };
-      if ((payload.ok ?? true) !== false && typeof payload.name === 'string') {
+      // Require explicit ok === true. Absence-of-failure (ok undefined) is
+      // NOT the same as success — a future tool event that forgets to set
+      // ok would silently leak a failed source into the footer otherwise.
+      if (payload.ok === true && typeof payload.name === 'string' && payload.name.length > 0) {
         capturedSources.push(payload.name);
       }
     }
@@ -198,6 +198,17 @@ async function persistAssistantOutcome(input: {
         history,
         input.userId,
         captureOnEvent,
+        {
+          // Retry transient transport errors ONLY on the non-streaming path.
+          // On SSE the client has already seen a partial stream; silently
+          // restarting would mix two runs into one DOM update.
+          retryOnTransportError: input.onEvent === undefined,
+          // Failed attempt may have pushed tool names before throwing — reset
+          // so the persisted sources match the successful attempt only.
+          onRetry: () => {
+            capturedSources.length = 0;
+          },
+        },
       );
       const assistantMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,

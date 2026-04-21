@@ -11,9 +11,12 @@ npm install --ignore-scripts
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test
-npm run seed:dev
-# Indexing is best-effort — downloads ~40MB of embedding model on first
-# run, so offline/sandboxed bootstraps shouldn't fail here. Dev server
-# still comes up; /chat errors until `npm run index` succeeds.
+# Seeding + indexing are both best-effort. seed:dev touches card data,
+# scenario/section records, and the dev user — any of which can fail on
+# a flaky network or a parser change without being a reason to abort the
+# whole bootstrap. Indexing downloads ~40MB of embedding model on first
+# run. Dev server still comes up in either case; /chat errors until the
+# failing step succeeds.
+npm run seed:dev || echo "[worktree-setup] WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds"
 npm run index || echo "[worktree-setup] WARN: indexing failed — /chat will error until 'npm run index' succeeds"
 '''
