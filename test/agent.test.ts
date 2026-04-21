@@ -401,37 +401,64 @@ describe('executeToolCall', () => {
   it('dispatches search_rules', async () => {
     const result = await executeToolCall('search_rules', { query: 'loot', topK: 3 });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 3);
-    expect(JSON.parse(result)).toHaveLength(1);
+    expect(JSON.parse(result.content)).toHaveLength(1);
+  });
+
+  it('search_rules populates sourceBooks from per-result sourceLabel', async () => {
+    mockSearchRules.mockResolvedValue([
+      { text: 'Rule A', source: 'rulebook.pdf:1', score: 0.9, sourceLabel: 'Rulebook' },
+      { text: 'Rule B', source: 'section-a.pdf:2', score: 0.8, sourceLabel: 'Section Book A' },
+      { text: 'Rule C', source: 'rulebook.pdf:3', score: 0.7, sourceLabel: 'Rulebook' },
+    ]);
+    const result = await executeToolCall('search_rules', { query: 'loot' });
+    // Deduplicated: Rulebook appeared twice but should be in sourceBooks once.
+    expect(result.sourceBooks).toEqual(['Rulebook', 'Section Book A']);
+  });
+
+  it('search_rules returns sourceBooks: [] when results have no sourceLabel', async () => {
+    mockSearchRules.mockResolvedValue([
+      { text: 'Rule A', source: 'rulebook.pdf:1', score: 0.9 },
+      { text: 'Rule B', source: 'section-a.pdf:2', score: 0.8 },
+    ]);
+    const result = await executeToolCall('search_rules', { query: 'loot' });
+    // Empty array (not undefined) so callers know search ran but found no book labels.
+    expect(result.sourceBooks).toEqual([]);
+  });
+
+  it('search_rules returns sourceBooks: [] when results array is empty', async () => {
+    mockSearchRules.mockResolvedValue([]);
+    const result = await executeToolCall('search_rules', { query: 'loot' });
+    expect(result.sourceBooks).toEqual([]);
   });
 
   it('dispatches search_cards', async () => {
     const result = await executeToolCall('search_cards', { query: 'boots' });
     expect(mockSearchCards).toHaveBeenCalledWith('boots', 6);
-    expect(JSON.parse(result)).toHaveLength(1);
+    expect(JSON.parse(result.content)).toHaveLength(1);
   });
 
   it('dispatches list_card_types', async () => {
     const result = await executeToolCall('list_card_types', {});
     expect(mockListCardTypes).toHaveBeenCalled();
-    expect(JSON.parse(result)).toEqual([{ type: 'items', count: 5 }]);
+    expect(JSON.parse(result.content)).toEqual([{ type: 'items', count: 5 }]);
   });
 
   it('dispatches get_card', async () => {
     const result = await executeToolCall('get_card', { type: 'items', id: 'Test Item' });
     expect(mockGetCard).toHaveBeenCalledWith('items', 'Test Item');
-    expect(JSON.parse(result)).toEqual({ name: 'Test Item' });
+    expect(JSON.parse(result.content)).toEqual({ name: 'Test Item' });
   });
 
   it('returns not found for missing card', async () => {
     mockGetCard.mockReturnValue(null);
     const result = await executeToolCall('get_card', { type: 'items', id: 'missing' });
-    expect(result).toContain('Card not found');
+    expect(result.content).toContain('Card not found');
   });
 
   it('dispatches find_scenario', async () => {
     const result = await executeToolCall('find_scenario', { query: 'scenario 61' });
     expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
-    expect(JSON.parse(result)).toEqual([{ ref: 'gloomhavensecretariat:scenario/061' }]);
+    expect(JSON.parse(result.content)).toEqual([{ ref: 'gloomhavensecretariat:scenario/061' }]);
   });
 
   it('dispatches get_scenario', async () => {
@@ -439,13 +466,13 @@ describe('executeToolCall', () => {
       ref: 'gloomhavensecretariat:scenario/061',
     });
     expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061');
-    expect(JSON.parse(result)).toEqual({ ref: 'gloomhavensecretariat:scenario/061' });
+    expect(JSON.parse(result.content)).toEqual({ ref: 'gloomhavensecretariat:scenario/061' });
   });
 
   it('dispatches get_section', async () => {
     const result = await executeToolCall('get_section', { ref: '67.1' });
     expect(mockGetSection).toHaveBeenCalledWith('67.1');
-    expect(JSON.parse(result)).toEqual({ ref: '67.1' });
+    expect(JSON.parse(result.content)).toEqual({ ref: '67.1' });
   });
 
   it('dispatches follow_links', async () => {
@@ -459,12 +486,12 @@ describe('executeToolCall', () => {
       'gloomhavensecretariat:scenario/061',
       'conclusion',
     );
-    expect(JSON.parse(result)).toEqual([{ toRef: '67.1' }]);
+    expect(JSON.parse(result.content)).toEqual([{ toRef: '67.1' }]);
   });
 
   it('returns error for unknown tool', async () => {
     const result = await executeToolCall('unknown_tool', {});
-    expect(result).toContain('Unknown tool');
+    expect(result.content).toContain('Unknown tool');
   });
 });
 
@@ -522,7 +549,11 @@ describe('runAgentLoop with emit (streaming)', () => {
       name: 'search_rules',
       input: { query: 'loot' },
     });
-    expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules', ok: true });
+    expect(emit).toHaveBeenCalledWith('tool_result', {
+      name: 'search_rules',
+      ok: true,
+      sourceBooks: [],
+    });
     expect(emit).toHaveBeenCalledWith('done', {});
   });
 

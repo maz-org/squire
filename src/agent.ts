@@ -204,30 +204,53 @@ export const AGENT_TOOLS = [
 /** Union of every tool name exposed to the agent. Keeps dependent maps honest. */
 export type AgentToolName = (typeof AGENT_TOOLS)[number]['name'];
 
+export interface ToolCallResult {
+  content: string;
+  /** Distinct provenance labels for the books actually hit — only set by search_rules. */
+  sourceBooks?: string[];
+}
+
 /**
- * Execute a single tool call and return the result as a string.
+ * Execute a single tool call and return the result content plus any per-result
+ * provenance metadata. For search_rules, `sourceBooks` carries the distinct
+ * retrieval source labels (e.g. "Rulebook", "Section Book A") so callers can
+ * surface accurate book provenance instead of a static tool-name label.
  */
 export async function executeToolCall(
   name: string,
   input: Record<string, unknown>,
-): Promise<string> {
+): Promise<ToolCallResult> {
   switch (name) {
     case 'search_rules': {
       const results = await searchRules(
         input.query as string,
         (input.topK as number | undefined) ?? 6,
       );
-      return JSON.stringify(results, null, 2);
+      const seen = new Set<string>();
+      const sourceBooks: string[] = [];
+      for (const r of results) {
+        if (r.sourceLabel && !seen.has(r.sourceLabel)) {
+          seen.add(r.sourceLabel);
+          sourceBooks.push(r.sourceLabel);
+        }
+      }
+      return {
+        content: JSON.stringify(results, null, 2),
+        // Always include the array (even empty) so callers can distinguish
+        // "tool doesn't produce book labels" (undefined) from "search found
+        // nothing" ([]). An empty array means: searched, found no hits.
+        sourceBooks,
+      };
     }
     case 'search_cards': {
       const results = await searchCards(
         input.query as string,
         (input.topK as number | undefined) ?? 6,
       );
-      return JSON.stringify(results, null, 2);
+      return { content: JSON.stringify(results, null, 2) };
     }
     case 'list_card_types': {
-      return JSON.stringify(await listCardTypes(), null, 2);
+      return { content: JSON.stringify(await listCardTypes(), null, 2) };
     }
     case 'list_cards': {
       const filter =
@@ -235,26 +258,26 @@ export async function executeToolCall(
           ? (input.filter as Record<string, unknown>)
           : undefined;
       const cards = await listCards(input.type as CardType, filter);
-      return JSON.stringify(cards, null, 2);
+      return { content: JSON.stringify(cards, null, 2) };
     }
     case 'get_card': {
       const card = await getCard(input.type as CardType, input.id as string);
-      if (!card) return `Card not found: ${input.type}/${input.id}`;
-      return JSON.stringify(card, null, 2);
+      if (!card) return { content: `Card not found: ${input.type}/${input.id}` };
+      return { content: JSON.stringify(card, null, 2) };
     }
     case 'find_scenario': {
       const scenarios = await findScenario(input.query as string);
-      return JSON.stringify(scenarios, null, 2);
+      return { content: JSON.stringify(scenarios, null, 2) };
     }
     case 'get_scenario': {
       const scenario = await getScenario(input.ref as string);
-      if (!scenario) return `Scenario not found: ${input.ref}`;
-      return JSON.stringify(scenario, null, 2);
+      if (!scenario) return { content: `Scenario not found: ${input.ref}` };
+      return { content: JSON.stringify(scenario, null, 2) };
     }
     case 'get_section': {
       const section = await getSection(input.ref as string);
-      if (!section) return `Section not found: ${input.ref}`;
-      return JSON.stringify(section, null, 2);
+      if (!section) return { content: `Section not found: ${input.ref}` };
+      return { content: JSON.stringify(section, null, 2) };
     }
     case 'follow_links': {
       const links = await followLinks(
@@ -262,10 +285,10 @@ export async function executeToolCall(
         input.fromRef as string,
         input.linkType as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
       );
-      return JSON.stringify(links, null, 2);
+      return { content: JSON.stringify(links, null, 2) };
     }
     default:
-      return `Unknown tool: ${name}`;
+      return { content: `Unknown tool: ${name}` };
   }
 }
 
@@ -360,23 +383,29 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
             await emit('tool_call', { name: block.name, input: block.input });
           }
 
-          let result: string;
+          let toolResult: ToolCallResult;
           let isError = false;
           try {
-            result = await executeToolCall(block.name, block.input as Record<string, unknown>);
+            toolResult = await executeToolCall(block.name, block.input as Record<string, unknown>);
           } catch (err) {
-            result = `Tool error: ${err instanceof Error ? err.message : String(err)}`;
+            toolResult = {
+              content: `Tool error: ${err instanceof Error ? err.message : String(err)}`,
+            };
             isError = true;
           }
 
           if (emit) {
-            await emit('tool_result', { name: block.name, ok: !isError });
+            await emit('tool_result', {
+              name: block.name,
+              ok: !isError,
+              sourceBooks: toolResult.sourceBooks,
+            });
           }
 
           toolResults.push({
             type: 'tool_result',
             tool_use_id: block.id,
-            content: result,
+            content: toolResult.content,
             is_error: isError,
           } as ContentBlockParam);
         }

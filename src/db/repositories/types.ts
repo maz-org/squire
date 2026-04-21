@@ -63,8 +63,6 @@ export interface CreateConversationInput {
   creationIdempotencyKey?: string | null;
 }
 
-import type { AgentToolName } from '../../agent.ts';
-
 export interface ConversationMessage {
   id: string;
   conversationId: string;
@@ -73,18 +71,19 @@ export interface ConversationMessage {
   isError: boolean;
   responseToMessageId: string | null;
   /**
-   * SQR-98: tool names (from AGENT_TOOLS in src/agent.ts) that fired with
-   * ok:true during this assistant answer's turn. Rendered as provenance
-   * labels in the tool-call footer. Always null for user messages and
-   * for assistant messages written before SQR-98 landed.
+   * SQR-98 / SQR-105: provenance values for this assistant turn. Always null
+   * for user messages and for assistant messages written before SQR-98.
    *
-   * Typed as AgentToolName[] so a caller that adds a new tool to
-   * AGENT_TOOLS has the domain contract in sync with TOOL_SOURCE_LABELS.
-   * At the DB boundary the column is raw jsonb — toDomain() trusts that
-   * the write-side only ever inserts tool names from AGENT_TOOLS, which
-   * is enforced by the capture wrapper in persistAssistantOutcome.
+   * Two storage formats coexist in the DB:
+   * - Pre-SQR-105 rows: AgentToolName strings (e.g. "search_rules", "get_section")
+   * - Post-SQR-105 rows: ToolSourceLabel strings for search_rules hits
+   *   (e.g. "RULEBOOK", "SECTION BOOK"), and AgentToolName strings for all
+   *   other tools.
+   *
+   * `aggregateSourceLabels` in consulted-footer.ts handles both formats at
+   * render time — no migration is needed.
    */
-  consultedSources: AgentToolName[] | null;
+  consultedSources: string[] | null;
   createdAt: Date;
 }
 

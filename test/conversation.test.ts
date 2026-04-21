@@ -1415,7 +1415,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
+        data: { id: 'rulebook', labels: ['RULEBOOK'], ok: true },
       },
       {
         event: 'done',
@@ -1484,7 +1484,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
+        data: { id: 'rulebook', labels: ['RULEBOOK'], ok: true },
       },
       {
         event: 'tool-start',
@@ -1496,7 +1496,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'rulebook', label: 'RULEBOOK', ok: true },
+        data: { id: 'rulebook', labels: ['RULEBOOK'], ok: true },
       },
       {
         event: 'done',
@@ -1546,7 +1546,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'card-index', label: 'CARD INDEX', ok: true },
+        data: { id: 'card-index', labels: ['CARD INDEX'], ok: true },
       },
       {
         event: 'tool-start',
@@ -1554,7 +1554,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'card-index', label: 'CARD INDEX', ok: true },
+        data: { id: 'card-index', labels: ['CARD INDEX'], ok: true },
       },
       {
         event: 'done',
@@ -1722,7 +1722,7 @@ describe('conversation web backend', () => {
       },
       {
         event: 'tool-result',
-        data: { id: 'rulebook', label: 'RULEBOOK', ok: false },
+        data: { id: 'rulebook', labels: ['RULEBOOK'], ok: false },
       },
       {
         event: 'done',

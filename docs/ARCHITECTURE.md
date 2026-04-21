@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0.7
+**Version:** 1.0.8
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-20
+**Last Refreshed:** 2026-04-21
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -331,15 +331,20 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   agent
 - History forwarded into `ask()` is capped to the most recent 20 non-error
   messages. Real compaction and summarization remain deferred to SQR-12
-- Each assistant message carries `consulted_sources` (jsonb array of agent
-  tool names, added in SQR-98). `persistAssistantOutcome` captures these
-  from the agent's `tool_result` events on every write path (SSE and the
-  plain-form POST fallback), so the `CONSULTED · …` footer reflects real
-  per-answer provenance rather than a hardcoded line. The tool-name →
-  provenance-label map lives in `src/web-ui/consulted-footer.ts` and is
-  pinned to `AgentToolName` so adding a tool to `AGENT_TOOLS` without
-  extending the label map is a typecheck failure. `null` means "no source
-  tools fired" or "pre-SQR-98 row"; both render with the footer hidden
+- Each assistant message carries `consulted_sources` (jsonb array, added
+  in SQR-98). The column stores two formats depending on when the row was
+  written: pre-SQR-105 rows store agent tool names (e.g. `"search_rules"`);
+  post-SQR-105 rows store `ToolSourceLabel` strings (e.g. `"RULEBOOK"`,
+  `"SECTION BOOK"`) for `search_rules` results so the footer shows the
+  actual book that was searched rather than always "RULEBOOK".
+  `persistAssistantOutcome` captures provenance from the agent's
+  `tool_result` events on every write path (SSE and the plain-form POST
+  fallback). `aggregateSourceLabels` in `src/web-ui/consulted-footer.ts`
+  handles both storage formats transparently so no migration is required.
+  The tool-name → label map is pinned to `AgentToolName` so adding a tool
+  to `AGENT_TOOLS` without extending the map is a typecheck failure. `null`
+  means "no source tools fired" or "pre-SQR-98 row"; both render with the
+  footer hidden
 - Browser streaming contract:
   - `text-delta` appends inert plain text only
   - terminal `done` carries the sanitized final HTML fragment, the
@@ -733,6 +738,8 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-04-21 (v1.0.8):** SQR-105 fixed the consulted footer to show the actual book(s) surfaced by `search_rules` rather than always showing "RULEBOOK". `search_rules` searches all four Frosthaven books; the specific books hit are now extracted from the tool result in `agent.ts` and stored as `ToolSourceLabel` strings in `consulted_sources`, bypassing the old static tool-name → label map for that tool. Added "PUZZLE BOOK" as a recognised provenance label (the Puzzle Book was indexed but never attributed). `aggregateSourceLabels` handles both storage formats (old tool-name strings and new label strings) transparently.
 
 - **2026-04-20 (v1.0.7):** SQR-98 replaced the hardcoded `CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14` placeholder with real per-answer source persistence. Added the `messages.consulted_sources` jsonb column and wired capture into `persistAssistantOutcome` so every write path (SSE + plain-form POST fallback) records which agent tools fired with `ok:true`. Layout hydrates the footer from the persisted column on historical turns; the SSE `done` event now also carries `consultedSources` so browser replay paths (duplicate `/stream`, reconnects) rebuild the footer without a full page reload. Tool-name → provenance-label map lives in `src/web-ui/consulted-footer.ts`, pinned to `AgentToolName` from `src/agent.ts` so future tool additions can't silently drop from the footer.
 
