@@ -35,7 +35,8 @@ Given the app handles isolation, bootstrap is small:
 4. Bring up the **one** shared `squire-postgres` container.
 5. Run `db:migrate` and `db:migrate:test` — both are worktree-aware and create
    `squire_<slug>` / `squire_<slug>_test` on first run.
-6. `npm run seed` — upsert card data and scenario/section book records. Both
+6. `npm run seed:dev` — upsert card data, scenario/section book records, and
+   the dev user used by the `/dev/login` preview-mode bypass. All three
    seed scripts are idempotent (targetless `ON CONFLICT DO NOTHING`), so
    re-running on subsequent startups no-ops.
 7. `npm run index` — extract + embed the Frosthaven PDFs into the per-worktree
@@ -70,7 +71,7 @@ npm install --ignore-scripts
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test
-npm run seed
+npm run seed:dev
 npm run index
 '''
 ```
