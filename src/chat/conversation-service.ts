@@ -118,28 +118,25 @@ async function generateAssistantReply(
   question: string,
   history: HistoryMessage[],
   userId: string,
-  onEvent?: (event: string, data: unknown) => Promise<void>,
+  emit: (event: string, data: unknown) => Promise<void>,
+  options: { retryOnTransportError: boolean; onRetry?: () => void } = {
+    retryOnTransportError: true,
+  },
 ) {
   try {
-    return await ask(question, {
-      history,
-      userId,
-      emit: onEvent,
-    });
+    return await ask(question, { history, userId, emit });
   } catch (err) {
-    if (!isRetryableTransportError(err)) {
-      throw err;
-    }
-    if (onEvent) {
+    if (!isRetryableTransportError(err) || !options.retryOnTransportError) {
       throw err;
     }
 
+    // SQR-98 regression: capture-emit wrapper is always installed so we
+    // can't use emit-truthiness as the "is streaming?" gate any more.
+    // Caller passes the explicit flag and, if retrying, resets any
+    // accumulator state populated by the failed first attempt.
+    options.onRetry?.();
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return ask(question, {
-      history,
-      userId,
-      emit: onEvent,
-    });
+    return ask(question, { history, userId, emit });
   }
 }
 
@@ -158,6 +155,26 @@ async function persistAssistantOutcome(input: {
   const history = toHistory(
     priorMessages.filter((message) => message.id !== input.currentUserMessageId),
   );
+
+  // SQR-98: capture consulted tool names for every write path, not just the
+  // SSE one. The plain-form POST fallback (no HTMX / no live stream) still
+  // renders the answer from the DB after redirect, so the footer needs real
+  // provenance there too. Wrapping the caller's onEvent here is the single
+  // chokepoint — any path that produces an assistant message (streaming or
+  // not) now persists sources.
+  const capturedSources: string[] = [];
+  const captureOnEvent = async (event: string, data: unknown) => {
+    if (event === 'tool_result') {
+      const payload = data as { name?: string; ok?: boolean };
+      // Require explicit ok === true. Absence-of-failure (ok undefined) is
+      // NOT the same as success — a future tool event that forgets to set
+      // ok would silently leak a failed source into the footer otherwise.
+      if (payload.ok === true && typeof payload.name === 'string' && payload.name.length > 0) {
+        capturedSources.push(payload.name);
+      }
+    }
+    if (input.onEvent) await input.onEvent(event, data);
+  };
 
   return getDb('server').db.transaction(async (tx) => {
     await tx.execute(sql`
@@ -180,13 +197,29 @@ async function persistAssistantOutcome(input: {
         input.question,
         history,
         input.userId,
-        input.onEvent,
+        captureOnEvent,
+        {
+          // Retry transient transport errors ONLY on the non-streaming path.
+          // On SSE the client has already seen a partial stream; silently
+          // restarting would mix two runs into one DOM update.
+          retryOnTransportError: input.onEvent === undefined,
+          // Failed attempt may have pushed tool names before throwing — reset
+          // so the persisted sources match the successful attempt only.
+          onRetry: () => {
+            capturedSources.length = 0;
+          },
+        },
       );
       const assistantMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,
         role: 'assistant',
         content: answer,
         responseToMessageId: input.currentUserMessageId,
+        // Null when the agent used no source tools. Pre-SQR-98 rows and
+        // tool-free answers both render with footer hidden — indistinguishable
+        // at the render layer, which is correct: both states mean "no
+        // provenance to show."
+        consultedSources: capturedSources.length > 0 ? capturedSources : null,
       });
       await ConversationRepository.touchLastMessageAt(
         tx,

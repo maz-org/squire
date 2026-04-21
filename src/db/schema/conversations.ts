@@ -2,6 +2,7 @@ import {
   type AnyPgColumn,
   boolean,
   index,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -44,6 +45,12 @@ export const messages = pgTable(
     responseToMessageId: uuid('response_to_message_id').references((): AnyPgColumn => messages.id, {
       onDelete: 'cascade',
     }),
+    // SQR-98: tool names (from AGENT_TOOLS in src/agent.ts) that fired with
+    // ok:true during this answer's turn. Rendered into the footer as
+    // provenance labels. Null for user messages and for any assistant
+    // message written before SQR-98 landed (pre-migration rows); both
+    // render with footer hidden.
+    consultedSources: jsonb('consulted_sources').$type<string[] | null>().default(null),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

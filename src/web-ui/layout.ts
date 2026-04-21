@@ -21,6 +21,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { renderAssistantContent } from './assistant-content.ts';
+import { aggregateSourceLabels, formatConsultedFooter } from './consulted-footer.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 import {
@@ -246,6 +247,34 @@ function renderMarkdownSpecimenCard(options: {
   </section>` as HtmlEscapedString;
 }
 
+// SQR-98: single source of truth for the hidden footer slot. The JS in
+// squire.js finds the footer via `answerEl.querySelector('.squire-toolcall')`
+// on every turn — pending, completed with no sources, completed with sources.
+// If the hidden-state markup diverges between the pending skeleton and the
+// render path, squire.js could miss the element and silently fail to
+// populate on `done`. Collapsing to one constant locks the contract.
+const HIDDEN_CONSULTED_FOOTER = html`<footer
+  class="squire-toolcall"
+  aria-live="off"
+  hidden
+></footer>` as HtmlEscapedString;
+
+function renderConsultedFooter(message: ConversationMessage): HtmlEscapedString {
+  // SQR-98: hydrate the consulted-sources footer from persisted tool names
+  // on this message. Null, empty, or all-null-mapped sources → hidden.
+  // Error messages never show a footer (the turn didn't produce an answer).
+  if (message.isError || !message.consultedSources || message.consultedSources.length === 0) {
+    return HIDDEN_CONSULTED_FOOTER;
+  }
+  const labels = aggregateSourceLabels(message.consultedSources);
+  if (labels.length === 0) {
+    return HIDDEN_CONSULTED_FOOTER;
+  }
+  return html`<footer class="squire-toolcall" aria-live="off">
+    ${formatConsultedFooter(labels)}
+  </footer>` as HtmlEscapedString;
+}
+
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   const content = message.isError
     ? (html`<p>${message.content}</p>` as HtmlEscapedString)
@@ -253,7 +282,7 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   return html`<article
     class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
   >
-    ${renderAnswerContent(content)}
+    ${renderAnswerContent(content)} ${renderConsultedFooter(message)}
   </article>` as HtmlEscapedString;
 }
 
@@ -299,6 +328,7 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
     </div>
+    ${HIDDEN_CONSULTED_FOOTER}
   </article>` as HtmlEscapedString;
 }
 
@@ -567,10 +597,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           </main>
           ${!authenticated || !showChatChrome
             ? html``
-            : html`<footer class="squire-toolcall" aria-live="off">
-                  CONSULTED · RULEBOOK P.47 · SCENARIO BOOK §14
-                </footer>
-                ${recentQuestionsNav}
+            : html`${recentQuestionsNav}
                 <form
                   class="squire-input-dock"
                   method="post"
@@ -601,6 +628,16 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
 
 interface LoginPageOptions {
   errorMessage?: string;
+  /**
+   * When true, renders a local-only "Sign in as Dev User" button that
+   * posts to /dev/login. The server only passes true when
+   * `shouldRegisterDevLogin()` is satisfied (non-production + managed-local
+   * DB), so the button is literally not present in production HTML.
+   * Exists because Claude Code's preview sandbox blocks off-localhost
+   * navigation, which means the real Google OAuth round-trip can't
+   * complete inside the preview tab.
+   */
+  devLoginEnabled?: boolean;
 }
 
 const GOOGLE_G_MARK = html`<svg
@@ -666,6 +703,13 @@ export async function renderLoginPage(options: LoginPageOptions = {}): Promise<H
           ${GOOGLE_G_MARK}
           <span>Sign in with Google</span>
         </a>
+        ${options.devLoginEnabled
+          ? html`<form method="post" action="/dev/login" class="squire-auth-page__dev-login">
+              <button type="submit" class="squire-button squire-button--secondary">
+                <span>Sign in as Dev User (local only)</span>
+              </button>
+            </form>`
+          : html``}
         ${options.errorMessage
           ? renderAuthBanner({
               label: "COULDN'T SIGN YOU IN",

@@ -59,4 +59,23 @@ log "running migrations"
 npm run --silent db:migrate
 npm run --silent db:migrate:test
 
+# seed:cards + seed:scenario-section-books are upsert-idempotent, index is
+# hash-keyed per source PDF ("Skipping (already indexed): ..."). First-run in
+# a fresh worktree populates the card/scenario tables and vector store so
+# /chat actually works; subsequent startups are a fast no-op.
+log "seeding card + scenario data (best-effort)"
+if ! npm run --silent seed:dev; then
+  log "WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds"
+fi
+# Indexing is best-effort: the first run downloads Xenova/all-MiniLM-L6-v2
+# (~40MB) to embed the Frosthaven PDFs. Offline, sandboxed, or slow
+# networks would otherwise block the whole bootstrap. /chat won't work
+# until indexing succeeds, but the dev server still comes up — the user
+# gets a clear error message from the chat route, and can rerun `npm run
+# index` manually once network is available.
+log "indexing Frosthaven books (best-effort)"
+if ! npm run --silent index; then
+  log "WARN: indexing failed — /chat will error until 'npm run index' succeeds"
+fi
+
 log "done"

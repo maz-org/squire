@@ -247,6 +247,49 @@ function extractToolFreeAnswerFromSuppressedPreToolDelta(delta) {
   return tail;
 }
 
+// SQR-98: the set of provenance labels that are allowed to appear in the
+// consulted footer. Keep this in sync with ToolSourceLabel in
+// src/web-ui/consulted-footer.ts. REFERENCE is intentionally excluded —
+// it's the wire-level fallback for utility/traversal tools and isn't a
+// real source. Anything else (e.g. a typo or a server-side drift) is
+// silently dropped rather than leaked into the UI.
+var KNOWN_CONSULTED_LABELS = {
+  RULEBOOK: true,
+  'CARD INDEX': true,
+  'SCENARIO BOOK': true,
+  'SECTION BOOK': true,
+};
+
+function isKnownConsultedLabel(label) {
+  return (
+    typeof label === 'string' && Object.prototype.hasOwnProperty.call(KNOWN_CONSULTED_LABELS, label)
+  );
+}
+
+// Mirrors TOOL_SOURCE_LABELS in src/web-ui/consulted-footer.ts. Only used
+// on the replay path (done event carrying payload.consultedSources for an
+// already-persisted assistant message — duplicate /stream hits, reconnects).
+// The live-stream path aggregates from the tool-result event's `label`
+// field instead. The JS/TS drift test in test/consulted-footer.test.ts
+// keeps both sides honest.
+var TOOL_NAME_TO_LABEL = {
+  search_rules: 'RULEBOOK',
+  search_cards: 'CARD INDEX',
+  list_card_types: 'CARD INDEX',
+  list_cards: 'CARD INDEX',
+  get_card: 'CARD INDEX',
+  find_scenario: 'SCENARIO BOOK',
+  get_scenario: 'SCENARIO BOOK',
+  get_section: 'SECTION BOOK',
+};
+
+function toolNameToConsultedLabel(name) {
+  if (typeof name !== 'string') return null;
+  return Object.prototype.hasOwnProperty.call(TOOL_NAME_TO_LABEL, name)
+    ? TOOL_NAME_TO_LABEL[name]
+    : null;
+}
+
 function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
   var row = toolEntries[toolId];
   if (row) return row;
@@ -321,11 +364,20 @@ function handlePendingTranscript(transcript) {
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
-  var footerEl = document.querySelector('.squire-toolcall');
+  // SQR-98: the consulted footer now lives inside the answer element so
+  // each turn owns its own provenance slot. Historical turns render the
+  // footer server-side from messages.consulted_sources; this stream-side
+  // path populates the footer for the live turn only.
+  var footerEl = answerEl.querySelector('.squire-toolcall');
   var toolEntries = {};
   var preToolBuffer = '';
   var seenFirstDelta = false;
   var toolPhaseStarted = false;
+  // Ordered-dedup set of provenance labels collected from tool-result
+  // events during this turn. `Map` preserves insertion order, which we
+  // rely on so the footer reads "CONSULTED · RULEBOOK · CARD INDEX" in
+  // the order the agent actually consulted the sources.
+  var consultedLabels = new Map();
   var source = new window.EventSource(streamUrl);
 
   activeStream = {
@@ -339,7 +391,6 @@ function handlePendingTranscript(transcript) {
     if (activeStream && activeStream.source === source) {
       activeStream = null;
     }
-    if (footerEl) footerEl.hidden = false;
     source.close();
   }
 
@@ -399,12 +450,28 @@ function handlePendingTranscript(transcript) {
   });
 
   source.addEventListener('tool-result', function (event) {
-    if (!toolsEl) return;
+    var payload = JSON.parse(event.data || '{}');
+    // SQR-98: once the answer text has started streaming, any subsequent
+    // tool events are late-arriving stragglers (agent loop finishing
+    // up), not actual sources for this answer. Ignore them both for the
+    // tool-indicator row AND for the consulted-footer accumulator —
+    // otherwise the footer would show stale labels that weren't really
+    // consulted for the answer the user is reading. CodeRabbit caught
+    // the accumulator leak on 2026-04-21.
     if (seenFirstDelta) {
-      clearToolStatusRows(toolsEl, toolEntries);
+      if (toolsEl) clearToolStatusRows(toolsEl, toolEntries);
       return;
     }
-    var payload = JSON.parse(event.data || '{}');
+    // Accumulate provenance labels for the consulted footer. Only successful
+    // tool calls contribute, only known provenance labels (REFERENCE is the
+    // wire-level fallback for utility tools — treat it as "no source"), and
+    // the Map preserves insertion order for the render step on `done`.
+    if (payload.ok !== false && isKnownConsultedLabel(payload.label)) {
+      if (!consultedLabels.has(payload.label)) {
+        consultedLabels.set(payload.label, true);
+      }
+    }
+    if (!toolsEl) return;
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, payload.ok === false ? 'error' : 'running');
   });
@@ -418,6 +485,34 @@ function handlePendingTranscript(transcript) {
     if (contentEl && typeof payload.html === 'string') {
       contentEl.classList.add('squire-markdown');
       contentEl.innerHTML = payload.html;
+    }
+    // SQR-98: write the accumulated provenance labels into the footer.
+    // Empty map → leave the footer hidden (AC #3: no source data, no lie).
+    //
+    // Replay fallback: if the stream completed without emitting any
+    // tool_result events (e.g., duplicate /stream hit that hit the
+    // idempotent already-persisted path), the server now includes the
+    // row's persisted consultedSources in the done payload so we can
+    // still rebuild the footer. Live-stream labels take precedence — if
+    // consultedLabels has entries, they came from this actual turn.
+    if (footerEl) {
+      var labels = [];
+      if (consultedLabels.size > 0) {
+        consultedLabels.forEach(function (_value, label) {
+          labels.push(label);
+        });
+      } else if (Array.isArray(payload.consultedSources)) {
+        for (var i = 0; i < payload.consultedSources.length; i += 1) {
+          var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
+          if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
+        }
+      }
+      if (labels.length > 0) {
+        footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
+        footerEl.hidden = false;
+      } else {
+        footerEl.hidden = true;
+      }
     }
     updateRecentQuestionsNav(payload.recentQuestionsNavHtml);
     finishStream();

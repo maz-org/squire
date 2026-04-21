@@ -20,6 +20,8 @@ import {
 } from './service.ts';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
+import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
+import { toolSourceLabel, TOOL_SOURCE_FALLBACK_LABEL } from './web-ui/consulted-footer.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -280,11 +282,24 @@ function loginRedirectWithError(message: string): string {
   return `/login?${new URLSearchParams({ error: message }).toString()}`;
 }
 
+const DEV_LOGIN_ENABLED = shouldRegisterDevLogin();
+if (DEV_LOGIN_ENABLED) {
+  console.warn(
+    '[dev] POST /dev/login route is registered (NODE_ENV !== production and DATABASE_URL points at a managed-local DB). This route never ships to production.',
+  );
+  registerDevLoginRoute(app);
+}
+
 app.get('/login', optionalSession(), async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   if (c.get('session')) return c.redirect('/');
-  return c.html(await renderLoginPage({ errorMessage: c.req.query('error') }));
+  return c.html(
+    await renderLoginPage({
+      errorMessage: c.req.query('error'),
+      devLoginEnabled: DEV_LOGIN_ENABLED,
+    }),
+  );
 });
 
 app.get('/not-invited', async (c) => c.html(await renderNotInvitedPage(), 403));
@@ -571,23 +586,11 @@ function buildStreamUrl(conversationId: string, messageId: string): string {
 
 // DESIGN.md wants streaming tool metadata to read like ledger provenance
 // ("CONSULTING · RULEBOOK"), not raw implementation names like search_rules.
-function buildToolSourceLabel(name: string): string {
-  switch (name) {
-    case 'search_rules':
-      return 'RULEBOOK';
-    case 'search_cards':
-    case 'list_card_types':
-    case 'list_cards':
-    case 'get_card':
-      return 'CARD INDEX';
-    default:
-      return 'REFERENCE';
-  }
-}
-
+// The provenance mapping itself lives in ./web-ui/consulted-footer.ts so the
+// layout render path can reuse it when hydrating historical answers.
 function buildToolStatusId(name: string): string {
-  const label = buildToolSourceLabel(name);
-  if (label === 'REFERENCE') return name;
+  const label = toolSourceLabel(name);
+  if (label === null) return name;
 
   return label
     .toLowerCase()
@@ -836,6 +839,12 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // Browser SSE semantics are documented in docs/SSE_CONTRACT.md. This route
   // owns the final user-visible ordering guarantees, including the final
   // sanitized-html swap on `done`.
+  //
+  // SQR-98: consulted-source capture lives inside persistAssistantOutcome
+  // now. Every write path (SSE here, plus plain-form POST fallbacks that
+  // call startConversation / appendMessage) runs the same event wrapper
+  // and persists the same sources. This handler just translates agent
+  // events to wire events.
   return streamSSE(c, async (stream) => {
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
@@ -858,7 +867,10 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             event: 'tool-start',
             data: JSON.stringify({
               id: buildToolStatusId(name),
-              label: buildToolSourceLabel(name),
+              // Keep the SSE wire contract: always send a string label
+              // (REFERENCE fallback for utility/traversal tools) so the
+              // tool-indicator UI doesn't need to know about nulls.
+              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
             }),
           });
           return;
@@ -871,7 +883,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             event: 'tool-result',
             data: JSON.stringify({
               id: buildToolStatusId(name),
-              label: buildToolSourceLabel(name),
+              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
               ok: payload.ok ?? true,
             }),
           });
@@ -908,6 +920,13 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           loaded.conversation.id,
           refreshedConversation?.messages ?? [loaded.message, assistantMessage],
         ),
+        // SQR-98: send the persisted consulted_sources along with `done` so
+        // the client can rebuild the footer on replay — duplicate /stream
+        // hits, HTMX reconnects, or any path where persistAssistantOutcome
+        // returns an already-persisted row return here with no tool_result
+        // events fired. Without this, the footer would stay hidden on the
+        // reconnected turn until a full page reload.
+        consultedSources: assistantMessage.consultedSources,
       }),
     });
   });

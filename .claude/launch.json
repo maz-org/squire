@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Squire dev server — port 3000 (OAuth)",
+      "runtimeExecutable": "./scripts/preview-serve.sh",
+      "runtimeArgs": ["3000"],
+      "port": 3000
+    },
+    {
+      "name": "Squire dev server — port 4450 (OAuth)",
+      "runtimeExecutable": "./scripts/preview-serve.sh",
+      "runtimeArgs": ["4450"],
+      "port": 4450
+    },
+    {
+      "name": "Squire dev server — port 5018 (OAuth)",
+      "runtimeExecutable": "./scripts/preview-serve.sh",
+      "runtimeArgs": ["5018"],
+      "port": 5018
+    }
+  ]
+}

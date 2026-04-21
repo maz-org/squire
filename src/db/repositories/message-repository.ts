@@ -1,6 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
+import type { AgentToolName } from '../../agent.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
 import { messages } from '../schema/conversations.ts';
 import type { ConversationMessage, CreateConversationMessageInput } from './types.ts';
@@ -15,6 +16,12 @@ function toDomain(row: MessageRow): ConversationMessage {
     content: row.content,
     isError: row.isError,
     responseToMessageId: row.responseToMessageId,
+    // Narrow jsonb string[] → AgentToolName[] at the domain boundary.
+    // The write side (persistAssistantOutcome capture wrapper) only ever
+    // persists names from AGENT_TOOLS, so this cast is safe for rows
+    // written by SQR-98+. Pre-SQR-98 rows are NULL and hit the ?? null
+    // branch — no cast applies.
+    consultedSources: (row.consultedSources as AgentToolName[] | null) ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -31,6 +38,7 @@ export async function create(
       content: input.content,
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId ?? null,
+      consultedSources: input.consultedSources ?? null,
     })
     .returning();
   return toDomain(row);
@@ -48,6 +56,7 @@ export async function createResponse(
       content: input.content,
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId,
+      consultedSources: input.consultedSources ?? null,
     })
     .onConflictDoNothing({
       target: messages.responseToMessageId,

@@ -226,6 +226,24 @@ afterAll(async () => {
   await shutdownServerPool();
 });
 
+/**
+ * Returns each assistant message's `consulted_sources` jsonb value,
+ * ordered oldest-first. SQR-98 tests repeatedly query this column to
+ * assert the footer-provenance persistence contract — this helper keeps
+ * the query shape in one place so the assertion sites only own what
+ * they actually care about (the expected array of source-lists).
+ */
+async function assistantConsultedSources(): Promise<Array<string[] | null>> {
+  const { db } = getDb('server');
+  const rows = await db.execute(sql`
+    select consulted_sources as "consultedSources"
+    from messages
+    where role = 'assistant'
+    order by created_at asc, id asc
+  `);
+  return rows.rows.map((row) => (row as { consultedSources: string[] | null }).consultedSources);
+}
+
 describe('conversation web backend', () => {
   it('creates a conversation on first message and reload restores ordered history', async () => {
     mockAsk.mockResolvedValueOnce('Loot tokens in your hex are picked up.');
@@ -269,6 +287,150 @@ describe('conversation web backend', () => {
       { role: 'user', content: 'How does looting work?' },
       { role: 'assistant', content: 'Loot tokens in your hex are picked up.' },
     ]);
+  });
+
+  it('persists consulted_sources on the non-SSE plain-form fallback path (SQR-98 regression)', async () => {
+    // Regression guard from Codex review 2026-04-20: the first SQR-98 pass
+    // only populated `messages.consulted_sources` from the SSE handler's
+    // accumulator, so a plain-form POST to /chat (no hx-request header)
+    // persisted NULL even when the agent actually consulted tools. The
+    // footer then stayed blank on the redirected /chat/:id page for a
+    // supported flow. Fix: capture happens inside persistAssistantOutcome,
+    // so every write path produces the same provenance metadata.
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('tool_result', { name: 'search_rules', ok: true });
+      await options?.emit?.('tool_call', { name: 'get_card' });
+      await options?.emit?.('tool_result', { name: 'get_card', ok: true });
+      await options?.emit?.('done', {});
+      return 'Rulebook + card answer.';
+    });
+
+    const auth = await createAuthContext();
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      // No `hx-request: true` — this is the non-SSE plain-form path.
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Two sources please',
+        idempotencyKey: 'idem-non-sse-sources',
+      }),
+      redirect: 'manual',
+    });
+    expect(createRes.status).toBe(302);
+    expect(await assistantConsultedSources()).toEqual([['search_rules', 'get_card']]);
+  });
+
+  it('excludes failed tool calls from consulted_sources on the non-SSE path', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('tool_result', { name: 'search_rules', ok: false });
+      await options?.emit?.('tool_call', { name: 'get_card' });
+      await options?.emit?.('tool_result', { name: 'get_card', ok: true });
+      await options?.emit?.('done', {});
+      return 'Recovered from rulebook failure via cards.';
+    });
+
+    const auth = await createAuthContext();
+    await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({ question: 'Failure fallback', idempotencyKey: 'idem-fail-fallback' }),
+      redirect: 'manual',
+    });
+
+    expect(await assistantConsultedSources()).toEqual([['get_card']]);
+  });
+
+  it('retries transient transport errors on the non-SSE path (regression: SQR-98 capture wrapper)', async () => {
+    // Regression: the SQR-98 capture-emit wrapper is always installed inside
+    // persistAssistantOutcome, which would have silently disabled the
+    // retryable-transport-error path if the retry gate kept checking emit
+    // truthiness. The retry gate now checks input.onEvent === undefined
+    // explicitly so the non-SSE plain-form POST path still retries once
+    // on transient failures. Also asserts capturedSources is reset on retry
+    // so the persisted sources reflect the successful attempt only.
+    const econnreset = Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' });
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      // First attempt: emit a tool event (simulating a partial stream), then
+      // fail with a transient error. The reset hook should drop this source.
+      await options?.emit?.('tool_result', { name: 'search_rules', ok: true });
+      throw econnreset;
+    });
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_result', { name: 'get_card', ok: true });
+      return 'Recovered after retry.';
+    });
+
+    const auth = await createAuthContext();
+    const res = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({ question: 'Retry me', idempotencyKey: 'idem-retry-regression' }),
+      redirect: 'manual',
+    });
+    expect(res.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledTimes(2);
+
+    const { db } = getDb('server');
+    const rows = await db.execute(sql`
+      select content, consulted_sources as "consultedSources"
+      from messages
+      where role = 'assistant'
+      order by created_at asc, id asc
+    `);
+    expect(rows.rows).toEqual([
+      {
+        content: 'Recovered after retry.',
+        consultedSources: ['get_card'],
+      },
+    ]);
+  });
+
+  it('does NOT retry on the SSE path (regression: partial stream must not be silently re-run)', async () => {
+    const econnreset = Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' });
+    mockAsk.mockImplementationOnce(async () => {
+      throw econnreset;
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({ question: 'SSE no retry', idempotencyKey: 'idem-sse-no-retry' }),
+    });
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    await streamRes.text();
+
+    // Exactly one ask — the SSE path must not silently retry a partial stream.
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves consulted_sources NULL when the agent used no tools', async () => {
+    mockAsk.mockResolvedValueOnce('Tool-free direct answer.');
+
+    const auth = await createAuthContext();
+    await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({ question: 'No tools', idempotencyKey: 'idem-no-tools' }),
+      redirect: 'manual',
+    });
+
+    expect(await assistantConsultedSources()).toEqual([null]);
   });
 
   it("returns 404 when one user requests another user's conversation URL", async () => {
@@ -773,6 +935,10 @@ describe('conversation web backend', () => {
         { role: 'assistant', content: 'First answer.' },
       ],
       userId: auth.userId,
+      // SQR-98: persistAssistantOutcome always installs an emit wrapper
+      // that captures consulted_sources, so `ask()` now receives a
+      // function here on every path (SSE or not).
+      emit: expect.any(Function),
     });
   });
 
@@ -922,6 +1088,7 @@ describe('conversation web backend', () => {
     expect(mockAsk).toHaveBeenCalledWith('Stranded question', {
       history: [],
       userId: auth.userId,
+      emit: expect.any(Function),
     });
 
     const storedMessages = await db.execute(sql`
@@ -1173,6 +1340,7 @@ describe('conversation web backend', () => {
         content: `Seed message ${index + 5}`,
       })),
       userId: auth.userId,
+      emit: expect.any(Function),
     });
   });
 

@@ -27,7 +27,18 @@ The browser consumes these SSE event names:
   - Payload: `{ "id": string, "label": string, "ok": boolean }`
 - `done`
   - Marks the stream complete and clears the pending answer UI.
-  - Payload: `{ "html": string, "recentQuestionsNavHtml": string }`
+  - Payload:
+    `{ "html": string, "recentQuestionsNavHtml": string, "consultedSources": string[] | null }`
+  - `consultedSources` carries the persisted per-answer tool names
+    (from `messages.consulted_sources`) so the client can rebuild the
+    "CONSULTED · …" footer on replay paths (duplicate `/stream` hits,
+    HTMX reconnects) where no `tool-result` events fired. `null` means
+    the answer used no source tools, or the row predates SQR-98; the
+    client renders the footer hidden in both cases. The mapping from
+    tool names to provenance labels lives in
+    [../src/web-ui/consulted-footer.ts](../src/web-ui/consulted-footer.ts)
+    and is mirrored in [../src/web-ui/squire.js](../src/web-ui/squire.js);
+    a drift test in `test/consulted-footer.test.ts` keeps both sides honest.
 - `error`
   - Replaces the pending answer UI with an error banner.
   - Payload: `{ "kind": string, "message": string, "recoverable": boolean }`
@@ -49,6 +60,11 @@ For every successful stream:
    `recentQuestionsNavHtml` fragment for the canonical conversation page, so
    the browser can restore or refresh the recent-question rail immediately
    after streaming completes.
+7. The terminal `done` event carries `consultedSources` (persisted tool
+   names for the answer, or `null`). Live streams also accumulate sources
+   from `tool-result` events as they arrive; `consultedSources` is the
+   authoritative replay payload used when no tool events fired during this
+   connection (duplicate `/stream` hit, reconnect, already-persisted row).
 
 Important:
 
