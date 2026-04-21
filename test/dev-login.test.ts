@@ -184,6 +184,22 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
     expect(res.status).toBe(403);
   });
 
+  it('returns 404 at handler time when SQUIRE_DEV_LOGIN is cleared after registration', async () => {
+    // The route was registered at startup (SQUIRE_DEV_LOGIN=1 from vitest.config).
+    // If the env var is cleared post-startup (e.g. a config change), the handler-level
+    // recheck should close the gate without requiring a server restart.
+    delete process.env.SQUIRE_DEV_LOGIN;
+    try {
+      const res = await app.request('http://localhost:3000/dev/login', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
+      });
+      expect(res.status).toBe(404);
+    } finally {
+      process.env.SQUIRE_DEV_LOGIN = '1';
+    }
+  });
+
   it('blocks a request with no Origin header', async () => {
     const res = await app.request('http://localhost:3000/dev/login', {
       method: 'POST',
