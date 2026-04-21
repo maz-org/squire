@@ -85,7 +85,17 @@ export function registerDevLoginRoute(app: Hono): void {
     // repeat calls after the first dev bootstrap.
     await seedDevUser(db);
 
-    const [user] = await db.select().from(users).where(eq(users.email, DEV_USER.email)).limit(1);
+    // Lookup by googleSub, not email. `seedDevUser()` no-ops on conflict
+    // by either `email` or `google_sub`, so the existing row could legitimately
+    // have a hand-edited email while keeping the canonical `DEV_USER.googleSub`.
+    // googleSub is the stable identity (comment in seed-dev-user.ts spells
+    // it out: "fixed, obviously-fake value so it can never collide with a
+    // real Google sub claim").
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.googleSub, DEV_USER.googleSub))
+      .limit(1);
     if (!user) {
       return c.json({ error: 'Dev user not found after seed', status: 500 }, 500);
     }

@@ -149,15 +149,6 @@ async function persistAssistantOutcome(input: {
   userId: string;
   currentUserMessageId: string;
   onEvent?: (event: string, data: unknown) => Promise<void>;
-  /**
-   * SQR-98: caller-owned array that accumulates raw tool names for this
-   * turn (populated by the SSE handler's onEvent on every ok:true
-   * tool_result). We read it after the agent loop returns and persist
-   * it on the assistant message so the footer can rebuild provenance
-   * for historical answers. Null when no caller is tracking sources
-   * (e.g. non-streaming paths like /chat that never render a footer).
-   */
-  consultedSources?: string[] | null;
   failureMessage?: string;
 }): Promise<ConversationMessage> {
   const priorMessages = await MessageRepository.listByConversationId(input.conversationId, {
@@ -167,6 +158,23 @@ async function persistAssistantOutcome(input: {
   const history = toHistory(
     priorMessages.filter((message) => message.id !== input.currentUserMessageId),
   );
+
+  // SQR-98: capture consulted tool names for every write path, not just the
+  // SSE one. The plain-form POST fallback (no HTMX / no live stream) still
+  // renders the answer from the DB after redirect, so the footer needs real
+  // provenance there too. Wrapping the caller's onEvent here is the single
+  // chokepoint — any path that produces an assistant message (streaming or
+  // not) now persists sources.
+  const capturedSources: string[] = [];
+  const captureOnEvent = async (event: string, data: unknown) => {
+    if (event === 'tool_result') {
+      const payload = data as { name?: string; ok?: boolean };
+      if ((payload.ok ?? true) !== false && typeof payload.name === 'string') {
+        capturedSources.push(payload.name);
+      }
+    }
+    if (input.onEvent) await input.onEvent(event, data);
+  };
 
   return getDb('server').db.transaction(async (tx) => {
     await tx.execute(sql`
@@ -189,22 +197,18 @@ async function persistAssistantOutcome(input: {
         input.question,
         history,
         input.userId,
-        input.onEvent,
+        captureOnEvent,
       );
       const assistantMessage = await MessageRepository.createResponse(tx, {
         conversationId: input.conversationId,
         role: 'assistant',
         content: answer,
         responseToMessageId: input.currentUserMessageId,
-        // Persist sources only when the caller tracked them AND the agent
-        // actually used at least one tool. Null stays null so pre-SQR-98
-        // rows and tool-free answers both render with footer hidden —
-        // indistinguishable at the render layer, which is correct: both
-        // states mean "no provenance to show."
-        consultedSources:
-          input.consultedSources && input.consultedSources.length > 0
-            ? input.consultedSources
-            : null,
+        // Null when the agent used no source tools. Pre-SQR-98 rows and
+        // tool-free answers both render with footer hidden — indistinguishable
+        // at the render layer, which is correct: both states mean "no
+        // provenance to show."
+        consultedSources: capturedSources.length > 0 ? capturedSources : null,
       });
       await ConversationRepository.touchLastMessageAt(
         tx,
@@ -332,8 +336,6 @@ export async function streamAssistantTurn(input: {
   userId: string;
   currentUserMessageId: string;
   onEvent: (event: string, data: unknown) => Promise<void>;
-  /** See persistAssistantOutcome — caller-owned source accumulator. */
-  consultedSources?: string[] | null;
   failureMessage?: string;
 }): Promise<ConversationMessage> {
   return persistAssistantOutcome({
@@ -342,7 +344,6 @@ export async function streamAssistantTurn(input: {
     userId: input.userId,
     currentUserMessageId: input.currentUserMessageId,
     onEvent: input.onEvent,
-    consultedSources: input.consultedSources,
     failureMessage: input.failureMessage,
   });
 }

@@ -12,5 +12,8 @@ docker compose up -d
 npm run db:migrate
 npm run db:migrate:test
 npm run seed
-npm run index
+# Indexing is best-effort — downloads ~40MB of embedding model on first
+# run, so offline/sandboxed bootstraps shouldn't fail here. Dev server
+# still comes up; /chat errors until `npm run index` succeeds.
+npm run index || echo "[worktree-setup] WARN: indexing failed — /chat will error until 'npm run index' succeeds"
 '''

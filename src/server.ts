@@ -840,20 +840,17 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // owns the final user-visible ordering guarantees, including the final
   // sanitized-html swap on `done`.
   //
-  // SQR-98: `turnSources` collects the raw tool names for every tool call
-  // that resolved with ok:true during this turn. The list is persisted on
-  // the assistant message (with insertion order preserved, dedup happens
-  // at render time) so historical answers can rebuild the consulted
-  // footer from DB state. Failed tool calls (ok:false) are excluded —
-  // they weren't actually consulted.
-  const turnSources: string[] = [];
+  // SQR-98: consulted-source capture lives inside persistAssistantOutcome
+  // now. Every write path (SSE here, plus plain-form POST fallbacks that
+  // call startConversation / appendMessage) runs the same event wrapper
+  // and persists the same sources. This handler just translates agent
+  // events to wire events.
   return streamSSE(c, async (stream) => {
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
       userId: session.userId,
       currentUserMessageId: loaded.message.id,
-      consultedSources: turnSources,
       onEvent: async (event, data) => {
         if (event === 'text') {
           await stream.writeSSE({
@@ -882,14 +879,12 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         if (event === 'tool_result') {
           const payload = data as { name?: string; ok?: boolean };
           const name = payload.name ?? 'tool';
-          const ok = payload.ok ?? true;
-          if (ok) turnSources.push(name);
           await stream.writeSSE({
             event: 'tool-result',
             data: JSON.stringify({
               id: buildToolStatusId(name),
               label: toolSourceLabel(name) ?? 'REFERENCE',
-              ok,
+              ok: payload.ok ?? true,
             }),
           });
           return;

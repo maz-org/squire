@@ -41,7 +41,10 @@ Given the app handles isolation, bootstrap is small:
 7. `npm run index` — extract + embed the Frosthaven PDFs into the per-worktree
    dev DB's vector store. Hash-keyed per source file, so the first run takes a
    minute or two and subsequent runs are an instant "Skipping (already
-   indexed)" sweep.
+   indexed)" sweep. **Best-effort:** the first run downloads
+   `Xenova/all-MiniLM-L6-v2` (~40MB). Both adapters wrap the command so that a
+   network failure doesn't block the dev server — `/chat` errors until
+   `npm run index` succeeds, but the rest of the app comes up.
 
 Steps 6 and 7 exist so `/chat` works immediately in a fresh worktree without
 a separate manual seed pass. The test DB is intentionally **not** seeded or

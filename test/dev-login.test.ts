@@ -157,4 +157,48 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('finds DEV_USER when email was hand-edited but googleSub still matches', async () => {
+    // Regression: Codex review 2026-04-20 — seedDevUser no-ops on conflict
+    // by either unique key, so a local row with the canonical googleSub
+    // and a hand-edited email is a supported state. The lookup after
+    // seedDevUser() must match on googleSub, not email, or /dev/login
+    // 500s for that dev.
+    const { db } = getDb('server');
+    const [seeded] = await db
+      .select()
+      .from(users)
+      .where(eq(users.googleSub, DEV_USER.googleSub))
+      .limit(1);
+    if (!seeded) {
+      const [created] = await db
+        .insert(users)
+        .values({
+          googleSub: DEV_USER.googleSub,
+          email: 'hand-edited-before-test@example.local',
+          name: DEV_USER.name,
+        })
+        .returning();
+      expect(created).toBeDefined();
+    } else {
+      await db
+        .update(users)
+        .set({ email: 'hand-edited-before-test@example.local' })
+        .where(eq(users.googleSub, DEV_USER.googleSub));
+    }
+
+    const res = await app.request('/dev/login', {
+      method: 'POST',
+      headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
+    });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/');
+
+    // Restore canonical email so later tests are unaffected.
+    await db
+      .update(users)
+      .set({ email: DEV_USER.email })
+      .where(eq(users.googleSub, DEV_USER.googleSub));
+  });
 });
