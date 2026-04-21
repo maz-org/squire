@@ -15,6 +15,16 @@ import type { AgentToolName } from '../agent.ts';
 
 export type ToolSourceLabel = 'RULEBOOK' | 'CARD INDEX' | 'SCENARIO BOOK' | 'SECTION BOOK';
 
+/**
+ * Wire-level label the SSE `tool-start` / `tool-result` events send for
+ * tools that aren't provenance sources (traversal/utility tools like
+ * `follow_links`, or unknown tools). The aggregator in the UI and in the
+ * client skip this value when building the CONSULTED footer. Exporting
+ * the constant keeps server.ts's fallback emission and any downstream
+ * filters in sync with one string.
+ */
+export const TOOL_SOURCE_FALLBACK_LABEL = 'REFERENCE';
+
 // null = a utility/traversal tool that isn't itself a provenance source
 // (the agent used it to navigate, but the actual content it surfaced
 // came from another tool call that already contributed a label).

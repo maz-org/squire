@@ -8,11 +8,14 @@
  * plus the aggregation + formatting helpers used by both the SSE route
  * and the historical-answer render path.
  */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
   aggregateSourceLabels,
   formatConsultedFooter,
+  TOOL_SOURCE_FALLBACK_LABEL,
   toolSourceLabel,
 } from '../src/web-ui/consulted-footer.ts';
 
@@ -73,6 +76,58 @@ describe('aggregateSourceLabels', () => {
       'RULEBOOK',
       'CARD INDEX',
     ]);
+  });
+});
+
+describe('JS ↔ TS label drift guard', () => {
+  // Regression: maintainability-review findings 2026-04-21. The client
+  // aggregator in src/web-ui/squire.js hand-duplicates the ToolSourceLabel
+  // union as `KNOWN_CONSULTED_LABELS`. The TS side gets compile-time
+  // safety via AgentToolName, the JS side is a plain object. This test
+  // keeps the two in sync: if someone adds a new ToolSourceLabel to the
+  // TS union, the JS allowlist must also learn the label, or the live
+  // stream will silently drop the new source from the footer.
+  it("squire.js KNOWN_CONSULTED_LABELS matches consulted-footer.ts's ToolSourceLabel", () => {
+    const jsSrc = readFileSync(
+      fileURLToPath(new URL('../src/web-ui/squire.js', import.meta.url)),
+      'utf8',
+    );
+    const match = jsSrc.match(/KNOWN_CONSULTED_LABELS\s*=\s*(\{[^}]+\})/);
+    expect(match, 'could not locate KNOWN_CONSULTED_LABELS in squire.js').not.toBeNull();
+    const jsLabels = new Set<string>();
+    // Match both quoted keys ('CARD INDEX': true,) and unquoted identifier
+    // keys (RULEBOOK: true,) — squire.js uses both forms depending on
+    // whether the label contains whitespace.
+    for (const label of match![1]!.matchAll(/(?:['"]([^'"]+)['"]|(\w+))\s*:/g)) {
+      jsLabels.add((label[1] ?? label[2])!);
+    }
+
+    // Collect every label produced by toolSourceLabel across every tool
+    // name in TOOL_SOURCE_LABELS. Null-mapped tools are skipped (they
+    // aren't provenance sources).
+    const tsLabels = new Set<string>();
+    const toolNames = [
+      'search_rules',
+      'search_cards',
+      'list_card_types',
+      'list_cards',
+      'get_card',
+      'find_scenario',
+      'get_scenario',
+      'get_section',
+      'follow_links',
+    ];
+    for (const name of toolNames) {
+      const label = toolSourceLabel(name);
+      if (label !== null) tsLabels.add(label);
+    }
+
+    expect(jsLabels).toEqual(tsLabels);
+    // The fallback label must NEVER appear in the known-labels set — it's
+    // the wire-level "not a real source" signal. squire.js's filter drops
+    // it explicitly; this assertion keeps both sides honest.
+    expect(jsLabels.has(TOOL_SOURCE_FALLBACK_LABEL)).toBe(false);
+    expect(tsLabels.has(TOOL_SOURCE_FALLBACK_LABEL as never)).toBe(false);
   });
 });
 

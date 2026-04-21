@@ -21,7 +21,7 @@ import {
 
 import { getDb, getWorktreeRuntime } from './db.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
-import { toolSourceLabel } from './web-ui/consulted-footer.ts';
+import { toolSourceLabel, TOOL_SOURCE_FALLBACK_LABEL } from './web-ui/consulted-footer.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -870,7 +870,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
               // Keep the SSE wire contract: always send a string label
               // (REFERENCE fallback for utility/traversal tools) so the
               // tool-indicator UI doesn't need to know about nulls.
-              label: toolSourceLabel(name) ?? 'REFERENCE',
+              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
             }),
           });
           return;
@@ -883,7 +883,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             event: 'tool-result',
             data: JSON.stringify({
               id: buildToolStatusId(name),
-              label: toolSourceLabel(name) ?? 'REFERENCE',
+              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
               ok: payload.ok ?? true,
             }),
           });

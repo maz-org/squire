@@ -247,24 +247,28 @@ function renderMarkdownSpecimenCard(options: {
   </section>` as HtmlEscapedString;
 }
 
+// SQR-98: single source of truth for the hidden footer slot. The JS in
+// squire.js finds the footer via `answerEl.querySelector('.squire-toolcall')`
+// on every turn — pending, completed with no sources, completed with sources.
+// If the hidden-state markup diverges between the pending skeleton and the
+// render path, squire.js could miss the element and silently fail to
+// populate on `done`. Collapsing to one constant locks the contract.
+const HIDDEN_CONSULTED_FOOTER = html`<footer
+  class="squire-toolcall"
+  aria-live="off"
+  hidden
+></footer>` as HtmlEscapedString;
+
 function renderConsultedFooter(message: ConversationMessage): HtmlEscapedString {
   // SQR-98: hydrate the consulted-sources footer from persisted tool names
   // on this message. Null, empty, or all-null-mapped sources → hidden.
   // Error messages never show a footer (the turn didn't produce an answer).
   if (message.isError || !message.consultedSources || message.consultedSources.length === 0) {
-    return html`<footer
-      class="squire-toolcall"
-      aria-live="off"
-      hidden
-    ></footer>` as HtmlEscapedString;
+    return HIDDEN_CONSULTED_FOOTER;
   }
   const labels = aggregateSourceLabels(message.consultedSources);
   if (labels.length === 0) {
-    return html`<footer
-      class="squire-toolcall"
-      aria-live="off"
-      hidden
-    ></footer>` as HtmlEscapedString;
+    return HIDDEN_CONSULTED_FOOTER;
   }
   return html`<footer class="squire-toolcall" aria-live="off">
     ${formatConsultedFooter(labels)}
@@ -324,7 +328,7 @@ function renderPendingAnswerSkeleton(): HtmlEscapedString {
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
     </div>
-    <footer class="squire-toolcall" aria-live="off" hidden></footer>
+    ${HIDDEN_CONSULTED_FOOTER}
   </article>` as HtmlEscapedString;
 }
 
