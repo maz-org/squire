@@ -236,7 +236,10 @@ export async function executeToolCall(
       }
       return {
         content: JSON.stringify(results, null, 2),
-        sourceBooks: sourceBooks.length > 0 ? sourceBooks : undefined,
+        // Always include the array (even empty) so callers can distinguish
+        // "tool doesn't produce book labels" (undefined) from "search found
+        // nothing" ([]). An empty array means: searched, found no hits.
+        sourceBooks,
       };
     }
     case 'search_cards': {

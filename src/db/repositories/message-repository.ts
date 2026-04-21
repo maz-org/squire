@@ -15,10 +15,9 @@ function toDomain(row: MessageRow): ConversationMessage {
     content: row.content,
     isError: row.isError,
     responseToMessageId: row.responseToMessageId,
-    // Narrow jsonb string[] → AgentToolName[] at the domain boundary.
-    // Post-SQR-105: may contain ToolSourceLabel strings for search_rules hits,
-    // or AgentToolName strings for other tools. Both are plain strings; the
-    // aggregateSourceLabels render helper handles both formats.
+    // Narrow jsonb string[] to string[] at the domain boundary.
+    // Post-SQR-105: may contain ToolSourceLabel strings for search_rules hits
+    // or AgentToolName strings for other tools. aggregateSourceLabels handles both.
     consultedSources: (row.consultedSources as string[] | null) ?? null,
     createdAt: row.createdAt,
   };

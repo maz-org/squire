@@ -415,6 +415,22 @@ describe('executeToolCall', () => {
     expect(result.sourceBooks).toEqual(['Rulebook', 'Section Book A']);
   });
 
+  it('search_rules returns sourceBooks: [] when results have no sourceLabel', async () => {
+    mockSearchRules.mockResolvedValue([
+      { text: 'Rule A', source: 'rulebook.pdf:1', score: 0.9 },
+      { text: 'Rule B', source: 'section-a.pdf:2', score: 0.8 },
+    ]);
+    const result = await executeToolCall('search_rules', { query: 'loot' });
+    // Empty array (not undefined) so callers know search ran but found no book labels.
+    expect(result.sourceBooks).toEqual([]);
+  });
+
+  it('search_rules returns sourceBooks: [] when results array is empty', async () => {
+    mockSearchRules.mockResolvedValue([]);
+    const result = await executeToolCall('search_rules', { query: 'loot' });
+    expect(result.sourceBooks).toEqual([]);
+  });
+
   it('dispatches search_cards', async () => {
     const result = await executeToolCall('search_cards', { query: 'boots' });
     expect(mockSearchCards).toHaveBeenCalledWith('boots', 6);
@@ -533,7 +549,11 @@ describe('runAgentLoop with emit (streaming)', () => {
       name: 'search_rules',
       input: { query: 'loot' },
     });
-    expect(emit).toHaveBeenCalledWith('tool_result', { name: 'search_rules', ok: true });
+    expect(emit).toHaveBeenCalledWith('tool_result', {
+      name: 'search_rules',
+      ok: true,
+      sourceBooks: [],
+    });
     expect(emit).toHaveBeenCalledWith('done', {});
   });
 

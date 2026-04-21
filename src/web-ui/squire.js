@@ -440,6 +440,10 @@ function handlePendingTranscript(transcript) {
     materializeStreamingDelta(delta);
   });
 
+  // tool-start sends a single `label` (static tool-name label, pre-result).
+  // tool-result sends `labels[]` (actual books hit, post-SQR-105). The
+  // asymmetry is intentional: at start time we don't yet know which books
+  // search_rules will hit; at result time we do.
   source.addEventListener('tool-start', function (event) {
     if (!toolsEl) return;
     if (seenFirstDelta) {

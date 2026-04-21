@@ -171,9 +171,10 @@ async function persistAssistantOutcome(input: {
       // NOT the same as success — a future tool event that forgets to set
       // ok would silently leak a failed source into the footer otherwise.
       if (payload.ok === true) {
-        if (payload.sourceBooks && payload.sourceBooks.length > 0) {
-          // search_rules: store the actual book labels (ToolSourceLabel strings)
-          // so the replay path renders the right books without a mapping step.
+        if (payload.sourceBooks !== undefined) {
+          // search_rules path: sourceBooks is always an array (possibly empty).
+          // Empty means the query returned no hits — store nothing so the footer
+          // doesn't falsely claim a book was consulted when retrieval found nothing.
           for (const rawLabel of payload.sourceBooks) {
             const label = retrievalSourceLabelToFooterLabel(rawLabel);
             if (label !== null) capturedSources.push(label);

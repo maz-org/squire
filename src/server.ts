@@ -883,10 +883,11 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         if (event === 'tool_result') {
           const payload = data as { name?: string; ok?: boolean; sourceBooks?: string[] };
           const name = payload.name ?? 'tool';
-          // Use the actual books hit when available (search_rules); otherwise
-          // fall back to the static label for the tool.
+          // Use the actual books hit when available (search_rules always sets
+          // sourceBooks, even to [] on no results); fall back to the static
+          // label for tools that don't set sourceBooks at all.
           const labels: string[] =
-            payload.sourceBooks && payload.sourceBooks.length > 0
+            payload.sourceBooks !== undefined
               ? payload.sourceBooks
                   .map(retrievalSourceLabelToFooterLabel)
                   .filter((l): l is NonNullable<typeof l> => l !== null)
