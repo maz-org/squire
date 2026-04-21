@@ -55,7 +55,11 @@ Guidelines:
 - You may call multiple tools or call the same tool multiple times to gather enough context
 - Answer accurately based on the retrieved data. If the data doesn't contain enough information, say so.
 - Do not invent rules, stats, or item numbers.
-- Be concise but complete.`;
+- Be concise but complete.
+
+Formatting:
+- Use *italics* only for named Frosthaven game terms — mechanics, abilities, conditions, status effects, keyword phrases (e.g., *Muddle*, *Shield 1*, *Retaliate*, *Loot 2*, *Move 3*). The UI renders these as a highlighted rule-term chip, so emphasizing prose words like *not* or *however* turns ordinary stress into a false rule citation. Use **bold** for general emphasis instead.
+- Use > blockquotes when you reproduce literal rulebook text. Don't wrap quoted sentences in italics.`;
 
 // `as const satisfies readonly Tool[]` lets us derive `AgentToolName` below
 // as a literal union of the tool names. That union is what powers the

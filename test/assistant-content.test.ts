@@ -143,4 +143,30 @@ describe('assistant content renderer', () => {
     const html = String(renderAssistantContent('**Bold** answer.'));
     expect(html).toContain('<p><strong>Bold</strong> answer.</p>');
   });
+
+  describe('rule-term highlighter heuristic', () => {
+    // The .squire-markdown em CSS rule applies the amber rule-term
+    // highlighter to every <em>. The intent (DESIGN.md §Rule-term
+    // highlighter) is named game mechanics like *Muddle* or *Shield 1* —
+    // not arbitrary prose emphasis. The renderer tags spans that are
+    // obviously prose with squire-markdown__em-prose so the stylesheet
+    // can opt them out of the highlighter (mirroring the blockquote
+    // override). See SQR-97.
+    it('keeps short single-term emphasis eligible for the rule-term highlighter', () => {
+      const html = renderAssistantContentHtml('You gain *Shield 1* this round.');
+      expect(html).toContain('<em>Shield 1</em>');
+    });
+
+    it('opts multi-word phrase emphasis out of the rule-term highlighter', () => {
+      const html = renderAssistantContentHtml('This is *not just a short phrase* at all.');
+      expect(html).toContain('<em class="squire-markdown__em-prose">not just a short phrase</em>');
+    });
+
+    it('opts emphasis containing sentence punctuation out of the rule-term highlighter', () => {
+      const html = renderAssistantContentHtml('Then *the next paragraph, of course,* applies.');
+      expect(html).toContain(
+        '<em class="squire-markdown__em-prose">the next paragraph, of course,</em>',
+      );
+    });
+  });
 });

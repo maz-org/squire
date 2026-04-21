@@ -1422,6 +1422,21 @@ template#squire-banner-fixtures {
   white-space: nowrap;
 }
 
+/* Prose-emphasis backstop (SQR-97). The renderer in assistant-content.ts
+   tags `<em>` spans that look like prose (long phrases or sentence
+   punctuation) with `squire-markdown__em-prose`. Treat those as readable
+   italic emphasis instead of named rule terms so the amber highlighter
+   keeps meaning "this is a Frosthaven mechanic / condition / ability". */
+.squire-markdown em.squire-markdown__em-prose {
+  font-style: italic;
+  font-weight: inherit;
+  font-variant-caps: normal;
+  letter-spacing: normal;
+  background-image: none;
+  padding: 0;
+  white-space: normal;
+}
+
 /* Answer links keep the same understated ledger voice as citations: sepia
    text, muted underline, wax on interaction. `.cite` remains the richer
    citation primitive with tap-toggle behavior, but safe markdown links
