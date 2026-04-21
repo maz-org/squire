@@ -19,9 +19,10 @@
  *    not even exist in production — you can grep prod logs / the route table
  *    and find nothing.
  *
- * 3. The handler itself re-checks the local-DB gate at request time, so
- *    a config-only change (e.g., setting `DATABASE_URL` to a remote host
- *    after the server started) neutralises the route without a restart.
+ * 3. The handler itself re-checks all three gates via `shouldRegisterDevLogin()`
+ *    at request time, so a config-only change (e.g., clearing `SQUIRE_DEV_LOGIN`
+ *    or setting `DATABASE_URL` to a remote host after the server started)
+ *    neutralises the route without a restart.
  *
  * 4. A same-origin Origin-header check blocks cross-site POSTs. The three-gate
  *    registration check is already enough to keep this route out of any hostile
