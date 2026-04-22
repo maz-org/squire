@@ -157,6 +157,14 @@ describe('assistant content renderer', () => {
       expect(html).toContain('<em>Shield 1</em>');
     });
 
+    // Boundary test: the heuristic opts out only when wordCount > 4. A
+    // four-word span must still pass through as a rule term so accidental
+    // future drift to >= 4 is caught here.
+    it('keeps four-word emphasis eligible for the rule-term highlighter', () => {
+      const html = renderAssistantContentHtml('You may *move up to three* hexes.');
+      expect(html).toContain('<em>move up to three</em>');
+    });
+
     it('opts multi-word phrase emphasis out of the rule-term highlighter', () => {
       const html = renderAssistantContentHtml('This is *not just a short phrase* at all.');
       expect(html).toContain('<em class="squire-markdown__em-prose">not just a short phrase</em>');

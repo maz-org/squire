@@ -1432,6 +1432,7 @@ template#squire-banner-fixtures {
   font-weight: inherit;
   font-variant-caps: normal;
   letter-spacing: normal;
+  color: inherit;
   background-image: none;
   padding: 0;
   white-space: normal;
