@@ -1,8 +1,9 @@
 ---
 type: ADR
-id: "0010"
-title: "Current-turn ledger for multi-turn chat surface"
-status: active
+id: '0010'
+title: 'Current-turn ledger for multi-turn chat surface'
+status: superseded
+superseded_by: '0012'
 date: 2026-04-08
 ---
 
