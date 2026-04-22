@@ -93,6 +93,42 @@ function renderAlignedTableCell(tagName: 'th' | 'td', tokens: Token[], idx: numb
 markdown.renderer.rules.code_inline = (tokens: Token[], idx: number) =>
   `<code>${markdown.utils.escapeHtml(tokens[idx]?.content ?? '')}</code>`;
 
+// `<em>` styling carries semantic weight in Squire: the `.squire-markdown em`
+// rule applies the amber rule-term highlighter, intended for named game
+// mechanics like *Muddle* or *Shield 1* (DESIGN.md §Rule-term highlighter).
+// LLM-authored prose drifts into using `*emphasis*` for general stress
+// ("this is *not* a healing spell"), which then renders as a highlighted
+// pseudo-rule-term. This heuristic backstops the prompt-side guidance
+// (src/agent.ts AGENT_SYSTEM_PROMPT): an `<em>` span that's clearly prose —
+// long phrase or carries sentence punctuation — gets a class the stylesheet
+// uses to revert to plain italic. The blockquote `em` override in styles.css
+// is the same pattern in a different context.
+const RULE_TERM_MAX_WORDS = 4;
+const PROSE_EM_PUNCTUATION = /[.!?,;:]/;
+const PROSE_EM_CLASS = 'squire-markdown__em-prose';
+
+function emInnerText(tokens: Token[], openIdx: number): string {
+  const open = tokens[openIdx];
+  if (!open) return '';
+  let text = '';
+  for (let i = openIdx + 1; i < tokens.length; i += 1) {
+    const t = tokens[i];
+    if (!t) break;
+    if (t.type === 'em_close' && t.level === open.level) break;
+    if (typeof t.content === 'string') text += t.content;
+  }
+  return text;
+}
+
+function isProseEm(text: string): boolean {
+  if (PROSE_EM_PUNCTUATION.test(text)) return true;
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  return wordCount > RULE_TERM_MAX_WORDS;
+}
+
+markdown.renderer.rules.em_open = (tokens: Token[], idx: number) =>
+  isProseEm(emInnerText(tokens, idx)) ? `<em class="${PROSE_EM_CLASS}">` : '<em>';
+
 markdown.renderer.rules.fence = (tokens: Token[], idx: number) =>
   `<pre><code>${markdown.utils.escapeHtml(tokens[idx]?.content ?? '')}</code></pre>`;
 

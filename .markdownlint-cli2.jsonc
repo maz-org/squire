@@ -1,7 +1,11 @@
 {
   "config": {
     "MD013": false,
-    "MD024": false,
+    // Keep MD024 enabled but only flag duplicate sibling headings. Lets
+    // CHANGELOG.md repeat `### Fixed` / `### Added` under each version
+    // (Keep a Changelog format) without globally suppressing duplicate-
+    // heading detection in regular docs.
+    "MD024": { "siblings_only": true },
     "MD033": false,
     "MD036": false
   }

@@ -56,7 +56,10 @@ recent-questions rail, consulted footer, input dock, or drop cap treatment.
 - Strong emphasis: render as `<strong>` with slightly heavier body emphasis,
   not a new color.
 - Emphasis: render as `<em>` using the existing small-caps amber
-  rule-term highlight.
+  rule-term highlight. Spans that look like prose — more than four words or
+  containing sentence punctuation (`. ! ? , ; :`) — are tagged with
+  `squire-markdown__em-prose` and revert to plain italic so the highlighter
+  keeps meaning "named Frosthaven term". See SQR-97.
 - Unordered lists: render as `<ul><li>` with standard disc markers and
   tightened ledger spacing.
 - Ordered lists: render as `<ol><li>` with decimal markers and the same list
@@ -86,6 +89,12 @@ recent-questions rail, consulted footer, input dock, or drop cap treatment.
   but retain the richer tap-toggle behavior from the ledger answer design.
 - Blockquote emphasis: quoted passages should wrap and read like quotations,
   not inherit the amber small-caps rule-term highlighter.
+- Prose emphasis (`squire-markdown__em-prose`): the `em_open` renderer in
+  `src/web-ui/assistant-content.ts` walks the inline tokens and adds this
+  class when the span is longer than four words or contains sentence
+  punctuation. The stylesheet then reverts the span to plain italic. The
+  agent system prompt (`src/agent.ts`) reinforces the convention — `*term*`
+  is for named game mechanics, `**bold**` is for general stress.
 - First paragraph: the first top-level `<p>` inside a
   `.squire-answer .squire-markdown` surface is eligible for the Fraunces
   wax-red drop cap, whether or not the answer opens with a preceding heading,

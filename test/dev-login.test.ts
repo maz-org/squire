@@ -19,7 +19,7 @@
  * want (route is live while the test suite runs against the local DB).
  */
 
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { app } from '../src/server.ts';
 import { getDb } from '../src/db.ts';
@@ -27,6 +27,7 @@ import { DEV_USER } from '../src/seed/seed-dev-user.ts';
 import { sessions, users } from '../src/db/schema/core.ts';
 import { eq } from 'drizzle-orm';
 import { shouldRegisterDevLogin } from '../src/auth/dev-login.ts';
+import { resetTestDb, setupTestDb } from './helpers/db.ts';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
@@ -115,21 +116,20 @@ describe('POST /dev/login (local DB + dev NODE_ENV)', () => {
   // These tests assume the route is registered (the registration gate
   // ran at module-load time with NODE_ENV unset, DATABASE_URL pointing
   // at the managed-local test DB — see resolveDatabaseUrl).
+  //
+  // DB hygiene: use the standard `setupTestDb`/`resetTestDb` pattern so
+  // every test (and every `npm run check` run) starts with an empty
+  // `users` + `sessions` table. The earlier per-file approach only
+  // pruned sessions for the current dev-user row, which let the row
+  // itself accumulate across runs and made the "hand-edited email"
+  // regression test below trip a `users_email_unique` violation when
+  // the suite ran twice in a row (SQR-97 follow-up).
+  beforeAll(async () => {
+    await setupTestDb();
+  });
 
   beforeEach(async () => {
-    const { db } = getDb('server');
-    // Wipe any prior dev-user sessions so each test starts clean.
-    // Key off googleSub, not email: the "hand-edited email" regression
-    // test below leaves the email rewritten mid-suite, and the dev-login
-    // route itself treats googleSub as canonical (see src/auth/dev-login.ts).
-    // CodeRabbit caught this on 2026-04-21.
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.googleSub, DEV_USER.googleSub));
-    for (const row of existing) {
-      await db.delete(sessions).where(eq(sessions.userId, row.id));
-    }
+    await resetTestDb();
   });
 
   afterAll(() => {
