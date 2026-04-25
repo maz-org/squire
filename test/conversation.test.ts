@@ -581,6 +581,47 @@ describe('conversation web backend', () => {
     expect(page).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
   });
 
+  it('does NOT render a pending skeleton when the latest turn is an error assistant reply (SQR-108 regression)', async () => {
+    // Pre-PR latent bug: the GET handler keyed only on "is there a latest
+    // user message" and always rendered a stream URL — so loading a
+    // finalized conversation whose final turn errored would re-attach an
+    // EventSource and re-trigger the SSE error path on every page load.
+    // Error assistant rows are persisted as `role: 'assistant', isError: true`
+    // with `responseToMessageId` set to the user message they answered;
+    // computePendingStreamUrl in src/server.ts must treat that as a reply
+    // and skip the skeleton.
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Will this fail?',
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: "I hit an error and couldn't answer that. Please try again.",
+      isError: true,
+      responseToMessageId: userMessage.id,
+    });
+
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000/chat/${conversation.id}`);
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    expect(page).not.toMatch(/squire-answer--pending/);
+    expect(page).not.toMatch(/data-stream-url=/);
+    // The error reply is still visible in the transcript.
+    expect(page).toContain('I hit an error and couldn&#39;t answer that. Please try again.');
+  });
+
   it('renders the canonical selected-message route as an HTMX fragment', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [

@@ -602,6 +602,28 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     expect(body).not.toMatch(/squire-answer--pending/);
     expect(body).not.toMatch(/data-stream-url/);
   });
+
+  it('still renders the live-region container when messages is empty (so beforeend appends are announced)', () => {
+    // ADR 0012 D-5: the transcript IS the permanent live-region container.
+    // It must exist on initial page load before any turns have been
+    // appended — otherwise the FIRST `hx-swap=beforeend` append misses
+    // its live-region announcement on screen readers that key off
+    // container registration time.
+    const body = String(
+      actualLayout.renderConversationTranscript({
+        conversationId: 'conv-empty',
+        messages: [],
+      }),
+    );
+
+    expect(body).toMatch(
+      /<section[^>]*class="squire-transcript"[^>]*role="log"[^>]*aria-live="polite"/,
+    );
+    expect(body).toContain('data-conversation-id="conv-empty"');
+    expect(body).not.toMatch(/<article/);
+    expect(body).not.toMatch(/squire-answer--pending/);
+    expect(body).not.toMatch(/squire-empty/);
+  });
 });
 
 describe('selected-message rendering helpers', () => {

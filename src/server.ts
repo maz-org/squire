@@ -616,6 +616,32 @@ async function readQuestionForm(
   };
 }
 
+// ADR 0012: a "pending" turn means the latest persisted user message has
+// no assistant response yet (in-flight stream, or a stranded retry the
+// user just navigated to). When that's the case, the conversation page
+// renders the skeleton answer for that user message and squire.js
+// attaches an EventSource to the stream URL.
+//
+// Returning undefined when an assistant reply already exists fixes a
+// pre-PR latent bug — the old code generated a stream URL for every
+// latest user message regardless of whether it had been answered, so
+// reloading a finalized conversation would re-attach a stream and
+// re-trigger the SSE error path on a persisted error reply. Error
+// assistant rows count as a reply because they're persisted as
+// `role: 'assistant'` with `responseToMessageId` set.
+function computePendingStreamUrl(
+  messages: Array<{ id: string; role: 'user' | 'assistant'; responseToMessageId?: string | null }>,
+  conversationId: string,
+): string | undefined {
+  const latestUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+  if (!latestUserMessage) return undefined;
+  const hasAssistantReply = messages.some(
+    (m) => m.role === 'assistant' && m.responseToMessageId === latestUserMessage.id,
+  );
+  if (hasAssistantReply) return undefined;
+  return buildStreamUrl(conversationId, latestUserMessage.id);
+}
+
 app.get('/chat/:conversationId', async (c) => {
   const session = c.get('session')!;
   const loaded = await loadConversation({
@@ -624,10 +650,6 @@ app.get('/chat/:conversationId', async (c) => {
   });
   if (!loaded) return c.notFound();
 
-  // ADR 0012: a "pending" turn means the latest persisted user message has
-  // no assistant response yet (in-flight stream, or a stranded retry the
-  // user just navigated to). The transcript renders the skeleton answer
-  // for that user message and squire.js attaches an EventSource.
   const pendingStreamUrl = computePendingStreamUrl(loaded.messages, loaded.conversation.id);
 
   c.header('Cache-Control', 'no-store');
@@ -642,19 +664,6 @@ app.get('/chat/:conversationId', async (c) => {
     }),
   );
 });
-
-function computePendingStreamUrl(
-  messages: Array<{ id: string; role: 'user' | 'assistant'; responseToMessageId?: string | null }>,
-  conversationId: string,
-): string | undefined {
-  const latestUserMessage = [...messages].reverse().find((m) => m.role === 'user');
-  if (!latestUserMessage) return undefined;
-  const hasAssistantReply = messages.some(
-    (m) => m.role === 'assistant' && m.responseToMessageId === latestUserMessage.id,
-  );
-  if (hasAssistantReply) return undefined;
-  return buildStreamUrl(conversationId, latestUserMessage.id);
-}
 
 app.get('/chat/:conversationId/messages/:messageId', async (c) => {
   const session = c.get('session')!;

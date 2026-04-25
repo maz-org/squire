@@ -185,9 +185,22 @@ function runSquireScript(pathname: string): Record<string, string> {
 function bootPendingTranscript() {
   const listeners = new Map<string, Array<() => void>>();
 
+  // SQR-108: setFormPendingState writes to form.dataset and reads back
+  // form.querySelector('input[name="question"]'/'button[type="submit"]'),
+  // so the fake form needs both. We don't care about the input/button
+  // pendingState transitions in these tests — just give them no-op
+  // setAttribute/removeAttribute so the lock+unlock path doesn't blow up.
+  const noopElement = {
+    setAttribute() {},
+    removeAttribute() {},
+    textContent: '',
+  };
   const form = {
     setAttribute() {},
-    querySelector() {
+    dataset: {} as Record<string, string>,
+    querySelector(selector: string) {
+      if (selector === 'input[name="question"]') return noopElement;
+      if (selector === 'button[type="submit"]') return noopElement;
       return null;
     },
   };
@@ -252,6 +265,14 @@ function bootPendingTranscript() {
       scrollY: 0,
       innerHeight: 0,
       scrollTo: () => {},
+      // SQR-108: the `done` handler uses requestAnimationFrame to
+      // wrap the streamed→final-HTML swap in aria-busy. Run callbacks
+      // synchronously in tests so the assertions on contentEl /
+      // footerEl don't need to wait for paint.
+      requestAnimationFrame: (cb: () => void) => {
+        cb();
+        return 0;
+      },
     },
   });
 
@@ -267,6 +288,7 @@ function bootPendingTranscript() {
     answerEl,
     contentEl,
     footerEl,
+    form,
     skeletonEl,
     source,
     toolsEl,
@@ -284,6 +306,38 @@ describe('squire.js selected-message retargeting', () => {
 
     expect(attributes.action).toBe('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages');
     expect(attributes['hx-post']).toBe('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages');
+  });
+
+  it('SQR-108: legacy /messages/:mid uses .squire-transcript + beforeend so the append-fragment lands inside the existing transcript wrapper (not innerHTML, which would wipe the surface)', () => {
+    // Regression: the SQR-108 first cut left /messages/:mid on
+    // hx-target=#squire-surface + hx-swap=innerHTML, which made the
+    // server's append-fragment response replace the entire surface with
+    // two orphan articles. The selected-message renderer DOES emit a
+    // `<section class="squire-transcript">` wrapper, so the cleanest fix
+    // is to use the same swap contract as /chat/:id and let the new
+    // turn append inside the existing wrapper.
+    const attributes = runSquireScript(
+      '/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages/7b8eaa3a-7f08-4c2c-90cc-76ad1ce587ec',
+    );
+
+    expect(attributes['hx-target']).toBe('.squire-transcript');
+    expect(attributes['hx-swap']).toBe('beforeend');
+  });
+
+  it('SQR-108: /chat/:id sets the append-fragment swap contract', () => {
+    const attributes = runSquireScript('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5');
+
+    expect(attributes.action).toBe('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages');
+    expect(attributes['hx-target']).toBe('.squire-transcript');
+    expect(attributes['hx-swap']).toBe('beforeend');
+  });
+
+  it('SQR-108: home page keeps #squire-surface + innerHTML so the first submit replaces the landing with the transcript shell', () => {
+    const attributes = runSquireScript('/');
+
+    expect(attributes.action).toBe('/chat');
+    expect(attributes['hx-target']).toBe('#squire-surface');
+    expect(attributes['hx-swap']).toBe('innerHTML');
   });
 
   it('suppresses pre-tool filler, keeps lookup metadata present-tense, and clears it when the answer starts', () => {
@@ -477,5 +531,73 @@ describe('squire.js selected-message retargeting', () => {
 
     expect(toolsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('Monsters cannot loot treasure tiles.');
+  });
+
+  describe('SQR-108 aria-busy double-announce suppression (D-5)', () => {
+    it('sets aria-busy=true before the innerHTML swap and clears it after, with at least one rAF gap', () => {
+      // The synchronous-toggle version of this code (set true, swap, set
+      // false in one tick) was a no-op on screen readers — browsers
+      // don't paint between three synchronous attribute/innerHTML calls.
+      // The fix wraps the swap in requestAnimationFrame so the browser
+      // can actually paint the busy state before the swap happens. This
+      // test pins the ordering: aria-busy=true must be set BEFORE the
+      // innerHTML mutation, and aria-busy=false must come AFTER.
+      const { answerEl, contentEl, source } = bootPendingTranscript();
+
+      const events: Array<{ type: 'aria-busy'; value: string } | { type: 'innerHTML' }> = [];
+      const origSetAttr = answerEl.setAttribute.bind(answerEl);
+      answerEl.setAttribute = (name: string, value: string) => {
+        if (name === 'aria-busy') events.push({ type: 'aria-busy', value });
+        origSetAttr(name, value);
+      };
+      const origInnerHTMLSet = Object.getOwnPropertyDescriptor(contentEl, 'innerHTML')?.set;
+      Object.defineProperty(contentEl, 'innerHTML', {
+        set(v: string) {
+          events.push({ type: 'innerHTML' });
+          origInnerHTMLSet?.call(this, v);
+        },
+        get() {
+          return '';
+        },
+      });
+
+      source.emit('text-delta', { delta: 'streamed plaintext' });
+      source.emit('done', { html: '<p>final</p>' });
+
+      const ariaBusyEvents = events.filter((e) => e.type === 'aria-busy');
+      const innerHTMLIdx = events.findIndex((e) => e.type === 'innerHTML');
+      const trueIdx = events.findIndex((e) => e.type === 'aria-busy' && e.value === 'true');
+      const falseIdx = events.findIndex((e) => e.type === 'aria-busy' && e.value === 'false');
+
+      expect(ariaBusyEvents.map((e) => 'value' in e && e.value)).toEqual(['true', 'false']);
+      expect(trueIdx).toBeLessThan(innerHTMLIdx);
+      expect(innerHTMLIdx).toBeLessThan(falseIdx);
+    });
+  });
+
+  describe('SQR-108 serialize submits — block follow-ups while a stream is active', () => {
+    it('disables the input dock when a pending stream is attached and re-enables it on done', () => {
+      // Prevents Codex's concurrent-submit stranding: if the form
+      // re-enables on htmx:afterSwap (before SSE done), a fast user
+      // can submit a second turn that strands the first turn's
+      // EventSource and leaves a stuck pending skeleton in the DOM.
+      const { form, source } = bootPendingTranscript();
+
+      // The pending stream attached on DOMContentLoaded — form should
+      // already be locked.
+      expect(form.dataset.submitting).toBe('true');
+
+      source.emit('done', { html: '<p>answer</p>' });
+      expect(form.dataset.submitting).toBeUndefined();
+    });
+
+    it('re-enables the input dock when the stream errors', () => {
+      const { form, source } = bootPendingTranscript();
+
+      expect(form.dataset.submitting).toBe('true');
+
+      source.emit('error', { kind: 'transport', message: 'Trouble.' });
+      expect(form.dataset.submitting).toBeUndefined();
+    });
   });
 });

@@ -92,10 +92,14 @@ function setFormPendingState(form, pending) {
 
 // SQR-108 / ADR 0012: keep the form's HTMX swap contract aligned with
 // the current page. On the home page the form replaces the whole
-// `#squire-surface`; on a `/chat/:id` page each submit appends one new
-// turn to `.squire-transcript`. The legacy `/messages/:mid` selected-
-// message route (cleaned up in PR 3) keeps the old replace-the-surface
-// behavior so the existing OOB chip refresh keeps working there.
+// `#squire-surface` (which gets replaced by the new transcript). On any
+// page that already has a `<section class="squire-transcript">` in the
+// DOM — including the legacy `/messages/:mid` selected-message route
+// that keeps shipping until PR 3 — each submit appends one new turn via
+// `.squire-transcript` + `beforeend`. The selected-message renderer
+// emits the same `.squire-transcript` wrapper, so the append-fragment
+// response from `POST /chat/:id/messages` lands cleanly without wiping
+// the surrounding surface.
 function syncChatFormAction() {
   var form = document.querySelector('.squire-input-dock');
   if (!form) return;
@@ -104,21 +108,13 @@ function syncChatFormAction() {
   var conversationMatch = pathname.match(/^\/chat\/([0-9a-f-]+)$/);
   var selectedMessageMatch = pathname.match(/^\/chat\/([0-9a-f-]+)\/messages\/[0-9a-f-]+$/);
 
-  if (conversationMatch) {
-    var convAction = '/chat/' + conversationMatch[1] + '/messages';
+  if (conversationMatch || selectedMessageMatch) {
+    var match = conversationMatch || selectedMessageMatch;
+    var convAction = '/chat/' + match[1] + '/messages';
     form.setAttribute('action', convAction);
     form.setAttribute('hx-post', convAction);
     form.setAttribute('hx-target', '.squire-transcript');
     form.setAttribute('hx-swap', 'beforeend');
-    return;
-  }
-
-  if (selectedMessageMatch) {
-    var selectedAction = '/chat/' + selectedMessageMatch[1] + '/messages';
-    form.setAttribute('action', selectedAction);
-    form.setAttribute('hx-post', selectedAction);
-    form.setAttribute('hx-target', '#squire-surface');
-    form.setAttribute('hx-swap', 'innerHTML');
     return;
   }
 
@@ -424,6 +420,17 @@ function attachPendingAnswerStream(answerEl) {
 
   closeActiveStream();
 
+  // SQR-108: serialize submits — keep the input dock disabled while a
+  // stream is active so the user can't append a second pending turn that
+  // would strand the first one (the client only supports one
+  // EventSource at a time, and the message DB ordering can scramble Q+A
+  // pairs if turn N+1 finishes before turn N). The form re-enables in
+  // the SSE `done` and `error` handlers below. Server-side stranded
+  // pending turns (e.g. a stranded HTMX retry) trigger the same
+  // disabled state on initial page load.
+  var formEl = document.querySelector('.squire-input-dock');
+  setFormPendingState(formEl, true);
+
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
@@ -455,6 +462,10 @@ function attachPendingAnswerStream(answerEl) {
       activeStream = null;
     }
     source.close();
+    // SQR-108: re-enable the input dock once the stream terminates so
+    // the user can submit the next turn. Mirrors the lock applied in
+    // attachPendingAnswerStream.
+    setFormPendingState(document.querySelector('.squire-input-dock'), false);
   }
 
   function materializeStreamingDelta(delta) {
@@ -559,44 +570,62 @@ function attachPendingAnswerStream(answerEl) {
     // swap in `aria-busy="true"` so screen readers (notably VoiceOver on
     // iOS Safari) don't double-announce the same answer once as the
     // streamed paragraph and again when the rendered HTML lands. The
-    // attribute is cleared once the swap finishes so the live region is
-    // ready for the next turn's announcement.
+    // toggle has to span at least one paint to be observable: setting
+    // true and false synchronously in the same tick means AT never
+    // notices the busy state. We use a double-rAF — set busy now, swap
+    // the HTML on the next frame, clear busy on the frame after — so
+    // the browser actually paints the busy state before the swap and
+    // the live region is ready for the next turn's announcement.
     answerEl.setAttribute('aria-busy', 'true');
-    if (contentEl && typeof payload.html === 'string') {
-      contentEl.classList.add('squire-markdown');
-      contentEl.innerHTML = payload.html;
-    }
-    answerEl.setAttribute('aria-busy', 'false');
-    // SQR-98: write the accumulated provenance labels into the footer.
-    // Empty map → leave the footer hidden (AC #3: no source data, no lie).
-    //
-    // Replay fallback: if the stream completed without emitting any
-    // tool_result events (e.g., duplicate /stream hit that hit the
-    // idempotent already-persisted path), the server now includes the
-    // row's persisted consultedSources in the done payload so we can
-    // still rebuild the footer. Live-stream labels take precedence — if
-    // consultedLabels has entries, they came from this actual turn.
-    if (footerEl) {
-      var labels = [];
-      if (consultedLabels.size > 0) {
-        consultedLabels.forEach(function (_value, label) {
-          labels.push(label);
-        });
-      } else if (Array.isArray(payload.consultedSources)) {
-        for (var i = 0; i < payload.consultedSources.length; i += 1) {
-          var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
-          if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
+    var applyDoneSwap = function () {
+      if (contentEl && typeof payload.html === 'string') {
+        contentEl.classList.add('squire-markdown');
+        contentEl.innerHTML = payload.html;
+      }
+      // SQR-98: write the accumulated provenance labels into the footer.
+      // Empty map → leave the footer hidden (AC #3: no source data, no lie).
+      //
+      // Replay fallback: if the stream completed without emitting any
+      // tool_result events (e.g., duplicate /stream hit that hit the
+      // idempotent already-persisted path), the server now includes the
+      // row's persisted consultedSources in the done payload so we can
+      // still rebuild the footer. Live-stream labels take precedence — if
+      // consultedLabels has entries, they came from this actual turn.
+      if (footerEl) {
+        var labels = [];
+        if (consultedLabels.size > 0) {
+          consultedLabels.forEach(function (_value, label) {
+            labels.push(label);
+          });
+        } else if (Array.isArray(payload.consultedSources)) {
+          for (var i = 0; i < payload.consultedSources.length; i += 1) {
+            var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
+            if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
+          }
+        }
+        if (labels.length > 0) {
+          footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
+          footerEl.hidden = false;
+        } else {
+          footerEl.hidden = true;
         }
       }
-      if (labels.length > 0) {
-        footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
-        footerEl.hidden = false;
+      if (pinToBottom) scrollToBottom();
+      var clearAriaBusy = function () {
+        answerEl.setAttribute('aria-busy', 'false');
+      };
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(clearAriaBusy);
       } else {
-        footerEl.hidden = true;
+        clearAriaBusy();
       }
+      finishStream();
+    };
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(applyDoneSwap);
+    } else {
+      applyDoneSwap();
     }
-    if (pinToBottom) scrollToBottom();
-    finishStream();
   });
 
   source.addEventListener('error', function (event) {
@@ -653,14 +682,12 @@ document.addEventListener('htmx:configRequest', function (event) {
 });
 
 document.addEventListener('htmx:afterSwap', function (event) {
-  // Reset the form pending state so the user can submit again. The form
-  // element lives outside the swap target on the conversation page (the
-  // append-fragment swap touches `.squire-transcript`, not the form), so
-  // we don't gate this on the swap target id any more.
+  // The form lives outside the swap target on the conversation page —
+  // the append-fragment swap touches `.squire-transcript`, not the form
+  // — so we manage form state here regardless of the swap target id.
   var form = document.querySelector('.squire-input-dock');
   var questionInput = form && form.querySelector('input[name="question"]');
   if (questionInput) questionInput.value = '';
-  setFormPendingState(form, false);
   syncChatFormAction();
 
   var swapTarget = event.detail && event.detail.target;
@@ -671,7 +698,15 @@ document.addEventListener('htmx:afterSwap', function (event) {
       pinToBottom = true;
       scrollPendingAnswerIntoView(pending);
     }
+    // SQR-108: attachPendingAnswerStream sets the form to disabled and
+    // the SSE done/error handlers re-enable it. Don't pre-enable here
+    // — that would let the user submit a second turn while the first
+    // is still streaming.
     attachPendingAnswerStream(pending);
+  } else {
+    // No pending stream after this swap (e.g., a non-chat swap).
+    // Re-enable the form so the user can submit again.
+    setFormPendingState(form, false);
   }
 });
 

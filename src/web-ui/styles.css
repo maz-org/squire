@@ -1007,6 +1007,14 @@ template#squire-banner-fixtures {
   box-shadow: none;
 }
 
+/* Hairline rule with breathing room above and below — the printed-book
+   footnote-rule pattern from DESIGN.md §Layout. The 24px `gap` on
+   `.squire-transcript` already places one item-margin between flex
+   children; the `padding-top` adds a matching 24px inside the next
+   turn so the rule sits visually centered with breathing room on both
+   sides (~48px between consecutive turn content). Tightening to a
+   literal 24px makes the rule sit flush against the next question's
+   first line and breaks the footnote-rule metaphor. */
 .squire-turn + .squire-turn {
   border-top: 1px solid var(--rule);
   padding-top: 24px;
