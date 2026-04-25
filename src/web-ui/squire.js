@@ -382,11 +382,29 @@ function isNearBottom(threshold) {
   return distance <= (threshold == null ? SCROLL_PIN_THRESHOLD_PX : threshold);
 }
 
+// Scroll coalescing — text-delta events fire dozens of times per second
+// while streaming. Each delta mutates the DOM (paragraph.textContent
+// growing) and a naïve scrollToBottom() per delta forces a layout flush
+// to read scrollHeight, then a second flush from the programmatic scroll
+// itself, then a third when the listener re-reads scrollHeight. Coalesce
+// all the per-frame scroll requests into a single rAF so the browser
+// does one scroll per paint regardless of how many deltas fire.
+var scrollToBottomScheduled = false;
 function scrollToBottom() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  var doc = document.documentElement;
-  if (!doc) return;
-  window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+  if (scrollToBottomScheduled) return;
+  if (typeof window.requestAnimationFrame !== 'function') {
+    var doc = document.documentElement;
+    if (doc) window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+    return;
+  }
+  scrollToBottomScheduled = true;
+  window.requestAnimationFrame(function () {
+    scrollToBottomScheduled = false;
+    var doc = document.documentElement;
+    if (!doc) return;
+    window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+  });
 }
 
 function scrollPendingAnswerIntoView(answerEl) {

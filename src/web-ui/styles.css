@@ -52,6 +52,20 @@
   --sage: #7a8c5c;
   --amber: #d4a147;
   --error: #8b2919;
+
+  /* Spacing scale — DESIGN.md §Spacing. Base unit 4px. Use these
+     tokens for any new spacing decision; raw px is kept in the file
+     only where the value carries non-spacing meaning (e.g. font sizes,
+     line heights, border widths). */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
 }
 
 /*
@@ -388,14 +402,37 @@ html {
   flex-shrink: 0;
 }
 
-/* SQR-108 / ADR 0012: the recent-questions chip row was the visible piece
- * of the current-turn ledger IA. With the conversation page now a scrolling
- * transcript, prior questions are read in place and the dedicated chip row
- * is gone. The legacy `/messages/:mid` selected-message route still
- * references `.squire-recent` markup until PR 3 cleans it up; styling is
- * intentionally not preserved here so the lingering surface degrades to
- * unstyled inline links — accepted in the SQR-108 plan rather than carry
- * dead CSS through the transition. */
+/* SQR-108 / ADR 0012: the recent-questions chip row is gone on the
+ * scrolling-chat conversation page. The legacy `/chat/:id/messages/:mid`
+ * selected-message route still ships the markup until PR 3 retires it,
+ * and we keep just enough styling here so chips render as styled chips
+ * during that transition window. PR 3 deletes the route AND these
+ * rules together. */
+.squire-recent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 52px;
+  flex-shrink: 0;
+}
+
+.squire-recent__label {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.squire-recent__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
 
 /* 5. Input dock — sticky at the bottom of the viewport, never collapses,
    respects iOS safe-area-inset-bottom so the home indicator doesn't sit on
@@ -662,6 +699,65 @@ html {
   color: var(--sepia);
   text-transform: uppercase;
   letter-spacing: 0.16em;
+}
+
+/* SQR-67 / SQR-108 transitional — recent-questions chip row. Pill-shaped
+   outlined chips in the `nav.squire-recent` container. Used only by the
+   legacy `/chat/:id/messages/:mid` selected-message route until PR 3
+   removes that route entirely. */
+.squire-recent .squire-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--sepia);
+  white-space: nowrap;
+  max-width: min(100%, 22rem);
+  overflow: hidden;
+  text-decoration: none;
+  text-overflow: ellipsis;
+}
+
+.squire-recent__overflow {
+  width: 100%;
+}
+
+.squire-recent__overflow > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.squire-recent__overflow > summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-recent .squire-chip--overflow {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.squire-chip__overflow-copy {
+  color: var(--parchment-dim);
+}
+
+.squire-chip__overflow-count {
+  color: var(--sepia);
+}
+
+.squire-recent__overflow-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
 }
 
 /* SQR-67 — "Squire recommends" verdict block. 3px wax left border rail,
@@ -981,7 +1077,7 @@ template#squire-banner-fixtures {
 .squire-transcript {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-lg);
 }
 
 .squire-internal-shell {
@@ -1008,16 +1104,17 @@ template#squire-banner-fixtures {
 }
 
 /* Hairline rule with breathing room above and below — the printed-book
-   footnote-rule pattern from DESIGN.md §Layout. The 24px `gap` on
-   `.squire-transcript` already places one item-margin between flex
-   children; the `padding-top` adds a matching 24px inside the next
-   turn so the rule sits visually centered with breathing room on both
-   sides (~48px between consecutive turn content). Tightening to a
-   literal 24px makes the rule sit flush against the next question's
-   first line and breaks the footnote-rule metaphor. */
+   footnote-rule pattern from DESIGN.md §Layout. The `--space-lg` `gap`
+   on `.squire-transcript` already places one item-margin between flex
+   children; the `padding-top` adds a matching `--space-lg` inside the
+   next turn so the rule sits visually centered with breathing room on
+   both sides (`--space-2xl` total between consecutive turn content).
+   Tightening to a single `--space-lg` makes the rule sit flush against
+   the next question's first line and breaks the footnote-rule
+   metaphor. */
 .squire-turn + .squire-turn {
   border-top: 1px solid var(--rule);
-  padding-top: 24px;
+  padding-top: var(--space-lg);
 }
 
 /* Answer block — the ledger page where the streamed agent answer lives.

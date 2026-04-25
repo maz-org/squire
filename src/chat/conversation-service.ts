@@ -433,6 +433,17 @@ export async function loadConversationMessage(input: {
 export async function loadConversation(input: {
   conversationId: string;
   userId: string;
+  /**
+   * Cap the number of returned messages. Used by the conversation page
+   * GET handler to bound the O(n) HTML render cost on long sessions —
+   * with the scrolling-chat IA (ADR 0012) every persisted turn is
+   * rendered, not just the latest. The repository sorts newest-first
+   * under the hood and reverses to oldest-first on return, so a limit
+   * of N keeps the most recent N messages and drops the older ones.
+   * Omit (or pass undefined) for the full transcript — used by stream /
+   * persistence paths that need the complete history for state checks.
+   */
+  limit?: number;
 }): Promise<{ conversation: Conversation; messages: ConversationMessage[] } | null> {
   const conversation = await ConversationRepository.findOwnedById(
     input.userId,
@@ -442,6 +453,7 @@ export async function loadConversation(input: {
 
   const messages = await MessageRepository.listByConversationId(conversation.id, {
     includeErrors: true,
+    limit: input.limit,
   });
 
   return { conversation, messages };

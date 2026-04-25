@@ -616,41 +616,66 @@ async function readQuestionForm(
   };
 }
 
-// ADR 0012: a "pending" turn means the latest persisted user message has
-// no assistant response yet (in-flight stream, or a stranded retry the
-// user just navigated to). When that's the case, the conversation page
-// renders the skeleton answer for that user message and squire.js
-// attaches an EventSource to the stream URL.
+// ADR 0012: a "pending" turn is any persisted user message without an
+// assistant reply — in-flight stream, stranded retry from a prior
+// session, or any user message a follow-up submitted before its reply
+// completed. The conversation page renders a skeleton answer for each
+// such user message, and squire.js attaches one EventSource per
+// pending stream URL.
 //
-// Returning undefined when an assistant reply already exists fixes a
-// pre-PR latent bug — the old code generated a stream URL for every
-// latest user message regardless of whether it had been answered, so
-// reloading a finalized conversation would re-attach a stream and
-// re-trigger the SSE error path on a persisted error reply. Error
-// assistant rows count as a reply because they're persisted as
-// `role: 'assistant'` with `responseToMessageId` set.
-function computePendingStreamUrl(
+// Returning a Map (instead of just the latest pending stream URL)
+// closes the defense-in-depth case Codex flagged on SQR-108: an older
+// turn still streaming when a newer one completes shouldn't drop off
+// the in-flight UI on reload. Pairing happens in
+// `pairConversationTurns` (src/web-ui/layout.ts) so renderable Q+A
+// stays correct independent of which assistant replies arrive in
+// what order.
+//
+// Skipping a user message when an assistant reply already exists
+// fixes a pre-PR latent bug — the old code generated a stream URL
+// for every latest user message regardless of whether it had been
+// answered, so reloading a finalized conversation would re-attach a
+// stream and re-trigger the SSE error path on a persisted error
+// reply. Error assistant rows count as a reply because they're
+// persisted as `role: 'assistant'` with `responseToMessageId` set.
+export function computePendingStreamUrls(
   messages: Array<{ id: string; role: 'user' | 'assistant'; responseToMessageId?: string | null }>,
   conversationId: string,
-): string | undefined {
-  const latestUserMessage = [...messages].reverse().find((m) => m.role === 'user');
-  if (!latestUserMessage) return undefined;
-  const hasAssistantReply = messages.some(
-    (m) => m.role === 'assistant' && m.responseToMessageId === latestUserMessage.id,
-  );
-  if (hasAssistantReply) return undefined;
-  return buildStreamUrl(conversationId, latestUserMessage.id);
+): Map<string, string> {
+  const repliedUserMessageIds = new Set<string>();
+  for (const message of messages) {
+    if (message.role === 'assistant' && message.responseToMessageId) {
+      repliedUserMessageIds.add(message.responseToMessageId);
+    }
+  }
+  const pending = new Map<string, string>();
+  for (const message of messages) {
+    if (message.role !== 'user') continue;
+    if (repliedUserMessageIds.has(message.id)) continue;
+    pending.set(message.id, buildStreamUrl(conversationId, message.id));
+  }
+  return pending;
 }
+
+// SQR-108: cap the rendered transcript to the most recent N messages.
+// With the scrolling-chat IA (ADR 0012) every persisted turn renders on
+// each GET, so an unbounded conversation grows the per-request HTML
+// linearly. 100 messages = ~50 turns of history, well above any
+// observed Phase 1 conversation length while bounding worst-case render
+// cost. Older turns are dropped (no "load earlier" affordance yet — file
+// a follow-up if anyone scrolls past 50 turns and feels the cliff).
+const TRANSCRIPT_MESSAGE_LIMIT = 100;
 
 app.get('/chat/:conversationId', async (c) => {
   const session = c.get('session')!;
   const loaded = await loadConversation({
     conversationId: c.req.param('conversationId'),
     userId: session.userId,
+    limit: TRANSCRIPT_MESSAGE_LIMIT,
   });
   if (!loaded) return c.notFound();
 
-  const pendingStreamUrl = computePendingStreamUrl(loaded.messages, loaded.conversation.id);
+  const pendingStreamUrls = computePendingStreamUrls(loaded.messages, loaded.conversation.id);
 
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
@@ -660,7 +685,7 @@ app.get('/chat/:conversationId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
-      pendingStreamUrl,
+      pendingStreamUrls,
     }),
   );
 });
@@ -742,12 +767,12 @@ app.post('/chat', async (c) => {
         userId: session.userId,
       });
       if (!loaded) return c.notFound();
-      const pendingStreamUrl = computePendingStreamUrl(loaded.messages, loaded.conversation.id);
+      const pendingStreamUrls = computePendingStreamUrls(loaded.messages, loaded.conversation.id);
       return c.html(
         renderConversationTranscript({
           conversationId: loaded.conversation.id,
           messages: loaded.messages,
-          pendingStreamUrl,
+          pendingStreamUrls,
         }),
       );
     }
@@ -756,7 +781,12 @@ app.post('/chat', async (c) => {
       renderConversationTranscript({
         conversationId: pending.conversation.id,
         messages: [pending.currentUserMessage],
-        pendingStreamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+        pendingStreamUrls: new Map([
+          [
+            pending.currentUserMessage.id,
+            buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+          ],
+        ]),
       }),
     );
   }

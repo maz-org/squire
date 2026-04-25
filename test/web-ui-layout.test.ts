@@ -573,12 +573,12 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     expect(body).toContain('data-conversation-id="conv-123"');
   });
 
-  it('renders prior turns oldest-first then a pending skeleton when pendingStreamUrl is provided', () => {
+  it('renders prior turns oldest-first then a pending skeleton for any user message in pendingStreamUrls', () => {
     const body = String(
       actualLayout.renderConversationTranscript({
         conversationId: 'conv-123',
         messages,
-        pendingStreamUrl: '/chat/conv-123/messages/m3/stream',
+        pendingStreamUrls: new Map([['m3', '/chat/conv-123/messages/m3/stream']]),
       }),
     );
 
@@ -591,7 +591,7 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     );
   });
 
-  it('omits the pending skeleton when no pendingStreamUrl is provided', () => {
+  it('omits the pending skeleton when pendingStreamUrls is empty / undefined', () => {
     const body = String(
       actualLayout.renderConversationTranscript({
         conversationId: 'conv-123',
@@ -836,14 +836,18 @@ describe('selected-message rendering helpers', () => {
     expect(body).toMatch(/hx-swap="beforeend"/);
   });
 
-  it('renders the conversation page with a pending answer skeleton when pendingStreamUrl is provided', async () => {
+  it('renders the conversation page with a pending answer skeleton for each entry in pendingStreamUrls', async () => {
+    // Drop m6 (the assistant reply to m5) so m5 is unanswered — the
+    // skeleton only renders for user messages that have no paired
+    // assistant message.
+    const messagesWithUnansweredLatest = messages.slice(0, 5);
     const body = String(
       await actualLayout.renderConversationPage({
         session: testSession,
         csrfToken: testCsrfToken,
         conversationId: 'conv-123',
-        messages,
-        pendingStreamUrl: '/chat/conv-123/messages/m5/stream',
+        messages: messagesWithUnansweredLatest,
+        pendingStreamUrls: new Map([['m5', '/chat/conv-123/messages/m5/stream']]),
       }),
     );
 
@@ -852,49 +856,121 @@ describe('selected-message rendering helpers', () => {
     );
   });
 
-  it('renders recent questions newest-to-oldest and excludes the selected question', () => {
+  it('renders multiple pending skeletons when concurrent turns exist (SQR-108 defense-in-depth)', async () => {
+    // Codex flagged that an older still-running turn could disappear
+    // from the in-flight UI on reload because computePendingStreamUrl
+    // only checked the latest user message. The render path now pairs
+    // by responseToMessageId and emits a skeleton for every unanswered
+    // user message; the server's computePendingStreamUrls returns one
+    // entry per unanswered turn.
+    const concurrent: typeof messages = [
+      {
+        id: 'q1',
+        conversationId: 'conv-c',
+        role: 'user',
+        content: 'First question',
+        isError: false,
+        responseToMessageId: null,
+        consultedSources: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      {
+        id: 'q2',
+        conversationId: 'conv-c',
+        role: 'user',
+        content: 'Second question',
+        isError: false,
+        responseToMessageId: null,
+        consultedSources: null,
+        createdAt: new Date('2026-01-01T00:00:01.000Z'),
+      },
+    ];
     const body = String(
-      actualLayout.renderRecentQuestionsNav({
-        conversationId: 'conv-123',
-        questions: [messages[4], messages[2], messages[0]],
-        selectedMessageId: 'm3',
+      await actualLayout.renderConversationPage({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        conversationId: 'conv-c',
+        messages: concurrent,
+        pendingStreamUrls: new Map([
+          ['q1', '/chat/conv-c/messages/q1/stream'],
+          ['q2', '/chat/conv-c/messages/q2/stream'],
+        ]),
       }),
     );
 
-    expect(body).toContain('Recent questions');
-    expect(body).toContain('href="/chat/conv-123/messages/m5"');
-    expect(body).toContain('Newest question');
-    expect(body).toContain('href="/chat/conv-123/messages/m1"');
-    expect(body).toContain('Oldest question');
-    expect(body).not.toContain('Middle question');
-    expect(body.indexOf('Newest question')).toBeLessThan(body.indexOf('Oldest question'));
+    expect(body).toMatch(
+      /squire-answer--pending[^>]*data-stream-url="\/chat\/conv-c\/messages\/q1\/stream"/,
+    );
+    expect(body).toMatch(
+      /squire-answer--pending[^>]*data-stream-url="\/chat\/conv-c\/messages\/q2\/stream"/,
+    );
   });
 
-  it('hides the recent questions region when there are no eligible prior questions', () => {
+  it('pairs Q+A by responseToMessageId so out-of-order assistant arrival still renders correctly (SQR-108 reload-ordering regression)', () => {
+    // Codex finding: if turn 2's assistant reply lands in the DB before
+    // turn 1's, walking by createdAt would render Q1, Q2, A2, A1.
+    // Pairing first keeps Q1, A1, Q2, A2 regardless of arrival order.
+    const reorderedMessages: typeof messages = [
+      {
+        id: 'q1',
+        conversationId: 'conv-r',
+        role: 'user',
+        content: 'First question',
+        isError: false,
+        responseToMessageId: null,
+        consultedSources: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      {
+        id: 'q2',
+        conversationId: 'conv-r',
+        role: 'user',
+        content: 'Second question',
+        isError: false,
+        responseToMessageId: null,
+        consultedSources: null,
+        createdAt: new Date('2026-01-01T00:00:01.000Z'),
+      },
+      // a2 lands BEFORE a1 in createdAt order
+      {
+        id: 'a2',
+        conversationId: 'conv-r',
+        role: 'assistant',
+        content: 'Second answer.',
+        isError: false,
+        responseToMessageId: 'q2',
+        consultedSources: null,
+        createdAt: new Date('2026-01-01T00:00:02.000Z'),
+      },
+      {
+        id: 'a1',
+        conversationId: 'conv-r',
+        role: 'assistant',
+        content: 'First answer.',
+        isError: false,
+        responseToMessageId: 'q1',
+        consultedSources: null,
+        createdAt: new Date('2026-01-01T00:00:03.000Z'),
+      },
+    ];
+
     const body = String(
-      actualLayout.renderRecentQuestionsNav({
-        conversationId: 'conv-123',
-        questions: [messages[2]],
-        selectedMessageId: 'm3',
+      actualLayout.renderConversationTranscript({
+        conversationId: 'conv-r',
+        messages: reorderedMessages,
       }),
     );
 
-    expect(body).toBe('');
+    // Q1, A1, Q2, A2 — paired by responseToMessageId, ordered by user
+    // message createdAt.
+    expect(body.indexOf('First question')).toBeLessThan(body.indexOf('First answer.'));
+    expect(body.indexOf('First answer.')).toBeLessThan(body.indexOf('Second question'));
+    expect(body.indexOf('Second question')).toBeLessThan(body.indexOf('Second answer.'));
   });
 
-  it('renders the recent questions region as an out-of-band HTMX update when requested', () => {
-    const body = String(
-      actualLayout.renderRecentQuestionsNav({
-        conversationId: 'conv-123',
-        questions: [messages[4], messages[0]],
-        selectedMessageId: 'm5',
-        outOfBand: true,
-      }),
-    );
-
-    expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*hx-swap-oob="outerHTML"/);
-    expect(body).toContain('Recent questions');
-  });
+  // SQR-108 dropped the typed-options overload of `renderRecentQuestionsNav`.
+  // The production caller in src/server.ts uses the array form. PR 3 retires
+  // the legacy /messages/:mid route and this helper goes with it.
 
   it('renders explicit nav items with HTMX attributes when provided', () => {
     const body = String(
@@ -1319,7 +1395,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
           csrfToken: testCsrfToken,
           conversationId: 'conv-sqr98',
           messages: [userMessage],
-          pendingStreamUrl: '/chat/conv-sqr98/messages/user-1/stream',
+          pendingStreamUrls: new Map([['user-1', '/chat/conv-sqr98/messages/user-1/stream']]),
         }),
       );
       expect(body).toMatch(
@@ -1419,9 +1495,27 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(body).toMatch(/font-size:\s*1[01]px/);
   });
 
-  // SQR-108 / ADR 0012: the recent-questions chip rules (.squire-recent,
-  // .squire-recent__chips, .squire-recent .squire-chip) were deleted with
-  // the chip row itself.
+  // SQR-108 / ADR 0012 transitional: the chip-row rules stay until PR 3
+  // retires the legacy `/chat/:id/messages/:mid` route. They render the
+  // selected-message page's recent-questions nav during the transition
+  // window. PR 3 deletes both the route and these rules.
+
+  it('declares .squire-recent .squire-chip with 1px --rule border and 4px radius (transitional)', () => {
+    const rule = css.match(/\.squire-recent\s+\.squire-chip\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toMatch(/border:\s*1px\s+solid\s+var\(--rule\)/);
+    expect(body).toMatch(/border-radius:\s*4px/);
+    expect(body).toContain('color: var(--sepia)');
+  });
+
+  it('declares .squire-recent__chips as a flex row with an 8px gap (transitional)', () => {
+    const rule = css.match(/\.squire-recent__chips\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('display: flex');
+    expect(body).toContain('gap: 8px');
+  });
 
   it('SQR-108 D-7: .squire-turn declares no card-shell properties (no shadow / outer radius / deviant background)', () => {
     // ADR 0012 D-7 — the conversation page reads as ledger prose, not a
@@ -1451,15 +1545,31 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toMatch(/border-top:\s*1px\s+solid\s+var\(--rule\)/);
+    expect(body).toMatch(/padding-top:\s*var\(--space-lg\)/);
   });
 
-  it('SQR-108: .squire-transcript stacks turns vertically with a 24px gap', () => {
+  it('SQR-108: .squire-transcript stacks turns vertically with a --space-lg gap', () => {
     const rule = css.match(/^\.squire-transcript\s*\{[^}]*\}/m);
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toContain('display: flex');
     expect(body).toContain('flex-direction: column');
-    expect(body).toContain('gap: 24px');
+    expect(body).toMatch(/gap:\s*var\(--space-lg\)/);
+  });
+
+  it('declares a --space-* scale on :root that matches DESIGN.md §Spacing (4px base unit)', () => {
+    const rootRule = css.match(/^:root\s*\{[^}]*\}/m);
+    expect(rootRule).not.toBeNull();
+    const body = rootRule![0];
+    expect(body).toMatch(/--space-2xs:\s*2px/);
+    expect(body).toMatch(/--space-xs:\s*4px/);
+    expect(body).toMatch(/--space-sm:\s*8px/);
+    expect(body).toMatch(/--space-md:\s*16px/);
+    expect(body).toMatch(/--space-lg:\s*24px/);
+    expect(body).toMatch(/--space-xl:\s*32px/);
+    expect(body).toMatch(/--space-2xl:\s*48px/);
+    expect(body).toMatch(/--space-3xl:\s*64px/);
+    expect(body).toMatch(/--space-4xl:\s*96px/);
   });
 
   it('SQR-108: drop cap selector targets only the LAST .squire-answer (newest-only) via :not(:has(~ .squire-answer))', () => {

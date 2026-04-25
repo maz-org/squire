@@ -88,13 +88,6 @@ export interface RecentQuestionNavItem {
   pushUrl?: boolean;
 }
 
-export interface RecentQuestionsNavOptions {
-  conversationId: string;
-  questions: ConversationMessage[];
-  selectedMessageId?: string;
-  outOfBand?: boolean;
-}
-
 export interface SelectedMessageSurfaceOptions {
   selectedQuestion: ConversationMessage;
   selectedAnswer: ConversationMessage;
@@ -290,10 +283,6 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   </article>` as HtmlEscapedString;
 }
 
-function renderConversationTurn(message: ConversationMessage): HtmlEscapedString {
-  return message.role === 'user' ? renderQuestionTurn(message.content) : renderAnswerTurn(message);
-}
-
 function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
   // ADR 0012: the pending answer is the unit of streaming. The stream URL
   // moves from the (deleted) `.squire-transcript--pending` wrapper onto the
@@ -376,71 +365,34 @@ function renderRecentQuestionsContainer(options: {
   </nav>` as HtmlEscapedString;
 }
 
-export function renderRecentQuestionsNav(options: RecentQuestionsNavOptions): HtmlEscapedString;
+// SQR-108 dropped the typed-options overload (`renderRecentQuestionsNav({
+// conversationId, questions, selectedMessageId, outOfBand })`) — the
+// production caller in `src/server.ts` uses the array-form, and the typed
+// overload was test-only. PR 3 retires the legacy `/messages/:mid` route
+// entirely, at which point this whole helper goes too.
 export function renderRecentQuestionsNav(
   items: RecentQuestionNavItem[],
   options?: { oob?: boolean },
-): HtmlEscapedString;
-export function renderRecentQuestionsNav(
-  optionsOrItems: RecentQuestionsNavOptions | RecentQuestionNavItem[],
-  options?: { oob?: boolean },
 ): HtmlEscapedString {
-  const items = Array.isArray(optionsOrItems)
-    ? optionsOrItems
-    : optionsOrItems.questions
-        .filter((question) => question.id !== optionsOrItems.selectedMessageId)
-        .map((question) => ({
-          href: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
-          hxGet: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
-          label: question.content,
-          pushUrl: true,
-        }));
-
-  if (Array.isArray(optionsOrItems)) {
-    return renderRecentQuestionsContainer({
-      visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
-        renderRecentQuestionChip({
-          href: item.href,
-          hxGet: item.hxGet,
-          label: item.label,
-          pushUrl: item.pushUrl,
-        }),
-      ),
-      overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
-        renderRecentQuestionChip({
-          href: item.href,
-          hxGet: item.hxGet,
-          label: item.label,
-          pushUrl: item.pushUrl,
-        }),
-      ),
-      hidden: items.length === 0,
-      outOfBand: options?.oob,
-    });
-  }
-
-  if (items.length === 0) {
-    return html`` as HtmlEscapedString;
-  }
-
   return renderRecentQuestionsContainer({
     visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
       renderRecentQuestionChip({
         href: item.href,
         hxGet: item.hxGet,
-        pushUrl: item.pushUrl,
         label: item.label,
+        pushUrl: item.pushUrl,
       }),
     ),
     overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
       renderRecentQuestionChip({
         href: item.href,
         hxGet: item.hxGet,
-        pushUrl: item.pushUrl,
         label: item.label,
+        pushUrl: item.pushUrl,
       }),
     ),
-    outOfBand: optionsOrItems.outOfBand,
+    hidden: items.length === 0,
+    outOfBand: options?.oob,
   });
 }
 
@@ -741,7 +693,14 @@ export async function renderConversationPage(options: {
   csrfToken: string;
   conversationId: string;
   messages: ConversationMessage[];
-  pendingStreamUrl?: string;
+  /**
+   * Map of user-message id → SSE stream URL for any user message
+   * without an assistant reply. The common case is a single entry (one
+   * pending turn at the bottom). When concurrent turns are pending —
+   * e.g. a stranded prior pending plus a new in-flight turn — each
+   * gets its own EventSource on the client side.
+   */
+  pendingStreamUrls?: Map<string, string>;
 }): Promise<HtmlEscapedString> {
   // ADR 0012: the conversation page is a standard scrolling-chat transcript.
   // Past turns stack oldest-to-newest, the pending answer skeleton (when
@@ -752,7 +711,7 @@ export async function renderConversationPage(options: {
   const transcript = renderConversationTranscript({
     conversationId: options.conversationId,
     messages: options.messages,
-    pendingStreamUrl: options.pendingStreamUrl,
+    pendingStreamUrls: options.pendingStreamUrls,
   });
 
   return layoutShell({
@@ -825,6 +784,44 @@ export async function renderMarkdownStyleguidePage(
 }
 
 /**
+ * Build Q+A pairs from a flat message list. Groups each user message
+ * with its assistant reply (matched by `responseToMessageId`) and orders
+ * pairs by user-message `createdAt` (ties broken by id, matching the
+ * repository's `(created_at, id)` sort). Defends against the
+ * reload-ordering corruption Codex flagged on SQR-108: if turn N+1's
+ * assistant reply happens to land in the DB before turn N's, walking
+ * messages in raw `createdAt` order would render `Q1, Q2, A2, A1` —
+ * broken pairs, no visible Q→A grouping. Pairing first keeps
+ * `Q1, A1, Q2, A2` no matter the assistant arrival order.
+ */
+function pairConversationTurns(
+  messages: ConversationMessage[],
+): Array<{ userMessage: ConversationMessage; assistantMessage: ConversationMessage | null }> {
+  const assistantByResponseTo = new Map<string, ConversationMessage>();
+  const userMessages: ConversationMessage[] = [];
+
+  for (const message of messages) {
+    if (message.role === 'user') {
+      userMessages.push(message);
+    } else if (message.role === 'assistant' && message.responseToMessageId) {
+      assistantByResponseTo.set(message.responseToMessageId, message);
+    }
+  }
+
+  userMessages.sort((a, b) => {
+    const ta = a.createdAt.getTime();
+    const tb = b.createdAt.getTime();
+    if (ta !== tb) return ta - tb;
+    return a.id.localeCompare(b.id);
+  });
+
+  return userMessages.map((userMessage) => ({
+    userMessage,
+    assistantMessage: assistantByResponseTo.get(userMessage.id) ?? null,
+  }));
+}
+
+/**
  * Render a scrolling-chat transcript. ADR 0012 / SQR-108: the conversation
  * page is a standard top-to-bottom transcript with a permanent live-region
  * container. The transcript element itself is `role="log" aria-live="polite"`,
@@ -833,16 +830,23 @@ export async function renderMarkdownStyleguidePage(
  * — without it, screen readers can miss the first append after a fresh
  * registration).
  *
- * When `pendingStreamUrl` is set, the latest user message has no assistant
- * response yet and we render a `squire-answer--pending` skeleton at the
- * bottom that carries the stream URL. squire.js attaches an EventSource to
- * the pending article on load and after every HTMX swap.
+ * Turns are paired by `responseToMessageId` before render so concurrent
+ * turns survive reload (see `pairConversationTurns`). Any user message
+ * with no assistant reply renders a pending answer skeleton — the
+ * `pendingStreamUrls` map keys those user-message ids to their stream
+ * URLs so multiple in-flight turns each get their own EventSource on
+ * the client side. The common case (one pending) passes a single-entry
+ * map; the empty case (everything answered) passes an empty map and no
+ * skeletons render.
  */
 export function renderConversationTranscript(options: {
   conversationId: string;
   messages: ConversationMessage[];
-  pendingStreamUrl?: string;
+  pendingStreamUrls?: Map<string, string>;
 }): HtmlEscapedString {
+  const pairs = pairConversationTurns(options.messages);
+  const pendingStreamUrls = options.pendingStreamUrls ?? new Map<string, string>();
+
   return html`<section
     class="squire-transcript"
     role="log"
@@ -850,8 +854,15 @@ export function renderConversationTranscript(options: {
     aria-label="Conversation transcript"
     data-conversation-id="${options.conversationId}"
   >
-    ${options.messages.map((message) => renderConversationTurn(message))}
-    ${options.pendingStreamUrl ? renderPendingAnswerSkeleton(options.pendingStreamUrl) : html``}
+    ${pairs.map((pair) => {
+      const streamUrl = pendingStreamUrls.get(pair.userMessage.id);
+      return html`${renderQuestionTurn(pair.userMessage.content)}
+      ${pair.assistantMessage
+        ? renderAnswerTurn(pair.assistantMessage)
+        : streamUrl
+          ? renderPendingAnswerSkeleton(streamUrl)
+          : html``}`;
+    })}
   </section>` as HtmlEscapedString;
 }
 
