@@ -242,7 +242,12 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/squire-account-menu__avatar-fallback"[^>]*>\s*T\s*<\/span>/);
   });
 
-  it('renders the authenticated shell regions with stable selectors', async () => {
+  it('renders the authenticated home shell regions with stable selectors (SQR-107)', async () => {
+    // SQR-107 / ADR 0012: the authenticated home page is a purpose-built
+    // landing — hero + scope line + input dock. No chip row, no desktop
+    // rail, no verdict/PICKED/spoiler stubs. The conversation page keeps
+    // its chip row and rail until PR 2 (SQR-108); see test/conversation.test.ts
+    // for the conversation-page selectors.
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
@@ -251,20 +256,18 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     // inside each answer element now. The home page has no answer so no
     // footer should be rendered. See separate SQR-98 test below.
     expect(body).not.toContain('class="squire-toolcall"');
-    expect(body).toContain('class="squire-recent"');
     expect(body).toContain('class="squire-input-dock"');
-    expect(body).toContain('class="squire-rail"');
+    // SQR-107: the home page no longer renders a recent-questions chip
+    // row or a desktop rail. Those live on the conversation page only.
+    expect(body).not.toContain('class="squire-recent"');
+    expect(body).not.toContain('id="squire-recent-questions"');
+    expect(body).not.toContain('class="squire-rail"');
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('aria-atomic="false"');
-    // SQR-98: the old aria-live="off" assertion came from the page-chrome
-    // footer that's now rendered per-answer instead. The home page has
-    // no answer and no footer to opt out of aria-live. Per-answer footer
-    // aria-live behavior is exercised by the SQR-98 test suite below.
     expect(body).toContain('class="sr-only-focusable"');
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
-    expect(body).toMatch(/<nav[^>]*id="squire-recent-questions"[^>]*class="squire-recent"/);
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/chat"/);
     expect(body).toMatch(/hx-post="\/chat"/);
     expect(body).toMatch(/hx-target="#squire-surface"/);
@@ -921,14 +924,11 @@ describe('GET / — signature components (SQR-66)', () => {
     expect(body).not.toMatch(/squire-dropcap/);
   });
 
-  it('renders the 56px masthead monogram on the desktop rail', async () => {
-    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
-    // The rail gets a second monogram marked as masthead so the 56px size
-    // can be tested in the browser. The header monogram stays 28px.
-    expect(body).toMatch(
-      /<aside[^>]*class="squire-rail"[\s\S]*squire-monogram squire-monogram--masthead/,
-    );
-  });
+  // SQR-107 / ADR 0012: the desktop rail is not rendered on the authenticated
+  // home page any more. Its masthead monogram still lives on the conversation
+  // page (until PR 2 ships SQR-108) and on the login / not-invited pages.
+  // CSS rule coverage for `.squire-monogram--masthead` sizing is preserved in
+  // the `styles.css` block below.
 });
 
 describe('styles.css — SQR-66 signature component rules', () => {
@@ -1072,7 +1072,7 @@ describe('styles.css — SQR-66 signature component rules', () => {
   });
 });
 
-describe('GET / — SQR-67 stub regions', () => {
+describe('GET / — SQR-107 purpose-built landing', () => {
   it('renders the first-run empty state with "At your service." and the scope line', async () => {
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toMatch(/<section[^>]*class="squire-empty"/);
@@ -1081,10 +1081,30 @@ describe('GET / — SQR-67 stub regions', () => {
     expect(body).toContain('ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO');
   });
 
-  it('renders the spoiler warning banner via the .squire-banner primitive', async () => {
+  it('renders the home page as hero + scope + input dock only (no chrome stubs)', async () => {
+    // SQR-107 / ADR 0012: the home page is a purpose-built landing. No
+    // pre-history chip row (used to read Looting / Element infusion /
+    // Negative scenario effects), no visible verdict block, no PICKED
+    // badge, no spoiler-warning banner. Those lived in `layoutShell`'s
+    // empty-state fallback and ADR 0012 moves them off visible HTML on
+    // home. Verdict + PICKED survive as fixtures inside
+    // `<template id="squire-banner-fixtures">` so CSS drift tests still
+    // find markup to target.
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
-    expect(body).toMatch(/squire-banner squire-banner--spoiler/);
-    expect(body).toContain('SPOILER WARNING');
+    expect(body).not.toContain('Looting');
+    expect(body).not.toContain('Element infusion');
+    expect(body).not.toContain('Negative scenario effects');
+
+    const withoutFixtures = body.replace(
+      /<template[^>]*id="squire-banner-fixtures"[\s\S]*?<\/template>/,
+      '',
+    );
+    expect(withoutFixtures).not.toMatch(/class="squire-verdict/);
+    expect(withoutFixtures).not.toContain('SQUIRE RECOMMENDS');
+    expect(withoutFixtures).not.toMatch(/class="squire-picked/);
+    expect(withoutFixtures).not.toContain('PICKED');
+    expect(withoutFixtures).not.toMatch(/squire-banner--spoiler/);
+    expect(withoutFixtures).not.toContain('SPOILER WARNING');
   });
 
   it('no longer ships the hardcoded CONSULTED placeholder in page chrome (SQR-98)', async () => {
@@ -1237,28 +1257,22 @@ describe('GET / — SQR-67 stub regions', () => {
     });
   });
 
-  it('renders at least two recent-question chips inside nav.squire-recent', async () => {
-    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
-    const navMatch = body.match(/<nav[^>]*class="squire-recent"[\s\S]*?<\/nav>/);
-    expect(navMatch).not.toBeNull();
-    const chips = (navMatch![0].match(/class="squire-chip"/g) || []).length;
-    expect(chips).toBeGreaterThanOrEqual(2);
-  });
-
-  it('renders the .squire-verdict block with label and picked badge', async () => {
-    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
-    expect(body).toMatch(/class="squire-verdict"/);
-    expect(body).toContain('SQUIRE RECOMMENDS');
-    expect(body).toMatch(/class="squire-picked"/);
-  });
-
-  it('ships hidden fixtures for the error and sync banner variants', async () => {
+  it('ships hidden fixtures for the error, sync, verdict, and PICKED variants', async () => {
+    // SQR-107 / ADR 0012: the visible home page drops the verdict block
+    // and PICKED badge. They stay in this hidden `<template>` so CSS
+    // drift tests that read `styles.css` keep a markup reference, and
+    // future QA can instantiate the fixtures without waiting for real
+    // Phase 5 content.
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     const tpl = body.match(/<template[^>]*id="squire-banner-fixtures"[\s\S]*?<\/template>/);
     expect(tpl).not.toBeNull();
     expect(tpl![0]).toMatch(/squire-banner squire-banner--error/);
     expect(tpl![0]).toMatch(/squire-banner squire-banner--sync/);
     expect(tpl![0]).toContain('SYNCED · 2H AGO');
+    expect(tpl![0]).toMatch(/class="squire-verdict"/);
+    expect(tpl![0]).toContain('SQUIRE RECOMMENDS');
+    expect(tpl![0]).toMatch(/class="squire-picked"/);
+    expect(tpl![0]).toContain('PICKED');
   });
 });
 

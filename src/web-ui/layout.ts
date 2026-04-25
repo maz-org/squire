@@ -351,10 +351,6 @@ function renderRecentQuestionChip(options: {
   </a>` as HtmlEscapedString;
 }
 
-function renderStaticRecentQuestionChip(label: string): HtmlEscapedString {
-  return html`<span class="squire-chip" title="${label}">${label}</span>` as HtmlEscapedString;
-}
-
 function renderRecentQuestionsOverflow(options: {
   hiddenChipCount: number;
   chips: HtmlEscapedString[];
@@ -503,60 +499,20 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   // `HtmlEscapedString` so the compiler guarantees the caller already
   // escaped it (see the LayoutShellOptions doc comment above) — no `raw()`
   // wrap needed, the value flows directly into the template.
-  //
-  // SQR-67 stub content — first-run empty state plus a styled showcase of
-  // the signature components SQR-6 / SQR-8 / Phase 5 will later wire to
-  // real data (spoiler banner, verdict block, picked-card badge). These
-  // are pure visual stubs: no behavior, no state. SQR-6 will swap the
-  // empty state for a streaming `.squire-question` + `.squire-answer`
-  // pair once there's a current turn. The hidden `<template>` at the end
-  // pins the error and sync banner variants so QA and tests can verify
-  // their computed CSS without needing to fake an error or wait for the
-  // Phase 6 sync feature. Without the fixtures the CSS silently bit-rots.
-  const emptyStateAndStubs = html`<section class="squire-empty" aria-label="Welcome">
-      <h1 class="squire-question">At your service.</h1>
-      <p class="squire-empty__scope">ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO</p>
-    </section>
-    <div class="squire-banner squire-banner--spoiler" role="note" aria-label="Spoiler warning">
-      <span class="squire-banner__label">SPOILER WARNING</span>
-      <p class="squire-banner__body">
-        Squire's answers may reference unlocked content from your campaign. Ask a narrower question
-        to keep the surprise intact.
-      </p>
-    </div>
-    <aside class="squire-verdict" aria-label="Squire recommends">
-      <span class="squire-verdict__label">SQUIRE RECOMMENDS</span>
-      <p class="squire-verdict__body">
-        Phase 5 will render a recommendation here when comparing cards.
-        <span class="squire-picked">PICKED</span>
-      </p>
-    </aside>
-    <template id="squire-banner-fixtures" aria-hidden="true">
-      <div class="squire-banner squire-banner--error" role="alert">
-        <span class="squire-banner__label">SOMETHING WENT WRONG</span>
-        <p class="squire-banner__body">Error banner fixture for QA / tests.</p>
-      </div>
-      <div class="squire-banner squire-banner--sync" role="status">
-        <span class="squire-banner__label">SYNCED · 2H AGO</span>
-        <p class="squire-banner__body">Sync banner fixture for QA / tests.</p>
-      </div>
-    </template>`;
-
   const surfaceContent = options.errorBanner
     ? html`<div class="squire-banner squire-banner--error" role="alert">
         <span class="squire-banner__label">SOMETHING WENT WRONG</span>
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
-    : (options.mainContent ?? emptyStateAndStubs);
-  const recentQuestionsNav =
-    options.recentQuestionsNav ??
-    renderRecentQuestionsContainer({
-      visibleChips: [
-        renderStaticRecentQuestionChip('Looting'),
-        renderStaticRecentQuestionChip('Element infusion'),
-        renderStaticRecentQuestionChip('Negative scenario effects'),
-      ],
-    });
+    : (options.mainContent ?? (html`` as HtmlEscapedString));
+  // SQR-107 / ADR 0012: `layoutShell` no longer owns an empty-state
+  // fallback. `renderHomePage` now supplies its own purpose-built
+  // landing (hero + scope + input dock) via `mainContent`, and error
+  // fallbacks render with `errorBanner`. The old hardcoded
+  // recent-questions default (Looting / Element infusion / Negative
+  // scenario effects) was dishonest placeholder content and has been
+  // removed. Callers that want a chip row must pass one explicitly.
+  const recentQuestionsNav = options.recentQuestionsNav;
 
   return renderDocument({
     authenticated,
@@ -597,7 +553,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           </main>
           ${!authenticated || !showChatChrome
             ? html``
-            : html`${recentQuestionsNav}
+            : html`${recentQuestionsNav ?? html``}
                 <form
                   class="squire-input-dock"
                   method="post"
@@ -739,10 +695,45 @@ export async function renderNotInvitedPage(): Promise<HtmlEscapedString> {
 }
 
 /**
- * Default authenticated home page renderer. Phase 1 still uses the empty
- * ledger surface — SQR-67 ships the first-run empty state, SQR-6 ships the
- * streaming answer slot. Exported as a separate function so the route handler
- * in `src/server.ts` has a single override point in tests.
+ * Authenticated home-page surface. A purpose-built landing composition —
+ * "At your service." Fraunces hero, a sepia small-caps scope line, and
+ * nothing else above the input dock. Chip row, verdict block, PICKED
+ * badge, spoiler banner, and desktop rail are all intentionally absent:
+ * SQR-107 / ADR 0012 supersede ADR 0010's current-turn ledger on the
+ * home surface.
+ *
+ * The hidden `<template id="squire-banner-fixtures">` carries the error,
+ * sync, verdict, and PICKED markup so CSS drift tests (and future QA)
+ * have real DOM references to target without waiting for a Phase 5
+ * recommendation or Phase 6 sync to fire in the wild.
+ */
+function renderHomeLanding(): HtmlEscapedString {
+  return html`<section class="squire-empty" aria-label="Welcome">
+      <h1 class="squire-question">At your service.</h1>
+      <p class="squire-empty__scope">ASK ABOUT A RULE, CARD, ITEM, MONSTER, OR SCENARIO</p>
+    </section>
+    <template id="squire-banner-fixtures" aria-hidden="true">
+      <div class="squire-banner squire-banner--error" role="alert">
+        <span class="squire-banner__label">SOMETHING WENT WRONG</span>
+        <p class="squire-banner__body">Error banner fixture for QA / tests.</p>
+      </div>
+      <div class="squire-banner squire-banner--sync" role="status">
+        <span class="squire-banner__label">SYNCED · 2H AGO</span>
+        <p class="squire-banner__body">Sync banner fixture for QA / tests.</p>
+      </div>
+      <aside class="squire-verdict" aria-label="Squire recommends">
+        <span class="squire-verdict__label">SQUIRE RECOMMENDS</span>
+        <p class="squire-verdict__body">
+          Phase 5 will render a recommendation here when comparing cards.
+          <span class="squire-picked">PICKED</span>
+        </p>
+      </aside>
+    </template>` as HtmlEscapedString;
+}
+
+/**
+ * Exported as a separate function so the route handler in `src/server.ts`
+ * has a single override point in tests.
  */
 export async function renderHomePage(
   session?: Session,
@@ -753,6 +744,8 @@ export async function renderHomePage(
     csrfToken,
     chatFormAction: '/chat',
     chatFormHiddenFields: [{ name: 'idempotencyKey', value: '' }],
+    mainContent: renderHomeLanding(),
+    showRail: false,
   });
 }
 
