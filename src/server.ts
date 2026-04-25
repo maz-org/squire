@@ -62,14 +62,13 @@ import { createCsrfToken, requireCsrf } from './auth/csrf.ts';
 import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
-  renderConversationTranscript,
   renderConversationPage,
+  renderConversationTranscript,
+  renderConversationTurnAppendFragment,
   renderHomePage,
   renderLoginPage,
   renderMarkdownStyleguidePage,
   renderNotInvitedPage,
-  renderPendingTurnShell,
-  renderPendingTurnShellWithRecentQuestions,
   renderRecentQuestionsNav,
   renderSelectedMessageSurface,
   renderSelectedMessageSurfaceWithRecentQuestions,
@@ -82,7 +81,6 @@ import {
   createPendingConversation,
   createPendingFollowUp,
   GENERIC_FAILURE_MESSAGE,
-  listRecentCompletedQuestions,
   loadConversation,
   loadConversationMessage,
   loadSelectedConversation,
@@ -602,30 +600,6 @@ function buildToolStatusId(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-function buildConversationRecentQuestionsNav(
-  conversationId: string,
-  messages: Parameters<typeof listRecentCompletedQuestions>[0],
-  options: { oob?: boolean } = {},
-) {
-  const recentCompletedQuestions = listRecentCompletedQuestions(messages);
-  const latestUserMessageId = [...messages]
-    .reverse()
-    .find((message) => message.role === 'user')?.id;
-  const visibleQuestions =
-    recentCompletedQuestions[0]?.messageId === latestUserMessageId
-      ? recentCompletedQuestions.slice(1)
-      : recentCompletedQuestions;
-  return renderRecentQuestionsNav(
-    visibleQuestions.map((question) => ({
-      href: `/chat/${conversationId}/messages/${question.messageId}`,
-      hxGet: `/chat/${conversationId}/messages/${question.messageId}`,
-      label: question.question,
-      pushUrl: true,
-    })),
-    options,
-  );
-}
-
 async function readQuestionForm(
   c: Context,
 ): Promise<{ question: string; idempotencyKey?: string }> {
@@ -649,12 +623,12 @@ app.get('/chat/:conversationId', async (c) => {
     userId: session.userId,
   });
   if (!loaded) return c.notFound();
-  const latestUserMessage = loaded.messages.filter((message) => message.role === 'user').at(-1);
 
-  const recentQuestionsNav = buildConversationRecentQuestionsNav(
-    loaded.conversation.id,
-    loaded.messages,
-  );
+  // ADR 0012: a "pending" turn means the latest persisted user message has
+  // no assistant response yet (in-flight stream, or a stranded retry the
+  // user just navigated to). The transcript renders the skeleton answer
+  // for that user message and squire.js attaches an EventSource.
+  const pendingStreamUrl = computePendingStreamUrl(loaded.messages, loaded.conversation.id);
 
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
@@ -664,13 +638,23 @@ app.get('/chat/:conversationId', async (c) => {
       csrfToken: createCsrfToken(session.id),
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
-      recentQuestionsNav,
-      pendingStreamUrl: latestUserMessage
-        ? buildStreamUrl(loaded.conversation.id, latestUserMessage.id)
-        : undefined,
+      pendingStreamUrl,
     }),
   );
 });
+
+function computePendingStreamUrl(
+  messages: Array<{ id: string; role: 'user' | 'assistant'; responseToMessageId?: string | null }>,
+  conversationId: string,
+): string | undefined {
+  const latestUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+  if (!latestUserMessage) return undefined;
+  const hasAssistantReply = messages.some(
+    (m) => m.role === 'assistant' && m.responseToMessageId === latestUserMessage.id,
+  );
+  if (hasAssistantReply) return undefined;
+  return buildStreamUrl(conversationId, latestUserMessage.id);
+}
 
 app.get('/chat/:conversationId/messages/:messageId', async (c) => {
   const session = c.get('session')!;
@@ -739,19 +723,31 @@ app.post('/chat', async (c) => {
     c.header('Vary', 'Cookie');
     c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
 
+    // ADR 0012: the home form swaps `#squire-surface innerHTML` with the
+    // full transcript shell (one pending turn). After the swap, squire.js
+    // sees the URL has flipped to `/chat/:id` and re-points the form to
+    // `.squire-transcript` + `beforeend` for subsequent submits.
     if (!pending.currentUserMessage) {
       const loaded = await loadConversation({
         conversationId: pending.conversation.id,
         userId: session.userId,
       });
       if (!loaded) return c.notFound();
-      return c.html(renderConversationTranscript(loaded.conversation.id, loaded.messages));
+      const pendingStreamUrl = computePendingStreamUrl(loaded.messages, loaded.conversation.id);
+      return c.html(
+        renderConversationTranscript({
+          conversationId: loaded.conversation.id,
+          messages: loaded.messages,
+          pendingStreamUrl,
+        }),
+      );
     }
 
     return c.html(
-      renderPendingTurnShell({
-        question: pending.currentUserMessage.content,
-        streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
+      renderConversationTranscript({
+        conversationId: pending.conversation.id,
+        messages: [pending.currentUserMessage],
+        pendingStreamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
       }),
     );
   }
@@ -779,26 +775,21 @@ app.post('/chat/:conversationId/messages', async (c) => {
       question,
     });
     if (!pending?.currentUserMessage) return c.notFound();
-    const loaded = await loadConversation({
-      conversationId: pending.conversation.id,
-      userId: session.userId,
-    });
-    if (!loaded) return c.notFound();
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
+    // Push the canonical conversation URL on follow-ups submitted from the
+    // legacy `/messages/:mid` selected-message page (still served until
+    // PR 3) so the URL bar stops pointing at a deeper sub-resource.
     c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+    // ADR 0012 E-3: append-fragment swap. The client's form posts with
+    // `hx-target=".squire-transcript"` `hx-swap="beforeend"`, so we return
+    // ONLY the new question + pending answer skeleton — NOT the wrapping
+    // transcript section.
     return c.html(
-      renderPendingTurnShellWithRecentQuestions({
+      renderConversationTurnAppendFragment({
         question: pending.currentUserMessage.content,
         streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
-        recentQuestionsNav: buildConversationRecentQuestionsNav(
-          loaded.conversation.id,
-          loaded.messages,
-          {
-            oob: true,
-          },
-        ),
       }),
     );
   }
@@ -920,25 +911,19 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       return;
     }
 
-    const refreshedConversation = await loadConversation({
-      conversationId: loaded.conversation.id,
-      userId: session.userId,
-    });
-
     await stream.writeSSE({
       event: 'done',
       data: JSON.stringify({
         html: renderAssistantContentHtml(assistantMessage.content),
-        recentQuestionsNavHtml: buildConversationRecentQuestionsNav(
-          loaded.conversation.id,
-          refreshedConversation?.messages ?? [loaded.message, assistantMessage],
-        ),
         // SQR-98: send the persisted consulted_sources along with `done` so
         // the client can rebuild the footer on replay — duplicate /stream
         // hits, HTMX reconnects, or any path where persistAssistantOutcome
         // returns an already-persisted row return here with no tool_result
         // events fired. Without this, the footer would stay hidden on the
         // reconnected turn until a full page reload.
+        // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
+        // dropped — the conversation page is a scrolling transcript with
+        // no recent-questions chip rail to refresh.
         consultedSources: assistantMessage.consultedSources,
       }),
     });

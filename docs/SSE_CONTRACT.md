@@ -27,8 +27,7 @@ The browser consumes these SSE event names:
   - Payload: `{ "id": string, "label": string, "ok": boolean }`
 - `done`
   - Marks the stream complete and clears the pending answer UI.
-  - Payload:
-    `{ "html": string, "recentQuestionsNavHtml": string, "consultedSources": string[] | null }`
+  - Payload: `{ "html": string, "consultedSources": string[] | null }`
   - `consultedSources` carries the persisted per-answer tool names
     (from `messages.consulted_sources`) so the client can rebuild the
     "CONSULTED · …" footer on replay paths (duplicate `/stream` hits,
@@ -39,6 +38,11 @@ The browser consumes these SSE event names:
     [../src/web-ui/consulted-footer.ts](../src/web-ui/consulted-footer.ts)
     and is mirrored in [../src/web-ui/squire.js](../src/web-ui/squire.js);
     a drift test in `test/consulted-footer.test.ts` keeps both sides honest.
+  - SQR-108 / [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md) E-3
+    dropped the `recentQuestionsNavHtml` field. The conversation page is
+    now a scrolling transcript with no recent-questions chip rail to
+    refresh after a turn finishes — prior questions are read in place
+    inside the transcript itself.
 - `error`
   - Replaces the pending answer UI with an error banner.
   - Payload: `{ "kind": string, "message": string, "recoverable": boolean }`
@@ -56,11 +60,7 @@ For every successful stream:
    text.
 5. The terminal `done` event carries the final server-rendered sanitized HTML
    fragment, which replaces the pending plain-text transcript in the browser.
-6. The terminal `done` event also carries the final server-rendered
-   `recentQuestionsNavHtml` fragment for the canonical conversation page, so
-   the browser can restore or refresh the recent-question rail immediately
-   after streaming completes.
-7. The terminal `done` event carries `consultedSources` (persisted tool
+6. The terminal `done` event carries `consultedSources` (persisted tool
    names for the answer, or `null`). Live streams also accumulate sources
    from `tool-result` events as they arrive; `consultedSources` is the
    authoritative replay payload used when no tool events fired during this
@@ -97,15 +97,15 @@ The route, not the provider, owns the final browser ordering guarantees:
 - provider/internal `tool_result` -> browser `tool-result`
 - provider/internal `done` is only a completion signal
 - browser `done` is emitted by the route with the final sanitized HTML derived
-  from the persisted assistant message, plus the canonical recent-question rail
-  HTML derived from the refreshed persisted conversation state
+  from the persisted assistant message and the persisted `consultedSources`
+  for replay
 
 ## Testing guidance
 
 Regression tests should assert browser-visible behavior, not only persistence:
 
 - successful streams without incremental text still end with a visible
-  `done.html` fragment and the refreshed recent-question rail payload
+  `done.html` fragment
 - `text-delta` content remains inert plain text even when it contains hostile
   markup
 - `done.html` is sanitized before browser insertion

@@ -498,21 +498,22 @@ describe('SQR-71 Promise memoization — concurrent cold start', () => {
   });
 });
 
-describe('renderPendingTurnShell', () => {
-  it('renders a turn-scoped pending transcript shell with a skeleton and tool region', () => {
+describe('renderConversationTurnAppendFragment (SQR-108 / ADR 0012 E-3)', () => {
+  it('renders only the new question + pending answer skeleton for `hx-swap=beforeend`', () => {
     const body = String(
-      actualLayout.renderPendingTurnShell({
+      actualLayout.renderConversationTurnAppendFragment({
         question: 'Can I loot through a doorway?',
-        streamUrl: '/chat/conv-123/turns/turn-456/stream',
+        streamUrl: '/chat/conv-123/messages/msg-456/stream',
       }),
     );
 
-    expect(body).toMatch(/class="squire-transcript squire-transcript--pending"/);
-    expect(body).toContain('data-stream-url="/chat/conv-123/turns/turn-456/stream"');
+    // No wrapping <section class="squire-transcript"> — the append fragment
+    // is meant to drop into an existing transcript via `beforeend`.
+    expect(body).not.toMatch(/<section[^>]*class="squire-transcript/);
     expect(body).toMatch(/<article[^>]*class="squire-turn squire-question"/);
     expect(body).toContain('Can I loot through a doorway?');
     expect(body).toMatch(
-      /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-state="pending"/,
+      /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-state="pending"[^>]*data-stream-url="\/chat\/conv-123\/messages\/msg-456\/stream"/,
     );
     expect(body).toMatch(/<div[^>]*class="squire-answer__content squire-markdown"><\/div>/);
     expect(body).toMatch(/<div[^>]*class="squire-answer__tools"[^>]*aria-live="off"><\/div>/);
@@ -524,53 +525,82 @@ describe('renderPendingTurnShell', () => {
   });
 });
 
-describe('renderConversationTranscriptWithPendingTurn', () => {
-  it('renders prior turns and appends a pending answer shell for the latest turn', () => {
+describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
+  const messages = [
+    {
+      id: 'm1',
+      conversationId: 'conv-123',
+      role: 'user' as const,
+      content: 'First question',
+      isError: false,
+      responseToMessageId: null,
+      consultedSources: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    },
+    {
+      id: 'm2',
+      conversationId: 'conv-123',
+      role: 'assistant' as const,
+      content: 'First answer.',
+      isError: false,
+      responseToMessageId: 'm1',
+      consultedSources: null,
+      createdAt: new Date('2026-01-01T00:00:01.000Z'),
+    },
+    {
+      id: 'm3',
+      conversationId: 'conv-123',
+      role: 'user' as const,
+      content: 'Second question',
+      isError: false,
+      responseToMessageId: null,
+      consultedSources: null,
+      createdAt: new Date('2026-01-01T00:00:02.000Z'),
+    },
+  ];
+
+  it('renders the transcript as role="log" with aria-live="polite" — the permanent live-region container', () => {
     const body = String(
-      actualLayout.renderConversationTranscriptWithPendingTurn({
+      actualLayout.renderConversationTranscript({
         conversationId: 'conv-123',
-        streamUrl: '/chat/conv-123/messages/msg-456/stream',
-        messages: [
-          {
-            id: 'm1',
-            conversationId: 'conv-123',
-            role: 'user',
-            content: 'First question',
-            isError: false,
-            responseToMessageId: null,
-            consultedSources: null,
-            createdAt: new Date('2026-01-01T00:00:00.000Z'),
-          },
-          {
-            id: 'm2',
-            conversationId: 'conv-123',
-            role: 'assistant',
-            content: 'First answer.',
-            isError: false,
-            responseToMessageId: 'm1',
-            consultedSources: null,
-            createdAt: new Date('2026-01-01T00:00:01.000Z'),
-          },
-          {
-            id: 'm3',
-            conversationId: 'conv-123',
-            role: 'user',
-            content: 'Second question',
-            isError: false,
-            responseToMessageId: null,
-            consultedSources: null,
-            createdAt: new Date('2026-01-01T00:00:02.000Z'),
-          },
-        ],
+        messages: messages.slice(0, 2),
+      }),
+    );
+
+    expect(body).toMatch(
+      /<section[^>]*class="squire-transcript"[^>]*role="log"[^>]*aria-live="polite"/,
+    );
+    expect(body).toContain('data-conversation-id="conv-123"');
+  });
+
+  it('renders prior turns oldest-first then a pending skeleton when pendingStreamUrl is provided', () => {
+    const body = String(
+      actualLayout.renderConversationTranscript({
+        conversationId: 'conv-123',
+        messages,
+        pendingStreamUrl: '/chat/conv-123/messages/m3/stream',
       }),
     );
 
     expect(body).toContain('First question');
     expect(body).toContain('First answer.');
     expect(body).toContain('Second question');
-    expect(body).toContain('data-conversation-id="conv-123"');
-    expect(body).toContain('data-stream-url="/chat/conv-123/messages/msg-456/stream"');
-    expect(body).toMatch(/class="squire-turn squire-answer squire-answer--pending"/);
+    expect(body.indexOf('First question')).toBeLessThan(body.indexOf('Second question'));
+    expect(body).toMatch(
+      /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-url="\/chat\/conv-123\/messages\/m3\/stream"/,
+    );
+  });
+
+  it('omits the pending skeleton when no pendingStreamUrl is provided', () => {
+    const body = String(
+      actualLayout.renderConversationTranscript({
+        conversationId: 'conv-123',
+        messages: messages.slice(0, 2),
+      }),
+    );
+
+    expect(body).not.toMatch(/squire-answer--pending/);
+    expect(body).not.toMatch(/data-stream-url/);
   });
 });
 
@@ -738,39 +768,66 @@ describe('selected-message rendering helpers', () => {
     expect(body).not.toContain('EARLIER QUESTION');
   });
 
-  it('renders the canonical conversation page with only the latest turn in the surface', async () => {
+  it('renders the conversation page as a full scrolling transcript with role=log and no recent-questions chrome (SQR-108)', async () => {
+    // ADR 0012: the conversation page is a standard scrolling chat
+    // transcript — every persisted turn renders top-to-bottom inside one
+    // `.squire-transcript` `role="log" aria-live="polite"` container, not
+    // a single current-turn slot with collapsed history.
     const body = String(
       await actualLayout.renderConversationPage({
         session: testSession,
         csrfToken: testCsrfToken,
         conversationId: 'conv-123',
         messages,
-        recentQuestionsNav: actualLayout.renderRecentQuestionsNav([
-          {
-            href: '/chat/conv-123/messages/m3',
-            hxGet: '/chat/conv-123/messages/m3',
-            label: 'Middle question',
-            pushUrl: true,
-          },
-          {
-            href: '/chat/conv-123/messages/m1',
-            hxGet: '/chat/conv-123/messages/m1',
-            label: 'Oldest question',
-            pushUrl: true,
-          },
-        ]),
       }),
     );
 
     const transcript = body.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toMatch(/role="log"/);
+    expect(transcript).toMatch(/aria-live="polite"/);
+    expect(transcript).toContain('Oldest question');
+    expect(transcript).toContain('Oldest answer.');
+    expect(transcript).toContain('Middle question');
+    expect(transcript).toContain('Middle answer.');
     expect(transcript).toContain('Newest question');
     expect(transcript).toContain('Newest answer.');
-    expect(transcript).not.toContain('Middle question');
-    expect(transcript).not.toContain('Middle answer.');
-    expect(transcript).not.toContain('Oldest question');
-    expect(transcript).not.toContain('Oldest answer.');
-    expect(body).toContain('Middle question');
-    expect(body).toContain('Oldest question');
+    // Oldest-to-newest order: the persisted-message ordering drives DOM
+    // order so the position-based drop cap selector targets the newest
+    // answer correctly.
+    expect(transcript!.indexOf('Oldest answer.')).toBeLessThan(
+      transcript!.indexOf('Middle answer.'),
+    );
+    expect(transcript!.indexOf('Middle answer.')).toBeLessThan(
+      transcript!.indexOf('Newest answer.'),
+    );
+    // No recent-questions chip rail anywhere on the page (SQR-108).
+    expect(body).not.toMatch(/class="squire-recent"/);
+    expect(body).not.toMatch(/id="squire-recent-questions"/);
+    // No desktop rail aside on the conversation page (D-6).
+    expect(body).not.toMatch(/class="squire-rail"/);
+    // The input dock posts to /chat/:id/messages and uses the
+    // append-fragment swap contract.
+    expect(body).toMatch(
+      /<form[^>]*class="squire-input-dock"[^>]*action="\/chat\/conv-123\/messages"/,
+    );
+    expect(body).toMatch(/hx-target="\.squire-transcript"/);
+    expect(body).toMatch(/hx-swap="beforeend"/);
+  });
+
+  it('renders the conversation page with a pending answer skeleton when pendingStreamUrl is provided', async () => {
+    const body = String(
+      await actualLayout.renderConversationPage({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        conversationId: 'conv-123',
+        messages,
+        pendingStreamUrl: '/chat/conv-123/messages/m5/stream',
+      }),
+    );
+
+    expect(body).toMatch(
+      /squire-answer--pending[^>]*data-stream-url="\/chat\/conv-123\/messages\/m5\/stream"/,
+    );
   });
 
   it('renders recent questions newest-to-oldest and excludes the selected question', () => {
@@ -839,21 +896,10 @@ describe('selected-message rendering helpers', () => {
     expect(body).toContain('hx-push-url="true"');
   });
 
-  it('renders selected-message follow-up pending state as only the new question plus pending answer', () => {
-    const body = String(
-      actualLayout.renderPendingTurnShellWithRecentQuestions({
-        question: 'Newest question',
-        streamUrl: '/chat/conv-123/messages/m7/stream',
-        recentQuestionsNav: actualLayout.renderRecentQuestionsNav([], { oob: true }),
-      }),
-    );
-
-    expect(body).toContain('Newest question');
-    expect(body).toContain('class="squire-answer__skeleton"');
-    expect(body).not.toContain('Oldest question');
-    expect(body).not.toContain('Newest answer.');
-    expect(body).toContain('id="squire-recent-questions"');
-  });
+  // SQR-108 / ADR 0012 E-3 replaced the pending-shell-with-recent-questions
+  // helper with `renderConversationTurnAppendFragment` (covered above) for
+  // /chat/:id follow-ups. The `/chat/:id/messages/:mid` route still uses
+  // the recent-questions OOB swap path until PR 3 lands.
 
   it('renders older recent questions behind an explicit overflow control', () => {
     const body = String(
@@ -1023,8 +1069,11 @@ describe('styles.css — SQR-66 signature component rules', () => {
     // list, or blockquote — the previous `:first-child` variant suppressed the
     // drop cap on completed/persisted answers whose markdown opened with any
     // non-<p> block element, leaving them as plain fallback text blocks.
-    expect(css).toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-of-type:not\(/);
-    expect(css).not.toMatch(/\.squire-answer\s+\.squire-markdown\s+>\s+p:first-child:not\(/);
+    // SQR-108: the parent selector now also constrains to the newest
+    // `.squire-answer` via `:not(:has(~ .squire-answer))`, but the inner
+    // `:first-of-type` shape is unchanged.
+    expect(css).toMatch(/\.squire-answer[^{]*\.squire-markdown\s+>\s+p:first-of-type:not\(/);
+    expect(css).not.toMatch(/\.squire-answer[^{]*\.squire-markdown\s+>\s+p:first-child:not\(/);
     expect(css).toContain(
       ':has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)',
     );
@@ -1248,7 +1297,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
           csrfToken: testCsrfToken,
           conversationId: 'conv-sqr98',
           messages: [userMessage],
-          recentQuestionsNav: actualLayout.renderRecentQuestionsNav([]),
+          pendingStreamUrl: '/chat/conv-sqr98/messages/user-1/stream',
         }),
       );
       expect(body).toMatch(
@@ -1348,21 +1397,56 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(body).toMatch(/font-size:\s*1[01]px/);
   });
 
-  it('declares .squire-recent .squire-chip with 1px --rule border and 4px radius', () => {
-    const rule = css.match(/\.squire-recent\s+\.squire-chip\s*\{[^}]*\}/);
+  // SQR-108 / ADR 0012: the recent-questions chip rules (.squire-recent,
+  // .squire-recent__chips, .squire-recent .squire-chip) were deleted with
+  // the chip row itself.
+
+  it('SQR-108 D-7: .squire-turn declares no card-shell properties (no shadow / outer radius / deviant background)', () => {
+    // ADR 0012 D-7 — the conversation page reads as ledger prose, not a
+    // chat-bubble or card stack. A computed-style assertion is heavier
+    // than the constraint needs; greping the rule body keeps it cheap and
+    // tests the source of truth (a future change adding box-shadow has to
+    // pass this rule body anyway).
+    const rule = css.match(/\.squire-turn\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     const body = rule![0];
-    expect(body).toMatch(/border:\s*1px\s+solid\s+var\(--rule\)/);
-    expect(body).toMatch(/border-radius:\s*4px/);
-    expect(body).toContain('color: var(--sepia)');
+    expect(body).toContain('background: transparent');
+    expect(body).toContain('border-radius: 0');
+    expect(body).toContain('box-shadow: none');
   });
 
-  it('declares .squire-recent__chips as a flex row with an 8px gap', () => {
-    const rule = css.match(/\.squire-recent__chips\s*\{[^}]*\}/);
+  it('SQR-108 D-7: .squire-answer declares no card-shell properties', () => {
+    const rule = css.match(/^\.squire-answer\s*\{[^}]*\}/m);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toContain('background: transparent');
+    expect(body).toContain('border-radius: 0');
+    expect(body).toContain('box-shadow: none');
+  });
+
+  it('SQR-108 D-7: .squire-turn + .squire-turn uses a hairline --rule border-top as the only between-turn separator', () => {
+    const rule = css.match(/\.squire-turn\s*\+\s*\.squire-turn\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    const body = rule![0];
+    expect(body).toMatch(/border-top:\s*1px\s+solid\s+var\(--rule\)/);
+  });
+
+  it('SQR-108: .squire-transcript stacks turns vertically with a 24px gap', () => {
+    const rule = css.match(/^\.squire-transcript\s*\{[^}]*\}/m);
     expect(rule).not.toBeNull();
     const body = rule![0];
     expect(body).toContain('display: flex');
-    expect(body).toContain('gap: 8px');
+    expect(body).toContain('flex-direction: column');
+    expect(body).toContain('gap: 24px');
+  });
+
+  it('SQR-108: drop cap selector targets only the LAST .squire-answer (newest-only) via :not(:has(~ .squire-answer))', () => {
+    // ADR 0012: drop cap rarity is preserved by position, not by limiting
+    // visible turns. The selector pins ::first-letter to the last
+    // .squire-answer in the transcript so prior answers render plain.
+    expect(css).toMatch(
+      /\.squire-answer:not\(:has\(\s*~\s*\.squire-answer\s*\)\)\s+\.squire-markdown\s+>\s+p:first-of-type/,
+    );
   });
 
   it('declares .squire-question__eyebrow as small metadata instead of hero text', () => {

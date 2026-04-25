@@ -34,9 +34,25 @@ document.addEventListener('submit', function (e) {
   if (submitButton) {
     submitButton.textContent = '...';
   }
+
+  // SQR-108 / ADR 0012 D-3: arm the scroll controller for the new turn.
+  // The pending answer hasn't been swapped in yet — `htmx:afterSwap` will
+  // do that — but flagging "the user just submitted" lets the post-swap
+  // path scroll to the new pending turn and re-enable pin-to-bottom in
+  // case the user had scrolled away on a prior turn.
+  pinToBottom = true;
+  pendingScrollOnNextSwap = true;
 });
 
 var activeStream = null;
+// SQR-108 / ADR 0012 D-3: scroll controller state. `pinToBottom` is true
+// while the user is at (or near) the bottom of the transcript; while pinned,
+// streaming text auto-scrolls to keep up. The user scrolling up by more
+// than `SCROLL_PIN_THRESHOLD_PX` disables pin so they can re-read prior
+// turns without snap-back; scrolling back near the bottom re-enables it.
+var SCROLL_PIN_THRESHOLD_PX = 80;
+var pinToBottom = true;
+var pendingScrollOnNextSwap = false;
 
 function generateIdempotencyKey() {
   if (window.crypto && window.crypto.randomUUID) {
@@ -74,40 +90,48 @@ function setFormPendingState(form, pending) {
   if (submitButton) submitButton.textContent = 'Ask';
 }
 
+// SQR-108 / ADR 0012: keep the form's HTMX swap contract aligned with
+// the current page. On the home page the form replaces the whole
+// `#squire-surface`; on a `/chat/:id` page each submit appends one new
+// turn to `.squire-transcript`. The legacy `/messages/:mid` selected-
+// message route (cleaned up in PR 3) keeps the old replace-the-surface
+// behavior so the existing OOB chip refresh keeps working there.
 function syncChatFormAction() {
   var form = document.querySelector('.squire-input-dock');
   if (!form) return;
 
-  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)(?:\/messages\/[0-9a-f-]+)?$/);
-  var action = match ? '/chat/' + match[1] + '/messages' : '/chat';
-  form.setAttribute('action', action);
-  form.setAttribute('hx-post', action);
+  var pathname = window.location.pathname;
+  var conversationMatch = pathname.match(/^\/chat\/([0-9a-f-]+)$/);
+  var selectedMessageMatch = pathname.match(/^\/chat\/([0-9a-f-]+)\/messages\/[0-9a-f-]+$/);
+
+  if (conversationMatch) {
+    var convAction = '/chat/' + conversationMatch[1] + '/messages';
+    form.setAttribute('action', convAction);
+    form.setAttribute('hx-post', convAction);
+    form.setAttribute('hx-target', '.squire-transcript');
+    form.setAttribute('hx-swap', 'beforeend');
+    return;
+  }
+
+  if (selectedMessageMatch) {
+    var selectedAction = '/chat/' + selectedMessageMatch[1] + '/messages';
+    form.setAttribute('action', selectedAction);
+    form.setAttribute('hx-post', selectedAction);
+    form.setAttribute('hx-target', '#squire-surface');
+    form.setAttribute('hx-swap', 'innerHTML');
+    return;
+  }
+
+  form.setAttribute('action', '/chat');
+  form.setAttribute('hx-post', '/chat');
+  form.setAttribute('hx-target', '#squire-surface');
+  form.setAttribute('hx-swap', 'innerHTML');
 }
 
 function closeActiveStream() {
   if (!activeStream) return;
   activeStream.source.close();
   activeStream = null;
-}
-
-function updateRecentQuestionsNav(html) {
-  if (typeof html !== 'string' || !html) return;
-
-  var template = document.createElement('template');
-  template.innerHTML = html.trim();
-  var nextNav = template.content.firstElementChild;
-  if (!nextNav) return;
-
-  var currentNav = document.querySelector('#squire-recent-questions');
-  if (currentNav && currentNav.parentNode) {
-    currentNav.replaceWith(nextNav);
-    return;
-  }
-
-  var form = document.querySelector('.squire-input-dock');
-  if (form && form.parentNode) {
-    form.parentNode.insertBefore(nextNav, form);
-  }
 }
 
 function ensureAnswerParagraph(contentEl) {
@@ -351,19 +375,54 @@ function clearToolStatusRows(toolsEl, toolEntries) {
   }
 }
 
-function handlePendingTranscript(transcript) {
-  if (!transcript) return;
+// SQR-108 / ADR 0012 D-3: pin-to-bottom helpers. Use page-level scroll
+// (the conversation page scrolls the document body — `.squire-frame` is
+// `min-height: 100vh` and the input dock sticky-pins to the viewport).
+function isNearBottom(threshold) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return true;
+  var doc = document.documentElement;
+  if (!doc) return true;
+  var distance = doc.scrollHeight - (window.scrollY + window.innerHeight);
+  return distance <= (threshold == null ? SCROLL_PIN_THRESHOLD_PX : threshold);
+}
+
+function scrollToBottom() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  var doc = document.documentElement;
+  if (!doc) return;
+  window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+}
+
+function scrollPendingAnswerIntoView(answerEl) {
+  if (!answerEl || typeof answerEl.scrollIntoView !== 'function') return;
+  answerEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+}
+
+// User-driven scrolls (touchmove, wheel, scrollbar) update `pinToBottom`
+// based on distance from bottom. Programmatic auto-scrolls also fire
+// scroll events, but they leave us at the bottom — `isNearBottom`
+// returns true and the pin stays on. Genuine user-initiated scroll-up
+// drops below the threshold and disables pin.
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener(
+    'scroll',
+    function () {
+      pinToBottom = isNearBottom();
+    },
+    { passive: true },
+  );
+}
+
+function attachPendingAnswerStream(answerEl) {
+  if (!answerEl) return;
 
   // Browser event expectations live in docs/SSE_CONTRACT.md. Text is rendered
   // only from text-delta, while done/error are terminal UI state changes.
-  var streamUrl = transcript.getAttribute('data-stream-url');
+  var streamUrl = answerEl.getAttribute('data-stream-url');
   if (!streamUrl) return;
   if (activeStream && activeStream.url === streamUrl) return;
 
   closeActiveStream();
-
-  var answerEl = transcript.querySelector('.squire-answer--pending');
-  if (!answerEl) return;
 
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
@@ -410,6 +469,7 @@ function handlePendingTranscript(transcript) {
     contentEl.classList.add('squire-markdown');
     var paragraph = ensureAnswerParagraph(contentEl);
     paragraph.textContent += delta;
+    if (pinToBottom) scrollToBottom();
   }
 
   source.addEventListener('text-delta', function (event) {
@@ -495,10 +555,18 @@ function handlePendingTranscript(transcript) {
     if (skeletonEl) skeletonEl.hidden = true;
     if (toolsEl) toolsEl.replaceChildren();
     var payload = JSON.parse(event.data || '{}');
+    // SQR-108 / ADR 0012 D-5: wrap the streamed-plaintext → final-HTML
+    // swap in `aria-busy="true"` so screen readers (notably VoiceOver on
+    // iOS Safari) don't double-announce the same answer once as the
+    // streamed paragraph and again when the rendered HTML lands. The
+    // attribute is cleared once the swap finishes so the live region is
+    // ready for the next turn's announcement.
+    answerEl.setAttribute('aria-busy', 'true');
     if (contentEl && typeof payload.html === 'string') {
       contentEl.classList.add('squire-markdown');
       contentEl.innerHTML = payload.html;
     }
+    answerEl.setAttribute('aria-busy', 'false');
     // SQR-98: write the accumulated provenance labels into the footer.
     // Empty map → leave the footer hidden (AC #3: no source data, no lie).
     //
@@ -527,7 +595,7 @@ function handlePendingTranscript(transcript) {
         footerEl.hidden = true;
       }
     }
-    updateRecentQuestionsNav(payload.recentQuestionsNavHtml);
+    if (pinToBottom) scrollToBottom();
     finishStream();
   });
 
@@ -543,6 +611,26 @@ function handlePendingTranscript(transcript) {
     );
     finishStream();
   });
+}
+
+// Find the pending answer that needs a stream attached. Used both on page
+// load (initial server-rendered transcript may include one) and after every
+// HTMX swap (a follow-up appended one new pending turn, or a first submit
+// from home replaced #squire-surface with the new transcript).
+function findActivePendingAnswer(root) {
+  var scope = root || document;
+  var candidates = scope.querySelectorAll
+    ? scope.querySelectorAll('.squire-answer--pending[data-stream-url]')
+    : null;
+  if (!candidates || candidates.length === 0) return null;
+  for (var i = 0; i < candidates.length; i += 1) {
+    var candidate = candidates[i];
+    var url = candidate.getAttribute('data-stream-url');
+    if (!url) continue;
+    if (activeStream && activeStream.url === url) continue;
+    return candidate;
+  }
+  return null;
 }
 
 document.addEventListener('htmx:configRequest', function (event) {
@@ -565,18 +653,34 @@ document.addEventListener('htmx:configRequest', function (event) {
 });
 
 document.addEventListener('htmx:afterSwap', function (event) {
-  var target = event.detail && event.detail.target;
-  if (!target || target.id !== 'squire-surface') return;
-
+  // Reset the form pending state so the user can submit again. The form
+  // element lives outside the swap target on the conversation page (the
+  // append-fragment swap touches `.squire-transcript`, not the form), so
+  // we don't gate this on the swap target id any more.
   var form = document.querySelector('.squire-input-dock');
   var questionInput = form && form.querySelector('input[name="question"]');
   if (questionInput) questionInput.value = '';
   setFormPendingState(form, false);
   syncChatFormAction();
-  handlePendingTranscript(target.querySelector('.squire-transcript--pending'));
+
+  var swapTarget = event.detail && event.detail.target;
+  var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
+  if (pending) {
+    if (pendingScrollOnNextSwap) {
+      pendingScrollOnNextSwap = false;
+      pinToBottom = true;
+      scrollPendingAnswerIntoView(pending);
+    }
+    attachPendingAnswerStream(pending);
+  }
 });
 
 document.addEventListener('DOMContentLoaded', function () {
   syncChatFormAction();
-  handlePendingTranscript(document.querySelector('.squire-transcript--pending'));
+  // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
+  // back/forward navigation and refresh, so we don't pin or auto-scroll on
+  // initial load. We only flag pin on submit (above) and re-evaluate it
+  // from the current scroll position on the user's first scroll event.
+  pinToBottom = isNearBottom();
+  attachPendingAnswerStream(findActivePendingAnswer(document));
 });

@@ -24,11 +24,20 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain('event.detail.path = action;');
   });
 
-  it('recognizes selected-message URLs when retargeting follow-up submits', () => {
+  it('recognizes selected-message URLs when retargeting follow-up submits (PR 3 will retire this)', () => {
+    // SQR-108 / ADR 0012: home and conversation submits use different
+    // swap contracts (`#squire-surface innerHTML` vs
+    // `.squire-transcript beforeend`), and the legacy
+    // `/chat/:id/messages/:mid` route stays on the replace-the-surface
+    // contract until PR 3 removes it. The single regex was split into
+    // separate matches so the retargeter can flip target/swap, not just
+    // the action URL.
+    expect(squireJs).toContain('pathname.match(/^\\/chat\\/([0-9a-f-]+)$/)');
     expect(squireJs).toContain(
-      'window.location.pathname.match(/^\\/chat\\/([0-9a-f-]+)(?:\\/messages\\/[0-9a-f-]+)?$/)',
+      'pathname.match(/^\\/chat\\/([0-9a-f-]+)\\/messages\\/[0-9a-f-]+$/)',
     );
-    expect(squireJs).toContain("var action = match ? '/chat/' + match[1] + '/messages' : '/chat';");
+    expect(squireJs).toContain("form.setAttribute('hx-target', '.squire-transcript');");
+    expect(squireJs).toContain("form.setAttribute('hx-swap', 'beforeend');");
   });
 
   it('keeps the submit button labeled Ask after pending state clears', () => {

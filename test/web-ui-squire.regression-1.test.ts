@@ -158,6 +158,7 @@ function runSquireScript(pathname: string): Record<string, string> {
     querySelectorAll() {
       return [];
     },
+    documentElement: { scrollHeight: 0 },
   };
 
   const context = vm.createContext({
@@ -166,6 +167,10 @@ function runSquireScript(pathname: string): Record<string, string> {
       location: { pathname },
       crypto: {},
       EventSource: function () {},
+      addEventListener: () => {},
+      scrollY: 0,
+      innerHeight: 0,
+      scrollTo: () => {},
     },
   });
 
@@ -196,13 +201,15 @@ function bootPendingTranscript() {
 
   const answerEl = new FakeElement('article');
   answerEl.classList.add('squire-answer--pending');
+  // SQR-108 / ADR 0012: stream URL lives on the pending answer article,
+  // not on the (now-deleted) `.squire-transcript--pending` wrapper.
+  answerEl.setAttribute('data-stream-url', '/chat/stream');
   answerEl.appendChild(contentEl);
   answerEl.appendChild(toolsEl);
   answerEl.appendChild(skeletonEl);
 
   const transcript = new FakeElement('section');
-  transcript.classList.add('squire-transcript--pending');
-  transcript.setAttribute('data-stream-url', '/chat/stream');
+  transcript.classList.add('squire-transcript');
   transcript.appendChild(answerEl);
 
   // SQR-98: the footer now lives inside the answer element, not page
@@ -221,12 +228,18 @@ function bootPendingTranscript() {
     },
     querySelector(selector: string) {
       if (selector === '.squire-input-dock') return form;
-      if (selector === '.squire-transcript--pending') return transcript;
       return null;
     },
-    querySelectorAll() {
+    querySelectorAll(selector: string) {
+      // SQR-108: squire.js looks for `.squire-answer--pending[data-stream-url]`
+      // to attach the EventSource. Match that selector directly so the
+      // fake DOM stays in sync with the real lookup path.
+      if (selector === '.squire-answer--pending[data-stream-url]') {
+        return answerEl.getAttribute('data-stream-url') ? [answerEl] : [];
+      }
       return [];
     },
+    documentElement: { scrollHeight: 0 },
   };
 
   const context = vm.createContext({
@@ -235,6 +248,10 @@ function bootPendingTranscript() {
       location: { pathname: '/chat/test' },
       crypto: {},
       EventSource: FakeEventSource,
+      addEventListener: () => {},
+      scrollY: 0,
+      innerHeight: 0,
+      scrollTo: () => {},
     },
   });
 
