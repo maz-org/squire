@@ -24,17 +24,12 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain('event.detail.path = action;');
   });
 
-  it('recognizes selected-message URLs when retargeting follow-up submits (PR 3 will retire this)', () => {
+  it('recognizes conversation URLs when retargeting follow-up submits', () => {
     // SQR-108 / ADR 0012: the home submit uses `#squire-surface innerHTML`,
-    // and conversation submits — both `/chat/:id` and the legacy
-    // `/chat/:id/messages/:mid` route — append onto the live transcript via
-    // `.squire-transcript` + `beforeend`. Two separate path regexes feed the
-    // same target/swap flip; the legacy route is matched here so the contract
-    // stays consistent until PR 3 removes the surrogate URL entirely.
+    // and conversation submits append onto the live transcript via
+    // `.squire-transcript` + `beforeend`.
     expect(squireJs).toContain('pathname.match(/^\\/chat\\/([0-9a-f-]+)$/)');
-    expect(squireJs).toContain(
-      'pathname.match(/^\\/chat\\/([0-9a-f-]+)\\/messages\\/[0-9a-f-]+$/)',
-    );
+    expect(squireJs).not.toContain('pathname.match(/^\\/chat\\/([0-9a-f-]+)\\/messages\\/');
     expect(squireJs).toContain("form.setAttribute('hx-target', '.squire-transcript');");
     expect(squireJs).toContain("form.setAttribute('hx-swap', 'beforeend');");
   });

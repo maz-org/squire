@@ -100,24 +100,17 @@ function setFormPendingState(form, pending) {
 // SQR-108 / ADR 0012: keep the form's HTMX swap contract aligned with
 // the current page. On the home page the form replaces the whole
 // `#squire-surface` (which gets replaced by the new transcript). On any
-// page that already has a `<section class="squire-transcript">` in the
-// DOM — including the legacy `/messages/:mid` selected-message route
-// that keeps shipping until PR 3 — each submit appends one new turn via
-// `.squire-transcript` + `beforeend`. The selected-message renderer
-// emits the same `.squire-transcript` wrapper, so the append-fragment
-// response from `POST /chat/:id/messages` lands cleanly without wiping
-// the surrounding surface.
+// conversation page, each submit appends one new turn via
+// `.squire-transcript` + `beforeend`.
 function syncChatFormAction() {
   var form = document.querySelector('.squire-input-dock');
   if (!form) return;
 
   var pathname = window.location.pathname;
   var conversationMatch = pathname.match(/^\/chat\/([0-9a-f-]+)$/);
-  var selectedMessageMatch = pathname.match(/^\/chat\/([0-9a-f-]+)\/messages\/[0-9a-f-]+$/);
 
-  if (conversationMatch || selectedMessageMatch) {
-    var match = conversationMatch || selectedMessageMatch;
-    var convAction = '/chat/' + match[1] + '/messages';
+  if (conversationMatch) {
+    var convAction = '/chat/' + conversationMatch[1] + '/messages';
     form.setAttribute('action', convAction);
     form.setAttribute('hx-post', convAction);
     form.setAttribute('hx-target', '.squire-transcript');

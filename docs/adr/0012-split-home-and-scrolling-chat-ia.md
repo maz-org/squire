@@ -145,15 +145,15 @@ CARD, ITEM, MONSTER, OR SCENARIO` sepia small-caps scope line, and
 
 ## Advice
 
-- **CEO review** (2026-04-22, `docs/plans/ledger-ia-tech-spec.md`)
+- **CEO review** (2026-04-22, former staging plan doc deleted after SQR-109)
   surfaced Option D as a fourth option the original spec missed. User
   selected via AskUserQuestion with ASCII preview.
-- **Design review** (2026-04-22, same plan doc) walked each downstream
+- **Design review** (2026-04-22, same staging plan) walked each downstream
   design decision with the user one at a time: drop cap placement,
   highlighter scope, scroll behavior, drop-cap transition, aria-live
   pattern, desktop rail fate, no-card-shell enforcement, home visual
   weight. All 8 decisions locked via AskUserQuestion.
-- **Eng review** (2026-04-22, same plan doc) walked the remaining
+- **Eng review** (2026-04-22, same staging plan) walked the remaining
   architectural decisions: redirect status code, PR split, swap
   contract. All 3 locked via AskUserQuestion.
 - **Codex outside-voice challenge** (gpt-5.4, high reasoning, 2026-04-22)

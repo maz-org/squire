@@ -69,9 +69,6 @@ import {
   renderLoginPage,
   renderMarkdownStyleguidePage,
   renderNotInvitedPage,
-  renderRecentQuestionsNav,
-  renderSelectedMessageSurface,
-  renderSelectedMessageSurfaceWithRecentQuestions,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
@@ -83,7 +80,6 @@ import {
   GENERIC_FAILURE_MESSAGE,
   loadConversation,
   loadConversationMessage,
-  loadSelectedConversation,
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
@@ -691,52 +687,11 @@ app.get('/chat/:conversationId', async (c) => {
 });
 
 app.get('/chat/:conversationId/messages/:messageId', async (c) => {
-  const session = c.get('session')!;
-  const loaded = await loadSelectedConversation({
-    conversationId: c.req.param('conversationId'),
-    messageId: c.req.param('messageId'),
-    userId: session.userId,
-  });
-  if (!loaded) return c.notFound();
-
-  const selectedMessageSurface = renderSelectedMessageSurface({
-    selectedQuestion: loaded.selectedTurn.userMessage,
-    selectedAnswer: loaded.selectedTurn.assistantMessage,
-    isEarlierQuestion: loaded.selectedTurn.isEarlierQuestion,
-  });
-  const recentQuestionsNav = renderRecentQuestionsNav(
-    loaded.recentQuestions.map((question) => ({
-      href: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
-      hxGet: `/chat/${loaded.conversation.id}/messages/${question.messageId}`,
-      label: question.question,
-      pushUrl: true,
-    })),
-    { oob: isHtmxRequest(c) },
-  );
+  const conversationId = c.req.param('conversationId');
 
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
-
-  if (isHtmxRequest(c)) {
-    return c.html(
-      renderSelectedMessageSurfaceWithRecentQuestions({
-        selectedQuestion: loaded.selectedTurn.userMessage,
-        selectedAnswer: loaded.selectedTurn.assistantMessage,
-        isEarlierQuestion: loaded.selectedTurn.isEarlierQuestion,
-        recentQuestionsNav,
-      }),
-    );
-  }
-
-  return c.html(
-    await layoutShell({
-      session,
-      csrfToken: createCsrfToken(session.id),
-      mainContent: selectedMessageSurface,
-      chatFormAction: `/chat/${loaded.conversation.id}/messages`,
-      recentQuestionsNav,
-    }),
-  );
+  return c.redirect(`/chat/${conversationId}`, 301);
 });
 
 app.post('/chat', async (c) => {
@@ -817,9 +772,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
-    // Push the canonical conversation URL on follow-ups submitted from the
-    // legacy `/messages/:mid` selected-message page (still served until
-    // PR 3) so the URL bar stops pointing at a deeper sub-resource.
+    // Keep follow-up submissions pinned to the canonical conversation URL.
     c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
     // ADR 0012 E-3: append-fragment swap. The client's form posts with
     // `hx-target=".squire-transcript"` `hx-swap="beforeend"`, so we return

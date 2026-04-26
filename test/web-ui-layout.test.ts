@@ -633,7 +633,7 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
   });
 });
 
-describe('selected-message rendering helpers', () => {
+describe('conversation transcript rendering helpers', () => {
   const messages = [
     {
       id: 'm1',
@@ -697,34 +697,21 @@ describe('selected-message rendering helpers', () => {
     },
   ];
 
-  it('renders a selected earlier question and answer with the EARLIER QUESTION cue', () => {
+  it('wraps persisted transcript answer markdown in the shared answer content container', () => {
     const body = String(
-      actualLayout.renderSelectedMessageSurface({
-        selectedQuestion: messages[2],
-        selectedAnswer: messages[3],
-        isEarlierQuestion: true,
+      actualLayout.renderConversationTranscript({
+        conversationId: 'conv-123',
+        messages: [
+          messages[2],
+          {
+            ...messages[3],
+            content: 'Paragraph with **strong** and *emphasis*.',
+          },
+        ],
       }),
     );
 
     expect(body).toContain('Middle question');
-    expect(body).toContain('Middle answer.');
-    expect(body).toContain('EARLIER QUESTION');
-    expect(body).toMatch(/class="squire-turn squire-question"/);
-    expect(body).toMatch(/class="squire-turn squire-answer"/);
-  });
-
-  it('wraps persisted selected-answer markdown in the shared answer content container', () => {
-    const body = String(
-      actualLayout.renderSelectedMessageSurface({
-        selectedQuestion: messages[2],
-        selectedAnswer: {
-          ...messages[3],
-          content: 'Paragraph with **strong** and *emphasis*.',
-        },
-        isEarlierQuestion: true,
-      }),
-    );
-
     expect(body).toMatch(
       /class="squire-turn squire-answer"[\s\S]*class="squire-answer__content squire-markdown"/,
     );
@@ -764,10 +751,9 @@ describe('selected-message rendering helpers', () => {
     'preserves the top-level first paragraph drop-cap target when the answer opens with a %s',
     (_label, content, leadElement, paragraph) => {
       const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: messages[4],
-          selectedAnswer: { ...messages[5], content },
-          isEarlierQuestion: false,
+        actualLayout.renderConversationTranscript({
+          conversationId: 'conv-123',
+          messages: [messages[4], { ...messages[5], content }],
         }),
       );
 
@@ -782,20 +768,6 @@ describe('selected-message rendering helpers', () => {
       expect(contentSlice.indexOf(leadElement)).toBeLessThan(contentSlice.indexOf(paragraph));
     },
   );
-
-  it('omits the EARLIER QUESTION cue when rendering the newest question', () => {
-    const body = String(
-      actualLayout.renderSelectedMessageSurface({
-        selectedQuestion: messages[4],
-        selectedAnswer: messages[5],
-        isEarlierQuestion: false,
-      }),
-    );
-
-    expect(body).toContain('Newest question');
-    expect(body).toContain('Newest answer.');
-    expect(body).not.toContain('EARLIER QUESTION');
-  });
 
   it('renders the conversation page as a full scrolling transcript with role=log and no recent-questions chrome (SQR-108)', async () => {
     // ADR 0012: the conversation page is a standard scrolling chat
@@ -994,86 +966,6 @@ describe('selected-message rendering helpers', () => {
     expect(body.indexOf('First question')).toBeLessThan(body.indexOf('First answer.'));
     expect(body.indexOf('First answer.')).toBeLessThan(body.indexOf('Second question'));
     expect(body.indexOf('Second question')).toBeLessThan(body.indexOf('Second answer.'));
-  });
-
-  // SQR-108 dropped the typed-options overload of `renderRecentQuestionsNav`.
-  // The production caller in src/server.ts uses the array form. PR 3 retires
-  // the legacy /messages/:mid route and this helper goes with it.
-
-  it('renders explicit nav items with HTMX attributes when provided', () => {
-    const body = String(
-      actualLayout.renderRecentQuestionsNav(
-        [
-          {
-            href: '/chat/conv-123/messages/m1',
-            hxGet: '/chat/conv-123/messages/m1',
-            label: 'Oldest question',
-            pushUrl: true,
-          },
-        ],
-        { oob: true },
-      ),
-    );
-
-    expect(body).toContain('href="/chat/conv-123/messages/m1"');
-    expect(body).toContain('hx-get="/chat/conv-123/messages/m1"');
-    expect(body).toContain('hx-target="#squire-surface"');
-    expect(body).toContain('hx-swap="innerHTML"');
-    expect(body).toContain('hx-push-url="true"');
-  });
-
-  // SQR-108 / ADR 0012 E-3 replaced the pending-shell-with-recent-questions
-  // helper with `renderConversationTurnAppendFragment` (covered above) for
-  // /chat/:id follow-ups. The `/chat/:id/messages/:mid` route still uses
-  // the recent-questions OOB swap path until PR 3 lands.
-
-  it('renders older recent questions behind an explicit overflow control', () => {
-    const body = String(
-      actualLayout.renderRecentQuestionsNav(
-        [
-          {
-            href: '/chat/conv-123/messages/m7',
-            hxGet: '/chat/conv-123/messages/m7',
-            label: 'Question 7',
-            pushUrl: true,
-          },
-          {
-            href: '/chat/conv-123/messages/m6',
-            hxGet: '/chat/conv-123/messages/m6',
-            label: 'Question 6',
-            pushUrl: true,
-          },
-          {
-            href: '/chat/conv-123/messages/m5',
-            hxGet: '/chat/conv-123/messages/m5',
-            label: 'Question 5',
-            pushUrl: true,
-          },
-          {
-            href: '/chat/conv-123/messages/m4',
-            hxGet: '/chat/conv-123/messages/m4',
-            label: 'Question 4',
-            pushUrl: true,
-          },
-          {
-            href: '/chat/conv-123/messages/m3',
-            hxGet: '/chat/conv-123/messages/m3',
-            label: 'Question 3',
-            pushUrl: true,
-          },
-        ],
-        { oob: true },
-      ),
-    );
-
-    expect(body).toContain('Question 7');
-    expect(body).toContain('Question 6');
-    expect(body).toContain('Question 5');
-    expect(body).toContain('More history');
-    expect(body).toContain('2 older questions');
-    expect(body).toContain('Question 4');
-    expect(body).toContain('Question 3');
-    expect(body).toMatch(/<details[^>]*class="squire-recent__overflow"/);
   });
 });
 
@@ -1323,14 +1215,17 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       };
     }
 
-    it('renders the consulted footer inside the answer element for a single source', () => {
-      const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: userMessage,
-          selectedAnswer: answerWith(['search_rules']),
-          isEarlierQuestion: false,
+    function renderTranscriptAnswer(answer: ReturnType<typeof answerWith>): string {
+      return String(
+        actualLayout.renderConversationTranscript({
+          conversationId: 'conv-sqr98',
+          messages: [userMessage, answer],
         }),
       );
+    }
+
+    it('renders the consulted footer inside the answer element for a single source', () => {
+      const body = renderTranscriptAnswer(answerWith(['search_rules']));
       // Template whitespace is nondeterministic across hono/html versions,
       // so match the shape with \s* tolerance between tokens rather than
       // asserting byte-for-byte equality.
@@ -1340,18 +1235,8 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     });
 
     it('aggregates multiple tool names into deduped labels, preserving insertion order', () => {
-      const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: userMessage,
-          selectedAnswer: answerWith([
-            'search_rules',
-            'search_cards',
-            'search_rules',
-            'get_card',
-            'get_section',
-          ]),
-          isEarlierQuestion: false,
-        }),
+      const body = renderTranscriptAnswer(
+        answerWith(['search_rules', 'search_cards', 'search_rules', 'get_card', 'get_section']),
       );
       expect(body).toContain('CONSULTED · RULEBOOK · CARD INDEX · SECTION BOOK');
       // The RULEBOOK-first ordering is the insertion-order contract — ensure
@@ -1361,13 +1246,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     });
 
     it('renders the footer hidden when consultedSources is null (pre-SQR-98 rows)', () => {
-      const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: userMessage,
-          selectedAnswer: answerWith(null),
-          isEarlierQuestion: false,
-        }),
-      );
+      const body = renderTranscriptAnswer(answerWith(null));
       expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
     });
 
@@ -1376,39 +1255,25 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       // from whatever tool resolved the link, so it never contributes a
       // provenance label on its own. An answer that "only" used follow_links
       // shouldn't show any consulted sources.
-      const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: userMessage,
-          selectedAnswer: answerWith(['follow_links']),
-          isEarlierQuestion: false,
-        }),
-      );
+      const body = renderTranscriptAnswer(answerWith(['follow_links']));
       expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
     });
 
     it('renders the footer hidden for error messages even if sources exist', () => {
       // An error turn didn't produce a real answer. The footer would lie
       // about the error being the result of consulting a source.
-      const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: userMessage,
-          selectedAnswer: answerWith(['search_rules'], {
-            isError: true,
-            content: 'Trouble connecting. Please try again.',
-          }),
-          isEarlierQuestion: false,
+      const body = renderTranscriptAnswer(
+        answerWith(['search_rules'], {
+          isError: true,
+          content: 'Trouble connecting. Please try again.',
         }),
       );
       expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
     });
 
     it('maps scenario-family and section-family tools to the right labels', () => {
-      const body = String(
-        actualLayout.renderSelectedMessageSurface({
-          selectedQuestion: userMessage,
-          selectedAnswer: answerWith(['find_scenario', 'get_scenario', 'get_section']),
-          isEarlierQuestion: false,
-        }),
+      const body = renderTranscriptAnswer(
+        answerWith(['find_scenario', 'get_scenario', 'get_section']),
       );
       expect(body).toContain('CONSULTED · SCENARIO BOOK · SECTION BOOK');
     });
@@ -1521,28 +1386,6 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(body).toMatch(/letter-spacing:\s*0\.1[4-9]em|letter-spacing:\s*0\.2/);
     expect(body).toContain('color: var(--sepia)');
     expect(body).toMatch(/font-size:\s*1[01]px/);
-  });
-
-  // SQR-108 / ADR 0012 transitional: the chip-row rules stay until PR 3
-  // retires the legacy `/chat/:id/messages/:mid` route. They render the
-  // selected-message page's recent-questions nav during the transition
-  // window. PR 3 deletes both the route and these rules.
-
-  it('declares .squire-recent .squire-chip with 1px --rule border and 4px radius (transitional)', () => {
-    const rule = css.match(/\.squire-recent\s+\.squire-chip\s*\{[^}]*\}/);
-    expect(rule).not.toBeNull();
-    const body = rule![0];
-    expect(body).toMatch(/border:\s*1px\s+solid\s+var\(--rule\)/);
-    expect(body).toMatch(/border-radius:\s*4px/);
-    expect(body).toContain('color: var(--sepia)');
-  });
-
-  it('declares .squire-recent__chips as a flex row with an 8px gap (transitional)', () => {
-    const rule = css.match(/\.squire-recent__chips\s*\{[^}]*\}/);
-    expect(rule).not.toBeNull();
-    const body = rule![0];
-    expect(body).toContain('display: flex');
-    expect(body).toContain('gap: 8px');
   });
 
   it('SQR-108 D-7: .squire-turn declares no card-shell properties (no shadow / outer radius / deviant background)', () => {

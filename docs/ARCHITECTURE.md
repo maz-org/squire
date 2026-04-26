@@ -217,7 +217,7 @@ The web channel passes a `Session` domain object through the request lifecycle. 
 3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = the view renders its surface-specific interaction chrome (every authenticated surface ships the input dock). Per [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md), the home page is a focused landing (no chip row, no desktop rail) and the conversation page is a scrolling transcript (no recent-questions chip row, no desktop rail). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
 4. **Tests** construct `Session` objects directly. No context faking, no mock modules. The `Session` type ensures tests fail at compile time if the shape changes.
 
-`optionalSession()` runs on public routes like `/login` so the layout can adapt without blocking unauthenticated visitors. `requirePageSession()` runs on browser HTML routes (`/`, `/chat`, `/chat/:conversationId/messages/:messageId`, `/auth/logout`) and redirects to `/login` if no valid session. `requireSession()` remains for machine-readable cookie routes like `/auth/me`, where a missing or expired session should return JSON 401.
+`optionalSession()` runs on public routes like `/login` so the layout can adapt without blocking unauthenticated visitors. `requirePageSession()` runs on browser HTML routes (`/`, `/chat`, `/chat/:conversationId`, `/chat/:conversationId/messages/:messageId`, `/auth/logout`) and redirects to `/login` if no valid session. `requireSession()` remains for machine-readable cookie routes like `/auth/me`, where a missing or expired session should return JSON 401.
 
 ---
 
@@ -337,10 +337,10 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   scrolling transcript per [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md).
   Follow-up submits use an append-fragment swap contract (`POST` returns just
   the new question + pending answer skeleton; the client appends them to
-  `.squire-transcript` via `hx-swap="beforeend"`). The legacy
-  `/chat/:id/messages/:mid` selected-message route still ships the old
-  current-turn ledger surface; PR 3 of the SQR-101 cycle replaces it with a
-  301 redirect to `/chat/:id`
+  `.squire-transcript` via `hx-swap="beforeend"`). Old bookmark URLs at
+  `/chat/:id/messages/:mid` permanently 301-redirect to `/chat/:id`; the
+  `/chat/:id/messages/:mid/stream` sibling remains a live SSE endpoint because
+  streaming is per user message.
 - Web writes persist the user turn first, then either the assistant answer or a
   generic persisted failure turn
 - Failure turns are excluded from future history passed back into the knowledge

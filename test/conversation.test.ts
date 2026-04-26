@@ -54,7 +54,7 @@ import { createCsrfToken } from '../src/auth/csrf.ts';
 import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
-import { loadConversation, loadSelectedConversation } from '../src/chat/conversation-service.ts';
+import { loadConversation } from '../src/chat/conversation-service.ts';
 import { users } from '../src/db/schema/core.ts';
 import { conversations, messages } from '../src/db/schema/conversations.ts';
 
@@ -514,38 +514,6 @@ describe('conversation web backend', () => {
     expect(page).toMatch(/hx-swap="beforeend"/);
   });
 
-  it('renders the canonical selected-message page for the conversation owner', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
-      { question: 'When do elements wane?', answer: 'At end of round.' },
-    ]);
-
-    const pageRes = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
-    );
-
-    expect(pageRes.status).toBe(200);
-    expect(pageRes.headers.get('cache-control')).toBe('no-store');
-    expect(pageRes.headers.get('vary')).toBe('Cookie');
-
-    const page = await pageRes.text();
-    expect(page).toContain('class="squire-account-menu"');
-    expect(page).toContain('href="/styleguide/markdown"');
-    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
-    expect(transcript).toContain('How does looting work?');
-    expect(transcript).toContain('Loot tokens in your hex are picked up.');
-    expect(transcript).toContain('EARLIER QUESTION');
-    expect(transcript).not.toContain('When do elements wane?');
-    expect(transcript).not.toContain('At end of round.');
-    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(recentNav).toContain('When do elements wane?');
-    expect(recentNav).not.toContain('How does looting work?');
-    expect(recentNav).toContain('hx-get="/chat/');
-    expect(recentNav).toContain('hx-push-url="true"');
-  });
-
   it('renders prior turns plus a pending answer skeleton when the canonical page has an in-flight turn (SQR-108)', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
@@ -622,97 +590,35 @@ describe('conversation web backend', () => {
     expect(page).toContain('I hit an error and couldn&#39;t answer that. Please try again.');
   });
 
-  it('renders the canonical selected-message route as an HTMX fragment', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'What does muddle do?', answer: 'It forces disadvantage on attacks.' },
-      { question: 'What does strengthen do?', answer: 'It grants advantage on attacks.' },
-    ]);
-
-    const fragmentRes = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[1]!.id}`,
-      {
-        headers: { 'hx-request': 'true' },
-      },
-    );
-
-    expect(fragmentRes.status).toBe(200);
-    expect(fragmentRes.headers.get('cache-control')).toBe('no-store');
-    expect(fragmentRes.headers.get('vary')).toBe('Cookie');
-
-    const fragment = await fragmentRes.text();
-    const transcript = fragment.match(
-      /<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/,
-    )?.[0];
-    expect(transcript).toContain('What does strengthen do?');
-    expect(transcript).toContain('It grants advantage on attacks.');
-    expect(transcript).not.toContain('EARLIER QUESTION');
-    expect(fragment).not.toContain('<!doctype html>');
-    const recentNav = fragment.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
-    expect(recentNav).toContain('What does muddle do?');
-    expect(recentNav).not.toContain('What does strengthen do?');
-    expect(recentNav).toContain('hx-get="/chat/');
-    expect(recentNav).toContain('hx-push-url="true"');
-  });
-
-  it("returns 404 when one user requests another user's selected-message URL", async () => {
-    const owner = await createAuthContext();
-    const intruder = await createAuthContext({
-      email: 'mallory@example.com',
-      googleSub: 'google-sub-mallory',
-      name: 'Mallory',
-    });
-    const seeded = await seedConversationWithTurns(owner, [
-      { question: 'Owner-only question', answer: 'Owner-only answer.' },
-    ]);
-
-    const response = await requestWithAuth(
-      intruder,
-      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
-    );
-
-    expect(response.status).toBe(404);
-  });
-
-  it('returns 404 when the selected-message URL targets an assistant message id', async () => {
+  it('301-redirects old selected-message bookmarks to the parent conversation', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'Question', answer: 'Answer' },
-    ]);
-
-    const response = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.assistantMessages[0]!.id}`,
-    );
-
-    expect(response.status).toBe(404);
-  });
-
-  it('returns 404 when the selected-message URL mixes conversation and message ids', async () => {
-    const auth = await createAuthContext();
-    const firstConversation = await seedConversationWithTurns(auth, [
-      { question: 'First question', answer: 'First answer' },
     ]);
     const secondConversation = await seedConversationWithTurns(auth, [
       { question: 'Second question', answer: 'Second answer' },
     ]);
 
-    const response = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${firstConversation.conversationId}/messages/${secondConversation.userMessages[0]!.id}`,
-    );
+    for (const messageId of [
+      seeded.userMessages[0]!.id,
+      seeded.assistantMessages[0]!.id,
+      secondConversation.userMessages[0]!.id,
+      '00000000-0000-4000-8000-000000000000',
+    ]) {
+      const response = await requestWithAuth(
+        auth,
+        `http://localhost:3000/chat/${seeded.conversationId}/messages/${messageId}`,
+        { redirect: 'manual' },
+      );
 
-    expect(response.status).toBe(404);
+      expect(response.status).toBe(301);
+      expect(response.headers.get('location')).toBe(`/chat/${seeded.conversationId}`);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      expect(response.headers.get('vary')).toBe('Cookie');
+    }
   });
 
-  it('pushes the canonical conversation URL when posting a follow-up from a selected-message page', async () => {
-    // The legacy `/chat/:id/messages/:mid` route ships until PR 3. Until
-    // then, follow-up posts from there still set HX-Push-Url so the URL
-    // bar moves back to the canonical conversation. This PR drops the
-    // out-of-band recent-questions nav refresh — the response is now an
-    // append-fragment instead.
+  it('pushes the canonical conversation URL when posting an HTMX follow-up', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'First question', answer: 'First answer' },
@@ -728,7 +634,7 @@ describe('conversation web backend', () => {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
           'hx-request': 'true',
-          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}`,
         },
         body: formBody({ question: 'Newest question' }),
       },
@@ -741,11 +647,9 @@ describe('conversation web backend', () => {
   });
 
   it('returns an append-fragment (new question + pending answer skeleton) for HTMX follow-ups (SQR-108 E-3)', async () => {
-    // Regression baseline: ISSUE-001 — selected-message follow-up fell
-    // back to transcript mode. SQR-108 / ADR 0012: the follow-up POST
-    // returns ONLY the new question + pending answer skeleton (no
-    // wrapping `<section class="squire-transcript">`), and the client
-    // appends them via `hx-swap="beforeend"`.
+    // SQR-108 / ADR 0012: the follow-up POST returns ONLY the new question
+    // + pending answer skeleton (no wrapping `<section class="squire-transcript">`),
+    // and the client appends them via `hx-swap="beforeend"`.
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'First question', answer: 'First answer' },
@@ -1915,167 +1819,7 @@ describe('conversation web backend', () => {
   });
 });
 
-describe('selected-message projection', () => {
-  it('returns the selected completed turn and recent completed questions newest-to-oldest', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'Oldest completed question', answer: 'Oldest completed answer' },
-      { question: 'Middle completed question', answer: 'Middle completed answer' },
-      { question: 'Newest completed question', answer: 'Newest completed answer' },
-      { question: 'Pending question only' },
-    ]);
-
-    const projection = await loadSelectedConversation({
-      conversationId: seeded.conversationId,
-      messageId: seeded.userMessages[1]!.id,
-      userId: auth.userId,
-    });
-
-    expect(projection).not.toBeNull();
-    expect(projection?.selectedTurn.userMessage.content).toBe('Middle completed question');
-    expect(projection?.selectedTurn.assistantMessage.content).toBe('Middle completed answer');
-    expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
-    expect(projection?.recentQuestions.map((question) => question.messageId)).toEqual([
-      seeded.userMessages[2]!.id,
-      seeded.userMessages[0]!.id,
-    ]);
-    expect(projection?.recentQuestions.map((question) => question.question)).toEqual([
-      'Newest completed question',
-      'Oldest completed question',
-    ]);
-  });
-
-  it('returns no recent questions when there are no other completed questions', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'Only completed question', answer: 'Only completed answer' },
-      { question: 'Still pending' },
-    ]);
-
-    const projection = await loadSelectedConversation({
-      conversationId: seeded.conversationId,
-      messageId: seeded.userMessages[0]!.id,
-      userId: auth.userId,
-    });
-
-    expect(projection).not.toBeNull();
-    expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
-    expect(projection?.recentQuestions).toEqual([]);
-  });
-
-  it('excludes error assistant turns from selected-message history', async () => {
-    const auth = await createAuthContext();
-    const { db } = getDb('server');
-    const [conversation] = await db
-      .insert(conversations)
-      .values({ userId: auth.userId })
-      .returning();
-
-    const [olderUserMessage] = await db
-      .insert(messages)
-      .values({
-        conversationId: conversation.id,
-        role: 'user',
-        content: 'Older completed question',
-      })
-      .returning();
-    await db.insert(messages).values({
-      conversationId: conversation.id,
-      role: 'assistant',
-      content: 'Older completed answer',
-      responseToMessageId: olderUserMessage.id,
-    });
-    const [failedUserMessage] = await db
-      .insert(messages)
-      .values({
-        conversationId: conversation.id,
-        role: 'user',
-        content: 'Failed question',
-      })
-      .returning();
-    const [failedAssistantMessage] = await db
-      .insert(messages)
-      .values({
-        conversationId: conversation.id,
-        role: 'assistant',
-        content: 'I hit an error and could not answer that.',
-        isError: true,
-        responseToMessageId: failedUserMessage.id,
-      })
-      .returning();
-
-    await db
-      .update(conversations)
-      .set({ lastMessageAt: failedAssistantMessage.createdAt })
-      .where(sql`${conversations.id} = ${conversation.id}`);
-
-    const selectedFailedTurn = await loadSelectedConversation({
-      conversationId: conversation.id,
-      messageId: failedUserMessage.id,
-      userId: auth.userId,
-    });
-    expect(selectedFailedTurn).toBeNull();
-
-    const projection = await loadSelectedConversation({
-      conversationId: conversation.id,
-      messageId: olderUserMessage.id,
-      userId: auth.userId,
-    });
-
-    expect(projection).not.toBeNull();
-    expect(projection?.recentQuestions).toEqual([]);
-  });
-
-  it('marks the latest completed turn as earlier when a newer user question is pending', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'Oldest completed question', answer: 'Oldest completed answer' },
-      { question: 'Latest completed question', answer: 'Latest completed answer' },
-      { question: 'Newest pending question' },
-    ]);
-
-    const projection = await loadSelectedConversation({
-      conversationId: seeded.conversationId,
-      messageId: seeded.userMessages[1]!.id,
-      userId: auth.userId,
-    });
-
-    expect(projection).not.toBeNull();
-    expect(projection?.selectedTurn.isEarlierQuestion).toBe(true);
-    expect(projection?.recentQuestions.map((question) => question.messageId)).toEqual([
-      seeded.userMessages[0]!.id,
-    ]);
-  });
-
-  it('keeps all other completed turns available for recent-question overflow', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'Question 1', answer: 'Answer 1' },
-      { question: 'Question 2', answer: 'Answer 2' },
-      { question: 'Question 3', answer: 'Answer 3' },
-      { question: 'Question 4', answer: 'Answer 4' },
-      { question: 'Question 5', answer: 'Answer 5' },
-      { question: 'Question 6', answer: 'Answer 6' },
-      { question: 'Question 7', answer: 'Answer 7' },
-    ]);
-
-    const projection = await loadSelectedConversation({
-      conversationId: seeded.conversationId,
-      messageId: seeded.userMessages[0]!.id,
-      userId: auth.userId,
-    });
-
-    expect(projection).not.toBeNull();
-    expect(projection?.recentQuestions.map((question) => question.question)).toEqual([
-      'Question 7',
-      'Question 6',
-      'Question 5',
-      'Question 4',
-      'Question 3',
-      'Question 2',
-    ]);
-  });
-
+describe('conversation loading', () => {
   it('pads the load window when the limit cuts between a user message and its assistant reply (CR PR #274)', async () => {
     // Without padding, a window that starts at an assistant message whose
     // paired user is older than the cap would silently drop the assistant
