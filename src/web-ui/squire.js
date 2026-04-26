@@ -131,12 +131,6 @@ function syncChatFormAction() {
   form.setAttribute('hx-swap', 'innerHTML');
 }
 
-function closeActiveStream() {
-  if (!activeStream) return;
-  activeStream.source.close();
-  activeStream = null;
-}
-
 function ensureAnswerParagraph(contentEl) {
   var paragraph = contentEl.querySelector('p');
   if (paragraph) return paragraph;
@@ -443,7 +437,14 @@ function attachPendingAnswerStream(answerEl) {
   if (!streamUrl) return;
   if (activeStream && activeStream.url === streamUrl) return;
 
-  closeActiveStream();
+  // CodeRabbit (PR 274): if a different stream is already in flight, do
+  // NOT close it just to start a new one — that strands the older
+  // pending turn (its `done`/`error` will never reach the browser). The
+  // multi-pending case (server-rendered transcript with several
+  // unanswered user messages) is drained serially: when the active
+  // stream finishes, `finishStream()` re-scans the DOM and attaches to
+  // the next pending answer.
+  if (activeStream) return;
 
   // SQR-108: serialize submits — keep the input dock disabled while a
   // stream is active so the user can't append a second pending turn that
@@ -487,10 +488,20 @@ function attachPendingAnswerStream(answerEl) {
       activeStream = null;
     }
     source.close();
-    // SQR-108: re-enable the input dock once the stream terminates so
-    // the user can submit the next turn. Mirrors the lock applied in
-    // attachPendingAnswerStream.
-    setFormPendingState(document.querySelector('.squire-input-dock'), false);
+    // CodeRabbit (PR 274): drain the multi-pending queue. If the DOM
+    // has another unattached pending answer (e.g. a server-rendered
+    // transcript with multiple unanswered user messages — the case
+    // `pairConversationTurns` was added to defend against), attach to
+    // it now. Only re-enable the input dock when no pending remains —
+    // otherwise the next turn's pending skeleton would be undefended
+    // against a fast user submitting a third turn before the chain
+    // completes.
+    var nextPending = findActivePendingAnswer(document);
+    if (nextPending) {
+      attachPendingAnswerStream(nextPending);
+    } else {
+      setFormPendingState(document.querySelector('.squire-input-dock'), false);
+    }
   }
 
   function materializeStreamingDelta(delta) {
@@ -604,7 +615,18 @@ function attachPendingAnswerStream(answerEl) {
       activeStream = null;
     }
     source.close();
-    setFormPendingState(document.querySelector('.squire-input-dock'), false);
+    // CodeRabbit (PR 274): drain the multi-pending queue. If the
+    // server-rendered transcript had several unanswered user messages,
+    // attach to the next pending now instead of re-enabling the dock —
+    // otherwise a fast user could submit a third turn before the chain
+    // completes. attachPendingAnswerStream sets the form to pending
+    // again on its own.
+    var nextPending = findActivePendingAnswer(document);
+    if (nextPending) {
+      attachPendingAnswerStream(nextPending);
+    } else {
+      setFormPendingState(document.querySelector('.squire-input-dock'), false);
+    }
 
     var payload = JSON.parse(event.data || '{}');
     // SQR-108 / ADR 0012 D-5: wrap the streamed-plaintext → final-HTML
@@ -757,9 +779,15 @@ document.addEventListener('htmx:afterSwap', function (event) {
     // — that would let the user submit a second turn while the first
     // is still streaming.
     attachPendingAnswerStream(pending);
-  } else {
-    // No pending stream after this swap (e.g., a non-chat swap).
-    // Re-enable the form so the user can submit again.
+  } else if (!activeStream) {
+    // No pending stream after this swap (e.g., a non-chat swap) AND
+    // nothing is currently streaming. Re-enable the form so the user
+    // can submit again. CodeRabbit (PR 274): the `!activeStream` guard
+    // matters because `findActivePendingAnswer()` intentionally skips
+    // the currently attached stream's URL; an unrelated swap during
+    // streaming would otherwise fall into this branch and re-enable
+    // the form before `done`/`error` fires, reopening the
+    // concurrent-submit race.
     setFormPendingState(form, false);
   }
 });

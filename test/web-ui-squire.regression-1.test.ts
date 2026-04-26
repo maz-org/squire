@@ -245,9 +245,12 @@ function bootPendingTranscript() {
     },
     querySelectorAll(selector: string) {
       // SQR-108: squire.js looks for `.squire-answer--pending[data-stream-url]`
-      // to attach the EventSource. Match that selector directly so the
-      // fake DOM stays in sync with the real lookup path.
+      // to attach the EventSource. Match that selector directly — both the
+      // class and attribute must be present, so post-error/post-done answers
+      // (where renderPendingError / done strip the class) drop out and the
+      // multi-pending drain path doesn't loop.
       if (selector === '.squire-answer--pending[data-stream-url]') {
+        if (!answerEl.classList.contains('squire-answer--pending')) return [];
         return answerEl.getAttribute('data-stream-url') ? [answerEl] : [];
       }
       return [];
@@ -964,13 +967,15 @@ describe('squire.js selected-message retargeting', () => {
     });
   });
 
-  describe('SQR-108 findActivePendingAnswer tie-break (multi-pending case)', () => {
-    it('skips a pending answer whose URL matches the active stream and attaches to a different one', () => {
-      // Codex defense-in-depth scenario: an older pending turn is still
-      // streaming when an htmx:afterSwap fires with a newer pending
-      // answer in the swap target. findActivePendingAnswer skips the
-      // candidate whose URL matches the active stream, so only the
-      // newcomer gets a fresh EventSource.
+  describe('SQR-108 multi-pending case — serial drain via finishStream', () => {
+    it('does NOT open a second EventSource on htmx:afterSwap while one is active; drains to the next pending only after `done`', () => {
+      // CodeRabbit (PR 274): a server-rendered transcript can include
+      // multiple pending user-message turns (`pendingStreamUrls` is now a
+      // Map). DOMContentLoaded attaches the FIRST pending. While that
+      // stream is in flight, an htmx:afterSwap MUST NOT open a parallel
+      // EventSource — the client supports exactly one active stream and
+      // the second open would strand the first. The next pending is
+      // drained from `finishStream()` after `done` (or `error`).
       const listeners = new Map<
         string,
         Array<(event: { detail?: { target?: unknown } }) => void>
@@ -1064,12 +1069,18 @@ describe('squire.js selected-message retargeting', () => {
       const firstSource = FakeEventSource.latest;
       expect(firstSource?.url).toBe('/chat/conv/messages/m1/stream');
 
-      // Now an htmx:afterSwap fires (e.g. a follow-up was appended).
-      // findActivePendingAnswer should skip oldPending (its URL matches
-      // the active stream) and return newPending.
+      // While m1 is in flight, an htmx:afterSwap fires. The handler
+      // MUST NOT open a parallel EventSource — `attachPendingAnswerStream`
+      // bails when `activeStream` is set so m1's stream isn't stranded.
       for (const callback of listeners.get('htmx:afterSwap') ?? []) {
         callback({ detail: { target: transcript } });
       }
+      expect(FakeEventSource.latest).toBe(firstSource);
+
+      // m1's stream finishes. `finishStream()` then drains the queue —
+      // it re-scans the DOM, finds newPending, and attaches a fresh
+      // EventSource pointing at m2.
+      firstSource?.emit('done', { html: '<p>m1 answered</p>' });
       const secondSource = FakeEventSource.latest;
       expect(secondSource?.url).toBe('/chat/conv/messages/m2/stream');
       expect(secondSource).not.toBe(firstSource);

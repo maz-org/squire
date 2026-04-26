@@ -856,6 +856,11 @@ export function renderConversationTranscript(options: {
   >
     ${pairs.map((pair) => {
       const streamUrl = pendingStreamUrls.get(pair.userMessage.id);
+      // Three states: (1) answered → render the answer; (2) pending with a
+      // live stream URL → render the skeleton so the client reattaches the
+      // SSE; (3) orphan question with no assistant row and no stream URL —
+      // shows the question alone (defensive: no expected production path
+      // produces this, but a crashed/aborted stream could leave one behind).
       return html`${renderQuestionTurn(pair.userMessage.content)}
       ${pair.assistantMessage
         ? renderAnswerTurn(pair.assistantMessage)

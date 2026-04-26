@@ -25,13 +25,12 @@ describe('squire.js HTMX first-turn submit regression', () => {
   });
 
   it('recognizes selected-message URLs when retargeting follow-up submits (PR 3 will retire this)', () => {
-    // SQR-108 / ADR 0012: home and conversation submits use different
-    // swap contracts (`#squire-surface innerHTML` vs
-    // `.squire-transcript beforeend`), and the legacy
-    // `/chat/:id/messages/:mid` route stays on the replace-the-surface
-    // contract until PR 3 removes it. The single regex was split into
-    // separate matches so the retargeter can flip target/swap, not just
-    // the action URL.
+    // SQR-108 / ADR 0012: the home submit uses `#squire-surface innerHTML`,
+    // and conversation submits — both `/chat/:id` and the legacy
+    // `/chat/:id/messages/:mid` route — append onto the live transcript via
+    // `.squire-transcript` + `beforeend`. Two separate path regexes feed the
+    // same target/swap flip; the legacy route is matched here so the contract
+    // stays consistent until PR 3 removes the surrogate URL entirely.
     expect(squireJs).toContain('pathname.match(/^\\/chat\\/([0-9a-f-]+)$/)');
     expect(squireJs).toContain(
       'pathname.match(/^\\/chat\\/([0-9a-f-]+)\\/messages\\/[0-9a-f-]+$/)',

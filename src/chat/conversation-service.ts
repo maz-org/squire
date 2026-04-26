@@ -445,6 +445,17 @@ export async function loadConversation(input: {
    */
   limit?: number;
 }): Promise<{ conversation: Conversation; messages: ConversationMessage[] } | null> {
+  // Reject non-positive / non-integer limits — the repository uses a truthy
+  // check on `limit`, so 0 would silently return the full transcript and
+  // defeat the cap. Callers that want unbounded results must omit `limit`.
+  if (input.limit !== undefined) {
+    if (!Number.isInteger(input.limit) || input.limit < 1) {
+      throw new TypeError(
+        `loadConversation: limit must be a positive integer or undefined, got ${input.limit}`,
+      );
+    }
+  }
+
   const conversation = await ConversationRepository.findOwnedById(
     input.userId,
     input.conversationId,
