@@ -113,17 +113,17 @@ the same shared contract definitions.
 
 ## Entity Kinds
 
-| Kind            | Meaning                                                                                              | Current source                              | Ref examples                                                    |
-| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
-| `source`        | A knowledge source such as a rulebook, section book, card database, or future campaign record store  | Source metadata                             | `source:frosthaven/rulebook`, `source:frosthaven/cards`         |
-| `rules_passage` | A semantic book-search passage from indexed PDFs                                                     | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`                   |
-| `scenario`      | A scenario-book scenario record                                                                      | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`, `scenario:gloomhavensecretariat/061` |
-| `section`       | A section-book section record                                                                        | `getSection()`                              | `section:frosthaven/67.1`                                       |
-| `card_type`     | A category of structured GHS card data                                                               | `listCardTypes()`                           | `card-type:frosthaven/items`                                    |
-| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`            |
-| `campaign`      | Future campaign state                                                                                | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                             |
-| `character`     | Future character state                                                                               | Future Phase 4 data                         | `character:frosthaven/<character-id>`                           |
-| `party`         | Future party state                                                                                   | Future Phase 4 data                         | `party:frosthaven/<party-id>`                                   |
+| Kind            | Meaning                                                                                              | Current source                              | Ref examples                                            |
+| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
+| `source`        | A knowledge source such as a rulebook, section book, card database, or future campaign record store  | Source metadata                             | `source:frosthaven/rulebook`, `source:frosthaven/cards` |
+| `rules_passage` | A semantic book-search passage from indexed PDFs                                                     | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`           |
+| `scenario`      | A scenario-book scenario record                                                                      | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`                               |
+| `section`       | A section-book section record                                                                        | `getSection()`                              | `section:frosthaven/67.1`                               |
+| `card_type`     | A category of structured GHS card data                                                               | `listCardTypes()`                           | `card-type:frosthaven/items`                            |
+| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`    |
+| `campaign`      | Future campaign state                                                                                | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                     |
+| `character`     | Future character state                                                                               | Future Phase 4 data                         | `character:frosthaven/<character-id>`                   |
+| `party`         | Future party state                                                                                   | Future Phase 4 data                         | `party:frosthaven/<party-id>`                           |
 
 Refs are URL-safe strings with this formal shape:
 
@@ -474,6 +474,22 @@ Output schema:
   ]
 }
 ```
+
+`include` field meanings:
+
+- `citations` returns source attribution for facts in `entity.data`.
+- `links` returns explicit refs found in the opened record, such as scenario
+  conclusions, unlocks, anchors, or source-authored cross references.
+- `related` returns inferred nearby entities from indexes or relationship
+  expansion. It is useful for exploration, but answers should not treat it as a
+  source-authored link unless a follow-up `open_entity()` call provides
+  citations.
+- `raw` returns implementation metadata needed for debugging or migration, not
+  normal answer synthesis.
+
+`neighbors()` traverses the same explicit relationship graph exposed through
+`links`, but starts from a ref and can filter by relation without opening the
+full entity payload.
 
 Example:
 
