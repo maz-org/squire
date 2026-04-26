@@ -1,6 +1,6 @@
 # Squire Architecture
 
-**Version:** 1.0.9
+**Version:** 1.0.10
 **Date:** 2026-04-07
 **Last Refreshed:** 2026-04-26
 **Owner:** Architect
@@ -484,6 +484,17 @@ The same handful of tools handle every card type via parameter, rather than one 
 - `listCardTypes(opts?)` — discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table.
 - `listCards(type, filter?, opts?)` — list records of a given type with field-level AND filter, plus optional `opts.game`.
 - `getCard(type, id, opts?)` — exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions.
+
+Squire is moving this public retrieval surface toward the
+[Self-Describing Knowledge Tool Contract](KNOWLEDGE_TOOL_CONTRACT.md). The next
+contract is designed first for the knowledge agent behind `/api/ask`. It keeps
+the existing tools as adapters, but gives that agent discovery, schema
+inspection, entity resolution, exact opening, broad search, and neighbor
+traversal through a smaller set of domain-shaped operations:
+`inspect_sources`, `schema`, `resolve_entity`, `open_entity`,
+`search_knowledge`, and `neighbors`. External MCP names may use a `squire_`
+prefix as a projection detail when clients load tools from many servers. See
+[ADR 0014](adr/0014-self-describing-knowledge-tool-contract.md).
 
 ```mermaid
 graph TB
