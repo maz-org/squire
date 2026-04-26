@@ -54,7 +54,7 @@ import { createCsrfToken } from '../src/auth/csrf.ts';
 import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
-import { loadSelectedConversation } from '../src/chat/conversation-service.ts';
+import { loadConversation, loadSelectedConversation } from '../src/chat/conversation-service.ts';
 import { users } from '../src/db/schema/core.ts';
 import { conversations, messages } from '../src/db/schema/conversations.ts';
 
@@ -458,7 +458,7 @@ describe('conversation web backend', () => {
     expect(intruderRes.status).toBe(404);
   });
 
-  it('renders real recent-question chips on the canonical conversation page', async () => {
+  it('renders the conversation page as a full scrolling transcript with no recent-questions chrome (SQR-108 / ADR 0012)', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
@@ -473,22 +473,26 @@ describe('conversation web backend', () => {
     expect(pageRes.status).toBe(200);
 
     const page = await pageRes.text();
-    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(recentNav).toContain('How does looting work?');
-    expect(recentNav).not.toContain('Looting');
-    expect(recentNav).not.toContain('Element infusion');
-    expect(recentNav).not.toContain('Negative scenario effects');
-    expect(recentNav).toContain(
-      `href="/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}"`,
+    const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    expect(transcript).toMatch(/role="log"/);
+    expect(transcript).toMatch(/aria-live="polite"/);
+    // ADR 0012: every persisted turn is visible — no current-turn focus.
+    expect(transcript).toContain('How does looting work?');
+    expect(transcript).toContain('Loot tokens in your hex are picked up.');
+    expect(transcript).toContain('When do elements wane?');
+    expect(transcript).toContain('At end of round.');
+    // Oldest-to-newest ordering drives the position-based drop cap selector.
+    expect(transcript!.indexOf('Loot tokens in your hex are picked up.')).toBeLessThan(
+      transcript!.indexOf('At end of round.'),
     );
-    expect(recentNav).toContain(
-      `hx-get="/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}"`,
-    );
-    expect(recentNav).toContain('hx-push-url="true"');
-    expect(recentNav).not.toContain('When do elements wane?');
+    // No recent-questions chip rail anywhere on the page (D-6 / E-3).
+    expect(page).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
+    expect(page).not.toMatch(/class="squire-recent"/);
+    // No desktop rail aside on the conversation page (D-6).
+    expect(page).not.toMatch(/<aside[^>]*class="squire-rail"/);
   });
 
-  it('hides recent questions on the canonical conversation page when there is no prior turn', async () => {
+  it('renders the input dock with append-fragment HTMX swap on the conversation page', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'Only question', answer: 'Only answer' },
@@ -498,73 +502,16 @@ describe('conversation web backend', () => {
       auth,
       `http://localhost:3000/chat/${seeded.conversationId}`,
     );
-
     expect(pageRes.status).toBe(200);
 
     const page = await pageRes.text();
-    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(page).not.toContain('Looting');
-    expect(page).not.toContain('Element infusion');
-    expect(page).not.toContain('Negative scenario effects');
-    expect(recentNav).toContain('hidden');
-    expect(recentNav).not.toContain('href="/chat/');
-  });
-
-  it('keeps older recent questions discoverable behind an explicit overflow affordance', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'Question 1', answer: 'Answer 1' },
-      { question: 'Question 2', answer: 'Answer 2' },
-      { question: 'Question 3', answer: 'Answer 3' },
-      { question: 'Question 4', answer: 'Answer 4' },
-      { question: 'Question 5', answer: 'Answer 5' },
-      { question: 'Question 6', answer: 'Answer 6' },
-      { question: 'Question 7', answer: 'Answer 7' },
-    ]);
-
-    const pageRes = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${seeded.conversationId}`,
+    expect(page).toMatch(
+      new RegExp(
+        `<form[^>]*class="squire-input-dock"[^>]*action="/chat/${seeded.conversationId}/messages"`,
+      ),
     );
-
-    expect(pageRes.status).toBe(200);
-
-    const page = await pageRes.text();
-    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    const questionLinkCount = (recentNav?.match(/href="\/chat\/[^"]+\/messages\/[^"]+"/g) || [])
-      .length;
-    expect(questionLinkCount).toBe(6);
-    expect(recentNav).toContain('Question 6');
-    expect(recentNav).toContain('Question 5');
-    expect(recentNav).toContain('Question 4');
-    expect(recentNav).toContain('More history');
-    expect(recentNav).toContain('3 older questions');
-    expect(recentNav).toContain('Question 3');
-    expect(recentNav).toContain('Question 2');
-    expect(recentNav).toContain('Question 1');
-    expect(recentNav).not.toContain('Question 7');
-  });
-
-  it('renders only the latest completed turn on the canonical conversation page', async () => {
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'First question', answer: 'First answer' },
-      { question: 'Second question', answer: 'Second answer' },
-    ]);
-
-    const pageRes = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${seeded.conversationId}`,
-    );
-
-    expect(pageRes.status).toBe(200);
-
-    const page = await pageRes.text();
-    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
-    expect(transcript).toContain('Second question');
-    expect(transcript).toContain('Second answer');
-    expect(transcript).not.toContain('First question');
-    expect(transcript).not.toContain('First answer');
+    expect(page).toMatch(/hx-target="\.squire-transcript"/);
+    expect(page).toMatch(/hx-swap="beforeend"/);
   });
 
   it('renders the canonical selected-message page for the conversation owner', async () => {
@@ -599,7 +546,7 @@ describe('conversation web backend', () => {
     expect(recentNav).toContain('hx-push-url="true"');
   });
 
-  it('keeps the latest completed turn in the rail when the canonical page is showing a pending turn', async () => {
+  it('renders prior turns plus a pending answer skeleton when the canonical page has an in-flight turn (SQR-108)', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'How does looting work?', answer: 'Loot tokens in your hex are picked up.' },
@@ -615,14 +562,64 @@ describe('conversation web backend', () => {
     expect(pageRes.status).toBe(200);
 
     const page = await pageRes.text();
-    const transcript = page.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
+    const transcript = page.match(/<section[^>]*class="squire-transcript"[\s\S]*?<\/section>/)?.[0];
+    // All prior turns visible alongside the pending one.
+    expect(transcript).toContain('How does looting work?');
+    expect(transcript).toContain('Loot tokens in your hex are picked up.');
+    expect(transcript).toContain('When do elements wane?');
+    expect(transcript).toContain('At end of round.');
     expect(transcript).toContain('Can I loot through a wall?');
     expect(transcript).toContain('class="squire-answer__skeleton"');
+    // The pending answer carries the stream URL on the article itself
+    // (the wrapping `.squire-transcript--pending` class is gone — the
+    // transcript stays as one permanent live-region container).
+    expect(transcript).toMatch(
+      new RegExp(
+        `squire-answer--pending[^>]*data-stream-url="/chat/${seeded.conversationId}/messages/${seeded.userMessages[2]!.id}/stream"`,
+      ),
+    );
+    expect(page).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
+  });
 
-    const recentNav = page.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(recentNav).toContain('When do elements wane?');
-    expect(recentNav).toContain('How does looting work?');
-    expect(recentNav).not.toContain('Can I loot through a wall?');
+  it('does NOT render a pending skeleton when the latest turn is an error assistant reply (SQR-108 regression)', async () => {
+    // Pre-PR latent bug: the GET handler keyed only on "is there a latest
+    // user message" and always rendered a stream URL — so loading a
+    // finalized conversation whose final turn errored would re-attach an
+    // EventSource and re-trigger the SSE error path on every page load.
+    // Error assistant rows are persisted as `role: 'assistant', isError: true`
+    // with `responseToMessageId` set to the user message they answered;
+    // computePendingStreamUrl in src/server.ts must treat that as a reply
+    // and skip the skeleton.
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Will this fail?',
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: "I hit an error and couldn't answer that. Please try again.",
+      isError: true,
+      responseToMessageId: userMessage.id,
+    });
+
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000/chat/${conversation.id}`);
+    expect(pageRes.status).toBe(200);
+
+    const page = await pageRes.text();
+    expect(page).not.toMatch(/squire-answer--pending/);
+    expect(page).not.toMatch(/data-stream-url=/);
+    // The error reply is still visible in the transcript.
+    expect(page).toContain('I hit an error and couldn&#39;t answer that. Please try again.');
   });
 
   it('renders the canonical selected-message route as an HTMX fragment', async () => {
@@ -711,6 +708,11 @@ describe('conversation web backend', () => {
   });
 
   it('pushes the canonical conversation URL when posting a follow-up from a selected-message page', async () => {
+    // The legacy `/chat/:id/messages/:mid` route ships until PR 3. Until
+    // then, follow-up posts from there still set HX-Push-Url so the URL
+    // bar moves back to the canonical conversation. This PR drops the
+    // out-of-band recent-questions nav refresh — the response is now an
+    // append-fragment instead.
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'First question', answer: 'First answer' },
@@ -735,52 +737,15 @@ describe('conversation web backend', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('HX-Push-Url')).toBe(`/chat/${seeded.conversationId}`);
     const body = await response.text();
-    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
-    expect(recentNav).toContain('Second question');
-    expect(recentNav).toContain('First question');
+    expect(body).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
   });
 
-  it('renders only the new pending turn when a selected-message page submits a follow-up', async () => {
-    // Regression: ISSUE-001 — selected-message follow-up fell back to transcript mode
-    // Found by /qa on 2026-04-18
-    // Report: .gstack/qa-reports/qa-report-localhost-5018-2026-04-18.md
-    const auth = await createAuthContext();
-    const seeded = await seedConversationWithTurns(auth, [
-      { question: 'First question', answer: 'First answer' },
-      { question: 'Second question', answer: 'Second answer' },
-    ]);
-
-    const response = await requestWithAuth(
-      auth,
-      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
-      {
-        method: 'POST',
-        csrf: true,
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded',
-          'hx-request': 'true',
-          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
-        },
-        body: formBody({ question: 'Newest question' }),
-      },
-    );
-
-    expect(response.status).toBe(200);
-    const body = await response.text();
-    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
-    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(transcript).toContain('Newest question');
-    expect(transcript).toContain('class="squire-answer__skeleton"');
-    expect(transcript).not.toContain('First question');
-    expect(transcript).not.toContain('First answer');
-    expect(transcript).not.toContain('Second question');
-    expect(transcript).not.toContain('Second answer');
-    expect(recentNav).toContain('Second question');
-    expect(recentNav).toContain('First question');
-  });
-
-  it('refreshes the recent-questions rail alongside a normal conversation follow-up', async () => {
+  it('returns an append-fragment (new question + pending answer skeleton) for HTMX follow-ups (SQR-108 E-3)', async () => {
+    // Regression baseline: ISSUE-001 — selected-message follow-up fell
+    // back to transcript mode. SQR-108 / ADR 0012: the follow-up POST
+    // returns ONLY the new question + pending answer skeleton (no
+    // wrapping `<section class="squire-transcript">`), and the client
+    // appends them via `hx-swap="beforeend"`.
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
       { question: 'First question', answer: 'First answer' },
@@ -804,21 +769,84 @@ describe('conversation web backend', () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
-    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
-    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(transcript).toContain('Newest question');
-    expect(transcript).toContain('class="squire-answer__skeleton"');
-    expect(transcript).not.toContain('First question');
-    expect(transcript).not.toContain('First answer');
-    expect(transcript).not.toContain('Second question');
-    expect(transcript).not.toContain('Second answer');
-    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
-    expect(recentNav).toContain('First question');
-    expect(recentNav).toContain('Second question');
-    expect(recentNav).not.toContain('Newest question');
+    // The fragment is just the two new articles — no wrapping
+    // `.squire-transcript` section, no recent-questions nav.
+    expect(body).not.toMatch(/<section[^>]*class="squire-transcript/);
+    expect(body).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
+    expect(body).toContain('Newest question');
+    expect(body).toMatch(/<article[^>]*class="squire-turn squire-question"[^>]*>/);
+    expect(body).toMatch(
+      new RegExp(
+        `squire-answer--pending[^>]*data-stream-url="/chat/${seeded.conversationId}/messages/[0-9a-f-]+/stream"`,
+      ),
+    );
+    // None of the prior persisted turns appear in the fragment — they
+    // already live in the existing transcript and would duplicate.
+    expect(body).not.toContain('First question');
+    expect(body).not.toContain('First answer');
+    expect(body).not.toContain('Second question');
+    expect(body).not.toContain('Second answer');
   });
 
-  it('restores canonical recent-question chips after streaming a follow-up from a selected-message page', async () => {
+  // SQR-108: the second-turn submit append regression. Catches the
+  // `chat-ui-qa-must-include-second-turn-submit` learning at the API
+  // level — submitting a second follow-up to an already-active conversation
+  // must produce an append-fragment, not a full transcript replacement,
+  // so the client `hx-swap="beforeend"` adds one new turn cleanly.
+  it('returns an append-fragment on the SECOND HTMX follow-up — does not replace existing transcript chrome (SQR-108 regression)', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const firstFollowUp = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+        },
+        body: formBody({ question: 'Third question' }),
+      },
+    );
+    expect(firstFollowUp.status).toBe(200);
+    const firstBody = await firstFollowUp.text();
+    expect(firstBody).not.toMatch(/<section[^>]*class="squire-transcript/);
+    expect(firstBody).toContain('Third question');
+
+    const secondFollowUp = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+        },
+        body: formBody({ question: 'Fourth question' }),
+      },
+    );
+    expect(secondFollowUp.status).toBe(200);
+    const secondBody = await secondFollowUp.text();
+    // Same shape as the first follow-up: no transcript wrapper, no
+    // recent-questions nav, just the new turn.
+    expect(secondBody).not.toMatch(/<section[^>]*class="squire-transcript/);
+    expect(secondBody).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
+    expect(secondBody).toContain('Fourth question');
+    expect(secondBody).toMatch(/<article[^>]*class="squire-turn squire-question"[^>]*>/);
+    expect(secondBody).toMatch(
+      new RegExp(
+        `squire-answer--pending[^>]*data-stream-url="/chat/${seeded.conversationId}/messages/[0-9a-f-]+/stream"`,
+      ),
+    );
+  });
+
+  it('streams the SSE done event without recentQuestionsNavHtml after SQR-108', async () => {
     mockAsk.mockResolvedValueOnce('Third answer.');
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
@@ -835,7 +863,6 @@ describe('conversation web backend', () => {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
           'hx-request': 'true',
-          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}/messages/${seeded.userMessages[0]!.id}`,
         },
         body: formBody({ question: 'Third question' }),
       },
@@ -848,20 +875,11 @@ describe('conversation web backend', () => {
 
     const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
     const events = parseSse(await streamRes.text());
-    expect(events.at(-1)).toEqual({
-      event: 'done',
-      data: expect.objectContaining({
-        html: '<p>Third answer.</p>\n',
-        recentQuestionsNavHtml: expect.stringContaining('Second question'),
-      }),
-    });
-
-    const doneData = events.at(-1)?.data as { recentQuestionsNavHtml: string };
-    expect(doneData.recentQuestionsNavHtml).toContain('First question');
-    expect(doneData.recentQuestionsNavHtml).not.toContain('Third question');
-    expect(doneData.recentQuestionsNavHtml).not.toContain('Looting');
-    expect(doneData.recentQuestionsNavHtml).toContain('hx-get="/chat/');
-    expect(doneData.recentQuestionsNavHtml).toContain('hx-push-url="true"');
+    const doneEvent = events.at(-1);
+    expect(doneEvent?.event).toBe('done');
+    const doneData = doneEvent?.data as Record<string, unknown>;
+    expect(doneData).not.toHaveProperty('recentQuestionsNavHtml');
+    expect(doneData.html).toBe('<p>Third answer.</p>\n');
   });
 
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {
@@ -1164,7 +1182,6 @@ describe('conversation web backend', () => {
         event: 'done',
         data: expect.objectContaining({
           html: '<p>Recovered over SSE.</p>\n',
-          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
         }),
       },
     ]);
@@ -1364,9 +1381,17 @@ describe('conversation web backend', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('HX-Push-Url')).toMatch(/^\/chat\/[0-9a-f-]+$/);
     const body = await res.text();
-    expect(body).toContain('squire-transcript squire-transcript--pending');
+    // SQR-108: first submit from home returns the full transcript shell
+    // (a `<section class="squire-transcript">` containing one pending
+    // turn) so the home-form `hx-target="#squire-surface"` swap replaces
+    // the landing with the live conversation surface in one step.
+    expect(body).toMatch(
+      /<section[^>]*class="squire-transcript"[^>]*role="log"[^>]*aria-live="polite"/,
+    );
     expect(body).toContain('Can I loot through a doorway?');
-    expect(body).toMatch(/data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/);
+    expect(body).toMatch(
+      /squire-answer--pending[^>]*data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/,
+    );
     expect(mockAsk).not.toHaveBeenCalled();
   });
 
@@ -1421,7 +1446,6 @@ describe('conversation web backend', () => {
         event: 'done',
         data: expect.objectContaining({
           html: '<p>Loot tokens in your hex are picked up with <strong>style</strong>.</p>\n',
-          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
         }),
       },
     ]);
@@ -1630,7 +1654,6 @@ describe('conversation web backend', () => {
         event: 'done',
         data: expect.objectContaining({
           html: '<p>&lt;script&gt;alert(1)&lt;/script&gt;[click](javascript:alert(1))&lt;img src=x onerror=alert(1)&gt;</p>\n',
-          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
         }),
       },
     ]);
@@ -1672,18 +1695,19 @@ describe('conversation web backend', () => {
 
     expect(followUpRes.status).toBe(200);
     const body = await followUpRes.text();
-    const transcript = body.match(/<section[^>]*squire-transcript[^>]*>[\s\S]*?<\/section>/)?.[0];
-    const recentNav = body.match(/<nav[^>]*id="squire-recent-questions"[\s\S]*?<\/nav>/)?.[0];
-    expect(transcript).toContain('Second question');
-    expect(transcript).not.toContain('First question');
-    expect(transcript).not.toContain('First answer.');
-    expect(transcript).toContain('squire-transcript squire-transcript--pending');
-    expect(transcript).toMatch(
-      /data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/,
+    // SQR-108: HTMX follow-ups return an append-fragment (just the new
+    // question + pending answer skeleton). No wrapping `.squire-transcript`
+    // and no recent-questions nav — the form's `hx-swap="beforeend"` adds
+    // these articles to the existing transcript on the page.
+    expect(body).not.toMatch(/<section[^>]*class="squire-transcript"/);
+    expect(body).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
+    expect(body).toContain('Second question');
+    expect(body).toMatch(/<article[^>]*class="squire-turn squire-question"[^>]*>/);
+    expect(body).toMatch(
+      /squire-answer--pending[^>]*data-stream-url="\/chat\/[0-9a-f-]+\/messages\/[0-9a-f-]+\/stream"/,
     );
-    expect(recentNav).toContain('id="squire-recent-questions"');
-    expect(recentNav).toContain('hx-swap-oob="outerHTML"');
-    expect(recentNav).toContain('First question');
+    expect(body).not.toContain('First question');
+    expect(body).not.toContain('First answer.');
   });
 
   it('propagates failed tool results into the browser-facing SSE payload', async () => {
@@ -1728,7 +1752,6 @@ describe('conversation web backend', () => {
         event: 'done',
         data: expect.objectContaining({
           html: '<p>Fallback answer.</p>\n',
-          recentQuestionsNavHtml: expect.stringContaining('id="squire-recent-questions"'),
         }),
       },
     ]);
@@ -2051,5 +2074,100 @@ describe('selected-message projection', () => {
       'Question 3',
       'Question 2',
     ]);
+  });
+
+  it('pads the load window when the limit cuts between a user message and its assistant reply (CR PR #274)', async () => {
+    // Without padding, a window that starts at an assistant message whose
+    // paired user is older than the cap would silently drop the assistant
+    // from the rendered transcript (`pairConversationTurns` keys assistants
+    // by responseToMessageId and only emits pairs whose user is in the
+    // slice). loadConversation prepends the missing user so the pair
+    // stays whole.
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Question 1', answer: 'Answer 1' },
+      { question: 'Question 2', answer: 'Answer 2' },
+      { question: 'Question 3', answer: 'Answer 3' },
+    ]);
+
+    // 6 messages total in chronological order: U1 A1 U2 A2 U3 A3.
+    // Limit 5 keeps the newest 5: A1 U2 A2 U3 A3 — A1 is orphaned (its
+    // user U1 is outside the window). The pad should restore U1.
+    const loaded = await loadConversation({
+      conversationId: seeded.conversationId,
+      userId: auth.userId,
+      limit: 5,
+    });
+
+    expect(loaded).not.toBeNull();
+    const contents = loaded!.messages.map((m) => m.content);
+    expect(contents).toEqual([
+      'Question 1',
+      'Answer 1',
+      'Question 2',
+      'Answer 2',
+      'Question 3',
+      'Answer 3',
+    ]);
+  });
+
+  it('pads the load window with EVERY missing user when multiple assistants are orphaned (CR PR #274 round 2)', async () => {
+    // Out-of-order persistence: imagine U1 streamed slowly, U2 was sent
+    // before A1 finished, then A1 and A2 land in close succession. Raw
+    // chronological order is U1 U2 A1 A2 — limit 2 returns the newest 2,
+    // [A1, A2], with BOTH user pairs outside the window. Padding must
+    // restore both U1 AND U2.
+    const auth = await createAuthContext();
+
+    // Seed a conversation with explicit interleaved-then-late-answer order
+    // (the helper's normal turn order won't reproduce the case).
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+    const baseTime = new Date('2026-01-01T00:00:00.000Z').getTime();
+    const [u1] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Question 1',
+        createdAt: new Date(baseTime + 1_000),
+      })
+      .returning();
+    const [u2] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Question 2',
+        createdAt: new Date(baseTime + 2_000),
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'Answer 1',
+      responseToMessageId: u1.id,
+      createdAt: new Date(baseTime + 3_000),
+    });
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'Answer 2',
+      responseToMessageId: u2.id,
+      createdAt: new Date(baseTime + 4_000),
+    });
+
+    const loaded = await loadConversation({
+      conversationId: conversation.id,
+      userId: auth.userId,
+      limit: 2,
+    });
+
+    expect(loaded).not.toBeNull();
+    const contents = loaded!.messages.map((m) => m.content);
+    expect(contents).toEqual(['Question 1', 'Question 2', 'Answer 1', 'Answer 2']);
   });
 });

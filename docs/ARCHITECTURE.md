@@ -10,6 +10,15 @@ This document is the architect-owned source of truth for **how** Squire is built
 
 If you're updating Squire's strategy or what it's for, edit SPEC.md. If you're updating how it's built, edit this file. If a single change touches both — start in SPEC.md and propagate the technical implications here.
 
+## What belongs in this file (and what doesn't)
+
+ARCHITECTURE.md is the system shape, not the implementation. Before adding anything, check:
+
+- **Belongs:** the boundaries, roles, and contracts. Layering rules. Auth boundaries. Data model decisions. The "why we picked this" for the choices that would otherwise need an ADR. User-visible behavior with real product impact (the LLM-history cap of 20 messages is a good example — it shapes what the agent can remember).
+- **Does not belong:** function names, constant names, file paths, or class names — that's grep territory. Tunable performance knobs that have no current user impact. Render-time defensive techniques that exist to harden against rare edge cases. Anything you'd describe as "an implementation detail" — that belongs in a code comment at the call site, not here.
+- **Tone test:** if a sentence reads like documentation for the implementer ("we pair Q+A by `responseToMessageId` before mapping to articles"), it's a code comment. If it reads like documentation for the system reader ("the conversation page is a scrolling transcript"), it's architecture.
+- **The drift signal:** if you're tempted to name a constant or file path here so a future agent can find it, write the code comment instead and link the file. Architecture documents do not age well as grep indexes.
+
 ---
 
 ## Overview
@@ -106,7 +115,7 @@ _Rationale: chosen to keep the stack simple and lightweight — single language 
 
 _Tailwind delivery decision: see [ADR 0011 — On-demand asset pipeline via in-process Tailwind JIT](adr/0011-on-demand-asset-pipeline.md) (supersedes [ADR 0008](adr/0008-tailwind-cli-for-production-css.md))._
 
-_Chat surface layout decision: the web UI renders ONE turn at a time on `main.squire-surface` — current user question (Fraunces hero) + current answer (drop cap + citations + tool footer) — with prior turns collapsed into the recent-questions chip row. Not a scrolling message list. See [ADR 0010 — Current-turn ledger for multi-turn chat surface](adr/0010-current-turn-ledger.md) and the design system in [DESIGN.md](../DESIGN.md)._
+_Chat surface layout decision: the conversation page (`/chat/:id`) renders a standard scrolling-chat transcript — every persisted turn stacked oldest-to-newest inside one `role="log" aria-live="polite"` `<section class="squire-transcript">`. Drop cap rarity is preserved by position (`:not(:has(~ .squire-answer))::first-letter` targets only the newest answer). The authenticated home page (`/`) is a separate purpose-built landing — Fraunces hero + scope line + input dock — not the empty state of a transcript. See [ADR 0012 — Split home + scrolling-chat IA](adr/0012-split-home-and-scrolling-chat-ia.md) (supersedes [ADR 0010](adr/0010-current-turn-ledger.md)) and the design system in [DESIGN.md](../DESIGN.md)._
 
 ### Database
 
@@ -205,7 +214,7 @@ The web channel passes a `Session` domain object through the request lifecycle. 
 
 1. **Middleware** (`optionalSession`, `requireSession`, or `requirePageSession`) reads the signed session cookie, calls `SessionRepository.findById()` (one relational query), and stores the `Session` on the Hono context via `c.set('session', session)`.
 2. **Route handlers** read `c.get('session')` and pass it to views. `/auth/me` reads `session.user` directly, zero extra DB calls.
-3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = the view renders its surface-specific interaction chrome (every authenticated surface ships the input dock; the conversation page additionally renders the desktop rail and recent-questions chip row, while the home page is a focused landing per [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md)). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
+3. **Views** (`layoutShell`, `renderAuthErrorPage`, `renderHomePage`) accept `session?: Session`. Session present = logged in = the view renders its surface-specific interaction chrome (every authenticated surface ships the input dock). Per [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md), the home page is a focused landing (no chip row, no desktop rail) and the conversation page is a scrolling transcript (no recent-questions chip row, no desktop rail). Session absent = logged out = brand-only chrome (header, monogram). Views never import from auth modules.
 4. **Tests** construct `Session` objects directly. No context faking, no mock modules. The `Session` type ensures tests fail at compile time if the shape changes.
 
 `optionalSession()` runs on public routes like `/login` so the layout can adapt without blocking unauthenticated visitors. `requirePageSession()` runs on browser HTML routes (`/`, `/chat`, `/chat/:conversationId/messages/:messageId`, `/auth/logout`) and redirects to `/login` if no valid session. `requireSession()` remains for machine-readable cookie routes like `/auth/me`, where a missing or expired session should return JSON 401.
@@ -324,7 +333,14 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
 ### User Conversations
 
 - Stored in Postgres today via `conversations` and `messages`, scoped to user
-- Addressable on the web channel as `/chat/:conversationId`
+- Addressable on the web channel as `/chat/:conversationId` — a standard
+  scrolling transcript per [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md).
+  Follow-up submits use an append-fragment swap contract (`POST` returns just
+  the new question + pending answer skeleton; the client appends them to
+  `.squire-transcript` via `hx-swap="beforeend"`). The legacy
+  `/chat/:id/messages/:mid` selected-message route still ships the old
+  current-turn ledger surface; PR 3 of the SQR-101 cycle replaces it with a
+  301 redirect to `/chat/:id`
 - Web writes persist the user turn first, then either the assistant answer or a
   generic persisted failure turn
 - Failure turns are excluded from future history passed back into the knowledge
@@ -347,9 +363,10 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   footer hidden
 - Browser streaming contract:
   - `text-delta` appends inert plain text only
-  - terminal `done` carries the sanitized final HTML fragment, the
-    refreshed recent-question rail, and the persisted `consultedSources`
-    for replay
+  - terminal `done` carries the sanitized final HTML fragment and the
+    persisted `consultedSources` for replay (the `recentQuestionsNavHtml`
+    field was removed in SQR-108 / ADR 0012 — the conversation page is a
+    scrolling transcript with no chip rail to refresh)
   - the same server-side renderer is used for persisted reloads and final
     post-stream replacement
 

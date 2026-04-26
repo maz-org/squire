@@ -52,6 +52,20 @@
   --sage: #7a8c5c;
   --amber: #d4a147;
   --error: #8b2919;
+
+  /* Spacing scale — DESIGN.md §Spacing. Base unit 4px. Use these
+     tokens for any new spacing decision; raw px is kept in the file
+     only where the value carries non-spacing meaning (e.g. font sizes,
+     line heights, border widths). */
+  --space-2xs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
 }
 
 /*
@@ -388,7 +402,12 @@ html {
   flex-shrink: 0;
 }
 
-/* 4. Recent-questions chip row — empty in SQR-65 (SQR-6 populates it). */
+/* SQR-108 / ADR 0012: the recent-questions chip row is gone on the
+ * scrolling-chat conversation page. The legacy `/chat/:id/messages/:mid`
+ * selected-message route still ships the markup until PR 3 retires it,
+ * and we keep just enough styling here so chips render as styled chips
+ * during that transition window. PR 3 deletes the route AND these
+ * rules together. */
 .squire-recent {
   display: flex;
   flex-direction: column;
@@ -682,10 +701,10 @@ html {
   letter-spacing: 0.16em;
 }
 
-/* SQR-67 — recent-questions chip row. Pill-shaped outlined chips in the
-   `nav.squire-recent` container (which already handles the horizontal
-   scroll). SQR-6 will populate these from the active session; Phase 1
-   ships styled stubs so the chip row doesn't render as dead space. */
+/* SQR-67 / SQR-108 transitional — recent-questions chip row. Pill-shaped
+   outlined chips in the `nav.squire-recent` container. Used only by the
+   legacy `/chat/:id/messages/:mid` selected-message route until PR 3
+   removes that route entirely. */
 .squire-recent .squire-chip {
   display: inline-flex;
   align-items: center;
@@ -1058,7 +1077,7 @@ template#squire-banner-fixtures {
 .squire-transcript {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-lg);
 }
 
 .squire-internal-shell {
@@ -1066,16 +1085,49 @@ template#squire-banner-fixtures {
   margin: 0 auto;
 }
 
+/*
+ * SQR-108 / ADR 0012 D-7 — no-card-shell rule. Transcript turns are
+ * unframed prose on parchment, separated by a hairline `--rule` border
+ * and the transcript container's own gap. They MUST NOT acquire a
+ * `box-shadow`, an outer `border-radius`, or a background color that
+ * deviates from the page surface — anything resembling a chat bubble or
+ * card shell breaks the "ledger, not messenger" posture established in
+ * DESIGN.md §Layout. The drift test in test/web-ui-layout.test.ts greps
+ * this rule body so a future change can't silently re-add card shell
+ * properties.
+ */
 .squire-turn {
   width: 100%;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Hairline rule with breathing room above and below — the printed-book
+   footnote-rule pattern from DESIGN.md §Layout. The `--space-lg` `gap`
+   on `.squire-transcript` already places one item-margin between flex
+   children; the `padding-top` adds a matching `--space-lg` inside the
+   next turn so the rule sits visually centered with breathing room on
+   both sides (`--space-2xl` total between consecutive turn content).
+   Tightening to a single `--space-lg` makes the rule sit flush against
+   the next question's first line and breaks the footnote-rule
+   metaphor. */
+.squire-turn + .squire-turn {
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-lg);
 }
 
 /* Answer block — the ledger page where the streamed agent answer lives.
-   First paragraph gets a drop cap; <em> becomes a rule-term highlighter;
-   .cite becomes a sepia-underlined citation link. No chat bubble chrome
-   anywhere — this is a ledger, not a messenger. */
+   The newest `.squire-answer` gets the drop cap; `<em>` becomes a
+   rule-term highlighter; `.cite` becomes a sepia-underlined citation
+   link. No chat bubble chrome anywhere — this is a ledger, not a
+   messenger. The same no-card-shell invariant from `.squire-turn`
+   applies: no outer shadow, no outer radius, no deviant background. */
 .squire-answer {
   max-width: 640px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .squire-markdown {
@@ -1377,8 +1429,16 @@ template#squire-banner-fixtures {
  * (SQR-100). The `>` combinator keeps the target pinned to a direct child
  * of `.squire-markdown`, so a <p> nested inside a <blockquote> or list
  * item is never drop-capped.
+ *
+ * SQR-108 / ADR 0012: in a scrolling-chat transcript with multiple
+ * answers visible, the drop cap is allowed only on the NEWEST answer.
+ * `:not(:has(~ .squire-answer))` selects the last `.squire-answer`
+ * regardless of intervening question articles, which is what we want —
+ * "newest" is position-based among answers, not children. When a
+ * follow-up turn is appended, the previous answer no longer matches and
+ * the drop cap moves automatically with no animation (D-4).
  */
-.squire-answer
+.squire-answer:not(:has(~ .squire-answer))
   .squire-markdown
   > p:first-of-type:not(
     :has(> strong:first-child, > em:first-child, > code:first-child, > a:first-child)

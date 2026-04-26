@@ -45,6 +45,14 @@ branch/PR.
 
 Use `/loop` to watch for new comments and check status. Do not stop watching early.
 
+**Polling cadence** — when actively waiting on CodeRabbit re-review or CI on
+this repo, schedule the next check at **~240s** (CR auto-reviews fire within
+~5 min of a push; CI runs are typically 2-3 min). Do not stretch toward
+1200s+ "to amortize prompt-cache cost" while a fast signal is expected — the
+cache window is a secondary concern; the primary signal is "when will the
+thing I'm waiting for actually arrive." Stretch the interval only after 2-3
+polls with no signal.
+
 CodeRabbit configuration is in `.coderabbit.yaml`. Path-specific review
 instructions can be added there for modules that need domain-aware review
 (e.g., Zod schemas matching game data, mock patterns in tests).

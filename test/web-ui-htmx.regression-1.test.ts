@@ -24,16 +24,29 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain('event.detail.path = action;');
   });
 
-  it('recognizes selected-message URLs when retargeting follow-up submits', () => {
+  it('recognizes selected-message URLs when retargeting follow-up submits (PR 3 will retire this)', () => {
+    // SQR-108 / ADR 0012: the home submit uses `#squire-surface innerHTML`,
+    // and conversation submits — both `/chat/:id` and the legacy
+    // `/chat/:id/messages/:mid` route — append onto the live transcript via
+    // `.squire-transcript` + `beforeend`. Two separate path regexes feed the
+    // same target/swap flip; the legacy route is matched here so the contract
+    // stays consistent until PR 3 removes the surrogate URL entirely.
+    expect(squireJs).toContain('pathname.match(/^\\/chat\\/([0-9a-f-]+)$/)');
     expect(squireJs).toContain(
-      'window.location.pathname.match(/^\\/chat\\/([0-9a-f-]+)(?:\\/messages\\/[0-9a-f-]+)?$/)',
+      'pathname.match(/^\\/chat\\/([0-9a-f-]+)\\/messages\\/[0-9a-f-]+$/)',
     );
-    expect(squireJs).toContain("var action = match ? '/chat/' + match[1] + '/messages' : '/chat';");
+    expect(squireJs).toContain("form.setAttribute('hx-target', '.squire-transcript');");
+    expect(squireJs).toContain("form.setAttribute('hx-swap', 'beforeend');");
   });
 
-  it('keeps the submit button labeled Ask after pending state clears', () => {
-    expect(squireJs).toContain("submitButton.textContent = 'Ask';");
-    expect(squireJs).not.toContain("submitButton.textContent = '→';");
+  it('does NOT mutate submitButton.textContent in setFormPendingState (SQR-108 QA: would destroy the inner <span>S</span> wax-seal monogram from SQR-99)', () => {
+    expect(squireJs).not.toContain("submitButton.textContent = 'Ask'");
+    expect(squireJs).not.toContain("submitButton.textContent = '...'");
+    expect(squireJs).not.toContain("submitButton.textContent = '→'");
+    // The pending visual is now driven by the form's data-submitting
+    // attribute + the button's disabled attribute + CSS opacity.
+    expect(squireJs).toContain("form.dataset.submitting = 'true'");
+    expect(squireJs).toContain('delete form.dataset.submitting');
   });
 
   it('keeps lookup status present-tense and clears it once real answer prose starts', () => {

@@ -28,15 +28,36 @@ document.addEventListener('submit', function (e) {
   var submitButton = form.querySelector('button[type="submit"]');
   ensureIdempotencyKey(form);
 
+  // SQR-108 QA: do NOT mutate `submitButton.textContent` here. The
+  // submit button renders the Squire seal monogram via an inner
+  // `<span aria-hidden="true">S</span>` (SQR-99). Setting textContent
+  // destroys the span and leaves a literal "..." (then "Ask" on
+  // re-enable) where the wax-seal mark should be. The `disabled`
+  // attribute + `data-submitting='true'` on the form already convey
+  // the pending visual via `.squire-input-dock[data-submitting='true']
+  // .squire-input-dock__submit { opacity: 0.8 }` in styles.css.
   form.dataset.submitting = 'true';
   if (questionInput) questionInput.setAttribute('readonly', 'true');
   if (submitButton) submitButton.setAttribute('disabled', 'true');
-  if (submitButton) {
-    submitButton.textContent = '...';
-  }
+
+  // SQR-108 / ADR 0012 D-3: arm the scroll controller for the new turn.
+  // The pending answer hasn't been swapped in yet — `htmx:afterSwap` will
+  // do that — but flagging "the user just submitted" lets the post-swap
+  // path scroll to the new pending turn and re-enable pin-to-bottom in
+  // case the user had scrolled away on a prior turn.
+  pinToBottom = true;
+  pendingScrollOnNextSwap = true;
 });
 
 var activeStream = null;
+// SQR-108 / ADR 0012 D-3: scroll controller state. `pinToBottom` is true
+// while the user is at (or near) the bottom of the transcript; while pinned,
+// streaming text auto-scrolls to keep up. The user scrolling up by more
+// than `SCROLL_PIN_THRESHOLD_PX` disables pin so they can re-read prior
+// turns without snap-back; scrolling back near the bottom re-enables it.
+var SCROLL_PIN_THRESHOLD_PX = 80;
+var pinToBottom = true;
+var pendingScrollOnNextSwap = false;
 
 function generateIdempotencyKey() {
   if (window.crypto && window.crypto.randomUUID) {
@@ -64,50 +85,50 @@ function setFormPendingState(form, pending) {
     form.dataset.submitting = 'true';
     if (questionInput) questionInput.setAttribute('readonly', 'true');
     if (submitButton) submitButton.setAttribute('disabled', 'true');
-    if (submitButton) submitButton.textContent = '...';
     return;
   }
 
   delete form.dataset.submitting;
   if (questionInput) questionInput.removeAttribute('readonly');
   if (submitButton) submitButton.removeAttribute('disabled');
-  if (submitButton) submitButton.textContent = 'Ask';
+  // SQR-108 QA: do NOT touch `submitButton.textContent`. See the
+  // matching comment in the document-level submit handler — the
+  // button's inner `<span>S</span>` renders the wax-seal monogram and
+  // textContent assignment destroys it.
 }
 
+// SQR-108 / ADR 0012: keep the form's HTMX swap contract aligned with
+// the current page. On the home page the form replaces the whole
+// `#squire-surface` (which gets replaced by the new transcript). On any
+// page that already has a `<section class="squire-transcript">` in the
+// DOM — including the legacy `/messages/:mid` selected-message route
+// that keeps shipping until PR 3 — each submit appends one new turn via
+// `.squire-transcript` + `beforeend`. The selected-message renderer
+// emits the same `.squire-transcript` wrapper, so the append-fragment
+// response from `POST /chat/:id/messages` lands cleanly without wiping
+// the surrounding surface.
 function syncChatFormAction() {
   var form = document.querySelector('.squire-input-dock');
   if (!form) return;
 
-  var match = window.location.pathname.match(/^\/chat\/([0-9a-f-]+)(?:\/messages\/[0-9a-f-]+)?$/);
-  var action = match ? '/chat/' + match[1] + '/messages' : '/chat';
-  form.setAttribute('action', action);
-  form.setAttribute('hx-post', action);
-}
+  var pathname = window.location.pathname;
+  var conversationMatch = pathname.match(/^\/chat\/([0-9a-f-]+)$/);
+  var selectedMessageMatch = pathname.match(/^\/chat\/([0-9a-f-]+)\/messages\/[0-9a-f-]+$/);
 
-function closeActiveStream() {
-  if (!activeStream) return;
-  activeStream.source.close();
-  activeStream = null;
-}
-
-function updateRecentQuestionsNav(html) {
-  if (typeof html !== 'string' || !html) return;
-
-  var template = document.createElement('template');
-  template.innerHTML = html.trim();
-  var nextNav = template.content.firstElementChild;
-  if (!nextNav) return;
-
-  var currentNav = document.querySelector('#squire-recent-questions');
-  if (currentNav && currentNav.parentNode) {
-    currentNav.replaceWith(nextNav);
+  if (conversationMatch || selectedMessageMatch) {
+    var match = conversationMatch || selectedMessageMatch;
+    var convAction = '/chat/' + match[1] + '/messages';
+    form.setAttribute('action', convAction);
+    form.setAttribute('hx-post', convAction);
+    form.setAttribute('hx-target', '.squire-transcript');
+    form.setAttribute('hx-swap', 'beforeend');
     return;
   }
 
-  var form = document.querySelector('.squire-input-dock');
-  if (form && form.parentNode) {
-    form.parentNode.insertBefore(nextNav, form);
-  }
+  form.setAttribute('action', '/chat');
+  form.setAttribute('hx-post', '/chat');
+  form.setAttribute('hx-target', '#squire-surface');
+  form.setAttribute('hx-swap', 'innerHTML');
 }
 
 function ensureAnswerParagraph(contentEl) {
@@ -351,19 +372,90 @@ function clearToolStatusRows(toolsEl, toolEntries) {
   }
 }
 
-function handlePendingTranscript(transcript) {
-  if (!transcript) return;
+// SQR-108 / ADR 0012 D-3: pin-to-bottom helpers. Use page-level scroll
+// (the conversation page scrolls the document body — `.squire-frame` is
+// `min-height: 100vh` and the input dock sticky-pins to the viewport).
+function isNearBottom(threshold) {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return true;
+  var doc = document.documentElement;
+  if (!doc) return true;
+  var distance = doc.scrollHeight - (window.scrollY + window.innerHeight);
+  return distance <= (threshold == null ? SCROLL_PIN_THRESHOLD_PX : threshold);
+}
+
+// Scroll coalescing — text-delta events fire dozens of times per second
+// while streaming. Each delta mutates the DOM (paragraph.textContent
+// growing) and a naïve scrollToBottom() per delta forces a layout flush
+// to read scrollHeight, then a second flush from the programmatic scroll
+// itself, then a third when the listener re-reads scrollHeight. Coalesce
+// all the per-frame scroll requests into a single rAF so the browser
+// does one scroll per paint regardless of how many deltas fire.
+var scrollToBottomScheduled = false;
+function scrollToBottom() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (scrollToBottomScheduled) return;
+  if (typeof window.requestAnimationFrame !== 'function') {
+    var doc = document.documentElement;
+    if (doc) window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+    return;
+  }
+  scrollToBottomScheduled = true;
+  window.requestAnimationFrame(function () {
+    scrollToBottomScheduled = false;
+    var doc = document.documentElement;
+    if (!doc) return;
+    window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+  });
+}
+
+function scrollPendingAnswerIntoView(answerEl) {
+  if (!answerEl || typeof answerEl.scrollIntoView !== 'function') return;
+  answerEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+}
+
+// User-driven scrolls (touchmove, wheel, scrollbar) update `pinToBottom`
+// based on distance from bottom. Programmatic auto-scrolls also fire
+// scroll events, but they leave us at the bottom — `isNearBottom`
+// returns true and the pin stays on. Genuine user-initiated scroll-up
+// drops below the threshold and disables pin.
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener(
+    'scroll',
+    function () {
+      pinToBottom = isNearBottom();
+    },
+    { passive: true },
+  );
+}
+
+function attachPendingAnswerStream(answerEl) {
+  if (!answerEl) return;
 
   // Browser event expectations live in docs/SSE_CONTRACT.md. Text is rendered
   // only from text-delta, while done/error are terminal UI state changes.
-  var streamUrl = transcript.getAttribute('data-stream-url');
+  var streamUrl = answerEl.getAttribute('data-stream-url');
   if (!streamUrl) return;
   if (activeStream && activeStream.url === streamUrl) return;
 
-  closeActiveStream();
+  // CodeRabbit (PR 274): if a different stream is already in flight, do
+  // NOT close it just to start a new one — that strands the older
+  // pending turn (its `done`/`error` will never reach the browser). The
+  // multi-pending case (server-rendered transcript with several
+  // unanswered user messages) is drained serially: when the active
+  // stream finishes, `finishStream()` re-scans the DOM and attaches to
+  // the next pending answer.
+  if (activeStream) return;
 
-  var answerEl = transcript.querySelector('.squire-answer--pending');
-  if (!answerEl) return;
+  // SQR-108: serialize submits — keep the input dock disabled while a
+  // stream is active so the user can't append a second pending turn that
+  // would strand the first one (the client only supports one
+  // EventSource at a time, and the message DB ordering can scramble Q+A
+  // pairs if turn N+1 finishes before turn N). The form re-enables in
+  // the SSE `done` and `error` handlers below. Server-side stranded
+  // pending turns (e.g. a stranded HTMX retry) trigger the same
+  // disabled state on initial page load.
+  var formEl = document.querySelector('.squire-input-dock');
+  setFormPendingState(formEl, true);
 
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
@@ -396,6 +488,20 @@ function handlePendingTranscript(transcript) {
       activeStream = null;
     }
     source.close();
+    // CodeRabbit (PR 274): drain the multi-pending queue. If the DOM
+    // has another unattached pending answer (e.g. a server-rendered
+    // transcript with multiple unanswered user messages — the case
+    // `pairConversationTurns` was added to defend against), attach to
+    // it now. Only re-enable the input dock when no pending remains —
+    // otherwise the next turn's pending skeleton would be undefended
+    // against a fast user submitting a third turn before the chain
+    // completes.
+    var nextPending = findActivePendingAnswer(document);
+    if (nextPending) {
+      attachPendingAnswerStream(nextPending);
+    } else {
+      setFormPendingState(document.querySelector('.squire-input-dock'), false);
+    }
   }
 
   function materializeStreamingDelta(delta) {
@@ -410,6 +516,7 @@ function handlePendingTranscript(transcript) {
     contentEl.classList.add('squire-markdown');
     var paragraph = ensureAnswerParagraph(contentEl);
     paragraph.textContent += delta;
+    if (pinToBottom) scrollToBottom();
   }
 
   source.addEventListener('text-delta', function (event) {
@@ -494,44 +601,110 @@ function handlePendingTranscript(transcript) {
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
     if (toolsEl) toolsEl.replaceChildren();
-    var payload = JSON.parse(event.data || '{}');
-    if (contentEl && typeof payload.html === 'string') {
-      contentEl.classList.add('squire-markdown');
-      contentEl.innerHTML = payload.html;
+    // SQR-108 QA: close the EventSource SYNCHRONOUSLY before deferring
+    // the HTML swap. The server ends its handler after sending `done`,
+    // which closes the TCP connection from the server side; the
+    // browser then synthesizes an `error` event for the close. If we
+    // defer source.close() (e.g. inside a rAF callback), the
+    // browser's connection-close error fires FIRST and stomps the
+    // answer with the "Trouble connecting" banner. Closing
+    // immediately and dropping `activeStream` here means the
+    // subsequent error handler can short-circuit on
+    // `source.readyState === EventSource.CLOSED`.
+    if (activeStream && activeStream.source === source) {
+      activeStream = null;
     }
-    // SQR-98: write the accumulated provenance labels into the footer.
-    // Empty map → leave the footer hidden (AC #3: no source data, no lie).
-    //
-    // Replay fallback: if the stream completed without emitting any
-    // tool_result events (e.g., duplicate /stream hit that hit the
-    // idempotent already-persisted path), the server now includes the
-    // row's persisted consultedSources in the done payload so we can
-    // still rebuild the footer. Live-stream labels take precedence — if
-    // consultedLabels has entries, they came from this actual turn.
-    if (footerEl) {
-      var labels = [];
-      if (consultedLabels.size > 0) {
-        consultedLabels.forEach(function (_value, label) {
-          labels.push(label);
-        });
-      } else if (Array.isArray(payload.consultedSources)) {
-        for (var i = 0; i < payload.consultedSources.length; i += 1) {
-          var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
-          if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
+    source.close();
+    // CodeRabbit (PR 274): drain the multi-pending queue. If the
+    // server-rendered transcript had several unanswered user messages,
+    // attach to the next pending now instead of re-enabling the dock —
+    // otherwise a fast user could submit a third turn before the chain
+    // completes. attachPendingAnswerStream sets the form to pending
+    // again on its own.
+    var nextPending = findActivePendingAnswer(document);
+    if (nextPending) {
+      attachPendingAnswerStream(nextPending);
+    } else {
+      setFormPendingState(document.querySelector('.squire-input-dock'), false);
+    }
+
+    var payload = JSON.parse(event.data || '{}');
+    // SQR-108 / ADR 0012 D-5: wrap the streamed-plaintext → final-HTML
+    // swap in `aria-busy="true"` so screen readers (notably VoiceOver on
+    // iOS Safari) don't double-announce the same answer once as the
+    // streamed paragraph and again when the rendered HTML lands. The
+    // toggle has to span at least one paint to be observable: setting
+    // true and false synchronously in the same tick means AT never
+    // notices the busy state. We use a double-rAF — set busy now, swap
+    // the HTML on the next frame, clear busy on the frame after — so
+    // the browser actually paints the busy state before the swap and
+    // the live region is ready for the next turn's announcement.
+    answerEl.setAttribute('aria-busy', 'true');
+    var applyDoneSwap = function () {
+      if (contentEl && typeof payload.html === 'string') {
+        contentEl.classList.add('squire-markdown');
+        contentEl.innerHTML = payload.html;
+      }
+      // SQR-98: write the accumulated provenance labels into the footer.
+      // Empty map → leave the footer hidden (AC #3: no source data, no lie).
+      //
+      // Replay fallback: if the stream completed without emitting any
+      // tool_result events (e.g., duplicate /stream hit that hit the
+      // idempotent already-persisted path), the server now includes the
+      // row's persisted consultedSources in the done payload so we can
+      // still rebuild the footer. Live-stream labels take precedence — if
+      // consultedLabels has entries, they came from this actual turn.
+      if (footerEl) {
+        var labels = [];
+        if (consultedLabels.size > 0) {
+          consultedLabels.forEach(function (_value, label) {
+            labels.push(label);
+          });
+        } else if (Array.isArray(payload.consultedSources)) {
+          for (var i = 0; i < payload.consultedSources.length; i += 1) {
+            var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
+            if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
+          }
+        }
+        if (labels.length > 0) {
+          footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
+          footerEl.hidden = false;
+        } else {
+          footerEl.hidden = true;
         }
       }
-      if (labels.length > 0) {
-        footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
-        footerEl.hidden = false;
+      if (pinToBottom) scrollToBottom();
+      var clearAriaBusy = function () {
+        answerEl.setAttribute('aria-busy', 'false');
+      };
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(clearAriaBusy);
       } else {
-        footerEl.hidden = true;
+        clearAriaBusy();
       }
+    };
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(applyDoneSwap);
+    } else {
+      applyDoneSwap();
     }
-    updateRecentQuestionsNav(payload.recentQuestionsNavHtml);
-    finishStream();
   });
 
   source.addEventListener('error', function (event) {
+    // SQR-108 QA: ignore the EventSource `error` that browsers
+    // synthesize when the SERVER cleanly closes the connection after
+    // sending `done`. The done handler closes the source synchronously
+    // before deferring its visual swap, so any error fired against an
+    // already-closed source is the natural connection-close — not a
+    // real transport failure. Surfacing that as "Trouble connecting"
+    // would stomp the answer the user just received.
+    //
+    // EventSource.CLOSED is `2` per the WHATWG spec; we hard-code it
+    // because the `EventSource` constructor isn't in scope under the
+    // module-script lint rule even though it's a global at runtime.
+    if (source.readyState === 2) {
+      return;
+    }
     var payload = { kind: 'transport', message: 'Trouble connecting. Please try again.' };
     if (event.data) {
       payload = JSON.parse(event.data);
@@ -543,6 +716,26 @@ function handlePendingTranscript(transcript) {
     );
     finishStream();
   });
+}
+
+// Find the pending answer that needs a stream attached. Used both on page
+// load (initial server-rendered transcript may include one) and after every
+// HTMX swap (a follow-up appended one new pending turn, or a first submit
+// from home replaced #squire-surface with the new transcript).
+function findActivePendingAnswer(root) {
+  var scope = root || document;
+  var candidates = scope.querySelectorAll
+    ? scope.querySelectorAll('.squire-answer--pending[data-stream-url]')
+    : null;
+  if (!candidates || candidates.length === 0) return null;
+  for (var i = 0; i < candidates.length; i += 1) {
+    var candidate = candidates[i];
+    var url = candidate.getAttribute('data-stream-url');
+    if (!url) continue;
+    if (activeStream && activeStream.url === url) continue;
+    return candidate;
+  }
+  return null;
 }
 
 document.addEventListener('htmx:configRequest', function (event) {
@@ -565,18 +758,46 @@ document.addEventListener('htmx:configRequest', function (event) {
 });
 
 document.addEventListener('htmx:afterSwap', function (event) {
-  var target = event.detail && event.detail.target;
-  if (!target || target.id !== 'squire-surface') return;
-
+  // The form lives outside the swap target on the conversation page —
+  // the append-fragment swap touches `.squire-transcript`, not the form
+  // — so we manage form state here regardless of the swap target id.
   var form = document.querySelector('.squire-input-dock');
   var questionInput = form && form.querySelector('input[name="question"]');
   if (questionInput) questionInput.value = '';
-  setFormPendingState(form, false);
   syncChatFormAction();
-  handlePendingTranscript(target.querySelector('.squire-transcript--pending'));
+
+  var swapTarget = event.detail && event.detail.target;
+  var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
+  if (pending) {
+    if (pendingScrollOnNextSwap) {
+      pendingScrollOnNextSwap = false;
+      pinToBottom = true;
+      scrollPendingAnswerIntoView(pending);
+    }
+    // SQR-108: attachPendingAnswerStream sets the form to disabled and
+    // the SSE done/error handlers re-enable it. Don't pre-enable here
+    // — that would let the user submit a second turn while the first
+    // is still streaming.
+    attachPendingAnswerStream(pending);
+  } else if (!activeStream) {
+    // No pending stream after this swap (e.g., a non-chat swap) AND
+    // nothing is currently streaming. Re-enable the form so the user
+    // can submit again. CodeRabbit (PR 274): the `!activeStream` guard
+    // matters because `findActivePendingAnswer()` intentionally skips
+    // the currently attached stream's URL; an unrelated swap during
+    // streaming would otherwise fall into this branch and re-enable
+    // the form before `done`/`error` fires, reopening the
+    // concurrent-submit race.
+    setFormPendingState(form, false);
+  }
 });
 
 document.addEventListener('DOMContentLoaded', function () {
   syncChatFormAction();
-  handlePendingTranscript(document.querySelector('.squire-transcript--pending'));
+  // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
+  // back/forward navigation and refresh, so we don't pin or auto-scroll on
+  // initial load. We only flag pin on submit (above) and re-evaluate it
+  // from the current scroll position on the user's first scroll event.
+  pinToBottom = isNearBottom();
+  attachPendingAnswerStream(findActivePendingAnswer(document));
 });

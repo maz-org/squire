@@ -65,16 +65,28 @@ export interface LayoutShellOptions {
   csrfToken?: string;
   chatFormAction?: string;
   chatFormHiddenFields?: Array<{ name: string; value: string }>;
+  /**
+   * HTMX swap target selector for the input dock form. Home / first-submit
+   * surfaces use `#squire-surface` + `innerHTML` so the landing is replaced
+   * by the new transcript. The conversation page (ADR 0012) flips to
+   * `.squire-transcript` + `beforeend` so each follow-up appends one new
+   * turn instead of replacing the surface.
+   */
+  chatFormHxTarget?: string;
+  chatFormHxSwap?: string;
   recentQuestionsNav?: HtmlEscapedString;
   showRail?: boolean;
   showChatChrome?: boolean;
   headerContext?: string;
   columnClassName?: string;
-}
-
-export interface PendingTurnShellOptions {
-  question: string;
-  streamUrl: string;
+  /**
+   * Set to true on pages whose `mainContent` contains its own live region
+   * (e.g., `section.squire-transcript[role="log" aria-live="polite"]` on
+   * /chat/:id, ADR 0012). When set, `main.squire-surface` is rendered with
+   * `aria-live="off"` so screen readers don't announce the same swap from
+   * two nested polite regions.
+   */
+  transcriptOwnsLiveRegion?: boolean;
 }
 
 export interface RecentQuestionNavItem {
@@ -82,13 +94,6 @@ export interface RecentQuestionNavItem {
   label: string;
   hxGet?: string;
   pushUrl?: boolean;
-}
-
-export interface RecentQuestionsNavOptions {
-  conversationId: string;
-  questions: ConversationMessage[];
-  selectedMessageId?: string;
-  outOfBand?: boolean;
 }
 
 export interface SelectedMessageSurfaceOptions {
@@ -286,39 +291,16 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   </article>` as HtmlEscapedString;
 }
 
-function renderConversationTurn(message: ConversationMessage): HtmlEscapedString {
-  return message.role === 'user' ? renderQuestionTurn(message.content) : renderAnswerTurn(message);
-}
-
-function findCurrentConversationTurn(messages: ConversationMessage[]): {
-  userMessage: ConversationMessage;
-  assistantMessage: ConversationMessage | null;
-} | null {
-  const assistantResponses = new Map<string, ConversationMessage>();
-
-  for (const message of messages) {
-    if (message.role === 'assistant' && message.responseToMessageId) {
-      assistantResponses.set(message.responseToMessageId, message);
-    }
-  }
-
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
-    if (message?.role !== 'user') continue;
-
-    return {
-      userMessage: message,
-      assistantMessage: assistantResponses.get(message.id) ?? null,
-    };
-  }
-
-  return null;
-}
-
-function renderPendingAnswerSkeleton(): HtmlEscapedString {
+function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
+  // ADR 0012: the pending answer is the unit of streaming. The stream URL
+  // moves from the (deleted) `.squire-transcript--pending` wrapper onto the
+  // `<article class="squire-answer--pending">` itself, so squire.js can find
+  // the active stream regardless of whether the article was rendered as part
+  // of a full transcript or appended via `hx-swap="beforeend"`.
   return html`<article
     class="squire-turn squire-answer squire-answer--pending"
     data-stream-state="pending"
+    data-stream-url="${streamUrl}"
   >
     <div class="squire-answer__content squire-markdown"></div>
     <div class="squire-answer__tools" aria-live="off"></div>
@@ -391,71 +373,34 @@ function renderRecentQuestionsContainer(options: {
   </nav>` as HtmlEscapedString;
 }
 
-export function renderRecentQuestionsNav(options: RecentQuestionsNavOptions): HtmlEscapedString;
+// SQR-108 dropped the typed-options overload (`renderRecentQuestionsNav({
+// conversationId, questions, selectedMessageId, outOfBand })`) — the
+// production caller in `src/server.ts` uses the array-form, and the typed
+// overload was test-only. PR 3 retires the legacy `/messages/:mid` route
+// entirely, at which point this whole helper goes too.
 export function renderRecentQuestionsNav(
   items: RecentQuestionNavItem[],
   options?: { oob?: boolean },
-): HtmlEscapedString;
-export function renderRecentQuestionsNav(
-  optionsOrItems: RecentQuestionsNavOptions | RecentQuestionNavItem[],
-  options?: { oob?: boolean },
 ): HtmlEscapedString {
-  const items = Array.isArray(optionsOrItems)
-    ? optionsOrItems
-    : optionsOrItems.questions
-        .filter((question) => question.id !== optionsOrItems.selectedMessageId)
-        .map((question) => ({
-          href: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
-          hxGet: `/chat/${optionsOrItems.conversationId}/messages/${question.id}`,
-          label: question.content,
-          pushUrl: true,
-        }));
-
-  if (Array.isArray(optionsOrItems)) {
-    return renderRecentQuestionsContainer({
-      visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
-        renderRecentQuestionChip({
-          href: item.href,
-          hxGet: item.hxGet,
-          label: item.label,
-          pushUrl: item.pushUrl,
-        }),
-      ),
-      overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
-        renderRecentQuestionChip({
-          href: item.href,
-          hxGet: item.hxGet,
-          label: item.label,
-          pushUrl: item.pushUrl,
-        }),
-      ),
-      hidden: items.length === 0,
-      outOfBand: options?.oob,
-    });
-  }
-
-  if (items.length === 0) {
-    return html`` as HtmlEscapedString;
-  }
-
   return renderRecentQuestionsContainer({
     visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
       renderRecentQuestionChip({
         href: item.href,
         hxGet: item.hxGet,
-        pushUrl: item.pushUrl,
         label: item.label,
+        pushUrl: item.pushUrl,
       }),
     ),
     overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
       renderRecentQuestionChip({
         href: item.href,
         hxGet: item.hxGet,
-        pushUrl: item.pushUrl,
         label: item.label,
+        pushUrl: item.pushUrl,
       }),
     ),
-    outOfBand: optionsOrItems.outOfBand,
+    hidden: items.length === 0,
+    outOfBand: options?.oob,
   });
 }
 
@@ -487,6 +432,8 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   }
   const authenticatedCsrfToken = csrfToken ?? '';
   const chatFormAction = options.chatFormAction ?? '/chat';
+  const chatFormHxTarget = options.chatFormHxTarget ?? '#squire-surface';
+  const chatFormHxSwap = options.chatFormHxSwap ?? 'innerHTML';
   const headerContext = options.headerContext ?? 'FROSTHAVEN · RULES';
   const columnClassName = options.columnClassName ?? 'squire-column';
   const chatFormHiddenFields = [
@@ -546,8 +493,8 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           <main
             id="squire-surface"
             class="squire-surface"
-            aria-live="${showChatChrome ? 'polite' : 'off'}"
-            aria-atomic="${showChatChrome ? 'false' : 'true'}"
+            aria-live="${showChatChrome && !options.transcriptOwnsLiveRegion ? 'polite' : 'off'}"
+            aria-atomic="${showChatChrome && !options.transcriptOwnsLiveRegion ? 'false' : 'true'}"
           >
             ${surfaceContent}
           </main>
@@ -559,8 +506,8 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   method="post"
                   action="${chatFormAction}"
                   hx-post="${chatFormAction}"
-                  hx-target="#squire-surface"
-                  hx-swap="innerHTML"
+                  hx-target="${chatFormHxTarget}"
+                  hx-swap="${chatFormHxSwap}"
                 >
                   ${chatFormHiddenFields.map(
                     (field) =>
@@ -754,32 +701,36 @@ export async function renderConversationPage(options: {
   csrfToken: string;
   conversationId: string;
   messages: ConversationMessage[];
-  recentQuestionsNav?: HtmlEscapedString;
-  pendingStreamUrl?: string;
+  /**
+   * Map of user-message id → SSE stream URL for any user message
+   * without an assistant reply. The common case is a single entry (one
+   * pending turn at the bottom). When concurrent turns are pending —
+   * e.g. a stranded prior pending plus a new in-flight turn — each
+   * gets its own EventSource on the client side.
+   */
+  pendingStreamUrls?: Map<string, string>;
 }): Promise<HtmlEscapedString> {
-  const currentTurn = findCurrentConversationTurn(options.messages);
-  const transcript = !currentTurn
-    ? renderConversationTranscript(options.conversationId, options.messages)
-    : currentTurn.assistantMessage
-      ? renderSelectedMessageSurface({
-          selectedQuestion: currentTurn.userMessage,
-          selectedAnswer: currentTurn.assistantMessage,
-          isEarlierQuestion: false,
-        })
-      : (html`<section
-          class="squire-transcript squire-transcript--pending"
-          aria-label="Conversation transcript"
-          ${options.pendingStreamUrl ? html`data-stream-url="${options.pendingStreamUrl}"` : html``}
-        >
-          ${renderQuestionTurn(currentTurn.userMessage.content)} ${renderPendingAnswerSkeleton()}
-        </section>` as HtmlEscapedString);
+  // ADR 0012: the conversation page is a standard scrolling-chat transcript.
+  // Past turns stack oldest-to-newest, the pending answer skeleton (when
+  // the latest user message has no assistant response yet) sits at the
+  // bottom, and follow-up submits append a single new pending turn rather
+  // than replacing the whole surface. The desktop rail collapses entirely
+  // on this surface in Phase 1 — no `.squire-rail` aside on conversation.
+  const transcript = renderConversationTranscript({
+    conversationId: options.conversationId,
+    messages: options.messages,
+    pendingStreamUrls: options.pendingStreamUrls,
+  });
 
   return layoutShell({
     session: options.session,
     csrfToken: options.csrfToken,
-    mainContent: transcript as HtmlEscapedString,
+    mainContent: transcript,
     chatFormAction: `/chat/${options.conversationId}/messages`,
-    recentQuestionsNav: options.recentQuestionsNav,
+    chatFormHxTarget: '.squire-transcript',
+    chatFormHxSwap: 'beforeend',
+    showRail: false,
+    transcriptOwnsLiveRegion: true,
   });
 }
 
@@ -841,57 +792,106 @@ export async function renderMarkdownStyleguidePage(
   });
 }
 
-export function renderConversationTranscript(
-  conversationId: string,
+/**
+ * Build Q+A pairs from a flat message list. Groups each user message
+ * with its assistant reply (matched by `responseToMessageId`) and orders
+ * pairs by user-message `createdAt` (ties broken by id, matching the
+ * repository's `(created_at, id)` sort). Defends against the
+ * reload-ordering corruption Codex flagged on SQR-108: if turn N+1's
+ * assistant reply happens to land in the DB before turn N's, walking
+ * messages in raw `createdAt` order would render `Q1, Q2, A2, A1` —
+ * broken pairs, no visible Q→A grouping. Pairing first keeps
+ * `Q1, A1, Q2, A2` no matter the assistant arrival order.
+ */
+function pairConversationTurns(
   messages: ConversationMessage[],
-): HtmlEscapedString {
-  if (messages.length === 0) {
-    return html`<section class="squire-empty" aria-label="Conversation">
-      <h1 class="squire-question">Conversation is empty.</h1>
-    </section>` as HtmlEscapedString;
+): Array<{ userMessage: ConversationMessage; assistantMessage: ConversationMessage | null }> {
+  const assistantByResponseTo = new Map<string, ConversationMessage>();
+  const userMessages: ConversationMessage[] = [];
+
+  for (const message of messages) {
+    if (message.role === 'user') {
+      userMessages.push(message);
+    } else if (message.role === 'assistant' && message.responseToMessageId) {
+      assistantByResponseTo.set(message.responseToMessageId, message);
+    }
   }
+
+  userMessages.sort((a, b) => {
+    const ta = a.createdAt.getTime();
+    const tb = b.createdAt.getTime();
+    if (ta !== tb) return ta - tb;
+    return a.id.localeCompare(b.id);
+  });
+
+  return userMessages.map((userMessage) => ({
+    userMessage,
+    assistantMessage: assistantByResponseTo.get(userMessage.id) ?? null,
+  }));
+}
+
+/**
+ * Render a scrolling-chat transcript. ADR 0012 / SQR-108: the conversation
+ * page is a standard top-to-bottom transcript with a permanent live-region
+ * container. The transcript element itself is `role="log" aria-live="polite"`,
+ * so follow-up `hx-swap="beforeend"` appends register as live-region updates
+ * without re-creating the container (the live-region permanent-slot pattern
+ * — without it, screen readers can miss the first append after a fresh
+ * registration).
+ *
+ * Turns are paired by `responseToMessageId` before render so concurrent
+ * turns survive reload (see `pairConversationTurns`). Any user message
+ * with no assistant reply renders a pending answer skeleton — the
+ * `pendingStreamUrls` map keys those user-message ids to their stream
+ * URLs so multiple in-flight turns each get their own EventSource on
+ * the client side. The common case (one pending) passes a single-entry
+ * map; the empty case (everything answered) passes an empty map and no
+ * skeletons render.
+ */
+export function renderConversationTranscript(options: {
+  conversationId: string;
+  messages: ConversationMessage[];
+  pendingStreamUrls?: Map<string, string>;
+}): HtmlEscapedString {
+  const pairs = pairConversationTurns(options.messages);
+  const pendingStreamUrls = options.pendingStreamUrls ?? new Map<string, string>();
 
   return html`<section
     class="squire-transcript"
-    aria-label="Conversation transcript"
-    data-conversation-id="${conversationId}"
-  >
-    ${messages.map((message) => renderConversationTurn(message))}
-  </section>` as HtmlEscapedString;
-}
-
-export function renderConversationTranscriptWithPendingTurn(options: {
-  conversationId: string;
-  messages: ConversationMessage[];
-  streamUrl: string;
-}): HtmlEscapedString {
-  return html`<section
-    class="squire-transcript squire-transcript--pending"
+    role="log"
+    aria-live="polite"
     aria-label="Conversation transcript"
     data-conversation-id="${options.conversationId}"
-    data-stream-url="${options.streamUrl}"
   >
-    ${options.messages.map((message) => renderConversationTurn(message))}
-    ${renderPendingAnswerSkeleton()}
+    ${pairs.map((pair) => {
+      const streamUrl = pendingStreamUrls.get(pair.userMessage.id);
+      // Three states: (1) answered → render the answer; (2) pending with a
+      // live stream URL → render the skeleton so the client reattaches the
+      // SSE; (3) orphan question with no assistant row and no stream URL —
+      // shows the question alone (defensive: no expected production path
+      // produces this, but a crashed/aborted stream could leave one behind).
+      return html`${renderQuestionTurn(pair.userMessage.content)}
+      ${pair.assistantMessage
+        ? renderAnswerTurn(pair.assistantMessage)
+        : streamUrl
+          ? renderPendingAnswerSkeleton(streamUrl)
+          : html``}`;
+    })}
   </section>` as HtmlEscapedString;
 }
 
-export function renderConversationTranscriptWithPendingTurnAndRecentQuestions(options: {
-  conversationId: string;
-  messages: ConversationMessage[];
+/**
+ * Append-fragment for `POST /chat/:conversationId/messages` (ADR 0012 E-3).
+ * The client appends this to `.squire-transcript` via `hx-swap="beforeend"`,
+ * adding exactly one new turn (question + pending answer skeleton) without
+ * replacing the surrounding transcript chrome.
+ */
+export function renderConversationTurnAppendFragment(options: {
+  question: string;
   streamUrl: string;
-  recentQuestionsNav: HtmlEscapedString;
 }): HtmlEscapedString {
-  return html`${renderConversationTranscriptWithPendingTurn(options)} ${options.recentQuestionsNav}` as HtmlEscapedString;
-}
-
-export function renderConversationTranscriptWithRecentQuestions(options: {
-  conversationId: string;
-  messages: ConversationMessage[];
-  recentQuestionsNav: HtmlEscapedString;
-}): HtmlEscapedString {
-  return html`${renderConversationTranscript(options.conversationId, options.messages)}
-  ${options.recentQuestionsNav}` as HtmlEscapedString;
+  return html`${renderQuestionTurn(options.question)}
+  ${renderPendingAnswerSkeleton(options.streamUrl)}` as HtmlEscapedString;
 }
 
 export function renderSelectedMessageSurfaceWithRecentQuestions(options: {
@@ -906,22 +906,4 @@ export function renderSelectedMessageSurfaceWithRecentQuestions(options: {
     isEarlierQuestion: options.isEarlierQuestion,
   })}
   ${options.recentQuestionsNav}` as HtmlEscapedString;
-}
-
-export function renderPendingTurnShell(options: PendingTurnShellOptions): HtmlEscapedString {
-  return html`<section
-    class="squire-transcript squire-transcript--pending"
-    aria-label="Conversation transcript"
-    data-stream-url="${options.streamUrl}"
-  >
-    ${renderQuestionTurn(options.question)} ${renderPendingAnswerSkeleton()}
-  </section>` as HtmlEscapedString;
-}
-
-export function renderPendingTurnShellWithRecentQuestions(
-  options: PendingTurnShellOptions & {
-    recentQuestionsNav: HtmlEscapedString;
-  },
-): HtmlEscapedString {
-  return html`${renderPendingTurnShell(options)} ${options.recentQuestionsNav}` as HtmlEscapedString;
 }

@@ -433,7 +433,29 @@ export async function loadConversationMessage(input: {
 export async function loadConversation(input: {
   conversationId: string;
   userId: string;
+  /**
+   * Cap the number of returned messages. Used by the conversation page
+   * GET handler to bound the O(n) HTML render cost on long sessions —
+   * with the scrolling-chat IA (ADR 0012) every persisted turn is
+   * rendered, not just the latest. The repository sorts newest-first
+   * under the hood and reverses to oldest-first on return, so a limit
+   * of N keeps the most recent N messages and drops the older ones.
+   * Omit (or pass undefined) for the full transcript — used by stream /
+   * persistence paths that need the complete history for state checks.
+   */
+  limit?: number;
 }): Promise<{ conversation: Conversation; messages: ConversationMessage[] } | null> {
+  // Reject non-positive / non-integer limits — the repository uses a truthy
+  // check on `limit`, so 0 would silently return the full transcript and
+  // defeat the cap. Callers that want unbounded results must omit `limit`.
+  if (input.limit !== undefined) {
+    if (!Number.isInteger(input.limit) || input.limit < 1) {
+      throw new TypeError(
+        `loadConversation: limit must be a positive integer or undefined, got ${input.limit}`,
+      );
+    }
+  }
+
   const conversation = await ConversationRepository.findOwnedById(
     input.userId,
     input.conversationId,
@@ -442,7 +464,48 @@ export async function loadConversation(input: {
 
   const messages = await MessageRepository.listByConversationId(conversation.id, {
     includeErrors: true,
+    limit: input.limit,
   });
+
+  // CodeRabbit (PR 274): if the limit window cut between a user message and
+  // its assistant reply, any assistant in the slice whose paired user is
+  // older than the cap is orphaned. `pairConversationTurns` keys assistants
+  // by responseToMessageId and silently drops orphans — visible data loss
+  // in the rendered transcript. Multiple orphans are possible when
+  // assistants land out-of-order (e.g., U1, U2, A1, A2 chronologically →
+  // limit 2 returns A1, A2 with both pairs cut). Scan the whole slice for
+  // missing user pairs, batch-fetch them, and prepend in chronological
+  // order so every assistant retains its question.
+  if (input.limit !== undefined && messages.length > 0) {
+    const presentIds = new Set(messages.map((message) => message.id));
+    const missingUserIds = [
+      ...new Set(
+        messages.flatMap((message) =>
+          message.role === 'assistant' &&
+          message.responseToMessageId &&
+          !presentIds.has(message.responseToMessageId)
+            ? [message.responseToMessageId]
+            : [],
+        ),
+      ),
+    ];
+
+    if (missingUserIds.length > 0) {
+      const paddedUsers = (
+        await Promise.all(missingUserIds.map((id) => MessageRepository.findById(id)))
+      )
+        .filter(
+          (message): message is ConversationMessage =>
+            !!message && message.conversationId === conversation.id && message.role === 'user',
+        )
+        .sort((left, right) => {
+          const byTime = left.createdAt.getTime() - right.createdAt.getTime();
+          return byTime !== 0 ? byTime : left.id.localeCompare(right.id);
+        });
+
+      messages.unshift(...paddedUsers);
+    }
+  }
 
   return { conversation, messages };
 }
