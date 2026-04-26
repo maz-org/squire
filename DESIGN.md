@@ -1,10 +1,14 @@
 # Design System — Squire
 
-**Version:** 0.4
-**Date:** 2026-04-08
+**Version:** 0.5
+**Date:** 2026-04-22
 **Status:** Approved via `/design-consultation`. Covers all eight phases of the
 Squire initiative, not just Phase 1. Implementation in `src/web-ui/` follows
-this document.
+this document. v0.5 (2026-04-22) supersedes the 2026-04-08 current-turn ledger
+with the split home + scrolling-chat IA per
+[ADR 0012](docs/adr/0012-split-home-and-scrolling-chat-ia.md); the drop cap
+appears only on the newest answer (position-based selector), and live-region
+duties move from `main.squire-surface` to `section.squire-transcript`.
 **Companion docs:** [docs/SPEC.md](docs/SPEC.md),
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), ADR
 [0008](docs/adr/0008-tailwind-cli-for-production-css.md).
@@ -46,8 +50,9 @@ first and say why.
 **Squire is an attendant at your elbow, not an oracle from the high seat.** The
 design language is a squire's personal ledger: warm ink, cream parchment, one
 wax-seal red, literary serifs for signature moments, a clean sans for
-everything scannable, and one small illuminated capital on every answer.
-Modern restraint in the vocabulary of a treasured reference book.
+everything scannable, and one small illuminated capital reserved for the
+newest answer in the transcript. Modern restraint in the vocabulary of a
+treasured reference book.
 
 **The dissonance is the signature:** the DESIGN carries the manuscript /
 reference-book vibe. The VOICE stays a terse modern assistant
@@ -62,9 +67,11 @@ agent copy in medieval-cosplay voice — that breaks the whole thing.
 
 - **Direction:** Modern Codex / Ledger. Medieval reference-book feel, executed
   with modern restraint.
-- **Decoration level:** intentional, not minimal. One illuminated drop cap on
-  every agent answer (Fraunces, wax-seal red, ~3-line tall, sharp optical
-  setting). Thin 1px sepia rules separating answers from citations (like
+- **Decoration level:** intentional, not minimal. One illuminated drop cap
+  reserved for the newest answer in the transcript (Fraunces, wax-seal
+  red, ~3-line tall, sharp optical setting; selector
+  `.squire-answer:not(:has(~ .squire-answer))::first-letter` so older
+  answers render plain). Thin 1px sepia rules separating answers from citations (like
   footnote rules in a printed book). Monogram "S" on wax-seal red square as
   the brand mark. Nothing else.
 - **Mood:** treasured reference book, at your elbow, confidently opinionated,
@@ -482,9 +489,10 @@ attribute on `<html>`. That's the extent of the per-game theming.
    AI-chat standard palette.** Warmer tones marginally harder on eyes for
    very long sessions — at Phase 1 usage (10–15 second glances) the cost is
    effectively zero.
-4. **Illuminated drop cap on every agent answer.** One decorative flourish.
-   Six lines of CSS. Risk: feels precious if overdone. Benefit: unmistakable
-   signature detail.
+4. **Illuminated drop cap reserved for the newest agent answer.** One
+   decorative flourish. Six lines of CSS, scoped to the last `.squire-answer`
+   in document order. Risk: feels precious if overdone — that's why it's
+   newest-only. Benefit: unmistakable signature detail.
 5. **Rule-term highlighter stripes.** Literal highlighter-on-rulebook
    metaphor. Costs a small amount of ambient "visual noise" in dense answers;
    benefit is instant scannability of the important rule terms. Use the dials

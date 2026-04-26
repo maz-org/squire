@@ -2110,4 +2110,64 @@ describe('selected-message projection', () => {
       'Answer 3',
     ]);
   });
+
+  it('pads the load window with EVERY missing user when multiple assistants are orphaned (CR PR #274 round 2)', async () => {
+    // Out-of-order persistence: imagine U1 streamed slowly, U2 was sent
+    // before A1 finished, then A1 and A2 land in close succession. Raw
+    // chronological order is U1 U2 A1 A2 — limit 2 returns the newest 2,
+    // [A1, A2], with BOTH user pairs outside the window. Padding must
+    // restore both U1 AND U2.
+    const auth = await createAuthContext();
+
+    // Seed a conversation with explicit interleaved-then-late-answer order
+    // (the helper's normal turn order won't reproduce the case).
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+    const baseTime = new Date('2026-01-01T00:00:00.000Z').getTime();
+    const [u1] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Question 1',
+        createdAt: new Date(baseTime + 1_000),
+      })
+      .returning();
+    const [u2] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Question 2',
+        createdAt: new Date(baseTime + 2_000),
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'Answer 1',
+      responseToMessageId: u1.id,
+      createdAt: new Date(baseTime + 3_000),
+    });
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'Answer 2',
+      responseToMessageId: u2.id,
+      createdAt: new Date(baseTime + 4_000),
+    });
+
+    const loaded = await loadConversation({
+      conversationId: conversation.id,
+      userId: auth.userId,
+      limit: 2,
+    });
+
+    expect(loaded).not.toBeNull();
+    const contents = loaded!.messages.map((m) => m.content);
+    expect(contents).toEqual(['Question 1', 'Question 2', 'Answer 1', 'Answer 2']);
+  });
 });

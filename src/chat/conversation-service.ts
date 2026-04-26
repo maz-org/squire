@@ -468,25 +468,42 @@ export async function loadConversation(input: {
   });
 
   // CodeRabbit (PR 274): if the limit window cut between a user message and
-  // its assistant reply, the chronologically-earliest message in the slice
-  // can be an assistant whose paired user is older than the cap. Without
-  // this guard `pairConversationTurns` (which pairs by responseToMessageId)
-  // silently drops that orphan assistant — visible data loss in the
-  // rendered transcript. Pad the window with the missing user message so
-  // the pair stays whole. Only the first message can be orphaned in
-  // realistic flows (every assistant follows its user shortly after, so
-  // later orphans would require pathological out-of-order persistence).
+  // its assistant reply, any assistant in the slice whose paired user is
+  // older than the cap is orphaned. `pairConversationTurns` keys assistants
+  // by responseToMessageId and silently drops orphans — visible data loss
+  // in the rendered transcript. Multiple orphans are possible when
+  // assistants land out-of-order (e.g., U1, U2, A1, A2 chronologically →
+  // limit 2 returns A1, A2 with both pairs cut). Scan the whole slice for
+  // missing user pairs, batch-fetch them, and prepend in chronological
+  // order so every assistant retains its question.
   if (input.limit !== undefined && messages.length > 0) {
-    const earliest = messages[0]!;
-    if (earliest.role === 'assistant' && earliest.responseToMessageId) {
-      const orphanUserId = earliest.responseToMessageId;
-      const userInSlice = messages.some((m) => m.id === orphanUserId);
-      if (!userInSlice) {
-        const pairedUser = await MessageRepository.findById(orphanUserId);
-        if (pairedUser && pairedUser.conversationId === conversation.id) {
-          messages.unshift(pairedUser);
-        }
-      }
+    const presentIds = new Set(messages.map((message) => message.id));
+    const missingUserIds = [
+      ...new Set(
+        messages.flatMap((message) =>
+          message.role === 'assistant' &&
+          message.responseToMessageId &&
+          !presentIds.has(message.responseToMessageId)
+            ? [message.responseToMessageId]
+            : [],
+        ),
+      ),
+    ];
+
+    if (missingUserIds.length > 0) {
+      const paddedUsers = (
+        await Promise.all(missingUserIds.map((id) => MessageRepository.findById(id)))
+      )
+        .filter(
+          (message): message is ConversationMessage =>
+            !!message && message.conversationId === conversation.id && message.role === 'user',
+        )
+        .sort((left, right) => {
+          const byTime = left.createdAt.getTime() - right.createdAt.getTime();
+          return byTime !== 0 ? byTime : left.id.localeCompare(right.id);
+        });
+
+      messages.unshift(...paddedUsers);
     }
   }
 
