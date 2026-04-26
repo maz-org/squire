@@ -79,6 +79,14 @@ export interface LayoutShellOptions {
   showChatChrome?: boolean;
   headerContext?: string;
   columnClassName?: string;
+  /**
+   * Set to true on pages whose `mainContent` contains its own live region
+   * (e.g., `section.squire-transcript[role="log" aria-live="polite"]` on
+   * /chat/:id, ADR 0012). When set, `main.squire-surface` is rendered with
+   * `aria-live="off"` so screen readers don't announce the same swap from
+   * two nested polite regions.
+   */
+  transcriptOwnsLiveRegion?: boolean;
 }
 
 export interface RecentQuestionNavItem {
@@ -485,8 +493,8 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           <main
             id="squire-surface"
             class="squire-surface"
-            aria-live="${showChatChrome ? 'polite' : 'off'}"
-            aria-atomic="${showChatChrome ? 'false' : 'true'}"
+            aria-live="${showChatChrome && !options.transcriptOwnsLiveRegion ? 'polite' : 'off'}"
+            aria-atomic="${showChatChrome && !options.transcriptOwnsLiveRegion ? 'false' : 'true'}"
           >
             ${surfaceContent}
           </main>
@@ -722,6 +730,7 @@ export async function renderConversationPage(options: {
     chatFormHxTarget: '.squire-transcript',
     chatFormHxSwap: 'beforeend',
     showRail: false,
+    transcriptOwnsLiveRegion: true,
   });
 }
 

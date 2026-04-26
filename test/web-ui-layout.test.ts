@@ -843,6 +843,27 @@ describe('selected-message rendering helpers', () => {
     expect(body).toMatch(/hx-swap="beforeend"/);
   });
 
+  it('makes the transcript the ONLY polite live region on /chat/:id (CR PR #274 — duplicate aria-live regions cause double announcement)', async () => {
+    // The transcript section owns role=log + aria-live=polite. The outer
+    // `main.squire-surface` wrapper from layoutShell defaults to
+    // aria-live=polite on authenticated pages with chat chrome, but on
+    // transcript pages we flip it to "off" via transcriptOwnsLiveRegion
+    // so screen readers don't announce the same swap from two nested
+    // polite regions.
+    const body = String(
+      await actualLayout.renderConversationPage({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        conversationId: 'conv-123',
+        messages,
+      }),
+    );
+    const surface = body.match(/<main[^>]*id="squire-surface"[^>]*>/)?.[0];
+    expect(surface).toBeDefined();
+    expect(surface).toMatch(/aria-live="off"/);
+    expect(surface).toMatch(/aria-atomic="true"/);
+  });
+
   it('renders the conversation page with a pending answer skeleton for each entry in pendingStreamUrls', async () => {
     // Drop m6 (the assistant reply to m5) so m5 is unanswered — the
     // skeleton only renders for user messages that have no paired
