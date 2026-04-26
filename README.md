@@ -139,7 +139,7 @@ Squire includes an evaluation framework for measuring answer quality:
 # Seed the eval dataset to Langfuse (first time)
 npm run eval -- --seed
 
-# Run all 16 eval cases
+# Run all 17 eval cases
 npm run eval -- --name="my experiment"
 
 # Run a subset
