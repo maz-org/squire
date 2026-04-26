@@ -10,6 +10,15 @@ This document is the architect-owned source of truth for **how** Squire is built
 
 If you're updating Squire's strategy or what it's for, edit SPEC.md. If you're updating how it's built, edit this file. If a single change touches both — start in SPEC.md and propagate the technical implications here.
 
+## What belongs in this file (and what doesn't)
+
+ARCHITECTURE.md is the system shape, not the implementation. Before adding anything, check:
+
+- **Belongs:** the boundaries, roles, and contracts. Layering rules. Auth boundaries. Data model decisions. The "why we picked this" for the choices that would otherwise need an ADR. User-visible behavior with real product impact (the LLM-history cap of 20 messages is a good example — it shapes what the agent can remember).
+- **Does not belong:** function names, constant names, file paths, or class names — that's grep territory. Tunable performance knobs that have no current user impact. Render-time defensive techniques that exist to harden against rare edge cases. Anything you'd describe as "an implementation detail" — that belongs in a code comment at the call site, not here.
+- **Tone test:** if a sentence reads like documentation for the implementer ("we pair Q+A by `responseToMessageId` before mapping to articles"), it's a code comment. If it reads like documentation for the system reader ("the conversation page is a scrolling transcript"), it's architecture.
+- **The drift signal:** if you're tempted to name a constant or file path here so a future agent can find it, write the code comment instead and link the file. Architecture documents do not age well as grep indexes.
+
 ---
 
 ## Overview
