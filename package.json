@@ -53,7 +53,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
     "@hono/node-server": "^1.19.14",
-    "@langfuse/client": "^5.1.0",
+    "@langfuse/client": "^5.2.0",
     "@langfuse/otel": "^5.1.0",
     "@langfuse/tracing": "^5.2.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
