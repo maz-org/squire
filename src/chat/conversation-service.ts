@@ -467,6 +467,29 @@ export async function loadConversation(input: {
     limit: input.limit,
   });
 
+  // CodeRabbit (PR 274): if the limit window cut between a user message and
+  // its assistant reply, the chronologically-earliest message in the slice
+  // can be an assistant whose paired user is older than the cap. Without
+  // this guard `pairConversationTurns` (which pairs by responseToMessageId)
+  // silently drops that orphan assistant — visible data loss in the
+  // rendered transcript. Pad the window with the missing user message so
+  // the pair stays whole. Only the first message can be orphaned in
+  // realistic flows (every assistant follows its user shortly after, so
+  // later orphans would require pathological out-of-order persistence).
+  if (input.limit !== undefined && messages.length > 0) {
+    const earliest = messages[0]!;
+    if (earliest.role === 'assistant' && earliest.responseToMessageId) {
+      const orphanUserId = earliest.responseToMessageId;
+      const userInSlice = messages.some((m) => m.id === orphanUserId);
+      if (!userInSlice) {
+        const pairedUser = await MessageRepository.findById(orphanUserId);
+        if (pairedUser && pairedUser.conversationId === conversation.id) {
+          messages.unshift(pairedUser);
+        }
+      }
+    }
+  }
+
   return { conversation, messages };
 }
 

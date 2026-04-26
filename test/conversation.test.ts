@@ -54,7 +54,7 @@ import { createCsrfToken } from '../src/auth/csrf.ts';
 import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
-import { loadSelectedConversation } from '../src/chat/conversation-service.ts';
+import { loadConversation, loadSelectedConversation } from '../src/chat/conversation-service.ts';
 import { users } from '../src/db/schema/core.ts';
 import { conversations, messages } from '../src/db/schema/conversations.ts';
 
@@ -2073,6 +2073,41 @@ describe('selected-message projection', () => {
       'Question 4',
       'Question 3',
       'Question 2',
+    ]);
+  });
+
+  it('pads the load window when the limit cuts between a user message and its assistant reply (CR PR #274)', async () => {
+    // Without padding, a window that starts at an assistant message whose
+    // paired user is older than the cap would silently drop the assistant
+    // from the rendered transcript (`pairConversationTurns` keys assistants
+    // by responseToMessageId and only emits pairs whose user is in the
+    // slice). loadConversation prepends the missing user so the pair
+    // stays whole.
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'Question 1', answer: 'Answer 1' },
+      { question: 'Question 2', answer: 'Answer 2' },
+      { question: 'Question 3', answer: 'Answer 3' },
+    ]);
+
+    // 6 messages total in chronological order: U1 A1 U2 A2 U3 A3.
+    // Limit 5 keeps the newest 5: A1 U2 A2 U3 A3 — A1 is orphaned (its
+    // user U1 is outside the window). The pad should restore U1.
+    const loaded = await loadConversation({
+      conversationId: seeded.conversationId,
+      userId: auth.userId,
+      limit: 5,
+    });
+
+    expect(loaded).not.toBeNull();
+    const contents = loaded!.messages.map((m) => m.content);
+    expect(contents).toEqual([
+      'Question 1',
+      'Answer 1',
+      'Question 2',
+      'Answer 2',
+      'Question 3',
+      'Answer 3',
     ]);
   });
 });
