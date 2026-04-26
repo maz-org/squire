@@ -328,10 +328,15 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   scrolling transcript per [ADR 0012](adr/0012-split-home-and-scrolling-chat-ia.md).
   Follow-up submits use an append-fragment swap contract (`POST` returns just
   the new question + pending answer skeleton; the client appends them to
-  `.squire-transcript` via `hx-swap="beforeend"`). The legacy
-  `/chat/:id/messages/:mid` selected-message route still ships the old
-  current-turn ledger surface; PR 3 of the SQR-101 cycle replaces it with a
-  301 redirect to `/chat/:id`
+  `.squire-transcript` via `hx-swap="beforeend"`). The render path pairs Q+A
+  by `responseToMessageId` before mapping to articles so out-of-order
+  assistant arrival can't scramble pairs. `GET /chat/:conversationId` caps
+  the rendered transcript at the most recent 100 messages
+  (`TRANSCRIPT_MESSAGE_LIMIT` in `src/server.ts`) to bound per-request HTML
+  cost on long sessions; older turns drop off the page until the user
+  reloads with a deep link. The legacy `/chat/:id/messages/:mid`
+  selected-message route still ships the old current-turn ledger surface;
+  PR 3 of the SQR-101 cycle replaces it with a 301 redirect to `/chat/:id`
 - Web writes persist the user turn first, then either the assistant answer or a
   generic persisted failure turn
 - Failure turns are excluded from future history passed back into the knowledge

@@ -121,8 +121,10 @@ Run [qa.md](./qa.md)'s six-step sweep every time. In preview:
    UI is not stuck pending.
 4. **Follow-up chat** — ask a second question in the same conversation,
    URL stays the same, stream completes.
-5. **Existing transcript** — click a prior question's chip in the
-   recent-questions nav; the `EARLIER QUESTION` eyebrow appears.
+5. **Existing transcript** — reload the conversation page or open a
+   seeded `/chat/:id` URL; every persisted user/assistant pair renders
+   in order, the drop cap appears only on the newest answer, and the
+   rule-term highlighter renders on every answer (per ADR 0012).
 6. **Branch-specific scenario** — whatever the ticket was actually about.
 
 After each step, an `preview_eval` against the relevant DOM path
