@@ -96,12 +96,13 @@ serves:
   step required on a fresh clone. Prod uses content-hashed URLs
   (`/app.<hash>.css`) with immutable caching. See
   [ADR 0011](docs/adr/0011-on-demand-asset-pipeline.md)). Authenticated chat
-  runs on `/chat`, `/chat/:conversationId`, and
-  `/chat/:conversationId/messages/:messageId`, with persisted per-user
-  conversations in Postgres and recent-question navigation for hopping between
-  completed turns. Live streaming stays plain text until completion; the final
-  assistant answer and refreshed recent-question rail are then swapped in as
-  server-rendered sanitized HTML under an HTML-only Content Security Policy.
+  runs on `/chat` and `/chat/:conversationId`, with persisted per-user
+  conversations in Postgres and a scrolling transcript for completed turns.
+  Old bookmarks at `/chat/:conversationId/messages/:messageId` permanently
+  redirect to the parent conversation while the `/stream` sibling remains the
+  live SSE endpoint. Live streaming stays plain text until completion; the
+  final assistant answer is then swapped in as server-rendered sanitized HTML
+  under an HTML-only Content Security Policy.
   The authenticated internal markdown renderer reference page lives at
   `/styleguide/markdown`.
 - **REST API** — `GET /api/health`, `/api/search/rules`, `/api/search/cards`,

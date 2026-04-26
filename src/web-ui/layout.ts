@@ -53,9 +53,9 @@ export interface LayoutShellOptions {
   errorBanner?: { message: string };
   /**
    * Current session (with user), if authenticated. When present, the layout
-   * renders the full interaction surface (sidebar, input dock, recent
-   * questions). When absent, renders brand-only chrome (header, monogram,
-   * fonts, colors). The layout never touches the Hono context or DB.
+   * renders the full interaction surface. When absent, renders brand-only
+   * chrome (header, monogram, fonts, colors). The layout never touches the
+   * Hono context or DB.
    */
   session?: Session;
   /**
@@ -74,7 +74,6 @@ export interface LayoutShellOptions {
    */
   chatFormHxTarget?: string;
   chatFormHxSwap?: string;
-  recentQuestionsNav?: HtmlEscapedString;
   showRail?: boolean;
   showChatChrome?: boolean;
   headerContext?: string;
@@ -88,21 +87,6 @@ export interface LayoutShellOptions {
    */
   transcriptOwnsLiveRegion?: boolean;
 }
-
-export interface RecentQuestionNavItem {
-  href: string;
-  label: string;
-  hxGet?: string;
-  pushUrl?: boolean;
-}
-
-export interface SelectedMessageSurfaceOptions {
-  selectedQuestion: ConversationMessage;
-  selectedAnswer: ConversationMessage;
-  isEarlierQuestion: boolean;
-}
-
-const VISIBLE_RECENT_QUESTION_LIMIT = 3;
 
 interface DocumentOptions {
   bodyContent: HtmlEscapedString;
@@ -314,111 +298,11 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
   </article>` as HtmlEscapedString;
 }
 
-function renderRecentQuestionChip(options: {
-  href: string;
-  label: string;
-  hxGet?: string;
-  pushUrl?: boolean;
-}): HtmlEscapedString {
-  return html`<a
-    class="squire-chip"
-    href="${options.href}"
-    title="${options.label}"
-    ${options.hxGet ? html`hx-get="${options.hxGet}"` : html``}
-    ${options.hxGet ? html`hx-target="#squire-surface"` : html``}
-    ${options.hxGet ? html`hx-swap="innerHTML"` : html``}
-    ${options.hxGet && options.pushUrl ? html`hx-push-url="true"` : html``}
-  >
-    ${options.label}
-  </a>` as HtmlEscapedString;
-}
-
-function renderRecentQuestionsOverflow(options: {
-  hiddenChipCount: number;
-  chips: HtmlEscapedString[];
-}): HtmlEscapedString {
-  const questionLabel = options.hiddenChipCount === 1 ? 'question' : 'questions';
-  const summaryLabel = `${options.hiddenChipCount} older ${questionLabel}`;
-
-  return html`<details class="squire-recent__overflow">
-    <summary class="squire-chip squire-chip--overflow" aria-label="Show ${summaryLabel}">
-      <span class="squire-chip__overflow-copy">More history</span>
-      <span class="squire-chip__overflow-count">${summaryLabel}</span>
-    </summary>
-    <div class="squire-recent__overflow-panel">${options.chips}</div>
-  </details>` as HtmlEscapedString;
-}
-
-function renderRecentQuestionsContainer(options: {
-  visibleChips: HtmlEscapedString[];
-  overflowChips?: HtmlEscapedString[];
-  hidden?: boolean;
-  outOfBand?: boolean;
-}): HtmlEscapedString {
-  return html`<nav
-    id="squire-recent-questions"
-    class="squire-recent"
-    aria-label="Recent questions"
-    ${options.outOfBand ? html`hx-swap-oob="outerHTML"` : html``}
-    ${options.hidden ? html`hidden` : html``}
-  >
-    <span class="squire-recent__label">Recent questions</span>
-    <div class="squire-recent__chips">${options.visibleChips}</div>
-    ${options.overflowChips && options.overflowChips.length > 0
-      ? renderRecentQuestionsOverflow({
-          hiddenChipCount: options.overflowChips.length,
-          chips: options.overflowChips,
-        })
-      : html``}
-  </nav>` as HtmlEscapedString;
-}
-
-// SQR-108 dropped the typed-options overload (`renderRecentQuestionsNav({
-// conversationId, questions, selectedMessageId, outOfBand })`) — the
-// production caller in `src/server.ts` uses the array-form, and the typed
-// overload was test-only. PR 3 retires the legacy `/messages/:mid` route
-// entirely, at which point this whole helper goes too.
-export function renderRecentQuestionsNav(
-  items: RecentQuestionNavItem[],
-  options?: { oob?: boolean },
-): HtmlEscapedString {
-  return renderRecentQuestionsContainer({
-    visibleChips: items.slice(0, VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
-      renderRecentQuestionChip({
-        href: item.href,
-        hxGet: item.hxGet,
-        label: item.label,
-        pushUrl: item.pushUrl,
-      }),
-    ),
-    overflowChips: items.slice(VISIBLE_RECENT_QUESTION_LIMIT).map((item) =>
-      renderRecentQuestionChip({
-        href: item.href,
-        hxGet: item.hxGet,
-        label: item.label,
-        pushUrl: item.pushUrl,
-      }),
-    ),
-    hidden: items.length === 0,
-    outOfBand: options?.oob,
-  });
-}
-
-export function renderSelectedMessageSurface(
-  options: SelectedMessageSurfaceOptions,
-): HtmlEscapedString {
-  return html`<section class="squire-transcript" aria-label="Conversation transcript">
-    ${renderQuestionTurn(options.selectedQuestion.content, {
-      eyebrowLabel: options.isEarlierQuestion ? 'EARLIER QUESTION' : undefined,
-    })}
-    ${renderAnswerTurn(options.selectedAnswer)}
-  </section>` as HtmlEscapedString;
-}
 /**
  * Render the full HTML document for the companion-first layout. Stable
  * selectors (`squire-header`, `squire-surface`, `squire-toolcall`,
- * `squire-recent`, `squire-input-dock`, `squire-rail`) are guaranteed by
- * the acceptance criteria — later tickets target them by class.
+ * `squire-input-dock`, `squire-rail`) are guaranteed by the acceptance
+ * criteria — later tickets target them by class.
  */
 export async function layoutShell(options: LayoutShellOptions = {}): Promise<HtmlEscapedString> {
   // The layout adapts chrome based on whether a session was provided.
@@ -452,15 +336,6 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
     : (options.mainContent ?? (html`` as HtmlEscapedString));
-  // SQR-107 / ADR 0012: `layoutShell` no longer owns an empty-state
-  // fallback. `renderHomePage` now supplies its own purpose-built
-  // landing (hero + scope + input dock) via `mainContent`, and error
-  // fallbacks render with `errorBanner`. The old hardcoded
-  // recent-questions default (Looting / Element infusion / Negative
-  // scenario effects) was dishonest placeholder content and has been
-  // removed. Callers that want a chip row must pass one explicitly.
-  const recentQuestionsNav = options.recentQuestionsNav;
-
   return renderDocument({
     authenticated,
     csrfToken,
@@ -500,30 +375,29 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           </main>
           ${!authenticated || !showChatChrome
             ? html``
-            : html`${recentQuestionsNav ?? html``}
-                <form
-                  class="squire-input-dock"
-                  method="post"
-                  action="${chatFormAction}"
-                  hx-post="${chatFormAction}"
-                  hx-target="${chatFormHxTarget}"
-                  hx-swap="${chatFormHxSwap}"
-                >
-                  ${chatFormHiddenFields.map(
-                    (field) =>
-                      html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
-                  )}
-                  <input
-                    id="squire-input"
-                    name="question"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="Ask a question..."
-                  />
-                  <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                    <span aria-hidden="true">S</span>
-                  </button>
-                </form>`}
+            : html`<form
+                class="squire-input-dock"
+                method="post"
+                action="${chatFormAction}"
+                hx-post="${chatFormAction}"
+                hx-target="${chatFormHxTarget}"
+                hx-swap="${chatFormHxSwap}"
+              >
+                ${chatFormHiddenFields.map(
+                  (field) =>
+                    html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
+                )}
+                <input
+                  id="squire-input"
+                  name="question"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="Ask a question..."
+                />
+                <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
+                  <span aria-hidden="true">S</span>
+                </button>
+              </form>`}
         </div>
       </div>` as HtmlEscapedString,
   });
@@ -892,18 +766,4 @@ export function renderConversationTurnAppendFragment(options: {
 }): HtmlEscapedString {
   return html`${renderQuestionTurn(options.question)}
   ${renderPendingAnswerSkeleton(options.streamUrl)}` as HtmlEscapedString;
-}
-
-export function renderSelectedMessageSurfaceWithRecentQuestions(options: {
-  selectedQuestion: ConversationMessage;
-  selectedAnswer: ConversationMessage;
-  isEarlierQuestion: boolean;
-  recentQuestionsNav: HtmlEscapedString;
-}): HtmlEscapedString {
-  return html`${renderSelectedMessageSurface({
-    selectedQuestion: options.selectedQuestion,
-    selectedAnswer: options.selectedAnswer,
-    isEarlierQuestion: options.isEarlierQuestion,
-  })}
-  ${options.recentQuestionsNav}` as HtmlEscapedString;
 }

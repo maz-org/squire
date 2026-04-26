@@ -17,74 +17,6 @@ export interface PendingConversationTurn {
   currentUserMessage: ConversationMessage | null;
 }
 
-export interface SelectedConversationQuestion {
-  messageId: string;
-  question: string;
-  askedAt: Date;
-}
-
-export interface SelectedConversationTurn {
-  userMessage: ConversationMessage;
-  assistantMessage: ConversationMessage;
-  isEarlierQuestion: boolean;
-}
-
-export interface SelectedConversationProjection {
-  conversation: Conversation;
-  selectedTurn: SelectedConversationTurn;
-  recentQuestions: SelectedConversationQuestion[];
-}
-
-interface CompletedConversationTurn {
-  userMessage: ConversationMessage;
-  assistantMessage: ConversationMessage;
-}
-
-function listCompletedTurns(messages: ConversationMessage[]): CompletedConversationTurn[] {
-  const assistantResponses = new Map<string, ConversationMessage>();
-  const completedTurns: CompletedConversationTurn[] = [];
-
-  for (const message of messages) {
-    if (message.role === 'assistant' && message.responseToMessageId && !message.isError) {
-      assistantResponses.set(message.responseToMessageId, message);
-    }
-  }
-
-  for (const message of messages) {
-    if (message.role !== 'user') continue;
-
-    const assistantMessage = assistantResponses.get(message.id);
-    if (!assistantMessage) continue;
-
-    completedTurns.push({
-      userMessage: message,
-      assistantMessage,
-    });
-  }
-
-  return completedTurns;
-}
-
-export function listRecentCompletedQuestions(
-  messages: ConversationMessage[],
-  options: { excludeMessageId?: string } = {},
-): SelectedConversationQuestion[] {
-  return listCompletedTurns(messages)
-    .filter((turn) => turn.userMessage.id !== options.excludeMessageId)
-    .slice()
-    .sort((left, right) => {
-      const timestampDiff =
-        right.userMessage.createdAt.getTime() - left.userMessage.createdAt.getTime();
-      if (timestampDiff !== 0) return timestampDiff;
-      return right.userMessage.id.localeCompare(left.userMessage.id);
-    })
-    .map((turn) => ({
-      messageId: turn.userMessage.id,
-      question: turn.userMessage.content,
-      askedAt: turn.userMessage.createdAt,
-    }));
-}
-
 function isRetryableTransportError(err: unknown): boolean {
   if (typeof err !== 'object' || err === null) {
     return false;
@@ -508,38 +440,4 @@ export async function loadConversation(input: {
   }
 
   return { conversation, messages };
-}
-
-export async function loadSelectedConversation(input: {
-  conversationId: string;
-  messageId: string;
-  userId: string;
-}): Promise<SelectedConversationProjection | null> {
-  const loaded = await loadConversation({
-    conversationId: input.conversationId,
-    userId: input.userId,
-  });
-  if (!loaded) return null;
-
-  const completedTurns = listCompletedTurns(loaded.messages);
-
-  const selectedIndex = completedTurns.findIndex((turn) => turn.userMessage.id === input.messageId);
-  if (selectedIndex === -1) return null;
-
-  const selectedTurn = completedTurns[selectedIndex]!;
-  const userMessages = loaded.messages.filter((message) => message.role === 'user');
-  const latestUserMessage = userMessages.at(-1);
-  const recentQuestions = listRecentCompletedQuestions(loaded.messages, {
-    excludeMessageId: input.messageId,
-  });
-
-  return {
-    conversation: loaded.conversation,
-    selectedTurn: {
-      userMessage: selectedTurn.userMessage,
-      assistantMessage: selectedTurn.assistantMessage,
-      isEarlierQuestion: latestUserMessage?.id !== selectedTurn.userMessage.id,
-    },
-    recentQuestions,
-  };
 }

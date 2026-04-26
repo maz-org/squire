@@ -298,35 +298,7 @@ function bootPendingTranscript() {
   };
 }
 
-describe('squire.js selected-message retargeting', () => {
-  it('retargets the ask form to the current conversation on selected-message URLs', () => {
-    // Regression: ISSUE-QA-001 — selected-message pages posted follow-ups to /chat
-    // Found by /qa on 2026-04-11
-    // Report: .gstack/qa-reports/qa-report-localhost-4306-2026-04-11.md
-    const attributes = runSquireScript(
-      '/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages/7b8eaa3a-7f08-4c2c-90cc-76ad1ce587ec',
-    );
-
-    expect(attributes.action).toBe('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages');
-    expect(attributes['hx-post']).toBe('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages');
-  });
-
-  it('SQR-108: legacy /messages/:mid uses .squire-transcript + beforeend so the append-fragment lands inside the existing transcript wrapper (not innerHTML, which would wipe the surface)', () => {
-    // Regression: the SQR-108 first cut left /messages/:mid on
-    // hx-target=#squire-surface + hx-swap=innerHTML, which made the
-    // server's append-fragment response replace the entire surface with
-    // two orphan articles. The selected-message renderer DOES emit a
-    // `<section class="squire-transcript">` wrapper, so the cleanest fix
-    // is to use the same swap contract as /chat/:id and let the new
-    // turn append inside the existing wrapper.
-    const attributes = runSquireScript(
-      '/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5/messages/7b8eaa3a-7f08-4c2c-90cc-76ad1ce587ec',
-    );
-
-    expect(attributes['hx-target']).toBe('.squire-transcript');
-    expect(attributes['hx-swap']).toBe('beforeend');
-  });
-
+describe('squire.js chat form retargeting', () => {
   it('SQR-108: /chat/:id sets the append-fragment swap contract', () => {
     const attributes = runSquireScript('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5');
 
@@ -436,7 +408,6 @@ describe('squire.js selected-message retargeting', () => {
 
     source.emit('done', {
       html: '<p>Loot 2 can reach up to two hexes away.</p>',
-      recentQuestionsNavHtml: '',
     });
     // SQR-98: the single successful tool-result fed RULEBOOK into the
     // consulted set. The done handler writes the real provenance line.
@@ -458,7 +429,7 @@ describe('squire.js selected-message retargeting', () => {
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('tool-start', { id: 'card-index', label: 'CARD INDEX' });
       source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
-      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+      source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
       expect(footerEl.hidden).toBe(false);
@@ -470,7 +441,7 @@ describe('squire.js selected-message retargeting', () => {
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
-      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+      source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
     });
@@ -480,7 +451,7 @@ describe('squire.js selected-message retargeting', () => {
 
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: false });
       source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
-      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+      source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(footerEl.textContent).toBe('CONSULTED · CARD INDEX');
     });
@@ -491,7 +462,7 @@ describe('squire.js selected-message retargeting', () => {
       // follow_links emits label=REFERENCE on the wire — our footer
       // aggregator should treat that as "not a real source".
       source.emit('tool-result', { id: 'follow_links', labels: ['REFERENCE'], ok: true });
-      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+      source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(footerEl.textContent).toBe('');
       expect(footerEl.hidden).toBe(true);
@@ -506,7 +477,7 @@ describe('squire.js selected-message retargeting', () => {
         labels: ['RULEBOOK', 'SECTION BOOK'],
         ok: true,
       });
-      source.emit('done', { html: '<p>Answer.</p>', recentQuestionsNavHtml: '' });
+      source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · SECTION BOOK');
       expect(footerEl.hidden).toBe(false);
@@ -516,7 +487,7 @@ describe('squire.js selected-message retargeting', () => {
       const { footerEl, source } = bootPendingTranscript();
 
       source.emit('text-delta', { delta: 'Short direct answer.' });
-      source.emit('done', { html: '<p>Short direct answer.</p>', recentQuestionsNavHtml: '' });
+      source.emit('done', { html: '<p>Short direct answer.</p>' });
 
       expect(footerEl.hidden).toBe(true);
       expect(footerEl.textContent).toBe('');
