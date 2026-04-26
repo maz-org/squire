@@ -583,6 +583,22 @@ function attachPendingAnswerStream(answerEl) {
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
     if (toolsEl) toolsEl.replaceChildren();
+    // SQR-108 QA: close the EventSource SYNCHRONOUSLY before deferring
+    // the HTML swap. The server ends its handler after sending `done`,
+    // which closes the TCP connection from the server side; the
+    // browser then synthesizes an `error` event for the close. If we
+    // defer source.close() (e.g. inside a rAF callback), the
+    // browser's connection-close error fires FIRST and stomps the
+    // answer with the "Trouble connecting" banner. Closing
+    // immediately and dropping `activeStream` here means the
+    // subsequent error handler can short-circuit on
+    // `source.readyState === EventSource.CLOSED`.
+    if (activeStream && activeStream.source === source) {
+      activeStream = null;
+    }
+    source.close();
+    setFormPendingState(document.querySelector('.squire-input-dock'), false);
+
     var payload = JSON.parse(event.data || '{}');
     // SQR-108 / ADR 0012 D-5: wrap the streamed-plaintext → final-HTML
     // swap in `aria-busy="true"` so screen readers (notably VoiceOver on
@@ -637,7 +653,6 @@ function attachPendingAnswerStream(answerEl) {
       } else {
         clearAriaBusy();
       }
-      finishStream();
     };
     if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
       window.requestAnimationFrame(applyDoneSwap);
@@ -647,6 +662,20 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('error', function (event) {
+    // SQR-108 QA: ignore the EventSource `error` that browsers
+    // synthesize when the SERVER cleanly closes the connection after
+    // sending `done`. The done handler closes the source synchronously
+    // before deferring its visual swap, so any error fired against an
+    // already-closed source is the natural connection-close — not a
+    // real transport failure. Surfacing that as "Trouble connecting"
+    // would stomp the answer the user just received.
+    //
+    // EventSource.CLOSED is `2` per the WHATWG spec; we hard-code it
+    // because the `EventSource` constructor isn't in scope under the
+    // module-script lint rule even though it's a global at runtime.
+    if (source.readyState === 2) {
+      return;
+    }
     var payload = { kind: 'transport', message: 'Trouble connecting. Please try again.' };
     if (event.data) {
       payload = JSON.parse(event.data);
