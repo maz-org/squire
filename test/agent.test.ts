@@ -353,6 +353,34 @@ describe('runAgentLoop', () => {
     expect(result).toContain('unable to produce an answer');
   });
 
+  it('forces synthesis after three repeated rule searches', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'looting rules' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('search_rules', {
+          query: 'loot ability end-of-turn looting money tokens treasure tiles',
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_rules', {
+          query: 'end-of-turn looting character loot token own hex',
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Looting means picking up loot tokens.'));
+
+    const result = await runAgentLoop('What is looting?');
+
+    expect(result).toBe('Looting means picking up loot tokens.');
+    expect(mockSearchRules).toHaveBeenCalledTimes(3);
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(4);
+    expect(mockMessagesCreate.mock.calls[3][0]).not.toHaveProperty('tools');
+    expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual({
+      role: 'user',
+      content:
+        'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.',
+    });
+  });
+
   it('prepends history messages', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Follow-up answer'));
     const history = [

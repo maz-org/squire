@@ -56,6 +56,14 @@
     "source": "fh-rule-book.pdf"
   },
   {
+    "id": "rule-looting-definition",
+    "category": "rulebook",
+    "question": "What is looting?",
+    "expected": "Characters loot by using Loot X abilities to collect loot tokens and treasure tiles within range X, and by automatically looting loot tokens in their own hex at the end of their turn. Looted loot tokens draw from the loot deck; monsters can loot tokens with Loot abilities but do not draw loot cards and cannot loot treasure tiles.",
+    "grading": "Must define looting as collecting loot tokens and treasure tiles. Must mention Loot X range or automatic end-of-turn looting. Must not answer with step-budget exhaustion or an inability to answer.",
+    "source": "fh-rule-book.pdf"
+  },
+  {
     "id": "monster-vermling-scout",
     "category": "monster-stats",
     "question": "What are the stats of a normal Vermling Scout at level 1 in Frosthaven?",

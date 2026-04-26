@@ -34,8 +34,14 @@ const client = new Anthropic();
 /** Maximum agent loop iterations to prevent runaway tool calls. */
 export const MAX_AGENT_ITERATIONS = 10;
 
+/** Maximum repeated broad book searches before forcing synthesis. */
+const MAX_RULE_SEARCHES_BEFORE_SYNTHESIS = 3;
+
 /** Maximum number of history messages to include. */
 const MAX_HISTORY_TURNS = 20;
+
+const FORCE_SYNTHESIS_PROMPT =
+  'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
 export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \
 for searching the indexed Frosthaven books and looking up card data. Use the tools to find relevant information before answering.
@@ -300,23 +306,34 @@ export async function executeToolCall(
  * Call the Claude API, either streaming or non-streaming based on emit.
  * Returns the final Message in both cases.
  */
-async function callClaude(messages: MessageParam[], emit?: EmitFn): Promise<Message> {
+async function callClaude(
+  messages: MessageParam[],
+  emit?: EmitFn,
+  opts: { allowTools?: boolean } = {},
+): Promise<Message> {
+  const allowTools = opts.allowTools ?? true;
   const params = {
     model: 'claude-sonnet-4-6' as const,
     max_tokens: 4096,
     system: AGENT_SYSTEM_PROMPT,
-    // Spread into a mutable array so the readonly AGENT_TOOLS tuple
-    // (declared `as const` to power the AgentToolName union) satisfies
-    // the Anthropic SDK's `ToolUnion[]` signature.
-    tools: [...AGENT_TOOLS],
     messages,
   };
 
+  const paramsWithTools = allowTools
+    ? {
+        ...params,
+        // Spread into a mutable array so the readonly AGENT_TOOLS tuple
+        // (declared `as const` to power the AgentToolName union) satisfies
+        // the Anthropic SDK's `ToolUnion[]` signature.
+        tools: [...AGENT_TOOLS],
+      }
+    : params;
+
   if (!emit) {
-    return client.messages.create(params);
+    return client.messages.create(paramsWithTools);
   }
 
-  const stream = client.messages.stream(params);
+  const stream = client.messages.stream(paramsWithTools);
   stream.on('text', (delta) => {
     void emit('text', { delta });
   });
@@ -344,9 +361,12 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
   ];
 
   let lastTextContent = '';
+  let broadRuleSearches = 0;
+  let hasUsedNonRuleSearchTool = false;
+  let forceSynthesis = false;
 
   for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
-    const response = await callClaude(messages, emit);
+    const response = await callClaude(messages, emit, { allowTools: !forceSynthesis });
     const hasToolUse = response.content.some((block) => block.type === 'tool_use');
 
     // Collect all text content from this response
@@ -383,6 +403,12 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
       const toolResults: ContentBlockParam[] = [];
       for (const block of response.content) {
         if (block.type === 'tool_use') {
+          if (block.name === 'search_rules') {
+            broadRuleSearches += 1;
+          } else {
+            hasUsedNonRuleSearchTool = true;
+          }
+
           if (emit) {
             await emit('tool_call', { name: block.name, input: block.input });
           }
@@ -416,6 +442,13 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
       }
 
       messages.push({ role: 'user', content: toolResults });
+      // Simple factual rule lookups can drift into repeated broad searches.
+      // After three rule-corpus searches, force synthesis from gathered context
+      // without lowering the global loop budget needed by traversal questions.
+      if (broadRuleSearches >= MAX_RULE_SEARCHES_BEFORE_SYNTHESIS && !hasUsedNonRuleSearchTool) {
+        forceSynthesis = true;
+        messages.push({ role: 'user', content: FORCE_SYNTHESIS_PROMPT });
+      }
       continue;
     }
 
