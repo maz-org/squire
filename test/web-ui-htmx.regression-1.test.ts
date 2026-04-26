@@ -40,9 +40,14 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain("form.setAttribute('hx-swap', 'beforeend');");
   });
 
-  it('keeps the submit button labeled Ask after pending state clears', () => {
-    expect(squireJs).toContain("submitButton.textContent = 'Ask';");
-    expect(squireJs).not.toContain("submitButton.textContent = '→';");
+  it('does NOT mutate submitButton.textContent in setFormPendingState (SQR-108 QA: would destroy the inner <span>S</span> wax-seal monogram from SQR-99)', () => {
+    expect(squireJs).not.toContain("submitButton.textContent = 'Ask'");
+    expect(squireJs).not.toContain("submitButton.textContent = '...'");
+    expect(squireJs).not.toContain("submitButton.textContent = '→'");
+    // The pending visual is now driven by the form's data-submitting
+    // attribute + the button's disabled attribute + CSS opacity.
+    expect(squireJs).toContain("form.dataset.submitting = 'true'");
+    expect(squireJs).toContain('delete form.dataset.submitting');
   });
 
   it('keeps lookup status present-tense and clears it once real answer prose starts', () => {

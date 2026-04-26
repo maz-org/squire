@@ -329,7 +329,14 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
     expect(body).toContain('squire-answer');
     expect(body).toContain('is-active');
     expect(body).toContain('EventSource');
-    expect(body).toContain("submitButton.textContent = '...'");
+    // SQR-108 QA: removed `submitButton.textContent = '...'` and
+    // `submitButton.textContent = 'Ask'` mutations. They destroyed the
+    // inner `<span>S</span>` that renders the wax-seal monogram. The
+    // pending visual is now driven entirely by `data-submitting='true'`
+    // on the form + the `disabled` attribute on the button + CSS
+    // opacity.
+    expect(body).not.toContain("submitButton.textContent = '...'");
+    expect(body).not.toContain("submitButton.textContent = 'Ask'");
     expect(body).not.toContain("action === '/chat'");
   });
 

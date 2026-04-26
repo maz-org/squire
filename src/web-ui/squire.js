@@ -28,12 +28,17 @@ document.addEventListener('submit', function (e) {
   var submitButton = form.querySelector('button[type="submit"]');
   ensureIdempotencyKey(form);
 
+  // SQR-108 QA: do NOT mutate `submitButton.textContent` here. The
+  // submit button renders the Squire seal monogram via an inner
+  // `<span aria-hidden="true">S</span>` (SQR-99). Setting textContent
+  // destroys the span and leaves a literal "..." (then "Ask" on
+  // re-enable) where the wax-seal mark should be. The `disabled`
+  // attribute + `data-submitting='true'` on the form already convey
+  // the pending visual via `.squire-input-dock[data-submitting='true']
+  // .squire-input-dock__submit { opacity: 0.8 }` in styles.css.
   form.dataset.submitting = 'true';
   if (questionInput) questionInput.setAttribute('readonly', 'true');
   if (submitButton) submitButton.setAttribute('disabled', 'true');
-  if (submitButton) {
-    submitButton.textContent = '...';
-  }
 
   // SQR-108 / ADR 0012 D-3: arm the scroll controller for the new turn.
   // The pending answer hasn't been swapped in yet — `htmx:afterSwap` will
@@ -80,14 +85,16 @@ function setFormPendingState(form, pending) {
     form.dataset.submitting = 'true';
     if (questionInput) questionInput.setAttribute('readonly', 'true');
     if (submitButton) submitButton.setAttribute('disabled', 'true');
-    if (submitButton) submitButton.textContent = '...';
     return;
   }
 
   delete form.dataset.submitting;
   if (questionInput) questionInput.removeAttribute('readonly');
   if (submitButton) submitButton.removeAttribute('disabled');
-  if (submitButton) submitButton.textContent = 'Ask';
+  // SQR-108 QA: do NOT touch `submitButton.textContent`. See the
+  // matching comment in the document-level submit handler — the
+  // button's inner `<span>S</span>` renders the wax-seal monogram and
+  // textContent assignment destroys it.
 }
 
 // SQR-108 / ADR 0012: keep the form's HTMX swap contract aligned with
