@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0.8
+**Version:** 1.0.9
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-21
+**Last Refreshed:** 2026-04-26
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -35,6 +35,39 @@ The system is organized as a single Hono server that hosts:
 - A **REST API** (`/api/*`) for non-MCP programmatic clients
 
 All channels (web UI, MCP, REST, future Discord / iMessage) talk to the same knowledge agent and the same atomic tools.
+
+---
+
+## Current Production Baseline
+
+Phase 1 production stays on the current Hono server, Postgres + pgvector
+runtime store, Claude SDK tool loop, conversation service, SSE contract, and
+Langfuse/OpenTelemetry trace path while the retrieval redesign happens. Deep
+Agents and LangSmith Deployment are explicitly deferred until after the Step 3
+eval report. See
+[ADR 0013 — Keep Phase 1 production on the current knowledge-agent path](adr/0013-phase-1-production-agent-baseline.md).
+
+The active baseline is:
+
+- Hono hosts the web UI, REST endpoints, and MCP endpoint in one server.
+- Postgres + pgvector hold the runtime retrieval layers.
+- The knowledge agent uses the current Claude SDK tool loop.
+- The web conversation service owns persisted turns, ownership checks, SSE,
+  and presentation, then delegates domain reasoning to the knowledge agent.
+- `/api/ask`, the in-process service entry, the CLI wrapper, and the eval
+  runner all route through the same service boundary.
+- Langfuse and OpenTelemetry remain the LLM trace and eval path for now.
+
+Existing regression coverage protects the current path:
+
+- `test/agent.test.ts` protects the agent loop and atomic tool use.
+- `test/service.test.ts` protects service readiness and delegation to
+  `runAgentLoop`.
+- `test/conversation.test.ts` protects the web conversation service, stored
+  turns, and browser SSE route.
+- `test/server-api.test.ts` protects REST endpoints and `/api/ask` SSE.
+- `test/mcp.test.ts`, `test/mcp-in-process.test.ts`, and
+  `test/mcp-transport.test.ts` protect the MCP surface.
 
 ---
 
@@ -749,6 +782,9 @@ For developer setup, running the server, working on import scripts locally, and 
 
 - **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
 - **Hosting platform.** Fly.io vs Railway vs Render vs self-hosted VPS — defer until Phase 1 deployment work begins.
+- **Deep Agents / LangSmith Deployment adoption.** Deferred until after the
+  Step 3 eval report from the retrieval redesign. See
+  [ADR 0013](adr/0013-phase-1-production-agent-baseline.md).
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
 - **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
@@ -757,6 +793,12 @@ For developer setup, running the server, working on import scripts locally, and 
 ## Changelog
 
 - **2026-04-26:** SQR-110 added a narrow synthesis guard to the knowledge agent loop. If a turn only calls `search_rules` and reaches three broad rule-corpus searches, the next model call runs without tools and is instructed to answer from the retrieved context. This preserves the full loop budget for scenario traversal and card lookups while preventing simple rules questions from spending all ten iterations on repeated searches. The eval dataset now includes `rule-looting-definition` for the original "What is looting?" failure mode.
+
+- **2026-04-26:** SQR-114 recorded the Phase 1 production-agent
+  baseline while the retrieval redesign runs. Production stays on the current
+  Hono, Postgres + pgvector, Claude SDK tool loop, conversation-service, SSE,
+  Langfuse, and OpenTelemetry path. Deep Agents and LangSmith Deployment are
+  deferred until after the Step 3 eval report.
 
 - **2026-04-21 (v1.0.8):** SQR-105 fixed the consulted footer to show the actual book(s) surfaced by `search_rules` rather than always showing "RULEBOOK". `search_rules` searches all four Frosthaven books; the specific books hit are now extracted from the tool result in `agent.ts` and stored as `ToolSourceLabel` strings in `consulted_sources`, bypassing the old static tool-name → label map for that tool. Added "PUZZLE BOOK" as a recognised provenance label (the Puzzle Book was indexed but never attributed). `aggregateSourceLabels` handles both storage formats (old tool-name strings and new label strings) transparently.
 
