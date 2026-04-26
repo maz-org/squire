@@ -223,9 +223,12 @@ SCEN 14` once Phase 4 character state lands. Always visible. One line,
    chrome stubs above the input dock. The conversation page (`/chat/:id`)
    is a standard scrolling-chat transcript per
    [ADR 0012](docs/adr/0012-split-home-and-scrolling-chat-ia.md): every
-   persisted turn renders top-to-bottom inside one `<section class="squire-transcript">`,
-   with no card-shell chrome (no shadow, no outer radius, no deviating
-   background) and a hairline `--rule` between turns. The drop cap appears
+   persisted turn renders top-to-bottom inside one
+   `<section class="squire-transcript" role="log" aria-live="polite">`
+   (the live-region attrs make every `hx-swap="beforeend"` follow-up
+   announce reliably without re-creating the container), with no
+   card-shell chrome (no shadow, no outer radius, no deviating background)
+   and a hairline `--rule` between turns. The drop cap appears
    only on the NEWEST `.squire-answer` (position-based selector
    `.squire-answer:not(:has(~ .squire-answer))::first-letter`); past answers
    render plain. Each answer carries its own tool-call footer
