@@ -302,6 +302,13 @@ describe('knowledge discovery tools', () => {
       }),
     );
 
+    expect(getSchema('rules_passage')).toEqual(
+      expect.objectContaining({
+        ok: true,
+        kind: 'rules_passage',
+      }),
+    );
+
     expect(getSchema('item')).toEqual(
       expect.objectContaining({
         ok: true,

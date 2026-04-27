@@ -189,6 +189,7 @@ const CARD_KIND_ALIASES: Record<string, CardType[]> = {
 };
 
 const KIND_ALIASES: Record<string, KnowledgeKind> = {
+  rules_passage: 'rules_passage',
   rule: 'rules_passage',
   rules: 'rules_passage',
   rulebook: 'rules_passage',

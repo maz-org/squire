@@ -274,6 +274,12 @@ export interface ToolCallResult {
   sourceBooks?: string[];
 }
 
+const DISCOVERY_ONLY_TOOL_NAMES = new Set<AgentToolName>([
+  'inspect_sources',
+  'schema',
+  'resolve_entity',
+]);
+
 /**
  * Execute a single tool call and return the result content plus any per-result
  * provenance metadata. For search_rules, `sourceBooks` carries the distinct
@@ -480,7 +486,7 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
         if (block.type === 'tool_use') {
           if (block.name === 'search_rules') {
             broadRuleSearches += 1;
-          } else {
+          } else if (!DISCOVERY_ONLY_TOOL_NAMES.has(block.name as AgentToolName)) {
             hasUsedNonRuleSearchTool = true;
           }
 
