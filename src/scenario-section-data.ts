@@ -197,6 +197,39 @@ export async function getSection(
   return row ? { ...row, metadata: normalizeJsonObject(row.metadata) } : null;
 }
 
+export async function searchSections(
+  query: string,
+  limit = 6,
+  opts: LoadOpts = {},
+): Promise<SectionBookSection[]> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+  const normalized = query.trim();
+  if (normalized.length === 0) return [];
+  const likePattern = `%${normalized.toLowerCase()}%`;
+
+  const rows = await db.execute<SectionBookSection>(sql`
+    SELECT
+      ref,
+      section_number AS "sectionNumber",
+      section_variant AS "sectionVariant",
+      source_pdf AS "sourcePdf",
+      source_page AS "sourcePage",
+      text,
+      metadata
+    FROM ${sectionBookSections}
+    WHERE game = ${game}
+      AND lower(text) LIKE ${likePattern}
+    ORDER BY section_number, section_variant
+    LIMIT ${limit}
+  `);
+
+  return rows.rows.map((row) => ({
+    ...row,
+    metadata: normalizeJsonObject(row.metadata),
+  }));
+}
+
 export async function followReferences(
   fromKind: BookRecordKind,
   fromRef: string,

@@ -5,7 +5,7 @@
 
 import { embed } from './embedder.ts';
 import { formatRetrievalSourceLabel } from './retrieval-source.ts';
-import { search } from './vector-store.ts';
+import { getEntryBySourceChunk, search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
 import { countsByType, load, loadOne, searchExtractedRanked, TYPES } from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
@@ -14,6 +14,7 @@ import {
   getScenarioSectionBooksBootstrapStatus,
   getScenario as loadScenario,
   getSection as loadSection,
+  searchSections as loadSections,
   followReferences as loadReferences,
 } from './scenario-section-data.ts';
 import {
@@ -153,6 +154,86 @@ export type EntityResolutionResult =
       hint: string;
       candidates: [];
     };
+
+export type KnowledgeEntityKind = 'rules_passage' | 'scenario' | 'section' | 'card';
+
+export interface KnowledgeEntitySummary {
+  kind: KnowledgeEntityKind;
+  ref: string;
+  title: string;
+  sourceLabel: string;
+}
+
+export interface KnowledgeCitation {
+  sourceRef: string;
+  sourceLabel: string;
+  locator: string;
+}
+
+export interface KnowledgeLink {
+  relation: string;
+  target: KnowledgeEntitySummary;
+  reason?: string;
+}
+
+export interface KnowledgeEntity extends KnowledgeEntitySummary {
+  data: Record<string, unknown>;
+}
+
+export interface KnowledgeError {
+  code: 'invalid_ref' | 'not_found' | 'ambiguous' | 'invalid_filter' | 'unsupported_relation';
+  message: string;
+  hint?: string;
+  candidates?: KnowledgeEntitySummary[];
+}
+
+export type KnowledgeOpenResult =
+  | {
+      ok: true;
+      entity: KnowledgeEntity;
+      citations: KnowledgeCitation[];
+      links: KnowledgeLink[];
+      related: KnowledgeLink[];
+    }
+  | { ok: false; error: KnowledgeError };
+
+export interface KnowledgeSearchHit {
+  entity: KnowledgeEntitySummary;
+  score: number;
+  snippet: string;
+  citations: KnowledgeCitation[];
+  nextRefs: KnowledgeEntitySummary[];
+}
+
+export type KnowledgeSearchResult =
+  | {
+      ok: true;
+      query: string;
+      results: KnowledgeSearchHit[];
+      truncated?: boolean;
+      truncatedScopes?: KnowledgeEntityKind[];
+    }
+  | { ok: false; error: KnowledgeError };
+
+export type KnowledgeNeighborsResult =
+  | {
+      ok: true;
+      from: KnowledgeEntitySummary;
+      neighbors: KnowledgeLink[];
+      truncated?: boolean;
+    }
+  | { ok: false; error: KnowledgeError };
+
+export interface SearchKnowledgeOptions extends ToolOpts {
+  scope?: KnowledgeEntityKind[];
+  filters?: Record<string, unknown>;
+  limit?: number;
+}
+
+export interface NeighborsOptions extends ToolOpts {
+  relation?: BookReferenceType;
+  limit?: number;
+}
 
 interface ToolOpts {
   /** Campaign variant. Defaults to 'frosthaven'. Reserved for Phase 2. */
@@ -442,6 +523,180 @@ function validateKinds(
   return { ok: true, kinds: resolved };
 }
 
+function sourceRefForPdf(game: string, source: string): string {
+  return `source:${game}/${source.replace(/\.pdf$/i, '')}`;
+}
+
+function canonicalScenarioRef(ref: string, game = DEFAULT_GAME): string {
+  const match = ref.match(/(\d{1,3}[A-Z]?)$/i);
+  const scenarioId = match ? match[1].padStart(3, '0') : ref;
+  return `scenario:${game}/${scenarioId}`;
+}
+
+function scenarioStorageRef(ref: string): string {
+  const match = ref.match(/^scenario:([^/]+)\/(.+)$/);
+  if (!match) return ref;
+  return `gloomhavensecretariat:scenario/${match[2].padStart(3, '0')}`;
+}
+
+function sectionStorageRef(ref: string): string {
+  return ref.replace(/^section:[^/]+\//, '');
+}
+
+function canonicalSectionRef(ref: string, game = DEFAULT_GAME): string {
+  return `section:${game}/${sectionStorageRef(ref)}`;
+}
+
+function canonicalCardRef(type: CardType, sourceId: string, game = DEFAULT_GAME): string {
+  return `card:${game}/${type}/${sourceId}`;
+}
+
+function summarizeScenario(scenario: ScenarioResult, game = DEFAULT_GAME): KnowledgeEntitySummary {
+  return {
+    kind: 'scenario',
+    ref: canonicalScenarioRef(scenario.ref, game),
+    title: scenario.name || `Scenario ${scenario.scenarioIndex}`,
+    sourceLabel: scenario.sourcePdf
+      ? formatRetrievalSourceLabel(scenario.sourcePdf)
+      : 'Scenario Book',
+  };
+}
+
+function summarizeSection(section: SectionResult, game = DEFAULT_GAME): KnowledgeEntitySummary {
+  return {
+    kind: 'section',
+    ref: canonicalSectionRef(section.ref, game),
+    title: `Section ${section.ref}`,
+    sourceLabel: formatRetrievalSourceLabel(section.sourcePdf),
+  };
+}
+
+function summarizeRule(hit: ScoredEntry, game = DEFAULT_GAME): KnowledgeEntitySummary {
+  return {
+    kind: 'rules_passage',
+    ref: `rules:${game}/${hit.source}#chunk=${hit.chunkIndex}`,
+    title: `${formatRetrievalSourceLabel(hit.source)} passage ${hit.chunkIndex + 1}`,
+    sourceLabel: formatRetrievalSourceLabel(hit.source),
+  };
+}
+
+function summarizeCard(
+  type: CardType,
+  card: Record<string, unknown>,
+  game = DEFAULT_GAME,
+): KnowledgeEntitySummary {
+  const sourceId = String(card.sourceId ?? '');
+  return {
+    kind: 'card',
+    ref: canonicalCardRef(type, sourceId, game),
+    title: displayTitleForCard(card, type),
+    sourceLabel: 'Card Index',
+  };
+}
+
+function citationForScenario(scenario: ScenarioResult, game = DEFAULT_GAME): KnowledgeCitation[] {
+  if (!scenario.sourcePdf) return [];
+  return [
+    {
+      sourceRef: sourceRefForPdf(game, scenario.sourcePdf),
+      sourceLabel: formatRetrievalSourceLabel(scenario.sourcePdf),
+      locator: `scenario ${scenario.scenarioIndex}`,
+    },
+  ];
+}
+
+function citationForSection(section: SectionResult, game = DEFAULT_GAME): KnowledgeCitation[] {
+  return [
+    {
+      sourceRef: sourceRefForPdf(game, section.sourcePdf),
+      sourceLabel: formatRetrievalSourceLabel(section.sourcePdf),
+      locator: `section ${section.ref}`,
+    },
+  ];
+}
+
+function citationForRule(hit: ScoredEntry, game = DEFAULT_GAME): KnowledgeCitation[] {
+  return [
+    {
+      sourceRef: sourceRefForPdf(game, hit.source),
+      sourceLabel: formatRetrievalSourceLabel(hit.source),
+      locator: `chunk ${hit.chunkIndex}`,
+    },
+  ];
+}
+
+function citationForCard(
+  type: CardType,
+  sourceId: string,
+  game = DEFAULT_GAME,
+): KnowledgeCitation[] {
+  return [
+    {
+      sourceRef: `source:${game}/cards/${type}`,
+      sourceLabel: 'Card Index',
+      locator: sourceId,
+    },
+  ];
+}
+
+function parseRulesRef(
+  ref: string,
+): { ok: true; game: string; source: string; chunkIndex: number } | { ok: false } {
+  const match = ref.match(/^rules:([^/]+)\/(.+)#chunk=(\d+)$/);
+  if (!match) return { ok: false };
+  return { ok: true, game: match[1], source: match[2], chunkIndex: Number(match[3]) };
+}
+
+function parseCardRef(
+  ref: string,
+): { ok: true; game: string; type: CardType; sourceId: string } | { ok: false } {
+  const match = ref.match(/^card:([^/]+)\/([^/]+)\/(.+)$/);
+  if (!match || !TYPES.includes(match[2] as CardType)) return { ok: false };
+  return { ok: true, game: match[1], type: match[2] as CardType, sourceId: match[3] };
+}
+
+async function targetSummary(
+  kind: BookRecordKind,
+  ref: string,
+  game = DEFAULT_GAME,
+): Promise<KnowledgeEntitySummary> {
+  if (kind === 'scenario') {
+    const scenario = await getScenario(canonicalScenarioRef(ref, game), { game });
+    if (scenario) return summarizeScenario(scenario, game);
+    return {
+      kind: 'scenario',
+      ref: canonicalScenarioRef(ref, game),
+      title: `Scenario ${ref.match(/(\d{1,3}[A-Z]?)$/i)?.[1] ?? ref}`,
+      sourceLabel: 'Scenario Book',
+    };
+  }
+
+  const section = await getSection(canonicalSectionRef(ref, game), { game });
+  if (section) return summarizeSection(section, game);
+  return {
+    kind: 'section',
+    ref: canonicalSectionRef(ref, game),
+    title: `Section ${sectionStorageRef(ref)}`,
+    sourceLabel: 'Section Book',
+  };
+}
+
+async function linksFor(
+  kind: BookRecordKind,
+  ref: string,
+  opts?: ToolOpts,
+): Promise<KnowledgeLink[]> {
+  const game = opts?.game ?? DEFAULT_GAME;
+  const links = await followLinks(kind, ref, undefined, opts);
+  return Promise.all(
+    links.map(async (link) => ({
+      relation: link.linkType,
+      target: await targetSummary(link.toKind, link.toRef, game),
+      reason: link.rawLabel ?? link.rawContext ?? undefined,
+    })),
+  );
+}
+
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
 /**
@@ -699,11 +954,19 @@ export async function findScenario(query: string, opts?: ToolOpts): Promise<Scen
 }
 
 export async function getScenario(ref: string, opts?: ToolOpts): Promise<ScenarioResult | null> {
-  return loadScenario(ref, opts);
+  return loadScenario(scenarioStorageRef(ref), opts);
 }
 
 export async function getSection(ref: string, opts?: ToolOpts): Promise<SectionResult | null> {
-  return loadSection(ref, opts);
+  return loadSection(sectionStorageRef(ref), opts);
+}
+
+export async function searchSections(
+  query: string,
+  limit = 6,
+  opts?: ToolOpts,
+): Promise<SectionResult[]> {
+  return loadSections(query, limit, opts);
 }
 
 export async function followLinks(
@@ -712,5 +975,299 @@ export async function followLinks(
   linkType?: BookReferenceType,
   opts?: ToolOpts,
 ): Promise<ReferenceResult[]> {
-  return loadReferences(fromKind, fromRef, linkType, opts);
+  const normalizedRef =
+    fromKind === 'scenario' ? scenarioStorageRef(fromRef) : sectionStorageRef(fromRef);
+  return loadReferences(fromKind, normalizedRef, linkType, opts);
+}
+
+export async function openEntity(ref: string, opts?: ToolOpts): Promise<KnowledgeOpenResult> {
+  const game = opts?.game ?? DEFAULT_GAME;
+
+  if (/^\d+$/.test(ref.trim())) {
+    return {
+      ok: false,
+      error: {
+        code: 'ambiguous',
+        message: `Ref "${ref}" is ambiguous.`,
+        hint: 'Use scenario:frosthaven/061, section:frosthaven/61.1, or a card ref.',
+      },
+    };
+  }
+
+  const ruleRef = parseRulesRef(ref);
+  if (ruleRef.ok) {
+    const hit = await getEntryBySourceChunk(ruleRef.source, ruleRef.chunkIndex, {
+      game: ruleRef.game,
+    });
+    if (!hit) {
+      return { ok: false, error: { code: 'not_found', message: `Rule passage not found: ${ref}` } };
+    }
+    const entity = summarizeRule(hit, ruleRef.game);
+    return {
+      ok: true,
+      entity: {
+        ...entity,
+        data: {
+          text: hit.text,
+          source: hit.source,
+          chunkIndex: hit.chunkIndex,
+        },
+      },
+      citations: citationForRule(hit, ruleRef.game),
+      links: [],
+      related: [],
+    };
+  }
+
+  if (ref.startsWith('scenario:') || ref.startsWith('gloomhavensecretariat:scenario/')) {
+    const scenario = await getScenario(
+      ref.startsWith('scenario:') ? ref : canonicalScenarioRef(ref, game),
+      {
+        game,
+      },
+    );
+    if (!scenario) {
+      return { ok: false, error: { code: 'not_found', message: `Scenario not found: ${ref}` } };
+    }
+    const entity = summarizeScenario(scenario, game);
+    return {
+      ok: true,
+      entity: {
+        ...entity,
+        data: {
+          scenarioGroup: scenario.scenarioGroup,
+          scenarioIndex: scenario.scenarioIndex,
+          name: scenario.name,
+          complexity: scenario.complexity,
+          flowChartGroup: scenario.flowChartGroup,
+          initial: scenario.initial,
+          sourcePdf: scenario.sourcePdf,
+          sourcePage: scenario.sourcePage,
+          rawText: scenario.rawText,
+          metadata: scenario.metadata,
+        },
+      },
+      citations: citationForScenario(scenario, game),
+      links: await linksFor('scenario', scenario.ref, { game }),
+      related: [],
+    };
+  }
+
+  if (ref.startsWith('section:') || /^\d+\.\d+$/.test(ref)) {
+    const section = await getSection(ref, { game });
+    if (!section) {
+      return { ok: false, error: { code: 'not_found', message: `Section not found: ${ref}` } };
+    }
+    const entity = summarizeSection(section, game);
+    return {
+      ok: true,
+      entity: {
+        ...entity,
+        data: {
+          sectionNumber: section.sectionNumber,
+          sectionVariant: section.sectionVariant,
+          sourcePdf: section.sourcePdf,
+          sourcePage: section.sourcePage,
+          text: section.text,
+          metadata: section.metadata,
+        },
+      },
+      citations: citationForSection(section, game),
+      links: await linksFor('section', section.ref, { game }),
+      related: [],
+    };
+  }
+
+  const cardRef = parseCardRef(ref);
+  if (cardRef.ok) {
+    const card = await getCard(cardRef.type, cardRef.sourceId, { game: cardRef.game });
+    if (!card)
+      return { ok: false, error: { code: 'not_found', message: `Card not found: ${ref}` } };
+    const entity = summarizeCard(cardRef.type, card, cardRef.game);
+    const sourceId = String(card.sourceId ?? cardRef.sourceId);
+    return {
+      ok: true,
+      entity: {
+        ...entity,
+        data: {
+          ...card,
+          type: cardRef.type,
+          sourceId,
+          displayName: displayTitleForCard(card, cardRef.type),
+        },
+      },
+      citations: citationForCard(cardRef.type, sourceId, cardRef.game),
+      links: [],
+      related: [],
+    };
+  }
+
+  return {
+    ok: false,
+    error: {
+      code: 'invalid_ref',
+      message: `Ref is not inspectable: ${ref}`,
+      hint: 'Expected rules:<game>/<source>#chunk=N, scenario:<game>/<id>, section:<game>/<id>, or card:<game>/<type>/<sourceId>.',
+    },
+  };
+}
+
+export async function searchKnowledge(
+  query: string,
+  options: SearchKnowledgeOptions = {},
+): Promise<KnowledgeSearchResult> {
+  const game = options.game ?? DEFAULT_GAME;
+  const scope = options.scope ?? ['rules_passage', 'scenario', 'section', 'card'];
+  const limit = Math.min(Math.max(options.limit ?? 6, 1), 20);
+  const allowed = new Set<KnowledgeEntityKind>(['rules_passage', 'scenario', 'section', 'card']);
+  const invalid = scope.find((kind) => !allowed.has(kind));
+  if (invalid) {
+    return {
+      ok: false,
+      error: { code: 'invalid_filter', message: `Unsupported search scope: ${invalid}` },
+    };
+  }
+
+  const perScope = Math.ceil(limit / scope.length) + 1;
+  const hits: KnowledgeSearchHit[] = [];
+
+  if (scope.includes('rules_passage')) {
+    const queryEmbedding = await embed(query);
+    const rules = await search(queryEmbedding, perScope, { game });
+    hits.push(
+      ...rules.map((rule) => {
+        const entity = summarizeRule(rule, game);
+        return {
+          entity,
+          score: rule.score,
+          snippet: rule.text,
+          citations: citationForRule(rule, game),
+          nextRefs: [entity],
+        };
+      }),
+    );
+  }
+
+  if (scope.includes('scenario')) {
+    const scenarios = await findScenario(query, { game });
+    hits.push(
+      ...scenarios.slice(0, perScope).map((scenario) => {
+        const entity = summarizeScenario(scenario, game);
+        return {
+          entity,
+          score: 0.85,
+          snippet: scenario.rawText ?? scenario.name,
+          citations: citationForScenario(scenario, game),
+          nextRefs: [entity],
+        };
+      }),
+    );
+  }
+
+  if (scope.includes('section')) {
+    const sectionQuery = query.trim();
+    if (/^\d+\.\d+$/.test(sectionQuery)) {
+      const section = await getSection(sectionQuery, { game });
+      if (section) {
+        const entity = summarizeSection(section, game);
+        hits.push({
+          entity,
+          score: 0.95,
+          snippet: section.text,
+          citations: citationForSection(section, game),
+          nextRefs: [entity],
+        });
+      }
+    } else {
+      const sections = await searchSections(query, perScope, { game });
+      hits.push(
+        ...sections.map((section) => {
+          const entity = summarizeSection(section, game);
+          return {
+            entity,
+            score: 0.8,
+            snippet: section.text,
+            citations: citationForSection(section, game),
+            nextRefs: [entity],
+          };
+        }),
+      );
+    }
+  }
+
+  if (scope.includes('card')) {
+    const cards = await searchCards(query, perScope, { game });
+    hits.push(
+      ...cards.map((card) => {
+        const sourceId = String(card.data.sourceId ?? '');
+        const entity = summarizeCard(card.type, card.data, game);
+        return {
+          entity,
+          score: card.score,
+          snippet: JSON.stringify(card.data),
+          citations: citationForCard(card.type, sourceId, game),
+          nextRefs: [entity],
+        };
+      }),
+    );
+  }
+
+  hits.sort((a, b) => b.score - a.score);
+  return {
+    ok: true,
+    query,
+    results: hits.slice(0, limit),
+    truncated: hits.length > limit || undefined,
+  };
+}
+
+export async function neighbors(
+  ref: string,
+  options: NeighborsOptions = {},
+): Promise<KnowledgeNeighborsResult> {
+  const game = options.game ?? DEFAULT_GAME;
+  const relation = options.relation;
+  if (relation && !BOOK_REFERENCE_TYPES.includes(relation)) {
+    return {
+      ok: false,
+      error: { code: 'unsupported_relation', message: `Unsupported relation: ${relation}` },
+    };
+  }
+
+  let kind: BookRecordKind;
+  let storageRef: string;
+  if (ref.startsWith('scenario:') || ref.startsWith('gloomhavensecretariat:scenario/')) {
+    kind = 'scenario';
+    storageRef = scenarioStorageRef(ref);
+  } else if (ref.startsWith('section:') || /^\d+\.\d+$/.test(ref)) {
+    kind = 'section';
+    storageRef = sectionStorageRef(ref);
+  } else if (ref.includes(':')) {
+    return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
+  } else {
+    return { ok: false, error: { code: 'invalid_ref', message: `Ref is not traversable: ${ref}` } };
+  }
+
+  const opened = await openEntity(ref, { game });
+  if (!opened.ok) return opened;
+  if (opened.entity.kind !== 'scenario' && opened.entity.kind !== 'section') {
+    return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
+  }
+
+  const links = await followLinks(kind, storageRef, relation, { game });
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 50);
+  const mapped = await Promise.all(
+    links.slice(0, limit).map(async (link) => ({
+      relation: link.linkType,
+      target: await targetSummary(link.toKind, link.toRef, game),
+      reason: link.rawLabel ?? link.rawContext ?? undefined,
+    })),
+  );
+
+  return {
+    ok: true,
+    from: opened.entity,
+    neighbors: mapped,
+    truncated: links.length > limit || undefined,
+  };
 }

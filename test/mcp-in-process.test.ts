@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const {
   mockSearchRules,
   mockSearchCards,
+  mockSearchKnowledge,
   mockListCardTypes,
   mockListCards,
   mockGetCard,
+  mockOpenEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -13,12 +15,15 @@ const {
   mockGetScenario,
   mockGetSection,
   mockFollowLinks,
+  mockNeighbors,
 } = vi.hoisted(() => ({
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
+  mockSearchKnowledge: vi.fn(),
   mockListCardTypes: vi.fn(),
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
+  mockOpenEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
@@ -26,14 +31,17 @@ const {
   mockGetScenario: vi.fn(),
   mockGetSection: vi.fn(),
   mockFollowLinks: vi.fn(),
+  mockNeighbors: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: mockSearchCards,
+  searchKnowledge: mockSearchKnowledge,
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  openEntity: mockOpenEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -41,6 +49,7 @@ vi.mock('../src/tools.ts', () => ({
   getScenario: mockGetScenario,
   getSection: mockGetSection,
   followLinks: mockFollowLinks,
+  neighbors: mockNeighbors,
 }));
 
 import { createInProcessClient } from '../src/mcp.ts';
@@ -64,6 +73,30 @@ describe('in-process MCP client', () => {
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
     mockGetCard.mockReturnValue({ name: 'Algox Archer' });
+    mockSearchKnowledge.mockResolvedValue({ ok: true, query: 'loot', results: [] });
+    mockOpenEntity.mockResolvedValue({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: 'section:frosthaven/67.1',
+        title: 'Section 67.1',
+        sourceLabel: 'Section Book',
+        data: {},
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
+    mockNeighbors.mockResolvedValue({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [],
+    });
   });
 
   it('creates a connected MCP client', async () => {
@@ -75,7 +108,7 @@ describe('in-process MCP client', () => {
   it('lists tools via in-process transport', async () => {
     const client = await createInProcessClient();
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(12);
+    expect(tools.length).toBe(15);
     const names = tools.map((t) => t.name);
     expect(names).toContain('inspect_sources');
     expect(names).toContain('schema');
@@ -85,6 +118,9 @@ describe('in-process MCP client', () => {
     expect(names).toContain('get_scenario');
     expect(names).toContain('get_section');
     expect(names).toContain('follow_links');
+    expect(names).toContain('open_entity');
+    expect(names).toContain('search_knowledge');
+    expect(names).toContain('neighbors');
     expect(names).toContain('list_card_types');
     expect(names).toContain('get_card');
     await client.close();

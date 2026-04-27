@@ -10,12 +10,14 @@
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 
-const { mockSearch } = vi.hoisted(() => ({
+const { mockSearch, mockGetEntryBySourceChunk } = vi.hoisted(() => ({
   mockSearch: vi.fn(),
+  mockGetEntryBySourceChunk: vi.fn(),
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
   search: mockSearch,
+  getEntryBySourceChunk: mockGetEntryBySourceChunk,
 }));
 
 vi.mock('../src/embedder.ts', () => ({
@@ -25,9 +27,11 @@ vi.mock('../src/embedder.ts', () => ({
 import {
   searchRules,
   searchCards,
+  searchKnowledge,
   listCardTypes,
   listCards,
   getCard,
+  openEntity,
   inspectSources,
   getSchema,
   resolveEntity,
@@ -35,6 +39,7 @@ import {
   getScenario,
   getSection,
   followLinks,
+  neighbors,
 } from '../src/tools.ts';
 import type {
   RuleResult,
@@ -44,6 +49,9 @@ import type {
   ScenarioResult,
   SectionResult,
   ReferenceResult,
+  KnowledgeOpenResult,
+  KnowledgeSearchResult,
+  KnowledgeNeighborsResult,
 } from '../src/tools.ts';
 import { findScenarios } from '../src/scenario-section-data.ts';
 import { getDb } from '../src/db.ts';
@@ -82,6 +90,12 @@ const FAKE_RULE_HITS = [
 beforeAll(async () => {
   await setupTestDb();
   mockSearch.mockImplementation(async (_v: number[], k = 6) => FAKE_RULE_HITS.slice(0, k));
+  mockGetEntryBySourceChunk.mockImplementation(async (source: string, chunkIndex: number) => {
+    const hit = FAKE_RULE_HITS.find(
+      (entry) => entry.source === source && entry.chunkIndex === chunkIndex,
+    );
+    return hit ?? null;
+  });
 });
 
 afterAll(async () => {
@@ -139,6 +153,221 @@ describe('searchRules', () => {
     expect(mockSearch).toHaveBeenCalledTimes(1);
     const callArgs = mockSearch.mock.calls[0];
     expect(callArgs[2]).toEqual({ game: 'gloomhaven' });
+  });
+});
+
+describe('openEntity', () => {
+  it('opens a scenario with source metadata and inspectable next links', async () => {
+    const result: KnowledgeOpenResult = await openEntity('scenario:frosthaven/061');
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.entity).toMatchObject({
+      kind: 'scenario',
+      ref: 'scenario:frosthaven/061',
+      title: 'Life and Death',
+      sourceLabel: 'Scenario Book 62-81',
+    });
+    expect(result.entity.data).toMatchObject({
+      scenarioIndex: '61',
+      sourcePdf: 'fh-scenario-book-62-81.pdf',
+    });
+    expect(result.citations).toEqual([
+      expect.objectContaining({
+        sourceRef: 'source:frosthaven/fh-scenario-book-62-81',
+        sourceLabel: 'Scenario Book 62-81',
+        locator: 'scenario 61',
+      }),
+    ]);
+    expect(result.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          relation: 'conclusion',
+          target: expect.objectContaining({
+            kind: 'section',
+            ref: 'section:frosthaven/67.1',
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('opens a section with exact text, source metadata, and outgoing links', async () => {
+    const result = await openEntity('section:frosthaven/66.2');
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.entity).toMatchObject({
+      kind: 'section',
+      ref: 'section:frosthaven/66.2',
+      title: 'Section 66.2',
+      sourceLabel: 'Section Book 62-81',
+    });
+    expect(result.entity.data.text).toContain('Caravan Guards116');
+    expect(result.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          relation: 'unlock',
+          target: expect.objectContaining({
+            kind: 'scenario',
+            ref: 'scenario:frosthaven/116',
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('opens a card with canonical ID, card type, display name, and source fields', async () => {
+    const result = await openEntity('card:frosthaven/items/gloomhavensecretariat:item/1');
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.entity.kind).toBe('card');
+    expect(result.entity.ref).toBe('card:frosthaven/items/gloomhavensecretariat:item/1');
+    expect(result.entity.title).toBe('Spyglass');
+    expect(result.entity.sourceLabel).toBe('Card Index');
+    expect(result.entity.data).toMatchObject({
+      type: 'items',
+      sourceId: 'gloomhavensecretariat:item/1',
+      displayName: 'Spyglass',
+    });
+    expect(result.citations).toEqual([
+      expect.objectContaining({
+        sourceRef: 'source:frosthaven/cards/items',
+        sourceLabel: 'Card Index',
+        locator: 'gloomhavensecretariat:item/1',
+      }),
+    ]);
+  });
+
+  it('opens a rule passage by canonical source and chunk ref', async () => {
+    const result = await openEntity('rules:frosthaven/fh-rule-book.pdf#chunk=0');
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.entity).toMatchObject({
+      kind: 'rules_passage',
+      ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=0',
+      sourceLabel: 'Rulebook',
+    });
+    expect(result.entity.data.text).toContain('Loot action');
+  });
+
+  it('returns structured not_found and invalid_ref failures', async () => {
+    await expect(openEntity('section:frosthaven/9999.9')).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'not_found' },
+    });
+    await expect(openEntity('nonsense')).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'invalid_ref' },
+    });
+  });
+
+  it('returns ambiguous for underspecified legacy refs', async () => {
+    await expect(openEntity('61')).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'ambiguous' },
+    });
+  });
+});
+
+describe('searchKnowledge', () => {
+  it('searches across scopes with openable refs, metadata, citations, and next refs', async () => {
+    const result: KnowledgeSearchResult = await searchKnowledge('loot action', {
+      scope: ['rules_passage', 'card'],
+      limit: 4,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results.length).toBeGreaterThan(0);
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        kind: expect.stringMatching(/^(rules_passage|card)$/),
+        ref: expect.any(String),
+        sourceLabel: expect.any(String),
+      }),
+      score: expect.any(Number),
+      snippet: expect.any(String),
+      citations: expect.any(Array),
+      nextRefs: expect.any(Array),
+    });
+  });
+
+  it('returns an empty successful result set for no-result searches', async () => {
+    const result = await searchKnowledge('zzzzzzz-no-such-token-zzzzzzz', {
+      scope: ['card'],
+    });
+    expect(result).toMatchObject({ ok: true, results: [] });
+  });
+
+  it('searches section text and returns openable section refs', async () => {
+    const result = await searchKnowledge('Moonshard answers', {
+      scope: ['section'],
+      limit: 3,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entity: expect.objectContaining({
+            kind: 'section',
+            ref: 'section:frosthaven/67.1',
+          }),
+          snippet: expect.stringContaining('Moonshard answers'),
+        }),
+      ]),
+    );
+  });
+
+  it('rejects invalid scopes with structured errors', async () => {
+    const result = await searchKnowledge('loot', {
+      scope: ['bogus' as never],
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: 'invalid_filter' },
+    });
+  });
+});
+
+describe('neighbors', () => {
+  it('traverses scenario conclusion links as openable neighbors', async () => {
+    const result: KnowledgeNeighborsResult = await neighbors('scenario:frosthaven/061', {
+      relation: 'conclusion',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.from).toMatchObject({
+      kind: 'scenario',
+      ref: 'scenario:frosthaven/061',
+      sourceLabel: 'Scenario Book 62-81',
+    });
+    expect(result.neighbors).toEqual([
+      expect.objectContaining({
+        relation: 'conclusion',
+        target: expect.objectContaining({
+          kind: 'section',
+          ref: 'section:frosthaven/67.1',
+        }),
+      }),
+    ]);
+  });
+
+  it('returns structured errors for invalid refs and unsupported relations', async () => {
+    await expect(neighbors('nonsense')).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'invalid_ref' },
+    });
+    await expect(
+      neighbors('scenario:frosthaven/061', { relation: 'not_a_relation' as never }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'unsupported_relation' },
+    });
   });
 });
 

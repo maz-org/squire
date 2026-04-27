@@ -54,6 +54,9 @@ const TOOL_SOURCE_LABELS: Record<AgentToolName, ToolSourceLabel | null> = {
   inspect_sources: null,
   schema: null,
   resolve_entity: null,
+  open_entity: null,
+  search_knowledge: null,
+  neighbors: null,
   search_rules: 'RULEBOOK',
   search_cards: 'CARD INDEX',
   list_card_types: 'CARD INDEX',
@@ -78,6 +81,7 @@ const TOOL_SOURCE_LABELS: Record<AgentToolName, ToolSourceLabel | null> = {
 export function retrievalSourceLabelToFooterLabel(label: string): ToolSourceLabel | null {
   if (label === 'Rulebook') return 'RULEBOOK';
   if (label === 'Puzzle Book') return 'PUZZLE BOOK';
+  if (label === 'Card Index') return 'CARD INDEX';
   if (label.startsWith('Scenario Book')) return 'SCENARIO BOOK';
   if (label.startsWith('Section Book')) return 'SECTION BOOK';
   return null;

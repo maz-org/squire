@@ -185,6 +185,45 @@ export async function search(
   }
 }
 
+export async function getEntryBySourceChunk(
+  source: string,
+  chunkIndex: number,
+  opts: SearchOptions = {},
+): Promise<ScoredEntry | null> {
+  const game = opts.game ?? DEFAULT_GAME;
+
+  try {
+    const { db } = getDb('server');
+    const result = await db.execute<{
+      id: string;
+      source: string;
+      chunk_index: number;
+      text: string;
+      game: string;
+    }>(sql`
+      SELECT id, source, chunk_index, text, game
+      FROM embeddings
+      WHERE game = ${game}
+        AND source = ${source}
+        AND chunk_index = ${chunkIndex}
+      LIMIT 1
+    `);
+
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      id: row.id,
+      source: row.source,
+      chunkIndex: Number(row.chunk_index),
+      text: row.text,
+      game: row.game,
+      score: 1,
+    };
+  } catch (err) {
+    throw wrapDbError(err);
+  }
+}
+
 function wrapDbError(err: unknown): Error {
   const msg = (err as Error).message ?? String(err);
   return new Error(
