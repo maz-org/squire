@@ -367,6 +367,8 @@ async function resolveCards(
   limit: number,
   opts: ToolOpts,
 ): Promise<EntityCandidate[]> {
+  if (query.trim() === '') return [];
+
   const game = opts.game ?? DEFAULT_GAME;
   const level = extractLevelQuery(query);
   const lowered = query.toLowerCase();

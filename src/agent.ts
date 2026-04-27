@@ -60,7 +60,8 @@ Guidelines:
 - Prefer explicit scenario/section references over search_rules when the question already names a scenario number, scenario title, or section ref
 - Use search_rules for fuzzy book-corpus questions (rules, mechanics, open-ended discovery, or when traversal runs out)
 - Use search_cards for questions about specific cards, monsters, items, or abilities
-- Use get_card for precise lookups when you know the card type and name/number
+- Use get_card for precise lookups only when you know the card type and canonical sourceId
+- If you only know a natural card reference such as a name or number, use resolve_entity, search_cards, or list_cards first to find the canonical sourceId
 - Use list_card_types to discover what data is available
 - Use list_cards to browse or filter cards of a specific type
 - You may call multiple tools or call the same tool multiple times to gather enough context
@@ -118,7 +119,9 @@ export const AGENT_TOOLS = [
         },
         limit: {
           type: 'integer',
-          description: 'Maximum candidates (default 6)',
+          minimum: 1,
+          maximum: 20,
+          description: 'Maximum candidates (1-20, default 6)',
           default: 6,
         },
       },

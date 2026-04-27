@@ -399,6 +399,14 @@ describe('knowledge discovery tools', () => {
       candidates: [],
     });
   });
+
+  it('resolveEntity returns no card candidates for a blank query', async () => {
+    await expect(resolveEntity('   ', { kinds: ['card'] })).resolves.toEqual({
+      ok: true,
+      query: '   ',
+      candidates: [],
+    });
+  });
 });
 
 describe('scenario/section book tools', () => {
