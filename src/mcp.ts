@@ -73,7 +73,7 @@ export function createMcpServer(): McpServer {
     'resolve_entity',
     {
       description:
-        'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked canonical entity refs.',
+        'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
       inputSchema: {
         query: z.string().describe('Natural-language entity reference'),
         kinds: z

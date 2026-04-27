@@ -51,7 +51,7 @@ for searching the indexed Frosthaven books and looking up card data. Use the too
 
 Guidelines:
 - Use inspect_sources and schema when you need to discover available kinds, filters, refs, or relations
-- Use resolve_entity to turn natural references into canonical scenario, section, card type, or card refs
+- Use resolve_entity to turn natural references into opener-ready scenario, section, card type, or card refs
 - Use find_scenario when the user names a scenario number or scenario title
 - Use get_scenario once you know the exact canonical scenario ref
 - Use get_section for exact section refs or when a traversal link points to a section
@@ -107,7 +107,7 @@ export const AGENT_TOOLS = [
   {
     name: 'resolve_entity',
     description:
-      'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked canonical entity refs.',
+      'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
     input_schema: {
       type: 'object',
       properties: {

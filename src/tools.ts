@@ -226,7 +226,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
   scenario: {
     ok: true,
     kind: 'scenario',
-    refPattern: 'scenario:<game>/<scenario-ref>',
+    refPattern: '<scenario-ref>',
     fields: [
       { name: 'scenarioIndex', type: 'string', description: 'Printed scenario number or code' },
       { name: 'name', type: 'string', description: 'Scenario title' },
@@ -238,7 +238,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
     examples: [
       {
         label: 'Open scenario 61',
-        ref: 'scenario:frosthaven/gloomhavensecretariat:scenario/061',
+        ref: 'gloomhavensecretariat:scenario/061',
       },
     ],
     aliases: ['scenario', 'scenarios'],
@@ -246,7 +246,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
   section: {
     ok: true,
     kind: 'section',
-    refPattern: 'section:<game>/<section-number>.<variant>',
+    refPattern: '<section-number>.<variant>',
     fields: [
       { name: 'text', type: 'string', description: 'Section prose' },
       { name: 'sectionNumber', type: 'number', description: 'Section number before the dot' },
@@ -255,7 +255,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
     ],
     filterFields: ['sectionNumber', 'sectionVariant'],
     relations: [...BOOK_REFERENCE_TYPES],
-    examples: [{ label: 'Open section 67.1', ref: 'section:frosthaven/67.1' }],
+    examples: [{ label: 'Open section 67.1', ref: '67.1' }],
     aliases: ['section', 'sections'],
   },
   card_type: {
@@ -274,7 +274,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
   card: {
     ok: true,
     kind: 'card',
-    refPattern: 'card:<game>/<card-type>/<source-id>',
+    refPattern: '<source-id>',
     fields: [
       { name: 'sourceId', type: 'string', description: 'GHS source identifier' },
       { name: 'name', type: 'string', description: 'Display name when present' },
@@ -283,7 +283,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
     ],
     filterFields: ['type', 'name', 'cardName', 'level', 'class', 'number'],
     relations: ['belongs_to_type'],
-    examples: [{ label: 'Open item 1', ref: 'card:frosthaven/items/gloomhavensecretariat:item/1' }],
+    examples: [{ label: 'Open item 1', ref: 'gloomhavensecretariat:item/1' }],
     aliases: Object.keys(CARD_KIND_ALIASES),
   },
 };
@@ -304,18 +304,6 @@ function cardTypesForKinds(kinds?: string[]): CardType[] {
     for (const type of CARD_KIND_ALIASES[normalized] ?? []) out.add(type);
   }
   return [...out];
-}
-
-function canonicalScenarioRef(game: string, ref: string): string {
-  return `scenario:${game}/${ref}`;
-}
-
-function canonicalSectionRef(game: string, ref: string): string {
-  return `section:${game}/${ref}`;
-}
-
-function canonicalCardRef(game: string, type: CardType, sourceId: string): string {
-  return `card:${game}/${type}/${sourceId}`;
 }
 
 function displayTitleForCard(record: Record<string, unknown>, type: CardType): string {
@@ -401,7 +389,7 @@ async function resolveCards(
       candidates.push({
         entity: {
           kind: 'card',
-          ref: canonicalCardRef(game, type, sourceId),
+          ref: sourceId,
           title,
           source: `source:${game}/cards`,
           sourceLabel: 'GHS Card Data',
@@ -423,7 +411,7 @@ async function resolveCards(
       candidates.push({
         entity: {
           kind: 'card',
-          ref: canonicalCardRef(game, record._type, sourceId),
+          ref: sourceId,
           title: displayTitleForCard(stripped, record._type),
           source: `source:${game}/cards`,
           sourceLabel: 'GHS Card Data',
@@ -607,14 +595,15 @@ export async function resolveEntity(
   const kinds = validation.kinds;
 
   if (kinds.includes('scenario')) {
-    for (const scenario of await findScenarios(query, limit, { game })) {
-      const exactNumber = query.match(/\bscenario\s*0*(\d{1,3})\b/i)?.[1];
+    const exactNumber = query.match(/\bscenario\s*0*(\d{1,3})\b/i)?.[1];
+    const scenarioQuery = exactNumber ? String(Number(exactNumber)) : query;
+    for (const scenario of await findScenarios(scenarioQuery, limit, { game })) {
       const confidence =
         exactNumber && String(Number(exactNumber)) === scenario.scenarioIndex ? 0.99 : 0.86;
       candidates.push({
         entity: {
           kind: 'scenario',
-          ref: canonicalScenarioRef(game, scenario.ref),
+          ref: scenario.ref,
           title: scenario.name,
           source: `source:${game}/scenario-section-books`,
           sourceLabel: formatRetrievalSourceLabel(scenario.sourcePdf ?? 'fh-scenario-book.pdf'),
@@ -634,7 +623,7 @@ export async function resolveEntity(
         candidates.push({
           entity: {
             kind: 'section',
-            ref: canonicalSectionRef(game, section.ref),
+            ref: section.ref,
             title: `Section ${section.ref}`,
             source: `source:${game}/scenario-section-books`,
             sourceLabel: formatRetrievalSourceLabel(section.sourcePdf),

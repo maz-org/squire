@@ -292,12 +292,12 @@ describe('knowledge discovery tools', () => {
     );
   });
 
-  it('getSchema returns canonical schema metadata and resolves common aliases', () => {
+  it('getSchema returns schema metadata and resolves common aliases', () => {
     expect(getSchema('scenario')).toEqual(
       expect.objectContaining({
         ok: true,
         kind: 'scenario',
-        refPattern: 'scenario:<game>/<scenario-ref>',
+        refPattern: '<scenario-ref>',
         relations: ['conclusion', 'read_now', 'section_link', 'unlock', 'cross_reference'],
       }),
     );
@@ -306,7 +306,7 @@ describe('knowledge discovery tools', () => {
       expect.objectContaining({
         ok: true,
         kind: 'card',
-        refPattern: 'card:<game>/<card-type>/<source-id>',
+        refPattern: '<source-id>',
         filterFields: expect.arrayContaining(['type', 'name', 'level', 'class', 'number']),
       }),
     );
@@ -319,7 +319,7 @@ describe('knowledge discovery tools', () => {
     });
   });
 
-  it('resolveEntity returns ranked canonical candidates for scenarios and sections', async () => {
+  it('resolveEntity returns ranked opener-ready candidates for scenarios and sections', async () => {
     const scenario: EntityResolutionResult = await resolveEntity('scenario 61');
     expect(scenario.ok).toBe(true);
     expect(scenario.candidates[0]).toEqual(
@@ -328,7 +328,7 @@ describe('knowledge discovery tools', () => {
         matchReason: 'Exact scenario number',
         entity: expect.objectContaining({
           kind: 'scenario',
-          ref: 'scenario:frosthaven/gloomhavensecretariat:scenario/061',
+          ref: 'gloomhavensecretariat:scenario/061',
           title: 'Life and Death',
         }),
       }),
@@ -341,7 +341,7 @@ describe('knowledge discovery tools', () => {
         matchReason: 'Exact section ref',
         entity: expect.objectContaining({
           kind: 'section',
-          ref: 'section:frosthaven/90.2',
+          ref: '90.2',
           title: 'Section 90.2',
         }),
       }),
@@ -355,7 +355,7 @@ describe('knowledge discovery tools', () => {
         confidence: expect.any(Number),
         entity: expect.objectContaining({
           kind: 'card',
-          ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+          ref: 'gloomhavensecretariat:item/1',
           title: 'Spyglass',
           data: expect.objectContaining({ cardType: 'items' }),
         }),
