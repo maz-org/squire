@@ -29,7 +29,8 @@ lives in [DEVELOPMENT.md](../DEVELOPMENT.md#local-environment).
 Given the app handles isolation, bootstrap is small:
 
 1. Activate the project's Node version (`nvm use` against `.nvmrc`).
-2. Symlink `.env` from the source tree so the worktree inherits secrets.
+2. Symlink `.env` from the source tree so the worktree inherits secrets, or
+   copy it when the worktree needs different local values.
 3. `npm install --ignore-scripts` (husky hooks would otherwise refuse to
    install into a linked worktree).
 4. Bring up the **one** shared `squire-postgres` container.
@@ -40,6 +41,8 @@ Given the app handles isolation, bootstrap is small:
    seed scripts are idempotent: card + scenario/section seeds upsert by
    canonical source id, and the dev-user seed uses targetless
    `ON CONFLICT DO NOTHING`. Re-running on subsequent startups is a no-op.
+   **Best-effort:** both adapters warn instead of aborting if this command
+   fails.
 7. `npm run index` — extract + embed the Frosthaven PDFs into the per-worktree
    dev DB's vector store. Hash-keyed per source file, so the first run takes a
    minute or two and subsequent runs are an instant "Skipping (already
@@ -57,6 +60,32 @@ Step 4 is the only subtle one: `docker-compose.yml` hardcodes
 checkout must share the same container. The setup script must run
 `docker compose up -d` against the project name `squire`.
 
+### Manual `.env` setup
+
+Agent-created worktrees should inherit the main checkout's secrets by symlinking
+the source tree's `.env` into the worktree:
+
+```bash
+ln -sfn /path/to/main/squire/.env .env
+```
+
+For Codex-created worktrees, the setup script does this with the path Codex
+provides:
+
+```bash
+ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
+```
+
+Use a symlink when the worktree can share the same local secrets, OAuth config,
+and default environment overrides as the main checkout. If a worktree needs
+different local values, copy the file instead and edit the copy:
+
+```bash
+cp /path/to/main/squire/.env .env
+```
+
+That copy is intentionally worktree-local. Keep secrets out of git either way.
+
 ## Codex adapter
 
 Defined in [`.codex/environments/environment.toml`](../../.codex/environments/environment.toml).
@@ -72,8 +101,14 @@ npm install --ignore-scripts
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test
-npm run seed:dev
-npm run index
+# Seeding + indexing are both best-effort. seed:dev touches card data,
+# scenario/section records, and the dev user — any of which can fail on
+# a flaky network or a parser change without being a reason to abort the
+# whole bootstrap. Indexing downloads ~40MB of embedding model on first
+# run. Dev server still comes up in either case; /chat errors until the
+# failing step succeeds.
+npm run seed:dev || echo "[worktree-setup] WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds" >&2
+npm run index || echo "[worktree-setup] WARN: indexing failed — /chat will error until 'npm run index' succeeds" >&2
 '''
 ```
 
@@ -84,6 +119,11 @@ without any explicit pinning.
 
 Codex exposes `CODEX_SOURCE_TREE_PATH` and `CODEX_WORKTREE_PATH` to the
 script.
+
+Cross-check status: this section mirrors
+[`.codex/environments/environment.toml`](../../.codex/environments/environment.toml).
+If they diverge, treat the TOML as the source of truth for what Codex actually
+runs and update this doc in the same change.
 
 ## Claude Code adapter
 
