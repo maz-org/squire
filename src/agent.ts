@@ -8,16 +8,19 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   searchRules,
   searchCards,
+  searchKnowledge,
   listCardTypes,
   listCards,
   getCard,
   inspectSources,
   getSchema,
   resolveEntity,
+  openEntity,
   findScenario,
   getScenario,
   getSection,
   followLinks,
+  neighbors,
 } from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
 import type { AskOptions, HistoryMessage, EmitFn } from './service.ts';
@@ -52,6 +55,9 @@ for searching the indexed Frosthaven books and looking up card data. Use the too
 Guidelines:
 - Use inspect_sources and schema when you need to discover available kinds, filters, refs, or relations
 - Use resolve_entity to turn natural references into opener-ready scenario, section, card type, or card refs
+- Prefer search_knowledge for broad discovery across rules, scenarios, sections, and cards
+- Use open_entity when you have an exact canonical ref
+- Use neighbors to traverse explicit scenario/section links from a canonical ref
 - Use find_scenario when the user names a scenario number or scenario title
 - Use get_scenario once you know the exact canonical scenario ref
 - Use get_section for exact section refs or when a traversal link points to a section
@@ -126,6 +132,53 @@ export const AGENT_TOOLS = [
         },
       },
       required: ['query'],
+    },
+  },
+  {
+    name: 'open_entity',
+    description:
+      'Open one exact Squire entity by canonical ref: rules passage, scenario, section, or card.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ref: { type: 'string', description: 'Canonical inspectable ref' },
+      },
+      required: ['ref'],
+    },
+  },
+  {
+    name: 'search_knowledge',
+    description:
+      'Search rules passages, scenarios, sections, and cards. Results include openable refs, citations, source labels, and next refs.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+        scope: {
+          type: 'array',
+          items: { type: 'string', enum: ['rules_passage', 'scenario', 'section', 'card'] },
+          description: 'Optional searchable kind filter',
+        },
+        limit: { type: 'integer', description: 'Global result limit (default 6)', default: 6 },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'neighbors',
+    description: 'Traverse known outgoing relationships from a scenario or section ref.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ref: { type: 'string', description: 'Canonical traversable ref' },
+        relation: {
+          type: 'string',
+          enum: [...BOOK_REFERENCE_TYPES],
+          description: 'Optional relation filter like "conclusion" or "section_link"',
+        },
+        limit: { type: 'integer', description: 'Maximum neighbors (default 20)', default: 20 },
+      },
+      required: ['ref'],
     },
   },
   {
@@ -270,8 +323,30 @@ export type AgentToolName = (typeof AGENT_TOOLS)[number]['name'];
 
 export interface ToolCallResult {
   content: string;
-  /** Distinct provenance labels for the books actually hit — only set by search_rules. */
+  /** Distinct provenance labels for dynamic result sources. */
   sourceBooks?: string[];
+}
+
+function sourceLabelsFromResult(value: unknown): string[] {
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  const add = (label: unknown) => {
+    if (typeof label !== 'string' || seen.has(label)) return;
+    seen.add(label);
+    labels.push(label);
+  };
+
+  if (!value || typeof value !== 'object') return labels;
+  const result = value as {
+    citations?: Array<{ sourceLabel?: unknown }>;
+    results?: Array<{ citations?: Array<{ sourceLabel?: unknown }> }>;
+  };
+
+  for (const citation of result.citations ?? []) add(citation.sourceLabel);
+  for (const hit of result.results ?? []) {
+    for (const citation of hit.citations ?? []) add(citation.sourceLabel);
+  }
+  return labels;
 }
 
 const DISCOVERY_ONLY_TOOL_NAMES = new Set<AgentToolName>([
@@ -282,9 +357,9 @@ const DISCOVERY_ONLY_TOOL_NAMES = new Set<AgentToolName>([
 
 /**
  * Execute a single tool call and return the result content plus any per-result
- * provenance metadata. For search_rules, `sourceBooks` carries the distinct
- * retrieval source labels (e.g. "Rulebook", "Section Book A") so callers can
- * surface accurate book provenance instead of a static tool-name label.
+ * provenance metadata. Dynamic search/open tools return distinct source labels
+ * (e.g. "Rulebook", "Section Book 62-81") so callers can surface accurate
+ * provenance instead of a static tool-name label.
  */
 export async function executeToolCall(
   name: string,
@@ -339,6 +414,31 @@ export async function executeToolCall(
         (input.topK as number | undefined) ?? 6,
       );
       return { content: JSON.stringify(results, null, 2) };
+    }
+    case 'search_knowledge': {
+      const scope = Array.isArray(input.scope) ? (input.scope as never[]) : undefined;
+      const result = await searchKnowledge(input.query as string, {
+        scope,
+        limit: (input.limit as number | undefined) ?? 6,
+      });
+      return {
+        content: JSON.stringify(result, null, 2),
+        sourceBooks: sourceLabelsFromResult(result),
+      };
+    }
+    case 'open_entity': {
+      const result = await openEntity(input.ref as string);
+      return {
+        content: JSON.stringify(result, null, 2),
+        sourceBooks: sourceLabelsFromResult(result),
+      };
+    }
+    case 'neighbors': {
+      const result = await neighbors(input.ref as string, {
+        relation: input.relation as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
+        limit: (input.limit as number | undefined) ?? 20,
+      });
+      return { content: JSON.stringify(result, null, 2) };
     }
     case 'list_card_types': {
       return { content: JSON.stringify(await listCardTypes(), null, 2) };

@@ -10,16 +10,19 @@ import { z } from 'zod';
 import {
   searchRules,
   searchCards,
+  searchKnowledge,
   listCardTypes,
   listCards,
   getCard,
   inspectSources,
   getSchema,
   resolveEntity,
+  openEntity,
   findScenario,
   getScenario,
   getSection,
   followLinks,
+  neighbors,
 } from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
 import {
@@ -271,6 +274,65 @@ export function createMcpServer(): McpServer {
     async ({ fromKind, fromRef, linkType }) => {
       const links = await followLinks(fromKind as BookRecordKind, fromRef, linkType);
       return { content: [{ type: 'text', text: JSON.stringify(links, null, 2) }] };
+    },
+  );
+
+  server.registerTool(
+    'open_entity',
+    {
+      description:
+        'Open one exact Squire entity by canonical ref: rules passage, scenario, section, or card.',
+      inputSchema: {
+        ref: z.string().describe('Canonical inspectable ref'),
+      },
+    },
+    async ({ ref }) => {
+      const result = await openEntity(ref);
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        isError: !result.ok,
+      };
+    },
+  );
+
+  server.registerTool(
+    'search_knowledge',
+    {
+      description: 'Search rules passages, scenarios, sections, and cards with openable refs.',
+      inputSchema: {
+        query: z.string().describe('Search query'),
+        scope: z
+          .array(z.enum(['rules_passage', 'scenario', 'section', 'card']))
+          .optional()
+          .describe('Optional searchable kind filter'),
+        limit: z.number().int().min(1).max(20).default(6).describe('Global result limit'),
+      },
+    },
+    async ({ query, scope, limit }) => {
+      const result = await searchKnowledge(query, { scope, limit });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        isError: !result.ok,
+      };
+    },
+  );
+
+  server.registerTool(
+    'neighbors',
+    {
+      description: 'Traverse known outgoing relationships from a scenario or section ref.',
+      inputSchema: {
+        ref: z.string().describe('Canonical traversable ref'),
+        relation: z.enum(BOOK_REFERENCE_TYPES).optional().describe('Optional relation filter'),
+        limit: z.number().int().min(1).max(50).default(20).describe('Maximum neighbors'),
+      },
+    },
+    async ({ ref, relation, limit }) => {
+      const result = await neighbors(ref, { relation, limit });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        isError: !result.ok,
+      };
     },
   );
 

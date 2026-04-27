@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const {
   mockSearchRules,
   mockSearchCards,
+  mockSearchKnowledge,
   mockListCardTypes,
   mockListCards,
   mockGetCard,
+  mockOpenEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -13,12 +15,15 @@ const {
   mockGetScenario,
   mockGetSection,
   mockFollowLinks,
+  mockNeighbors,
 } = vi.hoisted(() => ({
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
+  mockSearchKnowledge: vi.fn(),
   mockListCardTypes: vi.fn(),
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
+  mockOpenEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
@@ -26,14 +31,17 @@ const {
   mockGetScenario: vi.fn(),
   mockGetSection: vi.fn(),
   mockFollowLinks: vi.fn(),
+  mockNeighbors: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: mockSearchCards,
+  searchKnowledge: mockSearchKnowledge,
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  openEntity: mockOpenEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -41,6 +49,7 @@ vi.mock('../src/tools.ts', () => ({
   getScenario: mockGetScenario,
   getSection: mockGetSection,
   followLinks: mockFollowLinks,
+  neighbors: mockNeighbors,
 }));
 
 import { createMcpServer } from '../src/mcp.ts';
@@ -124,9 +133,33 @@ describe('MCP tool registration', () => {
     });
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
+    mockOpenEntity.mockResolvedValue({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: 'section:frosthaven/67.1',
+        title: 'Section 67.1',
+        sourceLabel: 'Section Book',
+        data: {},
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
+    mockSearchKnowledge.mockResolvedValue({ ok: true, query: 'loot', results: [] });
+    mockNeighbors.mockResolvedValue({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [],
+    });
   });
 
-  it('registers old tools and the new discovery tools', async () => {
+  it('registers old tools, discovery tools, and canonical knowledge tools', async () => {
     const client = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -138,11 +171,14 @@ describe('MCP tool registration', () => {
     expect(names).toContain('get_scenario');
     expect(names).toContain('get_section');
     expect(names).toContain('follow_links');
+    expect(names).toContain('open_entity');
+    expect(names).toContain('search_knowledge');
+    expect(names).toContain('neighbors');
     expect(names).toContain('search_cards');
     expect(names).toContain('list_card_types');
     expect(names).toContain('list_cards');
     expect(names).toContain('get_card');
-    expect(tools).toHaveLength(12);
+    expect(tools).toHaveLength(15);
   });
 
   it('wires the discovery tools through to handlers', async () => {
@@ -202,6 +238,30 @@ describe('MCP tool registration', () => {
       'gloomhavensecretariat:scenario/061',
       undefined,
     );
+
+    await expect(
+      client.callTool({ name: 'open_entity', arguments: { ref: 'section:frosthaven/67.1' } }),
+    ).resolves.toBeDefined();
+    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
+
+    await expect(
+      client.callTool({ name: 'search_knowledge', arguments: { query: 'loot', limit: 3 } }),
+    ).resolves.toBeDefined();
+    expect(mockSearchKnowledge).toHaveBeenCalledWith('loot', {
+      scope: undefined,
+      limit: 3,
+    });
+
+    await expect(
+      client.callTool({
+        name: 'neighbors',
+        arguments: { ref: 'scenario:frosthaven/061', relation: 'conclusion' },
+      }),
+    ).resolves.toBeDefined();
+    expect(mockNeighbors).toHaveBeenCalledWith('scenario:frosthaven/061', {
+      relation: 'conclusion',
+      limit: 20,
+    });
   });
 });
 

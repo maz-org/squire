@@ -7,7 +7,9 @@ const {
   mockMessagesStream,
   mockSearchRules,
   mockSearchCards,
+  mockSearchKnowledge,
   mockListCardTypes,
+  mockOpenEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -16,12 +18,15 @@ const {
   mockGetScenario,
   mockGetSection,
   mockFollowLinks,
+  mockNeighbors,
 } = vi.hoisted(() => ({
   mockMessagesCreate: vi.fn(),
   mockMessagesStream: vi.fn(),
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
+  mockSearchKnowledge: vi.fn(),
   mockListCardTypes: vi.fn(),
+  mockOpenEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
@@ -30,6 +35,7 @@ const {
   mockGetScenario: vi.fn(),
   mockGetSection: vi.fn(),
   mockFollowLinks: vi.fn(),
+  mockNeighbors: vi.fn(),
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -41,7 +47,9 @@ vi.mock('@anthropic-ai/sdk', () => ({
 vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: mockSearchCards,
+  searchKnowledge: mockSearchKnowledge,
   listCardTypes: mockListCardTypes,
+  openEntity: mockOpenEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -51,6 +59,7 @@ vi.mock('../src/tools.ts', () => ({
   getScenario: mockGetScenario,
   getSection: mockGetSection,
   followLinks: mockFollowLinks,
+  neighbors: mockNeighbors,
 }));
 
 import { runAgentLoop, executeToolCall, AGENT_TOOLS, MAX_AGENT_ITERATIONS } from '../src/agent.ts';
@@ -122,6 +131,7 @@ describe('runAgentLoop', () => {
       { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
     ]);
     mockSearchCards.mockReturnValue([]);
+    mockSearchKnowledge.mockResolvedValue({ ok: true, query: 'loot', results: [] });
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 10 }]);
     mockInspectSources.mockResolvedValue({
       ok: true,
@@ -131,6 +141,19 @@ describe('runAgentLoop', () => {
     });
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
+    mockOpenEntity.mockResolvedValue({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: 'section:frosthaven/67.1',
+        title: 'Section 67.1',
+        sourceLabel: 'Section Book',
+        data: {},
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
     mockGetCard.mockReturnValue({ name: 'Boots of Speed', effect: 'Move +1' });
     mockFindScenario.mockResolvedValue([
       { ref: 'gloomhavensecretariat:scenario/061', scenarioIndex: '61', name: 'Life and Death' },
@@ -158,6 +181,16 @@ describe('runAgentLoop', () => {
         sequence: 0,
       },
     ]);
+    mockNeighbors.mockResolvedValue({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [],
+    });
   });
 
   it('returns text immediately when Claude responds without tool use', async () => {
@@ -465,6 +498,7 @@ describe('executeToolCall', () => {
     vi.clearAllMocks();
     mockSearchRules.mockResolvedValue([{ text: 'rule text', source: 'test.pdf:1', score: 0.9 }]);
     mockSearchCards.mockReturnValue([{ type: 'items', data: { name: 'Test' }, score: 1 }]);
+    mockSearchKnowledge.mockResolvedValue({ ok: true, query: 'loot', results: [] });
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 5 }]);
     mockInspectSources.mockResolvedValue({
       ok: true,
@@ -474,11 +508,34 @@ describe('executeToolCall', () => {
     });
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
+    mockOpenEntity.mockResolvedValue({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: 'section:frosthaven/67.1',
+        title: 'Section 67.1',
+        sourceLabel: 'Section Book',
+        data: {},
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
     mockGetCard.mockReturnValue({ name: 'Test Item' });
     mockFindScenario.mockResolvedValue([{ ref: 'gloomhavensecretariat:scenario/061' }]);
     mockGetScenario.mockResolvedValue({ ref: 'gloomhavensecretariat:scenario/061' });
     mockGetSection.mockResolvedValue({ ref: '67.1' });
     mockFollowLinks.mockResolvedValue([{ toRef: '67.1' }]);
+    mockNeighbors.mockResolvedValue({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [],
+    });
   });
 
   it('dispatches search_rules', async () => {
@@ -518,6 +575,66 @@ describe('executeToolCall', () => {
     const result = await executeToolCall('search_cards', { query: 'boots' });
     expect(mockSearchCards).toHaveBeenCalledWith('boots', 6);
     expect(JSON.parse(result.content)).toHaveLength(1);
+  });
+
+  it('dispatches search_knowledge and collects citation source labels', async () => {
+    mockSearchKnowledge.mockResolvedValueOnce({
+      ok: true,
+      query: 'loot',
+      results: [
+        {
+          entity: {
+            kind: 'rules_passage',
+            ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=0',
+            title: 'fh-rule-book.pdf chunk 0',
+            sourceLabel: 'Rulebook',
+          },
+          score: 0.9,
+          snippet: 'Loot action',
+          citations: [
+            { sourceRef: 'rules:frosthaven/fh-rule-book.pdf', sourceLabel: 'Rulebook' },
+            { sourceRef: 'card-index:frosthaven/items', sourceLabel: 'Card Index' },
+          ],
+          nextRefs: [],
+        },
+      ],
+    });
+    const result = await executeToolCall('search_knowledge', {
+      query: 'loot',
+      scope: ['rules_passage'],
+      limit: 3,
+    });
+    expect(mockSearchKnowledge).toHaveBeenCalledWith('loot', {
+      scope: ['rules_passage'],
+      limit: 3,
+    });
+    expect(result.sourceBooks).toEqual(['Rulebook', 'Card Index']);
+  });
+
+  it('dispatches open_entity and collects citation source labels', async () => {
+    mockOpenEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: 'section:frosthaven/67.1',
+        title: 'Section 67.1',
+        sourceLabel: 'Section Book 62-81',
+        data: {},
+      },
+      citations: [
+        {
+          sourceRef: 'source:frosthaven/fh-section-book-62-81.pdf',
+          sourceLabel: 'Section Book 62-81',
+          locator: 'p. 1',
+        },
+      ],
+      links: [],
+      related: [],
+    });
+    const result = await executeToolCall('open_entity', { ref: 'section:frosthaven/67.1' });
+    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
+    expect(JSON.parse(result.content).entity.ref).toBe('section:frosthaven/67.1');
+    expect(result.sourceBooks).toEqual(['Section Book 62-81']);
   });
 
   it('dispatches list_card_types', async () => {
@@ -604,6 +721,28 @@ describe('executeToolCall', () => {
       'conclusion',
     );
     expect(JSON.parse(result.content)).toEqual([{ toRef: '67.1' }]);
+  });
+
+  it('dispatches neighbors', async () => {
+    const result = await executeToolCall('neighbors', {
+      ref: 'scenario:frosthaven/061',
+      relation: 'conclusion',
+      limit: 5,
+    });
+    expect(mockNeighbors).toHaveBeenCalledWith('scenario:frosthaven/061', {
+      relation: 'conclusion',
+      limit: 5,
+    });
+    expect(JSON.parse(result.content)).toEqual({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [],
+    });
   });
 
   it('returns error for unknown tool', async () => {

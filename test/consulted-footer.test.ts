@@ -36,7 +36,13 @@ describe('toolSourceLabel', () => {
     expect(toolSourceLabel(tool)).toBe(label);
   });
 
-  it('returns null for follow_links (traversal tool, not a source)', () => {
+  it('returns null for tools whose dynamic results carry source labels', () => {
+    expect(toolSourceLabel('open_entity')).toBeNull();
+    expect(toolSourceLabel('search_knowledge')).toBeNull();
+  });
+
+  it('returns null for traversal tools that are not sources', () => {
+    expect(toolSourceLabel('neighbors')).toBeNull();
     expect(toolSourceLabel('follow_links')).toBeNull();
   });
 
@@ -50,6 +56,7 @@ describe('retrievalSourceLabelToFooterLabel', () => {
   it.each([
     ['Rulebook', 'RULEBOOK'],
     ['Puzzle Book', 'PUZZLE BOOK'],
+    ['Card Index', 'CARD INDEX'],
     ['Scenario Book 1', 'SCENARIO BOOK'],
     ['Scenario Book A', 'SCENARIO BOOK'],
     ['Section Book A', 'SECTION BOOK'],
