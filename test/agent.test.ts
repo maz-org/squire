@@ -8,6 +8,9 @@ const {
   mockSearchRules,
   mockSearchCards,
   mockListCardTypes,
+  mockInspectSources,
+  mockGetSchema,
+  mockResolveEntity,
   mockGetCard,
   mockFindScenario,
   mockGetScenario,
@@ -19,6 +22,9 @@ const {
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
   mockListCardTypes: vi.fn(),
+  mockInspectSources: vi.fn(),
+  mockGetSchema: vi.fn(),
+  mockResolveEntity: vi.fn(),
   mockGetCard: vi.fn(),
   mockFindScenario: vi.fn(),
   mockGetScenario: vi.fn(),
@@ -36,6 +42,9 @@ vi.mock('../src/tools.ts', () => ({
   searchRules: mockSearchRules,
   searchCards: mockSearchCards,
   listCardTypes: mockListCardTypes,
+  inspectSources: mockInspectSources,
+  getSchema: mockGetSchema,
+  resolveEntity: mockResolveEntity,
   listCards: vi.fn(() => []),
   getCard: mockGetCard,
   findScenario: mockFindScenario,
@@ -114,6 +123,14 @@ describe('runAgentLoop', () => {
     ]);
     mockSearchCards.mockReturnValue([]);
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 10 }]);
+    mockInspectSources.mockResolvedValue({
+      ok: true,
+      sources: [],
+      games: [],
+      defaultGame: 'frosthaven',
+    });
+    mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
+    mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
     mockGetCard.mockReturnValue({ name: 'Boots of Speed', effect: 'Move +1' });
     mockFindScenario.mockResolvedValue([
       { ref: 'gloomhavensecretariat:scenario/061', scenarioIndex: '61', name: 'Life and Death' },
@@ -419,6 +436,14 @@ describe('executeToolCall', () => {
     mockSearchRules.mockResolvedValue([{ text: 'rule text', source: 'test.pdf:1', score: 0.9 }]);
     mockSearchCards.mockReturnValue([{ type: 'items', data: { name: 'Test' }, score: 1 }]);
     mockListCardTypes.mockReturnValue([{ type: 'items', count: 5 }]);
+    mockInspectSources.mockResolvedValue({
+      ok: true,
+      sources: [],
+      games: [],
+      defaultGame: 'frosthaven',
+    });
+    mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
+    mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
     mockGetCard.mockReturnValue({ name: 'Test Item' });
     mockFindScenario.mockResolvedValue([{ ref: 'gloomhavensecretariat:scenario/061' }]);
     mockGetScenario.mockResolvedValue({ ref: 'gloomhavensecretariat:scenario/061' });
@@ -469,6 +494,40 @@ describe('executeToolCall', () => {
     const result = await executeToolCall('list_card_types', {});
     expect(mockListCardTypes).toHaveBeenCalled();
     expect(JSON.parse(result.content)).toEqual([{ type: 'items', count: 5 }]);
+  });
+
+  it('dispatches inspect_sources', async () => {
+    const result = await executeToolCall('inspect_sources', {});
+    expect(mockInspectSources).toHaveBeenCalled();
+    expect(JSON.parse(result.content)).toEqual({
+      ok: true,
+      sources: [],
+      games: [],
+      defaultGame: 'frosthaven',
+    });
+  });
+
+  it('dispatches schema', async () => {
+    const result = await executeToolCall('schema', { kind: 'item' });
+    expect(mockGetSchema).toHaveBeenCalledWith('item');
+    expect(JSON.parse(result.content)).toEqual({ ok: true, kind: 'card', fields: [] });
+  });
+
+  it('dispatches resolve_entity', async () => {
+    const result = await executeToolCall('resolve_entity', {
+      query: 'Spyglass',
+      kinds: ['card'],
+      limit: 3,
+    });
+    expect(mockResolveEntity).toHaveBeenCalledWith('Spyglass', {
+      kinds: ['card'],
+      limit: 3,
+    });
+    expect(JSON.parse(result.content)).toEqual({
+      ok: true,
+      query: 'Spyglass',
+      candidates: [],
+    });
   });
 
   it('dispatches get_card', async () => {

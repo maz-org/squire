@@ -28,6 +28,9 @@ import {
   listCardTypes,
   listCards,
   getCard,
+  inspectSources,
+  getSchema,
+  resolveEntity,
   findScenario,
   getScenario,
   getSection,
@@ -37,6 +40,7 @@ import type {
   RuleResult,
   CardResult,
   CardTypeInfo,
+  EntityResolutionResult,
   ScenarioResult,
   SectionResult,
   ReferenceResult,
@@ -247,6 +251,153 @@ describe('listCards', () => {
   it('returns empty when filter matches nothing', async () => {
     const cards = await listCards('items', { name: 'No Such Item Exists' });
     expect(cards).toEqual([]);
+  });
+});
+
+describe('knowledge discovery tools', () => {
+  it('inspectSources advertises source capabilities and live counts', async () => {
+    const result = await inspectSources();
+
+    expect(result.ok).toBe(true);
+    expect(result.defaultGame).toBe('frosthaven');
+    expect(result.games).toEqual([{ id: 'frosthaven', label: 'Frosthaven', default: true }]);
+    expect(result.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ref: 'source:frosthaven/rulebook',
+          kinds: ['rules_passage'],
+          searchable: true,
+          openable: false,
+        }),
+        expect.objectContaining({
+          ref: 'source:frosthaven/scenario-section-books',
+          kinds: ['scenario', 'section'],
+          relations: ['conclusion', 'read_now', 'section_link', 'unlock', 'cross_reference'],
+          counts: expect.objectContaining({
+            scenario: expect.any(Number),
+            section: expect.any(Number),
+          }),
+        }),
+        expect.objectContaining({
+          ref: 'source:frosthaven/cards',
+          kinds: ['card_type', 'card'],
+          relations: ['belongs_to_type'],
+          counts: expect.objectContaining({
+            items: expect.any(Number),
+            'monster-stats': expect.any(Number),
+            'character-abilities': expect.any(Number),
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('getSchema returns canonical schema metadata and resolves common aliases', () => {
+    expect(getSchema('scenario')).toEqual(
+      expect.objectContaining({
+        ok: true,
+        kind: 'scenario',
+        refPattern: 'scenario:<game>/<scenario-ref>',
+        relations: ['conclusion', 'read_now', 'section_link', 'unlock', 'cross_reference'],
+      }),
+    );
+
+    expect(getSchema('item')).toEqual(
+      expect.objectContaining({
+        ok: true,
+        kind: 'card',
+        refPattern: 'card:<game>/<card-type>/<source-id>',
+        filterFields: expect.arrayContaining(['type', 'name', 'level', 'class', 'number']),
+      }),
+    );
+
+    expect(getSchema('no-such-kind')).toEqual({
+      ok: false,
+      error: 'unknown_kind',
+      kind: 'no-such-kind',
+      hint: 'Call inspect_sources first and pass one of the returned kinds.',
+    });
+  });
+
+  it('resolveEntity returns ranked canonical candidates for scenarios and sections', async () => {
+    const scenario: EntityResolutionResult = await resolveEntity('scenario 61');
+    expect(scenario.ok).toBe(true);
+    expect(scenario.candidates[0]).toEqual(
+      expect.objectContaining({
+        confidence: 0.99,
+        matchReason: 'Exact scenario number',
+        entity: expect.objectContaining({
+          kind: 'scenario',
+          ref: 'scenario:frosthaven/gloomhavensecretariat:scenario/061',
+          title: 'Life and Death',
+        }),
+      }),
+    );
+
+    const section = await resolveEntity('section 90.2', { kinds: ['section'] });
+    expect(section.candidates[0]).toEqual(
+      expect.objectContaining({
+        confidence: 0.99,
+        matchReason: 'Exact section ref',
+        entity: expect.objectContaining({
+          kind: 'section',
+          ref: 'section:frosthaven/90.2',
+          title: 'Section 90.2',
+        }),
+      }),
+    );
+  });
+
+  it('resolveEntity returns card candidates for items, monsters, and character abilities', async () => {
+    const item = await resolveEntity('Spyglass', { kinds: ['card'] });
+    expect(item.candidates[0]).toEqual(
+      expect.objectContaining({
+        confidence: expect.any(Number),
+        entity: expect.objectContaining({
+          kind: 'card',
+          ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+          title: 'Spyglass',
+          data: expect.objectContaining({ cardType: 'items' }),
+        }),
+      }),
+    );
+
+    const monster = await resolveEntity('Living Bones', { kinds: ['monster'] });
+    expect(monster.candidates[0].entity).toEqual(
+      expect.objectContaining({
+        kind: 'card',
+        title: 'Living Bones',
+        data: expect.objectContaining({ cardType: 'monster-stats' }),
+      }),
+    );
+
+    const ability = await resolveEntity('Blinkblade level 4 cards', {
+      kinds: ['character-ability'],
+    });
+    expect(ability.candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entity: expect.objectContaining({
+            kind: 'card',
+            data: expect.objectContaining({
+              cardType: 'character-abilities',
+              characterClass: 'Blinkblade',
+              level: 4,
+            }),
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('resolveEntity validates kind filters against the discovery registry', async () => {
+    await expect(resolveEntity('Spyglass', { kinds: ['nonsense'] })).resolves.toEqual({
+      ok: false,
+      error: 'invalid_filter',
+      query: 'Spyglass',
+      hint: 'Unknown kind filter: nonsense. Call inspect_sources first.',
+      candidates: [],
+    });
   });
 });
 

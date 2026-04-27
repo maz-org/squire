@@ -11,6 +11,9 @@ import {
   listCardTypes,
   listCards,
   getCard,
+  inspectSources,
+  getSchema,
+  resolveEntity,
   findScenario,
   getScenario,
   getSection,
@@ -47,6 +50,8 @@ export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules ass
 for searching the indexed Frosthaven books and looking up card data. Use the tools to find relevant information before answering.
 
 Guidelines:
+- Use inspect_sources and schema when you need to discover available kinds, filters, refs, or relations
+- Use resolve_entity to turn natural references into canonical scenario, section, card type, or card refs
 - Use find_scenario when the user names a scenario number or scenario title
 - Use get_scenario once you know the exact canonical scenario ref
 - Use get_section for exact section refs or when a traversal link points to a section
@@ -74,6 +79,52 @@ Formatting:
 // extending the label map is a typecheck error, so the consulted-sources
 // footer can never silently drop a tool.
 export const AGENT_TOOLS = [
+  {
+    name: 'inspect_sources',
+    description:
+      'Discover available Frosthaven knowledge sources, entity kinds, relation kinds, and live record counts before choosing a lookup tool.',
+    input_schema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'schema',
+    description:
+      'Inspect fields, filters, ref patterns, examples, and relations for a source kind returned by inspect_sources.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        kind: {
+          type: 'string',
+          description: 'Entity kind or common alias, such as card, item, scenario, or section',
+        },
+      },
+      required: ['kind'],
+    },
+  },
+  {
+    name: 'resolve_entity',
+    description:
+      'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked canonical entity refs.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Natural-language entity reference' },
+        kinds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional kind filters returned by inspect_sources, plus common aliases',
+        },
+        limit: {
+          type: 'integer',
+          description: 'Maximum candidates (default 6)',
+          default: 6,
+        },
+      },
+      required: ['query'],
+    },
+  },
   {
     name: 'search_rules',
     description:
@@ -231,6 +282,27 @@ export async function executeToolCall(
   input: Record<string, unknown>,
 ): Promise<ToolCallResult> {
   switch (name) {
+    case 'inspect_sources': {
+      return { content: JSON.stringify(await inspectSources(), null, 2) };
+    }
+    case 'schema': {
+      return { content: JSON.stringify(getSchema(input.kind as string), null, 2) };
+    }
+    case 'resolve_entity': {
+      const kinds = Array.isArray(input.kinds)
+        ? input.kinds.filter((kind): kind is string => typeof kind === 'string')
+        : undefined;
+      return {
+        content: JSON.stringify(
+          await resolveEntity(input.query as string, {
+            kinds,
+            limit: input.limit as number | undefined,
+          }),
+          null,
+          2,
+        ),
+      };
+    }
     case 'search_rules': {
       const results = await searchRules(
         input.query as string,
