@@ -6,6 +6,9 @@ const {
   mockListCardTypes,
   mockListCards,
   mockGetCard,
+  mockInspectSources,
+  mockGetSchema,
+  mockResolveEntity,
   mockFindScenario,
   mockGetScenario,
   mockGetSection,
@@ -16,6 +19,9 @@ const {
   mockListCardTypes: vi.fn(),
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
+  mockInspectSources: vi.fn(),
+  mockGetSchema: vi.fn(),
+  mockResolveEntity: vi.fn(),
   mockFindScenario: vi.fn(),
   mockGetScenario: vi.fn(),
   mockGetSection: vi.fn(),
@@ -28,6 +34,9 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  inspectSources: mockInspectSources,
+  getSchema: mockGetSchema,
+  resolveEntity: mockResolveEntity,
   findScenario: mockFindScenario,
   getScenario: mockGetScenario,
   getSection: mockGetSection,
@@ -107,12 +116,23 @@ describe('MCP tool registration', () => {
         metadata: {},
       },
     ]);
+    mockInspectSources.mockResolvedValue({
+      ok: true,
+      sources: [],
+      games: [],
+      defaultGame: 'frosthaven',
+    });
+    mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
+    mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
   });
 
-  it('registers all 9 tools', async () => {
+  it('registers old tools and the new discovery tools', async () => {
     const client = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
+    expect(names).toContain('inspect_sources');
+    expect(names).toContain('schema');
+    expect(names).toContain('resolve_entity');
     expect(names).toContain('search_rules');
     expect(names).toContain('find_scenario');
     expect(names).toContain('get_scenario');
@@ -122,7 +142,32 @@ describe('MCP tool registration', () => {
     expect(names).toContain('list_card_types');
     expect(names).toContain('list_cards');
     expect(names).toContain('get_card');
-    expect(tools).toHaveLength(9);
+    expect(tools).toHaveLength(12);
+  });
+
+  it('wires the discovery tools through to handlers', async () => {
+    const client = await connectClient();
+
+    await expect(
+      client.callTool({ name: 'inspect_sources', arguments: {} }),
+    ).resolves.toBeDefined();
+    expect(mockInspectSources).toHaveBeenCalledWith();
+
+    await expect(
+      client.callTool({ name: 'schema', arguments: { kind: 'item' } }),
+    ).resolves.toBeDefined();
+    expect(mockGetSchema).toHaveBeenCalledWith('item');
+
+    await expect(
+      client.callTool({
+        name: 'resolve_entity',
+        arguments: { query: 'Spyglass', kinds: ['card'], limit: 3 },
+      }),
+    ).resolves.toBeDefined();
+    expect(mockResolveEntity).toHaveBeenCalledWith('Spyglass', {
+      kinds: ['card'],
+      limit: 3,
+    });
   });
 
   it('wires the traversal tools through to handlers', async () => {

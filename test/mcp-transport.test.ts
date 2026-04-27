@@ -6,6 +6,9 @@ const {
   mockListCardTypes,
   mockListCards,
   mockGetCard,
+  mockInspectSources,
+  mockGetSchema,
+  mockResolveEntity,
   mockFindScenario,
   mockGetScenario,
   mockGetSection,
@@ -16,6 +19,9 @@ const {
   mockListCardTypes: vi.fn(),
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
+  mockInspectSources: vi.fn(),
+  mockGetSchema: vi.fn(),
+  mockResolveEntity: vi.fn(),
   mockFindScenario: vi.fn(),
   mockGetScenario: vi.fn(),
   mockGetSection: vi.fn(),
@@ -28,6 +34,9 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+  inspectSources: mockInspectSources,
+  getSchema: mockGetSchema,
+  resolveEntity: mockResolveEntity,
   findScenario: mockFindScenario,
   getScenario: mockGetScenario,
   getSection: mockGetSection,
@@ -101,14 +110,25 @@ describe('MCP over Streamable HTTP', () => {
     mockSearchRules.mockResolvedValue([
       { text: 'Loot: pick up tokens.', source: 'rulebook.pdf:42', score: 0.9 },
     ]);
+    mockInspectSources.mockResolvedValue({
+      ok: true,
+      sources: [],
+      games: [],
+      defaultGame: 'frosthaven',
+    });
+    mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
+    mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
     mockGetCard.mockReturnValue({ name: 'Algox Archer' });
   });
 
   it('lists tools via HTTP transport', async () => {
     const client = await createHttpClient();
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(9);
+    expect(tools.length).toBe(12);
     const names = tools.map((t) => t.name);
+    expect(names).toContain('inspect_sources');
+    expect(names).toContain('schema');
+    expect(names).toContain('resolve_entity');
     expect(names).toContain('search_rules');
     expect(names).toContain('find_scenario');
     expect(names).toContain('get_scenario');

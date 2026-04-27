@@ -13,6 +13,9 @@ import {
   listCardTypes,
   listCards,
   getCard,
+  inspectSources,
+  getSchema,
+  resolveEntity,
   findScenario,
   getScenario,
   getSection,
@@ -30,6 +33,61 @@ export function createMcpServer(): McpServer {
     name: 'squire',
     version: '0.1.0',
   });
+
+  // ─── inspect_sources ──────────────────────────────────────────────────────
+
+  server.registerTool(
+    'inspect_sources',
+    {
+      description:
+        'Discover available Frosthaven knowledge sources, entity kinds, relation kinds, and live record counts before choosing a lookup tool.',
+    },
+    async () => {
+      const result = await inspectSources();
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    },
+  );
+
+  // ─── schema ───────────────────────────────────────────────────────────────
+
+  server.registerTool(
+    'schema',
+    {
+      description:
+        'Inspect fields, filters, ref patterns, examples, and relations for a source kind returned by inspect_sources.',
+      inputSchema: {
+        kind: z
+          .string()
+          .describe('Entity kind or common alias, such as card, item, scenario, or section'),
+      },
+    },
+    async ({ kind }) => {
+      const result = getSchema(kind);
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    },
+  );
+
+  // ─── resolve_entity ───────────────────────────────────────────────────────
+
+  server.registerTool(
+    'resolve_entity',
+    {
+      description:
+        'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
+      inputSchema: {
+        query: z.string().describe('Natural-language entity reference'),
+        kinds: z
+          .array(z.string())
+          .optional()
+          .describe('Optional kind filters returned by inspect_sources, plus common aliases'),
+        limit: z.number().int().min(1).max(20).default(6).describe('Maximum candidates'),
+      },
+    },
+    async ({ query, kinds, limit }) => {
+      const result = await resolveEntity(query, { kinds, limit });
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    },
+  );
 
   // ─── search_rules ──────────────────────────────────────────────────────────
 

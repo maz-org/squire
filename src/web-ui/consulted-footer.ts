@@ -51,6 +51,9 @@ export const TOOL_SOURCE_FALLBACK_LABEL = 'REFERENCE';
 // (the agent used it to navigate, but the actual content it surfaced
 // came from another tool call that already contributed a label).
 const TOOL_SOURCE_LABELS: Record<AgentToolName, ToolSourceLabel | null> = {
+  inspect_sources: null,
+  schema: null,
+  resolve_entity: null,
   search_rules: 'RULEBOOK',
   search_cards: 'CARD INDEX',
   list_card_types: 'CARD INDEX',
