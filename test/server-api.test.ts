@@ -635,6 +635,7 @@ describe('POST /api/ask', () => {
       body: JSON.stringify({ question: 'test', toolSurface: 'old' }),
     });
     expect(res.status).toBe(400);
+    expect(mockAsk).not.toHaveBeenCalled();
   });
 
   it('returns 400 for non-UUID campaignId', async () => {
