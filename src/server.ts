@@ -1140,6 +1140,7 @@ const AskRequestSchema = z.object({
     .optional(),
   campaignId: z.string().uuid().optional(),
   userId: z.string().uuid().optional(),
+  toolSurface: z.enum(['redesigned', 'legacy']).optional(),
 });
 
 app.post('/api/ask', async (c) => {

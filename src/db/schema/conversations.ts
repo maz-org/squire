@@ -45,7 +45,7 @@ export const messages = pgTable(
     responseToMessageId: uuid('response_to_message_id').references((): AnyPgColumn => messages.id, {
       onDelete: 'cascade',
     }),
-    // SQR-98: tool names (from AGENT_TOOLS in src/agent.ts) that fired with
+    // SQR-98: selectable agent tool names that fired with
     // ok:true during this answer's turn. Rendered into the footer as
     // provenance labels. Null for user messages and for any assistant
     // message written before SQR-98 landed (pre-migration rows); both

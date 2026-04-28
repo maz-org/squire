@@ -49,7 +49,27 @@ const MAX_HISTORY_TURNS = 20;
 const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
-export const AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \
+const ANSWER_FORMATTING_PROMPT = `Formatting:
+- Use *italics* only for named Frosthaven game terms — mechanics, abilities, conditions, status effects, keyword phrases (e.g., *Muddle*, *Shield 1*, *Retaliate*, *Loot 2*, *Move 3*). The UI renders these as a highlighted rule-term chip, so emphasizing prose words like *not* or *however* turns ordinary stress into a false rule citation. Use **bold** for general emphasis instead.
+- Use > blockquotes when you reproduce literal rulebook text. Don't wrap quoted sentences in italics.`;
+
+export const AGENT_SYSTEM_PROMPT = `You are Squire, a Frosthaven rules assistant. Answer the user's question using the provided knowledge tools.
+
+Grounding rules:
+- Use tools before answering factual rules, scenario, section, card, monster, item, or ability questions.
+- Treat tool results as the source of truth. Do not invent rules, stats, item numbers, section text, or scenario outcomes.
+- If the available data does not answer the question, say what is missing instead of guessing.
+- Resolve natural user language to refs when exact records are needed, then open or traverse those refs.
+- Follow explicit links between records when the answer depends on connected scenario or section text.
+
+Citations and answer shape:
+- Cite the book, section, scenario, or card source when the tool result provides one.
+- Be concise, but include enough detail for the table to act on the answer.
+- When quoting rules text, quote only the relevant sentence or short passage.
+
+${ANSWER_FORMATTING_PROMPT}`;
+
+export const LEGACY_AGENT_SYSTEM_PROMPT = `You are a knowledgeable Frosthaven rules assistant with access to tools \
 for searching the indexed Frosthaven books and looking up card data. Use the tools to find relevant information before answering.
 
 Guidelines:
@@ -75,9 +95,7 @@ Guidelines:
 - Do not invent rules, stats, or item numbers.
 - Be concise but complete.
 
-Formatting:
-- Use *italics* only for named Frosthaven game terms — mechanics, abilities, conditions, status effects, keyword phrases (e.g., *Muddle*, *Shield 1*, *Retaliate*, *Loot 2*, *Move 3*). The UI renders these as a highlighted rule-term chip, so emphasizing prose words like *not* or *however* turns ordinary stress into a false rule citation. Use **bold** for general emphasis instead.
-- Use > blockquotes when you reproduce literal rulebook text. Don't wrap quoted sentences in italics.`;
+${ANSWER_FORMATTING_PROMPT}`;
 
 // `as const satisfies readonly Tool[]` lets us derive `AgentToolName` below
 // as a literal union of the tool names. That union is what powers the
@@ -181,6 +199,9 @@ export const AGENT_TOOLS = [
       required: ['ref'],
     },
   },
+] as const satisfies readonly Tool[];
+
+export const LEGACY_AGENT_TOOLS = [
   {
     name: 'search_rules',
     description:
@@ -318,8 +339,28 @@ export const AGENT_TOOLS = [
   },
 ] as const satisfies readonly Tool[];
 
-/** Union of every tool name exposed to the agent. Keeps dependent maps honest. */
-export type AgentToolName = (typeof AGENT_TOOLS)[number]['name'];
+export const ALL_AGENT_TOOLS = [...AGENT_TOOLS, ...LEGACY_AGENT_TOOLS] as const;
+
+/** Union of every selectable tool name. Keeps dependent maps honest. */
+export type AgentToolName = (typeof ALL_AGENT_TOOLS)[number]['name'];
+
+type AgentToolSurface = 'redesigned' | 'legacy';
+
+function selectedAgentSurface(surface: AgentToolSurface | undefined): {
+  system: string;
+  tools: readonly Tool[];
+} {
+  if (surface === 'legacy') {
+    return {
+      system: LEGACY_AGENT_SYSTEM_PROMPT,
+      tools: LEGACY_AGENT_TOOLS,
+    };
+  }
+  return {
+    system: AGENT_SYSTEM_PROMPT,
+    tools: AGENT_TOOLS,
+  };
+}
 
 export interface ToolCallResult {
   content: string;
@@ -490,23 +531,24 @@ export async function executeToolCall(
 async function callClaude(
   messages: MessageParam[],
   emit?: EmitFn,
-  opts: { allowTools?: boolean } = {},
+  opts: { allowTools?: boolean; toolSurface?: AgentToolSurface } = {},
 ): Promise<Message> {
   const allowTools = opts.allowTools ?? true;
+  const surface = selectedAgentSurface(opts.toolSurface);
   const params = {
     model: 'claude-sonnet-4-6' as const,
     max_tokens: 4096,
-    system: AGENT_SYSTEM_PROMPT,
+    system: surface.system,
     messages,
   };
 
   const paramsWithTools = allowTools
     ? {
         ...params,
-        // Spread into a mutable array so the readonly AGENT_TOOLS tuple
+        // Spread into a mutable array so the readonly tool tuples
         // (declared `as const` to power the AgentToolName union) satisfies
         // the Anthropic SDK's `ToolUnion[]` signature.
-        tools: [...AGENT_TOOLS],
+        tools: [...surface.tools],
       }
     : params;
 
@@ -531,6 +573,7 @@ async function callClaude(
 export async function runAgentLoop(question: string, options?: AskOptions): Promise<string> {
   const history = options?.history;
   const emit = options?.emit;
+  const toolSurface = options?.toolSurface;
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
 
   const messages: MessageParam[] = [
@@ -547,7 +590,10 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
   let forceSynthesis = false;
 
   for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
-    const response = await callClaude(messages, emit, { allowTools: !forceSynthesis });
+    const response = await callClaude(messages, emit, {
+      allowTools: !forceSynthesis,
+      toolSurface,
+    });
     const hasToolUse = response.content.some((block) => block.type === 'tool_use');
 
     // Collect all text content from this response

@@ -96,12 +96,10 @@ export interface CreateConversationMessageInput {
   /**
    * Write-side accepts plain strings because the capture wrapper in
    * persistAssistantOutcome reads raw tool names off the agent's emit
-   * stream — the agent only ever emits names from AGENT_TOOLS, but the
-   * event payload type is `string`, so forcing AgentToolName[] here
-   * would require a cast at every call site for no safety gain. The
-   * read-side ConversationMessage.consultedSources narrows to
-   * AgentToolName[] after toDomain, which is where the contract is
-   * actually useful (render path).
+   * stream — the agent only ever emits known AgentToolName values, but the
+   * event payload type is `string`, so forcing AgentToolName[] here would
+   * require a cast at every call site for no safety gain. The render path
+   * validates and aggregates the strings before showing provenance.
    */
   consultedSources?: string[] | null;
 }
