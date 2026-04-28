@@ -9,14 +9,15 @@ import 'dotenv/config';
 import { sdk } from './instrumentation.ts';
 import { runAgentLoopWithTrajectory, type AgentRunResult } from './agent.ts';
 import { initialize, ask } from './service.ts';
+import type { AskOptions } from './service.ts';
 
 /**
  * Answer a Frosthaven rules question using RAG + structured card data.
  * Delegates to service.ts for all logic.
  */
-export async function askFrosthaven(question: string): Promise<string> {
+export async function askFrosthaven(question: string, options?: AskOptions): Promise<string> {
   await initialize();
-  return ask(question);
+  return options ? ask(question, options) : ask(question);
 }
 
 export async function askFrosthavenWithTrajectory(question: string): Promise<AgentRunResult> {

@@ -32,6 +32,12 @@ describe('askFrosthaven', () => {
     expect(mockAsk).toHaveBeenCalledWith('What is the loot action?');
   });
 
+  it('passes options through to service.ask()', async () => {
+    const options = { toolSurface: 'legacy' as const };
+    await askFrosthaven('What is the loot action?', options);
+    expect(mockAsk).toHaveBeenCalledWith('What is the loot action?', options);
+  });
+
   it('returns the answer from service.ask()', async () => {
     const result = await askFrosthaven('What is the loot action?');
     expect(result).toBe('Mocked answer from service');

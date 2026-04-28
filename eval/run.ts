@@ -16,18 +16,24 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { LangfuseClient } from '@langfuse/client';
 import { askFrosthavenWithTrajectory } from '../src/query.ts';
+import {
+  EvalDatasetSchema,
+  evalCaseHasFinalAnswer,
+  scoreTrajectory,
+  validateRemoteDatasetShape,
+  type EvalCase,
+  type FinalAnswerExpectation,
+  type TrajectoryExpectation,
+} from './schema.ts';
+import type { AgentRunResult } from '../src/agent.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DATASET_NAME = 'frosthaven-qa';
 
-interface EvalCase {
-  id: string;
-  category: string;
-  question: string;
-  expected: string;
-  grading: string;
-  source: string;
+interface EvalRunOutput {
+  answer: string;
+  trajectory: AgentRunResult['trajectory'];
 }
 
 const JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven board game rules assistant.
@@ -94,8 +100,17 @@ async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): Promise
       datasetName: DATASET_NAME,
       id: c.id,
       input: { question: c.question },
-      expectedOutput: { answer: c.expected, grading: c.grading },
-      metadata: { id: c.id, category: c.category, source: c.source },
+      expectedOutput: {
+        finalAnswer: c.finalAnswer,
+        trajectory: c.trajectory,
+      },
+      metadata: {
+        id: c.id,
+        category: c.category,
+        source: c.source,
+        hasFinalAnswer: !!c.finalAnswer,
+        hasTrajectory: !!c.trajectory,
+      },
     });
     process.stdout.write('.');
   }
@@ -115,36 +130,81 @@ function buildEvaluators(anthropic: Anthropic) {
       output: unknown;
       expectedOutput?: unknown;
     }) => {
-      const question = (input as { question: string }).question;
-      const exp = expectedOutput as { answer: string; grading: string };
-      const actual =
-        typeof output === 'string'
-          ? output
-          : output !== null &&
-              typeof output === 'object' &&
-              'answer' in output &&
-              typeof output.answer === 'string'
-            ? output.answer
-            : String(output ?? '');
+      const exp = expectedOutput as
+        | { finalAnswer?: FinalAnswerExpectation; trajectory?: TrajectoryExpectation }
+        | undefined;
+      const runOutput =
+        output && typeof output === 'object' && 'answer' in output
+          ? (output as EvalRunOutput)
+          : {
+              answer: output as string,
+              trajectory: {
+                toolCalls: [],
+                finalAnswer: output as string,
+                tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+                model: 'unknown',
+                iterations: 0,
+                stopReason: null,
+              },
+            };
+      const evaluations = [];
 
-      const verdict = await judgeAnswer(anthropic, question, exp.answer, exp.grading, actual);
-
-      const icon = verdict.pass ? '\u2713' : '\u2717';
-      console.log(`${icon} (${verdict.score}/5)`);
-
-      return [
-        {
-          name: 'correctness',
-          value: verdict.score / 5,
-          dataType: 'NUMERIC' as const,
-          comment: verdict.reasoning,
-        },
-        {
-          name: 'pass',
-          value: verdict.pass ? 'pass' : 'fail',
+      if (!exp?.finalAnswer) {
+        evaluations.push({
+          name: 'final_answer',
+          value: 'not_applicable',
           dataType: 'CATEGORICAL' as const,
-        },
-      ];
+          comment: 'This case defines trajectory expectations only.',
+        });
+      } else {
+        const question = (input as { question: string }).question;
+        const verdict = await judgeAnswer(
+          anthropic,
+          question,
+          exp.finalAnswer.expected,
+          exp.finalAnswer.grading,
+          runOutput.answer,
+        );
+
+        const icon = verdict.pass ? '\u2713' : '\u2717';
+        console.log(`${icon} (${verdict.score}/5)`);
+
+        evaluations.push(
+          {
+            name: 'correctness',
+            value: verdict.score / 5,
+            dataType: 'NUMERIC' as const,
+            comment: verdict.reasoning,
+          },
+          {
+            name: 'pass',
+            value: verdict.pass ? 'pass' : 'fail',
+            dataType: 'CATEGORICAL' as const,
+          },
+        );
+      }
+
+      if (exp?.trajectory) {
+        const trajectory = scoreTrajectory(exp.trajectory, runOutput.trajectory.toolCalls);
+        evaluations.push(
+          {
+            name: 'trajectory',
+            value: trajectory.pass ? 1 : 0,
+            dataType: 'NUMERIC' as const,
+            comment:
+              trajectory.failures.length === 0
+                ? `${runOutput.trajectory.toolCalls.length} tool call(s) matched expectations`
+                : trajectory.failures.join('; '),
+          },
+          {
+            name: 'trajectory_pass',
+            value: trajectory.pass ? 'pass' : 'fail',
+            dataType: 'CATEGORICAL' as const,
+          },
+        );
+      }
+
+      return evaluations;
     },
   ];
 }
@@ -164,18 +224,29 @@ function buildRunEvaluators() {
       const passCount = itemResults
         .flatMap((r) => r.evaluations)
         .filter((e) => e.name === 'pass' && e.value === 'pass').length;
+      const trajectoryScores = itemResults
+        .flatMap((r) => r.evaluations)
+        .filter((e) => e.name === 'trajectory')
+        .map((e) => e.value as number);
+      const trajectoryPassCount = itemResults
+        .flatMap((r) => r.evaluations)
+        .filter((e) => e.name === 'trajectory_pass' && e.value === 'pass').length;
 
       console.log(`\n--- Summary ---`);
+      const scoredCount = scores.length;
       console.log(
-        `Pass rate: ${passCount}/${itemResults.length} (${((passCount / itemResults.length) * 100).toFixed(0)}%)`,
+        `Pass rate: ${passCount}/${scoredCount} (${scoredCount === 0 ? '0' : ((passCount / scoredCount) * 100).toFixed(0)}%)`,
       );
       console.log(`Avg correctness: ${(avg * 5).toFixed(2)}/5`);
+      if (trajectoryScores.length > 0) {
+        console.log(`Trajectory pass rate: ${trajectoryPassCount}/${trajectoryScores.length}`);
+      }
 
       return {
         name: 'avg_correctness',
         value: avg,
         dataType: 'NUMERIC' as const,
-        comment: `${passCount}/${itemResults.length} passed`,
+        comment: `${passCount}/${scoredCount} final-answer cases passed`,
       };
     },
   ];
@@ -187,6 +258,7 @@ async function runOnDataset(langfuse: LangfuseClient, runName: string): Promise<
   const anthropic = new Anthropic();
   const dataset = await langfuse.dataset.get(DATASET_NAME);
   console.log(`Dataset has ${dataset.items.length} items`);
+  validateRemoteDatasetShape(dataset.items, allCases.length, DATASET_NAME);
 
   const result = await dataset.runExperiment({
     name: runName,
@@ -216,8 +288,14 @@ async function runFiltered(
 
   const data = cases.map((c) => ({
     input: { question: c.question },
-    expectedOutput: { answer: c.expected, grading: c.grading },
-    metadata: { id: c.id, category: c.category, source: c.source },
+    expectedOutput: { finalAnswer: c.finalAnswer, trajectory: c.trajectory },
+    metadata: {
+      id: c.id,
+      category: c.category,
+      source: c.source,
+      hasFinalAnswer: !!c.finalAnswer,
+      hasTrajectory: !!c.trajectory,
+    },
   }));
 
   const result = await langfuse.experiment.run({
@@ -247,7 +325,9 @@ const runName =
   args.find((a) => a.startsWith('--name='))?.split('=')[1] ??
   `eval-${new Date().toISOString().slice(0, 16)}`;
 
-const allCases: EvalCase[] = JSON.parse(readFileSync(join(__dirname, 'dataset.json'), 'utf-8'));
+const allCases: EvalCase[] = EvalDatasetSchema.parse(
+  JSON.parse(readFileSync(join(__dirname, 'dataset.json'), 'utf-8')),
+);
 const isFiltered = !!(categoryFilter || idFilter);
 
 let cases = allCases;
@@ -257,6 +337,13 @@ if (idFilter) cases = cases.filter((c) => c.id === idFilter);
 if (cases.length === 0) {
   console.error('No matching eval cases found.');
   process.exit(1);
+}
+
+if (shouldSeed) {
+  const finalAnswerCount = allCases.filter(evalCaseHasFinalAnswer).length;
+  console.log(
+    `Loaded ${allCases.length} eval case(s): ${finalAnswerCount} final-answer, ${allCases.length - finalAnswerCount} trajectory-only.`,
+  );
 }
 
 const langfuse = new LangfuseClient({
