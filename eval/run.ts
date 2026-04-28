@@ -15,7 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { LangfuseClient } from '@langfuse/client';
-import { askFrosthaven } from '../src/query.ts';
+import { askFrosthavenWithTrajectory } from '../src/query.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -117,7 +117,7 @@ function buildEvaluators(anthropic: Anthropic) {
     }) => {
       const question = (input as { question: string }).question;
       const exp = expectedOutput as { answer: string; grading: string };
-      const actual = output as string;
+      const actual = typeof output === 'string' ? output : (output as { answer: string }).answer;
 
       const verdict = await judgeAnswer(anthropic, question, exp.answer, exp.grading, actual);
 
@@ -187,7 +187,7 @@ async function runOnDataset(langfuse: LangfuseClient, runName: string): Promise<
       const question = (item.input as { question: string }).question;
       const meta = item.metadata as { id?: string } | undefined;
       process.stdout.write(`  ${meta?.id ?? '?'}... `);
-      return askFrosthaven(question);
+      return askFrosthavenWithTrajectory(question);
     },
     evaluators: buildEvaluators(anthropic),
     runEvaluators: buildRunEvaluators(),
@@ -220,7 +220,7 @@ async function runFiltered(
       const question = (item.input as { question: string }).question;
       const meta = item.metadata as { id?: string } | undefined;
       process.stdout.write(`  ${meta?.id ?? '?'}... `);
-      return askFrosthaven(question);
+      return askFrosthavenWithTrajectory(question);
     },
     evaluators: buildEvaluators(anthropic),
     runEvaluators: buildRunEvaluators(),
