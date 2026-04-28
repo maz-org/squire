@@ -22,6 +22,7 @@ import {
   followLinks,
   neighbors,
 } from './tools.ts';
+import type { KnowledgeEntityKind } from './tools.ts';
 import { CARD_TYPES, type CardType } from './schemas.ts';
 import type { AskOptions, HistoryMessage, EmitFn } from './service.ts';
 import {
@@ -457,7 +458,7 @@ export async function executeToolCall(
       return { content: JSON.stringify(results, null, 2) };
     }
     case 'search_knowledge': {
-      const scope = Array.isArray(input.scope) ? (input.scope as never[]) : undefined;
+      const scope = Array.isArray(input.scope) ? (input.scope as KnowledgeEntityKind[]) : undefined;
       const result = await searchKnowledge(input.query as string, {
         scope,
         limit: (input.limit as number | undefined) ?? 6,
