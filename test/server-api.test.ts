@@ -616,6 +616,27 @@ describe('POST /api/ask', () => {
     );
   });
 
+  it('passes toolSurface to ask()', async () => {
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is loot?', toolSurface: 'legacy' }),
+    });
+    expect(mockAsk).toHaveBeenCalledWith(
+      'What is loot?',
+      expect.objectContaining({ toolSurface: 'legacy' }),
+    );
+  });
+
+  it('returns 400 for invalid toolSurface', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'test', toolSurface: 'old' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
   it('returns 400 for non-UUID campaignId', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',

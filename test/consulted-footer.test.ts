@@ -2,7 +2,7 @@
  * Unit tests for src/web-ui/consulted-footer.ts (SQR-98).
  *
  * The typed-union drift guard on `TOOL_SOURCE_LABELS` is enforced at
- * compile time — adding a tool to AGENT_TOOLS without a matching label
+ * compile time — adding a selectable tool without a matching label
  * entry would fail `npm run typecheck` before reaching runtime. These
  * tests cover the concrete mapping values (which TS can't assert),
  * plus the aggregation + formatting helpers used by both the SSE route
@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { AGENT_TOOLS } from '../src/agent.ts';
+import { ALL_AGENT_TOOLS } from '../src/agent.ts';
 import {
   aggregateSourceLabels,
   formatConsultedFooter,
@@ -165,7 +165,7 @@ describe('JS ↔ TS label drift guard', () => {
     // in messages.consulted_sources) back to labels without going through
     // the server. This JS map must stay in sync with TOOL_SOURCE_LABELS
     // in src/web-ui/consulted-footer.ts. If a new tool is added to
-    // AGENT_TOOLS + TOOL_SOURCE_LABELS but not to TOOL_NAME_TO_LABEL,
+    // ALL_AGENT_TOOLS + TOOL_SOURCE_LABELS but not to TOOL_NAME_TO_LABEL,
     // replayed turns that used the new tool render a blank footer.
     const jsSrc = readFileSync(
       fileURLToPath(new URL('../src/web-ui/squire.js', import.meta.url)),
@@ -178,11 +178,11 @@ describe('JS ↔ TS label drift guard', () => {
       jsMap.set((entry[1] ?? entry[2])!, entry[3]!);
     }
 
-    // Derive from AGENT_TOOLS, filtering to the tools that actually map to
+    // Derive from ALL_AGENT_TOOLS, filtering to the tools that actually map to
     // a provenance label. Same drift guarantee as the first drift test:
-    // a new tool added to AGENT_TOOLS that should surface in the footer
+    // a new tool added to ALL_AGENT_TOOLS that should surface in the footer
     // must also be added to TOOL_NAME_TO_LABEL, or this loop fails.
-    const toolNames = AGENT_TOOLS.map((tool) => tool.name).filter(
+    const toolNames = ALL_AGENT_TOOLS.map((tool) => tool.name).filter(
       (name) => toolSourceLabel(name) !== null,
     );
     for (const name of toolNames) {
@@ -191,7 +191,7 @@ describe('JS ↔ TS label drift guard', () => {
     }
     // Null-mapped tools (traversal/utility like follow_links) must NOT appear
     // in the JS map — they aren't provenance sources on either side.
-    for (const tool of AGENT_TOOLS) {
+    for (const tool of ALL_AGENT_TOOLS) {
       if (toolSourceLabel(tool.name) === null) {
         expect(
           jsMap.has(tool.name),

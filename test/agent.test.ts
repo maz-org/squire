@@ -62,7 +62,15 @@ vi.mock('../src/tools.ts', () => ({
   neighbors: mockNeighbors,
 }));
 
-import { runAgentLoop, executeToolCall, AGENT_TOOLS, MAX_AGENT_ITERATIONS } from '../src/agent.ts';
+import {
+  runAgentLoop,
+  executeToolCall,
+  AGENT_TOOLS,
+  LEGACY_AGENT_TOOLS,
+  AGENT_SYSTEM_PROMPT,
+  LEGACY_AGENT_SYSTEM_PROMPT,
+  MAX_AGENT_ITERATIONS,
+} from '../src/agent.ts';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -195,7 +203,7 @@ describe('runAgentLoop', () => {
 
   it('returns text immediately when Claude responds without tool use', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Loot tokens are picked up in your hex.'));
-    const result = await runAgentLoop('What is the loot action?');
+    const result = await runAgentLoop('What is the loot action?', { toolSurface: 'legacy' });
     expect(result).toBe('Loot tokens are picked up in your hex.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
   });
@@ -206,9 +214,118 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: AGENT_TOOLS,
-        system: expect.stringContaining('Frosthaven rules assistant'),
+        system: AGENT_SYSTEM_PROMPT,
       }),
     );
+  });
+
+  it('uses only the redesigned tools by default', async () => {
+    expect(AGENT_TOOLS.map((tool) => tool.name)).toEqual([
+      'inspect_sources',
+      'schema',
+      'resolve_entity',
+      'open_entity',
+      'search_knowledge',
+      'neighbors',
+    ]);
+    expect(AGENT_SYSTEM_PROMPT).not.toContain('search_rules');
+    expect(AGENT_SYSTEM_PROMPT).not.toContain('find_scenario');
+    expect(AGENT_SYSTEM_PROMPT).not.toContain('follow_links');
+  });
+
+  it('can select the legacy tool surface while evals are pending', async () => {
+    mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
+    await runAgentLoop('test', { toolSurface: 'legacy' });
+
+    expect(mockMessagesCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tools: LEGACY_AGENT_TOOLS,
+        system: LEGACY_AGENT_SYSTEM_PROMPT,
+      }),
+    );
+    expect(LEGACY_AGENT_TOOLS.map((tool) => tool.name)).toEqual([
+      'search_rules',
+      'search_cards',
+      'list_card_types',
+      'list_cards',
+      'get_card',
+      'find_scenario',
+      'get_scenario',
+      'get_section',
+      'follow_links',
+    ]);
+  });
+
+  it('uses the redesigned traversal tools for an exact scenario conclusion lookup', async () => {
+    mockNeighbors.mockResolvedValueOnce({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [
+        {
+          relation: 'conclusion',
+          target: {
+            kind: 'section',
+            ref: 'section:frosthaven/67.1',
+            title: 'Section 67.1',
+            sourceLabel: 'Section Book',
+          },
+          reason: 'Scenario conclusion points to this section',
+        },
+      ],
+    });
+
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('resolve_entity', { query: 'scenario 61', kinds: ['scenario'] }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('neighbors', {
+          ref: 'scenario:frosthaven/061',
+          relation: 'conclusion',
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('open_entity', { ref: 'section:frosthaven/67.1' }))
+      .mockResolvedValueOnce(textResponse('Read section 67.1.'));
+
+    const result = await runAgentLoop(
+      'show the full text of the section to read at the conclusion of scenario 61',
+    );
+
+    expect(result).toBe('Read section 67.1.');
+    expect(mockResolveEntity).toHaveBeenCalledWith('scenario 61', {
+      kinds: ['scenario'],
+      limit: undefined,
+    });
+    expect(mockNeighbors).toHaveBeenCalledWith('scenario:frosthaven/061', {
+      relation: 'conclusion',
+      limit: 20,
+    });
+    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
+  });
+
+  it('uses the redesigned broad search tool for mixed rules and cards discovery', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot and item interactions',
+          scope: ['rules_passage', 'card'],
+          limit: 4,
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Loot rules and item results are grounded together.'));
+
+    const result = await runAgentLoop('How do loot rules interact with items?');
+
+    expect(result).toBe('Loot rules and item results are grounded together.');
+    expect(mockSearchKnowledge).toHaveBeenCalledWith('loot and item interactions', {
+      scope: ['rules_passage', 'card'],
+      limit: 4,
+    });
   });
 
   it('executes tool calls and loops until text response', async () => {
@@ -218,7 +335,7 @@ describe('runAgentLoop', () => {
       // Second call: Claude returns text answer
       .mockResolvedValueOnce(textResponse('You pick up loot tokens.'));
 
-    const result = await runAgentLoop('What is the loot action?');
+    const result = await runAgentLoop('What is the loot action?', { toolSurface: 'legacy' });
     expect(result).toBe('You pick up loot tokens.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
     expect(mockSearchRules).toHaveBeenCalledWith('loot action', 6);
@@ -233,7 +350,9 @@ describe('runAgentLoop', () => {
       )
       .mockResolvedValueOnce(textResponse('Read section 67.1.'));
 
-    const result = await runAgentLoop('What section unlocks scenario 61?');
+    const result = await runAgentLoop('What section unlocks scenario 61?', {
+      toolSurface: 'legacy',
+    });
     expect(result).toBe('Read section 67.1.');
   });
 
@@ -249,7 +368,7 @@ describe('runAgentLoop', () => {
       })
       .mockResolvedValueOnce(textResponse('Here is what I found about loot.'));
 
-    const result = await runAgentLoop('Tell me about loot');
+    const result = await runAgentLoop('Tell me about loot', { toolSurface: 'legacy' });
     expect(result).toBe('Here is what I found about loot.');
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
     expect(mockSearchCards).toHaveBeenCalledWith('loot', 6);
@@ -260,7 +379,7 @@ describe('runAgentLoop', () => {
       .mockResolvedValueOnce(toolUseResponse('get_card', { type: 'items', id: 'Boots of Speed' }))
       .mockResolvedValueOnce(textResponse('Boots of Speed grants Move +1.'));
 
-    const result = await runAgentLoop('What does Boots of Speed do?');
+    const result = await runAgentLoop('What does Boots of Speed do?', { toolSurface: 'legacy' });
     expect(result).toBe('Boots of Speed grants Move +1.');
     expect(mockGetCard).toHaveBeenCalledWith('items', 'Boots of Speed');
   });
@@ -270,7 +389,7 @@ describe('runAgentLoop', () => {
       .mockResolvedValueOnce(toolUseResponse('list_card_types', {}))
       .mockResolvedValueOnce(textResponse('There are items and more.'));
 
-    const result = await runAgentLoop('What card types are available?');
+    const result = await runAgentLoop('What card types are available?', { toolSurface: 'legacy' });
     expect(result).toBe('There are items and more.');
     expect(mockListCardTypes).toHaveBeenCalled();
   });
@@ -290,6 +409,7 @@ describe('runAgentLoop', () => {
 
     const result = await runAgentLoop(
       'show the full text of the section to read at the conclusion of scenario 61',
+      { toolSurface: 'legacy' },
     );
     expect(result).toBe('Read section 67.1.');
     expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
@@ -344,6 +464,7 @@ describe('runAgentLoop', () => {
 
     const result = await runAgentLoop(
       'Starting from section 103.1, which section do I end up reading after following the next two explicit read instructions?',
+      { toolSurface: 'legacy' },
     );
 
     expect(result).toBe('The chain goes 103.1 -> 11.5 -> 155.1.');
@@ -386,7 +507,7 @@ describe('runAgentLoop', () => {
       .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'loot' }))
       .mockResolvedValueOnce(textResponse('I encountered an error but can still help.'));
 
-    const result = await runAgentLoop('What is loot?');
+    const result = await runAgentLoop('What is loot?', { toolSurface: 'legacy' });
     expect(result).toBe('I encountered an error but can still help.');
     // The tool result should have been sent back as an error
     const toolResultMsg = mockMessagesCreate.mock.calls[1][0].messages.at(-1);
@@ -398,7 +519,7 @@ describe('runAgentLoop', () => {
     // Claude keeps calling tools forever
     mockMessagesCreate.mockResolvedValue(toolUseResponse('search_rules', { query: 'loop' }));
 
-    const result = await runAgentLoop('infinite loop question');
+    const result = await runAgentLoop('infinite loop question', { toolSurface: 'legacy' });
     expect(mockMessagesCreate).toHaveBeenCalledTimes(MAX_AGENT_ITERATIONS);
     expect(result).toContain('unable to produce an answer');
   });
@@ -418,7 +539,7 @@ describe('runAgentLoop', () => {
       )
       .mockResolvedValueOnce(textResponse('Looting means picking up loot tokens.'));
 
-    const result = await runAgentLoop('What is looting?');
+    const result = await runAgentLoop('What is looting?', { toolSurface: 'legacy' });
 
     expect(result).toBe('Looting means picking up loot tokens.');
     expect(mockSearchRules).toHaveBeenCalledTimes(3);
@@ -447,7 +568,7 @@ describe('runAgentLoop', () => {
       )
       .mockResolvedValueOnce(textResponse('Looting means picking up loot tokens.'));
 
-    const result = await runAgentLoop('What is looting?');
+    const result = await runAgentLoop('What is looting?', { toolSurface: 'legacy' });
 
     expect(result).toBe('Looting means picking up loot tokens.');
     expect(mockSearchRules).toHaveBeenCalledTimes(3);
@@ -768,7 +889,7 @@ describe('runAgentLoop with emit (streaming)', () => {
     mockMessagesStream.mockReturnValue(mockStream(msg, ['Streamed ', 'answer']));
     const emit = vi.fn().mockResolvedValue(undefined);
 
-    await runAgentLoop('test', { emit });
+    await runAgentLoop('test', { emit, toolSurface: 'legacy' });
     expect(mockMessagesStream).toHaveBeenCalledTimes(1);
     expect(mockMessagesCreate).not.toHaveBeenCalled();
   });
@@ -813,6 +934,45 @@ describe('runAgentLoop with emit (streaming)', () => {
     expect(emit).toHaveBeenCalledWith('done', {});
   });
 
+  it('emits tool visibility for redesigned tool calls', async () => {
+    mockSearchKnowledge.mockResolvedValueOnce({
+      ok: true,
+      query: 'loot',
+      results: [
+        {
+          entity: {
+            kind: 'rules_passage',
+            ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=0',
+            title: 'fh-rule-book.pdf chunk 0',
+            sourceLabel: 'Rulebook',
+          },
+          score: 0.9,
+          snippet: 'Loot action',
+          citations: [{ sourceRef: 'source:frosthaven/rulebook', sourceLabel: 'Rulebook' }],
+          nextRefs: [],
+        },
+      ],
+    });
+    const toolMsg = toolUseResponse('search_knowledge', { query: 'loot' });
+    const finalMsg = textResponse('Answer');
+    mockMessagesStream
+      .mockReturnValueOnce(mockStream(toolMsg))
+      .mockReturnValueOnce(mockStream(finalMsg, ['Answer']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    await runAgentLoop('test', { emit });
+    expect(emit).toHaveBeenCalledWith('tool_call', {
+      name: 'search_knowledge',
+      input: { query: 'loot' },
+    });
+    expect(emit).toHaveBeenCalledWith('tool_result', {
+      name: 'search_knowledge',
+      ok: true,
+      sourceBooks: ['Rulebook'],
+    });
+    expect(emit).toHaveBeenCalledWith('done', {});
+  });
+
   it('does not treat streamed scratch text before tool use as the final answer', async () => {
     const toolMsg = textAndToolUseResponse('Let me look that up.', 'search_rules', {
       query: 'scenario 61 conclusion',
@@ -823,7 +983,7 @@ describe('runAgentLoop with emit (streaming)', () => {
       .mockReturnValueOnce(mockStream(finalMsg, ['Read section 67.1.']));
     const emit = vi.fn().mockResolvedValue(undefined);
 
-    const result = await runAgentLoop('test', { emit });
+    const result = await runAgentLoop('test', { emit, toolSurface: 'legacy' });
     expect(result).toBe('Read section 67.1.');
   });
 });

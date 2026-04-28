@@ -17,7 +17,7 @@
  * and label strings (new rows) — so no migration is required.
  *
  * Keeping `TOOL_SOURCE_LABELS` typed against `AgentToolName` means adding a
- * tool to `AGENT_TOOLS` without extending the map is a typecheck failure.
+ * selectable tool without extending the map is a typecheck failure.
  */
 
 import type { AgentToolName } from '../agent.ts';

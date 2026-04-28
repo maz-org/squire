@@ -390,8 +390,8 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   `tool_result` events on every write path (SSE and the plain-form POST
   fallback). `aggregateSourceLabels` in `src/web-ui/consulted-footer.ts`
   handles both storage formats transparently so no migration is required.
-  The tool-name → label map is pinned to `AgentToolName` so adding a tool
-  to `AGENT_TOOLS` without extending the map is a typecheck failure. `null`
+  The tool-name → label map is pinned to `AgentToolName` so adding a selectable
+  tool without extending the map is a typecheck failure. `null`
   means "no source tools fired" or "pre-SQR-98 row"; both render with the
   footer hidden
 - Browser streaming contract:
