@@ -4,7 +4,7 @@
  */
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { LangfuseSpanProcessor } from '@langfuse/otel';
+import { LangfuseSpanProcessor, isDefaultExportSpan } from '@langfuse/otel';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 
 export const LANGFUSE_DEFAULT_BASE_URL = 'https://us.cloud.langfuse.com';
@@ -13,6 +13,8 @@ const sdk = new NodeSDK({
   spanProcessors: [
     new LangfuseSpanProcessor({
       baseUrl: process.env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
+      shouldExportSpan: ({ otelSpan }) =>
+        otelSpan.name.startsWith('squire.agent.') || isDefaultExportSpan(otelSpan),
     }),
   ],
   // Auto-instrument node-postgres so every Drizzle query gets a span. Drizzle

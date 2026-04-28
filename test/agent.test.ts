@@ -64,6 +64,7 @@ vi.mock('../src/tools.ts', () => ({
 
 import {
   runAgentLoop,
+  runAgentLoopWithTrajectory,
   executeToolCall,
   AGENT_TOOLS,
   LEGACY_AGENT_TOOLS,
@@ -341,6 +342,88 @@ describe('runAgentLoop', () => {
     expect(mockSearchRules).toHaveBeenCalledWith('loot action', 6);
   });
 
+  it('captures a structured trajectory for successful tool calls', async () => {
+    mockSearchRules.mockResolvedValueOnce([
+      {
+        text: 'Loot: pick up all loot tokens.',
+        source: 'rulebook.pdf:42',
+        score: 0.9,
+        sourceLabel: 'Rulebook',
+        ref: 'fh-rule-book.pdf::42',
+      },
+    ]);
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'loot action' }))
+      .mockResolvedValueOnce(textResponse('You pick up loot tokens.'));
+
+    const result = await runAgentLoopWithTrajectory('What is the loot action?', {
+      toolSurface: 'legacy',
+    });
+
+    expect(result.answer).toBe('You pick up loot tokens.');
+    expect(result.trajectory.finalAnswer).toBe('You pick up loot tokens.');
+    expect(result.trajectory.model).toBe('claude-sonnet-4-6');
+    expect(result.trajectory.iterations).toBe(2);
+    expect(result.trajectory.stopReason).toBe('end_turn');
+    expect(result.trajectory.tokenUsage).toEqual({
+      inputTokens: 200,
+      outputTokens: 100,
+      totalTokens: 300,
+    });
+    expect(result.trajectory.toolCalls).toMatchObject([
+      {
+        iteration: 1,
+        id: 'tool_1',
+        name: 'search_rules',
+        input: { query: 'loot action' },
+        ok: true,
+        outputSummary: 'json array (1 item)',
+        sourceLabels: ['Rulebook'],
+        canonicalRefs: ['fh-rule-book.pdf::42'],
+      },
+    ]);
+    expect(result.trajectory.toolCalls[0]?.startedAt).toEqual(expect.any(String));
+    expect(result.trajectory.toolCalls[0]?.endedAt).toEqual(expect.any(String));
+    expect(result.trajectory.toolCalls[0]?.durationMs).toEqual(expect.any(Number));
+  });
+
+  it('captures a structured trajectory for redesigned tool calls', async () => {
+    mockSearchKnowledge.mockResolvedValueOnce({
+      ok: true,
+      query: 'Jump',
+      results: [
+        {
+          ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=87',
+          citations: [{ sourceLabel: 'Rulebook' }],
+        },
+      ],
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'Jump',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Jump ignores terrain except in the last hex.'));
+
+    const result = await runAgentLoopWithTrajectory('What is Jump?');
+
+    expect(result.answer).toBe('Jump ignores terrain except in the last hex.');
+    expect(result.trajectory.toolCalls).toMatchObject([
+      {
+        iteration: 1,
+        id: 'tool_1',
+        name: 'search_knowledge',
+        input: { query: 'Jump', scope: ['rules_passage'] },
+        ok: true,
+        outputSummary: 'json object (ok, query, results)',
+        sourceLabels: ['Rulebook'],
+        canonicalRefs: ['rules:frosthaven/fh-rule-book.pdf#chunk=87'],
+      },
+    ]);
+  });
+
   it('does not persist scratch text from a tool-use turn as the final answer', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(
@@ -513,6 +596,30 @@ describe('runAgentLoop', () => {
     const toolResultMsg = mockMessagesCreate.mock.calls[1][0].messages.at(-1);
     expect(toolResultMsg.content[0].is_error).toBe(true);
     expect(toolResultMsg.content[0].content).toContain('Embedder failed');
+  });
+
+  it('captures a structured trajectory for tool errors', async () => {
+    mockSearchRules.mockRejectedValueOnce(new Error('Embedder failed'));
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'loot' }))
+      .mockResolvedValueOnce(textResponse('I encountered an error but can still help.'));
+
+    const result = await runAgentLoopWithTrajectory('What is loot?', { toolSurface: 'legacy' });
+
+    expect(result.answer).toBe('I encountered an error but can still help.');
+    expect(result.trajectory.toolCalls).toMatchObject([
+      {
+        iteration: 1,
+        id: 'tool_1',
+        name: 'search_rules',
+        input: { query: 'loot' },
+        ok: false,
+        outputSummary: 'Tool error: Embedder failed',
+        sourceLabels: [],
+        canonicalRefs: [],
+        error: 'Embedder failed',
+      },
+    ]);
   });
 
   it('respects iteration limit', async () => {

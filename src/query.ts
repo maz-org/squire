@@ -7,6 +7,7 @@
 
 import 'dotenv/config';
 import { sdk } from './instrumentation.ts';
+import { runAgentLoopWithTrajectory, type AgentRunResult } from './agent.ts';
 import { initialize, ask } from './service.ts';
 
 /**
@@ -16,6 +17,11 @@ import { initialize, ask } from './service.ts';
 export async function askFrosthaven(question: string): Promise<string> {
   await initialize();
   return ask(question);
+}
+
+export async function askFrosthavenWithTrajectory(question: string): Promise<AgentRunResult> {
+  await initialize();
+  return runAgentLoopWithTrajectory(question);
 }
 
 // CLI entrypoint

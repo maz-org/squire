@@ -5,6 +5,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import {
   searchRules,
   searchCards,
@@ -35,8 +36,10 @@ type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
 type ContentBlockParam = Anthropic.ContentBlockParam;
 type Message = Anthropic.Message;
+type StopReason = Message['stop_reason'];
 
 const client = new Anthropic();
+const tracer = trace.getTracer('squire.agent');
 
 /** Maximum agent loop iterations to prevent runaway tool calls. */
 export const MAX_AGENT_ITERATIONS = 10;
@@ -369,6 +372,95 @@ export interface ToolCallResult {
   sourceBooks?: string[];
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
+export interface ToolTrajectoryStep {
+  iteration: number;
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+  ok: boolean;
+  outputSummary: string;
+  sourceLabels: string[];
+  canonicalRefs: string[];
+  error?: string;
+  startedAt: string;
+  endedAt: string;
+  durationMs: number;
+}
+
+export interface AgentRunTrajectory {
+  toolCalls: ToolTrajectoryStep[];
+  finalAnswer: string;
+  tokenUsage: TokenUsage;
+  model: string;
+  iterations: number;
+  stopReason: StopReason | 'iteration_limit' | null;
+}
+
+export interface AgentRunResult {
+  answer: string;
+  trajectory: AgentRunTrajectory;
+}
+
+const AGENT_MODEL = 'claude-sonnet-4-6' as const;
+const MAX_ATTRIBUTE_TEXT_LENGTH = 2_000;
+
+function truncateForAttribute(value: string, maxLength = MAX_ATTRIBUTE_TEXT_LENGTH): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 3)}...`;
+}
+
+function addUsage(total: TokenUsage, response: Message): void {
+  total.inputTokens += response.usage.input_tokens;
+  total.outputTokens += response.usage.output_tokens;
+  total.totalTokens = total.inputTokens + total.outputTokens;
+}
+
+function collectCanonicalRefs(value: unknown, refs = new Set<string>()): Set<string> {
+  if (!value || typeof value !== 'object') return refs;
+  if (Array.isArray(value)) {
+    for (const item of value) collectCanonicalRefs(item, refs);
+    return refs;
+  }
+
+  for (const [key, nested] of Object.entries(value)) {
+    if ((key === 'ref' || key === 'sourceId') && typeof nested === 'string') {
+      refs.add(nested);
+    } else {
+      collectCanonicalRefs(nested, refs);
+    }
+  }
+  return refs;
+}
+
+function summarizeToolOutput(content: string): { summary: string; canonicalRefs: string[] } {
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    const canonicalRefs = [...collectCanonicalRefs(parsed)];
+    if (Array.isArray(parsed)) {
+      return {
+        summary: `json array (${parsed.length} item${parsed.length === 1 ? '' : 's'})`,
+        canonicalRefs,
+      };
+    }
+    if (parsed && typeof parsed === 'object') {
+      const keys = Object.keys(parsed).slice(0, 8);
+      return {
+        summary: `json object (${keys.join(', ') || 'no keys'})`,
+        canonicalRefs,
+      };
+    }
+    return { summary: `json ${typeof parsed}`, canonicalRefs };
+  } catch {
+    return { summary: truncateForAttribute(content, 240), canonicalRefs: [] };
+  }
+}
+
 function sourceLabelsFromResult(value: unknown): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
@@ -537,7 +629,7 @@ async function callClaude(
   const allowTools = opts.allowTools ?? true;
   const surface = selectedAgentSurface(opts.toolSurface);
   const params = {
-    model: 'claude-sonnet-4-6' as const,
+    model: AGENT_MODEL,
     max_tokens: 4096,
     system: surface.system,
     messages,
@@ -572,6 +664,43 @@ async function callClaude(
  * and tool activity is emitted as events.
  */
 export async function runAgentLoop(question: string, options?: AskOptions): Promise<string> {
+  const result = await runAgentLoopWithTrajectory(question, options);
+  return result.answer;
+}
+
+export async function runAgentLoopWithTrajectory(
+  question: string,
+  options?: AskOptions,
+): Promise<AgentRunResult> {
+  return tracer.startActiveSpan('squire.agent.run', async (runSpan) => {
+    try {
+      const result = await runAgentLoopInternal(question, options);
+      runSpan.setAttributes({
+        'squire.agent.model': result.trajectory.model,
+        'squire.agent.iterations': result.trajectory.iterations,
+        'squire.agent.tool_call_count': result.trajectory.toolCalls.length,
+        'squire.agent.stop_reason': result.trajectory.stopReason ?? 'unknown',
+        'squire.agent.input_tokens': result.trajectory.tokenUsage.inputTokens,
+        'squire.agent.output_tokens': result.trajectory.tokenUsage.outputTokens,
+      });
+      return result;
+    } catch (err) {
+      runSpan.recordException(err as Error);
+      runSpan.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      throw err;
+    } finally {
+      runSpan.end();
+    }
+  });
+}
+
+async function runAgentLoopInternal(
+  question: string,
+  options?: AskOptions,
+): Promise<AgentRunResult> {
   const history = options?.history;
   const emit = options?.emit;
   const toolSurface = options?.toolSurface;
@@ -589,12 +718,41 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
   let broadRuleSearches = 0;
   let hasUsedNonRuleSearchTool = false;
   let forceSynthesis = false;
+  const toolCalls: ToolTrajectoryStep[] = [];
+  const tokenUsage: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  let iterations = 0;
 
   for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
-    const response = await callClaude(messages, emit, {
-      allowTools: !forceSynthesis,
-      toolSurface,
+    iterations = i + 1;
+    const response = await tracer.startActiveSpan('squire.agent.iteration', async (span) => {
+      try {
+        span.setAttributes({
+          'squire.agent.iteration': i + 1,
+          'squire.agent.allow_tools': !forceSynthesis,
+          'squire.agent.message_count': messages.length,
+        });
+        const message = await callClaude(messages, emit, {
+          allowTools: !forceSynthesis,
+          toolSurface,
+        });
+        span.setAttributes({
+          'squire.agent.stop_reason': message.stop_reason ?? 'unknown',
+          'squire.agent.input_tokens': message.usage.input_tokens,
+          'squire.agent.output_tokens': message.usage.output_tokens,
+        });
+        return message;
+      } catch (err) {
+        span.recordException(err as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      } finally {
+        span.end();
+      }
     });
+    addUsage(tokenUsage, response);
     const hasToolUse = response.content.some((block) => block.type === 'tool_use');
 
     // Collect all text content from this response
@@ -614,7 +772,17 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
     // If the model is done (no more tool calls), return the answer
     if (response.stop_reason === 'end_turn' || response.stop_reason === 'stop_sequence') {
       if (emit) await emit('done', {});
-      return lastTextContent;
+      return {
+        answer: lastTextContent,
+        trajectory: {
+          toolCalls,
+          finalAnswer: lastTextContent,
+          tokenUsage,
+          model: AGENT_MODEL,
+          iterations,
+          stopReason: response.stop_reason,
+        },
+      };
     }
 
     // Max tokens or pause — append partial response and continue for more
@@ -641,16 +809,66 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
             await emit('tool_call', { name: block.name, input: block.input });
           }
 
+          const toolStartedAtMs = Date.now();
+          const toolStartedAt = new Date(toolStartedAtMs).toISOString();
           let toolResult: ToolCallResult;
           let isError = false;
+          let errorMessage: string | undefined;
           try {
-            toolResult = await executeToolCall(block.name, block.input as Record<string, unknown>);
+            toolResult = await tracer.startActiveSpan('squire.agent.tool', async (span) => {
+              try {
+                span.setAttributes({
+                  'squire.agent.iteration': i + 1,
+                  'squire.agent.tool.id': block.id,
+                  'squire.agent.tool.name': block.name,
+                  'squire.agent.tool.input': truncateForAttribute(JSON.stringify(block.input)),
+                });
+                const result = await executeToolCall(
+                  block.name,
+                  block.input as Record<string, unknown>,
+                );
+                const { summary, canonicalRefs } = summarizeToolOutput(result.content);
+                span.setAttributes({
+                  'squire.agent.tool.ok': true,
+                  'squire.agent.tool.output_summary': summary,
+                  'squire.agent.tool.source_labels': result.sourceBooks ?? [],
+                  'squire.agent.tool.canonical_refs': canonicalRefs,
+                });
+                return result;
+              } catch (err) {
+                span.recordException(err as Error);
+                span.setStatus({
+                  code: SpanStatusCode.ERROR,
+                  message: err instanceof Error ? err.message : String(err),
+                });
+                throw err;
+              } finally {
+                span.end();
+              }
+            });
           } catch (err) {
+            errorMessage = err instanceof Error ? err.message : String(err);
             toolResult = {
-              content: `Tool error: ${err instanceof Error ? err.message : String(err)}`,
+              content: `Tool error: ${errorMessage}`,
             };
             isError = true;
           }
+          const toolEndedAtMs = Date.now();
+          const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content);
+          toolCalls.push({
+            iteration: i + 1,
+            id: block.id,
+            name: block.name,
+            input: block.input as Record<string, unknown>,
+            ok: !isError,
+            outputSummary: summary,
+            sourceLabels: toolResult.sourceBooks ?? [],
+            canonicalRefs,
+            ...(errorMessage ? { error: errorMessage } : {}),
+            startedAt: toolStartedAt,
+            endedAt: new Date(toolEndedAtMs).toISOString(),
+            durationMs: toolEndedAtMs - toolStartedAtMs,
+          });
 
           if (emit) {
             await emit('tool_result', {
@@ -682,10 +900,33 @@ export async function runAgentLoop(question: string, options?: AskOptions): Prom
 
     // Unrecoverable stop reasons (refusal, context window exceeded, etc.)
     if (emit) await emit('done', {});
-    return lastTextContent || 'I was unable to answer this question.';
+    const answer = lastTextContent || 'I was unable to answer this question.';
+    return {
+      answer,
+      trajectory: {
+        toolCalls,
+        finalAnswer: answer,
+        tokenUsage,
+        model: AGENT_MODEL,
+        iterations,
+        stopReason: response.stop_reason,
+      },
+    };
   }
 
   // Iteration limit reached
   if (emit) await emit('done', {});
-  return lastTextContent || 'I was unable to produce an answer within the allowed number of steps.';
+  const answer =
+    lastTextContent || 'I was unable to produce an answer within the allowed number of steps.';
+  return {
+    answer,
+    trajectory: {
+      toolCalls,
+      finalAnswer: answer,
+      tokenUsage,
+      model: AGENT_MODEL,
+      iterations,
+      stopReason: 'iteration_limit',
+    },
+  };
 }
