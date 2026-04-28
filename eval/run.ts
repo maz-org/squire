@@ -117,7 +117,15 @@ function buildEvaluators(anthropic: Anthropic) {
     }) => {
       const question = (input as { question: string }).question;
       const exp = expectedOutput as { answer: string; grading: string };
-      const actual = typeof output === 'string' ? output : (output as { answer: string }).answer;
+      const actual =
+        typeof output === 'string'
+          ? output
+          : output !== null &&
+              typeof output === 'object' &&
+              'answer' in output &&
+              typeof output.answer === 'string'
+            ? output.answer
+            : String(output ?? '');
 
       const verdict = await judgeAnswer(anthropic, question, exp.answer, exp.grading, actual);
 
