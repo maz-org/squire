@@ -21,8 +21,16 @@ describe('eval dataset', () => {
     const cases = EvalDatasetSchema.parse(dataset);
 
     expect(cases).toHaveLength(29);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(17);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(18);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(10);
+  });
+
+  it('makes the cross-game ref case assert both the attempt and rejection', () => {
+    const cases = EvalDatasetSchema.parse(dataset);
+    const evalCase = cases.find((candidate) => candidate.id === 'traj-invalid-cross-game-ref');
+
+    expect(evalCase?.finalAnswer?.grading).toMatch(/Gloomhaven 2 path is rejected/);
+    expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven2/67.1');
   });
 
   it('defines flexible tool-path expectations for trajectory cases', () => {
@@ -60,5 +68,18 @@ describe('eval dataset', () => {
         'frosthaven-qa',
       ),
     ).toThrow(/has 1 item/);
+  });
+
+  it('rejects malformed remote Langfuse expected outputs', () => {
+    expect(() =>
+      validateRemoteDatasetShape(
+        [
+          { expectedOutput: { finalAnswer: {} } },
+          { expectedOutput: { trajectory: { maxToolCalls: '3' } } },
+        ],
+        2,
+        'frosthaven-qa',
+      ),
+    ).toThrow(/old expected-output shape/);
   });
 });

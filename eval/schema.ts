@@ -37,6 +37,16 @@ export const EvalCaseSchema = z
 
 export const EvalDatasetSchema = z.array(EvalCaseSchema);
 
+const RemoteExpectedOutputSchema = z
+  .object({
+    finalAnswer: FinalAnswerExpectationSchema.optional(),
+    trajectory: TrajectoryExpectationSchema.optional(),
+  })
+  .strict()
+  .refine((expectedOutput) => expectedOutput.finalAnswer || expectedOutput.trajectory, {
+    message: 'Remote expectedOutput must define finalAnswer, trajectory, or both.',
+  });
+
 export type ToolKind = z.infer<typeof ToolKindSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
@@ -102,14 +112,9 @@ export function validateRemoteDatasetShape(
     );
   }
 
-  const staleItems = remoteItems.filter((item) => {
-    const expected = item.expectedOutput;
-    return (
-      !expected ||
-      typeof expected !== 'object' ||
-      (!('finalAnswer' in expected) && !('trajectory' in expected))
-    );
-  });
+  const staleItems = remoteItems.filter(
+    (item) => !RemoteExpectedOutputSchema.safeParse(item.expectedOutput).success,
+  );
   if (staleItems.length > 0) {
     throw new Error(
       `Remote Langfuse dataset "${datasetName}" still uses the old expected-output shape for ${staleItems.length} item(s). Run \`node eval/run.ts --seed\` before running the full dataset.`,

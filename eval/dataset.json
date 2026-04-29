@@ -322,12 +322,16 @@
     "id": "traj-invalid-cross-game-ref",
     "category": "trajectory",
     "question": "Resolve section 67.1 in Frosthaven and then try the same bare legacy ref with an explicit Gloomhaven 2 game. The second path should reject or require a canonical game-qualified ref.",
+    "finalAnswer": {
+      "expected": "Frosthaven section 67.1 can be resolved and opened. The explicit Gloomhaven 2 section 67.1 lookup should fail or be reported as unavailable, and the assistant must not silently reuse the Frosthaven section for Gloomhaven 2.",
+      "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2 lookup. Must state that the Gloomhaven 2 path is rejected, unavailable, or requires a valid game-qualified ref. Answers that reuse Frosthaven data for Gloomhaven 2 should fail."
+    },
     "trajectory": {
       "requiredTools": ["resolve_entity", "open_entity"],
       "requiredToolKinds": ["resolution", "open"],
       "forbiddenTools": ["search_rules"],
-      "requiredRefs": ["section:frosthaven/67.1"],
-      "maxToolCalls": 6,
+      "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven2/67.1"],
+      "maxToolCalls": 8,
       "notes": "This covers missing-data and invalid-ref behavior without letting the agent silently reuse Frosthaven data for another game."
     },
     "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md"
