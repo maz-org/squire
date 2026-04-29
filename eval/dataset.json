@@ -94,8 +94,8 @@
     "category": "monster-stats",
     "question": "What conditions are Living Bones immune to in Frosthaven?",
     "finalAnswer": {
-      "expected": "Poison and wound.",
-      "grading": "Must mention both poison and wound immunity."
+      "expected": "Living Bones have no condition immunities in the checked-in Frosthaven monster stat data.",
+      "grading": "Must state that Living Bones have no condition immunities, or that the immunities list is empty. Must not claim poison or wound immunity."
     },
     "source": "data/extracted/monster-stats.json"
   },
@@ -114,8 +114,8 @@
     "category": "buildings",
     "question": "What does the Alchemist building cost to build at level 1 in Frosthaven?",
     "finalAnswer": {
-      "expected": "1 gold, 2 lumber, 2 metal, 1 hide.",
-      "grading": "Must mention the four resources: 1 gold, 2 lumber, 2 metal, 1 hide."
+      "expected": "The Alchemist starts the campaign already built at level 1, so it has no initial build cost. Its level 1 upgrade cost is 1 prosperity, 2 lumber, 2 metal, and 1 hide.",
+      "grading": "Must say the level 1 Alchemist has no initial build cost. Must not present 1 prosperity, 2 lumber, 2 metal, and 1 hide as the initial build cost; those are the upgrade cost shown on the level 1 building card."
     },
     "source": "data/extracted/buildings.json"
   },
@@ -144,8 +144,8 @@
     "category": "scenarios",
     "question": "What section text unlocks scenario 61 (Life and Death) in Frosthaven?",
     "finalAnswer": {
-      "expected": "Section 67.1 links to Life and Death (scenario 61). The section involves escaping shadows with Moonshard.",
-      "grading": "Must reference section 67 or the narrative context that leads to scenario 61. Mentioning 'Life and Death' as the scenario name is a bonus."
+      "expected": "Section 79.4 unlocks Life and Death (scenario 61). It is the Crain/star iron section whose rewards include New Scenario: Life and Death.",
+      "grading": "Must reference section 79.4 and the Crain/star iron context or the New Scenario: Life and Death reward."
     },
     "source": "fh-section-book-62-81.pdf"
   },
@@ -201,8 +201,8 @@
     "category": "trajectory",
     "question": "Starting from section 103.1, follow the next two read-now links and tell me where I end up.",
     "trajectory": {
-      "requiredTools": ["open_entity", "neighbors"],
-      "requiredToolKinds": ["open", "traversal"],
+      "requiredTools": ["neighbors"],
+      "requiredToolKinds": ["traversal"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:frosthaven/103.1"],
       "maxToolCalls": 7

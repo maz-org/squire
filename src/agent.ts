@@ -53,6 +53,9 @@ const MAX_HISTORY_TURNS = 20;
 const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
+const NEIGHBORS_TARGET_PROMPT =
+  'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks for section text, call open_entity on the returned section ref now; otherwise answer from the neighbors result. Do not search for another path unless neighbors returned no relevant target.';
+
 const ANSWER_FORMATTING_PROMPT = `Formatting:
 - Use *italics* only for named Frosthaven game terms — mechanics, abilities, conditions, status effects, keyword phrases (e.g., *Muddle*, *Shield 1*, *Retaliate*, *Loot 2*, *Move 3*). The UI renders these as a highlighted rule-term chip, so emphasizing prose words like *not* or *however* turns ordinary stress into a false rule citation. Use **bold** for general emphasis instead.
 - Use > blockquotes when you reproduce literal rulebook text. Don't wrap quoted sentences in italics.`;
@@ -64,9 +67,17 @@ Grounding rules:
 - Treat tool results as the source of truth. Do not invent rules, stats, item numbers, section text, or scenario outcomes.
 - If the available data does not answer the question, say what is missing instead of guessing.
 - Resolve natural user language to refs when exact records are needed, then open or traverse those refs.
+- For scenario/section relationship questions, resolve the named scenario or section first, then open or traverse the canonical ref.
+- For named card-data records such as items, monsters, buildings, events, battle goals, personal quests, and character mats, resolve the record first and then open the exact ref.
+- When an exact record has null or empty fields, state that the field is not available in the checked-in data. Do not recommend physical components, community knowledge, memory, or likely values as a substitute for missing tool data.
+- For building records, treat a cost object as known no-cost only when every numeric cost field is 0, including prosperity when present. If resources are 0 but prosperity is non-zero, say there is no resource cost but there is still a prosperity requirement.
 - If the user asks you to resolve something, call resolve_entity before opening or answering.
 - When the user gives an explicit game qualifier, preserve it in canonical refs such as section:gloomhaven2/67.1; never invent URI forms like gloomhaven2://section/67.1.
 - Use neighbors for scenario/section traversal questions, including conclusions, read-now links, unlocks, next links, and related records. Open entities for record text after traversal identifies the target.
+- When neighbors returns the requested unlock, conclusion, read-now, next, or related target, open that target if text is needed, then answer. Do not search for a second path unless neighbors returns no relevant target.
+- For multi-hop traversal questions, open the starting record, then call neighbors for each hop; do not rely on open_entity links alone.
+- For direct "related records" questions, a neighbors result is enough unless the user asks for full text from each neighbor.
+- When comparing exact records with fuzzy search matches, open the exact requested record and use search result summaries for fuzzy/contextual matches. Do not open every fuzzy match unless the user asks for full details.
 
 Citations and answer shape:
 - Cite the book, section, scenario, or card source when the tool result provides one.
@@ -137,7 +148,7 @@ export const AGENT_TOOLS = [
   {
     name: 'resolve_entity',
     description:
-      'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
+      'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", "Alchemist building", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
     input_schema: {
       type: 'object',
       properties: {
@@ -161,7 +172,7 @@ export const AGENT_TOOLS = [
   {
     name: 'open_entity',
     description:
-      'Open one exact Squire entity by canonical ref: rules:<game>/<source>#chunk=N, scenario:<game>/<id>, section:<game>/<id>, or card:<game>/<type>/<sourceId>. Use this to validate unavailable game-qualified refs instead of inventing URI forms.',
+      'Open one exact Squire entity by canonical ref: rules:<game>/<source>#chunk=N, scenario:<game>/<id>, section:<game>/<id>, or card:<game>/<type>/<sourceId>. Do not use this as the only step for traversal questions; call neighbors to follow links. Use this to validate unavailable game-qualified refs instead of inventing URI forms.',
     input_schema: {
       type: 'object',
       properties: {
@@ -191,7 +202,7 @@ export const AGENT_TOOLS = [
   {
     name: 'neighbors',
     description:
-      'Traverse known outgoing relationships from a scenario or section ref. Prefer this for conclusions, read-now links, unlocks, next links, and related scenario/section questions.',
+      'Traverse known relationships from a scenario or section ref, including incoming section links and unlocks for a scenario. Use this even when open_entity shows links; it is the traversal tool for conclusions, read-now links, unlocks, next links, and related scenario/section questions.',
     input_schema: {
       type: 'object',
       properties: {
@@ -458,6 +469,18 @@ function summarizeToolOutput(content: string): { summary: string; canonicalRefs:
   }
 }
 
+function hasUsefulNeighborsResult(result: ToolCallResult): boolean {
+  try {
+    const parsed = JSON.parse(result.content) as {
+      ok?: unknown;
+      neighbors?: unknown;
+    };
+    return parsed.ok === true && Array.isArray(parsed.neighbors) && parsed.neighbors.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 function sourceLabelsFromResult(value: unknown): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
@@ -485,6 +508,23 @@ const DISCOVERY_ONLY_TOOL_NAMES = new Set<AgentToolName>([
   'schema',
   'resolve_entity',
 ]);
+
+function isBroadRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
+  if (toolName === 'search_rules') return true;
+  if (toolName !== 'search_knowledge') return false;
+
+  const scope = input.scope;
+  if (!Array.isArray(scope) || scope.length === 0) return false;
+  return scope.length > 0 && scope.every((kind) => kind === 'rules_passage');
+}
+
+function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
+  if (DISCOVERY_ONLY_TOOL_NAMES.has(toolName as AgentToolName)) return false;
+  if (toolName === 'open_entity' && typeof input.ref === 'string') {
+    return !input.ref.startsWith('rules:');
+  }
+  return !isBroadRuleSearchTool(toolName, input);
+}
 
 /**
  * Execute a single tool call and return the result content plus any per-result
@@ -794,11 +834,13 @@ async function runAgentLoopInternal(
       messages.push({ role: 'assistant', content: response.content });
 
       const toolResults: ContentBlockParam[] = [];
+      let sawNeighborsWithTargets = false;
       for (const block of response.content) {
         if (block.type === 'tool_use') {
-          if (block.name === 'search_rules') {
+          const input = block.input as Record<string, unknown>;
+          if (isBroadRuleSearchTool(block.name, input)) {
             broadRuleSearches += 1;
-          } else if (!DISCOVERY_ONLY_TOOL_NAMES.has(block.name as AgentToolName)) {
+          } else if (isNonRuleSearchTool(block.name, input)) {
             hasUsedNonRuleSearchTool = true;
           }
 
@@ -866,6 +908,9 @@ async function runAgentLoopInternal(
             endedAt: new Date(toolEndedAtMs).toISOString(),
             durationMs: toolEndedAtMs - toolStartedAtMs,
           });
+          if (block.name === 'neighbors' && !isError && hasUsefulNeighborsResult(toolResult)) {
+            sawNeighborsWithTargets = true;
+          }
 
           if (emit) {
             await emit('tool_result', {
@@ -885,6 +930,9 @@ async function runAgentLoopInternal(
       }
 
       messages.push({ role: 'user', content: toolResults });
+      if (sawNeighborsWithTargets) {
+        messages.push({ role: 'user', content: NEIGHBORS_TARGET_PROMPT });
+      }
       // Simple factual rule lookups can drift into repeated broad searches.
       // After three rule-corpus searches, force synthesis from gathered context
       // without lowering the global loop budget needed by traversal questions.

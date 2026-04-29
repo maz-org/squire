@@ -265,7 +265,7 @@ export const cardBuildings = pgTable(
     buildingNumber: text('building_number'),
     name: text('name').notNull(),
     level: integer('level').notNull(),
-    buildCost: jsonb('build_cost').notNull(), // { gold, lumber, metal, hide }
+    buildCost: jsonb('build_cost').notNull(), // { prosperity, gold, lumber, metal, hide }
     effect: text('effect').notNull(),
     notes: text('notes'),
     searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),

@@ -645,6 +645,55 @@ describe('knowledge discovery tools', () => {
     expect(ability.candidates[0].entity).not.toHaveProperty('data');
   });
 
+  it('resolveEntity accepts building aliases and returns openable building refs', async () => {
+    const result = await resolveEntity('Alchemist building level 1', {
+      kinds: ['building'],
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.candidates[0]).toEqual(
+      expect.objectContaining({
+        entity: expect.objectContaining({
+          kind: 'card',
+          ref: 'card:frosthaven/buildings/gloomhavensecretariat:building/35/L1',
+          title: 'Alchemist',
+        }),
+      }),
+    );
+    await expect(openEntity(result.candidates[0].entity.ref)).resolves.toMatchObject({
+      ok: true,
+      entity: expect.objectContaining({
+        data: expect.objectContaining({
+          level: 1,
+          buildCost: {
+            prosperity: 0,
+            gold: 0,
+            lumber: 0,
+            metal: 0,
+            hide: 0,
+          },
+        }),
+      }),
+    });
+    await expect(
+      openEntity('card:frosthaven/buildings/gloomhavensecretariat:building/35/L2'),
+    ).resolves.toMatchObject({
+      ok: true,
+      entity: expect.objectContaining({
+        data: expect.objectContaining({
+          level: 2,
+          buildCost: {
+            prosperity: 1,
+            gold: 0,
+            lumber: 2,
+            metal: 2,
+            hide: 1,
+          },
+        }),
+      }),
+    });
+  });
+
   it('resolveEntity validates kind filters against the discovery registry', async () => {
     await expect(resolveEntity('Spyglass', { kinds: ['nonsense'] })).resolves.toEqual({
       ok: false,
@@ -812,6 +861,56 @@ describe('scenario/section book tools', () => {
         linkType: 'unlock',
       }),
     ]);
+  });
+
+  it('resolves incoming unlock links for a scenario through neighbors', async () => {
+    const result = await neighbors('scenario:frosthaven/061', { relation: 'unlock' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.neighbors).toEqual([
+      expect.objectContaining({
+        relation: 'unlock',
+        target: expect.objectContaining({
+          kind: 'section',
+          ref: 'section:frosthaven/79.4',
+        }),
+      }),
+    ]);
+  });
+
+  it('includes incoming section links when listing scenario neighbors', async () => {
+    const result = await neighbors('scenario:frosthaven/061');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.neighbors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          relation: 'section_link',
+          target: expect.objectContaining({
+            kind: 'section',
+            ref: 'section:frosthaven/105.1',
+          }),
+        }),
+        expect.objectContaining({
+          relation: 'section_link',
+          target: expect.objectContaining({
+            kind: 'section',
+            ref: 'section:frosthaven/82.2',
+          }),
+        }),
+        expect.objectContaining({
+          relation: 'section_link',
+          target: expect.objectContaining({
+            kind: 'section',
+            ref: 'section:frosthaven/97.3',
+          }),
+        }),
+      ]),
+    );
   });
 
   it('keeps scenario-box links whose section refs are OCR-spaced around the dot', async () => {

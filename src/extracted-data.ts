@@ -393,11 +393,18 @@ function recordToText(record: ExtractedRecord): string {
   if (t === 'buildings') {
     const r = record as ExtractedRecord;
     const buildCost = r.buildCost as Record<string, number | null> | undefined;
+    const costEntries = buildCost
+      ? Object.entries(buildCost).filter(([, v]) => v !== null && v !== 0)
+      : [];
+    const values = buildCost ? Object.values(buildCost) : [];
+    const knownCosts = values.filter((v): v is number => v !== null);
+    const hasUnknownCosts = values.some((v) => v === null);
     const cost = buildCost
-      ? Object.entries(buildCost)
-          .filter(([, v]) => v)
-          .map(([k, v]) => `${v} ${k}`)
-          .join(', ')
+      ? costEntries.length > 0
+        ? costEntries.map(([k, v]) => `${v} ${k}`).join(', ')
+        : !hasUnknownCosts && knownCosts.length > 0 && knownCosts.every((v) => v === 0)
+          ? 'no cost'
+          : 'unknown'
       : 'unknown';
     return `Building #${r.buildingNumber} — ${r.name} Level ${r.level}. Cost: ${cost}. Effect: ${r.effect}. ${(r.notes as string) || ''}`.trim();
   }
