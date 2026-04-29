@@ -8,6 +8,7 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
+import { pathToFileURL } from 'node:url';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
@@ -1231,7 +1232,7 @@ async function listen(server: import('node:net').Server, port: number): Promise<
 }
 
 // CLI entrypoint
-if (process.argv[1]?.endsWith('server.ts')) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   startServer().catch((err: unknown) => {
     console.error('Failed to start server:', err);
     process.exit(1);

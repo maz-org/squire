@@ -516,8 +516,8 @@ export type EmitFn = (event: string, data: unknown) => Promise<void>;
 export interface AskOptions {
   history?: HistoryMessage[];
   /**
-   * Default uses the redesigned self-describing knowledge tools. `legacy`
-   * keeps the old tool surface selectable until eval parity closes Step 3.
+   * Phase 1 defaults to the legacy prompt-routed tools after the SQR-122 eval
+   * report. `redesigned` remains selectable for the follow-up retrieval work.
    */
   toolSurface?: 'redesigned' | 'legacy';
   /** Campaign UUID — reserved for future campaign context loading. */

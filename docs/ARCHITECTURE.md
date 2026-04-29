@@ -47,6 +47,12 @@ Agents and LangSmith Deployment are explicitly deferred until after the Step 3
 eval report. See
 [ADR 0013 — Keep Phase 1 production on the current knowledge-agent path](adr/0013-phase-1-production-agent-baseline.md).
 
+The Step 3 eval report is checked in at
+[docs/plans/sqr-122-retrieval-eval-decision-report.md](plans/sqr-122-retrieval-eval-decision-report.md).
+Its decision is to keep Phase 1 production on the legacy prompt-routed tool
+surface and defer the redesigned self-describing tool surface until its
+final-answer regressions and remaining trajectory failures are fixed.
+
 The active baseline is:
 
 - Hono hosts the web UI, REST endpoints, and MCP endpoint in one server.

@@ -20,9 +20,14 @@ export async function askFrosthaven(question: string, options?: AskOptions): Pro
   return options ? ask(question, options) : ask(question);
 }
 
-export async function askFrosthavenWithTrajectory(question: string): Promise<AgentRunResult> {
+export async function askFrosthavenWithTrajectory(
+  question: string,
+  options?: AskOptions,
+): Promise<AgentRunResult> {
   await initialize();
-  return runAgentLoopWithTrajectory(question);
+  return options
+    ? runAgentLoopWithTrajectory(question, options)
+    : runAgentLoopWithTrajectory(question);
 }
 
 // CLI entrypoint

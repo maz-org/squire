@@ -209,18 +209,27 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
   });
 
-  it('passes tools to Claude API', async () => {
+  it('defaults to the legacy tool surface for Phase 1', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
     await runAgentLoop('test');
+    expect(mockMessagesCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tools: LEGACY_AGENT_TOOLS,
+        system: LEGACY_AGENT_SYSTEM_PROMPT,
+      }),
+    );
+  });
+
+  it('keeps the redesigned tools selectable for evals and follow-up work', async () => {
+    mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
+    await runAgentLoop('test', { toolSurface: 'redesigned' });
+
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: AGENT_TOOLS,
         system: AGENT_SYSTEM_PROMPT,
       }),
     );
-  });
-
-  it('uses only the redesigned tools by default', async () => {
     expect(AGENT_TOOLS.map((tool) => tool.name)).toEqual([
       'inspect_sources',
       'schema',
@@ -234,7 +243,7 @@ describe('runAgentLoop', () => {
     expect(AGENT_SYSTEM_PROMPT).not.toContain('follow_links');
   });
 
-  it('can select the legacy tool surface while evals are pending', async () => {
+  it('keeps the legacy tool list stable', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
     await runAgentLoop('test', { toolSurface: 'legacy' });
 
@@ -295,6 +304,7 @@ describe('runAgentLoop', () => {
 
     const result = await runAgentLoop(
       'show the full text of the section to read at the conclusion of scenario 61',
+      { toolSurface: 'redesigned' },
     );
 
     expect(result).toBe('Read section 67.1.');
@@ -320,7 +330,9 @@ describe('runAgentLoop', () => {
       )
       .mockResolvedValueOnce(textResponse('Loot rules and item results are grounded together.'));
 
-    const result = await runAgentLoop('How do loot rules interact with items?');
+    const result = await runAgentLoop('How do loot rules interact with items?', {
+      toolSurface: 'redesigned',
+    });
 
     expect(result).toBe('Loot rules and item results are grounded together.');
     expect(mockSearchKnowledge).toHaveBeenCalledWith('loot and item interactions', {
@@ -407,7 +419,9 @@ describe('runAgentLoop', () => {
       )
       .mockResolvedValueOnce(textResponse('Jump ignores terrain except in the last hex.'));
 
-    const result = await runAgentLoopWithTrajectory('What is Jump?');
+    const result = await runAgentLoopWithTrajectory('What is Jump?', {
+      toolSurface: 'redesigned',
+    });
 
     expect(result.answer).toBe('Jump ignores terrain except in the last hex.');
     expect(result.trajectory.toolCalls).toMatchObject([
@@ -1006,7 +1020,7 @@ describe('runAgentLoop with emit (streaming)', () => {
     mockMessagesStream.mockReturnValue(mockStream(msg, ['Hello ', 'world']));
     const emit = vi.fn().mockResolvedValue(undefined);
 
-    await runAgentLoop('test', { emit });
+    await runAgentLoop('test', { emit, toolSurface: 'redesigned' });
     expect(emit).toHaveBeenCalledWith('text', { delta: 'Hello ' });
     expect(emit).toHaveBeenCalledWith('text', { delta: 'world' });
   });

@@ -354,16 +354,10 @@ function selectedAgentSurface(surface: AgentToolSurface | undefined): {
   system: string;
   tools: readonly Tool[];
 } {
-  if (surface === 'legacy') {
-    return {
-      system: LEGACY_AGENT_SYSTEM_PROMPT,
-      tools: LEGACY_AGENT_TOOLS,
-    };
+  if (surface === 'redesigned') {
+    return { system: AGENT_SYSTEM_PROMPT, tools: AGENT_TOOLS };
   }
-  return {
-    system: AGENT_SYSTEM_PROMPT,
-    tools: AGENT_TOOLS,
-  };
+  return { system: LEGACY_AGENT_SYSTEM_PROMPT, tools: LEGACY_AGENT_TOOLS };
 }
 
 export interface ToolCallResult {

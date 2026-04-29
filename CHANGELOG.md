@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.6] - 2026-04-29
+
+### Changed
+
+- Added the SQR-122 retrieval eval decision report comparing the legacy and redesigned tool surfaces on the same 29-case eval suite.
+- Kept Phase 1 production on the legacy prompt-routed tool surface while leaving the redesigned surface selectable for evals and follow-up work.
+- Added eval runner flags for selecting the tool surface and writing local JSON reports with per-case latency, token, tool-call, and scoring data.
+- Tightened the server CLI entrypoint guard so importing `src/server.ts` in tests cannot start the HTTP server as a side effect.
+
 ## [0.1.5] - 2026-04-28
 
 ### Added

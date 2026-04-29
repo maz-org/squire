@@ -8,18 +8,37 @@ const { mockInitialize, mockAsk } = vi.hoisted(() => ({
   mockAsk: vi.fn(),
 }));
 
+const { mockRunAgentLoopWithTrajectory } = vi.hoisted(() => ({
+  mockRunAgentLoopWithTrajectory: vi.fn(),
+}));
+
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
   ask: mockAsk,
 }));
 
-import { askFrosthaven } from '../src/query.ts';
+vi.mock('../src/agent.ts', () => ({
+  runAgentLoopWithTrajectory: mockRunAgentLoopWithTrajectory,
+}));
+
+import { askFrosthaven, askFrosthavenWithTrajectory } from '../src/query.ts';
 
 describe('askFrosthaven', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockInitialize.mockResolvedValue(undefined);
     mockAsk.mockResolvedValue('Mocked answer from service');
+    mockRunAgentLoopWithTrajectory.mockResolvedValue({
+      answer: 'Mocked trajectory answer',
+      trajectory: {
+        toolCalls: [],
+        finalAnswer: 'Mocked trajectory answer',
+        tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        model: 'test-model',
+        iterations: 1,
+        stopReason: 'end_turn',
+      },
+    });
   });
 
   it('initializes the service before asking', async () => {
@@ -52,5 +71,17 @@ describe('askFrosthaven', () => {
   it('propagates ask errors', async () => {
     mockAsk.mockRejectedValue(new Error('Claude API error'));
     await expect(askFrosthaven('test')).rejects.toThrow('Claude API error');
+  });
+
+  it('passes options through to trajectory runs', async () => {
+    const options = { toolSurface: 'legacy' as const };
+
+    await askFrosthavenWithTrajectory('What is the loot action?', options);
+
+    expect(mockInitialize).toHaveBeenCalled();
+    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith(
+      'What is the loot action?',
+      options,
+    );
   });
 });

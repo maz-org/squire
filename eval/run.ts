@@ -2,20 +2,24 @@
  * RAG pipeline evaluation runner using Langfuse datasets & experiments.
  *
  * First run:  node eval/run.ts --seed        # upload dataset to Langfuse
- * Run eval:   node eval/run.ts               # run all questions
+ * Run eval:   node eval/run.ts               # run all questions on redesigned tools
+ * Legacy:     node eval/run.ts --tool-surface=legacy
  * Filtered:   node eval/run.ts --category=rulebook
  *             node eval/run.ts --id=rule-poison
  * Named run:  node eval/run.ts --name="after chunking fix"
+ * Local JSON: node eval/run.ts --local-report=/tmp/eval.json
  */
 
 import 'dotenv/config';
 import { sdk, LANGFUSE_DEFAULT_BASE_URL } from '../src/instrumentation.ts';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { LangfuseClient } from '@langfuse/client';
 import { askFrosthavenWithTrajectory } from '../src/query.ts';
+import { AGENT_SYSTEM_PROMPT, LEGACY_AGENT_SYSTEM_PROMPT, type TokenUsage } from '../src/agent.ts';
+import { parseEvalArgs, type EvalToolSurface } from './cli.ts';
 import {
   EvalDatasetSchema,
   evalCaseHasFinalAnswer,
@@ -34,6 +38,8 @@ const DATASET_NAME = 'frosthaven-qa';
 interface EvalRunOutput {
   answer: string;
   trajectory: AgentRunResult['trajectory'];
+  durationMs?: number;
+  toolSurface?: EvalToolSurface;
 }
 
 const JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven board game rules assistant.
@@ -254,7 +260,11 @@ function buildRunEvaluators() {
 
 // --- Run experiment ---
 
-async function runOnDataset(langfuse: LangfuseClient, runName: string): Promise<void> {
+async function runOnDataset(
+  langfuse: LangfuseClient,
+  runName: string,
+  toolSurface: EvalToolSurface,
+): Promise<void> {
   const anthropic = new Anthropic();
   const dataset = await langfuse.dataset.get(DATASET_NAME);
   console.log(`Dataset has ${dataset.items.length} items`);
@@ -267,7 +277,9 @@ async function runOnDataset(langfuse: LangfuseClient, runName: string): Promise<
       const question = (item.input as { question: string }).question;
       const meta = item.metadata as { id?: string } | undefined;
       process.stdout.write(`  ${meta?.id ?? '?'}... `);
-      return askFrosthavenWithTrajectory(question);
+      const startedAt = Date.now();
+      const result = await askFrosthavenWithTrajectory(question, { toolSurface });
+      return { ...result, durationMs: Date.now() - startedAt, toolSurface };
     },
     evaluators: buildEvaluators(anthropic),
     runEvaluators: buildRunEvaluators(),
@@ -283,6 +295,7 @@ async function runFiltered(
   langfuse: LangfuseClient,
   cases: EvalCase[],
   runName: string,
+  toolSurface: EvalToolSurface,
 ): Promise<void> {
   const anthropic = new Anthropic();
 
@@ -306,7 +319,9 @@ async function runFiltered(
       const question = (item.input as { question: string }).question;
       const meta = item.metadata as { id?: string } | undefined;
       process.stdout.write(`  ${meta?.id ?? '?'}... `);
-      return askFrosthavenWithTrajectory(question);
+      const startedAt = Date.now();
+      const result = await askFrosthavenWithTrajectory(question, { toolSurface });
+      return { ...result, durationMs: Date.now() - startedAt, toolSurface };
     },
     evaluators: buildEvaluators(anthropic),
     runEvaluators: buildRunEvaluators(),
@@ -315,15 +330,139 @@ async function runFiltered(
   console.log('\n' + (await result.format()));
 }
 
+function addTokenUsage(total: TokenUsage, next: TokenUsage): void {
+  total.inputTokens += next.inputTokens;
+  total.outputTokens += next.outputTokens;
+  total.totalTokens += next.totalTokens;
+}
+
+function promptLengthFor(toolSurface: EvalToolSurface): { chars: number; estimatedTokens: number } {
+  const prompt = toolSurface === 'legacy' ? LEGACY_AGENT_SYSTEM_PROMPT : AGENT_SYSTEM_PROMPT;
+  return { chars: prompt.length, estimatedTokens: Math.ceil(prompt.length / 4) };
+}
+
+async function runLocalReport(
+  cases: EvalCase[],
+  runName: string,
+  toolSurface: EvalToolSurface,
+  outputPath: string,
+): Promise<void> {
+  const anthropic = new Anthropic();
+  const results = [];
+  const totalTokenUsage: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+
+  for (const c of cases) {
+    process.stdout.write(`  ${c.id}... `);
+    const startedAt = Date.now();
+    try {
+      const output = await askFrosthavenWithTrajectory(c.question, { toolSurface });
+      const durationMs = Date.now() - startedAt;
+      addTokenUsage(totalTokenUsage, output.trajectory.tokenUsage);
+
+      const finalAnswer = c.finalAnswer
+        ? await judgeAnswer(
+            anthropic,
+            c.question,
+            c.finalAnswer.expected,
+            c.finalAnswer.grading,
+            output.answer,
+          )
+        : null;
+      const trajectory = c.trajectory
+        ? scoreTrajectory(c.trajectory, output.trajectory.toolCalls)
+        : null;
+
+      const mark =
+        (finalAnswer ? finalAnswer.pass : true) && (trajectory ? trajectory.pass : true)
+          ? '\u2713'
+          : '\u2717';
+      console.log(mark);
+
+      results.push({
+        id: c.id,
+        category: c.category,
+        source: c.source,
+        hasFinalAnswerExpectation: Boolean(c.finalAnswer),
+        hasTrajectoryExpectation: Boolean(c.trajectory),
+        question: c.question,
+        answer: output.answer,
+        durationMs,
+        finalAnswer,
+        trajectory,
+        toolCallCount: output.trajectory.toolCalls.length,
+        toolCalls: output.trajectory.toolCalls.map((call) => ({
+          name: call.name,
+          input: call.input,
+          ok: call.ok,
+          sourceLabels: call.sourceLabels,
+          canonicalRefs: call.canonicalRefs,
+          durationMs: call.durationMs,
+          error: call.error,
+        })),
+        tokenUsage: output.trajectory.tokenUsage,
+        iterations: output.trajectory.iterations,
+        stopReason: output.trajectory.stopReason,
+      });
+    } catch (err) {
+      console.log('\u2717');
+      results.push({
+        id: c.id,
+        category: c.category,
+        source: c.source,
+        hasFinalAnswerExpectation: Boolean(c.finalAnswer),
+        hasTrajectoryExpectation: Boolean(c.trajectory),
+        question: c.question,
+        durationMs: Date.now() - startedAt,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  const finalAnswerResults = results.filter((result) => result.finalAnswer);
+  const trajectoryResults = results.filter((result) => result.trajectory);
+  const finalAnswerCases = results.filter((result) => result.hasFinalAnswerExpectation).length;
+  const trajectoryCases = results.filter((result) => result.hasTrajectoryExpectation).length;
+  const totalDurationMs = results.reduce((sum, result) => sum + (result.durationMs ?? 0), 0);
+  const totalToolCalls = results.reduce((sum, result) => sum + (result.toolCallCount ?? 0), 0);
+  const promptLength = promptLengthFor(toolSurface);
+
+  const report = {
+    generatedAt: new Date().toISOString(),
+    runName,
+    toolSurface,
+    datasetName: DATASET_NAME,
+    promptLength,
+    summary: {
+      totalCases: results.length,
+      erroredCases: results.filter((result) => result.error).length,
+      finalAnswerCases,
+      finalAnswerPasses: finalAnswerResults.filter((result) => result.finalAnswer?.pass === true)
+        .length,
+      avgCorrectnessScore:
+        finalAnswerResults.length === 0
+          ? null
+          : finalAnswerResults.reduce((sum, result) => sum + (result.finalAnswer?.score ?? 0), 0) /
+            finalAnswerResults.length,
+      trajectoryCases,
+      trajectoryPasses: trajectoryResults.filter((result) => result.trajectory?.pass === true)
+        .length,
+      avgToolCalls: results.length === 0 ? 0 : totalToolCalls / results.length,
+      avgLatencyMs: results.length === 0 ? 0 : totalDurationMs / results.length,
+      totalLatencyMs: totalDurationMs,
+      tokenUsage: totalTokenUsage,
+    },
+    results,
+  };
+
+  mkdirSync(dirname(outputPath), { recursive: true });
+  writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(`\nWrote local eval report: ${outputPath}`);
+}
+
 // --- CLI ---
 
-const args = process.argv.slice(2);
-const shouldSeed = args.includes('--seed');
-const categoryFilter = args.find((a) => a.startsWith('--category='))?.split('=')[1];
-const idFilter = args.find((a) => a.startsWith('--id='))?.split('=')[1];
-const runName =
-  args.find((a) => a.startsWith('--name='))?.split('=')[1] ??
-  `eval-${new Date().toISOString().slice(0, 16)}`;
+const { shouldSeed, categoryFilter, idFilter, runName, toolSurface, localReportPath } =
+  parseEvalArgs(process.argv.slice(2));
 
 const allCases: EvalCase[] = EvalDatasetSchema.parse(
   JSON.parse(readFileSync(join(__dirname, 'dataset.json'), 'utf-8')),
@@ -346,18 +485,23 @@ if (shouldSeed) {
   );
 }
 
-const langfuse = new LangfuseClient({
-  baseUrl: process.env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
-});
-
-if (shouldSeed) {
-  await seedDataset(langfuse, allCases);
+if (localReportPath) {
+  console.log(`Running ${cases.length} local eval(s) as "${runName}" on ${toolSurface} tools...\n`);
+  await runLocalReport(cases, runName, toolSurface, localReportPath);
 } else {
-  console.log(`Running ${cases.length} eval(s) as "${runName}"...\n`);
-  if (isFiltered) {
-    await runFiltered(langfuse, cases, runName);
+  const langfuse = new LangfuseClient({
+    baseUrl: process.env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
+  });
+
+  if (shouldSeed) {
+    await seedDataset(langfuse, allCases);
   } else {
-    await runOnDataset(langfuse, runName);
+    console.log(`Running ${cases.length} eval(s) as "${runName}" on ${toolSurface} tools...\n`);
+    if (isFiltered) {
+      await runFiltered(langfuse, cases, runName, toolSurface);
+    } else {
+      await runOnDataset(langfuse, runName, toolSurface);
+    }
   }
 }
 
