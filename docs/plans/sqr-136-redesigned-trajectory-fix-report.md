@@ -21,7 +21,7 @@ Those are tracked by SQR-137 rather than SQR-136.
 
 ## Root Causes
 
-The remaining trajectory failures had three causes:
+The previously observed trajectory failures had three causes:
 
 - `resolve_entity` returned legacy card source IDs and full record payloads. The
   model could answer from the resolution output or try to open an

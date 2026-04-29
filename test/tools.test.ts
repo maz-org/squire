@@ -271,6 +271,13 @@ describe('openEntity', () => {
     });
   });
 
+  it('does not open a default-game scenario for an explicit unsupported game ref', async () => {
+    await expect(openEntity('scenario:gloomhaven2/061')).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'not_found' },
+    });
+  });
+
   it('returns ambiguous for underspecified legacy refs', async () => {
     await expect(openEntity('61')).resolves.toMatchObject({
       ok: false,
