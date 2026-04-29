@@ -238,6 +238,9 @@ describe('runAgentLoop', () => {
       'search_knowledge',
       'neighbors',
     ]);
+    expect(AGENT_SYSTEM_PROMPT).toContain(
+      'known no-cost only when every numeric cost field is 0, including prosperity when present',
+    );
     expect(AGENT_SYSTEM_PROMPT).not.toContain('search_rules');
     expect(AGENT_SYSTEM_PROMPT).not.toContain('find_scenario');
     expect(AGENT_SYSTEM_PROMPT).not.toContain('follow_links');
