@@ -264,6 +264,13 @@ describe('openEntity', () => {
     });
   });
 
+  it('does not open a default-game section for an explicit unsupported game ref', async () => {
+    await expect(openEntity('section:gloomhaven2/67.1')).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'not_found' },
+    });
+  });
+
   it('returns ambiguous for underspecified legacy refs', async () => {
     await expect(openEntity('61')).resolves.toMatchObject({
       ok: false,
@@ -591,21 +598,29 @@ describe('knowledge discovery tools', () => {
         confidence: expect.any(Number),
         entity: expect.objectContaining({
           kind: 'card',
-          ref: 'gloomhavensecretariat:item/1',
+          ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
           title: 'Spyglass',
-          data: expect.objectContaining({ cardType: 'items' }),
         }),
       }),
     );
+    expect(item.candidates[0].entity).not.toHaveProperty('data');
+    await expect(openEntity(item.candidates[0].entity.ref)).resolves.toMatchObject({
+      ok: true,
+      entity: expect.objectContaining({
+        kind: 'card',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+      }),
+    });
 
     const monster = await resolveEntity('Living Bones', { kinds: ['monster'] });
     expect(monster.candidates[0].entity).toEqual(
       expect.objectContaining({
         kind: 'card',
+        ref: expect.stringMatching(/^card:frosthaven\/monster-stats\//),
         title: 'Living Bones',
-        data: expect.objectContaining({ cardType: 'monster-stats' }),
       }),
     );
+    expect(monster.candidates[0].entity).not.toHaveProperty('data');
 
     const ability = await resolveEntity('Blinkblade level 4 cards', {
       kinds: ['character-ability'],
@@ -615,15 +630,12 @@ describe('knowledge discovery tools', () => {
         expect.objectContaining({
           entity: expect.objectContaining({
             kind: 'card',
-            data: expect.objectContaining({
-              cardType: 'character-abilities',
-              characterClass: 'Blinkblade',
-              level: 4,
-            }),
+            ref: expect.stringMatching(/^card:frosthaven\/character-abilities\//),
           }),
         }),
       ]),
     );
+    expect(ability.candidates[0].entity).not.toHaveProperty('data');
   });
 
   it('resolveEntity validates kind filters against the discovery registry', async () => {
