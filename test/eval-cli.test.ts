@@ -15,7 +15,23 @@ describe('parseEvalArgs', () => {
     expect(() => parseEvalArgs(['--tool-surface=old'])).toThrow(/Invalid --tool-surface/);
   });
 
+  it('rejects an empty tool surface', () => {
+    expect(() => parseEvalArgs(['--tool-surface='])).toThrow(
+      /Invalid --tool-surface: value cannot be empty/,
+    );
+  });
+
+  it('rejects an empty run name', () => {
+    expect(() => parseEvalArgs(['--name='])).toThrow(/Invalid --name: value cannot be empty/);
+  });
+
   it('parses the local report output path', () => {
     expect(parseEvalArgs(['--local-report=/tmp/eval.json']).localReportPath).toBe('/tmp/eval.json');
+  });
+
+  it('rejects an empty local report output path', () => {
+    expect(() => parseEvalArgs(['--local-report='])).toThrow(
+      /Invalid --local-report: value cannot be empty/,
+    );
   });
 });

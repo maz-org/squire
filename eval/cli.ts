@@ -11,7 +11,13 @@ export interface EvalCliOptions {
 
 function valueFor(args: string[], prefix: string): string | undefined {
   const arg = args.find((candidate) => candidate.startsWith(prefix));
-  return arg ? arg.slice(prefix.length) : undefined;
+  if (!arg) return undefined;
+
+  const value = arg.slice(prefix.length);
+  if (value.length === 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: value cannot be empty.`);
+  }
+  return value;
 }
 
 export function parseEvalArgs(args: string[], now = new Date()): EvalCliOptions {

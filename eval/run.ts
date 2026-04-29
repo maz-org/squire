@@ -382,6 +382,8 @@ async function runLocalReport(
         id: c.id,
         category: c.category,
         source: c.source,
+        hasFinalAnswerExpectation: Boolean(c.finalAnswer),
+        hasTrajectoryExpectation: Boolean(c.trajectory),
         question: c.question,
         answer: output.answer,
         durationMs,
@@ -407,6 +409,8 @@ async function runLocalReport(
         id: c.id,
         category: c.category,
         source: c.source,
+        hasFinalAnswerExpectation: Boolean(c.finalAnswer),
+        hasTrajectoryExpectation: Boolean(c.trajectory),
         question: c.question,
         durationMs: Date.now() - startedAt,
         error: err instanceof Error ? err.message : String(err),
@@ -416,6 +420,8 @@ async function runLocalReport(
 
   const finalAnswerResults = results.filter((result) => result.finalAnswer);
   const trajectoryResults = results.filter((result) => result.trajectory);
+  const finalAnswerCases = results.filter((result) => result.hasFinalAnswerExpectation).length;
+  const trajectoryCases = results.filter((result) => result.hasTrajectoryExpectation).length;
   const totalDurationMs = results.reduce((sum, result) => sum + (result.durationMs ?? 0), 0);
   const totalToolCalls = results.reduce((sum, result) => sum + (result.toolCallCount ?? 0), 0);
   const promptLength = promptLengthFor(toolSurface);
@@ -429,15 +435,17 @@ async function runLocalReport(
     summary: {
       totalCases: results.length,
       erroredCases: results.filter((result) => result.error).length,
-      finalAnswerCases: finalAnswerResults.length,
-      finalAnswerPasses: finalAnswerResults.filter((result) => result.finalAnswer?.pass).length,
+      finalAnswerCases,
+      finalAnswerPasses: finalAnswerResults.filter((result) => result.finalAnswer?.pass === true)
+        .length,
       avgCorrectnessScore:
         finalAnswerResults.length === 0
           ? null
           : finalAnswerResults.reduce((sum, result) => sum + (result.finalAnswer?.score ?? 0), 0) /
             finalAnswerResults.length,
-      trajectoryCases: trajectoryResults.length,
-      trajectoryPasses: trajectoryResults.filter((result) => result.trajectory?.pass).length,
+      trajectoryCases,
+      trajectoryPasses: trajectoryResults.filter((result) => result.trajectory?.pass === true)
+        .length,
       avgToolCalls: results.length === 0 ? 0 : totalToolCalls / results.length,
       avgLatencyMs: results.length === 0 ? 0 : totalDurationMs / results.length,
       totalLatencyMs: totalDurationMs,
