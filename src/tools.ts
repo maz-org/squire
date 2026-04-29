@@ -471,11 +471,10 @@ async function resolveCards(
       candidates.push({
         entity: {
           kind: 'card',
-          ref: sourceId,
+          ref: canonicalCardRef(type, sourceId, game),
           title,
           source: `source:${game}/cards`,
           sourceLabel: 'GHS Card Data',
-          data: { ...record, cardType: type },
         },
         confidence: cardMatchConfidence(query, record, type),
         matchReason: cardMatchReason(query, record, type),
@@ -493,11 +492,10 @@ async function resolveCards(
       candidates.push({
         entity: {
           kind: 'card',
-          ref: sourceId,
+          ref: canonicalCardRef(record._type, sourceId, game),
           title: displayTitleForCard(stripped, record._type),
           source: `source:${game}/cards`,
           sourceLabel: 'GHS Card Data',
-          data: { ...stripped, cardType: record._type },
         },
         confidence: 0.68,
         matchReason: 'Card text match',
@@ -541,6 +539,15 @@ function scenarioStorageRef(ref: string): string {
 
 function sectionStorageRef(ref: string): string {
   return ref.replace(/^section:[^/]+\//, '');
+}
+
+function gameQualifiedRef(
+  ref: string,
+  prefix: 'scenario' | 'section',
+  fallbackGame = DEFAULT_GAME,
+): { game: string; ref: string } {
+  const match = ref.match(new RegExp(`^${prefix}:([^/]+)/(.+)$`));
+  return match ? { game: match[1], ref: match[2] } : { game: fallbackGame, ref };
 }
 
 function canonicalSectionRef(ref: string, game = DEFAULT_GAME): string {
@@ -863,7 +870,6 @@ export async function resolveEntity(
           title: scenario.name,
           source: `source:${game}/scenario-section-books`,
           sourceLabel: formatRetrievalSourceLabel(scenario.sourcePdf ?? 'fh-scenario-book.pdf'),
-          data: scenario,
         },
         confidence,
         matchReason: confidence === 0.99 ? 'Exact scenario number' : 'Scenario name match',
@@ -883,7 +889,6 @@ export async function resolveEntity(
             title: `Section ${section.ref}`,
             source: `source:${game}/scenario-section-books`,
             sourceLabel: formatRetrievalSourceLabel(section.sourcePdf),
-            data: section,
           },
           confidence: 0.99,
           matchReason: 'Exact section ref',
@@ -903,7 +908,6 @@ export async function resolveEntity(
             title: type,
             source: `source:${game}/cards`,
             sourceLabel: 'GHS Card Data',
-            data: { cardType: type },
           },
           confidence: 0.95,
           matchReason: 'Exact card type',
@@ -1020,16 +1024,19 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
   }
 
   if (ref.startsWith('scenario:') || ref.startsWith('gloomhavensecretariat:scenario/')) {
+    const parsed = gameQualifiedRef(ref, 'scenario', game);
     const scenario = await getScenario(
-      ref.startsWith('scenario:') ? ref : canonicalScenarioRef(ref, game),
+      ref.startsWith('scenario:')
+        ? canonicalScenarioRef(parsed.ref, parsed.game)
+        : canonicalScenarioRef(ref, parsed.game),
       {
-        game,
+        game: parsed.game,
       },
     );
     if (!scenario) {
       return { ok: false, error: { code: 'not_found', message: `Scenario not found: ${ref}` } };
     }
-    const entity = summarizeScenario(scenario, game);
+    const entity = summarizeScenario(scenario, parsed.game);
     return {
       ok: true,
       entity: {
@@ -1047,18 +1054,19 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           metadata: scenario.metadata,
         },
       },
-      citations: citationForScenario(scenario, game),
-      links: await linksFor('scenario', scenario.ref, { game }),
+      citations: citationForScenario(scenario, parsed.game),
+      links: await linksFor('scenario', scenario.ref, { game: parsed.game }),
       related: [],
     };
   }
 
   if (ref.startsWith('section:') || /^\d+\.\d+$/.test(ref)) {
-    const section = await getSection(ref, { game });
+    const parsed = gameQualifiedRef(ref, 'section', game);
+    const section = await getSection(parsed.ref, { game: parsed.game });
     if (!section) {
       return { ok: false, error: { code: 'not_found', message: `Section not found: ${ref}` } };
     }
-    const entity = summarizeSection(section, game);
+    const entity = summarizeSection(section, parsed.game);
     return {
       ok: true,
       entity: {
@@ -1072,8 +1080,8 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           metadata: section.metadata,
         },
       },
-      citations: citationForSection(section, game),
-      links: await linksFor('section', section.ref, { game }),
+      citations: citationForSection(section, parsed.game),
+      links: await linksFor('section', section.ref, { game: parsed.game }),
       related: [],
     };
   }

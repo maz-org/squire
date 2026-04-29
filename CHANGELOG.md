@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7] - 2026-04-29
+
+### Fixed
+
+- Improved redesigned retrieval trajectory behavior so the checked-in trajectory suite passes 12/12 without regressing final-answer coverage.
+- Made `resolve_entity` return concise, canonical, openable refs while keeping full record payloads behind `open_entity`.
+- Fixed game-qualified scenario and section opens so unsupported game refs do not fall back to Frosthaven data.
+
 ## [0.1.6] - 2026-04-29
 
 ### Changed

@@ -64,7 +64,9 @@ Grounding rules:
 - Treat tool results as the source of truth. Do not invent rules, stats, item numbers, section text, or scenario outcomes.
 - If the available data does not answer the question, say what is missing instead of guessing.
 - Resolve natural user language to refs when exact records are needed, then open or traverse those refs.
-- Follow explicit links between records when the answer depends on connected scenario or section text.
+- If the user asks you to resolve something, call resolve_entity before opening or answering.
+- When the user gives an explicit game qualifier, preserve it in canonical refs such as section:gloomhaven2/67.1; never invent URI forms like gloomhaven2://section/67.1.
+- Use neighbors for scenario/section traversal questions, including conclusions, read-now links, unlocks, next links, and related records. Open entities for record text after traversal identifies the target.
 
 Citations and answer shape:
 - Cite the book, section, scenario, or card source when the tool result provides one.
@@ -159,7 +161,7 @@ export const AGENT_TOOLS = [
   {
     name: 'open_entity',
     description:
-      'Open one exact Squire entity by canonical ref: rules passage, scenario, section, or card.',
+      'Open one exact Squire entity by canonical ref: rules:<game>/<source>#chunk=N, scenario:<game>/<id>, section:<game>/<id>, or card:<game>/<type>/<sourceId>. Use this to validate unavailable game-qualified refs instead of inventing URI forms.',
     input_schema: {
       type: 'object',
       properties: {
@@ -188,7 +190,8 @@ export const AGENT_TOOLS = [
   },
   {
     name: 'neighbors',
-    description: 'Traverse known outgoing relationships from a scenario or section ref.',
+    description:
+      'Traverse known outgoing relationships from a scenario or section ref. Prefer this for conclusions, read-now links, unlocks, next links, and related scenario/section questions.',
     input_schema: {
       type: 'object',
       properties: {
