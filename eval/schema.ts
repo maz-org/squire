@@ -112,12 +112,23 @@ export function validateRemoteDatasetShape(
     );
   }
 
-  const staleItems = remoteItems.filter(
-    (item) => !RemoteExpectedOutputSchema.safeParse(item.expectedOutput).success,
-  );
-  if (staleItems.length > 0) {
+  const invalidItems: Array<{ index: number; issues: string[] }> = [];
+  remoteItems.forEach((item, index) => {
+    const result = RemoteExpectedOutputSchema.safeParse(item.expectedOutput);
+    if (!result.success) {
+      invalidItems.push({
+        index,
+        issues: result.error.issues.map((issue) => issue.message),
+      });
+    }
+  });
+  if (invalidItems.length > 0) {
+    const sample = invalidItems
+      .slice(0, 3)
+      .map((item) => `item ${item.index}: ${item.issues[0] ?? 'invalid expectedOutput'}`)
+      .join('; ');
     throw new Error(
-      `Remote Langfuse dataset "${datasetName}" still uses the old expected-output shape for ${staleItems.length} item(s). Run \`node eval/run.ts --seed\` before running the full dataset.`,
+      `Remote Langfuse dataset "${datasetName}" has ${invalidItems.length} invalid expectedOutput item(s). Sample: ${sample}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
     );
   }
 }

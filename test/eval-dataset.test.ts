@@ -57,7 +57,7 @@ describe('eval dataset', () => {
         2,
         'frosthaven-qa',
       ),
-    ).toThrow(/old expected-output shape/);
+    ).toThrow(/invalid expectedOutput/);
   });
 
   it('rejects remote Langfuse datasets with a stale item count', () => {
@@ -80,6 +80,6 @@ describe('eval dataset', () => {
         2,
         'frosthaven-qa',
       ),
-    ).toThrow(/old expected-output shape/);
+    ).toThrow(/invalid expectedOutput/);
   });
 });
