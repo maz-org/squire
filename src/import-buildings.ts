@@ -41,10 +41,11 @@ export interface GhsBuilding {
     gold: number;
   };
   upgrades: Array<{
-    prosperity: number;
-    lumber: number;
-    metal: number;
-    hide: number;
+    prosperity?: number;
+    lumber?: number;
+    metal?: number;
+    hide?: number;
+    manual?: number;
   }>;
   repair: number[];
   rebuild: Array<{ lumber: number; metal: number; hide: number }>;
@@ -61,6 +62,7 @@ interface ExtractedBuilding {
   name: string;
   level: number;
   buildCost: {
+    prosperity: number | null;
     gold: number | null;
     lumber: number | null;
     metal: number | null;
@@ -73,9 +75,31 @@ interface ExtractedBuilding {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-/** Convert a number to null if it's zero or undefined (zero means "no cost"). */
-function zeroToNull(n: number | undefined): number | null {
-  return n === 0 || n === undefined ? null : n;
+type GhsCostMap = Partial<Record<'prosperity' | 'gold' | 'lumber' | 'metal' | 'hide', number>>;
+
+/** GHS omits some zero-valued cost keys, so normalize absent cost fields to 0. */
+function costOrZero(n: number | undefined): number {
+  return n ?? 0;
+}
+
+function knownCostMap(cost: GhsCostMap) {
+  return {
+    prosperity: costOrZero(cost.prosperity),
+    gold: costOrZero(cost.gold),
+    lumber: costOrZero(cost.lumber),
+    metal: costOrZero(cost.metal),
+    hide: costOrZero(cost.hide),
+  };
+}
+
+function unknownCostMap() {
+  return {
+    prosperity: null,
+    gold: null,
+    lumber: null,
+    metal: null,
+    hide: null,
+  };
 }
 
 /**
@@ -120,20 +144,10 @@ export function convertBuilding(ghs: GhsBuilding, labels: LabelData): ExtractedB
     // Level 1 uses initial build costs; level 2+ uses upgrades[level-2]
     let buildCost: ExtractedBuilding['buildCost'];
     if (level === 1) {
-      buildCost = {
-        gold: zeroToNull(ghs.costs.gold),
-        lumber: zeroToNull(ghs.costs.lumber),
-        metal: zeroToNull(ghs.costs.metal),
-        hide: zeroToNull(ghs.costs.hide),
-      };
+      buildCost = knownCostMap(ghs.costs);
     } else {
       const upgrade = ghs.upgrades[level - 2];
-      buildCost = {
-        gold: upgrade ? zeroToNull((upgrade as Record<string, number>).gold) : null,
-        lumber: upgrade ? zeroToNull(upgrade.lumber) : null,
-        metal: upgrade ? zeroToNull(upgrade.metal) : null,
-        hide: upgrade ? zeroToNull(upgrade.hide) : null,
-      };
+      buildCost = upgrade && !upgrade.manual ? knownCostMap(upgrade) : unknownCostMap();
     }
 
     results.push({

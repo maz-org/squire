@@ -261,6 +261,37 @@ export async function followReferences(
   return rows.rows;
 }
 
+export async function findIncomingReferences(
+  toKind: BookRecordKind,
+  toRef: string,
+  referenceType?: BookReferenceType,
+  opts: LoadOpts = {},
+): Promise<BookReference[]> {
+  const { db } = getDb();
+  const game = opts.game ?? 'frosthaven';
+  const referenceTypeClause = referenceType ? sql`AND link_type = ${referenceType}` : sql``;
+
+  const rows = await db.execute<BookReference>(sql`
+    SELECT
+      from_kind AS "fromKind",
+      from_ref AS "fromRef",
+      to_kind AS "toKind",
+      to_ref AS "toRef",
+      link_type AS "linkType",
+      raw_label AS "rawLabel",
+      raw_context AS "rawContext",
+      sequence
+    FROM ${bookReferences}
+    WHERE game = ${game}
+      AND to_kind = ${toKind}
+      AND to_ref = ${toRef}
+      ${referenceTypeClause}
+    ORDER BY sequence, from_ref
+  `);
+
+  return rows.rows;
+}
+
 export async function getScenarioSectionBooksBootstrapStatus(
   opts: LoadOpts = {},
 ): Promise<ScenarioSectionBooksBootstrapStatus> {

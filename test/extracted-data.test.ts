@@ -388,15 +388,33 @@ describe('formatExtracted', () => {
         buildingNumber: '05',
         name: 'Mining Camp',
         level: 1,
-        buildCost: { gold: 20, lumber: 5, metal: null, hide: null },
+        buildCost: { prosperity: 1, gold: 20, lumber: 5, metal: 0, hide: 0 },
         effect: 'Gain 2 metal each week',
         notes: null,
       },
     ]);
     expect(text).toContain('Mining Camp');
+    expect(text).toContain('1 prosperity');
     expect(text).toContain('20 gold');
     expect(text).toContain('5 lumber');
+    expect(text).not.toContain('0 metal');
     expect(text).toContain('Gain 2 metal');
+  });
+
+  it('formats known zero building costs as no cost', () => {
+    const text = formatExtracted([
+      {
+        _type: 'buildings',
+        buildingNumber: '35',
+        name: 'Alchemist',
+        level: 1,
+        buildCost: { prosperity: 0, gold: 0, lumber: 0, metal: 0, hide: 0 },
+        effect: 'Characters cannot use potions',
+        notes: null,
+      },
+    ]);
+    expect(text).toContain('Alchemist');
+    expect(text).toContain('Cost: no cost');
   });
 
   it('formats monster abilities with initiative', () => {

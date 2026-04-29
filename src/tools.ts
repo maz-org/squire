@@ -16,6 +16,7 @@ import {
   getSection as loadSection,
   searchSections as loadSections,
   followReferences as loadReferences,
+  findIncomingReferences as loadIncomingReferences,
 } from './scenario-section-data.ts';
 import {
   BOOK_REFERENCE_TYPES,
@@ -267,6 +268,16 @@ const CARD_KIND_ALIASES: Record<string, CardType[]> = {
   abilities: ['character-abilities'],
   'character-ability': ['character-abilities'],
   'character-abilities': ['character-abilities'],
+  building: ['buildings'],
+  buildings: ['buildings'],
+  event: ['events'],
+  events: ['events'],
+  'battle-goal': ['battle-goals'],
+  'battle-goals': ['battle-goals'],
+  'personal-quest': ['personal-quests'],
+  'personal-quests': ['personal-quests'],
+  'character-mat': ['character-mats'],
+  'character-mats': ['character-mats'],
 };
 
 const KIND_ALIASES: Record<string, KnowledgeKind> = {
@@ -984,6 +995,17 @@ export async function followLinks(
   return loadReferences(fromKind, normalizedRef, linkType, opts);
 }
 
+export async function incomingLinks(
+  toKind: BookRecordKind,
+  toRef: string,
+  linkType?: BookReferenceType,
+  opts?: ToolOpts,
+): Promise<ReferenceResult[]> {
+  const normalizedRef =
+    toKind === 'scenario' ? scenarioStorageRef(toRef) : sectionStorageRef(toRef);
+  return loadIncomingReferences(toKind, normalizedRef, linkType, opts);
+}
+
 export async function openEntity(ref: string, opts?: ToolOpts): Promise<KnowledgeOpenResult> {
   const game = opts?.game ?? DEFAULT_GAME;
 
@@ -1262,12 +1284,32 @@ export async function neighbors(
     return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
   }
 
-  const links = await followLinks(kind, storageRef, relation, { game });
+  let links = await followLinks(kind, storageRef, relation, { game });
+  if (kind === 'scenario') {
+    const incoming = await incomingLinks(kind, storageRef, relation, { game });
+    const seen = new Set(
+      links.map(
+        (link) => `${link.linkType}:${link.fromKind}:${link.fromRef}:${link.toKind}:${link.toRef}`,
+      ),
+    );
+    links = [
+      ...links,
+      ...incoming.filter((link) => {
+        const key = `${link.linkType}:${link.fromKind}:${link.fromRef}:${link.toKind}:${link.toRef}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }),
+    ];
+  }
   const limit = Math.min(Math.max(options.limit ?? 20, 1), 50);
   const mapped = await Promise.all(
     links.slice(0, limit).map(async (link) => ({
       relation: link.linkType,
-      target: await targetSummary(link.toKind, link.toRef, game),
+      target:
+        link.fromKind === kind && link.fromRef === storageRef
+          ? await targetSummary(link.toKind, link.toRef, game)
+          : await targetSummary(link.fromKind, link.fromRef, game),
       reason: link.rawLabel ?? link.rawContext ?? undefined,
     })),
   );

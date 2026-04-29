@@ -317,6 +317,11 @@ describe('runAgentLoop', () => {
       limit: 20,
     });
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
+    expect(mockMessagesCreate.mock.calls[2][0].messages).toContainEqual({
+      role: 'user',
+      content:
+        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks for section text, call open_entity on the returned section ref now; otherwise answer from the neighbors result. Do not search for another path unless neighbors returned no relevant target.',
+    });
   });
 
   it('uses the redesigned broad search tool for mixed rules and cards discovery', async () => {
@@ -671,6 +676,77 @@ describe('runAgentLoop', () => {
       content:
         'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.',
     });
+  });
+
+  it('forces synthesis after three repeated redesigned rule-only searches', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'looting rules',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot ability end-of-turn looting money tokens treasure tiles',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'end-of-turn looting character loot token own hex',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Looting means picking up loot tokens.'));
+
+    const result = await runAgentLoop('What is looting?', { toolSurface: 'redesigned' });
+
+    expect(result).toBe('Looting means picking up loot tokens.');
+    expect(mockSearchKnowledge).toHaveBeenCalledTimes(3);
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(4);
+    expect(mockMessagesCreate.mock.calls[3][0]).not.toHaveProperty('tools');
+    expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual({
+      role: 'user',
+      content:
+        'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.',
+    });
+  });
+
+  it('still forces synthesis after opening rule passages between redesigned searches', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'looting rules',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', {
+          ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=111',
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'end-of-turn looting character loot token own hex',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot deck money tokens treasure tiles',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Looting means picking up loot tokens.'));
+
+    const result = await runAgentLoop('What is looting?', { toolSurface: 'redesigned' });
+
+    expect(result).toBe('Looting means picking up loot tokens.');
+    expect(mockSearchKnowledge).toHaveBeenCalledTimes(3);
+    expect(mockOpenEntity).toHaveBeenCalledWith('rules:frosthaven/fh-rule-book.pdf#chunk=111');
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(5);
+    expect(mockMessagesCreate.mock.calls[4][0]).not.toHaveProperty('tools');
   });
 
   it('keeps discovery-only tools out of repeated rule search synthesis guard', async () => {

@@ -65,6 +65,7 @@ describe('convertBuilding', () => {
   it('uses initial costs for level 1', () => {
     const results = convertBuilding(miningCamp, labels);
     expect(results[0].buildCost).toEqual({
+      prosperity: 1,
       gold: 10,
       lumber: 4,
       metal: 2,
@@ -75,7 +76,8 @@ describe('convertBuilding', () => {
   it('uses upgrade costs for levels 2+', () => {
     const results = convertBuilding(miningCamp, labels);
     expect(results[1].buildCost).toEqual({
-      gold: null,
+      prosperity: 3,
+      gold: 0,
       lumber: 6,
       metal: 3,
       hide: 2,
@@ -123,13 +125,13 @@ describe('convertBuilding', () => {
     expect(results[0].sourceId).toBe('gloomhavensecretariat:building/wall-j/L1');
   });
 
-  it('treats zero-valued resources as null', () => {
+  it('normalizes missing cost fields to zero', () => {
     const results = convertBuilding(miningCamp, labels);
-    // Upgrade costs have no gold field → null
-    expect(results[1].buildCost.gold).toBeNull();
+    // Upgrade costs in GHS omit gold when it is not required.
+    expect(results[1].buildCost.gold).toBe(0);
   });
 
-  it('handles buildings with effectWrecked instead of effectNormal', () => {
+  it('handles already-built buildings with explicit zero level 1 build costs', () => {
     const wreckedLabels = {
       buildings: {
         craftsman: {
@@ -169,6 +171,20 @@ describe('convertBuilding', () => {
     expect(results[0].level).toBe(1);
     // Effect text is resolved
     expect(results[0].effect).toBe('Lose 1 collective Hide');
+    expect(results[0].buildCost).toEqual({
+      prosperity: 0,
+      gold: 0,
+      lumber: 0,
+      metal: 0,
+      hide: 0,
+    });
+    expect(results[1].buildCost).toEqual({
+      prosperity: 1,
+      gold: 0,
+      lumber: 2,
+      metal: 2,
+      hide: 1,
+    });
   });
 
   it('handles buildings with no effect arrays (zero levels)', () => {
@@ -242,7 +258,7 @@ describe('convertBuilding', () => {
     expect(results[0].effect).toBe('Train soldiers Capacity: 4');
   });
 
-  it('converts zero costs to null', () => {
+  it('preserves known zero costs', () => {
     const zeroLabels = {
       buildings: {
         free: {
@@ -265,6 +281,46 @@ describe('convertBuilding', () => {
 
     const results = convertBuilding(free, zeroLabels);
     expect(results[0].buildCost).toEqual({
+      prosperity: 0,
+      gold: 0,
+      lumber: 0,
+      metal: 0,
+      hide: 0,
+    });
+  });
+
+  it('keeps manual upgrade costs unknown', () => {
+    const barracksLabels = {
+      buildings: {
+        barracks: {
+          '': 'Barracks',
+          '1': 'Train soldiers',
+          '2': 'Train more soldiers',
+        },
+      },
+    };
+
+    const barracks: GhsBuilding = {
+      id: '98',
+      name: 'barracks',
+      costs: { prosperity: 0, lumber: 0, metal: 0, hide: 0, gold: 0 },
+      upgrades: [{ prosperity: 0, lumber: 0, metal: 0, hide: 0, manual: 1 }],
+      repair: [2],
+      rebuild: [{ lumber: 0, metal: 0, hide: 0 }],
+      effectNormal: ['%data.buildings.barracks.1%', '%data.buildings.barracks.2%'],
+      rewards: [{}, {}],
+    };
+
+    const results = convertBuilding(barracks, barracksLabels);
+    expect(results[0].buildCost).toEqual({
+      prosperity: 0,
+      gold: 0,
+      lumber: 0,
+      metal: 0,
+      hide: 0,
+    });
+    expect(results[1].buildCost).toEqual({
+      prosperity: null,
       gold: null,
       lumber: null,
       metal: null,

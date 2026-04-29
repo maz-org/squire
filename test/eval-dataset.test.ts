@@ -33,6 +33,35 @@ describe('eval dataset', () => {
     expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven2/67.1');
   });
 
+  it('treats read-now chain traversal as a neighbors requirement', () => {
+    const cases = EvalDatasetSchema.parse(dataset);
+    const evalCase = cases.find((candidate) => candidate.id === 'traj-section-read-now-chain');
+
+    expect(evalCase?.trajectory?.requiredTools).toContain('neighbors');
+    expect(evalCase?.trajectory?.requiredToolKinds).toContain('traversal');
+    expect(evalCase?.trajectory?.requiredTools).not.toContain('open_entity');
+  });
+
+  it('keeps SQR-137 final-answer expectations aligned with checked-in data', () => {
+    const cases = EvalDatasetSchema.parse(dataset);
+    const byId = new Map(cases.map((evalCase) => [evalCase.id, evalCase]));
+
+    expect(byId.get('monster-living-bones-immunity')?.finalAnswer).toMatchObject({
+      expected: expect.stringMatching(/no condition immunit/i),
+      grading: expect.stringMatching(/must not claim poison or wound immunity/i),
+    });
+
+    expect(byId.get('building-alchemist')?.finalAnswer).toMatchObject({
+      expected: expect.stringMatching(/no initial build cost/i),
+      grading: expect.stringMatching(/upgrade cost/i),
+    });
+
+    expect(byId.get('scenario-61-unlock')?.finalAnswer).toMatchObject({
+      expected: expect.stringMatching(/Section 79\.4/i),
+      grading: expect.stringMatching(/Crain|star iron/i),
+    });
+  });
+
   it('defines flexible tool-path expectations for trajectory cases', () => {
     const cases = EvalDatasetSchema.parse(dataset).filter(evalCaseHasTrajectory);
 

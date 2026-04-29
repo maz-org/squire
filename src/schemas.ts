@@ -170,12 +170,13 @@ export const BuildingSchema = z.object({
   level: z.number().int().describe('Building level'),
   buildCost: z
     .object({
+      prosperity: nullableInt,
       gold: nullableInt,
       lumber: nullableInt,
       metal: nullableInt,
       hide: nullableInt,
     })
-    .describe('Resource costs, null for resources not required'),
+    .describe('Resource costs, with 0 for resources not required and null only if unknown'),
   effect: z.string().describe('Full effect/ability text at this level'),
   notes: nullableStr.describe('Any other relevant text, or null'),
 });
