@@ -396,11 +396,13 @@ function recordToText(record: ExtractedRecord): string {
     const costEntries = buildCost
       ? Object.entries(buildCost).filter(([, v]) => v !== null && v !== 0)
       : [];
-    const knownCosts = buildCost ? Object.values(buildCost).filter((v) => v !== null) : [];
+    const values = buildCost ? Object.values(buildCost) : [];
+    const knownCosts = values.filter((v): v is number => v !== null);
+    const hasUnknownCosts = values.some((v) => v === null);
     const cost = buildCost
       ? costEntries.length > 0
         ? costEntries.map(([k, v]) => `${v} ${k}`).join(', ')
-        : knownCosts.length > 0 && knownCosts.every((v) => v === 0)
+        : !hasUnknownCosts && knownCosts.length > 0 && knownCosts.every((v) => v === 0)
           ? 'no cost'
           : 'unknown'
       : 'unknown';

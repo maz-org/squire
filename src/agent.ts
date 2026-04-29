@@ -502,8 +502,8 @@ function isBroadRuleSearchTool(toolName: string, input: Record<string, unknown>)
   if (toolName !== 'search_knowledge') return false;
 
   const scope = input.scope;
-  if (!Array.isArray(scope) || scope.length === 0) return true;
-  return scope.every((kind) => kind === 'rules_passage');
+  if (!Array.isArray(scope) || scope.length === 0) return false;
+  return scope.length > 0 && scope.every((kind) => kind === 'rules_passage');
 }
 
 function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {

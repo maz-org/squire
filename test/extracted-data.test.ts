@@ -417,6 +417,23 @@ describe('formatExtracted', () => {
     expect(text).toContain('Cost: no cost');
   });
 
+  it('formats mixed unknown and zero building costs as unknown', () => {
+    const text = formatExtracted([
+      {
+        _type: 'buildings',
+        buildingNumber: '98',
+        name: 'Barracks',
+        level: 2,
+        buildCost: { prosperity: null, gold: 0, lumber: 0, metal: 0, hide: 0 },
+        effect: 'Train soldiers',
+        notes: null,
+      },
+    ]);
+    expect(text).toContain('Barracks');
+    expect(text).toContain('Cost: unknown');
+    expect(text).not.toContain('Cost: no cost');
+  });
+
   it('formats monster abilities with initiative', () => {
     const text = formatExtracted([
       {

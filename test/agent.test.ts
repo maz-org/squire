@@ -713,6 +713,41 @@ describe('runAgentLoop', () => {
     });
   });
 
+  it('does not force synthesis after unscoped redesigned knowledge searches', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'Alchemist building',
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'Alchemist level 1',
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'Alchemist upgrade cost',
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', {
+          ref: 'card:frosthaven/buildings/gloomhavensecretariat:building/35/L1',
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('The Alchemist has no listed build cost.'));
+
+    const result = await runAgentLoop('What does Alchemist cost?', { toolSurface: 'redesigned' });
+
+    expect(result).toBe('The Alchemist has no listed build cost.');
+    expect(mockSearchKnowledge).toHaveBeenCalledTimes(3);
+    expect(mockOpenEntity).toHaveBeenCalledWith(
+      'card:frosthaven/buildings/gloomhavensecretariat:building/35/L1',
+    );
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(5);
+    expect(mockMessagesCreate.mock.calls[3][0]).toHaveProperty('tools');
+  });
+
   it('still forces synthesis after opening rule passages between redesigned searches', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(
