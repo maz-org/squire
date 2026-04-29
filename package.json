@@ -1,6 +1,6 @@
 {
   "name": "squire",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Frosthaven AI assistant with RAG over rulebooks",
   "type": "module",
   "scripts": {

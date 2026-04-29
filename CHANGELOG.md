@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5] - 2026-04-28
+
+### Added
+
+- Added trajectory-only Langfuse eval cases for Frosthaven tool-path quality, with schema validation, stale remote dataset checks, and trajectory scoring for required tools, tool kinds, refs, and call budgets.
+- Added eval tests covering the new dataset shape, stale Langfuse dataset detection, and trajectory ref normalization.
+
 ## [0.1.4] - 2026-04-21
 
 ### Fixed

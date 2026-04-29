@@ -3,136 +3,337 @@
     "id": "rule-long-rest-init",
     "category": "rulebook",
     "question": "What is the initiative value of a long rest in Frosthaven?",
-    "expected": "99",
-    "grading": "The answer must state the initiative is 99.",
+    "finalAnswer": {
+      "expected": "99",
+      "grading": "The answer must state the initiative is 99."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-long-rest-steps",
     "category": "rulebook",
     "question": "What are the steps a character performs when taking a long rest in Frosthaven?",
-    "expected": "1. Lose one card from discard pile, return remaining to hand. 2. Perform Heal 2 self (optional). 3. Recover all spent items.",
-    "grading": "Must mention all three steps: losing a card from discard (mandatory), Heal 2 self (optional), and recovering spent items. Order matters.",
+    "finalAnswer": {
+      "expected": "1. Lose one card from discard pile, return remaining to hand. 2. Perform Heal 2 self (optional). 3. Recover all spent items.",
+      "grading": "Must mention all three steps: losing a card from discard (mandatory), Heal 2 self (optional), and recovering spent items. Order matters."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-scenario-level",
     "category": "rulebook",
     "question": "How is the recommended scenario level calculated in Frosthaven?",
-    "expected": "Average level of the characters divided by 2, rounded up.",
-    "grading": "Must mention dividing average character level by 2 and rounding up.",
+    "finalAnswer": {
+      "expected": "Average level of the characters divided by 2, rounded up.",
+      "grading": "Must mention dividing average character level by 2 and rounding up."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-poison",
     "category": "rulebook",
     "question": "What does the Poison condition do in Frosthaven?",
-    "expected": "All attacks targeting the figure gain +1 Attack. Poison is removed when healed, but prevents the heal from increasing hit points.",
-    "grading": "Must mention +1 Attack on attacks targeting the figure AND that poison prevents healing from increasing HP while being removed by healing.",
+    "finalAnswer": {
+      "expected": "All attacks targeting the figure gain +1 Attack. Poison is removed when healed, but prevents the heal from increasing hit points.",
+      "grading": "Must mention +1 Attack on attacks targeting the figure AND that poison prevents healing from increasing HP while being removed by healing."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-brittle",
     "category": "rulebook",
     "question": "What does the Brittle condition do in Frosthaven?",
-    "expected": "Next time the figure would suffer damage, they suffer double that damage instead, then brittle is removed. Also removed by healing.",
-    "grading": "Must mention double damage on next damage source and removal after triggering. Should mention healing also removes it.",
+    "finalAnswer": {
+      "expected": "Next time the figure would suffer damage, they suffer double that damage instead, then brittle is removed. Also removed by healing.",
+      "grading": "Must mention double damage on next damage source and removal after triggering. Should mention healing also removes it."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-advantage",
     "category": "rulebook",
     "question": "How does advantage work with attack modifier cards in Frosthaven?",
-    "expected": "Draw two modifiers and use one. Monsters always use the better one. Characters may use either one.",
-    "grading": "Must mention drawing two modifiers. Must distinguish that monsters use the better one while characters may choose either.",
+    "finalAnswer": {
+      "expected": "Draw two modifiers and use one. Monsters always use the better one. Characters may use either one.",
+      "grading": "Must mention drawing two modifiers. Must distinguish that monsters use the better one while characters may choose either."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-small-items",
     "category": "rulebook",
     "question": "How many small items can a character bring into a Frosthaven scenario?",
-    "expected": "Half their level, rounded up.",
-    "grading": "Must state half the character's level rounded up.",
+    "finalAnswer": {
+      "expected": "Half their level, rounded up.",
+      "grading": "Must state half the character's level rounded up."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "rule-looting-definition",
     "category": "rulebook",
     "question": "What is looting?",
-    "expected": "Characters loot by using Loot X abilities to collect loot tokens and treasure tiles within range X, and by automatically looting loot tokens in their own hex at the end of their turn. Looted loot tokens draw from the loot deck; monsters can loot tokens with Loot abilities but do not draw loot cards and cannot loot treasure tiles.",
-    "grading": "Must define looting as collecting loot tokens and treasure tiles. Must mention Loot X range or automatic end-of-turn looting. Must not answer with step-budget exhaustion or an inability to answer.",
+    "finalAnswer": {
+      "expected": "Characters loot by using Loot X abilities to collect loot tokens and treasure tiles within range X, and by automatically looting loot tokens in their own hex at the end of their turn. Looted loot tokens draw from the loot deck; monsters can loot tokens with Loot abilities but do not draw loot cards and cannot loot treasure tiles.",
+      "grading": "Must define looting as collecting loot tokens and treasure tiles. Must mention Loot X range or automatic end-of-turn looting. Must not answer with step-budget exhaustion or an inability to answer."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "monster-vermling-scout",
     "category": "monster-stats",
     "question": "What are the stats of a normal Vermling Scout at level 1 in Frosthaven?",
-    "expected": "HP 3, Move 3, Attack 1.",
-    "grading": "Must include all three stats: HP 3, Move 3, Attack 1. Range is not a stat card value — do not penalize for omitting it.",
+    "finalAnswer": {
+      "expected": "HP 3, Move 3, Attack 1.",
+      "grading": "Must include all three stats: HP 3, Move 3, Attack 1. Range is not a stat card value; do not penalize for omitting it."
+    },
     "source": "data/extracted/monster-stats.json"
   },
   {
     "id": "monster-living-bones-immunity",
     "category": "monster-stats",
     "question": "What conditions are Living Bones immune to in Frosthaven?",
-    "expected": "Poison and wound.",
-    "grading": "Must mention both poison and wound immunity.",
+    "finalAnswer": {
+      "expected": "Poison and wound.",
+      "grading": "Must mention both poison and wound immunity."
+    },
     "source": "data/extracted/monster-stats.json"
   },
   {
     "id": "monster-flame-demon-elite",
     "category": "monster-stats",
     "question": "What are the stats of an elite Flame Demon at level 0 in Frosthaven?",
-    "expected": "HP 3, Move 3, Attack 2. Shield 3.",
-    "grading": "Must include HP 3, Move 3, Attack 2. Shield 3 is a bonus. Range is not a stat card value — do not penalize for omitting it.",
+    "finalAnswer": {
+      "expected": "HP 3, Move 3, Attack 2. Shield 3.",
+      "grading": "Must include HP 3, Move 3, Attack 2. Shield 3 is a bonus. Range is not a stat card value; do not penalize for omitting it."
+    },
     "source": "data/extracted/monster-stats.json"
   },
   {
     "id": "building-alchemist",
     "category": "buildings",
     "question": "What does the Alchemist building cost to build at level 1 in Frosthaven?",
-    "expected": "1 gold, 2 lumber, 2 metal, 1 hide.",
-    "grading": "Must mention the four resources: 1 gold, 2 lumber, 2 metal, 1 hide.",
+    "finalAnswer": {
+      "expected": "1 gold, 2 lumber, 2 metal, 1 hide.",
+      "grading": "Must mention the four resources: 1 gold, 2 lumber, 2 metal, 1 hide."
+    },
     "source": "data/extracted/buildings.json"
   },
   {
     "id": "item-spyglass",
     "category": "items",
     "question": "What does the Spyglass item do in Frosthaven, and what is its item number?",
-    "expected": "Item #001. During your attack ability, gain advantage on one attack. Costs 40 gold, small item slot, 2 uses.",
-    "grading": "Must state item number 001 (not 082). Must mention gaining advantage on an attack. Cost of 40 gold is a bonus.",
+    "finalAnswer": {
+      "expected": "Item #001. During your attack ability, gain advantage on one attack. Costs 40 gold, small item slot, 2 uses.",
+      "grading": "Must state item number 001 (not 082). Must mention gaining advantage on an attack. Cost of 40 gold is a bonus."
+    },
     "source": "data/extracted/items.json (note: extracted number is wrong, correct is 001 from filename)"
   },
   {
     "id": "item-crude-boots",
     "category": "items",
     "question": "What does the Crude Boots item do in Frosthaven?",
-    "expected": "Legs slot, costs 2 gold. During your move ability, add +1 movement.",
-    "grading": "Must mention +1 movement during move ability. Cost of 2 gold is a bonus.",
+    "finalAnswer": {
+      "expected": "Legs slot, costs 2 gold. During your move ability, add +1 movement.",
+      "grading": "Must mention +1 movement during move ability. Cost of 2 gold is a bonus."
+    },
     "source": "data/extracted/items.json"
   },
   {
     "id": "scenario-61-unlock",
     "category": "scenarios",
     "question": "What section text unlocks scenario 61 (Life and Death) in Frosthaven?",
-    "expected": "Section 67.1 links to Life and Death (scenario 61). The section involves escaping shadows with Moonshard.",
-    "grading": "Must reference section 67 or the narrative context that leads to scenario 61. Mentioning 'Life and Death' as the scenario name is a bonus.",
+    "finalAnswer": {
+      "expected": "Section 67.1 links to Life and Death (scenario 61). The section involves escaping shadows with Moonshard.",
+      "grading": "Must reference section 67 or the narrative context that leads to scenario 61. Mentioning 'Life and Death' as the scenario name is a bonus."
+    },
     "source": "fh-section-book-62-81.pdf"
   },
   {
     "id": "rule-wound",
     "category": "rulebook",
     "question": "What does the Wound condition do in Frosthaven?",
-    "expected": "The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.",
-    "grading": "Must mention 1 damage at start of turns and removal by healing.",
+    "finalAnswer": {
+      "expected": "The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.",
+      "grading": "Must mention 1 damage at start of turns and removal by healing."
+    },
     "source": "fh-rule-book.pdf"
   },
   {
     "id": "tool-free-assistant-game",
     "category": "tool-free",
     "question": "What game is this assistant for? Answer in one short sentence.",
-    "expected": "This assistant is for Frosthaven.",
-    "grading": "Must clearly say the assistant is for Frosthaven in one short sentence. Answers that hedge, mention another game, or say it does not know should fail.",
+    "finalAnswer": {
+      "expected": "This assistant is for Frosthaven.",
+      "grading": "Must clearly say the assistant is for Frosthaven in one short sentence. Answers that hedge, mention another game, or say it does not know should fail."
+    },
     "source": "src/agent.ts"
+  },
+  {
+    "id": "traj-source-discovery",
+    "category": "trajectory",
+    "question": "What sources can you inspect for Frosthaven, and which ones can you open exactly?",
+    "trajectory": {
+      "requiredTools": ["inspect_sources"],
+      "requiredToolKinds": ["discovery"],
+      "forbiddenToolKinds": ["traversal"],
+      "requiredRefs": [],
+      "maxToolCalls": 3,
+      "notes": "A source-shape question should use discovery, not answer from prompt memory."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md"
+  },
+  {
+    "id": "traj-scenario-conclusion-open",
+    "category": "trajectory",
+    "question": "Show the section I should read at the conclusion of scenario 61.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity", "neighbors"],
+      "requiredToolKinds": ["resolution", "open", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["scenario:frosthaven/061", "section:frosthaven/67.1"],
+      "maxToolCalls": 5
+    },
+    "source": "fh-scenario-book-62-81.pdf"
+  },
+  {
+    "id": "traj-section-read-now-chain",
+    "category": "trajectory",
+    "question": "Starting from section 103.1, follow the next two read-now links and tell me where I end up.",
+    "trajectory": {
+      "requiredTools": ["open_entity", "neighbors"],
+      "requiredToolKinds": ["open", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:frosthaven/103.1"],
+      "maxToolCalls": 7
+    },
+    "source": "fh-section-book-102-121.pdf"
+  },
+  {
+    "id": "traj-exact-item-open",
+    "category": "trajectory",
+    "question": "What does item 1 do, and what source ID did you use to open it?",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["card:frosthaven/items/gloomhavensecretariat:item/1"],
+      "maxToolCalls": 6
+    },
+    "source": "data/extracted/items.json"
+  },
+  {
+    "id": "traj-rule-brittle-citation",
+    "category": "trajectory",
+    "question": "What are the rules for Brittle? Quote or cite the source you used.",
+    "trajectory": {
+      "requiredTools": ["search_knowledge"],
+      "requiredToolKinds": ["search"],
+      "forbiddenTools": ["get_card", "find_scenario"],
+      "requiredRefs": [],
+      "maxToolCalls": 4
+    },
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "traj-ambiguous-algox-archer",
+    "category": "trajectory",
+    "question": "Find Algox Archer records, then open the best matching monster stat record.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenToolKinds": ["traversal"],
+      "requiredRefs": [
+        "card:frosthaven/monster-stats/gloomhavensecretariat:monster-stat/algox-archer/0-3"
+      ],
+      "maxToolCalls": 5
+    },
+    "source": "data/extracted/monster-stats.json"
+  },
+  {
+    "id": "traj-scenario-neighbors",
+    "category": "trajectory",
+    "question": "What scenarios or sections are directly related to scenario 61?",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "neighbors"],
+      "requiredToolKinds": ["resolution", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["scenario:frosthaven/061"],
+      "maxToolCalls": 6
+    },
+    "source": "fh-scenario-book-62-81.pdf"
+  },
+  {
+    "id": "traj-section-unlocks-scenario",
+    "category": "trajectory",
+    "question": "I know there is a locked scenario from section 66.2. What scenario ref does that section unlock?",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "neighbors"],
+      "requiredToolKinds": ["resolution", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:frosthaven/66.2", "scenario:frosthaven/116"],
+      "maxToolCalls": 4
+    },
+    "source": "fh-section-book-62-81.pdf"
+  },
+  {
+    "id": "traj-scenario-conclusion-next-links",
+    "category": "trajectory",
+    "question": "For scenario 61, find the conclusion section, open it, and list any scenarios or sections it unlocks or points to next.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity", "neighbors"],
+      "requiredToolKinds": ["resolution", "open", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["scenario:frosthaven/061", "section:frosthaven/67.1"],
+      "maxToolCalls": 7
+    },
+    "source": "fh-scenario-book-62-81.pdf"
+  },
+  {
+    "id": "traj-rule-during-scenario",
+    "category": "trajectory",
+    "question": "A player asks about Brittle during scenario 61. Answer the rule question, cite the rule source, and mention whether the scenario/section books were needed.",
+    "trajectory": {
+      "requiredTools": ["search_knowledge"],
+      "requiredToolKinds": ["search"],
+      "forbiddenToolKinds": ["traversal"],
+      "requiredRefs": [],
+      "maxToolCalls": 5,
+      "notes": "The scenario mention is incidental; the answer should not traverse scenario books just because a scenario number appears."
+    },
+    "source": "fh-rule-book.pdf"
+  },
+  {
+    "id": "traj-card-fuzzy-vs-exact",
+    "category": "trajectory",
+    "question": "Find the Algox Archer monster stat record, then search for any ability or card records that mention Algox Archer and explain which records are exact data versus fuzzy matches.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity", "search_knowledge"],
+      "requiredToolKinds": ["resolution", "open", "search"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": [
+        "card:frosthaven/monster-stats/gloomhavensecretariat:monster-stat/algox-archer/0-3"
+      ],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/monster-stats.json"
+  },
+  {
+    "id": "traj-invalid-cross-game-ref",
+    "category": "trajectory",
+    "question": "Resolve section 67.1 in Frosthaven and then try the same bare legacy ref with an explicit Gloomhaven 2 game. The second path should reject or require a canonical game-qualified ref.",
+    "finalAnswer": {
+      "expected": "Frosthaven section 67.1 can be resolved and opened. The explicit Gloomhaven 2 section 67.1 lookup should fail or be reported as unavailable, and the assistant must not silently reuse the Frosthaven section for Gloomhaven 2.",
+      "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2 lookup. Must state that the Gloomhaven 2 path is rejected, unavailable, or requires a valid game-qualified ref. Answers that reuse Frosthaven data for Gloomhaven 2 should fail."
+    },
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven2/67.1"],
+      "maxToolCalls": 8,
+      "notes": "This covers missing-data and invalid-ref behavior without letting the agent silently reuse Frosthaven data for another game."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md"
   }
 ]
