@@ -469,6 +469,18 @@ function summarizeToolOutput(content: string): { summary: string; canonicalRefs:
   }
 }
 
+function hasUsefulNeighborsResult(result: ToolCallResult): boolean {
+  try {
+    const parsed = JSON.parse(result.content) as {
+      ok?: unknown;
+      neighbors?: unknown;
+    };
+    return parsed.ok === true && Array.isArray(parsed.neighbors) && parsed.neighbors.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 function sourceLabelsFromResult(value: unknown): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
@@ -822,7 +834,7 @@ async function runAgentLoopInternal(
       messages.push({ role: 'assistant', content: response.content });
 
       const toolResults: ContentBlockParam[] = [];
-      let sawNeighborsTool = false;
+      let sawNeighborsWithTargets = false;
       for (const block of response.content) {
         if (block.type === 'tool_use') {
           const input = block.input as Record<string, unknown>;
@@ -830,9 +842,6 @@ async function runAgentLoopInternal(
             broadRuleSearches += 1;
           } else if (isNonRuleSearchTool(block.name, input)) {
             hasUsedNonRuleSearchTool = true;
-          }
-          if (block.name === 'neighbors') {
-            sawNeighborsTool = true;
           }
 
           if (emit) {
@@ -899,6 +908,9 @@ async function runAgentLoopInternal(
             endedAt: new Date(toolEndedAtMs).toISOString(),
             durationMs: toolEndedAtMs - toolStartedAtMs,
           });
+          if (block.name === 'neighbors' && !isError && hasUsefulNeighborsResult(toolResult)) {
+            sawNeighborsWithTargets = true;
+          }
 
           if (emit) {
             await emit('tool_result', {
@@ -918,7 +930,7 @@ async function runAgentLoopInternal(
       }
 
       messages.push({ role: 'user', content: toolResults });
-      if (sawNeighborsTool) {
+      if (sawNeighborsWithTargets) {
         messages.push({ role: 'user', content: NEIGHBORS_TARGET_PROMPT });
       }
       // Simple factual rule lookups can drift into repeated broad searches.

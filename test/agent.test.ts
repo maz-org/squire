@@ -324,6 +324,28 @@ describe('runAgentLoop', () => {
     });
   });
 
+  it('does not add the neighbors target prompt for empty neighbor results', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('neighbors', {
+          ref: 'scenario:frosthaven/061',
+          relation: 'unlock',
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('I could not find an unlock from that scenario.'));
+
+    const result = await runAgentLoop('what does scenario 61 unlock?', {
+      toolSurface: 'redesigned',
+    });
+
+    expect(result).toBe('I could not find an unlock from that scenario.');
+    expect(mockMessagesCreate.mock.calls[1][0].messages).not.toContainEqual({
+      role: 'user',
+      content:
+        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks for section text, call open_entity on the returned section ref now; otherwise answer from the neighbors result. Do not search for another path unless neighbors returned no relevant target.',
+    });
+  });
+
   it('uses the redesigned broad search tool for mixed rules and cards discovery', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(
