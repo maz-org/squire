@@ -240,6 +240,12 @@ describe('SQR-128 Anthropic eval runner', () => {
         traceId: 'trace-quality',
         statusReason: 'quality',
         judgeScores: [
+          { name: 'failure_class', value: 'quality' },
+          { name: 'tool_call_count', value: 1 },
+          { name: 'retry_count', value: 0 },
+          { name: 'loop_iterations', value: 2 },
+          { name: 'model_latency_ms', value: 1500 },
+          { name: 'model_cost_usd', value: 0 },
           { name: 'correctness', value: 0.4, comment: 'Missing upgrade distinction.' },
           { name: 'pass', value: 'fail', comment: 'Expected upgrade cost distinction.' },
         ],

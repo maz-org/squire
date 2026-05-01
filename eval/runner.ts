@@ -5,6 +5,7 @@ import { filterEvalCases, loadEvalCases, seedDataset } from './dataset.ts';
 import { evalCaseHasFinalAnswer } from './schema.ts';
 import { runFiltered, runOnDataset } from './experiments.ts';
 import { runLocalReport } from './local-report.ts';
+import { runOpenAiLocalReport } from './openai-runner.ts';
 
 function describeProviderConfig(config: EvalProviderConfig): string {
   const tuning = [
@@ -18,12 +19,13 @@ function describeProviderConfig(config: EvalProviderConfig): string {
 }
 
 function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): void {
+  if (config.provider === 'openai') return;
   if (config.provider === 'anthropic') return;
 
   throw new Error(
     [
       `Eval provider config parsed as ${describeProviderConfig(config)}, but the provider runner is not implemented yet.`,
-      'SQR-128 adds the Anthropic eval runner; SQR-129 still owns OpenAI runner support.',
+      'Supported eval providers are anthropic and openai.',
     ].join(' '),
   );
 }
@@ -55,6 +57,26 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   }
 
   assertCurrentRunnerSupportsProviderConfig(options.providerConfig);
+
+  if (options.providerConfig.provider === 'openai') {
+    if (!options.localReportPath) {
+      throw new Error(
+        'OpenAI Responses evals currently require --local-report so the SQR-127 trace artifacts are written to a local report. Langfuse matrix wiring lands in SQR-131.',
+      );
+    }
+    console.log(
+      `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
+    );
+    await runOpenAiLocalReport(
+      cases,
+      options.runName,
+      options.providerConfig,
+      options.toolSurface,
+      options.localReportPath,
+      env,
+    );
+    return;
+  }
 
   if (options.localReportPath) {
     console.log(

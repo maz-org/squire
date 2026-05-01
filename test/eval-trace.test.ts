@@ -238,29 +238,35 @@ describe('SQR-127 eval trace writer', () => {
 
     expect(scores).toEqual([
       expect.objectContaining({
+        id: 'trace-case-1:score:correctness:score-create',
         body: expect.objectContaining({
           id: 'trace-case-1:score:correctness',
           traceId: 'trace-case-1',
           name: 'correctness',
           value: 1,
+          dataType: 'NUMERIC',
           comment: 'Expected detail present.',
           metadata: { playerId: '[REDACTED]' },
         }),
       }),
       expect.objectContaining({
+        id: 'trace-case-1:score:pass:score-create',
         body: expect.objectContaining({
           id: 'trace-case-1:score:pass',
           traceId: 'trace-case-1',
           name: 'pass',
           value: 'pass',
+          dataType: 'CATEGORICAL',
         }),
       }),
       expect.objectContaining({
+        id: 'trace-case-1:score:tool_call_count:score-create',
         body: expect.objectContaining({
           id: 'trace-case-1:score:tool_call_count',
           traceId: 'trace-case-1',
           name: 'tool_call_count',
           value: 1,
+          dataType: 'NUMERIC',
         }),
       }),
     ]);
@@ -332,5 +338,22 @@ describe('SQR-127 eval trace writer', () => {
     expect(JSON.stringify(batches[0])).not.toContain('sk-tool-secret');
     expect(JSON.stringify(batches[0])).not.toContain('session-secret');
     expect(JSON.stringify(batches[0])).not.toContain('player@example.test');
+  });
+
+  it('fails when Langfuse accepts a batch with per-event ingestion errors', async () => {
+    const client: LangfuseTraceIngestionClient = {
+      api: {
+        ingestion: {
+          batch: async () => ({
+            successes: [],
+            errors: [{ id: 'score-event', status: 400, message: 'invalid score' }],
+          }),
+        },
+      },
+    };
+
+    await expect(writeEvalTrace(client, baseTrace)).rejects.toThrow(
+      'Langfuse trace ingestion failed',
+    );
   });
 });
