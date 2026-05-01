@@ -213,6 +213,7 @@ function stripNullValues(value: unknown): unknown {
     const normalizedChild = stripNullValues(child);
     if (normalizedChild !== undefined) normalized[key] = normalizedChild;
   }
+  if (Object.keys(normalized).length === 0) return undefined;
   return normalized;
 }
 

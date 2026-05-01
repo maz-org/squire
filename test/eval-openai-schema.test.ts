@@ -147,6 +147,18 @@ describe('OpenAI strict tool schema renderer', () => {
     });
 
     expect(
+      normalizeOpenAiToolInput('list_cards', {
+        type: 'items',
+        filter: {
+          cost: null,
+          level: null,
+          name: null,
+          sourceId: null,
+        },
+      }),
+    ).toEqual({ type: 'items' });
+
+    expect(
       normalizeOpenAiToolInput('neighbors', {
         ref: 'scenario:frosthaven/061',
         relation: null,
