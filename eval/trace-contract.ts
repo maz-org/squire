@@ -32,8 +32,8 @@ export type TraceDebugCategory =
   | 'redaction'
   | 'report';
 
-export interface TraceField {
-  name: string;
+interface TraceFieldShape<Name extends string = string> {
+  name: Name;
   required: boolean;
   langfuseTarget: LangfuseTarget;
   debugCategory: TraceDebugCategory;
@@ -277,7 +277,24 @@ const TRACE_FIELD_DEFINITIONS = [
     includeInAppConversationHistory: false,
     description: 'Local convenience export derived from Langfuse data, not the source of truth.',
   },
-] satisfies TraceField[];
+] as const satisfies readonly TraceFieldShape[];
+
+export type TraceFieldName = (typeof TRACE_FIELD_DEFINITIONS)[number]['name'];
+export type TraceField = TraceFieldShape<TraceFieldName>;
+
+function assertUniqueTraceFieldNames(fields: readonly TraceFieldShape[]): void {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const { name } of fields) {
+    if (seen.has(name)) duplicates.add(name);
+    seen.add(name);
+  }
+  if (duplicates.size > 0) {
+    throw new Error(`Duplicate trace field name(s): ${[...duplicates].join(', ')}`);
+  }
+}
+
+assertUniqueTraceFieldNames(TRACE_FIELD_DEFINITIONS);
 
 export const TRACE_FIELDS: ReadonlyArray<Readonly<TraceField>> = Object.freeze(
   TRACE_FIELD_DEFINITIONS.map((field) => Object.freeze(field)),

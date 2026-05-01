@@ -20,6 +20,11 @@ function field(name: string): TraceField {
 }
 
 describe('SQR-125 trace artifact contract', () => {
+  it('keeps trace field names unique', () => {
+    const names = TRACE_FIELDS.map((candidate) => candidate.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it('keeps provider, model, run, and case filters in Langfuse trace metadata', () => {
     for (const name of [
       'contractVersion',
