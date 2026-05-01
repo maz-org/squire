@@ -18,16 +18,12 @@ function describeProviderConfig(config: EvalProviderConfig): string {
 }
 
 function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): void {
-  const usesDefaultModel = config.provider === 'anthropic' && config.model === 'claude-sonnet-4-6';
-  const hasFutureRunnerTuning =
-    config.reasoningEffort || config.maxOutputTokens || config.timeoutMs || config.toolLoopLimit;
-  if (usesDefaultModel && !hasFutureRunnerTuning) return;
+  if (config.provider === 'anthropic') return;
 
   throw new Error(
     [
       `Eval provider config parsed as ${describeProviderConfig(config)}, but the provider runner is not implemented yet.`,
-      'This SQR-124 contract only defines eval-only config and module boundaries.',
-      'Use the existing default anthropic:claude-sonnet-4-6 runner until SQR-128/SQR-129 add provider-specific loops.',
+      'SQR-128 adds the Anthropic eval runner; SQR-129 still owns OpenAI runner support.',
     ].join(' '),
   );
 }
@@ -76,8 +72,20 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
     `Running ${cases.length} eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
   );
   if (isFiltered) {
-    await runFiltered(langfuse, cases, options.runName, options.toolSurface);
+    await runFiltered(
+      langfuse,
+      cases,
+      options.runName,
+      options.toolSurface,
+      options.providerConfig,
+    );
   } else {
-    await runOnDataset(langfuse, options.runName, options.toolSurface, allCases.length);
+    await runOnDataset(
+      langfuse,
+      options.runName,
+      options.toolSurface,
+      allCases.length,
+      options.providerConfig,
+    );
   }
 }

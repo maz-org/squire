@@ -239,6 +239,7 @@ describe('SQR-127 eval trace writer', () => {
     expect(scores).toEqual([
       expect.objectContaining({
         body: expect.objectContaining({
+          id: 'trace-case-1:score:correctness',
           traceId: 'trace-case-1',
           name: 'correctness',
           value: 1,
@@ -247,10 +248,16 @@ describe('SQR-127 eval trace writer', () => {
         }),
       }),
       expect.objectContaining({
-        body: expect.objectContaining({ traceId: 'trace-case-1', name: 'pass', value: 'pass' }),
+        body: expect.objectContaining({
+          id: 'trace-case-1:score:pass',
+          traceId: 'trace-case-1',
+          name: 'pass',
+          value: 'pass',
+        }),
       }),
       expect.objectContaining({
         body: expect.objectContaining({
+          id: 'trace-case-1:score:tool_call_count',
           traceId: 'trace-case-1',
           name: 'tool_call_count',
           value: 1,
