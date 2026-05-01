@@ -64,6 +64,7 @@ vi.mock('../src/tools.ts', () => ({
 
 import {
   runAgentLoop,
+  runAgentLoopWithEvalConfig,
   runAgentLoopWithTrajectory,
   executeToolCall,
   AGENT_TOOLS,
@@ -267,6 +268,28 @@ describe('runAgentLoop', () => {
       'get_section',
       'follow_links',
     ]);
+  });
+
+  it('uses eval-only Anthropic model config without changing the tool loop', async () => {
+    mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
+
+    await runAgentLoopWithEvalConfig('test', {
+      toolSurface: 'redesigned',
+      anthropicModel: 'claude-opus-4-7',
+      maxOutputTokens: 2048,
+      timeoutMs: 30000,
+      toolLoopLimit: 4,
+    });
+
+    expect(mockMessagesCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'claude-opus-4-7',
+        max_tokens: 2048,
+        tools: AGENT_TOOLS,
+        system: AGENT_SYSTEM_PROMPT,
+      }),
+      { timeout: 30000 },
+    );
   });
 
   it('uses the redesigned traversal tools for an exact scenario conclusion lookup', async () => {
