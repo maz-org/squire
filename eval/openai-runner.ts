@@ -490,7 +490,7 @@ export async function runOpenAiResponsesEvalCase(
       retries: [],
       toolCalls: traceToolCalls,
       judgeScores: [
-        { name: 'failure_class', value: statusReason },
+        { name: 'failure_class', value: statusReason === 'completed' ? 'none' : statusReason },
         { name: 'tool_call_count', value: toolCalls.length },
         { name: 'loop_iterations', value: iterations },
       ],

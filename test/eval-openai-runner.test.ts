@@ -168,6 +168,9 @@ describe('OpenAI Responses eval runner', () => {
       ],
       errors: [],
     });
+    expect(result.trace.judgeScores).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'failure_class', value: 'none' })]),
+    );
     expect(result.trace.providerNativeTranscript).toMatchObject({
       contractVersion: TRACE_CONTRACT_VERSION,
       turns: [
