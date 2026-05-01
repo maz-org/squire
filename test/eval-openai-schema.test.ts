@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { ALL_AGENT_TOOLS, executeToolCall } from '../src/agent.ts';
-import { searchCards } from '../src/tools.ts';
+import { listCards, searchCards } from '../src/tools.ts';
 import {
   OPENAI_TOOL_SCHEMA_VERSION,
   executeOpenAiToolCall,
@@ -76,7 +76,19 @@ describe('OpenAI strict tool schema renderer', () => {
       renderOpenAiStrictToolSchemas().map((schema) => [schema.name, schema.parameters]),
     ) as Record<
       string,
-      { required: string[]; properties: Record<string, { type?: unknown; enum?: unknown[] }> }
+      {
+        required: string[];
+        properties: Record<
+          string,
+          {
+            type?: unknown;
+            enum?: unknown[];
+            required?: string[];
+            additionalProperties?: unknown;
+            properties?: Record<string, { type?: unknown }>;
+          }
+        >;
+      }
     >;
 
     expect(byName.search_rules.required).toEqual(['query', 'topK']);
@@ -87,6 +99,17 @@ describe('OpenAI strict tool schema renderer', () => {
     expect(byName.neighbors.required).toEqual(['ref', 'relation', 'limit']);
     expect(byName.neighbors.properties.relation.enum).toContain(null);
     expect(byName.list_cards.required).toEqual(['type', 'filter']);
+    expect(byName.list_cards.properties.filter.type).toEqual(['object', 'null']);
+    expect(byName.list_cards.properties.filter.additionalProperties).toBe(false);
+    expect(byName.list_cards.properties.filter.required).toEqual(
+      expect.arrayContaining(['cost', 'level', 'name', 'sourceId']),
+    );
+    expect(byName.list_cards.properties.filter.properties?.name.type).toEqual([
+      'string',
+      'number',
+      'boolean',
+      'null',
+    ]);
     expect(byName.follow_links.required).toEqual(['fromKind', 'fromRef', 'linkType']);
     expect(byName.follow_links.properties.linkType.enum).toContain(null);
   });
@@ -105,6 +128,23 @@ describe('OpenAI strict tool schema renderer', () => {
         filter: null,
       }),
     ).toEqual({ type: 'items' });
+
+    expect(
+      normalizeOpenAiToolInput('list_cards', {
+        type: 'items',
+        filter: {
+          cost: null,
+          level: null,
+          name: 'Spyglass',
+          sourceId: null,
+        },
+      }),
+    ).toEqual({
+      type: 'items',
+      filter: {
+        name: 'Spyglass',
+      },
+    });
 
     expect(
       normalizeOpenAiToolInput('neighbors', {
@@ -139,6 +179,23 @@ describe('OpenAI strict tool schema renderer', () => {
 
     expect(result.content).toContain('[]');
     expect(searchCards).toHaveBeenCalledWith('boots', 6);
+  });
+
+  it('normalizes closed list_cards filter placeholders before executing', async () => {
+    vi.mocked(listCards).mockResolvedValueOnce([]);
+
+    const result = await executeOpenAiToolCall('list_cards', {
+      type: 'items',
+      filter: {
+        cost: null,
+        level: null,
+        name: 'Spyglass',
+        sourceId: null,
+      },
+    });
+
+    expect(result.content).toContain('[]');
+    expect(listCards).toHaveBeenCalledWith('items', { name: 'Spyglass' });
   });
 
   it('rejects future tools that use unsupported schema keywords', () => {

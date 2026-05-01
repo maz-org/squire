@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import { ALL_AGENT_TOOLS, executeToolCall, type AgentToolName } from '../src/agent.ts';
 import type { ToolCallResult } from '../src/agent.ts';
+import { SCHEMAS } from '../src/schemas.ts';
 
 export const OPENAI_TOOL_SCHEMA_VERSION = 'squire-openai-tools-v1';
 
@@ -35,6 +37,65 @@ const SUPPORTED_SCHEMA_KEYS = new Set([
 
 function clonePlainObject(value: JsonSchema): JsonSchema {
   return JSON.parse(JSON.stringify(value)) as JsonSchema;
+}
+
+function objectProperties(schema: JsonSchema): Record<string, JsonSchema> | undefined {
+  return schema.properties &&
+    typeof schema.properties === 'object' &&
+    !Array.isArray(schema.properties)
+    ? (schema.properties as Record<string, JsonSchema>)
+    : undefined;
+}
+
+function cardFilterPropertyNames(): string[] {
+  const names = new Set<string>();
+  for (const schema of Object.values(SCHEMAS)) {
+    const jsonSchema = z.toJSONSchema(schema) as JsonSchema;
+    const properties = objectProperties(jsonSchema);
+    if (!properties) continue;
+    for (const name of Object.keys(properties)) names.add(name);
+  }
+  return [...names].sort();
+}
+
+function buildListCardsFilterSchema(description: unknown): JsonSchema {
+  const properties: Record<string, JsonSchema> = {};
+  for (const name of cardFilterPropertyNames()) {
+    properties[name] = {
+      type: ['string', 'number', 'boolean', 'null'],
+      description: `Exact-match value for the ${name} field, or null when unused.`,
+    };
+  }
+
+  return {
+    type: 'object',
+    description:
+      typeof description === 'string'
+        ? description
+        : 'Exact-match primitive filters for known card fields.',
+    properties,
+    required: [],
+    additionalProperties: false,
+  };
+}
+
+function normalizedInputSchema(tool: AgentToolLike): JsonSchema {
+  const schema = clonePlainObject(tool.input_schema);
+  if (tool.name !== 'list_cards') return schema;
+
+  const properties = objectProperties(schema);
+  const filterSchema = properties?.filter;
+  if (
+    !properties ||
+    !filterSchema ||
+    typeof filterSchema !== 'object' ||
+    Array.isArray(filterSchema)
+  ) {
+    return schema;
+  }
+
+  properties.filter = buildListCardsFilterSchema((filterSchema as JsonSchema).description);
+  return schema;
 }
 
 function schemaTypeIncludes(type: unknown, expected: string): boolean {
@@ -123,11 +184,7 @@ export function renderOpenAiStrictToolSchemas(
     name: tool.name,
     description: tool.description ?? '',
     strict: true,
-    parameters: strictifySchema(
-      clonePlainObject(tool.input_schema),
-      true,
-      `${tool.name}.parameters`,
-    ),
+    parameters: strictifySchema(normalizedInputSchema(tool), true, `${tool.name}.parameters`),
   }));
 }
 
@@ -141,9 +198,20 @@ export function normalizeOpenAiToolInput(
   _name: AgentToolName | string,
   input: Record<string, unknown>,
 ): Record<string, unknown> {
+  return stripNullValues(input) as Record<string, unknown>;
+}
+
+function stripNullValues(value: unknown): unknown {
+  if (value === null) return undefined;
+  if (Array.isArray(value)) {
+    return value.map(stripNullValues).filter((item) => item !== undefined);
+  }
+  if (!value || typeof value !== 'object') return value;
+
   const normalized: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value !== null) normalized[key] = value;
+  for (const [key, child] of Object.entries(value)) {
+    const normalizedChild = stripNullValues(child);
+    if (normalizedChild !== undefined) normalized[key] = normalizedChild;
   }
   return normalized;
 }
