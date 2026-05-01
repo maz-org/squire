@@ -362,7 +362,7 @@ export const ALL_AGENT_TOOLS = [...AGENT_TOOLS, ...LEGACY_AGENT_TOOLS] as const;
 /** Union of every selectable tool name. Keeps dependent maps honest. */
 export type AgentToolName = (typeof ALL_AGENT_TOOLS)[number]['name'];
 
-type AgentToolSurface = 'redesigned' | 'legacy';
+export type AgentToolSurface = 'redesigned' | 'legacy';
 
 function selectedAgentSurface(surface: AgentToolSurface | undefined): {
   system: string;
@@ -386,6 +386,8 @@ export interface TokenUsage {
   totalTokens: number;
 }
 
+export type AnthropicEvalModel = 'claude-sonnet-4-6' | 'claude-opus-4-7';
+
 export interface ToolTrajectoryStep {
   iteration: number;
   id: string;
@@ -401,8 +403,21 @@ export interface ToolTrajectoryStep {
   durationMs: number;
 }
 
+export interface ModelTrajectoryStep {
+  iteration: number;
+  model: string;
+  stopReason: StopReason | null;
+  inputTokens: number;
+  outputTokens: number;
+  content: unknown;
+  startedAt: string;
+  endedAt: string;
+  durationMs: number;
+}
+
 export interface AgentRunTrajectory {
   toolCalls: ToolTrajectoryStep[];
+  modelCalls: ModelTrajectoryStep[];
   finalAnswer: string;
   tokenUsage: TokenUsage;
   model: string;
@@ -413,6 +428,14 @@ export interface AgentRunTrajectory {
 export interface AgentRunResult {
   answer: string;
   trajectory: AgentRunTrajectory;
+}
+
+export interface EvalAgentLoopOptions {
+  toolSurface?: AgentToolSurface;
+  anthropicModel: AnthropicEvalModel;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+  toolLoopLimit?: number;
 }
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
@@ -661,13 +684,19 @@ export async function executeToolCall(
 async function callClaude(
   messages: MessageParam[],
   emit?: EmitFn,
-  opts: { allowTools?: boolean; toolSurface?: AgentToolSurface } = {},
+  opts: {
+    allowTools?: boolean;
+    toolSurface?: AgentToolSurface;
+    model?: string;
+    maxOutputTokens?: number;
+    timeoutMs?: number;
+  } = {},
 ): Promise<Message> {
   const allowTools = opts.allowTools ?? true;
   const surface = selectedAgentSurface(opts.toolSurface);
   const params = {
-    model: AGENT_MODEL,
-    max_tokens: 4096,
+    model: opts.model ?? AGENT_MODEL,
+    max_tokens: opts.maxOutputTokens ?? 4096,
     system: surface.system,
     messages,
   };
@@ -682,11 +711,16 @@ async function callClaude(
       }
     : params;
 
+  const requestOptions = opts.timeoutMs ? { timeout: opts.timeoutMs } : undefined;
+
   if (!emit) {
+    if (requestOptions) return client.messages.create(paramsWithTools, requestOptions);
     return client.messages.create(paramsWithTools);
   }
 
-  const stream = client.messages.stream(paramsWithTools);
+  const stream = requestOptions
+    ? client.messages.stream(paramsWithTools, requestOptions)
+    : client.messages.stream(paramsWithTools);
   stream.on('text', (delta) => {
     void emit('text', { delta });
   });
@@ -734,14 +768,63 @@ export async function runAgentLoopWithTrajectory(
   });
 }
 
+export async function runAgentLoopWithEvalConfig(
+  question: string,
+  options: EvalAgentLoopOptions,
+): Promise<AgentRunResult> {
+  return tracer.startActiveSpan('squire.agent.eval.run', async (runSpan) => {
+    try {
+      const result = await runAgentLoopInternal(
+        question,
+        { toolSurface: options.toolSurface },
+        {
+          model: options.anthropicModel,
+          maxOutputTokens: options.maxOutputTokens,
+          timeoutMs: options.timeoutMs,
+          toolLoopLimit: options.toolLoopLimit,
+        },
+      );
+      runSpan.setAttributes({
+        'squire.agent.model': result.trajectory.model,
+        'squire.agent.iterations': result.trajectory.iterations,
+        'squire.agent.tool_call_count': result.trajectory.toolCalls.length,
+        'squire.agent.stop_reason': result.trajectory.stopReason ?? 'unknown',
+        'squire.agent.input_tokens': result.trajectory.tokenUsage.inputTokens,
+        'squire.agent.output_tokens': result.trajectory.tokenUsage.outputTokens,
+        'squire.agent.eval': true,
+      });
+      return result;
+    } catch (err) {
+      runSpan.recordException(err as Error);
+      runSpan.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      throw err;
+    } finally {
+      runSpan.end();
+    }
+  });
+}
+
+interface AgentLoopInternalConfig {
+  model?: string;
+  maxOutputTokens?: number;
+  timeoutMs?: number;
+  toolLoopLimit?: number;
+}
+
 async function runAgentLoopInternal(
   question: string,
   options?: AskOptions,
+  config: AgentLoopInternalConfig = {},
 ): Promise<AgentRunResult> {
   const history = options?.history;
   const emit = options?.emit;
   const toolSurface = options?.toolSurface;
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
+  const model = config.model ?? AGENT_MODEL;
+  const maxIterations = config.toolLoopLimit ?? MAX_AGENT_ITERATIONS;
 
   const messages: MessageParam[] = [
     ...truncatedHistory.map((m: HistoryMessage) => ({
@@ -756,11 +839,14 @@ async function runAgentLoopInternal(
   let hasUsedNonRuleSearchTool = false;
   let forceSynthesis = false;
   const toolCalls: ToolTrajectoryStep[] = [];
+  const modelCalls: ModelTrajectoryStep[] = [];
   const tokenUsage: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
   let iterations = 0;
 
-  for (let i = 0; i < MAX_AGENT_ITERATIONS; i++) {
+  for (let i = 0; i < maxIterations; i++) {
     iterations = i + 1;
+    const modelStartedAtMs = Date.now();
+    const modelStartedAt = new Date(modelStartedAtMs).toISOString();
     const response = await tracer.startActiveSpan('squire.agent.iteration', async (span) => {
       try {
         span.setAttributes({
@@ -771,6 +857,9 @@ async function runAgentLoopInternal(
         const message = await callClaude(messages, emit, {
           allowTools: !forceSynthesis,
           toolSurface,
+          model,
+          maxOutputTokens: config.maxOutputTokens,
+          timeoutMs: config.timeoutMs,
         });
         span.setAttributes({
           'squire.agent.stop_reason': message.stop_reason ?? 'unknown',
@@ -788,6 +877,18 @@ async function runAgentLoopInternal(
       } finally {
         span.end();
       }
+    });
+    const modelEndedAtMs = Date.now();
+    modelCalls.push({
+      iteration: i + 1,
+      model,
+      stopReason: response.stop_reason,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      content: response.content,
+      startedAt: modelStartedAt,
+      endedAt: new Date(modelEndedAtMs).toISOString(),
+      durationMs: modelEndedAtMs - modelStartedAtMs,
     });
     addUsage(tokenUsage, response);
     const hasToolUse = response.content.some((block) => block.type === 'tool_use');
@@ -813,9 +914,10 @@ async function runAgentLoopInternal(
         answer: lastTextContent,
         trajectory: {
           toolCalls,
+          modelCalls,
           finalAnswer: lastTextContent,
           tokenUsage,
-          model: AGENT_MODEL,
+          model,
           iterations,
           stopReason: response.stop_reason,
         },
@@ -950,9 +1052,10 @@ async function runAgentLoopInternal(
       answer,
       trajectory: {
         toolCalls,
+        modelCalls,
         finalAnswer: answer,
         tokenUsage,
-        model: AGENT_MODEL,
+        model,
         iterations,
         stopReason: response.stop_reason,
       },
@@ -967,9 +1070,10 @@ async function runAgentLoopInternal(
     answer,
     trajectory: {
       toolCalls,
+      modelCalls,
       finalAnswer: answer,
       tokenUsage,
-      model: AGENT_MODEL,
+      model,
       iterations,
       stopReason: 'iteration_limit',
     },

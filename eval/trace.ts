@@ -275,6 +275,7 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
 
   const scoreEvents = input.judgeScores.map((score) =>
     event('score-create', `${input.traceId}:score:${score.name}`, timestamp, {
+      id: `${input.traceId}:score:${score.name}`,
       traceId: input.traceId,
       name: score.name,
       value: score.value,
