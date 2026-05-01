@@ -16,10 +16,11 @@ and `SQR-126`.
 
 ## Probe Inputs
 
-- Anthropic credentials were loaded from `/Users/bcm/Projects/maz/squire/.env`.
-- OpenAI credentials were loaded from `/Users/bcm/Projects/maz/squire/.env`.
-- Langfuse credentials are present in `/Users/bcm/Projects/maz/squire/.env`, but
-  this issue only verifies provider model access.
+- Anthropic credentials were loaded from the local `.env` file used for this
+  run.
+- OpenAI credentials were loaded from the local `.env` file used for this run.
+- Langfuse credentials were present in the local `.env` file used for this run,
+  but this issue only verifies provider model access.
 
 No secrets or raw API keys are recorded here.
 
