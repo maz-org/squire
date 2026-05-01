@@ -113,6 +113,17 @@ function scoresForResult(result: AgentRunResult, statusReason: string): EvalTrac
   ];
 }
 
+function mergeMetricScores(
+  metricScores: EvalTraceScore[],
+  judgeScores: EvalTraceScore[],
+): EvalTraceScore[] {
+  const judgeScoreNames = new Set(judgeScores.map((score) => score.name));
+  return [
+    ...metricScores.filter((metricScore) => !judgeScoreNames.has(metricScore.name)),
+    ...judgeScores,
+  ];
+}
+
 function totalModelLatencyMs(result: AgentRunResult): number {
   return result.trajectory.modelCalls.reduce((sum, call) => sum + call.durationMs, 0);
 }
@@ -171,7 +182,7 @@ async function writeSuccessTrace(
     toolCalls: result.trajectory.toolCalls,
     judgeScores: scores,
   });
-  const judgeScores = scores.length > 0 ? scores : scoresForResult(result, statusReason);
+  const judgeScores = mergeMetricScores(scoresForResult(result, statusReason), scores);
 
   await writeEvalTrace(options.traceClient, {
     traceId,
