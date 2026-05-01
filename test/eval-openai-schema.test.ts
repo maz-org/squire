@@ -165,6 +165,8 @@ describe('OpenAI strict tool schema renderer', () => {
         limit: null,
       }),
     ).toEqual({ ref: 'scenario:frosthaven/061' });
+
+    expect(normalizeOpenAiToolInput('list_card_types', {})).toEqual({});
   });
 
   it('preserves non-null values while normalizing OpenAI tool inputs', () => {

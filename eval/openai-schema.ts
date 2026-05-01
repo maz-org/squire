@@ -198,7 +198,7 @@ export function normalizeOpenAiToolInput(
   _name: AgentToolName | string,
   input: Record<string, unknown>,
 ): Record<string, unknown> {
-  return stripNullValues(input) as Record<string, unknown>;
+  return (stripNullValues(input) as Record<string, unknown> | undefined) ?? {};
 }
 
 function stripNullValues(value: unknown): unknown {
