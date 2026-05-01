@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -9,7 +9,9 @@ import {
   type TraceField,
 } from '../eval/trace-contract.ts';
 
-const DOC_PATH = join(process.cwd(), 'docs/plans/sqr-125-trace-artifact-contract.md');
+const DOC_PATH = fileURLToPath(
+  new URL('../docs/plans/sqr-125-trace-artifact-contract.md', import.meta.url),
+);
 
 function field(name: string): TraceField {
   const match = TRACE_FIELDS.find((candidate) => candidate.name === name);
@@ -20,6 +22,7 @@ function field(name: string): TraceField {
 describe('SQR-125 trace artifact contract', () => {
   it('keeps provider, model, run, and case filters in Langfuse trace metadata', () => {
     for (const name of [
+      'contractVersion',
       'provider',
       'model',
       'resolvedModel',
@@ -29,6 +32,7 @@ describe('SQR-125 trace artifact contract', () => {
       'caseCategory',
       'promptHash',
       'promptVersion',
+      'toolSurface',
       'toolSchemaVersion',
       'toolSchemaHash',
     ]) {
@@ -61,6 +65,7 @@ describe('SQR-125 trace artifact contract', () => {
 
     const requiredNames = [
       'modelSettings',
+      'inputQuestion',
       'toolCalls',
       'toolArguments',
       'toolResults',
@@ -73,6 +78,7 @@ describe('SQR-125 trace artifact contract', () => {
       'stopReason',
       'statusReason',
       'finalAnswer',
+      'judgeScores',
     ];
 
     for (const name of requiredNames) {
@@ -91,11 +97,16 @@ describe('SQR-125 trace artifact contract', () => {
   });
 
   it('redacts secrets and future user or campaign state before trace writes', () => {
-    for (const sensitiveName of [
+    expect(TRACE_REDACTION_DENYLIST).toEqual([
       'apiKey',
       'authorization',
+      'bearer',
       'cookie',
+      'setCookie',
+      'session',
       'sessionId',
+      'csrf',
+      'oauth',
       'accessToken',
       'refreshToken',
       'userId',
@@ -103,9 +114,7 @@ describe('SQR-125 trace artifact contract', () => {
       'campaignId',
       'characterId',
       'playerId',
-    ]) {
-      expect(TRACE_REDACTION_DENYLIST).toContain(sensitiveName);
-    }
+    ]);
   });
 
   it('has a checked-in markdown contract that names the current schema version', () => {

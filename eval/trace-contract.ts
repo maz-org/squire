@@ -41,7 +41,7 @@ export interface TraceField {
   description: string;
 }
 
-export const TRACE_FIELDS: TraceField[] = [
+const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'contractVersion',
     required: true,
@@ -277,7 +277,11 @@ export const TRACE_FIELDS: TraceField[] = [
     includeInAppConversationHistory: false,
     description: 'Local convenience export derived from Langfuse data, not the source of truth.',
   },
-];
+] satisfies TraceField[];
+
+export const TRACE_FIELDS: ReadonlyArray<Readonly<TraceField>> = Object.freeze(
+  TRACE_FIELD_DEFINITIONS.map((field) => Object.freeze(field)),
+);
 
 export const TRACE_REDACTION_DENYLIST = [
   'apiKey',
