@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.7] - 2026-05-01
+
+### Added
+
+- Eval runs can now render every Squire agent tool as an OpenAI strict function schema, with stable schema version and hash values for trace metadata.
+- Added tests that reject unsupported future tool schema shapes, remove defaults, close object schemas, convert optional inputs to nullable required fields, and preserve the Anthropic tool definitions.
+
+### Fixed
+
+- OpenAI eval tool calls now normalize nullable placeholder fields before dispatch, including closed `list_cards` filters with known card fields.
+
 ## [0.1.6] - 2026-04-29
 
 ### Changed
