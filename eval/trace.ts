@@ -177,6 +177,14 @@ function generationIdFor(input: EvalTraceInput): string {
   return input.generationId ?? `${input.traceId}:generation`;
 }
 
+function scoreIdFor(input: EvalTraceInput, score: EvalTraceScore): string {
+  return `${input.traceId}:score:${score.name}`;
+}
+
+function scoreDataTypeFor(score: EvalTraceScore): string {
+  return typeof score.value === 'number' ? 'NUMERIC' : 'CATEGORICAL';
+}
+
 function timestampFor(input: EvalTraceInput): string {
   return input.startedAt;
 }
@@ -273,15 +281,18 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
     });
   });
 
-  const scoreEvents = input.judgeScores.map((score) =>
-    event('score-create', `${input.traceId}:score:${score.name}`, timestamp, {
+  const scoreEvents = input.judgeScores.map((score) => {
+    const scoreId = scoreIdFor(input, score);
+    return event('score-create', `${scoreId}:score-create`, timestamp, {
+      id: scoreId,
       traceId: input.traceId,
       name: score.name,
       value: score.value,
+      dataType: scoreDataTypeFor(score),
       comment: score.comment,
       metadata: redactTracePayload(score.metadata ?? {}),
-    }),
-  );
+    });
+  });
 
   return {
     batch: [traceEvent, generationEvent, ...toolEvents, ...scoreEvents],
@@ -295,5 +306,12 @@ export async function writeEvalTrace(
   client: LangfuseTraceIngestionClient,
   input: EvalTraceInput,
 ): Promise<void> {
-  await client.api.ingestion.batch(buildEvalTraceIngestionBatch(input));
+  const response = await client.api.ingestion.batch(buildEvalTraceIngestionBatch(input));
+  const errors =
+    response && typeof response === 'object' && 'errors' in response
+      ? (response.errors as unknown)
+      : undefined;
+  if (Array.isArray(errors) && errors.length > 0) {
+    throw new Error(`Langfuse trace ingestion failed: ${JSON.stringify(errors)}`);
+  }
 }
