@@ -50,7 +50,7 @@ Langfuse filtering and grouped reporting work without parsing nested blobs.
 | `promptVersion`     | `redesigned-agent-v1`           | Stable prompt contract name or semantic version.     |
 | `promptHash`        | `sha256:...`                    | Hash of system prompt plus prompt wrapper.           |
 | `toolSurface`       | `redesigned`                    | Existing Squire tool surface name.                   |
-| `toolSchemaVersion` | `squire-agent-tools.v1`         | Stable tool schema version coordinated with SQR-126. |
+| `toolSchemaVersion` | `squire-openai-tools-v1`        | Stable tool schema version coordinated with SQR-126. |
 | `toolSchemaHash`    | `sha256:...`                    | Hash of provider-rendered tool definitions.          |
 | `statusReason`      | `completed`, `timeout`, `error` | Normalized case status for failure filtering.        |
 
@@ -243,7 +243,8 @@ filterable but not compatibility blockers.
 - SQR-124 owns CLI/config fields that feed `provider`, `model`, `runLabel`,
   `modelSettings`, and `toolSurface`.
 - SQR-126 owns OpenAI strict tool schema rendering and the stable
-  `toolSchemaVersion`/`toolSchemaHash` values.
+  `toolSchemaVersion`/`toolSchemaHash` values exposed by
+  `eval/openai-schema.ts`.
 - SQR-127 owns the trace writer, redaction utility, and Langfuse generation/span
   mapping that must satisfy this contract.
 - SQR-128 and SQR-129 own provider runners and should emit provider-native items
