@@ -34,4 +34,152 @@ describe('parseEvalArgs', () => {
       /Invalid --local-report: value cannot be empty/,
     );
   });
+
+  it('defaults to the verified Anthropic Sonnet model', () => {
+    expect(parseEvalArgs([]).providerConfig).toEqual({
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-6',
+      reasoningEffort: undefined,
+      maxOutputTokens: undefined,
+      timeoutMs: undefined,
+      toolLoopLimit: undefined,
+    });
+  });
+
+  it('parses provider, model, run label, timeout, max output, reasoning effort, and tool loop limit', () => {
+    expect(
+      parseEvalArgs([
+        '--provider=openai',
+        '--model=gpt-5.5',
+        '--run-label=matrix-smoke',
+        '--timeout-ms=45000',
+        '--max-output-tokens=2048',
+        '--reasoning-effort=low',
+        '--tool-loop-limit=6',
+      ]).providerConfig,
+    ).toEqual({
+      provider: 'openai',
+      model: 'gpt-5.5',
+      reasoningEffort: 'low',
+      maxOutputTokens: 2048,
+      timeoutMs: 45000,
+      toolLoopLimit: 6,
+    });
+  });
+
+  it('uses run-label as the run name when present', () => {
+    expect(parseEvalArgs(['--run-label=nightly-smoke']).runName).toBe('nightly-smoke');
+  });
+
+  it('keeps --name as a backwards-compatible run label alias', () => {
+    expect(parseEvalArgs(['--name=legacy-name']).runName).toBe('legacy-name');
+  });
+
+  it('lets the --name alias override the environment run label', () => {
+    expect(
+      parseEvalArgs(['--name=legacy-name'], new Date('2026-05-01T02:00:00Z'), {
+        SQUIRE_EVAL_RUN_LABEL: 'env-run',
+      }).runName,
+    ).toBe('legacy-name');
+  });
+
+  it('rejects conflicting run labels', () => {
+    expect(() => parseEvalArgs(['--name=legacy', '--run-label=new'])).toThrow(
+      /Invalid run label: use either --run-label or --name, not both/,
+    );
+  });
+
+  it('applies environment fallback for eval provider config', () => {
+    expect(
+      parseEvalArgs([], new Date('2026-05-01T02:00:00Z'), {
+        SQUIRE_EVAL_PROVIDER: 'anthropic',
+        SQUIRE_EVAL_MODEL: 'claude-opus-4-7',
+        SQUIRE_EVAL_RUN_LABEL: 'env-run',
+        SQUIRE_EVAL_TIMEOUT_MS: '60000',
+        SQUIRE_EVAL_MAX_OUTPUT_TOKENS: '4096',
+        SQUIRE_EVAL_REASONING_EFFORT: 'high',
+        SQUIRE_EVAL_TOOL_LOOP_LIMIT: '8',
+      }),
+    ).toMatchObject({
+      runName: 'env-run',
+      providerConfig: {
+        provider: 'anthropic',
+        model: 'claude-opus-4-7',
+        reasoningEffort: 'high',
+        maxOutputTokens: 4096,
+        timeoutMs: 60000,
+        toolLoopLimit: 8,
+      },
+    });
+  });
+
+  it('lets CLI values override environment fallback values', () => {
+    expect(
+      parseEvalArgs(
+        [
+          '--provider=openai',
+          '--model=gpt-5.5',
+          '--run-label=cli-run',
+          '--timeout-ms=1000',
+          '--max-output-tokens=128',
+          '--reasoning-effort=none',
+          '--tool-loop-limit=2',
+        ],
+        new Date('2026-05-01T02:00:00Z'),
+        {
+          SQUIRE_EVAL_PROVIDER: 'anthropic',
+          SQUIRE_EVAL_MODEL: 'claude-opus-4-7',
+          SQUIRE_EVAL_RUN_LABEL: 'env-run',
+          SQUIRE_EVAL_TIMEOUT_MS: '60000',
+          SQUIRE_EVAL_MAX_OUTPUT_TOKENS: '4096',
+          SQUIRE_EVAL_REASONING_EFFORT: 'high',
+          SQUIRE_EVAL_TOOL_LOOP_LIMIT: '8',
+        },
+      ),
+    ).toMatchObject({
+      runName: 'cli-run',
+      providerConfig: {
+        provider: 'openai',
+        model: 'gpt-5.5',
+        reasoningEffort: 'none',
+        maxOutputTokens: 128,
+        timeoutMs: 1000,
+        toolLoopLimit: 2,
+      },
+    });
+  });
+
+  it('rejects unsupported providers', () => {
+    expect(() => parseEvalArgs(['--provider=local'])).toThrow(
+      /Invalid --provider: local. Expected "anthropic" or "openai"./,
+    );
+  });
+
+  it('rejects unsupported model combinations', () => {
+    expect(() => parseEvalArgs(['--provider=openai', '--model=claude-sonnet-4-6'])).toThrow(
+      /Invalid --model: claude-sonnet-4-6 is not supported for provider openai/,
+    );
+  });
+
+  it('rejects invalid reasoning effort for the selected provider', () => {
+    expect(() =>
+      parseEvalArgs([
+        '--provider=anthropic',
+        '--model=claude-sonnet-4-6',
+        '--reasoning-effort=xhigh',
+      ]),
+    ).toThrow(/Invalid --reasoning-effort: xhigh is not supported for provider anthropic/);
+  });
+
+  it('rejects non-positive numeric config values', () => {
+    expect(() => parseEvalArgs(['--timeout-ms=0'])).toThrow(
+      /Invalid --timeout-ms: expected a positive integer/,
+    );
+    expect(() => parseEvalArgs(['--max-output-tokens=-1'])).toThrow(
+      /Invalid --max-output-tokens: expected a positive integer/,
+    );
+    expect(() => parseEvalArgs(['--tool-loop-limit=1.5'])).toThrow(
+      /Invalid --tool-loop-limit: expected a positive integer/,
+    );
+  });
 });
