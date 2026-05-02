@@ -3,6 +3,11 @@ export type EvalProvider = 'anthropic' | 'openai';
 export type EvalProviderModel = 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'gpt-5.5';
 export type EvalReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'max' | 'xhigh';
 
+export const DEFAULT_EVAL_MODELS = {
+  anthropic: 'claude-sonnet-4-6',
+  openai: 'gpt-5.5',
+} as const satisfies Record<EvalProvider, EvalProviderModel>;
+
 export interface EvalProviderConfig {
   provider: EvalProvider;
   model: EvalProviderModel;
@@ -10,6 +15,15 @@ export interface EvalProviderConfig {
   maxOutputTokens: number | undefined;
   timeoutMs: number | undefined;
   toolLoopLimit: number | undefined;
+}
+
+export interface EvalReplayCliOptions {
+  enabled: boolean;
+  traceId: string | undefined;
+  diffTraceId: string | undefined;
+  diffProvider: EvalProvider | undefined;
+  diffModel: EvalProviderModel | undefined;
+  diffRunLabel: string | undefined;
 }
 
 export interface EvalMatrixGuardrails {
@@ -29,6 +43,7 @@ export interface EvalCliOptions {
   toolSurface: EvalToolSurface;
   localReportPath: string | undefined;
   providerConfig: EvalProviderConfig;
+  replay: EvalReplayCliOptions | undefined;
   matrixMode: boolean;
   matrixGuardrails: EvalMatrixGuardrails;
 }
@@ -57,6 +72,10 @@ function assertProvider(value: string): EvalProvider {
   if (value === 'anthropic' || value === 'openai') return value;
 
   throw new Error(`Invalid --provider: ${value}. Expected "anthropic" or "openai".`);
+}
+
+export function defaultEvalModelForProvider(provider: EvalProvider): EvalProviderModel {
+  return DEFAULT_EVAL_MODELS[provider];
 }
 
 function assertModel(provider: EvalProvider, value: string): EvalProviderModel {
@@ -104,6 +123,44 @@ function positiveIntegerFor(
     throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a positive integer.`);
   }
   return parsed;
+}
+
+function replayOptionsFor(
+  args: string[],
+  idFilter: string | undefined,
+  provider: EvalProvider,
+): EvalReplayCliOptions | undefined {
+  const enabled = args.includes('--replay');
+  const traceId = valueFor(args, '--trace-id=');
+  const diffTraceId = valueFor(args, '--diff-trace-id=');
+  const diffRunLabel = valueFor(args, '--diff-run-label=');
+  const rawDiffProvider = valueFor(args, '--diff-provider=');
+  const diffProvider = rawDiffProvider ? assertProvider(rawDiffProvider) : undefined;
+  const rawDiffModel = valueFor(args, '--diff-model=');
+  const diffModel = rawDiffModel ? assertModel(diffProvider ?? provider, rawDiffModel) : undefined;
+
+  if (!enabled && !traceId && !diffTraceId && !diffProvider && !diffModel && !diffRunLabel) {
+    return undefined;
+  }
+
+  if (!enabled) {
+    throw new Error('Invalid replay options: pass --replay when using replay trace flags.');
+  }
+  if (!traceId && !idFilter) {
+    throw new Error('Invalid --replay: pass --id or --trace-id.');
+  }
+  if (!diffTraceId && !idFilter && (diffProvider || diffModel || diffRunLabel)) {
+    throw new Error('Invalid replay diff: pass --id or --diff-trace-id.');
+  }
+
+  return {
+    enabled,
+    traceId,
+    diffTraceId,
+    diffProvider,
+    diffModel,
+    diffRunLabel,
+  };
 }
 
 function optionalPositiveIntegerFor(args: string[], prefix: string, fallback: number): number {
@@ -163,10 +220,9 @@ export function parseEvalArgs(
   const provider = assertProvider(
     settingFor(args, '--provider=', env, 'SQUIRE_EVAL_PROVIDER') ?? 'anthropic',
   );
-  const defaultModel = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-5.5';
   const model = assertModel(
     provider,
-    settingFor(args, '--model=', env, 'SQUIRE_EVAL_MODEL') ?? defaultModel,
+    settingFor(args, '--model=', env, 'SQUIRE_EVAL_MODEL') ?? defaultEvalModelForProvider(provider),
   );
   const reasoningEffort = assertReasoningEffort(
     provider,
@@ -198,6 +254,7 @@ export function parseEvalArgs(
         'SQUIRE_EVAL_TOOL_LOOP_LIMIT',
       ),
     },
+    replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
     matrixMode: args.includes('--matrix'),
     matrixGuardrails: {
       allowFullDataset: args.includes('--allow-full-dataset'),

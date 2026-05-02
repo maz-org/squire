@@ -29,6 +29,41 @@ describe('parseEvalArgs', () => {
     expect(parseEvalArgs(['--local-report=/tmp/eval.json']).localReportPath).toBe('/tmp/eval.json');
   });
 
+  it('parses replay and trace diff options', () => {
+    expect(
+      parseEvalArgs([
+        '--replay',
+        '--trace-id=eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
+        '--diff-trace-id=eval:debug-run:case-1:openai',
+        '--diff-provider=openai',
+        '--diff-model=gpt-5.5',
+        '--diff-run-label=debug-run-openai',
+      ]).replay,
+    ).toEqual({
+      enabled: true,
+      traceId: 'eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
+      diffTraceId: 'eval:debug-run:case-1:openai',
+      diffProvider: 'openai',
+      diffModel: 'gpt-5.5',
+      diffRunLabel: 'debug-run-openai',
+    });
+  });
+
+  it('requires a single case id or explicit trace id for replay mode', () => {
+    expect(() => parseEvalArgs(['--replay'])).toThrow(/Invalid --replay: pass --id or --trace-id/);
+  });
+
+  it('requires a case id or explicit diff trace id for provider-based replay diffs', () => {
+    expect(() =>
+      parseEvalArgs([
+        '--replay',
+        '--trace-id=eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
+        '--diff-provider=openai',
+        '--diff-model=gpt-5.5',
+      ]),
+    ).toThrow(/Invalid replay diff: pass --id or --diff-trace-id/);
+  });
+
   it('parses matrix runner guardrails', () => {
     expect(
       parseEvalArgs([
