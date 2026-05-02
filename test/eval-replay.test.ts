@@ -203,4 +203,47 @@ describe('eval replay debugging', () => {
   it('renders transcripts directly from a fetched trace for CLI output', () => {
     expect(renderEvalTraceTranscript(trace({}))).toContain('Tool calls');
   });
+
+  it('redacts free-text final answers, judge comments, and errors in transcripts', () => {
+    const transcript = renderEvalTraceTranscript(
+      trace({
+        output: { finalAnswer: 'Leaked apiKey=sk-live-abcdefghijklmnopqrstuvwxyz' },
+        scores: [
+          {
+            name: 'pass',
+            stringValue: 'fail',
+            comment: 'Judge saw bearer abcdefghijklmnopqrstuvwxyz',
+          },
+        ],
+        observations: [
+          {
+            id: 'generation',
+            type: 'GENERATION',
+            name: 'eval.model_call',
+            metadata: {
+              errors: [{ type: 'api', message: 'access_token=secret-should-not-render' }],
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(transcript).toContain('[REDACTED]');
+    expect(transcript).not.toContain('sk-live-abcdefghijklmnopqrstuvwxyz');
+    expect(transcript).not.toContain('bearer abcdefghijklmnopqrstuvwxyz');
+    expect(transcript).not.toContain('access_token=secret-should-not-render');
+  });
+
+  it('does not report missing retrieval for pure-generation trace diffs', () => {
+    const left = trace({
+      metadata: { provider: 'anthropic', model: 'claude-sonnet-4-6', caseId: 'tool-free' },
+      observations: [{ id: 'generation-left', type: 'GENERATION', name: 'eval.model_call' }],
+    });
+    const right = trace({
+      metadata: { provider: 'openai', model: 'gpt-5.5', caseId: 'tool-free' },
+      observations: [{ id: 'generation-right', type: 'GENERATION', name: 'eval.model_call' }],
+    });
+
+    expect(formatEvalTraceDiff(diffEvalTraces(left, right))).not.toContain('missing retrieval');
+  });
 });

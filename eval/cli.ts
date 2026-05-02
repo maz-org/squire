@@ -3,6 +3,11 @@ export type EvalProvider = 'anthropic' | 'openai';
 export type EvalProviderModel = 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'gpt-5.5';
 export type EvalReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'max' | 'xhigh';
 
+export const DEFAULT_EVAL_MODELS = {
+  anthropic: 'claude-sonnet-4-6',
+  openai: 'gpt-5.5',
+} as const satisfies Record<EvalProvider, EvalProviderModel>;
+
 export interface EvalProviderConfig {
   provider: EvalProvider;
   model: EvalProviderModel;
@@ -56,6 +61,10 @@ function assertProvider(value: string): EvalProvider {
   if (value === 'anthropic' || value === 'openai') return value;
 
   throw new Error(`Invalid --provider: ${value}. Expected "anthropic" or "openai".`);
+}
+
+export function defaultEvalModelForProvider(provider: EvalProvider): EvalProviderModel {
+  return DEFAULT_EVAL_MODELS[provider];
 }
 
 function assertModel(provider: EvalProvider, value: string): EvalProviderModel {
@@ -167,10 +176,9 @@ export function parseEvalArgs(
   const provider = assertProvider(
     settingFor(args, '--provider=', env, 'SQUIRE_EVAL_PROVIDER') ?? 'anthropic',
   );
-  const defaultModel = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-5.5';
   const model = assertModel(
     provider,
-    settingFor(args, '--model=', env, 'SQUIRE_EVAL_MODEL') ?? defaultModel,
+    settingFor(args, '--model=', env, 'SQUIRE_EVAL_MODEL') ?? defaultEvalModelForProvider(provider),
   );
   const reasoningEffort = assertReasoningEffort(
     provider,

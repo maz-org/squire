@@ -1,6 +1,10 @@
 import { LangfuseClient } from '@langfuse/client';
 import { LANGFUSE_DEFAULT_BASE_URL } from '../src/instrumentation.ts';
-import type { EvalCliOptions, EvalProviderConfig } from './cli.ts';
+import {
+  defaultEvalModelForProvider,
+  type EvalCliOptions,
+  type EvalProviderConfig,
+} from './cli.ts';
 import { filterEvalCases, loadEvalCases, seedDataset } from './dataset.ts';
 import { evalCaseHasFinalAnswer } from './schema.ts';
 import { runFiltered, runOnDataset } from './experiments.ts';
@@ -34,12 +38,6 @@ function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): 
       'Supported eval providers are anthropic and openai.',
     ].join(' '),
   );
-}
-
-function defaultModelForProvider(
-  provider: EvalProviderConfig['provider'],
-): EvalProviderConfig['model'] {
-  return provider === 'openai' ? 'gpt-5.5' : 'claude-sonnet-4-6';
 }
 
 export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = process.env) {
@@ -79,7 +77,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
           options.replay.diffModel ??
           (diffProvider === options.providerConfig.provider
             ? options.providerConfig.model
-            : defaultModelForProvider(diffProvider)),
+            : defaultEvalModelForProvider(diffProvider)),
       });
       console.log(`\n${formatEvalTraceDiff(diffEvalTraces(replay.trace, diffReplay.trace))}`);
       if (diffReplay.traceUrl) console.log(`\nDiff trace in Langfuse: ${diffReplay.traceUrl}`);

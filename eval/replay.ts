@@ -115,6 +115,11 @@ function compactJson(value: unknown, maxLength = 500): string {
   return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
 }
 
+function safeText(value: unknown): string {
+  const redacted = redactTracePayload(value);
+  return typeof redacted === 'string' ? redacted : compactJson(redacted);
+}
+
 function candidateTraceId(input: EvalReplayTraceSelector): string {
   return ['eval', input.runLabel, input.provider, input.model, input.caseId]
     .join(':')
@@ -322,19 +327,19 @@ export function renderEvalTraceTranscript(trace: LangfuseEvalTrace): string {
     });
   }
 
-  lines.push('', 'Final answer', finalAnswer(trace) || '(empty)', '', 'Judge output');
+  lines.push('', 'Final answer', safeText(finalAnswer(trace)) || '(empty)', '', 'Judge output');
   if (scores.length === 0) {
     lines.push('- none');
   } else {
     for (const score of scores) {
-      const comment = score.comment ? ` (${score.comment})` : '';
-      lines.push(`- ${score.name}: ${scoreDisplayValue(score)}${comment}`);
+      const comment = score.comment ? ` (${safeText(score.comment)})` : '';
+      lines.push(`- ${score.name}: ${safeText(scoreDisplayValue(score))}${comment}`);
     }
   }
 
   const traceErrors = errorsFor(trace);
   if (traceErrors.length > 0) {
-    lines.push('', 'Errors', ...traceErrors.map((error) => `- ${error}`));
+    lines.push('', 'Errors', ...traceErrors.map((error) => `- ${safeText(error)}`));
   }
 
   return lines.join('\n');
@@ -407,12 +412,17 @@ export function diffEvalTraces(
     );
   }
 
-  if (left.canonicalRefs.length === 0 || right.canonicalRefs.length === 0) {
+  if (
+    (left.toolNames.length > 0 || right.toolNames.length > 0) &&
+    (left.canonicalRefs.length === 0 || right.canonicalRefs.length === 0)
+  ) {
     const missing = [
-      left.canonicalRefs.length === 0 ? left.provider : undefined,
-      right.canonicalRefs.length === 0 ? right.provider : undefined,
+      left.toolNames.length > 0 && left.canonicalRefs.length === 0 ? left.provider : undefined,
+      right.toolNames.length > 0 && right.canonicalRefs.length === 0 ? right.provider : undefined,
     ].filter(Boolean);
-    findings.push(`missing retrieval: ${missing.join(', ')} returned no canonical refs`);
+    if (missing.length > 0) {
+      findings.push(`missing retrieval: ${missing.join(', ')} returned no canonical refs`);
+    }
   } else if (!sameOrderedValues(left.canonicalRefs, right.canonicalRefs)) {
     findings.push(
       `retrieval differs: ${left.provider} refs ${left.canonicalRefs.join(', ')}; ${right.provider} refs ${right.canonicalRefs.join(', ')}`,
