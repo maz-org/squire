@@ -12,6 +12,15 @@ export interface EvalProviderConfig {
   toolLoopLimit: number | undefined;
 }
 
+export interface EvalMatrixGuardrails {
+  allowFullDataset: boolean;
+  allowEstimatedCostOverride: boolean;
+  maxEstimatedCostUsd: number;
+  retryCount: number;
+  continueOnModelFailure: boolean;
+  providerConcurrency: Record<EvalProvider, number>;
+}
+
 export interface EvalCliOptions {
   shouldSeed: boolean;
   categoryFilter: string | undefined;
@@ -20,6 +29,8 @@ export interface EvalCliOptions {
   toolSurface: EvalToolSurface;
   localReportPath: string | undefined;
   providerConfig: EvalProviderConfig;
+  matrixMode: boolean;
+  matrixGuardrails: EvalMatrixGuardrails;
 }
 
 function valueFor(args: string[], prefix: string): string | undefined {
@@ -95,6 +106,39 @@ function positiveIntegerFor(
   return parsed;
 }
 
+function optionalPositiveIntegerFor(args: string[], prefix: string, fallback: number): number {
+  const value = valueFor(args, prefix);
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a positive integer.`);
+  }
+  return parsed;
+}
+
+function optionalNonNegativeIntegerFor(args: string[], prefix: string, fallback: number): number {
+  const value = valueFor(args, prefix);
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a non-negative integer.`);
+  }
+  return parsed;
+}
+
+function optionalPositiveNumberFor(args: string[], prefix: string, fallback: number): number {
+  const value = valueFor(args, prefix);
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a positive number.`);
+  }
+  return parsed;
+}
+
 export function parseEvalArgs(
   args: string[],
   now = new Date(),
@@ -153,6 +197,18 @@ export function parseEvalArgs(
         env,
         'SQUIRE_EVAL_TOOL_LOOP_LIMIT',
       ),
+    },
+    matrixMode: args.includes('--matrix'),
+    matrixGuardrails: {
+      allowFullDataset: args.includes('--allow-full-dataset'),
+      allowEstimatedCostOverride: args.includes('--allow-estimated-cost'),
+      maxEstimatedCostUsd: optionalPositiveNumberFor(args, '--max-estimated-cost-usd=', 1),
+      retryCount: optionalNonNegativeIntegerFor(args, '--retry-count=', 1),
+      continueOnModelFailure: !args.includes('--fail-fast-model-failure'),
+      providerConcurrency: {
+        anthropic: optionalPositiveIntegerFor(args, '--anthropic-concurrency=', 1),
+        openai: optionalPositiveIntegerFor(args, '--openai-concurrency=', 1),
+      },
     },
   };
 }
