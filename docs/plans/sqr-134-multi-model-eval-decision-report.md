@@ -68,10 +68,10 @@ Run settings:
 
 Pricing sources:
 
-- Claude pricing from the provided local PDF,
-  `/Users/bcm/Downloads/Models overview - Claude API Docs.pdf`: Opus 4.7 at
-  $5/input MTok and $25/output MTok; Sonnet 4.6 at $3/input MTok and
-  $15/output MTok; Haiku 4.5 at $1/input MTok and $5/output MTok.
+- Claude pricing from the provided local Claude pricing PDF ("Models overview -
+  Claude API Docs.pdf"): Opus 4.7 at $5/input MTok and $25/output MTok; Sonnet
+  4.6 at $3/input MTok and $15/output MTok; Haiku 4.5 at $1/input MTok and
+  $5/output MTok.
 - OpenAI pricing from the provided screenshot: GPT-5.5 standard short context
   at $5/input MTok and $30/output MTok; GPT-5.4 at $2.50/input MTok and
   $15/output MTok; GPT-5.4-mini at $0.75/input MTok and $4.50/output MTok;

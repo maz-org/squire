@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { LangfuseClient } from '@langfuse/client';
-import type { EvalProviderConfig } from './cli.ts';
+import { EVAL_MODELS_BY_PROVIDER, type EvalProviderConfig } from './cli.ts';
 import { runAnthropicEvalCase, type AnthropicEvalCaseResult } from './anthropic-runner.ts';
 import {
   createOpenAiResponsesClient,
@@ -19,7 +19,7 @@ import type { EvalTraceInput, LangfuseTraceIngestionClient } from './trace.ts';
 
 type AnthropicMatrixConfig = EvalProviderConfig & {
   provider: 'anthropic';
-  model: 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'claude-haiku-4-5';
+  model: (typeof EVAL_MODELS_BY_PROVIDER)['anthropic'][number];
 };
 
 function traceClientFor(langfuse: LangfuseClient): LangfuseTraceIngestionClient {
@@ -29,9 +29,7 @@ function traceClientFor(langfuse: LangfuseClient): LangfuseTraceIngestionClient 
 function assertAnthropicMatrixConfig(config: EvalProviderConfig): AnthropicMatrixConfig {
   if (
     config.provider === 'anthropic' &&
-    (config.model === 'claude-sonnet-4-6' ||
-      config.model === 'claude-opus-4-7' ||
-      config.model === 'claude-haiku-4-5')
+    (EVAL_MODELS_BY_PROVIDER.anthropic as readonly string[]).includes(config.model)
   ) {
     return config as AnthropicMatrixConfig;
   }

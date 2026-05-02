@@ -15,6 +15,11 @@ export const DEFAULT_EVAL_MODELS = {
   openai: 'gpt-5.5',
 } as const satisfies Record<EvalProvider, EvalProviderModel>;
 
+export const EVAL_MODELS_BY_PROVIDER = {
+  anthropic: ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'],
+  openai: ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'],
+} as const satisfies Record<EvalProvider, readonly EvalProviderModel[]>;
+
 export interface EvalProviderConfig {
   provider: EvalProvider;
   model: EvalProviderModel;
@@ -93,11 +98,7 @@ export function defaultEvalModelForProvider(provider: EvalProvider): EvalProvide
 }
 
 function assertModel(provider: EvalProvider, value: string): EvalProviderModel {
-  const modelsByProvider = {
-    anthropic: ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'],
-    openai: ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'],
-  } as const;
-  if ((modelsByProvider[provider] as readonly string[]).includes(value)) {
+  if ((EVAL_MODELS_BY_PROVIDER[provider] as readonly string[]).includes(value)) {
     return value as EvalProviderModel;
   }
 
