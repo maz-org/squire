@@ -26,6 +26,15 @@ export interface EvalReplayCliOptions {
   diffRunLabel: string | undefined;
 }
 
+export interface EvalMatrixGuardrails {
+  allowFullDataset: boolean;
+  allowEstimatedCostOverride: boolean;
+  maxEstimatedCostUsd: number;
+  retryCount: number;
+  continueOnModelFailure: boolean;
+  providerConcurrency: Record<EvalProvider, number>;
+}
+
 export interface EvalCliOptions {
   shouldSeed: boolean;
   categoryFilter: string | undefined;
@@ -35,6 +44,8 @@ export interface EvalCliOptions {
   localReportPath: string | undefined;
   providerConfig: EvalProviderConfig;
   replay: EvalReplayCliOptions | undefined;
+  matrixMode: boolean;
+  matrixGuardrails: EvalMatrixGuardrails;
 }
 
 function valueFor(args: string[], prefix: string): string | undefined {
@@ -152,6 +163,39 @@ function replayOptionsFor(
   };
 }
 
+function optionalPositiveIntegerFor(args: string[], prefix: string, fallback: number): number {
+  const value = valueFor(args, prefix);
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a positive integer.`);
+  }
+  return parsed;
+}
+
+function optionalNonNegativeIntegerFor(args: string[], prefix: string, fallback: number): number {
+  const value = valueFor(args, prefix);
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a non-negative integer.`);
+  }
+  return parsed;
+}
+
+function optionalPositiveNumberFor(args: string[], prefix: string, fallback: number): number {
+  const value = valueFor(args, prefix);
+  if (!value) return fallback;
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a positive number.`);
+  }
+  return parsed;
+}
+
 export function parseEvalArgs(
   args: string[],
   now = new Date(),
@@ -211,5 +255,17 @@ export function parseEvalArgs(
       ),
     },
     replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
+    matrixMode: args.includes('--matrix'),
+    matrixGuardrails: {
+      allowFullDataset: args.includes('--allow-full-dataset'),
+      allowEstimatedCostOverride: args.includes('--allow-estimated-cost'),
+      maxEstimatedCostUsd: optionalPositiveNumberFor(args, '--max-estimated-cost-usd=', 1),
+      retryCount: optionalNonNegativeIntegerFor(args, '--retry-count=', 1),
+      continueOnModelFailure: !args.includes('--fail-fast-model-failure'),
+      providerConcurrency: {
+        anthropic: optionalPositiveIntegerFor(args, '--anthropic-concurrency=', 1),
+        openai: optionalPositiveIntegerFor(args, '--openai-concurrency=', 1),
+      },
+    },
   };
 }
