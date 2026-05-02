@@ -20,6 +20,7 @@ import type { EvalCase } from './schema.ts';
 import {
   type EvalTraceError,
   type EvalTraceInput,
+  type EvalTraceScore,
   type EvalTraceToolCall,
   type LangfuseTraceIngestionClient,
 } from './trace.ts';
@@ -103,6 +104,14 @@ export interface OpenAiResponsesEvalResult {
   trace: EvalTraceInput;
 }
 
+export interface OpenAiResponsesScorableResult {
+  ok: boolean;
+  answer: string;
+  failureClass: OpenAiEvalFailureClass;
+  failureMessage?: string;
+  trajectory: OpenAiResponsesEvalResult['trajectory'];
+}
+
 export interface RunOpenAiResponsesEvalCaseOptions {
   client?: OpenAiResponsesClient;
   evalCase: EvalCase;
@@ -110,6 +119,9 @@ export interface RunOpenAiResponsesEvalCaseOptions {
   runLabel: string;
   toolSurface: EvalToolSurface;
   traceClient?: LangfuseTraceIngestionClient;
+  traceId?: string;
+  judgeScores?: EvalTraceScore[];
+  scoreResult?: (result: OpenAiResponsesScorableResult) => Promise<EvalTraceScore[] | undefined>;
   executeTool?: (name: string, input: Record<string, unknown>) => Promise<ToolCallResult>;
   now?: () => Date;
   env?: NodeJS.ProcessEnv;
@@ -447,10 +459,13 @@ export async function runOpenAiResponsesEvalCase(
     statusReason: string,
     stopReason: string,
     finalAnswer: string | null,
+    resultScores: EvalTraceScore[] | undefined,
   ): EvalTraceInput => {
     const endedAt = now().toISOString();
+    const scores = resultScores ?? options.judgeScores ?? [];
+    const metricScoreNames = new Set(scores.map((score) => score.name));
     return {
-      traceId: `eval:${options.runLabel}:${options.evalCase.id}:openai`,
+      traceId: options.traceId ?? `eval:${options.runLabel}:${options.evalCase.id}:openai`,
       runLabel: options.runLabel,
       datasetName: DATASET_NAME,
       caseId: options.evalCase.id,
@@ -490,9 +505,15 @@ export async function runOpenAiResponsesEvalCase(
       retries: [],
       toolCalls: traceToolCalls,
       judgeScores: [
-        { name: 'failure_class', value: statusReason === 'completed' ? 'none' : statusReason },
-        { name: 'tool_call_count', value: toolCalls.length },
-        { name: 'loop_iterations', value: iterations },
+        ...[
+          { name: 'failure_class', value: statusReason === 'completed' ? 'none' : statusReason },
+          { name: 'tool_call_count', value: toolCalls.length },
+          { name: 'retry_count', value: 0 },
+          { name: 'loop_iterations', value: iterations },
+          { name: 'model_latency_ms', value: durationMsBetween(startedAt, endedAt) },
+          { name: 'model_cost_usd', value: 0 },
+        ].filter((score) => !metricScoreNames.has(score.name)),
+        ...scores,
       ],
     };
   };
@@ -504,21 +525,36 @@ export async function runOpenAiResponsesEvalCase(
     stopReason: string,
     failureMessage?: string,
   ): Promise<OpenAiResponsesEvalResult> => {
-    const trace = buildTrace(ok ? 'completed' : failureClass, stopReason, ok ? answer : null);
+    const trajectory = {
+      toolCalls,
+      finalAnswer: answer,
+      tokenUsage: tokenUsageForAgent(tokenUsage),
+      model: resolvedModel,
+      iterations,
+      stopReason,
+    };
+    const resultScores =
+      options.judgeScores ??
+      (await options.scoreResult?.({
+        ok,
+        answer,
+        failureClass,
+        failureMessage,
+        trajectory,
+      }));
+    const trace = buildTrace(
+      ok ? 'completed' : failureClass,
+      stopReason,
+      ok ? answer : null,
+      resultScores,
+    );
     if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
     return {
       ok,
       answer,
       failureClass,
       failureMessage,
-      trajectory: {
-        toolCalls,
-        finalAnswer: answer,
-        tokenUsage: tokenUsageForAgent(tokenUsage),
-        model: resolvedModel,
-        iterations,
-        stopReason,
-      },
+      trajectory,
       trace,
     };
   };

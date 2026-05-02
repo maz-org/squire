@@ -29,6 +29,42 @@ describe('parseEvalArgs', () => {
     expect(parseEvalArgs(['--local-report=/tmp/eval.json']).localReportPath).toBe('/tmp/eval.json');
   });
 
+  it('parses matrix runner guardrails', () => {
+    expect(
+      parseEvalArgs([
+        '--matrix',
+        '--allow-full-dataset',
+        '--allow-estimated-cost',
+        '--max-estimated-cost-usd=2.5',
+        '--anthropic-concurrency=2',
+        '--openai-concurrency=3',
+        '--retry-count=4',
+        '--fail-fast-model-failure',
+      ]),
+    ).toMatchObject({
+      matrixMode: true,
+      matrixGuardrails: {
+        allowFullDataset: true,
+        allowEstimatedCostOverride: true,
+        maxEstimatedCostUsd: 2.5,
+        retryCount: 4,
+        continueOnModelFailure: false,
+        providerConcurrency: { anthropic: 2, openai: 3 },
+      },
+    });
+  });
+
+  it('defaults matrix guardrails to selected-case, low-cost runs', () => {
+    expect(parseEvalArgs(['--matrix']).matrixGuardrails).toEqual({
+      allowFullDataset: false,
+      allowEstimatedCostOverride: false,
+      maxEstimatedCostUsd: 1,
+      retryCount: 1,
+      continueOnModelFailure: true,
+      providerConcurrency: { anthropic: 1, openai: 1 },
+    });
+  });
+
   it('rejects an empty local report output path', () => {
     expect(() => parseEvalArgs(['--local-report='])).toThrow(
       /Invalid --local-report: value cannot be empty/,
@@ -180,6 +216,18 @@ describe('parseEvalArgs', () => {
     );
     expect(() => parseEvalArgs(['--tool-loop-limit=1.5'])).toThrow(
       /Invalid --tool-loop-limit: expected a positive integer/,
+    );
+  });
+
+  it('rejects invalid matrix guardrail values', () => {
+    expect(() => parseEvalArgs(['--max-estimated-cost-usd=0'])).toThrow(
+      /Invalid --max-estimated-cost-usd: expected a positive number/,
+    );
+    expect(() => parseEvalArgs(['--retry-count=-1'])).toThrow(
+      /Invalid --retry-count: expected a non-negative integer/,
+    );
+    expect(() => parseEvalArgs(['--anthropic-concurrency=0'])).toThrow(
+      /Invalid --anthropic-concurrency: expected a positive integer/,
     );
   });
 });

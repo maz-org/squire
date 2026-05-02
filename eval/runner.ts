@@ -6,6 +6,15 @@ import { evalCaseHasFinalAnswer } from './schema.ts';
 import { runFiltered, runOnDataset } from './experiments.ts';
 import { runLocalReport } from './local-report.ts';
 import { runOpenAiLocalReport } from './openai-runner.ts';
+import {
+  assertEvalMatrixGuardrails,
+  defaultEvalMatrixModels,
+  formatEvalMatrixTable,
+  runEvalMatrix,
+  writeEvalMatrixLocalReport,
+  type EvalMatrixSelection,
+} from './matrix.ts';
+import { createEvalMatrixRunner } from './matrix-runtime.ts';
 
 function describeProviderConfig(config: EvalProviderConfig): string {
   const tuning = [
@@ -58,11 +67,75 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
 
   assertCurrentRunnerSupportsProviderConfig(options.providerConfig);
 
+  if (options.matrixMode) {
+    const langfuseBaseUrl = env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL;
+    const langfuse = new LangfuseClient({ baseUrl: langfuseBaseUrl });
+    const selection: EvalMatrixSelection = options.idFilter
+      ? 'id'
+      : options.categoryFilter
+        ? 'category'
+        : 'all';
+    const modelConfigs = defaultEvalMatrixModels(options.providerConfig);
+    assertEvalMatrixGuardrails({
+      cases,
+      modelConfigs,
+      selection,
+      guardrails: options.matrixGuardrails,
+    });
+    console.log(
+      `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
+    );
+    const matrixRunner = createEvalMatrixRunner(langfuse, env);
+    const result = await runEvalMatrix({
+      cases,
+      runLabel: options.runName,
+      toolSurface: options.toolSurface,
+      selection,
+      modelConfigs,
+      runner: matrixRunner,
+      guardrails: options.matrixGuardrails,
+      langfuseBaseUrl,
+    });
+
+    console.log(formatEvalMatrixTable(result.rows));
+    if (options.localReportPath) {
+      writeEvalMatrixLocalReport(options.localReportPath, result);
+      console.log(`\nWrote eval matrix report: ${options.localReportPath}`);
+    }
+    return;
+  }
+
   if (options.providerConfig.provider === 'openai') {
     if (!options.localReportPath) {
-      throw new Error(
-        'OpenAI Responses evals currently require --local-report so the SQR-127 trace artifacts are written to a local report. Langfuse matrix wiring lands in SQR-131.',
+      const langfuseBaseUrl = env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL;
+      const langfuse = new LangfuseClient({ baseUrl: langfuseBaseUrl });
+      const selection: EvalMatrixSelection = options.idFilter
+        ? 'id'
+        : options.categoryFilter
+          ? 'category'
+          : 'all';
+      const modelConfigs = [options.providerConfig];
+      assertEvalMatrixGuardrails({
+        cases,
+        modelConfigs,
+        selection,
+        guardrails: options.matrixGuardrails,
+      });
+      console.log(
+        `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
       );
+      const result = await runEvalMatrix({
+        cases,
+        runLabel: options.runName,
+        toolSurface: options.toolSurface,
+        selection,
+        modelConfigs,
+        runner: createEvalMatrixRunner(langfuse, env),
+        guardrails: options.matrixGuardrails,
+        langfuseBaseUrl,
+      });
+      console.log(formatEvalMatrixTable(result.rows));
+      return;
     }
     console.log(
       `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,

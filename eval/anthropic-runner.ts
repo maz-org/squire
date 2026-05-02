@@ -13,6 +13,7 @@ import { DATASET_NAME } from './dataset.ts';
 import {
   writeEvalTrace,
   type EvalTraceScore,
+  type EvalTraceInput,
   type EvalTraceToolCall,
   type LangfuseTraceIngestionClient,
 } from './trace.ts';
@@ -32,6 +33,7 @@ export interface AnthropicEvalCaseResult extends AgentRunResult {
   durationMs: number;
   toolSurface: EvalToolSurface;
   traceId: string;
+  trace: EvalTraceInput;
 }
 
 export interface RunAnthropicEvalCaseOptions {
@@ -174,9 +176,7 @@ async function writeSuccessTrace(
   endedAt: string,
   durationMs: number,
   resultScores: EvalTraceScore[] | undefined,
-): Promise<void> {
-  if (!options.traceClient) return;
-
+): Promise<EvalTraceInput> {
   const scores = resultScores ?? options.judgeScores ?? [];
   const statusReason = classifyAnthropicEvalStatus({
     toolCalls: result.trajectory.toolCalls,
@@ -184,7 +184,7 @@ async function writeSuccessTrace(
   });
   const judgeScores = mergeMetricScores(scoresForResult(result, statusReason), scores);
 
-  await writeEvalTrace(options.traceClient, {
+  const trace: EvalTraceInput = {
     traceId,
     generationId: `${traceId}:generation`,
     runLabel: options.runLabel,
@@ -240,7 +240,10 @@ async function writeSuccessTrace(
     retries: [],
     toolCalls: toolCallsForTrace(result),
     judgeScores,
-  });
+  };
+
+  if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
+  return trace;
 }
 
 async function writeFailureTrace(
@@ -324,13 +327,22 @@ export async function runAnthropicEvalCase(
     const durationMs = endedAtDate.getTime() - startedAtDate.getTime();
     const resultScores = options.judgeScores ?? (await options.scoreResult?.(result));
 
-    await writeSuccessTrace(options, traceId, result, startedAt, endedAt, durationMs, resultScores);
+    const trace = await writeSuccessTrace(
+      options,
+      traceId,
+      result,
+      startedAt,
+      endedAt,
+      durationMs,
+      resultScores,
+    );
 
     return {
       ...result,
       durationMs,
       toolSurface: options.toolSurface,
       traceId,
+      trace,
     };
   } catch (error) {
     const endedAtDate = now();

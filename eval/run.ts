@@ -8,6 +8,7 @@
  *             node eval/run.ts --id=rule-poison
  * Named run:  node eval/run.ts --run-label="after chunking fix"
  * Local JSON: node eval/run.ts --local-report=/tmp/eval.json
+ * Matrix:     node eval/run.ts --matrix --id=rule-poison
  */
 
 import 'dotenv/config';

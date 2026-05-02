@@ -223,6 +223,39 @@ describe('OpenAI Responses eval runner', () => {
     );
   });
 
+  it('uses caller-provided trace ids and merges judge scores into the Langfuse trace', async () => {
+    const client = responsesClient({
+      id: 'resp_final',
+      model: 'gpt-5.5-2026-04-23',
+      status: 'completed',
+      output_text: 'Done.',
+      output: [{ type: 'message', content: [{ type: 'output_text', text: 'Done.' }] }],
+      usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+    });
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase,
+      providerConfig,
+      runLabel: 'matrix-run',
+      toolSurface: 'redesigned',
+      traceId: 'matrix-openai-trace',
+      scoreResult: async () => [
+        { name: 'correctness', value: 1, comment: 'Correct.' },
+        { name: 'pass', value: 'pass', comment: 'Correct.' },
+      ],
+    });
+
+    expect(result.trace.traceId).toBe('matrix-openai-trace');
+    expect(result.trace.judgeScores).toEqual(
+      expect.arrayContaining([
+        { name: 'correctness', value: 1, comment: 'Correct.' },
+        { name: 'pass', value: 'pass', comment: 'Correct.' },
+        expect.objectContaining({ name: 'retry_count', value: 0 }),
+      ]),
+    );
+  });
+
   it('classifies schema failures from malformed function-call arguments', async () => {
     const client = responsesClient({
       id: 'resp_bad_args',
