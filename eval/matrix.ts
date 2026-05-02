@@ -7,6 +7,13 @@ import type {
   EvalReasoningEffort,
   EvalToolSurface,
 } from './cli.ts';
+import {
+  evalMatrixRunSettingsFor,
+  evalModelSettingsFor,
+  evalRunCompatibilityFor,
+  type EvalMatrixRunSettings,
+  type EvalModelSettings,
+} from './run-metadata.ts';
 import type { EvalCase } from './schema.ts';
 
 export type EvalMatrixSelection = 'id' | 'category' | 'all';
@@ -39,6 +46,7 @@ export interface EvalMatrixRunnerOutput {
   toolCallCount: number;
   loopIterations: number;
   failureClass: string;
+  modelSettings?: EvalModelSettings;
 }
 
 export type EvalMatrixRunner = (input: EvalMatrixRunnerInput) => Promise<EvalMatrixRunnerOutput>;
@@ -64,6 +72,13 @@ export interface EvalMatrixRow {
   failureClass: string;
   traceId: string;
   traceUrl: string;
+  promptVersion: string;
+  promptHash: string;
+  toolSurface: EvalToolSurface;
+  toolSchemaVersion: string;
+  toolSchemaHash: string;
+  modelSettings: EvalModelSettings;
+  runSettings: EvalMatrixRunSettings;
   runUrl?: string;
   error?: string;
 }
@@ -258,7 +273,9 @@ function rowFromOutput(
   input: EvalMatrixRunnerInput,
   output: EvalMatrixRunnerOutput,
   retryCount: number,
+  guardrails: EvalMatrixGuardrails,
 ): EvalMatrixRow {
+  const compatibility = evalRunCompatibilityFor(input.providerConfig, input.toolSurface);
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
@@ -280,6 +297,12 @@ function rowFromOutput(
     failureClass: output.failureClass,
     traceId: output.traceId,
     traceUrl: output.traceUrl,
+    ...compatibility,
+    modelSettings: {
+      ...evalModelSettingsFor(input.providerConfig),
+      ...(output.modelSettings ?? {}),
+    },
+    runSettings: evalMatrixRunSettingsFor(guardrails),
     runUrl: output.runUrl,
   };
 }
@@ -288,7 +311,9 @@ function rowFromError(
   input: EvalMatrixRunnerInput,
   error: unknown,
   retryCount: number,
+  guardrails: EvalMatrixGuardrails,
 ): EvalMatrixRow {
+  const compatibility = evalRunCompatibilityFor(input.providerConfig, input.toolSurface);
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
@@ -310,6 +335,9 @@ function rowFromError(
     failureClass: failureClassForError(error),
     traceId: input.traceId,
     traceUrl: input.traceUrl,
+    ...compatibility,
+    modelSettings: evalModelSettingsFor(input.providerConfig),
+    runSettings: evalMatrixRunSettingsFor(guardrails),
     error: errorMessage(error),
   };
 }
@@ -321,11 +349,11 @@ async function runMatrixInput(
 ): Promise<EvalMatrixRow> {
   try {
     const result = await runWithRetries(input, runner, guardrails.retryCount);
-    return rowFromOutput(input, result.output, result.retryCount);
+    return rowFromOutput(input, result.output, result.retryCount, guardrails);
   } catch (error) {
     if (!guardrails.continueOnModelFailure) throw error;
     const retryCount = matrixRetryCountForError(error) ?? 0;
-    return rowFromError(input, error, retryCount);
+    return rowFromError(input, error, retryCount, guardrails);
   }
 }
 

@@ -205,6 +205,7 @@ async function writeSuccessTrace(
       reasoningEffort: options.providerConfig.reasoningEffort,
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
+      broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
     },
     inputQuestion: options.case.question,
     finalAnswer: result.answer,
@@ -280,6 +281,7 @@ async function writeFailureTrace(
       reasoningEffort: options.providerConfig.reasoningEffort,
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
+      broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
     },
     inputQuestion: options.case.question,
     finalAnswer: null,
@@ -321,6 +323,7 @@ export async function runAnthropicEvalCase(
       maxOutputTokens: options.providerConfig.maxOutputTokens,
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
+      broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
     });
     const endedAtDate = now();
     const endedAt = endedAtDate.toISOString();

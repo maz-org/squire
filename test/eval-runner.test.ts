@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseEvalArgs } from '../eval/cli.ts';
@@ -6,6 +9,78 @@ import { runEval } from '../eval/runner.ts';
 describe('eval runner', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('prints a local before-after matrix comparison without running eval cases', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'squire-eval-compare-'));
+    const beforePath = join(dir, 'before.json');
+    const afterPath = join(dir, 'after.json');
+    const baseRow = {
+      runLabel: 'before',
+      caseId: 'building-alchemist',
+      category: 'card-data',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-6',
+      ok: true,
+      answer: 'answer',
+      score: 0.4,
+      pass: false,
+      latencyMs: 1200,
+      tokenInput: 100,
+      tokenOutput: 50,
+      tokenTotal: 150,
+      estimatedCostUsd: 0.02,
+      toolCallCount: 4,
+      retryCount: 1,
+      loopIterations: 4,
+      failureClass: 'quality',
+      traceId: 'trace-before',
+      traceUrl: 'https://langfuse.test/trace-before',
+      promptVersion: 'redesigned-agent-v1',
+      promptHash: 'sha256:prompt',
+      toolSurface: 'redesigned',
+      toolSchemaVersion: 'squire-anthropic-tools-v1',
+      toolSchemaHash: 'sha256:tools',
+      modelSettings: { model: 'claude-sonnet-4-6' },
+      runSettings: {
+        retryCount: 1,
+        maxEstimatedCostUsd: 1,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    };
+    writeFileSync(
+      beforePath,
+      `${JSON.stringify({ runLabel: 'before', estimatedCostUsd: 0.02, rows: [baseRow] })}\n`,
+    );
+    writeFileSync(
+      afterPath,
+      `${JSON.stringify({
+        runLabel: 'after',
+        estimatedCostUsd: 0.03,
+        rows: [
+          {
+            ...baseRow,
+            runLabel: 'after',
+            pass: true,
+            score: 0.9,
+            latencyMs: 800,
+            estimatedCostUsd: 0.03,
+            failureClass: 'none',
+          },
+        ],
+      })}\n`,
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    try {
+      await runEval(parseEvalArgs([`--compare-runs=${beforePath},${afterPath}`]), {});
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining('Eval run comparison: before -> after'),
+    );
   });
 
   it('honors estimated-cost guardrails for plain OpenAI Langfuse runs', async () => {

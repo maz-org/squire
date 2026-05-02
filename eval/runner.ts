@@ -6,6 +6,7 @@ import {
   type EvalProviderConfig,
 } from './cli.ts';
 import { filterEvalCases, loadEvalCases, seedDataset } from './dataset.ts';
+import { compareEvalRuns, formatEvalRunComparison, readEvalMatrixReport } from './cost-harness.ts';
 import { evalCaseHasFinalAnswer } from './schema.ts';
 import { runFiltered, runOnDataset } from './experiments.ts';
 import { runLocalReport } from './local-report.ts';
@@ -32,6 +33,9 @@ function describeProviderConfig(config: EvalProviderConfig): string {
     config.maxOutputTokens ? `maxOutput=${config.maxOutputTokens}` : undefined,
     config.timeoutMs ? `timeoutMs=${config.timeoutMs}` : undefined,
     config.toolLoopLimit ? `toolLoopLimit=${config.toolLoopLimit}` : undefined,
+    config.broadSearchSynthesisThreshold
+      ? `broadSearchSynthesisThreshold=${config.broadSearchSynthesisThreshold}`
+      : undefined,
   ].filter(Boolean);
 
   return `${config.provider}:${config.model}${tuning.length > 0 ? ` (${tuning.join(', ')})` : ''}`;
@@ -50,6 +54,15 @@ function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): 
 }
 
 export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = process.env) {
+  if (options.comparison) {
+    const comparison = compareEvalRuns({
+      before: readEvalMatrixReport(options.comparison.beforeReportPath),
+      after: readEvalMatrixReport(options.comparison.afterReportPath),
+    });
+    console.log(formatEvalRunComparison(comparison));
+    return;
+  }
+
   if (options.replay) {
     const caseId = options.idFilter ?? options.replay.traceId;
     if (!caseId) throw new Error('Replay mode requires --id or --trace-id.');
