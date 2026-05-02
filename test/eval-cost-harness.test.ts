@@ -251,4 +251,39 @@ describe('eval cost and performance harness', () => {
       /Cannot compare before to after.*promptHash.*toolSchemaVersion/s,
     );
   });
+
+  it('rejects comparisons with missing compatibility metadata', () => {
+    const input = comparisonInput();
+    const { modelSettings, ...legacyBeforeRow } = row({ runLabel: 'before' });
+    input.before.rows = [legacyBeforeRow as EvalMatrixRow];
+    input.after.rows = [row({ runLabel: 'after' })];
+    expect(modelSettings).toBeDefined();
+
+    expect(() => compareEvalRuns(input)).toThrow(
+      /Cannot compare before to after.*missing modelSettings before/s,
+    );
+  });
+
+  it('rejects comparisons when model or run settings differ', () => {
+    const input = comparisonInput();
+    input.before.rows = [row({ runLabel: 'before' })];
+    input.after.rows = [
+      row({
+        runLabel: 'after',
+        modelSettings: {
+          ...row({}).modelSettings,
+          broadSearchSynthesisThreshold: 3,
+        },
+        runSettings: {
+          retryCount: 0,
+          maxEstimatedCostUsd: 1,
+          providerConcurrency: { anthropic: 1, openai: 1 },
+        },
+      }),
+    ];
+
+    expect(() => compareEvalRuns(input)).toThrow(
+      /Cannot compare before to after.*modelSettings.*runSettings/s,
+    );
+  });
 });

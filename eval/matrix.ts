@@ -141,6 +141,7 @@ function withSharedKnobs(
     maxOutputTokens: shared.maxOutputTokens,
     timeoutMs: shared.timeoutMs,
     toolLoopLimit: shared.toolLoopLimit,
+    broadSearchSynthesisThreshold: shared.broadSearchSynthesisThreshold,
   };
 }
 

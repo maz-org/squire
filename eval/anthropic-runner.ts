@@ -10,6 +10,7 @@ import {
 } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { DATASET_NAME } from './dataset.ts';
+import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import {
   writeEvalTrace,
   type EvalTraceScore,
@@ -17,8 +18,6 @@ import {
   type EvalTraceToolCall,
   type LangfuseTraceIngestionClient,
 } from './trace.ts';
-
-export const ANTHROPIC_TOOL_SCHEMA_VERSION = 'squire-anthropic-tools-v1' as const;
 
 export type AnthropicEvalFailureClass = 'access' | 'api' | 'timeout' | 'tool' | 'quality';
 

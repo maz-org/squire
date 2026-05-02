@@ -156,14 +156,34 @@ function diagnose(before: EvalRunAggregate, after: EvalRunAggregate): string[] {
   return reasons;
 }
 
+function stableStringify(value: unknown): string {
+  if (!value || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
+    .join(',')}}`;
+}
+
 function assertCompatibleRows(before: EvalMatrixRow, after: EvalMatrixRow): void {
-  const mismatches = [
-    before.promptVersion !== after.promptVersion ? 'promptVersion' : undefined,
-    before.promptHash !== after.promptHash ? 'promptHash' : undefined,
-    before.toolSurface !== after.toolSurface ? 'toolSurface' : undefined,
-    before.toolSchemaVersion !== after.toolSchemaVersion ? 'toolSchemaVersion' : undefined,
-    before.toolSchemaHash !== after.toolSchemaHash ? 'toolSchemaHash' : undefined,
-  ].filter(Boolean);
+  const compatibilityFields = [
+    'promptVersion',
+    'promptHash',
+    'toolSurface',
+    'toolSchemaVersion',
+    'toolSchemaHash',
+    'modelSettings',
+    'runSettings',
+  ] as const satisfies readonly (keyof EvalMatrixRow)[];
+
+  const mismatches = compatibilityFields.flatMap((field) => {
+    const beforeValue = before[field];
+    const afterValue = after[field];
+    if (beforeValue === undefined || beforeValue === null) return [`missing ${field} before`];
+    if (afterValue === undefined || afterValue === null) return [`missing ${field} after`];
+    return stableStringify(beforeValue) === stableStringify(afterValue) ? [] : [field];
+  });
 
   if (mismatches.length > 0) {
     throw new Error(
