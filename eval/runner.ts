@@ -17,6 +17,7 @@ import {
   formatEvalMatrixTable,
   runEvalMatrix,
   writeEvalMatrixLocalReport,
+  type EvalMatrixProgressEvent,
   type EvalMatrixSelection,
 } from './matrix.ts';
 import { createEvalMatrixRunner } from './matrix-runtime.ts';
@@ -39,6 +40,29 @@ function describeProviderConfig(config: EvalProviderConfig): string {
   ].filter(Boolean);
 
   return `${config.provider}:${config.model}${tuning.length > 0 ? ` (${tuning.join(', ')})` : ''}`;
+}
+
+function formatProgressNullable(value: string | number | boolean | null | undefined): string {
+  if (value === undefined || value === null) return '-';
+  return String(value);
+}
+
+export function formatEvalMatrixProgress(event: EvalMatrixProgressEvent): string {
+  const { completed, total, row } = event;
+  const status = row.pass === null ? '-' : row.pass ? 'pass' : 'fail';
+  const latency = row.latencyMs === null ? '-' : `${row.latencyMs}ms`;
+  return [
+    `[${completed}/${total}]`,
+    status,
+    `${row.provider}:${row.model}`,
+    row.caseId,
+    `failure=${row.failureClass}`,
+    `score=${formatProgressNullable(row.score)}`,
+    `latency=${latency}`,
+    `tokens=${formatProgressNullable(row.tokenTotal)}`,
+    `tools=${formatProgressNullable(row.toolCallCount)}`,
+    `loops=${formatProgressNullable(row.loopIterations)}`,
+  ].join(' ');
 }
 
 function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): void {
@@ -162,6 +186,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       runner: matrixRunner,
       guardrails: options.matrixGuardrails,
       langfuseBaseUrl,
+      onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
     });
 
     console.log(formatEvalMatrixTable(result.rows));
@@ -204,6 +229,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
         runner: createEvalMatrixRunner(langfuse, env),
         guardrails,
         langfuseBaseUrl,
+        onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
       });
       console.log(formatEvalMatrixTable(result.rows));
       return;

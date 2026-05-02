@@ -386,7 +386,7 @@ export interface TokenUsage {
   totalTokens: number;
 }
 
-export type AnthropicEvalModel = 'claude-sonnet-4-6' | 'claude-opus-4-7';
+export type AnthropicEvalModel = 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'claude-haiku-4-5';
 
 export interface ToolTrajectoryStep {
   iteration: number;

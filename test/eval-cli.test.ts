@@ -141,6 +141,34 @@ describe('parseEvalArgs', () => {
     });
   });
 
+  it('accepts expanded eval candidate models from the pricing sheets', () => {
+    for (const [provider, model] of [
+      ['anthropic', 'claude-haiku-4-5'],
+      ['openai', 'gpt-5.4'],
+      ['openai', 'gpt-5.4-mini'],
+      ['openai', 'gpt-5.4-nano'],
+    ] as const) {
+      expect(parseEvalArgs([`--provider=${provider}`, `--model=${model}`]).providerConfig).toEqual(
+        expect.objectContaining({ provider, model }),
+      );
+    }
+  });
+
+  it('uses expanded candidate models in replay diffs', () => {
+    expect(
+      parseEvalArgs([
+        '--replay',
+        '--trace-id=eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
+        '--diff-trace-id=eval:debug-run:case-1:haiku',
+        '--diff-provider=anthropic',
+        '--diff-model=claude-haiku-4-5',
+      ]).replay,
+    ).toMatchObject({
+      diffProvider: 'anthropic',
+      diffModel: 'claude-haiku-4-5',
+    });
+  });
+
   it('parses local matrix report comparison inputs', () => {
     expect(parseEvalArgs(['--compare-runs=/tmp/before.json,/tmp/after.json']).comparison).toEqual({
       beforeReportPath: '/tmp/before.json',

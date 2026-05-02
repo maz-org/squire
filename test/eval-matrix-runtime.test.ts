@@ -105,6 +105,17 @@ function input(provider: 'anthropic' | 'openai'): EvalMatrixRunnerInput {
   };
 }
 
+function anthropicInput(model: 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'claude-haiku-4-5') {
+  return {
+    ...input('anthropic'),
+    providerConfig: {
+      ...input('anthropic').providerConfig,
+      provider: 'anthropic' as const,
+      model,
+    },
+  };
+}
+
 describe('eval matrix runtime adapter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -147,6 +158,33 @@ describe('eval matrix runtime adapter', () => {
       loopIterations: 2,
       failureClass: 'none',
     });
+  });
+
+  it('runs Haiku through the Anthropic matrix adapter', async () => {
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'haiku-trace',
+      trace: trace({
+        traceId: 'haiku-trace',
+        model: 'claude-haiku-4-5',
+        resolvedModel: 'claude-haiku-4-5',
+      }),
+    });
+
+    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    await runner(anthropicInput('claude-haiku-4-5'));
+
+    expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerConfig: expect.objectContaining({
+          provider: 'anthropic',
+          model: 'claude-haiku-4-5',
+        }),
+      }),
+    );
   });
 
   it('falls back to the matrix cost estimate when provider traces have no cost', async () => {

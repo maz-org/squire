@@ -1,12 +1,24 @@
 export type EvalToolSurface = 'redesigned' | 'legacy';
 export type EvalProvider = 'anthropic' | 'openai';
-export type EvalProviderModel = 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'gpt-5.5';
+export type EvalProviderModel =
+  | 'claude-sonnet-4-6'
+  | 'claude-opus-4-7'
+  | 'claude-haiku-4-5'
+  | 'gpt-5.5'
+  | 'gpt-5.4'
+  | 'gpt-5.4-mini'
+  | 'gpt-5.4-nano';
 export type EvalReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'max' | 'xhigh';
 
 export const DEFAULT_EVAL_MODELS = {
   anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-5.5',
 } as const satisfies Record<EvalProvider, EvalProviderModel>;
+
+export const EVAL_MODELS_BY_PROVIDER = {
+  anthropic: ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'],
+  openai: ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano'],
+} as const satisfies Record<EvalProvider, readonly EvalProviderModel[]>;
 
 export interface EvalProviderConfig {
   provider: EvalProvider;
@@ -86,11 +98,7 @@ export function defaultEvalModelForProvider(provider: EvalProvider): EvalProvide
 }
 
 function assertModel(provider: EvalProvider, value: string): EvalProviderModel {
-  const modelsByProvider = {
-    anthropic: ['claude-sonnet-4-6', 'claude-opus-4-7'],
-    openai: ['gpt-5.5'],
-  } as const;
-  if ((modelsByProvider[provider] as readonly string[]).includes(value)) {
+  if ((EVAL_MODELS_BY_PROVIDER[provider] as readonly string[]).includes(value)) {
     return value as EvalProviderModel;
   }
 

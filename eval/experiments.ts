@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { LangfuseClient } from '@langfuse/client';
-import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
+import { EVAL_MODELS_BY_PROVIDER, type EvalProviderConfig, type EvalToolSurface } from './cli.ts';
 import { runAnthropicEvalCase, type AnthropicEvalCaseResult } from './anthropic-runner.ts';
 import { DATASET_NAME } from './dataset.ts';
 import { buildEvaluators, buildRunEvaluators, judgeAnswer } from './evaluators.ts';
@@ -10,7 +10,7 @@ import type { LangfuseTraceIngestionClient } from './trace.ts';
 
 type AnthropicEvalProviderConfig = EvalProviderConfig & {
   provider: 'anthropic';
-  model: 'claude-sonnet-4-6' | 'claude-opus-4-7';
+  model: (typeof EVAL_MODELS_BY_PROVIDER)['anthropic'][number];
 };
 
 function assertAnthropicProviderConfig(
@@ -18,7 +18,7 @@ function assertAnthropicProviderConfig(
 ): AnthropicEvalProviderConfig {
   if (
     providerConfig.provider === 'anthropic' &&
-    (providerConfig.model === 'claude-sonnet-4-6' || providerConfig.model === 'claude-opus-4-7')
+    (EVAL_MODELS_BY_PROVIDER.anthropic as readonly string[]).includes(providerConfig.model)
   ) {
     return providerConfig as AnthropicEvalProviderConfig;
   }
