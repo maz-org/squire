@@ -19,7 +19,7 @@ import type { EvalTraceInput, LangfuseTraceIngestionClient } from './trace.ts';
 
 type AnthropicMatrixConfig = EvalProviderConfig & {
   provider: 'anthropic';
-  model: 'claude-sonnet-4-6' | 'claude-opus-4-7';
+  model: 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'claude-haiku-4-5';
 };
 
 function traceClientFor(langfuse: LangfuseClient): LangfuseTraceIngestionClient {
@@ -29,7 +29,9 @@ function traceClientFor(langfuse: LangfuseClient): LangfuseTraceIngestionClient 
 function assertAnthropicMatrixConfig(config: EvalProviderConfig): AnthropicMatrixConfig {
   if (
     config.provider === 'anthropic' &&
-    (config.model === 'claude-sonnet-4-6' || config.model === 'claude-opus-4-7')
+    (config.model === 'claude-sonnet-4-6' ||
+      config.model === 'claude-opus-4-7' ||
+      config.model === 'claude-haiku-4-5')
   ) {
     return config as AnthropicMatrixConfig;
   }

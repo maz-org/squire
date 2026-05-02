@@ -10,7 +10,7 @@ import type { LangfuseTraceIngestionClient } from './trace.ts';
 
 type AnthropicEvalProviderConfig = EvalProviderConfig & {
   provider: 'anthropic';
-  model: 'claude-sonnet-4-6' | 'claude-opus-4-7';
+  model: 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'claude-haiku-4-5';
 };
 
 function assertAnthropicProviderConfig(
@@ -18,7 +18,9 @@ function assertAnthropicProviderConfig(
 ): AnthropicEvalProviderConfig {
   if (
     providerConfig.provider === 'anthropic' &&
-    (providerConfig.model === 'claude-sonnet-4-6' || providerConfig.model === 'claude-opus-4-7')
+    (providerConfig.model === 'claude-sonnet-4-6' ||
+      providerConfig.model === 'claude-opus-4-7' ||
+      providerConfig.model === 'claude-haiku-4-5')
   ) {
     return providerConfig as AnthropicEvalProviderConfig;
   }

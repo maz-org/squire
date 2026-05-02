@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseEvalArgs } from '../eval/cli.ts';
-import { runEval } from '../eval/runner.ts';
+import { formatEvalMatrixProgress, runEval } from '../eval/runner.ts';
 
 describe('eval runner', () => {
   afterEach(() => {
@@ -80,6 +80,50 @@ describe('eval runner', () => {
 
     expect(log).toHaveBeenCalledWith(
       expect.stringContaining('Eval run comparison: before -> after'),
+    );
+  });
+
+  it('formats incremental matrix progress lines', () => {
+    expect(
+      formatEvalMatrixProgress({
+        completed: 3,
+        total: 7,
+        row: {
+          runLabel: 'progress',
+          caseId: 'rule-poison',
+          category: 'rulebook',
+          provider: 'openai',
+          model: 'gpt-5.4-mini',
+          ok: true,
+          answer: 'answer',
+          score: 1,
+          pass: true,
+          latencyMs: 1234,
+          tokenInput: 100,
+          tokenOutput: 20,
+          tokenTotal: 120,
+          estimatedCostUsd: 0.01,
+          toolCallCount: 2,
+          retryCount: 0,
+          loopIterations: 3,
+          failureClass: 'none',
+          traceId: 'trace',
+          traceUrl: 'https://langfuse.test/trace',
+          promptVersion: 'redesigned-agent-v1',
+          promptHash: 'sha256:prompt',
+          toolSurface: 'redesigned',
+          toolSchemaVersion: 'tools',
+          toolSchemaHash: 'sha256:tools',
+          modelSettings: { model: 'gpt-5.4-mini' },
+          runSettings: {
+            retryCount: 0,
+            maxEstimatedCostUsd: 1,
+            providerConcurrency: { anthropic: 1, openai: 1 },
+          },
+        },
+      }),
+    ).toBe(
+      '[3/7] pass openai:gpt-5.4-mini rule-poison failure=none score=1 latency=1234ms tokens=120 tools=2 loops=3',
     );
   });
 

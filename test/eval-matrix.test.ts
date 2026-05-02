@@ -78,9 +78,13 @@ describe('eval matrix runner', () => {
     expect(result.rows.map((row) => `${row.provider}:${row.model}`)).toEqual([
       'anthropic:claude-sonnet-4-6',
       'anthropic:claude-opus-4-7',
+      'anthropic:claude-haiku-4-5',
       'openai:gpt-5.5',
+      'openai:gpt-5.4',
+      'openai:gpt-5.4-mini',
+      'openai:gpt-5.4-nano',
     ]);
-    expect(runner).toHaveBeenCalledTimes(3);
+    expect(runner).toHaveBeenCalledTimes(7);
     expect(result.rows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -130,8 +134,36 @@ describe('eval matrix runner', () => {
         broadSearchSynthesisThreshold: 2,
       }),
       expect.objectContaining({
+        provider: 'anthropic',
+        model: 'claude-haiku-4-5',
+        reasoningEffort: undefined,
+        timeoutMs: 30_000,
+        broadSearchSynthesisThreshold: 2,
+      }),
+      expect.objectContaining({
         provider: 'openai',
         model: 'gpt-5.5',
+        reasoningEffort: 'xhigh',
+        toolLoopLimit: 4,
+        broadSearchSynthesisThreshold: 2,
+      }),
+      expect.objectContaining({
+        provider: 'openai',
+        model: 'gpt-5.4',
+        reasoningEffort: 'xhigh',
+        toolLoopLimit: 4,
+        broadSearchSynthesisThreshold: 2,
+      }),
+      expect.objectContaining({
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        reasoningEffort: 'xhigh',
+        toolLoopLimit: 4,
+        broadSearchSynthesisThreshold: 2,
+      }),
+      expect.objectContaining({
+        provider: 'openai',
+        model: 'gpt-5.4-nano',
         reasoningEffort: 'xhigh',
         toolLoopLimit: 4,
         broadSearchSynthesisThreshold: 2,
@@ -177,7 +209,7 @@ describe('eval matrix runner', () => {
       langfuseBaseUrl: 'https://langfuse.test',
     });
 
-    expect(runner).toHaveBeenCalledTimes(12);
+    expect(runner).toHaveBeenCalledTimes(28);
   });
 
   it('keeps successful rows when another model fails', async () => {
@@ -219,8 +251,8 @@ describe('eval matrix runner', () => {
       langfuseBaseUrl: 'https://langfuse.test',
     });
 
-    expect(result.rows).toHaveLength(3);
-    expect(result.rows.filter((row) => row.ok)).toHaveLength(2);
+    expect(result.rows).toHaveLength(7);
+    expect(result.rows.filter((row) => row.ok)).toHaveLength(3);
     expect(result.rows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -364,6 +396,47 @@ describe('eval matrix runner', () => {
       failureClass: 'timeout',
       retryCount: 1,
     });
+  });
+
+  it('emits progress after each completed matrix row', async () => {
+    const onProgress = vi.fn();
+
+    await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-progress',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: DEFAULT_EVAL_MATRIX_MODELS.slice(0, 2),
+      runner: successfulRunner(),
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+      onProgress,
+    });
+
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(onProgress).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        completed: 1,
+        total: 2,
+        row: expect.objectContaining({ caseId: 'item-spyglass' }),
+      }),
+    );
+    expect(onProgress).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        completed: 2,
+        total: 2,
+        row: expect.objectContaining({ caseId: 'item-spyglass' }),
+      }),
+    );
   });
 
   it('formats the matrix summary table with comparison fields and Langfuse links', async () => {

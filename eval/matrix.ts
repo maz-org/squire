@@ -89,6 +89,12 @@ export interface EvalMatrixResult {
   estimatedCostUsd: number;
 }
 
+export interface EvalMatrixProgressEvent {
+  completed: number;
+  total: number;
+  row: EvalMatrixRow;
+}
+
 export interface RunEvalMatrixOptions {
   cases: EvalCase[];
   runLabel: string;
@@ -98,6 +104,7 @@ export interface RunEvalMatrixOptions {
   runner: EvalMatrixRunner;
   guardrails: EvalMatrixGuardrails;
   langfuseBaseUrl: string;
+  onProgress?: (event: EvalMatrixProgressEvent) => void;
 }
 
 export const ESTIMATED_COST_PER_CASE_MODEL_USD = 0.05;
@@ -120,8 +127,40 @@ export const DEFAULT_EVAL_MATRIX_MODELS: EvalProviderConfig[] = [
     toolLoopLimit: undefined,
   },
   {
+    provider: 'anthropic',
+    model: 'claude-haiku-4-5',
+    reasoningEffort: undefined,
+    maxOutputTokens: undefined,
+    timeoutMs: undefined,
+    toolLoopLimit: undefined,
+  },
+  {
     provider: 'openai',
     model: 'gpt-5.5',
+    reasoningEffort: undefined,
+    maxOutputTokens: undefined,
+    timeoutMs: undefined,
+    toolLoopLimit: undefined,
+  },
+  {
+    provider: 'openai',
+    model: 'gpt-5.4',
+    reasoningEffort: undefined,
+    maxOutputTokens: undefined,
+    timeoutMs: undefined,
+    toolLoopLimit: undefined,
+  },
+  {
+    provider: 'openai',
+    model: 'gpt-5.4-mini',
+    reasoningEffort: undefined,
+    maxOutputTokens: undefined,
+    timeoutMs: undefined,
+    toolLoopLimit: undefined,
+  },
+  {
+    provider: 'openai',
+    model: 'gpt-5.4-nano',
     reasoningEffort: undefined,
     maxOutputTokens: undefined,
     timeoutMs: undefined,
@@ -363,6 +402,7 @@ async function runProviderQueue(
   concurrency: number,
   runner: EvalMatrixRunner,
   guardrails: EvalMatrixGuardrails,
+  onRowComplete: (row: EvalMatrixRow) => void,
 ): Promise<EvalMatrixRow[]> {
   const rows: EvalMatrixRow[] = [];
   let cursor = 0;
@@ -372,7 +412,9 @@ async function runProviderQueue(
       cursor += 1;
       const input = inputs[index];
       if (!input) return;
-      rows[index] = await runMatrixInput(input, runner, guardrails);
+      const row = await runMatrixInput(input, runner, guardrails);
+      rows[index] = row;
+      onRowComplete(row);
     }
   }
 
@@ -399,6 +441,12 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
     }),
   );
 
+  let completed = 0;
+  const onRowComplete = (row: EvalMatrixRow) => {
+    completed += 1;
+    options.onProgress?.({ completed, total: inputs.length, row });
+  };
+
   const rowsByProvider = await Promise.all(
     (['anthropic', 'openai'] as const).map((provider) =>
       runProviderQueue(
@@ -406,6 +454,7 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
         options.guardrails.providerConcurrency[provider],
         options.runner,
         options.guardrails,
+        onRowComplete,
       ),
     ),
   );
