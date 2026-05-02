@@ -12,6 +12,15 @@ export interface EvalProviderConfig {
   toolLoopLimit: number | undefined;
 }
 
+export interface EvalReplayCliOptions {
+  enabled: boolean;
+  traceId: string | undefined;
+  diffTraceId: string | undefined;
+  diffProvider: EvalProvider | undefined;
+  diffModel: EvalProviderModel | undefined;
+  diffRunLabel: string | undefined;
+}
+
 export interface EvalCliOptions {
   shouldSeed: boolean;
   categoryFilter: string | undefined;
@@ -20,6 +29,7 @@ export interface EvalCliOptions {
   toolSurface: EvalToolSurface;
   localReportPath: string | undefined;
   providerConfig: EvalProviderConfig;
+  replay: EvalReplayCliOptions | undefined;
 }
 
 function valueFor(args: string[], prefix: string): string | undefined {
@@ -95,6 +105,44 @@ function positiveIntegerFor(
   return parsed;
 }
 
+function replayOptionsFor(
+  args: string[],
+  idFilter: string | undefined,
+  provider: EvalProvider,
+): EvalReplayCliOptions | undefined {
+  const enabled = args.includes('--replay');
+  const traceId = valueFor(args, '--trace-id=');
+  const diffTraceId = valueFor(args, '--diff-trace-id=');
+  const diffRunLabel = valueFor(args, '--diff-run-label=');
+  const rawDiffProvider = valueFor(args, '--diff-provider=');
+  const diffProvider = rawDiffProvider ? assertProvider(rawDiffProvider) : undefined;
+  const rawDiffModel = valueFor(args, '--diff-model=');
+  const diffModel = rawDiffModel ? assertModel(diffProvider ?? provider, rawDiffModel) : undefined;
+
+  if (!enabled && !traceId && !diffTraceId && !diffProvider && !diffModel && !diffRunLabel) {
+    return undefined;
+  }
+
+  if (!enabled) {
+    throw new Error('Invalid replay options: pass --replay when using replay trace flags.');
+  }
+  if (!traceId && !idFilter) {
+    throw new Error('Invalid --replay: pass --id or --trace-id.');
+  }
+  if (!diffTraceId && !idFilter && (diffProvider || diffModel || diffRunLabel)) {
+    throw new Error('Invalid replay diff: pass --id or --diff-trace-id.');
+  }
+
+  return {
+    enabled,
+    traceId,
+    diffTraceId,
+    diffProvider,
+    diffModel,
+    diffRunLabel,
+  };
+}
+
 export function parseEvalArgs(
   args: string[],
   now = new Date(),
@@ -154,5 +202,6 @@ export function parseEvalArgs(
         'SQUIRE_EVAL_TOOL_LOOP_LIMIT',
       ),
     },
+    replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
   };
 }
