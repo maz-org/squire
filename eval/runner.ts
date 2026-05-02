@@ -115,6 +115,16 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
           ? 'category'
           : 'all';
       const modelConfigs = [options.providerConfig];
+      const guardrails = {
+        ...options.matrixGuardrails,
+        allowFullDataset: true,
+      };
+      assertEvalMatrixGuardrails({
+        cases,
+        modelConfigs,
+        selection,
+        guardrails,
+      });
       console.log(
         `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
       );
@@ -125,11 +135,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
         selection,
         modelConfigs,
         runner: createEvalMatrixRunner(langfuse, env),
-        guardrails: {
-          ...options.matrixGuardrails,
-          allowFullDataset: true,
-          allowEstimatedCostOverride: true,
-        },
+        guardrails,
         langfuseBaseUrl,
       });
       console.log(formatEvalMatrixTable(result.rows));
