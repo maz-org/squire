@@ -290,6 +290,31 @@ describe('OpenAI Responses eval runner', () => {
     ]);
   });
 
+  it('does not invoke result scoring on failed runs', async () => {
+    const client = responsesClient({
+      id: 'resp_empty',
+      model: 'gpt-5.5-2026-04-23',
+      status: 'completed',
+      output: [{ type: 'message', content: [] }],
+    });
+    const scoreResult = vi.fn();
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase,
+      providerConfig,
+      runLabel: 'failed-score-skip',
+      toolSurface: 'redesigned',
+      scoreResult,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(scoreResult).not.toHaveBeenCalled();
+    expect(result.trace.judgeScores).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'failure_class' })]),
+    );
+  });
+
   it('classifies tool execution failures', async () => {
     const client = responsesClient({
       id: 'resp_tool',

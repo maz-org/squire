@@ -322,6 +322,46 @@ describe('eval matrix runner', () => {
     expect(result.rows[0]).toMatchObject({ ok: true, retryCount: 1 });
   });
 
+  it('keeps retry counts when a retried call ends with a non-rate-limit failure', async () => {
+    const config: EvalProviderConfig = {
+      provider: 'openai',
+      model: 'gpt-5.5',
+      reasoningEffort: undefined,
+      maxOutputTokens: undefined,
+      timeoutMs: undefined,
+      toolLoopLimit: undefined,
+    };
+    const runner: EvalMatrixRunner = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error('429 rate limit'), { status: 429 }))
+      .mockRejectedValueOnce(new Error('request timeout'));
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-mixed-failure',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [config],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 1,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+    });
+
+    expect(runner).toHaveBeenCalledTimes(2);
+    expect(result.rows[0]).toMatchObject({
+      ok: false,
+      failureClass: 'timeout',
+      retryCount: 1,
+    });
+  });
+
   it('formats the matrix summary table with comparison fields and Langfuse links', async () => {
     const result = await runEvalMatrix({
       cases: [selectedCase],

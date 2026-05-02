@@ -69,13 +69,11 @@ export function scoreFromTraceScores(scores: EvalTraceScore[]): number | null {
 }
 
 export function passFromTraceScores(scores: EvalTraceScore[]): boolean | null {
-  const score = scores.find((candidate) => candidate.name === 'pass');
-  if (score?.value === 'pass') return true;
-  if (score?.value === 'fail') return false;
-
-  const trajectory = scores.find((candidate) => candidate.name === 'trajectory_pass');
-  if (trajectory?.value === 'pass') return true;
-  if (trajectory?.value === 'fail') return false;
+  const verdicts = scores.filter(
+    (candidate) => candidate.name === 'pass' || candidate.name === 'trajectory_pass',
+  );
+  if (verdicts.some((score) => score.value === 'fail')) return false;
+  if (verdicts.some((score) => score.value === 'pass')) return true;
 
   return null;
 }

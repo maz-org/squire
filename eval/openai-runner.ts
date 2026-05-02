@@ -535,13 +535,15 @@ export async function runOpenAiResponsesEvalCase(
     };
     const resultScores =
       options.judgeScores ??
-      (await options.scoreResult?.({
-        ok,
-        answer,
-        failureClass,
-        failureMessage,
-        trajectory,
-      }));
+      (ok
+        ? await options.scoreResult?.({
+            ok,
+            answer,
+            failureClass,
+            failureMessage,
+            trajectory,
+          })
+        : undefined);
     const trace = buildTrace(
       ok ? 'completed' : failureClass,
       stopReason,

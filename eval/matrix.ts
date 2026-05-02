@@ -222,6 +222,19 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function matrixRetryCountForError(error: unknown): number | undefined {
+  return typeof error === 'object' && error && 'matrixRetryCount' in error
+    ? Number((error as { matrixRetryCount?: unknown }).matrixRetryCount)
+    : undefined;
+}
+
+function errorWithRetryCount(error: unknown, retryCount: number): unknown {
+  if (typeof error === 'object' && error) {
+    return Object.assign(error, { matrixRetryCount: retryCount });
+  }
+  return Object.assign(new Error(String(error)), { matrixRetryCount: retryCount });
+}
+
 async function runWithRetries(
   input: EvalMatrixRunnerInput,
   runner: EvalMatrixRunner,
@@ -233,7 +246,9 @@ async function runWithRetries(
       const output = await runner({ ...input, attempt: attempts + 1 });
       return { output, retryCount: attempts };
     } catch (error) {
-      if (!isRateLimitError(error) || attempts >= retryCount) throw error;
+      if (!isRateLimitError(error) || attempts >= retryCount) {
+        throw errorWithRetryCount(error, attempts);
+      }
       attempts += 1;
     }
   }
@@ -309,7 +324,7 @@ async function runMatrixInput(
     return rowFromOutput(input, result.output, result.retryCount);
   } catch (error) {
     if (!guardrails.continueOnModelFailure) throw error;
-    const retryCount = isRateLimitError(error) ? guardrails.retryCount : 0;
+    const retryCount = matrixRetryCountForError(error) ?? 0;
     return rowFromError(input, error, retryCount);
   }
 }
