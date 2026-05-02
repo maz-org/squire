@@ -15,6 +15,7 @@ export interface EvalProviderConfig {
   maxOutputTokens: number | undefined;
   timeoutMs: number | undefined;
   toolLoopLimit: number | undefined;
+  broadSearchSynthesisThreshold?: number | undefined;
 }
 
 export interface EvalReplayCliOptions {
@@ -46,6 +47,12 @@ export interface EvalCliOptions {
   replay: EvalReplayCliOptions | undefined;
   matrixMode: boolean;
   matrixGuardrails: EvalMatrixGuardrails;
+  comparison: EvalRunComparisonCliOptions | undefined;
+}
+
+export interface EvalRunComparisonCliOptions {
+  beforeReportPath: string;
+  afterReportPath: string;
 }
 
 function valueFor(args: string[], prefix: string): string | undefined {
@@ -196,6 +203,23 @@ function optionalPositiveNumberFor(args: string[], prefix: string, fallback: num
   return parsed;
 }
 
+function comparisonOptionsFor(args: string[]): EvalRunComparisonCliOptions | undefined {
+  const raw = valueFor(args, '--compare-runs=');
+  if (!raw) return undefined;
+
+  const paths = raw
+    .split(',')
+    .map((path) => path.trim())
+    .filter(Boolean);
+  if (paths.length !== 2) {
+    throw new Error('Invalid --compare-runs: expected two comma-separated report paths.');
+  }
+  return {
+    beforeReportPath: paths[0],
+    afterReportPath: paths[1],
+  };
+}
+
 export function parseEvalArgs(
   args: string[],
   now = new Date(),
@@ -253,6 +277,12 @@ export function parseEvalArgs(
         env,
         'SQUIRE_EVAL_TOOL_LOOP_LIMIT',
       ),
+      broadSearchSynthesisThreshold: positiveIntegerFor(
+        args,
+        '--broad-search-synthesis-threshold=',
+        env,
+        'SQUIRE_EVAL_BROAD_SEARCH_SYNTHESIS_THRESHOLD',
+      ),
     },
     replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
     matrixMode: args.includes('--matrix'),
@@ -267,5 +297,6 @@ export function parseEvalArgs(
         openai: optionalPositiveIntegerFor(args, '--openai-concurrency=', 1),
       },
     },
+    comparison: comparisonOptionsFor(args),
   };
 }

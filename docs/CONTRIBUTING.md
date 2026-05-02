@@ -347,6 +347,32 @@ npm run eval -- --id=rule-poison
 Runs one specific eval case by ID (IDs are in `eval/dataset.json`). Useful for
 debugging a single failure without waiting for the full suite.
 
+**Run and compare a model matrix experiment:**
+
+```bash
+npm run eval -- --matrix --id=building-alchemist --name=sqr-133-before --local-report=/tmp/sqr-133-before.json
+npm run eval -- --matrix --id=building-alchemist --name=sqr-133-after --tool-loop-limit=4 --broad-search-synthesis-threshold=2 --local-report=/tmp/sqr-133-after.json
+npm run eval -- --compare-runs=/tmp/sqr-133-before.json,/tmp/sqr-133-after.json
+```
+
+Matrix reports include pass rate, score, latency, token use, estimated cost,
+tool-call count, retry count, timeout rate, loop iterations, Langfuse trace
+links, prompt/tool schema versions, and model knob values. The comparison
+command prints deltas by provider/model and rejects comparisons when prompt or
+tool schema versions differ; do not mix those runs, because a prompt or schema
+change changes more than model tuning.
+
+Tunable eval-only knobs:
+
+- `--max-output-tokens=`
+- `--reasoning-effort=`
+- `--timeout-ms=`
+- `--tool-loop-limit=`
+- `--broad-search-synthesis-threshold=`
+- `--anthropic-concurrency=` / `--openai-concurrency=`
+- `--retry-count=`
+- `--max-estimated-cost-usd=` with `--allow-estimated-cost`
+
 ## Pre-commit hooks
 
 Git hooks are installed automatically when you run `npm install`. Squire pins

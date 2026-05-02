@@ -84,6 +84,7 @@ function outputFromTrace(
     toolCallCount: trace.toolCalls.length,
     loopIterations: scoreNamed(trace, 'loop_iterations') ?? 0,
     failureClass: failureClassFromTrace(trace),
+    modelSettings: trace.modelSettings,
   };
 }
 

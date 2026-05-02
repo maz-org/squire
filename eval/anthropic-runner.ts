@@ -10,6 +10,7 @@ import {
 } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { DATASET_NAME } from './dataset.ts';
+import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import {
   writeEvalTrace,
   type EvalTraceScore,
@@ -17,8 +18,6 @@ import {
   type EvalTraceToolCall,
   type LangfuseTraceIngestionClient,
 } from './trace.ts';
-
-export const ANTHROPIC_TOOL_SCHEMA_VERSION = 'squire-anthropic-tools-v1' as const;
 
 export type AnthropicEvalFailureClass = 'access' | 'api' | 'timeout' | 'tool' | 'quality';
 
@@ -205,6 +204,7 @@ async function writeSuccessTrace(
       reasoningEffort: options.providerConfig.reasoningEffort,
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
+      broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
     },
     inputQuestion: options.case.question,
     finalAnswer: result.answer,
@@ -280,6 +280,7 @@ async function writeFailureTrace(
       reasoningEffort: options.providerConfig.reasoningEffort,
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
+      broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
     },
     inputQuestion: options.case.question,
     finalAnswer: null,
@@ -321,6 +322,7 @@ export async function runAnthropicEvalCase(
       maxOutputTokens: options.providerConfig.maxOutputTokens,
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
+      broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
     });
     const endedAtDate = now();
     const endedAt = endedAtDate.toISOString();

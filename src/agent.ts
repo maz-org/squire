@@ -436,6 +436,7 @@ export interface EvalAgentLoopOptions {
   maxOutputTokens?: number;
   timeoutMs?: number;
   toolLoopLimit?: number;
+  broadSearchSynthesisThreshold?: number;
 }
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
@@ -782,6 +783,7 @@ export async function runAgentLoopWithEvalConfig(
           maxOutputTokens: options.maxOutputTokens,
           timeoutMs: options.timeoutMs,
           toolLoopLimit: options.toolLoopLimit,
+          broadSearchSynthesisThreshold: options.broadSearchSynthesisThreshold,
         },
       );
       runSpan.setAttributes({
@@ -812,6 +814,7 @@ interface AgentLoopInternalConfig {
   maxOutputTokens?: number;
   timeoutMs?: number;
   toolLoopLimit?: number;
+  broadSearchSynthesisThreshold?: number;
 }
 
 async function runAgentLoopInternal(
@@ -825,6 +828,8 @@ async function runAgentLoopInternal(
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
   const model = config.model ?? AGENT_MODEL;
   const maxIterations = config.toolLoopLimit ?? MAX_AGENT_ITERATIONS;
+  const broadSearchSynthesisThreshold =
+    config.broadSearchSynthesisThreshold ?? MAX_RULE_SEARCHES_BEFORE_SYNTHESIS;
 
   const messages: MessageParam[] = [
     ...truncatedHistory.map((m: HistoryMessage) => ({
@@ -1038,7 +1043,7 @@ async function runAgentLoopInternal(
       // Simple factual rule lookups can drift into repeated broad searches.
       // After three rule-corpus searches, force synthesis from gathered context
       // without lowering the global loop budget needed by traversal questions.
-      if (broadRuleSearches >= MAX_RULE_SEARCHES_BEFORE_SYNTHESIS && !hasUsedNonRuleSearchTool) {
+      if (broadRuleSearches >= broadSearchSynthesisThreshold && !hasUsedNonRuleSearchTool) {
         forceSynthesis = true;
         messages.push({ role: 'user', content: FORCE_SYNTHESIS_PROMPT });
       }

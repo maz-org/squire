@@ -88,6 +88,9 @@ interface OpenAiTranscriptTurn {
   error?: EvalTraceError;
 }
 
+const FORCE_SYNTHESIS_PROMPT =
+  'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
+
 export interface OpenAiResponsesEvalResult {
   ok: boolean;
   answer: string;
@@ -233,10 +236,12 @@ function sha256(value: string): string {
 
 function modelSettingsFor(config: EvalProviderConfig): Record<string, string | number | undefined> {
   return {
+    model: config.model,
     reasoningEffort: config.reasoningEffort,
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.timeoutMs,
     toolLoopLimit: config.toolLoopLimit,
+    broadSearchSynthesisThreshold: config.broadSearchSynthesisThreshold,
   };
 }
 
@@ -245,12 +250,13 @@ function createResponsesRequest(
   evalCase: EvalCase,
   providerConfig: EvalProviderConfig,
   toolSurface: EvalToolSurface,
+  allowTools: boolean,
 ): OpenAiResponsesCreateRequest {
   const request: OpenAiResponsesCreateRequest = {
     model: providerConfig.model,
     instructions: promptFor(toolSurface),
     input: [...input],
-    tools: renderOpenAiStrictToolSchemas(),
+    tools: allowTools ? renderOpenAiStrictToolSchemas() : [],
     store: false,
     parallel_tool_calls: false,
     include: ['reasoning.encrypted_content'],
@@ -263,6 +269,25 @@ function createResponsesRequest(
   if (providerConfig.reasoningEffort)
     request.reasoning = { effort: providerConfig.reasoningEffort };
   return request;
+}
+
+function isBroadRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
+  if (toolName === 'search_rules') return true;
+  if (toolName !== 'search_knowledge') return false;
+
+  const scope = input.scope;
+  if (!Array.isArray(scope) || scope.length === 0) return false;
+  return scope.every((kind) => kind === 'rules_passage');
+}
+
+function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
+  if (toolName === 'inspect_sources' || toolName === 'schema' || toolName === 'resolve_entity') {
+    return false;
+  }
+  if (toolName === 'open_entity' && typeof input.ref === 'string') {
+    return !input.ref.startsWith('rules:');
+  }
+  return !isBroadRuleSearchTool(toolName, input);
 }
 
 function functionCallItems(response: OpenAiResponsesResponse): Array<{
@@ -454,6 +479,9 @@ export async function runOpenAiResponsesEvalCase(
   const tokenUsage = { input: 0, output: 0, reasoning: 0, cached: 0, total: 0 };
   let resolvedModel: string = options.providerConfig.model;
   let iterations = 0;
+  let broadRuleSearches = 0;
+  let hasUsedNonRuleSearchTool = false;
+  let forceSynthesis = false;
 
   const buildTrace = (
     statusReason: string,
@@ -568,6 +596,7 @@ export async function runOpenAiResponsesEvalCase(
       options.evalCase,
       options.providerConfig,
       options.toolSurface,
+      !forceSynthesis,
     );
     requests.push(request);
     const turn: OpenAiTranscriptTurn = {
@@ -633,6 +662,12 @@ export async function runOpenAiResponsesEvalCase(
         return finish(false, '', failureClass, failureClass, message);
       }
 
+      if (isBroadRuleSearchTool(call.name, parsedArguments)) {
+        broadRuleSearches += 1;
+      } else if (isNonRuleSearchTool(call.name, parsedArguments)) {
+        hasUsedNonRuleSearchTool = true;
+      }
+
       const toolStartedAt = now().toISOString();
       let toolResult: ToolCallResult;
       let toolOk = true;
@@ -694,6 +729,19 @@ export async function runOpenAiResponsesEvalCase(
       };
       turn.functionCallOutputs.push(outputItem);
       input.push(outputItem);
+    }
+
+    if (
+      options.providerConfig.broadSearchSynthesisThreshold &&
+      broadRuleSearches >= options.providerConfig.broadSearchSynthesisThreshold &&
+      !hasUsedNonRuleSearchTool
+    ) {
+      forceSynthesis = true;
+      input.push({
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: FORCE_SYNTHESIS_PROMPT }],
+      });
     }
   }
 

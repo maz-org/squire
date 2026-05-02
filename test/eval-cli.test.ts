@@ -114,10 +114,11 @@ describe('parseEvalArgs', () => {
       maxOutputTokens: undefined,
       timeoutMs: undefined,
       toolLoopLimit: undefined,
+      broadSearchSynthesisThreshold: undefined,
     });
   });
 
-  it('parses provider, model, run label, timeout, max output, reasoning effort, and tool loop limit', () => {
+  it('parses provider, model, run label, timeout, max output, reasoning effort, tool loop limit, and synthesis threshold', () => {
     expect(
       parseEvalArgs([
         '--provider=openai',
@@ -127,6 +128,7 @@ describe('parseEvalArgs', () => {
         '--max-output-tokens=2048',
         '--reasoning-effort=low',
         '--tool-loop-limit=6',
+        '--broad-search-synthesis-threshold=2',
       ]).providerConfig,
     ).toEqual({
       provider: 'openai',
@@ -135,6 +137,14 @@ describe('parseEvalArgs', () => {
       maxOutputTokens: 2048,
       timeoutMs: 45000,
       toolLoopLimit: 6,
+      broadSearchSynthesisThreshold: 2,
+    });
+  });
+
+  it('parses local matrix report comparison inputs', () => {
+    expect(parseEvalArgs(['--compare-runs=/tmp/before.json,/tmp/after.json']).comparison).toEqual({
+      beforeReportPath: '/tmp/before.json',
+      afterReportPath: '/tmp/after.json',
     });
   });
 
@@ -170,6 +180,7 @@ describe('parseEvalArgs', () => {
         SQUIRE_EVAL_MAX_OUTPUT_TOKENS: '4096',
         SQUIRE_EVAL_REASONING_EFFORT: 'high',
         SQUIRE_EVAL_TOOL_LOOP_LIMIT: '8',
+        SQUIRE_EVAL_BROAD_SEARCH_SYNTHESIS_THRESHOLD: '2',
       }),
     ).toMatchObject({
       runName: 'env-run',
@@ -180,6 +191,7 @@ describe('parseEvalArgs', () => {
         maxOutputTokens: 4096,
         timeoutMs: 60000,
         toolLoopLimit: 8,
+        broadSearchSynthesisThreshold: 2,
       },
     });
   });
@@ -195,6 +207,7 @@ describe('parseEvalArgs', () => {
           '--max-output-tokens=128',
           '--reasoning-effort=none',
           '--tool-loop-limit=2',
+          '--broad-search-synthesis-threshold=4',
         ],
         new Date('2026-05-01T02:00:00Z'),
         {
@@ -205,6 +218,7 @@ describe('parseEvalArgs', () => {
           SQUIRE_EVAL_MAX_OUTPUT_TOKENS: '4096',
           SQUIRE_EVAL_REASONING_EFFORT: 'high',
           SQUIRE_EVAL_TOOL_LOOP_LIMIT: '8',
+          SQUIRE_EVAL_BROAD_SEARCH_SYNTHESIS_THRESHOLD: '3',
         },
       ),
     ).toMatchObject({
@@ -216,6 +230,7 @@ describe('parseEvalArgs', () => {
         maxOutputTokens: 128,
         timeoutMs: 1000,
         toolLoopLimit: 2,
+        broadSearchSynthesisThreshold: 4,
       },
     });
   });
@@ -251,6 +266,15 @@ describe('parseEvalArgs', () => {
     );
     expect(() => parseEvalArgs(['--tool-loop-limit=1.5'])).toThrow(
       /Invalid --tool-loop-limit: expected a positive integer/,
+    );
+    expect(() => parseEvalArgs(['--broad-search-synthesis-threshold=0'])).toThrow(
+      /Invalid --broad-search-synthesis-threshold: expected a positive integer/,
+    );
+  });
+
+  it('rejects invalid local report comparison inputs', () => {
+    expect(() => parseEvalArgs(['--compare-runs=/tmp/before.json'])).toThrow(
+      /Invalid --compare-runs: expected two comma-separated report paths/,
     );
   });
 

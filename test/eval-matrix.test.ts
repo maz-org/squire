@@ -112,6 +112,7 @@ describe('eval matrix runner', () => {
         maxOutputTokens: 1024,
         timeoutMs: 30_000,
         toolLoopLimit: 4,
+        broadSearchSynthesisThreshold: 2,
       }),
     ).toEqual([
       expect.objectContaining({
@@ -119,18 +120,21 @@ describe('eval matrix runner', () => {
         model: 'claude-sonnet-4-6',
         reasoningEffort: undefined,
         maxOutputTokens: 1024,
+        broadSearchSynthesisThreshold: 2,
       }),
       expect.objectContaining({
         provider: 'anthropic',
         model: 'claude-opus-4-7',
         reasoningEffort: undefined,
         timeoutMs: 30_000,
+        broadSearchSynthesisThreshold: 2,
       }),
       expect.objectContaining({
         provider: 'openai',
         model: 'gpt-5.5',
         reasoningEffort: 'xhigh',
         toolLoopLimit: 4,
+        broadSearchSynthesisThreshold: 2,
       }),
     ]);
   });
