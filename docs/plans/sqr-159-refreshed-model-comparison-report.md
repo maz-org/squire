@@ -99,6 +99,14 @@ Run settings:
 | `openai:gpt-5.4-mini`         | 25/29 (86.2%) |      0.869 |        5.3s |       10.5s |      281,165 |      163,840 |         5,671 |      286,836 |         $0.13 |      2.34 |      3.34 |        4 |               +8 |
 | `openai:gpt-5.4-nano`         | 20/29 (69.0%) |      0.766 |        6.0s |        9.4s |      417,913 |      175,872 |         7,549 |      425,462 |         $0.06 |      3.24 |      4.24 |        9 |               +3 |
 
+Token note: `Total tokens` is the provider-reported total from each eval row.
+The visible `Input tokens`, `Cached input`, and `Output tokens` columns are the
+normalized fields we track across providers. For OpenAI rows, `Cached input` is
+a subset of `Input tokens`, so `Total tokens` generally matches
+`Input tokens + Output tokens`. For Anthropic rows, `Total tokens` also includes
+provider-specific cache creation / prompt-writing token classes that are not
+shown as separate columns here, so it will not equal the visible column sum.
+
 ## Category Results
 
 | Model                         | Rulebook | Monster stats | Buildings | Items | Scenarios | Tool-free | Trajectory |
