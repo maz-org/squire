@@ -14,7 +14,7 @@ WITH building_cost_context AS (
       PARTITION BY game, COALESCE(building_number, regexp_replace(source_id, '/L[0-9]+$', ''))
       ORDER BY level
     ) AS upgrade_cost,
-    building_number IN ('34', '35') AS campaign_start_built
+    COALESCE(building_number IN ('34', '35'), false) AS campaign_start_built
   FROM "card_buildings"
 )
 UPDATE "card_buildings"

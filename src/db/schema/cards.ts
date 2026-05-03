@@ -25,10 +25,9 @@
  * ## Hand-migrated columns — drizzle-kit generate warning
  *
  * The `searchVector` tsvector column on every table is a STORED generated
- * column whose real expression lives in the hand-written migration
- * `src/db/migrations/0002_card_fts.sql`. The schema only declares a
- * placeholder marker (`SV_MARKER`) so drizzle-orm excludes the column
- * from INSERT/UPDATE.
+ * column whose real expression lives in the hand-written card FTS migrations
+ * under `src/db/migrations/`. The schema only declares a placeholder marker
+ * (`SV_MARKER`) so drizzle-orm excludes the column from INSERT/UPDATE.
  *
  * If you run `npx drizzle-kit generate` against this schema, drizzle-kit
  * will see the placeholder and try to "fix" the expression by emitting a
@@ -37,7 +36,7 @@
  * `searchExtracted`/`searchCards`. **Always review drizzle-kit output
  * before committing it.** If drizzle-kit proposes any change to
  * `search_vector` or to `card_*_search_idx`, discard that hunk and update
- * `0002_card_fts.sql` by hand instead.
+ * the relevant hand-written card FTS migration instead.
  */
 
 import { sql } from 'drizzle-orm';
@@ -60,13 +59,12 @@ import {
  * `ts_rank` in `src/extracted-data.ts`.
  *
  * Drizzle has no first-class `tsvector`, so we declare it via `customType`.
- * The generated expression itself lives in the hand-written migration
- * (`0002_card_fts.sql`) — that is the single source of truth for the FTS
- * field lists. We attach `.generatedAlwaysAs(SV_MARKER)`
- * here only as a marker so `drizzle-orm` excludes the column from INSERTs
- * and UPDATEs; the SQL in the marker is never emitted (drizzle-kit's
- * generated-column DDL for custom types is unreliable as of 0.45, so we
- * don't run it).
+ * The generated expression itself lives in the hand-written card FTS migrations
+ * under `src/db/migrations/` — those are the single source of truth for the FTS
+ * field lists. We attach `.generatedAlwaysAs(SV_MARKER)` here only as a marker
+ * so `drizzle-orm` excludes the column from INSERTs and UPDATEs; the SQL in
+ * the marker is never emitted (drizzle-kit's generated-column DDL for custom
+ * types is unreliable as of 0.45, so we don't run it).
  */
 const tsvector = customType<{ data: string; driverData: string }>({
   dataType() {
@@ -76,7 +74,7 @@ const tsvector = customType<{ data: string; driverData: string }>({
 
 // Placeholder expression for `.generatedAlwaysAs`. Drizzle-orm only cares
 // that the column is marked generated so it's excluded from writes; the
-// real expression is in `src/db/migrations/0002_card_fts.sql`.
+// real expression is in the hand-written card FTS migrations.
 const SV_MARKER = sql`''::tsvector`;
 
 // ─── card_monster_stats ─────────────────────────────────────────────────────

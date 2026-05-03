@@ -224,9 +224,52 @@ describe('searchExtracted / searchExtractedRanked', () => {
   it('weights name fields above cross-reference arrays', async () => {
     // Without setweight, scenarios that list "Algox Archer" in their
     // monsters[] array outranked the actual monster-stats row. The 'A'/'D'
-    // weighting in 0002_card_fts.sql is the fix; this test guards it.
+    // weighting in the hand-written card FTS migrations is the fix; this test guards it.
     const ranked = await searchExtractedRanked('algox archer', 6);
     expect(ranked[0].record._type).toBe('monster-stats');
+  });
+
+  it('treats empty monster immunities as searchable evidence', async () => {
+    const ranked = await searchExtractedRanked('Living Bones immunities', 6);
+
+    expect(ranked[0].record).toMatchObject({
+      _type: 'monster-stats',
+      name: 'Living Bones',
+      immunities: [],
+    });
+  });
+
+  it('matches natural monster stat card wording for empty immunities', async () => {
+    const ranked = await searchExtractedRanked('Living Bones monster stat card immunities', 6);
+
+    expect(ranked[0].record).toMatchObject({
+      _type: 'monster-stats',
+      name: 'Living Bones',
+      immunities: [],
+    });
+  });
+
+  it('relaxes immunity-condition wording to the named monster stat row', async () => {
+    const ranked = await searchExtractedRanked('Living Bones monster stat immunity conditions', 6);
+
+    expect(ranked[0].record).toMatchObject({
+      _type: 'monster-stats',
+      name: 'Living Bones',
+      immunities: [],
+    });
+  });
+
+  it('relaxes candidate condition lists to the named monster stat row', async () => {
+    const ranked = await searchExtractedRanked(
+      'Living Bones monster stat card poison wound muddle immobilize',
+      6,
+    );
+
+    expect(ranked[0].record).toMatchObject({
+      _type: 'monster-stats',
+      name: 'Living Bones',
+      immunities: [],
+    });
   });
 
   it('orders tied monster stat level bands by the default lower band first', async () => {
@@ -317,6 +360,23 @@ describe('formatExtracted', () => {
     expect(text).toContain('Level 0');
     expect(text).toContain('HP 5');
     expect(text).toContain('Immunities: poison');
+  });
+
+  it('formats empty monster immunities as explicit evidence', () => {
+    const text = formatExtracted([
+      {
+        _type: 'monster-stats',
+        name: 'Living Bones',
+        levelRange: '0-3',
+        normal: { 0: { hp: 5, move: 2, attack: 1 } },
+        elite: { 0: { hp: 6, move: 4, attack: 2 } },
+        immunities: [],
+        notes: null,
+      },
+    ]);
+
+    expect(text).toContain('Monster: Living Bones');
+    expect(text).toContain('Immunities: none');
   });
 
   it('formats battle goals with condition', () => {
