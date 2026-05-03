@@ -61,6 +61,31 @@ describe('eval matrix runner', () => {
     );
   });
 
+  it('falls back to the default Langfuse project id when configured blank', async () => {
+    const runner = successfulRunner();
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-smoke',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+      langfuseProjectId: '   ',
+    });
+
+    expect(result.rows[0]?.traceUrl).toContain('/project/default/traces/');
+  });
+
   it('runs one selected case across every configured provider/model', async () => {
     const runner = successfulRunner();
 

@@ -511,6 +511,11 @@ async function runProviderQueue(
 export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<EvalMatrixResult> {
   const guardrailEstimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs);
   assertEvalMatrixGuardrails(options);
+  const configuredLangfuseProjectId = options.langfuseProjectId?.trim();
+  const langfuseProjectId =
+    configuredLangfuseProjectId && configuredLangfuseProjectId.length > 0
+      ? configuredLangfuseProjectId
+      : 'default';
 
   const inputs = options.cases.flatMap((evalCase) =>
     options.modelConfigs.map((providerConfig) => {
@@ -521,11 +526,7 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
         runLabel: options.runLabel,
         toolSurface: options.toolSurface,
         traceId,
-        traceUrl: langfuseTraceUrl(
-          options.langfuseBaseUrl,
-          options.langfuseProjectId ?? 'default',
-          traceId,
-        ),
+        traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, langfuseProjectId, traceId),
         attempt: 1,
       };
     }),
