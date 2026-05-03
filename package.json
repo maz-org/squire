@@ -51,7 +51,7 @@
     ]
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.91.1",
+    "@anthropic-ai/sdk": "^0.92.0",
     "@hono/node-server": "^2.0.1",
     "@langfuse/client": "^5.2.0",
     "@langfuse/otel": "^5.1.0",
