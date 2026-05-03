@@ -443,7 +443,11 @@ describe('OpenAI Responses eval runner', () => {
         id: 'rule-looting-definition',
         question: 'What is looting?',
       },
-      providerConfig: { ...providerConfig, broadSearchSynthesisThreshold: undefined },
+      providerConfig: {
+        ...providerConfig,
+        broadSearchSynthesisThreshold: undefined,
+        toolLoopLimit: 3,
+      },
       runLabel: 'rule-synthesis',
       toolSurface: 'redesigned',
       executeTool: vi.fn().mockResolvedValue({ content: 'Loot rule context.' }),
