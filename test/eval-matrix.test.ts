@@ -97,7 +97,9 @@ describe('eval matrix runner', () => {
           tokenInput: 100,
           tokenOutput: 50,
           tokenTotal: 150,
-          estimatedCostUsd: 0.02,
+          guardrailEstimatedCostUsd: 0.05,
+          providerEstimatedCostUsd: 0.002,
+          estimatedCostUsd: 0.002,
           toolCallCount: 1,
           retryCount: 0,
           loopIterations: 2,
@@ -309,6 +311,136 @@ describe('eval matrix runner', () => {
     ).rejects.toThrow(/requires --allow-estimated-cost/);
   });
 
+  it('calculates row provider costs from model prices while keeping guardrail estimates', async () => {
+    const configs: EvalProviderConfig[] = [
+      {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-6',
+        reasoningEffort: undefined,
+        maxOutputTokens: undefined,
+        timeoutMs: undefined,
+        toolLoopLimit: undefined,
+      },
+      {
+        provider: 'openai',
+        model: 'gpt-5.5',
+        reasoningEffort: undefined,
+        maxOutputTokens: undefined,
+        timeoutMs: undefined,
+        toolLoopLimit: undefined,
+      },
+    ];
+    const runner: EvalMatrixRunner = vi.fn(async ({ providerConfig, traceId }) => ({
+      ok: true,
+      answer: 'priced',
+      traceId,
+      traceUrl: `https://langfuse.test/project/default/traces/${traceId}`,
+      score: 1,
+      pass: true,
+      latencyMs: 500,
+      tokenUsage:
+        providerConfig.provider === 'openai'
+          ? { input: 1_000_000, cachedInput: 400_000, output: 100_000, total: 1_100_000 }
+          : { input: 1_000_000, output: 100_000, total: 1_100_000 },
+      estimatedCostUsd: 0.05,
+      toolCallCount: 0,
+      loopIterations: 1,
+      failureClass: 'none',
+    }));
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-pricing',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: configs,
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+    });
+
+    expect(result).toMatchObject({
+      estimatedCostUsd: 0.1,
+      guardrailEstimatedCostUsd: 0.1,
+    });
+    expect(result.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          tokenCachedInput: null,
+          guardrailEstimatedCostUsd: 0.05,
+          providerEstimatedCostUsd: 4.5,
+          estimatedCostUsd: 4.5,
+        }),
+        expect.objectContaining({
+          provider: 'openai',
+          model: 'gpt-5.5',
+          tokenCachedInput: 400_000,
+          guardrailEstimatedCostUsd: 0.05,
+          providerEstimatedCostUsd: 6.2,
+          estimatedCostUsd: 6.2,
+        }),
+      ]),
+    );
+  });
+
+  it('does not bill cached input tokens beyond total input tokens', async () => {
+    const config: EvalProviderConfig = {
+      provider: 'openai',
+      model: 'gpt-5.5',
+      reasoningEffort: undefined,
+      maxOutputTokens: undefined,
+      timeoutMs: undefined,
+      toolLoopLimit: undefined,
+    };
+    const runner: EvalMatrixRunner = vi.fn(async ({ traceId }) => ({
+      ok: true,
+      answer: 'priced',
+      traceId,
+      traceUrl: `https://langfuse.test/project/default/traces/${traceId}`,
+      score: 1,
+      pass: true,
+      latencyMs: 500,
+      tokenUsage: { input: 1_000_000, cachedInput: 2_000_000, output: 0, total: 1_000_000 },
+      estimatedCostUsd: 0.05,
+      toolCallCount: 0,
+      loopIterations: 1,
+      failureClass: 'none',
+    }));
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-cached-input-clamp',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [config],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+    });
+
+    expect(result.rows[0]).toMatchObject({
+      tokenCachedInput: 2_000_000,
+      providerEstimatedCostUsd: 0.5,
+      estimatedCostUsd: 0.5,
+    });
+  });
+
   it('retries provider rate limits before recording a matrix failure', async () => {
     const config: EvalProviderConfig = {
       provider: 'openai',
@@ -459,7 +591,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tmodel\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcost_usd\ttools\tretries\tloops\ttrace\terror',
+      'case\tmodel\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');
