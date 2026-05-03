@@ -6,7 +6,11 @@ import {
   LEGACY_AGENT_TOOLS,
 } from '../src/agent.ts';
 import type { EvalMatrixGuardrails, EvalProviderConfig, EvalToolSurface } from './cli.ts';
-import { OPENAI_TOOL_SCHEMA_VERSION, getOpenAiToolSchemaHash } from './openai-schema.ts';
+import {
+  OPENAI_TOOL_SCHEMA_VERSION,
+  getOpenAiToolSchemaHash,
+  openAiToolsForSurface,
+} from './openai-schema.ts';
 
 export const ANTHROPIC_TOOL_SCHEMA_VERSION = 'squire-anthropic-tools-v1' as const;
 
@@ -43,7 +47,8 @@ export function evalToolSchemaHashFor(
   config: EvalProviderConfig,
   toolSurface: EvalToolSurface,
 ): string {
-  if (config.provider === 'openai') return getOpenAiToolSchemaHash();
+  if (config.provider === 'openai')
+    return getOpenAiToolSchemaHash(openAiToolsForSurface(toolSurface));
   const tools = toolSurface === 'legacy' ? LEGACY_AGENT_TOOLS : AGENT_TOOLS;
   return `sha256:${createHash('sha256').update(JSON.stringify(tools)).digest('hex')}`;
 }

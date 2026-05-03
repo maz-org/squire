@@ -1,6 +1,13 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { ALL_AGENT_TOOLS, executeToolCall, type AgentToolName } from '../src/agent.ts';
+import {
+  AGENT_TOOLS,
+  ALL_AGENT_TOOLS,
+  LEGACY_AGENT_TOOLS,
+  executeToolCall,
+  type AgentToolName,
+  type AgentToolSurface,
+} from '../src/agent.ts';
 import type { ToolCallResult } from '../src/agent.ts';
 import { SCHEMAS } from '../src/schemas.ts';
 
@@ -186,6 +193,10 @@ export function renderOpenAiStrictToolSchemas(
     strict: true,
     parameters: strictifySchema(normalizedInputSchema(tool), true, `${tool.name}.parameters`),
   }));
+}
+
+export function openAiToolsForSurface(toolSurface: AgentToolSurface): readonly AgentToolLike[] {
+  return toolSurface === 'legacy' ? LEGACY_AGENT_TOOLS : AGENT_TOOLS;
 }
 
 export function getOpenAiToolSchemaHash(tools: readonly AgentToolLike[] = ALL_AGENT_TOOLS): string {

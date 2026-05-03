@@ -13,6 +13,7 @@ import {
   OPENAI_TOOL_SCHEMA_VERSION,
   executeOpenAiToolCall,
   getOpenAiToolSchemaHash,
+  openAiToolsForSurface,
   renderOpenAiStrictToolSchemas,
   type OpenAiStrictFunctionTool,
 } from './openai-schema.ts';
@@ -266,11 +267,12 @@ function createResponsesRequest(
   toolSurface: EvalToolSurface,
   allowTools: boolean,
 ): OpenAiResponsesCreateRequest {
+  const tools = openAiToolsForSurface(toolSurface);
   const request: OpenAiResponsesCreateRequest = {
     model: providerConfig.model,
     instructions: promptFor(toolSurface),
     input: [...input],
-    tools: allowTools ? renderOpenAiStrictToolSchemas() : [],
+    tools: allowTools ? renderOpenAiStrictToolSchemas(tools) : [],
     store: false,
     parallel_tool_calls: false,
     include: ['reasoning.encrypted_content'],
@@ -530,7 +532,7 @@ export async function runOpenAiResponsesEvalCase(
       promptHash: sha256(promptFor(options.toolSurface)),
       toolSurface: options.toolSurface,
       toolSchemaVersion: OPENAI_TOOL_SCHEMA_VERSION,
-      toolSchemaHash: getOpenAiToolSchemaHash(),
+      toolSchemaHash: getOpenAiToolSchemaHash(openAiToolsForSurface(options.toolSurface)),
       modelSettings: modelSettingsFor(options.providerConfig),
       inputQuestion: options.evalCase.question,
       finalAnswer,
