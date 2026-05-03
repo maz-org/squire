@@ -124,10 +124,10 @@
     "category": "items",
     "question": "What does the Spyglass item do in Frosthaven, and what is its item number?",
     "finalAnswer": {
-      "expected": "Item #001. During your attack ability, gain advantage on one attack. Costs 40 gold, small item slot, 2 uses.",
-      "grading": "Must state item number 001 (not 082). Must mention gaining advantage on an attack. Cost of 40 gold is a bonus."
+      "expected": "Item #001. Head slot, craft cost 1 metal. During your attack ability, gain advantage on one attack.",
+      "grading": "Must state item number 001 (not 082). Must mention gaining advantage on one attack. Should identify the head slot and craft cost 1 metal. Must not say 40 gold, small item slot, or 2 uses."
     },
-    "source": "data/extracted/items.json (note: extracted number is wrong, correct is 001 from filename)"
+    "source": "data/extracted/items.json"
   },
   {
     "id": "item-crude-boots",
