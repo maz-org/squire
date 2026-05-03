@@ -185,6 +185,21 @@ describe('convertBuilding', () => {
       metal: 2,
       hide: 1,
     });
+    expect(results[0].campaignStartBuilt).toBe(true);
+    expect(results[0].initialBuildCost).toEqual({
+      prosperity: 0,
+      gold: 0,
+      lumber: 0,
+      metal: 0,
+      hide: 0,
+    });
+    expect(results[0].upgradeCost).toEqual({
+      prosperity: 1,
+      gold: 0,
+      lumber: 2,
+      metal: 2,
+      hide: 1,
+    });
   });
 
   it('handles buildings with no effect arrays (zero levels)', () => {

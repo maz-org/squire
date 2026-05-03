@@ -10,6 +10,21 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 3,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 1 Metal for 2 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/05/L1"
@@ -25,6 +40,21 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 8,
+      "metal": 5,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 2 Metal for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/05/L2"
@@ -40,6 +70,21 @@
       "metal": 5,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 10,
+      "metal": 6,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 3 Metal for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/05/L3"
@@ -55,6 +100,15 @@
       "metal": 6,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 4 Metal for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/05/L4"
@@ -70,6 +124,21 @@
       "metal": 1,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 1,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 3,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 1 Hide for 2 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/12/L1"
@@ -85,6 +154,21 @@
       "metal": 2,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 1,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 8,
+      "metal": 2,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 2 Hide for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/12/L2"
@@ -100,6 +184,21 @@
       "metal": 2,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 1,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 10,
+      "metal": 3,
+      "hide": 6
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 3 Hide for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/12/L3"
@@ -115,6 +214,15 @@
       "metal": 3,
       "hide": 6
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 1,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 4 Hide for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/12/L4"
@@ -130,6 +238,21 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 3,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 1 Lumber for 2 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/17/L1"
@@ -145,6 +268,21 @@
       "metal": 5,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 2 Lumber for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/17/L2"
@@ -160,6 +298,21 @@
       "metal": 6,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 8,
+      "metal": 8,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 3 Lumber for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/17/L3"
@@ -175,6 +328,15 @@
       "metal": 8,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 4 Lumber for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/17/L4"
@@ -190,6 +352,21 @@
       "metal": 4,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 1 material resource for 2 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/21/L1"
@@ -205,6 +382,21 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 6
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 2 different material resource for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/21/L2"
@@ -220,6 +412,15 @@
       "metal": 6,
       "hide": 6
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively buy up to 3 different material resource for 2 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/21/L3"
@@ -235,6 +436,21 @@
       "metal": 0,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 2,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Plant herbs, rotate this card 180°, then stop - Gain 1 herb from each planted plot, then rotate this card 180° then stop",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/24/L1"
@@ -250,6 +466,21 @@
       "metal": 2,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Plant herbs, rotate this card 180°, then stop - Gain 1 herb from each planted plot, then rotate this card 180° then stop",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/24/L2"
@@ -265,6 +496,21 @@
       "metal": 3,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/24/L3"
@@ -280,6 +526,15 @@
       "metal": 3,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Gain 1 collective herb from each planted plot, then plant herbs",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/24/L4"
@@ -295,6 +550,21 @@
       "metal": 0,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 1,
+      "gold": 0,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 1 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L1"
@@ -310,6 +580,21 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 2,
+      "gold": 0,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 2
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 1 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L2"
@@ -325,6 +610,21 @@
       "metal": 2,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 3,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 1 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L3"
@@ -340,6 +640,21 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 3,
+      "hide": 3
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 2 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L4"
@@ -355,6 +670,21 @@
       "metal": 3,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 3
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 2 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L5"
@@ -370,6 +700,21 @@
       "metal": 4,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 6,
+      "gold": 0,
+      "lumber": 7,
+      "metal": 4,
+      "hide": 4
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 2 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L6"
@@ -385,6 +730,21 @@
       "metal": 4,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 8,
+      "metal": 5,
+      "hide": 3
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 2 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L7"
@@ -400,6 +760,21 @@
       "metal": 5,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 8,
+      "gold": 0,
+      "lumber": 9,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": true,
     "effect": "Lose 2 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L8"
@@ -415,6 +790,15 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": true,
     "effect": "Lose 2 collective Hide",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/34/L9"
@@ -430,6 +814,21 @@
       "metal": 0,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 1,
+      "gold": 0,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "campaignStartBuilt": true,
     "effect": "Characters cannot use potions",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/35/L1"
@@ -445,6 +844,21 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 2
+    },
+    "campaignStartBuilt": true,
     "effect": "Characters cannot use potions",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/35/L2"
@@ -460,6 +874,15 @@
       "metal": 4,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": true,
     "effect": "Characters cannot use potions",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/35/L3"
@@ -475,6 +898,21 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 3,
+      "gold": 0,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 5 collective gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/37/L1"
@@ -490,6 +928,21 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 10 collective gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/37/L2"
@@ -505,6 +958,21 @@
       "metal": 3,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 4,
+      "hide": 4
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 15 collective gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/37/L3"
@@ -520,6 +988,15 @@
       "metal": 4,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Lose 20 collective gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/37/L4"
@@ -535,6 +1012,21 @@
       "metal": 2,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 4,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 4
+    },
+    "upgradeCost": {
+      "prosperity": 6,
+      "gold": 0,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Damage any one building",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/39/L1"
@@ -550,6 +1042,21 @@
       "metal": 6,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 4,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 4
+    },
+    "upgradeCost": {
+      "prosperity": 8,
+      "gold": 0,
+      "lumber": 2,
+      "metal": 10,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Damage any one building",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/39/L2"
@@ -565,6 +1072,15 @@
       "metal": 10,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 4,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 4
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Damage any one building",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/39/L3"
@@ -580,6 +1096,21 @@
       "metal": 2,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 3,
+      "metal": 6,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/42/L1"
@@ -595,6 +1126,21 @@
       "metal": 6,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 10,
+      "hide": 4
+    },
+    "campaignStartBuilt": false,
     "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/42/L2"
@@ -610,6 +1156,15 @@
       "metal": 10,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Each character may lose 5 gold to start the next scenario with Blessx2",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/42/L3"
@@ -625,6 +1180,21 @@
       "metal": 4,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 4,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 3,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 0
+    },
+    "campaignStartBuilt": false,
     "effect": "",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/44/L1"
@@ -640,6 +1210,21 @@
       "metal": 5,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 4,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 4
+    },
+    "campaignStartBuilt": false,
     "effect": "Reduce all enhancement costs by 10 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/44/L2"
@@ -655,6 +1240,21 @@
       "metal": 4,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 4,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 6,
+      "hide": 6
+    },
+    "campaignStartBuilt": false,
     "effect": "Reduce all enhancement costs by 10 gold and level penalties by 10 gold per level",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/44/L3"
@@ -670,6 +1270,15 @@
       "metal": 6,
       "hide": 6
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 4,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Reduce all enhancement costs by 10 gold, level penalties by 10 gold per level, and repeat penalties by 25 gold per enhancement",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/44/L4"
@@ -685,6 +1294,21 @@
       "metal": 6,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 6,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively sell up to 1 Metal for 5 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/65/L1"
@@ -700,6 +1324,15 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 6,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively sell up to 2 Metal for 5 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/65/L2"
@@ -715,6 +1348,21 @@
       "metal": 2,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively sell up to 1 Lumber for 5 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/67/L1"
@@ -730,6 +1378,15 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively sell up to 2 Lumber for 5 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/67/L2"
@@ -745,6 +1402,21 @@
       "metal": 2,
       "hide": 6
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 6
+    },
+    "upgradeCost": {
+      "prosperity": 7,
+      "gold": 0,
+      "lumber": 5,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively sell up to 1 Hide for 5 gold",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/72/L1"
@@ -760,6 +1432,15 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 6
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively sell up to 2 Hide for 5 gold each",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/72/L2"
@@ -775,6 +1456,21 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 1 morale",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/74/L1"
@@ -790,6 +1486,21 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 6,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 4,
+      "hide": 2
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 1 morale",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/74/L2"
@@ -805,6 +1516,15 @@
       "metal": 4,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Lose 1 morale",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/74/L3"
@@ -820,6 +1540,21 @@
       "metal": 6,
       "hide": 6
     },
+    "initialBuildCost": {
+      "prosperity": 5,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 6
+    },
+    "upgradeCost": {
+      "prosperity": null,
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "campaignStartBuilt": false,
     "effect": "When the trials deck is complete, read Section 187.1",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/81/L1"
@@ -835,6 +1570,15 @@
       "metal": null,
       "hide": null
     },
+    "initialBuildCost": {
+      "prosperity": 5,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 6,
+      "hide": 6
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Access to Tholos' Favors",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/81/L2"
@@ -850,6 +1594,21 @@
       "metal": 2,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 4,
+      "hide": 1
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 1 inspiration",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/83/L1"
@@ -865,6 +1624,21 @@
       "metal": 4,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": 6,
+      "gold": 0,
+      "lumber": 2,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Lose 1 inspiration",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/83/L2"
@@ -880,6 +1654,15 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Lose 1 inspiration",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/83/L3"
@@ -895,6 +1678,15 @@
       "metal": 0,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Lose 1 collective Lumber",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/84/L1"
@@ -910,6 +1702,21 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 5,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 5,
+      "hide": 4
+    },
+    "campaignStartBuilt": false,
     "effect": "Reduce all construction costs by 1 material resource",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/85/L1"
@@ -925,6 +1732,15 @@
       "metal": 5,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Reduce all construction costs by 1 material resource and the extra construction cost by 1 morale",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/85/L2"
@@ -940,6 +1756,21 @@
       "metal": 2,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 5
+    },
+    "campaignStartBuilt": false,
     "effect": "Bring one pet into each scenario. Capacity: 4",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/88/L1"
@@ -955,6 +1786,21 @@
       "metal": 5,
       "hide": 5
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 6,
+      "gold": 0,
+      "lumber": 6,
+      "metal": 7,
+      "hide": 6
+    },
+    "campaignStartBuilt": false,
     "effect": "Bring one pet into each scenario. Capacity: 8",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/88/L2"
@@ -970,6 +1816,21 @@
       "metal": 7,
       "hide": 6
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": {
+      "prosperity": 8,
+      "gold": 0,
+      "lumber": 8,
+      "metal": 8,
+      "hide": 8
+    },
+    "campaignStartBuilt": false,
     "effect": "Bring two pets into each scenario. Capacity: 8",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/88/L3"
@@ -985,6 +1846,15 @@
       "metal": 8,
       "hide": 8
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Bring two pets into each scenario. Capacity: 12",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/88/L4"
@@ -1000,6 +1870,21 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 4,
+      "gold": 0,
+      "lumber": 3,
+      "metal": 3,
+      "hide": 3
+    },
+    "campaignStartBuilt": false,
     "effect": "Draw one challenge and keep up to one. When the challenge deck is complete, read Section 190.1",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/90/L1"
@@ -1015,6 +1900,21 @@
       "metal": 3,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": {
+      "prosperity": 6,
+      "gold": 0,
+      "lumber": 4,
+      "metal": 5,
+      "hide": 4
+    },
+    "campaignStartBuilt": false,
     "effect": "Draw two challenges and keep up to one. When the challenge deck is complete, read Section 190.1",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/90/L2"
@@ -1030,6 +1930,15 @@
       "metal": 5,
       "hide": 4
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 2,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Draw three challenges and keep up to two. When the challenge deck is complete, read Section 190.1",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/90/L3"
@@ -1045,6 +1954,21 @@
       "metal": 0,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": null,
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 4 Effect: advantage and -5 Attack",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L1"
@@ -1060,6 +1984,21 @@
       "metal": null,
       "hide": null
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": null,
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 6 Effect: advantage and -15 Attack",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L2"
@@ -1075,6 +2014,21 @@
       "metal": null,
       "hide": null
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": {
+      "prosperity": null,
+      "gold": null,
+      "lumber": null,
+      "metal": null,
+      "hide": null
+    },
+    "campaignStartBuilt": false,
     "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 8 Effect: advantage and -25 Attack",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L3"
@@ -1090,6 +2044,15 @@
       "metal": null,
       "hide": null
     },
+    "initialBuildCost": {
+      "prosperity": 0,
+      "gold": 0,
+      "lumber": 0,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 10 Effect: advantage and -35 Attack",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L4"
@@ -1105,6 +2068,15 @@
       "metal": 0,
       "hide": 0
     },
+    "initialBuildCost": {
+      "prosperity": 1,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 0,
+      "hide": 0
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "+5 Defense",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/wall-j/L1"
@@ -1120,6 +2092,15 @@
       "metal": 2,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 2,
+      "gold": 10,
+      "lumber": 3,
+      "metal": 2,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "+5 Defense",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/wall-k/L1"
@@ -1135,6 +2116,15 @@
       "metal": 2,
       "hide": 1
     },
+    "initialBuildCost": {
+      "prosperity": 3,
+      "gold": 10,
+      "lumber": 5,
+      "metal": 2,
+      "hide": 1
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "+5 Defense",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/wall-l/L1"
@@ -1150,6 +2140,15 @@
       "metal": 3,
       "hide": 3
     },
+    "initialBuildCost": {
+      "prosperity": 4,
+      "gold": 10,
+      "lumber": 4,
+      "metal": 3,
+      "hide": 3
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "+5 Defense",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/wall-m/L1"
@@ -1165,6 +2164,15 @@
       "metal": 3,
       "hide": 2
     },
+    "initialBuildCost": {
+      "prosperity": 6,
+      "gold": 10,
+      "lumber": 6,
+      "metal": 3,
+      "hide": 2
+    },
+    "upgradeCost": null,
+    "campaignStartBuilt": false,
     "effect": "+5 Defense",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/wall-n/L1"
