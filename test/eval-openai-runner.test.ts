@@ -50,8 +50,8 @@ describe('OpenAI Responses eval runner', () => {
       type: 'function_call',
       id: 'fc_1',
       call_id: 'call_1',
-      name: 'search_cards',
-      arguments: '{"query":"Spyglass","topK":null}',
+      name: 'search_knowledge',
+      arguments: '{"query":"Spyglass","scope":["card"],"limit":6}',
     };
     const client = responsesClient(
       {
@@ -100,7 +100,11 @@ describe('OpenAI Responses eval runner', () => {
     expect(result.ok).toBe(true);
     expect(result.answer).toBe('Spyglass reveals the top card.');
     expect(result.failureClass).toBe('none');
-    expect(executeTool).toHaveBeenCalledWith('search_cards', { query: 'Spyglass', topK: null });
+    expect(executeTool).toHaveBeenCalledWith('search_knowledge', {
+      query: 'Spyglass',
+      scope: ['card'],
+      limit: 6,
+    });
 
     const create = vi.mocked(client.responses.create);
     expect(create).toHaveBeenCalledTimes(2);
@@ -139,7 +143,7 @@ describe('OpenAI Responses eval runner', () => {
       expect.objectContaining({
         iteration: 1,
         id: 'fc_1',
-        name: 'search_cards',
+        name: 'search_knowledge',
         ok: true,
         sourceLabels: ['Items'],
       }),
@@ -163,9 +167,9 @@ describe('OpenAI Responses eval runner', () => {
       },
       toolCalls: [
         expect.objectContaining({
-          toolName: 'search_cards',
+          toolName: 'search_knowledge',
           providerToolCallId: 'call_1',
-          arguments: { query: 'Spyglass', topK: null },
+          arguments: { query: 'Spyglass', scope: ['card'], limit: 6 },
           result: '[{"name":"Spyglass","effect":"Reveal the top card."}]',
         }),
       ],
@@ -269,7 +273,7 @@ describe('OpenAI Responses eval runner', () => {
           type: 'function_call',
           id: 'fc_bad',
           call_id: 'call_bad',
-          name: 'search_cards',
+          name: 'search_knowledge',
           arguments: '{"query":',
         },
       ],
@@ -289,6 +293,43 @@ describe('OpenAI Responses eval runner', () => {
       expect.objectContaining({
         type: 'schema',
         message: expect.stringContaining('Invalid JSON arguments'),
+      }),
+    ]);
+  });
+
+  it('rejects tools outside the selected eval surface before execution', async () => {
+    const executeTool = vi.fn();
+    const client = responsesClient({
+      id: 'resp_unavailable_tool',
+      model: 'gpt-5.5-2026-04-23',
+      status: 'completed',
+      output: [
+        {
+          type: 'function_call',
+          id: 'fc_unavailable',
+          call_id: 'call_unavailable',
+          name: 'search_rules',
+          arguments: '{"query":"Brittle","topK":5}',
+        },
+      ],
+    });
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase,
+      providerConfig,
+      runLabel: 'unavailable-tool',
+      toolSurface: 'redesigned',
+      executeTool,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.failureClass).toBe('schema');
+    expect(executeTool).not.toHaveBeenCalled();
+    expect(result.trace.errors).toEqual([
+      expect.objectContaining({
+        type: 'schema',
+        message: expect.stringContaining('unavailable redesigned tool: search_rules'),
       }),
     ]);
   });
@@ -328,8 +369,8 @@ describe('OpenAI Responses eval runner', () => {
           type: 'function_call',
           id: 'fc_tool',
           call_id: 'call_tool',
-          name: 'search_cards',
-          arguments: '{"query":"Spyglass"}',
+          name: 'search_knowledge',
+          arguments: '{"query":"Spyglass","scope":["card"],"limit":6}',
         },
       ],
     });
@@ -514,8 +555,8 @@ describe('OpenAI Responses eval runner', () => {
             type: 'function_call',
             id: 'fc_traj_1',
             call_id: 'call_traj_1',
-            name: 'search_cards',
-            arguments: '{"query":"Algox Archer","topK":10}',
+            name: 'search_knowledge',
+            arguments: '{"query":"Algox Archer","scope":["card"],"limit":10}',
           },
         ],
       },
@@ -528,8 +569,8 @@ describe('OpenAI Responses eval runner', () => {
             type: 'function_call',
             id: 'fc_traj_2',
             call_id: 'call_traj_2',
-            name: 'list_cards',
-            arguments: '{"type":"monster-abilities","filter":null}',
+            name: 'resolve_entity',
+            arguments: '{"query":"Algox Archer","kinds":["monster"],"limit":6}',
           },
         ],
       },
@@ -560,7 +601,7 @@ describe('OpenAI Responses eval runner', () => {
         category: 'trajectory',
         question: 'Find Algox Archer and explain exact versus fuzzy matches.',
         trajectory: {
-          requiredTools: ['search_cards'],
+          requiredTools: ['search_knowledge'],
           requiredToolKinds: ['search'],
           forbiddenTools: [],
           forbiddenToolKinds: [],
