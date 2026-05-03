@@ -349,6 +349,53 @@ npm run eval -- --id=rule-poison
 Runs one specific eval case by ID (IDs are in `eval/dataset.json`). Useful for
 debugging a single failure without waiting for the full suite.
 
+**Find the Langfuse trace URL:**
+
+Do not hand-build Langfuse UI links from a guessed trace ID. Filtered Anthropic
+evals create two useful Langfuse traces:
+
+- `eval.case` — Squire's deterministic trace, with ID
+  `eval:<run-label>:<provider>:<model>:<case-id>`. Use this for
+  `npm run eval -- --replay --trace-id=...` and API debugging.
+- `experiment-item-run` — Langfuse SDK's experiment item trace. This usually has
+  a short hex ID and is the safest browser UI link for filtered single-case
+  evals.
+
+For a UI link, query Langfuse and use the returned `htmlPath` instead of
+constructing `/project/.../traces/...` yourself:
+
+```bash
+node - <<'NODE'
+import 'dotenv/config';
+
+const runLabel = 'sqr-153-identity-scope-smoke-2026-05-03';
+const caseId = 'tool-free-assistant-game';
+const fromTimestamp = '2026-05-03T18:00:00.000Z';
+const toTimestamp = '2026-05-03T18:10:00.000Z';
+
+const baseUrl = process.env.LANGFUSE_BASEURL ?? 'https://us.cloud.langfuse.com';
+const auth = Buffer.from(
+  `${process.env.LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`,
+).toString('base64');
+const url =
+  `${baseUrl}/api/public/traces?limit=20` +
+  `&fromTimestamp=${encodeURIComponent(fromTimestamp)}` +
+  `&toTimestamp=${encodeURIComponent(toTimestamp)}`;
+
+const response = await fetch(url, { headers: { authorization: `Basic ${auth}` } });
+const { data } = await response.json();
+for (const trace of data ?? []) {
+  const body = JSON.stringify(trace);
+  if (body.includes(runLabel) && body.includes(caseId)) {
+    console.log(`${trace.name}: ${baseUrl}${trace.htmlPath}`);
+  }
+}
+NODE
+```
+
+If both traces are present, share the `experiment-item-run` URL for browser
+viewing and the `eval.case` trace ID for replay/debugging.
+
 **Run and compare a model matrix experiment:**
 
 ```bash
