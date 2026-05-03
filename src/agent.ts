@@ -54,7 +54,10 @@ const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
 const NEIGHBORS_TARGET_PROMPT =
-  'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks for section text, call open_entity on the returned section ref now; otherwise answer from the neighbors result. Do not search for another path unless neighbors returned no relevant target.';
+  'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.';
+
+const RESOLUTION_TARGET_PROMPT =
+  'You now have canonical candidate refs. If the user asked for an exact record or source text, open the best matching exact ref before answering. If the user also asked for fuzzy/contextual matches, keep those separate and use search only for the fuzzy part.';
 
 const ANSWER_FORMATTING_PROMPT = `Formatting:
 - Use *italics* only for named Frosthaven game terms — mechanics, abilities, conditions, status effects, keyword phrases (e.g., *Muddle*, *Shield 1*, *Retaliate*, *Loot 2*, *Move 3*). The UI renders these as a highlighted rule-term chip, so emphasizing prose words like *not* or *however* turns ordinary stress into a false rule citation. Use **bold** for general emphasis instead.
@@ -505,6 +508,18 @@ function hasUsefulNeighborsResult(result: ToolCallResult): boolean {
   }
 }
 
+function hasUsefulResolutionResult(result: ToolCallResult): boolean {
+  try {
+    const parsed = JSON.parse(result.content) as {
+      ok?: unknown;
+      candidates?: unknown;
+    };
+    return parsed.ok === true && Array.isArray(parsed.candidates) && parsed.candidates.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 function sourceLabelsFromResult(value: unknown): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
@@ -942,6 +957,7 @@ async function runAgentLoopInternal(
 
       const toolResults: ContentBlockParam[] = [];
       let sawNeighborsWithTargets = false;
+      let sawResolutionWithCandidates = false;
       for (const block of response.content) {
         if (block.type === 'tool_use') {
           const input = block.input as Record<string, unknown>;
@@ -1018,6 +1034,13 @@ async function runAgentLoopInternal(
           if (block.name === 'neighbors' && !isError && hasUsefulNeighborsResult(toolResult)) {
             sawNeighborsWithTargets = true;
           }
+          if (
+            block.name === 'resolve_entity' &&
+            !isError &&
+            hasUsefulResolutionResult(toolResult)
+          ) {
+            sawResolutionWithCandidates = true;
+          }
 
           if (emit) {
             await emit('tool_result', {
@@ -1037,6 +1060,9 @@ async function runAgentLoopInternal(
       }
 
       messages.push({ role: 'user', content: toolResults });
+      if (sawResolutionWithCandidates) {
+        messages.push({ role: 'user', content: RESOLUTION_TARGET_PROMPT });
+      }
       if (sawNeighborsWithTargets) {
         messages.push({ role: 'user', content: NEIGHBORS_TARGET_PROMPT });
       }
