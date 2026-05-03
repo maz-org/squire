@@ -85,6 +85,19 @@ const TOOL_KIND_BY_NAME = new Map<string, ToolKind>([
   ['follow_links', 'traversal'],
 ]);
 
+const CARD_TYPE_BY_SOURCE_PREFIX = new Map<string, string>([
+  ['item', 'items'],
+  ['monster-stat', 'monster-stats'],
+  ['monster-ability', 'monster-abilities'],
+  ['character-ability', 'character-abilities'],
+  ['character-mat', 'character-mats'],
+  ['building', 'buildings'],
+  ['event', 'events'],
+  ['battle-goal', 'battle-goals'],
+  ['personal-quest', 'personal-quests'],
+  ['scenario', 'scenarios'],
+]);
+
 export function evalCaseHasFinalAnswer(
   evalCase: EvalCase,
 ): evalCase is EvalCase & { finalAnswer: FinalAnswerExpectation } {
@@ -144,6 +157,17 @@ export function normalizeTrajectoryRef(ref: string): string {
   const sectionMatch = ref.match(/^(?:section:frosthaven\/|section:)?(\d+\.\d+)$/);
   if (sectionMatch) {
     return `section:frosthaven/${sectionMatch[1]}`;
+  }
+
+  const cardMatch = ref.match(
+    /^(?:card:frosthaven\/([^/]+)\/)?gloomhavensecretariat:([^/]+)\/(.+)$/,
+  );
+  if (cardMatch) {
+    const explicitType = cardMatch[1];
+    const sourcePrefix = cardMatch[2];
+    const sourceRest = cardMatch[3];
+    const type = explicitType ?? CARD_TYPE_BY_SOURCE_PREFIX.get(sourcePrefix);
+    if (type) return `card:frosthaven/${type}/gloomhavensecretariat:${sourcePrefix}/${sourceRest}`;
   }
 
   return ref;

@@ -280,6 +280,19 @@ const CARD_KIND_ALIASES: Record<string, CardType[]> = {
   'character-mats': ['character-mats'],
 };
 
+const CARD_TYPE_BY_SOURCE_PREFIX: Record<string, CardType> = {
+  scenario: 'scenarios',
+  item: 'items',
+  'monster-stat': 'monster-stats',
+  'monster-ability': 'monster-abilities',
+  'character-ability': 'character-abilities',
+  'character-mat': 'character-mats',
+  building: 'buildings',
+  event: 'events',
+  'battle-goal': 'battle-goals',
+  'personal-quest': 'personal-quests',
+};
+
 const KIND_ALIASES: Record<string, KnowledgeKind> = {
   rules_passage: 'rules_passage',
   rule: 'rules_passage',
@@ -376,7 +389,12 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
     ],
     filterFields: ['type', 'name', 'cardName', 'level', 'class', 'number'],
     relations: ['belongs_to_type'],
-    examples: [{ label: 'Open item 1', ref: 'gloomhavensecretariat:item/1' }],
+    examples: [
+      {
+        label: 'Open item 1',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+      },
+    ],
     aliases: Object.keys(CARD_KIND_ALIASES),
   },
 };
@@ -442,6 +460,18 @@ function extractLevelQuery(query: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
+function extractExactItemNumberQuery(query: string): number | null {
+  const match = query.match(/\bitems?\s*#?\s*0*(\d{1,3})\b/i);
+  return match ? Number(match[1]) : null;
+}
+
+function normalizedCardNumber(record: Record<string, unknown>): number | null {
+  const value = record.number;
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const match = String(value).match(/^0*(\d{1,3})$/);
+  return match ? Number(match[1]) : null;
+}
+
 async function resolveCards(
   query: string,
   cardTypes: CardType[],
@@ -454,12 +484,32 @@ async function resolveCards(
   const level = extractLevelQuery(query);
   const lowered = query.toLowerCase();
   const candidates: EntityCandidate[] = [];
+  const exactItemNumber = cardTypes.includes('items') ? extractExactItemNumberQuery(query) : null;
 
   for (const type of cardTypes) {
     const records = await load(type, opts);
     for (const rawRecord of records) {
       const record = stripInternalKeys(rawRecord);
       if (level !== null && record.level !== level) continue;
+
+      const sourceId = record.sourceId;
+      if (typeof sourceId !== 'string') continue;
+      const title = displayTitleForCard(record, type);
+      if (type === 'items' && exactItemNumber !== null) {
+        if (normalizedCardNumber(record) !== exactItemNumber) continue;
+        candidates.push({
+          entity: {
+            kind: 'card',
+            ref: canonicalCardRef(type, sourceId, game),
+            title,
+            source: `source:${game}/cards`,
+            sourceLabel: 'GHS Card Data',
+          },
+          confidence: 0.99,
+          matchReason: 'Exact item number',
+        });
+        continue;
+      }
 
       const searchable = [
         record.name,
@@ -476,9 +526,6 @@ async function resolveCards(
       );
       if (!matches) continue;
 
-      const sourceId = record.sourceId;
-      if (typeof sourceId !== 'string') continue;
-      const title = displayTitleForCard(record, type);
       candidates.push({
         entity: {
           kind: 'card',
@@ -669,8 +716,20 @@ function parseCardRef(
   ref: string,
 ): { ok: true; game: string; type: CardType; sourceId: string } | { ok: false } {
   const match = ref.match(/^card:([^/]+)\/([^/]+)\/(.+)$/);
-  if (!match || !TYPES.includes(match[2] as CardType)) return { ok: false };
-  return { ok: true, game: match[1], type: match[2] as CardType, sourceId: match[3] };
+  if (match && TYPES.includes(match[2] as CardType)) {
+    return { ok: true, game: match[1], type: match[2] as CardType, sourceId: match[3] };
+  }
+
+  const sourceIdMatch = ref.match(/^gloomhavensecretariat:([^/]+)\/(.+)$/);
+  if (!sourceIdMatch) return { ok: false };
+  const type = CARD_TYPE_BY_SOURCE_PREFIX[sourceIdMatch[1]];
+  if (!type) return { ok: false };
+  return {
+    ok: true,
+    game: DEFAULT_GAME,
+    type,
+    sourceId: `gloomhavensecretariat:${sourceIdMatch[1]}/${sourceIdMatch[2]}`,
+  };
 }
 
 async function targetSummary(
@@ -1121,6 +1180,7 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
         ...entity,
         data: {
           ...card,
+          canonicalRef: entity.ref,
           type: cardRef.type,
           sourceId,
           displayName: displayTitleForCard(card, cardRef.type),
