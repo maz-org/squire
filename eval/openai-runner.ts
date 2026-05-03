@@ -331,6 +331,10 @@ function functionCallItems(response: OpenAiResponsesResponse): Array<{
   );
 }
 
+function allowedToolNamesForSurface(toolSurface: EvalToolSurface): Set<string> {
+  return new Set(openAiToolsForSurface(toolSurface).map((tool) => tool.name));
+}
+
 function parseFunctionArguments(item: {
   name: string;
   arguments: string;
@@ -509,6 +513,7 @@ export async function runOpenAiResponsesEvalCase(
   const maxTrajectoryToolCalls = trajectoryToolBudget(options.evalCase);
   const toolLoopLimit = options.providerConfig.toolLoopLimit ?? 10;
   let allowForcedSynthesisTurn = false;
+  const allowedToolNames = allowedToolNamesForSurface(options.toolSurface);
 
   const buildTrace = (
     statusReason: string,
@@ -677,6 +682,14 @@ export async function runOpenAiResponsesEvalCase(
     }
 
     for (const call of calls) {
+      if (!allowedToolNames.has(call.name)) {
+        const message = `OpenAI response called unavailable ${options.toolSurface} tool: ${call.name}.`;
+        const traceError = errorTrace('schema', message);
+        errors.push(traceError);
+        turn.error = traceError;
+        return finish(false, '', 'schema', 'unavailable_tool', message);
+      }
+
       let parsedArguments: Record<string, unknown>;
       try {
         parsedArguments = parseFunctionArguments(call);

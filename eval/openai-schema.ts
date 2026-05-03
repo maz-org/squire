@@ -11,11 +11,11 @@ import {
 import type { ToolCallResult } from '../src/agent.ts';
 import { SCHEMAS } from '../src/schemas.ts';
 
-export const OPENAI_TOOL_SCHEMA_VERSION = 'squire-openai-tools-v1';
+export const OPENAI_TOOL_SCHEMA_VERSION = 'squire-openai-tools-v2';
 
 type JsonSchema = Record<string, unknown>;
 
-interface AgentToolLike {
+export interface AgentToolLike {
   name: string;
   description?: string;
   input_schema: JsonSchema;
