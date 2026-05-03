@@ -143,6 +143,9 @@ shape:
   uses.
 
 That mismatch is not clean model-failure evidence. Follow-up filed: SQR-150.
+Post-report note: SQR-150 has since landed on `main`, so future runs should use
+the corrected Spyglass fixture. This report still describes the 2026-05-03 run
+as executed.
 
 Adjusted view if `item-spyglass` is excluded as bad evidence:
 
@@ -271,7 +274,7 @@ Confusing/stale-evidence cases:
 
 ## Follow-Ups
 
-- SQR-150: fix the stale `item-spyglass` eval fixture.
+- SQR-150: fix the stale `item-spyglass` eval fixture. Landed after this run.
 - Existing SQR-146: harden `resourcesAny` craft-cost handling and tests.
 
 No production multi-provider refactor is justified by this run.
