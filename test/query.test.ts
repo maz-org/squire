@@ -33,7 +33,13 @@ describe('askFrosthaven', () => {
       trajectory: {
         toolCalls: [],
         finalAnswer: 'Mocked trajectory answer',
-        tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        tokenUsage: {
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+          totalTokens: 0,
+        },
         model: 'test-model',
         iterations: 1,
         stopReason: 'end_turn',

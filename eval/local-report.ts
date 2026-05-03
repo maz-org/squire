@@ -11,6 +11,8 @@ import { scoreTrajectory, type EvalCase } from './schema.ts';
 function addTokenUsage(total: TokenUsage, next: TokenUsage): void {
   total.inputTokens += next.inputTokens;
   total.outputTokens += next.outputTokens;
+  total.cacheCreationInputTokens += next.cacheCreationInputTokens;
+  total.cacheReadInputTokens += next.cacheReadInputTokens;
   total.totalTokens += next.totalTokens;
 }
 
@@ -27,7 +29,13 @@ export async function runLocalReport(
 ): Promise<void> {
   const anthropic = new Anthropic();
   const results = [];
-  const totalTokenUsage: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  const totalTokenUsage: TokenUsage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: 0,
+    totalTokens: 0,
+  };
 
   for (const c of cases) {
     process.stdout.write(`  ${c.id}... `);

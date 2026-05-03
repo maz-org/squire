@@ -393,10 +393,17 @@ function addUsage(
   total.total += usage.total_tokens ?? (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
 }
 
-function tokenUsageForAgent(total: { input: number; output: number; total: number }): TokenUsage {
+function tokenUsageForAgent(total: {
+  input: number;
+  output: number;
+  cached: number;
+  total: number;
+}): TokenUsage {
   return {
     inputTokens: total.input,
     outputTokens: total.output,
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: total.cached,
     totalTokens: total.total,
   };
 }
