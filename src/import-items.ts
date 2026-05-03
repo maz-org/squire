@@ -45,7 +45,7 @@ export interface GhsItem {
   actions?: GhsAction[];
   actionsBack?: GhsAction[];
   resources?: Record<string, number>;
-  resourcesAny?: number;
+  resourcesAny?: Array<Record<string, number>>;
   requiredBuilding?: string;
   requiredBuildingLevel?: number;
   requiredItems?: number[];
@@ -65,6 +65,10 @@ interface ExtractedItem {
   name: string;
   slot: 'head' | 'body' | 'legs' | 'one hand' | 'two hands' | 'small item';
   cost: number | null;
+  craftCost: {
+    resources?: Record<string, number>;
+    resourcesAny?: Array<Record<string, number>>;
+  } | null;
   effect: string;
   uses: number | null;
   spent: boolean;
@@ -122,6 +126,13 @@ export function resolveNestedDataRefs(text: string, labels: LabelData): string {
  */
 export function convertItem(ghs: GhsItem, labels: LabelData): ExtractedItem {
   const slot = SLOT_MAP[ghs.slot ?? ''] ?? 'small item';
+  const craftCost =
+    ghs.resources || ghs.resourcesAny
+      ? {
+          ...(ghs.resources ? { resources: ghs.resources } : {}),
+          ...(ghs.resourcesAny ? { resourcesAny: ghs.resourcesAny } : {}),
+        }
+      : null;
 
   // Build effect text from actions
   const actionParts = (ghs.actions ?? [])
@@ -135,6 +146,7 @@ export function convertItem(ghs: GhsItem, labels: LabelData): ExtractedItem {
     name: ghs.name,
     slot,
     cost: ghs.cost ?? null,
+    craftCost,
     effect,
     uses: null,
     spent: ghs.spent ?? false,

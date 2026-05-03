@@ -33,6 +33,7 @@ describe('convertItem', () => {
       edition: 'fh',
       slot: 'head',
       spent: true,
+      resources: { metal: 1 },
       actions: [{ type: 'custom', value: '%data.items.fh-1.1%', small: true }],
     };
 
@@ -43,6 +44,7 @@ describe('convertItem', () => {
       name: 'Spyglass',
       slot: 'head',
       cost: null,
+      craftCost: { resources: { metal: 1 } },
       effect: 'During your attack ability, gain advantage on one attack.',
       uses: null,
       spent: true,
@@ -95,6 +97,41 @@ describe('convertItem', () => {
     };
 
     expect(convertItem(ghsItem, labels).cost).toBe(15);
+  });
+
+  it('includes craft resource costs when present', () => {
+    const ghsItem = {
+      id: 5,
+      name: 'Crude Boots',
+      count: 2,
+      edition: 'fh',
+      slot: 'legs',
+      spent: true,
+      resources: { hide: 2 },
+      requiredBuilding: 'craftsman',
+      requiredBuildingLevel: 1,
+      actions: [{ type: 'custom', value: '%data.items.fh-5.1%', small: true }],
+    };
+
+    const result = convertItem(ghsItem, {
+      items: {
+        'fh-5': {
+          '': 'Crude Boots',
+          '1': 'During your move ability, add +1 %game.action.move%',
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      number: '005',
+      name: 'Crude Boots',
+      slot: 'legs',
+      cost: null,
+      craftCost: { resources: { hide: 2 } },
+      effect: 'During your move ability, add +1 Move',
+      spent: true,
+      lost: false,
+    });
   });
 
   it('sets lost from the loss field', () => {

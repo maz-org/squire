@@ -193,6 +193,7 @@ export const cardItems = pgTable(
     // 'head' | 'body' | 'legs' | 'one hand' | 'two hands' | 'small item'
     slot: text('slot').notNull(),
     cost: integer('cost'), // nullable
+    craftCost: jsonb('craft_cost'), // nullable
     effect: text('effect').notNull(),
     uses: integer('uses'), // nullable
     spent: boolean('spent').notNull(),

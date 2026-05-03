@@ -343,6 +343,28 @@ describe('formatExtracted', () => {
     expect(text).toContain('[lost]');
   });
 
+  it('formats item craft resource costs when no gold cost is shown', () => {
+    const text = formatExtracted([
+      {
+        _type: 'items',
+        number: '005',
+        name: 'Crude Boots',
+        slot: 'legs',
+        cost: null,
+        craftCost: { resources: { hide: 2 } },
+        effect: 'During your move ability, add +1 Move',
+        uses: null,
+        spent: true,
+        lost: false,
+      },
+    ]);
+
+    expect(text).toContain('Item #005');
+    expect(text).toContain('Crude Boots');
+    expect(text).toContain('Craft cost: 2 hide');
+    expect(text).not.toContain('Cost: nullg');
+  });
+
   it('formats character abilities with top and bottom actions', () => {
     const text = formatExtracted([
       {
