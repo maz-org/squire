@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ALL_AGENT_TOOLS, executeToolCall } from '../src/agent.ts';
+import { AGENT_TOOLS, ALL_AGENT_TOOLS, LEGACY_AGENT_TOOLS, executeToolCall } from '../src/agent.ts';
 import { listCards, searchCards } from '../src/tools.ts';
 import {
   OPENAI_TOOL_SCHEMA_VERSION,
   executeOpenAiToolCall,
   getOpenAiToolSchemaHash,
   normalizeOpenAiToolInput,
+  openAiToolsForSurface,
   renderOpenAiStrictToolSchemas,
 } from '../eval/openai-schema.ts';
 
@@ -258,8 +259,16 @@ describe('OpenAI strict tool schema renderer', () => {
   });
 
   it('exports a stable schema version and content hash for trace metadata', () => {
-    expect(OPENAI_TOOL_SCHEMA_VERSION).toBe('squire-openai-tools-v1');
+    expect(OPENAI_TOOL_SCHEMA_VERSION).toBe('squire-openai-tools-v2');
     expect(getOpenAiToolSchemaHash()).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('selects OpenAI tool schemas by eval surface', () => {
+    expect(openAiToolsForSurface('redesigned')).toBe(AGENT_TOOLS);
+    expect(openAiToolsForSurface('legacy')).toBe(LEGACY_AGENT_TOOLS);
+    expect(getOpenAiToolSchemaHash(openAiToolsForSurface('redesigned'))).not.toBe(
+      getOpenAiToolSchemaHash(openAiToolsForSurface('legacy')),
+    );
   });
 
   it('keeps executeToolCall import available for type-level integration', () => {

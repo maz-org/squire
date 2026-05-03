@@ -115,7 +115,10 @@ describe('OpenAI Responses eval runner', () => {
     });
     expect(firstRequest).not.toHaveProperty('previous_response_id');
     expect(firstRequest.tools).toEqual(
-      expect.arrayContaining([expect.objectContaining({ name: 'search_cards', strict: true })]),
+      expect.arrayContaining([expect.objectContaining({ name: 'search_knowledge', strict: true })]),
+    );
+    expect(firstRequest.tools).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'search_rules' })]),
     );
 
     const secondRequest = create.mock.calls[1]?.[0] as { input: unknown[] };
@@ -387,8 +390,8 @@ describe('OpenAI Responses eval runner', () => {
             type: 'function_call',
             id: 'fc_rule_1',
             call_id: 'call_rule_1',
-            name: 'search_rules',
-            arguments: '{"query":"looting","topK":5}',
+            name: 'search_knowledge',
+            arguments: '{"query":"looting","scope":["rules_passage"],"limit":5}',
           },
         ],
       },
@@ -401,8 +404,8 @@ describe('OpenAI Responses eval runner', () => {
             type: 'function_call',
             id: 'fc_rule_2',
             call_id: 'call_rule_2',
-            name: 'search_rules',
-            arguments: '{"query":"end-of-turn looting","topK":5}',
+            name: 'search_knowledge',
+            arguments: '{"query":"end-of-turn looting","scope":["rules_passage"],"limit":5}',
           },
         ],
       },
@@ -415,8 +418,8 @@ describe('OpenAI Responses eval runner', () => {
             type: 'function_call',
             id: 'fc_rule_3',
             call_id: 'call_rule_3',
-            name: 'search_rules',
-            arguments: '{"query":"loot token current hex","topK":5}',
+            name: 'search_knowledge',
+            arguments: '{"query":"loot token current hex","scope":["rules_passage"],"limit":5}',
           },
         ],
       },
@@ -470,6 +473,33 @@ describe('OpenAI Responses eval runner', () => {
           ]),
         }),
       ]),
+    );
+  });
+
+  it('uses the legacy tool schema on the legacy eval surface', async () => {
+    const client = responsesClient({
+      id: 'resp_final',
+      model: 'gpt-5.5-2026-04-23',
+      status: 'completed',
+      output_text: 'Done.',
+      output: [{ type: 'message', content: [{ type: 'output_text', text: 'Done.' }] }],
+    });
+
+    await runOpenAiResponsesEvalCase({
+      client,
+      evalCase,
+      providerConfig,
+      runLabel: 'legacy-tools',
+      toolSurface: 'legacy',
+    });
+
+    const create = vi.mocked(client.responses.create);
+    const firstRequest = create.mock.calls[0]?.[0] as unknown as Record<string, unknown>;
+    expect(firstRequest.tools).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'search_rules', strict: true })]),
+    );
+    expect(firstRequest.tools).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'search_knowledge' })]),
     );
   });
 

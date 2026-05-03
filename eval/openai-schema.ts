@@ -1,14 +1,21 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { ALL_AGENT_TOOLS, executeToolCall, type AgentToolName } from '../src/agent.ts';
+import {
+  AGENT_TOOLS,
+  ALL_AGENT_TOOLS,
+  LEGACY_AGENT_TOOLS,
+  executeToolCall,
+  type AgentToolName,
+} from '../src/agent.ts';
 import type { ToolCallResult } from '../src/agent.ts';
 import { SCHEMAS } from '../src/schemas.ts';
+import type { EvalToolSurface } from './cli.ts';
 
-export const OPENAI_TOOL_SCHEMA_VERSION = 'squire-openai-tools-v1';
+export const OPENAI_TOOL_SCHEMA_VERSION = 'squire-openai-tools-v2';
 
 type JsonSchema = Record<string, unknown>;
 
-interface AgentToolLike {
+export interface AgentToolLike {
   name: string;
   description?: string;
   input_schema: JsonSchema;
@@ -192,6 +199,10 @@ export function getOpenAiToolSchemaHash(tools: readonly AgentToolLike[] = ALL_AG
   return createHash('sha256')
     .update(JSON.stringify(renderOpenAiStrictToolSchemas(tools)))
     .digest('hex');
+}
+
+export function openAiToolsForSurface(toolSurface: EvalToolSurface): readonly AgentToolLike[] {
+  return toolSurface === 'legacy' ? LEGACY_AGENT_TOOLS : AGENT_TOOLS;
 }
 
 export function normalizeOpenAiToolInput(
