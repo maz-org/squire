@@ -109,6 +109,7 @@ export interface RunEvalMatrixOptions {
   runner: EvalMatrixRunner;
   guardrails: EvalMatrixGuardrails;
   langfuseBaseUrl: string;
+  langfuseProjectId?: string;
   onProgress?: (event: EvalMatrixProgressEvent) => void;
 }
 
@@ -271,8 +272,8 @@ export function traceIdForMatrixRow(
   ].join(':');
 }
 
-export function langfuseTraceUrl(baseUrl: string, traceId: string): string {
-  return `${baseUrl.replace(/\/$/, '')}/project/default/traces/${encodeURIComponent(traceId)}`;
+export function langfuseTraceUrl(baseUrl: string, projectId: string, traceId: string): string {
+  return `${baseUrl.replace(/\/$/, '')}/project/${encodeURIComponent(projectId)}/traces/${encodeURIComponent(traceId)}`;
 }
 
 function estimateMatrixCost(cases: EvalCase[], configs: EvalProviderConfig[]): number {
@@ -520,7 +521,11 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
         runLabel: options.runLabel,
         toolSurface: options.toolSurface,
         traceId,
-        traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, traceId),
+        traceUrl: langfuseTraceUrl(
+          options.langfuseBaseUrl,
+          options.langfuseProjectId ?? 'default',
+          traceId,
+        ),
         attempt: 1,
       };
     }),

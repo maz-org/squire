@@ -160,6 +160,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
 
   if (options.matrixMode) {
     const langfuseBaseUrl = env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL;
+    const langfuseProjectId = env.LANGFUSE_PROJECT_ID;
     const langfuse = new LangfuseClient({ baseUrl: langfuseBaseUrl });
     const selection: EvalMatrixSelection = options.idFilter
       ? 'id'
@@ -186,6 +187,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       runner: matrixRunner,
       guardrails: options.matrixGuardrails,
       langfuseBaseUrl,
+      langfuseProjectId,
       onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
     });
 
@@ -229,6 +231,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
         runner: createEvalMatrixRunner(langfuse, env),
         guardrails,
         langfuseBaseUrl,
+        langfuseProjectId: env.LANGFUSE_PROJECT_ID,
         onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
       });
       console.log(formatEvalMatrixTable(result.rows));
