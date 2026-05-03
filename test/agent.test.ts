@@ -238,6 +238,14 @@ describe('runAgentLoop', () => {
     );
   });
 
+  it('keeps assistant identity and support scope Frosthaven-only across tool surfaces', () => {
+    for (const prompt of [AGENT_SYSTEM_PROMPT, LEGACY_AGENT_SYSTEM_PROMPT]) {
+      expect(prompt).toContain('exclusive game scope');
+      expect(prompt).toContain('assistant identity or support-scope questions');
+      expect(prompt).toContain('do not volunteer Gloomhaven or any other game as supported');
+    }
+  });
+
   it('keeps the redesigned tools selectable for evals and follow-up work', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
     await runAgentLoop('test', { toolSurface: 'redesigned' });
