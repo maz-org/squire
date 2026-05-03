@@ -1,6 +1,7 @@
 -- Add `search_vector` (tsvector) as a STORED generated column + GIN index
--- to every `card_*` table. This is the single source of truth for the FTS
--- field lists — the schema (src/db/schema/cards.ts) declares the column
+-- to every `card_*` table. This is the initial source of truth for the FTS
+-- field lists; later hand-written card FTS migrations may revise specific
+-- table expressions. The schema (src/db/schema/cards.ts) declares the column
 -- only as a marker so drizzle-orm excludes it from writes.
 --
 -- Only text / text[] columns feed the tsvector (no jsonb) — keeps recall

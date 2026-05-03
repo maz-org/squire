@@ -336,6 +336,66 @@ describe('searchKnowledge', () => {
     );
   });
 
+  it('surfaces empty monster immunities as card evidence', async () => {
+    const result = await searchKnowledge('Living Bones immunities', {
+      scope: ['card'],
+      limit: 6,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        kind: 'card',
+        ref: expect.stringMatching(/^card:frosthaven\/monster-stats\//),
+        title: 'Living Bones',
+      }),
+      snippet: expect.stringContaining('Immunities: none'),
+    });
+  });
+
+  it('surfaces empty monster immunities when the query asks for the monster stat card', async () => {
+    const result = await searchKnowledge('Living Bones monster stat card immunities', {
+      scope: ['card'],
+      limit: 6,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        kind: 'card',
+        ref: expect.stringMatching(/^card:frosthaven\/monster-stats\//),
+        title: 'Living Bones',
+      }),
+      snippet: expect.stringContaining('Immunities: none'),
+    });
+  });
+
+  it('surfaces empty monster immunities for condition-list card searches', async () => {
+    const result = await searchKnowledge(
+      'Living Bones monster stat card poison wound muddle immobilize',
+      {
+        scope: ['card'],
+        limit: 6,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        kind: 'card',
+        ref: expect.stringMatching(/^card:frosthaven\/monster-stats\//),
+        title: 'Living Bones',
+      }),
+      snippet: expect.stringContaining('Immunities: none'),
+    });
+  });
+
   it('rejects invalid scopes with structured errors', async () => {
     const result = await searchKnowledge('loot', {
       scope: ['bogus' as never],

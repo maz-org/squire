@@ -7,7 +7,14 @@ import { embed } from './embedder.ts';
 import { formatRetrievalSourceLabel } from './retrieval-source.ts';
 import { getEntryBySourceChunk, search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
-import { countsByType, load, loadOne, searchExtractedRanked, TYPES } from './extracted-data.ts';
+import {
+  countsByType,
+  formatExtracted,
+  load,
+  loadOne,
+  searchExtractedRanked,
+  TYPES,
+} from './extracted-data.ts';
 import type { CardType } from './schemas.ts';
 import {
   findScenarios,
@@ -1234,7 +1241,7 @@ export async function searchKnowledge(
         return {
           entity,
           score: card.score,
-          snippet: JSON.stringify(card.data),
+          snippet: formatExtracted([{ ...card.data, _type: card.type }]),
           citations: citationForCard(card.type, sourceId, game),
           nextRefs: [entity],
         };

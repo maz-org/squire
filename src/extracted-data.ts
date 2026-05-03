@@ -146,6 +146,40 @@ function normalizeRow(type: CardType, row: Record<string, unknown>): Record<stri
   return row;
 }
 
+const RELAXED_CONDITION_SEARCH_TERMS = new Set([
+  'bane',
+  'bless',
+  'brittle',
+  'condition',
+  'conditions',
+  'curse',
+  'disarm',
+  'immobilize',
+  'immune',
+  'immunity',
+  'immunities',
+  'impair',
+  'invisible',
+  'muddle',
+  'poison',
+  'regenerate',
+  'strengthen',
+  'stun',
+  'ward',
+  'wound',
+]);
+
+function relaxedConditionSearchQuery(query: string): string | null {
+  const tokens = query.match(/[a-zA-Z0-9]+(?:[-'][a-zA-Z0-9]+)*/g) ?? [];
+  if (tokens.length < 2) return null;
+
+  const relaxed = tokens.filter(
+    (token) => !RELAXED_CONDITION_SEARCH_TERMS.has(token.toLowerCase()),
+  );
+  if (relaxed.length === tokens.length || relaxed.length < 2) return null;
+  return relaxed.join(' ');
+}
+
 export async function load(type: CardType, opts: LoadOpts = {}): Promise<ExtractedRecord[]> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
@@ -228,6 +262,8 @@ export async function searchExtractedRanked(
 ): Promise<Array<{ record: ExtractedRecord; score: number }>> {
   const { db } = getDb();
   const game = opts.game ?? 'frosthaven';
+  const relaxedQuery = relaxedConditionSearchQuery(query);
+  const queries = relaxedQuery ? [query, relaxedQuery] : [query];
 
   // `ts_rank`'s weight vector maps to {D, C, B, A} — this gives a direct
   // name-field match (weight 'A') ~10x the score of a cross-reference
@@ -236,35 +272,41 @@ export async function searchExtractedRanked(
   // for Algox Archer. The weight labels themselves are assigned in the
   // generated-column expressions in `src/db/migrations/0002_card_fts.sql`.
   const weightVec = sql`'{0.1, 0.2, 0.4, 1.0}'::float4[]`;
-  const branches = TYPES.map((type) => {
-    const table = TYPE_TO_TABLE[type];
-    const payload = tableToJsonbObject(table);
-    return sql`
-      SELECT
-        ${sql.raw(`'${type}'`)} AS card_type,
-        ${payload} AS payload,
-        ts_rank(${weightVec}, search_vector, websearch_to_tsquery('english', ${query})) AS score
-      FROM ${table}
-      WHERE game = ${game} AND search_vector @@ websearch_to_tsquery('english', ${query})
-    `;
-  });
+  for (const searchQuery of queries) {
+    const branches = TYPES.map((type) => {
+      const table = TYPE_TO_TABLE[type];
+      const payload = tableToJsonbObject(table);
+      return sql`
+        SELECT
+          ${sql.raw(`'${type}'`)} AS card_type,
+          ${payload} AS payload,
+          ts_rank(${weightVec}, search_vector, websearch_to_tsquery('english', ${searchQuery})) AS score
+        FROM ${table}
+        WHERE game = ${game} AND search_vector @@ websearch_to_tsquery('english', ${searchQuery})
+      `;
+    });
 
-  let unioned = sql`${branches[0]}`;
-  for (let i = 1; i < branches.length; i++) unioned = sql`${unioned} UNION ALL ${branches[i]}`;
+    let unioned = sql`${branches[0]}`;
+    for (let i = 1; i < branches.length; i++) unioned = sql`${unioned} UNION ALL ${branches[i]}`;
 
-  const rows = await db.execute<{
-    card_type: CardType;
-    payload: Record<string, unknown>;
-    score: number;
-  }>(sql`SELECT card_type, payload, score FROM (${unioned}) s ORDER BY score DESC LIMIT ${k}`);
+    const rows = await db.execute<{
+      card_type: CardType;
+      payload: Record<string, unknown>;
+      score: number;
+    }>(sql`SELECT card_type, payload, score FROM (${unioned}) s ORDER BY score DESC LIMIT ${k}`);
 
-  return rows.rows.map((r) => ({
-    record: {
-      ...normalizeRow(r.card_type, r.payload as Record<string, unknown>),
-      _type: r.card_type,
-    } as ExtractedRecord,
-    score: Number(r.score),
-  }));
+    if (rows.rows.length > 0 || searchQuery === queries[queries.length - 1]) {
+      return rows.rows.map((r) => ({
+        record: {
+          ...normalizeRow(r.card_type, r.payload as Record<string, unknown>),
+          _type: r.card_type,
+        } as ExtractedRecord,
+        score: Number(r.score),
+      }));
+    }
+  }
+
+  return [];
 }
 
 /**
@@ -321,8 +363,9 @@ function recordToText(record: ExtractedRecord): string {
     const eliteLevels = Object.entries(elite || {})
       .map(([l, s]) => `Level ${l}: Elite(HP ${s?.hp}, Move ${s?.move}, Attack ${s?.attack})`)
       .join('; ');
-    const immunities = (r.immunities as string[])?.length
-      ? `Immunities: ${(r.immunities as string[]).join(', ')}. `
+    const immunityValues = Array.isArray(r.immunities) ? (r.immunities as string[]) : null;
+    const immunities = immunityValues
+      ? `Immunities: ${immunityValues.length > 0 ? immunityValues.join(', ') : 'none'}. `
       : '';
     const notes = r.notes ? `Notes: ${r.notes}` : '';
     return `Monster: ${r.name} (levels ${r.levelRange}). ${levels}. ${eliteLevels}. ${immunities}${notes}`;
