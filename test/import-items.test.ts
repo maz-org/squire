@@ -33,6 +33,7 @@ describe('convertItem', () => {
       edition: 'fh',
       slot: 'head',
       spent: true,
+      resources: { metal: 1 },
       actions: [{ type: 'custom', value: '%data.items.fh-1.1%', small: true }],
     };
 
@@ -43,6 +44,7 @@ describe('convertItem', () => {
       name: 'Spyglass',
       slot: 'head',
       cost: null,
+      craftCost: { resources: { metal: 1 } },
       effect: 'During your attack ability, gain advantage on one attack.',
       uses: null,
       spent: true,
@@ -95,6 +97,86 @@ describe('convertItem', () => {
     };
 
     expect(convertItem(ghsItem, labels).cost).toBe(15);
+  });
+
+  it('includes craft resource costs when present', () => {
+    const ghsItem = {
+      id: 5,
+      name: 'Crude Boots',
+      count: 2,
+      edition: 'fh',
+      slot: 'legs',
+      spent: true,
+      resources: { hide: 2 },
+      requiredBuilding: 'craftsman',
+      requiredBuildingLevel: 1,
+      actions: [{ type: 'custom', value: '%data.items.fh-5.1%', small: true }],
+    };
+
+    const result = convertItem(ghsItem, {
+      items: {
+        'fh-5': {
+          '': 'Crude Boots',
+          '1': 'During your move ability, add +1 %game.action.move%',
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      number: '005',
+      name: 'Crude Boots',
+      slot: 'legs',
+      cost: null,
+      craftCost: { resources: { hide: 2 } },
+      effect: 'During your move ability, add +1 Move',
+      spent: true,
+      lost: false,
+    });
+  });
+
+  it('includes resource-any craft costs when present', () => {
+    const ghsItem = {
+      id: 98,
+      name: 'Unhealthy Mixture',
+      count: 2,
+      edition: 'fh',
+      slot: 'small',
+      resourcesAny: [{ herb_resources: 1 }, { herb_resources: 1 }],
+      actions: [{ type: 'custom', value: '%data.items.fh-98.1%', small: true }],
+    };
+
+    const result = convertItem(ghsItem, {
+      items: {
+        'fh-98': {
+          '': 'Unhealthy Mixture',
+          '1': 'During your turn, perform %game.condition.wound%, %game.condition.poison% self',
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      number: '098',
+      name: 'Unhealthy Mixture',
+      slot: 'small item',
+      cost: null,
+      craftCost: { resourcesAny: [{ herb_resources: 1 }, { herb_resources: 1 }] },
+      effect: 'During your turn, perform Wound, Poison self',
+    });
+  });
+
+  it('normalizes empty craft-cost payloads to null', () => {
+    const ghsItem = {
+      id: 200,
+      name: 'Empty Craft Cost',
+      count: 1,
+      edition: 'fh',
+      slot: 'small',
+      resources: {},
+      resourcesAny: [],
+      actions: [],
+    };
+
+    expect(convertItem(ghsItem, labels).craftCost).toBeNull();
   });
 
   it('sets lost from the loss field', () => {

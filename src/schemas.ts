@@ -107,6 +107,11 @@ export const CharacterMatSchema = z.object({
   masteries: z.array(z.string()).describe('Human-readable mastery conditions'),
 });
 
+const ItemCraftCostSchema = z.object({
+  resources: z.record(z.string(), z.number().int().positive()).optional(),
+  resourcesAny: z.array(z.record(z.string(), z.number().int().positive())).optional(),
+});
+
 export const ItemSchema = z.object({
   sourceId: z.string().describe('GHS source identifier (e.g. gloomhavensecretariat:item/099)'),
   number: z.string().describe('Item number as 3-digit string e.g. "099"'),
@@ -115,6 +120,9 @@ export const ItemSchema = z.object({
     .enum(['head', 'body', 'legs', 'one hand', 'two hands', 'small item'])
     .describe('Equipment slot'),
   cost: nullableInt.describe('Gold cost, or null if not shown'),
+  craftCost: ItemCraftCostSchema.nullable()
+    .optional()
+    .describe('Crafting resource cost from GHS item resources, or null if not shown'),
   effect: z.string().describe('Full effect text verbatim'),
   uses: nullableInt.describe('Number of use tokens, or null'),
   spent: z.boolean().describe('True if the card has a spent symbol (flip to use)'),

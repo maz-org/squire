@@ -134,8 +134,8 @@
     "category": "items",
     "question": "What does the Crude Boots item do in Frosthaven?",
     "finalAnswer": {
-      "expected": "Legs slot, costs 2 gold. During your move ability, add +1 movement.",
-      "grading": "Must mention +1 movement during move ability. Cost of 2 gold is a bonus."
+      "expected": "Legs slot, craft cost 2 hide. During your move ability, add +1 movement.",
+      "grading": "Must mention +1 movement during move ability. Craft cost of 2 hide is a bonus. Must not say Crude Boots has no cost."
     },
     "source": "data/extracted/items.json"
   },
