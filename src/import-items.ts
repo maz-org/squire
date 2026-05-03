@@ -126,11 +126,14 @@ export function resolveNestedDataRefs(text: string, labels: LabelData): string {
  */
 export function convertItem(ghs: GhsItem, labels: LabelData): ExtractedItem {
   const slot = SLOT_MAP[ghs.slot ?? ''] ?? 'small item';
+  const resources =
+    ghs.resources && Object.keys(ghs.resources).length > 0 ? ghs.resources : undefined;
+  const resourcesAny = ghs.resourcesAny?.filter((choice) => Object.keys(choice).length > 0);
   const craftCost =
-    ghs.resources || ghs.resourcesAny
+    resources || resourcesAny?.length
       ? {
-          ...(ghs.resources ? { resources: ghs.resources } : {}),
-          ...(ghs.resourcesAny ? { resourcesAny: ghs.resourcesAny } : {}),
+          ...(resources ? { resources } : {}),
+          ...(resourcesAny?.length ? { resourcesAny } : {}),
         }
       : null;
 

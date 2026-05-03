@@ -377,10 +377,12 @@ function recordToText(record: ExtractedRecord): string {
     const uses = r.uses ? ` (${r.uses} uses)` : '';
     const spent = r.spent ? ' [spent]' : '';
     const lost = r.lost ? ' [lost]' : '';
-    const costText =
-      typeof r.cost === 'number'
-        ? `Cost: ${r.cost}g`
-        : (formatItemCraftCost(r.craftCost) ?? 'Cost: not shown');
+    const craftCostText = formatItemCraftCost(r.craftCost);
+    const costParts = [
+      typeof r.cost === 'number' ? `Cost: ${r.cost}g` : null,
+      craftCostText,
+    ].filter((part): part is string => part !== null);
+    const costText = costParts.length > 0 ? costParts.join('. ') : 'Cost: not shown';
     return `Item #${r.number}: ${r.name}. Slot: ${r.slot}. ${costText}. Effect: ${r.effect}${uses}${spent}${lost}`;
   }
 
