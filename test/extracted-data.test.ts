@@ -365,6 +365,46 @@ describe('formatExtracted', () => {
     expect(text).not.toContain('Cost: nullg');
   });
 
+  it('formats item resource-any craft costs', () => {
+    const text = formatExtracted([
+      {
+        _type: 'items',
+        number: '098',
+        name: 'Unhealthy Mixture',
+        slot: 'small item',
+        cost: null,
+        craftCost: { resourcesAny: [{ herb_resources: 1 }, { herb_resources: 1 }] },
+        effect: 'During your turn, perform Wound, Poison self',
+        uses: null,
+        spent: false,
+        lost: false,
+      },
+    ]);
+
+    expect(text).toContain('Craft cost: any 1 herb_resources, any 1 herb_resources');
+    expect(text).not.toContain('Cost: nullg');
+  });
+
+  it('formats item gold cost and craft cost when both are present', () => {
+    const text = formatExtracted([
+      {
+        _type: 'items',
+        number: '777',
+        name: 'Future Hybrid Item',
+        slot: 'small item',
+        cost: 10,
+        craftCost: { resources: { hide: 1 } },
+        effect: 'Do the thing',
+        uses: null,
+        spent: false,
+        lost: false,
+      },
+    ]);
+
+    expect(text).toContain('Cost: 10g');
+    expect(text).toContain('Craft cost: 1 hide');
+  });
+
   it('formats character abilities with top and bottom actions', () => {
     const text = formatExtracted([
       {

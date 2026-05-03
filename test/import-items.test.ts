@@ -134,6 +134,51 @@ describe('convertItem', () => {
     });
   });
 
+  it('includes resource-any craft costs when present', () => {
+    const ghsItem = {
+      id: 98,
+      name: 'Unhealthy Mixture',
+      count: 2,
+      edition: 'fh',
+      slot: 'small',
+      resourcesAny: [{ herb_resources: 1 }, { herb_resources: 1 }],
+      actions: [{ type: 'custom', value: '%data.items.fh-98.1%', small: true }],
+    };
+
+    const result = convertItem(ghsItem, {
+      items: {
+        'fh-98': {
+          '': 'Unhealthy Mixture',
+          '1': 'During your turn, perform %game.condition.wound%, %game.condition.poison% self',
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      number: '098',
+      name: 'Unhealthy Mixture',
+      slot: 'small item',
+      cost: null,
+      craftCost: { resourcesAny: [{ herb_resources: 1 }, { herb_resources: 1 }] },
+      effect: 'During your turn, perform Wound, Poison self',
+    });
+  });
+
+  it('normalizes empty craft-cost payloads to null', () => {
+    const ghsItem = {
+      id: 200,
+      name: 'Empty Craft Cost',
+      count: 1,
+      edition: 'fh',
+      slot: 'small',
+      resources: {},
+      resourcesAny: [],
+      actions: [],
+    };
+
+    expect(convertItem(ghsItem, labels).craftCost).toBeNull();
+  });
+
   it('sets lost from the loss field', () => {
     const ghsItem = {
       id: 84,
