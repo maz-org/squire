@@ -294,7 +294,16 @@ export async function searchExtractedRanked(
       card_type: CardType;
       payload: Record<string, unknown>;
       score: number;
-    }>(sql`SELECT card_type, payload, score FROM (${unioned}) s ORDER BY score DESC LIMIT ${k}`);
+    }>(
+      sql`
+        SELECT card_type, payload, score
+        FROM (${unioned}) s
+        ORDER BY
+          score DESC,
+          CASE WHEN card_type = 'monster-stats' THEN payload->>'sourceId' END ASC
+        LIMIT ${k}
+      `,
+    );
 
     if (rows.rows.length > 0 || searchQuery === queries[queries.length - 1]) {
       return rows.rows.map((r) => ({

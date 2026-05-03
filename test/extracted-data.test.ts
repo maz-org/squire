@@ -224,7 +224,7 @@ describe('searchExtracted / searchExtractedRanked', () => {
   it('weights name fields above cross-reference arrays', async () => {
     // Without setweight, scenarios that list "Algox Archer" in their
     // monsters[] array outranked the actual monster-stats row. The 'A'/'D'
-    // weighting in 0002_card_fts.sql is the fix; this test guards it.
+    // weighting in the hand-written card FTS migrations is the fix; this test guards it.
     const ranked = await searchExtractedRanked('algox archer', 6);
     expect(ranked[0].record._type).toBe('monster-stats');
   });
@@ -270,6 +270,18 @@ describe('searchExtracted / searchExtractedRanked', () => {
       name: 'Living Bones',
       immunities: [],
     });
+  });
+
+  it('orders tied monster stat level bands by the default lower band first', async () => {
+    const ranked = await searchExtractedRanked('algox archer', 6);
+    const algoxArcherStats = ranked
+      .filter((hit) => hit.record._type === 'monster-stats')
+      .map((hit) => hit.record.sourceId);
+
+    expect(algoxArcherStats.slice(0, 2)).toEqual([
+      'gloomhavensecretariat:monster-stat/algox-archer/0-3',
+      'gloomhavensecretariat:monster-stat/algox-archer/4-7',
+    ]);
   });
 
   it('searchExtracted strips the score wrapper', async () => {
