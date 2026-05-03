@@ -57,6 +57,7 @@ function failureClassFromTrace(trace: EvalTraceInput): string {
 function tokenUsage(trace: EvalTraceInput): EvalMatrixRunnerOutput['tokenUsage'] {
   return {
     input: trace.tokenUsage.input ?? 0,
+    cachedInput: trace.tokenUsage.cached,
     output: trace.tokenUsage.output ?? 0,
     total: trace.tokenUsage.total ?? 0,
   };
