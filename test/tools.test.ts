@@ -732,6 +732,21 @@ describe('knowledge discovery tools', () => {
             metal: 0,
             hide: 0,
           },
+          initialBuildCost: {
+            prosperity: 0,
+            gold: 0,
+            lumber: 0,
+            metal: 0,
+            hide: 0,
+          },
+          upgradeCost: {
+            prosperity: 1,
+            gold: 0,
+            lumber: 2,
+            metal: 2,
+            hide: 1,
+          },
+          campaignStartBuilt: true,
         }),
       }),
     });

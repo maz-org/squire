@@ -531,12 +531,19 @@ describe('formatExtracted', () => {
         name: 'Alchemist',
         level: 1,
         buildCost: { prosperity: 0, gold: 0, lumber: 0, metal: 0, hide: 0 },
+        initialBuildCost: { prosperity: 0, gold: 0, lumber: 0, metal: 0, hide: 0 },
+        upgradeCost: { prosperity: 1, gold: 0, lumber: 2, metal: 2, hide: 1 },
+        campaignStartBuilt: true,
         effect: 'Characters cannot use potions',
         notes: null,
       },
     ]);
     expect(text).toContain('Alchemist');
-    expect(text).toContain('Cost: no cost');
+    expect(text).toContain('Starts built at campaign start: yes');
+    expect(text).toContain('Initial build cost: no cost');
+    expect(text).toContain('Level 1 upgrade cost: 1 prosperity, 2 lumber, 2 metal, 1 hide');
+    expect(text).not.toContain('ruined');
+    expect(text).not.toContain('unbuilt');
   });
 
   it('formats mixed unknown and zero building costs as unknown', () => {

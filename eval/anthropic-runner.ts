@@ -163,6 +163,9 @@ function tokenUsageForTrace(result: AgentRunResult): Record<string, number> {
   return {
     input: result.trajectory.tokenUsage.inputTokens,
     output: result.trajectory.tokenUsage.outputTokens,
+    cached: result.trajectory.tokenUsage.cacheReadInputTokens,
+    cacheCreationInput: result.trajectory.tokenUsage.cacheCreationInputTokens,
+    cacheReadInput: result.trajectory.tokenUsage.cacheReadInputTokens,
     total: result.trajectory.tokenUsage.totalTokens,
   };
 }
@@ -298,7 +301,14 @@ async function writeFailureTrace(
     providerNativeTranscript: {
       modelCalls: [],
     },
-    tokenUsage: { input: 0, output: 0, total: 0 },
+    tokenUsage: {
+      input: 0,
+      output: 0,
+      cached: 0,
+      cacheCreationInput: 0,
+      cacheReadInput: 0,
+      total: 0,
+    },
     costEstimate: { totalUsd: 0 },
     errors: [{ type: statusReason, message, retryable: statusReason === 'timeout' }],
     retries: [],

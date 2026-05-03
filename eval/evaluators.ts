@@ -82,7 +82,13 @@ export function buildEvaluators(anthropic: Anthropic) {
               trajectory: {
                 toolCalls: [],
                 finalAnswer: output as string,
-                tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+                tokenUsage: {
+                  inputTokens: 0,
+                  outputTokens: 0,
+                  cacheCreationInputTokens: 0,
+                  cacheReadInputTokens: 0,
+                  totalTokens: 0,
+                },
                 model: 'unknown',
                 iterations: 0,
                 stopReason: null,

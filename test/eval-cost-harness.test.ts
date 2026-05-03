@@ -15,8 +15,10 @@ const evalCase: EvalCase = {
   source: 'unit-test',
   question: 'What does the Alchemist cost?',
   finalAnswer: {
-    expected: 'The level 1 Alchemist starts built and has no build cost.',
-    grading: 'Mentions level 1 starts built.',
+    expected:
+      'The Alchemist starts the campaign already built at level 1, so it has no initial build cost. Its level 1 upgrade cost is 1 prosperity, 2 lumber, 2 metal, and 1 hide.',
+    grading:
+      'Mentions level 1 starts built, has no initial build cost, and separates the level 1 upgrade cost from the initial build cost.',
   },
 };
 

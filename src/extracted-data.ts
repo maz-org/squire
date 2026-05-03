@@ -350,6 +350,21 @@ function formatItemCraftCost(craftCost: unknown): string | null {
   return parts.length > 0 ? `Craft cost: ${parts.join(', ')}` : null;
 }
 
+function formatBuildingCost(cost: unknown): string {
+  if (!cost || typeof cost !== 'object' || Array.isArray(cost)) return 'unknown';
+  const values = Object.values(cost as Record<string, unknown>);
+  const knownCosts = values.filter((v): v is number => typeof v === 'number');
+  const hasUnknownCosts = values.some((v) => v === null);
+  const costEntries = Object.entries(cost as Record<string, unknown>).filter(
+    (entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] !== 0,
+  );
+  if (costEntries.length > 0) return costEntries.map(([k, v]) => `${v} ${k}`).join(', ');
+  if (!hasUnknownCosts && knownCosts.length > 0 && knownCosts.every((v) => v === 0)) {
+    return 'no cost';
+  }
+  return 'unknown';
+}
+
 function recordToText(record: ExtractedRecord): string {
   const t = record._type;
 
@@ -466,21 +481,14 @@ function recordToText(record: ExtractedRecord): string {
 
   if (t === 'buildings') {
     const r = record as ExtractedRecord;
-    const buildCost = r.buildCost as Record<string, number | null> | undefined;
-    const costEntries = buildCost
-      ? Object.entries(buildCost).filter(([, v]) => v !== null && v !== 0)
-      : [];
-    const values = buildCost ? Object.values(buildCost) : [];
-    const knownCosts = values.filter((v): v is number => v !== null);
-    const hasUnknownCosts = values.some((v) => v === null);
-    const cost = buildCost
-      ? costEntries.length > 0
-        ? costEntries.map(([k, v]) => `${v} ${k}`).join(', ')
-        : !hasUnknownCosts && knownCosts.length > 0 && knownCosts.every((v) => v === 0)
-          ? 'no cost'
-          : 'unknown'
-      : 'unknown';
-    return `Building #${r.buildingNumber} — ${r.name} Level ${r.level}. Cost: ${cost}. Effect: ${r.effect}. ${(r.notes as string) || ''}`.trim();
+    if ('initialBuildCost' in r || 'upgradeCost' in r || 'campaignStartBuilt' in r) {
+      const level = typeof r.level === 'number' ? r.level : Number(r.level);
+      const upgradeCost = r.upgradeCost
+        ? `Level ${Number.isFinite(level) ? level : r.level} upgrade cost: ${formatBuildingCost(r.upgradeCost)}. `
+        : '';
+      return `Building #${r.buildingNumber} — ${r.name} Level ${r.level}. Starts built at campaign start: ${r.campaignStartBuilt ? 'yes' : 'no'}. Initial build cost: ${formatBuildingCost(r.initialBuildCost)}. ${upgradeCost}Effect: ${r.effect}. ${(r.notes as string) || ''}`.trim();
+    }
+    return `Building #${r.buildingNumber} — ${r.name} Level ${r.level}. Cost: ${formatBuildingCost(r.buildCost)}. Effect: ${r.effect}. ${(r.notes as string) || ''}`.trim();
   }
 
   if (t === 'scenarios') {

@@ -166,6 +166,14 @@ export const BattleGoalSchema = z.object({
   checkmarks: z.number().int().describe('Number of checkmarks awarded'),
 });
 
+const BuildingCostSchema = z.object({
+  prosperity: nullableInt,
+  gold: nullableInt,
+  lumber: nullableInt,
+  metal: nullableInt,
+  hide: nullableInt,
+});
+
 export const BuildingSchema = z.object({
   sourceId: z
     .string()
@@ -176,15 +184,18 @@ export const BuildingSchema = z.object({
     .describe('Building number as string, or null for walls (which have no number)'),
   name: z.string().describe('Building name'),
   level: z.number().int().describe('Building level'),
-  buildCost: z
-    .object({
-      prosperity: nullableInt,
-      gold: nullableInt,
-      lumber: nullableInt,
-      metal: nullableInt,
-      hide: nullableInt,
-    })
-    .describe('Resource costs, with 0 for resources not required and null only if unknown'),
+  buildCost: BuildingCostSchema.describe(
+    'Resource costs, with 0 for resources not required and null only if unknown',
+  ),
+  initialBuildCost: BuildingCostSchema.describe(
+    'Cost to construct the building from unbuilt to level 1; explicit zeros mean no initial build cost',
+  ),
+  upgradeCost: BuildingCostSchema.nullable().describe(
+    'Cost printed on this level to upgrade to the next level, or null when no structured cost is shown',
+  ),
+  campaignStartBuilt: z
+    .boolean()
+    .describe('True when this building starts the campaign already built at level 1'),
   effect: z.string().describe('Full effect/ability text at this level'),
   notes: nullableStr.describe('Any other relevant text, or null'),
 });

@@ -97,21 +97,31 @@ function mockStream(finalMessage: Record<string, unknown>, textDeltas: string[] 
   };
 }
 
+const PROMPT_CACHE_CONTROL = { type: 'ephemeral', ttl: '1h' };
+
 /** Create a mock response where Claude returns text immediately (no tool use). */
-function textResponse(text: string) {
+function textResponse(
+  text: string,
+  usage: Record<string, number> = { input_tokens: 100, output_tokens: 50 },
+) {
   return {
     content: [{ type: 'text', text }],
     stop_reason: 'end_turn',
-    usage: { input_tokens: 100, output_tokens: 50 },
+    usage,
   };
 }
 
 /** Create a mock response where Claude calls one tool. */
-function toolUseResponse(toolName: string, toolInput: Record<string, unknown>, id = 'tool_1') {
+function toolUseResponse(
+  toolName: string,
+  toolInput: Record<string, unknown>,
+  id = 'tool_1',
+  usage: Record<string, number> = { input_tokens: 100, output_tokens: 50 },
+) {
   return {
     content: [{ type: 'tool_use', id, name: toolName, input: toolInput }],
     stop_reason: 'tool_use',
-    usage: { input_tokens: 100, output_tokens: 50 },
+    usage,
   };
 }
 
@@ -217,7 +227,14 @@ describe('runAgentLoop', () => {
       expect.objectContaining({
         tools: LEGACY_AGENT_TOOLS,
         system: LEGACY_AGENT_SYSTEM_PROMPT,
+        cache_control: PROMPT_CACHE_CONTROL,
       }),
+    );
+    expect(mockMessagesCreate.mock.calls[0][0].messages).toEqual([
+      { role: 'user', content: 'test' },
+    ]);
+    expect(JSON.stringify(mockMessagesCreate.mock.calls[0][0].messages)).not.toContain(
+      'cache_control',
     );
   });
 
@@ -229,6 +246,7 @@ describe('runAgentLoop', () => {
       expect.objectContaining({
         tools: AGENT_TOOLS,
         system: AGENT_SYSTEM_PROMPT,
+        cache_control: PROMPT_CACHE_CONTROL,
       }),
     );
     expect(AGENT_TOOLS.map((tool) => tool.name)).toEqual([
@@ -255,8 +273,10 @@ describe('runAgentLoop', () => {
       expect.objectContaining({
         tools: LEGACY_AGENT_TOOLS,
         system: LEGACY_AGENT_SYSTEM_PROMPT,
+        cache_control: PROMPT_CACHE_CONTROL,
       }),
     );
+    expect(LEGACY_AGENT_TOOLS.at(-1)).not.toHaveProperty('cache_control');
     expect(LEGACY_AGENT_TOOLS.map((tool) => tool.name)).toEqual([
       'search_rules',
       'search_cards',
@@ -287,6 +307,7 @@ describe('runAgentLoop', () => {
         max_tokens: 2048,
         tools: AGENT_TOOLS,
         system: AGENT_SYSTEM_PROMPT,
+        cache_control: PROMPT_CACHE_CONTROL,
       }),
       { timeout: 30000 },
     );
@@ -418,8 +439,20 @@ describe('runAgentLoop', () => {
       },
     ]);
     mockMessagesCreate
-      .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'loot action' }))
-      .mockResolvedValueOnce(textResponse('You pick up loot tokens.'));
+      .mockResolvedValueOnce(
+        toolUseResponse('search_rules', { query: 'loot action' }, 'tool_1', {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_creation_input_tokens: 20,
+        }),
+      )
+      .mockResolvedValueOnce(
+        textResponse('You pick up loot tokens.', {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 10,
+        }),
+      );
 
     const result = await runAgentLoopWithTrajectory('What is the loot action?', {
       toolSurface: 'legacy',
@@ -433,7 +466,9 @@ describe('runAgentLoop', () => {
     expect(result.trajectory.tokenUsage).toEqual({
       inputTokens: 200,
       outputTokens: 100,
-      totalTokens: 300,
+      cacheCreationInputTokens: 20,
+      cacheReadInputTokens: 10,
+      totalTokens: 330,
     });
     expect(result.trajectory.toolCalls).toMatchObject([
       {
@@ -791,6 +826,12 @@ describe('runAgentLoop', () => {
     expect(mockSearchRules).toHaveBeenCalledTimes(3);
     expect(mockMessagesCreate).toHaveBeenCalledTimes(4);
     expect(mockMessagesCreate.mock.calls[3][0]).not.toHaveProperty('tools');
+    expect(mockMessagesCreate.mock.calls[3][0]).toEqual(
+      expect.objectContaining({
+        system: LEGACY_AGENT_SYSTEM_PROMPT,
+        cache_control: PROMPT_CACHE_CONTROL,
+      }),
+    );
     expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual({
       role: 'user',
       content:
@@ -826,6 +867,9 @@ describe('runAgentLoop', () => {
     expect(mockSearchKnowledge).toHaveBeenCalledTimes(3);
     expect(mockMessagesCreate).toHaveBeenCalledTimes(4);
     expect(mockMessagesCreate.mock.calls[3][0]).not.toHaveProperty('tools');
+    expect(mockMessagesCreate.mock.calls[3][0]).toEqual(
+      expect.objectContaining({ system: AGENT_SYSTEM_PROMPT, cache_control: PROMPT_CACHE_CONTROL }),
+    );
     expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual({
       role: 'user',
       content:

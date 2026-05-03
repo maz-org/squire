@@ -68,6 +68,30 @@ interface ExtractedBuilding {
     metal: number | null;
     hide: number | null;
   };
+  /**
+   * Cost to construct the building from not present to level 1.
+   * Campaign-start buildings such as Craftsman and Alchemist are already built,
+   * so this is an explicit zero cost rather than an unknown/null cost.
+   */
+  initialBuildCost: {
+    prosperity: number;
+    gold: number;
+    lumber: number;
+    metal: number;
+    hide: number;
+  };
+  /**
+   * Cost printed on this level's card to upgrade to the next level.
+   * Null means the source has no structured upgrade cost for this level.
+   */
+  upgradeCost: {
+    prosperity: number;
+    gold: number;
+    lumber: number;
+    metal: number;
+    hide: number;
+  } | null;
+  campaignStartBuilt: boolean;
   effect: string;
   notes: string | null;
   sourceId: string;
@@ -129,6 +153,8 @@ function resolveEffectText(ref: string, labels: LabelData): string {
 export function convertBuilding(ghs: GhsBuilding, labels: LabelData): ExtractedBuilding[] {
   const effectRefs = ghs.effectNormal ?? ghs.effectWrecked ?? [];
   if (effectRefs.length === 0) return [];
+  const campaignStartBuilt = ghs.effectNormal === undefined && ghs.effectWrecked !== undefined;
+  const initialBuildCost = knownCostMap(ghs.costs);
 
   const name = resolveLabel(`%data.buildings.${ghs.name}.%`, labels);
   // Fall back to kebab-to-title if label lookup returned the raw ref
@@ -144,11 +170,13 @@ export function convertBuilding(ghs: GhsBuilding, labels: LabelData): ExtractedB
     // Level 1 uses initial build costs; level 2+ uses upgrades[level-2]
     let buildCost: ExtractedBuilding['buildCost'];
     if (level === 1) {
-      buildCost = knownCostMap(ghs.costs);
+      buildCost = initialBuildCost;
     } else {
       const upgrade = ghs.upgrades[level - 2];
       buildCost = upgrade && !upgrade.manual ? knownCostMap(upgrade) : unknownCostMap();
     }
+    const upgrade = ghs.upgrades[i];
+    const upgradeCost = upgrade && !upgrade.manual ? knownCostMap(upgrade) : null;
 
     results.push({
       // Walls have no number in GHS — keep null rather than coercing to a string.
@@ -156,6 +184,9 @@ export function convertBuilding(ghs: GhsBuilding, labels: LabelData): ExtractedB
       name: displayName,
       level,
       buildCost,
+      initialBuildCost,
+      upgradeCost,
+      campaignStartBuilt,
       effect,
       notes: null,
       // Fall back to `ghs.name` (e.g. "wall-j") so each wall gets a stable,
