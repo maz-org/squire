@@ -1040,7 +1040,7 @@
     "initiative": 77,
     "abilities": [
       "Attack 0, EnemiesAdjacent",
-      "Element ice, Damage 1"
+      "Element ice"
     ],
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/552"
   },
@@ -1209,7 +1209,7 @@
     "abilities": [
       "Move 1",
       "Shield 2",
-      "Element fire, Damage 1"
+      "Element fire"
     ],
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/627"
   },
@@ -1488,7 +1488,7 @@
     "abilities": [
       "Move 1",
       "Attack 0",
-      "Element dark, Perform \" Heal X, self\" where X is twice the number of enemies targeted by the attack ability."
+      "Element dark, Perform \" X, self\" where X is twice the number of enemies targeted by the attack ability."
     ],
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/808"
   },

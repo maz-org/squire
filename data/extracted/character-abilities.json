@@ -2887,7 +2887,7 @@
     "level": 1,
     "initiative": 71,
     "top": {
-      "action": "On your next six melee attacks, add +2 Attack.",
+      "action": "On your next six melee attacks, add ValueSign 2.",
       "effects": []
     },
     "bottom": {
@@ -2911,7 +2911,7 @@
       ]
     },
     "bottom": {
-      "action": "On your next six move abilities, add +2 Move.",
+      "action": "On your next six move abilities, add ValueSign 2.",
       "effects": []
     },
     "lost": true,
@@ -2923,7 +2923,7 @@
     "level": 1,
     "initiative": 66,
     "top": {
-      "action": "All your ranged attacks have +1 Range. On your next six ranged attacks, add +1 Attack.",
+      "action": "All your ranged attacks have ValueSign 1. On your next six ranged attacks, add ValueSign 1.",
       "effects": []
     },
     "bottom": {
@@ -2947,7 +2947,7 @@
       ]
     },
     "bottom": {
-      "action": "On your next six heals, add +2 Heal.",
+      "action": "On your next six heals, add ValueSign 2.",
       "effects": []
     },
     "lost": true,
@@ -2963,7 +2963,7 @@
       "effects": []
     },
     "bottom": {
-      "action": "On the next six attacks targeting you performed by enemies within Range2, gain Retaliate 2 Range2.",
+      "action": "On the next six attacks targeting you performed by enemies within Range 2, gain Retaliate 2 Range 2.",
       "effects": []
     },
     "lost": true,
@@ -3152,7 +3152,7 @@
     "level": 2,
     "initiative": 17,
     "top": {
-      "action": "On your next six melee attacks targeting an enemy adjacent to any other enemy, one enemy adjacent to the target suffers Damage2.",
+      "action": "On your next six melee attacks targeting an enemy adjacent to any other enemy, one enemy adjacent to the target suffers Damage 2.",
       "effects": []
     },
     "bottom": {
@@ -3192,7 +3192,7 @@
       "effects": []
     },
     "bottom": {
-      "action": "On your next six ranged attack abilities, add +1 Target.",
+      "action": "On your next six ranged attack abilities, add ValueSign 1.",
       "effects": []
     },
     "lost": true,
@@ -3378,7 +3378,7 @@
       ]
     },
     "bottom": {
-      "action": "On the next six instances of an enemy entering a hex adjacent to you, that enemy suffers Damage3",
+      "action": "On the next six instances of an enemy entering a hex adjacent to you, that enemy suffers Damage 3",
       "effects": []
     },
     "lost": true,

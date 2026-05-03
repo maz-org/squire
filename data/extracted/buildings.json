@@ -1045,7 +1045,7 @@
       "metal": 0,
       "hide": 0
     },
-    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 4 Effect: advantage and -5 Attack",
+    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 4 Effect: advantage and -5",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L1"
   },
@@ -1060,7 +1060,7 @@
       "metal": null,
       "hide": null
     },
-    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 6 Effect: advantage and -15 Attack",
+    "effect": "Collectively train up to 1 soldier for 3 gold and 1 material resource Capacity: 6 Effect: advantage and -15",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L2"
   },
@@ -1075,7 +1075,7 @@
       "metal": null,
       "hide": null
     },
-    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 8 Effect: advantage and -25 Attack",
+    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 8 Effect: advantage and -25",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L3"
   },
@@ -1090,7 +1090,7 @@
       "metal": null,
       "hide": null
     },
-    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 10 Effect: advantage and -35 Attack",
+    "effect": "Collectively train up to 2 soldiers for 3 gold and 1 material resource Capacity: 10 Effect: advantage and -35",
     "notes": null,
     "sourceId": "gloomhavensecretariat:building/98/L4"
   },

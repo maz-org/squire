@@ -26,7 +26,7 @@
       "Replace 2 -1 cards with +0 cards",
       "Replace 2 +0 cards with +2 cards",
       "Replace 2 +0 cards with three Rolling +0 Move one waning element to strong cards",
-      "Add 2 two Rolling +0 +1 Attack for each pair of active Fh-infusion cards",
+      "Add 2 two Rolling +0 ValueSign 1 for each pair of active Fh-infusion cards",
       "You may ignore negative scenario effects",
       "You may ignore negative item effects and the appearance of a cursed item.. Whenever you become exhausted, keep all your active bonuses in play, with your summons acting on initiative 99 each round",
       "Whenever you short rest, you may Wild to Recover on spent One Hand or Two Hands item",
@@ -60,14 +60,14 @@
     },
     "perks": [
       "Replace 3 -1 cards with Rolling +0 Shield 1 cards",
-      "Replace 2 +0 cards with +1 Add +1 Attack for each ally adjacent to the target cards",
+      "Replace 2 +0 cards with +1 Add ValueSign 1 for each ally adjacent to the target cards",
       "Add 2 +1 Disarm cards",
       "Add 2 +2 Push 1 cards",
       "Add 2 two Rolling +1 cards",
       "Add 2 two Rolling +0 Heal 1 cards",
       "Remove 1 -1 card",
       "At the end of each of your long rests, grant one ally within Range 3: Move 2",
-      "Whenever you open a door with a move ability, add +3 Move",
+      "Whenever you open a door with a move ability, add ValueSign 3",
       "Once each scenario, during your turn, gain Shield 2 for the round"
     ],
     "masteries": [
@@ -101,7 +101,7 @@
       "Replace 2 -1 cards with +1 cards",
       "Replace 2 -1 cards with +0 Wound cards",
       "Replace 2 +0 cards with +1 Immobilize cards",
-      "Replace 3 +0 cards with Rolling +0 On your next attack, discard this card to add +2 Attack. Persistent cards",
+      "Replace 3 +0 cards with Rolling +0 On your next attack, discard this card to add ValueSign 2. Persistent cards",
       "Replace 1 two +1 cards with two +2 cards",
       "Add 2 -1 Gain 1 Time token cards",
       "Add 2 Rolling +2 Regenerate Self cards",
@@ -338,8 +338,8 @@
       "Replace 2 +0 cards with +2 Create one 1-hex icy terrain tile in a featureless hex adjacent to the target cards",
       "Add 1 +3 card",
       "Add 3 two Rolling +0 Heal 1 cards",
-      "You may ignore negative item effects and the appearance of a cursed item, and whenever you enter icy terrain with a move ability, you may ignore the effect to add +1 Move",
-      "Whenever you heal from a long rest, you may Ice|earth to add +2 Heal",
+      "You may ignore negative item effects and the appearance of a cursed item, and whenever you enter icy terrain with a move ability, you may ignore the effect to add ValueSign 1",
+      "Whenever you heal from a long rest, you may Ice|earth to add ValueSign 2",
       "Once each scenario, when you would suffer Damage, you may negate the Damage"
     ],
     "masteries": [
@@ -351,7 +351,10 @@
   {
     "name": "Geminate",
     "characterClass": "Harrower",
-    "handSize": [7, 7],
+    "handSize": [
+      7,
+      7
+    ],
     "traits": [
       "arcane",
       "chaotic",
@@ -534,7 +537,7 @@
       "Replace 1 +0 card with +2 card",
       "Replace 1 three +1 cards with three +1 Curse cards",
       "Add 2 three Rolling +0 Heal 1 cards",
-      "Add 2 +0 Add +1 Attack for each negative condition you have cards",
+      "Add 2 +0 Add ValueSign 1 for each negative condition you have cards",
       "Add 1 two +1 cards",
       "Each round in which you long rest, you may ignore all negative conditions you have. If you do, they cannot be removed that round",
       "Whenever you become exhausted, first perform Curse, Target all, Range 3",
