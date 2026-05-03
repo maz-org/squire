@@ -56,10 +56,12 @@ export async function findById(sessionId: string): Promise<Session | null> {
   const { db } = getDb('server');
   const now = new Date();
 
-  const row = await db.query.sessions.findFirst({
-    where: { id: sessionId },
-    with: { user: true },
-  });
+  const [row] = await db
+    .select({ session: sessions, user: users })
+    .from(sessions)
+    .leftJoin(users, eq(sessions.userId, users.id))
+    .where(eq(sessions.id, sessionId))
+    .limit(1);
 
   if (!row) return null;
   if (!row.user) {
@@ -67,9 +69,10 @@ export async function findById(sessionId: string): Promise<Session | null> {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
     return null;
   }
+  const session = row.session;
   const user = row.user;
 
-  if (row.expiresAt <= now) {
+  if (session.expiresAt <= now) {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
     return null;
   }
@@ -83,7 +86,7 @@ export async function findById(sessionId: string): Promise<Session | null> {
     console.warn('[session] lastSeenAt update failed (non-fatal):', (err as Error).message);
   }
 
-  return toDomain({ ...row, user });
+  return toDomain({ ...session, user });
 }
 
 /**

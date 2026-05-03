@@ -212,7 +212,13 @@ describe('eval matrix runtime adapter', () => {
       trajectory: {
         toolCalls: [],
         finalAnswer: '',
-        tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        tokenUsage: {
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+          totalTokens: 0,
+        },
         model: 'gpt-5.5',
         iterations: 1,
         stopReason: 'api_status',
@@ -241,7 +247,13 @@ describe('eval matrix runtime adapter', () => {
         trajectory: {
           toolCalls: [],
           finalAnswer: '',
-          tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+          tokenUsage: {
+            inputTokens: 0,
+            outputTokens: 0,
+            cacheCreationInputTokens: 0,
+            cacheReadInputTokens: 0,
+            totalTokens: 0,
+          },
           model: 'gpt-5.5',
           iterations: 1,
           stopReason: 'api_status',
@@ -256,7 +268,13 @@ describe('eval matrix runtime adapter', () => {
         trajectory: {
           toolCalls: [],
           finalAnswer: '',
-          tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+          tokenUsage: {
+            inputTokens: 0,
+            outputTokens: 0,
+            cacheCreationInputTokens: 0,
+            cacheReadInputTokens: 0,
+            totalTokens: 0,
+          },
           model: 'gpt-5.5',
           iterations: 1,
           stopReason: 'api_status',

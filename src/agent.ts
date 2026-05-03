@@ -386,6 +386,8 @@ export interface ToolCallResult {
 export interface TokenUsage {
   inputTokens: number;
   outputTokens: number;
+  cacheCreationInputTokens: number;
+  cacheReadInputTokens: number;
   totalTokens: number;
 }
 
@@ -412,6 +414,8 @@ export interface ModelTrajectoryStep {
   stopReason: StopReason | null;
   inputTokens: number;
   outputTokens: number;
+  cacheCreationInputTokens: number;
+  cacheReadInputTokens: number;
   content: unknown;
   startedAt: string;
   endedAt: string;
@@ -444,6 +448,7 @@ export interface EvalAgentLoopOptions {
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
 const MAX_ATTRIBUTE_TEXT_LENGTH = 2_000;
+const PROMPT_CACHE_CONTROL: Anthropic.CacheControlEphemeral = { type: 'ephemeral', ttl: '1h' };
 
 function truncateForAttribute(value: string, maxLength = MAX_ATTRIBUTE_TEXT_LENGTH): string {
   if (value.length <= maxLength) return value;
@@ -453,7 +458,23 @@ function truncateForAttribute(value: string, maxLength = MAX_ATTRIBUTE_TEXT_LENG
 function addUsage(total: TokenUsage, response: Message): void {
   total.inputTokens += response.usage.input_tokens;
   total.outputTokens += response.usage.output_tokens;
-  total.totalTokens = total.inputTokens + total.outputTokens;
+  total.cacheCreationInputTokens += response.usage.cache_creation_input_tokens ?? 0;
+  total.cacheReadInputTokens += response.usage.cache_read_input_tokens ?? 0;
+  total.totalTokens =
+    total.inputTokens +
+    total.outputTokens +
+    total.cacheCreationInputTokens +
+    total.cacheReadInputTokens;
+}
+
+function emptyTokenUsage(): TokenUsage {
+  return {
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationInputTokens: 0,
+    cacheReadInputTokens: 0,
+    totalTokens: 0,
+  };
 }
 
 function collectCanonicalRefs(value: unknown, refs = new Set<string>()): Set<string> {
@@ -710,14 +731,16 @@ async function callClaude(
 ): Promise<Message> {
   const allowTools = opts.allowTools ?? true;
   const surface = selectedAgentSurface(opts.toolSurface);
+  const includeTools = allowTools && surface.tools.length > 0;
   const params = {
     model: opts.model ?? AGENT_MODEL,
     max_tokens: opts.maxOutputTokens ?? 4096,
     system: surface.system,
+    cache_control: PROMPT_CACHE_CONTROL,
     messages,
   };
 
-  const paramsWithTools = allowTools
+  const paramsWithTools = includeTools
     ? {
         ...params,
         // Spread into a mutable array so the readonly tool tuples
@@ -769,6 +792,9 @@ export async function runAgentLoopWithTrajectory(
         'squire.agent.stop_reason': result.trajectory.stopReason ?? 'unknown',
         'squire.agent.input_tokens': result.trajectory.tokenUsage.inputTokens,
         'squire.agent.output_tokens': result.trajectory.tokenUsage.outputTokens,
+        'squire.agent.cache_creation_input_tokens':
+          result.trajectory.tokenUsage.cacheCreationInputTokens,
+        'squire.agent.cache_read_input_tokens': result.trajectory.tokenUsage.cacheReadInputTokens,
       });
       return result;
     } catch (err) {
@@ -808,6 +834,9 @@ export async function runAgentLoopWithEvalConfig(
         'squire.agent.stop_reason': result.trajectory.stopReason ?? 'unknown',
         'squire.agent.input_tokens': result.trajectory.tokenUsage.inputTokens,
         'squire.agent.output_tokens': result.trajectory.tokenUsage.outputTokens,
+        'squire.agent.cache_creation_input_tokens':
+          result.trajectory.tokenUsage.cacheCreationInputTokens,
+        'squire.agent.cache_read_input_tokens': result.trajectory.tokenUsage.cacheReadInputTokens,
         'squire.agent.eval': true,
       });
       return result;
@@ -860,7 +889,7 @@ async function runAgentLoopInternal(
   let forceSynthesis = false;
   const toolCalls: ToolTrajectoryStep[] = [];
   const modelCalls: ModelTrajectoryStep[] = [];
-  const tokenUsage: TokenUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  const tokenUsage: TokenUsage = emptyTokenUsage();
   let iterations = 0;
 
   for (let i = 0; i < maxIterations; i++) {
@@ -885,6 +914,9 @@ async function runAgentLoopInternal(
           'squire.agent.stop_reason': message.stop_reason ?? 'unknown',
           'squire.agent.input_tokens': message.usage.input_tokens,
           'squire.agent.output_tokens': message.usage.output_tokens,
+          'squire.agent.cache_creation_input_tokens':
+            message.usage.cache_creation_input_tokens ?? 0,
+          'squire.agent.cache_read_input_tokens': message.usage.cache_read_input_tokens ?? 0,
         });
         return message;
       } catch (err) {
@@ -905,6 +937,8 @@ async function runAgentLoopInternal(
       stopReason: response.stop_reason,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
+      cacheCreationInputTokens: response.usage.cache_creation_input_tokens ?? 0,
+      cacheReadInputTokens: response.usage.cache_read_input_tokens ?? 0,
       content: response.content,
       startedAt: modelStartedAt,
       endedAt: new Date(modelEndedAtMs).toISOString(),
