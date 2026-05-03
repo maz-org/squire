@@ -3,8 +3,9 @@
  *
  * Backed by Postgres — the `card_*` tables seeded via `scripts/seed-cards.ts`.
  * Full-text search runs against the per-table `search_vector` stored generated
- * columns (see `src/db/migrations/0002_card_fts.sql`), ranked with `ts_rank`
- * over `websearch_to_tsquery('english', ...)`.
+ * columns (see the hand-written card FTS migrations under
+ * `src/db/migrations/`), ranked with `ts_rank` over
+ * `websearch_to_tsquery('english', ...)`.
  *
  * There is NO flat-file fallback — per Decision 9 of the storage-migration
  * tech spec, if the DB is unreachable we throw a clear error rather than
@@ -270,7 +271,7 @@ export async function searchExtractedRanked(
   // array hit (weight 'D'). Without this, a scenario that lists "Algox
   // Archer" in its monsters array outranks the actual monster-stats row
   // for Algox Archer. The weight labels themselves are assigned in the
-  // generated-column expressions in `src/db/migrations/0002_card_fts.sql`.
+  // hand-written card FTS migrations under `src/db/migrations/`.
   const weightVec = sql`'{0.1, 0.2, 0.4, 1.0}'::float4[]`;
   for (const searchQuery of queries) {
     const branches = TYPES.map((type) => {
