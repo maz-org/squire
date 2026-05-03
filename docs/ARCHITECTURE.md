@@ -1,8 +1,8 @@
 # Squire Architecture
 
-**Version:** 1.0.10
+**Version:** 1.0.11
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-26
+**Last Refreshed:** 2026-05-03
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -42,9 +42,12 @@ All channels (web UI, MCP, REST, future Discord / iMessage) talk to the same kno
 
 Phase 1 production stays on the current Hono server, Postgres + pgvector
 runtime store, Claude SDK tool loop, conversation service, SSE contract, and
-Langfuse/OpenTelemetry trace path while the retrieval redesign happens. Deep
-Agents and LangSmith Deployment are explicitly deferred until after the Step 3
-eval report. See
+Langfuse/OpenTelemetry trace path while the deployment host is chosen.
+[ADR 0015 — Evaluate LangChain and Deep Agents at the intelligence boundary](adr/0015-langchain-deep-agents-intelligence-layer.md)
+keeps Deep Agents and LangSmith Deployment out of the Phase 1 app-hosting
+decision, but treats LangChain, Deep Agents, and LangSmith evals as candidates
+for the intelligence and eval layers behind `/api/ask`. The earlier retrieval
+redesign gate is recorded in
 [ADR 0013 — Keep Phase 1 production on the current knowledge-agent path](adr/0013-phase-1-production-agent-baseline.md).
 
 The Step 3 eval report is checked in at
@@ -58,6 +61,9 @@ The active baseline is:
 - Hono hosts the web UI, REST endpoints, and MCP endpoint in one server.
 - Postgres + pgvector hold the runtime retrieval layers.
 - The knowledge agent uses the current Claude SDK tool loop.
+- LangChain / Deep Agents may be added as a parallel eval-only runner behind
+  the same service boundary, but production traffic stays on the current runner
+  until evals and a later ADR justify switching.
 - The web conversation service owns persisted turns, ownership checks, SSE,
   and presentation, then delegates domain reasoning to the knowledge agent.
 - `/api/ask`, the in-process service entry, the CLI wrapper, and the eval
@@ -799,9 +805,6 @@ For developer setup, running the server, working on import scripts locally, and 
 
 - **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
 - **Hosting platform.** Fly.io vs Railway vs Render vs self-hosted VPS — defer until Phase 1 deployment work begins.
-- **Deep Agents / LangSmith Deployment adoption.** Deferred until after the
-  Step 3 eval report from the retrieval redesign. See
-  [ADR 0013](adr/0013-phase-1-production-agent-baseline.md).
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
 - **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
