@@ -5,6 +5,7 @@ import {
   DEFAULT_EVAL_MATRIX_MODELS,
   defaultEvalMatrixModels,
   formatEvalMatrixTable,
+  langfuseTraceUrl,
   runEvalMatrix,
   type EvalMatrixRunner,
 } from '../eval/matrix.ts';
@@ -37,11 +38,11 @@ const secondCase: EvalCase = {
 };
 
 function successfulRunner(): EvalMatrixRunner {
-  return vi.fn(async ({ evalCase, providerConfig, traceId }) => ({
+  return vi.fn(async ({ evalCase, providerConfig, traceId, traceUrl }) => ({
     ok: true,
     answer: `${providerConfig.model} answered ${evalCase.id}`,
     traceId,
-    traceUrl: `https://langfuse.test/project/default/traces/${encodeURIComponent(traceId)}`,
+    traceUrl,
     score: 0.8,
     pass: true,
     latencyMs: 1200,
@@ -54,6 +55,37 @@ function successfulRunner(): EvalMatrixRunner {
 }
 
 describe('eval matrix runner', () => {
+  it('builds Langfuse trace links with the configured project id', () => {
+    expect(langfuseTraceUrl('https://langfuse.test/', 'project-123', 'eval:run:model:case')).toBe(
+      'https://langfuse.test/project/project-123/traces/eval%3Arun%3Amodel%3Acase',
+    );
+  });
+
+  it('falls back to the default Langfuse project id when configured blank', async () => {
+    const runner = successfulRunner();
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-smoke',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+      langfuseProjectId: '   ',
+    });
+
+    expect(result.rows[0]?.traceUrl).toContain('/project/default/traces/');
+  });
+
   it('runs one selected case across every configured provider/model', async () => {
     const runner = successfulRunner();
 
@@ -73,6 +105,7 @@ describe('eval matrix runner', () => {
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
       langfuseBaseUrl: 'https://langfuse.test',
+      langfuseProjectId: 'project-123',
     });
 
     expect(result.rows.map((row) => `${row.provider}:${row.model}`)).toEqual([
@@ -103,7 +136,7 @@ describe('eval matrix runner', () => {
           toolCallCount: 1,
           retryCount: 0,
           loopIterations: 2,
-          traceUrl: expect.stringContaining('/traces/'),
+          traceUrl: expect.stringContaining('/project/project-123/traces/'),
         }),
       ]),
     );

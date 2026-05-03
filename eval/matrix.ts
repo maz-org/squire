@@ -109,6 +109,7 @@ export interface RunEvalMatrixOptions {
   runner: EvalMatrixRunner;
   guardrails: EvalMatrixGuardrails;
   langfuseBaseUrl: string;
+  langfuseProjectId?: string;
   onProgress?: (event: EvalMatrixProgressEvent) => void;
 }
 
@@ -271,8 +272,8 @@ export function traceIdForMatrixRow(
   ].join(':');
 }
 
-export function langfuseTraceUrl(baseUrl: string, traceId: string): string {
-  return `${baseUrl.replace(/\/$/, '')}/project/default/traces/${encodeURIComponent(traceId)}`;
+export function langfuseTraceUrl(baseUrl: string, projectId: string, traceId: string): string {
+  return `${baseUrl.replace(/\/$/, '')}/project/${encodeURIComponent(projectId)}/traces/${encodeURIComponent(traceId)}`;
 }
 
 function estimateMatrixCost(cases: EvalCase[], configs: EvalProviderConfig[]): number {
@@ -510,6 +511,11 @@ async function runProviderQueue(
 export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<EvalMatrixResult> {
   const guardrailEstimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs);
   assertEvalMatrixGuardrails(options);
+  const configuredLangfuseProjectId = options.langfuseProjectId?.trim();
+  const langfuseProjectId =
+    configuredLangfuseProjectId && configuredLangfuseProjectId.length > 0
+      ? configuredLangfuseProjectId
+      : 'default';
 
   const inputs = options.cases.flatMap((evalCase) =>
     options.modelConfigs.map((providerConfig) => {
@@ -520,7 +526,7 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
         runLabel: options.runLabel,
         toolSurface: options.toolSurface,
         traceId,
-        traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, traceId),
+        traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, langfuseProjectId, traceId),
         attempt: 1,
       };
     }),
