@@ -81,7 +81,7 @@ function comparisonInput(): EvalRunComparisonInput {
   return {
     before: {
       runLabel: 'before',
-      guardrailEstimatedCostUsd: 0.02,
+      guardrailEstimatedCostUsd: 0.1,
       estimatedCostUsd: 0.02,
       rows: [
         row({ runLabel: 'before', score: 0.4, pass: false, failureClass: 'quality' }),
@@ -107,7 +107,7 @@ function comparisonInput(): EvalRunComparisonInput {
     },
     after: {
       runLabel: 'after',
-      guardrailEstimatedCostUsd: 0.05,
+      guardrailEstimatedCostUsd: 0.1,
       estimatedCostUsd: 0.05,
       rows: [
         row({
