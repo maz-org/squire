@@ -43,8 +43,11 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     pass: false,
     latencyMs: 1200,
     tokenInput: 100,
+    tokenCachedInput: null,
     tokenOutput: 50,
     tokenTotal: 150,
+    guardrailEstimatedCostUsd: 0.05,
+    providerEstimatedCostUsd: 0.02,
     estimatedCostUsd: 0.02,
     toolCallCount: 4,
     retryCount: 1,
@@ -78,6 +81,7 @@ function comparisonInput(): EvalRunComparisonInput {
   return {
     before: {
       runLabel: 'before',
+      guardrailEstimatedCostUsd: 0.1,
       estimatedCostUsd: 0.02,
       rows: [
         row({ runLabel: 'before', score: 0.4, pass: false, failureClass: 'quality' }),
@@ -88,8 +92,10 @@ function comparisonInput(): EvalRunComparisonInput {
           pass: false,
           latencyMs: null,
           tokenInput: null,
+          tokenCachedInput: null,
           tokenOutput: null,
           tokenTotal: null,
+          providerEstimatedCostUsd: null,
           estimatedCostUsd: null,
           toolCallCount: null,
           loopIterations: null,
@@ -101,6 +107,7 @@ function comparisonInput(): EvalRunComparisonInput {
     },
     after: {
       runLabel: 'after',
+      guardrailEstimatedCostUsd: 0.1,
       estimatedCostUsd: 0.05,
       rows: [
         row({
@@ -109,8 +116,10 @@ function comparisonInput(): EvalRunComparisonInput {
           pass: true,
           latencyMs: 800,
           tokenInput: 120,
+          tokenCachedInput: null,
           tokenOutput: 80,
           tokenTotal: 200,
+          providerEstimatedCostUsd: 0.03,
           estimatedCostUsd: 0.03,
           toolCallCount: 2,
           retryCount: 0,
@@ -126,8 +135,10 @@ function comparisonInput(): EvalRunComparisonInput {
           pass: true,
           latencyMs: 900,
           tokenInput: 110,
+          tokenCachedInput: null,
           tokenOutput: 60,
           tokenTotal: 170,
+          providerEstimatedCostUsd: 0.02,
           estimatedCostUsd: 0.02,
           toolCallCount: 3,
           retryCount: 0,

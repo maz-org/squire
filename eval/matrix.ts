@@ -39,6 +39,7 @@ export interface EvalMatrixRunnerOutput {
   latencyMs: number;
   tokenUsage: {
     input: number;
+    cachedInput?: number | undefined;
     output: number;
     total: number;
   };
@@ -63,8 +64,11 @@ export interface EvalMatrixRow {
   pass: boolean | null;
   latencyMs: number | null;
   tokenInput: number | null;
+  tokenCachedInput: number | null;
   tokenOutput: number | null;
   tokenTotal: number | null;
+  guardrailEstimatedCostUsd: number;
+  providerEstimatedCostUsd: number | null;
   estimatedCostUsd: number | null;
   toolCallCount: number | null;
   retryCount: number;
@@ -86,6 +90,7 @@ export interface EvalMatrixRow {
 export interface EvalMatrixResult {
   runLabel: string;
   rows: EvalMatrixRow[];
+  guardrailEstimatedCostUsd: number;
   estimatedCostUsd: number;
 }
 
@@ -108,6 +113,57 @@ export interface RunEvalMatrixOptions {
 }
 
 export const ESTIMATED_COST_PER_CASE_MODEL_USD = 0.05;
+
+interface EvalModelPrice {
+  inputUsdPerMillionTokens: number;
+  cachedInputUsdPerMillionTokens: number;
+  outputUsdPerMillionTokens: number;
+}
+
+type EvalModelPriceKey = `${EvalProvider}:${EvalProviderConfig['model']}`;
+
+const priceKey = (config: Pick<EvalProviderConfig, 'provider' | 'model'>): EvalModelPriceKey =>
+  `${config.provider}:${config.model}` as EvalModelPriceKey;
+
+// These are API token prices for the eval candidate models, separate from the
+// flat guardrail estimate used to decide whether a run may start.
+export const EVAL_MODEL_PRICE_TABLE: Partial<Record<EvalModelPriceKey, EvalModelPrice>> = {
+  'anthropic:claude-sonnet-4-6': {
+    inputUsdPerMillionTokens: 3,
+    cachedInputUsdPerMillionTokens: 0.3,
+    outputUsdPerMillionTokens: 15,
+  },
+  'anthropic:claude-opus-4-7': {
+    inputUsdPerMillionTokens: 5,
+    cachedInputUsdPerMillionTokens: 0.5,
+    outputUsdPerMillionTokens: 25,
+  },
+  'anthropic:claude-haiku-4-5': {
+    inputUsdPerMillionTokens: 1,
+    cachedInputUsdPerMillionTokens: 0.1,
+    outputUsdPerMillionTokens: 5,
+  },
+  'openai:gpt-5.5': {
+    inputUsdPerMillionTokens: 5,
+    cachedInputUsdPerMillionTokens: 0.5,
+    outputUsdPerMillionTokens: 30,
+  },
+  'openai:gpt-5.4': {
+    inputUsdPerMillionTokens: 2.5,
+    cachedInputUsdPerMillionTokens: 0.25,
+    outputUsdPerMillionTokens: 15,
+  },
+  'openai:gpt-5.4-mini': {
+    inputUsdPerMillionTokens: 0.75,
+    cachedInputUsdPerMillionTokens: 0.075,
+    outputUsdPerMillionTokens: 4.5,
+  },
+  'openai:gpt-5.4-nano': {
+    inputUsdPerMillionTokens: 0.2,
+    cachedInputUsdPerMillionTokens: 0.02,
+    outputUsdPerMillionTokens: 1.25,
+  },
+} as const;
 
 export const DEFAULT_EVAL_MATRIX_MODELS: EvalProviderConfig[] = [
   {
@@ -223,6 +279,27 @@ function estimateMatrixCost(cases: EvalCase[], configs: EvalProviderConfig[]): n
   return cases.length * configs.length * ESTIMATED_COST_PER_CASE_MODEL_USD;
 }
 
+function roundUsd(value: number): number {
+  return Number(value.toFixed(6));
+}
+
+function providerCostEstimateUsd(
+  providerConfig: EvalProviderConfig,
+  tokenUsage: EvalMatrixRunnerOutput['tokenUsage'],
+): number | null {
+  const price = EVAL_MODEL_PRICE_TABLE[priceKey(providerConfig)];
+  if (!price) return null;
+
+  const cachedInput = Math.min(Math.max(0, tokenUsage.cachedInput ?? 0), tokenUsage.input);
+  const uncachedInput = Math.max(0, tokenUsage.input - cachedInput);
+  return roundUsd(
+    (uncachedInput * price.inputUsdPerMillionTokens +
+      cachedInput * price.cachedInputUsdPerMillionTokens +
+      tokenUsage.output * price.outputUsdPerMillionTokens) /
+      1_000_000,
+  );
+}
+
 export function assertEvalMatrixGuardrails(
   options: Pick<RunEvalMatrixOptions, 'cases' | 'modelConfigs' | 'selection' | 'guardrails'>,
 ): void {
@@ -316,6 +393,8 @@ function rowFromOutput(
   guardrails: EvalMatrixGuardrails,
 ): EvalMatrixRow {
   const compatibility = evalRunCompatibilityFor(input.providerConfig, input.toolSurface);
+  const providerEstimatedCostUsd =
+    providerCostEstimateUsd(input.providerConfig, output.tokenUsage) ?? output.estimatedCostUsd;
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
@@ -328,9 +407,12 @@ function rowFromOutput(
     pass: output.pass,
     latencyMs: output.latencyMs,
     tokenInput: output.tokenUsage.input,
+    tokenCachedInput: output.tokenUsage.cachedInput ?? null,
     tokenOutput: output.tokenUsage.output,
     tokenTotal: output.tokenUsage.total,
-    estimatedCostUsd: output.estimatedCostUsd,
+    guardrailEstimatedCostUsd: ESTIMATED_COST_PER_CASE_MODEL_USD,
+    providerEstimatedCostUsd,
+    estimatedCostUsd: providerEstimatedCostUsd,
     toolCallCount: output.toolCallCount,
     retryCount,
     loopIterations: output.loopIterations,
@@ -366,8 +448,11 @@ function rowFromError(
     pass: false,
     latencyMs: null,
     tokenInput: null,
+    tokenCachedInput: null,
     tokenOutput: null,
     tokenTotal: null,
+    guardrailEstimatedCostUsd: ESTIMATED_COST_PER_CASE_MODEL_USD,
+    providerEstimatedCostUsd: null,
     estimatedCostUsd: null,
     toolCallCount: null,
     retryCount,
@@ -423,7 +508,7 @@ async function runProviderQueue(
 }
 
 export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<EvalMatrixResult> {
-  const estimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs);
+  const guardrailEstimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs);
   assertEvalMatrixGuardrails(options);
 
   const inputs = options.cases.flatMap((evalCase) =>
@@ -470,7 +555,8 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
   return {
     runLabel: options.runLabel,
     rows: rows.filter((row): row is EvalMatrixRow => !!row),
-    estimatedCostUsd,
+    guardrailEstimatedCostUsd,
+    estimatedCostUsd: guardrailEstimatedCostUsd,
   };
 }
 
@@ -481,7 +567,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tmodel\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcost_usd\ttools\tretries\tloops\ttrace\terror',
+    'case\tmodel\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -493,7 +579,9 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         formatNullable(row.score),
         formatNullable(row.latencyMs),
         row.tokenTotal === null ? '-' : `${row.tokenInput}/${row.tokenOutput}/${row.tokenTotal}`,
-        row.estimatedCostUsd === null ? '-' : row.estimatedCostUsd.toFixed(4),
+        formatNullable(row.tokenCachedInput),
+        row.guardrailEstimatedCostUsd.toFixed(4),
+        row.providerEstimatedCostUsd === null ? '-' : row.providerEstimatedCostUsd.toFixed(4),
         formatNullable(row.toolCallCount),
         row.retryCount,
         formatNullable(row.loopIterations),
