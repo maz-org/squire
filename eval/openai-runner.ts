@@ -91,6 +91,11 @@ interface OpenAiTranscriptTurn {
 const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
+const DEFAULT_RULE_SEARCH_SYNTHESIS_THRESHOLD = 3;
+
+const TOOL_BUDGET_SYNTHESIS_PROMPT =
+  'The eval tool budget has been reached. Use the retrieved tool results to answer now. Do not call more tools.';
+
 export interface OpenAiResponsesEvalResult {
   ok: boolean;
   answer: string;
@@ -241,8 +246,17 @@ function modelSettingsFor(config: EvalProviderConfig): Record<string, string | n
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.timeoutMs,
     toolLoopLimit: config.toolLoopLimit,
-    broadSearchSynthesisThreshold: config.broadSearchSynthesisThreshold,
+    broadSearchSynthesisThreshold: broadSearchSynthesisThresholdFor(config),
   };
+}
+
+function broadSearchSynthesisThresholdFor(config: EvalProviderConfig): number {
+  return config.broadSearchSynthesisThreshold ?? DEFAULT_RULE_SEARCH_SYNTHESIS_THRESHOLD;
+}
+
+function trajectoryToolBudget(evalCase: EvalCase): number | undefined {
+  const budget = evalCase.trajectory?.maxToolCalls;
+  return typeof budget === 'number' && Number.isInteger(budget) && budget > 0 ? budget : undefined;
 }
 
 function createResponsesRequest(
@@ -482,6 +496,8 @@ export async function runOpenAiResponsesEvalCase(
   let broadRuleSearches = 0;
   let hasUsedNonRuleSearchTool = false;
   let forceSynthesis = false;
+  const broadSearchSynthesisThreshold = broadSearchSynthesisThresholdFor(options.providerConfig);
+  const maxTrajectoryToolCalls = trajectoryToolBudget(options.evalCase);
 
   const buildTrace = (
     statusReason: string,
@@ -731,16 +747,19 @@ export async function runOpenAiResponsesEvalCase(
       input.push(outputItem);
     }
 
-    if (
-      options.providerConfig.broadSearchSynthesisThreshold &&
-      broadRuleSearches >= options.providerConfig.broadSearchSynthesisThreshold &&
-      !hasUsedNonRuleSearchTool
-    ) {
+    if (broadRuleSearches >= broadSearchSynthesisThreshold && !hasUsedNonRuleSearchTool) {
       forceSynthesis = true;
       input.push({
         type: 'message',
         role: 'user',
         content: [{ type: 'input_text', text: FORCE_SYNTHESIS_PROMPT }],
+      });
+    } else if (maxTrajectoryToolCalls && toolCalls.length >= maxTrajectoryToolCalls) {
+      forceSynthesis = true;
+      input.push({
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: TOOL_BUDGET_SYNTHESIS_PROMPT }],
       });
     }
   }

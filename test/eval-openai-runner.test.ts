@@ -376,6 +376,190 @@ describe('OpenAI Responses eval runner', () => {
     ]);
   });
 
+  it('uses the default repeated-rule-search synthesis guard', async () => {
+    const client = responsesClient(
+      {
+        id: 'resp_rule_1',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output: [
+          {
+            type: 'function_call',
+            id: 'fc_rule_1',
+            call_id: 'call_rule_1',
+            name: 'search_rules',
+            arguments: '{"query":"looting","topK":5}',
+          },
+        ],
+      },
+      {
+        id: 'resp_rule_2',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output: [
+          {
+            type: 'function_call',
+            id: 'fc_rule_2',
+            call_id: 'call_rule_2',
+            name: 'search_rules',
+            arguments: '{"query":"end-of-turn looting","topK":5}',
+          },
+        ],
+      },
+      {
+        id: 'resp_rule_3',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output: [
+          {
+            type: 'function_call',
+            id: 'fc_rule_3',
+            call_id: 'call_rule_3',
+            name: 'search_rules',
+            arguments: '{"query":"loot token current hex","topK":5}',
+          },
+        ],
+      },
+      {
+        id: 'resp_rule_final',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output_text: 'Looting collects loot tokens and treasure tiles.',
+        output: [
+          {
+            type: 'message',
+            content: [
+              { type: 'output_text', text: 'Looting collects loot tokens and treasure tiles.' },
+            ],
+          },
+        ],
+      },
+    );
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase: {
+        ...evalCase,
+        id: 'rule-looting-definition',
+        question: 'What is looting?',
+      },
+      providerConfig: { ...providerConfig, broadSearchSynthesisThreshold: undefined },
+      runLabel: 'rule-synthesis',
+      toolSurface: 'redesigned',
+      executeTool: vi.fn().mockResolvedValue({ content: 'Loot rule context.' }),
+    });
+
+    expect(result.ok).toBe(true);
+    const create = vi.mocked(client.responses.create);
+    const finalRequest = create.mock.calls[3]?.[0] as { input: unknown[]; tools: unknown[] };
+    expect(finalRequest.tools).toEqual([]);
+    expect(finalRequest.input).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'message',
+          role: 'user',
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'input_text',
+              text: expect.stringContaining('Use the retrieved rulebook context to answer now'),
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
+  it('forces synthesis when a trajectory eval reaches its tool budget', async () => {
+    const client = responsesClient(
+      {
+        id: 'resp_traj_1',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output: [
+          {
+            type: 'function_call',
+            id: 'fc_traj_1',
+            call_id: 'call_traj_1',
+            name: 'search_cards',
+            arguments: '{"query":"Algox Archer","topK":10}',
+          },
+        ],
+      },
+      {
+        id: 'resp_traj_2',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output: [
+          {
+            type: 'function_call',
+            id: 'fc_traj_2',
+            call_id: 'call_traj_2',
+            name: 'list_cards',
+            arguments: '{"type":"monster-abilities","filter":null}',
+          },
+        ],
+      },
+      {
+        id: 'resp_traj_final',
+        model: 'gpt-5.5-2026-04-23',
+        status: 'completed',
+        output_text: 'The exact record is the Algox Archer monster stat record.',
+        output: [
+          {
+            type: 'message',
+            content: [
+              {
+                type: 'output_text',
+                text: 'The exact record is the Algox Archer monster stat record.',
+              },
+            ],
+          },
+        ],
+      },
+    );
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase: {
+        ...evalCase,
+        id: 'traj-card-fuzzy-vs-exact',
+        category: 'trajectory',
+        question: 'Find Algox Archer and explain exact versus fuzzy matches.',
+        trajectory: {
+          requiredTools: ['search_cards'],
+          requiredToolKinds: ['search'],
+          forbiddenTools: [],
+          forbiddenToolKinds: [],
+          requiredRefs: [],
+          maxToolCalls: 2,
+        },
+      },
+      providerConfig,
+      runLabel: 'trajectory-budget',
+      toolSurface: 'redesigned',
+      executeTool: vi.fn().mockResolvedValue({ content: 'Tool context.' }),
+    });
+
+    expect(result.ok).toBe(true);
+    const create = vi.mocked(client.responses.create);
+    const finalRequest = create.mock.calls[2]?.[0] as { input: unknown[]; tools: unknown[] };
+    expect(finalRequest.tools).toEqual([]);
+    expect(finalRequest.input).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'message',
+          role: 'user',
+          content: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'input_text',
+              text: expect.stringContaining('The eval tool budget has been reached'),
+            }),
+          ]),
+        }),
+      ]),
+    );
+  });
+
   it('classifies model access, API status, and timeout failures', () => {
     expect(classifyOpenAiResponsesFailure({ status: 401, message: 'missing model' })).toBe(
       'model_access',
