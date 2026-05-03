@@ -192,6 +192,19 @@ describe('openEntity', () => {
     );
   });
 
+  it('opens legacy GHS scenario source IDs as canonical scenario refs', async () => {
+    const result = await openEntity('gloomhavensecretariat:scenario/061');
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+      },
+    });
+  });
+
   it('opens a section with exact text, source metadata, and outgoing links', async () => {
     const result = await openEntity('section:frosthaven/66.2');
     expect(result.ok).toBe(true);
@@ -227,6 +240,7 @@ describe('openEntity', () => {
     expect(result.entity.title).toBe('Spyglass');
     expect(result.entity.sourceLabel).toBe('Card Index');
     expect(result.entity.data).toMatchObject({
+      canonicalRef: 'card:frosthaven/items/gloomhavensecretariat:item/1',
       type: 'items',
       sourceId: 'gloomhavensecretariat:item/1',
       displayName: 'Spyglass',
@@ -238,6 +252,23 @@ describe('openEntity', () => {
         locator: 'gloomhavensecretariat:item/1',
       }),
     ]);
+  });
+
+  it('opens legacy GHS card source IDs as canonical card refs', async () => {
+    const result = await openEntity('gloomhavensecretariat:item/1');
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        data: {
+          canonicalRef: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+          sourceId: 'gloomhavensecretariat:item/1',
+          displayName: 'Spyglass',
+        },
+      },
+    });
   });
 
   it('opens a rule passage by canonical source and chunk ref', async () => {
@@ -616,6 +647,9 @@ describe('knowledge discovery tools', () => {
       entity: expect.objectContaining({
         kind: 'card',
         ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        data: expect.objectContaining({
+          canonicalRef: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        }),
       }),
     });
 
@@ -643,6 +677,34 @@ describe('knowledge discovery tools', () => {
       ]),
     );
     expect(ability.candidates[0].entity).not.toHaveProperty('data');
+  });
+
+  it('resolveEntity treats item number queries as exact item refs', async () => {
+    const result = await resolveEntity('item 1', { kinds: ['item'] });
+
+    expect(result.ok).toBe(true);
+    expect(result.candidates[0]).toEqual(
+      expect.objectContaining({
+        confidence: 0.99,
+        matchReason: 'Exact item number',
+        entity: expect.objectContaining({
+          kind: 'card',
+          ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+          title: 'Spyglass',
+        }),
+      }),
+    );
+    await expect(openEntity(result.candidates[0].entity.ref)).resolves.toMatchObject({
+      ok: true,
+      entity: expect.objectContaining({
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        data: expect.objectContaining({
+          number: '001',
+          sourceId: 'gloomhavensecretariat:item/1',
+          displayName: 'Spyglass',
+        }),
+      }),
+    });
   });
 
   it('resolveEntity accepts building aliases and returns openable building refs', async () => {

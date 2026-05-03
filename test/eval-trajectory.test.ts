@@ -48,6 +48,29 @@ describe('scoreTrajectory', () => {
     expect(result).toEqual({ pass: true, failures: [] });
   });
 
+  it('matches exact card refs against opened GHS source IDs', () => {
+    const result = scoreTrajectory(
+      {
+        requiredTools: ['resolve_entity', 'open_entity'],
+        requiredToolKinds: ['resolution', 'open'],
+        forbiddenTools: ['search_rules'],
+        forbiddenToolKinds: [],
+        requiredRefs: ['card:frosthaven/items/gloomhavensecretariat:item/1'],
+        maxToolCalls: 3,
+      },
+      [
+        { name: 'resolve_entity', input: { query: 'item 1', kinds: ['item'] } },
+        {
+          name: 'open_entity',
+          input: { ref: 'gloomhavensecretariat:item/1' },
+          canonicalRefs: ['gloomhavensecretariat:item/1'],
+        },
+      ],
+    );
+
+    expect(result).toEqual({ pass: true, failures: [] });
+  });
+
   it('reports missing requirements and forbidden calls', () => {
     const result = scoreTrajectory(
       {
