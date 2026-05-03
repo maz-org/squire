@@ -283,6 +283,31 @@ export async function searchExtracted(
 // ─── Text representation ─────────────────────────────────────────────────────
 // Unchanged from the JSON-backed version — pure functions over a record.
 
+function formatResourceEntries(resources: Record<string, unknown>): string[] {
+  return Object.entries(resources)
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+    .map(([resource, amount]) => `${amount} ${resource}`);
+}
+
+function formatItemCraftCost(craftCost: unknown): string | null {
+  if (!craftCost || typeof craftCost !== 'object' || Array.isArray(craftCost)) return null;
+  const cost = craftCost as { resources?: unknown; resourcesAny?: unknown };
+  const parts =
+    cost.resources && typeof cost.resources === 'object' && !Array.isArray(cost.resources)
+      ? formatResourceEntries(cost.resources as Record<string, unknown>)
+      : [];
+
+  if (Array.isArray(cost.resourcesAny)) {
+    for (const choice of cost.resourcesAny) {
+      if (!choice || typeof choice !== 'object' || Array.isArray(choice)) continue;
+      const entries = formatResourceEntries(choice as Record<string, unknown>);
+      if (entries.length > 0) parts.push(`any ${entries.join(', ')}`);
+    }
+  }
+
+  return parts.length > 0 ? `Craft cost: ${parts.join(', ')}` : null;
+}
+
 function recordToText(record: ExtractedRecord): string {
   const t = record._type;
 
@@ -352,7 +377,11 @@ function recordToText(record: ExtractedRecord): string {
     const uses = r.uses ? ` (${r.uses} uses)` : '';
     const spent = r.spent ? ' [spent]' : '';
     const lost = r.lost ? ' [lost]' : '';
-    return `Item #${r.number}: ${r.name}. Slot: ${r.slot}. Cost: ${r.cost}g. Effect: ${r.effect}${uses}${spent}${lost}`;
+    const costText =
+      typeof r.cost === 'number'
+        ? `Cost: ${r.cost}g`
+        : (formatItemCraftCost(r.craftCost) ?? 'Cost: not shown');
+    return `Item #${r.number}: ${r.name}. Slot: ${r.slot}. ${costText}. Effect: ${r.effect}${uses}${spent}${lost}`;
   }
 
   if (t === 'events') {

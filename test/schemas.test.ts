@@ -133,12 +133,34 @@ describe('ItemSchema', () => {
       name: 'Major Healing Potion',
       slot: 'small item',
       cost: 20,
+      craftCost: null,
       effect: 'Heal 4, self',
       uses: 1,
       spent: false,
       lost: true,
     };
     expect(schema.safeParse(data).success).toBe(true);
+  });
+
+  it('accepts item craft resource costs', () => {
+    const data = {
+      sourceId: 'gloomhavensecretariat:item/005',
+      number: '005',
+      name: 'Crude Boots',
+      slot: 'legs',
+      cost: null,
+      craftCost: { resources: { hide: 2 } },
+      effect: 'During your move ability, add +1 Move',
+      uses: null,
+      spent: true,
+      lost: false,
+    };
+
+    const parsed = schema.safeParse(data);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.craftCost).toEqual({ resources: { hide: 2 } });
+    }
   });
 
   it('rejects invalid slot type', () => {
