@@ -11,6 +11,19 @@ import {
 } from '../eval/schema.ts';
 
 const dataset = JSON.parse(readFileSync(join(process.cwd(), 'eval/dataset.json'), 'utf-8'));
+const items = JSON.parse(
+  readFileSync(join(process.cwd(), 'data/extracted/items.json'), 'utf-8'),
+) as
+  | Array<{
+      name: string;
+      number: string;
+      slot: string;
+      cost: number | null;
+      craftCost?: { resources?: Record<string, number> };
+      effect: string;
+      uses: number | null;
+    }>
+  | undefined;
 
 describe('eval dataset', () => {
   it('matches the final-answer and trajectory fixture schema', () => {
@@ -60,6 +73,28 @@ describe('eval dataset', () => {
       expected: expect.stringMatching(/Section 79\.4/i),
       grading: expect.stringMatching(/Crain|star iron/i),
     });
+  });
+
+  it('keeps the Spyglass final-answer expectation aligned with checked-in item data', () => {
+    const cases = EvalDatasetSchema.parse(dataset);
+    const spyglassCase = cases.find((evalCase) => evalCase.id === 'item-spyglass');
+    const spyglassItem = items?.find((item) => item.name === 'Spyglass');
+
+    expect(spyglassItem).toMatchObject({
+      number: '001',
+      slot: 'head',
+      cost: null,
+      craftCost: { resources: { metal: 1 } },
+      effect: 'During your attack ability, gain advantage on one attack.',
+      uses: null,
+    });
+    expect(spyglassCase?.finalAnswer).toMatchObject({
+      expected: expect.stringMatching(/Item #001/i),
+      grading: expect.stringMatching(/not say 40 gold/i),
+    });
+    expect(spyglassCase?.finalAnswer?.expected).toMatch(/head slot/i);
+    expect(spyglassCase?.finalAnswer?.expected).toMatch(/craft cost 1 metal/i);
+    expect(spyglassCase?.finalAnswer?.expected).not.toMatch(/40 gold|small item slot|2 uses/i);
   });
 
   it('defines flexible tool-path expectations for trajectory cases', () => {
