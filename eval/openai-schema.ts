@@ -6,10 +6,10 @@ import {
   LEGACY_AGENT_TOOLS,
   executeToolCall,
   type AgentToolName,
+  type AgentToolSurface,
 } from '../src/agent.ts';
 import type { ToolCallResult } from '../src/agent.ts';
 import { SCHEMAS } from '../src/schemas.ts';
-import type { EvalToolSurface } from './cli.ts';
 
 export const OPENAI_TOOL_SCHEMA_VERSION = 'squire-openai-tools-v2';
 
@@ -195,14 +195,14 @@ export function renderOpenAiStrictToolSchemas(
   }));
 }
 
+export function openAiToolsForSurface(toolSurface: AgentToolSurface): readonly AgentToolLike[] {
+  return toolSurface === 'legacy' ? LEGACY_AGENT_TOOLS : AGENT_TOOLS;
+}
+
 export function getOpenAiToolSchemaHash(tools: readonly AgentToolLike[] = ALL_AGENT_TOOLS): string {
   return createHash('sha256')
     .update(JSON.stringify(renderOpenAiStrictToolSchemas(tools)))
     .digest('hex');
-}
-
-export function openAiToolsForSurface(toolSurface: EvalToolSurface): readonly AgentToolLike[] {
-  return toolSurface === 'legacy' ? LEGACY_AGENT_TOOLS : AGENT_TOOLS;
 }
 
 export function normalizeOpenAiToolInput(

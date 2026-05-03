@@ -229,6 +229,18 @@ describe('searchExtracted / searchExtractedRanked', () => {
     expect(ranked[0].record._type).toBe('monster-stats');
   });
 
+  it('orders tied monster stat level bands by the default lower band first', async () => {
+    const ranked = await searchExtractedRanked('algox archer', 6);
+    const algoxArcherStats = ranked
+      .filter((hit) => hit.record._type === 'monster-stats')
+      .map((hit) => hit.record.sourceId);
+
+    expect(algoxArcherStats.slice(0, 2)).toEqual([
+      'gloomhavensecretariat:monster-stat/algox-archer/0-3',
+      'gloomhavensecretariat:monster-stat/algox-archer/4-7',
+    ]);
+  });
+
   it('searchExtracted strips the score wrapper', async () => {
     const records = await searchExtracted('algox archer', 3);
     expect(records.length).toBeGreaterThan(0);

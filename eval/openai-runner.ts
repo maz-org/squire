@@ -267,11 +267,12 @@ function createResponsesRequest(
   toolSurface: EvalToolSurface,
   allowTools: boolean,
 ): OpenAiResponsesCreateRequest {
+  const tools = openAiToolsForSurface(toolSurface);
   const request: OpenAiResponsesCreateRequest = {
     model: providerConfig.model,
     instructions: promptFor(toolSurface),
     input: [...input],
-    tools: allowTools ? renderOpenAiStrictToolSchemas(openAiToolsForSurface(toolSurface)) : [],
+    tools: allowTools ? renderOpenAiStrictToolSchemas(tools) : [],
     store: false,
     parallel_tool_calls: false,
     include: ['reasoning.encrypted_content'],

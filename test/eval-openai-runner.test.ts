@@ -40,6 +40,45 @@ function responsesClient(...responses: unknown[]): OpenAiResponsesClient {
 }
 
 describe('OpenAI Responses eval runner', () => {
+  it('advertises only redesigned tools for redesigned eval runs', async () => {
+    const client = responsesClient({
+      id: 'resp_1',
+      model: 'gpt-5.5-2026-04-23',
+      status: 'completed',
+      output_text: 'Done.',
+      output: [
+        {
+          type: 'message',
+          content: [{ type: 'output_text', text: 'Done.' }],
+        },
+      ],
+    });
+
+    await runOpenAiResponsesEvalCase({
+      client,
+      evalCase,
+      providerConfig,
+      runLabel: 'unit-openai',
+      toolSurface: 'redesigned',
+    });
+
+    const request = vi.mocked(client.responses.create).mock.calls[0]?.[0] as {
+      tools: Array<{ name: string }>;
+    };
+    const toolNames = request.tools.map((tool) => tool.name);
+    expect(toolNames).toEqual([
+      'inspect_sources',
+      'schema',
+      'resolve_entity',
+      'open_entity',
+      'search_knowledge',
+      'neighbors',
+    ]);
+    expect(toolNames).not.toEqual(
+      expect.arrayContaining(['search_cards', 'list_cards', 'get_card']),
+    );
+  });
+
   it('runs a manual stateless Responses tool loop without previous_response_id', async () => {
     const reasoningItem = {
       type: 'reasoning',

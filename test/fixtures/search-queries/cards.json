@@ -2,8 +2,8 @@
   {
     "query": "algox archer",
     "expectedTopSourceIds": [
-      "gloomhavensecretariat:monster-stat/algox-archer/4-7",
       "gloomhavensecretariat:monster-stat/algox-archer/0-3",
+      "gloomhavensecretariat:monster-stat/algox-archer/4-7",
       "gloomhavensecretariat:event/WO-39",
       "gloomhavensecretariat:scenario/003",
       "gloomhavensecretariat:scenario/002",
@@ -84,8 +84,8 @@
   {
     "query": "flame demon",
     "expectedTopSourceIds": [
-      "gloomhavensecretariat:monster-stat/flame-demon/4-7",
       "gloomhavensecretariat:monster-stat/flame-demon/0-3",
+      "gloomhavensecretariat:monster-stat/flame-demon/4-7",
       "gloomhavensecretariat:scenario/067",
       "gloomhavensecretariat:scenario/068",
       "gloomhavensecretariat:monster-ability/flame-demon/549",
