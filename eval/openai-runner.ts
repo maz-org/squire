@@ -91,6 +91,11 @@ interface OpenAiTranscriptTurn {
 const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
+const DEFAULT_RULE_SEARCH_SYNTHESIS_THRESHOLD = 3;
+
+const TOOL_BUDGET_SYNTHESIS_PROMPT =
+  'The eval tool budget has been reached. Use the retrieved tool results to answer now. Do not call more tools.';
+
 export interface OpenAiResponsesEvalResult {
   ok: boolean;
   answer: string;
@@ -241,8 +246,17 @@ function modelSettingsFor(config: EvalProviderConfig): Record<string, string | n
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.timeoutMs,
     toolLoopLimit: config.toolLoopLimit,
-    broadSearchSynthesisThreshold: config.broadSearchSynthesisThreshold,
+    broadSearchSynthesisThreshold: broadSearchSynthesisThresholdFor(config),
   };
+}
+
+function broadSearchSynthesisThresholdFor(config: EvalProviderConfig): number {
+  return config.broadSearchSynthesisThreshold ?? DEFAULT_RULE_SEARCH_SYNTHESIS_THRESHOLD;
+}
+
+function trajectoryToolBudget(evalCase: EvalCase): number | undefined {
+  const budget = evalCase.trajectory?.maxToolCalls;
+  return typeof budget === 'number' && Number.isInteger(budget) && budget > 0 ? budget : undefined;
 }
 
 function createResponsesRequest(
@@ -482,6 +496,10 @@ export async function runOpenAiResponsesEvalCase(
   let broadRuleSearches = 0;
   let hasUsedNonRuleSearchTool = false;
   let forceSynthesis = false;
+  const broadSearchSynthesisThreshold = broadSearchSynthesisThresholdFor(options.providerConfig);
+  const maxTrajectoryToolCalls = trajectoryToolBudget(options.evalCase);
+  const toolLoopLimit = options.providerConfig.toolLoopLimit ?? 10;
+  let allowForcedSynthesisTurn = false;
 
   const buildTrace = (
     statusReason: string,
@@ -589,7 +607,7 @@ export async function runOpenAiResponsesEvalCase(
     };
   };
 
-  for (let i = 0; i < (options.providerConfig.toolLoopLimit ?? 10); i++) {
+  for (let i = 0; i < toolLoopLimit + (allowForcedSynthesisTurn ? 1 : 0); i++) {
     iterations = i + 1;
     const request = createResponsesRequest(
       input,
@@ -731,21 +749,26 @@ export async function runOpenAiResponsesEvalCase(
       input.push(outputItem);
     }
 
-    if (
-      options.providerConfig.broadSearchSynthesisThreshold &&
-      broadRuleSearches >= options.providerConfig.broadSearchSynthesisThreshold &&
-      !hasUsedNonRuleSearchTool
-    ) {
+    if (broadRuleSearches >= broadSearchSynthesisThreshold && !hasUsedNonRuleSearchTool) {
       forceSynthesis = true;
+      allowForcedSynthesisTurn = true;
       input.push({
         type: 'message',
         role: 'user',
         content: [{ type: 'input_text', text: FORCE_SYNTHESIS_PROMPT }],
       });
+    } else if (maxTrajectoryToolCalls && toolCalls.length >= maxTrajectoryToolCalls) {
+      forceSynthesis = true;
+      allowForcedSynthesisTurn = true;
+      input.push({
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: TOOL_BUDGET_SYNTHESIS_PROMPT }],
+      });
     }
   }
 
-  const message = `OpenAI Responses loop reached ${options.providerConfig.toolLoopLimit ?? 10} iteration(s) without a final answer.`;
+  const message = `OpenAI Responses loop reached ${toolLoopLimit} iteration(s) without a final answer.`;
   errors.push(errorTrace('loop_limit', message));
   return finish(false, '', 'loop_limit', 'loop_limit', message);
 }
