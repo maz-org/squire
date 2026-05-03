@@ -192,6 +192,19 @@ describe('openEntity', () => {
     );
   });
 
+  it('opens legacy GHS scenario source IDs as canonical scenario refs', async () => {
+    const result = await openEntity('gloomhavensecretariat:scenario/061');
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+      },
+    });
+  });
+
   it('opens a section with exact text, source metadata, and outgoing links', async () => {
     const result = await openEntity('section:frosthaven/66.2');
     expect(result.ok).toBe(true);

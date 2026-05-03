@@ -281,6 +281,7 @@ const CARD_KIND_ALIASES: Record<string, CardType[]> = {
 };
 
 const CARD_TYPE_BY_SOURCE_PREFIX: Record<string, CardType> = {
+  scenario: 'scenarios',
   item: 'items',
   'monster-stat': 'monster-stats',
   'monster-ability': 'monster-abilities',
