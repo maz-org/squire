@@ -346,7 +346,7 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate.mock.calls[2][0].messages).toContainEqual({
       role: 'user',
       content:
-        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks for section text, call open_entity on the returned section ref now; otherwise answer from the neighbors result. Do not search for another path unless neighbors returned no relevant target.',
+        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.',
     });
   });
 
@@ -542,6 +542,78 @@ describe('runAgentLoop', () => {
     const result = await runAgentLoop('What card types are available?', { toolSurface: 'legacy' });
     expect(result).toBe('There are items and more.');
     expect(mockListCardTypes).toHaveBeenCalled();
+  });
+
+  it('nudges redesigned exact-record resolutions toward opening before answering', async () => {
+    mockResolveEntity.mockResolvedValueOnce({
+      ok: true,
+      query: 'Algox Archer',
+      candidates: [
+        {
+          ref: 'card:frosthaven/monster-stats/gloomhavensecretariat:monster-stat/algox-archer/0-3',
+          kind: 'card',
+          title: 'Algox Archer',
+          confidence: 0.98,
+          matchReason: 'Exact card name',
+        },
+      ],
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('resolve_entity', {
+          query: 'Algox Archer',
+          kinds: ['monster'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Algox Archer has two stat records.'));
+
+    await runAgentLoop('Find the Algox Archer monster stat record, then search for card records.', {
+      toolSurface: 'redesigned',
+    });
+
+    expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual({
+      role: 'user',
+      content:
+        'You now have canonical candidate refs. If the user asked for an exact record or source text, open the best matching exact ref before answering. If the user also asked for fuzzy/contextual matches, keep those separate and use search only for the fuzzy part.',
+    });
+  });
+
+  it('makes traversal guidance explicit about opening returned section refs', async () => {
+    mockNeighbors.mockResolvedValueOnce({
+      ok: true,
+      from: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+        sourceLabel: 'Scenario Book',
+      },
+      neighbors: [
+        {
+          ref: 'section:frosthaven/67.1',
+          kind: 'section',
+          relation: 'conclusion',
+          title: 'Section 67.1',
+        },
+      ],
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('neighbors', {
+          ref: 'scenario:frosthaven/061',
+          relation: 'conclusion',
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Read section 67.1.'));
+
+    await runAgentLoop('Show the section I should read at the conclusion of scenario 61.', {
+      toolSurface: 'redesigned',
+    });
+
+    expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual({
+      role: 'user',
+      content:
+        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.',
+    });
   });
 
   it('uses traversal tools for an exact scenario conclusion lookup', async () => {
