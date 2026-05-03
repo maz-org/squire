@@ -68,7 +68,8 @@ The active baseline is:
   and presentation, then delegates domain reasoning to the knowledge agent.
 - `/api/ask`, the in-process service entry, the CLI wrapper, and the eval
   runner all route through the same service boundary.
-- Langfuse and OpenTelemetry remain the LLM trace and eval path for now.
+- Langfuse remains the authoritative LLM trace/eval path for now;
+  OpenTelemetry provides the trace export/transport feeding it.
 
 Existing regression coverage protects the current path:
 

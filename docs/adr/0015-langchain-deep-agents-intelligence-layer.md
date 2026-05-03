@@ -108,13 +108,21 @@ baseline before it can receive production traffic.
 Langfuse remains the authoritative LLM trace and eval path. LangSmith evals may
 be prototyped as a parallel export or comparison path, but replacing Langfuse
 requires a later decision with trace-link, dataset, judge, and report parity.
+Trace-link parity means the eval report can map each row back to the same
+logical run across systems: provider/model, run label, dataset item or case ID,
+Squire trace ID, request ID when present, judge run ID, report ID, timestamps,
+and parent-child relationships between the agent run, model calls, tool calls,
+and scores. Any LangSmith export must define that mapping in one schema or
+export spec before tests can treat it as equivalent to Langfuse.
 
 Any Deep Agents production experiment must use safe backends. The in-memory
-state backend is acceptable for eval-only runs; a store-backed memory namespace
-may be tested for user-scoped memory; local filesystem and local shell backends
-must not be used in the production web server. Shared writable memory is a
-prompt-injection surface and must be isolated by user, campaign, and agent
-purpose before it can affect answers.
+state backend is acceptable for eval-only runs only when each eval gets a fresh
+agent instance, no mutable state is shared across requests or tasks, and teardown
+or reset is explicit after the run. A store-backed memory namespace may be tested
+for user-scoped memory; local filesystem and local shell backends must not be
+used in the production web server. Shared writable memory becomes a
+prompt-injection surface when isolation fails, so it must be scoped by user,
+campaign, and agent purpose before it can affect answers.
 
 This decision should be re-opened if the LangChain runner beats the current
 runner on quality, traceability, latency, cost, or implementation clarity in the
