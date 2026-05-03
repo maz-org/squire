@@ -368,7 +368,7 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate.mock.calls[1][0].messages).not.toContainEqual({
       role: 'user',
       content:
-        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks for section text, call open_entity on the returned section ref now; otherwise answer from the neighbors result. Do not search for another path unless neighbors returned no relevant target.',
+        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.',
     });
   });
 
