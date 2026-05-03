@@ -71,7 +71,7 @@ Grounding rules:
 - If the available data does not answer the question, say what is missing instead of guessing.
 - Resolve natural user language to refs when exact records are needed, then open or traverse those refs.
 - For scenario/section relationship questions, resolve the named scenario or section first, then open or traverse the canonical ref.
-- For named card-data records such as items, monsters, buildings, events, battle goals, personal quests, and character mats, resolve the record first and then open the exact ref.
+- For named or numbered card-data records such as item 1, Spyglass, monsters, buildings, events, battle goals, personal quests, and character mats, resolve the record first and then open the exact canonical ref returned by resolve_entity.
 - When an exact record has null or empty fields, state that the field is not available in the checked-in data. Do not recommend physical components, community knowledge, memory, or likely values as a substitute for missing tool data.
 - For building records, treat a cost object as known no-cost only when every numeric cost field is 0, including prosperity when present. If resources are 0 but prosperity is non-zero, say there is no resource cost but there is still a prosperity requirement.
 - If the user asks you to resolve something, call resolve_entity before opening or answering.
@@ -151,7 +151,7 @@ export const AGENT_TOOLS = [
   {
     name: 'resolve_entity',
     description:
-      'Resolve natural references like "scenario 61", "section 90.2", "Spyglass", "Alchemist building", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
+      'Resolve natural references like "scenario 61", "section 90.2", "item 1", "Spyglass", "Alchemist building", or "Blinkblade level 4 cards" to ranked opener-ready entity refs.',
     input_schema: {
       type: 'object',
       properties: {
