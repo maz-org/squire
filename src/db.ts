@@ -20,7 +20,7 @@ import { getWorktreeRuntime } from './worktree-runtime.ts';
 
 export type DbMode = 'server' | 'cli';
 
-export type Db = ReturnType<typeof drizzle<typeof relations>>;
+export type Db = ReturnType<typeof drizzle<typeof schema, typeof relations>>;
 
 export interface DbHandle {
   db: Db;
@@ -33,7 +33,7 @@ export interface DbHandle {
 }
 
 let serverPool: pg.Pool | null = null;
-let serverDb: ReturnType<typeof drizzle<typeof relations>> | null = null;
+let serverDb: Db | null = null;
 
 interface DbConnectionOptions {
   url?: string;
@@ -53,7 +53,7 @@ function createDrizzleClient({
   if (idleTimeoutMillis !== undefined) {
     connection.idleTimeoutMillis = idleTimeoutMillis;
   }
-  return drizzle({ connection, relations });
+  return drizzle({ connection, schema, relations });
 }
 
 export function createStandaloneDb(
