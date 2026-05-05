@@ -323,15 +323,12 @@ export function assertEvalMatrixGuardrails(
     'cases' | 'modelConfigs' | 'agentRuntimes' | 'selection' | 'guardrails'
   >,
 ): void {
-  const estimatedCostUsd = estimateMatrixCost(
-    options.cases,
-    options.modelConfigs,
-    agentRuntimesFor(options),
-  );
+  const agentRuntimes = agentRuntimesFor(options);
+  const estimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs, agentRuntimes);
 
   if (options.selection === 'all' && !options.guardrails.allowFullDataset) {
     throw new Error(
-      `A full-dataset matrix run requires --allow-full-dataset (${options.cases.length} case(s), ${options.modelConfigs.length} model(s)).`,
+      `A full-dataset matrix run requires --allow-full-dataset (${options.cases.length} case(s), ${options.modelConfigs.length} model(s), ${agentRuntimes.length} runtime(s)).`,
     );
   }
 
@@ -340,7 +337,7 @@ export function assertEvalMatrixGuardrails(
     !options.guardrails.allowEstimatedCostOverride
   ) {
     throw new Error(
-      `Estimated matrix cost $${estimatedCostUsd.toFixed(2)} exceeds --max-estimated-cost-usd=${options.guardrails.maxEstimatedCostUsd} and requires --allow-estimated-cost to proceed.`,
+      `Estimated matrix cost $${estimatedCostUsd.toFixed(2)} for ${options.cases.length} case(s), ${options.modelConfigs.length} model(s), ${agentRuntimes.length} runtime(s) exceeds --max-estimated-cost-usd=${options.guardrails.maxEstimatedCostUsd} and requires --allow-estimated-cost to proceed.`,
     );
   }
 

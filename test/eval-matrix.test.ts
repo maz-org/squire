@@ -340,6 +340,7 @@ describe('eval matrix runner', () => {
         toolSurface: 'redesigned',
         selection: 'all',
         modelConfigs: DEFAULT_EVAL_MATRIX_MODELS,
+        agentRuntimes: ['claude-sdk', 'deep-agents'],
         runner,
         guardrails: {
           allowFullDataset: false,
@@ -351,7 +352,7 @@ describe('eval matrix runner', () => {
         },
         langfuseBaseUrl: 'https://langfuse.test',
       }),
-    ).rejects.toThrow(/requires --allow-full-dataset/);
+    ).rejects.toThrow(/2 case\(s\), 7 model\(s\), 2 runtime\(s\)/);
 
     await expect(
       runEvalMatrix({
@@ -360,6 +361,7 @@ describe('eval matrix runner', () => {
         toolSurface: 'redesigned',
         selection: 'id',
         modelConfigs: DEFAULT_EVAL_MATRIX_MODELS,
+        agentRuntimes: ['claude-sdk', 'deep-agents'],
         runner,
         guardrails: {
           allowFullDataset: false,
@@ -371,7 +373,7 @@ describe('eval matrix runner', () => {
         },
         langfuseBaseUrl: 'https://langfuse.test',
       }),
-    ).rejects.toThrow(/requires --allow-estimated-cost/);
+    ).rejects.toThrow(/1 case\(s\), 7 model\(s\), 2 runtime\(s\)/);
   });
 
   it('calculates row provider costs from model prices while keeping guardrail estimates', async () => {
