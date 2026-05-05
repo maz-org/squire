@@ -89,6 +89,23 @@ describe('parseEvalArgs', () => {
     });
   });
 
+  it('parses eval agent runtime selection', () => {
+    expect(parseEvalArgs(['--agent-runtime=deep-agents'])).toMatchObject({
+      agentRuntime: 'deep-agents',
+      matrixAgentRuntimes: ['deep-agents'],
+    });
+    expect(parseEvalArgs(['--agent-runtime=both']).matrixAgentRuntimes).toEqual([
+      'claude-sdk',
+      'deep-agents',
+    ]);
+  });
+
+  it('rejects unsupported eval agent runtimes', () => {
+    expect(() => parseEvalArgs(['--agent-runtime=langchain'])).toThrow(
+      /Invalid --agent-runtime: langchain/,
+    );
+  });
+
   it('defaults matrix guardrails to selected-case, low-cost runs', () => {
     expect(parseEvalArgs(['--matrix']).matrixGuardrails).toEqual({
       allowFullDataset: false,

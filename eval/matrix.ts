@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type {
   EvalMatrixGuardrails,
+  EvalAgentRuntime,
   EvalProvider,
   EvalProviderConfig,
   EvalReasoningEffort,
@@ -20,6 +21,7 @@ export type EvalMatrixSelection = 'id' | 'category' | 'all';
 
 export interface EvalMatrixRunnerInput {
   evalCase: EvalCase;
+  agentRuntime: EvalAgentRuntime;
   providerConfig: EvalProviderConfig;
   runLabel: string;
   toolSurface: EvalToolSurface;
@@ -56,6 +58,7 @@ export interface EvalMatrixRow {
   runLabel: string;
   caseId: string;
   category: string;
+  agentRuntime: EvalAgentRuntime;
   provider: EvalProvider;
   model: EvalProviderConfig['model'];
   ok: boolean;
@@ -106,6 +109,7 @@ export interface RunEvalMatrixOptions {
   toolSurface: EvalToolSurface;
   selection: EvalMatrixSelection;
   modelConfigs: EvalProviderConfig[];
+  agentRuntimes?: EvalAgentRuntime[];
   runner: EvalMatrixRunner;
   guardrails: EvalMatrixGuardrails;
   langfuseBaseUrl: string;
@@ -261,11 +265,13 @@ function slugPart(value: string): string {
 export function traceIdForMatrixRow(
   runLabel: string,
   evalCase: EvalCase,
+  agentRuntime: EvalAgentRuntime,
   providerConfig: EvalProviderConfig,
 ): string {
   return [
     'eval',
     slugPart(runLabel),
+    slugPart(agentRuntime),
     providerConfig.provider,
     slugPart(providerConfig.model),
     slugPart(evalCase.id),
@@ -276,8 +282,18 @@ export function langfuseTraceUrl(baseUrl: string, projectId: string, traceId: st
   return `${baseUrl.replace(/\/$/, '')}/project/${encodeURIComponent(projectId)}/traces/${encodeURIComponent(traceId)}`;
 }
 
-function estimateMatrixCost(cases: EvalCase[], configs: EvalProviderConfig[]): number {
-  return cases.length * configs.length * ESTIMATED_COST_PER_CASE_MODEL_USD;
+function estimateMatrixCost(
+  cases: EvalCase[],
+  configs: EvalProviderConfig[],
+  agentRuntimes: EvalAgentRuntime[],
+): number {
+  return cases.length * configs.length * agentRuntimes.length * ESTIMATED_COST_PER_CASE_MODEL_USD;
+}
+
+function agentRuntimesFor(options: { agentRuntimes?: EvalAgentRuntime[] }): EvalAgentRuntime[] {
+  return options.agentRuntimes && options.agentRuntimes.length > 0
+    ? options.agentRuntimes
+    : ['claude-sdk'];
 }
 
 function roundUsd(value: number): number {
@@ -302,9 +318,16 @@ function providerCostEstimateUsd(
 }
 
 export function assertEvalMatrixGuardrails(
-  options: Pick<RunEvalMatrixOptions, 'cases' | 'modelConfigs' | 'selection' | 'guardrails'>,
+  options: Pick<
+    RunEvalMatrixOptions,
+    'cases' | 'modelConfigs' | 'agentRuntimes' | 'selection' | 'guardrails'
+  >,
 ): void {
-  const estimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs);
+  const estimatedCostUsd = estimateMatrixCost(
+    options.cases,
+    options.modelConfigs,
+    agentRuntimesFor(options),
+  );
 
   if (options.selection === 'all' && !options.guardrails.allowFullDataset) {
     throw new Error(
@@ -402,6 +425,7 @@ function rowFromOutput(
     category: input.evalCase.category,
     provider: input.providerConfig.provider,
     model: input.providerConfig.model,
+    agentRuntime: input.agentRuntime,
     ok: output.ok,
     answer: output.answer,
     score: output.score,
@@ -443,6 +467,7 @@ function rowFromError(
     category: input.evalCase.category,
     provider: input.providerConfig.provider,
     model: input.providerConfig.model,
+    agentRuntime: input.agentRuntime,
     ok: false,
     answer: null,
     score: null,
@@ -509,7 +534,12 @@ async function runProviderQueue(
 }
 
 export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<EvalMatrixResult> {
-  const guardrailEstimatedCostUsd = estimateMatrixCost(options.cases, options.modelConfigs);
+  const agentRuntimes = agentRuntimesFor(options);
+  const guardrailEstimatedCostUsd = estimateMatrixCost(
+    options.cases,
+    options.modelConfigs,
+    agentRuntimes,
+  );
   assertEvalMatrixGuardrails(options);
   const configuredLangfuseProjectId = options.langfuseProjectId?.trim();
   const langfuseProjectId =
@@ -518,18 +548,26 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
       : 'default';
 
   const inputs = options.cases.flatMap((evalCase) =>
-    options.modelConfigs.map((providerConfig) => {
-      const traceId = traceIdForMatrixRow(options.runLabel, evalCase, providerConfig);
-      return {
-        evalCase,
-        providerConfig,
-        runLabel: options.runLabel,
-        toolSurface: options.toolSurface,
-        traceId,
-        traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, langfuseProjectId, traceId),
-        attempt: 1,
-      };
-    }),
+    agentRuntimes.flatMap((agentRuntime) =>
+      options.modelConfigs.map((providerConfig) => {
+        const traceId = traceIdForMatrixRow(
+          options.runLabel,
+          evalCase,
+          agentRuntime,
+          providerConfig,
+        );
+        return {
+          evalCase,
+          agentRuntime,
+          providerConfig,
+          runLabel: options.runLabel,
+          toolSurface: options.toolSurface,
+          traceId,
+          traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, langfuseProjectId, traceId),
+          attempt: 1,
+        };
+      }),
+    ),
   );
 
   let completed = 0;
@@ -550,11 +588,12 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
     ),
   );
   const unorderedRows = rowsByProvider.flat();
-  const rowKey = (row: EvalMatrixRow) => `${row.caseId}:${row.provider}:${row.model}`;
+  const rowKey = (row: EvalMatrixRow) =>
+    `${row.caseId}:${row.agentRuntime}:${row.provider}:${row.model}`;
   const rowsByKey = new Map(unorderedRows.map((row) => [rowKey(row), row]));
   const rows = inputs.map((input) =>
     rowsByKey.get(
-      `${input.evalCase.id}:${input.providerConfig.provider}:${input.providerConfig.model}`,
+      `${input.evalCase.id}:${input.agentRuntime}:${input.providerConfig.provider}:${input.providerConfig.model}`,
     ),
   );
 
@@ -573,13 +612,13 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tmodel\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
+    'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
   ];
   for (const row of rows) {
     lines.push(
       [
         row.caseId,
-        `${row.provider}:${row.model}`,
+        `${row.agentRuntime}:${row.provider}:${row.model}`,
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,
         formatNullable(row.score),

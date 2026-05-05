@@ -1,4 +1,5 @@
 export type EvalToolSurface = 'redesigned' | 'legacy';
+export type EvalAgentRuntime = 'claude-sdk' | 'deep-agents';
 export type EvalProvider = 'anthropic' | 'openai';
 export type EvalProviderModel =
   | 'claude-sonnet-4-6'
@@ -56,6 +57,8 @@ export interface EvalCliOptions {
   toolSurface: EvalToolSurface;
   localReportPath: string | undefined;
   providerConfig: EvalProviderConfig;
+  agentRuntime: EvalAgentRuntime;
+  matrixAgentRuntimes: EvalAgentRuntime[];
   replay: EvalReplayCliOptions | undefined;
   matrixMode: boolean;
   matrixGuardrails: EvalMatrixGuardrails;
@@ -91,6 +94,21 @@ function assertProvider(value: string): EvalProvider {
   if (value === 'anthropic' || value === 'openai') return value;
 
   throw new Error(`Invalid --provider: ${value}. Expected "anthropic" or "openai".`);
+}
+
+function assertAgentRuntime(value: string): EvalAgentRuntime {
+  if (value === 'claude-sdk' || value === 'deep-agents') return value;
+
+  throw new Error(
+    `Invalid --agent-runtime: ${value}. Expected "claude-sdk", "deep-agents", or "both".`,
+  );
+}
+
+function matrixAgentRuntimesFor(args: string[], env: NodeJS.ProcessEnv): EvalAgentRuntime[] {
+  const raw =
+    settingFor(args, '--agent-runtime=', env, 'SQUIRE_EVAL_AGENT_RUNTIME') ?? 'claude-sdk';
+  if (raw === 'both') return ['claude-sdk', 'deep-agents'];
+  return [assertAgentRuntime(raw)];
 }
 
 export function defaultEvalModelForProvider(provider: EvalProvider): EvalProviderModel {
@@ -260,6 +278,7 @@ export function parseEvalArgs(
     provider,
     settingFor(args, '--reasoning-effort=', env, 'SQUIRE_EVAL_REASONING_EFFORT'),
   );
+  const matrixAgentRuntimes = matrixAgentRuntimesFor(args, env);
 
   return {
     shouldSeed: args.includes('--seed'),
@@ -292,6 +311,8 @@ export function parseEvalArgs(
         'SQUIRE_EVAL_BROAD_SEARCH_SYNTHESIS_THRESHOLD',
       ),
     },
+    agentRuntime: matrixAgentRuntimes[0],
+    matrixAgentRuntimes,
     replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
     matrixMode: args.includes('--matrix'),
     matrixGuardrails: {

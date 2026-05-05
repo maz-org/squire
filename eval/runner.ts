@@ -42,6 +42,10 @@ function describeProviderConfig(config: EvalProviderConfig): string {
   return `${config.provider}:${config.model}${tuning.length > 0 ? ` (${tuning.join(', ')})` : ''}`;
 }
 
+function describeAgentRuntimes(runtimes: string[]): string {
+  return runtimes.join(',');
+}
+
 function formatProgressNullable(value: string | number | boolean | null | undefined): string {
   if (value === undefined || value === null) return '-';
   return String(value);
@@ -54,7 +58,7 @@ export function formatEvalMatrixProgress(event: EvalMatrixProgressEvent): string
   return [
     `[${completed}/${total}]`,
     status,
-    `${row.provider}:${row.model}`,
+    `${row.agentRuntime}:${row.provider}:${row.model}`,
     row.caseId,
     `failure=${row.failureClass}`,
     `score=${formatProgressNullable(row.score)}`,
@@ -74,6 +78,15 @@ function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): 
       `Eval provider config parsed as ${describeProviderConfig(config)}, but the provider runner is not implemented yet.`,
       'Supported eval providers are anthropic and openai.',
     ].join(' '),
+  );
+}
+
+function assertCurrentCommandSupportsAgentRuntime(options: EvalCliOptions): void {
+  if (options.matrixMode) return;
+  if (options.matrixAgentRuntimes.every((runtime) => runtime === 'claude-sdk')) return;
+
+  throw new Error(
+    'Deep Agents runtime is eval-matrix only; pass --matrix --agent-runtime=deep-agents.',
   );
 }
 
@@ -147,6 +160,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   }
 
   console.log(`Eval provider config: ${describeProviderConfig(options.providerConfig)}`);
+  console.log(`Eval agent runtime: ${describeAgentRuntimes(options.matrixAgentRuntimes)}`);
 
   if (options.shouldSeed) {
     const langfuse = new LangfuseClient({
@@ -157,6 +171,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   }
 
   assertCurrentRunnerSupportsProviderConfig(options.providerConfig);
+  assertCurrentCommandSupportsAgentRuntime(options);
 
   if (options.matrixMode) {
     const langfuseBaseUrl = env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL;
@@ -167,15 +182,18 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       : options.categoryFilter
         ? 'category'
         : 'all';
-    const modelConfigs = defaultEvalMatrixModels(options.providerConfig);
+    const modelConfigs = options.matrixAgentRuntimes.includes('deep-agents')
+      ? [options.providerConfig]
+      : defaultEvalMatrixModels(options.providerConfig);
     assertEvalMatrixGuardrails({
       cases,
       modelConfigs,
+      agentRuntimes: options.matrixAgentRuntimes,
       selection,
       guardrails: options.matrixGuardrails,
     });
     console.log(
-      `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
+      `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) and ${options.matrixAgentRuntimes.length} runtime(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
     );
     const matrixRunner = createEvalMatrixRunner(langfuse, env);
     const result = await runEvalMatrix({
@@ -184,6 +202,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       toolSurface: options.toolSurface,
       selection,
       modelConfigs,
+      agentRuntimes: options.matrixAgentRuntimes,
       runner: matrixRunner,
       guardrails: options.matrixGuardrails,
       langfuseBaseUrl,
@@ -216,6 +235,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       assertEvalMatrixGuardrails({
         cases,
         modelConfigs,
+        agentRuntimes: ['claude-sdk'],
         selection,
         guardrails,
       });
@@ -228,6 +248,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
         toolSurface: options.toolSurface,
         selection,
         modelConfigs,
+        agentRuntimes: ['claude-sdk'],
         runner: createEvalMatrixRunner(langfuse, env),
         guardrails,
         langfuseBaseUrl,

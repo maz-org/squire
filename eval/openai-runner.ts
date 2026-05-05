@@ -530,6 +530,7 @@ export async function runOpenAiResponsesEvalCase(
       datasetName: DATASET_NAME,
       caseId: options.evalCase.id,
       caseCategory: options.evalCase.category,
+      agentRuntime: 'claude-sdk',
       provider: 'openai',
       model: options.providerConfig.model,
       resolvedModel,

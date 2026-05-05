@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { LangfuseClient } from '@langfuse/client';
 import { EVAL_MODELS_BY_PROVIDER, type EvalProviderConfig } from './cli.ts';
 import { runAnthropicEvalCase, type AnthropicEvalCaseResult } from './anthropic-runner.ts';
+import { runDeepAgentsEvalCase } from './deep-agents-runner.ts';
 import {
   createOpenAiResponsesClient,
   runOpenAiResponsesEvalCase,
@@ -113,11 +114,40 @@ async function runAnthropicMatrixCase(
     providerConfig: assertAnthropicMatrixConfig(input.providerConfig),
     traceClient,
     traceId: input.traceId,
+    agentRuntime: 'claude-sdk',
     scoreResult: (runResult) =>
       traceScoresForEvalResult(anthropic, {
         evalCase: input.evalCase,
         answer: runResult.answer,
         toolCalls: runResult.trajectory.toolCalls,
+      }),
+  });
+
+  return outputFromTrace(result.trace, result.answer, true, input.traceUrl);
+}
+
+async function runDeepAgentsMatrixCase(
+  input: EvalMatrixRunnerInput,
+  anthropic: Anthropic,
+  traceClient: LangfuseTraceIngestionClient,
+): Promise<EvalMatrixRunnerOutput> {
+  if (input.providerConfig.provider !== 'anthropic') {
+    throw new Error('Deep Agents eval runtime currently supports Anthropic provider configs only.');
+  }
+  const result = await runDeepAgentsEvalCase({
+    case: input.evalCase,
+    runLabel: input.runLabel,
+    toolSurface: input.toolSurface,
+    providerConfig: assertAnthropicMatrixConfig(input.providerConfig),
+    traceClient,
+    traceId: input.traceId,
+    scoreResult: (runResult) =>
+      traceScoresForEvalResult(anthropic, {
+        evalCase: input.evalCase,
+        answer: runResult.answer,
+        toolCalls: runResult.trajectory.toolCalls.filter(
+          (toolCall) => !toolCall.name.startsWith('deep_agents.'),
+        ),
       }),
   });
 
@@ -166,6 +196,10 @@ export function createEvalMatrixRunner(
   const openAiClient = createOpenAiResponsesClient(env);
 
   return async (input) => {
+    if (input.agentRuntime === 'deep-agents') {
+      return runDeepAgentsMatrixCase(input, anthropic, traceClient);
+    }
+
     if (input.providerConfig.provider === 'anthropic') {
       return runAnthropicMatrixCase(input, anthropic, traceClient);
     }
