@@ -331,7 +331,18 @@ export function langfuseTraceWriter(client: LangfuseTraceIngestionClient): EvalT
 export function compositeEvalTraceWriter(writers: EvalTraceWriter[]): EvalTraceWriter {
   return {
     async writeTrace(input) {
-      for (const writer of writers) await writer.writeTrace(input);
+      const errors: unknown[] = [];
+      for (const writer of writers) {
+        try {
+          await writer.writeTrace(input);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'One or more trace writers failed.');
+      }
     },
   };
 }
