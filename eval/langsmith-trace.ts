@@ -100,6 +100,40 @@ function deterministicUuid(seed: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+export function langSmithRootRunIdForTraceId(traceId: string): string {
+  return deterministicUuid(`${traceId}:root`);
+}
+
+export function langSmithRunUrl(projectUrl: string, traceId: string): string {
+  return `${projectUrl.replace(/\/$/, '')}/r/${langSmithRootRunIdForTraceId(traceId)}?poll=true`;
+}
+
+function scoreValue(trace: EvalTraceInput, name: string): number | string | undefined {
+  return trace.judgeScores.find((score) => score.name === name)?.value;
+}
+
+function scoreNumber(trace: EvalTraceInput, name: string): number | undefined {
+  const value = scoreValue(trace, name);
+  return typeof value === 'number' ? value : undefined;
+}
+
+function primaryScore(trace: EvalTraceInput): number | undefined {
+  return scoreNumber(trace, 'correctness') ?? scoreNumber(trace, 'trajectory');
+}
+
+function failureClass(trace: EvalTraceInput): string {
+  const value = scoreValue(trace, 'failure_class');
+  if (typeof value === 'string') return value;
+  return trace.statusReason === 'completed' ? 'none' : trace.statusReason;
+}
+
+function passValue(trace: EvalTraceInput): boolean | undefined {
+  const value = scoreValue(trace, 'pass') ?? scoreValue(trace, 'trajectory_pass');
+  if (value === 'pass') return true;
+  if (value === 'fail') return false;
+  return undefined;
+}
+
 function commonMetadata(trace: EvalTraceInput): Record<string, unknown> {
   return {
     contractVersion: TRACE_CONTRACT_VERSION,
@@ -118,6 +152,10 @@ function commonMetadata(trace: EvalTraceInput): Record<string, unknown> {
     toolSchemaVersion: trace.toolSchemaVersion,
     toolSchemaHash: trace.toolSchemaHash,
     statusReason: trace.statusReason,
+    failureClass: failureClass(trace),
+    pass: passValue(trace),
+    score: primaryScore(trace),
+    trajectoryScore: scoreNumber(trace, 'trajectory'),
   };
 }
 
@@ -162,11 +200,21 @@ export function buildLangSmithRuns(
   config: Pick<LangSmithTraceConfig, 'projectName'>,
 ): LangSmithTracePayload {
   const trace = redactTracePayload(traceInput);
-  const rootRunId = deterministicUuid(`${trace.traceId}:root`);
+  const rootRunId = langSmithRootRunIdForTraceId(trace.traceId);
   const modelRunId = deterministicUuid(`${trace.traceId}:model`);
   const rootOrder = convertToDottedOrderFormat(Date.parse(trace.startedAt), rootRunId, 1);
   const modelOrder = convertToDottedOrderFormat(Date.parse(trace.startedAt), modelRunId, 2);
-  const tags = ['eval', trace.agentRuntime, trace.provider, trace.model, trace.runLabel];
+  const tags = [
+    'eval',
+    trace.agentRuntime,
+    trace.provider,
+    trace.model,
+    trace.runLabel,
+    `case:${trace.caseId}`,
+    `category:${trace.caseCategory}`,
+    `failure:${failureClass(trace)}`,
+    `pass:${passValue(trace) === true ? 'true' : passValue(trace) === false ? 'false' : 'unknown'}`,
+  ];
   const rootRun: LangSmithRunCreate = {
     id: rootRunId,
     name: 'eval.case',
@@ -305,4 +353,14 @@ export function createLangSmithTraceWriterFromEnv(env: NodeJS.ProcessEnv): EvalT
       workspaceId: config.workspaceId,
     }),
   });
+}
+
+export async function langSmithProjectUrlFromEnv(env: NodeJS.ProcessEnv): Promise<string> {
+  const config = langSmithTraceConfigFromEnv(env);
+  const client = new Client({
+    apiKey: config.apiKey,
+    apiUrl: config.apiUrl,
+    workspaceId: config.workspaceId,
+  });
+  return client.getProjectUrl({ projectName: config.projectName });
 }
