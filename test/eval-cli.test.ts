@@ -68,6 +68,7 @@ describe('parseEvalArgs', () => {
     expect(
       parseEvalArgs([
         '--matrix',
+        '--langsmith-tracing',
         '--allow-full-dataset',
         '--allow-estimated-cost',
         '--max-estimated-cost-usd=2.5',
@@ -78,6 +79,7 @@ describe('parseEvalArgs', () => {
       ]),
     ).toMatchObject({
       matrixMode: true,
+      langsmithTracing: true,
       matrixGuardrails: {
         allowFullDataset: true,
         allowEstimatedCostOverride: true,
@@ -87,6 +89,14 @@ describe('parseEvalArgs', () => {
         providerConcurrency: { anthropic: 2, openai: 3 },
       },
     });
+  });
+
+  it('parses LangSmith tracing opt-in from the environment', () => {
+    expect(
+      parseEvalArgs([], new Date('2026-05-01T02:00:00Z'), {
+        SQUIRE_EVAL_LANGSMITH_TRACING: 'true',
+      }).langsmithTracing,
+    ).toBe(true);
   });
 
   it('parses eval agent runtime selection', () => {

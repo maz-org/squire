@@ -195,7 +195,9 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
     console.log(
       `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) and ${options.matrixAgentRuntimes.length} runtime(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
     );
-    const matrixRunner = createEvalMatrixRunner(langfuse, env);
+    const matrixRunner = createEvalMatrixRunner(langfuse, env, {
+      langsmithTracing: options.langsmithTracing,
+    });
     const result = await runEvalMatrix({
       cases,
       runLabel: options.runName,
@@ -249,7 +251,9 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
         selection,
         modelConfigs,
         agentRuntimes: ['claude-sdk'],
-        runner: createEvalMatrixRunner(langfuse, env),
+        runner: createEvalMatrixRunner(langfuse, env, {
+          langsmithTracing: options.langsmithTracing,
+        }),
         guardrails,
         langfuseBaseUrl,
         langfuseProjectId: env.LANGFUSE_PROJECT_ID,

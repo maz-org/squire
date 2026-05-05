@@ -24,6 +24,7 @@ import {
   type EvalTraceInput,
   type EvalTraceScore,
   type EvalTraceToolCall,
+  type EvalTraceWriter,
   type LangfuseTraceIngestionClient,
 } from './trace.ts';
 
@@ -44,10 +45,19 @@ export interface RunDeepAgentsEvalCaseOptions {
   toolSurface: EvalToolSurface;
   providerConfig: DeepAgentsAnthropicConfig;
   traceClient?: LangfuseTraceIngestionClient;
+  traceWriter?: EvalTraceWriter;
   traceId?: string;
   judgeScores?: EvalTraceScore[];
   scoreResult?: (result: AgentRunResult) => Promise<EvalTraceScore[] | undefined>;
   now?: () => Date;
+}
+
+async function writeTrace(options: RunDeepAgentsEvalCaseOptions, trace: EvalTraceInput) {
+  if (options.traceWriter) {
+    await options.traceWriter.writeTrace(trace);
+    return;
+  }
+  if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
 }
 
 export interface DeepAgentsEvalCaseResult extends AgentRunResult {
@@ -374,10 +384,10 @@ async function writeFailureTrace(
   endedAt: string,
   durationMs: number,
 ): Promise<void> {
-  if (!options.traceClient) return;
+  if (!options.traceClient && !options.traceWriter) return;
   const statusReason = failureStatus(error);
   const message = error instanceof Error ? error.message : String(error);
-  await writeEvalTrace(options.traceClient, {
+  await writeTrace(options, {
     traceId,
     generationId: `${traceId}:generation`,
     runLabel: options.runLabel,
@@ -558,7 +568,7 @@ export async function runDeepAgentsEvalCase(
       toolCalls: traceToolCallsFor(result),
       judgeScores,
     };
-    if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
+    await writeTrace(options, trace);
     return {
       ...result,
       durationMs,
