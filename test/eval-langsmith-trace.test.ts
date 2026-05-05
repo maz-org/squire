@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildLangSmithRuns,
   createLangSmithTraceWriter,
+  langSmithRootRunIdForTraceId,
+  langSmithRunUrl,
   langSmithTraceConfigFromEnv,
   langSmithTracingEnabled,
   type LangSmithTraceClient,
@@ -161,8 +163,17 @@ describe('LangSmith eval trace writer', () => {
           provider: 'openai',
           model: 'gpt-5.5',
           runLabel: 'sqr-162-test-run',
+          failureClass: 'none',
+          pass: true,
+          score: 1,
         }),
       },
+      tags: expect.arrayContaining([
+        'case:case-1',
+        'category:buildings',
+        'failure:none',
+        'pass:true',
+      ]),
     });
     expect(payload.runs[1]).toMatchObject({
       name: 'eval.model_call',
@@ -207,6 +218,45 @@ describe('LangSmith eval trace writer', () => {
     expect(JSON.stringify(payload)).not.toContain('sk-tool-secret');
     expect(JSON.stringify(payload)).not.toContain('session-secret');
     expect(JSON.stringify(payload)).not.toContain('player@example.test');
+  });
+
+  it('builds deterministic run URLs for matrix reports', () => {
+    expect(
+      langSmithRunUrl(
+        'https://smith.langchain.com/o/org-id/projects/p/project-id/',
+        baseTrace.traceId,
+      ),
+    ).toBe(
+      `https://smith.langchain.com/o/org-id/projects/p/project-id/r/${langSmithRootRunIdForTraceId(
+        baseTrace.traceId,
+      )}?poll=true`,
+    );
+  });
+
+  it('maps trajectory-only pass policy into filterable LangSmith facts', () => {
+    const payload = buildLangSmithRuns(
+      {
+        ...baseTrace,
+        judgeScores: [
+          { name: 'failure_class', value: 'none' },
+          { name: 'trajectory', value: 0 },
+          { name: 'trajectory_pass', value: 'fail', comment: 'missing required ref' },
+        ],
+      },
+      { projectName: 'squire-evals' },
+    );
+
+    expect(payload.runs[0]).toMatchObject({
+      extra: {
+        metadata: expect.objectContaining({
+          failureClass: 'none',
+          pass: false,
+          score: 0,
+          trajectoryScore: 0,
+        }),
+      },
+      tags: expect.arrayContaining(['failure:none', 'pass:false']),
+    });
   });
 
   it('wraps primitive tool arguments and results in LangSmith object payloads', () => {

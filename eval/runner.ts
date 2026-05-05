@@ -10,6 +10,7 @@ import { compareEvalRuns, formatEvalRunComparison, readEvalMatrixReport } from '
 import { evalCaseHasFinalAnswer } from './schema.ts';
 import { runFiltered, runOnDataset } from './experiments.ts';
 import { runLocalReport } from './local-report.ts';
+import { langSmithProjectUrlFromEnv } from './langsmith-trace.ts';
 import { runOpenAiLocalReport } from './openai-runner.ts';
 import {
   assertEvalMatrixGuardrails,
@@ -198,6 +199,9 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
     const matrixRunner = createEvalMatrixRunner(langfuse, env, {
       langsmithTracing: options.langsmithTracing,
     });
+    const langsmithProjectUrl = options.langsmithTracing
+      ? await langSmithProjectUrlFromEnv(env)
+      : undefined;
     const result = await runEvalMatrix({
       cases,
       runLabel: options.runName,
@@ -209,6 +213,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       guardrails: options.matrixGuardrails,
       langfuseBaseUrl,
       langfuseProjectId,
+      langsmithProjectUrl,
       onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
     });
 
@@ -244,6 +249,9 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       console.log(
         `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
       );
+      const langsmithProjectUrl = options.langsmithTracing
+        ? await langSmithProjectUrlFromEnv(env)
+        : undefined;
       const result = await runEvalMatrix({
         cases,
         runLabel: options.runName,
@@ -257,6 +265,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
         guardrails,
         langfuseBaseUrl,
         langfuseProjectId: env.LANGFUSE_PROJECT_ID,
+        langsmithProjectUrl,
         onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
       });
       console.log(formatEvalMatrixTable(result.rows));

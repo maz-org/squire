@@ -15,6 +15,7 @@ import {
   type EvalMatrixRunSettings,
   type EvalModelSettings,
 } from './run-metadata.ts';
+import { langSmithRunUrl } from './langsmith-trace.ts';
 import type { EvalCase } from './schema.ts';
 
 export type EvalMatrixSelection = 'id' | 'category' | 'all';
@@ -27,6 +28,7 @@ export interface EvalMatrixRunnerInput {
   toolSurface: EvalToolSurface;
   traceId: string;
   traceUrl: string;
+  langsmithTraceUrl?: string;
   attempt: number;
 }
 
@@ -35,6 +37,7 @@ export interface EvalMatrixRunnerOutput {
   answer: string;
   traceId: string;
   traceUrl: string;
+  langsmithTraceUrl?: string;
   runUrl?: string;
   score: number | null;
   pass: boolean | null;
@@ -79,6 +82,7 @@ export interface EvalMatrixRow {
   failureClass: string;
   traceId: string;
   traceUrl: string;
+  langsmithTraceUrl?: string;
   promptVersion: string;
   promptHash: string;
   toolSurface: EvalToolSurface;
@@ -114,6 +118,7 @@ export interface RunEvalMatrixOptions {
   guardrails: EvalMatrixGuardrails;
   langfuseBaseUrl: string;
   langfuseProjectId?: string;
+  langsmithProjectUrl?: string;
   onProgress?: (event: EvalMatrixProgressEvent) => void;
 }
 
@@ -441,6 +446,7 @@ function rowFromOutput(
     failureClass: output.failureClass,
     traceId: output.traceId,
     traceUrl: output.traceUrl,
+    langsmithTraceUrl: output.langsmithTraceUrl ?? input.langsmithTraceUrl,
     ...compatibility,
     modelSettings: {
       ...evalModelSettingsFor(input.providerConfig),
@@ -483,6 +489,7 @@ function rowFromError(
     failureClass: failureClassForError(error),
     traceId: input.traceId,
     traceUrl: input.traceUrl,
+    langsmithTraceUrl: input.langsmithTraceUrl,
     ...compatibility,
     modelSettings: evalModelSettingsFor(input.providerConfig),
     runSettings: evalMatrixRunSettingsFor(guardrails),
@@ -561,6 +568,9 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
           toolSurface: options.toolSurface,
           traceId,
           traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, langfuseProjectId, traceId),
+          langsmithTraceUrl: options.langsmithProjectUrl
+            ? langSmithRunUrl(options.langsmithProjectUrl, traceId)
+            : undefined,
           attempt: 1,
         };
       }),
@@ -609,7 +619,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
+    'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -628,6 +638,7 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.retryCount,
         formatNullable(row.loopIterations),
         row.traceUrl,
+        row.langsmithTraceUrl ?? '',
         row.error ?? '',
       ].join('\t'),
     );

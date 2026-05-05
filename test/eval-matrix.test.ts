@@ -38,11 +38,12 @@ const secondCase: EvalCase = {
 };
 
 function successfulRunner(): EvalMatrixRunner {
-  return vi.fn(async ({ evalCase, providerConfig, traceId, traceUrl }) => ({
+  return vi.fn(async ({ evalCase, providerConfig, traceId, traceUrl, langsmithTraceUrl }) => ({
     ok: true,
     answer: `${providerConfig.model} answered ${evalCase.id}`,
     traceId,
     traceUrl,
+    langsmithTraceUrl,
     score: 0.8,
     pass: true,
     latencyMs: 1200,
@@ -84,6 +85,43 @@ describe('eval matrix runner', () => {
     });
 
     expect(result.rows[0]?.traceUrl).toContain('/project/default/traces/');
+  });
+
+  it('adds LangSmith row links when a project URL is provided', async () => {
+    const runner = successfulRunner();
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-langsmith-links',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+      langfuseProjectId: 'project-123',
+      langsmithProjectUrl: 'https://smith.langchain.com/o/org-id/projects/p/project-id',
+    });
+
+    expect(runner).toHaveBeenCalledWith(
+      expect.objectContaining({
+        langsmithTraceUrl: expect.stringContaining(
+          'https://smith.langchain.com/o/org-id/projects/p/project-id/r/',
+        ),
+      }),
+    );
+    expect(result.rows[0]?.langsmithTraceUrl).toContain(
+      'https://smith.langchain.com/o/org-id/projects/p/project-id/r/',
+    );
+    expect(formatEvalMatrixTable(result.rows)).toContain('langsmith_trace');
+    expect(formatEvalMatrixTable(result.rows)).toContain('https://smith.langchain.com/');
   });
 
   it('runs one selected case across every configured provider/model', async () => {
@@ -656,7 +694,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
+      'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');
