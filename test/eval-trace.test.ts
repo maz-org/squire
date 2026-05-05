@@ -4,6 +4,7 @@ import { DATASET_NAME } from '../eval/dataset.ts';
 import { OPENAI_TOOL_SCHEMA_VERSION, getOpenAiToolSchemaHash } from '../eval/openai-schema.ts';
 import {
   buildEvalTraceIngestionBatch,
+  compositeEvalTraceWriter,
   redactTracePayload,
   writeEvalTrace,
   type EvalTraceInput,
@@ -357,5 +358,42 @@ describe('SQR-127 eval trace writer', () => {
     await expect(writeEvalTrace(client, baseTrace)).rejects.toThrow(
       'Langfuse trace ingestion failed',
     );
+  });
+
+  it('attempts every composite trace writer before surfacing one failure', async () => {
+    const attempted: string[] = [];
+    const writer = compositeEvalTraceWriter([
+      {
+        async writeTrace() {
+          attempted.push('first');
+          throw new Error('first failed');
+        },
+      },
+      {
+        async writeTrace() {
+          attempted.push('second');
+        },
+      },
+    ]);
+
+    await expect(writer.writeTrace(baseTrace)).rejects.toThrow('first failed');
+    expect(attempted).toEqual(['first', 'second']);
+  });
+
+  it('throws an aggregate error after multiple composite trace writers fail', async () => {
+    const writer = compositeEvalTraceWriter([
+      {
+        async writeTrace() {
+          throw new Error('first failed');
+        },
+      },
+      {
+        async writeTrace() {
+          throw new Error('second failed');
+        },
+      },
+    ]);
+
+    await expect(writer.writeTrace(baseTrace)).rejects.toThrow(AggregateError);
   });
 });

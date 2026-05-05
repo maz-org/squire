@@ -59,6 +59,7 @@ export interface EvalCliOptions {
   providerConfig: EvalProviderConfig;
   agentRuntime: EvalAgentRuntime;
   matrixAgentRuntimes: EvalAgentRuntime[];
+  langsmithTracing: boolean;
   replay: EvalReplayCliOptions | undefined;
   matrixMode: boolean;
   matrixGuardrails: EvalMatrixGuardrails;
@@ -246,6 +247,11 @@ function comparisonOptionsFor(args: string[]): EvalRunComparisonCliOptions | und
   };
 }
 
+function booleanEnvEnabled(value: string | undefined): boolean {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes';
+}
+
 export function parseEvalArgs(
   args: string[],
   now = new Date(),
@@ -313,6 +319,8 @@ export function parseEvalArgs(
     },
     agentRuntime: matrixAgentRuntimes[0],
     matrixAgentRuntimes,
+    langsmithTracing:
+      args.includes('--langsmith-tracing') || booleanEnvEnabled(env.SQUIRE_EVAL_LANGSMITH_TRACING),
     replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
     matrixMode: args.includes('--matrix'),
     matrixGuardrails: {

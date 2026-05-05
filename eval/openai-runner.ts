@@ -23,6 +23,7 @@ import {
   type EvalTraceInput,
   type EvalTraceScore,
   type EvalTraceToolCall,
+  type EvalTraceWriter,
   type LangfuseTraceIngestionClient,
 } from './trace.ts';
 import { TRACE_CONTRACT_VERSION } from './trace-contract.ts';
@@ -128,6 +129,7 @@ export interface RunOpenAiResponsesEvalCaseOptions {
   runLabel: string;
   toolSurface: EvalToolSurface;
   traceClient?: LangfuseTraceIngestionClient;
+  traceWriter?: EvalTraceWriter;
   traceId?: string;
   judgeScores?: EvalTraceScore[];
   scoreResult?: (result: OpenAiResponsesScorableResult) => Promise<EvalTraceScore[] | undefined>;
@@ -150,6 +152,14 @@ export class OpenAiEvalRunnerError extends Error {
     this.failureClass = failureClass;
     this.status = status;
   }
+}
+
+async function writeTrace(options: RunOpenAiResponsesEvalCaseOptions, trace: EvalTraceInput) {
+  if (options.traceWriter) {
+    await options.traceWriter.writeTrace(trace);
+    return;
+  }
+  if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
 }
 
 export function classifyOpenAiResponsesFailure(
@@ -611,7 +621,7 @@ export async function runOpenAiResponsesEvalCase(
       ok ? answer : null,
       resultScores,
     );
-    if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
+    await writeTrace(options, trace);
     return {
       ok,
       answer,

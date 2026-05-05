@@ -9,6 +9,7 @@ import {
   type OpenAiResponsesClient,
   type OpenAiResponsesEvalResult,
 } from './openai-runner.ts';
+import { createLangSmithTraceWriterFromEnv } from './langsmith-trace.ts';
 import {
   ESTIMATED_COST_PER_CASE_MODEL_USD,
   type EvalMatrixRunner,
@@ -16,7 +17,13 @@ import {
   type EvalMatrixRunnerOutput,
 } from './matrix.ts';
 import { passFromTraceScores, scoreFromTraceScores, traceScoresForEvalResult } from './scoring.ts';
-import type { EvalTraceInput, LangfuseTraceIngestionClient } from './trace.ts';
+import {
+  compositeEvalTraceWriter,
+  langfuseTraceWriter,
+  type EvalTraceInput,
+  type EvalTraceWriter,
+  type LangfuseTraceIngestionClient,
+} from './trace.ts';
 
 type AnthropicMatrixConfig = EvalProviderConfig & {
   provider: 'anthropic';
@@ -106,6 +113,7 @@ async function runAnthropicMatrixCase(
   input: EvalMatrixRunnerInput,
   anthropic: Anthropic,
   traceClient: LangfuseTraceIngestionClient,
+  traceWriter: EvalTraceWriter | undefined,
 ): Promise<EvalMatrixRunnerOutput> {
   const result: AnthropicEvalCaseResult = await runAnthropicEvalCase({
     case: input.evalCase,
@@ -113,6 +121,7 @@ async function runAnthropicMatrixCase(
     toolSurface: input.toolSurface,
     providerConfig: assertAnthropicMatrixConfig(input.providerConfig),
     traceClient,
+    traceWriter,
     traceId: input.traceId,
     agentRuntime: 'claude-sdk',
     scoreResult: (runResult) =>
@@ -130,6 +139,7 @@ async function runDeepAgentsMatrixCase(
   input: EvalMatrixRunnerInput,
   anthropic: Anthropic,
   traceClient: LangfuseTraceIngestionClient,
+  traceWriter: EvalTraceWriter | undefined,
 ): Promise<EvalMatrixRunnerOutput> {
   if (input.providerConfig.provider !== 'anthropic') {
     throw new Error('Deep Agents eval runtime currently supports Anthropic provider configs only.');
@@ -140,6 +150,7 @@ async function runDeepAgentsMatrixCase(
     toolSurface: input.toolSurface,
     providerConfig: assertAnthropicMatrixConfig(input.providerConfig),
     traceClient,
+    traceWriter,
     traceId: input.traceId,
     scoreResult: (runResult) =>
       traceScoresForEvalResult(anthropic, {
@@ -158,6 +169,7 @@ async function runOpenAiMatrixCase(
   input: EvalMatrixRunnerInput,
   anthropic: Anthropic,
   traceClient: LangfuseTraceIngestionClient,
+  traceWriter: EvalTraceWriter | undefined,
   client: OpenAiResponsesClient,
   env: NodeJS.ProcessEnv,
 ): Promise<EvalMatrixRunnerOutput> {
@@ -168,6 +180,7 @@ async function runOpenAiMatrixCase(
     runLabel: input.runLabel,
     toolSurface: input.toolSurface,
     traceClient,
+    traceWriter,
     traceId: input.traceId,
     env,
     scoreResult: async (runResult) =>
@@ -190,22 +203,29 @@ async function runOpenAiMatrixCase(
 export function createEvalMatrixRunner(
   langfuse: LangfuseClient,
   env: NodeJS.ProcessEnv = process.env,
+  options: { langsmithTracing?: boolean } = {},
 ): EvalMatrixRunner {
   const anthropic = new Anthropic();
   const traceClient = traceClientFor(langfuse);
+  const traceWriter = options.langsmithTracing
+    ? compositeEvalTraceWriter([
+        langfuseTraceWriter(traceClient),
+        createLangSmithTraceWriterFromEnv(env),
+      ])
+    : undefined;
   const openAiClient = createOpenAiResponsesClient(env);
 
   return async (input) => {
     if (input.agentRuntime === 'deep-agents') {
-      return runDeepAgentsMatrixCase(input, anthropic, traceClient);
+      return runDeepAgentsMatrixCase(input, anthropic, traceClient, traceWriter);
     }
 
     if (input.providerConfig.provider === 'anthropic') {
-      return runAnthropicMatrixCase(input, anthropic, traceClient);
+      return runAnthropicMatrixCase(input, anthropic, traceClient, traceWriter);
     }
 
     if (input.providerConfig.provider === 'openai') {
-      return runOpenAiMatrixCase(input, anthropic, traceClient, openAiClient, env);
+      return runOpenAiMatrixCase(input, anthropic, traceClient, traceWriter, openAiClient, env);
     }
 
     throw new Error(`Matrix runner does not support provider ${input.providerConfig.provider}.`);

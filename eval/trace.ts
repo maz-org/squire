@@ -28,6 +28,10 @@ export interface LangfuseTraceIngestionClient {
   };
 }
 
+export interface EvalTraceWriter {
+  writeTrace: (input: EvalTraceInput) => Promise<void>;
+}
+
 export interface EvalTraceScore {
   name: string;
   value: number | string;
@@ -316,4 +320,29 @@ export async function writeEvalTrace(
   if (Array.isArray(errors) && errors.length > 0) {
     throw new Error(`Langfuse trace ingestion failed: ${JSON.stringify(errors)}`);
   }
+}
+
+export function langfuseTraceWriter(client: LangfuseTraceIngestionClient): EvalTraceWriter {
+  return {
+    writeTrace: (input) => writeEvalTrace(client, input),
+  };
+}
+
+export function compositeEvalTraceWriter(writers: EvalTraceWriter[]): EvalTraceWriter {
+  return {
+    async writeTrace(input) {
+      const errors: unknown[] = [];
+      for (const writer of writers) {
+        try {
+          await writer.writeTrace(input);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'One or more trace writers failed.');
+      }
+    },
+  };
 }

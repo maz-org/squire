@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  mockCreateLangSmithTraceWriterFromEnv,
   mockCreateOpenAiResponsesClient,
   mockRunAnthropicEvalCase,
   mockRunDeepAgentsEvalCase,
   mockRunOpenAiResponsesEvalCase,
   mockTraceScoresForEvalResult,
 } = vi.hoisted(() => ({
+  mockCreateLangSmithTraceWriterFromEnv: vi.fn(),
   mockCreateOpenAiResponsesClient: vi.fn(),
   mockRunAnthropicEvalCase: vi.fn(),
   mockRunDeepAgentsEvalCase: vi.fn(),
@@ -25,6 +27,10 @@ vi.mock('../eval/deep-agents-runner.ts', () => ({
 vi.mock('../eval/openai-runner.ts', () => ({
   createOpenAiResponsesClient: mockCreateOpenAiResponsesClient,
   runOpenAiResponsesEvalCase: mockRunOpenAiResponsesEvalCase,
+}));
+
+vi.mock('../eval/langsmith-trace.ts', () => ({
+  createLangSmithTraceWriterFromEnv: mockCreateLangSmithTraceWriterFromEnv,
 }));
 
 vi.mock('../eval/scoring.ts', async (importOriginal) => {
@@ -128,6 +134,9 @@ describe('eval matrix runtime adapter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCreateOpenAiResponsesClient.mockReturnValue({ responses: { create: vi.fn() } });
+    mockCreateLangSmithTraceWriterFromEnv.mockReturnValue({
+      writeTrace: vi.fn(async () => undefined),
+    });
     mockTraceScoresForEvalResult.mockResolvedValue([
       { name: 'correctness', value: 0.8 },
       { name: 'pass', value: 'pass' },
@@ -191,6 +200,41 @@ describe('eval matrix runtime adapter', () => {
           provider: 'anthropic',
           model: 'claude-haiku-4-5',
         }),
+      }),
+    );
+  });
+
+  it('passes a composite trace writer when LangSmith tracing is enabled', async () => {
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'anthropic-trace',
+      trace: trace({ traceId: 'anthropic-trace' }),
+    });
+
+    const runner = createEvalMatrixRunner(
+      {} as never,
+      {
+        LANGSMITH_API_KEY: 'key',
+        LANGSMITH_PROJECT: 'squire-evals',
+        OPENAI_API_KEY: 'test-key',
+      },
+      { langsmithTracing: true },
+    );
+    await runner(input('anthropic'));
+
+    expect(mockCreateLangSmithTraceWriterFromEnv).toHaveBeenCalledWith(
+      expect.objectContaining({
+        LANGSMITH_API_KEY: 'key',
+        LANGSMITH_PROJECT: 'squire-evals',
+      }),
+    );
+    expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        traceClient: {},
+        traceWriter: expect.objectContaining({ writeTrace: expect.any(Function) }),
       }),
     );
   });
