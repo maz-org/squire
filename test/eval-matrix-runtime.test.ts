@@ -3,17 +3,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   mockCreateOpenAiResponsesClient,
   mockRunAnthropicEvalCase,
+  mockRunDeepAgentsEvalCase,
   mockRunOpenAiResponsesEvalCase,
   mockTraceScoresForEvalResult,
 } = vi.hoisted(() => ({
   mockCreateOpenAiResponsesClient: vi.fn(),
   mockRunAnthropicEvalCase: vi.fn(),
+  mockRunDeepAgentsEvalCase: vi.fn(),
   mockRunOpenAiResponsesEvalCase: vi.fn(),
   mockTraceScoresForEvalResult: vi.fn(),
 }));
 
 vi.mock('../eval/anthropic-runner.ts', () => ({
   runAnthropicEvalCase: mockRunAnthropicEvalCase,
+}));
+
+vi.mock('../eval/deep-agents-runner.ts', () => ({
+  runDeepAgentsEvalCase: mockRunDeepAgentsEvalCase,
 }));
 
 vi.mock('../eval/openai-runner.ts', () => ({
@@ -52,6 +58,7 @@ function trace(overrides: Partial<EvalTraceInput> = {}): EvalTraceInput {
     datasetName: 'squire-evals',
     caseId: evalCase.id,
     caseCategory: evalCase.category,
+    agentRuntime: 'claude-sdk',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
     resolvedModel: 'claude-sonnet-4-6',
@@ -89,6 +96,7 @@ function trace(overrides: Partial<EvalTraceInput> = {}): EvalTraceInput {
 function input(provider: 'anthropic' | 'openai'): EvalMatrixRunnerInput {
   return {
     evalCase,
+    agentRuntime: 'claude-sdk',
     providerConfig: {
       provider,
       model: provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-5.5',
@@ -183,6 +191,57 @@ describe('eval matrix runtime adapter', () => {
           provider: 'anthropic',
           model: 'claude-haiku-4-5',
         }),
+      }),
+    );
+  });
+
+  it('routes Deep Agents runtime through the Deep Agents runner without changing provider identity', async () => {
+    mockRunDeepAgentsEvalCase.mockImplementation(async (options) => {
+      await options.scoreResult({
+        answer: 'Spyglass reveals the top card.',
+        trajectory: {
+          toolCalls: [{ name: 'deep_agents.write_todos' }, { name: 'inspect_sources' }],
+        },
+      });
+      return {
+        answer: 'Spyglass reveals the top card.',
+        trajectory: { toolCalls: [] },
+        durationMs: 1000,
+        toolSurface: 'redesigned',
+        traceId: 'deep-agents-trace',
+        trace: trace({
+          traceId: 'deep-agents-trace',
+          agentRuntime: 'deep-agents',
+        }),
+      };
+    });
+
+    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const output = await runner({
+      ...input('anthropic'),
+      agentRuntime: 'deep-agents',
+      traceId: 'deep-agents-trace',
+      traceUrl: 'https://langfuse.test/traces/deep-agents-trace',
+    });
+
+    expect(mockRunDeepAgentsEvalCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerConfig: expect.objectContaining({
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+        }),
+        traceId: 'deep-agents-trace',
+      }),
+    );
+    expect(output).toMatchObject({
+      traceId: 'deep-agents-trace',
+      traceUrl: 'https://langfuse.test/traces/deep-agents-trace',
+      failureClass: 'none',
+    });
+    expect(mockTraceScoresForEvalResult).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        toolCalls: [expect.objectContaining({ name: 'inspect_sources' })],
       }),
     );
   });

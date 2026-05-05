@@ -502,7 +502,7 @@ function collectCanonicalRefs(value: unknown, refs = new Set<string>()): Set<str
   return refs;
 }
 
-function summarizeToolOutput(content: string): { summary: string; canonicalRefs: string[] } {
+export function summarizeToolOutput(content: string): { summary: string; canonicalRefs: string[] } {
   try {
     const parsed = JSON.parse(content) as unknown;
     const canonicalRefs = [...collectCanonicalRefs(parsed)];

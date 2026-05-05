@@ -18,6 +18,7 @@ const baseTrace: EvalTraceInput = {
   datasetName: DATASET_NAME,
   caseId: 'case-1',
   caseCategory: 'buildings',
+  agentRuntime: 'claude-sdk',
   provider: 'openai',
   model: 'gpt-5.5',
   resolvedModel: 'gpt-5.5-2026-04-23',
@@ -142,6 +143,7 @@ describe('SQR-127 eval trace writer', () => {
       output: { finalAnswer: 'It can brew 2-herb potions.', statusReason: 'completed' },
       metadata: {
         contractVersion: TRACE_CONTRACT_VERSION,
+        agentRuntime: 'claude-sdk',
         provider: 'openai',
         model: 'gpt-5.5',
         resolvedModel: 'gpt-5.5-2026-04-23',

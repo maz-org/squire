@@ -8,7 +8,7 @@ import {
   type AgentRunResult,
   type AnthropicEvalModel,
 } from '../src/agent.ts';
-import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
+import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { DATASET_NAME } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import {
@@ -39,6 +39,7 @@ export interface RunAnthropicEvalCaseOptions {
   case: AnthropicEvalCase;
   runLabel: string;
   toolSurface: EvalToolSurface;
+  agentRuntime?: EvalAgentRuntime;
   providerConfig: EvalProviderConfig & {
     provider: 'anthropic';
     model: AnthropicEvalModel;
@@ -95,6 +96,7 @@ function traceIdFor(options: RunAnthropicEvalCaseOptions): string {
   return [
     'eval',
     options.runLabel,
+    options.agentRuntime ?? 'claude-sdk',
     options.providerConfig.provider,
     options.providerConfig.model,
     options.case.id,
@@ -193,6 +195,7 @@ async function writeSuccessTrace(
     datasetName: DATASET_NAME,
     caseId: options.case.id,
     caseCategory: options.case.category,
+    agentRuntime: options.agentRuntime ?? 'claude-sdk',
     provider: 'anthropic',
     model: options.providerConfig.model,
     resolvedModel: result.trajectory.model,
@@ -269,6 +272,7 @@ async function writeFailureTrace(
     datasetName: DATASET_NAME,
     caseId: options.case.id,
     caseCategory: options.case.category,
+    agentRuntime: options.agentRuntime ?? 'claude-sdk',
     provider: 'anthropic',
     model: options.providerConfig.model,
     resolvedModel: options.providerConfig.model,

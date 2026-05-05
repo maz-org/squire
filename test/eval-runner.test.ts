@@ -92,6 +92,7 @@ describe('eval runner', () => {
           runLabel: 'progress',
           caseId: 'rule-poison',
           category: 'rulebook',
+          agentRuntime: 'claude-sdk',
           provider: 'openai',
           model: 'gpt-5.4-mini',
           ok: true,
@@ -126,7 +127,7 @@ describe('eval runner', () => {
         },
       }),
     ).toBe(
-      '[3/7] pass openai:gpt-5.4-mini rule-poison failure=none score=1 latency=1234ms tokens=120 tools=2 loops=3',
+      '[3/7] pass claude-sdk:openai:gpt-5.4-mini rule-poison failure=none score=1 latency=1234ms tokens=120 tools=2 loops=3',
     );
   });
 
@@ -145,5 +146,13 @@ describe('eval runner', () => {
         {},
       ),
     ).rejects.toThrow(/requires --allow-estimated-cost/);
+  });
+
+  it('rejects Deep Agents outside matrix mode when both runtimes are requested', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await expect(
+      runEval(parseEvalArgs(['--agent-runtime=both', '--id=rule-poison']), {}),
+    ).rejects.toThrow(/Deep Agents runtime is eval-matrix only/);
   });
 });

@@ -37,6 +37,7 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     runLabel: 'before',
     caseId: 'building-alchemist',
     category: 'card-data',
+    agentRuntime: 'claude-sdk',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
     ok: true,

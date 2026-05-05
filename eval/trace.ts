@@ -77,6 +77,7 @@ export interface EvalTraceInput {
   datasetName: string;
   caseId: string;
   caseCategory: string;
+  agentRuntime: string;
   provider: 'anthropic' | 'openai';
   model: string;
   resolvedModel: string;
@@ -157,6 +158,7 @@ function redactValue(value: unknown): unknown {
 function requiredTraceMetadata(input: EvalTraceInput): Record<string, unknown> {
   return {
     contractVersion: TRACE_CONTRACT_VERSION,
+    agentRuntime: input.agentRuntime,
     provider: input.provider,
     model: input.model,
     resolvedModel: input.resolvedModel,
@@ -213,7 +215,7 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
       statusReason: input.statusReason,
     }),
     metadata: redactTracePayload(traceMetadata),
-    tags: ['eval', input.provider, input.model, input.runLabel],
+    tags: ['eval', input.agentRuntime, input.provider, input.model, input.runLabel],
   });
 
   const generationEvent = event(

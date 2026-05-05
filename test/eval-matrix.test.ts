@@ -142,6 +142,36 @@ describe('eval matrix runner', () => {
     );
   });
 
+  it('keeps Claude SDK and Deep Agents rows and traces distinct for the same provider model case', async () => {
+    const runner = successfulRunner();
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'runtime-compare',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      agentRuntimes: ['claude-sdk', 'deep-agents'],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langfuseBaseUrl: 'https://langfuse.test',
+      langfuseProjectId: 'project-123',
+    });
+
+    expect(result.rows.map((row) => row.agentRuntime)).toEqual(['claude-sdk', 'deep-agents']);
+    expect(result.rows.map((row) => row.traceId)).toEqual([
+      'eval:runtime-compare:claude-sdk:anthropic:claude-sonnet-4-6:item-spyglass',
+      'eval:runtime-compare:deep-agents:anthropic:claude-sonnet-4-6:item-spyglass',
+    ]);
+  });
+
   it('shares provider-safe tuning knobs across the default matrix models', () => {
     expect(
       defaultEvalMatrixModels({
@@ -624,7 +654,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tmodel\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
+      'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');
