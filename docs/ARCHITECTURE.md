@@ -675,23 +675,17 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 ## Deployment
 
-**Hosting (open, decision deferred — see [Open Tech Questions](#open-tech-questions)):**
+**Hosting:** Fly.io. A single `shared-cpu-1x@1GB` machine in one region runs the Hono server, MCP transport, and web UI in one process. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. Cloudflare sits in front as the WAF (Full Strict origin TLS, validated by Fly's Let's Encrypt cert). See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
 
-- **Fly.io** — VM-based, global regions, good Postgres story (Fly Postgres), Docker-native
-- **Railway** — simple deploys from a Dockerfile, included Postgres add-on, $5/mo hobby tier
-- **Render** — managed services + Postgres, similar to Railway, free tier for hobby
-- **Self-hosted VPS** (Hetzner, DigitalOcean) — most control, most ops work
-
-All four work with the Docker-first deployment plan. Cloudflare WAF sits in front regardless of host choice.
+The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) so SSE connections aren't severed by scale-to-zero. `idle_timeout` is configured at 600s, past the longest knowledge-agent tool loop.
 
 **CI/CD:**
 
 - Build and test on push
-- Deploy to staging on `main` merge
-- Deploy to production on release tag
-- Run database migrations as part of deploy
+- Deploy to production on release tag (no staging tier in Phase 1 — see ADR 0016)
+- Run `node scripts/db-migrate.ts` via Fly's `release_command` before traffic cutover; non-zero exit aborts the deploy and leaves the prior version live
 - Smoke test after deploy (hit `/api/health`)
-- Rollback capability
+- Rollback via `fly releases list` + `fly deploy --image <prior-sha>`
 
 ---
 
@@ -699,11 +693,11 @@ All four work with the Docker-first deployment plan. Cloudflare WAF sits in fron
 
 **Estimated monthly cost (Phase 1 MVP):**
 
-- Hosting: $0–10 (free tiers on Fly / Railway / Render, or hobby plan)
-- Postgres: $0–10 (included in host's free tier or hobby add-on)
+- Fly app (`shared-cpu-1x@1GB`, always-on): $6
+- Fly Managed Postgres (Basic, Shared-2x / 1GB / 1 TB cap): $38
 - Cloudflare WAF: $0 (free tier)
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
-- **Total: ~$10–50/month** for a single user with moderate usage
+- **Total: ~$55–75/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
 
 Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. Per-user daily budget circuit breakers, embedding caching, and model tiering (Haiku for cheap cases) are the primary mitigations. Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 6 and only apply if the screenshot path is chosen over the browser-extension or GHS-as-tracker alternatives.
 
@@ -805,13 +799,14 @@ For developer setup, running the server, working on import scripts locally, and 
 ## Open Tech Questions
 
 - **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
-- **Hosting platform.** Fly.io vs Railway vs Render vs self-hosted VPS — defer until Phase 1 deployment work begins.
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
 - **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
 ---
 
 ## Changelog
+
+- **2026-05-06:** SQR-59 picked the Phase 1 hosting platform: Fly.io app + Fly Managed Postgres (Basic) in one region, no staging. Cloudflare in front as WAF. App-to-DB traffic on private 6PN. Migrations run via `release_command` before traffic cutover. ARCHITECTURE.md §Deployment and §Cost updated to reflect the concrete pick. Reasoning, alternatives (Neon, Railway, Render, VPS, Cloudflare Workers), and re-evaluation triggers in [ADR 0016](adr/0016-phase-1-hosting-platform.md). Unblocks SQR-58 (WAF), SQR-42 (Dockerize), SQR-43 (migrate-on-deploy), SQR-44 (CI/CD).
 
 - **2026-04-26:** SQR-110 added a narrow synthesis guard to the knowledge agent loop. If a turn only calls `search_rules` and reaches three broad rule-corpus searches, the next model call runs without tools and is instructed to answer from the retrieved context. This preserves the full loop budget for scenario traversal and card lookups while preventing simple rules questions from spending all ten iterations on repeated searches. The eval dataset now includes `rule-looting-definition` for the original "What is looting?" failure mode.
 
