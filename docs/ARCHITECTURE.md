@@ -683,7 +683,7 @@ The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) 
 
 - Build and test on push
 - Deploy to production on release tag (no staging tier in Phase 1 — see ADR 0016)
-- Run `drizzle-kit migrate` via Fly's `release_command` before traffic cutover; non-zero exit aborts the deploy and leaves the prior version live
+- Run `node scripts/db-migrate.ts` via Fly's `release_command` before traffic cutover; non-zero exit aborts the deploy and leaves the prior version live
 - Smoke test after deploy (hit `/api/health`)
 - Rollback via `fly releases list` + `fly deploy --image <prior-sha>`
 
@@ -693,8 +693,8 @@ The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) 
 
 **Estimated monthly cost (Phase 1 MVP):**
 
-- Fly app (`shared-cpu-1x@1GB`, always-on): ~$6
-- Fly Managed Postgres (Basic, Shared-2x / 1GB / 1 TB cap): ~$38
+- Fly app (`shared-cpu-1x@1GB`, always-on): $6
+- Fly Managed Postgres (Basic, Shared-2x / 1GB / 1 TB cap): $38
 - Cloudflare WAF: $0 (free tier)
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
 - **Total: ~$55–75/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).

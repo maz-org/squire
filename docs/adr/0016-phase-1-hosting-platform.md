@@ -58,19 +58,19 @@ Postgres over Fly's private 6PN network — Postgres has no public ingress.
   runs on a temporary machine with the new image before traffic shifts, exiting
   non-zero aborts the deploy — exactly the SQR-43 contract. MPG Basic includes
   daily backups, point-in-time recovery, and connection pooling; pgvector is
-  available out of the box. App-to-DB traffic stays on private 6PN. Configurable
-  `idle_timeout` keeps SSE connections alive across the longest knowledge-agent
-  loops. Approximate Phase 1 cost: $5.92/mo app + $38/mo DB ≈ **$44/mo**, well
-  under budget with headroom for an APM tier later.
+  available out of the box. App-to-DB traffic stays on private 6PN. Approximate
+  Phase 1 cost: $5.92/mo app + $38/mo DB ≈ **$44/mo**, well under budget with
+  headroom for an APM tier later.
 
 - **Option B — Fly.io app + Neon (free tier) for Postgres.**
-  Cheapest combo at ~$6/mo total; Neon has first-class pgvector and PITR even
-  on the free tier. Rejected on single-vendor ergonomics: a solo maintainer
-  benefits more from one throat to choke than from saving $38/mo. Two billing
-  surfaces, two SLAs, and two failure modes for what would otherwise be a
-  single private-network hop. Kept on file as the fallback if MPG ever
-  disappoints — Drizzle migrations + Docker image make the swap a one-day
-  exercise.
+  Cheapest combo at ~$6/mo total; Neon has first-class pgvector and branching
+  with 24-hour restore-from-history on the free tier. Rejected on single-vendor
+  ergonomics: a solo maintainer benefits more from one throat to choke than
+  from saving $38/mo, and the 24h restore window is materially weaker than
+  MPG Basic's daily backups + 7-day PITR. Two billing surfaces, two SLAs, and
+  two failure modes for what would otherwise be a single private-network hop.
+  Kept on file as the fallback if MPG ever disappoints — Drizzle migrations +
+  Docker image make the swap a one-day exercise.
 
 - **Option C — Fly.io app + legacy unmanaged Fly Postgres.**
   Rejected. Fly's docs now lead with: _"We are not able to provide support or
@@ -119,9 +119,12 @@ Postgres over Fly's private 6PN network — Postgres has no public ingress.
 - **SQR-58 (Cloudflare WAF)** — origin is `https://<app>.fly.dev` (or a
   Fly-issued cert on a custom hostname). Cloudflare Full (Strict) works because
   Fly issues a Let's Encrypt cert for the public hostname.
-- **SQR-42 (Dockerize)** — Dockerfile must `EXPOSE 8080`, run as a non-root
-  user, run `npm run build:css` in the build stage, and bake `public/app.css`
-  into the runtime image (per ADR 0008).
+- **SQR-42 (Dockerize)** — multi-stage Node 24 Dockerfile that `EXPOSE 8080`s
+  and runs as a non-root user. No static asset baking — per
+  [ADR 0011](0011-on-demand-asset-pipeline.md), Tailwind compiles in-process on
+  first request and caches in module memory. Squire runs TypeScript directly
+  via Node 24 strip-types (no JS compile step), so the runtime stage carries
+  the `src/` tree and `node_modules`.
 - **SQR-43 (migrate on deploy)** — wire `release_command = "node scripts/db-migrate.ts"`
   into `fly.toml`. A non-zero exit code from the release machine aborts the
   deploy and leaves the prior version live, which is exactly the SQR-43
@@ -140,9 +143,11 @@ Postgres over Fly's private 6PN network — Postgres has no public ingress.
 - **One region.** Phase 1 has 1–2 users. Multi-region is a Phase 3+ concern;
   switching regions on Fly is a `fly.toml` edit.
 - **One machine, always-on.** `auto_stop_machines = "off"` and
-  `min_machines_running = 1` to prevent SSE connections from being severed by
-  scale-to-zero. Idle timeout configured to 600s, comfortably past the longest
-  knowledge-agent tool loop.
+  `min_machines_running = 1` so the machine never scales to zero — the primary
+  protection against SSE streams being severed mid-flight. `[http_service]
+idle_timeout` set to 600s as belt-and-suspenders for any brief silent gap
+  between streamed events; the always-on machine is the load-bearing setting,
+  not the timeout.
 - **Private DB only.** App reaches Postgres over 6PN; Postgres has no public
   ingress. DATABASE_URL is a Fly secret.
 - **Backups + PITR** are MPG Basic defaults; no separate backup tooling needed
