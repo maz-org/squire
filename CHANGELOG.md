@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7] - 2026-05-06
+
+### Changed
+
+- Picked the Phase 1 hosting platform: Fly.io app + Fly Managed Postgres (Basic) in one region, no staging tier. Cloudflare in front as the WAF. App-to-DB traffic stays on Fly's private 6PN. Migrations run via Fly's `release_command` before traffic cutover (failure aborts the deploy and leaves the prior version live).
+- Recorded reasoning, six alternatives evaluated (Neon-paired Fly, legacy unmanaged Fly Postgres, Railway, Render, VPS, Cloudflare Workers), and re-evaluation triggers in [ADR 0016](docs/adr/0016-phase-1-hosting-platform.md).
+- Updated `docs/ARCHITECTURE.md` §Deployment, §Cost, §Open Tech Questions, and §Changelog to reflect the concrete pick (production budget ~$55–75/mo within the $100/mo Phase 1 cap).
+
 ## [0.1.6] - 2026-04-29
 
 ### Changed
