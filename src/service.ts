@@ -103,8 +103,9 @@ export interface ServiceBootstrapStatus {
  *   init_failed -> warming_up | dependency_failed | boot_blocked
  *
  * Extension rules
- *   1. Keep health on snapshot reads only. Do not add live probes to
- *      getBootstrapStatus().
+ *   1. Keep request admission paths on snapshot reads only. Do not add live
+ *      probes to getBootstrapStatus(); production readiness probes live in
+ *      src/health.ts.
  *   2. A capability may be allowed only if every dependency it exercises on
  *      the request path is healthy. Example: rules require embeddings AND the
  *      embedder, so init_failed must block them.
@@ -461,8 +462,8 @@ export async function refreshBootstrapState(): Promise<ServiceBootstrapStatus> {
 }
 
 /**
- * Snapshot-only read for health and other observers. This must never trigger
- * live bootstrap probes or await dependency checks on the request path.
+ * Snapshot-only read for route gating and other observers. This must never
+ * trigger live bootstrap probes or await dependency checks on the request path.
  */
 export function getBootstrapStatus(): ServiceBootstrapStatus {
   return bootstrapStatus;

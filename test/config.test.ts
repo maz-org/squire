@@ -1,0 +1,110 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  formatServerConfigError,
+  resolveGoogleOAuthEnv,
+  validateServerEnv,
+} from '../src/config.ts';
+
+describe('validateServerEnv', () => {
+  const validProductionEnv = {
+    NODE_ENV: 'production',
+    DATABASE_URL: 'postgres://squire:squire@localhost:5432/squire',
+    ANTHROPIC_API_KEY: 'anthropic-key',
+    SESSION_SECRET: 'x'.repeat(32),
+    LANGFUSE_SECRET_KEY: 'langfuse-secret',
+    LANGFUSE_PUBLIC_KEY: 'langfuse-public',
+    LANGFUSE_BASEURL: 'https://us.cloud.langfuse.com',
+    GOOGLE_OAUTH_CLIENT_ID: 'google-client',
+    GOOGLE_OAUTH_CLIENT_SECRET: 'google-secret',
+  };
+
+  it('rejects missing production secrets with the missing variable names', () => {
+    const result = validateServerEnv({ NODE_ENV: 'production' });
+
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error('expected invalid env');
+    expect(result.error.missing).toEqual([
+      'DATABASE_URL',
+      'ANTHROPIC_API_KEY',
+      'SESSION_SECRET',
+      'LANGFUSE_SECRET_KEY',
+      'LANGFUSE_PUBLIC_KEY',
+      'LANGFUSE_BASEURL',
+      'GOOGLE_OAUTH_CLIENT_ID',
+      'GOOGLE_OAUTH_CLIENT_SECRET',
+    ]);
+    expect(formatServerConfigError(result.error)).toContain(
+      'Missing required environment variables',
+    );
+  });
+
+  it('applies production port and host defaults at the config boundary', () => {
+    const result = validateServerEnv(validProductionEnv);
+
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('expected valid env');
+    expect(result.data.port).toBe(8080);
+    expect(result.data.host).toBe('0.0.0.0');
+  });
+
+  it('allows development to use the managed local database default', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      NODE_ENV: 'development',
+      DATABASE_URL: undefined,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('expected valid env');
+    expect(result.data.port).toBeUndefined();
+    expect(result.data.host).toBeUndefined();
+  });
+
+  it('rejects malformed port and too-short session secrets', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      PORT: 'not-a-port',
+      SESSION_SECRET: 'short',
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error('expected invalid env');
+    expect(result.error.invalid).toEqual(
+      expect.arrayContaining([
+        { name: 'PORT', message: 'must be an integer between 1 and 65535' },
+        { name: 'SESSION_SECRET', message: 'must be at least 32 characters' },
+      ]),
+    );
+  });
+});
+
+describe('resolveGoogleOAuthEnv', () => {
+  it('reads the GOOGLE_OAUTH names used by production and local development', () => {
+    expect(
+      resolveGoogleOAuthEnv({
+        GOOGLE_OAUTH_CLIENT_ID: 'oauth-id',
+        GOOGLE_OAUTH_CLIENT_SECRET: 'oauth-secret',
+        GOOGLE_OAUTH_REDIRECT_URI: 'http://localhost:3000/auth/google/callback',
+      }),
+    ).toEqual({
+      clientId: 'oauth-id',
+      clientSecret: 'oauth-secret',
+      redirectUri: 'http://localhost:3000/auth/google/callback',
+    });
+  });
+
+  it('does not fall back to the removed legacy Google env names', () => {
+    expect(
+      resolveGoogleOAuthEnv({
+        GOOGLE_CLIENT_ID: 'legacy-id',
+        GOOGLE_CLIENT_SECRET: 'legacy-secret',
+        GOOGLE_REDIRECT_URI: 'http://localhost:3000/auth/google/callback',
+      }),
+    ).toEqual({
+      clientId: undefined,
+      clientSecret: undefined,
+      redirectUri: undefined,
+    });
+  });
+});

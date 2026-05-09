@@ -17,11 +17,11 @@ Create a `.env` file in the project root:
 ANTHROPIC_API_KEY=...
 
 # Google OAuth (required for web UI login)
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
 # Fallback callback for non-local hosts. For localhost sign-in, run on an
 # allowlisted port and the app derives the callback URI from request origin.
-GOOGLE_REDIRECT_URI=http://localhost:4450/auth/google/callback
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:4450/auth/google/callback
 SESSION_SECRET=<random 32+ character string>
 
 # Email allowlist (comma-separated, controls who can log in)
@@ -40,8 +40,8 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-`GOOGLE_REDIRECT_URI` is still the configured fallback callback for production
-and non-local hosts. In local development, `/auth/google/start` and
+`GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for
+production and non-local hosts. In local development, `/auth/google/start` and
 `/auth/google/callback` reuse the current `localhost` origin so linked
 worktrees can log in on their own ports. Google still requires exact
 redirect-URI matches. The localhost callback ports currently allowlisted for
@@ -163,9 +163,9 @@ Override with `PORT` if you want a specific port. On startup, the server logs
 the final port it selected. It binds the port immediately, then warms the
 retrieval stack in the background. If embeddings, card data, or
 scenario/section-book data are missing, startup no longer crashes;
-`/api/health` returns a coarse lifecycle snapshot immediately and query
-endpoints return `503` JSON errors until `npm run index` and the relevant
-seed step has been run (`npm run seed`, `npm run seed:cards`, or
+`/api/live` returns immediately and query endpoints return `503` JSON errors
+until `npm run index` and the relevant seed step has been run (`npm run seed`,
+`npm run seed:cards`, or
 `npm run seed:scenario-section-books`). Detailed bootstrap and dependency
 reasons are logged server-side.
 
@@ -187,7 +187,7 @@ Example health check for the main checkout:
 
 ```bash
 curl http://localhost:3000/api/health
-# {"lifecycle":"ready","ready":true,"warming_up":false}
+# {"status":"ok","db":{"status":"ok"},"vector":{"status":"ok"},"embedder":{"status":"ok"}}
 ```
 
 For linked worktrees, replace `3000` with that worktree's logged port. Do not
@@ -198,15 +198,16 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 
 ## REST API endpoints
 
-| Method | Path                         | Description                                                        |
-| ------ | ---------------------------- | ------------------------------------------------------------------ |
-| GET    | `/api/health`                | Snapshot-only readiness check (`lifecycle`, `ready`, `warming_up`) |
-| GET    | `/api/search/rules?q=&topK=` | Vector search over indexed Frosthaven book passages                |
-| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank`         |
-| GET    | `/api/card-types`            | List card types with record counts                                 |
-| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                              |
-| GET    | `/api/cards/:type/:id`       | Look up a single card                                              |
-| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)               |
+| Method | Path                         | Description                                                |
+| ------ | ---------------------------- | ---------------------------------------------------------- |
+| GET    | `/api/live`                  | Liveness probe; no dependency checks                       |
+| GET    | `/api/health`                | Readiness check (`status`, `db`, `vector`, `embedder`)     |
+| GET    | `/api/search/rules?q=&topK=` | Vector search over indexed Frosthaven book passages        |
+| GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
+| GET    | `/api/card-types`            | List card types with record counts                         |
+| GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                      |
+| GET    | `/api/cards/:type/:id`       | Look up a single card                                      |
+| POST   | `/api/ask`                   | Bundled RAG pipeline (`{ question }` → `{ answer }`)       |
 
 All errors return `{ error, status }` as JSON. Bootstrap and dependency details
 are logged server-side rather than returned from public endpoints.
@@ -220,8 +221,10 @@ Startup and readiness are modeled as an explicit lifecycle in
 [`src/service.ts`](../src/service.ts), not as route-local booleans. If you are
 adding a new endpoint or capability:
 
-- keep `/api/health` snapshot-only; do not add live DB probes or warmup waits
-  to the health path
+- keep request admission paths snapshot-only; do not add live DB probes or
+  warmup waits to `getBootstrapStatus()` or route gating. `/api/health` is the
+  production readiness probe and intentionally runs bounded
+  DB/vector/embedder checks.
 - map the endpoint to a capability based on the dependencies it actually uses
   on the request path, not just on nearby data being present
 - preserve request validation order: malformed requests should still return
