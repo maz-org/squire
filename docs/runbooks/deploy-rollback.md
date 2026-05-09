@@ -16,14 +16,14 @@ migration aborts the deploy and leaves the previous app image live.
 Run these once from the repo root:
 
 ```bash
-flyctl launch --no-deploy --name squire --region iad
+flyctl launch --no-deploy --name maz-squire --region iad
 flyctl mpg create \
   --name squire-db \
   --region iad \
   --plan Basic \
   --pg-major-version 16 \
   --volume-size 10
-flyctl mpg attach <cluster-id> --app squire --variable-name DATABASE_URL
+flyctl mpg attach <cluster-id> --app maz-squire --variable-name DATABASE_URL
 flyctl secrets set \
   ANTHROPIC_API_KEY='...' \
   SESSION_SECRET='...' \
@@ -50,7 +50,7 @@ flyctl deploy --local-only
 After the first real deploy:
 
 ```bash
-curl https://squire.fly.dev/api/health
+curl https://maz-squire.fly.dev/api/health
 ```
 
 `/api/live` is the cheap platform liveness check. `/api/health` is the

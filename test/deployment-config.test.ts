@@ -47,6 +47,7 @@ describe('deployment configuration', () => {
   it('uses Fly release commands for migrate-before-cutover deploys', async () => {
     const flyConfig = await readProjectFile('fly.toml');
 
+    expect(flyConfig).toContain('app = "maz-squire"');
     expect(flyConfig).toContain('release_command = "node scripts/db-migrate.ts"');
     expect(flyConfig).toContain('internal_port = 8080');
     expect(flyConfig).toContain('auto_stop_machines = "off"');

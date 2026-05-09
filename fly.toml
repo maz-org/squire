@@ -1,4 +1,4 @@
-app = "squire"
+app = "maz-squire"
 primary_region = "iad"
 
 [build]
