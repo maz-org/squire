@@ -26,6 +26,11 @@ const REQUIRED_SERVER_ENV = [
   'GOOGLE_OAUTH_CLIENT_SECRET',
 ] as const;
 
+function requiredServerEnv(nodeEnv: string): readonly (typeof REQUIRED_SERVER_ENV)[number][] {
+  if (nodeEnv === 'production') return REQUIRED_SERVER_ENV;
+  return REQUIRED_SERVER_ENV.filter((name) => name !== 'DATABASE_URL');
+}
+
 function isTestProcess(env: Env): boolean {
   return env.VITEST === 'true' || env.NODE_ENV === 'test';
 }
@@ -57,7 +62,7 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
   const nodeEnv = env.NODE_ENV ?? 'development';
   const missing = isTestProcess(env)
     ? []
-    : REQUIRED_SERVER_ENV.filter((name) => !hasText(env[name]));
+    : requiredServerEnv(nodeEnv).filter((name) => !hasText(env[name]));
   const invalid: ServerConfigError['invalid'] = [];
 
   const port = parsePort(env.PORT);

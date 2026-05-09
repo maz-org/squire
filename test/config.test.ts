@@ -48,6 +48,19 @@ describe('validateServerEnv', () => {
     expect(result.data.host).toBe('0.0.0.0');
   });
 
+  it('allows development to use the managed local database default', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      NODE_ENV: 'development',
+      DATABASE_URL: undefined,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('expected valid env');
+    expect(result.data.port).toBeUndefined();
+    expect(result.data.host).toBeUndefined();
+  });
+
   it('rejects malformed port and too-short session secrets', () => {
     const result = validateServerEnv({
       ...validProductionEnv,
