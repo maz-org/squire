@@ -185,9 +185,9 @@ obtain these):
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Google OAuth (required for web UI login — see ADR 0009)
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:4450/auth/google/callback
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:4450/auth/google/callback
 SESSION_SECRET=<random 32+ character string>
 SQUIRE_ALLOWED_EMAILS=your-email@example.com
 
@@ -204,8 +204,8 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-`GOOGLE_REDIRECT_URI` is the fallback callback for production and non-local
-hosts. In local development, `/auth/google/start` and
+`GOOGLE_OAUTH_REDIRECT_URI` is the fallback callback for production and
+non-local hosts. In local development, `/auth/google/start` and
 `/auth/google/callback` reuse the current `localhost` origin so linked
 worktrees can sign in on their own ports. Google still requires exact
 redirect-URI matches, so every localhost callback port you use for browser QA

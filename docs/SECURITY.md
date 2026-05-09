@@ -292,7 +292,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 ### 10. Information Disclosure
 
-- `/api/health` reveals `index_size` (minor internal state)
+- `/api/health` reveals coarse dependency readiness (`db`, `vector`, `embedder`)
 - MCP server reports `name: 'squire', version: '0.1.0'`
   (fingerprinting)
 - `/api/card-types` reveals the data schema (game data, not sensitive)

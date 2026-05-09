@@ -68,6 +68,7 @@ const {
   mockListCardTypes,
   mockListCards,
   mockGetCard,
+  mockRunReadinessChecks,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockEnsureBootstrapStatus: vi.fn(),
@@ -80,6 +81,7 @@ const {
   mockListCardTypes: vi.fn(),
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
+  mockRunReadinessChecks: vi.fn(),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -101,6 +103,10 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: mockListCardTypes,
   listCards: mockListCards,
   getCard: mockGetCard,
+}));
+
+vi.mock('../src/health.ts', () => ({
+  runReadinessChecks: mockRunReadinessChecks,
 }));
 
 // Bypass the Drizzle-backed auth provider — these tests don't exercise OAuth
@@ -145,6 +151,7 @@ function resetRouteMocks() {
   mockListCardTypes.mockReset();
   mockListCards.mockReset();
   mockGetCard.mockReset();
+  mockRunReadinessChecks.mockReset();
 }
 
 describe('GET /api/health', () => {
@@ -154,76 +161,48 @@ describe('GET /api/health', () => {
     mockRefreshInitializationIfReady.mockResolvedValue(undefined);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
+    mockRunReadinessChecks.mockResolvedValue({
+      status: 'ok',
+      db: { status: 'ok' },
+      vector: { status: 'ok' },
+      embedder: { status: 'ok' },
+    });
   });
 
-  it('returns 200 with ready status', async () => {
+  it('returns 200 with structured readiness status when every component is ready', async () => {
     const res = await app.request('/api/health');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toHaveProperty('ready', true);
-    expect(body).toHaveProperty('lifecycle', 'ready');
-    expect(body).toHaveProperty('warming_up', false);
-    expect(body).not.toHaveProperty('errors');
+    expect(body).toEqual({
+      status: 'ok',
+      db: { status: 'ok' },
+      vector: { status: 'ok' },
+      embedder: { status: 'ok' },
+    });
   });
 
-  it('returns ready=false when service is not initialized', async () => {
-    mockGetBootstrapStatus.mockReturnValueOnce(
-      makeStatus({
-        lifecycle: 'warming_up',
-        ready: false,
-        warmingUp: true,
-        capabilities: {
-          rules: { allowed: true, reason: null, message: null },
-          cards: { allowed: true, reason: null, message: null },
-          ask: {
-            allowed: false,
-            reason: 'warming_up',
-            message: 'Service is warming up. Retry in a moment.',
-          },
-        },
-        askReady: false,
-      }),
-    );
+  it('returns 503 with the failing readiness components named', async () => {
+    mockRunReadinessChecks.mockResolvedValueOnce({
+      status: 'error',
+      db: { status: 'ok' },
+      vector: { status: 'error', error: 'type "vector" does not exist' },
+      embedder: { status: 'error', error: 'embedder is not loaded' },
+    });
+
     const res = await app.request('/api/health');
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.status).toBe('error');
+    expect(body.vector).toEqual({ status: 'error', error: 'type "vector" does not exist' });
+    expect(body.embedder).toEqual({ status: 'error', error: 'embedder is not loaded' });
+  });
+
+  it('returns live status without dependency checks', async () => {
+    const res = await app.request('/api/live');
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.ready).toBe(false);
-    expect(body.warming_up).toBe(true);
-  });
-
-  it('returns the starting snapshot immediately before probes complete', async () => {
-    mockGetBootstrapStatus.mockReturnValueOnce(
-      makeStatus({
-        lifecycle: 'starting',
-        ready: false,
-        warmingUp: false,
-        ruleQueriesReady: false,
-        cardQueriesReady: false,
-        askReady: false,
-        capabilities: {
-          rules: {
-            allowed: false,
-            reason: 'warming_up',
-            message: 'Service is warming up. Retry in a moment.',
-          },
-          cards: {
-            allowed: false,
-            reason: 'warming_up',
-            message: 'Service is warming up. Retry in a moment.',
-          },
-          ask: {
-            allowed: false,
-            reason: 'warming_up',
-            message: 'Service is warming up. Retry in a moment.',
-          },
-        },
-      }),
-    );
-
-    const res = await app.request('/api/health');
-    const body = await res.json();
-    expect(body.lifecycle).toBe('starting');
-    expect(body.ready).toBe(false);
+    expect(body).toEqual({ status: 'ok' });
+    expect(mockRunReadinessChecks).not.toHaveBeenCalled();
   });
 
   it('returns JSON content type', async () => {
@@ -234,6 +213,7 @@ describe('GET /api/health', () => {
   it('reports lifecycle state without invoking recovery hooks', async () => {
     await app.request('/api/health');
     expect(mockRefreshInitializationIfReady).not.toHaveBeenCalled();
+    expect(mockGetBootstrapStatus).not.toHaveBeenCalled();
   });
 });
 

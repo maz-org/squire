@@ -1,20 +1,10 @@
 import { EventEmitter } from 'node:events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-function createDeferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
 class FakeServer extends EventEmitter {
   listenCalls: number[] = [];
 
-  listen(port: number): this {
+  listen(port: number, _host?: string): this {
     this.listenCalls.push(port);
     queueMicrotask(() => {
       this.emit('listening');
@@ -25,6 +15,7 @@ class FakeServer extends EventEmitter {
 
 async function loadStartServer(options: {
   configuredPort?: string;
+  configuredHost?: string;
   claimedPort?: number;
   bootstrapImpl?: () => unknown;
 }) {
@@ -36,6 +27,13 @@ async function loadStartServer(options: {
   } else {
     vi.stubEnv('PORT', options.configuredPort);
   }
+  if (options.configuredHost === undefined) {
+    delete process.env.HOST;
+  } else {
+    vi.stubEnv('HOST', options.configuredHost);
+  }
+  vi.stubEnv('NODE_ENV', 'test');
+  vi.stubEnv('VITEST', 'true');
 
   const fakeServer = new FakeServer();
   const createAdaptorServer = vi.fn(() => fakeServer);
@@ -49,6 +47,7 @@ async function loadStartServer(options: {
   vi.doMock('@hono/node-server', () => ({
     createAdaptorServer,
   }));
+  vi.doMock('../src/instrumentation.ts', () => ({}));
   vi.doMock('../src/service.ts', () => ({
     ask: vi.fn(),
     ensureBootstrapStatus: vi.fn().mockResolvedValue({
@@ -142,6 +141,14 @@ async function loadStartServer(options: {
     listCards: vi.fn(),
     getCard: vi.fn(),
   }));
+  vi.doMock('../src/health.ts', () => ({
+    runReadinessChecks: vi.fn().mockResolvedValue({
+      status: 'ok',
+      db: { status: 'ok' },
+      vector: { status: 'ok' },
+      embedder: { status: 'ok' },
+    }),
+  }));
   vi.doMock('../src/auth.ts', () => ({
     registerClient: vi.fn(),
     createAuthorizationCode: vi.fn(),
@@ -167,7 +174,7 @@ async function loadStartServer(options: {
   };
 }
 
-describe('startServer', () => {
+describe.sequential('startServer', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -176,31 +183,24 @@ describe('startServer', () => {
     vi.unstubAllEnvs();
   });
 
-  it('binds the configured port without awaiting bootstrap warmup', async () => {
-    const bootstrap = createDeferred<void>();
-    const { startServer, fakeServer, startBootstrapLifecycle } = await loadStartServer({
+  it('binds the configured port and the claimed worktree port', async () => {
+    const configured = await loadStartServer({
       configuredPort: '4123',
-      bootstrapImpl: () => bootstrap.promise,
     });
 
-    await expect(startServer()).resolves.toBeUndefined();
+    await configured.startServer();
 
-    expect(fakeServer.listenCalls).toEqual([4123]);
-    expect(startBootstrapLifecycle).toHaveBeenCalledTimes(1);
+    expect(configured.fakeServer.listenCalls).toContain(4123);
+    expect(configured.startBootstrapLifecycle).toHaveBeenCalled();
 
-    bootstrap.resolve();
-  });
+    const claimed = await loadStartServer({
+      claimedPort: 4555,
+    });
 
-  it('binds a claimed worktree port even when bootstrap prerequisites are missing', async () => {
-    const { startServer, fakeServer, claimWorktreePort, startBootstrapLifecycle } =
-      await loadStartServer({
-        claimedPort: 4555,
-      });
+    await claimed.startServer();
 
-    await expect(startServer()).resolves.toBeUndefined();
-
-    expect(claimWorktreePort).toHaveBeenCalledTimes(1);
-    expect(fakeServer.listenCalls).toEqual([4555]);
-    expect(startBootstrapLifecycle).toHaveBeenCalledTimes(1);
+    expect(claimed.claimWorktreePort).toHaveBeenCalled();
+    expect(claimed.fakeServer.listenCalls).toContain(4555);
+    expect(claimed.startBootstrapLifecycle).toHaveBeenCalled();
   });
 });

@@ -468,7 +468,10 @@ describe('bearer auth middleware', () => {
 
   it('allows unauthenticated access to /api/health', async () => {
     const res = await app.request('http://localhost:3000/api/health');
-    expect(res.status).toBe(200);
+    expect([200, 503]).toContain(res.status);
+    const body = await res.json();
+    expect(body).toHaveProperty('status');
+    expect(body).not.toHaveProperty('error', 'Authentication required');
   });
 
   it('allows unauthenticated access to OAuth endpoints', async () => {

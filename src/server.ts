@@ -12,15 +12,11 @@ import { pathToFileURL } from 'node:url';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
-import {
-  ask,
-  ensureBootstrapStatus,
-  getBootstrapStatus,
-  isReady,
-  startBootstrapLifecycle,
-} from './service.ts';
+import { ask, ensureBootstrapStatus, isReady, startBootstrapLifecycle } from './service.ts';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
+import { loadServerConfig } from './config.ts';
+import { runReadinessChecks } from './health.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
 import {
   toolSourceLabel,
@@ -1010,13 +1006,12 @@ app.onError((err, c) => {
 // ─── Health endpoint ─────────────────────────────────────────────────────────
 
 app.get('/api/health', async (c) => {
-  // Health is a pure snapshot read. Do not await live bootstrap probes here.
-  const status = getBootstrapStatus();
-  return c.json({
-    lifecycle: status.lifecycle,
-    ready: status.ready,
-    warming_up: status.warmingUp,
-  });
+  const readiness = await runReadinessChecks();
+  return c.json(readiness, readiness.status === 'ok' ? 200 : 503);
+});
+
+app.get('/api/live', (c) => {
+  return c.json({ status: 'ok' });
 });
 
 // ─── Search endpoints ────────────────────────────────────────────────────────
@@ -1181,11 +1176,12 @@ app.post('/api/ask', async (c) => {
 // ─── Server startup ──────────────────────────────────────────────────────────
 
 export async function startServer(): Promise<void> {
-  const configuredPort = parseInt(process.env.PORT || '', 10);
+  const config = loadServerConfig();
+  const configuredPort = config.port;
   const runtime = getWorktreeRuntime();
   const { createAdaptorServer } = await import('@hono/node-server');
 
-  if (!process.env.PORT || Number.isNaN(configuredPort)) {
+  if (configuredPort === undefined) {
     while (true) {
       const claim = await claimWorktreePort({
         checkoutRoot: runtime.checkoutRoot,
@@ -1194,7 +1190,7 @@ export async function startServer(): Promise<void> {
       });
       const server = createAdaptorServer({ fetch: app.fetch });
       try {
-        await listen(server, claim.port);
+        await listen(server, claim.port, config.host);
         server.once('close', () => {
           void claim.release();
         });
@@ -1210,12 +1206,16 @@ export async function startServer(): Promise<void> {
   }
 
   const server = createAdaptorServer({ fetch: app.fetch });
-  await listen(server, configuredPort);
+  await listen(server, configuredPort, config.host);
   startBootstrapLifecycle();
   console.log(`Squire server listening on port ${configuredPort}`);
 }
 
-async function listen(server: import('node:net').Server, port: number): Promise<void> {
+async function listen(
+  server: import('node:net').Server,
+  port: number,
+  host?: string,
+): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const onError = (error: Error) => {
       server.off('listening', onListening);
@@ -1227,12 +1227,20 @@ async function listen(server: import('node:net').Server, port: number): Promise<
     };
     server.once('error', onError);
     server.once('listening', onListening);
-    server.listen(port);
+    if (host) {
+      server.listen(port, host);
+    } else {
+      server.listen(port);
+    }
   });
 }
 
 // CLI entrypoint
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.env.VITEST !== 'true' &&
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   startServer().catch((err: unknown) => {
     console.error('Failed to start server:', err);
     process.exit(1);

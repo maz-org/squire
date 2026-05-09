@@ -24,8 +24,8 @@ import { setupTestDb, resetTestDb, teardownTestDb } from './helpers/db.ts';
 
 // `src/server.ts` imports `service.ts` which would otherwise call out to
 // embedders / other heavy init at module-load time. Stub it. The bearer
-// middleware doesn't care about service state, and `/api/health` only reads
-// `isReady()` plus a single `SELECT COUNT(*)` on a real table.
+// middleware doesn't care about service state, and this test exercises the
+// bearer-protected API path rather than the readiness endpoint.
 vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
   isReady: vi.fn(() => true),

@@ -16,6 +16,10 @@ async function getEmbedder(): Promise<FeatureExtractionPipeline> {
   return embedder;
 }
 
+export function isEmbedderLoaded(): boolean {
+  return embedder !== null;
+}
+
 export async function embed(text: string): Promise<number[]> {
   const model = await getEmbedder();
   const output = await model(text, { pooling: 'mean', normalize: true });

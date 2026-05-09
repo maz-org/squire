@@ -15,6 +15,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
 
 import { getDb } from '../db.ts';
+import { resolveGoogleOAuthEnv } from '../config.ts';
 import { writeAuditEvent } from './audit.ts';
 import * as UserRepository from '../db/repositories/user-repository.ts';
 import { EmailConflictError } from '../db/repositories/user-repository.ts';
@@ -23,25 +24,29 @@ import * as SessionRepository from '../db/repositories/session-repository.ts';
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 function getGoogleConfig(redirectUriOverride?: string) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const { clientId, clientSecret, redirectUri } = resolveGoogleOAuthEnv();
   if (!clientId || !clientSecret || (!redirectUri && !redirectUriOverride)) {
-    throw new Error('Missing GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, or GOOGLE_REDIRECT_URI');
+    throw new Error(
+      'Missing GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, or GOOGLE_OAUTH_REDIRECT_URI',
+    );
   }
   return { clientId, clientSecret, redirectUri: redirectUriOverride ?? redirectUri! };
 }
 
 export function resolveGoogleRedirectUri(requestUrl?: string): string {
-  const { redirectUri } = getGoogleConfig();
+  const { redirectUri } = resolveGoogleOAuthEnv();
 
-  if (!requestUrl || process.env.NODE_ENV === 'production') {
+  if (redirectUri && (!requestUrl || process.env.NODE_ENV === 'production')) {
     return redirectUri;
+  }
+
+  if (!requestUrl) {
+    return getGoogleConfig().redirectUri;
   }
 
   const request = new URL(requestUrl);
   const isLocalHost = request.hostname === 'localhost' || request.hostname === '127.0.0.1';
-  if (!isLocalHost) {
+  if (!isLocalHost && redirectUri) {
     return redirectUri;
   }
 
