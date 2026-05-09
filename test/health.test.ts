@@ -86,4 +86,33 @@ describe('runReadinessChecks', () => {
     });
     expect(query).not.toHaveBeenCalled();
   });
+
+  it('deduplicates concurrent readiness probes', async () => {
+    let releaseQuery!: () => void;
+    const query = vi.fn(() => {
+      if (query.mock.calls.length === 1) {
+        return new Promise((resolve) => {
+          releaseQuery = () => resolve({ rows: [{ ok: 1 }] });
+        });
+      }
+      return Promise.resolve({ rows: [{ ok: 1 }] });
+    });
+
+    const first = runReadinessChecks({
+      db: { $client: { query } },
+      isEmbedderLoaded: () => true,
+    });
+    const second = runReadinessChecks({
+      db: { $client: { query } },
+      isEmbedderLoaded: () => true,
+    });
+
+    expect(query).toHaveBeenCalledTimes(1);
+    releaseQuery();
+
+    const [firstStatus, secondStatus] = await Promise.all([first, second]);
+    expect(firstStatus).toEqual(secondStatus);
+    expect(firstStatus.status).toBe('ok');
+    expect(query).toHaveBeenCalledTimes(2);
+  });
 });

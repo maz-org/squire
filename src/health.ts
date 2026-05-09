@@ -10,6 +10,7 @@ export interface ReadinessStatus {
 }
 
 const DEFAULT_QUERY_TIMEOUT_MS = 2000;
+let readinessInFlight: Promise<ReadinessStatus> | null = null;
 
 interface QueryableDb {
   $client: {
@@ -77,7 +78,7 @@ async function checkQuery(
   }
 }
 
-export async function runReadinessChecks(
+async function runReadinessChecksOnce(
   dependencies: ReadinessDependencies = {},
 ): Promise<ReadinessStatus> {
   const db = dependencies.db ?? getDb('server').db;
@@ -104,4 +105,15 @@ export async function runReadinessChecks(
     vector: vectorStatus,
     embedder: embedderStatus,
   };
+}
+
+export async function runReadinessChecks(
+  dependencies: ReadinessDependencies = {},
+): Promise<ReadinessStatus> {
+  if (readinessInFlight) return readinessInFlight;
+
+  readinessInFlight = runReadinessChecksOnce(dependencies).finally(() => {
+    readinessInFlight = null;
+  });
+  return readinessInFlight;
 }
