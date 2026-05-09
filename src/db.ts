@@ -122,6 +122,9 @@ export function resolveDatabaseUrl(): string {
   if (isTest) {
     return process.env.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL;
   }
+  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL?.trim()) {
+    throw new Error('DATABASE_URL is required when NODE_ENV=production');
+  }
   return process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
 }
 
