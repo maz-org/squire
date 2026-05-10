@@ -9,6 +9,7 @@ release_command = "node scripts/db-migrate.ts"
 
 [env]
 NODE_ENV = "production"
+SQUIRE_ENV = "production"
 PORT = "8080"
 HOST = "0.0.0.0"
 

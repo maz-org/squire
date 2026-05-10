@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Client } from 'langsmith';
 import { convertToDottedOrderFormat } from 'langsmith/run_trees';
+import { resolveSquireEnv } from '../src/squire-env.ts';
 import { TRACE_CONTRACT_VERSION } from './trace-contract.ts';
 import {
   redactTracePayload,
@@ -134,9 +135,18 @@ function passValue(trace: EvalTraceInput): boolean | undefined {
   return undefined;
 }
 
+function traceEnvironment(trace: EvalTraceInput): string {
+  return trace.environment?.trim()
+    ? resolveSquireEnv({ SQUIRE_ENV: trace.environment })
+    : resolveSquireEnv();
+}
+
 function commonMetadata(trace: EvalTraceInput): Record<string, unknown> {
+  const environment = traceEnvironment(trace);
+
   return {
     contractVersion: TRACE_CONTRACT_VERSION,
+    environment,
     squireTraceId: trace.traceId,
     runLabel: trace.runLabel,
     datasetName: trace.datasetName,
@@ -200,6 +210,7 @@ export function buildLangSmithRuns(
   config: Pick<LangSmithTraceConfig, 'projectName'>,
 ): LangSmithTracePayload {
   const trace = redactTracePayload(traceInput);
+  const environment = traceEnvironment(trace);
   const rootRunId = langSmithRootRunIdForTraceId(trace.traceId);
   const modelRunId = deterministicUuid(`${trace.traceId}:model`);
   const rootOrder = convertToDottedOrderFormat(Date.parse(trace.startedAt), rootRunId, 1);
@@ -210,6 +221,7 @@ export function buildLangSmithRuns(
     trace.provider,
     trace.model,
     trace.runLabel,
+    `env:${environment}`,
     `case:${trace.caseId}`,
     `category:${trace.caseCategory}`,
     `failure:${failureClass(trace)}`,

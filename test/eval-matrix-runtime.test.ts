@@ -161,6 +161,7 @@ describe('eval matrix runtime adapter', () => {
         traceId: 'anthropic-trace',
         runLabel: 'matrix-run',
         traceClient: {},
+        traceWriter: expect.objectContaining({ writeTrace: expect.any(Function) }),
       }),
     );
     expect(output).toMatchObject({

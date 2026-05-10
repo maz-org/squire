@@ -51,6 +51,15 @@ const TRACE_FIELD_DEFINITIONS = [
     description: 'Trace contract version used to reject incompatible run comparisons.',
   },
   {
+    name: 'environment',
+    required: true,
+    langfuseTarget: 'trace.metadata',
+    debugCategory: 'filter',
+    includeInAppConversationHistory: false,
+    description:
+      'SQUIRE_ENV value for separating development, test, staging, and production traces.',
+  },
+  {
     name: 'provider',
     required: true,
     langfuseTarget: 'trace.metadata',

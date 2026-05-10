@@ -17,6 +17,7 @@ describe('deployment configuration', () => {
     expect(dockerfile).toContain('COPY --chown=node:node src ./src');
     expect(dockerfile).toContain('COPY --chown=node:node scripts ./scripts');
     expect(dockerfile).toContain('ENV NODE_ENV=production');
+    expect(dockerfile).toContain('ENV SQUIRE_ENV=production');
     expect(dockerfile).toContain('ENV PORT=8080');
     expect(dockerfile).toContain('EXPOSE 8080');
     expect(dockerfile).toContain('HEALTHCHECK');
@@ -48,6 +49,7 @@ describe('deployment configuration', () => {
     const flyConfig = await readProjectFile('fly.toml');
 
     expect(flyConfig).toContain('app = "maz-squire"');
+    expect(flyConfig).toContain('SQUIRE_ENV = "production"');
     expect(flyConfig).toContain('release_command = "node scripts/db-migrate.ts"');
     expect(flyConfig).toContain('internal_port = 8080');
     expect(flyConfig).toContain('auto_stop_machines = "off"');

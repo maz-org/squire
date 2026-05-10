@@ -12,6 +12,7 @@ FROM node:24.14.0-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV SQUIRE_ENV=production
 ENV PORT=8080
 ENV HOST=0.0.0.0
 
