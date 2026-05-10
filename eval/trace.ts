@@ -1,4 +1,5 @@
 import { TRACE_CONTRACT_VERSION, TRACE_REDACTION_DENYLIST } from './trace-contract.ts';
+import { resolveSquireEnv } from '../src/squire-env.ts';
 
 export const TRACE_REDACTION_PLACEHOLDER = '[REDACTED]' as const;
 
@@ -77,6 +78,7 @@ export interface EvalTraceToolCall {
 export interface EvalTraceInput {
   traceId: string;
   generationId?: string;
+  environment?: string;
   runLabel: string;
   datasetName: string;
   caseId: string;
@@ -160,8 +162,11 @@ function redactValue(value: unknown): unknown {
 }
 
 function requiredTraceMetadata(input: EvalTraceInput): Record<string, unknown> {
+  const environment = traceEnvironment(input);
+
   return {
     contractVersion: TRACE_CONTRACT_VERSION,
+    environment,
     agentRuntime: input.agentRuntime,
     provider: input.provider,
     model: input.model,
@@ -177,6 +182,11 @@ function requiredTraceMetadata(input: EvalTraceInput): Record<string, unknown> {
     toolSchemaHash: input.toolSchemaHash,
     statusReason: input.statusReason,
   };
+}
+
+function traceEnvironment(input: EvalTraceInput): string {
+  const environment = input.environment?.trim();
+  return environment ? resolveSquireEnv({ SQUIRE_ENV: environment }) : resolveSquireEnv();
 }
 
 function generationIdFor(input: EvalTraceInput): string {
@@ -208,18 +218,27 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
   const generationId = generationIdFor(input);
   const timestamp = timestampFor(input);
   const traceMetadata = requiredTraceMetadata(input);
+  const environment = traceEnvironment(input);
 
   const traceEvent = event('trace-create', `${input.traceId}:trace-create`, timestamp, {
     id: input.traceId,
     timestamp: input.startedAt,
     name: 'eval.case',
+    environment,
     input: redactTracePayload({ question: input.inputQuestion }),
     output: redactTracePayload({
       finalAnswer: input.finalAnswer,
       statusReason: input.statusReason,
     }),
     metadata: redactTracePayload(traceMetadata),
-    tags: ['eval', input.agentRuntime, input.provider, input.model, input.runLabel],
+    tags: [
+      'eval',
+      `env:${environment}`,
+      input.agentRuntime,
+      input.provider,
+      input.model,
+      input.runLabel,
+    ],
   });
 
   const generationEvent = event(
@@ -233,6 +252,7 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
       startTime: input.startedAt,
       endTime: input.endedAt,
       completionStartTime: input.completionStartedAt,
+      environment,
       model: input.model,
       input: redactTracePayload({ request: input.providerRequest }),
       output: redactTracePayload({
@@ -268,6 +288,7 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
       name: `eval.tool_call.${toolCall.toolName}`,
       startTime: toolCall.startedAt,
       endTime: toolCall.endedAt,
+      environment,
       input: redactTracePayload(toolCall.arguments),
       output: redactTracePayload(toolCall.result),
       metadata: redactTracePayload({
@@ -296,6 +317,7 @@ export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIn
       value: score.value,
       dataType: scoreDataTypeFor(score),
       comment: score.comment,
+      environment,
       metadata: redactTracePayload(score.metadata ?? {}),
     });
   });
@@ -325,6 +347,22 @@ export async function writeEvalTrace(
 export function langfuseTraceWriter(client: LangfuseTraceIngestionClient): EvalTraceWriter {
   return {
     writeTrace: (input) => writeEvalTrace(client, input),
+  };
+}
+
+export function withEvalTraceEnvironment(
+  writer: EvalTraceWriter,
+  env: NodeJS.ProcessEnv = process.env,
+): EvalTraceWriter {
+  const environment = resolveSquireEnv(env);
+  return {
+    writeTrace: (input) => {
+      const explicitEnvironment = input.environment?.trim();
+      return writer.writeTrace({
+        ...input,
+        environment: explicitEnvironment || environment,
+      });
+    },
   };
 }
 

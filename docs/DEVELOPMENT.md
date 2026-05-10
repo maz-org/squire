@@ -32,6 +32,9 @@ LANGFUSE_BASEURL=https://us.cloud.langfuse.com
 LANGFUSE_PROJECT_ID=...
 LANGFUSE_PUBLIC_KEY=...
 LANGFUSE_SECRET_KEY=...
+
+# Trace environment label for Langfuse and LangSmith; defaults to NODE_ENV.
+SQUIRE_ENV=development
 ```
 
 Generate `SESSION_SECRET` with:

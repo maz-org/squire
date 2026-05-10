@@ -1,50 +1,27 @@
 /**
- * Squire web UI — on-demand asset pipeline (SQR-71, ADR 0011).
+ * Squire web UI asset pipeline (SQR-71, ADR 0011).
  *
- * Compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node`
- * and reads `src/web-ui/squire.js` plus vendored `htmx.org` from disk.
- * Exposes both content getters (`getAppCss` / `getSquireJs` /
- * `getHtmxJs`, returning `{content, hash}`) and URL helpers
- * (`getAppCssUrl` / `getSquireJsUrl` / `getHtmxJsUrl`) that follow
- * Rails Propshaft semantics:
+ * Reads CSS/JS content and exposes URL helpers that follow Rails
+ * Propshaft semantics:
  *
- *   - **dev**: bare paths, `Cache-Control: no-cache`, mtime-keyed
- *     cache so edits to the source files show up on the next
- *     request without a rebuild. URL helpers return `/app.css`,
- *     `/squire.js`, and `/htmx.js`.
- *   - **prod**: content-hashed paths, `Cache-Control: public,
- *     max-age=31536000, immutable`, compile-once-per-process. URL
- *     helpers return `/app.<hash>.css`, `/squire.<hash>.js`, and
- *     `/htmx.<hash>.js` so Cloudflare and browsers can cache forever
- *     and invalidation is automatic on content change.
+ * - dev: compile `src/web-ui/styles.css` on demand and serve bare paths.
+ * - prod: read `dist/web-ui/app.css`, built by `npm run build:web-assets`
+ *   during the Docker build, and serve content-hashed paths.
  *
- * Promise memoization on the compile/read paths collapses two
- * concurrent cold-start callers into a single compile instead of
- * a race. See ADR 0011 (fingerprinting addendum) for the full
- * rationale and the rolling-deploy caveat.
+ * Promise memoization on the read paths collapses two concurrent
+ * cold-start callers into one filesystem read. See ADR 0011
+ * (fingerprinting addendum) for the rationale and rolling-deploy caveat.
  */
 
 import { createHash } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-import { compile, optimize } from '@tailwindcss/node';
-import { Scanner } from '@tailwindcss/oxide';
-
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const WEB_UI_DIR = HERE;
-const STYLES_PATH = path.join(WEB_UI_DIR, 'styles.css');
-const SQUIRE_JS_PATH = path.join(WEB_UI_DIR, 'squire.js');
-const HTMX_JS_PATH = path.join(
-  WEB_UI_DIR,
-  '..',
-  '..',
-  'node_modules',
-  'htmx.org',
-  'dist',
-  'htmx.js',
-);
+import {
+  GENERATED_APP_CSS_PATH,
+  HTMX_JS_PATH,
+  SQUIRE_JS_PATH,
+  STYLES_PATH,
+} from './asset-paths.ts';
 
 function isProd(): boolean {
   return process.env.NODE_ENV === 'production';
@@ -103,39 +80,31 @@ async function computeCssCacheKey(): Promise<string> {
 
 async function compileCssEntry(): Promise<AssetEntry> {
   cssCompileCount += 1;
-  const cssSource = await readFile(STYLES_PATH, 'utf8');
-  const compiler = await compile(cssSource, {
-    base: WEB_UI_DIR,
-    onDependency: () => {
-      // No-op. Dev invalidation is handled by the mtime cache key
-      // and prod compiles exactly once per process.
-    },
+  const { compileAppCss } = await import('./css-build.ts');
+  return compileAppCss({ minify: false });
+}
+
+async function readBuiltCssEntry(): Promise<AssetEntry> {
+  const content = await readFile(GENERATED_APP_CSS_PATH, 'utf8').catch((error: unknown) => {
+    const candidate = error as NodeJS.ErrnoException;
+    if (candidate?.code !== 'ENOENT') throw error;
+    throw new Error(
+      `Production CSS asset is missing at ${GENERATED_APP_CSS_PATH}. Run npm run build:web-assets before starting with NODE_ENV=production.`,
+      { cause: error },
+    );
   });
-  // The Scanner walks the project sources (driven by `@source`
-  // directives in styles.css) and returns every utility-class
-  // candidate present in the codebase. compiler.build() materializes
-  // only the classes that were actually used.
-  const scanner = new Scanner({ sources: compiler.sources });
-  const candidates = scanner.scan();
-  let content = compiler.build(candidates);
-  if (isProd()) {
-    // Minify in prod only — dev keeps the readable form so devtools
-    // is useful when poking at computed styles. Source maps are out
-    // of scope for SQR-71.
-    content = optimize(content, { minify: true }).code;
-  }
   return { content, hash: hashContent(content) };
 }
 
 /**
- * Compile (or fetch cached) Tailwind CSS for `src/web-ui/styles.css`.
+ * Fetch cached CSS for the current environment.
  * Returns `{content, hash}` where `hash` is the content digest used
  * to fingerprint the prod URL.
  *
- * Promise-memoized: two concurrent cold-start callers share a single
- * compile instead of racing to populate the cache twice. The in-flight
- * promise is cleared in `finally` so a failed compile doesn't poison
- * the cache — the next caller will retry.
+ * In dev, this compiles Tailwind on demand so stylesheet edits are visible
+ * without a build. In prod, this only reads the prebuilt CSS artifact from
+ * `dist/web-ui/app.css`; Docker runs `npm run build:web-assets` before the
+ * runtime image starts.
  *
  * Key-drift guard: if an in-flight compile was started under a
  * different cache key (e.g., a dev caller edited styles.css while
@@ -156,7 +125,7 @@ export async function getAppCss(): Promise<AssetEntry> {
 
   cssInFlight = (async () => {
     try {
-      const entry = await compileCssEntry();
+      const entry = isProd() ? await readBuiltCssEntry() : await compileCssEntry();
       cssCache = { key, entry };
       return entry;
     } finally {

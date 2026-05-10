@@ -39,6 +39,7 @@ describe('getDb', () => {
 
   afterEach(async () => {
     await shutdownServerPool();
+    vi.unstubAllEnvs();
   });
 
   it('exposes checkout-local default DATABASE_URL values for the current checkout', () => {
@@ -54,6 +55,22 @@ describe('getDb', () => {
 
   it('resolves the test database automatically under VITEST', () => {
     expect(resolveDatabaseUrl()).toBe(DEFAULT_TEST_DATABASE_URL);
+  });
+
+  it('requires DATABASE_URL in production instead of falling back to local Postgres', () => {
+    vi.stubEnv('VITEST', 'false');
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('DATABASE_URL', '');
+
+    expect(() => resolveDatabaseUrl()).toThrow('DATABASE_URL is required when NODE_ENV=production');
+
+    vi.stubEnv('DATABASE_URL', '   ');
+
+    expect(() => resolveDatabaseUrl()).toThrow('DATABASE_URL is required when NODE_ENV=production');
+
+    vi.stubEnv('DATABASE_URL', ' postgres://user:pass@example.com:5432/squire ');
+
+    expect(resolveDatabaseUrl()).toBe('postgres://user:pass@example.com:5432/squire');
   });
 
   it('describes the current checkout runtime shape', () => {

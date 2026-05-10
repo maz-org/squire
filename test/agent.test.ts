@@ -19,23 +19,70 @@ const {
   mockGetSection,
   mockFollowLinks,
   mockNeighbors,
-} = vi.hoisted(() => ({
-  mockMessagesCreate: vi.fn(),
-  mockMessagesStream: vi.fn(),
-  mockSearchRules: vi.fn(),
-  mockSearchCards: vi.fn(),
-  mockSearchKnowledge: vi.fn(),
-  mockListCardTypes: vi.fn(),
-  mockOpenEntity: vi.fn(),
-  mockInspectSources: vi.fn(),
-  mockGetSchema: vi.fn(),
-  mockResolveEntity: vi.fn(),
-  mockGetCard: vi.fn(),
-  mockFindScenario: vi.fn(),
-  mockGetScenario: vi.fn(),
-  mockGetSection: vi.fn(),
-  mockFollowLinks: vi.fn(),
-  mockNeighbors: vi.fn(),
+  mockStartedSpans,
+  mockStartActiveSpan,
+} = vi.hoisted(() => {
+  const mockStartedSpans: Array<{ name: string; span: { attributes: Record<string, unknown> } }> =
+    [];
+  const mockStartActiveSpan = vi.fn((name: string, ...args: unknown[]) => {
+    const callback = args.find((arg) => typeof arg === 'function') as
+      | ((span: { attributes: Record<string, unknown> }) => unknown)
+      | undefined;
+    if (!callback) throw new Error(`No span callback for ${name}`);
+
+    const attributes: Record<string, unknown> = {};
+    const span: {
+      attributes: Record<string, unknown>;
+      setAttributes: (attributes: Record<string, unknown>) => void;
+      setAttribute: (key: string, value: unknown) => void;
+      recordException: (error: unknown) => void;
+      setStatus: (status: unknown) => void;
+      end: () => void;
+    } = {
+      attributes,
+      setAttributes: (nextAttributes: Record<string, unknown>) => {
+        Object.assign(attributes, nextAttributes);
+      },
+      setAttribute: (key: string, value: unknown) => {
+        attributes[key] = value;
+      },
+      recordException: vi.fn(),
+      setStatus: vi.fn(),
+      end: vi.fn(),
+    };
+    mockStartedSpans.push({ name, span });
+    return callback(span);
+  });
+
+  return {
+    mockMessagesCreate: vi.fn(),
+    mockMessagesStream: vi.fn(),
+    mockSearchRules: vi.fn(),
+    mockSearchCards: vi.fn(),
+    mockSearchKnowledge: vi.fn(),
+    mockListCardTypes: vi.fn(),
+    mockOpenEntity: vi.fn(),
+    mockInspectSources: vi.fn(),
+    mockGetSchema: vi.fn(),
+    mockResolveEntity: vi.fn(),
+    mockGetCard: vi.fn(),
+    mockFindScenario: vi.fn(),
+    mockGetScenario: vi.fn(),
+    mockGetSection: vi.fn(),
+    mockFollowLinks: vi.fn(),
+    mockNeighbors: vi.fn(),
+    mockStartedSpans,
+    mockStartActiveSpan,
+  };
+});
+
+vi.mock('@opentelemetry/api', () => ({
+  SpanStatusCode: { ERROR: 2 },
+  trace: {
+    getTracer: () => ({
+      startActiveSpan: mockStartActiveSpan,
+    }),
+  },
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -142,11 +189,26 @@ function textAndToolUseResponse(
   };
 }
 
+function spanAttributes(name: string): Record<string, unknown> {
+  const span = mockStartedSpans.find((started) => started.name === name);
+  expect(span).toBeDefined();
+  return span!.span.attributes;
+}
+
+function parseJsonAttribute(attributes: Record<string, unknown>, key: string): unknown {
+  const value = attributes[key];
+  expect(value).toEqual(expect.any(String));
+  return JSON.parse(value as string);
+}
+
 // ─── runAgentLoop ────────────────────────────────────────────────────────────
 
 describe('runAgentLoop', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.SQUIRE_ENV = 'test';
+    mockStartedSpans.length = 0;
+    mockStartActiveSpan.mockClear();
     mockSearchRules.mockResolvedValue([
       { text: 'Loot: pick up all loot tokens.', source: 'rulebook.pdf:42', score: 0.9 },
     ]);
@@ -218,6 +280,51 @@ describe('runAgentLoop', () => {
     const result = await runAgentLoop('What is the loot action?', { toolSurface: 'legacy' });
     expect(result).toBe('Loot tokens are picked up in your hex.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds Langfuse-native input, output, usage, and tags to runtime agent traces', async () => {
+    mockMessagesCreate.mockResolvedValue(textResponse('Loot tokens are picked up in your hex.'));
+
+    await runAgentLoopWithTrajectory('What is the loot action?', { toolSurface: 'legacy' });
+
+    const runAttributes = spanAttributes('squire.agent.run');
+    expect(parseJsonAttribute(runAttributes, 'langfuse.trace.input')).toEqual({
+      question: 'What is the loot action?',
+    });
+    expect(parseJsonAttribute(runAttributes, 'langfuse.trace.output')).toEqual({
+      finalAnswer: 'Loot tokens are picked up in your hex.',
+    });
+    expect(runAttributes['langfuse.observation.type']).toBe('agent');
+    expect(parseJsonAttribute(runAttributes, 'langfuse.observation.usage_details')).toEqual({
+      input: 100,
+      output: 50,
+      total: 150,
+      cacheCreationInput: 0,
+      cacheReadInput: 0,
+    });
+    expect(runAttributes['langfuse.trace.tags']).toEqual([
+      'agent',
+      'runtime',
+      'anthropic',
+      'claude-sdk',
+      'claude-sonnet-4-6',
+      'legacy',
+      'env:test',
+    ]);
+
+    const iterationAttributes = spanAttributes('squire.agent.iteration');
+    expect(iterationAttributes['langfuse.observation.type']).toBe('generation');
+    expect(iterationAttributes['langfuse.observation.model.name']).toBe('claude-sonnet-4-6');
+    expect(parseJsonAttribute(iterationAttributes, 'langfuse.observation.input')).toMatchObject({
+      iteration: 1,
+      allowTools: true,
+      toolSurface: 'legacy',
+      messages: [{ role: 'user', content: 'What is the loot action?' }],
+    });
+    expect(parseJsonAttribute(iterationAttributes, 'langfuse.observation.output')).toMatchObject({
+      stopReason: 'end_turn',
+      content: [{ type: 'text', text: 'Loot tokens are picked up in your hex.' }],
+    });
   });
 
   it('defaults to the legacy tool surface for Phase 1', async () => {
@@ -493,6 +600,19 @@ describe('runAgentLoop', () => {
     expect(result.trajectory.toolCalls[0]?.startedAt).toEqual(expect.any(String));
     expect(result.trajectory.toolCalls[0]?.endedAt).toEqual(expect.any(String));
     expect(result.trajectory.toolCalls[0]?.durationMs).toEqual(expect.any(Number));
+
+    const toolAttributes = spanAttributes('squire.agent.tool');
+    expect(toolAttributes['langfuse.observation.type']).toBe('tool');
+    expect(parseJsonAttribute(toolAttributes, 'langfuse.observation.input')).toEqual({
+      name: 'search_rules',
+      input: { query: 'loot action' },
+    });
+    expect(parseJsonAttribute(toolAttributes, 'langfuse.observation.output')).toEqual({
+      ok: true,
+      summary: 'json array (1 item)',
+      sourceLabels: ['Rulebook'],
+      canonicalRefs: ['fh-rule-book.pdf::42'],
+    });
   });
 
   it('captures a structured trajectory for redesigned tool calls', async () => {

@@ -16,6 +16,7 @@ import type { EvalTraceInput } from '../eval/trace.ts';
 const baseTrace: EvalTraceInput = {
   traceId: 'eval:sqr-162:openai:gpt-5.5:case-1',
   generationId: 'generation-case-1',
+  environment: 'test',
   runLabel: 'sqr-162-test-run',
   datasetName: DATASET_NAME,
   caseId: 'case-1',
@@ -159,6 +160,7 @@ describe('LangSmith eval trace writer', () => {
       },
       extra: {
         metadata: expect.objectContaining({
+          environment: 'test',
           squireTraceId: 'eval:sqr-162:openai:gpt-5.5:case-1',
           provider: 'openai',
           model: 'gpt-5.5',
@@ -171,6 +173,7 @@ describe('LangSmith eval trace writer', () => {
       tags: expect.arrayContaining([
         'case:case-1',
         'category:buildings',
+        'env:test',
         'failure:none',
         'pass:true',
       ]),

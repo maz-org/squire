@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "npm run typecheck && npm run lint && npm run lint:css && npm run lint:md && npm run format:check && npm test",
+    "build:web-assets": "node scripts/build-web-assets.ts",
     "index": "node src/index-docs.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/db-migrate.ts",

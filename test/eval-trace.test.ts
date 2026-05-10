@@ -6,6 +6,7 @@ import {
   buildEvalTraceIngestionBatch,
   compositeEvalTraceWriter,
   redactTracePayload,
+  withEvalTraceEnvironment,
   writeEvalTrace,
   type EvalTraceInput,
   type LangfuseTraceIngestionClient,
@@ -15,6 +16,7 @@ import { TRACE_CONTRACT_VERSION } from '../eval/trace-contract.ts';
 const baseTrace: EvalTraceInput = {
   traceId: 'trace-case-1',
   generationId: 'generation-case-1',
+  environment: 'test',
   runLabel: 'sqr-127-test-run',
   datasetName: DATASET_NAME,
   caseId: 'case-1',
@@ -140,10 +142,12 @@ describe('SQR-127 eval trace writer', () => {
     expect(trace.body).toMatchObject({
       id: 'trace-case-1',
       name: 'eval.case',
+      environment: 'test',
       input: { question: 'What does the level 1 Alchemist unlock?' },
       output: { finalAnswer: 'It can brew 2-herb potions.', statusReason: 'completed' },
       metadata: {
         contractVersion: TRACE_CONTRACT_VERSION,
+        environment: 'test',
         agentRuntime: 'claude-sdk',
         provider: 'openai',
         model: 'gpt-5.5',
@@ -159,12 +163,14 @@ describe('SQR-127 eval trace writer', () => {
         toolSchemaHash: getOpenAiToolSchemaHash(),
         statusReason: 'completed',
       },
+      tags: expect.arrayContaining(['eval', 'env:test']),
     });
 
     expect(generation.body).toMatchObject({
       id: 'generation-case-1',
       traceId: 'trace-case-1',
       name: 'eval.model_call',
+      environment: 'test',
       model: 'gpt-5.5',
       input: {
         request: {
@@ -218,6 +224,7 @@ describe('SQR-127 eval trace writer', () => {
       traceId: 'trace-case-1',
       parentObservationId: 'generation-case-1',
       name: 'eval.tool_call.searchCards',
+      environment: 'test',
       input: {
         query: 'Alchemist',
         sessionId: '[REDACTED]',
@@ -246,6 +253,7 @@ describe('SQR-127 eval trace writer', () => {
           id: 'trace-case-1:score:correctness',
           traceId: 'trace-case-1',
           name: 'correctness',
+          environment: 'test',
           value: 1,
           dataType: 'NUMERIC',
           comment: 'Expected detail present.',
@@ -341,6 +349,23 @@ describe('SQR-127 eval trace writer', () => {
     expect(JSON.stringify(batches[0])).not.toContain('sk-tool-secret');
     expect(JSON.stringify(batches[0])).not.toContain('session-secret');
     expect(JSON.stringify(batches[0])).not.toContain('player@example.test');
+  });
+
+  it('injects SQUIRE_ENV into traces before writer output', async () => {
+    const seen: EvalTraceInput[] = [];
+    const writer = withEvalTraceEnvironment(
+      {
+        async writeTrace(input) {
+          seen.push(input);
+        },
+      },
+      { SQUIRE_ENV: 'production' },
+    );
+
+    await writer.writeTrace({ ...baseTrace, environment: undefined });
+    await writer.writeTrace({ ...baseTrace, environment: 'test' });
+
+    expect(seen.map((trace) => trace.environment)).toEqual(['production', 'test']);
   });
 
   it('fails when Langfuse accepts a batch with per-event ingestion errors', async () => {

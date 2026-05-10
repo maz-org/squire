@@ -5,7 +5,13 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import {
+  createObservationAttributes,
+  createTraceAttributes,
+  LangfuseOtelSpanAttributes,
+} from '@langfuse/tracing';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
+import type { Attributes } from '@opentelemetry/api';
 import {
   searchRules,
   searchCards,
@@ -31,6 +37,7 @@ import {
   BOOK_REFERENCE_TYPES,
   type BookRecordKind,
 } from './scenario-section-schemas.ts';
+import { resolveSquireEnv } from './squire-env.ts';
 
 type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
@@ -456,11 +463,122 @@ export interface EvalAgentLoopOptions {
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
 const MAX_ATTRIBUTE_TEXT_LENGTH = 2_000;
+const MAX_TRACE_TEXT_LENGTH = 8_000;
+const MAX_TRACE_ARRAY_ITEMS = 50;
+const MAX_TRACE_OBJECT_KEYS = 50;
 const PROMPT_CACHE_CONTROL: Anthropic.CacheControlEphemeral = { type: 'ephemeral', ttl: '1h' };
 
 function truncateForAttribute(value: string, maxLength = MAX_ATTRIBUTE_TEXT_LENGTH): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength - 3)}...`;
+}
+
+function compactForTrace(value: unknown, depth = 0): unknown {
+  if (value == null || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (typeof value === 'string') return truncateForAttribute(value, MAX_TRACE_TEXT_LENGTH);
+  if (typeof value !== 'object') return String(value);
+  if (depth >= 5) return '[max depth]';
+
+  if (Array.isArray(value)) {
+    const items = value
+      .slice(0, MAX_TRACE_ARRAY_ITEMS)
+      .map((item) => compactForTrace(item, depth + 1));
+    if (value.length > MAX_TRACE_ARRAY_ITEMS) {
+      items.push(`[${value.length - MAX_TRACE_ARRAY_ITEMS} more items]`);
+    }
+    return items;
+  }
+
+  const entries = Object.entries(value).slice(0, MAX_TRACE_OBJECT_KEYS);
+  const result: Record<string, unknown> = {};
+  for (const [key, nested] of entries) {
+    result[key] = compactForTrace(nested, depth + 1);
+  }
+  const totalKeys = Object.keys(value).length;
+  if (totalKeys > MAX_TRACE_OBJECT_KEYS) {
+    result.__truncatedKeys = totalKeys - MAX_TRACE_OBJECT_KEYS;
+  }
+  return result;
+}
+
+function langfuseUsageDetails(usage: TokenUsage): Record<string, number> {
+  return {
+    input: usage.inputTokens,
+    output: usage.outputTokens,
+    total: usage.totalTokens,
+    cacheCreationInput: usage.cacheCreationInputTokens,
+    cacheReadInput: usage.cacheReadInputTokens,
+  };
+}
+
+function tokenUsageFromMessage(message: Message): TokenUsage {
+  const usage = emptyTokenUsage();
+  addUsage(usage, message);
+  return usage;
+}
+
+function agentTraceTags({
+  model,
+  toolSurface,
+  evalRun = false,
+}: {
+  model: string;
+  toolSurface: AgentToolSurface | undefined;
+  evalRun?: boolean;
+}): string[] {
+  const surface = toolSurface ?? 'legacy';
+  return [
+    'agent',
+    evalRun ? 'eval' : 'runtime',
+    'anthropic',
+    'claude-sdk',
+    model,
+    surface,
+    `env:${resolveSquireEnv()}`,
+  ];
+}
+
+function agentRunTraceAttributes({
+  question,
+  model,
+  toolSurface,
+  result,
+  evalRun = false,
+}: {
+  question: string;
+  model: string;
+  toolSurface: AgentToolSurface | undefined;
+  result?: AgentRunResult;
+  evalRun?: boolean;
+}): Attributes {
+  return {
+    ...createTraceAttributes({
+      input: { question },
+      ...(result ? { output: { finalAnswer: result.answer } } : {}),
+    }),
+    ...createObservationAttributes('agent', {
+      input: { question },
+      ...(result
+        ? {
+            output: { finalAnswer: result.answer },
+            usageDetails: langfuseUsageDetails(result.trajectory.tokenUsage),
+          }
+        : {}),
+      metadata: {
+        eval: evalRun,
+        model,
+        toolSurface: toolSurface ?? 'legacy',
+        ...(result
+          ? {
+              iterations: result.trajectory.iterations,
+              toolCallCount: result.trajectory.toolCalls.length,
+              stopReason: result.trajectory.stopReason ?? 'unknown',
+            }
+          : {}),
+      },
+    }),
+    [LangfuseOtelSpanAttributes.TRACE_TAGS]: agentTraceTags({ model, toolSurface, evalRun }),
+  };
 }
 
 function addUsage(total: TokenUsage, response: Message): void {
@@ -792,8 +910,21 @@ export async function runAgentLoopWithTrajectory(
 ): Promise<AgentRunResult> {
   return tracer.startActiveSpan('squire.agent.run', async (runSpan) => {
     try {
+      runSpan.setAttributes(
+        agentRunTraceAttributes({
+          question,
+          model: AGENT_MODEL,
+          toolSurface: options?.toolSurface,
+        }),
+      );
       const result = await runAgentLoopInternal(question, options);
       runSpan.setAttributes({
+        ...agentRunTraceAttributes({
+          question,
+          model: result.trajectory.model,
+          toolSurface: options?.toolSurface,
+          result,
+        }),
         'squire.agent.model': result.trajectory.model,
         'squire.agent.iterations': result.trajectory.iterations,
         'squire.agent.tool_call_count': result.trajectory.toolCalls.length,
@@ -806,10 +937,21 @@ export async function runAgentLoopWithTrajectory(
       });
       return result;
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      runSpan.setAttributes({
+        ...createTraceAttributes({
+          output: { error: message },
+        }),
+        ...createObservationAttributes('agent', {
+          output: { error: message },
+          level: 'ERROR',
+          statusMessage: message,
+        }),
+      });
       runSpan.recordException(err as Error);
       runSpan.setStatus({
         code: SpanStatusCode.ERROR,
-        message: err instanceof Error ? err.message : String(err),
+        message,
       });
       throw err;
     } finally {
@@ -824,6 +966,14 @@ export async function runAgentLoopWithEvalConfig(
 ): Promise<AgentRunResult> {
   return tracer.startActiveSpan('squire.agent.eval.run', async (runSpan) => {
     try {
+      runSpan.setAttributes(
+        agentRunTraceAttributes({
+          question,
+          model: options.anthropicModel,
+          toolSurface: options.toolSurface,
+          evalRun: true,
+        }),
+      );
       const result = await runAgentLoopInternal(
         question,
         { toolSurface: options.toolSurface },
@@ -836,6 +986,13 @@ export async function runAgentLoopWithEvalConfig(
         },
       );
       runSpan.setAttributes({
+        ...agentRunTraceAttributes({
+          question,
+          model: result.trajectory.model,
+          toolSurface: options.toolSurface,
+          result,
+          evalRun: true,
+        }),
         'squire.agent.model': result.trajectory.model,
         'squire.agent.iterations': result.trajectory.iterations,
         'squire.agent.tool_call_count': result.trajectory.toolCalls.length,
@@ -849,10 +1006,21 @@ export async function runAgentLoopWithEvalConfig(
       });
       return result;
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      runSpan.setAttributes({
+        ...createTraceAttributes({
+          output: { error: message },
+        }),
+        ...createObservationAttributes('agent', {
+          output: { error: message },
+          level: 'ERROR',
+          statusMessage: message,
+        }),
+      });
       runSpan.recordException(err as Error);
       runSpan.setStatus({
         code: SpanStatusCode.ERROR,
-        message: err instanceof Error ? err.message : String(err),
+        message,
       });
       throw err;
     } finally {
@@ -906,7 +1074,26 @@ async function runAgentLoopInternal(
     const modelStartedAt = new Date(modelStartedAtMs).toISOString();
     const response = await tracer.startActiveSpan('squire.agent.iteration', async (span) => {
       try {
+        const iterationInput = {
+          iteration: i + 1,
+          allowTools: !forceSynthesis,
+          toolSurface: toolSurface ?? 'legacy',
+          messages: compactForTrace(messages),
+        };
         span.setAttributes({
+          ...createObservationAttributes('generation', {
+            input: iterationInput,
+            model,
+            modelParameters: {
+              max_tokens: config.maxOutputTokens ?? 4096,
+              tool_surface: toolSurface ?? 'legacy',
+            },
+            metadata: {
+              iteration: i + 1,
+              allowTools: !forceSynthesis,
+              messageCount: messages.length,
+            },
+          }),
           'squire.agent.iteration': i + 1,
           'squire.agent.allow_tools': !forceSynthesis,
           'squire.agent.message_count': messages.length,
@@ -919,6 +1106,17 @@ async function runAgentLoopInternal(
           timeoutMs: config.timeoutMs,
         });
         span.setAttributes({
+          ...createObservationAttributes('generation', {
+            output: {
+              stopReason: message.stop_reason ?? 'unknown',
+              content: compactForTrace(message.content),
+            },
+            model,
+            usageDetails: langfuseUsageDetails(tokenUsageFromMessage(message)),
+            metadata: {
+              stopReason: message.stop_reason ?? 'unknown',
+            },
+          }),
           'squire.agent.stop_reason': message.stop_reason ?? 'unknown',
           'squire.agent.input_tokens': message.usage.input_tokens,
           'squire.agent.output_tokens': message.usage.output_tokens,
@@ -928,10 +1126,18 @@ async function runAgentLoopInternal(
         });
         return message;
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        span.setAttributes(
+          createObservationAttributes('generation', {
+            output: { error: message },
+            level: 'ERROR',
+            statusMessage: message,
+          }),
+        );
         span.recordException(err as Error);
         span.setStatus({
           code: SpanStatusCode.ERROR,
-          message: err instanceof Error ? err.message : String(err),
+          message,
         });
         throw err;
       } finally {
@@ -1022,6 +1228,17 @@ async function runAgentLoopInternal(
             toolResult = await tracer.startActiveSpan('squire.agent.tool', async (span) => {
               try {
                 span.setAttributes({
+                  ...createObservationAttributes('tool', {
+                    input: {
+                      name: block.name,
+                      input: compactForTrace(block.input),
+                    },
+                    metadata: {
+                      iteration: i + 1,
+                      toolId: block.id,
+                      toolName: block.name,
+                    },
+                  }),
                   'squire.agent.iteration': i + 1,
                   'squire.agent.tool.id': block.id,
                   'squire.agent.tool.name': block.name,
@@ -1033,6 +1250,14 @@ async function runAgentLoopInternal(
                 );
                 const { summary, canonicalRefs } = summarizeToolOutput(result.content);
                 span.setAttributes({
+                  ...createObservationAttributes('tool', {
+                    output: {
+                      ok: true,
+                      summary,
+                      sourceLabels: result.sourceBooks ?? [],
+                      canonicalRefs,
+                    },
+                  }),
                   'squire.agent.tool.ok': true,
                   'squire.agent.tool.output_summary': summary,
                   'squire.agent.tool.source_labels': result.sourceBooks ?? [],
@@ -1040,10 +1265,18 @@ async function runAgentLoopInternal(
                 });
                 return result;
               } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                span.setAttributes(
+                  createObservationAttributes('tool', {
+                    output: { ok: false, error: message },
+                    level: 'ERROR',
+                    statusMessage: message,
+                  }),
+                );
                 span.recordException(err as Error);
                 span.setStatus({
                   code: SpanStatusCode.ERROR,
-                  message: err instanceof Error ? err.message : String(err),
+                  message,
                 });
                 throw err;
               } finally {

@@ -122,7 +122,11 @@ export function resolveDatabaseUrl(): string {
   if (isTest) {
     return process.env.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL;
   }
-  return process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+  if (process.env.NODE_ENV === 'production' && !databaseUrl) {
+    throw new Error('DATABASE_URL is required when NODE_ENV=production');
+  }
+  return databaseUrl || DEFAULT_DATABASE_URL;
 }
 
 export function getDatabaseNameFromUrl(url: string): string {

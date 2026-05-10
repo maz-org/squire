@@ -20,6 +20,7 @@ import { passFromTraceScores, scoreFromTraceScores, traceScoresForEvalResult } f
 import {
   compositeEvalTraceWriter,
   langfuseTraceWriter,
+  withEvalTraceEnvironment,
   type EvalTraceInput,
   type EvalTraceWriter,
   type LangfuseTraceIngestionClient,
@@ -207,12 +208,13 @@ export function createEvalMatrixRunner(
 ): EvalMatrixRunner {
   const anthropic = new Anthropic();
   const traceClient = traceClientFor(langfuse);
+  const langfuseWriter = withEvalTraceEnvironment(langfuseTraceWriter(traceClient), env);
   const traceWriter = options.langsmithTracing
     ? compositeEvalTraceWriter([
-        langfuseTraceWriter(traceClient),
-        createLangSmithTraceWriterFromEnv(env),
+        langfuseWriter,
+        withEvalTraceEnvironment(createLangSmithTraceWriterFromEnv(env), env),
       ])
-    : undefined;
+    : langfuseWriter;
   const openAiClient = createOpenAiResponsesClient(env);
 
   return async (input) => {
