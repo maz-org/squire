@@ -11,9 +11,12 @@ describe('deployment configuration', () => {
     const nvmrc = (await readProjectFile('.nvmrc')).trim();
 
     expect(dockerfile).toContain(`FROM node:${nvmrc}-bookworm-slim AS deps`);
+    expect(dockerfile).toContain('FROM deps AS assets');
     expect(dockerfile).toContain(`FROM node:${nvmrc}-bookworm-slim AS runtime`);
     expect(dockerfile).toContain('npm ci --omit=dev');
+    expect(dockerfile).toContain('RUN npm run build:web-assets');
     expect(dockerfile).toContain('COPY --from=deps /app/node_modules ./node_modules');
+    expect(dockerfile).toContain('COPY --from=assets /app/dist ./dist');
     expect(dockerfile).toContain('COPY --chown=node:node src ./src');
     expect(dockerfile).toContain('COPY --chown=node:node scripts ./scripts');
     expect(dockerfile).toContain('ENV NODE_ENV=production');
@@ -24,6 +27,14 @@ describe('deployment configuration', () => {
     expect(dockerfile).toContain('/api/health');
     expect(dockerfile).toContain('USER node');
     expect(dockerfile).toContain('CMD ["node", "src/server.ts"]');
+  });
+
+  it('defines a deploy-time web asset build command', async () => {
+    const packageJson = JSON.parse(await readProjectFile('package.json')) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.['build:web-assets']).toBe('node scripts/build-web-assets.ts');
   });
 
   it('keeps deploy-only and secret material out of the Docker context', async () => {

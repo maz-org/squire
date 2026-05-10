@@ -105,12 +105,12 @@ const cspMiddleware: MiddlewareHandler = async (c, next) => {
 
 app.use('*', cspMiddleware);
 
-// ─── Web UI: on-demand asset pipeline (SQR-71, ADR 0011) ─────────────────────
+// ─── Web UI asset pipeline (SQR-71, ADR 0011) ────────────────────────────────
 //
-// Replaces the prebuilt-static-file pipeline from ADR 0008 with
-// Rails Propshaft semantics: dev serves bare paths with no-cache so
-// edits to styles.css and squire.js show up immediately in devtools,
-// prod serves content-hashed paths (`/app.<hash>.css`,
+// Rails Propshaft semantics: dev serves bare paths with no-cache so edits to
+// styles.css and squire.js show up immediately in devtools, while prod reads
+// CSS built by `npm run build:web-assets` during the Docker build and serves
+// content-hashed paths (`/app.<hash>.css`,
 // `/squire.<hash>.js`) with immutable caching so Cloudflare and
 // browsers can cache forever and invalidation is automatic on
 // content change. Hash is enforced by the router regex
@@ -151,14 +151,8 @@ app.get('/app.css', async (c) => {
 // support `:param{regex}.literal` patterns — it either 404s silently
 // (single-segment) or throws (multi-segment) — but full-filename
 // constraints work fine. Router rejects non-hex at the match layer;
-// the handler then checks the filename matches the current compile
-// exactly and 404s on mismatch.
-//
-// Trade-off: the handler calls getAppCss() *before* comparing the
-// hash, so an unauthenticated 404 probe on a cold process pays one
-// Tailwind compile (~38 ms) before getting its 404. One-time cost
-// per process lifetime, not amplifiable — accepted. See ADR 0011
-// fingerprinting addendum, "What this does not solve".
+// the handler then checks the filename matches the current prebuilt
+// asset exactly and 404s on mismatch.
 app.get('/:file{app\\.[a-f0-9]+\\.css}', async (c) => {
   if (!isProdEnv()) return c.notFound();
   const { content, hash } = await getAppCss();
@@ -223,18 +217,11 @@ app.get('/', requirePageSession(), async (c) => {
   // required. Awaiting both ensures the catch branch always renders
   // the layout shell.
   //
-  // Known gap (accepted, SQR-71 eng review): if the ORIGINAL error
-  // was an asset-compile failure in prod (unreadable styles.css,
-  // broken @tailwindcss/node upgrade), the fallback re-invokes
-  // `layoutShell` which re-invokes `getAppCssUrl` → `getAppCss` →
-  // throws again, bypassing this catch. The styled fallback is
-  // lost in that specific case and the user gets the bare
-  // `app.onError` JSON 500. We accept this because a prod deploy
-  // with an unreadable styles.css is already broken end-to-end —
-  // CSS is load-bearing, no error banner saves a page with no
-  // styles. Dev is unaffected because `getAppCssUrl` in dev
-  // returns a constant string without I/O. See ADR 0011
-  // fingerprinting addendum, "What this does not solve".
+  // Known gap (accepted, SQR-71 eng review): if the original error was
+  // a production asset-read failure, the fallback re-invokes `layoutShell`,
+  // which reads the same missing asset and falls through to `app.onError`.
+  // A prod image missing `dist/web-ui/app.css` is broken end-to-end; Docker
+  // now builds that file before deploy so this fails before runtime.
   try {
     const session = c.get('session')!;
     c.header('Cache-Control', 'no-store');

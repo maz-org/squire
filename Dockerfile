@@ -7,6 +7,16 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
+FROM deps AS assets
+
+WORKDIR /app
+
+COPY --chown=node:node package.json package-lock.json ./
+COPY --chown=node:node tailwind.config.js ./tailwind.config.js
+COPY --chown=node:node src ./src
+COPY --chown=node:node scripts ./scripts
+RUN npm run build:web-assets
+
 FROM node:24.14.0-bookworm-slim AS runtime
 
 WORKDIR /app
@@ -17,6 +27,7 @@ ENV PORT=8080
 ENV HOST=0.0.0.0
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=assets /app/dist ./dist
 COPY --chown=node:node package.json package-lock.json ./
 COPY --chown=node:node src ./src
 COPY --chown=node:node scripts ./scripts

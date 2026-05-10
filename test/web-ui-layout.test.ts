@@ -10,6 +10,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -25,6 +26,7 @@ import {
   getSquireJs,
   getSquireJsUrl,
 } from '../src/web-ui/assets.ts';
+import { GENERATED_APP_CSS_PATH, GENERATED_WEB_UI_DIR } from '../src/web-ui/asset-paths.ts';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
@@ -289,11 +291,11 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
   });
 });
 
-// SQR-71 ships two asset pipelines in one module: an on-demand Tailwind
-// JIT compile for CSS, and a vanilla file-read-and-cache for squire.js.
-// Both are served with Rails Propshaft semantics — dev uses bare paths
+// SQR-71 serves assets with Rails Propshaft semantics: dev uses bare paths
 // with no-cache, prod uses content-hashed paths with immutable caching.
-// Concurrent cold-start requests share one compile via Promise memo.
+// CSS compiles on demand in dev and is read from a prebuilt Docker artifact
+// in prod. Concurrent cold-start requests share one read/compile via Promise
+// memoization.
 // See ADR 0011 (fingerprinting addendum) for the decision log.
 
 describe('SQR-71 dev asset pipeline — bare paths', () => {
@@ -382,14 +384,17 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
 });
 
 describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     vi.stubEnv('NODE_ENV', 'production');
+    await mkdir(GENERATED_WEB_UI_DIR, { recursive: true });
+    await writeFile(GENERATED_APP_CSS_PATH, '.squire-monogram{display:block}');
     _resetAssetCachesForTests();
   });
-  afterEach(() => {
+  afterEach(async () => {
     vi.unstubAllEnvs();
     _resetAssetCachesForTests();
+    await rm(GENERATED_WEB_UI_DIR, { recursive: true, force: true });
   });
 
   it('serves /app.<hash>.css with immutable cache on correct hash', async () => {
@@ -470,6 +475,13 @@ describe('SQR-71 prod asset pipeline — content-hashed paths', () => {
     expect(htmxUrl).toMatch(/^\/htmx\.[a-f0-9]{10}\.js$/);
     expect(jsUrl).toMatch(/^\/squire\.[a-f0-9]{10}\.js$/);
   }, 15000);
+
+  it('reads prebuilt CSS in prod instead of compiling Tailwind at runtime', async () => {
+    const { content } = await getAppCss();
+
+    expect(content).toBe('.squire-monogram{display:block}');
+    expect(_getCssCompileCountForTests()).toBe(0);
+  });
 });
 
 describe('SQR-71 Promise memoization — concurrent cold start', () => {
