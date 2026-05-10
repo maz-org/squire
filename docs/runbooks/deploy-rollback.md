@@ -38,6 +38,16 @@ flyctl secrets set \
 connection string. Do not put secrets in `.env`, `fly.toml`, Docker build args,
 or the image.
 
+Before the first deploy, open the Fly dashboard for the Managed Postgres
+cluster and enable the `vector` extension from the Extensions page:
+
+- Database: `fly-db`
+- Schema: `public`
+- Extension: `vector`
+
+Fly Managed Postgres makes `vector` available, but the attached application
+role is not a superuser and cannot run `CREATE EXTENSION vector` itself.
+
 ## Local deploy checks
 
 Before the first real deploy:

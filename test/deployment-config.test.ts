@@ -64,6 +64,8 @@ describe('deployment configuration', () => {
 
     expect(runbook).toContain('flyctl mpg create');
     expect(runbook).toContain('flyctl mpg attach <cluster-id>');
+    expect(runbook).toContain('Extensions page');
+    expect(runbook).toContain('Extension: `vector`');
     expect(runbook).toContain('fly releases list');
     expect(runbook).toContain('fly logs');
     expect(runbook).toContain('fly deploy --image <prior-image>');

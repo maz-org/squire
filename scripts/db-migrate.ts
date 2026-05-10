@@ -5,6 +5,7 @@
  */
 import 'dotenv/config';
 
+import { pathToFileURL } from 'node:url';
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
@@ -30,7 +31,7 @@ async function main(): Promise<void> {
   await ensureManagedLocalDatabaseExists(url);
   const handle = createStandaloneDb({ url, max: 1 });
   try {
-    await handle.db.execute(sql.raw('CREATE EXTENSION IF NOT EXISTS vector'));
+    await ensureVectorExtension(handle);
     await migrate(handle.db, { migrationsFolder: './src/db/migrations' });
     console.log(`✓ migrations applied to ${redact(url)}`);
   } finally {
@@ -57,11 +58,50 @@ async function ensureManagedLocalDatabaseExists(url: string): Promise<void> {
   }
 }
 
+async function ensureVectorExtension(handle: Awaited<ReturnType<typeof createStandaloneDb>>) {
+  try {
+    await handle.db.execute(sql.raw('CREATE EXTENSION IF NOT EXISTS vector'));
+  } catch (error) {
+    if (!isPgVectorPermissionError(error)) throw error;
+    if (await isVectorExtensionInstalled(handle.db.$client)) return;
+    throw new Error(pgVectorExtensionSetupMessage(), { cause: error });
+  }
+}
+
+async function isVectorExtensionInstalled(client: pg.Pool): Promise<boolean> {
+  const result = await client.query(
+    "SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') AS installed",
+  );
+  return result.rows[0]?.installed === true;
+}
+
+export function isPgVectorPermissionError(error: unknown): boolean {
+  const candidate = error as {
+    query?: unknown;
+    cause?: { code?: unknown; message?: unknown };
+  };
+  return (
+    candidate?.cause?.code === '42501' &&
+    typeof candidate.query === 'string' &&
+    candidate.query.includes('CREATE EXTENSION') &&
+    candidate.query.includes('vector')
+  );
+}
+
+export function pgVectorExtensionSetupMessage(): string {
+  return [
+    'pgvector is not enabled for this database, and the app database role cannot create it.',
+    'For Fly Managed Postgres, enable the vector extension in the dashboard Extensions page for database fly-db, schema public, then rerun the deploy.',
+  ].join(' ');
+}
+
 function redact(url: string): string {
   return url.replace(/\/\/[^@]*@/, '//***:***@');
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
