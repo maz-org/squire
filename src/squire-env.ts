@@ -1,7 +1,7 @@
 type Env = NodeJS.ProcessEnv | Record<string, string | undefined>;
 
 const DEFAULT_SQUIRE_ENV = 'development';
-const SQUIRE_ENV_PATTERN = /^(?!langfuse)[a-z0-9-_]{1,40}$/;
+const SQUIRE_ENV_PATTERN = /^(?!langfuse)[a-z0-9_-]{1,40}$/;
 
 export function resolveSquireEnv(env: Env = process.env): string {
   const raw = env.SQUIRE_ENV?.trim() || env.NODE_ENV?.trim() || DEFAULT_SQUIRE_ENV;

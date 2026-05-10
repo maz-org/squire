@@ -185,9 +185,8 @@ function requiredTraceMetadata(input: EvalTraceInput): Record<string, unknown> {
 }
 
 function traceEnvironment(input: EvalTraceInput): string {
-  return input.environment?.trim()
-    ? resolveSquireEnv({ SQUIRE_ENV: input.environment })
-    : resolveSquireEnv();
+  const environment = input.environment?.trim();
+  return environment ? resolveSquireEnv({ SQUIRE_ENV: environment }) : resolveSquireEnv();
 }
 
 function generationIdFor(input: EvalTraceInput): string {
@@ -357,8 +356,13 @@ export function withEvalTraceEnvironment(
 ): EvalTraceWriter {
   const environment = resolveSquireEnv(env);
   return {
-    writeTrace: (input) =>
-      writer.writeTrace({ ...input, environment: input.environment ?? environment }),
+    writeTrace: (input) => {
+      const explicitEnvironment = input.environment?.trim();
+      return writer.writeTrace({
+        ...input,
+        environment: explicitEnvironment || environment,
+      });
+    },
   };
 }
 

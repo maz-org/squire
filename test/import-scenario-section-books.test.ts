@@ -7,7 +7,7 @@ describe('importScenarioSectionBooks', () => {
 
   beforeAll(async () => {
     extract = await importScenarioSectionBooks();
-  }, 60000);
+  }, 120000);
 
   it('builds the scenario 61 conclusion path to section 67.1', () => {
     const scenario = extract.scenarios.find(

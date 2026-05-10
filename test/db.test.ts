@@ -63,6 +63,14 @@ describe('getDb', () => {
     vi.stubEnv('DATABASE_URL', '');
 
     expect(() => resolveDatabaseUrl()).toThrow('DATABASE_URL is required when NODE_ENV=production');
+
+    vi.stubEnv('DATABASE_URL', '   ');
+
+    expect(() => resolveDatabaseUrl()).toThrow('DATABASE_URL is required when NODE_ENV=production');
+
+    vi.stubEnv('DATABASE_URL', ' postgres://user:pass@example.com:5432/squire ');
+
+    expect(resolveDatabaseUrl()).toBe('postgres://user:pass@example.com:5432/squire');
   });
 
   it('describes the current checkout runtime shape', () => {
