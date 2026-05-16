@@ -105,11 +105,14 @@ describe('security alert Linear sync', () => {
       fetch,
     });
 
-    expect(fetches).toEqual([
-      'https://api.github.com/repos/maz-org/squire/dependabot/alerts?state=open&per_page=100',
-      'https://api.github.com/repos/maz-org/squire/code-scanning/alerts?state=open&per_page=100',
-      'https://api.github.com/repos/maz-org/squire/secret-scanning/alerts?state=open&per_page=100',
-    ]);
+    expect(fetches).toHaveLength(3);
+    expect(fetches).toEqual(
+      expect.arrayContaining([
+        'https://api.github.com/repos/maz-org/squire/dependabot/alerts?state=open&per_page=100',
+        'https://api.github.com/repos/maz-org/squire/code-scanning/alerts?state=open&per_page=100',
+        'https://api.github.com/repos/maz-org/squire/secret-scanning/alerts?state=open&per_page=100',
+      ]),
+    );
     expect(alerts.map((alert) => alert.key)).toEqual([
       'github-security:maz-org/squire:dependabot:11',
       'github-security:maz-org/squire:code-scanning:21',
@@ -212,6 +215,36 @@ describe('security alert Linear sync', () => {
     );
   });
 
+  it('fails instead of suppressing secret scanning rate-limit 403s', async () => {
+    const fetch: typeof globalThis.fetch = async (input) => {
+      const url = String(input);
+
+      if (url.includes('/dependabot/alerts') || url.includes('/code-scanning/alerts')) {
+        return jsonResponse([]);
+      }
+
+      if (url.includes('/secret-scanning/alerts')) {
+        return new Response(JSON.stringify({ message: 'API rate limit exceeded' }), {
+          status: 403,
+          headers: {
+            'content-type': 'application/json',
+            'x-ratelimit-remaining': '0',
+          },
+        });
+      }
+
+      throw new Error(`Unexpected request: ${url}`);
+    };
+
+    await expect(
+      collectRoutableAlerts({
+        repository: 'maz-org/squire',
+        githubToken: 'gh-test-token',
+        fetch,
+      }),
+    ).rejects.toThrow('Secret scanning alerts returned 403');
+  });
+
   it('times out stalled GitHub alert requests', async () => {
     const fetch: typeof globalThis.fetch = async () => {
       return new Promise<Response>(() => undefined);
@@ -267,16 +300,19 @@ describe('security alert Linear sync', () => {
 
       const body = JSON.parse(String(init?.body)) as {
         operationName: string;
+        query: string;
         variables?: Record<string, unknown>;
       };
       operations.push(body.operationName);
 
       if (body.operationName === 'ResolveLinearTargets') {
+        expect(body.query).toContain('accessibleTeams');
+        expect(body.query).toContain('team: { null: true }');
         return jsonResponse({
           data: {
             teams: { nodes: [{ id: 'team-id', key: 'SQR', name: 'Squire' }] },
             projects: { nodes: [{ id: 'project-id', name: 'Squire · Security Alert Automation' }] },
-            issueLabels: { nodes: [{ id: 'security-label-id', name: 'Security' }] },
+            issueLabels: { nodes: [{ id: 'security-label-id', name: 'Security', team: null }] },
           },
         });
       }
@@ -381,7 +417,7 @@ describe('security alert Linear sync', () => {
           data: {
             teams: { nodes: [{ id: 'team-id', key: 'SQR', name: 'Squire' }] },
             projects: { nodes: [{ id: 'project-id', name: 'Squire · Security Alert Automation' }] },
-            issueLabels: { nodes: [{ id: 'security-label-id', name: 'Security' }] },
+            issueLabels: { nodes: [{ id: 'security-label-id', name: 'Security', team: null }] },
           },
         });
       }

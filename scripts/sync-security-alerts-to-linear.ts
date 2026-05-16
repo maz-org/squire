@@ -217,7 +217,10 @@ async function fetchGitHubPages(
       return results;
     }
 
-    if (response.status === 403 && options.treatForbiddenAsEmpty) {
+    const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
+    const retryAfter = response.headers.get('retry-after');
+    const isRateLimited = rateLimitRemaining === '0' || retryAfter !== null;
+    if (response.status === 403 && options.treatForbiddenAsEmpty && !isRateLimited) {
       log(`${endpointName} returned 403; skipping because the token cannot read this alert type`);
       return results;
     }
@@ -459,7 +462,9 @@ async function resolveLinearTargets(
   const data = await linearGraphql<{
     teams: { nodes: { id: string; key: string; name: string }[] };
     projects: { nodes: { id: string; name: string }[] };
-    issueLabels: { nodes: { id: string; name: string }[] };
+    issueLabels: {
+      nodes: { id: string; name: string; team: { id: string; key: string } | null }[];
+    };
   }>(
     fetch,
     linearApiKey,
@@ -468,11 +473,23 @@ async function resolveLinearTargets(
       teams(first: 1, filter: { key: { eq: $teamKey } }) {
         nodes { id key name }
       }
-      projects(first: 1, filter: { name: { eq: $projectName } }) {
+      projects(
+        first: 1
+        filter: {
+          name: { eq: $projectName }
+          accessibleTeams: { some: { key: { eq: $teamKey } } }
+        }
+      ) {
         nodes { id name }
       }
-      issueLabels(first: 1, filter: { name: { eqIgnoreCase: $labelName } }) {
-        nodes { id name }
+      issueLabels(
+        first: 10
+        filter: {
+          name: { eqIgnoreCase: $labelName }
+          or: [{ team: { null: true } }, { team: { key: { eq: $teamKey } } }]
+        }
+      ) {
+        nodes { id name team { id key } }
       }
     }`,
     {
@@ -489,13 +506,19 @@ async function resolveLinearTargets(
   }
 
   const project = data.projects.nodes[0];
-  if (linearProjectName && !project) {
-    throw new Error(`Linear project ${linearProjectName} was not found`);
+  if (!project) {
+    throw new Error(
+      `Linear project ${linearProjectName ?? DEFAULT_LINEAR_PROJECT_NAME} was not found for team ${linearTeamKey}`,
+    );
   }
 
-  const label = data.issueLabels.nodes[0];
+  const label =
+    data.issueLabels.nodes.find((candidate) => candidate.team === null) ??
+    data.issueLabels.nodes[0];
   if (!label) {
-    throw new Error(`Linear label ${linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME} was not found`);
+    throw new Error(
+      `Linear label ${linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME} was not found as a workspace or ${linearTeamKey} team label`,
+    );
   }
 
   return { teamId: team.id, projectId: project?.id, labelIds: [label.id], labelName: label.name };
