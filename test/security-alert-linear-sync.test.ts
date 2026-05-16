@@ -212,6 +212,21 @@ describe('security alert Linear sync', () => {
     );
   });
 
+  it('times out stalled GitHub alert requests', async () => {
+    const fetch: typeof globalThis.fetch = async () => {
+      return new Promise<Response>(() => undefined);
+    };
+
+    await expect(
+      collectRoutableAlerts({
+        repository: 'maz-org/squire',
+        githubToken: 'gh-test-token',
+        fetch,
+        httpTimeoutMs: 1,
+      }),
+    ).rejects.toThrow('timed out after 1ms');
+  });
+
   it('creates new Linear issues and updates existing ones by alert marker', async () => {
     const operations: string[] = [];
     const fetch: typeof globalThis.fetch = async (input, init) => {

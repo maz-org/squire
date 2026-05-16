@@ -13,6 +13,7 @@ interface CollectAlertsOptions {
   githubToken: string;
   fetch?: FetchLike;
   log?: Logger;
+  httpTimeoutMs?: number;
 }
 
 interface SyncSecurityAlertsOptions extends CollectAlertsOptions {
@@ -106,6 +107,7 @@ const LINEAR_GRAPHQL_URL = 'https://api.linear.app/graphql';
 const DEFAULT_LINEAR_TEAM_KEY = 'SQR';
 const DEFAULT_LINEAR_PROJECT_NAME = 'Squire · Security Alert Automation';
 const DEFAULT_LINEAR_LABEL_NAME = 'Security';
+const DEFAULT_HTTP_TIMEOUT_MS = 30_000;
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
@@ -140,6 +142,40 @@ async function readJson(response: Response, context: string): Promise<unknown> {
   }
 }
 
+async function fetchWithTimeout(
+  fetch: FetchLike,
+  input: string | URL,
+  init: RequestInit,
+  context: string,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutError = new Error(`${context} timed out after ${String(timeoutMs)}ms`);
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      controller.abort();
+      reject(timeoutError);
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([
+      fetch(input, { ...init, signal: controller.signal }),
+      timeoutPromise,
+    ]);
+  } catch (error) {
+    if (error === timeoutError) throw error;
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 function nextLink(linkHeader: string | null): string | undefined {
   if (!linkHeader) return undefined;
 
@@ -162,12 +198,19 @@ async function fetchGitHubPages(
   endpointName: string,
   log: Logger,
   options: { treatForbiddenAsEmpty?: boolean } = {},
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
 ): Promise<unknown[]> {
   const results: unknown[] = [];
   let nextUrl: string | undefined = url;
 
   while (nextUrl) {
-    const response = await fetch(nextUrl, { headers: githubHeaders(token) });
+    const response = await fetchWithTimeout(
+      fetch,
+      nextUrl,
+      { headers: githubHeaders(token) },
+      endpointName,
+      timeoutMs,
+    );
 
     if (response.status === 404) {
       log(`${endpointName} returned 404; treating it as no enabled alerts for this repo`);
@@ -320,6 +363,8 @@ export async function collectRoutableAlerts(
       `${baseUrl}/dependabot/alerts?state=open&per_page=100`,
       'Dependabot alerts',
       log,
+      {},
+      options.httpTimeoutMs,
     ),
     fetchGitHubPages(
       fetch,
@@ -327,6 +372,8 @@ export async function collectRoutableAlerts(
       `${baseUrl}/code-scanning/alerts?state=open&per_page=100`,
       'Code scanning alerts',
       log,
+      {},
+      options.httpTimeoutMs,
     ),
     fetchGitHubPages(
       fetch,
@@ -335,6 +382,7 @@ export async function collectRoutableAlerts(
       'Secret scanning alerts',
       log,
       { treatForbiddenAsEmpty: true },
+      options.httpTimeoutMs,
     ),
   ]);
 
@@ -361,15 +409,22 @@ async function linearGraphql<T>(
   operationName: string,
   query: string,
   variables: Record<string, unknown>,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
 ): Promise<T> {
-  const response = await fetch(LINEAR_GRAPHQL_URL, {
-    method: 'POST',
-    headers: {
-      authorization: linearApiKey,
-      'content-type': 'application/json',
+  const response = await fetchWithTimeout(
+    fetch,
+    LINEAR_GRAPHQL_URL,
+    {
+      method: 'POST',
+      headers: {
+        authorization: linearApiKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ operationName, query, variables }),
     },
-    body: JSON.stringify({ operationName, query, variables }),
-  });
+    `Linear ${operationName}`,
+    timeoutMs,
+  );
 
   if (!response.ok) {
     const body = await response.text();
@@ -399,6 +454,7 @@ async function resolveLinearTargets(
   linearTeamKey: string,
   linearProjectName: string | undefined,
   linearLabelName: string | undefined,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
 ): Promise<LinearTargets> {
   const data = await linearGraphql<{
     teams: { nodes: { id: string; key: string; name: string }[] };
@@ -424,6 +480,7 @@ async function resolveLinearTargets(
       projectName: linearProjectName ?? DEFAULT_LINEAR_PROJECT_NAME,
       labelName: linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME,
     },
+    timeoutMs,
   );
 
   const team = data.teams.nodes[0];
@@ -455,6 +512,7 @@ async function findExistingIssue(
   linearApiKey: string,
   linearTeamKey: string,
   marker: string,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
 ): Promise<LinearIssueRef | undefined> {
   const data = await linearGraphql<{
     issues: { nodes: LinearIssueRef[] };
@@ -474,6 +532,7 @@ async function findExistingIssue(
       }
     }`,
     { teamKey: linearTeamKey, marker },
+    timeoutMs,
   );
 
   return data.issues.nodes[0];
@@ -501,6 +560,7 @@ async function createIssue(
   linearApiKey: string,
   targets: LinearTargets,
   alert: RoutableSecurityAlert,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
 ): Promise<LinearIssueRef> {
   const input: Record<string, unknown> = {
     teamId: targets.teamId,
@@ -524,6 +584,7 @@ async function createIssue(
       }
     }`,
     { input },
+    timeoutMs,
   );
 
   if (!data.issueCreate.success) {
@@ -538,6 +599,7 @@ async function updateIssue(
   targets: LinearTargets,
   existingIssueId: string,
   alert: RoutableSecurityAlert,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
 ): Promise<LinearIssueRef> {
   const input: Record<string, unknown> = {
     title: alert.title,
@@ -560,6 +622,7 @@ async function updateIssue(
       }
     }`,
     { id: existingIssueId, input },
+    timeoutMs,
   );
 
   if (!data.issueUpdate.success) {
@@ -584,6 +647,7 @@ export async function syncSecurityAlertsToLinear(
       options.linearTeamKey,
       options.linearProjectName,
       options.linearLabelName,
+      options.httpTimeoutMs,
     );
     logValidatedLinearTarget(log, targets);
     return { alerts: 0, created: 0, updated: 0, dryRun: 0 };
@@ -624,6 +688,7 @@ export async function syncSecurityAlertsToLinear(
     options.linearTeamKey,
     options.linearProjectName,
     options.linearLabelName,
+    options.httpTimeoutMs,
   );
   logValidatedLinearTarget(log, targets);
 
@@ -638,14 +703,28 @@ export async function syncSecurityAlertsToLinear(
       options.linearApiKey,
       options.linearTeamKey,
       alert.key,
+      options.httpTimeoutMs,
     );
 
     if (existing) {
-      const updated = await updateIssue(fetch, options.linearApiKey, targets, existing.id, alert);
+      const updated = await updateIssue(
+        fetch,
+        options.linearApiKey,
+        targets,
+        existing.id,
+        alert,
+        options.httpTimeoutMs,
+      );
       log(`Updated ${updated.identifier} for ${alert.key}: ${updated.url}`);
       result.updated += 1;
     } else {
-      const created = await createIssue(fetch, options.linearApiKey, targets, alert);
+      const created = await createIssue(
+        fetch,
+        options.linearApiKey,
+        targets,
+        alert,
+        options.httpTimeoutMs,
+      );
       log(`Created ${created.identifier} for ${alert.key}: ${created.url}`);
       result.created += 1;
     }
