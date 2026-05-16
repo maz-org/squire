@@ -131,11 +131,25 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('run: actionlint');
   });
 
+  it('enables auto-merge with an app token so main push workflows run', async () => {
+    const workflow = await readProjectFile('.github/workflows/auto-merge.yml');
+
+    expect(workflow).toContain(
+      'if: github.event.pull_request.head.repo.full_name == github.repository',
+    );
+    expect(workflow).toContain('uses: actions/create-github-app-token@v3');
+    expect(workflow).toContain('app-id: ${{ secrets.AUTO_MERGE_APP_ID }}');
+    expect(workflow).toContain('private-key: ${{ secrets.AUTO_MERGE_PRIVATE_KEY }}');
+    expect(workflow).toContain('GH_TOKEN: ${{ steps.app-token.outputs.token }}');
+    expect(workflow).not.toContain('GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}');
+  });
+
   it('documents GitHub deploy token setup and post-deploy smoke checks', async () => {
     const runbook = await readProjectFile('docs/runbooks/deploy-rollback.md');
 
     expect(runbook).toContain('fly tokens create deploy');
     expect(runbook).toContain('FLY_API_TOKEN');
+    expect(runbook).toContain('AUTO_MERGE_APP_*');
     expect(runbook).toContain('Deploy to Fly');
     expect(runbook).toContain('node scripts/check-deploy-health.ts');
     expect(runbook).toContain('https://maz-squire.fly.dev/api/live');
