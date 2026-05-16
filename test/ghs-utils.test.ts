@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { kebabToTitle, resolveLabel, resolveGameTokens, formatAction } from '../src/ghs-utils.ts';
+import {
+  kebabToTitle,
+  stripHtml,
+  resolveLabel,
+  resolveGameTokens,
+  formatAction,
+} from '../src/ghs-utils.ts';
 
 // ─── kebabToTitle ────────────────────────────────────────────────────────────
 
@@ -14,6 +20,18 @@ describe('kebabToTitle', () => {
 
   it('handles multi-segment names', () => {
     expect(kebabToTitle('fracture-of-the-deep')).toBe('Fracture Of The Deep');
+  });
+});
+
+// ─── stripHtml ──────────────────────────────────────────────────────────────
+
+describe('stripHtml', () => {
+  it('removes tags and converts line breaks to spaces', () => {
+    expect(stripHtml('Attack <b>3</b><br/>Then move <i>2</i>')).toBe('Attack 3 Then move 2');
+  });
+
+  it('drops unterminated tag fragments', () => {
+    expect(stripHtml('Attack 3 <script')).toBe('Attack 3');
   });
 });
 

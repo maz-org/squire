@@ -103,11 +103,26 @@ export function kebabToTitle(name: string): string {
  * other tags, and collapses whitespace.
  */
 export function stripHtml(text: string): string {
-  return text
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/  +/g, ' ')
-    .trim();
+  let stripped = '';
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (char !== '<') {
+      stripped += char;
+      continue;
+    }
+
+    const closeIndex = text.indexOf('>', i + 1);
+    if (closeIndex === -1) break;
+
+    const tagContent = text.slice(i + 1, closeIndex).trim();
+    const tagName = tagContent.replace(/\/$/, '').trim().split(/\s+/, 1)[0]?.toLowerCase();
+    if (tagName === 'br') stripped += ' ';
+
+    i = closeIndex;
+  }
+
+  return stripped.replace(/  +/g, ' ').trim();
 }
 
 // ─── Game token resolution ───────────────────────────────────────────────────
