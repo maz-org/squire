@@ -267,6 +267,19 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
   high and critical runtime vulnerabilities introduced by dependency changes;
   low and moderate findings stay non-blocking until alert noise is better
   understood.
+- Security Alert Linear Sync runs daily and on manual dispatch via
+  `.github/workflows/security-alert-linear-sync.yml`. It polls open
+  Dependabot, CodeQL code scanning, and secret scanning alerts, routes
+  high/critical findings into the Squire Linear security automation project,
+  applies the Linear `Security` label, and de-duplicates issues with a stable
+  `github-security:<repo>:<type>:<number>` marker in the issue body. Manual dry
+  runs are available with `SECURITY_ALERT_DRY_RUN=1 npm run security:alerts:dry-run`;
+  validate the Linear key, team, project, and label without creating issues via
+  `npm run security:alerts:validate-config`. Live writes require `LINEAR_API_KEY`,
+  and the workflow uses read-only `GITHUB_TOKEN` permissions for repository
+  metadata, CodeQL, and Dependabot alerts. Secret scanning alert reads require
+  a `SECURITY_ALERTS_GITHUB_TOKEN` secret from a GitHub App or personal access
+  token with secret-scanning alert read access.
 - CodeQL code scanning runs on PRs, `main`, and a weekly schedule via
   `.github/workflows/codeql.yml` for JavaScript/TypeScript and GitHub Actions
   workflow analysis. The repository is public, so GitHub Copilot Autofix for
@@ -331,6 +344,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 ## Changelog
 
+- **2026-05-16:** Added GitHub security alert routing into Linear for high/critical Dependabot, CodeQL, and secret scanning alerts (SQR-167).
 - **2026-05-16:** Added Dependency Review PR workflow to block high/critical runtime vulnerability introductions (SQR-165).
 - **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Migrated GitHub Issue references (#12, #55–#59) to Linear projects (User Accounts SQR-37/38/39/40, Security Hardening). Added header note pointing at the new product and tech specs.

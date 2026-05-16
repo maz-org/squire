@@ -24,6 +24,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "agent:check": "node scripts/check-agent-parity.ts",
+    "security:alerts:dry-run": "SECURITY_ALERT_DRY_RUN=1 node scripts/sync-security-alerts-to-linear.ts",
+    "security:alerts:validate-config": "node scripts/sync-security-alerts-to-linear.ts --validate-config",
     "lint": "eslint src/ test/ scripts/",
     "lint:css": "stylelint 'src/web-ui/**/*.css'",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads' '#.gstack'",
