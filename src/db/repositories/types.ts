@@ -32,6 +32,7 @@ export interface CreateUserInput {
 // ─── Session ────────────────────────────────────────────────────────────────
 
 export interface Session {
+  /** Raw session token from the signed cookie. The DB stores only its SHA-256 hash. */
   id: string;
   userId: string;
   expiresAt: Date;

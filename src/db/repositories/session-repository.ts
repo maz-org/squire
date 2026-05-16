@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
+import { hashSecret } from '../../security/hashing.ts';
 import { sessions, users } from '../schema/core.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
 import type { Session, CreateSessionInput, User } from './types.ts';
@@ -32,9 +33,9 @@ function userToDomain(row: UserRow): User {
   };
 }
 
-function toDomain(row: SessionRow & { user: UserRow }): Session {
+function toDomain(row: SessionRow & { user: UserRow }, rawSessionId: string): Session {
   return {
-    id: row.id,
+    id: rawSessionId,
     userId: row.userId,
     expiresAt: row.expiresAt,
     createdAt: row.createdAt,
@@ -55,25 +56,26 @@ function toDomain(row: SessionRow & { user: UserRow }): Session {
 export async function findById(sessionId: string): Promise<Session | null> {
   const { db } = getDb('server');
   const now = new Date();
+  const sessionHash = hashSecret(sessionId);
 
   const [row] = await db
     .select({ session: sessions, user: users })
     .from(sessions)
     .leftJoin(users, eq(sessions.userId, users.id))
-    .where(eq(sessions.id, sessionId))
+    .where(eq(sessions.id, sessionHash))
     .limit(1);
 
   if (!row) return null;
   if (!row.user) {
     console.warn('[session] session row missing joined user; deleting orphaned session');
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    await db.delete(sessions).where(eq(sessions.id, sessionHash));
     return null;
   }
   const session = row.session;
   const user = row.user;
 
   if (session.expiresAt <= now) {
-    await db.delete(sessions).where(eq(sessions.id, sessionId));
+    await db.delete(sessions).where(eq(sessions.id, sessionHash));
     return null;
   }
 
@@ -81,12 +83,12 @@ export async function findById(sessionId: string): Promise<Session | null> {
   // session. The session is valid regardless of whether we can bump the timestamp.
   // TODO: debounce for Phase 3 multi-user if write volume becomes a concern
   try {
-    await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId));
+    await db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionHash));
   } catch (err) {
     console.warn('[session] lastSeenAt update failed (non-fatal):', (err as Error).message);
   }
 
-  return toDomain({ ...session, user });
+  return toDomain({ ...session, user }, sessionId);
 }
 
 /**
@@ -100,11 +102,12 @@ export async function create(
   input: CreateSessionInput,
 ): Promise<{ sessionId: string; expiresAt: Date }> {
   const sessionId = randomUUID();
+  const sessionHash = hashSecret(sessionId);
   const now = new Date();
   const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_MS);
 
   await handle.insert(sessions).values({
-    id: sessionId,
+    id: sessionHash,
     userId: input.userId,
     expiresAt,
     ipAddress: input.ipAddress ?? null,
@@ -121,14 +124,15 @@ export async function create(
  */
 export async function destroy(sessionId: string): Promise<string | null> {
   const { db } = getDb('server');
+  const sessionHash = hashSecret(sessionId);
 
   const rows = await db
     .select({ userId: sessions.userId })
     .from(sessions)
-    .where(eq(sessions.id, sessionId))
+    .where(eq(sessions.id, sessionHash))
     .limit(1);
 
-  await db.delete(sessions).where(eq(sessions.id, sessionId));
+  await db.delete(sessions).where(eq(sessions.id, sessionHash));
 
   return rows[0]?.userId ?? null;
 }
