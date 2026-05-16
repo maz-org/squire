@@ -15,7 +15,7 @@ agent-native retrieval redesign. [ADR 0013](0013-phase-1-production-agent-baseli
 froze the production agent runtime; SQR-115 then closed (Done, 2026-04-29) with
 the decision to keep the legacy retrieval surface for Phase 1, unblocking
 deployment work. SQR-59 is the gating decision for the rest of the Production
-Readiness project: SQR-58 (Cloudflare WAF), SQR-42 (Dockerization),
+Readiness project: SQR-58 (AWS WAF + CloudFront), SQR-42 (Dockerization),
 SQR-43 (`drizzle-kit migrate` in the deploy pipeline), and SQR-44 (CI/CD).
 
 The host must satisfy:
@@ -29,8 +29,9 @@ The host must satisfy:
   timeouts would break the chat surface).
 - A first-class migrate-before-cutover hook so a failed migration aborts the
   deploy without leaving production on a half-migrated schema (SQR-43 contract).
-- A Cloudflare-friendly origin: TLS cert validatable in Cloudflare Full (Strict)
-  mode (SQR-58 contract).
+- A CloudFront-friendly origin: TLS to Fly's `fly.dev` hostname, custom-domain
+  DNS in Route 53, and an origin-secret lock between CloudFront and Fly
+  (SQR-58 contract).
 - Logs and metrics passthrough to Langfuse + OpenTelemetry without per-platform
   middleware.
 - Phase 1 budget: ~$100/month for hosting end-to-end, with headroom for
@@ -48,8 +49,10 @@ data. Migrations run via `release_command` before traffic cutover. No staging
 environment.**
 
 The Hono server, MCP transport, and web UI all run in one process on one
-machine. Cloudflare sits in front as the WAF (SQR-58). The app talks to
-Postgres over Fly's private 6PN network — Postgres has no public ingress.
+machine. Route 53, CloudFront, and AWS WAF sit in front of the Fly origin
+(SQR-58), and CloudFront sends `X-Origin-Secret` so the app can reject direct
+origin traffic. The app talks to Postgres over Fly's private 6PN network —
+Postgres has no public ingress.
 
 ## Options considered
 
@@ -116,13 +119,16 @@ Postgres over Fly's private 6PN network — Postgres has no public ingress.
 
 ### What this unblocks (Linear)
 
-- **SQR-58 (Cloudflare WAF)** — origin is `https://<app>.fly.dev` (or a
-  Fly-issued cert on a custom hostname). Cloudflare Full (Strict) works because
-  Fly issues a Let's Encrypt cert for the public hostname.
+- **SQR-58 (AWS WAF + CloudFront)** — public traffic enters through Route 53
+  and CloudFront, passes through the `squire-production-waf` AWS WAF web ACL,
+  then forwards to `https://maz-squire.fly.dev` with `X-Origin-Secret`. The Fly
+  app stores the matching `ORIGIN_SHARED_SECRET` and rejects direct browser,
+  OAuth, API, and MCP routes that bypass the edge.
 - **SQR-42 (Dockerize)** — multi-stage Node 24 Dockerfile that `EXPOSE 8080`s
-  and runs as a non-root user. No static asset baking — per
-  [ADR 0011](0011-on-demand-asset-pipeline.md), Tailwind compiles in-process on
-  first request and caches in module memory. Squire runs TypeScript directly
+  and runs as a non-root user. CSS and vanilla JS assets are prebuilt in the
+  Docker `assets` stage with `npm run build:web-assets`, while local
+  development keeps the in-process Tailwind path from
+  [ADR 0011](0011-on-demand-asset-pipeline.md). Squire runs TypeScript directly
   via Node 24 strip-types (no JS compile step), so the runtime stage carries
   the `src/` tree and `node_modules`.
 - **SQR-43 (migrate on deploy)** — wire `release_command = "node scripts/db-migrate.ts"`
@@ -130,10 +136,12 @@ Postgres over Fly's private 6PN network — Postgres has no public ingress.
   deploy and leaves the prior version live, which is exactly the SQR-43
   acceptance criterion.
 - **SQR-44 (CI/CD)** — GitHub Actions workflow runs after `CI` succeeds on
-  `main`, uses `superfly/flyctl-actions/setup-flyctl@master`, then runs
-  `flyctl deploy -a maz-squire --remote-only`. The deploy token lives in the
-  GitHub secret `FLY_API_TOKEN`; app secrets such as `DATABASE_URL` stay scoped
-  to the Fly app via `fly secrets set` and are never written to the repo.
+  `main`, uses a pinned `superfly/flyctl-actions/setup-flyctl` commit, then
+  runs `flyctl deploy -a maz-squire --remote-only`. The deploy token lives in
+  the GitHub secret `FLY_API_TOKEN`; app secrets such as `DATABASE_URL` stay
+  scoped to the Fly app via `fly secrets set` and are never written to the
+  repo. The auto-merge workflow uses `actions/create-github-app-token@v3` so
+  merges create the follow-up `push` event that the deploy workflow follows.
 
 ### Operational shape
 
@@ -153,8 +161,9 @@ idle_timeout` set to 600s as belt-and-suspenders for any brief silent gap
   ingress. DATABASE_URL is a Fly secret.
 - **Backups + PITR** are MPG Basic defaults; no separate backup tooling needed
   for Phase 1.
-- **Rollback** is `fly releases list` + `fly deploy --image <prior-sha>` for
-  the app, hand-rolled DDL or down-migration for schema.
+- **Rollback** is `fly releases -a maz-squire --image` +
+  `fly deploy --image <prior-image> -a maz-squire` for the app, hand-rolled DDL
+  or a forward repair migration for schema.
 
 ### Cost
 
@@ -163,9 +172,9 @@ idle_timeout` set to 600s as belt-and-suspenders for any brief silent gap
 | Fly `shared-cpu-1x@1GB` machine (Amsterdam pricing)     | $5.92          |
 | Fly Managed Postgres Basic (Shared-2x / 1GB / 1 TB cap) | $38.00         |
 | Volume-snapshot storage (first 10 GB free)              | ~$0            |
-| Cloudflare WAF (free tier)                              | $0             |
+| CloudFront + AWS WAF + WAF logging                      | ~$10–15        |
 | Claude API (Sonnet 4.6, Phase 1 chat volume)            | $10–30         |
-| **Total Phase 1 estimate**                              | **~$55–75/mo** |
+| **Total Phase 1 estimate**                              | **~$65–90/mo** |
 
 Within the $100/mo Phase 1 budget. Headroom is reserved for the open
 APM/RUM question (see [docs/ARCHITECTURE.md §Open Tech Questions](../ARCHITECTURE.md#open-tech-questions)).

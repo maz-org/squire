@@ -114,7 +114,7 @@ app.use('*', cspMiddleware);
 // styles.css and squire.js show up immediately in devtools, while prod reads
 // CSS built by `npm run build:web-assets` during the Docker build and serves
 // content-hashed paths (`/app.<hash>.css`,
-// `/squire.<hash>.js`) with immutable caching so Cloudflare and
+// `/squire.<hash>.js`) with immutable caching so the edge and
 // browsers can cache forever and invalidation is automatic on
 // content change. Hash is enforced by the router regex
 // (`[a-f0-9]+`) so non-hex paths 404 before the handler runs; a

@@ -11,6 +11,10 @@ node scripts/db-migrate.ts
 That command is wired as Fly's `release_command`, so a non-zero exit from
 migration aborts the deploy and leaves the previous app image live.
 
+For the day-to-day operator checklist, including DNS, CloudFront, AWS WAF,
+OAuth, question-answer, and Langfuse checks, see
+[production-operations.md](production-operations.md).
+
 ## One-time provisioning
 
 Run these once from the repo root:
@@ -32,6 +36,8 @@ flyctl secrets set \
   LANGFUSE_BASEURL='...' \
   GOOGLE_OAUTH_CLIENT_ID='...' \
   GOOGLE_OAUTH_CLIENT_SECRET='...' \
+  SQUIRE_ALLOWED_EMAILS='...' \
+  SQUIRE_ENV='production' \
   ORIGIN_SHARED_SECRET='...'
 ```
 
@@ -146,8 +152,8 @@ change propagates.
 A migration failure appears as a failed release machine during deploy. Check:
 
 ```bash
-fly releases list
-fly logs
+fly releases -a maz-squire --image
+fly logs -a maz-squire
 ```
 
 If the release command failed, Fly does not cut traffic over to the new image.
@@ -162,8 +168,8 @@ committing.
 Find the previous image from the releases list, then redeploy it:
 
 ```bash
-fly releases list
-fly deploy --image <prior-image>
+fly releases -a maz-squire --image
+fly deploy --image <prior-image> -a maz-squire
 ```
 
 ## Schema rollback

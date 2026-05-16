@@ -41,7 +41,7 @@ npm install
 # Add your API keys
 cp .env.example .env
 # Edit .env: ANTHROPIC_API_KEY (required), Google OAuth keys + SESSION_SECRET
-# (required for web UI login). `GOOGLE_REDIRECT_URI` can stay on
+# (required for web UI login). `GOOGLE_OAUTH_REDIRECT_URI` can stay on
 # `http://localhost:3000/auth/google/callback`; linked worktrees reuse the
 # current localhost origin at runtime, but every localhost callback port you use
 # still has to be pre-registered in Google Cloud Console. The currently
@@ -72,6 +72,7 @@ For the full contributor walkthrough, see [docs/CONTRIBUTING.md](docs/CONTRIBUTI
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for local setup, env vars, MCP wiring, and data workflows
 - [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the full macOS contributor walkthrough
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design, auth boundaries, and runtime topology
+- [docs/runbooks/production-operations.md](docs/runbooks/production-operations.md) for production deploy, edge, secret, verification, and rollback checks
 - [docs/SSE_CONTRACT.md](docs/SSE_CONTRACT.md) for the browser-visible chat streaming contract (`text-delta`, `done`, `error`, tool events)
 - [docs/SECURITY.md](docs/SECURITY.md) for the standing security review and mitigation backlog
 - [docs/markdown-rendering-styleguide.md](docs/markdown-rendering-styleguide.md) for the supported markdown subset and the shared `.squire-markdown` contract
@@ -91,9 +92,10 @@ The server initializes the vector index and embedder on startup, then
 serves:
 
 - **Web UI** — `GET /` (companion-first layout shell, server-rendered HTML;
-  `GET /app.css` compiles `src/web-ui/styles.css` in-process via
-  `@tailwindcss/node` on first request and caches the result — no build
-  step required on a fresh clone. Prod uses content-hashed URLs
+  `GET /app.css` compiles `src/web-ui/styles.css` in-process in development
+  so fresh clones do not need a build step before local rendering. Production
+  images prebuild assets with `npm run build:web-assets` and serve
+  content-hashed URLs
   (`/app.<hash>.css`) with immutable caching. See
   [ADR 0011](docs/adr/0011-on-demand-asset-pipeline.md)). Authenticated chat
   runs on `/chat` and `/chat/:conversationId`, with persisted per-user

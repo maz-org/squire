@@ -1,14 +1,14 @@
 ---
 type: ADR
-id: "0009"
-title: "Google OAuth + hard-coded email allowlist for Phase 1 Web UI"
+id: '0009'
+title: 'Google OAuth + hard-coded email allowlist for Phase 1 Web UI'
 status: active
 date: 2026-04-08
 ---
 
 ## Context
 
-Phase 1 MVP is the Web UI at the table: one user (Brian), deployed behind Cloudflare WAF, real auth so it's not bypassable, but no multi-tenant concerns yet. The SPEC (`docs/SPEC.md` §"Phase 1 — Out of scope") explicitly says single user but auth is real.
+Phase 1 MVP is the Web UI at the table: one user (Brian), deployed behind AWS WAF, real auth so it's not bypassable, but no multi-tenant concerns yet. The SPEC (`docs/SPEC.md` §"Phase 1 — Out of scope") explicitly says single user but auth is real.
 
 The pre-v2.0 tickets in the User Accounts project (SQR-37 "registration", SQR-38 "email + password login", SQR-40 "profile management") were written against an earlier design that assumed email + password self-service. That design predates the decision to extend the existing `@modelcontextprotocol/sdk` OAuth infrastructure in `src/auth.ts` into the web channel.
 
@@ -36,7 +36,7 @@ Specifically:
 - **Email + password with self-serve registration**: what the old tickets proposed. Requires password hashing, reset flow, email verification, account lockout — all work that doesn't serve a single-user MVP and predates the decision to reuse MCP OAuth infrastructure.
 - **Magic links**: no password, but requires email sending infrastructure (SES/Postmark/etc.) and a whole flow we don't need for one user.
 - **SSO (Google) with database-backed allowlist**: same as the chosen option but with the allowlist in Postgres. Rejected for Phase 1 because it adds a table, a CRUD UI, and zero value for one user. The chosen option intentionally picks the dumbest possible version so we can graduate to the table-backed version in Phase 3 without breaking anything.
-- **No auth, rely on Cloudflare WAF IP allowlist**: SPEC explicitly says "auth is real so it's not bypassable". Rejected.
+- **No auth, rely on an edge IP allowlist**: SPEC explicitly says "auth is real so it's not bypassable". Rejected.
 
 ## Consequences
 

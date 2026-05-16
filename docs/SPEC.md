@@ -2,7 +2,7 @@
 
 **Version:** 3.1
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-04-19
+**Last Refreshed:** 2026-05-16
 **Owner:** Product (PM)
 **Companion doc:** [docs/ARCHITECTURE.md](ARCHITECTURE.md) — architect-owned tech spec (how / with-what / where)
 **Status:** Phase 1 in progress, MVP scoped. GH2 content expansion (Phase 2) deadline ~mid-2026.
@@ -15,7 +15,7 @@ Squire is a deep game-knowledge agent for Gloomhaven and Frosthaven. It answers 
 
 Squire is **the agent**, not a specific app. It's reachable through multiple **channels** — primarily its own web UI today, with MCP-capable agent harnesses (Claude Code, Claude Desktop) as a second channel, and Discord / iMessage clients planned for the far future. All channels talk to the same underlying knowledge agent.
 
-**MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly behind Cloudflare WAF. The agent answers using semantic search across the Frosthaven books, deterministic scenario/section-book traversal for anchored story-book questions, and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
+**MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly at `squire.maz.org` behind CloudFront and AWS WAF. The agent answers using semantic search across the Frosthaven books, deterministic scenario/section-book traversal for anchored story-book questions, and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
 
 **Long-term product (Phases 2–8):** Gloomhaven 2.0 content expansion, multi-user platform, campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion, polish (voice input, share/export, spoiler protection), and additional channels (Discord, iMessage).
 
@@ -156,7 +156,7 @@ A user may have multiple characters across multiple campaigns. From Phase 4 onwa
 
 ### Platform
 
-Mobile-responsive web app, server-rendered (Hono JSX + HTMX + Tailwind compiled in-process via `@tailwindcss/node`, see [ADR 0011](adr/0011-on-demand-asset-pipeline.md)). Accessible via any modern mobile or desktop browser. No app installation, no PWA, no service worker.
+Mobile-responsive web app, server-rendered (Hono JSX + HTMX + Tailwind compiled in-process in development and prebuilt in production, see [ADR 0011](adr/0011-on-demand-asset-pipeline.md)). Accessible via any modern mobile or desktop browser. No app installation, no PWA, no service worker.
 
 ### Input Methods
 
@@ -223,9 +223,9 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ### Phase 1: MVP — Rules Q&A at the table
 
-**Goal:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. Hosted publicly behind Cloudflare WAF.
+**Goal:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. Hosted publicly at `squire.maz.org` behind CloudFront and AWS WAF.
 
-**Status as of 2026-04-07:** rules RAG pipeline, GHS imports, atomic tools, and MCP server are all built. The main remaining work is the web channel + auth + deployment.
+**Status as of 2026-05-16:** rules RAG pipeline, GHS imports, atomic tools, MCP server, web channel, Google OAuth, Fly deployment, custom domain, CI/CD, production health checks, and AWS WAF edge protection are built.
 
 **Tasks:**
 
@@ -241,7 +241,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 - Docker containerization
 - CI/CD pipeline
 - Production health checks and readiness
-- Cloudflare WAF in front of the deployed app
+- CloudFront and AWS WAF in front of the deployed app
 - Hosting platform decision (Fly / Railway / Render / VPS)
 
 **Out of scope for Phase 1:**
@@ -252,7 +252,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 - Any recommendations beyond rules answers
 - Discord, iMessage, or other channels beyond the web UI and MCP
 
-**Deliverable:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. The agent answers using semantic book search, deterministic scenario/section traversal (`findScenario`, `getScenario`, `getSection`, `followLinks`), and the GHS card tools (`searchRules`, `searchCards`, `listCards`, `getCard`). Hosted publicly behind Cloudflare WAF. Test suite passing.
+**Deliverable:** Brian can pull out his phone at the table, log in with Google, and ask Squire any Frosthaven rules question via a mobile-friendly web chat. The agent answers using semantic book search, deterministic scenario/section traversal (`findScenario`, `getScenario`, `getSection`, `followLinks`), and the GHS card tools (`searchRules`, `searchCards`, `listCards`, `getCard`). Hosted publicly behind CloudFront and AWS WAF. Test suite passing.
 
 ---
 
@@ -290,7 +290,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 **Tasks:**
 
-- Production hardening: rate limiting (per-user, on top of Cloudflare edge rate limiting)
+- Production hardening: rate limiting (per-user, on top of CloudFront / AWS WAF edge rate limiting)
 - Daily LLM cost budget with circuit breaker
 - Prompt injection resistance test suite (E2E, daily CI)
 - SAST scanning (Semgrep / CodeQL free tier)
@@ -494,8 +494,8 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
 
 - **2026-04-07 (v2.0):** Major refresh after the first month of real building.
   - **Product reframe:** Squire is the agent, not an app. Reachable via multiple channels (web UI today, MCP, future Discord / iMessage). Stopped conflating "personal assistant chatbot" with "\*haven game-knowledge agent" — Squire is only the latter.
-  - **MVP redefined:** rules Q&A at the table, on a phone, with Google login behind Cloudflare WAF. Recommendation engine, screenshot extraction, voice, PWA, multi-user — all moved to later phases.
-  - **Stack updates:** Hono JSX + HTMX + Tailwind CDN (no React, no Next.js, no build step). Drizzle (no Prisma). pgvector (no Pinecone). Custom Google OAuth (no NextAuth / Clerk). Sonnet 4.6. Local Xenova embeddings (`Xenova/all-MiniLM-L6-v2`) with Voyage AI as the planned upgrade path. Cloudflare WAF as edge layer.
+  - **MVP redefined:** rules Q&A at the table, on a phone, with Google login behind a real edge WAF. Recommendation engine, screenshot extraction, voice, PWA, multi-user — all moved to later phases.
+  - **Stack updates:** Hono JSX + HTMX + Tailwind CDN (no React, no Next.js, no build step). Drizzle (no Prisma). pgvector (no Pinecone). Custom Google OAuth (no NextAuth / Clerk). Sonnet 4.6. Local Xenova embeddings (`Xenova/all-MiniLM-L6-v2`) with Voyage AI as the planned upgrade path. Edge WAF as a Phase 1 deployment requirement.
   - **Game data:** Worldhaven and OCR pipeline retired (commit `34a26a1`). Replaced with Gloomhaven Secretariat (GHS) structured data — 10 import scripts in `src/import-*.ts`.
   - **Tools:** Reframed as a generalized atomic-tools API in `src/tools.ts` (`searchRules`, `searchCards`, `listCardTypes`, `listCards`, `getCard`) that works across all GHS card types. Per-feature operations are invocations, not new tools.
   - **MCP server:** Added as a first-class architectural fact. Treated as a third channel type alongside web UI and future Discord / iMessage. Internal MCP between conversation and knowledge agents was considered and dropped for simplicity.
