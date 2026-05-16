@@ -67,6 +67,47 @@ curl https://maz-squire.fly.dev/api/health
 `/api/live` is the cheap platform liveness check. `/api/health` is the
 readiness check and exercises Postgres, pgvector, and embedder warmup.
 
+## GitHub deploy automation
+
+The `Deploy to Fly` GitHub Actions workflow runs after the `CI` workflow
+finishes successfully on `main`. It uses the Fly deploy token stored in the
+repository secret `FLY_API_TOKEN`, runs:
+
+```bash
+flyctl deploy -a maz-squire --remote-only
+```
+
+and then smoke-checks the direct Fly health endpoints with:
+
+```bash
+node scripts/check-deploy-health.ts --base-url https://maz-squire.fly.dev
+```
+
+The smoke check calls:
+
+- `https://maz-squire.fly.dev/api/live`
+- `https://maz-squire.fly.dev/api/health`
+
+and fails unless `/api/health` reports `status`, `db.status`, `vector.status`,
+and `embedder.status` as `ok`.
+
+CI installs actionlint and runs it against `.github/workflows`. To run the same
+check locally, install actionlint and run:
+
+```bash
+npm run lint:actions
+```
+
+Create or rotate the deploy token with a deploy-scoped Fly token, then write it
+to GitHub without putting it in a local env file:
+
+```bash
+fly tokens create deploy -a maz-squire -x 8760h -n github-actions-maz-squire |
+  gh secret set FLY_API_TOKEN --repo maz-org/squire
+```
+
+After the next successful deploy, revoke the old deploy token in Fly.
+
 ## CloudFront origin lock
 
 Production app traffic is expected to enter through CloudFront with AWS WAF

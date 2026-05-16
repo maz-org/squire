@@ -37,6 +37,14 @@ describe('deployment configuration', () => {
     expect(packageJson.scripts?.['build:web-assets']).toBe('node scripts/build-web-assets.ts');
   });
 
+  it('defines a manual GitHub Actions lint command', async () => {
+    const packageJson = JSON.parse(await readProjectFile('package.json')) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.['lint:actions']).toBe('actionlint');
+  });
+
   it('keeps deploy-only and secret material out of the Docker context', async () => {
     const dockerignore = await readProjectFile('.dockerignore');
 
@@ -82,5 +90,55 @@ describe('deployment configuration', () => {
     expect(runbook).toContain('fly deploy --image <prior-image>');
     expect(runbook).toContain('node scripts/db-migrate.ts');
     expect(runbook).toContain('schemas are not rolled back automatically');
+  });
+
+  it('deploys main to Fly only after CI succeeds', async () => {
+    const workflow = await readProjectFile('.github/workflows/deploy.yml');
+
+    expect(workflow).toContain('name: Deploy to Fly');
+    expect(workflow).toContain('workflow_run:');
+    expect(workflow).toContain('workflows: [CI]');
+    expect(workflow).toContain('branches: [main]');
+    expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(workflow).toContain("github.event.workflow_run.event == 'push'");
+    expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
+    expect(workflow).toContain(
+      'github.event.workflow_run.head_repository.full_name == github.repository',
+    );
+    expect(workflow).toContain('deployments: write');
+    expect(workflow).toContain('name: production');
+    expect(workflow).toContain('url: https://squire.maz.org');
+    expect(workflow).toContain('group: fly-production');
+    expect(workflow).toContain('cancel-in-progress: false');
+    expect(workflow).toContain('FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}');
+    expect(workflow).toMatch(/superfly\/flyctl-actions\/setup-flyctl@[a-f0-9]{40}/);
+    expect(workflow).not.toContain('setup-flyctl@master');
+    expect(workflow).toContain('flyctl deploy -a maz-squire --remote-only');
+    expect(workflow).not.toContain('npm run db:migrate');
+    expect(workflow).not.toContain('scripts/db-migrate.ts');
+  });
+
+  it('runs actionlint in CI for GitHub workflow changes', async () => {
+    const workflow = await readProjectFile('.github/workflows/ci.yml');
+
+    expect(workflow).toContain('ACTIONLINT_VERSION: v1.7.12');
+    expect(workflow).toContain('attestations: read');
+    expect(workflow).toContain('rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}');
+    expect(workflow).toContain('actionlint_${ACTIONLINT_VERSION#v}_linux_amd64.tar.gz');
+    expect(workflow).toContain('gh attestation verify --repo rhysd/actionlint');
+    expect(workflow).toContain('actionlint_${ACTIONLINT_VERSION#v}_checksums.txt');
+    expect(workflow).toContain('name: Lint GitHub Actions');
+    expect(workflow).toContain('run: actionlint');
+  });
+
+  it('documents GitHub deploy token setup and post-deploy smoke checks', async () => {
+    const runbook = await readProjectFile('docs/runbooks/deploy-rollback.md');
+
+    expect(runbook).toContain('fly tokens create deploy');
+    expect(runbook).toContain('FLY_API_TOKEN');
+    expect(runbook).toContain('Deploy to Fly');
+    expect(runbook).toContain('node scripts/check-deploy-health.ts');
+    expect(runbook).toContain('https://maz-squire.fly.dev/api/live');
+    expect(runbook).toContain('https://maz-squire.fly.dev/api/health');
   });
 });
