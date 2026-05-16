@@ -74,6 +74,11 @@ attached. CloudFront sends `X-Origin-Secret`, and Fly stores the matching value
 as `ORIGIN_SHARED_SECRET`. Requests that do not include the exact header are
 rejected with 403 before the app routes run.
 
+The production WAF web ACL is `squire-production-waf`. It includes AWS managed
+rules for IP reputation, common web exploits, known bad inputs, and SQL
+injection, plus a 2,000 requests per 5 minutes per-IP rate limit. Logging goes to
+the CloudWatch log group `aws-waf-logs-squire-production`.
+
 `/api/live` and `/api/health` intentionally bypass the origin lock so Fly's own
 machine health checks keep working without header support. User-facing routes,
 OAuth routes, API routes, and MCP routes must go through CloudFront or include
