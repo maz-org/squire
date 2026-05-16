@@ -77,12 +77,12 @@ export async function checkDeployHealth(
   const healthUrl = `${baseUrl}/api/health`;
 
   const live = await checkEndpointStatus(fetch, liveUrl, '/api/live');
-  log(`✓ /api/live status=${String(live.status)}`);
+  log(`OK /api/live status=${String(live.status)}`);
 
   const health = await checkEndpointStatus(fetch, healthUrl, '/api/health');
   assertHealthComponents(health);
   log(
-    `✓ /api/health status=${String(health.status)} db=${String(
+    `OK /api/health status=${String(health.status)} db=${String(
       health.db?.status,
     )} vector=${String(health.vector?.status)} embedder=${String(health.embedder?.status)}`,
   );
