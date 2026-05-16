@@ -256,7 +256,7 @@ describe('SquireOAuthProvider.exchangeAuthorizationCode', () => {
     const { client, code, verifier } = await walkToCode();
 
     // Force the code to have expired already.
-    const { hashSecret } = await import('../src/auth/hashing.ts');
+    const { hashSecret } = await import('../src/security/hashing.ts');
     await db
       .update(oauthAuthorizationCodes)
       .set({ expiresAt: new Date(Date.now() - 1000) })
@@ -384,7 +384,7 @@ describe('SquireOAuthProvider.verifyAccessToken', () => {
     expect(info.token).toBe(token);
     expect(info.clientId).toBe(client.client_id);
 
-    const { hashSecret } = await import('../src/auth/hashing.ts');
+    const { hashSecret } = await import('../src/security/hashing.ts');
     const [row] = await db
       .select()
       .from(oauthTokens)
@@ -415,7 +415,7 @@ describe('SquireOAuthProvider.verifyAccessToken', () => {
 
   it('rejects an expired token with a token_expired audit row', async () => {
     const { client, token } = await issueToken();
-    const { hashSecret } = await import('../src/auth/hashing.ts');
+    const { hashSecret } = await import('../src/security/hashing.ts');
     await db
       .update(oauthTokens)
       .set({ expiresAt: new Date(Date.now() - 1000) })
