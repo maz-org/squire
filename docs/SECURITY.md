@@ -262,6 +262,11 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 - Pin GHS to a specific commit, review diffs before updating
 - npm audit + Dependabot (already configured)
+- Dependency Review runs on pull requests via
+  `.github/workflows/dependency-review.yml`. The workflow blocks
+  high and critical runtime vulnerabilities introduced by dependency changes;
+  low and moderate findings stay non-blocking until alert noise is better
+  understood.
 - CodeQL code scanning runs on PRs, `main`, and a weekly schedule via
   `.github/workflows/codeql.yml` for JavaScript/TypeScript and GitHub Actions
   workflow analysis. The repository is public, so GitHub Copilot Autofix for
@@ -326,6 +331,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 ## Changelog
 
+- **2026-05-16:** Added Dependency Review PR workflow to block high/critical runtime vulnerability introductions (SQR-165).
 - **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Migrated GitHub Issue references (#12, #55–#59) to Linear projects (User Accounts SQR-37/38/39/40, Security Hardening). Added header note pointing at the new product and tech specs.
 - **2026-04-07:** Renamed from `docs/security-review.md` to `docs/SECURITY.md` as part of the ALL_CAPS docs consolidation.
