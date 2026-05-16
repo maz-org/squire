@@ -22,7 +22,7 @@
  * ─── Security invariants ─────────────────────────────────────────────────
  * 1. Raw secrets (tokens, auth codes) are never persisted. The primary key
  *    on both `oauth_tokens` and `oauth_authorization_codes` is the SHA-256
- *    hex of the secret. See `src/auth/hashing.ts`.
+ *    hex of the secret. See `src/security/hashing.ts`.
  * 2. Every auth mutation and its audit row run inside a single transaction.
  *    Either both land or neither does. See `src/auth/audit.ts`.
  * 3. Authorization codes expire 60 seconds after issue. Expiry is enforced
@@ -55,7 +55,7 @@ import {
 
 import type { Db } from '../db.ts';
 import { oauthAuthorizationCodes, oauthTokens } from '../db/schema/auth.ts';
-import { hashSecret } from './hashing.ts';
+import { hashSecret } from '../security/hashing.ts';
 import { writeAuditEvent, type AuditContext } from './audit.ts';
 import { DrizzleClientsStore } from './clients-store.ts';
 

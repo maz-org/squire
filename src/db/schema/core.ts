@@ -37,7 +37,7 @@ export const users = pgTable('users', {
 export const sessions = pgTable(
   'sessions',
   {
-    id: text('id').primaryKey(), // opaque session token
+    id: text('id').primaryKey(), // SHA-256 hex of the opaque session token
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
