@@ -312,7 +312,9 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 ## Priority Recommendations
 
 1. Do not deploy publicly until auth is complete (Linear: User Accounts project, SQR-37/38/39/40)
-2. Add SAST scanning now (Linear: Security Hardening project)
+2. Keep CodeQL code scanning healthy: confirm the first default-branch run
+   succeeds, verify Copilot Autofix availability for supported alerts, and keep
+   alert triage flowing into Linear
 3. Design campaign data isolation before building campaign state — the
    player entity must enforce access boundaries, and the knowledge
    agent must scope its context to prevent LLM-mediated data leaks
