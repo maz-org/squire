@@ -29,6 +29,7 @@
     "lint": "eslint src/ test/ scripts/",
     "lint:css": "stylelint 'src/web-ui/**/*.css'",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads' '#.gstack'",
+    "lint:actions": "actionlint",
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
     "hooks:install": "node scripts/setup-git-hooks.ts",

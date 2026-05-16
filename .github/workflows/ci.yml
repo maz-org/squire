@@ -65,6 +65,19 @@ jobs:
       - name: Lint markdown
         run: npm run lint:md
 
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: v1.7.12
+        run: |
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          curl -sSLo "$RUNNER_TEMP/actionlint.tar.gz" \
+            "https://github.com/rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION#v}_linux_amd64.tar.gz"
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP/actionlint" actionlint
+          echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
+
+      - name: Lint GitHub Actions
+        run: actionlint
+
       - name: Format check
         run: npx prettier --check src/ test/
 
