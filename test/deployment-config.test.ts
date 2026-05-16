@@ -100,12 +100,19 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('workflows: [CI]');
     expect(workflow).toContain('branches: [main]');
     expect(workflow).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(workflow).toContain("github.event.workflow_run.event == 'push'");
+    expect(workflow).toContain("github.event.workflow_run.head_branch == 'main'");
+    expect(workflow).toContain(
+      'github.event.workflow_run.head_repository.full_name == github.repository',
+    );
     expect(workflow).toContain('deployments: write');
     expect(workflow).toContain('name: production');
     expect(workflow).toContain('url: https://squire.maz.org');
     expect(workflow).toContain('group: fly-production');
     expect(workflow).toContain('cancel-in-progress: false');
     expect(workflow).toContain('FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}');
+    expect(workflow).toMatch(/superfly\/flyctl-actions\/setup-flyctl@[a-f0-9]{40}/);
+    expect(workflow).not.toContain('setup-flyctl@master');
     expect(workflow).toContain('flyctl deploy -a maz-squire --remote-only');
     expect(workflow).not.toContain('npm run db:migrate');
     expect(workflow).not.toContain('scripts/db-migrate.ts');
@@ -115,8 +122,11 @@ describe('deployment configuration', () => {
     const workflow = await readProjectFile('.github/workflows/ci.yml');
 
     expect(workflow).toContain('ACTIONLINT_VERSION: v1.7.12');
+    expect(workflow).toContain('attestations: read');
     expect(workflow).toContain('rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}');
     expect(workflow).toContain('actionlint_${ACTIONLINT_VERSION#v}_linux_amd64.tar.gz');
+    expect(workflow).toContain('gh attestation verify --repo rhysd/actionlint');
+    expect(workflow).toContain('actionlint_${ACTIONLINT_VERSION#v}_checksums.txt');
     expect(workflow).toContain('name: Lint GitHub Actions');
     expect(workflow).toContain('run: actionlint');
   });

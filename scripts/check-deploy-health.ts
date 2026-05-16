@@ -47,11 +47,11 @@ async function checkEndpointStatus(
   path: string,
 ): Promise<StatusPayload> {
   const response = await fetch(url);
-  const payload = await readJson(response, path);
 
   if (!response.ok) {
     throw new Error(`${path} returned ${response.status}`);
   }
+  const payload = await readJson(response, path);
   if (payload.status !== 'ok') {
     throw new Error(`${path} status was ${String(payload.status)}`);
   }

@@ -50,6 +50,20 @@ describe('checkDeployHealth', () => {
     ).rejects.toThrow('/api/live returned 503');
   });
 
+  it('reports response status before parsing non-ok bodies', async () => {
+    await expect(
+      checkDeployHealth({
+        baseUrl: 'https://maz-squire.fly.dev',
+        fetch: async () =>
+          new Response('<html>temporarily unavailable</html>', {
+            status: 503,
+            headers: { 'content-type': 'text/html' },
+          }),
+        log: () => undefined,
+      }),
+    ).rejects.toThrow('/api/live returned 503');
+  });
+
   it('fails when a readiness dependency is unhealthy', async () => {
     await expect(
       checkDeployHealth({
