@@ -2,7 +2,7 @@
 
 **Version:** 1.0.11
 **Date:** 2026-04-07
-**Last Refreshed:** 2026-05-03
+**Last Refreshed:** 2026-05-16
 **Owner:** Architect
 **Companion doc:** [SPEC.md](SPEC.md) — product / PM concerns (what / why / who / when)
 
@@ -42,7 +42,8 @@ All channels (web UI, MCP, REST, future Discord / iMessage) talk to the same kno
 
 Phase 1 production stays on the current Hono server, Postgres + pgvector
 runtime store, Claude SDK tool loop, conversation service, SSE contract, and
-Langfuse/OpenTelemetry trace path while the deployment host is chosen.
+Langfuse/OpenTelemetry trace path. The deployed production host is the Fly app
+`maz-squire`, with Fly Managed Postgres, Route 53, CloudFront, and AWS WAF.
 [ADR 0015 — Evaluate LangChain and Deep Agents at the intelligence boundary](adr/0015-langchain-deep-agents-intelligence-layer.md)
 keeps Deep Agents and LangSmith Deployment out of the Phase 1 app-hosting
 decision, but treats LangChain, Deep Agents, and LangSmith evals as candidates
@@ -60,6 +61,8 @@ The active baseline is:
 
 - Hono hosts the web UI, REST endpoints, and MCP endpoint in one server.
 - Postgres + pgvector hold the runtime retrieval layers.
+- Fly hosts the production app and Fly Managed Postgres hosts the production
+  database.
 - The knowledge agent uses the current Claude SDK tool loop.
 - LangChain / Deep Agents may be added as a parallel eval-only runner behind
   the same service boundary, but production traffic stays on the current runner
@@ -146,11 +149,11 @@ Agents shouldn't need hard-coded knowledge of what data Squire has. They discove
 ### Web channel (frontend + server)
 
 - **Server framework:** Hono (`@hono/node-server`)
-- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS compiled in-process via `@tailwindcss/node`
+- **UI rendering:** Hono JSX (server-rendered) + HTMX for interactivity + Tailwind CSS compiled in-process in development and prebuilt in the production Docker image
 - **Assistant rendering boundary:** `markdown-it` on the server, with raw HTML
   disabled, non-HTTPS links rejected, and one shared renderer reused for both
   persisted transcript pages and final post-stream answer fragments
-- **Build pipeline:** no JavaScript bundler and no client-side build step. `GET /app.css` compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node` on first request and caches the result in a module-level variable; dev keys the cache on source-file mtime so edits show up on the next request, prod compiles exactly once per process. Prod serves the compiled CSS at a content-hashed URL (`/app.<hash>.css`) with `Cache-Control: public, max-age=31536000, immutable` so Cloudflare and browsers can cache forever and invalidation is automatic on content change; dev serves the bare `/app.css` path with `Cache-Control: no-cache`. A parallel `/squire.js` handler serves vanilla-JS islands (currently the SQR-66 cite tap-toggle) with the same caching pattern. No `public/` build output, no `npm run build:css` — every fresh clone renders correctly without a build prerequisite.
+- **Build pipeline:** no JavaScript bundler and no client-side build step. In development, `GET /app.css` compiles `src/web-ui/styles.css` in-process via `@tailwindcss/node` and keys the cache on source-file mtime so edits show up on the next request. In production, the Docker `assets` stage runs `npm run build:web-assets`, writes `dist/web-ui/app.css` and `dist/web-ui/squire.js`, and the runtime serves content-hashed URLs (`/app.<hash>.css`, `/squire.<hash>.js`) with `Cache-Control: public, max-age=31536000, immutable`. No checked-in `public/` build output, no JavaScript bundler, and no runtime CSS compilation in production.
 
 HTML responses also carry a shared Content Security Policy set in
 `src/server.ts`. The policy is `self`-only except for the current Google Fonts
@@ -209,7 +212,7 @@ _Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. S
 
 ### Edge layer
 
-- **Cloudflare** in front of the hosted app as a WAF. Provides DDoS protection, edge rate limiting, and bot mitigation. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
+- **Route 53 + CloudFront + AWS WAF** in front of the Fly app. Route 53 hosts `maz.org`; `squire.maz.org` aliases to a CloudFront distribution with AWS WAF managed rules, SQL-injection protection, IP reputation blocking, and a per-IP rate limit. CloudFront sends `X-Origin-Secret`; Fly stores the matching `ORIGIN_SHARED_SECRET` and rejects browser, OAuth, API, and MCP routes that bypass the edge. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
 
 ### Observability infrastructure
 
@@ -675,17 +678,17 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 ## Deployment
 
-**Hosting:** Fly.io. A single `shared-cpu-1x@1GB` machine in one region runs the Hono server, MCP transport, and web UI in one process. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. Cloudflare sits in front as the WAF (Full Strict origin TLS, validated by Fly's Let's Encrypt cert). See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
+**Hosting:** Fly.io. A single `shared-cpu-1x@1GB` machine in one region runs the Hono server, MCP transport, and web UI in one process. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. Public traffic reaches `https://squire.maz.org` through Route 53, CloudFront, and AWS WAF, then forwards to `https://maz-squire.fly.dev` with the `X-Origin-Secret` header required by the Fly app. See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
 
 The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) so SSE connections aren't severed by scale-to-zero. `idle_timeout` is configured at 600s, past the longest knowledge-agent tool loop.
 
 **CI/CD:**
 
 - Build and test on push
-- Deploy to production on release tag (no staging tier in Phase 1 — see ADR 0016)
+- Deploy to production from the `Deploy to Fly` GitHub Actions workflow after `CI` succeeds on `main`; the workflow runs `flyctl deploy -a maz-squire --remote-only`
 - Run `node scripts/db-migrate.ts` via Fly's `release_command` before traffic cutover; non-zero exit aborts the deploy and leaves the prior version live
-- Smoke test after deploy (hit `/api/health`)
-- Rollback via `fly releases list` + `fly deploy --image <prior-sha>`
+- Smoke test after deploy with `node scripts/check-deploy-health.ts --base-url https://maz-squire.fly.dev`
+- Rollback via `fly releases -a maz-squire --image` + `fly deploy --image <prior-image> -a maz-squire`
 
 ---
 
@@ -695,9 +698,9 @@ The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) 
 
 - Fly app (`shared-cpu-1x@1GB`, always-on): $6
 - Fly Managed Postgres (Basic, Shared-2x / 1GB / 1 TB cap): $38
-- Cloudflare WAF: $0 (free tier)
+- CloudFront + AWS WAF + WAF logging: roughly $10–15 at Phase 1 traffic
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
-- **Total: ~$55–75/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
+- **Total: ~$65–90/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
 
 Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. Per-user daily budget circuit breakers, embedding caching, and model tiering (Haiku for cheap cases) are the primary mitigations. Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 6 and only apply if the screenshot path is chosen over the browser-extension or GHS-as-tracker alternatives.
 
@@ -806,7 +809,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 ## Changelog
 
-- **2026-05-06:** SQR-59 picked the Phase 1 hosting platform: Fly.io app + Fly Managed Postgres (Basic) in one region, no staging. Cloudflare in front as WAF. App-to-DB traffic on private 6PN. Migrations run via `release_command` before traffic cutover. ARCHITECTURE.md §Deployment and §Cost updated to reflect the concrete pick. Reasoning, alternatives (Neon, Railway, Render, VPS, Cloudflare Workers), and re-evaluation triggers in [ADR 0016](adr/0016-phase-1-hosting-platform.md). Unblocks SQR-58 (WAF), SQR-42 (Dockerize), SQR-43 (migrate-on-deploy), SQR-44 (CI/CD).
+- **2026-05-06:** SQR-59 picked the Phase 1 hosting platform: Fly.io app + Fly Managed Postgres (Basic) in one region, no staging. SQR-58 later put Route 53, CloudFront, and AWS WAF in front of the Fly origin with an origin-secret lock. App-to-DB traffic stays on private 6PN. Migrations run via `release_command` before traffic cutover. ARCHITECTURE.md §Deployment and §Cost updated to reflect the concrete pick. Reasoning, alternatives (Neon, Railway, Render, VPS, Cloudflare Workers), and re-evaluation triggers in [ADR 0016](adr/0016-phase-1-hosting-platform.md). Unblocks SQR-58 (WAF), SQR-42 (Dockerize), SQR-43 (migrate-on-deploy), SQR-44 (CI/CD).
 
 - **2026-04-26:** SQR-110 added a narrow synthesis guard to the knowledge agent loop. If a turn only calls `search_rules` and reaches three broad rule-corpus searches, the next model call runs without tools and is instructed to answer from the retrieved context. This preserves the full loop budget for scenario traversal and card lookups while preventing simple rules questions from spending all ten iterations on repeated searches. The eval dataset now includes `rule-looting-definition` for the original "What is looting?" failure mode.
 

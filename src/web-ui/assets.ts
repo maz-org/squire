@@ -138,7 +138,7 @@ export async function getAppCss(): Promise<AssetEntry> {
 /**
  * URL to emit in HTML for the app stylesheet. Rails Propshaft
  * semantics: in prod the URL is content-hashed
- * (`/app.<hash>.css`) so Cloudflare and browsers can cache it
+ * (`/app.<hash>.css`) so the edge and browsers can cache it
  * forever; in dev the URL is the bare `/app.css` path so devtools
  * stays readable and there's no hash-mismatch dance when editing
  * `styles.css`.

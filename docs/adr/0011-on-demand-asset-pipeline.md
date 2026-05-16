@@ -1,9 +1,9 @@
 ---
 type: ADR
-id: "0011"
-title: "On-demand asset pipeline via in-process Tailwind JIT"
+id: '0011'
+title: 'On-demand asset pipeline via in-process Tailwind JIT'
 status: active
-supersedes: "0008"
+supersedes: '0008'
 date: 2026-04-08
 ---
 
@@ -35,21 +35,23 @@ cost is small.
 
 ## Decision
 
-**Compile CSS in-process at request time.** A new module
-`src/web-ui/assets.ts` exposes `getAppCss()` and `getSquireJs()`. The
-route handlers in `src/server.ts` for `/app.css` and `/squire.js` call
-these functions and stream the result.
+**Compile CSS in-process at request time in development, but serve prebuilt
+assets in production.** A new module `src/web-ui/assets.ts` exposes
+`getAppCss()` and `getSquireJs()`. The route handlers in `src/server.ts` for
+`/app.css`, `/app.<hash>.css`, `/squire.js`, and `/squire.<hash>.js` call these
+functions and stream the result.
 
 - `getAppCss()` reads `src/web-ui/styles.css`, calls
   `compile(...)` from `@tailwindcss/node`, walks the project sources via
-  `@tailwindcss/oxide`'s `Scanner`, and returns the built CSS. In
-  production the result is minified via `optimize({ minify: true })`.
+  `@tailwindcss/oxide`'s `Scanner`, and returns the built CSS in development.
+  In production it reads `dist/web-ui/app.css`, which is produced by
+  `npm run build:web-assets` during the Docker image build.
 - `getSquireJs()` reads `src/web-ui/squire.js` from disk. No bundler,
   no transform — vanilla file-read-and-cache. `src/web-ui/squire.js`
   contains the SQR-66 cite tap-toggle that previously lived inline in
   `layout.ts`.
 - Both functions cache in module-level variables. The cache key is
-  `'static'` in production (compile/read once on first request) and
+  `'static'` in production (read once on first request) and
   `'dev-${mtimeMs}'` of the source file in development, so edits during
   `npm run serve` are picked up on the next request without a rebuild.
 - `npm run build:css` and the `@tailwindcss/cli` devDependency are
@@ -61,12 +63,12 @@ these functions and stream the result.
 Measured locally on Node 24.14.0, MacBook Pro M-series, against the
 current `src/web-ui/styles.css` (692 lines, full design-token block):
 
-| Stage | Time |
-| --- | --- |
-| `import('./src/web-ui/assets.ts')` | ~125 ms |
-| First `getAppCss()` (cold compile + scan) | ~38 ms |
-| Subsequent `getAppCss()` (cache hit) | <1 ms |
-| Compiled CSS payload | 13,897 bytes |
+| Stage                                     | Time         |
+| ----------------------------------------- | ------------ |
+| `import('./src/web-ui/assets.ts')`        | ~125 ms      |
+| First `getAppCss()` (cold compile + scan) | ~38 ms       |
+| Subsequent `getAppCss()` (cache hit)      | <1 ms        |
+| Compiled CSS payload                      | 13,897 bytes |
 
 Total time from a cold process to a served `/app.css` response is well
 under 200 ms, comfortably under the 300 ms expected upper bound and an
@@ -103,15 +105,15 @@ running this in a serverless function.
 - Edit `src/web-ui/styles.css` in dev → next `/app.css` request reflects
   the edit. No watcher, no rebuild ritual.
 - The first `/app.css` request after process start pays a one-time
-  ~38 ms compile cost. Behind Cloudflare in production this is hidden
-  by edge caching after the first hit; locally it's invisible to
-  developers because dev tools cache the response too.
+  ~38 ms compile cost in development. Production reads the checked Docker image's
+  prebuilt CSS from `dist/web-ui/app.css`; the build fails before deploy if that
+  file cannot be generated.
 - `@tailwindcss/node` and `@tailwindcss/oxide` become explicit
   devDependencies. They were already transitively pulled in by
   `@tailwindcss/cli`; we're just naming them.
 - SQR-61 (CSP headers) is now unblocked. The inline `<script>` in
   `layout.ts` is gone — the layout references `<script src="/squire.js"
-  defer></script>` instead, and `script-src 'self'` will allow it.
+defer></script>` instead, and `script-src 'self'` will allow it.
 - Re-evaluate this decision if: the in-process compile cost grows
   meaningfully as styles.css gets bigger, the resident memory becomes a
   problem under multi-tenant deployment (Phase 3+), or we add enough
@@ -132,7 +134,7 @@ The decision above stopped at "compile in-process, cache in memory"
 and left the route handlers serving the bare `/app.css` and
 `/squire.js` paths with no `Cache-Control` header. Eng review on the
 initial SQR-71 implementation flagged that gap: without an explicit
-cache header, Cloudflare's edge cache behavior is implicit and every
+cache header, edge-cache behavior is implicit and every
 browser load re-fetches the CSS. Setting a short `max-age` is a
 half-measure (stale-risk vs. cache-efficiency compromise); the
 complete answer is content-hash fingerprinting with long-lived
@@ -160,7 +162,7 @@ documented pattern.** Hono's own routing docs
 ([hono.dev/docs/api/routing#parameters](https://hono.dev/docs/api/routing#parameters))
 show this example for matching a file with a literal extension:
 `app.get('/posts/:filename{.+\.png}', ...)` — the literal `.png`
-suffix lives *inside* the regex constraint, not outside it. Our
+suffix lives _inside_ the regex constraint, not outside it. Our
 `/:file{app\.[a-f0-9]+\.css}` and `/:file{squire\.[a-f0-9]+\.js}`
 patterns follow the same shape, which is the supported approach.
 
@@ -208,7 +210,7 @@ callers await the same promise. On resolution the cache is populated
 and the in-flight promise is cleared in a `finally` block so a
 failed compile doesn't poison the cache (the next caller retries).
 
-Probability in practice: low, especially behind Cloudflare where
+Probability in practice: low, especially behind CloudFront where
 cache-miss fan-out is one request per PoP. But the fix is ~5 lines,
 it eliminates a whole class of "why did memory spike on deploy"
 forensics, and it makes the concurrent-cold-start behavior
@@ -228,7 +230,7 @@ async propagation — all callers already `await` it.
 
 ### Rolling-deploy caveat
 
-Phase 1 ships a single-instance deploy behind Cloudflare, so the
+Phase 1 ships a single-instance deploy behind CloudFront, so the
 cache-invalidation story is simple: when a deploy starts, the new
 process computes a new hash, and the `<link>` URL in the HTML
 matches the current compile. Edge cache on the HTML is short-lived
@@ -255,7 +257,7 @@ answers for later:
    requests to the matching instance via a sticky-session cookie.
    Overkill for Squire.
 3. **Write compiled assets to a shared object store** at deploy
-   time and serve via Cloudflare directly — bypasses the Node
+   time and serve from the edge directly — bypasses the Node
    process entirely. The "right" answer at scale but Phase 1
    doesn't need it.
 
@@ -277,7 +279,7 @@ future agent doesn't spend half an hour "discovering" them.
 - **Old-compile retention across deploys**. If an in-flight HTML
   response from deploy N references `/app.<oldhash>.css` and that
   request lands on deploy N+1, the hashed route 404s. Phase 1's
-  ~second-long restart behind Cloudflare makes this window narrow
+  ~second-long restart behind CloudFront makes this window narrow
   enough to ignore; flagged above as a Phase 3+ concern.
 - **Styled error fallback when asset compile itself fails.** The
   `/` route wraps `renderHomePage()` in a try/catch that re-invokes
@@ -305,12 +307,13 @@ future agent doesn't spend half an hour "discovering" them.
   process thus pays one Tailwind compile (~38 ms) before getting
   its 404. This is a one-time cost per process lifetime (the second
   probe hits the cache), not amplifiable, so it's not a DoS vector
-  in the Phase 1 single-instance deploy behind Cloudflare. We
+  in the Phase 1 single-instance deploy behind CloudFront. We
   accept it rather than adding a separate "current hash" accessor
   that would let us hash-compare before compile, because the
   one-time cost is invisible in practice and the accessor would
   duplicate state. Revisit if Phase 3+ deploys to a model where
   cold starts happen frequently.
+
 - **Dev mtime cache invalidation does not track `@source` scans.**
   `computeCssCacheKey()` keys on the `styles.css` mtime only. If a
   dev edits a TypeScript or HTML file that contributes Tailwind
@@ -333,3 +336,13 @@ future agent doesn't spend half an hour "discovering" them.
   costs one extra compile (~38 ms) per call and has no
   data-corruption or exfiltration pathway. Documented inline where
   the hooks are defined.
+
+## Addendum — production prebuild (2026-05-10 deployment work)
+
+SQR-42 changed the production half of this ADR: production must not compile CSS
+at request time. The Dockerfile now builds web assets in an `assets` stage with
+`npm run build:web-assets`, copies `dist/web-ui` into the runtime image, and
+starts with `NODE_ENV=production`. In that mode `getAppCss()` reads
+`dist/web-ui/app.css`; if the file is missing, startup-era requests fail loudly
+with an instruction to run the build. Development keeps the original on-demand
+compile path so local style edits do not require a watcher or rebuild.
