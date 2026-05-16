@@ -32,7 +32,7 @@ Read these on demand:
 | Run the pre-push review and watch the PR                                   | [review.md](./review.md)                         |
 | Write a tech spec or plan-review checkpoint                                | [planning-artifacts.md](./planning-artifacts.md) |
 | Record a design/eng decision, or implement a feature that might touch one  | [adrs.md](./adrs.md)                             |
-| Check repeated pitfalls and promoted gstack learnings                      | [learnings.md](./learnings.md)                   |
+| Search prior agent learnings, plans, transcripts, and gbrain memory        | [learnings.md](./learnings.md)                   |
 
 ## Always-on rules
 
@@ -53,7 +53,7 @@ Read these on demand:
 
 ## State model
 
-There are three different kinds of state in this repo. Do not conflate them.
+There are four different kinds of state in this repo. Do not conflate them.
 
 1. **Checked-in project guidance** lives in repo files:
    - `CLAUDE.md`
@@ -66,17 +66,19 @@ There are three different kinds of state in this repo. Do not conflate them.
    - `~/.gstack/projects/maz-org-squire/`
    - in practice this includes files like `learnings.jsonl`,
      `timeline.jsonl`, and `repo-mode.json`
-3. **Repo-local `.gstack/`** is artifact output only:
+3. **GBrain indexed memory and code search** is developer-local:
+   - `gbrain` stores searchable pages, transcripts, learnings, and code indexes
+   - each linked worktree must run `/sync-gbrain --code-only`
+   - `.gbrain-source` pins a worktree to its own code source and is ignored by git
+4. **Repo-local `.gstack/`** is artifact output only:
    - QA reports
    - browser logs
    - other temporary project-local outputs
 
 Repo `.gstack/` is **not** canonical project memory. If a learning is durable
-enough to matter to future work, promote it into checked-in docs or an ADR.
-The normal path is: run gstack `/learn` to inspect the local runtime learnings,
-then run `npm run agent:export-learnings` to refresh
-[`docs/agent/learnings.md`](./learnings.md) before deciding whether a deeper
-doc or ADR update is needed.
+enough to matter to every future worktree, promote it into checked-in docs or an
+ADR. The normal path is: search gbrain for prior context, then update the
+specific checked-in doc or ADR that should own the rule.
 
 ## MCP
 
