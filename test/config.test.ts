@@ -17,6 +17,7 @@ describe('validateServerEnv', () => {
     LANGFUSE_BASEURL: 'https://us.cloud.langfuse.com',
     GOOGLE_OAUTH_CLIENT_ID: 'google-client',
     GOOGLE_OAUTH_CLIENT_SECRET: 'google-secret',
+    ORIGIN_SHARED_SECRET: 'origin-secret'.repeat(3),
   };
 
   it('rejects missing production secrets with the missing variable names', () => {
@@ -33,6 +34,7 @@ describe('validateServerEnv', () => {
       'LANGFUSE_BASEURL',
       'GOOGLE_OAUTH_CLIENT_ID',
       'GOOGLE_OAUTH_CLIENT_SECRET',
+      'ORIGIN_SHARED_SECRET',
     ]);
     expect(formatServerConfigError(result.error)).toContain(
       'Missing required environment variables',
@@ -53,6 +55,7 @@ describe('validateServerEnv', () => {
       ...validProductionEnv,
       NODE_ENV: 'development',
       DATABASE_URL: undefined,
+      ORIGIN_SHARED_SECRET: undefined,
     });
 
     expect(result.success).toBe(true);
@@ -66,6 +69,7 @@ describe('validateServerEnv', () => {
       ...validProductionEnv,
       PORT: 'not-a-port',
       SESSION_SECRET: 'short',
+      ORIGIN_SHARED_SECRET: 'short',
     });
 
     expect(result.success).toBe(false);
@@ -74,6 +78,7 @@ describe('validateServerEnv', () => {
       expect.arrayContaining([
         { name: 'PORT', message: 'must be an integer between 1 and 65535' },
         { name: 'SESSION_SECRET', message: 'must be at least 32 characters' },
+        { name: 'ORIGIN_SHARED_SECRET', message: 'must be at least 32 characters' },
       ]),
     );
   });
