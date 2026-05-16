@@ -30,7 +30,8 @@ If slash-style gstack invocation is unavailable in the current tool, run the
 underlying sync command from the worktree:
 
 ```bash
-bun run /Users/bcm/gstack/.agents/skills/gstack/bin/gstack-gbrain-sync.ts --code-only
+GSTACK_ROOT="${GSTACK_ROOT:-$HOME/.claude/skills/gstack}"
+bun run "$GSTACK_ROOT/.agents/skills/gstack/bin/gstack-gbrain-sync.ts" --code-only
 ```
 
 Sync gbrain:
