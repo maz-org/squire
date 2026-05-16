@@ -76,6 +76,9 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
   if (hasText(env.SESSION_SECRET) && env.SESSION_SECRET!.length < 32) {
     invalid.push({ name: 'SESSION_SECRET', message: 'must be at least 32 characters' });
   }
+  if (hasText(env.ORIGIN_SHARED_SECRET) && env.ORIGIN_SHARED_SECRET!.length < 32) {
+    invalid.push({ name: 'ORIGIN_SHARED_SECRET', message: 'must be at least 32 characters' });
+  }
   validateUrl('DATABASE_URL', env.DATABASE_URL, invalid);
   validateUrl('LANGFUSE_BASEURL', env.LANGFUSE_BASEURL, invalid);
 

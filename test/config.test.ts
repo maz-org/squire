@@ -69,6 +69,7 @@ describe('validateServerEnv', () => {
       ...validProductionEnv,
       PORT: 'not-a-port',
       SESSION_SECRET: 'short',
+      ORIGIN_SHARED_SECRET: 'short',
     });
 
     expect(result.success).toBe(false);
@@ -77,6 +78,7 @@ describe('validateServerEnv', () => {
       expect.arrayContaining([
         { name: 'PORT', message: 'must be an integer between 1 and 65535' },
         { name: 'SESSION_SECRET', message: 'must be at least 32 characters' },
+        { name: 'ORIGIN_SHARED_SECRET', message: 'must be at least 32 characters' },
       ]),
     );
   });
