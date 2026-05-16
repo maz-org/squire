@@ -262,7 +262,11 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 - Pin GHS to a specific commit, review diffs before updating
 - npm audit + Dependabot (already configured)
-- SAST scanning (Linear: Security Hardening project)
+- CodeQL code scanning runs on PRs, `main`, and a weekly schedule via
+  `.github/workflows/codeql.yml` for JavaScript/TypeScript and GitHub Actions
+  workflow analysis. The repository is public, so GitHub Copilot Autofix for
+  supported CodeQL alerts is plan-eligible; verify the repo/org setting after
+  the first CodeQL alerts exist.
 - Integrity checksums on extracted data and on the `embeddings` pgvector
   table contents (or on canonical reindex artifacts)
 - Do not run the extraction pipeline in production — import
@@ -320,6 +324,7 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 ## Changelog
 
+- **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Migrated GitHub Issue references (#12, #55–#59) to Linear projects (User Accounts SQR-37/38/39/40, Security Hardening). Added header note pointing at the new product and tech specs.
 - **2026-04-07:** Renamed from `docs/security-review.md` to `docs/SECURITY.md` as part of the ALL_CAPS docs consolidation.
 - **2026-04-06:** Updated to reflect retirement of OCR pipeline and Worldhaven dependency (commit `34a26a1`).
