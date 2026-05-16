@@ -129,10 +129,11 @@ Postgres over Fly's private 6PN network — Postgres has no public ingress.
   into `fly.toml`. A non-zero exit code from the release machine aborts the
   deploy and leaves the prior version live, which is exactly the SQR-43
   acceptance criterion.
-- **SQR-44 (CI/CD)** — GitHub Actions workflow uses
-  `superfly/flyctl-actions/setup-flyctl@master`, then `flyctl deploy` on
-  release tag. The DATABASE_URL secret is scoped to the Fly app via
-  `fly secrets set`, never written to the repo.
+- **SQR-44 (CI/CD)** — GitHub Actions workflow runs after `CI` succeeds on
+  `main`, uses `superfly/flyctl-actions/setup-flyctl@master`, then runs
+  `flyctl deploy -a maz-squire --remote-only`. The deploy token lives in the
+  GitHub secret `FLY_API_TOKEN`; app secrets such as `DATABASE_URL` stay scoped
+  to the Fly app via `fly secrets set` and are never written to the repo.
 
 ### Operational shape
 
