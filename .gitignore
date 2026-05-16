@@ -157,4 +157,5 @@ data/gloomhavensecretariat/
 # Vector index lives in Postgres now (pgvector). Regenerate locally with `npm run index`.
 data/index.json
 .gstack/
+.gbrain-source
 .DS_Store
