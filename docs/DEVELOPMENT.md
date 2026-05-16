@@ -15,6 +15,8 @@ Create a `.env` file in the project root:
 ```bash
 # Required
 ANTHROPIC_API_KEY=...
+# Required when running OpenAI-backed evals
+OPENAI_API_KEY=...
 
 # Google OAuth (required for web UI login)
 GOOGLE_OAUTH_CLIENT_ID=...
@@ -35,6 +37,16 @@ LANGFUSE_SECRET_KEY=...
 
 # Trace environment label for Langfuse and LangSmith; defaults to NODE_ENV.
 SQUIRE_ENV=development
+
+# Optional (LangSmith eval/prototype tracing)
+LANGSMITH_API_KEY=...
+LANGSMITH_PROJECT=squire-evals
+# LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+# LANGSMITH_WORKSPACE_ID=...
+# SQUIRE_EVAL_LANGSMITH_TRACING=0
+
+# Production origin lock only. CloudFront sends this value as X-Origin-Secret.
+# ORIGIN_SHARED_SECRET=...
 ```
 
 Generate `SESSION_SECRET` with:
@@ -42,6 +54,10 @@ Generate `SESSION_SECRET` with:
 ```bash
 openssl rand -base64 48
 ```
+
+Do not set `LANGFUSE_TRACING_ENVIRONMENT`; `SQUIRE_ENV=development` is the
+local environment label that feeds Langfuse tracing. LangSmith variables are for
+eval/prototype tracing unless the runtime path explicitly starts using them.
 
 `GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for
 production and non-local hosts. In local development, `/auth/google/start` and

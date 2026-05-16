@@ -85,7 +85,7 @@ describe('deployment configuration', () => {
     expect(runbook).toContain('flyctl mpg attach <cluster-id>');
     expect(runbook).toContain('Extensions page');
     expect(runbook).toContain('Extension: `vector`');
-    expect(runbook).toContain('fly releases list');
+    expect(runbook).toContain('fly releases -a maz-squire --image');
     expect(runbook).toContain('fly logs');
     expect(runbook).toContain('fly deploy --image <prior-image>');
     expect(runbook).toContain('node scripts/db-migrate.ts');
