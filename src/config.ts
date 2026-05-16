@@ -24,6 +24,7 @@ const REQUIRED_SERVER_ENV = [
   'LANGFUSE_BASEURL',
   'GOOGLE_OAUTH_CLIENT_ID',
   'GOOGLE_OAUTH_CLIENT_SECRET',
+  'ORIGIN_SHARED_SECRET',
 ] as const;
 
 function requiredServerEnv(nodeEnv: string): readonly (typeof REQUIRED_SERVER_ENV)[number][] {

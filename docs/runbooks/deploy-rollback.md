@@ -31,7 +31,8 @@ flyctl secrets set \
   LANGFUSE_PUBLIC_KEY='...' \
   LANGFUSE_BASEURL='...' \
   GOOGLE_OAUTH_CLIENT_ID='...' \
-  GOOGLE_OAUTH_CLIENT_SECRET='...'
+  GOOGLE_OAUTH_CLIENT_SECRET='...' \
+  ORIGIN_SHARED_SECRET='...'
 ```
 
 `flyctl mpg attach` writes the `DATABASE_URL` secret with the managed Postgres
@@ -65,6 +66,26 @@ curl https://maz-squire.fly.dev/api/health
 
 `/api/live` is the cheap platform liveness check. `/api/health` is the
 readiness check and exercises Postgres, pgvector, and embedder warmup.
+
+## CloudFront origin lock
+
+Production app traffic is expected to enter through CloudFront with AWS WAF
+attached. CloudFront sends `X-Origin-Secret`, and Fly stores the matching value
+as `ORIGIN_SHARED_SECRET`. Requests that do not include the exact header are
+rejected with 403 before the app routes run.
+
+`/api/live` and `/api/health` intentionally bypass the origin lock so Fly's own
+machine health checks keep working without header support. User-facing routes,
+OAuth routes, API routes, and MCP routes must go through CloudFront or include
+the shared secret for operator checks.
+
+To rotate without downtime:
+
+1. Add support for the new secret in CloudFront as `X-Origin-Secret`.
+2. Update the Fly `ORIGIN_SHARED_SECRET` secret to the same value.
+3. Wait for the Fly release to become healthy.
+4. Verify direct Fly access without the header is 403 and with the header is 200.
+5. Remove the old value from any local/operator notes.
 
 ## Failed migration
 

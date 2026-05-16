@@ -17,6 +17,7 @@ import { ask, ensureBootstrapStatus, isReady, startBootstrapLifecycle } from './
 import { getDb, getWorktreeRuntime } from './db.ts';
 import { loadServerConfig } from './config.ts';
 import { runReadinessChecks } from './health.ts';
+import { originSharedSecretMiddleware } from './origin-lock.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
 import {
   toolSourceLabel,
@@ -82,6 +83,8 @@ import {
 } from './chat/conversation-service.ts';
 
 export const app = new Hono();
+
+app.use('*', originSharedSecretMiddleware());
 
 const HTML_CSP =
   "default-src 'self'; " +

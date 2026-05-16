@@ -17,6 +17,7 @@ describe('validateServerEnv', () => {
     LANGFUSE_BASEURL: 'https://us.cloud.langfuse.com',
     GOOGLE_OAUTH_CLIENT_ID: 'google-client',
     GOOGLE_OAUTH_CLIENT_SECRET: 'google-secret',
+    ORIGIN_SHARED_SECRET: 'origin-secret'.repeat(3),
   };
 
   it('rejects missing production secrets with the missing variable names', () => {
@@ -33,6 +34,7 @@ describe('validateServerEnv', () => {
       'LANGFUSE_BASEURL',
       'GOOGLE_OAUTH_CLIENT_ID',
       'GOOGLE_OAUTH_CLIENT_SECRET',
+      'ORIGIN_SHARED_SECRET',
     ]);
     expect(formatServerConfigError(result.error)).toContain(
       'Missing required environment variables',
