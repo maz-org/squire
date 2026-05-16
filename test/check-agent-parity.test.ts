@@ -17,13 +17,15 @@ docs/ARCHITECTURE.md
 docs/DEVELOPMENT.md
 ~/.gstack/projects/maz-org-squire/
 Repo \`.gstack/\`
+/sync-gbrain --code-only
 `;
 
     const issues = collectParityIssues({
       agents: 'docs/agent/agent-baseline.md',
       baseline: shared,
       claude: 'docs/agent/agent-baseline.md',
-      development: 'AGENTS.md ~/.gstack/projects/maz-org-squire/ .mcp.json',
+      development:
+        'AGENTS.md ~/.gstack/projects/maz-org-squire/ .mcp.json /setup-gbrain /sync-gbrain --code-only',
       mcp: JSON.stringify({ mcpServers: { squire: { url: 'http://localhost:3000/mcp' } } }),
     });
 

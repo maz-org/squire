@@ -42,12 +42,21 @@ export function collectParityIssues(files: ParityFiles): string[] {
   if (!files.baseline.includes('Repo `.gstack/`')) {
     issues.push('docs/agent/agent-baseline.md does not clarify repo-local `.gstack/`');
   }
+  if (!files.baseline.includes('/sync-gbrain --code-only')) {
+    issues.push('docs/agent/agent-baseline.md does not mention worktree gbrain sync');
+  }
 
   if (!files.development.includes('AGENTS.md')) {
     issues.push('docs/DEVELOPMENT.md does not mention AGENTS.md');
   }
   if (!files.development.includes('~/.gstack/projects/maz-org-squire/')) {
     issues.push('docs/DEVELOPMENT.md does not mention canonical gstack runtime state');
+  }
+  if (!files.development.includes('/setup-gbrain')) {
+    issues.push('docs/DEVELOPMENT.md does not mention required gbrain setup');
+  }
+  if (!files.development.includes('/sync-gbrain --code-only')) {
+    issues.push('docs/DEVELOPMENT.md does not mention worktree gbrain sync');
   }
   if (!files.development.includes('.mcp.json')) {
     issues.push('docs/DEVELOPMENT.md does not mention repo-local MCP config');

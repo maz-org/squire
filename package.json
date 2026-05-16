@@ -24,8 +24,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "agent:check": "node scripts/check-agent-parity.ts",
-    "agent:export-learnings": "node scripts/export-gstack-learnings.ts",
-    "agent:install-launchagent": "node scripts/install-agent-learnings-launchagent.ts",
     "lint": "eslint src/ test/ scripts/",
     "lint:css": "stylelint 'src/web-ui/**/*.css'",
     "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#data' '#.beads' '#.gstack'",
@@ -33,7 +31,7 @@
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
     "hooks:install": "node scripts/setup-git-hooks.ts",
-    "prepare": "npm run hooks:install && npm run agent:install-launchagent"
+    "prepare": "npm run hooks:install"
   },
   "lint-staged": {
     "*.{ts,js}": [

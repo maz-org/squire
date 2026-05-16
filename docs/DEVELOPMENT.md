@@ -5,8 +5,8 @@
 - Node.js 24+ (see `.nvmrc`)
 - Docker (for the Postgres + pgvector dev database)
 - `.env` file with required environment variables (see below)
-- [gstack](https://github.com/garrytan/gstack) skills for Claude Code (see
-  [AI tooling setup](#ai-tooling-setup) below)
+- [gstack](https://github.com/garrytan/gstack) and gbrain for AI-assisted
+  development (see [AI tooling setup](#ai-tooling-setup) below)
 
 ### Environment variables
 
@@ -317,7 +317,7 @@ Claude Code supports Streamable HTTP natively — no bridge needed.
 
 ### Agent tooling state model
 
-Squire has three different categories of agent/tooling state:
+Squire has four different categories of agent/tooling state:
 
 1. **Checked-in project guidance** in the repo:
    - `CLAUDE.md`
@@ -330,14 +330,19 @@ Squire has three different categories of agent/tooling state:
    - `~/.gstack/projects/maz-org-squire/`
    - typically includes files like `learnings.jsonl`, `timeline.jsonl`, and
      `repo-mode.json`
-3. **Repo-local `.gstack/` artifact output**:
+3. **GBrain indexed memory and code search** on the developer machine:
+   - searchable learnings, timelines, plans, transcripts, and code pages
+   - one code source per linked worktree
+   - worktree-local `.gbrain-source` pins gbrain commands to the right source
+4. **Repo-local `.gstack/` artifact output**:
    - QA reports
    - browser logs
    - temporary local outputs that are useful during work
 
 Do not treat repo `.gstack/` as canonical project memory. If a learning should
-survive a single machine or tool session, promote it into checked-in docs, and
-into an ADR when it becomes a non-obvious architectural decision.
+survive as a rule for every developer and agent run, promote it into checked-in
+docs, and into an ADR when it becomes a non-obvious architectural decision.
+Use gbrain to search the long tail of prior learnings and session history.
 
 ### Codex and Claude configuration split
 
@@ -365,7 +370,6 @@ If your staged changes touch any of these files:
 - `docs/DEVELOPMENT.md`
 - `.mcp.json`
 - `scripts/check-agent-parity.ts`
-- `scripts/export-gstack-learnings.ts`
 
 then `.husky/pre-commit` automatically runs:
 
@@ -386,41 +390,35 @@ repair them with:
 npm run hooks:install
 ```
 
-`npm run agent:export-learnings` is **not** automated in git hooks. It reads
-machine-local `~/.gstack/projects/maz-org-squire/learnings.jsonl`, generates
-`docs/agent/learnings.md`, and should be run deliberately when the local
-learnings have accumulated enough signal to be worth curating into the repo.
-Normal flow: use gstack `/learn` to inspect or search the local learnings, then
-run `npm run agent:export-learnings` to promote the durable ones into the
-checked-in summary.
+### GBrain sync workflow
 
-### Weekly learnings export via launchd
+Squire does not export gstack learnings into a checked-in mirror. Use gbrain
+directly for prior learnings, plans, transcripts, timelines, and design
+artifacts.
 
-On macOS, local setup now also installs a **LaunchAgent** for the current clone
-when you run `npm install` (via the `prepare` script).
-
-The installer script is:
+Run gbrain sync from every active linked worktree:
 
 ```bash
-npm run agent:install-launchagent
+/sync-gbrain --code-only
 ```
 
-What it does:
+If slash-style gstack invocation is unavailable in the current tool, run:
 
-- writes `~/Library/LaunchAgents/org.maz.squire.agent-learnings.plist`
-- loads it with `launchctl`
-- runs `npm run agent:export-learnings` at load time and then every 7 days
-- logs output to `~/.gstack/analytics/squire-agent-learnings.log`
+```bash
+GSTACK_ROOT="${GSTACK_ROOT:-$HOME/.claude/skills/gstack}"
+bun run "$GSTACK_ROOT/.agents/skills/gstack/bin/gstack-gbrain-sync.ts" --code-only
+```
 
-Important behavior:
+Sync gbrain:
 
-- the job **does not auto-commit or auto-push**
-- it no-ops if `~/.gstack/projects/maz-org-squire/learnings.jsonl` does not exist
-- if you install the repo in a different path on another machine, running
-  `npm install` there rewrites the LaunchAgent to point at that clone
-- if a machine is asleep or closed at the exact scheduled time, the run is not
-  guaranteed to happen at that moment; `RunAtLoad` ensures it runs again the
-  next time the LaunchAgent is loaded (for example after login or reinstall)
+- when creating or switching into a linked worktree
+- after meaningful code or documentation changes
+- before `/review`, `/ship`, or a large refactor if the work depends on prior
+  project context
+- whenever gbrain search results feel stale or point at another worktree
+
+Do not run gbrain sync in git hooks, CI, or every test command. A fresh
+worktree sync can be slow and may need network access for embeddings.
 
 ## Testing
 
@@ -540,19 +538,22 @@ script changes.
 
 ## AI tooling setup
 
-This repo requires [gstack](https://github.com/garrytan/gstack) for
+This repo requires [gstack](https://github.com/garrytan/gstack) and gbrain for
 AI-assisted development. A pre-tool hook in `.claude/settings.json`
-enforces this — Claude Code will warn if gstack is missing.
+enforces the gstack side for Claude Code. Developers should also run
+`gbrain doctor --fast` before relying on prior project memory.
 
 One-time setup (per developer machine):
 
 ```bash
 git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
 cd ~/.claude/skills/gstack && ./setup --team
+/setup-gbrain
 ```
 
 This installs gstack skills (browse, review, ship, etc.) and enables
-auto-updates at the start of each Claude Code session. See the
+auto-updates at the start of each Claude Code session. `/setup-gbrain` installs
+and initializes the searchable project memory used by `/sync-gbrain`. See the
 `## gstack` section in `CLAUDE.md` for the full list of available skills.
 
 ## Project structure
