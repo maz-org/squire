@@ -84,10 +84,13 @@ machine health checks keep working without header support. User-facing routes,
 OAuth routes, API routes, and MCP routes must go through CloudFront or include
 the shared secret for operator checks.
 
-To rotate without downtime:
+To rotate the origin secret, plan a short maintenance window. The app accepts one
+origin secret at a time, so CloudFront and Fly can briefly disagree while the
+change propagates.
 
-1. Add support for the new secret in CloudFront as `X-Origin-Secret`.
-2. Update the Fly `ORIGIN_SHARED_SECRET` secret to the same value.
+1. Update CloudFront to send the new secret as `X-Origin-Secret`.
+2. Update the Fly `ORIGIN_SHARED_SECRET` secret to the same value immediately
+   after.
 3. Wait for the Fly release to become healthy.
 4. Verify direct Fly access without the header is 403 and with the header is 200.
 5. Remove the old value from any local/operator notes.

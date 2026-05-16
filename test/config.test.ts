@@ -55,6 +55,7 @@ describe('validateServerEnv', () => {
       ...validProductionEnv,
       NODE_ENV: 'development',
       DATABASE_URL: undefined,
+      ORIGIN_SHARED_SECRET: undefined,
     });
 
     expect(result.success).toBe(true);

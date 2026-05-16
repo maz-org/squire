@@ -29,7 +29,9 @@ const REQUIRED_SERVER_ENV = [
 
 function requiredServerEnv(nodeEnv: string): readonly (typeof REQUIRED_SERVER_ENV)[number][] {
   if (nodeEnv === 'production') return REQUIRED_SERVER_ENV;
-  return REQUIRED_SERVER_ENV.filter((name) => name !== 'DATABASE_URL');
+  return REQUIRED_SERVER_ENV.filter(
+    (name) => name !== 'DATABASE_URL' && name !== 'ORIGIN_SHARED_SECRET',
+  );
 }
 
 function isTestProcess(env: Env): boolean {

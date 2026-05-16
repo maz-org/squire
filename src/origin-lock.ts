@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { MiddlewareHandler } from 'hono';
 
 export const ORIGIN_SECRET_HEADER = 'x-origin-secret';
-export const ORIGIN_LOCK_BYPASS_PATHS = new Set(['/api/live', '/api/health']);
+export const ORIGIN_LOCK_BYPASS_PATHS: ReadonlySet<string> = new Set(['/api/live', '/api/health']);
 
 function hasText(value: string | undefined): value is string {
   return value !== undefined && value.trim().length > 0;
