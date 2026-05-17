@@ -18,6 +18,7 @@ import { getDb, getWorktreeRuntime } from './db.ts';
 import { loadServerConfig } from './config.ts';
 import { runReadinessChecks } from './health.ts';
 import { originSharedSecretMiddleware } from './origin-lock.ts';
+import { resolveTrustedClientIp } from './http/trusted-client-ip.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
 import {
   toolSourceLabel,
@@ -132,6 +133,13 @@ const DEV_ASSET_CACHE_CONTROL = 'no-cache';
 
 function isProdEnv(): boolean {
   return process.env.NODE_ENV === 'production';
+}
+
+function auditContext(c: Context): { ipAddress: string | null; userAgent: string | null } {
+  return {
+    ipAddress: resolveTrustedClientIp(c.req),
+    userAgent: c.req.header('user-agent') ?? null,
+  };
 }
 
 app.get('/favicon.svg', (c) => {
@@ -337,7 +345,7 @@ app.post('/register', async (c) => {
   }
 
   try {
-    const client = await registerClient(body as Record<string, unknown>);
+    const client = await registerClient(body as Record<string, unknown>, auditContext(c));
     return c.json(client, 201);
   } catch (err) {
     return oauthErrorResponse(c, err);
@@ -365,7 +373,13 @@ app.get('/authorize', async (c) => {
   }
 
   try {
-    const authCode = await createAuthorizationCode(clientId, redirectUri, codeChallenge, state);
+    const authCode = await createAuthorizationCode(
+      clientId,
+      redirectUri,
+      codeChallenge,
+      state,
+      auditContext(c),
+    );
     const redirect = new URL(redirectUri);
     redirect.searchParams.set('code', authCode.code);
     if (state) redirect.searchParams.set('state', state);
@@ -415,6 +429,7 @@ app.post('/token', async (c) => {
         clientId,
         codeVerifier,
         redirectUri,
+        auditContext(c),
       );
       return c.json(tokenResponse);
     } catch (err) {
@@ -494,7 +509,7 @@ app.get('/auth/google/callback', async (c) => {
       state,
       cookieState,
       cookieVerifier,
-      c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+      resolveTrustedClientIp(c.req) ?? undefined,
       c.req.header('user-agent'),
       resolveGoogleRedirectUri(c.req.url),
     );
@@ -531,7 +546,7 @@ app.post('/auth/logout', requirePageSession(), requireCsrf(), async (c) => {
       eventType: 'google_logout',
       userId,
       outcome: 'success',
-      ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
+      ipAddress: resolveTrustedClientIp(c.req),
       userAgent: c.req.header('user-agent'),
     });
   });
@@ -929,7 +944,7 @@ function requireBearerAuth() {
     }
 
     const token = authHeader.slice(7);
-    const valid = await verifyAccessToken(token);
+    const valid = await verifyAccessToken(token, auditContext(c));
     if (!valid) {
       c.header('WWW-Authenticate', 'Bearer error="invalid_token"');
       return c.json(jsonError('Invalid or expired token', 401), 401);

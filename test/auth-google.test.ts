@@ -76,6 +76,8 @@ import { eq, sql } from 'drizzle-orm';
 
 // ─── Test fixtures ──────────────────────────────────────────────────────────
 
+const ORIGINAL_ORIGIN_SHARED_SECRET = process.env.ORIGIN_SHARED_SECRET;
+
 const TEST_USER = {
   email: 'brian@example.com',
   name: 'Brian',
@@ -122,9 +124,11 @@ function mockGoogleUnverifiedEmail(user = TEST_USER) {
 async function walkOAuthFlow(options?: {
   overrideState?: string;
   skipPkceCookie?: boolean;
+  headers?: Record<string, string>;
 }): Promise<Response> {
   const startRes = await app.request('http://localhost:3000/auth/google/start', {
     redirect: 'manual',
+    headers: options?.headers,
   });
   expect(startRes.status).toBe(302);
 
@@ -134,7 +138,7 @@ async function walkOAuthFlow(options?: {
   const state = options?.overrideState ?? redirectUrl.searchParams.get('state')!;
 
   const callbackUrl = `http://localhost:3000/auth/google/callback?code=fake-code&state=${state}`;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...(options?.headers ?? {}) };
   if (!options?.skipPkceCookie && pkceCookie) {
     headers.Cookie = pkceCookie.split(';')[0];
   }
@@ -179,9 +183,12 @@ beforeEach(async () => {
   mockGetToken.mockReset();
   // Default: allow the test user's email via env var
   process.env.SQUIRE_ALLOWED_EMAILS = TEST_USER.email;
+  delete process.env.ORIGIN_SHARED_SECRET;
 });
 
 afterAll(async () => {
+  if (ORIGINAL_ORIGIN_SHARED_SECRET === undefined) delete process.env.ORIGIN_SHARED_SECRET;
+  else process.env.ORIGIN_SHARED_SECRET = ORIGINAL_ORIGIN_SHARED_SECRET;
   await teardownTestDb();
   await shutdownServerPool();
   resetAuthProvider();
@@ -215,7 +222,32 @@ describe('Google OAuth callback', () => {
     expect(sessionRows[0].lastSeenAt).not.toBeNull();
   });
 
-  it('1a. ignores non-https google profile photos', async () => {
+  it('1a. resolves trusted CloudFront/Fly client IP into session and audit rows', async () => {
+    const originSecret = 'cloudfront-origin-secret'.repeat(2);
+    process.env.ORIGIN_SHARED_SECRET = originSecret;
+    mockGoogleSuccess();
+
+    const res = await walkOAuthFlow({
+      headers: {
+        'x-origin-secret': originSecret,
+        'x-forwarded-for': '192.0.2.99, 198.51.100.10, 203.0.113.20',
+      },
+    });
+
+    expect(res.status).toBe(302);
+
+    const { db } = getDb('server');
+    const [sessionRow] = await db.select().from(sessions);
+    expect(sessionRow.ipAddress).toBe('198.51.100.10');
+
+    const [auditRow] = await db
+      .select()
+      .from(oauthAuditLog)
+      .where(eq(oauthAuditLog.eventType, 'google_login'));
+    expect(auditRow.ipAddress).toBe('198.51.100.10');
+  });
+
+  it('1b. ignores non-https google profile photos', async () => {
     mockGoogleSuccess({
       ...TEST_USER,
       picture: 'http://example.com/brian.png',
@@ -231,7 +263,7 @@ describe('Google OAuth callback', () => {
     expect(userRows[0].avatarUrl).toBeNull();
   });
 
-  it('1b. masks email addresses in successful-login stdout logs', async () => {
+  it('1c. masks email addresses in successful-login stdout logs', async () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     mockGoogleSuccess();
 
@@ -368,7 +400,7 @@ describe('Logout', () => {
     const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
       method: 'POST',
       redirect: 'manual',
-      headers: { 'x-csrf-token': csrfToken },
+      headers: { 'x-csrf-token': csrfToken, 'x-forwarded-for': 'not-an-ip' },
     });
 
     expect(logoutRes.status).toBe(302);
@@ -387,6 +419,7 @@ describe('Logout', () => {
     expect(logoutAudits[0]).toMatchObject({
       outcome: 'success',
       userId: expect.any(String),
+      ipAddress: null,
     });
   });
 
