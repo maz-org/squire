@@ -37,6 +37,7 @@ import type { Context, Hono } from 'hono';
 
 import { getDb, isManagedLocalDatabaseUrl, resolveDatabaseUrl } from '../db.ts';
 import * as SessionRepository from '../db/repositories/session-repository.ts';
+import { resolveTrustedClientIp } from '../http/trusted-client-ip.ts';
 import { DEV_USER, seedDevUser } from '../seed/seed-dev-user.ts';
 import { setSessionCookie } from './session-middleware.ts';
 import { users } from '../db/schema/core.ts';
@@ -130,7 +131,7 @@ export function registerDevLoginRoute(app: Hono): void {
 
     const { sessionId } = await SessionRepository.create(db, {
       userId: user.id,
-      ipAddress: c.req.header('x-forwarded-for') ?? null,
+      ipAddress: resolveTrustedClientIp(c.req),
       userAgent: c.req.header('user-agent') ?? null,
     });
 

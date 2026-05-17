@@ -25,6 +25,26 @@ checks work. Browser, OAuth, REST, and MCP routes should go through CloudFront
 or include the origin secret when an operator is deliberately testing the Fly
 origin.
 
+## Trusted client IPs
+
+Production client-IP attribution is only trusted after the origin lock passes.
+CloudFront sends `X-Origin-Secret`, and the app compares it with
+`ORIGIN_SHARED_SECRET` before auth routes record any forwarded client IP in
+session metadata or OAuth audit rows.
+
+For production traffic, CloudFront appends the viewer IP to `X-Forwarded-For`,
+and Fly appends its proxy hop before the request reaches the app. The app reads
+the IP immediately before Fly's trusted hop and ignores earlier XFF entries
+because a viewer can spoof them before CloudFront appends the real viewer IP.
+Malformed XFF chains, missing XFF chains, and direct-origin requests without the
+origin secret resolve to an unknown client IP instead of storing a raw header
+string.
+
+`X-Real-IP` is not trusted in production because CloudFront removes it before
+forwarding to the origin. Local development and tests can still resolve a
+validated `X-Forwarded-For`, `X-Real-IP`, or `Fly-Client-IP` value when
+`ORIGIN_SHARED_SECRET` is unset.
+
 ## Secrets and environment
 
 app-runtime secrets and settings belong in Fly:
