@@ -61,8 +61,11 @@ export function optionalSession() {
           deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
         }
       }
-    } catch {
-      // Auth check failed. Silently continue as unauthenticated.
+    } catch (err) {
+      console.warn(
+        '[session] optional session check failed; continuing unauthenticated:',
+        err instanceof Error ? err.message : String(err),
+      );
     }
     await next();
   };
