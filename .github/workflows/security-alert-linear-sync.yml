@@ -1,0 +1,49 @@
+name: Security Alert Linear Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print planned Linear changes without writing'
+        required: true
+        type: boolean
+        default: true
+  schedule:
+    - cron: '37 13 * * *'
+
+permissions: read-all
+
+concurrency:
+  group: security-alert-linear-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    env:
+      SECURITY_ALERT_REPOSITORY: ${{ github.repository }}
+      SECURITY_ALERT_GITHUB_TOKEN: ${{ secrets.SECURITY_ALERTS_GITHUB_TOKEN || github.token }}
+      LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+      SECURITY_ALERT_LINEAR_TEAM_KEY: SQR
+      SECURITY_ALERT_LINEAR_PROJECT: Squire · Security Alert Automation
+      SECURITY_ALERT_LINEAR_LABEL: Security
+      SECURITY_ALERT_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == true && '1' || '0' }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Sync GitHub security alerts to Linear
+        run: |
+          args=()
+          if [ "$SECURITY_ALERT_DRY_RUN" != "1" ]; then
+            args+=(--apply)
+          fi
+          node scripts/sync-security-alerts-to-linear.ts "${args[@]}"

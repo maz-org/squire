@@ -27,4 +27,37 @@ describe('security workflows', () => {
     expect(securityDocs).toContain('high and critical runtime vulnerabilities');
     expect(securityDocs).toContain('low and moderate findings stay non-blocking');
   });
+
+  it('routes high and critical security alerts into Linear', async () => {
+    const workflow = await readProjectFile('.github/workflows/security-alert-linear-sync.yml');
+    const securityDocs = await readProjectFile('docs/SECURITY.md');
+    const packageJson = JSON.parse(await readProjectFile('package.json')) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.['security:alerts:dry-run']).toBe(
+      'SECURITY_ALERT_DRY_RUN=1 node scripts/sync-security-alerts-to-linear.ts',
+    );
+    expect(packageJson.scripts?.['security:alerts:validate-config']).toBe(
+      'node scripts/sync-security-alerts-to-linear.ts --validate-config',
+    );
+
+    expect(workflow).toContain('name: Security Alert Linear Sync');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('schedule:');
+    expect(workflow).toContain('permissions: read-all');
+    expect(workflow).toContain('SECURITY_ALERT_REPOSITORY: ${{ github.repository }}');
+    expect(workflow).toContain('LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}');
+    expect(workflow).toContain('SECURITY_ALERT_LINEAR_TEAM_KEY: SQR');
+    expect(workflow).toContain('SECURITY_ALERT_LINEAR_PROJECT: Squire · Security Alert Automation');
+    expect(workflow).toContain('SECURITY_ALERT_LINEAR_LABEL: Security');
+    expect(workflow).toContain('node scripts/sync-security-alerts-to-linear.ts');
+
+    expect(securityDocs).toContain('Security Alert Linear Sync');
+    expect(securityDocs).toContain('Dependabot, CodeQL code scanning, and secret scanning');
+    expect(securityDocs).toContain('Linear `Security` label');
+    expect(securityDocs).toContain('npm run security:alerts:validate-config');
+    expect(securityDocs).toContain('Secret scanning alert reads require');
+    expect(securityDocs).toContain('SECURITY_ALERT_DRY_RUN=1');
+  });
 });
