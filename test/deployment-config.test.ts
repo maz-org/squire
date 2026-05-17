@@ -153,15 +153,23 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('run: actionlint');
   });
 
-  it('enables auto-merge with an app token so main push workflows run', async () => {
-    const workflow = await readProjectFile('.github/workflows/auto-merge.yml');
+  it('limits app-token auto-merge to Dependabot patch and minor PRs', async () => {
+    await expect(readProjectFile('.github/workflows/auto-merge.yml')).rejects.toThrow();
 
-    expect(workflow).toContain(
-      'if: github.event.pull_request.head.repo.full_name == github.repository',
-    );
+    const workflow = await readProjectFile('.github/workflows/dependabot-auto-merge.yml');
+
+    expect(workflow).toContain("if: github.actor == 'dependabot[bot]'");
     expect(workflow).toContain('uses: actions/create-github-app-token@v3');
     expect(workflow).toContain('app-id: ${{ secrets.AUTO_MERGE_APP_ID }}');
     expect(workflow).toContain('private-key: ${{ secrets.AUTO_MERGE_PRIVATE_KEY }}');
+    expect(workflow).toContain(
+      "steps.metadata.outputs.update-type == 'version-update:semver-patch'",
+    );
+    expect(workflow).toContain(
+      "steps.metadata.outputs.update-type == 'version-update:semver-minor'",
+    );
+    expect(workflow).toContain('gh pr review --approve "$PR_URL"');
+    expect(workflow).toContain('gh pr merge --auto --squash "$PR_URL"');
     expect(workflow).toContain('GH_TOKEN: ${{ steps.app-token.outputs.token }}');
     expect(workflow).not.toContain('GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}');
   });
