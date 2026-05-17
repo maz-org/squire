@@ -26,7 +26,7 @@ describe('writeSecurityLog', () => {
         level: 'info',
         ts: 'spoofed_timestamp',
         squire_env: 'spoofed_env',
-        endpoint: '/register',
+        detail: 'preserved_field',
       },
     });
 
@@ -36,7 +36,7 @@ describe('writeSecurityLog', () => {
       event: 'rate_limit_rejected',
       level: 'warn',
       squire_env: 'production',
-      endpoint: '/register',
+      detail: 'preserved_field',
     });
     expect(payload.ts).not.toBe('spoofed_timestamp');
   });
