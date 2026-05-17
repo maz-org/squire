@@ -212,7 +212,7 @@ _Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. S
 
 ### Edge layer
 
-- **Route 53 + CloudFront + AWS WAF** in front of the Fly app. Route 53 hosts `maz.org`; `squire.maz.org` aliases to a CloudFront distribution with AWS WAF managed rules, SQL-injection protection, IP reputation blocking, and a per-IP rate limit. CloudFront sends `X-Origin-Secret`; Fly stores the matching `ORIGIN_SHARED_SECRET` and rejects browser, OAuth, API, and MCP routes that bypass the edge. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
+- **Route 53 + CloudFront + AWS WAF** in front of the Fly app. Route 53 hosts `maz.org`; `squire.maz.org` aliases to a CloudFront distribution with AWS WAF managed rules, SQL-injection protection, IP reputation blocking, and a per-IP rate limit. CloudFront sends `X-Origin-Secret`; Fly stores the matching `ORIGIN_SHARED_SECRET` and rejects browser, OAuth, API, and MCP routes that bypass the edge. Auth audit/session IP attribution only trusts forwarded client IPs after that origin lock passes: CloudFront appends the viewer IP to `X-Forwarded-For`, Fly appends its proxy hop, and the app stores the address immediately before Fly's trusted hop. Malformed or untrusted forwarded headers resolve to an unknown client IP instead of raw header text. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
 
 ### Observability infrastructure
 
