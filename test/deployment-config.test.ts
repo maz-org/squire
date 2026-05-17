@@ -64,6 +64,32 @@ describe('deployment configuration', () => {
     expect(packageJson.scripts?.['lint:actions']).toBe('actionlint');
   });
 
+  it('splits fast PR tests from explicit slow PDF extraction tests', async () => {
+    const packageJson = JSON.parse(await readProjectFile('package.json')) as {
+      scripts?: Record<string, string>;
+    };
+    const workflow = await readProjectFile('.github/workflows/ci.yml');
+
+    expect(packageJson.scripts?.test).toBe(
+      'vitest run --exclude test/import-scenario-section-books.test.ts',
+    );
+    expect(packageJson.scripts?.['test:coverage']).toBe(
+      'vitest run --coverage --exclude test/import-scenario-section-books.test.ts',
+    );
+    expect(packageJson.scripts?.['test:slow:pdf']).toBe(
+      'vitest run test/import-scenario-section-books.test.ts',
+    );
+    expect(packageJson.scripts?.['test:full']).toBe('vitest run');
+    expect(packageJson.scripts?.['test:coverage:full']).toBe('vitest run --coverage');
+    expect(workflow).toContain('cron:');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('run: npm run test:coverage');
+    expect(workflow).toContain('name: Slow PDF extraction test');
+    expect(workflow).toContain("github.event_name == 'schedule'");
+    expect(workflow).toContain('run: npm run test:slow:pdf');
+    expect(workflow).not.toContain('run: npx vitest run --coverage');
+  });
+
   it('defines a Fly cron process for expired session cleanup', async () => {
     const flyConfig = await readProjectFile('fly.toml');
     const crontab = await readProjectFile('crontab');

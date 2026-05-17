@@ -444,7 +444,10 @@ worktree sync can be slow and may need network access for embeddings.
 ## Testing
 
 ```bash
-npm test              # Run all tests (shuffled order)
+npm test              # Fast suite, run once
+npm run test:coverage # Fast coverage suite used by normal PR CI
+npm run test:slow:pdf # Real scenario/section PDF extraction check
+npm run test:full     # Fast suite plus real scenario/section PDF extraction
 npm run test:watch    # Watch mode
 npm run typecheck     # TypeScript type checking
 npm run lint          # ESLint
@@ -458,10 +461,14 @@ npm run check         # local CI gate: typecheck + lint + format + tests
 ```
 
 Tests use randomized execution order (`sequence.shuffle` in vitest
-config) to catch order-dependent tests. The pre-commit hook is intentionally
-cheap: it runs the conditional agent parity check above plus `lint-staged` on
-staged files. There is no pre-push hook. Use `npm run check` as the canonical
-local gate before `/ship` or any manual push you expect to survive CI.
+config) to catch order-dependent tests. Normal PR CI runs the fast coverage
+suite and does not reparse the full scenario/section PDF set. The checked-in
+scenario/section extract has fast regression coverage; `npm run test:slow:pdf`
+and the scheduled/manual CI path run the real PDF parser when that parser or
+source PDFs need verification. The pre-commit hook is intentionally cheap: it
+runs the conditional agent parity check above plus `lint-staged` on staged
+files. There is no pre-push hook. Use `npm run check` as the canonical local
+gate before `/ship` or any manual push you expect to survive CI.
 
 **Prettier covers everything CI checks.** CI runs `prettier --check src/ test/`
 which walks those directories and formats _every_ file type Prettier knows
