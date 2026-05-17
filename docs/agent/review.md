@@ -37,7 +37,7 @@ branch/PR.
    - No unaddressed review comments remain
    - All PR checks have passed
    - CodeRabbit has approved the PR
-   - The PR has been auto-merged and closed
+   - The PR has been explicitly merged and closed
 7. **Clean up** — after merge, close the issue if GitHub didn't auto-close it,
    switch to main, pull, prune remote refs, check `git diff main..branch` (or
    equivalent) for any local-only follow-up commits, then delete the local
