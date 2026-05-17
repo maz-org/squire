@@ -8,10 +8,10 @@ date: 2026-05-17
 
 ## Context
 
-SQR-7's engineering review left the web chat reliability policy underspecified.
-The implementation is no longer greenfield: the Phase 1 web channel already has
-a concrete conversation service, persisted transcript, HTMX/SSE stream path, and
-plain-form fallback path.
+SQR-7's engineering review left the web chat reliability policy underspecified,
+and SQR-86 tracks the Phase 1 follow-through. The implementation is no longer
+greenfield: the Phase 1 web channel already has a concrete conversation service,
+persisted transcript, HTMX/SSE stream path, and plain-form fallback path.
 
 The current split matters:
 
