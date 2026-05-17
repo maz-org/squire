@@ -97,15 +97,18 @@ The smoke check calls:
 and fails unless `/api/health` reports `status`, `db.status`, `vector.status`,
 and `embedder.status` as `ok`.
 
-Keep `.github/workflows/auto-merge.yml` on the `AUTO_MERGE_APP_*` GitHub App
-token path. Merges performed with `secrets.GITHUB_TOKEN` do not start follow-up
-`push` workflows, which means the `CI` run on `main` would not exist and
-`Deploy to Fly` would have nothing to follow.
+Keep `.github/workflows/dependabot-auto-merge.yml` on the `AUTO_MERGE_APP_*`
+GitHub App token path for Dependabot patch/minor updates. Merges performed with
+`secrets.GITHUB_TOKEN` do not start follow-up `push` workflows, which means the
+`CI` run on `main` would not exist and `Deploy to Fly` would have nothing to
+follow. Human and agent PRs should be merged explicitly through the normal
+review, land, and deploy flow.
 
-CI installs actionlint and runs it against `.github/workflows`. To run the same
-check locally, install actionlint and run:
+CI installs a pinned actionlint release and runs it against `.github/workflows`.
+For local checks, install actionlint with Homebrew and run:
 
 ```bash
+brew install actionlint
 npm run lint:actions
 ```
 
