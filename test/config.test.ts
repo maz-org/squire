@@ -18,6 +18,7 @@ describe('validateServerEnv', () => {
     GOOGLE_OAUTH_CLIENT_ID: 'google-client',
     GOOGLE_OAUTH_CLIENT_SECRET: 'google-secret',
     ORIGIN_SHARED_SECRET: 'origin-secret'.repeat(3),
+    REDIS_URL: 'redis://localhost:6379',
   };
 
   it('rejects missing production secrets with the missing variable names', () => {
@@ -35,6 +36,7 @@ describe('validateServerEnv', () => {
       'GOOGLE_OAUTH_CLIENT_ID',
       'GOOGLE_OAUTH_CLIENT_SECRET',
       'ORIGIN_SHARED_SECRET',
+      'REDIS_URL',
     ]);
     expect(formatServerConfigError(result.error)).toContain(
       'Missing required environment variables',
@@ -56,6 +58,7 @@ describe('validateServerEnv', () => {
       NODE_ENV: 'development',
       DATABASE_URL: undefined,
       ORIGIN_SHARED_SECRET: undefined,
+      REDIS_URL: undefined,
     });
 
     expect(result.success).toBe(true);
@@ -70,6 +73,7 @@ describe('validateServerEnv', () => {
       PORT: 'not-a-port',
       SESSION_SECRET: 'short',
       ORIGIN_SHARED_SECRET: 'short',
+      REDIS_URL: 'not a url',
     });
 
     expect(result.success).toBe(false);
@@ -79,6 +83,7 @@ describe('validateServerEnv', () => {
         { name: 'PORT', message: 'must be an integer between 1 and 65535' },
         { name: 'SESSION_SECRET', message: 'must be at least 32 characters' },
         { name: 'ORIGIN_SHARED_SECRET', message: 'must be at least 32 characters' },
+        { name: 'REDIS_URL', message: 'must be a valid URL' },
       ]),
     );
   });

@@ -212,7 +212,7 @@ _Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. S
 
 ### Edge layer
 
-- **Route 53 + CloudFront + AWS WAF** in front of the Fly app. Route 53 hosts `maz.org`; `squire.maz.org` aliases to a CloudFront distribution with AWS WAF managed rules, SQL-injection protection, IP reputation blocking, and a per-IP rate limit. CloudFront sends `X-Origin-Secret`; Fly stores the matching `ORIGIN_SHARED_SECRET` and rejects browser, OAuth, API, and MCP routes that bypass the edge. Auth audit/session IP attribution only trusts forwarded client IPs after that origin lock passes: CloudFront appends the viewer IP to `X-Forwarded-For`, Fly appends its proxy hop, and the app stores the address immediately before Fly's trusted hop. Malformed or untrusted forwarded headers resolve to an unknown client IP instead of raw header text. Application-level rate limiting on expensive endpoints (`/api/ask`, `/mcp`) still lives in-app for per-user cost budgets.
+- **Route 53 + CloudFront + AWS WAF** in front of the Fly app. Route 53 hosts `maz.org`; `squire.maz.org` aliases to a CloudFront distribution with AWS WAF managed rules, SQL-injection protection, IP reputation blocking, and a per-IP rate limit. CloudFront sends `X-Origin-Secret`; Fly stores the matching `ORIGIN_SHARED_SECRET` and rejects browser, OAuth, API, and MCP routes that bypass the edge. Auth audit/session IP attribution only trusts forwarded client IPs after that origin lock passes: CloudFront appends the viewer IP to `X-Forwarded-For`, Fly appends its proxy hop, and the app stores the address immediately before Fly's trusted hop. Malformed or untrusted forwarded headers resolve to an unknown client IP instead of raw header text. Application-level request limits use Redis/Valkey-compatible token buckets via `REDIS_URL` (`src/rate-limit.ts`, [ADR 0018](adr/0018-redis-backed-application-rate-limits.md)) so endpoint-specific policies work across Fly machines; denials are structured security logs, not `oauth_audit_log` rows.
 
 ### Observability infrastructure
 
@@ -683,7 +683,7 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 ## Deployment
 
-**Hosting:** Fly.io. One `app` machine (`shared-cpu-1x@1GB`) runs the Hono server, MCP transport, and web UI in one process. One `cron` machine (`shared-cpu-1x@256MB`) runs Supercronic for scheduled maintenance. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. Public traffic reaches `https://squire.maz.org` through Route 53, CloudFront, and AWS WAF, then forwards to `https://maz-squire.fly.dev` with the `X-Origin-Secret` header required by the Fly app. See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
+**Hosting:** Fly.io. One `app` machine (`shared-cpu-1x@1GB`) runs the Hono server, MCP transport, and web UI in one process. One `cron` machine (`shared-cpu-1x@256MB`) runs Supercronic for scheduled maintenance. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. App-level request limits use a Redis/Valkey-compatible backend exposed through `REDIS_URL`; Phase 1 uses Fly Upstash Redis. Public traffic reaches `https://squire.maz.org` through Route 53, CloudFront, and AWS WAF, then forwards to `https://maz-squire.fly.dev` with the `X-Origin-Secret` header required by the Fly app. See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
 
 The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) so SSE connections aren't severed by scale-to-zero. `idle_timeout` is configured at 600s, past the longest knowledge-agent tool loop.
 
@@ -710,6 +710,7 @@ sweeper has a reliable scheduler without tying cleanup to web request traffic.
 - Fly app process (`shared-cpu-1x@1GB`, always-on): $6
 - Fly cron process (`shared-cpu-1x@256MB`, always-on): roughly $2
 - Fly Managed Postgres (Basic, Shared-2x / 1GB / 1 TB cap): $38
+- Fly Upstash Redis for app-level rate limits: usage-based, near zero at Phase 1 traffic
 - CloudFront + AWS WAF + WAF logging: roughly $10–15 at Phase 1 traffic
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
 - **Total: ~$67–92/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
@@ -802,10 +803,10 @@ For developer setup, running the server, working on import scripts locally, and 
 7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, scenario/section books, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
 
 8. **OAuth implementation surface.** Custom auth is a real trust boundary. Use
-   MCP SDK auth handlers, exact-match redirect URI validation, rate limit
-   client registration, hash bearer secrets at rest, and keep the long-lived
-   token policy under review as the threat model changes. See
-   [SECURITY.md](SECURITY.md).
+   MCP SDK auth handlers, exact-match redirect URI validation, Redis-backed
+   app rate limits for client registration, hash bearer secrets at rest, and
+   keep the long-lived token policy under review as the threat model changes.
+   See [SECURITY.md](SECURITY.md).
 
 9. **Campaign data isolation (Phase 4).** Multiplayer campaigns require strict horizontal privilege separation — User A must not see User B's personal quest or battle goals, even via LLM-mediated leaks. The data isolation design must come **before** building the campaign data model, not after. See [SECURITY.md](SECURITY.md).
 
