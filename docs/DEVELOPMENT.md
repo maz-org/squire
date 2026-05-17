@@ -39,6 +39,10 @@ LANGFUSE_SECRET_KEY=...
 # Trace environment label for Langfuse and LangSmith; defaults to NODE_ENV.
 SQUIRE_ENV=development
 
+# Redis/Valkey-compatible app rate-limit backend. Required in production;
+# local development falls back to in-process limits when unset.
+# REDIS_URL=redis://localhost:6379
+
 # Optional (LangSmith eval/prototype tracing)
 LANGSMITH_API_KEY=...
 LANGSMITH_PROJECT=squire-evals

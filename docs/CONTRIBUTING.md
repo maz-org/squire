@@ -204,6 +204,9 @@ LANGFUSE_BASEURL=https://us.cloud.langfuse.com
 LANGFUSE_PROJECT_ID=...
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
+
+# Optional locally; production requires REDIS_URL for app-level rate limits.
+# REDIS_URL=redis://localhost:6379
 ```
 
 Generate `SESSION_SECRET` with:

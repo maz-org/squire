@@ -92,6 +92,7 @@ describe('deployment operations documentation', () => {
       'LANGSMITH_API_KEY',
       'SQUIRE_EVAL_LANGSMITH_TRACING',
       'ORIGIN_SHARED_SECRET',
+      'REDIS_URL',
     ]) {
       expect(envExample).toContain(expected);
     }

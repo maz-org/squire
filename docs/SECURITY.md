@@ -76,8 +76,8 @@ planned as a custom implementation inside the Hono server.
 - For the web channel, local dev may derive the Google callback from the
   current `localhost` origin, but only for `localhost` / `127.0.0.1`;
   non-local hosts still use the configured redirect URI
-- Rate limit client registration (e.g., 10/hour per IP) — tracked in the
-  Production Readiness project (SQR-52) alongside other rate-limit configuration
+- Rate limit client registration (10/hour per trusted client IP) through the
+  Redis/Valkey-backed app limiter from SQR-52 / ADR 0017
 - **Long-lived access tokens (30-day default)** stored as SHA-256 hashes at rest.
   Long-lived tokens are a deliberate developer-experience choice for MCP and API
   clients — short-lived tokens with refresh rotation force every client (Claude
@@ -91,8 +91,10 @@ planned as a custom implementation inside the Hono server.
   reversible encryption: a DB read leak does not expose live bearer secrets.
 - Enforce auth code expiry (~60s) on consumption (`WHERE expires_at > now()`).
 - CSRF protection on the consent page (User Accounts project)
-- Audit log all auth events (registrations, grants, token issuance, verifies,
-  revocations) to the `oauth_audit_log` table
+- Audit log auth lifecycle state changes (registrations, grants, token
+  issuance, verifies, revocations) to the `oauth_audit_log` table. Operational
+  denials such as rate-limit hits are structured security log events, not
+  database audit rows.
 
 ### 3. Campaign Data Isolation (Horizontal Privilege Escalation)
 
@@ -164,7 +166,8 @@ attacker could run up significant costs.
 
 **Mitigations:**
 
-- Per-user rate limits, with tighter limits on `/api/ask` and
+- Redis/Valkey-backed app rate limits for interactive surfaces, with tighter
+  limits on expensive routes such as `/api/ask`, `/mcp`, and
   `/api/search/rules`
 - Daily cost budget with circuit breaker (reject requests when budget
   exceeded)
@@ -344,8 +347,8 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 3. Design campaign data isolation before building campaign state — the
    player entity must enforce access boundaries, and the knowledge
    agent must scope its context to prevent LLM-mediated data leaks
-4. Add rate limiting middleware as a near-term task (before auth, since
-   it protects against DoS even for authenticated users)
+4. Keep expanding the Redis/Valkey-backed app limiter from SQR-52 across the
+   remaining interactive surfaces; WAF remains the coarse outer layer
 5. Establish a prompt injection test suite — adversarial test cases in
    the E2E suite that try to extract the system prompt, manipulate
    responses, or cause the LLM to output HTML
@@ -354,6 +357,9 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 - **2026-05-17:** Recorded Dependabot auto-triage preset behavior and review
   path for low-impact development dependency alerts (SQR-168).
+- **2026-05-17:** Clarified that app rate limits use Redis/Valkey token
+  buckets and structured denial logs rather than `oauth_audit_log` rows
+  (SQR-52, ADR 0017).
 - **2026-05-16:** Added GitHub security alert routing into Linear for high/critical Dependabot, CodeQL, and secret scanning alerts (SQR-167).
 - **2026-05-16:** Added Dependency Review PR workflow to block high/critical runtime vulnerability introductions (SQR-165).
 - **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).

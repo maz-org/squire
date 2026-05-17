@@ -19,6 +19,12 @@ import { loadServerConfig } from './config.ts';
 import { runReadinessChecks } from './health.ts';
 import { originSharedSecretMiddleware } from './origin-lock.ts';
 import { resolveTrustedClientIp } from './http/trusted-client-ip.ts';
+import {
+  getDefaultRateLimiter,
+  REGISTER_CLIENT_RATE_LIMIT_POLICY,
+  type RateLimitDecision,
+} from './rate-limit.ts';
+import { writeSecurityLog } from './security-log.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
 import {
   toolSourceLabel,
@@ -139,6 +145,62 @@ function auditContext(c: Context): { ipAddress: string | null; userAgent: string
     ipAddress: resolveTrustedClientIp(c.req),
     userAgent: c.req.header('user-agent') ?? null,
   };
+}
+
+async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
+  const identity = resolveTrustedClientIp(c.req) ?? 'unknown';
+  return getDefaultRateLimiter().consume({
+    policy: REGISTER_CLIENT_RATE_LIMIT_POLICY,
+    identity,
+  });
+}
+
+function rateLimitedResponse(c: Context, decision: RateLimitDecision) {
+  const retryAfterSeconds = Math.max(1, decision.retryAfterSeconds);
+  writeSecurityLog({
+    event: 'rate_limit_rejected',
+    fields: {
+      route: '/register',
+      method: 'POST',
+      policy: decision.policy.name,
+      limit: decision.policy.limit,
+      window_ms: decision.policy.windowMs,
+      identity_hash: decision.identityHash,
+      retry_after_seconds: retryAfterSeconds,
+      reset_after_seconds: decision.resetAfterSeconds,
+    },
+  });
+
+  c.header('Retry-After', String(retryAfterSeconds));
+  return c.json(
+    {
+      error: 'rate_limited',
+      error_description: 'Too many registration requests. Try again later.',
+      retry_after_seconds: retryAfterSeconds,
+    },
+    429,
+  );
+}
+
+function rateLimitUnavailableResponse(c: Context, error: unknown) {
+  writeSecurityLog({
+    event: 'rate_limit_unavailable',
+    level: 'error',
+    fields: {
+      route: '/register',
+      method: 'POST',
+      policy: REGISTER_CLIENT_RATE_LIMIT_POLICY.name,
+      error: error instanceof Error ? error.message : 'unknown',
+    },
+  });
+
+  return c.json(
+    {
+      error: 'temporarily_unavailable',
+      error_description: 'Registration is temporarily unavailable. Try again later.',
+    },
+    503,
+  );
 }
 
 app.get('/favicon.svg', (c) => {
@@ -331,6 +393,17 @@ app.get('/.well-known/oauth-protected-resource', (c) => {
 // ─── Client registration ─────────────────────────────────────────────────────
 
 app.post('/register', async (c) => {
+  let rateLimit: RateLimitDecision;
+  try {
+    rateLimit = await checkRegisterRateLimit(c);
+  } catch (error) {
+    return rateLimitUnavailableResponse(c, error);
+  }
+
+  if (!rateLimit.allowed) {
+    return rateLimitedResponse(c, rateLimit);
+  }
+
   let body: unknown;
   try {
     body = await c.req.json();

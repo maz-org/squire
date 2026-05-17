@@ -1,13 +1,15 @@
 /**
  * OAuth audit log writer.
  *
- * Every auth mutation — registration, authorization, code exchange, token
- * verification, revocation — writes a row to `oauth_audit_log`. The writer
- * always takes a Drizzle query handle (either a `Db` or a transaction `tx`)
- * so callers can bundle the audit row with the state mutation in a single
- * transaction. A partial write (mutation without its audit row, or audit row
- * without its mutation) would be a compliance hole: reviewers wouldn't be
- * able to trust the audit log as a true record of every auth event.
+ * Auth lifecycle mutations — registration, authorization, code exchange, token
+ * verification, revocation — write rows to `oauth_audit_log`. The writer
+ * always takes a Drizzle query handle (either a `Db` or a transaction `tx`) so
+ * callers can bundle the audit row with the state mutation in a single
+ * transaction.
+ *
+ * The audit table is durable auth evidence, not a generic operational log
+ * sink. Denials that do not mutate auth state, such as rate-limit rejections,
+ * should be emitted as structured logs instead.
  *
  * Schema: see `src/db/schema/auth.ts#oauthAuditLog`. Required by
  * `docs/SECURITY.md` §2.
