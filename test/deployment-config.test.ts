@@ -150,6 +150,20 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('gh pr merge --auto --squash "$PR_URL"');
     expect(workflow).toContain('GH_TOKEN: ${{ steps.app-token.outputs.token }}');
     expect(workflow).not.toContain('GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}');
+    expect(workflow).not.toContain('security-update');
+  });
+
+  it('groups Dependabot security updates explicitly', async () => {
+    const dependabotConfig = await readProjectFile('.github/dependabot.yml');
+
+    expect(dependabotConfig).toContain('npm-security-updates:');
+    expect(dependabotConfig).toContain('github-actions-security-updates:');
+    expect(dependabotConfig.match(/applies-to: security-updates/g)).toHaveLength(2);
+    expect(dependabotConfig).toContain("patterns:\n          - '*'");
+    expect(dependabotConfig).toContain('dev-dependencies:');
+    expect(dependabotConfig).toContain("exclude-patterns:\n          - 'typescript'");
+    expect(dependabotConfig).toContain("dependency-name: 'typescript'");
+    expect(dependabotConfig).toContain("versions: ['>=6.0.0']");
   });
 
   it('documents GitHub deploy token setup and post-deploy smoke checks', async () => {
