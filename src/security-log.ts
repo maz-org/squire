@@ -17,11 +17,11 @@ function safeSquireEnv(): string {
 export function writeSecurityLog({ event, level = 'warn', fields = {} }: SecurityLogBase): void {
   console.warn(
     JSON.stringify({
+      ...fields,
       ts: new Date().toISOString(),
       level,
       event,
       squire_env: safeSquireEnv(),
-      ...fields,
     }),
   );
 }

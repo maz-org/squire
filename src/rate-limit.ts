@@ -53,6 +53,8 @@ interface RateLimiterOptions {
 const DEFAULT_KEY_PREFIX = 'squire:rate-limit';
 const TEST_IDENTITY_SECRET = 'squire-test-rate-limit-identity-secret';
 const DEV_IDENTITY_SECRET = 'squire-development-rate-limit-identity-secret';
+const REDIS_OPERATION_TIMEOUT_MS = 2_000;
+const REDIS_SOCKET_TIMEOUT_MS = 10_000;
 
 const TOKEN_BUCKET_SCRIPT = `
 local key = KEYS[1]
@@ -149,6 +151,27 @@ function parseRedisDecision(value: unknown): TokenBucketDecision {
   };
 }
 
+function withRedisTimeout<T>(
+  promise: Promise<T>,
+  operation: string,
+  timeoutMs: number,
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timer = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new Error(`${operation} timed out`));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timer]).finally(() => {
+    if (timeout) clearTimeout(timeout);
+  });
+}
+
+interface RedisTokenBucketStoreOptions {
+  operationTimeoutMs?: number;
+}
+
 function tokenBucketTtlMs(input: TokenBucketInput): number {
   return Math.max(
     input.refillIntervalMs,
@@ -216,10 +239,20 @@ class NoopTokenBucketStore implements TokenBucketStore {
 
 export class RedisTokenBucketStore implements TokenBucketStore {
   private readonly client: RedisClientType;
+  private readonly operationTimeoutMs: number;
   private connectPromise: Promise<RedisClientType> | undefined;
 
-  constructor(url: string, client?: RedisClientType) {
-    this.client = client ?? createClient({ url });
+  constructor(url: string, client?: RedisClientType, options: RedisTokenBucketStoreOptions = {}) {
+    this.client =
+      client ??
+      createClient({
+        url,
+        socket: {
+          connectTimeout: REDIS_OPERATION_TIMEOUT_MS,
+          socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
+        },
+      });
+    this.operationTimeoutMs = options.operationTimeoutMs ?? REDIS_OPERATION_TIMEOUT_MS;
     this.client.on('error', (error: Error) => {
       writeSecurityLog({
         event: 'rate_limit_redis_error',
@@ -231,17 +264,21 @@ export class RedisTokenBucketStore implements TokenBucketStore {
 
   async consume(input: TokenBucketInput): Promise<TokenBucketDecision> {
     await this.connect();
-    const raw = await this.client.eval(TOKEN_BUCKET_SCRIPT, {
-      keys: [input.key],
-      arguments: [
-        String(input.nowMs),
-        String(input.capacity),
-        String(input.refillIntervalMs),
-        String(input.refillTokens),
-        String(input.cost),
-        String(tokenBucketTtlMs(input)),
-      ],
-    });
+    const raw = await withRedisTimeout(
+      this.client.eval(TOKEN_BUCKET_SCRIPT, {
+        keys: [input.key],
+        arguments: [
+          String(input.nowMs),
+          String(input.capacity),
+          String(input.refillIntervalMs),
+          String(input.refillTokens),
+          String(input.cost),
+          String(tokenBucketTtlMs(input)),
+        ],
+      }),
+      'redis rate-limit eval',
+      this.operationTimeoutMs,
+    );
     return parseRedisDecision(raw);
   }
 
@@ -251,7 +288,11 @@ export class RedisTokenBucketStore implements TokenBucketStore {
       this.connectPromise = undefined;
       throw error;
     });
-    await this.connectPromise;
+    await withRedisTimeout(
+      this.connectPromise,
+      'redis rate-limit connect',
+      this.operationTimeoutMs,
+    );
   }
 }
 
