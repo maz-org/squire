@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24.14.0-bookworm-slim AS deps
+FROM node:26.1.0-bookworm-slim AS deps
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY --chown=node:node src ./src
 COPY --chown=node:node scripts ./scripts
 RUN npm run build:web-assets
 
-FROM node:24.14.0-bookworm-slim AS runtime
+FROM node:26.1.0-bookworm-slim AS runtime
 
 WORKDIR /app
 

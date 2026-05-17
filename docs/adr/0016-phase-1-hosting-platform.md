@@ -20,7 +20,7 @@ SQR-43 (`drizzle-kit migrate` in the deploy pipeline), and SQR-44 (CI/CD).
 
 The host must satisfy:
 
-- Node 24 runtime via a Docker image (`.nvmrc` is `24.14.0`).
+- Node 26 runtime via a Docker image (`.nvmrc` is `26.1.0`).
 - Postgres 16+ with `pgvector` for runtime retrieval (the local
   [docker-compose.yml](../../docker-compose.yml) is pinned to
   `pgvector/pgvector:pg16` precisely so the host decision could stay open).
@@ -124,12 +124,12 @@ Postgres has no public ingress.
   then forwards to `https://maz-squire.fly.dev` with `X-Origin-Secret`. The Fly
   app stores the matching `ORIGIN_SHARED_SECRET` and rejects direct browser,
   OAuth, API, and MCP routes that bypass the edge.
-- **SQR-42 (Dockerize)** — multi-stage Node 24 Dockerfile that `EXPOSE 8080`s
+- **SQR-42 (Dockerize)** — multi-stage Node 26 Dockerfile that `EXPOSE 8080`s
   and runs as a non-root user. CSS and vanilla JS assets are prebuilt in the
   Docker `assets` stage with `npm run build:web-assets`, while local
   development keeps the in-process Tailwind path from
   [ADR 0011](0011-on-demand-asset-pipeline.md). Squire runs TypeScript directly
-  via Node 24 strip-types (no JS compile step), so the runtime stage carries
+  via Node 26 strip-types (no JS compile step), so the runtime stage carries
   the `src/` tree and `node_modules`.
 - **SQR-43 (migrate on deploy)** — wire `release_command = "node scripts/db-migrate.ts"`
   into `fly.toml`. A non-zero exit code from the release machine aborts the

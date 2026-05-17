@@ -63,7 +63,7 @@ brew install git
 
 ### Node.js (via nvm)
 
-This project requires Node.js 24. We use [nvm](https://github.com/nvm-sh/nvm)
+This project requires Node.js 26.1 or newer. We use [nvm](https://github.com/nvm-sh/nvm)
 to manage Node versions:
 
 ```bash
@@ -81,9 +81,9 @@ source ~/.zshrc
 Install the project's Node version:
 
 ```bash
-nvm install    # reads .nvmrc → installs Node 24.x
+nvm install    # reads .nvmrc -> installs Node 26.x
 nvm use
-node --version # should print v24.x
+node --version # should print v26.x
 ```
 
 ### GitHub CLI
@@ -495,7 +495,7 @@ main CI gate:
 ## Project layout
 
 ```text
-src/           TypeScript source (runs natively on Node 24)
+src/           TypeScript source (runs natively on Node 26)
 test/          Unit tests (vitest)
 eval/          Evaluation framework and dataset
 docs/          Project documentation (SPEC, ARCHITECTURE, DEVELOPMENT, SECURITY, CONTRIBUTING)
