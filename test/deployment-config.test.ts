@@ -1,9 +1,26 @@
 import { readFile } from 'node:fs/promises';
+import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
 async function readProjectFile(path: string): Promise<string> {
   return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 }
+
+type DependabotGroup = {
+  'applies-to'?: string;
+  'dependency-type'?: string;
+  'exclude-patterns'?: string[];
+  patterns?: string[];
+};
+
+type DependabotUpdate = {
+  'package-ecosystem'?: string;
+  groups?: Record<string, DependabotGroup>;
+  ignore?: Array<{
+    'dependency-name'?: string;
+    versions?: string[];
+  }>;
+};
 
 describe('deployment configuration', () => {
   it('defines the production container contract', async () => {
@@ -172,6 +189,36 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('gh pr merge --auto --squash "$PR_URL"');
     expect(workflow).toContain('GH_TOKEN: ${{ steps.app-token.outputs.token }}');
     expect(workflow).not.toContain('GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}');
+    expect(workflow).not.toContain('security-update');
+  });
+
+  it('groups Dependabot security updates explicitly', async () => {
+    const dependabotConfig = parse(await readProjectFile('.github/dependabot.yml')) as {
+      updates?: DependabotUpdate[];
+    };
+
+    const updates = dependabotConfig.updates ?? [];
+    const npmUpdate = updates.find((update) => update['package-ecosystem'] === 'npm');
+    const githubActionsUpdate = updates.find(
+      (update) => update['package-ecosystem'] === 'github-actions',
+    );
+
+    expect(npmUpdate?.groups?.['npm-security-updates']).toMatchObject({
+      'applies-to': 'security-updates',
+      patterns: ['*'],
+    });
+    expect(githubActionsUpdate?.groups?.['github-actions-security-updates']).toMatchObject({
+      'applies-to': 'security-updates',
+      patterns: ['*'],
+    });
+    expect(npmUpdate?.groups?.['dev-dependencies']).toMatchObject({
+      'dependency-type': 'development',
+      'exclude-patterns': ['typescript'],
+    });
+    expect(npmUpdate?.ignore).toContainEqual({
+      'dependency-name': 'typescript',
+      versions: ['>=6.0.0'],
+    });
   });
 
   it('documents GitHub deploy token setup and post-deploy smoke checks', async () => {
