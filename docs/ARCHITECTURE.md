@@ -392,6 +392,11 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   streaming is per user message.
 - Web writes persist the user turn first, then either the assistant answer or a
   generic persisted failure turn
+- Web chat reliability policy is pinned in
+  [ADR 0017](adr/0017-phase-1-web-chat-reliability-policy.md): the plain-form
+  fallback retries at most once for narrow transport failures, streamed SSE
+  turns never retry after `ask()` starts, and provider/server-side errors are
+  not retried blindly
 - Failure turns are excluded from future history passed back into the knowledge
   agent
 - History forwarded into `ask()` is capped to the most recent 20 non-error

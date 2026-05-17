@@ -84,6 +84,11 @@ For every failed stream:
 2. `done` must not be sent after `error`.
 3. Partial `text-delta` events may have been sent before the failure.
 
+Per [ADR 0017](adr/0017-phase-1-web-chat-reliability-policy.md), streamed chat
+turns are not transparently retried after `ask()` starts. The browser may have
+already received partial text or tool events, so the safe terminal state is one
+recoverable error event plus one persisted assistant failure row.
+
 ## Translation rules
 
 The conversation service emits internal events like `text`, `tool_call`,

@@ -390,6 +390,128 @@ describe('conversation web backend', () => {
     ]);
   });
 
+  it.each([
+    ['ECONNRESET code', () => Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' })],
+    ['ETIMEDOUT code', () => Object.assign(new Error('fetch failed'), { code: 'ETIMEDOUT' })],
+    ['ENOTFOUND code', () => Object.assign(new Error('fetch failed'), { code: 'ENOTFOUND' })],
+    ['EAI_AGAIN code', () => Object.assign(new Error('fetch failed'), { code: 'EAI_AGAIN' })],
+    ['ECONNREFUSED code', () => Object.assign(new Error('fetch failed'), { code: 'ECONNREFUSED' })],
+    [
+      'nested cause transport code',
+      () => Object.assign(new Error('fetch failed'), { cause: { code: 'ECONNRESET' } }),
+    ],
+    ['AbortError name', () => Object.assign(new Error('aborted'), { name: 'AbortError' })],
+    ['network message', () => new Error('network connection lost')],
+    ['socket message', () => new Error('socket closed early')],
+    ['timed out message', () => new Error('request timed out')],
+  ])('retries %s once on the non-SSE path', async (_caseName, createError) => {
+    mockAsk.mockRejectedValueOnce(createError());
+    mockAsk.mockResolvedValueOnce('Recovered after one retry.');
+
+    const auth = await createAuthContext();
+    const res = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Retry policy boundary',
+        idempotencyKey: `idem-retry-${String(_caseName).replaceAll(/\W+/g, '-')}`,
+      }),
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledTimes(2);
+
+    const { db } = getDb('server');
+    const storedMessages = await db.execute(sql`
+      select role, content, is_error as "isError"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'Retry policy boundary', isError: false },
+      {
+        role: 'assistant',
+        content: 'Recovered after one retry.',
+        isError: false,
+      },
+    ]);
+  });
+
+  it('does not blindly retry provider/server-side ask errors on the non-SSE path', async () => {
+    mockAsk.mockRejectedValueOnce(
+      Object.assign(new Error('Internal server error'), {
+        status: 500,
+      }),
+    );
+
+    const auth = await createAuthContext();
+    const res = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Provider error policy',
+        idempotencyKey: 'idem-provider-error-no-retry',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+
+    const { db } = getDb('server');
+    const storedMessages = await db.execute(sql`
+      select role, content, is_error as "isError"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'Provider error policy', isError: false },
+      {
+        role: 'assistant',
+        content: "I hit an error and couldn't answer that. Please try again.",
+        isError: true,
+      },
+    ]);
+  });
+
+  it('persists one generic failure turn after the non-SSE retry budget is exhausted', async () => {
+    mockAsk.mockRejectedValueOnce(Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' }));
+    mockAsk.mockRejectedValueOnce(Object.assign(new Error('fetch failed'), { code: 'ETIMEDOUT' }));
+
+    const auth = await createAuthContext();
+    const res = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'Retry exhaustion policy',
+        idempotencyKey: 'idem-retry-exhaustion',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledTimes(2);
+
+    const { db } = getDb('server');
+    const storedMessages = await db.execute(sql`
+      select role, content, is_error as "isError"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'Retry exhaustion policy', isError: false },
+      {
+        role: 'assistant',
+        content: "I hit an error and couldn't answer that. Please try again.",
+        isError: true,
+      },
+    ]);
+  });
+
   it('does NOT retry on the SSE path (regression: partial stream must not be silently re-run)', async () => {
     const econnreset = Object.assign(new Error('fetch failed'), { code: 'ECONNRESET' });
     mockAsk.mockImplementationOnce(async () => {
