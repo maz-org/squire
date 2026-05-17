@@ -104,6 +104,14 @@ gh auth login
 5. It will show a one-time code — press Enter, paste the code in the browser
    window that opens, and authorize the GitHub CLI
 
+### actionlint
+
+Used by `npm run lint:actions` to lint GitHub Actions workflow files locally:
+
+```bash
+brew install actionlint
+```
+
 ### Claude Code
 
 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) is the recommended
