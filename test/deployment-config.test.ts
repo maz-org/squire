@@ -15,10 +15,12 @@ describe('deployment configuration', () => {
     expect(dockerfile).toContain(`FROM node:${nvmrc}-bookworm-slim AS runtime`);
     expect(dockerfile).toContain('npm ci --omit=dev');
     expect(dockerfile).toContain('RUN npm run build:web-assets');
+    expect(dockerfile).toContain('supercronic-linux-amd64');
     expect(dockerfile).toContain('COPY --from=deps /app/node_modules ./node_modules');
     expect(dockerfile).toContain('COPY --from=assets /app/dist ./dist');
     expect(dockerfile).toContain('COPY --chown=node:node src ./src');
     expect(dockerfile).toContain('COPY --chown=node:node scripts ./scripts');
+    expect(dockerfile).toContain('COPY --chown=node:node crontab ./crontab');
     expect(dockerfile).toContain('ENV NODE_ENV=production');
     expect(dockerfile).toContain('ENV SQUIRE_ENV=production');
     expect(dockerfile).toContain('ENV PORT=8080');
@@ -43,6 +45,23 @@ describe('deployment configuration', () => {
     };
 
     expect(packageJson.scripts?.['lint:actions']).toBe('actionlint');
+  });
+
+  it('defines a Fly cron process for expired session cleanup', async () => {
+    const flyConfig = await readProjectFile('fly.toml');
+    const crontab = await readProjectFile('crontab');
+    const packageJson = JSON.parse(await readProjectFile('package.json')) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.['sessions:sweep-expired']).toBe(
+      'node scripts/sweep-expired-sessions.ts',
+    );
+    expect(flyConfig).toContain('[processes]');
+    expect(flyConfig).toContain('app = "node src/server.ts"');
+    expect(flyConfig).toContain('cron = "supercronic /app/crontab"');
+    expect(flyConfig).toContain('processes = ["app"]');
+    expect(crontab).toContain('node scripts/sweep-expired-sessions.ts');
   });
 
   it('keeps deploy-only and secret material out of the Docker context', async () => {
@@ -76,6 +95,9 @@ describe('deployment configuration', () => {
     expect(flyConfig).toContain('idle_timeout = 600');
     expect(flyConfig).toContain('size = "shared-cpu-1x"');
     expect(flyConfig).toContain('memory = "1gb"');
+    expect(flyConfig).toContain('processes = ["app"]');
+    expect(flyConfig).toContain('memory = "256mb"');
+    expect(flyConfig).toContain('processes = ["cron"]');
   });
 
   it('documents migration failure and rollback operations', async () => {
