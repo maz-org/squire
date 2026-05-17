@@ -71,6 +71,7 @@ import { resetAuthProvider } from '../src/auth.ts';
 import { shutdownServerPool, getDb } from '../src/db.ts';
 import { sessions, users } from '../src/db/schema/core.ts';
 import { oauthAuditLog } from '../src/db/schema/auth.ts';
+import * as auditModule from '../src/auth/audit.ts';
 import { eq, sql } from 'drizzle-orm';
 // google.ts types used indirectly via the server routes
 
@@ -689,6 +690,37 @@ describe('Callback rejection', () => {
     expect(auditRows).toHaveLength(1);
     expect(auditRows[0].failureReason).toBe('email_not_verified');
     expect(auditRows[0].metadata).toEqual({ email: TEST_USER.email });
+  });
+
+  it('5c. unverified Google email still redirects when audit write fails', async () => {
+    mockGoogleUnverifiedEmail();
+    const auditSpy = vi
+      .spyOn(auditModule, 'writeAuditEvent')
+      .mockRejectedValueOnce(new Error('audit unavailable'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      const callbackRes = await walkOAuthFlow();
+      expect(callbackRes.status).toBe(302);
+      expect(callbackRes.headers.get('location')).toBe('/email-not-verified');
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[auth:google] failed to write google_login_denied audit:',
+        expect.any(Error),
+      );
+
+      const { db } = getDb('server');
+      expect(await db.select().from(users)).toHaveLength(0);
+      expect(await db.select().from(sessions)).toHaveLength(0);
+
+      const auditRows = await db
+        .select()
+        .from(oauthAuditLog)
+        .where(eq(oauthAuditLog.eventType, 'google_login_denied'));
+      expect(auditRows).toHaveLength(0);
+    } finally {
+      auditSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
   });
 
   it('6. invalid state parameter -> redirect /login?error=...', async () => {

@@ -238,14 +238,18 @@ export async function handleGoogleCallback(
     if (err instanceof GoogleAuthError) {
       if (err.code === 'email_not_verified') {
         const { db } = getDb('server');
-        await writeAuditEvent(db, {
-          eventType: 'google_login_denied',
-          outcome: 'failure',
-          failureReason: 'email_not_verified',
-          ipAddress,
-          userAgent,
-          metadata: { email: extractEmailFromGoogleAuthError(err) },
-        });
+        try {
+          await writeAuditEvent(db, {
+            eventType: 'google_login_denied',
+            outcome: 'failure',
+            failureReason: 'email_not_verified',
+            ipAddress,
+            userAgent,
+            metadata: { email: extractEmailFromGoogleAuthError(err) },
+          });
+        } catch (auditErr) {
+          console.error('[auth:google] failed to write google_login_denied audit:', auditErr);
+        }
       }
       throw err;
     }
