@@ -215,7 +215,23 @@ describe('Google OAuth callback', () => {
     expect(userRows[0].avatarUrl).toBeNull();
   });
 
-  it('1b. uses the request host for localhost worktree OAuth start URLs', async () => {
+  it('1b. masks email addresses in successful-login stdout logs', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    mockGoogleSuccess();
+
+    try {
+      const res = await walkOAuthFlow();
+      expect(res.status).toBe(302);
+
+      const renderedLogs = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      expect(renderedLogs).not.toContain(TEST_USER.email);
+      expect(renderedLogs).toContain('b***@example.com');
+    } finally {
+      infoSpy.mockRestore();
+    }
+  });
+
+  it('1c. uses the request host for localhost worktree OAuth start URLs', async () => {
     const res = await app.request('http://localhost:4450/auth/google/start', {
       redirect: 'manual',
     });
@@ -227,7 +243,7 @@ describe('Google OAuth callback', () => {
     );
   });
 
-  it('1c. keeps the configured callback for non-local hosts', async () => {
+  it('1d. keeps the configured callback for non-local hosts', async () => {
     const res = await app.request('http://example.com/auth/google/start', {
       redirect: 'manual',
     });
@@ -558,6 +574,36 @@ describe('Callback rejection', () => {
     const { db } = getDb('server');
     expect(await db.select().from(users)).toHaveLength(0);
     expect(await db.select().from(sessions)).toHaveLength(0);
+  });
+
+  it('5a. masks denied email in stdout but keeps full email in audit metadata', async () => {
+    process.env.SQUIRE_ALLOWED_EMAILS = 'other@example.com';
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockGoogleSuccess();
+
+    try {
+      const res = await walkOAuthFlow();
+      expect(res.status).toBe(302);
+      expect(res.headers.get('location')).toBe('/not-invited');
+
+      const renderedLogs = [...infoSpy.mock.calls, ...warnSpy.mock.calls]
+        .map((call) => call.join(' '))
+        .join('\n');
+      expect(renderedLogs).not.toContain(TEST_USER.email);
+      expect(renderedLogs).toContain('b***@example.com');
+
+      const { db } = getDb('server');
+      const auditRows = await db
+        .select()
+        .from(oauthAuditLog)
+        .where(eq(oauthAuditLog.eventType, 'google_login_denied'));
+      expect(auditRows).toHaveLength(1);
+      expect(auditRows[0].metadata).toEqual({ email: TEST_USER.email });
+    } finally {
+      infoSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
   });
 
   it('6. invalid state parameter -> redirect /login?error=...', async () => {
