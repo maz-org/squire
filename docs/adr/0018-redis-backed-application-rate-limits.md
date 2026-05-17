@@ -1,6 +1,6 @@
 ---
 type: ADR
-id: '0017'
+id: '0018'
 title: 'Redis-backed application rate limits with structured denial logs'
 status: active
 date: 2026-05-17

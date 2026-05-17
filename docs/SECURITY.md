@@ -77,7 +77,7 @@ planned as a custom implementation inside the Hono server.
   current `localhost` origin, but only for `localhost` / `127.0.0.1`;
   non-local hosts still use the configured redirect URI
 - Rate limit client registration (10/hour per trusted client IP) through the
-  Redis/Valkey-backed app limiter from SQR-52 / ADR 0017
+  Redis/Valkey-backed app limiter from SQR-52 / ADR 0018
 - **Long-lived access tokens (30-day default)** stored as SHA-256 hashes at rest.
   Long-lived tokens are a deliberate developer-experience choice for MCP and API
   clients — short-lived tokens with refresh rotation force every client (Claude
@@ -359,7 +359,7 @@ development-scoped dependencies`. The repository is public, so GitHub enables
   path for low-impact development dependency alerts (SQR-168).
 - **2026-05-17:** Clarified that app rate limits use Redis/Valkey token
   buckets and structured denial logs rather than `oauth_audit_log` rows
-  (SQR-52, ADR 0017).
+  (SQR-52, ADR 0018).
 - **2026-05-16:** Added GitHub security alert routing into Linear for high/critical Dependabot, CodeQL, and secret scanning alerts (SQR-167).
 - **2026-05-16:** Added Dependency Review PR workflow to block high/critical runtime vulnerability introductions (SQR-165).
 - **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).
