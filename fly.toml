@@ -13,6 +13,10 @@ SQUIRE_ENV = "production"
 PORT = "8080"
 HOST = "0.0.0.0"
 
+[processes]
+app = "node src/server.ts"
+cron = "supercronic /app/crontab"
+
 [http_service]
 internal_port = 8080
 force_https = true
@@ -32,3 +36,9 @@ path = "/api/live"
 [[vm]]
 size = "shared-cpu-1x"
 memory = "1gb"
+processes = ["app"]
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "256mb"
+processes = ["cron"]

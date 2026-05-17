@@ -678,15 +678,21 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 ## Deployment
 
-**Hosting:** Fly.io. A single `shared-cpu-1x@1GB` machine in one region runs the Hono server, MCP transport, and web UI in one process. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. Public traffic reaches `https://squire.maz.org` through Route 53, CloudFront, and AWS WAF, then forwards to `https://maz-squire.fly.dev` with the `X-Origin-Secret` header required by the Fly app. See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
+**Hosting:** Fly.io. One `app` machine (`shared-cpu-1x@1GB`) runs the Hono server, MCP transport, and web UI in one process. One `cron` machine (`shared-cpu-1x@256MB`) runs Supercronic for scheduled maintenance. Postgres is **Fly Managed Postgres** (Basic plan) reached over Fly's private 6PN network — Postgres has no public ingress. Public traffic reaches `https://squire.maz.org` through Route 53, CloudFront, and AWS WAF, then forwards to `https://maz-squire.fly.dev` with the `X-Origin-Secret` header required by the Fly app. See [ADR 0016](adr/0016-phase-1-hosting-platform.md) for the alternatives weighed and why Fly+MPG won the single-vendor tradeoff at the Phase 1 budget.
 
 The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) so SSE connections aren't severed by scale-to-zero. `idle_timeout` is configured at 600s, past the longest knowledge-agent tool loop.
+
+Expired sessions are removed by a Fly `cron` process group running Supercronic
+against `crontab`, which invokes `node scripts/sweep-expired-sessions.ts`
+hourly. The cron process must be scaled to one machine (`cron=1`) so the
+sweeper has a reliable scheduler without tying cleanup to web request traffic.
 
 **CI/CD:**
 
 - Build and test on push
 - Deploy to production from the `Deploy to Fly` GitHub Actions workflow after `CI` succeeds on `main`; the workflow runs `flyctl deploy -a maz-squire --remote-only`
 - Run `node scripts/db-migrate.ts` via Fly's `release_command` before traffic cutover; non-zero exit aborts the deploy and leaves the prior version live
+- Run `node scripts/sweep-expired-sessions.ts` from the Fly Supercronic process to prune stale session rows
 - Smoke test after deploy with `node scripts/check-deploy-health.ts --base-url https://maz-squire.fly.dev`
 - Rollback via `fly releases -a maz-squire --image` + `fly deploy --image <prior-image> -a maz-squire`
 
@@ -696,11 +702,12 @@ The app is always-on (`auto_stop_machines = "off"`, `min_machines_running = 1`) 
 
 **Estimated monthly cost (Phase 1 MVP):**
 
-- Fly app (`shared-cpu-1x@1GB`, always-on): $6
+- Fly app process (`shared-cpu-1x@1GB`, always-on): $6
+- Fly cron process (`shared-cpu-1x@256MB`, always-on): roughly $2
 - Fly Managed Postgres (Basic, Shared-2x / 1GB / 1 TB cap): $38
 - CloudFront + AWS WAF + WAF logging: roughly $10–15 at Phase 1 traffic
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
-- **Total: ~$65–90/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
+- **Total: ~$67–92/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
 
 Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. Per-user daily budget circuit breakers, embedding caching, and model tiering (Haiku for cheap cases) are the primary mitigations. Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 6 and only apply if the screenshot path is chosen over the browser-extension or GHS-as-tracker alternatives.
 
