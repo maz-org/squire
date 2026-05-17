@@ -574,6 +574,8 @@ html {
 
 .squire-banner__actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: flex-start;
   margin-top: 12px;
 }
