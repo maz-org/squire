@@ -72,7 +72,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "1.0.0-rc.2-203eab8",
     "google-auth-library": "^10.6.2",
-    "hono": "^4.12.18",
+    "hono": "^4.12.19",
     "htmx.org": "^2.0.10",
     "langchain": "^1.4.0",
     "langsmith": "^0.7.1",
