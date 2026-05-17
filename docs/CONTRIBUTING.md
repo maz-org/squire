@@ -285,7 +285,10 @@ npm run query "What does the Poison condition do?"
 ### Running tests
 
 ```bash
-npm test              # run once
+npm test              # fast suite, run once
+npm run test:coverage # fast coverage suite used by normal PR CI
+npm run test:slow:pdf # real scenario/section PDF extraction check
+npm run test:full     # fast suite plus real scenario/section PDF extraction
 npm run test:watch    # watch mode
 ```
 
