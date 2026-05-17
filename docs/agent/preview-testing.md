@@ -25,7 +25,7 @@ preview_start → "Squire dev server — port 3000 (OAuth)"
 ```
 
 The wrapper script at [../../scripts/preview-serve.sh](../../scripts/preview-serve.sh)
-sources nvm, activates `.nvmrc` (Node 24), exports `PORT`, and execs
+sources nvm, activates `.nvmrc` (Node 26), exports `PORT`, and execs
 `npm run serve`. No environment plumbing in `launch.json` — just a
 single port argument per config.
 
