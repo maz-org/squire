@@ -516,17 +516,21 @@ app.post('/auth/logout', requirePageSession(), requireCsrf(), async (c) => {
   const session = c.get('session')!;
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
-  const userId = await SessionRepository.destroy(session.id);
-  if (userId) {
-    const { db } = getDb('server');
-    await writeAuditEvent(db, {
+
+  const { db } = getDb('server');
+  await db.transaction(async (tx) => {
+    const userId = await SessionRepository.destroy(tx, session.id);
+    if (!userId) return;
+
+    await writeAuditEvent(tx, {
       eventType: 'google_logout',
       userId,
       outcome: 'success',
       ipAddress: c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip'),
       userAgent: c.req.header('user-agent'),
     });
-  }
+  });
+
   clearSessionCookie(c);
   return c.redirect('/login');
 });

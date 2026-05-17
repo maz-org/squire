@@ -4,6 +4,7 @@
 
 - Node.js 26.1+ (see `.nvmrc`)
 - Docker (for the Postgres + pgvector dev database)
+- actionlint (`brew install actionlint`) for local GitHub Actions workflow linting
 - `.env` file with required environment variables (see below)
 - [gstack](https://github.com/garrytan/gstack) and gbrain for AI-assisted
   development (see [AI tooling setup](#ai-tooling-setup) below)

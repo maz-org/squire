@@ -140,8 +140,10 @@ Postgres has no public ingress.
   runs `flyctl deploy -a maz-squire --remote-only`. The deploy token lives in
   the GitHub secret `FLY_API_TOKEN`; app secrets such as `DATABASE_URL` stay
   scoped to the Fly app via `fly secrets set` and are never written to the
-  repo. The auto-merge workflow uses `actions/create-github-app-token@v3` so
-  merges create the follow-up `push` event that the deploy workflow follows.
+  repo. Dependabot patch/minor auto-merge uses
+  `actions/create-github-app-token@v3` so those automated merges create the
+  follow-up `push` event that the deploy workflow follows. Human and agent PRs
+  are merged explicitly after review rather than auto-merged on every opened PR.
 
 ### Operational shape
 

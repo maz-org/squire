@@ -119,20 +119,17 @@ export async function create(
 }
 
 /**
- * Destroy a session. Returns the userId of the deleted session (for audit
- * logging by the caller), or null if the session didn't exist.
+ * Destroy a session through the provided handle. Returns the userId of the
+ * deleted session (for audit logging by the caller), or null if the session
+ * didn't exist.
  */
-export async function destroy(sessionId: string): Promise<string | null> {
-  const { db } = getDb('server');
+export async function destroy(handle: DbOrTx, sessionId: string): Promise<string | null> {
   const sessionHash = hashSecret(sessionId);
 
-  const rows = await db
-    .select({ userId: sessions.userId })
-    .from(sessions)
+  const rows = await handle
+    .delete(sessions)
     .where(eq(sessions.id, sessionHash))
-    .limit(1);
-
-  await db.delete(sessions).where(eq(sessions.id, sessionHash));
+    .returning({ userId: sessions.userId });
 
   return rows[0]?.userId ?? null;
 }
