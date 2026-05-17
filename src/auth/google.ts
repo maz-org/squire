@@ -85,6 +85,14 @@ export async function verifyGoogleIdToken(
   if (!payload?.sub || !payload?.email) {
     throw new Error('Google ID token missing sub or email');
   }
+  if (payload.email_verified !== true) {
+    throw new GoogleAuthError(
+      'email_not_verified',
+      'Google says this account email address is not verified',
+      403,
+      { email: payload.email },
+    );
+  }
   return {
     sub: payload.sub,
     email: payload.email,
@@ -227,6 +235,24 @@ export async function handleGoogleCallback(
     tokenPayload = await verifyGoogleIdToken(idToken, clientId);
   } catch (err) {
     console.warn('[auth:google] ID token verification failed:', (err as Error).message);
+    if (err instanceof GoogleAuthError) {
+      if (err.code === 'email_not_verified') {
+        const { db } = getDb('server');
+        try {
+          await writeAuditEvent(db, {
+            eventType: 'google_login_denied',
+            outcome: 'failure',
+            failureReason: 'email_not_verified',
+            ipAddress,
+            userAgent,
+            metadata: { email: extractEmailFromGoogleAuthError(err) },
+          });
+        } catch (auditErr) {
+          console.error('[auth:google] failed to write google_login_denied audit:', auditErr);
+        }
+      }
+      throw err;
+    }
     throw new GoogleAuthError('token_verification_failed', 'Failed to verify Google ID token', 400);
   }
 
@@ -341,11 +367,17 @@ export function getAllowedEmails(): string[] {
 export class GoogleAuthError extends Error {
   readonly code: string;
   readonly status: number;
+  readonly metadata: Record<string, unknown> | undefined;
 
-  constructor(code: string, message: string, status: number) {
+  constructor(code: string, message: string, status: number, metadata?: Record<string, unknown>) {
     super(message);
     this.name = 'GoogleAuthError';
     this.code = code;
     this.status = status;
+    this.metadata = metadata;
   }
+}
+
+function extractEmailFromGoogleAuthError(err: GoogleAuthError): string | undefined {
+  return typeof err.metadata?.email === 'string' ? err.metadata.email : undefined;
 }
