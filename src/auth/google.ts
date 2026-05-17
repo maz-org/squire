@@ -102,6 +102,15 @@ function sanitizeAvatarUrl(url?: string): string | null {
   }
 }
 
+function maskEmailForLog(email: string): string {
+  const atIndex = email.indexOf('@');
+  if (atIndex <= 0 || atIndex === email.length - 1) {
+    return '[redacted-email]';
+  }
+
+  return `${email[0]}***${email.slice(atIndex)}`;
+}
+
 // ─── PKCE + state helpers ───────────────────────────────────────────────────
 
 /** Generate a random state parameter for CSRF protection during OAuth flow. */
@@ -223,16 +232,17 @@ export async function handleGoogleCallback(
 
   const { sub: googleSub, email, name } = tokenPayload;
   const avatarUrl = sanitizeAvatarUrl(tokenPayload.picture);
+  const maskedEmail = maskEmailForLog(email);
 
   // 4. Check allowlist
   const allowedEmails = getAllowedEmails();
   console.info(
     '[auth:google] verified user email=%s, checking allowlist (%d entries)',
-    email,
+    maskedEmail,
     allowedEmails.length,
   );
   if (!allowedEmails.includes(email.toLowerCase())) {
-    console.warn('[auth:google] email not in allowlist: %s', email);
+    console.warn('[auth:google] email not in allowlist: %s', maskedEmail);
     const { db } = getDb('server');
     await writeAuditEvent(db, {
       eventType: 'google_login_denied',
@@ -298,7 +308,7 @@ export async function handleGoogleCallback(
   // Log truncated session ID only (full ID is a session secret)
   console.info(
     '[auth:google] login succeeded: email=%s session=%s...',
-    email,
+    maskedEmail,
     result.sessionId.slice(0, 8),
   );
   return result;
