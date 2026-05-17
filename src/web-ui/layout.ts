@@ -515,6 +515,40 @@ export async function renderNotInvitedPage(): Promise<HtmlEscapedString> {
   );
 }
 
+export async function renderEmailNotVerifiedPage(): Promise<HtmlEscapedString> {
+  return renderAuthPage(
+    html`<main class="squire-auth-page">
+      <section class="squire-auth-page__stack" aria-label="Google email not verified">
+        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+        <span class="squire-wordmark squire-wordmark--auth">Squire</span>
+        <p class="squire-tagline">A FROSTHAVEN COMPANION</p>
+        <div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">GOOGLE EMAIL NOT VERIFIED</span>
+          <p class="squire-banner__body">
+            Google says this account's email address has not been verified. Squire only allows
+            sign-in with a verified Google email address.
+          </p>
+          <p class="squire-banner__body">
+            Sign in to that Google Account and finish Google's account verification, then try again.
+          </p>
+          <div class="squire-banner__actions">
+            <a href="/auth/google/start" class="squire-button squire-button--ghost">
+              Try again with Google
+            </a>
+            <a
+              href="https://support.google.com/accounts/answer/63950"
+              class="squire-button squire-button--ghost"
+              rel="noreferrer"
+            >
+              Open Google verification help
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>` as HtmlEscapedString,
+  );
+}
+
 /**
  * Authenticated home-page surface. A purpose-built landing composition —
  * "At your service." Fraunces hero, a sepia small-caps scope line, and

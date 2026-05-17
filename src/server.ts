@@ -67,6 +67,7 @@ import {
   renderHomePage,
   renderLoginPage,
   renderMarkdownStyleguidePage,
+  renderEmailNotVerifiedPage,
   renderNotInvitedPage,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
@@ -296,6 +297,7 @@ app.get('/login', optionalSession(), async (c) => {
 });
 
 app.get('/not-invited', async (c) => c.html(await renderNotInvitedPage(), 403));
+app.get('/email-not-verified', async (c) => c.html(await renderEmailNotVerifiedPage(), 403));
 
 app.get('/.well-known/oauth-authorization-server', (c) => {
   const base = getBaseUrl();
@@ -516,6 +518,9 @@ app.get('/auth/google/callback', async (c) => {
     return c.redirect('/');
   } catch (err) {
     if (err instanceof GoogleAuthError) {
+      if (err.code === 'email_not_verified') {
+        return c.redirect('/email-not-verified', 302);
+      }
       if (err.code === 'not_allowed') {
         return c.redirect('/not-invited', 302);
       }
