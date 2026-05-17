@@ -82,4 +82,44 @@ describe('SessionRepository', () => {
       await expect(SessionRepository.destroy(tx, randomUUID())).resolves.toBeNull();
     });
   });
+
+  it('bulk deletes expired sessions while preserving active sessions', async () => {
+    const user = await createUser();
+    const cutoff = new Date('2026-05-17T12:00:00.000Z');
+    const expiredSessionId = randomUUID();
+    const activeSessionId = randomUUID();
+
+    await db.insert(sessions).values([
+      {
+        id: hashSecret(expiredSessionId),
+        userId: user.id,
+        expiresAt: new Date(cutoff.getTime() - 1),
+      },
+      {
+        id: hashSecret(activeSessionId),
+        userId: user.id,
+        expiresAt: new Date(cutoff.getTime() + 1),
+      },
+    ]);
+
+    await expect(SessionRepository.deleteExpired(cutoff)).resolves.toBe(1);
+
+    const remaining = await db.select().from(sessions);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.id).toBe(hashSecret(activeSessionId));
+  });
+
+  it('treats expired session deletion as idempotent', async () => {
+    const user = await createUser();
+    const cutoff = new Date('2026-05-17T12:00:00.000Z');
+
+    await db.insert(sessions).values({
+      id: hashSecret(randomUUID()),
+      userId: user.id,
+      expiresAt: new Date(cutoff.getTime() - 1),
+    });
+
+    await expect(SessionRepository.deleteExpired(cutoff)).resolves.toBe(1);
+    await expect(SessionRepository.deleteExpired(cutoff)).resolves.toBe(0);
+  });
 });

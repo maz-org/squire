@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 24+ (see `.nvmrc`)
+- Node.js 26.1+ (see `.nvmrc`)
 - Docker (for the Postgres + pgvector dev database)
 - actionlint (`brew install actionlint`) for local GitHub Actions workflow linting
 - `.env` file with required environment variables (see below)
@@ -305,8 +305,8 @@ yet — it requires a stdio bridge. Use
    }
    ```
 
-   If Claude Desktop uses an older Node version (< 20), specify the
-   full path to a Node 24+ `npx` in the `command` field, and set
+   If Claude Desktop uses an older Node version (< 26.1.0), specify the
+   full path to a Node 26.1+ `npx` in the `command` field, and set
    `env.PATH` to include that Node's bin directory.
 
 3. Restart Claude Desktop. The tools appear in the chat input area.

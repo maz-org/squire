@@ -6,7 +6,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, lte } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import { hashSecret } from '../../security/hashing.ts';
@@ -132,4 +132,20 @@ export async function destroy(handle: DbOrTx, sessionId: string): Promise<string
     .returning({ userId: sessions.userId });
 
   return rows[0]?.userId ?? null;
+}
+
+/**
+ * Delete all expired sessions in one indexed sweep.
+ *
+ * This backs the Fly cron job for sessions that are never loaded again, while
+ * `findById()` still handles cleanup-on-read for presented expired cookies.
+ */
+export async function deleteExpired(cutoff: Date = new Date()): Promise<number> {
+  const { db } = getDb('server');
+  const deleted = await db
+    .delete(sessions)
+    .where(lte(sessions.expiresAt, cutoff))
+    .returning({ id: sessions.id });
+
+  return deleted.length;
 }

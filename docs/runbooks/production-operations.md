@@ -17,6 +17,8 @@ Actions after CI passes on `main`.
 - Origin lock: CloudFront sends `X-Origin-Secret`; Fly stores the matching value
   in `ORIGIN_SHARED_SECRET`
 - Runtime environment label: `SQUIRE_ENV=production`
+- Background cleanup: Fly `cron` process group runs Supercronic with
+  `/app/crontab` and prunes expired sessions hourly
 
 `/api/live` and `/api/health` intentionally bypass the origin lock so Fly health
 checks work. Browser, OAuth, REST, and MCP routes should go through CloudFront
@@ -95,6 +97,16 @@ Use a manual deploy only for operator recovery from a known local checkout:
 flyctl deploy -a maz-squire --remote-only
 ```
 
+After the first deploy that introduces the cron process group, scale exactly one
+cron machine alongside the web app:
+
+```bash
+flyctl scale count app=1 cron=1 -a maz-squire
+```
+
+The cleanup command is idempotent, but `cron=1` keeps the logs and database work
+predictable.
+
 ## Post-deploy checks
 
 Start with platform and health:
@@ -102,6 +114,7 @@ Start with platform and health:
 ```bash
 flyctl status -a maz-squire
 fly releases -a maz-squire --image
+fly logs -a maz-squire --no-tail | grep session-gc
 node scripts/check-deploy-health.ts --base-url https://maz-squire.fly.dev
 curl -I https://squire.maz.org
 curl https://squire.maz.org/api/live
