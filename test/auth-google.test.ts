@@ -91,6 +91,22 @@ function mockGoogleSuccess(user = TEST_USER) {
     getPayload: () => ({
       sub: user.sub,
       email: user.email,
+      email_verified: true,
+      name: user.name,
+      picture: user.picture,
+    }),
+  });
+}
+
+function mockGoogleUnverifiedEmail(user = TEST_USER) {
+  mockGetToken.mockResolvedValueOnce({
+    tokens: { id_token: 'fake-id-token' },
+  });
+  mockVerifyIdToken.mockResolvedValueOnce({
+    getPayload: () => ({
+      sub: user.sub,
+      email: user.email,
+      email_verified: false,
       name: user.name,
       picture: user.picture,
     }),
@@ -604,6 +620,42 @@ describe('Callback rejection', () => {
       infoSpy.mockRestore();
       warnSpy.mockRestore();
     }
+  });
+
+  it('5b. unverified Google email -> helpful auth page, audit row, no user or session', async () => {
+    mockGoogleUnverifiedEmail();
+
+    const callbackRes = await walkOAuthFlow();
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get('location')).toBe('/email-not-verified');
+
+    const pageRes = await app.request('http://localhost:3000/email-not-verified');
+    expect(pageRes.status).toBe(403);
+    const body = await pageRes.text();
+    const readableBody = body.replace(/\s+/g, ' ');
+    expect(body).toContain('GOOGLE EMAIL NOT VERIFIED');
+    expect(readableBody).toContain(
+      "Google says this account's email address has not been verified.",
+    );
+    expect(readableBody).toContain(
+      'Squire only allows sign-in with a verified Google email address.',
+    );
+    expect(body).toContain('/auth/google/start');
+    expect(body).toContain('https://support.google.com/accounts/answer/63950');
+    expect(body).not.toContain('email_verified');
+    expect(body).not.toContain('ID token');
+
+    const { db } = getDb('server');
+    expect(await db.select().from(users)).toHaveLength(0);
+    expect(await db.select().from(sessions)).toHaveLength(0);
+
+    const auditRows = await db
+      .select()
+      .from(oauthAuditLog)
+      .where(eq(oauthAuditLog.eventType, 'google_login_denied'));
+    expect(auditRows).toHaveLength(1);
+    expect(auditRows[0].failureReason).toBe('email_not_verified');
+    expect(auditRows[0].metadata).toEqual({ email: TEST_USER.email });
   });
 
   it('6. invalid state parameter -> redirect /login?error=...', async () => {
