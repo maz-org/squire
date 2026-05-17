@@ -267,6 +267,14 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
   high and critical runtime vulnerabilities introduced by dependency changes;
   low and moderate findings stay non-blocking until alert noise is better
   understood.
+- Dependabot auto-triage uses GitHub's preset `Dismiss low impact issues for
+development-scoped dependencies`. The repository is public, so GitHub enables
+  this preset by default for npm development-scope alerts; do not add custom
+  auto-dismiss rules for runtime dependencies unless repeated false positives
+  justify a narrower follow-up rule. Review auto-dismissed Dependabot alerts in
+  GitHub via **Security** -> **Dependabot** -> **Closed** -> **Closed as:
+  Auto-dismissed**, or with:
+  `gh api 'repos/maz-org/squire/dependabot/alerts?state=auto_dismissed&per_page=100'`.
 - Security Alert Linear Sync runs daily and on manual dispatch via
   `.github/workflows/security-alert-linear-sync.yml`. It polls open
   Dependabot, CodeQL code scanning, and secret scanning alerts, routes
@@ -344,6 +352,8 @@ HTML/JS and are rendered unsanitized, prompt injection becomes XSS.
 
 ## Changelog
 
+- **2026-05-17:** Recorded Dependabot auto-triage preset behavior and review
+  path for low-impact development dependency alerts (SQR-168).
 - **2026-05-16:** Added GitHub security alert routing into Linear for high/critical Dependabot, CodeQL, and secret scanning alerts (SQR-167).
 - **2026-05-16:** Added Dependency Review PR workflow to block high/critical runtime vulnerability introductions (SQR-165).
 - **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).
