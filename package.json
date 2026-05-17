@@ -17,6 +17,7 @@
     "seed:scenario-section-books": "node scripts/seed-scenario-section-books.ts",
     "seed:dev-user": "node scripts/seed-dev-user.ts",
     "seed:dev": "npm run seed:cards && npm run seed:scenario-section-books && npm run seed:dev-user",
+    "sessions:sweep-expired": "node scripts/sweep-expired-sessions.ts",
     "query": "node src/query.ts",
     "serve": "node src/server.ts",
     "eval": "node eval/run.ts",
