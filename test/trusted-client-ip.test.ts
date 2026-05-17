@@ -84,6 +84,20 @@ describe('resolveTrustedClientIp', () => {
     expect(ip).toBeNull();
   });
 
+  it('rejects invalid trusted proxy hop counts', () => {
+    const requestHeaders = headers({
+      'x-origin-secret': originSecret,
+      'x-forwarded-for': '198.51.100.10, 203.0.113.20',
+    });
+
+    expect(
+      resolveTrustedClientIp(requestHeaders, { originSecret, trustedProxyHops: -1 }),
+    ).toBeNull();
+    expect(
+      resolveTrustedClientIp(requestHeaders, { originSecret, trustedProxyHops: 0.5 }),
+    ).toBeNull();
+  });
+
   it('ignores x-real-ip in production because CloudFront removes it before origin', () => {
     const ip = resolveTrustedClientIp(
       headers({

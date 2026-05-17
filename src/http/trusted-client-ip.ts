@@ -92,6 +92,8 @@ export function resolveTrustedClientIp(
   if (!xff) return null;
 
   const trustedProxyHops = options.trustedProxyHops ?? DEFAULT_TRUSTED_PROXY_HOPS;
+  if (!Number.isInteger(trustedProxyHops) || trustedProxyHops < 0) return null;
+
   const clientIndex = xff.length - trustedProxyHops - 1;
-  return clientIndex >= 0 ? xff[clientIndex] : null;
+  return clientIndex >= 0 && clientIndex < xff.length ? xff[clientIndex] : null;
 }
