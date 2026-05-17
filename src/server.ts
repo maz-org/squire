@@ -24,7 +24,7 @@ import {
   REGISTER_CLIENT_RATE_LIMIT_POLICY,
   type RateLimitDecision,
 } from './rate-limit.ts';
-import { writeSecurityLog } from './security-log.ts';
+import { errorLogFields, writeSecurityLog } from './security-log.ts';
 import { registerDevLoginRoute, shouldRegisterDevLogin } from './auth/dev-login.ts';
 import {
   toolSourceLabel,
@@ -191,7 +191,7 @@ function rateLimitUnavailableResponse(c: Context, error: unknown) {
       route: '/register',
       method: 'POST',
       policy: REGISTER_CLIENT_RATE_LIMIT_POLICY.name,
-      error: error instanceof Error ? error.message : 'unknown',
+      ...errorLogFields(error),
     },
   });
 

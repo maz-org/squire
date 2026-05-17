@@ -25,3 +25,11 @@ export function writeSecurityLog({ event, level = 'warn', fields = {} }: Securit
     }),
   );
 }
+
+export function errorLogFields(error: unknown): Record<string, string | null> {
+  const withCode = error as { code?: unknown };
+  return {
+    error_type: error instanceof Error && error.name ? error.name : 'unknown',
+    error_code: typeof withCode.code === 'string' ? withCode.code : null,
+  };
+}

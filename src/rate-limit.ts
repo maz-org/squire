@@ -2,6 +2,8 @@ import { createHmac } from 'node:crypto';
 
 import { createClient, type RedisClientType } from '@redis/client';
 
+import { errorLogFields, writeSecurityLog } from './security-log.ts';
+
 export interface RateLimitPolicy {
   name: string;
   limit: number;
@@ -87,7 +89,7 @@ else
   retry_after_ms = math.ceil(((cost - tokens) / refill_tokens) * refill_interval_ms)
 end
 
-redis.call('HMSET', key, 'tokens', tostring(tokens), 'updated_at', tostring(now_ms))
+redis.call('HSET', key, 'tokens', tostring(tokens), 'updated_at', tostring(now_ms))
 redis.call('PEXPIRE', key, ttl_ms)
 
 local reset_after_ms = math.ceil(((capacity - tokens) / refill_tokens) * refill_interval_ms)
@@ -219,13 +221,11 @@ export class RedisTokenBucketStore implements TokenBucketStore {
   constructor(url: string, client?: RedisClientType) {
     this.client = client ?? createClient({ url });
     this.client.on('error', (error: Error) => {
-      console.error(
-        JSON.stringify({
-          level: 'error',
-          event: 'rate_limit_redis_error',
-          message: error.message,
-        }),
-      );
+      writeSecurityLog({
+        event: 'rate_limit_redis_error',
+        level: 'error',
+        fields: errorLogFields(error),
+      });
     });
   }
 
