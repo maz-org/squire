@@ -37,6 +37,7 @@ import type {
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 
 import { SquireOAuthProvider } from './auth/provider.ts';
+import type { AuditContext } from './auth/audit.ts';
 import { getDb } from './db.ts';
 
 let provider: SquireOAuthProvider | null = null;
@@ -94,9 +95,10 @@ function coerceRegistrationMetadata(
  */
 export async function registerClient(
   metadata: Record<string, unknown>,
+  context: AuditContext = {},
 ): Promise<OAuthClientInformationFull> {
   const coerced = coerceRegistrationMetadata(metadata);
-  return getAuthProvider().clientsStore.registerClient(coerced);
+  return getAuthProvider().clientsStore.registerClient(coerced, context);
 }
 
 /**
@@ -130,16 +132,20 @@ export async function createAuthorizationCode(
   redirectUri: string,
   codeChallenge: string,
   state?: string,
+  context: AuditContext = {},
 ): Promise<{ code: string }> {
   const client = await lookupClient(clientId);
   if (!client) throw new InvalidRequestError('Unknown client_id');
-  const { code } = await getAuthProvider().createAuthorizationCode({
-    client,
-    redirectUri,
-    codeChallenge,
-    codeChallengeMethod: 'S256',
-    state,
-  });
+  const { code } = await getAuthProvider().createAuthorizationCode(
+    {
+      client,
+      redirectUri,
+      codeChallenge,
+      codeChallengeMethod: 'S256',
+      state,
+    },
+    context,
+  );
   return { code };
 }
 
@@ -152,10 +158,18 @@ export async function exchangeAuthorizationCode(
   clientId: string,
   codeVerifier: string,
   redirectUri: string,
+  context: AuditContext = {},
 ): Promise<OAuthTokens> {
   const client = await lookupClient(clientId);
   if (!client) throw new InvalidRequestError('Unknown client_id');
-  return getAuthProvider().exchangeAuthorizationCode(client, code, codeVerifier, redirectUri);
+  return getAuthProvider().exchangeAuthorizationCode(
+    client,
+    code,
+    codeVerifier,
+    redirectUri,
+    undefined,
+    context,
+  );
 }
 
 /**
@@ -164,9 +178,12 @@ export async function exchangeAuthorizationCode(
  * middleware in `src/server.ts` only needs the present/absent distinction,
  * so flattening the SDK exception keeps the call site simple.
  */
-export async function verifyAccessToken(token: string): Promise<AuthInfo | undefined> {
+export async function verifyAccessToken(
+  token: string,
+  context: AuditContext = {},
+): Promise<AuthInfo | undefined> {
   try {
-    return await getAuthProvider().verifyAccessToken(token);
+    return await getAuthProvider().verifyAccessToken(token, context);
   } catch (err) {
     if (err instanceof InvalidTokenError) return undefined;
     throw err;

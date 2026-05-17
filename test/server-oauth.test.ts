@@ -79,7 +79,9 @@ vi.mock('../src/tools.ts', () => ({
 
 import { app } from '../src/server.ts';
 import { resetAuthProvider } from '../src/auth.ts';
-import { shutdownServerPool } from '../src/db.ts';
+import { getDb, shutdownServerPool } from '../src/db.ts';
+import { oauthAuditLog } from '../src/db/schema/auth.ts';
+import { eq } from 'drizzle-orm';
 
 const { auth, resetTestToken } = makeAuthHelpers(app);
 
@@ -171,6 +173,34 @@ describe('POST /register', () => {
     expect(body).toHaveProperty('client_name', 'Test Client');
     expect(body).toHaveProperty('redirect_uris');
     expect(body).toHaveProperty('client_id_issued_at');
+  });
+
+  it('records validated client IP context in registration audit rows', async () => {
+    const res = await app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': '198.51.100.10',
+        'User-Agent': 'server-oauth-test',
+      },
+      body: JSON.stringify({
+        redirect_uris: ['http://localhost:8080/callback'],
+        client_name: 'Audited Client',
+        token_endpoint_auth_method: 'none',
+      }),
+    });
+
+    expect(res.status).toBe(201);
+
+    const { db } = getDb('server');
+    const [auditRow] = await db
+      .select()
+      .from(oauthAuditLog)
+      .where(eq(oauthAuditLog.eventType, 'register'));
+    expect(auditRow).toMatchObject({
+      ipAddress: '198.51.100.10',
+      userAgent: 'server-oauth-test',
+    });
   });
 
   it('returns 400 for missing redirect_uris', async () => {
