@@ -70,7 +70,8 @@ import { app } from '../src/server.ts';
 import { resetAuthProvider } from '../src/auth.ts';
 import { shutdownServerPool, getDb } from '../src/db.ts';
 import { sessions, users } from '../src/db/schema/core.ts';
-import { eq } from 'drizzle-orm';
+import { oauthAuditLog } from '../src/db/schema/auth.ts';
+import { eq, sql } from 'drizzle-orm';
 // google.ts types used indirectly via the server routes
 
 // ─── Test fixtures ──────────────────────────────────────────────────────────
@@ -326,7 +327,7 @@ describe('Authenticated web UI', () => {
 });
 
 describe('Logout', () => {
-  it('4. POST /auth/logout destroys session, clears cookie, redirects /login', async () => {
+  it('4. POST /auth/logout destroys session, writes audit, clears cookie, redirects /login', async () => {
     mockGoogleSuccess();
     const loginRes = await walkOAuthFlow();
     const cookie = extractSessionCookie(loginRes)!;
@@ -345,6 +346,99 @@ describe('Logout', () => {
     const { db } = getDb('server');
     const remaining = await db.select().from(sessions);
     expect(remaining).toHaveLength(0);
+
+    const logoutAudits = await db
+      .select()
+      .from(oauthAuditLog)
+      .where(eq(oauthAuditLog.eventType, 'google_logout'));
+    expect(logoutAudits).toHaveLength(1);
+    expect(logoutAudits[0]).toMatchObject({
+      outcome: 'success',
+      userId: expect.any(String),
+    });
+  });
+
+  it('4a. rolls back the session delete when logout audit writing fails', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
+
+    const { db } = getDb('server');
+    await db.execute(sql`
+      ALTER TABLE oauth_audit_log
+      DROP CONSTRAINT IF EXISTS oauth_audit_log_no_logout_test
+    `);
+    await db.execute(sql`
+      ALTER TABLE oauth_audit_log
+      ADD CONSTRAINT oauth_audit_log_no_logout_test CHECK (event_type != 'google_logout')
+    `);
+
+    try {
+      const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+        method: 'POST',
+        redirect: 'manual',
+        headers: { 'x-csrf-token': csrfToken },
+      });
+
+      expect(logoutRes.status).toBe(500);
+      expect(await db.select().from(sessions)).toHaveLength(1);
+      const logoutAudits = await db
+        .select()
+        .from(oauthAuditLog)
+        .where(eq(oauthAuditLog.eventType, 'google_logout'));
+      expect(logoutAudits).toHaveLength(0);
+    } finally {
+      await db.execute(sql`
+        ALTER TABLE oauth_audit_log
+        DROP CONSTRAINT IF EXISTS oauth_audit_log_no_logout_test
+      `);
+    }
+  });
+
+  it('4b. does not write a success audit row when session deletion fails', async () => {
+    mockGoogleSuccess();
+    const loginRes = await walkOAuthFlow();
+    const cookie = extractSessionCookie(loginRes)!;
+    const csrfToken = await fetchCsrfToken(cookie);
+
+    const { db } = getDb('server');
+    await db.execute(sql`DROP TRIGGER IF EXISTS fail_session_delete_for_test ON sessions`);
+    await db.execute(sql`
+      CREATE OR REPLACE FUNCTION fail_session_delete_for_test()
+      RETURNS trigger
+      LANGUAGE plpgsql
+      AS $$
+      BEGIN
+        RAISE EXCEPTION 'test session delete failure';
+      END;
+      $$;
+    `);
+    await db.execute(sql`
+      CREATE TRIGGER fail_session_delete_for_test
+      BEFORE DELETE ON sessions
+      FOR EACH ROW
+      EXECUTE FUNCTION fail_session_delete_for_test()
+    `);
+
+    try {
+      const logoutRes = await withSession('http://localhost:3000/auth/logout', cookie, {
+        method: 'POST',
+        redirect: 'manual',
+        headers: { 'x-csrf-token': csrfToken },
+      });
+
+      expect(logoutRes.status).toBe(500);
+      expect(await db.select().from(sessions)).toHaveLength(1);
+      const logoutAudits = await db
+        .select()
+        .from(oauthAuditLog)
+        .where(eq(oauthAuditLog.eventType, 'google_logout'));
+      expect(logoutAudits).toHaveLength(0);
+    } finally {
+      await db.execute(sql`DROP TRIGGER IF EXISTS fail_session_delete_for_test ON sessions`);
+      await db.execute(sql`DROP FUNCTION IF EXISTS fail_session_delete_for_test()`);
+    }
   });
 });
 
@@ -680,7 +774,6 @@ describe('Audit events', () => {
     await walkOAuthFlow();
 
     const { db } = getDb('server');
-    const { oauthAuditLog } = await import('../src/db/schema/auth.ts');
     const auditRows = await db
       .select()
       .from(oauthAuditLog)

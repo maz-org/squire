@@ -70,10 +70,16 @@ describe('SessionRepository', () => {
     const { sessionId } = await SessionRepository.create(db, { userId: user.id });
     const [stored] = await db.select().from(sessions).where(eq(sessions.userId, user.id));
 
-    await expect(SessionRepository.destroy(sessionId)).resolves.toBe(user.id);
+    await expect(SessionRepository.destroy(db, sessionId)).resolves.toBe(user.id);
 
     const remaining = await db.select().from(sessions).where(eq(sessions.id, stored.id));
     expect(remaining).toHaveLength(0);
-    await expect(SessionRepository.destroy(stored.id)).resolves.toBeNull();
+    await expect(SessionRepository.destroy(db, stored.id)).resolves.toBeNull();
+  });
+
+  it('returns null when destroying a missing session inside a transaction', async () => {
+    await db.transaction(async (tx) => {
+      await expect(SessionRepository.destroy(tx, randomUUID())).resolves.toBeNull();
+    });
   });
 });
