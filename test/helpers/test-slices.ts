@@ -20,4 +20,12 @@ export const DB_BACKED_TEST_FILES = [
   'test/vector-store.test.ts',
 ];
 
+/**
+ * Tests that perform the real scenario/section PDF extraction path.
+ *
+ * SLOW_PDF_TEST_FILES stays out of the normal PR suite because it does heavier
+ * file/PDF processing than the regression fixtures. Run these explicitly with
+ * `npm run test:slow:pdf`; CI runs them from the scheduled/manual slow-test
+ * path when source PDFs or parser behavior need verification.
+ */
 export const SLOW_PDF_TEST_FILES = ['test/import-scenario-section-books.test.ts'];

@@ -31,6 +31,7 @@ export default defineConfig({
             'data/**',
             '.claude/worktrees/**',
             ...DB_BACKED_TEST_FILES,
+            // Kept on the dedicated slow path: `npm run test:slow:pdf`.
             ...SLOW_PDF_TEST_FILES,
           ],
           fileParallelism: true,
