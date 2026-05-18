@@ -5,13 +5,19 @@
  */
 
 import 'dotenv/config';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { embedBatch } from './embedder.ts';
 import { shutdownServerPool } from './db.ts';
-import { addEntries, ensureHnswIndex, getIndexedSources } from './vector-store.ts';
+import {
+  addEntries,
+  deleteEntriesForSources,
+  ensureHnswIndex,
+  getIndexedSourceHashes,
+} from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
 
 // Re-exported so seed / deployment workflows can reference the current value.
@@ -28,6 +34,10 @@ interface Chunk {
   text: string;
   source: string;
   chunkIndex: number;
+}
+
+export function computeContentHash(bytes: Buffer): string {
+  return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 }
 
 /** Split text on double-newline boundaries into paragraphs. */
@@ -208,9 +218,8 @@ export function chunkText(text: string, source: string): Chunk[] {
   }));
 }
 
-async function extractText(pdfPath: string): Promise<string> {
-  const buffer = readFileSync(pdfPath);
-  const data = await pdfParse(buffer);
+async function extractText(pdfBytes: Buffer): Promise<string> {
+  const data = await pdfParse(pdfBytes);
   return data.text as string;
 }
 
@@ -218,17 +227,35 @@ export async function main(): Promise<void> {
   const files = readdirSync(PDFS_DIR).filter((f) => f.endsWith('.pdf'));
   console.log(`Found ${files.length} PDF(s) to index.`);
 
-  const indexedSources = await getIndexedSources();
+  const indexedSourceHashes = await getIndexedSourceHashes();
+  const currentSources = new Set(files);
+  const removedSources = [...indexedSourceHashes.keys()].filter(
+    (source) => !currentSources.has(source),
+  );
+  if (removedSources.length > 0) {
+    const deleted = await deleteEntriesForSources(removedSources);
+    console.log(`Removed ${deleted} stale chunk(s) for ${removedSources.length} missing PDF(s).`);
+  }
 
   const allNewEntries: IndexEntry[] = [];
 
   for (const file of files) {
-    if (indexedSources.has(file)) {
-      console.log(`  Skipping (already indexed): ${file}`);
+    const pdfBytes = readFileSync(join(PDFS_DIR, file));
+    const contentHash = computeContentHash(pdfBytes);
+    const indexedHash = indexedSourceHashes.get(file);
+
+    if (indexedHash === contentHash) {
+      console.log(`  Skipping (unchanged): ${file}`);
       continue;
     }
+
+    if (indexedHash !== undefined) {
+      const deleted = await deleteEntriesForSources([file]);
+      console.log(`  Re-indexing changed source: ${file} (${deleted} stale chunk(s) removed)`);
+    }
+
     console.log(`  Extracting: ${file}`);
-    const text = await extractText(join(PDFS_DIR, file));
+    const text = await extractText(pdfBytes);
     const chunks = chunkText(text, file);
     console.log(`    ${chunks.length} chunks — embedding...`);
 
@@ -242,6 +269,7 @@ export async function main(): Promise<void> {
           text: batch[j].text,
           source: batch[j].source,
           chunkIndex: batch[j].chunkIndex,
+          contentHash,
           embedding: embeddings[j],
         });
       }

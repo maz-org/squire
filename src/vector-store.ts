@@ -14,7 +14,7 @@
  * raw operator so the HNSW index can serve the query.
  */
 
-import { sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
 import { embeddings as embeddingsTable } from './db/schema/core.ts';
@@ -25,6 +25,7 @@ export interface IndexEntry {
   embedding: number[];
   source: string;
   chunkIndex: number;
+  contentHash?: string;
   /**
    * Optional on input — defaults to `'frosthaven'` at insert time via the
    * column default. Phase 2 starts populating this per-row from the PDF
@@ -108,6 +109,7 @@ export async function addEntries(entries: IndexEntry[]): Promise<void> {
             embedding: e.embedding,
             game: e.game ?? DEFAULT_GAME,
             embeddingVersion: EMBEDDING_VERSION,
+            contentHash: e.contentHash,
           })),
         )
         .onConflictDoNothing({
@@ -128,6 +130,54 @@ export async function getIndexedSources(game: string = DEFAULT_GAME): Promise<Se
       sql`SELECT DISTINCT source FROM embeddings WHERE game = ${game}`,
     );
     return new Set(rows.rows.map((r) => r.source));
+  } catch (err) {
+    throw wrapDbError(err);
+  }
+}
+
+/**
+ * Return PDF source hashes already represented in the embeddings table.
+ *
+ * A null hash means the source exists only as pre-SQR-47 rows. The indexer
+ * treats that as stale because it cannot prove the derived chunks match the
+ * current checked-in PDF bytes.
+ */
+export async function getIndexedSourceHashes(
+  game: string = DEFAULT_GAME,
+): Promise<Map<string, string | null>> {
+  try {
+    const { db } = getDb('server');
+    const rows = await db.execute<{ source: string; content_hash: string | null }>(sql`
+      SELECT
+        source,
+        CASE
+          WHEN COUNT(*) FILTER (WHERE content_hash IS NULL) > 0 THEN NULL
+          WHEN COUNT(DISTINCT content_hash) = 1 THEN MIN(content_hash)
+          ELSE NULL
+        END AS content_hash
+      FROM embeddings
+      WHERE game = ${game}
+      GROUP BY source
+    `);
+    return new Map(rows.rows.map((r) => [r.source, r.content_hash]));
+  } catch (err) {
+    throw wrapDbError(err);
+  }
+}
+
+export async function deleteEntriesForSources(
+  sources: string[],
+  game: string = DEFAULT_GAME,
+): Promise<number> {
+  if (sources.length === 0) return 0;
+
+  try {
+    const { db } = getDb('server');
+    const rows = await db
+      .delete(embeddingsTable)
+      .where(and(eq(embeddingsTable.game, game), inArray(embeddingsTable.source, sources)))
+      .returning({ id: embeddingsTable.id });
+    return rows.length;
   } catch (err) {
     throw wrapDbError(err);
   }
