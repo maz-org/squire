@@ -11,6 +11,7 @@ import {
 function createFakeRedisClient(options: {
   isOpen?: boolean;
   isReady?: boolean;
+  connectPromise?: Promise<unknown>;
   evalResult?: unknown;
   evalError?: Error;
 }): RedisClientType {
@@ -24,10 +25,11 @@ function createFakeRedisClient(options: {
       return isReady;
     },
     on: vi.fn(),
-    connect: vi.fn(async () => {
+    connect: vi.fn(() => {
+      if (options.connectPromise) return options.connectPromise;
       isOpen = true;
       isReady = true;
-      return client;
+      return Promise.resolve(client);
     }),
     destroy: vi.fn(() => {
       isOpen = false;
@@ -110,5 +112,26 @@ describe('RateLimiter', () => {
       resetAfterMs: 720_000,
     });
     expect(staleClient.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('destroys pending Redis clients after a connect timeout', async () => {
+    const pendingClient = createFakeRedisClient({
+      connectPromise: new Promise(() => {}),
+    });
+    const store = new RedisTokenBucketStore('redis://example.test:6379', pendingClient, {
+      operationTimeoutMs: 1,
+    });
+
+    await expect(
+      store.consume({
+        key: 'squire:rate-limit:test',
+        capacity: 10,
+        refillTokens: 10,
+        refillIntervalMs: 3_600_000,
+        cost: 1,
+        nowMs: 0,
+      }),
+    ).rejects.toThrow('redis rate-limit connect timed out');
+    expect(pendingClient.destroy).toHaveBeenCalledTimes(1);
   });
 });

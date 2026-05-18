@@ -311,7 +311,7 @@ export class RedisTokenBucketStore implements TokenBucketStore {
     this.client = undefined;
 
     try {
-      if (client.isOpen) client.destroy();
+      client.destroy();
     } catch {
       // Discarding a broken limiter client is best-effort; the next request
       // creates a fresh client and fails closed if Redis is still unavailable.
