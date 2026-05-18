@@ -7,7 +7,8 @@
  * - `embeddings` holds the indexed-book RAG vectors (replaces `data/index.json`).
  *   Includes `game` (default 'frosthaven') from day 1 — pulled forward from
  *   Phase 2 to avoid an ALTER TABLE later. Includes `embedding_version` as a
- *   code-vs-data drift guard (see tech spec §Drift guard).
+ *   code-vs-data drift guard (see tech spec §Drift guard), and `content_hash`
+ *   so data-only PDF changes can invalidate stale derived rows.
  *
  * The HNSW index is declared via raw SQL in the migration (SQR-32) rather
  * than here, because Drizzle's index builder doesn't yet support pgvector
@@ -67,6 +68,9 @@ export const embeddings = pgTable(
     game: text('game').notNull().default('frosthaven'),
     // Bumped whenever chunking logic or the embedder changes — see drift guard.
     embeddingVersion: text('embedding_version').notNull(),
+    // SHA-256 of the source PDF bytes. Nullable so existing production rows can
+    // migrate without a table rewrite; the next index run backfills by reindexing.
+    contentHash: text('content_hash'),
   },
   (t) => [
     uniqueIndex('embeddings_source_chunk_idx').on(t.source, t.chunkIndex),

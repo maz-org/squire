@@ -4,7 +4,9 @@
  * This is deterministic generated data, not user state, so the seed uses a
  * replace-by-game transaction instead of row-by-row upserts: delete current
  * rows for the game, then insert the latest extract. That keeps the tables in
- * lockstep with the checked-in artifact and makes prune semantics boring.
+ * lockstep with the checked-in artifact and makes prune semantics boring. It
+ * also means this path does not need the PDF embedding source-hash metadata:
+ * there is no skip-by-source cache to go stale.
  */
 
 import { readFileSync } from 'node:fs';

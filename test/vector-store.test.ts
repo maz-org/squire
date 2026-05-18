@@ -20,7 +20,14 @@ import { sql } from 'drizzle-orm';
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 
 import { embeddings as embeddingsTable } from '../src/db/schema/core.ts';
-import { EMBEDDING_VERSION, addEntries, getIndexedSources, search } from '../src/vector-store.ts';
+import {
+  EMBEDDING_VERSION,
+  addEntries,
+  deleteEntriesForSources,
+  getIndexedSourceHashes,
+  getIndexedSources,
+  search,
+} from '../src/vector-store.ts';
 import type { IndexEntry } from '../src/vector-store.ts';
 
 import { setupTestDb, resetTestDb, teardownTestDb } from './helpers/db.ts';
@@ -70,6 +77,21 @@ describe('addEntries', () => {
     expect(rows[0].text).toBe('hello world');
     expect(rows[0].game).toBe('frosthaven');
     expect(rows[0].embeddingVersion).toBe(EMBEDDING_VERSION);
+  });
+
+  it('stamps entries with their source content hash when provided', async () => {
+    const entry: IndexEntry = {
+      id: 'hashed.pdf::0',
+      text: 'hashed content',
+      embedding: axisVector(0),
+      source: 'hashed.pdf',
+      chunkIndex: 0,
+      contentHash: 'sha256:test-hash',
+    };
+    await addEntries([entry]);
+
+    const rows = await db.select().from(embeddingsTable);
+    expect(rows[0].contentHash).toBe('sha256:test-hash');
   });
 
   it('is idempotent on (source, chunk_index) — second insert is a no-op', async () => {
@@ -141,6 +163,125 @@ describe('getIndexedSources', () => {
     ]);
     expect(await getIndexedSources('frosthaven')).toEqual(new Set(['fh.pdf']));
     expect(await getIndexedSources('gloomhaven-2')).toEqual(new Set(['gh2.pdf']));
+  });
+});
+
+// ─── Source metadata + cleanup ──────────────────────────────────────────────
+
+describe('getIndexedSourceHashes', () => {
+  it('returns one content hash per indexed source', async () => {
+    await addEntries([
+      {
+        id: 'a.pdf::0',
+        text: 't',
+        embedding: axisVector(0),
+        source: 'a.pdf',
+        chunkIndex: 0,
+        contentHash: 'sha256:a',
+      },
+      {
+        id: 'a.pdf::1',
+        text: 't',
+        embedding: axisVector(1),
+        source: 'a.pdf',
+        chunkIndex: 1,
+        contentHash: 'sha256:a',
+      },
+      {
+        id: 'b.pdf::0',
+        text: 't',
+        embedding: axisVector(2),
+        source: 'b.pdf',
+        chunkIndex: 0,
+        contentHash: 'sha256:b',
+      },
+    ]);
+
+    expect(await getIndexedSourceHashes()).toEqual(
+      new Map([
+        ['a.pdf', 'sha256:a'],
+        ['b.pdf', 'sha256:b'],
+      ]),
+    );
+  });
+
+  it('returns null for pre-migration rows without content hashes', async () => {
+    await addEntries([
+      {
+        id: 'legacy.pdf::0',
+        text: 't',
+        embedding: axisVector(0),
+        source: 'legacy.pdf',
+        chunkIndex: 0,
+      },
+    ]);
+
+    expect(await getIndexedSourceHashes()).toEqual(new Map([['legacy.pdf', null]]));
+  });
+
+  it('returns null when any chunks for a source are missing content hashes', async () => {
+    await addEntries([
+      {
+        id: 'partial.pdf::0',
+        text: 't',
+        embedding: axisVector(0),
+        source: 'partial.pdf',
+        chunkIndex: 0,
+        contentHash: 'sha256:partial',
+      },
+      {
+        id: 'partial.pdf::1',
+        text: 't',
+        embedding: axisVector(1),
+        source: 'partial.pdf',
+        chunkIndex: 1,
+      },
+    ]);
+
+    expect(await getIndexedSourceHashes()).toEqual(new Map([['partial.pdf', null]]));
+  });
+});
+
+describe('deleteEntriesForSources', () => {
+  it('deletes all chunks for the given sources in the default game', async () => {
+    await addEntries([
+      { id: 'a.pdf::0', text: 't', embedding: axisVector(0), source: 'a.pdf', chunkIndex: 0 },
+      { id: 'a.pdf::1', text: 't', embedding: axisVector(1), source: 'a.pdf', chunkIndex: 1 },
+      { id: 'b.pdf::0', text: 't', embedding: axisVector(2), source: 'b.pdf', chunkIndex: 0 },
+      {
+        id: 'gh2-a.pdf::0',
+        text: 't',
+        embedding: axisVector(3),
+        source: 'a.pdf',
+        chunkIndex: 9,
+        game: 'gloomhaven-2',
+      },
+    ]);
+
+    expect(await deleteEntriesForSources(['a.pdf'])).toBe(2);
+
+    const remaining = await db
+      .select({
+        id: embeddingsTable.id,
+        game: embeddingsTable.game,
+      })
+      .from(embeddingsTable);
+    expect(remaining).toEqual(
+      expect.arrayContaining([
+        { id: 'b.pdf::0', game: 'frosthaven' },
+        { id: 'gh2-a.pdf::0', game: 'gloomhaven-2' },
+      ]),
+    );
+    expect(remaining).toHaveLength(2);
+  });
+
+  it('handles an empty source list as a no-op', async () => {
+    await addEntries([
+      { id: 'a.pdf::0', text: 't', embedding: axisVector(0), source: 'a.pdf', chunkIndex: 0 },
+    ]);
+
+    expect(await deleteEntriesForSources([])).toBe(0);
+    expect(await getIndexedSources()).toEqual(new Set(['a.pdf']));
   });
 });
 

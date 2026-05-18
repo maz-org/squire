@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { join } from 'node:path';
 
 vi.mock('dotenv/config', () => ({}));
 
@@ -28,13 +29,17 @@ vi.mock('../src/embedder.ts', () => ({
   embedBatch: mockEmbedBatch,
 }));
 
-const { mockGetIndexedSources, mockAddEntries } = vi.hoisted(() => ({
-  mockGetIndexedSources: vi.fn(),
-  mockAddEntries: vi.fn(),
-}));
+const { mockGetIndexedSourceHashes, mockDeleteEntriesForSources, mockAddEntries } = vi.hoisted(
+  () => ({
+    mockGetIndexedSourceHashes: vi.fn(),
+    mockDeleteEntriesForSources: vi.fn(),
+    mockAddEntries: vi.fn(),
+  }),
+);
 
 vi.mock('../src/vector-store.ts', () => ({
-  getIndexedSources: mockGetIndexedSources,
+  getIndexedSourceHashes: mockGetIndexedSourceHashes,
+  deleteEntriesForSources: mockDeleteEntriesForSources,
   addEntries: mockAddEntries,
   ensureHnswIndex: vi.fn().mockResolvedValue(undefined),
   EMBEDDING_VERSION: 'test-version',
@@ -45,6 +50,7 @@ vi.mock('../src/db.ts', () => ({
 }));
 
 import {
+  computeContentHash,
   chunkText,
   splitIntoParagraphs,
   splitLongParagraph,
@@ -282,16 +288,23 @@ describe('chunkText', () => {
 describe('main', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDeleteEntriesForSources.mockResolvedValue(0);
+    mockAddEntries.mockResolvedValue(undefined);
   });
 
-  it('skips files already in the index', async () => {
+  it('skips unchanged files already in the index', async () => {
+    const pdfBytes = Buffer.from('same pdf bytes');
     mockReaddirSync.mockReturnValue(['rulebook.pdf']);
-    mockGetIndexedSources.mockResolvedValue(new Set(['rulebook.pdf']));
+    mockReadFileSync.mockReturnValue(pdfBytes);
+    mockGetIndexedSourceHashes.mockResolvedValue(
+      new Map([['rulebook.pdf', computeContentHash(pdfBytes)]]),
+    );
 
     await main();
 
     expect(mockPdfParse).not.toHaveBeenCalled();
     expect(mockEmbedBatch).not.toHaveBeenCalled();
+    expect(mockDeleteEntriesForSources).not.toHaveBeenCalled();
     expect(mockAddEntries).not.toHaveBeenCalled();
   });
 
@@ -300,9 +313,8 @@ describe('main', () => {
     mockReaddirSync.mockReturnValue(['newfile.pdf']);
     mockReadFileSync.mockReturnValue(Buffer.from('pdf'));
     mockPdfParse.mockResolvedValue({ text: longText });
-    mockGetIndexedSources.mockResolvedValue(new Set<string>());
+    mockGetIndexedSourceHashes.mockResolvedValue(new Map<string, string | null>());
     mockEmbedBatch.mockResolvedValue([[0.1, 0.2]]);
-    mockAddEntries.mockResolvedValue(undefined);
 
     await main();
 
@@ -313,21 +325,61 @@ describe('main', () => {
     const newEntries = mockAddEntries.mock.calls[0][0];
     expect(newEntries.length).toBeGreaterThan(0);
     expect(newEntries[0].source).toBe('newfile.pdf');
+    expect(newEntries[0].contentHash).toBe(computeContentHash(Buffer.from('pdf')));
     expect(newEntries[0].embedding).toEqual([0.1, 0.2]);
+  });
+
+  it('reindexes changed PDF files with the same filename', async () => {
+    const longText = 'B'.repeat(900);
+    mockReaddirSync.mockReturnValue(['changed.pdf']);
+    mockReadFileSync.mockReturnValue(Buffer.from('changed pdf bytes'));
+    mockPdfParse.mockResolvedValue({ text: longText });
+    mockGetIndexedSourceHashes.mockResolvedValue(new Map([['changed.pdf', 'old-hash']]));
+    mockEmbedBatch.mockResolvedValue([[0.3, 0.4]]);
+
+    await main();
+
+    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['changed.pdf']);
+    expect(mockPdfParse).toHaveBeenCalledOnce();
+    expect(mockEmbedBatch).toHaveBeenCalledOnce();
+    const newEntries = mockAddEntries.mock.calls[0][0];
+    expect(newEntries[0].source).toBe('changed.pdf');
+    expect(newEntries[0].contentHash).toBe(computeContentHash(Buffer.from('changed pdf bytes')));
+  });
+
+  it('deletes embedding rows for PDFs that no longer exist', async () => {
+    mockReaddirSync.mockReturnValue(['kept.pdf']);
+    const keptBytes = Buffer.from('kept pdf bytes');
+    mockReadFileSync.mockReturnValue(keptBytes);
+    mockGetIndexedSourceHashes.mockResolvedValue(
+      new Map([
+        ['kept.pdf', computeContentHash(keptBytes)],
+        ['removed.pdf', 'removed-hash'],
+      ]),
+    );
+
+    await main();
+
+    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['removed.pdf']);
+    expect(mockPdfParse).not.toHaveBeenCalled();
+    expect(mockEmbedBatch).not.toHaveBeenCalled();
+    expect(mockAddEntries).not.toHaveBeenCalled();
   });
 
   it('indexes scenario and section books alongside the rulebook corpus', async () => {
     const longText = 'A'.repeat(900);
+    const rulebookPath = join(import.meta.dirname, '..', 'data', 'pdfs', 'fh-rule-book.pdf');
     mockReaddirSync.mockReturnValue([
       'fh-rule-book.pdf',
       'fh-scenario-book-42-61.pdf',
       'fh-section-book-62-81.pdf',
     ]);
-    mockReadFileSync.mockReturnValue(Buffer.from('pdf'));
+    mockReadFileSync.mockImplementation((path) => Buffer.from(String(path)));
     mockPdfParse.mockResolvedValue({ text: longText });
-    mockGetIndexedSources.mockResolvedValue(new Set(['fh-rule-book.pdf']));
+    mockGetIndexedSourceHashes.mockResolvedValue(
+      new Map([['fh-rule-book.pdf', computeContentHash(Buffer.from(rulebookPath))]]),
+    );
     mockEmbedBatch.mockResolvedValue([[0.1, 0.2]]);
-    mockAddEntries.mockResolvedValue(undefined);
 
     await main();
 
@@ -341,7 +393,7 @@ describe('main', () => {
 
   it('logs nothing new for empty docs directory', async () => {
     mockReaddirSync.mockReturnValue([]);
-    mockGetIndexedSources.mockResolvedValue(new Set<string>());
+    mockGetIndexedSourceHashes.mockResolvedValue(new Map<string, string | null>());
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await main();
