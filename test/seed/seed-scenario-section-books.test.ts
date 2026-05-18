@@ -81,6 +81,34 @@ describe('seedScenarioSectionBooks', () => {
     expect(after).toHaveLength(before.length);
   });
 
+  it('prunes rows that are no longer present in the checked-in extract', async () => {
+    const extract = readScenarioSectionBooksExtract();
+    await seedScenarioSectionBooks(db);
+    await db.insert(scenarioBookScenarios).values({
+      game: 'frosthaven',
+      ref: 'stale:scenario',
+      scenarioGroup: 'stale',
+      scenarioIndex: '999',
+      name: 'Stale Scenario',
+      initial: false,
+      metadata: { sourceId: 'stale:scenario' },
+    });
+
+    await seedScenarioSectionBooks(db);
+
+    const staleRows = await db
+      .select({ id: scenarioBookScenarios.id })
+      .from(scenarioBookScenarios)
+      .where(eq(scenarioBookScenarios.ref, 'stale:scenario'));
+    const scenarios = await db
+      .select({ id: scenarioBookScenarios.id })
+      .from(scenarioBookScenarios)
+      .where(eq(scenarioBookScenarios.game, 'frosthaven'));
+
+    expect(staleRows).toHaveLength(0);
+    expect(scenarios).toHaveLength(extract.scenarios.length);
+  });
+
   it('rejects unsupported game seeds until the extract is game-aware', async () => {
     await expect(seedScenarioSectionBooks(db, { game: 'gloomhaven-2' })).rejects.toThrow(
       'seedScenarioSectionBooks currently supports only "frosthaven"',
