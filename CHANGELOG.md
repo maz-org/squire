@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8] - 2026-05-17
+
+### Changed
+
+- Split the normal Vitest suite into a parallel isolated slice and a serial DB-backed slice so PR CI can recover safe file parallelism without adding per-worker databases.
+- Added explicit unit, DB, split, and serial coverage commands, with development docs describing when to use each path.
+
 ## [0.1.7] - 2026-05-06
 
 ### Changed

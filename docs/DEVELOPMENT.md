@@ -444,8 +444,12 @@ worktree sync can be slow and may need network access for embeddings.
 ## Testing
 
 ```bash
-npm test              # Fast suite, run once
+npm test              # Fast split suite: parallel unit slice plus serial DB slice
+npm run test:unit     # Isolated tests with Vitest file parallelism enabled
+npm run test:db       # DB-backed tests serially against the checkout test DB
+npm run test:split    # Unit slice plus DB slice via Vitest projects
 npm run test:coverage # Fast coverage suite used by normal PR CI
+npm run test:coverage:serial # Previous serial coverage path, useful for comparison
 npm run test:slow:pdf # Real scenario/section PDF extraction check
 npm run test:full     # Fast suite plus real scenario/section PDF extraction
 npm run test:watch    # Watch mode
@@ -465,10 +469,19 @@ config) to catch order-dependent tests. Normal PR CI runs the fast coverage
 suite and does not reparse the full scenario/section PDF set. The checked-in
 scenario/section extract has fast regression coverage; `npm run test:slow:pdf`
 and the scheduled/manual CI path run the real PDF parser when that parser or
-source PDFs need verification. The pre-commit hook is intentionally cheap: it
-runs the conditional agent parity check above plus `lint-staged` on staged
-files. There is no pre-push hook. Use `npm run check` as the canonical local
-gate before `/ship` or any manual push you expect to survive CI.
+source PDFs need verification.
+
+SQR-148 added an explicit test split for measuring safe parallelism:
+`test/helpers/test-slices.ts` lists the DB-backed test files that use the
+checkout-local test database. `npm run test:unit` excludes those files and can
+use Vitest file parallelism; `npm run test:db` keeps them serial against that
+database. `npm run test:coverage` runs both slices as Vitest projects so
+coverage can still be measured from one command.
+
+The pre-commit hook is intentionally cheap: it runs the conditional agent
+parity check above plus `lint-staged` on staged files. There is no pre-push
+hook. Use `npm run check` as the canonical local gate before `/ship` or any
+manual push you expect to survive CI.
 
 **Prettier covers everything CI checks.** CI runs `prettier --check src/ test/`
 which walks those directories and formats _every_ file type Prettier knows

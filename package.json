@@ -1,6 +1,6 @@
 {
   "name": "squire",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Frosthaven AI assistant with RAG over rulebooks",
   "type": "module",
   "engines": {
@@ -25,8 +25,12 @@
     "serve": "node src/server.ts",
     "eval": "node eval/run.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --exclude test/import-scenario-section-books.test.ts",
-    "test:coverage": "vitest run --coverage --exclude test/import-scenario-section-books.test.ts",
+    "test": "vitest run --config vitest.split.config.ts",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:db": "vitest run --config vitest.db.config.ts",
+    "test:split": "vitest run --config vitest.split.config.ts",
+    "test:coverage": "vitest run --coverage --config vitest.split.config.ts",
+    "test:coverage:serial": "vitest run --coverage --exclude test/import-scenario-section-books.test.ts",
     "test:slow:pdf": "vitest run test/import-scenario-section-books.test.ts",
     "test:full": "vitest run",
     "test:coverage:full": "vitest run --coverage",
