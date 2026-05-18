@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 
-import { createClient, type RedisClientType } from '@redis/client';
+import { createClient as createRedisClient, type RedisClientType } from '@redis/client';
 
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
 
@@ -170,6 +170,7 @@ function withRedisTimeout<T>(
 
 interface RedisTokenBucketStoreOptions {
   operationTimeoutMs?: number;
+  clientFactory?: () => RedisClientType;
 }
 
 function tokenBucketTtlMs(input: TokenBucketInput): number {
@@ -238,61 +239,112 @@ class NoopTokenBucketStore implements TokenBucketStore {
 }
 
 export class RedisTokenBucketStore implements TokenBucketStore {
-  private readonly client: RedisClientType;
+  private client: RedisClientType | undefined;
+  private readonly clientFactory: () => RedisClientType;
   private readonly operationTimeoutMs: number;
   private connectPromise: Promise<RedisClientType> | undefined;
 
   constructor(url: string, client?: RedisClientType, options: RedisTokenBucketStoreOptions = {}) {
-    this.client =
-      client ??
-      createClient({
-        url,
-        socket: {
-          connectTimeout: REDIS_OPERATION_TIMEOUT_MS,
-          socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
-        },
-      });
+    this.clientFactory =
+      options.clientFactory ??
+      (() =>
+        createRedisClient({
+          url,
+          socket: {
+            connectTimeout: REDIS_OPERATION_TIMEOUT_MS,
+            socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
+          },
+        }));
+    this.client = this.prepareClient(client ?? this.clientFactory());
     this.operationTimeoutMs = options.operationTimeoutMs ?? REDIS_OPERATION_TIMEOUT_MS;
-    this.client.on('error', (error: Error) => {
+  }
+
+  async consume(input: TokenBucketInput): Promise<TokenBucketDecision> {
+    const client = await this.connect();
+    try {
+      const raw = await withRedisTimeout(
+        client.eval(TOKEN_BUCKET_SCRIPT, {
+          keys: [input.key],
+          arguments: [
+            String(input.nowMs),
+            String(input.capacity),
+            String(input.refillIntervalMs),
+            String(input.refillTokens),
+            String(input.cost),
+            String(tokenBucketTtlMs(input)),
+          ],
+        }),
+        'redis rate-limit eval',
+        this.operationTimeoutMs,
+      );
+      return parseRedisDecision(raw);
+    } catch (error) {
+      this.resetClient(client);
+      throw error;
+    }
+  }
+
+  private createClient(): RedisClientType {
+    return this.prepareClient(this.clientFactory());
+  }
+
+  private prepareClient(client: RedisClientType): RedisClientType {
+    client.on('error', (error: Error) => {
+      this.resetClient(client);
       writeSecurityLog({
         event: 'rate_limit_redis_error',
         level: 'error',
         fields: errorLogFields(error),
       });
     });
+    return client;
   }
 
-  async consume(input: TokenBucketInput): Promise<TokenBucketDecision> {
-    await this.connect();
-    const raw = await withRedisTimeout(
-      this.client.eval(TOKEN_BUCKET_SCRIPT, {
-        keys: [input.key],
-        arguments: [
-          String(input.nowMs),
-          String(input.capacity),
-          String(input.refillIntervalMs),
-          String(input.refillTokens),
-          String(input.cost),
-          String(tokenBucketTtlMs(input)),
-        ],
-      }),
-      'redis rate-limit eval',
-      this.operationTimeoutMs,
-    );
-    return parseRedisDecision(raw);
+  private getClient(): RedisClientType {
+    this.client ??= this.createClient();
+    return this.client;
   }
 
-  private async connect(): Promise<void> {
-    if (this.client.isOpen) return;
-    this.connectPromise ??= this.client.connect().catch((error: unknown) => {
-      this.connectPromise = undefined;
+  private resetClient(client: RedisClientType): void {
+    if (this.client !== client) return;
+    this.connectPromise = undefined;
+    this.client = undefined;
+
+    try {
+      if (client.isOpen) client.destroy();
+    } catch {
+      // Discarding a broken limiter client is best-effort; the next request
+      // creates a fresh client and fails closed if Redis is still unavailable.
+    }
+  }
+
+  private async connect(): Promise<RedisClientType> {
+    let client = this.getClient();
+    if (client.isReady) return client;
+
+    if (client.isOpen) {
+      this.resetClient(client);
+      client = this.getClient();
+    }
+
+    this.connectPromise ??= client
+      .connect()
+      .then(() => client)
+      .catch((error: unknown) => {
+        this.resetClient(client);
+        throw error;
+      });
+
+    try {
+      return await withRedisTimeout(
+        this.connectPromise,
+        'redis rate-limit connect',
+        this.operationTimeoutMs,
+      );
+    } catch (error) {
+      this.resetClient(client);
       throw error;
-    });
-    await withRedisTimeout(
-      this.connectPromise,
-      'redis rate-limit connect',
-      this.operationTimeoutMs,
-    );
+    }
   }
 }
 
