@@ -8,6 +8,17 @@ import {
   RedisTokenBucketStore,
 } from '../src/rate-limit.ts';
 
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+} {
+  let resolve: (value: T | PromiseLike<T>) => void = () => {};
+  const promise = new Promise<T>((innerResolve) => {
+    resolve = innerResolve;
+  });
+  return { promise, resolve };
+}
+
 function createFakeRedisClient(options: {
   isOpen?: boolean;
   isReady?: boolean;
@@ -26,8 +37,13 @@ function createFakeRedisClient(options: {
     },
     on: vi.fn(),
     connect: vi.fn(() => {
-      if (options.connectPromise) return options.connectPromise;
       isOpen = true;
+      if (options.connectPromise) {
+        return options.connectPromise.then((value) => {
+          isReady = true;
+          return value;
+        });
+      }
       isReady = true;
       return Promise.resolve(client);
     }),
@@ -133,5 +149,39 @@ describe('RateLimiter', () => {
       }),
     ).rejects.toThrow('redis rate-limit connect timed out');
     expect(pendingClient.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses an in-flight Redis connect promise for concurrent callers', async () => {
+    const connect = createDeferred<unknown>();
+    const pendingClient = createFakeRedisClient({
+      connectPromise: connect.promise,
+    });
+    const store = new RedisTokenBucketStore('redis://example.test:6379', pendingClient);
+
+    const first = store.consume({
+      key: 'squire:rate-limit:first',
+      capacity: 10,
+      refillTokens: 10,
+      refillIntervalMs: 3_600_000,
+      cost: 1,
+      nowMs: 0,
+    });
+    const second = store.consume({
+      key: 'squire:rate-limit:second',
+      capacity: 10,
+      refillTokens: 10,
+      refillIntervalMs: 3_600_000,
+      cost: 1,
+      nowMs: 0,
+    });
+
+    expect(pendingClient.connect).toHaveBeenCalledTimes(1);
+    expect(pendingClient.destroy).not.toHaveBeenCalled();
+
+    connect.resolve(undefined);
+
+    await expect(first).resolves.toMatchObject({ allowed: true });
+    await expect(second).resolves.toMatchObject({ allowed: true });
+    expect(pendingClient.eval).toHaveBeenCalledTimes(2);
   });
 });

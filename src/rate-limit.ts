@@ -322,12 +322,25 @@ export class RedisTokenBucketStore implements TokenBucketStore {
     let client = this.getClient();
     if (client.isReady) return client;
 
+    if (this.connectPromise) {
+      try {
+        return await withRedisTimeout(
+          this.connectPromise,
+          'redis rate-limit connect',
+          this.operationTimeoutMs,
+        );
+      } catch (error) {
+        this.resetClient(client);
+        throw error;
+      }
+    }
+
     if (client.isOpen) {
       this.resetClient(client);
       client = this.getClient();
     }
 
-    this.connectPromise ??= client
+    this.connectPromise = client
       .connect()
       .then(() => client)
       .catch((error: unknown) => {
