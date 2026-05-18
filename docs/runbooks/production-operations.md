@@ -12,6 +12,8 @@ Actions after CI passes on `main`.
 - Fly app: `maz-squire`
 - Database: Fly Managed Postgres Basic, with `vector` enabled in the `public`
   schema of `fly-db`
+- Rate-limit store: Redis/Valkey-compatible service exposed through `REDIS_URL`
+  (Fly Upstash Redis for Phase 1)
 - Edge path: Route 53 `squire.maz.org` alias -> CloudFront distribution -> AWS
   WAF web ACL -> Fly origin
 - Origin lock: CloudFront sends `X-Origin-Secret`; Fly stores the matching value
@@ -45,6 +47,17 @@ forwarding to the origin. Local development and tests can still resolve a
 validated `X-Forwarded-For`, `X-Real-IP`, or `Fly-Client-IP` value when
 `ORIGIN_SHARED_SECRET` is unset.
 
+## Application rate limits
+
+AWS WAF remains the coarse outer filter. Squire-specific limits live in the app
+and use a Redis/Valkey-compatible token bucket (`REDIS_URL`) so limits are
+shared across app machines and restarts.
+
+`POST /register` is limited to 10 requests per hour per trusted client IP.
+Rate-limit denials return 429 with `Retry-After` and emit structured security
+log events with a hashed identity. They do not write `oauth_audit_log` rows;
+that table is for durable auth lifecycle state changes.
+
 ## Secrets and environment
 
 app-runtime secrets and settings belong in Fly:
@@ -61,6 +74,7 @@ app-runtime secrets and settings belong in Fly:
 - `LANGFUSE_PUBLIC_KEY`
 - `LANGFUSE_SECRET_KEY`
 - `ORIGIN_SHARED_SECRET`
+- `REDIS_URL`
 
 GitHub repository secrets:
 

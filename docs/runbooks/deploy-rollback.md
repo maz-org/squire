@@ -28,6 +28,7 @@ flyctl mpg create \
   --pg-major-version 16 \
   --volume-size 10
 flyctl mpg attach <cluster-id> --app maz-squire --variable-name DATABASE_URL
+flyctl redis create --name squire-rate-limit --region iad
 flyctl secrets set \
   ANTHROPIC_API_KEY='...' \
   SESSION_SECRET='...' \
@@ -38,12 +39,14 @@ flyctl secrets set \
   GOOGLE_OAUTH_CLIENT_SECRET='...' \
   SQUIRE_ALLOWED_EMAILS='...' \
   SQUIRE_ENV='production' \
+  REDIS_URL='redis://...' \
   ORIGIN_SHARED_SECRET='...'
 ```
 
 `flyctl mpg attach` writes the `DATABASE_URL` secret with the managed Postgres
-connection string. Do not put secrets in `.env`, `fly.toml`, Docker build args,
-or the image.
+connection string. `REDIS_URL` points at the Redis/Valkey-compatible rate-limit
+store. Do not put secrets in `.env`, `fly.toml`, Docker build args, or the
+image.
 
 Before the first deploy, open the Fly dashboard for the Managed Postgres
 cluster and enable the `vector` extension from the Extensions page:

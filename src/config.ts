@@ -25,12 +25,13 @@ const REQUIRED_SERVER_ENV = [
   'GOOGLE_OAUTH_CLIENT_ID',
   'GOOGLE_OAUTH_CLIENT_SECRET',
   'ORIGIN_SHARED_SECRET',
+  'REDIS_URL',
 ] as const;
 
 function requiredServerEnv(nodeEnv: string): readonly (typeof REQUIRED_SERVER_ENV)[number][] {
   if (nodeEnv === 'production') return REQUIRED_SERVER_ENV;
   return REQUIRED_SERVER_ENV.filter(
-    (name) => name !== 'DATABASE_URL' && name !== 'ORIGIN_SHARED_SECRET',
+    (name) => name !== 'DATABASE_URL' && name !== 'ORIGIN_SHARED_SECRET' && name !== 'REDIS_URL',
   );
 }
 
@@ -81,6 +82,7 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
   }
   validateUrl('DATABASE_URL', env.DATABASE_URL, invalid);
   validateUrl('LANGFUSE_BASEURL', env.LANGFUSE_BASEURL, invalid);
+  validateUrl('REDIS_URL', env.REDIS_URL, invalid);
 
   if (hasText(env.HOST) && env.HOST!.trim() !== env.HOST) {
     invalid.push({ name: 'HOST', message: 'must not contain leading or trailing whitespace' });

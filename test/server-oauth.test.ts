@@ -16,7 +16,7 @@
  * process restart) cannot be exercised against a fake `db.execute` stub.
  */
 
-import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 
 import { CODE_VERIFIER, CODE_CHALLENGE, makeAuthHelpers } from './helpers/server-oauth-helpers.ts';
 import { setupTestDb, resetTestDb, teardownTestDb } from './helpers/db.ts';
@@ -82,6 +82,12 @@ import { resetAuthProvider } from '../src/auth.ts';
 import { getDb, shutdownServerPool } from '../src/db.ts';
 import { oauthAuditLog } from '../src/db/schema/auth.ts';
 import { eq } from 'drizzle-orm';
+import {
+  InMemoryTokenBucketStore,
+  RateLimiter,
+  resetRateLimiterForTesting,
+  setRateLimiterForTesting,
+} from '../src/rate-limit.ts';
 
 const { auth, resetTestToken } = makeAuthHelpers(app);
 
@@ -94,6 +100,10 @@ beforeEach(() => {
   mockRefreshInitializationIfReady.mockResolvedValue(undefined);
   mockGetBootstrapStatus.mockReturnValue(makeStatus());
   mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
+});
+
+afterEach(() => {
+  resetRateLimiterForTesting();
 });
 
 afterAll(async () => {
@@ -153,6 +163,30 @@ describe('POST /register', () => {
     resetTestToken();
   });
 
+  function enableInMemoryRegisterLimiter() {
+    setRateLimiterForTesting(
+      new RateLimiter(new InMemoryTokenBucketStore(), {
+        identitySecret: 'server-oauth-rate-limit-test-secret',
+        nowMs: () => 1_000_000,
+      }),
+    );
+  }
+
+  function registerFromIp(ip: string, index: number) {
+    return app.request('http://localhost:3000/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': ip,
+      },
+      body: JSON.stringify({
+        redirect_uris: [`http://localhost:8080/callback-${index}`],
+        client_name: `Rate Limited Client ${index}`,
+        token_endpoint_auth_method: 'none',
+      }),
+    });
+  }
+
   it('registers a client and returns client_id', async () => {
     const res = await app.request('http://localhost:3000/register', {
       method: 'POST',
@@ -211,6 +245,68 @@ describe('POST /register', () => {
       if (previousOriginSecret === undefined) delete process.env.ORIGIN_SHARED_SECRET;
       else process.env.ORIGIN_SHARED_SECRET = previousOriginSecret;
     }
+  });
+
+  it('rate limits the 11th registration request from one resolved IP', async () => {
+    enableInMemoryRegisterLimiter();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      for (let i = 0; i < 10; i += 1) {
+        const res = await registerFromIp('198.51.100.50', i);
+        expect(res.status).toBe(201);
+      }
+
+      const limited = await registerFromIp('198.51.100.50', 11);
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get('retry-after')).toBe('360');
+      await expect(limited.json()).resolves.toMatchObject({
+        error: 'rate_limited',
+        retry_after_seconds: 360,
+      });
+
+      const logLine = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => {
+          return line.includes('"event":"rate_limit_rejected"');
+        });
+      expect(logLine).toBeTruthy();
+      expect(logLine).not.toContain('198.51.100.50');
+
+      const event = JSON.parse(logLine!);
+      expect(event).toMatchObject({
+        level: 'warn',
+        event: 'rate_limit_rejected',
+        route: '/register',
+        method: 'POST',
+        policy: 'oauth_register_ip',
+        limit: 10,
+        window_ms: 3_600_000,
+        retry_after_seconds: 360,
+      });
+      expect(event.identity_hash).toMatch(/^[A-Za-z0-9_-]{32}$/);
+
+      const { db } = getDb('server');
+      const auditRows = await db
+        .select()
+        .from(oauthAuditLog)
+        .where(eq(oauthAuditLog.eventType, 'register'));
+      expect(auditRows).toHaveLength(10);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('keeps independent buckets for different resolved IPs', async () => {
+    enableInMemoryRegisterLimiter();
+
+    for (let i = 0; i < 10; i += 1) {
+      const res = await registerFromIp('198.51.100.60', i);
+      expect(res.status).toBe(201);
+    }
+
+    const otherIp = await registerFromIp('198.51.100.61', 99);
+    expect(otherIp.status).toBe(201);
   });
 
   it('returns 400 for missing redirect_uris', async () => {
