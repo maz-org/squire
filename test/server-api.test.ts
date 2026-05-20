@@ -596,6 +596,42 @@ describe('POST /api/ask', () => {
     );
   });
 
+  it('correlates REST ask traces with an HTTP request ID', async () => {
+    const response = await app.request('/api/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Request-ID': 'req-from-edge',
+        ...(await auth()),
+      },
+      body: JSON.stringify({ question: 'What is loot?' }),
+    });
+
+    expect(response.headers.get('X-Request-ID')).toBe('req-from-edge');
+    expect(mockAsk).toHaveBeenCalledWith(
+      'What is loot?',
+      expect.objectContaining({ requestId: 'req-from-edge' }),
+    );
+  });
+
+  it('replaces malformed REST request IDs before trace correlation', async () => {
+    const response = await app.request('/api/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Request-ID': 'bad request id',
+        ...(await auth()),
+      },
+      body: JSON.stringify({ question: 'What is loot?' }),
+    });
+
+    const requestId = response.headers.get('X-Request-ID');
+    expect(requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(mockAsk).toHaveBeenCalledWith('What is loot?', expect.objectContaining({ requestId }));
+  });
+
   it('passes toolSurface to ask()', async () => {
     await app.request('/api/ask', {
       method: 'POST',

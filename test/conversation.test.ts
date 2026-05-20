@@ -973,12 +973,16 @@ describe('conversation web backend', () => {
     });
 
     expect(followUpRes.status).toBe(302);
+    const conversationId = location.split('/').at(-1)!;
     expect(mockAsk).toHaveBeenNthCalledWith(2, 'Second question', {
       history: [
         { role: 'user', content: 'First question' },
         { role: 'assistant', content: 'First answer.' },
       ],
       userId: auth.userId,
+      requestId: expect.any(String),
+      conversationId,
+      userMessageId: expect.any(String),
       // SQR-98: persistAssistantOutcome always installs an emit wrapper
       // that captures consulted_sources, so `ask()` now receives a
       // function here on every path (SSE or not).
@@ -1132,6 +1136,9 @@ describe('conversation web backend', () => {
     expect(mockAsk).toHaveBeenCalledWith('Stranded question', {
       history: [],
       userId: auth.userId,
+      requestId: expect.any(String),
+      conversationId: conversation.id,
+      userMessageId: userMessage.id,
       emit: expect.any(Function),
     });
 
@@ -1383,6 +1390,9 @@ describe('conversation web backend', () => {
         content: `Seed message ${index + 5}`,
       })),
       userId: auth.userId,
+      requestId: expect.any(String),
+      conversationId: conversation.id,
+      userMessageId: expect.any(String),
       emit: expect.any(Function),
     });
   });

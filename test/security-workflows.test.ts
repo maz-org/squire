@@ -28,6 +28,18 @@ describe('security workflows', () => {
     expect(securityDocs).toContain('low and moderate findings stay non-blocking');
   });
 
+  it('keeps the MCP threat model aligned with the bearer-auth route', async () => {
+    const securityDocs = await readProjectFile('docs/SECURITY.md');
+    const server = await readProjectFile('src/server.ts');
+
+    expect(server).toContain("app.use('/mcp', requireBearerAuth())");
+    expect(securityDocs).toContain('MCP Bearer-Auth Boundary');
+    expect(securityDocs).toContain('The `/mcp` endpoint is no longer pre-auth');
+    expect(securityDocs).toContain('Keep `/mcp` behind `requireBearerAuth()`');
+    expect(securityDocs).not.toContain('The `/mcp` endpoint is currently open with no auth');
+    expect(securityDocs).not.toContain('Do not deploy to a public network until auth is wired up');
+  });
+
   it('routes high and critical security alerts into Linear', async () => {
     const workflow = await readProjectFile('.github/workflows/security-alert-linear-sync.yml');
     const securityDocs = await readProjectFile('docs/SECURITY.md');

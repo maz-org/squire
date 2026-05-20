@@ -166,10 +166,64 @@ Then verify the user flow in a browser:
 Check Langfuse after the question:
 
 - Filter to `env:production`.
-- Confirm the root agent trace has the user input.
-- Confirm the final output is present.
-- Confirm agent-run tags include enough context to identify runtime, provider,
-  model, and production traffic.
+- Confirm the root `squire.agent.run` trace has the user input and final output.
+- Confirm `metadata.squireEnv` is `production`.
+- Confirm `metadata.requestId` is present for the HTTP request that generated
+  the answer.
+- Confirm web-chat traces include `metadata.conversationId`,
+  `metadata.userMessageId`, and `metadata.userId`; REST `/api/ask` traces may
+  also include `metadata.campaignId` when the caller provides it.
+- Confirm agent-run tags identify runtime, provider, model, tool surface, and
+  production traffic.
+- Confirm child generation and tool observations show model/provider usage,
+  tool names, compact tool inputs, tool summaries, canonical refs, and errors
+  without raw email addresses or session cookies.
+
+## Troubleshoot one production chat
+
+Use this path when a user reports a bad answer, failed stream, or suspicious
+chat behavior.
+
+1. Start with the browser URL. `/chat/<conversationId>` gives the persisted
+   conversation UUID. The pending answer stream URL
+   `/chat/<conversationId>/messages/<userMessageId>/stream` gives the user
+   message UUID for the exact turn.
+2. Search Langfuse in `env:production` for a `squire.agent.run` trace whose
+   metadata has that `conversationId` and `userMessageId`. If the report came
+   from REST `/api/ask`, search by the `X-Request-ID` response header or caller
+   log value instead.
+3. In the root trace, inspect:
+   - input question and final answer or error output
+   - `metadata.userId`, `metadata.conversationId`, `metadata.userMessageId`,
+     `metadata.requestId`, `metadata.squireEnv`
+   - `metadata.model`, `metadata.toolSurface`, iterations, tool-call count, and
+     stop reason
+   - tags: `runtime`, provider (`anthropic`), SDK (`claude-sdk`), model, tool
+     surface, and `env:production`
+4. Open child observations in order. Generation observations show compact model
+   input/output, stop reason, and token usage. Tool observations show tool name,
+   compact input, output summary, source labels, canonical refs, and tool
+   errors.
+5. If Langfuse has no trace for the turn, check Fly logs around the same time
+   and request ID:
+
+   ```bash
+   fly logs -a maz-squire --no-tail | grep '<requestId>'
+   fly logs -a maz-squire --no-tail | grep '<conversationId>'
+   ```
+
+6. If the failure follows a deploy, check the GitHub deploy run before changing
+   app code:
+
+   ```bash
+   gh run list --workflow "Deploy to Fly" --branch main --limit 5
+   gh run view <run-id> --log
+   gh api 'repos/maz-org/squire/deployments?environment=production'
+   ```
+
+Do not paste raw user questions, email addresses, cookies, bearer tokens, or
+full trace payloads into issues. Use UUIDs, request IDs, model/tool metadata,
+stop reasons, and short redacted excerpts.
 
 Probe the edge:
 
