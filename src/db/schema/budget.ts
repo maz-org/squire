@@ -1,4 +1,14 @@
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  check,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { users } from './core.ts';
 
@@ -33,5 +43,11 @@ export const llmBudgetWarnings = pgTable(
     budgetUsdMicros: integer('budget_usd_micros').notNull(),
     emittedAt: timestamp('emitted_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex('llm_budget_warnings_day_threshold_idx').on(t.budgetDay, t.thresholdPercent)],
+  (t) => [
+    uniqueIndex('llm_budget_warnings_day_threshold_idx').on(t.budgetDay, t.thresholdPercent),
+    check(
+      'llm_budget_warnings_threshold_percent_chk',
+      sql`${t.thresholdPercent} >= 1 AND ${t.thresholdPercent} <= 100`,
+    ),
+  ],
 );

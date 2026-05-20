@@ -18,7 +18,8 @@ CREATE TABLE "llm_budget_warnings" (
 	"threshold_percent" integer NOT NULL,
 	"spent_usd_micros" integer NOT NULL,
 	"budget_usd_micros" integer NOT NULL,
-	"emitted_at" timestamp with time zone DEFAULT now() NOT NULL
+	"emitted_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "llm_budget_warnings_threshold_percent_chk" CHECK ("threshold_percent" >= 1 AND "threshold_percent" <= 100)
 );
 --> statement-breakpoint
 ALTER TABLE "llm_budget_ledger" ADD CONSTRAINT "llm_budget_ledger_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
