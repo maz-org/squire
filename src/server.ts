@@ -29,9 +29,12 @@ import { originSharedSecretMiddleware } from './origin-lock.ts';
 import { resolveTrustedClientIp } from './http/trusted-client-ip.ts';
 import { LlmBudgetExceededError } from './llm-budget.ts';
 import {
+  GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY,
+  GOOGLE_OAUTH_START_RATE_LIMIT_POLICY,
   getDefaultRateLimiter,
   MCP_REQUEST_RATE_LIMIT_POLICY,
   REGISTER_CLIENT_RATE_LIMIT_POLICY,
+  type RateLimitPolicy,
   type RateLimitDecision,
 } from './rate-limit.ts';
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
@@ -176,6 +179,11 @@ async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
   });
 }
 
+async function checkIpRateLimit(c: Context, policy: RateLimitPolicy): Promise<RateLimitDecision> {
+  const identity = resolveTrustedClientIp(c.req) ?? 'unknown';
+  return getDefaultRateLimiter().consume({ policy, identity });
+}
+
 function rateLimitedResponse(c: Context, decision: RateLimitDecision) {
   const retryAfterSeconds = Math.max(1, decision.retryAfterSeconds);
   writeSecurityLog({
@@ -203,6 +211,33 @@ function rateLimitedResponse(c: Context, decision: RateLimitDecision) {
   );
 }
 
+function googleOAuthRateLimitedResponse(c: Context, decision: RateLimitDecision, route: string) {
+  const retryAfterSeconds = Math.max(1, decision.retryAfterSeconds);
+  writeSecurityLog({
+    event: 'rate_limit_rejected',
+    fields: {
+      route,
+      method: 'GET',
+      policy: decision.policy.name,
+      limit: decision.policy.limit,
+      window_ms: decision.policy.windowMs,
+      identity_hash: decision.identityHash,
+      retry_after_seconds: retryAfterSeconds,
+      reset_after_seconds: decision.resetAfterSeconds,
+    },
+  });
+
+  c.header('Retry-After', String(retryAfterSeconds));
+  return c.json(
+    {
+      error: 'rate_limited',
+      error_description: 'Too many sign-in attempts. Try again later.',
+      retry_after_seconds: retryAfterSeconds,
+    },
+    429,
+  );
+}
+
 function rateLimitUnavailableResponse(c: Context, error: unknown) {
   writeSecurityLog({
     event: 'rate_limit_unavailable',
@@ -219,6 +254,32 @@ function rateLimitUnavailableResponse(c: Context, error: unknown) {
     {
       error: 'temporarily_unavailable',
       error_description: 'Registration is temporarily unavailable. Try again later.',
+    },
+    503,
+  );
+}
+
+function googleOAuthRateLimitUnavailableResponse(
+  c: Context,
+  error: unknown,
+  route: string,
+  policy: RateLimitPolicy,
+) {
+  writeSecurityLog({
+    event: 'rate_limit_unavailable',
+    level: 'error',
+    fields: {
+      route,
+      method: 'GET',
+      policy: policy.name,
+      ...errorLogFields(error),
+    },
+  });
+
+  return c.json(
+    {
+      error: 'temporarily_unavailable',
+      error_description: 'Sign-in is temporarily unavailable. Try again later.',
     },
     503,
   );
@@ -650,6 +711,19 @@ app.post('/token', async (c) => {
 const PKCE_COOKIE_NAME = 'squire_oauth_pkce';
 
 app.get('/auth/google/start', async (c) => {
+  let rateLimit: RateLimitDecision;
+  try {
+    rateLimit = await checkIpRateLimit(c, GOOGLE_OAUTH_START_RATE_LIMIT_POLICY);
+  } catch (error) {
+    return googleOAuthRateLimitUnavailableResponse(
+      c,
+      error,
+      '/auth/google/start',
+      GOOGLE_OAUTH_START_RATE_LIMIT_POLICY,
+    );
+  }
+  if (!rateLimit.allowed) return googleOAuthRateLimitedResponse(c, rateLimit, '/auth/google/start');
+
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = computeCodeChallenge(codeVerifier);
@@ -670,6 +744,21 @@ app.get('/auth/google/start', async (c) => {
 });
 
 app.get('/auth/google/callback', async (c) => {
+  let rateLimit: RateLimitDecision;
+  try {
+    rateLimit = await checkIpRateLimit(c, GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY);
+  } catch (error) {
+    return googleOAuthRateLimitUnavailableResponse(
+      c,
+      error,
+      '/auth/google/callback',
+      GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY,
+    );
+  }
+  if (!rateLimit.allowed) {
+    return googleOAuthRateLimitedResponse(c, rateLimit, '/auth/google/callback');
+  }
+
   // Check for error from Google (e.g., user clicked Cancel)
   const error = c.req.query('error');
   if (error) {

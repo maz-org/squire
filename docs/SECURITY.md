@@ -78,6 +78,10 @@ planned as a custom implementation inside the Hono server.
   non-local hosts still use the configured redirect URI
 - Rate limit client registration (10/hour per trusted client IP) through the
   Redis/Valkey-backed app limiter from SQR-52 / ADR 0018
+- Rate limit Google OAuth web login initiation and callback routes
+  (`/auth/google/start` at 10/minute and `/auth/google/callback` at 20/minute
+  per trusted client IP) through the same Redis/Valkey-backed limiter; denials
+  are structured logs, not `oauth_audit_log` rows
 - **Long-lived access tokens (30-day default)** stored as SHA-256 hashes at rest.
   Long-lived tokens are a deliberate developer-experience choice for MCP and API
   clients — short-lived tokens with refresh rotation force every client (Claude
