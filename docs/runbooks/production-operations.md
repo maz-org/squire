@@ -75,6 +75,16 @@ app-runtime secrets and settings belong in Fly:
 - `LANGFUSE_SECRET_KEY`
 - `ORIGIN_SHARED_SECRET`
 - `REDIS_URL`
+- `SQUIRE_LLM_DAILY_BUDGET_USD=10`
+- `SQUIRE_LLM_BUDGET_WARNING_THRESHOLD=0.8`
+- `SQUIRE_LLM_INPUT_USD_PER_MILLION_TOKENS=3`
+- `SQUIRE_LLM_OUTPUT_USD_PER_MILLION_TOKENS=15`
+- `SQUIRE_LLM_CACHE_CREATION_INPUT_USD_PER_MILLION_TOKENS=6`
+- `SQUIRE_LLM_CACHE_READ_INPUT_USD_PER_MILLION_TOKENS=0.3`
+
+The LLM budget circuit breaker uses Postgres as the durable ledger and resets
+at UTC midnight. Langfuse remains the trace/debug surface; do not rely on it for
+budget admission.
 
 GitHub repository secrets:
 
