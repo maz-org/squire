@@ -33,6 +33,9 @@ describe('production data lifecycle workflows', () => {
     expect(() =>
       assertProductionDatabaseUrl('postgres://squire:squire@127.0.0.1:5432/fly-db'),
     ).toThrow(/local database/);
+    expect(() => assertProductionDatabaseUrl('postgres://squire:squire@db.internal')).toThrow(
+      /explicit database name/,
+    );
     expect(() =>
       assertProductionDatabaseUrl('postgres://squire:squire@db.internal:5432/squire_test'),
     ).toThrow(/dev\/test database/);

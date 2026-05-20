@@ -52,6 +52,9 @@ export function assertProductionDatabaseUrl(rawUrl: string | undefined): string 
   }
 
   const dbName = decodeURIComponent(parsed.pathname.replace(/^\/+/, '')).toLowerCase();
+  if (!dbName) {
+    throw new Error('DATABASE_URL must include an explicit database name.');
+  }
   if (dbName === 'squire' || /(^|[_-])(dev|test)($|[_-])/.test(dbName)) {
     throw new Error(
       `Refusing to run a production data workflow against dev/test database "${dbName}".`,
