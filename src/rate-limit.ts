@@ -65,6 +65,12 @@ export const REGISTER_CLIENT_RATE_LIMIT_POLICY: RateLimitPolicy = {
   windowMs: 60 * 60 * 1000,
 };
 
+export const MCP_REQUEST_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'mcp_request',
+  limit: 120,
+  windowMs: 60 * 1000,
+};
+
 function hasText(value: string | undefined): value is string {
   return value !== undefined && value.trim().length > 0;
 }

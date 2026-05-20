@@ -58,6 +58,13 @@ Rate-limit denials return 429 with `Retry-After` and emit structured security
 log events with a hashed identity. They do not write `oauth_audit_log` rows;
 that table is for durable auth lifecycle state changes.
 
+`/mcp` is limited to 120 requests per minute per authenticated token user when
+available, otherwise per OAuth client id. Unauthenticated or malformed requests
+fall back to the trusted client IP resolver, then a shared `unknown` bucket if no
+trusted IP can be resolved. MCP denials return HTTP 429 before the Streamable
+HTTP transport starts and emit the same structured `rate_limit_rejected` log
+shape with `identity_kind` set to `user`, `client`, `ip`, or `unknown`.
+
 ## Secrets and environment
 
 app-runtime secrets and settings belong in Fly:

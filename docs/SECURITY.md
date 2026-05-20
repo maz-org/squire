@@ -175,24 +175,28 @@ attacker could run up significant costs.
 - Embedding result cache (same query leads to same embedding)
 - Monitor API spend with alerts
 
-### 6. Pre-Auth MCP Exposure
+### 6. MCP Exposure
 
-The `/mcp` endpoint is currently open with no auth. If the server is
-network-accessible before the auth module is built, all tools are
-exposed.
+The `/mcp` endpoint is a public agent-facing API surface. It is protected by
+OAuth 2.1 bearer tokens and the same Redis/Valkey-backed app limiter used for
+other interactive surfaces.
 
 **Attack scenarios:**
 
-- Any network client can list tools, call `search_rules`, enumerate all
-  card data
-- Not damaging for game data, but sets a bad precedent — if campaign
-  tools are added before auth, private data is exposed
+- Stolen or leaked bearer tokens can list tools and call rules/search tools
+- Invalid-token or unauthenticated floods can still hit the HTTP auth surface
+- High-rate valid clients can create many MCP transports and tool calls
 
 **Mitigations:**
 
-- Do not deploy to a public network until auth is wired up (Linear: User Accounts project, SQR-37/38/39/40)
+- Require OAuth 2.1 bearer auth on `/mcp`
+- Rate limit `/mcp` to 120 requests per minute per token user when present,
+  otherwise per OAuth client id
+- Rate limit unauthenticated or malformed `/mcp` requests by trusted client IP
+  fallback, then by a shared `unknown` bucket
+- Return HTTP 429 before the Streamable HTTP transport starts and emit
+  structured, PII-safe rate-limit logs
 - For dev, bind to localhost only
-- Consider a simple API key middleware as a stopgap before full OAuth
 
 ### 7. Web UI XSS via LLM Output
 
@@ -315,7 +319,8 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 **Mitigations:**
 
-- Rate limiting per-IP and per-user
+- Redis/Valkey-backed app rate limits per trusted IP, OAuth client, and token
+  user where available
 - Connection limits
 - Response size limits
 - Consider caching for embeddings and frequent queries
