@@ -77,8 +77,16 @@ describe('production data lifecycle workflows', () => {
   });
 
   it('allows a local Fly proxy connection only when the production target URL is separate', () => {
-    const productionUrl = 'postgres://squire:secret@pgbouncer.internal:5432/fly-db';
-    const proxyUrl = 'postgres://squire:secret@127.0.0.1:15432/fly-db';
+    const productionUrl = postgresFixtureUrl({
+      host: 'pgbouncer.internal',
+      port: 5432,
+      database: 'fly-db',
+    });
+    const proxyUrl = postgresFixtureUrl({
+      host: '127.0.0.1',
+      port: 15432,
+      database: 'fly-db',
+    });
 
     expect(() => assertProductionDatabaseUrl(proxyUrl)).toThrow(/local database/);
     expect(
@@ -101,7 +109,11 @@ describe('production data lifecycle workflows', () => {
     ).toBe(productionUrl);
     expect(() =>
       getProductionDatabaseConnectionUrl({
-        DATABASE_URL: 'postgres://squire:secret@staging.internal:5432/fly-db',
+        DATABASE_URL: postgresFixtureUrl({
+          host: 'staging.internal',
+          port: 5432,
+          database: 'fly-db',
+        }),
         PRODUCTION_DATABASE_URL: productionUrl,
       }),
     ).toThrow(/local Fly proxy/);
