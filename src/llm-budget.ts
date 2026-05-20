@@ -53,7 +53,7 @@ function parsePositiveNumber(value: string | undefined, fallback: number): numbe
 function parseRatio(value: string | undefined, fallback: number): number {
   if (value === undefined || value.trim() === '') return fallback;
   const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 && parsed < 1 ? parsed : fallback;
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 1 ? parsed : fallback;
 }
 
 export function loadLlmBudgetConfig(env: NodeJS.ProcessEnv = process.env): LlmBudgetConfig {

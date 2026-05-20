@@ -1283,8 +1283,9 @@ app.post('/api/ask', async (c) => {
   if (bootstrapError) return bootstrapError;
 
   const { question, ...options } = result.data;
+  delete options.userId;
   try {
-    await ensureAskBudgetAvailable(options.userId ?? null);
+    await ensureAskBudgetAvailable(null);
   } catch (error) {
     if (error instanceof LlmBudgetExceededError) return budgetExceededResponse(c, error);
     throw error;

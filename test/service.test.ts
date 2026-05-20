@@ -6,6 +6,7 @@ const {
   mockRunAgentLoopWithTrajectory,
   mockAssertLlmBudgetAvailable,
   mockRecordLlmUsage,
+  mockWriteSecurityLog,
   mockEmbed,
   mockInitializeRetrieval,
   mockGetRetrievalBootstrapStatus,
@@ -15,6 +16,7 @@ const {
   mockRunAgentLoopWithTrajectory: vi.fn(),
   mockAssertLlmBudgetAvailable: vi.fn(),
   mockRecordLlmUsage: vi.fn(),
+  mockWriteSecurityLog: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
   mockGetRetrievalBootstrapStatus: vi.fn(),
@@ -29,6 +31,11 @@ vi.mock('../src/agent.ts', () => ({
 vi.mock('../src/llm-budget.ts', () => ({
   assertLlmBudgetAvailable: mockAssertLlmBudgetAvailable,
   recordLlmUsage: mockRecordLlmUsage,
+}));
+
+vi.mock('../src/security-log.ts', () => ({
+  errorLogFields: vi.fn(() => ({ error_type: 'Error', error_code: null })),
+  writeSecurityLog: mockWriteSecurityLog,
 }));
 
 vi.mock('../src/tools.ts', () => ({
@@ -317,6 +324,7 @@ describe('ask', () => {
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
     mockAssertLlmBudgetAvailable.mockResolvedValue(undefined);
     mockRecordLlmUsage.mockResolvedValue(undefined);
+    mockWriteSecurityLog.mockReset();
     mockRunAgentLoopWithTrajectory.mockResolvedValue({
       answer: 'You pick up loot tokens in your hex.',
       trajectory: {
@@ -367,6 +375,25 @@ describe('ask', () => {
     });
   });
 
+  it('returns the successful answer when usage accounting fails after the model run', async () => {
+    mockRecordLlmUsage.mockRejectedValueOnce(new Error('database unavailable'));
+
+    const result = await ask('What is the loot action?');
+
+    expect(result).toBe('You pick up loot tokens in your hex.');
+    expect(mockWriteSecurityLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'llm_budget_accounting_failed',
+        level: 'error',
+        fields: expect.objectContaining({
+          model: 'claude-sonnet-4-6',
+          has_user_id: false,
+          error_type: 'Error',
+        }),
+      }),
+    );
+  });
+
   it('does not run the agent loop when budget admission fails', async () => {
     mockAssertLlmBudgetAvailable.mockRejectedValueOnce(new Error('daily budget exceeded'));
 
@@ -405,9 +432,6 @@ describe('ask', () => {
     await refreshBootstrapState();
 
     await expect(ask('test after regression')).rejects.toThrow(/database unavailable/i);
-    expect(mockRunAgentLoopWithTrajectory).not.toHaveBeenCalledWith(
-      'test after regression',
-      undefined,
-    );
+    expect(mockRunAgentLoopWithTrajectory).not.toHaveBeenCalled();
   });
 });

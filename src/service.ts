@@ -13,6 +13,7 @@ import {
 import { listCardTypes } from './tools.ts';
 import { runAgentLoopWithTrajectory } from './agent.ts';
 import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
+import { errorLogFields, writeSecurityLog } from './security-log.ts';
 import {
   SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE,
   type ScenarioSectionBooksBootstrapStatus,
@@ -558,10 +559,22 @@ export async function ask(question: string, options?: AskOptions): Promise<strin
     question,
     Object.keys(agentOptions).length > 0 ? agentOptions : undefined,
   );
-  await recordLlmUsage({
-    userId,
-    model: result.trajectory.model,
-    usage: result.trajectory.tokenUsage,
-  });
+  try {
+    await recordLlmUsage({
+      userId,
+      model: result.trajectory.model,
+      usage: result.trajectory.tokenUsage,
+    });
+  } catch (error) {
+    writeSecurityLog({
+      event: 'llm_budget_accounting_failed',
+      level: 'error',
+      fields: {
+        model: result.trajectory.model,
+        has_user_id: userId !== null,
+        ...errorLogFields(error),
+      },
+    });
+  }
   return result.answer;
 }

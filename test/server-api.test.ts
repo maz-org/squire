@@ -614,7 +614,7 @@ describe('POST /api/ask', () => {
     expect(mockAsk).toHaveBeenCalledWith('What about traps?', expect.objectContaining({ history }));
   });
 
-  it('passes campaignId and userId to ask()', async () => {
+  it('ignores client-supplied userId on the bearer API path', async () => {
     const campaignId = '550e8400-e29b-41d4-a716-446655440000';
     const userId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
     await app.request('/api/ask', {
@@ -622,10 +622,12 @@ describe('POST /api/ask', () => {
       headers: { 'Content-Type': 'application/json', ...(await auth()) },
       body: JSON.stringify({ question: 'What items do I have?', campaignId, userId }),
     });
+    expect(mockEnsureAskBudgetAvailable).toHaveBeenCalledWith(null);
     expect(mockAsk).toHaveBeenCalledWith(
       'What items do I have?',
-      expect.objectContaining({ campaignId, userId }),
+      expect.objectContaining({ campaignId }),
     );
+    expect(mockAsk.mock.calls[0]?.[1]).not.toHaveProperty('userId');
   });
 
   it('correlates REST ask traces with an HTTP request ID', async () => {
