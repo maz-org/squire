@@ -99,6 +99,7 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('NODE_ENV: production');
     expect(workflow).toContain('SQUIRE_ENV: production');
     expect(workflow).toContain('superfly/flyctl-actions/setup-flyctl');
+    expect(workflow).toContain('flyctl wireguard websockets enable');
     expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
     expect(workflow).toContain('echo "::add-mask::$proxied_url"');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
