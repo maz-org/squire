@@ -1,7 +1,10 @@
 import { createHmac } from 'node:crypto';
 
 import { createClient as createRedisClient, type RedisClientType } from '@redis/client';
-import { RateLimiterRedis as FlexibleRedisRateLimiter } from 'rate-limiter-flexible';
+import {
+  RateLimiterMemory as FlexibleMemoryRateLimiter,
+  RateLimiterRedis as FlexibleRedisRateLimiter,
+} from 'rate-limiter-flexible';
 
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
 
@@ -259,6 +262,18 @@ export class FlexibleRateLimitStore implements TokenBucketStore {
   }
 }
 
+export class MemoryRateLimitStore extends FlexibleRateLimitStore {
+  constructor() {
+    super({
+      createLimiter: ({ points, durationSeconds }) =>
+        new FlexibleMemoryRateLimiter({
+          duration: durationSeconds,
+          points,
+        }),
+    });
+  }
+}
+
 export class RedisRateLimitStore extends FlexibleRateLimitStore {
   private client: RedisClientType;
   private readonly clientFactory: () => RedisClientType;
@@ -434,7 +449,7 @@ export function createRateLimiterFromEnv(env: NodeJS.ProcessEnv = process.env): 
     throw new Error('REDIS_URL must be set in production to enable app rate limiting');
   }
 
-  return new RateLimiter(new InMemoryTokenBucketStore(), {
+  return new RateLimiter(new MemoryRateLimitStore(), {
     identitySecret: identitySecretFromEnv(env),
   });
 }
