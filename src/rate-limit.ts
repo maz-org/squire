@@ -58,7 +58,6 @@ const DEFAULT_KEY_PREFIX = 'squire:rate-limit';
 const TEST_IDENTITY_SECRET = 'squire-test-rate-limit-identity-secret';
 const DEV_IDENTITY_SECRET = 'squire-development-rate-limit-identity-secret';
 const REDIS_OPERATION_TIMEOUT_MS = 2_000;
-const REDIS_SOCKET_TIMEOUT_MS = 10_000;
 
 export const REGISTER_CLIENT_RATE_LIMIT_POLICY: RateLimitPolicy = {
   name: 'oauth_register_ip',
@@ -290,7 +289,6 @@ export class RedisRateLimitStore extends FlexibleRateLimitStore {
           url,
           socket: {
             connectTimeout: operationTimeoutMs,
-            socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
           },
         }));
     const redisClient = client ?? clientFactory();
