@@ -542,15 +542,19 @@ function agentRunTraceAttributes({
   question,
   model,
   toolSurface,
+  options,
   result,
   evalRun = false,
 }: {
   question: string;
   model: string;
   toolSurface: AgentToolSurface | undefined;
+  options?: AskOptions;
   result?: AgentRunResult;
   evalRun?: boolean;
 }): Attributes {
+  const correlationMetadata = agentCorrelationMetadata(options);
+
   return {
     ...createTraceAttributes({
       input: { question },
@@ -568,6 +572,7 @@ function agentRunTraceAttributes({
         eval: evalRun,
         model,
         toolSurface: toolSurface ?? 'legacy',
+        ...correlationMetadata,
         ...(result
           ? {
               iterations: result.trajectory.iterations,
@@ -577,8 +582,33 @@ function agentRunTraceAttributes({
           : {}),
       },
     }),
+    ...agentCorrelationAttributes(options),
     [LangfuseOtelSpanAttributes.TRACE_TAGS]: agentTraceTags({ model, toolSurface, evalRun }),
   };
+}
+
+function agentCorrelationMetadata(options: AskOptions | undefined): Record<string, string> {
+  const metadata: Record<string, string> = {
+    squireEnv: resolveSquireEnv(),
+  };
+  if (options?.requestId) metadata.requestId = options.requestId;
+  if (options?.conversationId) metadata.conversationId = options.conversationId;
+  if (options?.userMessageId) metadata.userMessageId = options.userMessageId;
+  if (options?.userId) metadata.userId = options.userId;
+  if (options?.campaignId) metadata.campaignId = options.campaignId;
+  return metadata;
+}
+
+function agentCorrelationAttributes(options: AskOptions | undefined): Attributes {
+  const attributes: Attributes = {
+    'squire.env': resolveSquireEnv(),
+  };
+  if (options?.requestId) attributes['squire.request_id'] = options.requestId;
+  if (options?.conversationId) attributes['squire.conversation_id'] = options.conversationId;
+  if (options?.userMessageId) attributes['squire.user_message_id'] = options.userMessageId;
+  if (options?.userId) attributes['squire.user_id'] = options.userId;
+  if (options?.campaignId) attributes['squire.campaign_id'] = options.campaignId;
+  return attributes;
 }
 
 function addUsage(total: TokenUsage, response: Message): void {
@@ -915,6 +945,7 @@ export async function runAgentLoopWithTrajectory(
           question,
           model: AGENT_MODEL,
           toolSurface: options?.toolSurface,
+          options,
         }),
       );
       const result = await runAgentLoopInternal(question, options);
@@ -923,6 +954,7 @@ export async function runAgentLoopWithTrajectory(
           question,
           model: result.trajectory.model,
           toolSurface: options?.toolSurface,
+          options,
           result,
         }),
         'squire.agent.model': result.trajectory.model,
@@ -939,6 +971,7 @@ export async function runAgentLoopWithTrajectory(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       runSpan.setAttributes({
+        ...agentCorrelationAttributes(options),
         ...createTraceAttributes({
           output: { error: message },
         }),

@@ -525,6 +525,12 @@ export interface AskOptions {
   campaignId?: string;
   /** User UUID — reserved for future player context loading. */
   userId?: string;
+  /** HTTP request ID for REST callers that do not have a persisted conversation. */
+  requestId?: string;
+  /** Persisted web conversation UUID for trace/log correlation. */
+  conversationId?: string;
+  /** Persisted user-message UUID for trace/log correlation. */
+  userMessageId?: string;
   /** SSE emit callback. When provided, the agent streams text deltas and tool events. */
   emit?: EmitFn;
 }

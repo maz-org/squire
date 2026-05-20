@@ -280,9 +280,10 @@ Squire exposes 9 atomic tools via MCP at `/mcp`:
 - `list_cards` — list cards of a type with optional field filter
 - `get_card` — look up a single card by type and canonical `sourceId`
 
-The MCP endpoint uses Streamable HTTP transport in stateless mode (no
-auth in development). OAuth ships with the User Accounts work tracked
-in Linear (SQR-37/38/39/40).
+The MCP endpoint uses Streamable HTTP transport in stateless mode and requires
+OAuth bearer auth. Local integration tests may stub token verification, but the
+server route itself uses the same bearer middleware in development and
+production.
 
 For broader architectural context — agent loop, atomic-tool design,
 data layer, deployment, observability — see
