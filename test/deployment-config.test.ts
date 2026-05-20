@@ -64,16 +64,20 @@ describe('deployment configuration', () => {
     expect(packageJson.scripts?.['lint:actions']).toBe('actionlint');
   });
 
-  it('splits fast PR tests from explicit slow PDF extraction tests', async () => {
+  it('splits fast PR tests from DB-backed and slow PDF extraction tests', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;
     };
     const workflow = await readProjectFile('.github/workflows/ci.yml');
 
-    expect(packageJson.scripts?.test).toBe(
-      'vitest run --exclude test/import-scenario-section-books.test.ts',
-    );
+    expect(packageJson.scripts?.test).toBe('vitest run --config vitest.split.config.ts');
+    expect(packageJson.scripts?.['test:unit']).toBe('vitest run --config vitest.unit.config.ts');
+    expect(packageJson.scripts?.['test:db']).toBe('vitest run --config vitest.db.config.ts');
+    expect(packageJson.scripts?.['test:split']).toBe('vitest run --config vitest.split.config.ts');
     expect(packageJson.scripts?.['test:coverage']).toBe(
+      'vitest run --coverage --config vitest.split.config.ts',
+    );
+    expect(packageJson.scripts?.['test:coverage:serial']).toBe(
       'vitest run --coverage --exclude test/import-scenario-section-books.test.ts',
     );
     expect(packageJson.scripts?.['test:slow:pdf']).toBe(
