@@ -11,6 +11,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/conversation.test.ts',
   'test/dev-login.test.ts',
   'test/extracted-data.test.ts',
+  'test/llm-budget.test.ts',
   'test/seed/seed-cards.test.ts',
   'test/seed/seed-dev-user.test.ts',
   'test/seed/seed-scenario-section-books.test.ts',
