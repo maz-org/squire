@@ -347,6 +347,14 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 
 pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source PDFs (~164MB) are inputs to indexing, not deployed artifacts; they live in `data/pdfs/` for local development and are excluded from the production image.
 
+Production data updates are decoupled from image deploys. The weekly GHS refresh
+workflow opens reviewable PRs for `data/extracted/`; after those PRs merge,
+environment-protected GitHub Actions seed the production card tables. Separate
+production workflows seed scenario/section-book data and re-index PDF
+embeddings, with manual rebuild mode reserved for deliberate embedding
+model/version changes. The operator procedure lives in
+[docs/runbooks/production-operations.md](runbooks/production-operations.md).
+
 ### Character State
 
 _Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md) for the user-facing description and the five ingestion options under consideration. The data model is:_

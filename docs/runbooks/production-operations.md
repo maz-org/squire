@@ -148,6 +148,103 @@ flyctl scale count app=1 cron=1 -a maz-squire
 The cleanup command is idempotent, but `cron=1` keeps the logs and database work
 predictable.
 
+## Production data lifecycle
+
+Production data updates are separate from image deploys. The weekly
+`Refresh extracted data` workflow still only refreshes `data/extracted/` from
+Gloomhaven Secretariat and opens a reviewable PR. Merging that PR, or merging
+checked-in PDF/data changes, is what triggers production database writes.
+
+All production data workflows use the GitHub `production` environment and map
+the environment secret `PRODUCTION_DATABASE_URL` to `DATABASE_URL`. They also set
+`NODE_ENV=production` and `SQUIRE_ENV=production`, verify the database URL before
+running migrations, and fail rather than silently writing to localhost or an
+obvious dev/test database.
+
+### Card data
+
+`Production seed card data` runs on merges to `main` that change
+`data/extracted/` card JSON, excluding
+`data/extracted/scenario-section-books.json`. It can also be run manually with
+`workflow_dispatch`.
+
+The workflow runs:
+
+```bash
+npm run production-data:verify-db-url
+npm run db:migrate
+npm run seed:cards
+npm run production-data:check -- cards
+```
+
+`npm run seed:cards` is idempotent: it upserts current card rows and prunes rows
+that disappeared from the checked-in extract. The final sanity check requires
+every `card_*` table to contain data.
+
+### Scenario and section books
+
+`Production seed scenario and section books` runs on merges to `main` that change
+`data/extracted/scenario-section-books.json`, `data/pdfs/`, or the scenario /
+section import and seed code. It can also be run manually with
+`workflow_dispatch`.
+
+The workflow runs:
+
+```bash
+npm run production-data:verify-db-url
+npm run db:migrate
+npm run seed:scenario-section-books
+npm run production-data:check -- scenario-section-books
+```
+
+`npm run seed:scenario-section-books` is safe to rerun. The sanity check requires
+non-empty `scenario_book_scenarios`, `section_book_sections`, and
+`book_references` tables.
+
+### PDF embeddings
+
+`Production reindex PDFs` runs on merges to `main` that change `data/pdfs/` or
+the indexing/chunking code (`src/index-docs.ts`, `src/vector-store.ts`,
+`src/embedder.ts`, or `src/retrieval-source.ts`). It can also be run manually
+with `workflow_dispatch`.
+
+Normal mode runs:
+
+```bash
+npm run production-data:verify-db-url
+npm run db:migrate
+npm run index
+npm run production-data:check -- embeddings
+```
+
+Normal `npm run index` mode is content-hash based: unchanged PDFs are skipped,
+changed PDFs are re-indexed, new PDFs are added, and rows for removed PDFs are
+deleted. Use this path for ordinary PDF source updates and chunking changes.
+
+Manual rebuild mode accepts `rebuild: true`. Because that truncates the
+`embeddings` table before running `npm run index`, it should only be used for a
+deliberate embedding model/version change or a known corrupt index. The
+protected GitHub `production` environment is the approval gate for that rebuild.
+After changing the embedding model or vector dimensions, confirm the migration
+path first; a model-only change with the same dimensions can use rebuild mode,
+while a dimensionality change needs a schema migration before indexing.
+
+### Partial failure recovery
+
+If a production data workflow partially fails, do not deploy a new image just to
+retry data work. Rerun the failed workflow from GitHub Actions after fixing the
+cause:
+
+- Missing `PRODUCTION_DATABASE_URL`: add it to the GitHub `production`
+  environment secrets and rerun.
+- Migration failure: inspect the failed migration and prefer a forward repair
+  migration unless restoring from backup is clearly safer.
+- Card or scenario/section seed failure: fix the checked-in extract or seed code,
+  merge the fix, then rerun the relevant workflow.
+- PDF indexing failure: rerun normal mode after fixing the source PDF or indexing
+  code. Use `rebuild: true` only when the existing `embeddings` rows are known to
+  be wrong as a set.
+
 ## Post-deploy checks
 
 Start with platform and health:
