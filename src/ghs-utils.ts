@@ -25,6 +25,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFragment, type DefaultTreeAdapterMap } from 'parse5';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -99,30 +100,37 @@ export function kebabToTitle(name: string): string {
 // ─── HTML stripping ─────────────────────────────────────────────────────────
 
 /**
- * Strip HTML tags from GHS text. Converts `<br>` to spaces, removes all
- * other tags, and collapses whitespace.
+ * Extract plain text from GHS label HTML fragments. GHS uses simple markup as
+ * data, so parse the fragment instead of trying to maintain tag-scanner rules.
  */
 export function stripHtml(text: string): string {
-  let stripped = '';
+  const fragment = parseFragment(text);
+  const parts: string[] = [];
 
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    if (char !== '<') {
-      stripped += char;
-      continue;
+  function appendText(node: DefaultTreeAdapterMap['node']): void {
+    if (node.nodeName === '#text' && 'value' in node) {
+      parts.push(node.value);
+      return;
     }
 
-    const closeIndex = text.indexOf('>', i + 1);
-    if (closeIndex === -1) break;
+    if (node.nodeName === 'br') {
+      parts.push(' ');
+      return;
+    }
 
-    const tagContent = text.slice(i + 1, closeIndex).trim();
-    const tagName = tagContent.replace(/\/$/, '').trim().split(/\s+/, 1)[0]?.toLowerCase();
-    if (tagName === 'br') stripped += ' ';
+    if (node.nodeName === 'script' || node.nodeName === 'style') return;
 
-    i = closeIndex;
+    if ('content' in node) appendChildren(node.content.childNodes);
+    if ('childNodes' in node) appendChildren(node.childNodes);
   }
 
-  return stripped.replace(/  +/g, ' ').trim();
+  function appendChildren(nodes: DefaultTreeAdapterMap['childNode'][]): void {
+    for (const node of nodes) appendText(node);
+  }
+
+  appendChildren(fragment.childNodes);
+
+  return parts.join('').replace(/\s+/g, ' ').trim();
 }
 
 // ─── Game token resolution ───────────────────────────────────────────────────
