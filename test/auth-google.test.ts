@@ -27,7 +27,7 @@
  * google-auth-library boundary; everything else hits the real test database.
  */
 
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setupTestDb, resetTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -72,6 +72,12 @@ import { shutdownServerPool, getDb } from '../src/db.ts';
 import { sessions, users } from '../src/db/schema/core.ts';
 import { oauthAuditLog } from '../src/db/schema/auth.ts';
 import * as auditModule from '../src/auth/audit.ts';
+import {
+  InMemoryTokenBucketStore,
+  RateLimiter,
+  resetRateLimiterForTesting,
+  setRateLimiterForTesting,
+} from '../src/rate-limit.ts';
 import { eq, sql } from 'drizzle-orm';
 // google.ts types used indirectly via the server routes
 
@@ -113,6 +119,35 @@ function mockGoogleUnverifiedEmail(user = TEST_USER) {
       name: user.name,
       picture: user.picture,
     }),
+  });
+}
+
+function enableInMemoryGoogleOAuthLimiter() {
+  setRateLimiterForTesting(
+    new RateLimiter(new InMemoryTokenBucketStore(), {
+      identitySecret: 'auth-google-rate-limit-test-secret',
+      nowMs: () => 2_000_000,
+    }),
+  );
+}
+
+function googleStartFromIp(ip: string, headers: Record<string, string> = {}) {
+  return app.request('http://localhost:3000/auth/google/start', {
+    redirect: 'manual',
+    headers: {
+      'X-Forwarded-For': ip,
+      ...headers,
+    },
+  });
+}
+
+function googleCallbackFromIp(ip: string, index: number, headers: Record<string, string> = {}) {
+  return app.request(`http://localhost:3000/auth/google/callback?state=only-state-${index}`, {
+    redirect: 'manual',
+    headers: {
+      'X-Forwarded-For': ip,
+      ...headers,
+    },
   });
 }
 
@@ -185,6 +220,10 @@ beforeEach(async () => {
   // Default: allow the test user's email via env var
   process.env.SQUIRE_ALLOWED_EMAILS = TEST_USER.email;
   delete process.env.ORIGIN_SHARED_SECRET;
+});
+
+afterEach(() => {
+  resetRateLimiterForTesting();
 });
 
 afterAll(async () => {
@@ -302,6 +341,141 @@ describe('Google OAuth callback', () => {
     expect(redirectUrl.searchParams.get('redirect_uri')).toBe(
       'http://localhost:3000/auth/google/callback',
     );
+  });
+
+  it('1e. rate limits the 11th Google OAuth start request from one resolved IP', async () => {
+    enableInMemoryGoogleOAuthLimiter();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      for (let i = 0; i < 10; i += 1) {
+        const res = await googleStartFromIp('198.51.100.80');
+        expect(res.status).toBe(302);
+      }
+
+      const limited = await googleStartFromIp('198.51.100.80');
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get('retry-after')).toBe('6');
+      await expect(limited.json()).resolves.toMatchObject({
+        error: 'rate_limited',
+        retry_after_seconds: 6,
+      });
+
+      const logLine = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => line.includes('"event":"rate_limit_rejected"'));
+      expect(logLine).toBeTruthy();
+      expect(logLine).not.toContain('198.51.100.80');
+
+      const event = JSON.parse(logLine!);
+      expect(event).toMatchObject({
+        level: 'warn',
+        event: 'rate_limit_rejected',
+        route: '/auth/google/start',
+        method: 'GET',
+        policy: 'google_oauth_start_ip',
+        limit: 10,
+        window_ms: 60_000,
+        retry_after_seconds: 6,
+      });
+      expect(event.identity_hash).toMatch(/^[A-Za-z0-9_-]{32}$/);
+
+      const { db } = getDb('server');
+      const auditRows = await db.select().from(oauthAuditLog);
+      expect(auditRows).toHaveLength(0);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('1f. rate limits the 21st Google OAuth callback request from one resolved IP', async () => {
+    enableInMemoryGoogleOAuthLimiter();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      for (let i = 0; i < 20; i += 1) {
+        const res = await googleCallbackFromIp('198.51.100.81', i);
+        expect(res.status).toBe(302);
+        expect(res.headers.get('location')).toBe('/login?error=Missing+code+or+state+parameter.');
+      }
+
+      const limited = await googleCallbackFromIp('198.51.100.81', 21);
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get('retry-after')).toBe('3');
+      await expect(limited.json()).resolves.toMatchObject({
+        error: 'rate_limited',
+        retry_after_seconds: 3,
+      });
+
+      const logLine = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => line.includes('"event":"rate_limit_rejected"'));
+      expect(logLine).toBeTruthy();
+      expect(logLine).not.toContain('198.51.100.81');
+
+      const event = JSON.parse(logLine!);
+      expect(event).toMatchObject({
+        level: 'warn',
+        event: 'rate_limit_rejected',
+        route: '/auth/google/callback',
+        method: 'GET',
+        policy: 'google_oauth_callback_ip',
+        limit: 20,
+        window_ms: 60_000,
+        retry_after_seconds: 3,
+      });
+      expect(event.identity_hash).toMatch(/^[A-Za-z0-9_-]{32}$/);
+
+      const { db } = getDb('server');
+      const auditRows = await db.select().from(oauthAuditLog);
+      expect(auditRows).toHaveLength(0);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('1g. keeps Google OAuth start and callback buckets independent per IP and route', async () => {
+    enableInMemoryGoogleOAuthLimiter();
+
+    for (let i = 0; i < 10; i += 1) {
+      const startRes = await googleStartFromIp('198.51.100.82');
+      expect(startRes.status).toBe(302);
+    }
+
+    const otherStartIp = await googleStartFromIp('198.51.100.83');
+    expect(otherStartIp.status).toBe(302);
+
+    const sameIpCallback = await googleCallbackFromIp('198.51.100.82', 0);
+    expect(sameIpCallback.status).toBe(302);
+  });
+
+  it('1h. keys Google OAuth start limits by trusted CloudFront/Fly client IP', async () => {
+    enableInMemoryGoogleOAuthLimiter();
+    const originSecret = 'cloudfront-origin-secret'.repeat(2);
+    process.env.ORIGIN_SHARED_SECRET = originSecret;
+
+    const trustedHeaders = {
+      'X-Origin-Secret': originSecret,
+      'X-Forwarded-For': '192.0.2.99, 198.51.100.84, 203.0.113.20',
+    };
+    const spoofedHeaders = {
+      'X-Origin-Secret': originSecret,
+      'X-Forwarded-For': '192.0.2.100, 198.51.100.84, 203.0.113.21',
+    };
+
+    for (let i = 0; i < 10; i += 1) {
+      const res = await app.request('http://localhost:3000/auth/google/start', {
+        redirect: 'manual',
+        headers: trustedHeaders,
+      });
+      expect(res.status).toBe(302);
+    }
+
+    const sameTrustedClient = await app.request('http://localhost:3000/auth/google/start', {
+      redirect: 'manual',
+      headers: spoofedHeaders,
+    });
+    expect(sameTrustedClient.status).toBe(429);
   });
 });
 

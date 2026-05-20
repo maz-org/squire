@@ -58,6 +58,11 @@ Rate-limit denials return 429 with `Retry-After` and emit structured security
 log events with a hashed identity. They do not write `oauth_audit_log` rows;
 that table is for durable auth lifecycle state changes.
 
+`GET /auth/google/start` is limited to 10 requests per minute per trusted
+client IP. `GET /auth/google/callback` is limited to 20 requests per minute per
+trusted client IP. Denials use the same `Retry-After` response and structured
+log shape as registration, and do not write `oauth_audit_log` rows.
+
 `/mcp` is limited to 120 requests per minute per authenticated token user when
 available, otherwise per OAuth client id. Unauthenticated or malformed requests
 fall back to the trusted client IP resolver, then a shared `unknown` bucket if no

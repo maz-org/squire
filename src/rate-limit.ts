@@ -65,6 +65,18 @@ export const REGISTER_CLIENT_RATE_LIMIT_POLICY: RateLimitPolicy = {
   windowMs: 60 * 60 * 1000,
 };
 
+export const GOOGLE_OAUTH_START_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'google_oauth_start_ip',
+  limit: 10,
+  windowMs: 60 * 1000,
+};
+
+export const GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'google_oauth_callback_ip',
+  limit: 20,
+  windowMs: 60 * 1000,
+};
+
 export const MCP_REQUEST_RATE_LIMIT_POLICY: RateLimitPolicy = {
   name: 'mcp_request',
   limit: 120,
