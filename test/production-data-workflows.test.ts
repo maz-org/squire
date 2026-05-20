@@ -12,6 +12,16 @@ async function readProjectFile(path: string): Promise<string> {
   return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 }
 
+function postgresFixtureUrl(options: { host: string; database?: string; port?: number }): string {
+  const url = new URL('postgres://fixture.invalid');
+  url.username = 'squire';
+  url.password = 'fixture-password';
+  url.hostname = options.host;
+  if (options.port !== undefined) url.port = String(options.port);
+  if (options.database !== undefined) url.pathname = `/${options.database}`;
+  return url.toString();
+}
+
 describe('production data lifecycle workflows', () => {
   it('defines package scripts for production data URL verification and sanity checks', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
@@ -32,31 +42,51 @@ describe('production data lifecycle workflows', () => {
   it('rejects missing local and obvious dev/test production database URLs', () => {
     expect(() => assertProductionDatabaseUrl('')).toThrow(/PRODUCTION_DATABASE_URL/);
     expect(() =>
-      assertProductionDatabaseUrl('postgres://squire:squire@localhost:5432/fly-db'),
+      assertProductionDatabaseUrl(
+        postgresFixtureUrl({ host: 'localhost', port: 5432, database: 'fly-db' }),
+      ),
     ).toThrow(/local database/);
     expect(() =>
-      assertProductionDatabaseUrl('postgres://squire:squire@127.0.0.1:5432/fly-db'),
+      assertProductionDatabaseUrl(
+        postgresFixtureUrl({ host: '127.0.0.1', port: 5432, database: 'fly-db' }),
+      ),
     ).toThrow(/local database/);
-    expect(() => assertProductionDatabaseUrl('postgres://squire:squire@db.internal')).toThrow(
+    expect(() => assertProductionDatabaseUrl(postgresFixtureUrl({ host: 'db.internal' }))).toThrow(
       /explicit database name/,
     );
     expect(() =>
-      assertProductionDatabaseUrl('postgres://squire:squire@db.internal:5432/squire_test'),
+      assertProductionDatabaseUrl(
+        postgresFixtureUrl({ host: 'db.internal', port: 5432, database: 'squire_test' }),
+      ),
     ).toThrow(/dev\/test database/);
     expect(() =>
-      assertProductionDatabaseUrl('postgres://squire:squire@db.internal:5432/squire_dev'),
+      assertProductionDatabaseUrl(
+        postgresFixtureUrl({ host: 'db.internal', port: 5432, database: 'squire_dev' }),
+      ),
     ).toThrow(/dev\/test database/);
 
     expect(() =>
       assertProductionDatabaseUrl(
-        'postgres://squire:secret@top2.nearest.of.maz-squire-db:5432/fly-db',
+        postgresFixtureUrl({
+          host: 'top2.nearest.of.maz-squire-db',
+          port: 5432,
+          database: 'fly-db',
+        }),
       ),
     ).not.toThrow();
   });
 
   it('allows a local Fly proxy connection only when the production target URL is separate', () => {
-    const productionUrl = 'postgres://squire:secret@pgbouncer.internal:5432/fly-db';
-    const proxyUrl = 'postgres://squire:secret@127.0.0.1:15432/fly-db';
+    const productionUrl = postgresFixtureUrl({
+      host: 'pgbouncer.internal',
+      port: 5432,
+      database: 'fly-db',
+    });
+    const proxyUrl = postgresFixtureUrl({
+      host: '127.0.0.1',
+      port: 15432,
+      database: 'fly-db',
+    });
 
     expect(() => assertProductionDatabaseUrl(proxyUrl)).toThrow(/local database/);
     expect(
@@ -79,7 +109,11 @@ describe('production data lifecycle workflows', () => {
     ).toBe(productionUrl);
     expect(() =>
       getProductionDatabaseConnectionUrl({
-        DATABASE_URL: 'postgres://squire:secret@staging.internal:5432/fly-db',
+        DATABASE_URL: postgresFixtureUrl({
+          host: 'staging.internal',
+          port: 5432,
+          database: 'fly-db',
+        }),
         PRODUCTION_DATABASE_URL: productionUrl,
       }),
     ).toThrow(/local Fly proxy/);
