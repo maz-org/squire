@@ -71,6 +71,18 @@ describe('production data lifecycle workflows', () => {
         PRODUCTION_DATABASE_URL: productionUrl,
       }),
     ).toBe(proxyUrl);
+    expect(
+      getProductionDatabaseConnectionUrl({
+        DATABASE_URL: productionUrl,
+        PRODUCTION_DATABASE_URL: productionUrl,
+      }),
+    ).toBe(productionUrl);
+    expect(() =>
+      getProductionDatabaseConnectionUrl({
+        DATABASE_URL: 'postgres://squire:secret@staging.internal:5432/fly-db',
+        PRODUCTION_DATABASE_URL: productionUrl,
+      }),
+    ).toThrow(/local Fly proxy/);
   });
 
   it('seeds production card data only through the protected production environment', async () => {
@@ -88,6 +100,7 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('SQUIRE_ENV: production');
     expect(workflow).toContain('superfly/flyctl-actions/setup-flyctl');
     expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
+    expect(workflow).toContain('echo "::add-mask::$proxied_url"');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain('run: npm run seed:cards');

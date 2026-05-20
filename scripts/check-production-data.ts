@@ -70,7 +70,31 @@ export function getProductionDatabaseTargetUrl(env: NodeJS.ProcessEnv = process.
 
 export function getProductionDatabaseConnectionUrl(env: NodeJS.ProcessEnv = process.env): string {
   const targetUrl = getProductionDatabaseTargetUrl(env);
-  return env.DATABASE_URL?.trim() || targetUrl;
+  const connectionUrl = env.DATABASE_URL?.trim();
+  if (!connectionUrl || connectionUrl === targetUrl) return connectionUrl || targetUrl;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(connectionUrl);
+  } catch (error) {
+    throw new Error('DATABASE_URL must be a valid Postgres connection URL.', { cause: error });
+  }
+
+  if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) {
+    throw new Error('DATABASE_URL must use the postgres:// or postgresql:// protocol.');
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const isLocalProxy = ['localhost', '127.0.0.1', '[::1]', '::1', 'host.docker.internal'].includes(
+    hostname,
+  );
+  if (!isLocalProxy) {
+    throw new Error(
+      'DATABASE_URL may only override PRODUCTION_DATABASE_URL with a local Fly proxy URL.',
+    );
+  }
+
+  return connectionUrl;
 }
 
 export function assertProductionRuntimeEnv(env: NodeJS.ProcessEnv = process.env): void {
