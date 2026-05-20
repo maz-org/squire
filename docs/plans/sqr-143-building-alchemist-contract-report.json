@@ -1,0 +1,313 @@
+{
+  "generatedAt": "2026-05-20T02:07:54.457Z",
+  "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+  "rows": [
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "The **Alchemist (Level 1)** is actually one of Frosthaven's **starting buildings** — it comes pre-built at campaign start, so there is **no build cost** to construct it at Level 1. All resource and prosperity costs are 0.\n\nHere's a summary of the data:\n\n| Cost Field | Amount |\n|---|---|\n| Gold | 0 |\n| Lumber | 0 |\n| Metal | 0 |\n| Hide | 0 |\n| Prosperity | 0 |\n\n> **Note:** The Alchemist begins the campaign already built. Its Level 1 effect is that **characters cannot use potions** (the building must be upgraded to restore potion functionality and unlock crafting).\n\nIf you'd like to know the cost to **upgrade** the Alchemist to Level 2, just ask!",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 13335,
+      "tokenInput": 7,
+      "tokenCachedInput": 4966,
+      "tokenOutput": 353,
+      "tokenTotal": 8612,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.005297,
+      "estimatedCostUsd": 0.005297,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:anthropic:claude-sonnet-4-6:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aanthropic%3Aclaude-sonnet-4-6%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:819564c140bba9d8b8caf4e4eae9d97f33b581b4a191210ddc0c7177f9acf1d3",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6",
+        "timeoutMs": 60000
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "anthropic",
+      "model": "claude-opus-4-7",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "The **Alchemist (Level 1)** has no build cost — all resources (gold, hide, metal, lumber) and prosperity are 0. It's also flagged as `campaignStartBuilt: true`, meaning it begins the campaign already constructed.\n\nAt Level 1, the building's effect is:\n\n> Characters cannot use potions.\n\nFor reference, upgrading it to Level 2 costs 1 hide, 2 metal, 2 lumber, and requires prosperity 1.\n\n(Source: Card Index — building 35, Alchemist L1.)",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 7561,
+      "tokenInput": 13,
+      "tokenCachedInput": 6688,
+      "tokenOutput": 349,
+      "tokenTotal": 11294,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008731,
+      "estimatedCostUsd": 0.008731,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:anthropic:claude-opus-4-7:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aanthropic%3Aclaude-opus-4-7%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:819564c140bba9d8b8caf4e4eae9d97f33b581b4a191210ddc0c7177f9acf1d3",
+      "modelSettings": {
+        "model": "claude-opus-4-7",
+        "timeoutMs": 60000
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "anthropic",
+      "model": "claude-haiku-4-5",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "The **Alchemist building at level 1 has no resource or prosperity cost** — it is built at campaign start for free. According to the Card Index, the `buildCost` is 0 for all resources (gold, hide, metal, lumber) and prosperity.\n\nThe building's effect is: \"Characters cannot use potions.\"",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 4000,
+      "tokenInput": 7812,
+      "tokenCachedInput": 0,
+      "tokenOutput": 234,
+      "tokenTotal": 8046,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008982,
+      "estimatedCostUsd": 0.008982,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:anthropic:claude-haiku-4-5:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aanthropic%3Aclaude-haiku-4-5%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:819564c140bba9d8b8caf4e4eae9d97f33b581b4a191210ddc0c7177f9acf1d3",
+      "modelSettings": {
+        "model": "claude-haiku-4-5",
+        "timeoutMs": 60000
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "openai",
+      "model": "gpt-5.5",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "The level 1 **Alchemist** building costs **nothing to build**: 0 gold, 0 hide, 0 metal, 0 lumber, and 0 prosperity required. It is listed as **built at campaign start**.  \n\nSource: Card Index, Alchemist building 35, level 1.",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 10024,
+      "tokenInput": 5265,
+      "tokenCachedInput": 2560,
+      "tokenOutput": 152,
+      "tokenTotal": 5417,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.019365,
+      "estimatedCostUsd": 0.019365,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:openai:gpt-5.5:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aopenai%3Agpt-5.5%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-openai-tools-v2",
+      "toolSchemaHash": "af62eafa58ae591600d23f5459a14c7844dbd6d2bdc401cd4233513189289ee0",
+      "modelSettings": {
+        "model": "gpt-5.5",
+        "timeoutMs": 60000,
+        "broadSearchSynthesisThreshold": 3
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "openai",
+      "model": "gpt-5.4",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "The *Alchemist* at level 1 has **no build cost** in the checked-in Frosthaven data:\n\n- Gold: 0\n- Hide: 0\n- Metal: 0\n- Lumber: 0\n- Prosperity: 0\n\nIt is also marked as **campaign start built**.  \nSource: Card Index, Alchemist building card `35/L1`.",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 6707,
+      "tokenInput": 5595,
+      "tokenCachedInput": 3072,
+      "tokenOutput": 151,
+      "tokenTotal": 5746,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.00934,
+      "estimatedCostUsd": 0.00934,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:openai:gpt-5.4:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aopenai%3Agpt-5.4%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-openai-tools-v2",
+      "toolSchemaHash": "af62eafa58ae591600d23f5459a14c7844dbd6d2bdc401cd4233513189289ee0",
+      "modelSettings": {
+        "model": "gpt-5.4",
+        "timeoutMs": 60000,
+        "broadSearchSynthesisThreshold": 3
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "The **Alchemist** at **level 1** has an **initial build cost of 0**: no *gold*, *hide*, *metal*, *lumber*, or *prosperity*.\n\nIt is also marked as **campaignStartBuilt: true**, so it starts built in the campaign data.  \nSource: **Card Index** (`Alchemist`, level 1).",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 6326,
+      "tokenInput": 8355,
+      "tokenCachedInput": 4864,
+      "tokenOutput": 163,
+      "tokenTotal": 8518,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.003717,
+      "estimatedCostUsd": 0.003717,
+      "toolCallCount": 3,
+      "retryCount": 0,
+      "loopIterations": 4,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:openai:gpt-5.4-mini:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aopenai%3Agpt-5.4-mini%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-openai-tools-v2",
+      "toolSchemaHash": "af62eafa58ae591600d23f5459a14c7844dbd6d2bdc401cd4233513189289ee0",
+      "modelSettings": {
+        "model": "gpt-5.4-mini",
+        "timeoutMs": 60000,
+        "broadSearchSynthesisThreshold": 3
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-143-building-alchemist-contract-2026-05-20",
+      "caseId": "building-alchemist",
+      "category": "buildings",
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "In *Frosthaven*, the **Alchemist (level 1)** building costs:\n\n- **0 gold**\n- **0 hide**\n- **0 metal**\n- **0 lumber**\n- **0 prosperity**\n\nSo its build cost is **free** at level 1. (Card: *Alchemist* — *GHS Card Data*, level 1)",
+      "score": 1,
+      "pass": true,
+      "latencyMs": 6024,
+      "tokenInput": 8013,
+      "tokenCachedInput": 3584,
+      "tokenOutput": 165,
+      "tokenTotal": 8178,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.001164,
+      "estimatedCostUsd": 0.001164,
+      "toolCallCount": 3,
+      "retryCount": 0,
+      "loopIterations": 4,
+      "failureClass": "none",
+      "traceId": "eval:sqr-143-building-alchemist-contract-2026-05-20:claude-sdk:openai:gpt-5.4-nano:building-alchemist",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-143-building-alchemist-contract-2026-05-20%3Aclaude-sdk%3Aopenai%3Agpt-5.4-nano%3Abuilding-alchemist",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:ac3c14e6064a34fec297500c9db22ccc409a86f13db363fdf065218eaae38893",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-openai-tools-v2",
+      "toolSchemaHash": "af62eafa58ae591600d23f5459a14c7844dbd6d2bdc401cd4233513189289ee0",
+      "modelSettings": {
+        "model": "gpt-5.4-nano",
+        "timeoutMs": 60000,
+        "broadSearchSynthesisThreshold": 3
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.35000000000000003,
+  "estimatedCostUsd": 0.056596
+}

@@ -50,8 +50,8 @@ validated `X-Forwarded-For`, `X-Real-IP`, or `Fly-Client-IP` value when
 ## Application rate limits
 
 AWS WAF remains the coarse outer filter. Squire-specific limits live in the app
-and use a Redis/Valkey-compatible token bucket (`REDIS_URL`) so limits are
-shared across app machines and restarts.
+and use Redis/Valkey-compatible `rate-limiter-flexible` counters (`REDIS_URL`) so
+limits are shared across app machines and restarts.
 
 `POST /register` is limited to 10 requests per hour per trusted client IP.
 Rate-limit denials return 429 with `Retry-After` and emit structured security

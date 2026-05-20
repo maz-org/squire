@@ -24,6 +24,18 @@ const items = JSON.parse(
       uses: number | null;
     }>
   | undefined;
+const buildings = JSON.parse(
+  readFileSync(join(process.cwd(), 'data/extracted/buildings.json'), 'utf-8'),
+) as
+  | Array<{
+      name: string;
+      level: number;
+      initialBuildCost?: Record<string, number>;
+      upgradeCost?: Record<string, number> | null;
+      campaignStartBuilt?: boolean;
+      effect: string;
+    }>
+  | undefined;
 
 describe('eval dataset', () => {
   it('matches the final-answer and trajectory fixture schema', () => {
@@ -65,7 +77,7 @@ describe('eval dataset', () => {
     });
 
     expect(byId.get('building-alchemist')?.finalAnswer).toMatchObject({
-      expected: expect.stringMatching(/no initial build cost/i),
+      expected: expect.stringMatching(/initial build cost is no cost/i),
       grading: expect.stringMatching(/upgrade cost/i),
     });
 
@@ -73,6 +85,41 @@ describe('eval dataset', () => {
       expected: expect.stringMatching(/Section 79\.4/i),
       grading: expect.stringMatching(/Crain|star iron/i),
     });
+  });
+
+  it('keeps the Alchemist eval contract scoped to cost semantics', () => {
+    const cases = EvalDatasetSchema.parse(dataset);
+    const alchemistCase = cases.find((evalCase) => evalCase.id === 'building-alchemist');
+    const alchemistLevel1 = buildings?.find(
+      (building) => building.name === 'Alchemist' && building.level === 1,
+    );
+
+    expect(alchemistLevel1).toMatchObject({
+      campaignStartBuilt: true,
+      initialBuildCost: {
+        prosperity: 0,
+        gold: 0,
+        lumber: 0,
+        metal: 0,
+        hide: 0,
+      },
+      upgradeCost: {
+        prosperity: 1,
+        gold: 0,
+        lumber: 2,
+        metal: 2,
+        hide: 1,
+      },
+      effect: 'Characters cannot use potions',
+    });
+    expect(alchemistCase?.finalAnswer?.expected).toMatch(/built at campaign start/i);
+    expect(alchemistCase?.finalAnswer?.expected).toMatch(
+      /1 prosperity, 2 lumber, 2 metal, and 1 hide/i,
+    );
+    expect(alchemistCase?.finalAnswer?.grading).toMatch(/effect text is not required/i);
+    expect(alchemistCase?.finalAnswer?.grading).toMatch(/do not penalize.*sourced level 1 effect/i);
+    expect(alchemistCase?.finalAnswer?.grading).toMatch(/penalize.*unbuilt/i);
+    expect(alchemistCase?.finalAnswer?.grading).toMatch(/ruined/i);
   });
 
   it('keeps the Spyglass final-answer expectation aligned with checked-in item data', () => {

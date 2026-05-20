@@ -1,6 +1,10 @@
 import { createHmac } from 'node:crypto';
 
 import { createClient as createRedisClient, type RedisClientType } from '@redis/client';
+import {
+  RateLimiterMemory as FlexibleMemoryRateLimiter,
+  RateLimiterRedis as FlexibleRedisRateLimiter,
+} from 'rate-limiter-flexible';
 
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
 
@@ -54,49 +58,6 @@ const DEFAULT_KEY_PREFIX = 'squire:rate-limit';
 const TEST_IDENTITY_SECRET = 'squire-test-rate-limit-identity-secret';
 const DEV_IDENTITY_SECRET = 'squire-development-rate-limit-identity-secret';
 const REDIS_OPERATION_TIMEOUT_MS = 2_000;
-const REDIS_SOCKET_TIMEOUT_MS = 10_000;
-
-const TOKEN_BUCKET_SCRIPT = `
-local key = KEYS[1]
-local now_ms = tonumber(ARGV[1])
-local capacity = tonumber(ARGV[2])
-local refill_interval_ms = tonumber(ARGV[3])
-local refill_tokens = tonumber(ARGV[4])
-local cost = tonumber(ARGV[5])
-local ttl_ms = tonumber(ARGV[6])
-
-local state = redis.call('HMGET', key, 'tokens', 'updated_at')
-local tokens = tonumber(state[1])
-local updated_at = tonumber(state[2])
-
-if tokens == nil then
-  tokens = capacity
-  updated_at = now_ms
-end
-
-if updated_at == nil then
-  updated_at = now_ms
-end
-
-local elapsed_ms = math.max(0, now_ms - updated_at)
-local refill = (elapsed_ms / refill_interval_ms) * refill_tokens
-tokens = math.min(capacity, tokens + refill)
-
-local allowed = 0
-local retry_after_ms = 0
-if tokens >= cost then
-  allowed = 1
-  tokens = tokens - cost
-else
-  retry_after_ms = math.ceil(((cost - tokens) / refill_tokens) * refill_interval_ms)
-end
-
-redis.call('HSET', key, 'tokens', tostring(tokens), 'updated_at', tostring(now_ms))
-redis.call('PEXPIRE', key, ttl_ms)
-
-local reset_after_ms = math.ceil(((capacity - tokens) / refill_tokens) * refill_interval_ms)
-return { allowed, tostring(tokens), retry_after_ms, reset_after_ms }
-`;
 
 export const REGISTER_CLIENT_RATE_LIMIT_POLICY: RateLimitPolicy = {
   name: 'oauth_register_ip',
@@ -119,43 +80,13 @@ export function hashRateLimitIdentity(identity: string, secret: string): string 
   return createHmac('sha256', secret).update(identity).digest('base64url').slice(0, 32);
 }
 
-function parseRedisNumber(value: unknown): number {
+function parseFlexibleNumber(value: unknown): number {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') return Number(value);
   return Number.NaN;
 }
 
-function parseRedisDecision(value: unknown): TokenBucketDecision {
-  if (!Array.isArray(value) || value.length < 4) {
-    throw new Error('Redis rate limit script returned an invalid response');
-  }
-
-  const allowed = parseRedisNumber(value[0]);
-  const tokensRemaining = parseRedisNumber(value[1]);
-  const retryAfterMs = parseRedisNumber(value[2]);
-  const resetAfterMs = parseRedisNumber(value[3]);
-  if (
-    !Number.isFinite(allowed) ||
-    !Number.isFinite(tokensRemaining) ||
-    !Number.isFinite(retryAfterMs) ||
-    !Number.isFinite(resetAfterMs)
-  ) {
-    throw new Error('Redis rate limit script returned non-numeric values');
-  }
-
-  return {
-    allowed: allowed === 1,
-    tokensRemaining,
-    retryAfterMs,
-    resetAfterMs,
-  };
-}
-
-function withRedisTimeout<T>(
-  promise: Promise<T>,
-  operation: string,
-  timeoutMs: number,
-): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, operation: string, timeoutMs: number): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const timer = new Promise<never>((_, reject) => {
     timeout = setTimeout(() => {
@@ -168,16 +99,58 @@ function withRedisTimeout<T>(
   });
 }
 
-interface RedisTokenBucketStoreOptions {
+interface RedisRateLimitStoreOptions {
   operationTimeoutMs?: number;
   clientFactory?: () => RedisClientType;
 }
 
-function tokenBucketTtlMs(input: TokenBucketInput): number {
-  return Math.max(
-    input.refillIntervalMs,
-    Math.ceil((input.capacity / input.refillTokens) * input.refillIntervalMs * 2),
+interface FlexibleRateLimiterResult {
+  remainingPoints?: number;
+  msBeforeNext?: number;
+}
+
+interface FlexibleRateLimiter {
+  consume(key: string, points?: number): Promise<FlexibleRateLimiterResult>;
+}
+
+interface FlexibleRateLimitStoreOptions {
+  createLimiter: (input: { points: number; durationSeconds: number }) => FlexibleRateLimiter;
+  beforeConsume?: () => Promise<void>;
+  operationTimeoutMs?: number;
+}
+
+function rateLimiterConfigKey(input: TokenBucketInput): string {
+  return `${input.capacity}:${input.refillIntervalMs}`;
+}
+
+function durationSeconds(windowMs: number): number {
+  return Math.max(1, Math.ceil(windowMs / 1000));
+}
+
+function isFlexibleRateLimiterResult(error: unknown): error is FlexibleRateLimiterResult {
+  if (typeof error !== 'object' || error === null) return false;
+  const value = error as Partial<FlexibleRateLimiterResult>;
+  return (
+    value.remainingPoints !== undefined &&
+    value.msBeforeNext !== undefined &&
+    Number.isFinite(parseFlexibleNumber(value.remainingPoints)) &&
+    Number.isFinite(parseFlexibleNumber(value.msBeforeNext))
   );
+}
+
+function flexibleDecision(
+  allowed: boolean,
+  result: FlexibleRateLimiterResult,
+): TokenBucketDecision {
+  const tokensRemaining = Math.max(0, parseFlexibleNumber(result.remainingPoints));
+  const resetAfterMs = Math.max(0, parseFlexibleNumber(result.msBeforeNext));
+
+  return {
+    allowed,
+    tokensRemaining,
+    retryAfterMs: allowed ? 0 : resetAfterMs,
+    resetAfterMs,
+  };
 }
 
 async function consumeTokenBucket(
@@ -238,126 +211,182 @@ class NoopTokenBucketStore implements TokenBucketStore {
   }
 }
 
-export class RedisTokenBucketStore implements TokenBucketStore {
-  private client: RedisClientType | undefined;
-  private readonly clientFactory: () => RedisClientType;
-  private readonly operationTimeoutMs: number;
-  private connectPromise: Promise<RedisClientType> | undefined;
+export class FlexibleRateLimitStore implements TokenBucketStore {
+  private readonly createLimiter: FlexibleRateLimitStoreOptions['createLimiter'];
+  private readonly beforeConsume: (() => Promise<void>) | undefined;
+  private readonly operationTimeoutMs: number | undefined;
+  private readonly limiters = new Map<string, FlexibleRateLimiter>();
 
-  constructor(url: string, client?: RedisClientType, options: RedisTokenBucketStoreOptions = {}) {
-    this.clientFactory =
+  constructor(options: FlexibleRateLimitStoreOptions) {
+    this.createLimiter = options.createLimiter;
+    this.beforeConsume = options.beforeConsume;
+    this.operationTimeoutMs = options.operationTimeoutMs;
+  }
+
+  async consume(input: TokenBucketInput): Promise<TokenBucketDecision> {
+    if (this.beforeConsume) {
+      await this.beforeConsume();
+    }
+
+    const limiter = this.getLimiter(input);
+    try {
+      const promise = limiter.consume(input.key, input.cost);
+      const result = this.operationTimeoutMs
+        ? await withTimeout(promise, 'rate-limit consume', this.operationTimeoutMs)
+        : await promise;
+      return flexibleDecision(true, result);
+    } catch (error) {
+      if (isFlexibleRateLimiterResult(error)) {
+        return flexibleDecision(false, error);
+      }
+      throw error;
+    }
+  }
+
+  protected clearLimiters(): void {
+    this.limiters.clear();
+  }
+
+  private getLimiter(input: TokenBucketInput): FlexibleRateLimiter {
+    const key = rateLimiterConfigKey(input);
+    let limiter = this.limiters.get(key);
+    if (!limiter) {
+      limiter = this.createLimiter({
+        points: input.capacity,
+        durationSeconds: durationSeconds(input.refillIntervalMs),
+      });
+      this.limiters.set(key, limiter);
+    }
+    return limiter;
+  }
+}
+
+export class MemoryRateLimitStore extends FlexibleRateLimitStore {
+  constructor() {
+    super({
+      createLimiter: ({ points, durationSeconds }) =>
+        new FlexibleMemoryRateLimiter({
+          duration: durationSeconds,
+          points,
+        }),
+    });
+  }
+}
+
+export class RedisRateLimitStore extends FlexibleRateLimitStore {
+  private client: RedisClientType;
+  private readonly clientFactory: () => RedisClientType;
+  private readonly redisOperationTimeoutMs: number;
+  private connectPromise: Promise<void> | undefined;
+
+  constructor(url: string, client?: RedisClientType, options: RedisRateLimitStoreOptions = {}) {
+    let connect: () => Promise<void> = async () => {};
+    const operationTimeoutMs = options.operationTimeoutMs ?? REDIS_OPERATION_TIMEOUT_MS;
+    const clientFactory =
       options.clientFactory ??
       (() =>
         createRedisClient({
           url,
           socket: {
-            connectTimeout: REDIS_OPERATION_TIMEOUT_MS,
-            socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
+            connectTimeout: operationTimeoutMs,
           },
         }));
-    this.client = this.prepareClient(client ?? this.clientFactory());
-    this.operationTimeoutMs = options.operationTimeoutMs ?? REDIS_OPERATION_TIMEOUT_MS;
-  }
+    const redisClient = client ?? clientFactory();
 
-  async consume(input: TokenBucketInput): Promise<TokenBucketDecision> {
-    const client = await this.connect();
-    try {
-      const raw = await withRedisTimeout(
-        client.eval(TOKEN_BUCKET_SCRIPT, {
-          keys: [input.key],
-          arguments: [
-            String(input.nowMs),
-            String(input.capacity),
-            String(input.refillIntervalMs),
-            String(input.refillTokens),
-            String(input.cost),
-            String(tokenBucketTtlMs(input)),
-          ],
+    super({
+      beforeConsume: () => connect(),
+      createLimiter: ({ points, durationSeconds }) =>
+        new FlexibleRedisRateLimiter({
+          duration: durationSeconds,
+          keyPrefix: '',
+          points,
+          rejectIfRedisNotReady: true,
+          storeClient: this.client,
+          useRedisPackage: true,
         }),
-        'redis rate-limit eval',
-        this.operationTimeoutMs,
-      );
-      return parseRedisDecision(raw);
-    } catch (error) {
-      this.resetClient(client);
-      throw error;
-    }
+      operationTimeoutMs,
+    });
+
+    this.clientFactory = clientFactory;
+    this.client = this.prepareClient(redisClient);
+    this.redisOperationTimeoutMs = operationTimeoutMs;
+    connect = () => this.connect();
   }
 
   private createClient(): RedisClientType {
     return this.prepareClient(this.clientFactory());
   }
 
-  private prepareClient(client: RedisClientType): RedisClientType {
-    client.on('error', (error: Error) => {
-      this.resetClient(client);
-      writeSecurityLog({
-        event: 'rate_limit_redis_error',
-        level: 'error',
-        fields: errorLogFields(error),
-      });
-    });
-    return client;
-  }
-
-  private getClient(): RedisClientType {
-    this.client ??= this.createClient();
-    return this.client;
-  }
-
   private resetClient(client: RedisClientType): void {
     if (this.client !== client) return;
     this.connectPromise = undefined;
-    this.client = undefined;
+    this.client = this.createClient();
+    this.clearLimiters();
 
     try {
       client.destroy();
     } catch {
-      // Discarding a broken limiter client is best-effort; the next request
-      // creates a fresh client and fails closed if Redis is still unavailable.
+      // Closing a stale limiter client is best-effort. The next request uses a
+      // fresh client and still fails closed if Redis remains unavailable.
     }
   }
 
-  private async connect(): Promise<RedisClientType> {
-    let client = this.getClient();
-    if (client.isReady) return client;
+  private async connect(): Promise<void> {
+    let client = this.client;
+    if (client.isReady) return;
 
     if (this.connectPromise) {
       try {
-        return await withRedisTimeout(
+        await withTimeout(
           this.connectPromise,
           'redis rate-limit connect',
-          this.operationTimeoutMs,
+          this.redisOperationTimeoutMs,
         );
       } catch (error) {
         this.resetClient(client);
         throw error;
       }
+      return;
     }
 
     if (client.isOpen) {
       this.resetClient(client);
-      client = this.getClient();
+      client = this.client;
     }
 
     this.connectPromise = client
       .connect()
-      .then(() => client)
+      .then(() => undefined)
       .catch((error: unknown) => {
         this.resetClient(client);
         throw error;
       });
-
     try {
-      return await withRedisTimeout(
+      await withTimeout(
         this.connectPromise,
         'redis rate-limit connect',
-        this.operationTimeoutMs,
+        this.redisOperationTimeoutMs,
       );
     } catch (error) {
       this.resetClient(client);
       throw error;
+    } finally {
+      if (this.client === client) {
+        this.connectPromise = undefined;
+      }
     }
+  }
+
+  private prepareClient(client: RedisClientType): RedisClientType {
+    client.on('error', (error: Error) => {
+      writeSecurityLog({
+        event: 'rate_limit_redis_error',
+        level: 'error',
+        fields: errorLogFields(error),
+      });
+      this.resetClient(client);
+    });
+    return client;
   }
 }
 
@@ -409,7 +438,7 @@ export function createRateLimiterFromEnv(env: NodeJS.ProcessEnv = process.env): 
 
   const redisUrl = env.REDIS_URL?.trim();
   if (redisUrl) {
-    return new RateLimiter(new RedisTokenBucketStore(redisUrl), {
+    return new RateLimiter(new RedisRateLimitStore(redisUrl), {
       identitySecret: identitySecretFromEnv(env),
     });
   }
@@ -418,7 +447,7 @@ export function createRateLimiterFromEnv(env: NodeJS.ProcessEnv = process.env): 
     throw new Error('REDIS_URL must be set in production to enable app rate limiting');
   }
 
-  return new RateLimiter(new InMemoryTokenBucketStore(), {
+  return new RateLimiter(new MemoryRateLimitStore(), {
     identitySecret: identitySecretFromEnv(env),
   });
 }
