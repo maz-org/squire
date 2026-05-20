@@ -20,6 +20,7 @@ import {
   isReady,
   startBootstrapLifecycle,
 } from './service.ts';
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
 import { loadServerConfig } from './config.ts';
@@ -29,6 +30,7 @@ import { resolveTrustedClientIp } from './http/trusted-client-ip.ts';
 import { LlmBudgetExceededError } from './llm-budget.ts';
 import {
   getDefaultRateLimiter,
+  MCP_REQUEST_RATE_LIMIT_POLICY,
   REGISTER_CLIENT_RATE_LIMIT_POLICY,
   type RateLimitDecision,
 } from './rate-limit.ts';
@@ -222,6 +224,78 @@ function rateLimitUnavailableResponse(c: Context, error: unknown) {
   );
 }
 
+type McpRateLimitIdentityKind = 'user' | 'client' | 'ip' | 'unknown';
+
+interface McpRateLimitIdentity {
+  kind: McpRateLimitIdentityKind;
+  value: string;
+}
+
+interface McpRateLimitResult {
+  decision: RateLimitDecision;
+  identityKind: McpRateLimitIdentityKind;
+}
+
+function authInfoUserId(authInfo: AuthInfo): string | undefined {
+  const userId = authInfo.extra?.userId;
+  return typeof userId === 'string' && userId.trim().length > 0 ? userId : undefined;
+}
+
+function resolveMcpRateLimitIdentity(
+  c: Context,
+  authInfo: AuthInfo | undefined,
+): McpRateLimitIdentity {
+  if (authInfo) {
+    const userId = authInfoUserId(authInfo);
+    if (userId) return { kind: 'user', value: `user:${userId}` };
+    return { kind: 'client', value: `client:${authInfo.clientId}` };
+  }
+
+  const ip = resolveTrustedClientIp(c.req);
+  if (ip) return { kind: 'ip', value: `ip:${ip}` };
+  return { kind: 'unknown', value: 'unknown' };
+}
+
+async function checkMcpRateLimit(
+  c: Context,
+  authInfo: AuthInfo | undefined,
+): Promise<McpRateLimitResult> {
+  const identity = resolveMcpRateLimitIdentity(c, authInfo);
+  const decision = await getDefaultRateLimiter().consume({
+    policy: MCP_REQUEST_RATE_LIMIT_POLICY,
+    identity: identity.value,
+  });
+  return { decision, identityKind: identity.kind };
+}
+
+function mcpRateLimitedResponse(c: Context, result: McpRateLimitResult) {
+  const retryAfterSeconds = Math.max(1, result.decision.retryAfterSeconds);
+  writeSecurityLog({
+    event: 'rate_limit_rejected',
+    fields: {
+      route: '/mcp',
+      method: c.req.method,
+      policy: result.decision.policy.name,
+      limit: result.decision.policy.limit,
+      window_ms: result.decision.policy.windowMs,
+      identity_hash: result.decision.identityHash,
+      identity_kind: result.identityKind,
+      retry_after_seconds: retryAfterSeconds,
+      reset_after_seconds: result.decision.resetAfterSeconds,
+    },
+  });
+
+  c.header('Retry-After', String(retryAfterSeconds));
+  return c.json(
+    {
+      error: 'rate_limited',
+      error_description: 'Too many MCP requests. Try again later.',
+      retry_after_seconds: retryAfterSeconds,
+    },
+    429,
+  );
+}
+
 function budgetExceededResponse(c: Context, error: LlmBudgetExceededError) {
   return c.json(
     {
@@ -233,6 +307,27 @@ function budgetExceededResponse(c: Context, error: LlmBudgetExceededError) {
       remaining_usd: error.status.remainingUsd,
     },
     429,
+  );
+}
+
+function mcpRateLimitUnavailableResponse(c: Context, error: unknown) {
+  writeSecurityLog({
+    event: 'rate_limit_unavailable',
+    level: 'error',
+    fields: {
+      route: '/mcp',
+      method: c.req.method,
+      policy: MCP_REQUEST_RATE_LIMIT_POLICY.name,
+      ...errorLogFields(error),
+    },
+  });
+
+  return c.json(
+    {
+      error: 'temporarily_unavailable',
+      error_description: 'MCP is temporarily unavailable. Try again later.',
+    },
+    503,
   );
 }
 
@@ -1046,21 +1141,71 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
 
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 
-function requireBearerAuth() {
+type BearerAuthResult =
+  | { ok: true; authInfo: AuthInfo }
+  | { ok: false; authenticateHeader: string; message: string };
+
+async function authenticateBearer(c: Context): Promise<BearerAuthResult> {
+  const authHeader = c.req.header('authorization');
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+    return {
+      ok: false,
+      authenticateHeader: 'Bearer',
+      message: 'Authentication required',
+    };
+  }
+
+  const token = authHeader.slice(7);
+  const authInfo = await verifyAccessToken(token, auditContext(c));
+  if (!authInfo) {
+    return {
+      ok: false,
+      authenticateHeader: 'Bearer error="invalid_token"',
+      message: 'Invalid or expired token',
+    };
+  }
+
+  return { ok: true, authInfo };
+}
+
+function bearerAuthFailureResponse(c: Context, result: Extract<BearerAuthResult, { ok: false }>) {
+  c.header('WWW-Authenticate', result.authenticateHeader);
+  return c.json(jsonError(result.message, 401), 401);
+}
+
+function requireBearerAuth(): MiddlewareHandler {
   return async (c: Parameters<Parameters<typeof app.use>[1]>[0], next: () => Promise<void>) => {
-    const authHeader = c.req.header('authorization');
-    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
-      c.header('WWW-Authenticate', 'Bearer');
-      return c.json(jsonError('Authentication required', 401), 401);
+    const authResult = await authenticateBearer(c);
+    if (!authResult.ok) {
+      return bearerAuthFailureResponse(c, authResult);
     }
 
-    const token = authHeader.slice(7);
-    const valid = await verifyAccessToken(token, auditContext(c));
-    if (!valid) {
-      c.header('WWW-Authenticate', 'Bearer error="invalid_token"');
-      return c.json(jsonError('Invalid or expired token', 401), 401);
+    c.set('authInfo', authResult.authInfo);
+    await next();
+  };
+}
+
+function requireMcpAuthAndRateLimit(): MiddlewareHandler {
+  return async (c, next) => {
+    const authResult = await authenticateBearer(c);
+    const authInfo = authResult.ok ? authResult.authInfo : undefined;
+
+    let rateLimit: McpRateLimitResult;
+    try {
+      rateLimit = await checkMcpRateLimit(c, authInfo);
+    } catch (error) {
+      return mcpRateLimitUnavailableResponse(c, error);
     }
 
+    if (!rateLimit.decision.allowed) {
+      return mcpRateLimitedResponse(c, rateLimit);
+    }
+
+    if (!authResult.ok) {
+      return bearerAuthFailureResponse(c, authResult);
+    }
+
+    c.set('authInfo', authInfo);
     await next();
   };
 }
@@ -1071,7 +1216,7 @@ app.use('/api/cards/*', requireBearerAuth());
 app.use('/api/cards', requireBearerAuth());
 app.use('/api/card-types', requireBearerAuth());
 app.use('/api/ask', requireBearerAuth());
-app.use('/mcp', requireBearerAuth());
+app.use('/mcp', requireMcpAuthAndRateLimit());
 
 // ─── MCP transport ───────────────────────────────────────────────────────────
 

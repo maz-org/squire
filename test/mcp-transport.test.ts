@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const {
   mockSearchRules,
@@ -16,6 +16,7 @@ const {
   mockGetSection,
   mockFollowLinks,
   mockNeighbors,
+  mockVerifyAccessToken,
 } = vi.hoisted(() => ({
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
@@ -32,6 +33,7 @@ const {
   mockGetSection: vi.fn(),
   mockFollowLinks: vi.fn(),
   mockNeighbors: vi.fn(),
+  mockVerifyAccessToken: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({
@@ -77,14 +79,7 @@ vi.mock('../src/auth.ts', () => ({
   registerClient: vi.fn(),
   createAuthorizationCode: vi.fn(),
   exchangeAuthorizationCode: vi.fn(),
-  verifyAccessToken: vi.fn().mockResolvedValue({
-    token: 'stub',
-    clientId: 'stub-client',
-    scopes: [],
-    // Match SquireOAuthProvider.verifyAccessToken shape: `expiresAt` is
-    // unix seconds (not a Date). CodeRabbit nitpick on PR #196.
-    expiresAt: Math.floor(Date.now() / 1000) + 3600,
-  }),
+  verifyAccessToken: mockVerifyAccessToken,
   getAuthProvider: vi.fn(),
   resetAuthProvider: vi.fn(),
   OAuthError: class OAuthError extends Error {},
@@ -93,6 +88,62 @@ vi.mock('../src/auth.ts', () => ({
 import { app } from '../src/server.ts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import {
+  hashRateLimitIdentity,
+  MCP_REQUEST_RATE_LIMIT_POLICY,
+  resetRateLimiterForTesting,
+  setRateLimiterForTesting,
+  type RateLimiter,
+  type RateLimitConsumeInput,
+  type RateLimitDecision,
+} from '../src/rate-limit.ts';
+
+function authInfoForToken(token: string) {
+  return {
+    token,
+    clientId: token === 'other-token' ? 'other-client' : 'stub-client',
+    scopes: [],
+    // Match SquireOAuthProvider.verifyAccessToken shape: `expiresAt` is
+    // unix seconds (not a Date). CodeRabbit nitpick on PR #196.
+    expiresAt: Math.floor(Date.now() / 1000) + 3600,
+  };
+}
+
+function installOneRequestLimiter() {
+  const counts = new Map<string, number>();
+  const identities: string[] = [];
+
+  const limiter = {
+    async consume(input: RateLimitConsumeInput): Promise<RateLimitDecision> {
+      identities.push(input.identity);
+      const used = (counts.get(input.identity) ?? 0) + 1;
+      counts.set(input.identity, used);
+      const allowed = used <= 1;
+      return {
+        allowed,
+        policy: input.policy,
+        identityHash: hashRateLimitIdentity(input.identity, 'mcp-rate-limit-test-secret'),
+        remaining: allowed ? 0 : 0,
+        retryAfterSeconds: allowed ? 0 : 30,
+        resetAfterSeconds: 30,
+      };
+    },
+  };
+
+  setRateLimiterForTesting(limiter as unknown as RateLimiter);
+  return { identities };
+}
+
+function mcpPost(headers: Record<string, string> = {}) {
+  return app.request('/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
+    body: JSON.stringify({ not: 'jsonrpc' }),
+  });
+}
 
 // Helper to create an MCP client connected via HTTP to the Hono app
 async function createHttpClient(): Promise<Client> {
@@ -112,6 +163,7 @@ async function createHttpClient(): Promise<Client> {
 describe('MCP over Streamable HTTP', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockVerifyAccessToken.mockImplementation(async (token: string) => authInfoForToken(token));
     mockListCardTypes.mockReturnValue([
       { type: 'monster-stats', count: 10 },
       { type: 'items', count: 5 },
@@ -154,6 +206,10 @@ describe('MCP over Streamable HTTP', () => {
     });
   });
 
+  afterEach(() => {
+    resetRateLimiterForTesting();
+  });
+
   it('lists tools via HTTP transport', async () => {
     const client = await createHttpClient();
     const { tools } = await client.listTools();
@@ -190,5 +246,106 @@ describe('MCP over Streamable HTTP', () => {
       body: JSON.stringify({ not: 'jsonrpc' }),
     });
     expect(res.status).toBeGreaterThanOrEqual(400);
+  });
+
+  it('rate limits authenticated MCP requests by OAuth client before opening transport', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const limiter = installOneRequestLimiter();
+
+    try {
+      const allowed = await mcpPost({ Authorization: 'Bearer stub-token' });
+      expect(allowed.status).not.toBe(429);
+
+      const limited = await mcpPost({ Authorization: 'Bearer stub-token' });
+      expect(limited.status).toBe(429);
+      expect(limited.headers.get('retry-after')).toBe('30');
+      await expect(limited.json()).resolves.toMatchObject({
+        error: 'rate_limited',
+        retry_after_seconds: 30,
+      });
+
+      expect(limiter.identities).toEqual(['client:stub-client', 'client:stub-client']);
+
+      const logLine = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => {
+          return line.includes('"event":"rate_limit_rejected"');
+        });
+      expect(logLine).toBeTruthy();
+      expect(logLine).not.toContain('stub-client');
+
+      const event = JSON.parse(logLine!);
+      expect(event).toMatchObject({
+        level: 'warn',
+        event: 'rate_limit_rejected',
+        route: '/mcp',
+        method: 'POST',
+        policy: MCP_REQUEST_RATE_LIMIT_POLICY.name,
+        limit: MCP_REQUEST_RATE_LIMIT_POLICY.limit,
+        window_ms: MCP_REQUEST_RATE_LIMIT_POLICY.windowMs,
+        identity_kind: 'client',
+        retry_after_seconds: 30,
+      });
+      expect(event.identity_hash).toMatch(/^[A-Za-z0-9_-]{32}$/);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('keeps independent MCP buckets for different OAuth clients', async () => {
+    installOneRequestLimiter();
+
+    const allowed = await mcpPost({ Authorization: 'Bearer stub-token' });
+    expect(allowed.status).not.toBe(429);
+
+    const limited = await mcpPost({ Authorization: 'Bearer stub-token' });
+    expect(limited.status).toBe(429);
+
+    const otherClient = await mcpPost({ Authorization: 'Bearer other-token' });
+    expect(otherClient.status).not.toBe(429);
+  });
+
+  it('prefers authenticated user identity over OAuth client identity when present', async () => {
+    mockVerifyAccessToken.mockResolvedValue({
+      token: 'user-token',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: '11111111-1111-4111-8111-111111111111' },
+    });
+    const limiter = installOneRequestLimiter();
+
+    const res = await mcpPost({ Authorization: 'Bearer user-token' });
+    expect(res.status).not.toBe(429);
+    expect(limiter.identities).toEqual(['user:11111111-1111-4111-8111-111111111111']);
+  });
+
+  it('rate limits unauthenticated MCP requests by trusted client IP fallback', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const limiter = installOneRequestLimiter();
+
+    try {
+      const allowed = await mcpPost({ 'X-Forwarded-For': '198.51.100.70' });
+      expect(allowed.status).toBe(401);
+
+      const limited = await mcpPost({ 'X-Forwarded-For': '198.51.100.70' });
+      expect(limited.status).toBe(429);
+
+      expect(limiter.identities).toEqual(['ip:198.51.100.70', 'ip:198.51.100.70']);
+
+      const logLine = warn.mock.calls
+        .map((call) => String(call[0]))
+        .find((line) => {
+          return line.includes('"event":"rate_limit_rejected"');
+        });
+      expect(logLine).toBeTruthy();
+      expect(logLine).not.toContain('198.51.100.70');
+      expect(JSON.parse(logLine!)).toMatchObject({
+        route: '/mcp',
+        identity_kind: 'ip',
+      });
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

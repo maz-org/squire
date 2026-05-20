@@ -177,20 +177,29 @@ attacker could run up significant costs.
 
 ### 6. MCP Bearer-Auth Boundary
 
-The `/mcp` endpoint is no longer pre-auth. It uses the same OAuth 2.1 bearer
-middleware as REST API endpoints, and production traffic must also pass the
-CloudFront origin lock before reaching Fly.
+The `/mcp` endpoint is a public agent-facing API surface protected by OAuth 2.1
+bearer auth. Production traffic must pass the CloudFront origin lock before
+reaching Fly, and requests pass through the Redis/Valkey-backed app limiter
+before the Streamable HTTP transport starts.
 
 **Attack scenarios:**
 
 - A client obtains or steals a valid long-lived bearer token and calls MCP tools
 - A direct-origin caller attempts to bypass CloudFront and WAF
+- Invalid-token or unauthenticated floods can still hit the HTTP auth surface
+- High-rate valid clients can create many MCP transports and tool calls
 - Future campaign tools accidentally expose private campaign/player data through
   the same MCP transport
 
 **Mitigations:**
 
-- Keep `/mcp` behind `requireBearerAuth()` and the production origin lock
+- Keep `/mcp` behind bearer auth and the production origin lock
+- Rate limit `/mcp` to 120 requests per minute per token user when present,
+  otherwise per OAuth client id
+- Rate limit unauthenticated or malformed `/mcp` requests by trusted client IP
+  fallback, then by a shared `unknown` bucket
+- Return HTTP 429 before the Streamable HTTP transport starts and emit
+  structured, PII-safe rate-limit logs
 - Hash bearer tokens at rest and audit token lifecycle events through the OAuth
   provider
 - Keep local development on localhost unless deliberately testing the remote MCP
@@ -319,7 +328,8 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 **Mitigations:**
 
-- Rate limiting per-IP and per-user
+- Redis/Valkey-backed app rate limits per trusted IP, OAuth client, and token
+  user where available
 - Connection limits
 - Response size limits
 - Consider caching for embeddings and frequent queries

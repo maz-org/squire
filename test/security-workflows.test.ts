@@ -32,10 +32,11 @@ describe('security workflows', () => {
     const securityDocs = await readProjectFile('docs/SECURITY.md');
     const server = await readProjectFile('src/server.ts');
 
-    expect(server).toContain("app.use('/mcp', requireBearerAuth())");
+    expect(server).toContain("app.use('/mcp', requireMcpAuthAndRateLimit())");
     expect(securityDocs).toContain('MCP Bearer-Auth Boundary');
-    expect(securityDocs).toContain('The `/mcp` endpoint is no longer pre-auth');
-    expect(securityDocs).toContain('Keep `/mcp` behind `requireBearerAuth()`');
+    expect(securityDocs).toContain('protected by OAuth 2.1');
+    expect(securityDocs).toContain('Keep `/mcp` behind bearer auth');
+    expect(securityDocs).toContain('Rate limit `/mcp` to 120 requests per minute');
     expect(securityDocs).not.toContain('The `/mcp` endpoint is currently open with no auth');
     expect(securityDocs).not.toContain('Do not deploy to a public network until auth is wired up');
   });

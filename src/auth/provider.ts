@@ -424,6 +424,7 @@ export class SquireOAuthProvider {
       clientId: row.clientId,
       scopes: row.scope ? row.scope.split(' ').filter(Boolean) : [],
       expiresAt: Math.floor(row.expiresAt.getTime() / 1000),
+      extra: row.userId ? { userId: row.userId } : undefined,
     };
   }
 

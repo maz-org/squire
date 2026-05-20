@@ -634,6 +634,15 @@ The OAuth 2.1 infrastructure protects the MCP endpoint. No anonymous access in p
 
 PKCE required for all interactive clients. Dynamic Client Registration supported so clients auto-register without manual setup.
 
+`/mcp` also has an application-level Redis/Valkey-backed request limit separate
+from the unauthenticated OAuth endpoints: 120 requests per minute per
+authenticated token user when a token carries `userId`, otherwise per OAuth
+client id. Requests that do not authenticate still pass through the same limiter
+using the trusted client IP resolver from the CloudFront/Fly edge path, falling
+back to a shared `unknown` bucket when no trusted IP is available. Denials return
+HTTP 429 before the Streamable HTTP transport starts and emit structured
+PII-safe `rate_limit_rejected` logs.
+
 ### Internal MCP rejected
 
 An earlier design considered using **internal MCP** as the transport between the conversation agent and the knowledge agent. That was rejected because internal callers would have needed to bypass auth, which was undesirable. The two-agent split remains; only the internal MCP transport was dropped. The conversation agent calls the knowledge agent via direct in-process function calls today.
