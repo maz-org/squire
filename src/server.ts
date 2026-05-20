@@ -13,7 +13,13 @@ import { pathToFileURL } from 'node:url';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
-import { ask, ensureBootstrapStatus, isReady, startBootstrapLifecycle } from './service.ts';
+import {
+  ask,
+  ensureAskBudgetAvailable,
+  ensureBootstrapStatus,
+  isReady,
+  startBootstrapLifecycle,
+} from './service.ts';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 
 import { getDb, getWorktreeRuntime } from './db.ts';
@@ -21,6 +27,7 @@ import { loadServerConfig } from './config.ts';
 import { runReadinessChecks } from './health.ts';
 import { originSharedSecretMiddleware } from './origin-lock.ts';
 import { resolveTrustedClientIp } from './http/trusted-client-ip.ts';
+import { LlmBudgetExceededError } from './llm-budget.ts';
 import {
   getDefaultRateLimiter,
   MCP_REQUEST_RATE_LIMIT_POLICY,
@@ -284,6 +291,20 @@ function mcpRateLimitedResponse(c: Context, result: McpRateLimitResult) {
       error: 'rate_limited',
       error_description: 'Too many MCP requests. Try again later.',
       retry_after_seconds: retryAfterSeconds,
+    },
+    429,
+  );
+}
+
+function budgetExceededResponse(c: Context, error: LlmBudgetExceededError) {
+  return c.json(
+    {
+      error: 'llm_budget_exceeded',
+      error_description: 'Daily LLM budget exhausted. Try again tomorrow.',
+      budget_day: error.status.budgetDay,
+      budget_usd: error.status.budgetUsd,
+      spent_usd: error.status.spentUsd,
+      remaining_usd: error.status.remainingUsd,
     },
     429,
   );
@@ -1407,10 +1428,19 @@ app.post('/api/ask', async (c) => {
   if (bootstrapError) return bootstrapError;
 
   const { question, ...options } = result.data;
+  delete options.userId;
+  try {
+    await ensureAskBudgetAvailable(null);
+  } catch (error) {
+    if (error instanceof LlmBudgetExceededError) return budgetExceededResponse(c, error);
+    throw error;
+  }
+
   return streamSSE(c, async (stream) => {
     try {
       await ask(question, {
         ...options,
+        budgetPrechecked: true,
         requestId,
         emit: async (event, data) => {
           await stream.writeSSE({ event, data: JSON.stringify(data) });

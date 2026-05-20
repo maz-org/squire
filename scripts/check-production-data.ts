@@ -64,6 +64,39 @@ export function assertProductionDatabaseUrl(rawUrl: string | undefined): string 
   return url;
 }
 
+export function getProductionDatabaseTargetUrl(env: NodeJS.ProcessEnv = process.env): string {
+  return assertProductionDatabaseUrl(env.PRODUCTION_DATABASE_URL ?? env.DATABASE_URL);
+}
+
+export function getProductionDatabaseConnectionUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const targetUrl = getProductionDatabaseTargetUrl(env);
+  const connectionUrl = env.DATABASE_URL?.trim();
+  if (!connectionUrl || connectionUrl === targetUrl) return connectionUrl || targetUrl;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(connectionUrl);
+  } catch (error) {
+    throw new Error('DATABASE_URL must be a valid Postgres connection URL.', { cause: error });
+  }
+
+  if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) {
+    throw new Error('DATABASE_URL must use the postgres:// or postgresql:// protocol.');
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const isLocalProxy = ['localhost', '127.0.0.1', '[::1]', '::1', 'host.docker.internal'].includes(
+    hostname,
+  );
+  if (!isLocalProxy) {
+    throw new Error(
+      'DATABASE_URL may only override PRODUCTION_DATABASE_URL with a local Fly proxy URL.',
+    );
+  }
+
+  return connectionUrl;
+}
+
 export function assertProductionRuntimeEnv(env: NodeJS.ProcessEnv = process.env): void {
   if (env.NODE_ENV !== 'production') {
     throw new Error('NODE_ENV must be production for production data workflows.');
@@ -186,13 +219,14 @@ function parseCommand(
 async function main(): Promise<void> {
   const command = parseCommand(process.argv[2]);
   assertProductionRuntimeEnv();
-  const url = assertProductionDatabaseUrl(process.env.DATABASE_URL);
+  getProductionDatabaseTargetUrl();
 
   if (command === 'verify-url') {
     console.log('OK production database URL guard passed.');
     return;
   }
 
+  const url = getProductionDatabaseConnectionUrl();
   const handle = createStandaloneDb({ url, max: 1 });
   try {
     if (command === 'truncate-embeddings') {
