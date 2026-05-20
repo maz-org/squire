@@ -16,9 +16,9 @@ const evalCase: EvalCase = {
   question: 'What does the Alchemist cost?',
   finalAnswer: {
     expected:
-      'The Alchemist starts the campaign already built at level 1, so it has no initial build cost. Its level 1 upgrade cost is 1 prosperity, 2 lumber, 2 metal, and 1 hide.',
+      "The Alchemist is built at campaign start. Its level 1 initial build cost is no cost: 0 prosperity, 0 gold, 0 lumber, 0 metal, and 0 hide. The level 1 card's upgrade cost to reach level 2 is 1 prosperity, 2 lumber, 2 metal, and 1 hide.",
     grading:
-      'Mentions level 1 starts built, has no initial build cost, and separates the level 1 upgrade cost from the initial build cost.',
+      'Mentions level 1 starts built, has no initial build cost, and separates the level 1 upgrade cost from the initial build cost. Effect text is optional unless it contradicts the cost/build state.',
   },
 };
 
