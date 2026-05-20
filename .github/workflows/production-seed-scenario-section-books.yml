@@ -1,0 +1,57 @@
+name: Production seed scenario and section books
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/extracted/scenario-section-books.json'
+      - 'data/pdfs/**'
+      - 'src/import-scenario-section-books.ts'
+      - 'src/scenario-section-data.ts'
+      - 'src/scenario-section-schemas.ts'
+      - 'src/seed/seed-scenario-section-books.ts'
+      - 'scripts/seed-scenario-section-books.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-seed-scenario-section-books
+  cancel-in-progress: false
+
+jobs:
+  seed-scenario-section-books:
+    name: Seed production scenario and section books
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://squire.maz.org
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      NODE_ENV: production
+      SQUIRE_ENV: production
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Verify production database target
+        run: npm run production-data:verify-db-url
+
+      - name: Run production migrations
+        run: npm run db:migrate
+
+      - name: Seed scenario and section books
+        run: npm run seed:scenario-section-books
+
+      - name: Sanity check scenario and section books
+        run: npm run production-data:check -- scenario-section-books
