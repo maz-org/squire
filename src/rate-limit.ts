@@ -282,18 +282,18 @@ export class RedisRateLimitStore extends FlexibleRateLimitStore {
 
   constructor(url: string, client?: RedisClientType, options: RedisRateLimitStoreOptions = {}) {
     let connect: () => Promise<void> = async () => {};
+    const operationTimeoutMs = options.operationTimeoutMs ?? REDIS_OPERATION_TIMEOUT_MS;
     const clientFactory =
       options.clientFactory ??
       (() =>
         createRedisClient({
           url,
           socket: {
-            connectTimeout: REDIS_OPERATION_TIMEOUT_MS,
+            connectTimeout: operationTimeoutMs,
             socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
           },
         }));
     const redisClient = client ?? clientFactory();
-    const operationTimeoutMs = options.operationTimeoutMs ?? REDIS_OPERATION_TIMEOUT_MS;
 
     super({
       beforeConsume: () => connect(),
