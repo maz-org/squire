@@ -30,8 +30,22 @@ describe('stripHtml', () => {
     expect(stripHtml('Attack <b>3</b><br/>Then move <i>2</i>')).toBe('Attack 3 Then move 2');
   });
 
+  it('preserves text inside nested formatting tags', () => {
+    expect(stripHtml('Gain <strong><i>Advantage</i></strong> on the next attack')).toBe(
+      'Gain Advantage on the next attack',
+    );
+  });
+
   it('drops unterminated tag fragments', () => {
     expect(stripHtml('Attack 3 <script')).toBe('Attack 3');
+  });
+
+  it('keeps text inside malformed formatting fragments', () => {
+    expect(stripHtml('Attack <strong>3')).toBe('Attack 3');
+  });
+
+  it('drops script and style contents from parsed fragments', () => {
+    expect(stripHtml('Attack <script>alert(1)</script><style>.x{}</style> 3')).toBe('Attack 3');
   });
 });
 
@@ -93,6 +107,25 @@ describe('resolveLabel', () => {
   it('resolves a %data.custom.fh...% reference', () => {
     const result = resolveLabel('%data.custom.fh.drifter.abilities.1.1%', labels);
     expect(result).toBe('On your next six melee attacks, add +2 Attack.');
+  });
+
+  it('resolves labels through plain-text HTML extraction before game tokens', () => {
+    const htmlLabels = {
+      custom: {
+        fh: {
+          drifter: {
+            abilities: {
+              '1': {
+                '2': '<strong>Move</strong><br><i>+1%game.action.attack%</i>',
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const result = resolveLabel('%data.custom.fh.drifter.abilities.1.2%', htmlLabels);
+    expect(result).toBe('Move +1 Attack');
   });
 
   it('returns the original string when path is not found', () => {
