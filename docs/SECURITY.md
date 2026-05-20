@@ -175,28 +175,37 @@ attacker could run up significant costs.
 - Embedding result cache (same query leads to same embedding)
 - Monitor API spend with alerts
 
-### 6. MCP Exposure
+### 6. MCP Bearer-Auth Boundary
 
-The `/mcp` endpoint is a public agent-facing API surface. It is protected by
-OAuth 2.1 bearer tokens and the same Redis/Valkey-backed app limiter used for
-other interactive surfaces.
+The `/mcp` endpoint is a public agent-facing API surface. It uses OAuth 2.1
+bearer auth, production traffic must pass the CloudFront origin lock before
+reaching Fly, and requests pass through the Redis/Valkey-backed app limiter
+before the Streamable HTTP transport starts.
 
 **Attack scenarios:**
 
-- Stolen or leaked bearer tokens can list tools and call rules/search tools
+- A client obtains or steals a valid long-lived bearer token and calls MCP tools
+- A direct-origin caller attempts to bypass CloudFront and WAF
 - Invalid-token or unauthenticated floods can still hit the HTTP auth surface
 - High-rate valid clients can create many MCP transports and tool calls
+- Future campaign tools accidentally expose private campaign/player data through
+  the same MCP transport
 
 **Mitigations:**
 
-- Require OAuth 2.1 bearer auth on `/mcp`
+- Keep `/mcp` behind bearer auth and the production origin lock
 - Rate limit `/mcp` to 120 requests per minute per token user when present,
   otherwise per OAuth client id
 - Rate limit unauthenticated or malformed `/mcp` requests by trusted client IP
   fallback, then by a shared `unknown` bucket
 - Return HTTP 429 before the Streamable HTTP transport starts and emit
   structured, PII-safe rate-limit logs
-- For dev, bind to localhost only
+- Hash bearer tokens at rest and audit token lifecycle events through the OAuth
+  provider
+- Keep local development on localhost unless deliberately testing the remote MCP
+  transport
+- Before adding campaign/player tools, design and test campaign data isolation
+  first (see §3)
 
 ### 7. Web UI XSS via LLM Output
 
@@ -311,7 +320,7 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 - Flood `/api/search/rules` — each request runs the local embedding
   model (CPU-bound)
-- Flood `/mcp` — each request creates a new McpServer + transport
+- Flood `/mcp` with a valid bearer token — each request creates a new McpServer + transport
   (memory-bound)
 - Large `topK` values (capped at 100, but 100 results times concurrent
   requests strains memory)
@@ -345,21 +354,22 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 ## Priority Recommendations
 
-1. Do not deploy publicly until auth is complete (Linear: User Accounts project, SQR-37/38/39/40)
-2. Keep CodeQL code scanning healthy: confirm the first default-branch run
+1. Keep CodeQL code scanning healthy: confirm the first default-branch run
    succeeds, verify Copilot Autofix availability for supported alerts, and keep
    alert triage flowing into Linear
-3. Design campaign data isolation before building campaign state — the
+2. Design campaign data isolation before building campaign state — the
    player entity must enforce access boundaries, and the knowledge
    agent must scope its context to prevent LLM-mediated data leaks
-4. Keep expanding the Redis/Valkey-backed app limiter from SQR-52 across the
+3. Keep expanding the Redis/Valkey-backed app limiter from SQR-52 across the
    remaining interactive surfaces; WAF remains the coarse outer layer
-5. Establish a prompt injection test suite — adversarial test cases in
+4. Establish a prompt injection test suite — adversarial test cases in
    the E2E suite that try to extract the system prompt, manipulate
    responses, or cause the LLM to output HTML
 
 ## Changelog
 
+- **2026-05-19:** Replaced stale pre-auth `/mcp` wording with the current
+  bearer-auth and origin-lock boundary (SQR-87).
 - **2026-05-17:** Recorded Dependabot auto-triage preset behavior and review
   path for low-impact development dependency alerts (SQR-168).
 - **2026-05-17:** Clarified that app rate limits use Redis/Valkey token

@@ -51,13 +51,21 @@ async function generateAssistantReply(
   question: string,
   history: HistoryMessage[],
   userId: string,
+  correlation: { conversationId: string; userMessageId: string; requestId?: string },
   emit: (event: string, data: unknown) => Promise<void>,
   options: { retryOnTransportError: boolean; onRetry?: () => void } = {
     retryOnTransportError: true,
   },
 ) {
   try {
-    return await ask(question, { history, userId, emit });
+    return await ask(question, {
+      history,
+      userId,
+      requestId: correlation.requestId,
+      conversationId: correlation.conversationId,
+      userMessageId: correlation.userMessageId,
+      emit,
+    });
   } catch (err) {
     if (!isRetryableTransportError(err) || !options.retryOnTransportError) {
       throw err;
@@ -69,7 +77,14 @@ async function generateAssistantReply(
     // accumulator state populated by the failed first attempt.
     options.onRetry?.();
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return ask(question, { history, userId, emit });
+    return ask(question, {
+      history,
+      userId,
+      requestId: correlation.requestId,
+      conversationId: correlation.conversationId,
+      userMessageId: correlation.userMessageId,
+      emit,
+    });
   }
 }
 
@@ -78,6 +93,7 @@ async function persistAssistantOutcome(input: {
   question: string;
   userId: string;
   currentUserMessageId: string;
+  requestId?: string;
   onEvent?: (event: string, data: unknown) => Promise<void>;
   failureMessage?: string;
 }): Promise<ConversationMessage> {
@@ -142,6 +158,11 @@ async function persistAssistantOutcome(input: {
         input.question,
         history,
         input.userId,
+        {
+          requestId: input.requestId,
+          conversationId: input.conversationId,
+          userMessageId: input.currentUserMessageId,
+        },
         captureOnEvent,
         {
           // Retry transient transport errors ONLY on the non-streaming path.
@@ -291,6 +312,7 @@ export async function streamAssistantTurn(input: {
   question: string;
   userId: string;
   currentUserMessageId: string;
+  requestId?: string;
   onEvent: (event: string, data: unknown) => Promise<void>;
   failureMessage?: string;
 }): Promise<ConversationMessage> {
@@ -299,6 +321,7 @@ export async function streamAssistantTurn(input: {
     question: input.question,
     userId: input.userId,
     currentUserMessageId: input.currentUserMessageId,
+    requestId: input.requestId,
     onEvent: input.onEvent,
     failureMessage: input.failureMessage,
   });
@@ -308,6 +331,7 @@ export async function startConversation(input: {
   userId: string;
   question: string;
   idempotencyKey: string;
+  requestId?: string;
 }): Promise<Conversation> {
   const result = await createConversationTurn(input);
   if (result.currentUserMessage) {
@@ -316,6 +340,7 @@ export async function startConversation(input: {
       question: result.currentUserMessage.content,
       userId: input.userId,
       currentUserMessageId: result.currentUserMessage.id,
+      requestId: input.requestId,
     });
   }
 
@@ -329,6 +354,7 @@ export async function appendMessage(input: {
   conversationId: string;
   userId: string;
   question: string;
+  requestId?: string;
 }): Promise<Conversation | null> {
   const result = await createPendingFollowUp(input);
   if (!result?.currentUserMessage) return null;
@@ -338,6 +364,7 @@ export async function appendMessage(input: {
     question: input.question,
     userId: input.userId,
     currentUserMessageId: result.currentUserMessage.id,
+    requestId: input.requestId,
   });
 
   return ConversationRepository.findOwnedById(input.userId, input.conversationId);
