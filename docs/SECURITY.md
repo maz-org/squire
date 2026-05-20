@@ -177,8 +177,8 @@ attacker could run up significant costs.
 
 ### 6. MCP Bearer-Auth Boundary
 
-The `/mcp` endpoint is a public agent-facing API surface. It uses OAuth 2.1
-bearer auth, production traffic must pass the CloudFront origin lock before
+The `/mcp` endpoint is a public agent-facing API surface protected by OAuth 2.1
+bearer auth. Production traffic must pass the CloudFront origin lock before
 reaching Fly, and requests pass through the Redis/Valkey-backed app limiter
 before the Streamable HTTP transport starts.
 
