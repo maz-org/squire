@@ -603,12 +603,16 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
       `${input.evalCase.id}:${input.agentRuntime}:${input.providerConfig.provider}:${input.providerConfig.model}`,
     ),
   );
+  const completedRows = rows.filter((row): row is EvalMatrixRow => !!row);
+  const estimatedCostUsd = Number(
+    completedRows.reduce((sum, row) => sum + (row.estimatedCostUsd ?? 0), 0).toFixed(6),
+  );
 
   return {
     runLabel: options.runLabel,
-    rows: rows.filter((row): row is EvalMatrixRow => !!row),
+    rows: completedRows,
     guardrailEstimatedCostUsd,
-    estimatedCostUsd: guardrailEstimatedCostUsd,
+    estimatedCostUsd,
   };
 }
 

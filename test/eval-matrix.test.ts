@@ -470,7 +470,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(result).toMatchObject({
-      estimatedCostUsd: 0.1,
+      estimatedCostUsd: 10.7,
       guardrailEstimatedCostUsd: 0.1,
     });
     expect(result.rows).toEqual(
