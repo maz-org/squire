@@ -8,6 +8,7 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
+import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import { html } from 'hono/html';
@@ -153,6 +154,16 @@ function auditContext(c: Context): { ipAddress: string | null; userAgent: string
     ipAddress: resolveTrustedClientIp(c.req),
     userAgent: c.req.header('user-agent') ?? null,
   };
+}
+
+function correlateRequest(c: Context): string {
+  const incomingRequestId = c.req.header('x-request-id');
+  const requestId =
+    incomingRequestId && /^[A-Za-z0-9._:-]{1,128}$/.test(incomingRequestId)
+      ? incomingRequestId
+      : randomUUID();
+  c.header('X-Request-ID', requestId);
+  return requestId;
 }
 
 async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
@@ -800,6 +811,7 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
 });
 
 app.post('/chat', async (c) => {
+  const requestId = correlateRequest(c);
   const session = c.get('session')!;
   const { question, idempotencyKey } = await readQuestionForm(c);
 
@@ -855,6 +867,7 @@ app.post('/chat', async (c) => {
     userId: session.userId,
     question,
     idempotencyKey,
+    requestId,
   });
 
   c.header('Cache-Control', 'no-store');
@@ -863,6 +876,7 @@ app.post('/chat', async (c) => {
 });
 
 app.post('/chat/:conversationId/messages', async (c) => {
+  const requestId = correlateRequest(c);
   const session = c.get('session')!;
   const { question } = await readQuestionForm(c);
   if (!question) return badChatRequest(c, 'Question is required');
@@ -895,6 +909,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
     conversationId: c.req.param('conversationId'),
     userId: session.userId,
     question,
+    requestId,
   });
   if (!conversation) return c.notFound();
 
@@ -904,6 +919,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
 });
 
 app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
+  const requestId = correlateRequest(c);
   const session = c.get('session')!;
   const loaded = await loadConversationMessage({
     conversationId: c.req.param('conversationId'),
@@ -943,6 +959,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       question: loaded.message.content,
       userId: session.userId,
       currentUserMessageId: loaded.message.id,
+      requestId,
       onEvent: async (event, data) => {
         if (event === 'text') {
           await stream.writeSSE({
@@ -1248,6 +1265,8 @@ const AskRequestSchema = z.object({
 });
 
 app.post('/api/ask', async (c) => {
+  const requestId = correlateRequest(c);
+
   let body: unknown;
   try {
     body = await c.req.json();
@@ -1276,6 +1295,7 @@ app.post('/api/ask', async (c) => {
       await ask(question, {
         ...options,
         budgetPrechecked: true,
+        requestId,
         emit: async (event, data) => {
           await stream.writeSSE({ event, data: JSON.stringify(data) });
         },

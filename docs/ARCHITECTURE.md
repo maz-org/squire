@@ -677,6 +677,15 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 **LLM observability and evals: Langfuse.** Trace exports flow into Langfuse via `@langfuse/otel` and `@langfuse/tracing`. Each conversation, tool call, and model call is captured as a structured trace. Langfuse's built-in LLM-as-judge eval templates grade production traces (planned). Langfuse was chosen specifically for its eval system, which is more capable than alternatives for LLM-as-judge workflows.
 
+Runtime agent traces carry safe correlation metadata so an operator can follow
+one user-visible answer without reading PII from stdout logs. Web-chat traces
+include request ID, conversation ID, user-message ID, user ID, `SQUIRE_ENV`,
+provider/model, tool surface, stop reason, token usage, and compact tool
+summaries. REST `/api/ask` traces include request ID and any caller-provided
+user/campaign IDs. The browser response includes `X-Request-ID`; the web chat
+URL and stream URL expose the conversation and user-message IDs needed to find
+the persisted turn.
+
 **APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make Langfuse a better fit for evals — so even if Datadog is adopted for APM / RUM, Langfuse stays for LLM-specific observability. See [Open Tech Questions](#open-tech-questions).
 
 ---

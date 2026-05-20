@@ -285,7 +285,14 @@ describe('runAgentLoop', () => {
   it('adds Langfuse-native input, output, usage, and tags to runtime agent traces', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Loot tokens are picked up in your hex.'));
 
-    await runAgentLoopWithTrajectory('What is the loot action?', { toolSurface: 'legacy' });
+    await runAgentLoopWithTrajectory('What is the loot action?', {
+      toolSurface: 'legacy',
+      requestId: 'req-sqr-87',
+      conversationId: '550e8400-e29b-41d4-a716-446655440000',
+      userMessageId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      userId: '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      campaignId: '8ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
 
     const runAttributes = spanAttributes('squire.agent.run');
     expect(parseJsonAttribute(runAttributes, 'langfuse.trace.input')).toEqual({
@@ -301,6 +308,20 @@ describe('runAgentLoop', () => {
       total: 150,
       cacheCreationInput: 0,
       cacheReadInput: 0,
+    });
+    expect(runAttributes).toMatchObject({
+      'langfuse.observation.metadata.squireEnv': 'test',
+      'langfuse.observation.metadata.requestId': 'req-sqr-87',
+      'langfuse.observation.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
+      'langfuse.observation.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langfuse.observation.metadata.userId': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langfuse.observation.metadata.campaignId': '8ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'squire.env': 'test',
+      'squire.request_id': 'req-sqr-87',
+      'squire.conversation_id': '550e8400-e29b-41d4-a716-446655440000',
+      'squire.user_message_id': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'squire.user_id': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'squire.campaign_id': '8ba7b810-9dad-11d1-80b4-00c04fd430c8',
     });
     expect(runAttributes['langfuse.trace.tags']).toEqual([
       'agent',

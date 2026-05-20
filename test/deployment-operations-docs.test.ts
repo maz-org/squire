@@ -35,6 +35,11 @@ describe('deployment operations documentation', () => {
       'one real rules question',
       'Langfuse',
       'env:production',
+      'Troubleshoot one production chat',
+      'metadata.conversationId',
+      'metadata.userMessageId',
+      'metadata.requestId',
+      'X-Request-ID',
       'fly deploy --image <prior-image>',
     ]) {
       expect(guide).toContain(expected);
@@ -105,5 +110,6 @@ describe('deployment operations documentation', () => {
     expect(guide).toContain('eval/developer-only');
     expect(guide).toContain('Do not set `LANGFUSE_TRACING_ENVIRONMENT`');
     expect(guide).toContain('LangSmith variables are eval/prototype tracing variables');
+    expect(development).toContain('OAuth bearer auth');
   });
 });
