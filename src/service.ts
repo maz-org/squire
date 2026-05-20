@@ -11,7 +11,9 @@ import {
   initializeRetrieval,
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
-import { runAgentLoop } from './agent.ts';
+import { runAgentLoopWithTrajectory } from './agent.ts';
+import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
+import { errorLogFields, writeSecurityLog } from './security-log.ts';
 import {
   SCENARIO_SECTION_BOOKS_BOOTSTRAP_MESSAGE,
   type ScenarioSectionBooksBootstrapStatus,
@@ -533,6 +535,12 @@ export interface AskOptions {
   userMessageId?: string;
   /** SSE emit callback. When provided, the agent streams text deltas and tool events. */
   emit?: EmitFn;
+  /** Internal route hint: `/api/ask` already rejected exhausted budgets before SSE starts. */
+  budgetPrechecked?: boolean;
+}
+
+export async function ensureAskBudgetAvailable(userId?: string | null): Promise<void> {
+  await assertLlmBudgetAvailable({ userId: userId ?? null });
 }
 
 /**
@@ -542,5 +550,31 @@ export interface AskOptions {
  */
 export async function ask(question: string, options?: AskOptions): Promise<string> {
   if (!isReady()) await initialize();
-  return runAgentLoop(question, options);
+  const { budgetPrechecked, ...agentOptions } = options ?? {};
+  const userId = options?.userId ?? null;
+  if (!budgetPrechecked) {
+    await ensureAskBudgetAvailable(userId);
+  }
+  const result = await runAgentLoopWithTrajectory(
+    question,
+    Object.keys(agentOptions).length > 0 ? agentOptions : undefined,
+  );
+  try {
+    await recordLlmUsage({
+      userId,
+      model: result.trajectory.model,
+      usage: result.trajectory.tokenUsage,
+    });
+  } catch (error) {
+    writeSecurityLog({
+      event: 'llm_budget_accounting_failed',
+      level: 'error',
+      fields: {
+        model: result.trajectory.model,
+        has_user_id: userId !== null,
+        ...errorLogFields(error),
+      },
+    });
+  }
+  return result.answer;
 }

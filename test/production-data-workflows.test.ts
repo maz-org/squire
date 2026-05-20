@@ -2,7 +2,11 @@ import { readFile } from 'node:fs/promises';
 
 import { describe, expect, it } from 'vitest';
 
-import { assertProductionDatabaseUrl } from '../scripts/check-production-data.ts';
+import {
+  assertProductionDatabaseUrl,
+  getProductionDatabaseConnectionUrl,
+  getProductionDatabaseTargetUrl,
+} from '../scripts/check-production-data.ts';
 
 async function readProjectFile(path: string): Promise<string> {
   return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -72,6 +76,37 @@ describe('production data lifecycle workflows', () => {
     ).not.toThrow();
   });
 
+  it('allows a local Fly proxy connection only when the production target URL is separate', () => {
+    const productionUrl = 'postgres://squire:secret@pgbouncer.internal:5432/fly-db';
+    const proxyUrl = 'postgres://squire:secret@127.0.0.1:15432/fly-db';
+
+    expect(() => assertProductionDatabaseUrl(proxyUrl)).toThrow(/local database/);
+    expect(
+      getProductionDatabaseTargetUrl({
+        DATABASE_URL: proxyUrl,
+        PRODUCTION_DATABASE_URL: productionUrl,
+      }),
+    ).toBe(productionUrl);
+    expect(
+      getProductionDatabaseConnectionUrl({
+        DATABASE_URL: proxyUrl,
+        PRODUCTION_DATABASE_URL: productionUrl,
+      }),
+    ).toBe(proxyUrl);
+    expect(
+      getProductionDatabaseConnectionUrl({
+        DATABASE_URL: productionUrl,
+        PRODUCTION_DATABASE_URL: productionUrl,
+      }),
+    ).toBe(productionUrl);
+    expect(() =>
+      getProductionDatabaseConnectionUrl({
+        DATABASE_URL: 'postgres://squire:secret@staging.internal:5432/fly-db',
+        PRODUCTION_DATABASE_URL: productionUrl,
+      }),
+    ).toThrow(/local Fly proxy/);
+  });
+
   it('seeds production card data only through the protected production environment', async () => {
     const workflow = await readProjectFile('.github/workflows/production-seed-cards.yml');
 
@@ -81,9 +116,14 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('!data/extracted/scenario-section-books.json');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('name: production');
-    expect(workflow).toContain('DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain('FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}');
+    expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
     expect(workflow).toContain('NODE_ENV: production');
     expect(workflow).toContain('SQUIRE_ENV: production');
+    expect(workflow).toContain('superfly/flyctl-actions/setup-flyctl');
+    expect(workflow).toContain('flyctl wireguard websockets enable');
+    expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
+    expect(workflow).toContain('echo "::add-mask::$proxied_url"');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain('run: npm run seed:cards');
@@ -105,7 +145,8 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('scripts/seed-scenario-section-books.ts');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('name: production');
-    expect(workflow).toContain('DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain('run: npm run seed:scenario-section-books');
@@ -125,7 +166,8 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('rebuild:');
     expect(workflow).toContain('default: false');
     expect(workflow).toContain('name: production');
-    expect(workflow).toContain('DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain("if: github.event_name == 'workflow_dispatch' && inputs.rebuild");

@@ -1,6 +1,7 @@
 import { defineRelations } from 'drizzle-orm/relations';
 
 import * as auth from './auth.ts';
+import * as budget from './budget.ts';
 import * as cards from './cards.ts';
 import * as conversations from './conversations.ts';
 import * as core from './core.ts';
@@ -9,6 +10,7 @@ import * as scenarioSectionBooks from './scenario-section-books.ts';
 const schema = {
   ...core,
   ...auth,
+  ...budget,
   ...cards,
   ...conversations,
   ...scenarioSectionBooks,
@@ -35,6 +37,10 @@ export const relations = defineRelations(schema, (r) => ({
     oauthAuditLog: r.many.oauthAuditLog({
       from: r.users.id,
       to: r.oauthAuditLog.userId,
+    }),
+    llmBudgetLedger: r.many.llmBudgetLedger({
+      from: r.users.id,
+      to: r.llmBudgetLedger.userId,
     }),
   },
   sessions: {
@@ -85,6 +91,12 @@ export const relations = defineRelations(schema, (r) => ({
     client: r.one.oauthClients({
       from: r.oauthAuditLog.clientId,
       to: r.oauthClients.clientId,
+    }),
+  },
+  llmBudgetLedger: {
+    user: r.one.users({
+      from: r.llmBudgetLedger.userId,
+      to: r.users.id,
     }),
   },
   conversations: {
