@@ -1,0 +1,50 @@
+name: Production seed card data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/extracted/**'
+      - '!data/extracted/scenario-section-books.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-seed-cards
+  cancel-in-progress: false
+
+jobs:
+  seed-cards:
+    name: Seed production card data
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://squire.maz.org
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      NODE_ENV: production
+      SQUIRE_ENV: production
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Verify production database target
+        run: npm run production-data:verify-db-url
+
+      - name: Run production migrations
+        run: npm run db:migrate
+
+      - name: Seed card data
+        run: npm run seed:cards
+
+      - name: Sanity check card data
+        run: npm run production-data:check -- cards
