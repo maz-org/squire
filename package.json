@@ -88,6 +88,7 @@
     "markdown-it": "^14.1.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",
+    "rate-limiter-flexible": "^11.1.0",
     "tailwindcss": "^4.2.4",
     "zod": "^4.4.3"
   },
