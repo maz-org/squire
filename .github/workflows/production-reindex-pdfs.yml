@@ -32,7 +32,8 @@ jobs:
       name: production
       url: https://squire.maz.org
     env:
-      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
       NODE_ENV: production
       SQUIRE_ENV: production
 
@@ -46,10 +47,33 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master
+
       - run: npm ci
 
       - name: Verify production database target
         run: npm run production-data:verify-db-url
+
+      - name: Start Fly Postgres proxy
+        shell: bash
+        run: |
+          remote_host="$(node -e 'console.log(new URL(process.env.PRODUCTION_DATABASE_URL).hostname)')"
+          proxied_url="$(node -e 'const url = new URL(process.env.PRODUCTION_DATABASE_URL); url.hostname = "127.0.0.1"; url.port = "15432"; console.log(url.toString())')"
+          echo "DATABASE_URL=$proxied_url" >> "$GITHUB_ENV"
+          flyctl proxy 15432:5432 "$remote_host" --app maz-squire > /tmp/fly-postgres-proxy.log 2>&1 &
+          echo "$!" > /tmp/fly-postgres-proxy.pid
+          for _ in {1..20}; do
+            if (echo > /dev/tcp/127.0.0.1/15432) >/dev/null 2>&1; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/fly-postgres-proxy.pid)" 2>/dev/null; then
+              cat /tmp/fly-postgres-proxy.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/fly-postgres-proxy.log
+          exit 1
 
       - name: Run production migrations
         run: npm run db:migrate
@@ -63,3 +87,7 @@ jobs:
 
       - name: Sanity check embeddings
         run: npm run production-data:check -- embeddings
+
+      - name: Stop Fly Postgres proxy
+        if: always()
+        run: kill "$(cat /tmp/fly-postgres-proxy.pid)" 2>/dev/null || true

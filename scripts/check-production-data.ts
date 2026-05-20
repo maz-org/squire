@@ -64,6 +64,15 @@ export function assertProductionDatabaseUrl(rawUrl: string | undefined): string 
   return url;
 }
 
+export function getProductionDatabaseTargetUrl(env: NodeJS.ProcessEnv = process.env): string {
+  return assertProductionDatabaseUrl(env.PRODUCTION_DATABASE_URL ?? env.DATABASE_URL);
+}
+
+export function getProductionDatabaseConnectionUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const targetUrl = getProductionDatabaseTargetUrl(env);
+  return env.DATABASE_URL?.trim() || targetUrl;
+}
+
 export function assertProductionRuntimeEnv(env: NodeJS.ProcessEnv = process.env): void {
   if (env.NODE_ENV !== 'production') {
     throw new Error('NODE_ENV must be production for production data workflows.');
@@ -186,13 +195,14 @@ function parseCommand(
 async function main(): Promise<void> {
   const command = parseCommand(process.argv[2]);
   assertProductionRuntimeEnv();
-  const url = assertProductionDatabaseUrl(process.env.DATABASE_URL);
+  getProductionDatabaseTargetUrl();
 
   if (command === 'verify-url') {
     console.log('OK production database URL guard passed.');
     return;
   }
 
+  const url = getProductionDatabaseConnectionUrl();
   const handle = createStandaloneDb({ url, max: 1 });
   try {
     if (command === 'truncate-embeddings') {
