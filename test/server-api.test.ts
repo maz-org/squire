@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { parseSSE } from './helpers/server-oauth-helpers.ts';
+import { LlmBudgetExceededError } from '../src/llm-budget.ts';
 
 function makeStatus(
   overrides: Partial<{
@@ -63,6 +64,7 @@ const {
   mockIsReady,
   mockRefreshInitializationIfReady,
   mockAsk,
+  mockEnsureAskBudgetAvailable,
   mockSearchRules,
   mockSearchCards,
   mockListCardTypes,
@@ -76,6 +78,7 @@ const {
   mockIsReady: vi.fn(),
   mockRefreshInitializationIfReady: vi.fn(),
   mockAsk: vi.fn(),
+  mockEnsureAskBudgetAvailable: vi.fn(),
   mockSearchRules: vi.fn(),
   mockSearchCards: vi.fn(),
   mockListCardTypes: vi.fn(),
@@ -91,6 +94,7 @@ vi.mock('../src/service.ts', () => ({
   isReady: mockIsReady,
   refreshInitializationIfReady: mockRefreshInitializationIfReady,
   ask: mockAsk,
+  ensureAskBudgetAvailable: mockEnsureAskBudgetAvailable,
 }));
 vi.mock('../src/db.ts', () => ({
   getWorktreeRuntime: vi.fn(),
@@ -146,6 +150,7 @@ function resetRouteMocks() {
   mockIsReady.mockReset();
   mockRefreshInitializationIfReady.mockReset();
   mockAsk.mockReset();
+  mockEnsureAskBudgetAvailable.mockReset();
   mockSearchRules.mockReset();
   mockSearchCards.mockReset();
   mockListCardTypes.mockReset();
@@ -506,6 +511,7 @@ describe('POST /api/ask', () => {
     mockIsReady.mockReturnValue(true);
     mockGetBootstrapStatus.mockReturnValue(makeStatus());
     mockEnsureBootstrapStatus.mockResolvedValue(makeStatus());
+    mockEnsureAskBudgetAvailable.mockResolvedValue(undefined);
     mockAsk.mockResolvedValue('Loot tokens are picked up in your hex.');
   });
 
@@ -529,6 +535,32 @@ describe('POST /api/ask', () => {
       'What is the loot action?',
       expect.objectContaining({ emit: expect.any(Function) }),
     );
+  });
+
+  it('returns 429 before opening the stream when the LLM budget is exhausted', async () => {
+    mockEnsureAskBudgetAvailable.mockRejectedValueOnce(
+      new LlmBudgetExceededError({
+        spentUsd: 10,
+        budgetUsd: 10,
+        remainingUsd: 0,
+        budgetDay: '2026-05-20',
+        exceeded: true,
+      }),
+    );
+
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is the loot action?' }),
+    });
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get('content-type')).toContain('application/json');
+    expect(await res.json()).toMatchObject({
+      error: 'llm_budget_exceeded',
+      error_description: 'Daily LLM budget exhausted. Try again tomorrow.',
+    });
+    expect(mockAsk).not.toHaveBeenCalled();
   });
 
   it('returns 400 when question is missing', async () => {

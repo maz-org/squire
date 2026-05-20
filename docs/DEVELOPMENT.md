@@ -39,6 +39,15 @@ LANGFUSE_SECRET_KEY=...
 # Trace environment label for Langfuse and LangSmith; defaults to NODE_ENV.
 SQUIRE_ENV=development
 
+# Daily LLM spend circuit breaker. Defaults shown here match the app defaults.
+# Budget accounting is local Postgres state; Langfuse is observability only.
+# SQUIRE_LLM_DAILY_BUDGET_USD=10
+# SQUIRE_LLM_BUDGET_WARNING_THRESHOLD=0.8
+# SQUIRE_LLM_INPUT_USD_PER_MILLION_TOKENS=3
+# SQUIRE_LLM_OUTPUT_USD_PER_MILLION_TOKENS=15
+# SQUIRE_LLM_CACHE_CREATION_INPUT_USD_PER_MILLION_TOKENS=6
+# SQUIRE_LLM_CACHE_READ_INPUT_USD_PER_MILLION_TOKENS=0.3
+
 # Redis/Valkey-compatible app rate-limit backend. Required in production;
 # local development falls back to in-process limits when unset.
 # REDIS_URL=redis://localhost:6379

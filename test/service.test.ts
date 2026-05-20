@@ -3,14 +3,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
 const {
-  mockRunAgentLoop,
+  mockRunAgentLoopWithTrajectory,
+  mockAssertLlmBudgetAvailable,
+  mockRecordLlmUsage,
   mockEmbed,
   mockInitializeRetrieval,
   mockGetRetrievalBootstrapStatus,
   mockListCardTypes,
   mockGetScenarioSectionBooksBootstrapStatus,
 } = vi.hoisted(() => ({
-  mockRunAgentLoop: vi.fn(),
+  mockRunAgentLoopWithTrajectory: vi.fn(),
+  mockAssertLlmBudgetAvailable: vi.fn(),
+  mockRecordLlmUsage: vi.fn(),
   mockEmbed: vi.fn(),
   mockInitializeRetrieval: vi.fn(),
   mockGetRetrievalBootstrapStatus: vi.fn(),
@@ -19,7 +23,12 @@ const {
 }));
 
 vi.mock('../src/agent.ts', () => ({
-  runAgentLoop: mockRunAgentLoop,
+  runAgentLoopWithTrajectory: mockRunAgentLoopWithTrajectory,
+}));
+
+vi.mock('../src/llm-budget.ts', () => ({
+  assertLlmBudgetAvailable: mockAssertLlmBudgetAvailable,
+  recordLlmUsage: mockRecordLlmUsage,
 }));
 
 vi.mock('../src/tools.ts', () => ({
@@ -306,14 +315,63 @@ describe('ask', () => {
       linkCount: 817,
     });
     mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
-    mockRunAgentLoop.mockResolvedValue('You pick up loot tokens in your hex.');
+    mockAssertLlmBudgetAvailable.mockResolvedValue(undefined);
+    mockRecordLlmUsage.mockResolvedValue(undefined);
+    mockRunAgentLoopWithTrajectory.mockResolvedValue({
+      answer: 'You pick up loot tokens in your hex.',
+      trajectory: {
+        toolCalls: [],
+        modelCalls: [],
+        finalAnswer: 'You pick up loot tokens in your hex.',
+        tokenUsage: {
+          inputTokens: 100,
+          outputTokens: 50,
+          cacheCreationInputTokens: 20,
+          cacheReadInputTokens: 10,
+          totalTokens: 180,
+        },
+        model: 'claude-sonnet-4-6',
+        iterations: 1,
+        stopReason: 'end_turn',
+      },
+    });
   });
 
-  it('delegates to runAgentLoop', async () => {
+  it('checks the budget before delegating to the agent loop', async () => {
     await initialize();
     const result = await ask('What is the loot action?');
-    expect(mockRunAgentLoop).toHaveBeenCalledWith('What is the loot action?', undefined);
+    expect(mockAssertLlmBudgetAvailable).toHaveBeenCalledWith({ userId: null });
+    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith(
+      'What is the loot action?',
+      undefined,
+    );
     expect(result).toBe('You pick up loot tokens in your hex.');
+  });
+
+  it('records trajectory usage after the agent returns', async () => {
+    await initialize();
+    await ask('What is the loot action?', {
+      userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+
+    expect(mockRecordLlmUsage).toHaveBeenCalledWith({
+      userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      model: 'claude-sonnet-4-6',
+      usage: {
+        inputTokens: 100,
+        outputTokens: 50,
+        cacheCreationInputTokens: 20,
+        cacheReadInputTokens: 10,
+        totalTokens: 180,
+      },
+    });
+  });
+
+  it('does not run the agent loop when budget admission fails', async () => {
+    mockAssertLlmBudgetAvailable.mockRejectedValueOnce(new Error('daily budget exceeded'));
+
+    await expect(ask('What is the loot action?')).rejects.toThrow(/daily budget exceeded/i);
+    expect(mockRunAgentLoopWithTrajectory).not.toHaveBeenCalled();
   });
 
   it('passes options through to runAgentLoop', async () => {
@@ -324,13 +382,13 @@ describe('ask', () => {
       userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     };
     await ask('Follow-up', options);
-    expect(mockRunAgentLoop).toHaveBeenCalledWith('Follow-up', options);
+    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', options);
   });
 
   it('initializes lazily when asked before warmup', async () => {
     await ask('test');
     expect(mockInitializeRetrieval).toHaveBeenCalled();
-    expect(mockRunAgentLoop).toHaveBeenCalledWith('test', undefined);
+    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith('test', undefined);
   });
 
   it('does not run the agent loop after readiness has regressed', async () => {
@@ -347,6 +405,9 @@ describe('ask', () => {
     await refreshBootstrapState();
 
     await expect(ask('test after regression')).rejects.toThrow(/database unavailable/i);
-    expect(mockRunAgentLoop).not.toHaveBeenCalledWith('test after regression', undefined);
+    expect(mockRunAgentLoopWithTrajectory).not.toHaveBeenCalledWith(
+      'test after regression',
+      undefined,
+    );
   });
 });
