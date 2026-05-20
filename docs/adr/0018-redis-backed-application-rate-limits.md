@@ -22,20 +22,23 @@ well across more than one Fly machine.
 
 ## Decision
 
-**Application request limits use a shared Redis/Valkey-compatible token bucket,
-and rate-limit denials are structured security log events rather than
-`oauth_audit_log` rows.**
+**Application request limits use shared Redis/Valkey-compatible counters through
+`rate-limiter-flexible`, and rate-limit denials are structured security log
+events rather than `oauth_audit_log` rows.**
 
 Production config uses `REDIS_URL`; Fly Upstash Redis is the Phase 1 managed
-Redis-compatible backend. `oauth_audit_log` remains for auth lifecycle state
-changes such as registration, authorization, token issuance, verification, and
-revocation.
+Redis-compatible backend. The app uses the package's Redis store for production
+and keeps an in-process fallback for local development and tests.
+`oauth_audit_log` remains for auth lifecycle state changes such as registration,
+authorization, token issuance, verification, and revocation.
 
 ## Options considered
 
-- **Redis/Valkey-compatible token buckets (chosen):** shared across app
-  instances, cheap for high-frequency admission checks, naturally reused across
-  `/register`, Google OAuth endpoints, and MCP. Adds one small managed service.
+- **Redis/Valkey-compatible counters through `rate-limiter-flexible` (chosen):**
+  shared across app instances, cheap for high-frequency admission checks,
+  naturally reused across `/register`, Google OAuth endpoints, and MCP. Adds one
+  small managed service while keeping limiter edge cases in a maintained
+  package.
 - **Postgres counters:** avoids a new service but puts hot admission-control
   writes on the durable relational store and encourages treating operational
   denials like audit records.
