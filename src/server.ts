@@ -47,6 +47,7 @@ import {
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
+import { requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
@@ -1382,6 +1383,23 @@ function parseTopK(raw: string | undefined): number {
   return n;
 }
 
+function gameOptsFromValue(game: string | undefined): { game: string } | undefined {
+  if (game === undefined) return undefined;
+  requireGameId(game);
+  return { game };
+}
+
+function gameOptsFromQuery(
+  c: Context,
+): { ok: true; opts?: { game: string } } | { ok: false; response: Response } {
+  try {
+    return { ok: true, opts: gameOptsFromValue(c.req.query('game')) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, response: c.json(jsonError(message, 400), 400) };
+  }
+}
+
 async function bootstrapErrorResponse(
   c: Context,
   scope: 'rules' | 'cards' | 'ask',
@@ -1424,7 +1442,11 @@ app.get('/api/search/rules', async (c) => {
   if (bootstrapError) return bootstrapError;
 
   const topK = parseTopK(c.req.query('topK'));
-  const results = await searchRules(q, topK);
+  const gameOpts = gameOptsFromQuery(c);
+  if (!gameOpts.ok) return gameOpts.response;
+  const results = gameOpts.opts
+    ? await searchRules(q, topK, gameOpts.opts)
+    : await searchRules(q, topK);
   return c.json({ results });
 });
 
@@ -1436,21 +1458,29 @@ app.get('/api/search/cards', async (c) => {
   if (bootstrapError) return bootstrapError;
 
   const topK = parseTopK(c.req.query('topK'));
-  const results = await searchCards(q, topK);
+  const gameOpts = gameOptsFromQuery(c);
+  if (!gameOpts.ok) return gameOpts.response;
+  const results = gameOpts.opts
+    ? await searchCards(q, topK, gameOpts.opts)
+    : await searchCards(q, topK);
   return c.json({ results });
 });
 
 // ─── Card discovery and lookup endpoints ─────────────────────────────────────
 
 app.get('/api/card-types', requireBootstrapCapability('cards'), async (c) => {
-  const types = await listCardTypes();
+  const gameOpts = gameOptsFromQuery(c);
+  if (!gameOpts.ok) return gameOpts.response;
+  const types = gameOpts.opts ? await listCardTypes(gameOpts.opts) : await listCardTypes();
   return c.json({ types });
 });
 
 app.get('/api/cards/:type/:id', requireBootstrapCapability('cards'), async (c) => {
   const type = c.req.param('type') as CardType;
   const id = decodeURIComponent(c.req.param('id'));
-  const card = await getCard(type, id);
+  const gameOpts = gameOptsFromQuery(c);
+  if (!gameOpts.ok) return gameOpts.response;
+  const card = gameOpts.opts ? await getCard(type, id, gameOpts.opts) : await getCard(type, id);
   if (!card) return c.json(jsonError('Card not found', 404), 404);
   return c.json({ card });
 });
@@ -1476,7 +1506,11 @@ app.get('/api/cards', async (c) => {
   const bootstrapError = await ensureBootstrapCapability(c, 'cards');
   if (bootstrapError) return bootstrapError;
 
-  const cards = await listCards(type as CardType, filter);
+  const gameOpts = gameOptsFromQuery(c);
+  if (!gameOpts.ok) return gameOpts.response;
+  const cards = gameOpts.opts
+    ? await listCards(type as CardType, filter, gameOpts.opts)
+    : await listCards(type as CardType, filter);
   return c.json({ cards });
 });
 
@@ -1496,6 +1530,7 @@ const AskRequestSchema = z.object({
   campaignId: z.string().uuid().optional(),
   userId: z.string().uuid().optional(),
   toolSurface: z.enum(['redesigned', 'legacy']).optional(),
+  game: z.string().optional(),
 });
 
 app.post('/api/ask', async (c) => {
@@ -1517,6 +1552,12 @@ app.post('/api/ask', async (c) => {
   if (bootstrapError) return bootstrapError;
 
   const { question, ...options } = result.data;
+  try {
+    gameOptsFromValue(options.game);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return c.json(jsonError(message, 400), 400);
+  }
   delete options.userId;
   try {
     await ensureAskBudgetAvailable(null);
