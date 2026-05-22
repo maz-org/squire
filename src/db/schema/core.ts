@@ -73,7 +73,7 @@ export const embeddings = pgTable(
     contentHash: text('content_hash'),
   },
   (t) => [
-    uniqueIndex('embeddings_source_chunk_idx').on(t.source, t.chunkIndex),
+    uniqueIndex('embeddings_game_source_chunk_idx').on(t.game, t.source, t.chunkIndex),
     index('embeddings_game_idx').on(t.game),
     // HNSW index is added in the migration (raw SQL) — Drizzle's index builder
     // doesn't expose pgvector operator classes yet. Placeholder reference here

@@ -18,7 +18,8 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
 import { embeddings as embeddingsTable } from './db/schema/core.ts';
-import { DEFAULT_GAME_ID } from './game.ts';
+import { DEFAULT_GAME_ID, requireGameId } from './game.ts';
+import type { GameId } from './game.ts';
 
 export interface IndexEntry {
   id: string;
@@ -32,7 +33,7 @@ export interface IndexEntry {
    * column default. Phase 2 starts populating this per-row from the PDF
    * filename prefix in `index-docs.ts`.
    */
-  game?: string;
+  game?: GameId;
 }
 
 export interface ScoredEntry {
@@ -40,13 +41,13 @@ export interface ScoredEntry {
   text: string;
   source: string;
   chunkIndex: number;
-  game: string;
+  game: GameId;
   score: number;
 }
 
 export interface SearchOptions {
   /** Game filter. Defaults to `'frosthaven'`. */
-  game?: string;
+  game?: GameId | string;
 }
 
 /**
@@ -57,6 +58,11 @@ export interface SearchOptions {
 export const EMBEDDING_VERSION = 'xenova-minilm-l6-v2.v1';
 
 const DEFAULT_GAME = DEFAULT_GAME_ID;
+
+function resolveGame(game?: GameId | string): GameId {
+  if (game === undefined) return DEFAULT_GAME;
+  return requireGameId(game);
+}
 
 /**
  * Ensure the HNSW cosine index exists on `embeddings.embedding`.
@@ -80,10 +86,11 @@ export async function ensureHnswIndex(): Promise<void> {
 /**
  * Upsert indexed-book chunk embeddings into the `embeddings` table.
  *
- * Idempotent: uses `ON CONFLICT (source, chunk_index) DO NOTHING`, so
+ * Idempotent: uses `ON CONFLICT (game, source, chunk_index) DO NOTHING`, so
  * reindexing the same PDF twice is a no-op. If chunking changes for an
  * existing PDF, delete rows for that source first (`DELETE FROM embeddings
- * WHERE source = $1`) and reindex — see the tech spec's diff-vs-rebuild table.
+ * WHERE game = $1 AND source = $2`) and reindex — see the tech spec's
+ * diff-vs-rebuild table.
  *
  * Every row is stamped with the current `EMBEDDING_VERSION` as a drift guard.
  */
@@ -108,13 +115,13 @@ export async function addEntries(entries: IndexEntry[]): Promise<void> {
             chunkIndex: e.chunkIndex,
             text: e.text,
             embedding: e.embedding,
-            game: e.game ?? DEFAULT_GAME,
+            game: resolveGame(e.game),
             embeddingVersion: EMBEDDING_VERSION,
             contentHash: e.contentHash,
           })),
         )
         .onConflictDoNothing({
-          target: [embeddingsTable.source, embeddingsTable.chunkIndex],
+          target: [embeddingsTable.game, embeddingsTable.source, embeddingsTable.chunkIndex],
         });
     }
   });
@@ -124,11 +131,14 @@ export async function addEntries(entries: IndexEntry[]): Promise<void> {
  * Return the set of `source` values already present in the embeddings table.
  * Used by `index-docs.ts` to skip PDFs that are already indexed.
  */
-export async function getIndexedSources(game: string = DEFAULT_GAME): Promise<Set<string>> {
+export async function getIndexedSources(
+  game: GameId | string = DEFAULT_GAME,
+): Promise<Set<string>> {
+  const resolvedGame = resolveGame(game);
   try {
     const { db } = getDb('server');
     const rows = await db.execute<{ source: string }>(
-      sql`SELECT DISTINCT source FROM embeddings WHERE game = ${game}`,
+      sql`SELECT DISTINCT source FROM embeddings WHERE game = ${resolvedGame}`,
     );
     return new Set(rows.rows.map((r) => r.source));
   } catch (err) {
@@ -144,8 +154,9 @@ export async function getIndexedSources(game: string = DEFAULT_GAME): Promise<Se
  * current checked-in PDF bytes.
  */
 export async function getIndexedSourceHashes(
-  game: string = DEFAULT_GAME,
+  game: GameId | string = DEFAULT_GAME,
 ): Promise<Map<string, string | null>> {
+  const resolvedGame = resolveGame(game);
   try {
     const { db } = getDb('server');
     const rows = await db.execute<{ source: string; content_hash: string | null }>(sql`
@@ -157,7 +168,7 @@ export async function getIndexedSourceHashes(
           ELSE NULL
         END AS content_hash
       FROM embeddings
-      WHERE game = ${game}
+      WHERE game = ${resolvedGame}
       GROUP BY source
     `);
     return new Map(rows.rows.map((r) => [r.source, r.content_hash]));
@@ -168,15 +179,16 @@ export async function getIndexedSourceHashes(
 
 export async function deleteEntriesForSources(
   sources: string[],
-  game: string = DEFAULT_GAME,
+  game: GameId | string = DEFAULT_GAME,
 ): Promise<number> {
   if (sources.length === 0) return 0;
 
+  const resolvedGame = resolveGame(game);
   try {
     const { db } = getDb('server');
     const rows = await db
       .delete(embeddingsTable)
-      .where(and(eq(embeddingsTable.game, game), inArray(embeddingsTable.source, sources)))
+      .where(and(eq(embeddingsTable.game, resolvedGame), inArray(embeddingsTable.source, sources)))
       .returning({ id: embeddingsTable.id });
     return rows.length;
   } catch (err) {
@@ -196,7 +208,7 @@ export async function search(
   k = 8,
   opts: SearchOptions = {},
 ): Promise<ScoredEntry[]> {
-  const game = opts.game ?? DEFAULT_GAME;
+  const game = resolveGame(opts.game);
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
   try {
@@ -206,7 +218,7 @@ export async function search(
       source: string;
       chunk_index: number;
       text: string;
-      game: string;
+      game: GameId;
       score: number;
     }>(sql`
       SELECT
@@ -241,7 +253,7 @@ export async function getEntryBySourceChunk(
   chunkIndex: number,
   opts: SearchOptions = {},
 ): Promise<ScoredEntry | null> {
-  const game = opts.game ?? DEFAULT_GAME;
+  const game = resolveGame(opts.game);
 
   try {
     const { db } = getDb('server');
@@ -250,7 +262,7 @@ export async function getEntryBySourceChunk(
       source: string;
       chunk_index: number;
       text: string;
-      game: string;
+      game: GameId;
     }>(sql`
       SELECT id, source, chunk_index, text, game
       FROM embeddings

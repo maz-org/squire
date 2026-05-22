@@ -25,6 +25,7 @@ import {
   EMBEDDING_VERSION,
   addEntries,
   deleteEntriesForSources,
+  getEntryBySourceChunk,
   getIndexedSourceHashes,
   getIndexedSources,
   search,
@@ -95,7 +96,7 @@ describe('addEntries', () => {
     expect(rows[0].contentHash).toBe('sha256:test-hash');
   });
 
-  it('is idempotent on (source, chunk_index) — second insert is a no-op', async () => {
+  it('is idempotent on (game, source, chunk_index) — second insert is a no-op', async () => {
     const entry: IndexEntry = {
       id: 'fake.pdf::0',
       text: 'v1',
@@ -126,6 +127,24 @@ describe('addEntries', () => {
     ]);
     const rows = await db.select().from(embeddingsTable);
     expect(rows[0].game).toBe(GLOOMHAVEN_2E_GAME_ID);
+  });
+
+  it('allows the same source and chunk index in different games', async () => {
+    const sharedSource = 'rule-book.pdf';
+    const entry = {
+      text: 'shared chunk text',
+      embedding: axisVector(0),
+      source: sharedSource,
+      chunkIndex: 0,
+    };
+    await addEntries([
+      { ...entry, id: 'fh::0', game: 'frosthaven' },
+      { ...entry, id: 'gh2::0', game: GLOOMHAVEN_2E_GAME_ID },
+    ]);
+
+    const rows = await db.select().from(embeddingsTable);
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row.game).sort()).toEqual(['frosthaven', GLOOMHAVEN_2E_GAME_ID]);
   });
 
   it('handles an empty batch as a no-op', async () => {
@@ -322,29 +341,48 @@ describe('search', () => {
     expect(results).toEqual([]);
   });
 
-  it('defaults to game=frosthaven and filters out other games', async () => {
+  it('defaults to game=frosthaven and filters out other games for the same query', async () => {
+    const sharedText = 'When a monster dies, place a loot token.';
     await addEntries([
       {
         id: 'fh::0',
-        text: 'fh',
+        text: sharedText,
         embedding: axisVector(0),
-        source: 'fh',
+        source: 'fh-rule-book.pdf',
         chunkIndex: 0,
       },
       {
         id: 'gh2::0',
-        text: 'gh2',
+        text: sharedText,
         embedding: axisVector(0),
-        source: 'gh2',
+        source: 'gh2-rule-book.pdf',
         chunkIndex: 0,
         game: GLOOMHAVEN_2E_GAME_ID,
       },
     ]);
-    const defaultHits = await search(axisVector(0), 10);
-    expect(defaultHits.map((h) => h.id)).toEqual(['fh::0']);
 
-    const gh2Hits = await search(axisVector(0), 10, { game: GLOOMHAVEN_2E_GAME_ID });
-    expect(gh2Hits.map((h) => h.id)).toEqual(['gh2::0']);
+    const query = axisVector(0);
+    const defaultHits = await search(query, 10);
+    expect(defaultHits).toHaveLength(1);
+    expect(defaultHits[0]).toMatchObject({
+      id: 'fh::0',
+      source: 'fh-rule-book.pdf',
+      game: 'frosthaven',
+    });
+
+    const gh2Hits = await search(query, 10, { game: GLOOMHAVEN_2E_GAME_ID });
+    expect(gh2Hits).toHaveLength(1);
+    expect(gh2Hits[0]).toMatchObject({
+      id: 'gh2::0',
+      source: 'gh2-rule-book.pdf',
+      game: GLOOMHAVEN_2E_GAME_ID,
+    });
+  });
+
+  it('rejects unsupported game filters', async () => {
+    await expect(search(axisVector(0), 1, { game: 'jaws-of-the-lion' })).rejects.toThrow(
+      /Unsupported game id/,
+    );
   });
 
   it('can retrieve scenario-book and section-book sources as nearest matches', async () => {
@@ -379,6 +417,38 @@ describe('search', () => {
     const sectionHits = await search(axisVector(2), 1);
     expect(sectionHits).toHaveLength(1);
     expect(sectionHits[0].source).toBe('fh-section-book-62-81.pdf');
+  });
+});
+
+describe('getEntryBySourceChunk', () => {
+  it('returns the chunk for the requested game only', async () => {
+    const source = 'rule-book.pdf';
+    await addEntries([
+      {
+        id: 'fh::0',
+        text: 'Frosthaven rules',
+        embedding: axisVector(0),
+        source,
+        chunkIndex: 0,
+      },
+      {
+        id: 'gh2::0',
+        text: 'GH2 rules',
+        embedding: axisVector(0),
+        source,
+        chunkIndex: 0,
+        game: GLOOMHAVEN_2E_GAME_ID,
+      },
+    ]);
+
+    expect(await getEntryBySourceChunk(source, 0)).toMatchObject({
+      text: 'Frosthaven rules',
+      game: 'frosthaven',
+    });
+    expect(await getEntryBySourceChunk(source, 0, { game: GLOOMHAVEN_2E_GAME_ID })).toMatchObject({
+      text: 'GH2 rules',
+      game: GLOOMHAVEN_2E_GAME_ID,
+    });
   });
 });
 
