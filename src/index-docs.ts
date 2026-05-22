@@ -19,6 +19,7 @@ import {
   getIndexedSourceHashes,
 } from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
+import { SUPPORTED_GAME_IDS, gameIdFromSourceFilename } from './game.ts';
 
 // Re-exported so seed / deployment workflows can reference the current value.
 export { EMBEDDING_VERSION } from './vector-store.ts';
@@ -224,25 +225,38 @@ async function extractText(pdfBytes: Buffer): Promise<string> {
 }
 
 export async function main(): Promise<void> {
-  const files = readdirSync(PDFS_DIR).filter((f) => f.endsWith('.pdf'));
+  const files = readdirSync(PDFS_DIR)
+    .filter((f) => f.endsWith('.pdf'))
+    .map((file) => ({ file, game: gameIdFromSourceFilename(file) }));
   console.log(`Found ${files.length} PDF(s) to index.`);
 
-  const indexedSourceHashes = await getIndexedSourceHashes();
-  const currentSources = new Set(files);
-  const removedSources = [...indexedSourceHashes.keys()].filter(
-    (source) => !currentSources.has(source),
-  );
-  if (removedSources.length > 0) {
-    const deleted = await deleteEntriesForSources(removedSources);
-    console.log(`Removed ${deleted} stale chunk(s) for ${removedSources.length} missing PDF(s).`);
+  const indexedSourceHashesByGame = new Map<string, Map<string, string | null>>();
+  for (const game of SUPPORTED_GAME_IDS) {
+    indexedSourceHashesByGame.set(game, await getIndexedSourceHashes(game));
+  }
+
+  for (const game of SUPPORTED_GAME_IDS) {
+    const indexedSourceHashes = indexedSourceHashesByGame.get(game) ?? new Map();
+    const currentSources = new Set(
+      files.filter((source) => source.game === game).map((source) => source.file),
+    );
+    const removedSources = [...indexedSourceHashes.keys()].filter(
+      (source) => !currentSources.has(source),
+    );
+    if (removedSources.length > 0) {
+      const deleted = await deleteEntriesForSources(removedSources, game);
+      console.log(
+        `Removed ${deleted} stale chunk(s) for ${removedSources.length} missing ${game} PDF(s).`,
+      );
+    }
   }
 
   const allNewEntries: IndexEntry[] = [];
 
-  for (const file of files) {
+  for (const { file, game } of files) {
     const pdfBytes = readFileSync(join(PDFS_DIR, file));
     const contentHash = computeContentHash(pdfBytes);
-    const indexedHash = indexedSourceHashes.get(file);
+    const indexedHash = indexedSourceHashesByGame.get(game)?.get(file);
 
     if (indexedHash === contentHash) {
       console.log(`  Skipping (unchanged): ${file}`);
@@ -250,7 +264,7 @@ export async function main(): Promise<void> {
     }
 
     if (indexedHash !== undefined) {
-      const deleted = await deleteEntriesForSources([file]);
+      const deleted = await deleteEntriesForSources([file], game);
       console.log(`  Re-indexing changed source: ${file} (${deleted} stale chunk(s) removed)`);
     }
 
@@ -270,6 +284,7 @@ export async function main(): Promise<void> {
           source: batch[j].source,
           chunkIndex: batch[j].chunkIndex,
           contentHash,
+          game,
           embedding: embeddings[j],
         });
       }

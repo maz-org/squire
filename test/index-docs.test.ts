@@ -294,10 +294,14 @@ describe('main', () => {
 
   it('skips unchanged files already in the index', async () => {
     const pdfBytes = Buffer.from('same pdf bytes');
-    mockReaddirSync.mockReturnValue(['rulebook.pdf']);
+    mockReaddirSync.mockReturnValue(['fh-rulebook.pdf']);
     mockReadFileSync.mockReturnValue(pdfBytes);
-    mockGetIndexedSourceHashes.mockResolvedValue(
-      new Map([['rulebook.pdf', computeContentHash(pdfBytes)]]),
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-rulebook.pdf', computeContentHash(pdfBytes)]])
+          : new Map<string, string | null>(),
+      ),
     );
 
     await main();
@@ -310,7 +314,7 @@ describe('main', () => {
 
   it('processes new PDF files', async () => {
     const longText = 'A'.repeat(900);
-    mockReaddirSync.mockReturnValue(['newfile.pdf']);
+    mockReaddirSync.mockReturnValue(['gh2-newfile.pdf']);
     mockReadFileSync.mockReturnValue(Buffer.from('pdf'));
     mockPdfParse.mockResolvedValue({ text: longText });
     mockGetIndexedSourceHashes.mockResolvedValue(new Map<string, string | null>());
@@ -324,43 +328,55 @@ describe('main', () => {
 
     const newEntries = mockAddEntries.mock.calls[0][0];
     expect(newEntries.length).toBeGreaterThan(0);
-    expect(newEntries[0].source).toBe('newfile.pdf');
+    expect(newEntries[0].source).toBe('gh2-newfile.pdf');
+    expect(newEntries[0].game).toBe('gloomhaven-2e');
     expect(newEntries[0].contentHash).toBe(computeContentHash(Buffer.from('pdf')));
     expect(newEntries[0].embedding).toEqual([0.1, 0.2]);
   });
 
   it('reindexes changed PDF files with the same filename', async () => {
     const longText = 'B'.repeat(900);
-    mockReaddirSync.mockReturnValue(['changed.pdf']);
+    mockReaddirSync.mockReturnValue(['fh-changed.pdf']);
     mockReadFileSync.mockReturnValue(Buffer.from('changed pdf bytes'));
     mockPdfParse.mockResolvedValue({ text: longText });
-    mockGetIndexedSourceHashes.mockResolvedValue(new Map([['changed.pdf', 'old-hash']]));
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-changed.pdf', 'old-hash']])
+          : new Map<string, string | null>(),
+      ),
+    );
     mockEmbedBatch.mockResolvedValue([[0.3, 0.4]]);
 
     await main();
 
-    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['changed.pdf']);
+    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['fh-changed.pdf'], 'frosthaven');
     expect(mockPdfParse).toHaveBeenCalledOnce();
     expect(mockEmbedBatch).toHaveBeenCalledOnce();
     const newEntries = mockAddEntries.mock.calls[0][0];
-    expect(newEntries[0].source).toBe('changed.pdf');
+    expect(newEntries[0].source).toBe('fh-changed.pdf');
+    expect(newEntries[0].game).toBe('frosthaven');
     expect(newEntries[0].contentHash).toBe(computeContentHash(Buffer.from('changed pdf bytes')));
   });
 
   it('deletes embedding rows for PDFs that no longer exist', async () => {
-    mockReaddirSync.mockReturnValue(['kept.pdf']);
+    mockReaddirSync.mockReturnValue(['fh-kept.pdf']);
     const keptBytes = Buffer.from('kept pdf bytes');
     mockReadFileSync.mockReturnValue(keptBytes);
-    mockGetIndexedSourceHashes.mockResolvedValue(
-      new Map([
-        ['kept.pdf', computeContentHash(keptBytes)],
-        ['removed.pdf', 'removed-hash'],
-      ]),
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([
+              ['fh-kept.pdf', computeContentHash(keptBytes)],
+              ['fh-removed.pdf', 'removed-hash'],
+            ])
+          : new Map<string, string | null>(),
+      ),
     );
 
     await main();
 
-    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['removed.pdf']);
+    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['fh-removed.pdf'], 'frosthaven');
     expect(mockPdfParse).not.toHaveBeenCalled();
     expect(mockEmbedBatch).not.toHaveBeenCalled();
     expect(mockAddEntries).not.toHaveBeenCalled();
@@ -376,8 +392,12 @@ describe('main', () => {
     ]);
     mockReadFileSync.mockImplementation((path) => Buffer.from(String(path)));
     mockPdfParse.mockResolvedValue({ text: longText });
-    mockGetIndexedSourceHashes.mockResolvedValue(
-      new Map([['fh-rule-book.pdf', computeContentHash(Buffer.from(rulebookPath))]]),
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-rule-book.pdf', computeContentHash(Buffer.from(rulebookPath))]])
+          : new Map<string, string | null>(),
+      ),
     );
     mockEmbedBatch.mockResolvedValue([[0.1, 0.2]]);
 
@@ -389,6 +409,19 @@ describe('main', () => {
       'fh-scenario-book-42-61.pdf',
       'fh-section-book-62-81.pdf',
     ]);
+    expect(new Set(newEntries.map((entry: { game: string }) => entry.game))).toEqual(
+      new Set(['frosthaven']),
+    );
+  });
+
+  it('fails clearly for PDFs without a supported game prefix', async () => {
+    mockReaddirSync.mockReturnValue(['rule-book.pdf']);
+
+    await expect(main()).rejects.toThrow(
+      'Cannot derive game id from source filename "rule-book.pdf"',
+    );
+    expect(mockGetIndexedSourceHashes).not.toHaveBeenCalled();
+    expect(mockAddEntries).not.toHaveBeenCalled();
   });
 
   it('logs nothing new for empty docs directory', async () => {

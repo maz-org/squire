@@ -56,6 +56,7 @@ import type {
 import { findScenarios } from '../src/scenario-section-data.ts';
 import { getDb } from '../src/db.ts';
 import { scenarioBookScenarios } from '../src/db/schema/scenario-section-books.ts';
+import { GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -147,12 +148,12 @@ describe('searchRules', () => {
     }
   });
 
-  it('threads opts.game through to the vector store', async () => {
+  it('normalizes opts.game before searching the vector store', async () => {
     mockSearch.mockClear();
-    await searchRules('loot', 3, { game: 'gloomhaven' });
+    await searchRules('loot', 3, { game: 'gh2' });
     expect(mockSearch).toHaveBeenCalledTimes(1);
     const callArgs = mockSearch.mock.calls[0];
-    expect(callArgs[2]).toEqual({ game: 'gloomhaven' });
+    expect(callArgs[2]).toEqual({ game: GLOOMHAVEN_2E_GAME_ID });
   });
 });
 
@@ -594,7 +595,10 @@ describe('knowledge discovery tools', () => {
 
     expect(result.ok).toBe(true);
     expect(result.defaultGame).toBe('frosthaven');
-    expect(result.games).toEqual([{ id: 'frosthaven', label: 'Frosthaven', default: true }]);
+    expect(result.games).toEqual([
+      { id: 'frosthaven', label: 'Frosthaven', default: true },
+      { id: GLOOMHAVEN_2E_GAME_ID, label: 'Gloomhaven 2.0', default: false },
+    ]);
     expect(result.sources).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -621,6 +625,26 @@ describe('knowledge discovery tools', () => {
             'monster-stats': expect.any(Number),
             'character-abilities': expect.any(Number),
           }),
+        }),
+      ]),
+    );
+  });
+
+  it('inspectSources accepts game aliases and reports canonical source refs', async () => {
+    const result = await inspectSources({ game: 'gh2' });
+
+    expect(result.ok).toBe(true);
+    expect(result.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ref: `source:${GLOOMHAVEN_2E_GAME_ID}/rulebook`,
+          label: 'Gloomhaven 2.0 Rulebook',
+        }),
+        expect.objectContaining({
+          ref: `source:${GLOOMHAVEN_2E_GAME_ID}/scenario-section-books`,
+        }),
+        expect.objectContaining({
+          ref: `source:${GLOOMHAVEN_2E_GAME_ID}/cards`,
         }),
       ]),
     );

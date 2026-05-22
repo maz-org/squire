@@ -9,6 +9,7 @@ import {
   sectionBookSections,
   bookReferences,
 } from '../../src/db/schema/scenario-section-books.ts';
+import { GLOOMHAVEN_2E_GAME_ID } from '../../src/game.ts';
 import { seedScenarioSectionBooks } from '../../src/seed/seed-scenario-section-books.ts';
 import { ScenarioSectionBooksExtractSchema } from '../../src/scenario-section-schemas.ts';
 
@@ -110,7 +111,7 @@ describe('seedScenarioSectionBooks', () => {
   });
 
   it('rejects unsupported game seeds until the extract is game-aware', async () => {
-    await expect(seedScenarioSectionBooks(db, { game: 'gloomhaven-2' })).rejects.toThrow(
+    await expect(seedScenarioSectionBooks(db, { game: GLOOMHAVEN_2E_GAME_ID })).rejects.toThrow(
       'seedScenarioSectionBooks currently supports only "frosthaven"',
     );
   });

@@ -20,6 +20,7 @@ import { sql } from 'drizzle-orm';
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 
 import { embeddings as embeddingsTable } from '../src/db/schema/core.ts';
+import { GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
 import {
   EMBEDDING_VERSION,
   addEntries,
@@ -120,11 +121,11 @@ describe('addEntries', () => {
         embedding: axisVector(0),
         source: 'gh2.pdf',
         chunkIndex: 0,
-        game: 'gloomhaven-2',
+        game: GLOOMHAVEN_2E_GAME_ID,
       },
     ]);
     const rows = await db.select().from(embeddingsTable);
-    expect(rows[0].game).toBe('gloomhaven-2');
+    expect(rows[0].game).toBe(GLOOMHAVEN_2E_GAME_ID);
   });
 
   it('handles an empty batch as a no-op', async () => {
@@ -158,11 +159,11 @@ describe('getIndexedSources', () => {
         embedding: axisVector(1),
         source: 'gh2.pdf',
         chunkIndex: 0,
-        game: 'gloomhaven-2',
+        game: GLOOMHAVEN_2E_GAME_ID,
       },
     ]);
     expect(await getIndexedSources('frosthaven')).toEqual(new Set(['fh.pdf']));
-    expect(await getIndexedSources('gloomhaven-2')).toEqual(new Set(['gh2.pdf']));
+    expect(await getIndexedSources(GLOOMHAVEN_2E_GAME_ID)).toEqual(new Set(['gh2.pdf']));
   });
 });
 
@@ -254,7 +255,7 @@ describe('deleteEntriesForSources', () => {
         embedding: axisVector(3),
         source: 'a.pdf',
         chunkIndex: 9,
-        game: 'gloomhaven-2',
+        game: GLOOMHAVEN_2E_GAME_ID,
       },
     ]);
 
@@ -269,7 +270,7 @@ describe('deleteEntriesForSources', () => {
     expect(remaining).toEqual(
       expect.arrayContaining([
         { id: 'b.pdf::0', game: 'frosthaven' },
-        { id: 'gh2-a.pdf::0', game: 'gloomhaven-2' },
+        { id: 'gh2-a.pdf::0', game: GLOOMHAVEN_2E_GAME_ID },
       ]),
     );
     expect(remaining).toHaveLength(2);
@@ -336,13 +337,13 @@ describe('search', () => {
         embedding: axisVector(0),
         source: 'gh2',
         chunkIndex: 0,
-        game: 'gloomhaven-2',
+        game: GLOOMHAVEN_2E_GAME_ID,
       },
     ]);
     const defaultHits = await search(axisVector(0), 10);
     expect(defaultHits.map((h) => h.id)).toEqual(['fh::0']);
 
-    const gh2Hits = await search(axisVector(0), 10, { game: 'gloomhaven-2' });
+    const gh2Hits = await search(axisVector(0), 10, { game: GLOOMHAVEN_2E_GAME_ID });
     expect(gh2Hits.map((h) => h.id)).toEqual(['gh2::0']);
   });
 
