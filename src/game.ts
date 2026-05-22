@@ -88,7 +88,7 @@ export interface GameLoadOpts {
 
 /** Resolve the active game for DB-backed loaders. Validates explicit ids. */
 export function resolveGameId(opts: GameLoadOpts = {}): GameId {
-  return opts.game ? requireGameId(opts.game) : DEFAULT_GAME_ID;
+  return opts.game !== undefined ? requireGameId(opts.game) : DEFAULT_GAME_ID;
 }
 
 export function gameDefinitionFor(game: GameId): GameDefinition {

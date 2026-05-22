@@ -59,5 +59,6 @@ describe('game id helpers', () => {
     expect(() => resolveGameId({ game: 'no-such-game' })).toThrow(
       'Unsupported game id "no-such-game"',
     );
+    expect(() => resolveGameId({ game: '' })).toThrow('Unsupported game id ""');
   });
 });
