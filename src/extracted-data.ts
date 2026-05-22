@@ -16,7 +16,7 @@ import { getTableColumns, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
 import { getDb } from './db.ts';
-import { DEFAULT_GAME_ID } from './game.ts';
+import { type GameLoadOpts, resolveGameId } from './game.ts';
 import {
   cardBattleGoals,
   cardBuildings,
@@ -50,10 +50,7 @@ interface ExtractedRecord extends Record<string, unknown> {
   _type: CardType;
 }
 
-interface LoadOpts {
-  /** Campaign variant. Defaults to 'frosthaven'. Reserved for Phase 2. */
-  game?: string;
-}
+export type LoadOpts = GameLoadOpts;
 
 // ─── Table registry ──────────────────────────────────────────────────────────
 
@@ -185,7 +182,7 @@ function relaxedConditionSearchQuery(query: string): string | null {
 export async function load(type: CardType, opts: LoadOpts = {}): Promise<ExtractedRecord[]> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
-  const game = opts.game ?? DEFAULT_GAME_ID;
+  const game = resolveGameId(opts);
 
   const rows = await db.execute<Record<string, unknown>>(
     sql`SELECT ${visibleSelectList(table)} FROM ${table} WHERE game = ${game} ORDER BY source_id`,
@@ -207,7 +204,7 @@ export async function loadOne(
 ): Promise<ExtractedRecord | null> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
-  const game = opts.game ?? DEFAULT_GAME_ID;
+  const game = resolveGameId(opts);
 
   const rows = await db.execute<Record<string, unknown>>(
     sql`SELECT ${visibleSelectList(table)} FROM ${table}
@@ -230,7 +227,7 @@ export async function loadOne(
  */
 export async function countsByType(opts: LoadOpts = {}): Promise<Record<CardType, number>> {
   const { db } = getDb();
-  const game = opts.game ?? DEFAULT_GAME_ID;
+  const game = resolveGameId(opts);
 
   const branches = TYPES.map(
     (type) => sql`
@@ -263,7 +260,7 @@ export async function searchExtractedRanked(
   opts: LoadOpts = {},
 ): Promise<Array<{ record: ExtractedRecord; score: number }>> {
   const { db } = getDb();
-  const game = opts.game ?? DEFAULT_GAME_ID;
+  const game = resolveGameId(opts);
   const relaxedQuery = relaxedConditionSearchQuery(query);
   const queries = relaxedQuery ? [query, relaxedQuery] : [query];
 
@@ -541,7 +538,7 @@ export function formatExtracted(records: ExtractedRecord[]): string {
 /**
  * Record counts across all 10 card tables. Single round-trip via a CTE.
  */
-export async function extractedStats(): Promise<string> {
-  const counts = await countsByType();
+export async function extractedStats(opts: LoadOpts = {}): Promise<string> {
+  const counts = await countsByType(opts);
   return TYPES.map((t) => `${t}: ${counts[t]}`).join(', ');
 }
