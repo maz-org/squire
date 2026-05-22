@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { eq } from 'drizzle-orm';
 
 import type { Db } from '../db.ts';
+import { DEFAULT_GAME_ID, FROSTHAVEN_GAME_ID } from '../game.ts';
 import {
   bookReferences,
   scenarioBookScenarios,
@@ -48,8 +49,8 @@ export async function seedScenarioSectionBooks(
   db: Db,
   opts: SeedScenarioSectionBooksOptions = {},
 ): Promise<SeedScenarioSectionBooksResult[]> {
-  const game = opts.game ?? 'frosthaven';
-  if (game !== 'frosthaven') {
+  const game = opts.game ?? DEFAULT_GAME_ID;
+  if (game !== FROSTHAVEN_GAME_ID) {
     throw new Error(
       `seedScenarioSectionBooks currently supports only "frosthaven"; got ${JSON.stringify(game)}`,
     );

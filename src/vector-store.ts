@@ -18,6 +18,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
 import { embeddings as embeddingsTable } from './db/schema/core.ts';
+import { DEFAULT_GAME_ID } from './game.ts';
 
 export interface IndexEntry {
   id: string;
@@ -55,7 +56,7 @@ export interface SearchOptions {
  */
 export const EMBEDDING_VERSION = 'xenova-minilm-l6-v2.v1';
 
-const DEFAULT_GAME = 'frosthaven';
+const DEFAULT_GAME = DEFAULT_GAME_ID;
 
 /**
  * Ensure the HNSW cosine index exists on `embeddings.embedding`.

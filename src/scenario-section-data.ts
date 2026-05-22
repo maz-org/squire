@@ -8,6 +8,7 @@
 import { sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
+import { DEFAULT_GAME_ID } from './game.ts';
 import {
   bookReferences,
   scenarioBookScenarios,
@@ -98,7 +99,7 @@ export async function findScenarios(
   opts: LoadOpts = {},
 ): Promise<ScenarioBookScenario[]> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
   const normalized = query.trim();
   if (normalized.length === 0) return [];
   const lowered = normalized.toLowerCase();
@@ -148,7 +149,7 @@ export async function getScenario(
   opts: LoadOpts = {},
 ): Promise<ScenarioBookScenario | null> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
 
   const rows = await db.execute<ScenarioBookScenario>(sql`
     SELECT
@@ -177,7 +178,7 @@ export async function getSection(
   opts: LoadOpts = {},
 ): Promise<SectionBookSection | null> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
 
   const rows = await db.execute<SectionBookSection>(sql`
     SELECT
@@ -203,7 +204,7 @@ export async function searchSections(
   opts: LoadOpts = {},
 ): Promise<SectionBookSection[]> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
   const normalized = query.trim();
   if (normalized.length === 0) return [];
   const likePattern = `%${normalized.toLowerCase()}%`;
@@ -237,7 +238,7 @@ export async function followReferences(
   opts: LoadOpts = {},
 ): Promise<BookReference[]> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
   const referenceTypeClause = referenceType ? sql`AND link_type = ${referenceType}` : sql``;
 
   const rows = await db.execute<BookReference>(sql`
@@ -268,7 +269,7 @@ export async function findIncomingReferences(
   opts: LoadOpts = {},
 ): Promise<BookReference[]> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
   const referenceTypeClause = referenceType ? sql`AND link_type = ${referenceType}` : sql``;
 
   const rows = await db.execute<BookReference>(sql`
@@ -296,7 +297,7 @@ export async function getScenarioSectionBooksBootstrapStatus(
   opts: LoadOpts = {},
 ): Promise<ScenarioSectionBooksBootstrapStatus> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
 
   try {
     const rows = await db.execute<{

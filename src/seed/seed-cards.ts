@@ -27,6 +27,7 @@ import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
 type CardTable = PgTable & { game: AnyPgColumn; sourceId: AnyPgColumn };
 
 import type { Db } from '../db.ts';
+import { DEFAULT_GAME_ID } from '../game.ts';
 import {
   cardBattleGoals,
   cardBuildings,
@@ -79,7 +80,7 @@ export interface SeedCardsResult {
  * Returns per-type counts so callers can print a summary.
  */
 export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<SeedCardsResult[]> {
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
   const types = opts.types ?? CARD_TYPES;
   const results: SeedCardsResult[] = [];
 

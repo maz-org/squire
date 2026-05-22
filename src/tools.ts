@@ -30,6 +30,7 @@ import {
   type BookRecordKind,
   type BookReferenceType,
 } from './scenario-section-schemas.ts';
+import { DEFAULT_GAME_ID, SUPPORTED_GAMES, gameDefinitionFor, requireGameId } from './game.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -259,8 +260,12 @@ function stripInternalKeys(record: Record<string, unknown>): Record<string, unkn
   return out;
 }
 
-const DEFAULT_GAME = 'frosthaven';
-const GAME_INFO = { id: DEFAULT_GAME, label: 'Frosthaven', default: true };
+const DEFAULT_GAME = DEFAULT_GAME_ID;
+const GAME_INFO = SUPPORTED_GAMES.map(({ id, label, default: isDefault }) => ({
+  id,
+  label,
+  default: isDefault,
+}));
 
 const CARD_KIND_ALIASES: Record<string, CardType[]> = {
   item: ['items'],
@@ -853,7 +858,8 @@ export async function listCards(
 }
 
 export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesResult> {
-  const game = opts?.game ?? DEFAULT_GAME;
+  const game = requireGameId(opts?.game ?? DEFAULT_GAME);
+  const gameDefinition = gameDefinitionFor(game);
   const [cardCounts, scenarioSectionStatus] = await Promise.all([
     countsByType({ game }),
     getScenarioSectionBooksBootstrapStatus({ game }),
@@ -861,11 +867,11 @@ export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesRes
 
   return {
     ok: true,
-    games: [GAME_INFO],
+    games: GAME_INFO,
     sources: [
       {
         ref: `source:${game}/rulebook`,
-        label: 'Frosthaven Rulebook',
+        label: `${gameDefinition.label} Rulebook`,
         kinds: ['rules_passage'],
         searchable: true,
         openable: false,

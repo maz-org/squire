@@ -16,6 +16,7 @@ import { getTableColumns, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
 import { getDb } from './db.ts';
+import { DEFAULT_GAME_ID } from './game.ts';
 import {
   cardBattleGoals,
   cardBuildings,
@@ -184,7 +185,7 @@ function relaxedConditionSearchQuery(query: string): string | null {
 export async function load(type: CardType, opts: LoadOpts = {}): Promise<ExtractedRecord[]> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
 
   const rows = await db.execute<Record<string, unknown>>(
     sql`SELECT ${visibleSelectList(table)} FROM ${table} WHERE game = ${game} ORDER BY source_id`,
@@ -206,7 +207,7 @@ export async function loadOne(
 ): Promise<ExtractedRecord | null> {
   const { db } = getDb();
   const table = TYPE_TO_TABLE[type];
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
 
   const rows = await db.execute<Record<string, unknown>>(
     sql`SELECT ${visibleSelectList(table)} FROM ${table}
@@ -229,7 +230,7 @@ export async function loadOne(
  */
 export async function countsByType(opts: LoadOpts = {}): Promise<Record<CardType, number>> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
 
   const branches = TYPES.map(
     (type) => sql`
@@ -262,7 +263,7 @@ export async function searchExtractedRanked(
   opts: LoadOpts = {},
 ): Promise<Array<{ record: ExtractedRecord; score: number }>> {
   const { db } = getDb();
-  const game = opts.game ?? 'frosthaven';
+  const game = opts.game ?? DEFAULT_GAME_ID;
   const relaxedQuery = relaxedConditionSearchQuery(query);
   const queries = relaxedQuery ? [query, relaxedQuery] : [query];
 
