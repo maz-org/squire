@@ -57,6 +57,7 @@ describe('scoreTrajectory', () => {
         forbiddenToolKinds: [],
         requiredRefs: [
           'scenario:gloomhaven-2e/061',
+          'scenario:gloomhaven-2e/4A',
           'section:gloomhaven-2e/67.1',
           'card:gloomhaven-2e/items/gloomhavensecretariat:item/1',
         ],
@@ -66,7 +67,11 @@ describe('scoreTrajectory', () => {
         {
           name: 'open_entity',
           input: { ref: 'scenario:gloomhaven2/61' },
-          canonicalRefs: ['section:gh2/67.1', 'card:gh2e/items/gloomhavensecretariat:item/1'],
+          canonicalRefs: [
+            'scenario:gh2/4A',
+            'section:gh2/67.1',
+            'card:gh2e/items/gloomhavensecretariat:item/1',
+          ],
         },
       ],
     );

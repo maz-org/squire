@@ -149,10 +149,12 @@ export function validateRemoteDatasetShape(
 }
 
 export function normalizeTrajectoryRef(ref: string): string {
-  const qualifiedScenarioMatch = ref.match(/^scenario:([^/]+)\/(\d+)$/);
+  const qualifiedScenarioMatch = ref.match(/^scenario:([^/]+)\/([^/]+)$/);
   if (qualifiedScenarioMatch) {
     const game = normalizeGameId(qualifiedScenarioMatch[1]) ?? qualifiedScenarioMatch[1];
-    return `scenario:${game}/${qualifiedScenarioMatch[2].padStart(3, '0')}`;
+    const scenarioId = qualifiedScenarioMatch[2];
+    const canonicalScenarioId = /^\d+$/.test(scenarioId) ? scenarioId.padStart(3, '0') : scenarioId;
+    return `scenario:${game}/${canonicalScenarioId}`;
   }
 
   const scenarioMatch = ref.match(/^gloomhavensecretariat:scenario\/(\d+)$/);
