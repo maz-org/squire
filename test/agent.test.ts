@@ -1205,9 +1205,18 @@ describe('executeToolCall', () => {
   });
 
   it('dispatches search_rules', async () => {
-    const result = await executeToolCall('search_rules', { query: 'loot', topK: 3 });
-    expect(mockSearchRules).toHaveBeenCalledWith('loot', 3);
+    const result = await executeToolCall(
+      'search_rules',
+      { query: 'loot', topK: 3 },
+      { game: 'gh2' },
+    );
+    expect(mockSearchRules).toHaveBeenCalledWith('loot', 3, { game: 'gh2' });
     expect(JSON.parse(result.content)).toHaveLength(1);
+  });
+
+  it('lets explicit tool game override the runtime active game', async () => {
+    await executeToolCall('search_rules', { query: 'loot', game: 'frosthaven' }, { game: 'gh2' });
+    expect(mockSearchRules).toHaveBeenCalledWith('loot', 6, { game: 'frosthaven' });
   });
 
   it('search_rules populates sourceBooks from per-result sourceLabel', async () => {
@@ -1238,8 +1247,8 @@ describe('executeToolCall', () => {
   });
 
   it('dispatches search_cards', async () => {
-    const result = await executeToolCall('search_cards', { query: 'boots' });
-    expect(mockSearchCards).toHaveBeenCalledWith('boots', 6);
+    const result = await executeToolCall('search_cards', { query: 'boots' }, { game: 'gh2' });
+    expect(mockSearchCards).toHaveBeenCalledWith('boots', 6, { game: 'gh2' });
     expect(JSON.parse(result.content)).toHaveLength(1);
   });
 
@@ -1265,14 +1274,19 @@ describe('executeToolCall', () => {
         },
       ],
     });
-    const result = await executeToolCall('search_knowledge', {
-      query: 'loot',
-      scope: ['rules_passage'],
-      limit: 3,
-    });
+    const result = await executeToolCall(
+      'search_knowledge',
+      {
+        query: 'loot',
+        scope: ['rules_passage'],
+        limit: 3,
+      },
+      { game: 'gh2' },
+    );
     expect(mockSearchKnowledge).toHaveBeenCalledWith('loot', {
       scope: ['rules_passage'],
       limit: 3,
+      game: 'gh2',
     });
     expect(result.sourceBooks).toEqual(['Rulebook', 'Card Index']);
   });
@@ -1297,21 +1311,25 @@ describe('executeToolCall', () => {
       links: [],
       related: [],
     });
-    const result = await executeToolCall('open_entity', { ref: 'section:frosthaven/67.1' });
-    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
+    const result = await executeToolCall(
+      'open_entity',
+      { ref: 'section:frosthaven/67.1' },
+      { game: 'gh2' },
+    );
+    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1', { game: 'gh2' });
     expect(JSON.parse(result.content).entity.ref).toBe('section:frosthaven/67.1');
     expect(result.sourceBooks).toEqual(['Section Book 62-81']);
   });
 
   it('dispatches list_card_types', async () => {
-    const result = await executeToolCall('list_card_types', {});
-    expect(mockListCardTypes).toHaveBeenCalled();
+    const result = await executeToolCall('list_card_types', {}, { game: 'gh2' });
+    expect(mockListCardTypes).toHaveBeenCalledWith({ game: 'gh2' });
     expect(JSON.parse(result.content)).toEqual([{ type: 'items', count: 5 }]);
   });
 
   it('dispatches inspect_sources', async () => {
-    const result = await executeToolCall('inspect_sources', {});
-    expect(mockInspectSources).toHaveBeenCalled();
+    const result = await executeToolCall('inspect_sources', {}, { game: 'gh2' });
+    expect(mockInspectSources).toHaveBeenCalledWith({ game: 'gh2' });
     expect(JSON.parse(result.content)).toEqual({
       ok: true,
       sources: [],
@@ -1327,14 +1345,19 @@ describe('executeToolCall', () => {
   });
 
   it('dispatches resolve_entity', async () => {
-    const result = await executeToolCall('resolve_entity', {
-      query: 'Spyglass',
-      kinds: ['card'],
-      limit: 3,
-    });
+    const result = await executeToolCall(
+      'resolve_entity',
+      {
+        query: 'Spyglass',
+        kinds: ['card'],
+        limit: 3,
+      },
+      { game: 'gh2' },
+    );
     expect(mockResolveEntity).toHaveBeenCalledWith('Spyglass', {
       kinds: ['card'],
       limit: 3,
+      game: 'gh2',
     });
     expect(JSON.parse(result.content)).toEqual({
       ok: true,
@@ -1344,8 +1367,14 @@ describe('executeToolCall', () => {
   });
 
   it('dispatches get_card', async () => {
-    const result = await executeToolCall('get_card', { type: 'items', id: 'Test Item' });
-    expect(mockGetCard).toHaveBeenCalledWith('items', 'Test Item');
+    const result = await executeToolCall(
+      'get_card',
+      { type: 'items', id: 'Test Item' },
+      {
+        game: 'gh2',
+      },
+    );
+    expect(mockGetCard).toHaveBeenCalledWith('items', 'Test Item', { game: 'gh2' });
     expect(JSON.parse(result.content)).toEqual({ name: 'Test Item' });
   });
 
@@ -1356,48 +1385,70 @@ describe('executeToolCall', () => {
   });
 
   it('dispatches find_scenario', async () => {
-    const result = await executeToolCall('find_scenario', { query: 'scenario 61' });
-    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+    const result = await executeToolCall(
+      'find_scenario',
+      { query: 'scenario 61' },
+      {
+        game: 'gh2',
+      },
+    );
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61', { game: 'gh2' });
     expect(JSON.parse(result.content)).toEqual([{ ref: 'gloomhavensecretariat:scenario/061' }]);
   });
 
   it('dispatches get_scenario', async () => {
-    const result = await executeToolCall('get_scenario', {
-      ref: 'gloomhavensecretariat:scenario/061',
+    const result = await executeToolCall(
+      'get_scenario',
+      {
+        ref: 'gloomhavensecretariat:scenario/061',
+      },
+      { game: 'gh2' },
+    );
+    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061', {
+      game: 'gh2',
     });
-    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061');
     expect(JSON.parse(result.content)).toEqual({ ref: 'gloomhavensecretariat:scenario/061' });
   });
 
   it('dispatches get_section', async () => {
-    const result = await executeToolCall('get_section', { ref: '67.1' });
-    expect(mockGetSection).toHaveBeenCalledWith('67.1');
+    const result = await executeToolCall('get_section', { ref: '67.1' }, { game: 'gh2' });
+    expect(mockGetSection).toHaveBeenCalledWith('67.1', { game: 'gh2' });
     expect(JSON.parse(result.content)).toEqual({ ref: '67.1' });
   });
 
   it('dispatches follow_links', async () => {
-    const result = await executeToolCall('follow_links', {
-      fromKind: 'scenario',
-      fromRef: 'gloomhavensecretariat:scenario/061',
-      linkType: 'conclusion',
-    });
+    const result = await executeToolCall(
+      'follow_links',
+      {
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        linkType: 'conclusion',
+      },
+      { game: 'gh2' },
+    );
     expect(mockFollowLinks).toHaveBeenCalledWith(
       'scenario',
       'gloomhavensecretariat:scenario/061',
       'conclusion',
+      { game: 'gh2' },
     );
     expect(JSON.parse(result.content)).toEqual([{ toRef: '67.1' }]);
   });
 
   it('dispatches neighbors', async () => {
-    const result = await executeToolCall('neighbors', {
-      ref: 'scenario:frosthaven/061',
-      relation: 'conclusion',
-      limit: 5,
-    });
+    const result = await executeToolCall(
+      'neighbors',
+      {
+        ref: 'scenario:frosthaven/061',
+        relation: 'conclusion',
+        limit: 5,
+      },
+      { game: 'gh2' },
+    );
     expect(mockNeighbors).toHaveBeenCalledWith('scenario:frosthaven/061', {
       relation: 'conclusion',
       limit: 5,
+      game: 'gh2',
     });
     expect(JSON.parse(result.content)).toEqual({
       ok: true,

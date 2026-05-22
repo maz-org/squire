@@ -252,13 +252,21 @@ describe('GET /api/search/rules', () => {
   });
 
   it('passes query and topK to searchRules', async () => {
-    await app.request('/api/search/rules?q=loot&topK=3', { headers: await auth() });
-    expect(mockSearchRules).toHaveBeenCalledWith('loot', 3);
+    await app.request('/api/search/rules?q=loot&topK=3&game=gh2', { headers: await auth() });
+    expect(mockSearchRules).toHaveBeenCalledWith('loot', 3, { game: 'gh2' });
   });
 
   it('defaults topK to 6', async () => {
     await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
+  });
+
+  it('returns 400 for unsupported game ids before searching rules', async () => {
+    const res = await app.request('/api/search/rules?q=loot&game=no-such-game', {
+      headers: await auth(),
+    });
+    expect(res.status).toBe(400);
+    expect(mockSearchRules).not.toHaveBeenCalled();
   });
 
   it('returns 400 when q is missing', async () => {
@@ -346,8 +354,8 @@ describe('GET /api/search/cards', () => {
   });
 
   it('passes query and topK to searchCards', async () => {
-    await app.request('/api/search/cards?q=algox&topK=4', { headers: await auth() });
-    expect(mockSearchCards).toHaveBeenCalledWith('algox', 4);
+    await app.request('/api/search/cards?q=algox&topK=4&game=gh2', { headers: await auth() });
+    expect(mockSearchCards).toHaveBeenCalledWith('algox', 4, { game: 'gh2' });
   });
 
   it('defaults topK to 6', async () => {
@@ -419,12 +427,13 @@ describe('GET /api/card-types', () => {
   });
 
   it('returns all card types', async () => {
-    const res = await app.request('/api/card-types', { headers: await auth() });
+    const res = await app.request('/api/card-types?game=gh2', { headers: await auth() });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.types).toHaveLength(2);
     expect(body.types[0]).toHaveProperty('type');
     expect(body.types[0]).toHaveProperty('count');
+    expect(mockListCardTypes).toHaveBeenCalledWith({ game: 'gh2' });
   });
 });
 
@@ -440,11 +449,13 @@ describe('GET /api/cards', () => {
   });
 
   it('returns cards of a given type', async () => {
-    const res = await app.request('/api/cards?type=monster-stats', { headers: await auth() });
+    const res = await app.request('/api/cards?type=monster-stats&game=gh2', {
+      headers: await auth(),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.cards).toHaveLength(1);
-    expect(mockListCards).toHaveBeenCalledWith('monster-stats', undefined);
+    expect(mockListCards).toHaveBeenCalledWith('monster-stats', undefined, { game: 'gh2' });
   });
 
   it('returns 400 when type is missing', async () => {
@@ -461,8 +472,14 @@ describe('GET /api/cards', () => {
 
   it('passes filter as parsed JSON', async () => {
     const filter = encodeURIComponent(JSON.stringify({ name: 'Algox Archer' }));
-    await app.request(`/api/cards?type=monster-stats&filter=${filter}`, { headers: await auth() });
-    expect(mockListCards).toHaveBeenCalledWith('monster-stats', { name: 'Algox Archer' });
+    await app.request(`/api/cards?type=monster-stats&filter=${filter}&game=gh2`, {
+      headers: await auth(),
+    });
+    expect(mockListCards).toHaveBeenCalledWith(
+      'monster-stats',
+      { name: 'Algox Archer' },
+      { game: 'gh2' },
+    );
   });
 
   it('returns 400 for invalid filter JSON', async () => {
@@ -485,13 +502,13 @@ describe('GET /api/cards/:type/:id', () => {
   });
 
   it('returns a card by type and id', async () => {
-    const res = await app.request('/api/cards/monster-stats/Algox%20Archer', {
+    const res = await app.request('/api/cards/monster-stats/Algox%20Archer?game=gh2', {
       headers: await auth(),
     });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.card).toHaveProperty('name', 'Algox Archer');
-    expect(mockGetCard).toHaveBeenCalledWith('monster-stats', 'Algox Archer');
+    expect(mockGetCard).toHaveBeenCalledWith('monster-stats', 'Algox Archer', { game: 'gh2' });
   });
 
   it('returns 404 when card is not found', async () => {
@@ -676,6 +693,25 @@ describe('POST /api/ask', () => {
       'What is loot?',
       expect.objectContaining({ toolSurface: 'legacy' }),
     );
+  });
+
+  it('passes active game to ask()', async () => {
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is loot?', game: 'gh2' }),
+    });
+    expect(mockAsk).toHaveBeenCalledWith('What is loot?', expect.objectContaining({ game: 'gh2' }));
+  });
+
+  it('returns 400 for unsupported ask game ids', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'test', game: 'no-such-game' }),
+    });
+    expect(res.status).toBe(400);
+    expect(mockAsk).not.toHaveBeenCalled();
   });
 
   it('returns 400 for invalid toolSurface', async () => {

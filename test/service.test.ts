@@ -407,6 +407,7 @@ describe('ask', () => {
       history: [{ role: 'user' as const, content: 'What is loot?' }],
       campaignId: '550e8400-e29b-41d4-a716-446655440000',
       userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      game: 'gh2',
     };
     await ask('Follow-up', options);
     expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', options);

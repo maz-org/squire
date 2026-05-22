@@ -190,6 +190,11 @@ describe('MCP tool registration', () => {
     expect(mockInspectSources).toHaveBeenCalledWith();
 
     await expect(
+      client.callTool({ name: 'inspect_sources', arguments: { game: 'gh2' } }),
+    ).resolves.toBeDefined();
+    expect(mockInspectSources).toHaveBeenLastCalledWith({ game: 'gh2' });
+
+    await expect(
       client.callTool({ name: 'schema', arguments: { kind: 'item' } }),
     ).resolves.toBeDefined();
     expect(mockGetSchema).toHaveBeenCalledWith('item');
@@ -197,12 +202,13 @@ describe('MCP tool registration', () => {
     await expect(
       client.callTool({
         name: 'resolve_entity',
-        arguments: { query: 'Spyglass', kinds: ['card'], limit: 3 },
+        arguments: { query: 'Spyglass', kinds: ['card'], limit: 3, game: 'gh2' },
       }),
     ).resolves.toBeDefined();
     expect(mockResolveEntity).toHaveBeenCalledWith('Spyglass', {
       kinds: ['card'],
       limit: 3,
+      game: 'gh2',
     });
   });
 
@@ -210,57 +216,75 @@ describe('MCP tool registration', () => {
     const client = await connectClient();
 
     await expect(
-      client.callTool({ name: 'find_scenario', arguments: { query: 'scenario 61' } }),
+      client.callTool({
+        name: 'find_scenario',
+        arguments: { query: 'scenario 61', game: 'gh2' },
+      }),
     ).resolves.toBeDefined();
-    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61');
+    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61', { game: 'gh2' });
 
     await expect(
       client.callTool({
         name: 'get_scenario',
-        arguments: { ref: 'gloomhavensecretariat:scenario/061' },
+        arguments: { ref: 'gloomhavensecretariat:scenario/061', game: 'gh2' },
       }),
     ).resolves.toBeDefined();
-    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061');
+    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061', {
+      game: 'gh2',
+    });
 
     await expect(
-      client.callTool({ name: 'get_section', arguments: { ref: '67.1' } }),
+      client.callTool({ name: 'get_section', arguments: { ref: '67.1', game: 'gh2' } }),
     ).resolves.toBeDefined();
-    expect(mockGetSection).toHaveBeenCalledWith('67.1');
+    expect(mockGetSection).toHaveBeenCalledWith('67.1', { game: 'gh2' });
 
     await expect(
       client.callTool({
         name: 'follow_links',
-        arguments: { fromKind: 'scenario', fromRef: 'gloomhavensecretariat:scenario/061' },
+        arguments: {
+          fromKind: 'scenario',
+          fromRef: 'gloomhavensecretariat:scenario/061',
+          game: 'gh2',
+        },
       }),
     ).resolves.toBeDefined();
     expect(mockFollowLinks).toHaveBeenCalledWith(
       'scenario',
       'gloomhavensecretariat:scenario/061',
       undefined,
+      { game: 'gh2' },
     );
 
     await expect(
-      client.callTool({ name: 'open_entity', arguments: { ref: 'section:frosthaven/67.1' } }),
+      client.callTool({
+        name: 'open_entity',
+        arguments: { ref: 'section:frosthaven/67.1', game: 'gh2' },
+      }),
     ).resolves.toBeDefined();
-    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
+    expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1', { game: 'gh2' });
 
     await expect(
-      client.callTool({ name: 'search_knowledge', arguments: { query: 'loot', limit: 3 } }),
+      client.callTool({
+        name: 'search_knowledge',
+        arguments: { query: 'loot', limit: 3, game: 'gh2' },
+      }),
     ).resolves.toBeDefined();
     expect(mockSearchKnowledge).toHaveBeenCalledWith('loot', {
       scope: undefined,
       limit: 3,
+      game: 'gh2',
     });
 
     await expect(
       client.callTool({
         name: 'neighbors',
-        arguments: { ref: 'scenario:frosthaven/061', relation: 'conclusion' },
+        arguments: { ref: 'scenario:frosthaven/061', relation: 'conclusion', game: 'gh2' },
       }),
     ).resolves.toBeDefined();
     expect(mockNeighbors).toHaveBeenCalledWith('scenario:frosthaven/061', {
       relation: 'conclusion',
       limit: 20,
+      game: 'gh2',
     });
   });
 });
@@ -275,8 +299,11 @@ describe('search_rules tool', () => {
 
   it('calls searchRules and returns results', async () => {
     const client = await connectClient();
-    const result = await client.callTool({ name: 'search_rules', arguments: { query: 'loot' } });
-    expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
+    const result = await client.callTool({
+      name: 'search_rules',
+      arguments: { query: 'loot', game: 'gh2' },
+    });
+    expect(mockSearchRules).toHaveBeenCalledWith('loot', 6, { game: 'gh2' });
     const content = getTextContent(result);
     expect(content).toHaveLength(1);
     expect(content[0].text).toContain('Loot');
@@ -301,9 +328,9 @@ describe('search_cards tool', () => {
     const client = await connectClient();
     const result = await client.callTool({
       name: 'search_cards',
-      arguments: { query: 'algox archer' },
+      arguments: { query: 'algox archer', game: 'gh2' },
     });
-    expect(mockSearchCards).toHaveBeenCalledWith('algox archer', 6);
+    expect(mockSearchCards).toHaveBeenCalledWith('algox archer', 6, { game: 'gh2' });
     const content = getTextContent(result);
     expect(content).toHaveLength(1);
     expect(content[0].text).toContain('Algox Archer');
@@ -321,8 +348,11 @@ describe('list_card_types tool', () => {
 
   it('returns card types', async () => {
     const client = await connectClient();
-    const result = await client.callTool({ name: 'list_card_types', arguments: {} });
-    expect(mockListCardTypes).toHaveBeenCalled();
+    const result = await client.callTool({
+      name: 'list_card_types',
+      arguments: { game: 'gh2' },
+    });
+    expect(mockListCardTypes).toHaveBeenCalledWith({ game: 'gh2' });
     const content = getTextContent(result);
     expect(content).toHaveLength(1);
     const text = content[0].text;
@@ -341,18 +371,22 @@ describe('list_cards tool', () => {
     const client = await connectClient();
     await client.callTool({
       name: 'list_cards',
-      arguments: { type: 'monster-stats' },
+      arguments: { type: 'monster-stats', game: 'gh2' },
     });
-    expect(mockListCards).toHaveBeenCalledWith('monster-stats', undefined);
+    expect(mockListCards).toHaveBeenCalledWith('monster-stats', undefined, { game: 'gh2' });
   });
 
   it('passes filter when provided', async () => {
     const client = await connectClient();
     await client.callTool({
       name: 'list_cards',
-      arguments: { type: 'monster-stats', filter: '{"name":"Algox Archer"}' },
+      arguments: { type: 'monster-stats', filter: '{"name":"Algox Archer"}', game: 'gh2' },
     });
-    expect(mockListCards).toHaveBeenCalledWith('monster-stats', { name: 'Algox Archer' });
+    expect(mockListCards).toHaveBeenCalledWith(
+      'monster-stats',
+      { name: 'Algox Archer' },
+      { game: 'gh2' },
+    );
   });
 });
 
@@ -366,9 +400,9 @@ describe('get_card tool', () => {
     const client = await connectClient();
     const result = await client.callTool({
       name: 'get_card',
-      arguments: { type: 'monster-stats', id: 'Algox Archer' },
+      arguments: { type: 'monster-stats', id: 'Algox Archer', game: 'gh2' },
     });
-    expect(mockGetCard).toHaveBeenCalledWith('monster-stats', 'Algox Archer');
+    expect(mockGetCard).toHaveBeenCalledWith('monster-stats', 'Algox Archer', { game: 'gh2' });
     const content = getTextContent(result);
     expect(content).toHaveLength(1);
     expect(content[0].text).toContain('Algox Archer');

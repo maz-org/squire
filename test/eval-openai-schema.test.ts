@@ -92,14 +92,15 @@ describe('OpenAI strict tool schema renderer', () => {
       }
     >;
 
-    expect(byName.search_rules.required).toEqual(['query', 'topK']);
+    expect(byName.search_rules.required).toEqual(['query', 'topK', 'game']);
     expect(byName.search_rules.properties.topK.type).toEqual(['integer', 'null']);
-    expect(byName.search_cards.required).toEqual(['query', 'topK']);
-    expect(byName.search_knowledge.required).toEqual(['query', 'scope', 'limit']);
-    expect(byName.resolve_entity.required).toEqual(['query', 'kinds', 'limit']);
-    expect(byName.neighbors.required).toEqual(['ref', 'relation', 'limit']);
+    expect(byName.search_rules.properties.game.type).toEqual(['string', 'null']);
+    expect(byName.search_cards.required).toEqual(['query', 'topK', 'game']);
+    expect(byName.search_knowledge.required).toEqual(['query', 'scope', 'limit', 'game']);
+    expect(byName.resolve_entity.required).toEqual(['query', 'kinds', 'limit', 'game']);
+    expect(byName.neighbors.required).toEqual(['ref', 'relation', 'limit', 'game']);
     expect(byName.neighbors.properties.relation.enum).toContain(null);
-    expect(byName.list_cards.required).toEqual(['type', 'filter']);
+    expect(byName.list_cards.required).toEqual(['type', 'filter', 'game']);
     expect(byName.list_cards.properties.filter.type).toEqual(['object', 'null']);
     expect(byName.list_cards.properties.filter.additionalProperties).toBe(false);
     expect(byName.list_cards.properties.filter.required).toEqual(
@@ -111,7 +112,7 @@ describe('OpenAI strict tool schema renderer', () => {
       'boolean',
       'null',
     ]);
-    expect(byName.follow_links.required).toEqual(['fromKind', 'fromRef', 'linkType']);
+    expect(byName.follow_links.required).toEqual(['fromKind', 'fromRef', 'linkType', 'game']);
     expect(byName.follow_links.properties.linkType.enum).toContain(null);
   });
 
@@ -120,6 +121,7 @@ describe('OpenAI strict tool schema renderer', () => {
       normalizeOpenAiToolInput('search_rules', {
         query: 'loot',
         topK: null,
+        game: null,
       }),
     ).toEqual({ query: 'loot' });
 

@@ -38,6 +38,7 @@ import {
   type BookRecordKind,
 } from './scenario-section-schemas.ts';
 import { resolveSquireEnv } from './squire-env.ts';
+import { requireGameId } from './game.ts';
 
 type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
@@ -132,6 +133,11 @@ Guidelines:
 
 ${ANSWER_FORMATTING_PROMPT}`;
 
+const GAME_INPUT_SCHEMA = {
+  type: 'string',
+  description: 'Active game id or alias, such as "frosthaven" or "gh2".',
+} as const;
+
 // `as const satisfies readonly Tool[]` lets us derive `AgentToolName` below
 // as a literal union of the tool names. That union is what powers the
 // compile-time drift guard on `TOOL_SOURCE_LABELS` in
@@ -145,7 +151,9 @@ export const AGENT_TOOLS = [
       'Discover available Frosthaven knowledge sources, entity kinds, relation kinds, and live record counts before choosing a lookup tool.',
     input_schema: {
       type: 'object',
-      properties: {},
+      properties: {
+        game: GAME_INPUT_SCHEMA,
+      },
     },
   },
   {
@@ -183,6 +191,7 @@ export const AGENT_TOOLS = [
           description: 'Maximum candidates (1-20, default 6)',
           default: 6,
         },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['query'],
     },
@@ -195,6 +204,7 @@ export const AGENT_TOOLS = [
       type: 'object',
       properties: {
         ref: { type: 'string', description: 'Canonical inspectable ref' },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['ref'],
     },
@@ -213,6 +223,7 @@ export const AGENT_TOOLS = [
           description: 'Optional searchable kind filter',
         },
         limit: { type: 'integer', description: 'Global result limit (default 6)', default: 6 },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['query'],
     },
@@ -231,6 +242,7 @@ export const AGENT_TOOLS = [
           description: 'Optional relation filter like "conclusion" or "section_link"',
         },
         limit: { type: 'integer', description: 'Maximum neighbors (default 20)', default: 20 },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['ref'],
     },
@@ -247,6 +259,7 @@ export const LEGACY_AGENT_TOOLS = [
       properties: {
         query: { type: 'string', description: 'Search query' },
         topK: { type: 'integer', description: 'Number of results (default 6)', default: 6 },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['query'],
     },
@@ -259,6 +272,7 @@ export const LEGACY_AGENT_TOOLS = [
       properties: {
         query: { type: 'string', description: 'Search query' },
         topK: { type: 'integer', description: 'Number of results (default 6)', default: 6 },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['query'],
     },
@@ -268,7 +282,9 @@ export const LEGACY_AGENT_TOOLS = [
     description: 'List all available card types with record counts.',
     input_schema: {
       type: 'object',
-      properties: {},
+      properties: {
+        game: GAME_INPUT_SCHEMA,
+      },
     },
   },
   {
@@ -286,6 +302,7 @@ export const LEGACY_AGENT_TOOLS = [
           type: 'object',
           description: 'Optional field/value filters (AND logic)',
         },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['type'],
     },
@@ -306,6 +323,7 @@ export const LEGACY_AGENT_TOOLS = [
           description:
             'Canonical sourceId (e.g. "gloomhavensecretariat:item/1"). Case-sensitive. Use list_cards or search_cards to discover sourceIds.',
         },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['type', 'id'],
     },
@@ -318,6 +336,7 @@ export const LEGACY_AGENT_TOOLS = [
       type: 'object',
       properties: {
         query: { type: 'string', description: 'Scenario query' },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['query'],
     },
@@ -333,6 +352,7 @@ export const LEGACY_AGENT_TOOLS = [
           description:
             'Canonical scenario ref like "gloomhavensecretariat:scenario/061". Use find_scenario if you only know the number or name.',
         },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['ref'],
     },
@@ -344,6 +364,7 @@ export const LEGACY_AGENT_TOOLS = [
       type: 'object',
       properties: {
         ref: { type: 'string', description: 'Section ref like "90.2"' },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['ref'],
     },
@@ -369,6 +390,7 @@ export const LEGACY_AGENT_TOOLS = [
           enum: [...BOOK_REFERENCE_TYPES],
           description: 'Optional link-type filter like "conclusion" or "section_link"',
         },
+        game: GAME_INPUT_SCHEMA,
       },
       required: ['fromKind', 'fromRef'],
     },
@@ -396,6 +418,11 @@ export interface ToolCallResult {
   content: string;
   /** Distinct provenance labels for dynamic result sources. */
   sourceBooks?: string[];
+}
+
+export interface ToolExecutionContext {
+  /** Active game from runtime context. Explicit tool input overrides this. */
+  game?: string;
 }
 
 export interface TokenUsage {
@@ -596,6 +623,7 @@ function agentCorrelationMetadata(options: AskOptions | undefined): Record<strin
   if (options?.userMessageId) metadata.userMessageId = options.userMessageId;
   if (options?.userId) metadata.userId = options.userId;
   if (options?.campaignId) metadata.campaignId = options.campaignId;
+  if (options?.game) metadata.game = requireGameId(options.game);
   return metadata;
 }
 
@@ -608,6 +636,7 @@ function agentCorrelationAttributes(options: AskOptions | undefined): Attributes
   if (options?.userMessageId) attributes['squire.user_message_id'] = options.userMessageId;
   if (options?.userId) attributes['squire.user_id'] = options.userId;
   if (options?.campaignId) attributes['squire.campaign_id'] = options.campaignId;
+  if (options?.game) attributes['squire.game'] = requireGameId(options.game);
   return attributes;
 }
 
@@ -742,6 +771,15 @@ function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): 
   return !isBroadRuleSearchTool(toolName, input);
 }
 
+function gameOptsForToolInput(
+  input: Record<string, unknown>,
+  context?: ToolExecutionContext,
+): { game: string } | undefined {
+  const explicit = typeof input.game === 'string' ? input.game : undefined;
+  const game = explicit ?? context?.game;
+  return game === undefined ? undefined : { game };
+}
+
 /**
  * Execute a single tool call and return the result content plus any per-result
  * provenance metadata. Dynamic search/open tools return distinct source labels
@@ -751,10 +789,13 @@ function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): 
 export async function executeToolCall(
   name: string,
   input: Record<string, unknown>,
+  context?: ToolExecutionContext,
 ): Promise<ToolCallResult> {
+  const gameOpts = gameOptsForToolInput(input, context);
   switch (name) {
     case 'inspect_sources': {
-      return { content: JSON.stringify(await inspectSources(), null, 2) };
+      const result = gameOpts ? await inspectSources(gameOpts) : await inspectSources();
+      return { content: JSON.stringify(result, null, 2) };
     }
     case 'schema': {
       return { content: JSON.stringify(getSchema(input.kind as string), null, 2) };
@@ -768,6 +809,7 @@ export async function executeToolCall(
           await resolveEntity(input.query as string, {
             kinds,
             limit: input.limit as number | undefined,
+            ...gameOpts,
           }),
           null,
           2,
@@ -775,10 +817,11 @@ export async function executeToolCall(
       };
     }
     case 'search_rules': {
-      const results = await searchRules(
-        input.query as string,
-        (input.topK as number | undefined) ?? 6,
-      );
+      const query = input.query as string;
+      const topK = (input.topK as number | undefined) ?? 6;
+      const results = gameOpts
+        ? await searchRules(query, topK, gameOpts)
+        : await searchRules(query, topK);
       const seen = new Set<string>();
       const sourceBooks: string[] = [];
       for (const r of results) {
@@ -796,10 +839,11 @@ export async function executeToolCall(
       };
     }
     case 'search_cards': {
-      const results = await searchCards(
-        input.query as string,
-        (input.topK as number | undefined) ?? 6,
-      );
+      const query = input.query as string;
+      const topK = (input.topK as number | undefined) ?? 6;
+      const results = gameOpts
+        ? await searchCards(query, topK, gameOpts)
+        : await searchCards(query, topK);
       return { content: JSON.stringify(results, null, 2) };
     }
     case 'search_knowledge': {
@@ -807,6 +851,7 @@ export async function executeToolCall(
       const result = await searchKnowledge(input.query as string, {
         scope,
         limit: (input.limit as number | undefined) ?? 6,
+        ...gameOpts,
       });
       return {
         content: JSON.stringify(result, null, 2),
@@ -814,7 +859,9 @@ export async function executeToolCall(
       };
     }
     case 'open_entity': {
-      const result = await openEntity(input.ref as string);
+      const result = gameOpts
+        ? await openEntity(input.ref as string, gameOpts)
+        : await openEntity(input.ref as string);
       return {
         content: JSON.stringify(result, null, 2),
         sourceBooks: sourceLabelsFromResult(result),
@@ -824,36 +871,48 @@ export async function executeToolCall(
       const result = await neighbors(input.ref as string, {
         relation: input.relation as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
         limit: (input.limit as number | undefined) ?? 20,
+        ...gameOpts,
       });
       return { content: JSON.stringify(result, null, 2) };
     }
     case 'list_card_types': {
-      return { content: JSON.stringify(await listCardTypes(), null, 2) };
+      const result = gameOpts ? await listCardTypes(gameOpts) : await listCardTypes();
+      return { content: JSON.stringify(result, null, 2) };
     }
     case 'list_cards': {
       const filter =
         input.filter && typeof input.filter === 'object' && !Array.isArray(input.filter)
           ? (input.filter as Record<string, unknown>)
           : undefined;
-      const cards = await listCards(input.type as CardType, filter);
+      const cards = gameOpts
+        ? await listCards(input.type as CardType, filter, gameOpts)
+        : await listCards(input.type as CardType, filter);
       return { content: JSON.stringify(cards, null, 2) };
     }
     case 'get_card': {
-      const card = await getCard(input.type as CardType, input.id as string);
+      const card = gameOpts
+        ? await getCard(input.type as CardType, input.id as string, gameOpts)
+        : await getCard(input.type as CardType, input.id as string);
       if (!card) return { content: `Card not found: ${input.type}/${input.id}` };
       return { content: JSON.stringify(card, null, 2) };
     }
     case 'find_scenario': {
-      const scenarios = await findScenario(input.query as string);
+      const scenarios = gameOpts
+        ? await findScenario(input.query as string, gameOpts)
+        : await findScenario(input.query as string);
       return { content: JSON.stringify(scenarios, null, 2) };
     }
     case 'get_scenario': {
-      const scenario = await getScenario(input.ref as string);
+      const scenario = gameOpts
+        ? await getScenario(input.ref as string, gameOpts)
+        : await getScenario(input.ref as string);
       if (!scenario) return { content: `Scenario not found: ${input.ref}` };
       return { content: JSON.stringify(scenario, null, 2) };
     }
     case 'get_section': {
-      const section = await getSection(input.ref as string);
+      const section = gameOpts
+        ? await getSection(input.ref as string, gameOpts)
+        : await getSection(input.ref as string);
       if (!section) return { content: `Section not found: ${input.ref}` };
       return { content: JSON.stringify(section, null, 2) };
     }
@@ -862,6 +921,7 @@ export async function executeToolCall(
         input.fromKind as BookRecordKind,
         input.fromRef as string,
         input.linkType as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
+        ...(gameOpts ? [gameOpts] : []),
       );
       return { content: JSON.stringify(links, null, 2) };
     }
@@ -1078,6 +1138,7 @@ async function runAgentLoopInternal(
   const history = options?.history;
   const emit = options?.emit;
   const toolSurface = options?.toolSurface;
+  const activeGame = options?.game === undefined ? undefined : requireGameId(options.game);
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
   const model = config.model ?? AGENT_MODEL;
   const maxIterations = config.toolLoopLimit ?? MAX_AGENT_ITERATIONS;
@@ -1280,6 +1341,7 @@ async function runAgentLoopInternal(
                 const result = await executeToolCall(
                   block.name,
                   block.input as Record<string, unknown>,
+                  { game: activeGame },
                 );
                 const { summary, canonicalRefs } = summarizeToolOutput(result.content);
                 span.setAttributes({

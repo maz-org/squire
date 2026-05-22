@@ -523,6 +523,8 @@ export interface AskOptions {
    * report. `redesigned` remains selectable for the follow-up retrieval work.
    */
   toolSurface?: 'redesigned' | 'legacy';
+  /** Active game id or alias for knowledge-tool routing. Defaults to Frosthaven when omitted. */
+  game?: string;
   /** Campaign UUID — reserved for future campaign context loading. */
   campaignId?: string;
   /** User UUID — reserved for future player context loading. */

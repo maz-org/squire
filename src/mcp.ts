@@ -31,6 +31,15 @@ import {
   type BookRecordKind,
 } from './scenario-section-schemas.ts';
 
+const gameSchema = z
+  .string()
+  .optional()
+  .describe('Active game id or alias, such as "frosthaven" or "gh2"');
+
+function gameOpts(game?: string): { game: string } | undefined {
+  return game === undefined ? undefined : { game };
+}
+
 export function createMcpServer(): McpServer {
   const server = new McpServer({
     name: 'squire',
@@ -44,9 +53,13 @@ export function createMcpServer(): McpServer {
     {
       description:
         'Discover available Frosthaven knowledge sources, entity kinds, relation kinds, and live record counts before choosing a lookup tool.',
+      inputSchema: {
+        game: gameSchema,
+      },
     },
-    async () => {
-      const result = await inspectSources();
+    async ({ game }) => {
+      const opts = gameOpts(game);
+      const result = opts ? await inspectSources(opts) : await inspectSources();
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     },
   );
@@ -84,10 +97,11 @@ export function createMcpServer(): McpServer {
           .optional()
           .describe('Optional kind filters returned by inspect_sources, plus common aliases'),
         limit: z.number().int().min(1).max(20).default(6).describe('Maximum candidates'),
+        game: gameSchema,
       },
     },
-    async ({ query, kinds, limit }) => {
-      const result = await resolveEntity(query, { kinds, limit });
+    async ({ query, kinds, limit, game }) => {
+      const result = await resolveEntity(query, { kinds, limit, ...gameOpts(game) });
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     },
   );
@@ -102,10 +116,12 @@ export function createMcpServer(): McpServer {
       inputSchema: {
         query: z.string().describe('Search query'),
         topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),
+        game: gameSchema,
       },
     },
-    async ({ query, topK }) => {
-      const results = await searchRules(query, topK);
+    async ({ query, topK, game }) => {
+      const opts = gameOpts(game);
+      const results = opts ? await searchRules(query, topK, opts) : await searchRules(query, topK);
       return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
     },
   );
@@ -119,10 +135,12 @@ export function createMcpServer(): McpServer {
       inputSchema: {
         query: z.string().describe('Search query'),
         topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),
+        game: gameSchema,
       },
     },
-    async ({ query, topK }) => {
-      const results = await searchCards(query, topK);
+    async ({ query, topK, game }) => {
+      const opts = gameOpts(game);
+      const results = opts ? await searchCards(query, topK, opts) : await searchCards(query, topK);
       return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
     },
   );
@@ -133,9 +151,13 @@ export function createMcpServer(): McpServer {
     'list_card_types',
     {
       description: 'List all available card types with record counts.',
+      inputSchema: {
+        game: gameSchema,
+      },
     },
-    async () => {
-      const types = await listCardTypes();
+    async ({ game }) => {
+      const opts = gameOpts(game);
+      const types = opts ? await listCardTypes(opts) : await listCardTypes();
       return { content: [{ type: 'text', text: JSON.stringify(types, null, 2) }] };
     },
   );
@@ -152,9 +174,10 @@ export function createMcpServer(): McpServer {
           .string()
           .optional()
           .describe('Optional JSON filter object (AND logic), e.g. {"name":"Algox Archer"}'),
+        game: gameSchema,
       },
     },
-    async ({ type, filter }) => {
+    async ({ type, filter, game }) => {
       let parsed: Record<string, unknown> | undefined;
       if (filter) {
         try {
@@ -166,7 +189,10 @@ export function createMcpServer(): McpServer {
           };
         }
       }
-      const cards = await listCards(type as CardType, parsed);
+      const opts = gameOpts(game);
+      const cards = opts
+        ? await listCards(type as CardType, parsed, opts)
+        : await listCards(type as CardType, parsed);
       return { content: [{ type: 'text', text: JSON.stringify(cards, null, 2) }] };
     },
   );
@@ -184,10 +210,14 @@ export function createMcpServer(): McpServer {
           .describe(
             'Canonical sourceId (e.g. "gloomhavensecretariat:item/1"). Case-sensitive. Use list_cards or search_cards to discover sourceIds.',
           ),
+        game: gameSchema,
       },
     },
-    async ({ type, id }) => {
-      const card = await getCard(type as CardType, id);
+    async ({ type, id, game }) => {
+      const opts = gameOpts(game);
+      const card = opts
+        ? await getCard(type as CardType, id, opts)
+        : await getCard(type as CardType, id);
       if (!card) {
         return {
           content: [{ type: 'text', text: `Card not found: ${type}/${id}` }],
@@ -205,10 +235,12 @@ export function createMcpServer(): McpServer {
         'Resolve a scenario query like "scenario 61" or "Life and Death" to matching scenario records.',
       inputSchema: {
         query: z.string().describe('Scenario query'),
+        game: gameSchema,
       },
     },
-    async ({ query }) => {
-      const scenarios = await findScenario(query);
+    async ({ query, game }) => {
+      const opts = gameOpts(game);
+      const scenarios = opts ? await findScenario(query, opts) : await findScenario(query);
       return { content: [{ type: 'text', text: JSON.stringify(scenarios, null, 2) }] };
     },
   );
@@ -223,10 +255,12 @@ export function createMcpServer(): McpServer {
           .describe(
             'Canonical scenario ref like "gloomhavensecretariat:scenario/061". Use find_scenario if you only know the number or name.',
           ),
+        game: gameSchema,
       },
     },
-    async ({ ref }) => {
-      const scenario = await getScenario(ref);
+    async ({ ref, game }) => {
+      const opts = gameOpts(game);
+      const scenario = opts ? await getScenario(ref, opts) : await getScenario(ref);
       if (!scenario) {
         return {
           content: [{ type: 'text', text: `Scenario not found: ${ref}` }],
@@ -243,10 +277,12 @@ export function createMcpServer(): McpServer {
       description: 'Fetch an exact section record by section ref like "90.2".',
       inputSchema: {
         ref: z.string().describe('Section ref like "90.2"'),
+        game: gameSchema,
       },
     },
-    async ({ ref }) => {
-      const section = await getSection(ref);
+    async ({ ref, game }) => {
+      const opts = gameOpts(game);
+      const section = opts ? await getSection(ref, opts) : await getSection(ref);
       if (!section) {
         return {
           content: [{ type: 'text', text: `Section not found: ${ref}` }],
@@ -269,10 +305,14 @@ export function createMcpServer(): McpServer {
           .enum(BOOK_REFERENCE_TYPES)
           .optional()
           .describe('Optional link-type filter like "conclusion" or "section_link"'),
+        game: gameSchema,
       },
     },
-    async ({ fromKind, fromRef, linkType }) => {
-      const links = await followLinks(fromKind as BookRecordKind, fromRef, linkType);
+    async ({ fromKind, fromRef, linkType, game }) => {
+      const opts = gameOpts(game);
+      const links = opts
+        ? await followLinks(fromKind as BookRecordKind, fromRef, linkType, opts)
+        : await followLinks(fromKind as BookRecordKind, fromRef, linkType);
       return { content: [{ type: 'text', text: JSON.stringify(links, null, 2) }] };
     },
   );
@@ -284,10 +324,12 @@ export function createMcpServer(): McpServer {
         'Open one exact Squire entity by canonical ref: rules passage, scenario, section, or card.',
       inputSchema: {
         ref: z.string().describe('Canonical inspectable ref'),
+        game: gameSchema,
       },
     },
-    async ({ ref }) => {
-      const result = await openEntity(ref);
+    async ({ ref, game }) => {
+      const opts = gameOpts(game);
+      const result = opts ? await openEntity(ref, opts) : await openEntity(ref);
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
@@ -306,10 +348,11 @@ export function createMcpServer(): McpServer {
           .optional()
           .describe('Optional searchable kind filter'),
         limit: z.number().int().min(1).max(20).default(6).describe('Global result limit'),
+        game: gameSchema,
       },
     },
-    async ({ query, scope, limit }) => {
-      const result = await searchKnowledge(query, { scope, limit });
+    async ({ query, scope, limit, game }) => {
+      const result = await searchKnowledge(query, { scope, limit, ...gameOpts(game) });
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
@@ -325,10 +368,11 @@ export function createMcpServer(): McpServer {
         ref: z.string().describe('Canonical traversable ref'),
         relation: z.enum(BOOK_REFERENCE_TYPES).optional().describe('Optional relation filter'),
         limit: z.number().int().min(1).max(50).default(20).describe('Maximum neighbors'),
+        game: gameSchema,
       },
     },
-    async ({ ref, relation, limit }) => {
-      const result = await neighbors(ref, { relation, limit });
+    async ({ ref, relation, limit, game }) => {
+      const result = await neighbors(ref, { relation, limit, ...gameOpts(game) });
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
