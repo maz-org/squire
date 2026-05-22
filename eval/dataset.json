@@ -330,7 +330,7 @@
       "requiredTools": ["resolve_entity", "open_entity"],
       "requiredToolKinds": ["resolution", "open"],
       "forbiddenTools": ["search_rules"],
-      "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven2/67.1"],
+      "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven-2e/67.1"],
       "maxToolCalls": 8,
       "notes": "This covers missing-data and invalid-ref behavior without letting the agent silently reuse Frosthaven data for another game."
     },

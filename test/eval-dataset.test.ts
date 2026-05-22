@@ -55,7 +55,7 @@ describe('eval dataset', () => {
     const evalCase = cases.find((candidate) => candidate.id === 'traj-invalid-cross-game-ref');
 
     expect(evalCase?.finalAnswer?.grading).toMatch(/Gloomhaven 2 path is rejected/);
-    expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven2/67.1');
+    expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven-2e/67.1');
   });
 
   it('treats read-now chain traversal as a neighbors requirement', () => {
