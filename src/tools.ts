@@ -31,6 +31,7 @@ import {
   type BookReferenceType,
 } from './scenario-section-schemas.ts';
 import { DEFAULT_GAME_ID, SUPPORTED_GAMES, gameDefinitionFor, requireGameId } from './game.ts';
+import type { GameId } from './game.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -249,6 +250,10 @@ interface ToolOpts {
   game?: string;
 }
 
+interface NormalizedToolOpts extends ToolOpts {
+  game: GameId;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Strip internal `_*` marker keys from a card record. */
@@ -266,6 +271,14 @@ const GAME_INFO = SUPPORTED_GAMES.map(({ id, label, default: isDefault }) => ({
   label,
   default: isDefault,
 }));
+
+function normalizeToolGame(game?: string): GameId {
+  return requireGameId(game ?? DEFAULT_GAME);
+}
+
+function normalizeToolOpts(opts?: ToolOpts): NormalizedToolOpts {
+  return { ...opts, game: normalizeToolGame(opts?.game) };
+}
 
 const CARD_KIND_ALIASES: Record<string, CardType[]> = {
   item: ['items'],
@@ -492,14 +505,15 @@ async function resolveCards(
 ): Promise<EntityCandidate[]> {
   if (query.trim() === '') return [];
 
-  const game = opts.game ?? DEFAULT_GAME;
+  const normalizedOpts = normalizeToolOpts(opts);
+  const game = normalizedOpts.game;
   const level = extractLevelQuery(query);
   const lowered = query.toLowerCase();
   const candidates: EntityCandidate[] = [];
   const exactItemNumber = cardTypes.includes('items') ? extractExactItemNumberQuery(query) : null;
 
   for (const type of cardTypes) {
-    const records = await load(type, opts);
+    const records = await load(type, normalizedOpts);
     for (const rawRecord of records) {
       const record = stripInternalKeys(rawRecord);
       if (level !== null && record.level !== level) continue;
@@ -553,7 +567,7 @@ async function resolveCards(
   }
 
   if (candidates.length === 0) {
-    const ranked = await searchExtractedRanked(query, limit, opts);
+    const ranked = await searchExtractedRanked(query, limit, normalizedOpts);
     for (const { record } of ranked) {
       if (!cardTypes.includes(record._type)) continue;
       const stripped = stripInternalKeys(record);
@@ -615,9 +629,11 @@ function gameQualifiedRef(
   ref: string,
   prefix: 'scenario' | 'section',
   fallbackGame = DEFAULT_GAME,
-): { game: string; ref: string } {
+): { game: GameId; ref: string } {
   const match = ref.match(new RegExp(`^${prefix}:([^/]+)/(.+)$`));
-  return match ? { game: match[1], ref: match[2] } : { game: fallbackGame, ref };
+  return match
+    ? { game: normalizeToolGame(match[1]), ref: match[2] }
+    : { game: normalizeToolGame(fallbackGame), ref };
 }
 
 function canonicalSectionRef(ref: string, game = DEFAULT_GAME): string {
@@ -718,18 +734,28 @@ function citationForCard(
 
 function parseRulesRef(
   ref: string,
-): { ok: true; game: string; source: string; chunkIndex: number } | { ok: false } {
+): { ok: true; game: GameId; source: string; chunkIndex: number } | { ok: false } {
   const match = ref.match(/^rules:([^/]+)\/(.+)#chunk=(\d+)$/);
   if (!match) return { ok: false };
-  return { ok: true, game: match[1], source: match[2], chunkIndex: Number(match[3]) };
+  return {
+    ok: true,
+    game: normalizeToolGame(match[1]),
+    source: match[2],
+    chunkIndex: Number(match[3]),
+  };
 }
 
 function parseCardRef(
   ref: string,
-): { ok: true; game: string; type: CardType; sourceId: string } | { ok: false } {
+): { ok: true; game: GameId; type: CardType; sourceId: string } | { ok: false } {
   const match = ref.match(/^card:([^/]+)\/([^/]+)\/(.+)$/);
   if (match && TYPES.includes(match[2] as CardType)) {
-    return { ok: true, game: match[1], type: match[2] as CardType, sourceId: match[3] };
+    return {
+      ok: true,
+      game: normalizeToolGame(match[1]),
+      type: match[2] as CardType,
+      sourceId: match[3],
+    };
   }
 
   const sourceIdMatch = ref.match(/^gloomhavensecretariat:([^/]+)\/(.+)$/);
@@ -775,8 +801,9 @@ async function linksFor(
   ref: string,
   opts?: ToolOpts,
 ): Promise<KnowledgeLink[]> {
-  const game = opts?.game ?? DEFAULT_GAME;
-  const links = await followLinks(kind, ref, undefined, opts);
+  const normalizedOpts = normalizeToolOpts(opts);
+  const game = normalizedOpts.game;
+  const links = await followLinks(kind, ref, undefined, normalizedOpts);
   return Promise.all(
     links.map(async (link) => ({
       relation: link.linkType,
@@ -799,7 +826,8 @@ async function linksFor(
  */
 export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
-  const hits: ScoredEntry[] = await search(queryEmbedding, topK, { game: opts?.game });
+  const { game } = normalizeToolOpts(opts);
+  const hits: ScoredEntry[] = await search(queryEmbedding, topK, { game });
 
   return hits.map((h) => ({
     text: h.text,
@@ -814,7 +842,7 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
  * Returns structured results with card type, data, and `ts_rank` score.
  */
 export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Promise<CardResult[]> {
-  const ranked = await searchExtractedRanked(query, topK, opts);
+  const ranked = await searchExtractedRanked(query, topK, normalizeToolOpts(opts));
   return ranked.map(({ record, score }) => {
     const { _type, ...rest } = record;
     return {
@@ -833,7 +861,7 @@ export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Pro
  */
 export async function listCardTypes(opts?: ToolOpts): Promise<CardTypeInfo[]> {
   // Single UNION ALL of `count(*)` per type instead of N full-table scans.
-  const counts = await countsByType(opts);
+  const counts = await countsByType(normalizeToolOpts(opts));
   return TYPES.map((type) => ({ type, count: counts[type] }));
 }
 
@@ -846,7 +874,7 @@ export async function listCards(
   filter?: Record<string, unknown>,
   opts?: ToolOpts,
 ): Promise<Record<string, unknown>[]> {
-  let records = await load(type, opts);
+  let records = await load(type, normalizeToolOpts(opts));
 
   if (filter) {
     records = records.filter((record) =>
@@ -858,7 +886,7 @@ export async function listCards(
 }
 
 export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesResult> {
-  const game = requireGameId(opts?.game ?? DEFAULT_GAME);
+  const game = normalizeToolGame(opts?.game);
   const gameDefinition = gameDefinitionFor(game);
   const [cardCounts, scenarioSectionStatus] = await Promise.all([
     countsByType({ game }),
@@ -924,6 +952,7 @@ export async function resolveEntity(
   query: string,
   options: EntityResolutionOptions = {},
 ): Promise<EntityResolutionResult> {
+  const normalizedOptions = normalizeToolOpts(options);
   const validation = validateKinds(options.kinds);
   if (!validation.ok) {
     return {
@@ -935,7 +964,7 @@ export async function resolveEntity(
     };
   }
 
-  const game = options.game ?? DEFAULT_GAME;
+  const game = normalizedOptions.game;
   const limit = Math.min(Math.max(options.limit ?? 6, 1), 20);
   const candidates: EntityCandidate[] = [];
   const kinds = validation.kinds;
@@ -1001,7 +1030,7 @@ export async function resolveEntity(
 
   if (kinds.includes('card')) {
     candidates.push(
-      ...(await resolveCards(query, cardTypesForKinds(options.kinds), limit, { game })),
+      ...(await resolveCards(query, cardTypesForKinds(options.kinds), limit, normalizedOptions)),
     );
   }
 
@@ -1031,21 +1060,21 @@ export async function getCard(
 ): Promise<Record<string, unknown> | null> {
   // Indexed single-row lookup via `loadOne` — hits the `(game, source_id)`
   // unique index instead of loading every row and scanning client-side.
-  const match = await loadOne(type, id, opts);
+  const match = await loadOne(type, id, normalizeToolOpts(opts));
   if (!match) return null;
   return stripInternalKeys(match);
 }
 
 export async function findScenario(query: string, opts?: ToolOpts): Promise<ScenarioResult[]> {
-  return findScenarios(query, 6, opts);
+  return findScenarios(query, 6, normalizeToolOpts(opts));
 }
 
 export async function getScenario(ref: string, opts?: ToolOpts): Promise<ScenarioResult | null> {
-  return loadScenario(scenarioStorageRef(ref), opts);
+  return loadScenario(scenarioStorageRef(ref), normalizeToolOpts(opts));
 }
 
 export async function getSection(ref: string, opts?: ToolOpts): Promise<SectionResult | null> {
-  return loadSection(sectionStorageRef(ref), opts);
+  return loadSection(sectionStorageRef(ref), normalizeToolOpts(opts));
 }
 
 export async function searchSections(
@@ -1053,7 +1082,7 @@ export async function searchSections(
   limit = 6,
   opts?: ToolOpts,
 ): Promise<SectionResult[]> {
-  return loadSections(query, limit, opts);
+  return loadSections(query, limit, normalizeToolOpts(opts));
 }
 
 export async function followLinks(
@@ -1064,7 +1093,7 @@ export async function followLinks(
 ): Promise<ReferenceResult[]> {
   const normalizedRef =
     fromKind === 'scenario' ? scenarioStorageRef(fromRef) : sectionStorageRef(fromRef);
-  return loadReferences(fromKind, normalizedRef, linkType, opts);
+  return loadReferences(fromKind, normalizedRef, linkType, normalizeToolOpts(opts));
 }
 
 export async function incomingLinks(
@@ -1075,11 +1104,11 @@ export async function incomingLinks(
 ): Promise<ReferenceResult[]> {
   const normalizedRef =
     toKind === 'scenario' ? scenarioStorageRef(toRef) : sectionStorageRef(toRef);
-  return loadIncomingReferences(toKind, normalizedRef, linkType, opts);
+  return loadIncomingReferences(toKind, normalizedRef, linkType, normalizeToolOpts(opts));
 }
 
 export async function openEntity(ref: string, opts?: ToolOpts): Promise<KnowledgeOpenResult> {
-  const game = opts?.game ?? DEFAULT_GAME;
+  const game = normalizeToolGame(opts?.game);
 
   if (/^\d+$/.test(ref.trim())) {
     return {
@@ -1219,7 +1248,7 @@ export async function searchKnowledge(
   query: string,
   options: SearchKnowledgeOptions = {},
 ): Promise<KnowledgeSearchResult> {
-  const game = options.game ?? DEFAULT_GAME;
+  const game = normalizeToolGame(options.game);
   const scope = options.scope ?? ['rules_passage', 'scenario', 'section', 'card'];
   const limit = Math.min(Math.max(options.limit ?? 6, 1), 20);
   const allowed = new Set<KnowledgeEntityKind>(['rules_passage', 'scenario', 'section', 'card']);
@@ -1328,7 +1357,7 @@ export async function neighbors(
   ref: string,
   options: NeighborsOptions = {},
 ): Promise<KnowledgeNeighborsResult> {
-  const game = options.game ?? DEFAULT_GAME;
+  const game = normalizeToolGame(options.game);
   const relation = options.relation;
   if (relation && !BOOK_REFERENCE_TYPES.includes(relation)) {
     return {
