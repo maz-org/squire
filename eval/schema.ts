@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { FROSTHAVEN_GAME_ID, normalizeGameId } from '../src/game.ts';
+
 const ToolKindSchema = z.enum(['discovery', 'resolution', 'search', 'open', 'traversal']);
 
 export const TrajectoryExpectationSchema = z
@@ -147,27 +149,41 @@ export function validateRemoteDatasetShape(
 }
 
 export function normalizeTrajectoryRef(ref: string): string {
-  const scenarioMatch = ref.match(
-    /^(?:scenario:frosthaven\/|gloomhavensecretariat:scenario\/)(\d+)$/,
-  );
+  const qualifiedScenarioMatch = ref.match(/^scenario:([^/]+)\/(\d+)$/);
+  if (qualifiedScenarioMatch) {
+    const game = normalizeGameId(qualifiedScenarioMatch[1]) ?? qualifiedScenarioMatch[1];
+    return `scenario:${game}/${qualifiedScenarioMatch[2].padStart(3, '0')}`;
+  }
+
+  const scenarioMatch = ref.match(/^gloomhavensecretariat:scenario\/(\d+)$/);
   if (scenarioMatch) {
-    return `scenario:frosthaven/${scenarioMatch[1].padStart(3, '0')}`;
+    return `scenario:${FROSTHAVEN_GAME_ID}/${scenarioMatch[1].padStart(3, '0')}`;
   }
 
-  const sectionMatch = ref.match(/^(?:section:frosthaven\/|section:)?(\d+\.\d+)$/);
+  const qualifiedSectionMatch = ref.match(/^section:([^/]+)\/(\d+\.\d+)$/);
+  if (qualifiedSectionMatch) {
+    const game = normalizeGameId(qualifiedSectionMatch[1]) ?? qualifiedSectionMatch[1];
+    return `section:${game}/${qualifiedSectionMatch[2]}`;
+  }
+
+  const sectionMatch = ref.match(/^(?:section:)?(\d+\.\d+)$/);
   if (sectionMatch) {
-    return `section:frosthaven/${sectionMatch[1]}`;
+    return `section:${FROSTHAVEN_GAME_ID}/${sectionMatch[1]}`;
   }
 
-  const cardMatch = ref.match(
-    /^(?:card:frosthaven\/([^/]+)\/)?gloomhavensecretariat:([^/]+)\/(.+)$/,
-  );
+  const qualifiedCardMatch = ref.match(/^card:([^/]+)\/([^/]+)\/(.+)$/);
+  if (qualifiedCardMatch) {
+    const game = normalizeGameId(qualifiedCardMatch[1]) ?? qualifiedCardMatch[1];
+    return `card:${game}/${qualifiedCardMatch[2]}/${qualifiedCardMatch[3]}`;
+  }
+
+  const cardMatch = ref.match(/^gloomhavensecretariat:([^/]+)\/(.+)$/);
   if (cardMatch) {
-    const explicitType = cardMatch[1];
-    const sourcePrefix = cardMatch[2];
-    const sourceRest = cardMatch[3];
-    const type = explicitType ?? CARD_TYPE_BY_SOURCE_PREFIX.get(sourcePrefix);
-    if (type) return `card:frosthaven/${type}/gloomhavensecretariat:${sourcePrefix}/${sourceRest}`;
+    const sourcePrefix = cardMatch[1];
+    const sourceRest = cardMatch[2];
+    const type = CARD_TYPE_BY_SOURCE_PREFIX.get(sourcePrefix);
+    if (type)
+      return `card:${FROSTHAVEN_GAME_ID}/${type}/gloomhavensecretariat:${sourcePrefix}/${sourceRest}`;
   }
 
   return ref;

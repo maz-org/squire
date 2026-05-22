@@ -606,13 +606,13 @@ function validateKinds(
 }
 
 function sourceRefForPdf(game: string, source: string): string {
-  return `source:${game}/${source.replace(/\.pdf$/i, '')}`;
+  return `source:${normalizeToolGame(game)}/${source.replace(/\.pdf$/i, '')}`;
 }
 
 function canonicalScenarioRef(ref: string, game = DEFAULT_GAME): string {
   const match = ref.match(/(\d{1,3}[A-Z]?)$/i);
   const scenarioId = match ? match[1].padStart(3, '0') : ref;
-  return `scenario:${game}/${scenarioId}`;
+  return `scenario:${normalizeToolGame(game)}/${scenarioId}`;
 }
 
 function scenarioStorageRef(ref: string): string {
@@ -637,11 +637,11 @@ function gameQualifiedRef(
 }
 
 function canonicalSectionRef(ref: string, game = DEFAULT_GAME): string {
-  return `section:${game}/${sectionStorageRef(ref)}`;
+  return `section:${normalizeToolGame(game)}/${sectionStorageRef(ref)}`;
 }
 
 function canonicalCardRef(type: CardType, sourceId: string, game = DEFAULT_GAME): string {
-  return `card:${game}/${type}/${sourceId}`;
+  return `card:${normalizeToolGame(game)}/${type}/${sourceId}`;
 }
 
 function summarizeScenario(scenario: ScenarioResult, game = DEFAULT_GAME): KnowledgeEntitySummary {

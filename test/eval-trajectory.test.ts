@@ -48,6 +48,32 @@ describe('scoreTrajectory', () => {
     expect(result).toEqual({ pass: true, failures: [] });
   });
 
+  it('normalizes GH2 alias refs to canonical trajectory refs', () => {
+    const result = scoreTrajectory(
+      {
+        requiredTools: ['open_entity'],
+        requiredToolKinds: ['open'],
+        forbiddenTools: [],
+        forbiddenToolKinds: [],
+        requiredRefs: [
+          'scenario:gloomhaven-2e/061',
+          'section:gloomhaven-2e/67.1',
+          'card:gloomhaven-2e/items/gloomhavensecretariat:item/1',
+        ],
+        maxToolCalls: 2,
+      },
+      [
+        {
+          name: 'open_entity',
+          input: { ref: 'scenario:gloomhaven2/61' },
+          canonicalRefs: ['section:gh2/67.1', 'card:gh2e/items/gloomhavensecretariat:item/1'],
+        },
+      ],
+    );
+
+    expect(result).toEqual({ pass: true, failures: [] });
+  });
+
   it('matches exact card refs against opened GHS source IDs', () => {
     const result = scoreTrajectory(
       {

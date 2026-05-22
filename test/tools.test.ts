@@ -87,6 +87,13 @@ const FAKE_RULE_HITS = [
   },
 ];
 
+const GH2_CANONICAL_SCENARIO_REF = 'gloomhavensecretariat:scenario/061';
+const GH2_CANONICAL_SCENARIO_NAME = 'GH2 Canonical Test Scenario';
+const GH2_CANONICAL_SECTION_REF = '67.1';
+const GH2_CANONICAL_SECTION_TEXT = 'GH2 canonical section marker text for ref normalization.';
+const GH2_CANONICAL_ITEM_SOURCE_ID = 'gloomhavensecretariat:item/gh2-canonical-test';
+const GH2_CANONICAL_ITEM_NAME = 'GH2 Canonical Test Blade';
+
 // `card_*` tables are seeded once per run by `test/helpers/global-setup.ts`.
 beforeAll(async () => {
   await setupTestDb();
@@ -314,6 +321,182 @@ describe('openEntity', () => {
     await expect(openEntity('61')).resolves.toMatchObject({
       ok: false,
       error: { code: 'ambiguous' },
+    });
+  });
+});
+
+describe('GH2 canonical entity refs', () => {
+  beforeAll(async () => {
+    const { db } = getDb();
+    await db.execute(sql`
+      DELETE FROM card_items
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND source_id = ${GH2_CANONICAL_ITEM_SOURCE_ID}
+    `);
+    await db.execute(sql`
+      DELETE FROM section_book_sections
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND ref = ${GH2_CANONICAL_SECTION_REF}
+    `);
+    await db.execute(sql`
+      DELETE FROM scenario_book_scenarios
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND ref = ${GH2_CANONICAL_SCENARIO_REF}
+    `);
+    await db.execute(sql`
+      INSERT INTO scenario_book_scenarios (
+        game, ref, scenario_group, scenario_index, name, initial, source_pdf, source_page, raw_text, metadata
+      )
+      VALUES (
+        ${GLOOMHAVEN_2E_GAME_ID},
+        ${GH2_CANONICAL_SCENARIO_REF},
+        'test',
+        '61',
+        ${GH2_CANONICAL_SCENARIO_NAME},
+        false,
+        null,
+        null,
+        'GH2 canonical scenario marker text.',
+        '{}'::jsonb
+      )
+    `);
+    await db.execute(sql`
+      INSERT INTO section_book_sections (
+        game, ref, section_number, section_variant, source_pdf, source_page, text, metadata
+      )
+      VALUES (
+        ${GLOOMHAVEN_2E_GAME_ID},
+        ${GH2_CANONICAL_SECTION_REF},
+        67,
+        1,
+        'gh2-ghs-sections.json',
+        1,
+        ${GH2_CANONICAL_SECTION_TEXT},
+        '{}'::jsonb
+      )
+    `);
+    await db.execute(sql`
+      INSERT INTO card_items (
+        game, source_id, number, name, slot, cost, craft_cost, effect, uses, spent, lost
+      )
+      VALUES (
+        ${GLOOMHAVEN_2E_GAME_ID},
+        ${GH2_CANONICAL_ITEM_SOURCE_ID},
+        '001',
+        ${GH2_CANONICAL_ITEM_NAME},
+        'one hand',
+        10,
+        null,
+        'GH2 canonical item effect marker.',
+        null,
+        false,
+        false
+      )
+    `);
+  });
+
+  afterAll(async () => {
+    const { db } = getDb();
+    await db.execute(sql`
+      DELETE FROM card_items
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND source_id = ${GH2_CANONICAL_ITEM_SOURCE_ID}
+    `);
+    await db.execute(sql`
+      DELETE FROM section_book_sections
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND ref = ${GH2_CANONICAL_SECTION_REF}
+    `);
+    await db.execute(sql`
+      DELETE FROM scenario_book_scenarios
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND ref = ${GH2_CANONICAL_SCENARIO_REF}
+    `);
+  });
+
+  it('normalizes alias-qualified GH2 scenario refs to the canonical game id', async () => {
+    const result = await openEntity('scenario:gloomhaven2/061');
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: `scenario:${GLOOMHAVEN_2E_GAME_ID}/061`,
+        title: GH2_CANONICAL_SCENARIO_NAME,
+      },
+    });
+  });
+
+  it('normalizes alias-qualified GH2 section refs to the canonical game id', async () => {
+    const result = await openEntity('section:gh2/67.1');
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: `section:${GLOOMHAVEN_2E_GAME_ID}/67.1`,
+        data: {
+          text: GH2_CANONICAL_SECTION_TEXT,
+        },
+      },
+    });
+  });
+
+  it('normalizes alias-qualified GH2 card refs to the canonical game id', async () => {
+    const result = await openEntity(`card:gh2e/items/${GH2_CANONICAL_ITEM_SOURCE_ID}`);
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: `card:${GLOOMHAVEN_2E_GAME_ID}/items/${GH2_CANONICAL_ITEM_SOURCE_ID}`,
+        title: GH2_CANONICAL_ITEM_NAME,
+        data: {
+          canonicalRef: `card:${GLOOMHAVEN_2E_GAME_ID}/items/${GH2_CANONICAL_ITEM_SOURCE_ID}`,
+          sourceId: GH2_CANONICAL_ITEM_SOURCE_ID,
+        },
+      },
+    });
+  });
+
+  it('keeps bare legacy section refs Frosthaven-only unless an active game is supplied', async () => {
+    const defaultResult = await openEntity(GH2_CANONICAL_SECTION_REF);
+    expect(defaultResult).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: 'section:frosthaven/67.1',
+      },
+    });
+    if (!defaultResult.ok) throw new Error(defaultResult.error.message);
+    expect(defaultResult.entity.data.text).not.toBe(GH2_CANONICAL_SECTION_TEXT);
+
+    const gh2Result = await openEntity(GH2_CANONICAL_SECTION_REF, { game: 'gh2' });
+    expect(gh2Result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'section',
+        ref: `section:${GLOOMHAVEN_2E_GAME_ID}/67.1`,
+        data: {
+          text: GH2_CANONICAL_SECTION_TEXT,
+        },
+      },
+    });
+  });
+
+  it('keeps legacy scenario source IDs Frosthaven-only unless an active game is supplied', async () => {
+    const defaultResult = await openEntity(GH2_CANONICAL_SCENARIO_REF);
+    expect(defaultResult).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Life and Death',
+      },
+    });
+
+    const gh2Result = await openEntity(GH2_CANONICAL_SCENARIO_REF, { game: 'gloomhaven 2.0' });
+    expect(gh2Result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: `scenario:${GLOOMHAVEN_2E_GAME_ID}/061`,
+        title: GH2_CANONICAL_SCENARIO_NAME,
+      },
     });
   });
 });
