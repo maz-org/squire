@@ -13,6 +13,7 @@
  * Tests here are read-only against that shared seed, so we don't truncate
  * between files.
  */
+import { sql } from 'drizzle-orm';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -28,6 +29,7 @@ import {
   searchExtracted,
   searchExtractedRanked,
 } from '../src/extracted-data.ts';
+import { FROSTHAVEN_GAME_ID, GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
 import type { CardType } from '../src/schemas.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
@@ -105,9 +107,10 @@ describe('load', () => {
     }
   });
 
-  it('returns an empty array for an unknown game', async () => {
-    const rows = await load('items', { game: 'no-such-game' });
-    expect(rows).toEqual([]);
+  it('rejects unknown game ids', async () => {
+    await expect(load('items', { game: 'no-such-game' })).rejects.toThrow(
+      'Unsupported game id "no-such-game"',
+    );
   });
 });
 
@@ -334,6 +337,72 @@ describe('extractedStats', () => {
     for (const t of TYPES) {
       expect(summary).toContain(`${t}:`);
     }
+  });
+});
+
+const GH2_ISOLATION_SOURCE_ID = 'gh2:test/isolation-monster';
+const GH2_ISOLATION_NAME = 'Zephyrix Gh2IsolationMarker';
+
+describe('game isolation', () => {
+  beforeAll(async () => {
+    const db = await setupTestDb();
+    await db.execute(sql`
+      INSERT INTO card_monster_stats (game, source_id, name, level_range, normal, elite, immunities)
+      VALUES (
+        ${GLOOMHAVEN_2E_GAME_ID},
+        ${GH2_ISOLATION_SOURCE_ID},
+        ${GH2_ISOLATION_NAME},
+        '0-3',
+        ${JSON.stringify({ 0: { hp: 1, move: 1, attack: 1 } })}::jsonb,
+        ${JSON.stringify({ 0: { hp: 2, move: 2, attack: 2 } })}::jsonb,
+        ARRAY[]::text[]
+      )
+    `);
+  });
+
+  afterAll(async () => {
+    const db = await setupTestDb();
+    await db.execute(sql`
+      DELETE FROM card_monster_stats
+      WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND source_id = ${GH2_ISOLATION_SOURCE_ID}
+    `);
+  });
+
+  it('defaults to Frosthaven rows when game is omitted', async () => {
+    const row = await loadOne('monster-stats', GH2_ISOLATION_SOURCE_ID);
+    expect(row).toBeNull();
+  });
+
+  it('does not return GH2 rows from Frosthaven load/search/count APIs', async () => {
+    const loaded = await load('monster-stats', { game: FROSTHAVEN_GAME_ID });
+    expect(loaded.some((row) => row.sourceId === GH2_ISOLATION_SOURCE_ID)).toBe(false);
+
+    const searched = await searchExtracted(GH2_ISOLATION_NAME, 6, { game: FROSTHAVEN_GAME_ID });
+    expect(searched).toEqual([]);
+
+    const counts = await countsByType({ game: FROSTHAVEN_GAME_ID });
+    const gh2Counts = await countsByType({ game: GLOOMHAVEN_2E_GAME_ID });
+    expect(counts['monster-stats']).toBeGreaterThan(0);
+    expect(gh2Counts['monster-stats']).toBe(1);
+  });
+
+  it('returns GH2 rows only for explicit Gloomhaven 2.0 queries', async () => {
+    const row = await loadOne('monster-stats', GH2_ISOLATION_SOURCE_ID, {
+      game: GLOOMHAVEN_2E_GAME_ID,
+    });
+    expect(row).toMatchObject({
+      _type: 'monster-stats',
+      sourceId: GH2_ISOLATION_SOURCE_ID,
+      name: GH2_ISOLATION_NAME,
+    });
+
+    const searched = await searchExtracted(GH2_ISOLATION_NAME, 6, {
+      game: GLOOMHAVEN_2E_GAME_ID,
+    });
+    expect(searched[0]?.sourceId).toBe(GH2_ISOLATION_SOURCE_ID);
+
+    const summary = await extractedStats({ game: GLOOMHAVEN_2E_GAME_ID });
+    expect(summary).toContain('monster-stats: 1');
   });
 });
 

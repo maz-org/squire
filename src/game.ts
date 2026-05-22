@@ -81,6 +81,16 @@ export function requireGameId(value: string): GameId {
   );
 }
 
+export interface GameLoadOpts {
+  /** Active game. Defaults to Frosthaven when omitted. */
+  game?: string;
+}
+
+/** Resolve the active game for DB-backed loaders. Validates explicit ids. */
+export function resolveGameId(opts: GameLoadOpts = {}): GameId {
+  return opts.game !== undefined ? requireGameId(opts.game) : DEFAULT_GAME_ID;
+}
+
 export function gameDefinitionFor(game: GameId): GameDefinition {
   const definition = GAME_BY_ID.get(game);
   if (!definition) {

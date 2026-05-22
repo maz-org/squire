@@ -6,6 +6,7 @@ import {
   gameIdFromSourceFilename,
   normalizeGameId,
   requireGameId,
+  resolveGameId,
 } from '../src/game.ts';
 
 describe('game id helpers', () => {
@@ -49,5 +50,15 @@ describe('game id helpers', () => {
     expect(() => gameIdFromSourceFilename('rule-book.pdf')).toThrow(
       'Cannot derive game id from source filename "rule-book.pdf"',
     );
+  });
+
+  it('resolveGameId defaults to Frosthaven and validates explicit ids', () => {
+    expect(resolveGameId()).toBe(FROSTHAVEN_GAME_ID);
+    expect(resolveGameId({})).toBe(FROSTHAVEN_GAME_ID);
+    expect(resolveGameId({ game: 'gh2' })).toBe(GLOOMHAVEN_2E_GAME_ID);
+    expect(() => resolveGameId({ game: 'no-such-game' })).toThrow(
+      'Unsupported game id "no-such-game"',
+    );
+    expect(() => resolveGameId({ game: '' })).toThrow('Unsupported game id ""');
   });
 });
