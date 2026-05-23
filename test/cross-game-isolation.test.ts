@@ -174,15 +174,19 @@ describe('cross-game storage isolation', () => {
 
     const defaultHits = await search(axisVector(0), 10);
     expect(
-      defaultHits.map((hit) => hit.id),
+      defaultHits.map((hit) => hit.game),
       'vector search leaked GH2 rows into the default Frosthaven result set',
-    ).toEqual(['fh-boundary::0']);
+    ).toEqual(defaultHits.map(() => 'frosthaven'));
+    expect(defaultHits.map((hit) => hit.id)).toContain('fh-boundary::0');
+    expect(defaultHits.map((hit) => hit.id)).not.toContain('gh2-boundary::0');
 
     const gh2Hits = await search(axisVector(0), 10, { game: 'gh2' });
     expect(
-      gh2Hits.map((hit) => hit.id),
+      gh2Hits.map((hit) => hit.game),
       'vector search leaked Frosthaven rows into the GH2 result set',
-    ).toEqual(['gh2-boundary::0']);
+    ).toEqual(gh2Hits.map(() => GLOOMHAVEN_2E_GAME_ID));
+    expect(gh2Hits.map((hit) => hit.id)).toContain('gh2-boundary::0');
+    expect(gh2Hits.map((hit) => hit.id)).not.toContain('fh-boundary::0');
 
     await expect(
       getEntryBySourceChunk(SHARED_VECTOR_SOURCE, 0),
