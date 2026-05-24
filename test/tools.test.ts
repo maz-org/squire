@@ -117,21 +117,79 @@ describe('searchRules', () => {
     const results: RuleResult[] = await searchRules('loot action');
     expect(results.length).toBeGreaterThan(0);
     expect(results[0]).toHaveProperty('text');
+    expect(results[0]).toHaveProperty('game');
     expect(results[0]).toHaveProperty('source');
+    expect(results[0]).toHaveProperty('sourceRef');
+    expect(results[0]).toHaveProperty('sourceType');
     expect(results[0]).toHaveProperty('sourceLabel');
+    expect(results[0]).toHaveProperty('sourceLocator');
     expect(results[0]).toHaveProperty('score');
     expect(typeof results[0].text).toBe('string');
+    expect(typeof results[0].game).toBe('string');
     expect(typeof results[0].source).toBe('string');
+    expect(typeof results[0].sourceRef).toBe('string');
+    expect(typeof results[0].sourceType).toBe('string');
     expect(typeof results[0].sourceLabel).toBe('string');
+    expect(typeof results[0].sourceLocator).toBe('string');
     expect(typeof results[0].score).toBe('number');
   });
 
-  it('adds source labels that distinguish rulebook, scenario, and section books', async () => {
+  it('adds source provenance that distinguishes rulebook, scenario, and section books', async () => {
     const results = await searchRules('scenario 61');
-    expect(results.map((r) => [r.source, r.sourceLabel])).toEqual([
-      ['fh-rule-book.pdf', 'Rulebook'],
-      ['fh-scenario-book-42-61.pdf', 'Scenario Book 42-61'],
-      ['fh-section-book-62-81.pdf', 'Section Book 62-81'],
+    expect(results.map((r) => [r.source, r.sourceType, r.sourceLabel, r.sourceLocator])).toEqual([
+      ['fh-rule-book.pdf', 'rulebook', 'Rulebook', 'passage 1'],
+      ['fh-scenario-book-42-61.pdf', 'scenario_book', 'Scenario Book 42-61', 'passage 2'],
+      ['fh-section-book-62-81.pdf', 'section_book', 'Section Book 62-81', 'passage 3'],
+    ]);
+  });
+
+  it('adds captured freshness metadata for GH2 FAQ and errata sources', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-faq.html::3',
+        text: 'FAQ answer.',
+        source: 'gh2-faq.html',
+        chunkIndex: 3,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.8,
+      },
+      {
+        id: 'gh2-errata.html::0',
+        text: 'Errata answer.',
+        source: 'gh2-errata.html',
+        chunkIndex: 0,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.7,
+      },
+    ]);
+
+    const results = await searchRules('gh2 faq errata', 2, { game: 'gh2' });
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        game: GLOOMHAVEN_2E_GAME_ID,
+        sourceRef: `source:${GLOOMHAVEN_2E_GAME_ID}/gh2-faq`,
+        sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/',
+        sourceType: 'faq',
+        sourceLabel: 'FAQ',
+        sourceLocator: 'passage 4',
+        freshness: expect.objectContaining({
+          capturedAt: '2026-05-24',
+          sourceLastUpdated: '2026-04-19',
+        }),
+      }),
+      expect.objectContaining({
+        game: GLOOMHAVEN_2E_GAME_ID,
+        sourceRef: `source:${GLOOMHAVEN_2E_GAME_ID}/gh2-errata`,
+        sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/#page_01',
+        sourceType: 'errata',
+        sourceLabel: 'Errata',
+        sourceLocator: 'passage 1',
+        freshness: expect.objectContaining({
+          capturedAt: '2026-05-24',
+          sourceLastUpdated: '2026-04-19',
+        }),
+      }),
     ]);
   });
 
@@ -290,6 +348,13 @@ describe('openEntity', () => {
       sourceLabel: 'Rulebook',
     });
     expect(result.entity.data.text).toContain('Loot action');
+    expect(result.citations).toEqual([
+      expect.objectContaining({
+        sourceType: 'rulebook',
+        sourceLabel: 'Rulebook',
+        locator: 'passage 1',
+      }),
+    ]);
   });
 
   it('returns structured not_found and invalid_ref failures', async () => {
@@ -522,6 +587,52 @@ describe('searchKnowledge', () => {
       citations: expect.any(Array),
       nextRefs: expect.any(Array),
     });
+  });
+
+  it('carries typed GH2 rule-source citations for FAQ and errata hits', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-faq.html::3',
+        text: 'FAQ answer.',
+        source: 'gh2-faq.html',
+        chunkIndex: 3,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.8,
+      },
+      {
+        id: 'gh2-errata.html::0',
+        text: 'Errata answer.',
+        source: 'gh2-errata.html',
+        chunkIndex: 0,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.7,
+      },
+    ]);
+
+    const result = await searchKnowledge('gh2 faq errata', {
+      scope: ['rules_passage'],
+      limit: 2,
+      game: 'gh2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results.map((hit) => hit.citations[0])).toEqual([
+      expect.objectContaining({
+        sourceRef: `source:${GLOOMHAVEN_2E_GAME_ID}/gh2-faq`,
+        sourceType: 'faq',
+        sourceLabel: 'FAQ',
+        locator: 'passage 4',
+        sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/',
+      }),
+      expect.objectContaining({
+        sourceRef: `source:${GLOOMHAVEN_2E_GAME_ID}/gh2-errata`,
+        sourceType: 'errata',
+        sourceLabel: 'Errata',
+        locator: 'passage 1',
+        sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/#page_01',
+      }),
+    ]);
   });
 
   it('returns an empty successful result set for no-result searches', async () => {
@@ -828,12 +939,20 @@ describe('knowledge discovery tools', () => {
           label: 'Gloomhaven 2.0 FAQ',
           kinds: ['rules_passage'],
           searchable: true,
+          freshness: expect.objectContaining({
+            capturedAt: '2026-05-24',
+            sourceLastUpdated: '2026-04-19',
+          }),
         }),
         expect.objectContaining({
           ref: `source:${GLOOMHAVEN_2E_GAME_ID}/errata`,
           label: 'Gloomhaven 2.0 Errata',
           kinds: ['rules_passage'],
           searchable: true,
+          freshness: expect.objectContaining({
+            capturedAt: '2026-05-24',
+            sourceLastUpdated: '2026-04-19',
+          }),
         }),
         expect.objectContaining({
           ref: `source:${GLOOMHAVEN_2E_GAME_ID}/scenario-section-books`,
