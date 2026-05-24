@@ -43,6 +43,7 @@ import {
   toolSourceLabel,
   TOOL_SOURCE_FALLBACK_LABEL,
   retrievalSourceLabelToFooterLabel,
+  isToolSourceLabel,
 } from './web-ui/consulted-footer.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
@@ -1140,6 +1141,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // events to wire events.
   return streamSSE(c, async (stream) => {
     let progressSequence = 0;
+    let artifactSequence = 0;
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
@@ -1185,6 +1187,43 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
               id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
               label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
               message,
+            }),
+          });
+          return;
+        }
+
+        if (event === 'artifact') {
+          const payload = data as {
+            kind?: unknown;
+            title?: unknown;
+            body?: unknown;
+            sourceLabel?: unknown;
+            ref?: unknown;
+          };
+          const title = typeof payload.title === 'string' ? payload.title.trim() : '';
+          const body = typeof payload.body === 'string' ? payload.body.trim() : '';
+          if (payload.kind !== 'section_quote' || title.length === 0 || body.length === 0) {
+            return;
+          }
+          const rawSourceLabel =
+            typeof payload.sourceLabel === 'string' ? payload.sourceLabel.trim() : '';
+          const sourceLabel =
+            rawSourceLabel.length === 0
+              ? null
+              : isToolSourceLabel(rawSourceLabel)
+                ? rawSourceLabel
+                : retrievalSourceLabelToFooterLabel(rawSourceLabel);
+          const ref = typeof payload.ref === 'string' ? payload.ref.trim() : '';
+          artifactSequence += 1;
+          await stream.writeSSE({
+            event: 'answer-artifact',
+            data: JSON.stringify({
+              id: `section-quote-${artifactSequence}`,
+              kind: 'section-quote',
+              title,
+              body,
+              sourceLabel,
+              ref: ref.length > 0 ? ref : null,
             }),
           });
           return;

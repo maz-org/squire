@@ -31,6 +31,13 @@ The browser consumes these SSE event names:
   - `label` is safe tool/source metadata such as `SECTION BOOK` or the
     `REFERENCE` fallback. `message` is already filtered by the service as
     user-safe progress text; it is rendered as metadata, never answer prose.
+- `answer-artifact`
+  - Adds a structured, user-safe artifact such as a quoted section block.
+  - Payload:
+    `{ "id": string, "kind": "section-quote", "title": string, "body": string, "sourceLabel": string | null, "ref": string | null }`
+  - The browser renders artifact fields with DOM text APIs, not `innerHTML`.
+    Artifact bodies are metadata/content blocks outside
+    `.squire-answer__content`; they are never appended as answer prose.
 - `done`
   - Marks the stream complete and clears the pending answer UI.
   - Payload: `{ "html": string, "consultedSources": string[] | null }`
@@ -66,8 +73,8 @@ For every successful stream:
    text and must not be sent as `text-delta`.
 2. The browser must receive exactly one terminal `done` event.
 3. Any `text-delta` events must arrive before `done`.
-4. Tool events and progress events may appear before completion, but they do
-   not count as answer text.
+4. Tool, progress, and artifact events may appear before completion, but they
+   do not count as answer text.
 5. The terminal `done` event carries the final server-rendered sanitized HTML
    fragment, which replaces the pending plain-text transcript in the browser.
 6. The terminal `done` event carries `consultedSources` (persisted tool
@@ -110,6 +117,9 @@ The conversation service emits Squire-owned internal events. These are typed in
 - `tool_result`: a tool lookup or source traversal completed.
 - `tool_progress`: optional user-safe progress from inside a long tool. Routes
   that expose it must map it to browser `tool-progress`, not `text-delta`.
+- `artifact`: optional user-safe structured content. Routes that expose it must
+  map it to browser `answer-artifact`, not `text-delta`, and the browser must
+  render fields as text rather than trusted HTML.
 - `debug`: diagnostic data for traces/logs. This is never browser-visible.
 - `done`: internal completion signal only. The route emits browser `done` after
   persistence so it can include sanitized HTML and persisted consulted sources.
@@ -125,6 +135,7 @@ The route, not the provider, owns the final browser ordering guarantees:
 - provider/internal `tool_call` -> browser `tool-start`
 - provider/internal `tool_result` -> browser `tool-result`
 - internal `tool_progress` -> browser `tool-progress`
+- internal `artifact` -> browser `answer-artifact`
 - internal `debug` -> no browser event
 - provider/internal `done` is only a completion signal
 - browser `done` is emitted by the route with the final sanitized HTML derived
@@ -141,6 +152,8 @@ Regression tests should assert browser-visible behavior, not only persistence:
   appear in `text-delta`
 - `tool_progress` appears only as browser `tool-progress`; `debug` never appears
   in browser SSE
+- structured artifacts appear only as browser `answer-artifact`, not
+  `text-delta`, and artifact DOM rendering treats artifact fields as text
 - `text-delta` content remains inert plain text even when it contains hostile
   markup
 - `done.html` is sanitized before browser insertion

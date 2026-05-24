@@ -209,6 +209,8 @@ function bootPendingTranscript() {
   contentEl.classList.add('squire-answer__content');
   const toolsEl = new FakeElement('div');
   toolsEl.classList.add('squire-answer__tools');
+  const artifactsEl = new FakeElement('div');
+  artifactsEl.classList.add('squire-answer__artifacts');
   const skeletonEl = new FakeElement('div');
   skeletonEl.classList.add('squire-answer__skeleton');
 
@@ -217,8 +219,9 @@ function bootPendingTranscript() {
   // SQR-108 / ADR 0012: stream URL lives on the pending answer article,
   // not on the (now-deleted) `.squire-transcript--pending` wrapper.
   answerEl.setAttribute('data-stream-url', '/chat/stream');
-  answerEl.appendChild(contentEl);
   answerEl.appendChild(toolsEl);
+  answerEl.appendChild(artifactsEl);
+  answerEl.appendChild(contentEl);
   answerEl.appendChild(skeletonEl);
 
   const transcript = new FakeElement('section');
@@ -289,6 +292,7 @@ function bootPendingTranscript() {
 
   return {
     answerEl,
+    artifactsEl,
     contentEl,
     footerEl,
     form,
@@ -444,6 +448,45 @@ describe('squire.js chat form retargeting', () => {
     expect(toolsEl.children).toHaveLength(0);
     expect(footerEl.textContent).toBe('CONSULTED · SECTION BOOK');
     expect(footerEl.hidden).toBe(false);
+  });
+
+  it('renders section artifacts as text outside answer prose before final answer starts', () => {
+    const { artifactsEl, contentEl, source, toolsEl } = bootPendingTranscript();
+
+    source.emit('answer-artifact', {
+      id: 'section-quote-1',
+      kind: 'section-quote',
+      title: 'Locked Down',
+      body: '<img src=x onerror=alert(1)>\nNew Scenario: Life and Death — 61',
+      sourceLabel: 'SECTION BOOK',
+      ref: 'section:frosthaven/67.1',
+    });
+
+    expect(contentEl.querySelector('p')).toBeNull();
+    expect(toolsEl.children).toHaveLength(0);
+    expect(artifactsEl.children).toHaveLength(1);
+    const artifact = artifactsEl.children[0];
+    expect(artifact.querySelector('.squire-answer__artifact-title')?.textContent).toBe('');
+    expect(artifact.querySelector('.squire-answer__artifact-title')?.children[0]?.textContent).toBe(
+      'Locked Down',
+    );
+    expect(artifact.querySelector('.squire-answer__artifact-source')?.textContent).toBe(
+      'SECTION BOOK',
+    );
+    expect(artifact.querySelector('.squire-answer__artifact-body')?.textContent).toBe(
+      '<img src=x onerror=alert(1)>\nNew Scenario: Life and Death — 61',
+    );
+    expect(artifact.querySelector('.squire-answer__artifact-body')?.innerHTML).toBe('');
+
+    source.emit('text-delta', { delta: 'The section is Locked Down.' });
+    expect(artifactsEl.children).toHaveLength(1);
+    expect(contentEl.querySelector('p')?.textContent).toBe('The section is Locked Down.');
+
+    source.emit('done', {
+      html: '<p>The section is <strong>Locked Down</strong>.</p>',
+    });
+    expect(artifactsEl.children).toHaveLength(1);
+    expect(contentEl.innerHTML).toBe('<p>The section is <strong>Locked Down</strong>.</p>');
   });
 
   // SQR-98: the consulted footer must reflect the actual tool calls this

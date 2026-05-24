@@ -536,6 +536,9 @@ describe('renderConversationTurnAppendFragment (SQR-108 / ADR 0012 E-3)', () => 
     );
     expect(body).toMatch(/<div[^>]*class="squire-answer__content squire-markdown"><\/div>/);
     expect(body).toMatch(/<div[^>]*class="squire-answer__tools"[^>]*aria-live="off"><\/div>/);
+    expect(body).toMatch(
+      /<div[^>]*class="squire-answer__artifacts"[^>]*aria-live="polite"><\/div>/,
+    );
     expect(body).toMatch(/class="squire-answer__skeleton"[^>]*aria-hidden="true"/);
     expect(body).toContain('squire-answer__skeleton-dropcap');
     expect(body).toContain('squire-answer__skeleton-line squire-answer__skeleton-line--full');

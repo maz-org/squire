@@ -524,6 +524,14 @@ export interface AgentStreamEventMap {
   tool_result: { name: string; ok: boolean; sourceBooks?: string[] | undefined };
   /** User-safe progress from a long tool. Trace-only until explicitly mapped by a route. */
   tool_progress: { message: string; toolName?: string | undefined };
+  /** User-safe structured artifact content. Routes must render this outside answer prose. */
+  artifact: {
+    kind: 'section_quote';
+    title: string;
+    body: string;
+    sourceLabel?: string | undefined;
+    ref?: string | undefined;
+  };
   /** Diagnostic data for traces/logs. Never browser-visible. */
   debug: { message: string; data?: unknown };
   /** Internal completion signal. Browser `done` is emitted by the HTTP route after persistence. */
