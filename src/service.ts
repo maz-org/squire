@@ -514,7 +514,27 @@ export interface HistoryMessage {
   content: string;
 }
 
-export type EmitFn = (event: string, data: unknown) => Promise<void>;
+export interface AgentStreamEventMap {
+  /** Final answer prose only. Tool-planning text must not be emitted here. */
+  text: { delta: string };
+  /** A tool lookup or source traversal started. */
+  tool_call: { name: string; input?: unknown };
+  /** A tool lookup or source traversal completed. */
+  tool_result: { name: string; ok: boolean; sourceBooks?: string[] | undefined };
+  /** User-safe progress from a long tool. Trace-only until explicitly mapped by a route. */
+  tool_progress: { message: string; toolName?: string | undefined };
+  /** Diagnostic data for traces/logs. Never browser-visible. */
+  debug: { message: string; data?: unknown };
+  /** Internal completion signal. Browser `done` is emitted by the HTTP route after persistence. */
+  done: Record<string, never>;
+}
+
+export type AgentStreamEventName = keyof AgentStreamEventMap;
+
+export type EmitFn = <EventName extends AgentStreamEventName>(
+  event: EventName,
+  data: AgentStreamEventMap[EventName],
+) => Promise<void>;
 
 export interface AskOptions {
   history?: HistoryMessage[];
@@ -535,7 +555,7 @@ export interface AskOptions {
   conversationId?: string;
   /** Persisted user-message UUID for trace/log correlation. */
   userMessageId?: string;
-  /** SSE emit callback. When provided, the agent streams text deltas and tool events. */
+  /** Internal stream callback. Browser SSE translation happens in src/server.ts. */
   emit?: EmitFn;
   /** Internal route hint: `/api/ask` already rejected exhausted budgets before SSE starts. */
   budgetPrechecked?: boolean;

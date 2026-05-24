@@ -1502,6 +1502,71 @@ describe('conversation web backend', () => {
     ]);
   });
 
+  it('does not expose trace-only progress or debug events as browser text-delta', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'follow_links' });
+      await options?.emit?.('tool_progress', {
+        message: 'Tracing scenario 61 unlock links.',
+        toolName: 'follow_links',
+      });
+      await options?.emit?.('debug', {
+        message: 'raw tool output',
+        data: '>>> [Locked Down] >>> New Scenario: Life and Death 61',
+      });
+      await options?.emit?.('tool_result', {
+        name: 'follow_links',
+        ok: true,
+        sourceBooks: ['Section Book'],
+      });
+      await options?.emit?.('text', {
+        delta: 'Scenario 61 is unlocked by the Locked Down branch.',
+      });
+      await options?.emit?.('done', {});
+      return 'Scenario 61 is unlocked by the Locked Down branch.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'What unlocks scenario 61?',
+        idempotencyKey: 'idem-stream-hygiene',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    const events = parseSse(await streamRes.text());
+    expect(events.map((event) => event.event)).toEqual([
+      'tool-start',
+      'tool-result',
+      'text-delta',
+      'done',
+    ]);
+    expect(events).toContainEqual({
+      event: 'text-delta',
+      data: { delta: 'Scenario 61 is unlocked by the Locked Down branch.' },
+    });
+    expect(JSON.stringify(events)).not.toMatch(/Tracing scenario 61|raw tool output|>>>/);
+    expect(events.at(-1)).toEqual({
+      event: 'done',
+      data: expect.objectContaining({
+        html: '<p>Scenario 61 is unlocked by the Locked Down branch.</p>\n',
+        consultedSources: ['SECTION BOOK'],
+      }),
+    });
+  });
+
   it('reuses one tool-status id when the same tool runs multiple times in one answer', async () => {
     mockAsk.mockImplementationOnce(async (_question, options) => {
       await options?.emit?.('tool_call', { name: 'search_rules' });
