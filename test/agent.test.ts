@@ -1581,5 +1581,8 @@ describe('runAgentLoop with emit (streaming)', () => {
 
     const result = await runAgentLoop('test', { emit, toolSurface: 'legacy' });
     expect(result).toBe('Read section 67.1.');
+    expect(
+      emit.mock.calls.filter(([event]) => event === 'text').map(([, payload]) => payload),
+    ).toEqual([{ delta: 'Read section 67.1.' }]);
   });
 });
