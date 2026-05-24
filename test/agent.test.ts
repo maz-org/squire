@@ -366,12 +366,28 @@ describe('runAgentLoop', () => {
     );
   });
 
-  it('keeps assistant identity and support scope Frosthaven-only across tool surfaces', () => {
+  it('keeps assistant identity and support scope current for supported games', () => {
     for (const prompt of [AGENT_SYSTEM_PROMPT, LEGACY_AGENT_SYSTEM_PROMPT]) {
-      expect(prompt).toContain('exclusive game scope');
+      expect(prompt).toContain('Squire supports Frosthaven and Gloomhaven 2.0');
       expect(prompt).toContain('assistant identity or support-scope questions');
-      expect(prompt).toContain('do not volunteer Gloomhaven or any other game as supported');
+      expect(prompt).toContain(
+        'For Gloomhaven 2.0 current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.',
+      );
+      expect(prompt).toContain('Cite FAQ or errata when you rely on it');
+      expect(prompt).toContain(
+        'Rulebook-only answers are allowed when no current-source clarification applies.',
+      );
     }
+  });
+
+  it('advertises GH2 FAQ and errata current-source behavior on both rule-search tools', () => {
+    const searchKnowledgeTool = AGENT_TOOLS.find((tool) => tool.name === 'search_knowledge');
+    const searchRulesTool = LEGACY_AGENT_TOOLS.find((tool) => tool.name === 'search_rules');
+
+    expect(searchKnowledgeTool?.description).toContain('GH2 FAQ/errata');
+    expect(searchKnowledgeTool?.description).toContain('current corrections');
+    expect(searchRulesTool?.description).toContain('GH2 FAQ/errata');
+    expect(searchRulesTool?.description).toContain('current corrections');
   });
 
   it('keeps the redesigned tools selectable for evals and follow-up work', async () => {

@@ -193,6 +193,116 @@ describe('searchRules', () => {
     ]);
   });
 
+  it('prefers relevant GH2 errata and FAQ hits over close printed rulebook hits', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-rule-book.pdf::10',
+        text: 'Printed rulebook answer.',
+        source: 'gh2-rule-book.pdf',
+        chunkIndex: 10,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.91,
+      },
+      {
+        id: 'gh2-faq.html::3',
+        text: 'FAQ clarification.',
+        source: 'gh2-faq.html',
+        chunkIndex: 3,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.88,
+      },
+      {
+        id: 'gh2-errata.html::0',
+        text: 'Errata correction.',
+        source: 'gh2-errata.html',
+        chunkIndex: 0,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.86,
+      },
+    ]);
+
+    const results = await searchRules('gh2 errata-sensitive question', 3, { game: 'gh2' });
+
+    expect(results.map((result) => result.sourceType)).toEqual(['errata', 'faq', 'rulebook']);
+  });
+
+  it('keeps a substantially stronger rulebook hit ahead of weak current-source hits', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-rule-book.pdf::10',
+        text: 'Printed rulebook answer.',
+        source: 'gh2-rule-book.pdf',
+        chunkIndex: 10,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.93,
+      },
+      {
+        id: 'gh2-errata.html::0',
+        text: 'Barely related errata correction.',
+        source: 'gh2-errata.html',
+        chunkIndex: 0,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.7,
+      },
+    ]);
+
+    const results = await searchRules('gh2 rulebook-only question', 2, { game: 'gh2' });
+
+    expect(results.map((result) => result.sourceType)).toEqual(['rulebook', 'errata']);
+  });
+
+  it('considers a small surplus of GH2 rule hits so close FAQ results can enter topK', async () => {
+    mockSearch.mockImplementationOnce(async (_v: number[], k = 6) =>
+      [
+        {
+          id: 'gh2-rule-book.pdf::10',
+          text: 'Printed rulebook answer.',
+          source: 'gh2-rule-book.pdf',
+          chunkIndex: 10,
+          game: GLOOMHAVEN_2E_GAME_ID,
+          score: 0.91,
+        },
+        {
+          id: 'gh2-scenario-book.pdf::0',
+          text: 'Close scenario-book context.',
+          source: 'gh2-scenario-book.pdf',
+          chunkIndex: 0,
+          game: GLOOMHAVEN_2E_GAME_ID,
+          score: 0.9,
+        },
+        {
+          id: 'gh2-faq.html::3',
+          text: 'FAQ clarification just outside the requested cutoff.',
+          source: 'gh2-faq.html',
+          chunkIndex: 3,
+          game: GLOOMHAVEN_2E_GAME_ID,
+          score: 0.88,
+        },
+      ].slice(0, k),
+    );
+
+    const results = await searchRules('gh2 faq-sensitive question', 2, { game: 'gh2' });
+
+    expect(results.map((result) => result.sourceType)).toEqual(['faq', 'rulebook']);
+  });
+
+  it('does not cap large GH2 searchRules topK requests while adding surplus candidates', async () => {
+    mockSearch.mockImplementationOnce(async (_v: number[], k = 6) =>
+      Array.from({ length: k }, (_, index) => ({
+        id: `gh2-rule-book.pdf::${index}`,
+        text: `Printed rulebook answer ${index}.`,
+        source: 'gh2-rule-book.pdf',
+        chunkIndex: index,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 1 - index / 100,
+      })),
+    );
+
+    const results = await searchRules('gh2 broad rulebook question', 25, { game: 'gh2' });
+
+    expect(results).toHaveLength(25);
+  });
+
   it('respects topK parameter', async () => {
     const results = await searchRules('loot action', 1);
     expect(results.length).toBe(1);
@@ -632,6 +742,49 @@ describe('searchKnowledge', () => {
         locator: 'passage 1',
         sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/#page_01',
       }),
+    ]);
+  });
+
+  it('prioritizes GH2 current rule sources in rules-passage knowledge search', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-rule-book.pdf::10',
+        text: 'Printed rulebook answer.',
+        source: 'gh2-rule-book.pdf',
+        chunkIndex: 10,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.91,
+      },
+      {
+        id: 'gh2-faq.html::3',
+        text: 'FAQ clarification.',
+        source: 'gh2-faq.html',
+        chunkIndex: 3,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.88,
+      },
+      {
+        id: 'gh2-errata.html::0',
+        text: 'Errata correction.',
+        source: 'gh2-errata.html',
+        chunkIndex: 0,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.86,
+      },
+    ]);
+
+    const result = await searchKnowledge('gh2 errata-sensitive question', {
+      scope: ['rules_passage'],
+      limit: 3,
+      game: 'gh2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results.map((hit) => hit.citations[0]?.sourceType)).toEqual([
+      'errata',
+      'faq',
+      'rulebook',
     ]);
   });
 
