@@ -175,6 +175,7 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('src/index-docs.ts');
     expect(workflow).toContain('src/vector-store.ts');
     expect(workflow).toContain('src/embedder.ts');
+    expect(workflow).toContain('src/retrieval-source.ts');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('rebuild:');
     expect(workflow).toContain('default: false');
