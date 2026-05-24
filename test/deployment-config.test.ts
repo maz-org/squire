@@ -35,6 +35,9 @@ describe('deployment configuration', () => {
     expect(dockerfile).toContain('supercronic-linux-amd64');
     expect(dockerfile).toContain('COPY --from=deps /app/node_modules ./node_modules');
     expect(dockerfile).toContain('COPY --from=assets /app/dist ./dist');
+    expect(dockerfile).toContain(
+      'COPY --chown=node:node data/rule-sources/metadata.json ./data/rule-sources/metadata.json',
+    );
     expect(dockerfile).toContain('COPY --chown=node:node src ./src');
     expect(dockerfile).toContain('COPY --chown=node:node scripts ./scripts');
     expect(dockerfile).toContain('COPY --chown=node:node crontab ./crontab');
@@ -128,6 +131,13 @@ describe('deployment configuration', () => {
     ]) {
       expect(dockerignore).toContain(ignoredPath);
     }
+
+    // The runtime app reads this provenance manifest directly, but the bulk
+    // rule-source snapshots and PDFs should stay out of production images.
+    expect(dockerignore).toContain('data/*');
+    expect(dockerignore).toContain('!data/rule-sources/');
+    expect(dockerignore).toContain('data/rule-sources/*');
+    expect(dockerignore).toContain('!data/rule-sources/metadata.json');
   });
 
   it('uses Fly release commands for migrate-before-cutover deploys', async () => {

@@ -12,6 +12,11 @@
 .vscode/
 coverage/
 data/
+!data/
+data/*
+!data/rule-sources/
+data/rule-sources/*
+!data/rule-sources/metadata.json
 dist/
 docs/
 eval/
