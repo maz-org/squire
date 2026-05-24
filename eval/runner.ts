@@ -87,7 +87,7 @@ function assertCurrentCommandSupportsAgentRuntime(options: EvalCliOptions): void
   if (options.matrixAgentRuntimes.every((runtime) => runtime === 'claude-sdk')) return;
 
   throw new Error(
-    'Deep Agents runtime is eval-matrix only; pass --matrix --agent-runtime=deep-agents.',
+    'Deep Agents and LangGraph runtimes are eval-matrix only; pass --matrix with --agent-runtime.',
   );
 }
 
@@ -183,7 +183,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
       : options.categoryFilter
         ? 'category'
         : 'all';
-    const modelConfigs = options.matrixAgentRuntimes.includes('deep-agents')
+    const modelConfigs = options.matrixAgentRuntimes.some((runtime) => runtime !== 'claude-sdk')
       ? [options.providerConfig]
       : defaultEvalMatrixModels(options.providerConfig);
     assertEvalMatrixGuardrails({

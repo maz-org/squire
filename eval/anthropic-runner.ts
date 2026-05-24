@@ -8,6 +8,7 @@ import {
   type AgentRunResult,
   type AnthropicEvalModel,
 } from '../src/agent.ts';
+import { runLangGraphAgentLoopWithEvalConfig } from '../src/agent-langgraph.ts';
 import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { DATASET_NAME } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
@@ -340,7 +341,11 @@ export async function runAnthropicEvalCase(
   const traceId = traceIdFor(options);
 
   try {
-    const result = await runAgentLoopWithEvalConfig(options.case.question, {
+    const runAgent =
+      options.agentRuntime === 'langgraph'
+        ? runLangGraphAgentLoopWithEvalConfig
+        : runAgentLoopWithEvalConfig;
+    const result = await runAgent(options.case.question, {
       toolSurface: options.toolSurface,
       anthropicModel: options.providerConfig.model,
       maxOutputTokens: options.providerConfig.maxOutputTokens,

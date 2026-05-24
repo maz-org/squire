@@ -153,6 +153,6 @@ describe('eval runner', () => {
 
     await expect(
       runEval(parseEvalArgs(['--agent-runtime=both', '--id=rule-poison']), {}),
-    ).rejects.toThrow(/Deep Agents runtime is eval-matrix only/);
+    ).rejects.toThrow(/Deep Agents and LangGraph runtimes are eval-matrix only/);
   });
 });

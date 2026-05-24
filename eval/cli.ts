@@ -1,5 +1,5 @@
 export type EvalToolSurface = 'redesigned' | 'legacy';
-export type EvalAgentRuntime = 'claude-sdk' | 'deep-agents';
+export type EvalAgentRuntime = 'claude-sdk' | 'deep-agents' | 'langgraph';
 export type EvalProvider = 'anthropic' | 'openai';
 export type EvalProviderModel =
   | 'claude-sonnet-4-6'
@@ -98,10 +98,10 @@ function assertProvider(value: string): EvalProvider {
 }
 
 function assertAgentRuntime(value: string): EvalAgentRuntime {
-  if (value === 'claude-sdk' || value === 'deep-agents') return value;
+  if (value === 'claude-sdk' || value === 'deep-agents' || value === 'langgraph') return value;
 
   throw new Error(
-    `Invalid --agent-runtime: ${value}. Expected "claude-sdk", "deep-agents", or "both".`,
+    `Invalid --agent-runtime: ${value}. Expected "claude-sdk", "deep-agents", "langgraph", or "both".`,
   );
 }
 
@@ -109,7 +109,15 @@ function matrixAgentRuntimesFor(args: string[], env: NodeJS.ProcessEnv): EvalAge
   const raw =
     settingFor(args, '--agent-runtime=', env, 'SQUIRE_EVAL_AGENT_RUNTIME') ?? 'claude-sdk';
   if (raw === 'both') return ['claude-sdk', 'deep-agents'];
-  return [assertAgentRuntime(raw)];
+  const runtimes = raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map(assertAgentRuntime);
+  if (runtimes.length === 0) {
+    throw new Error('Invalid --agent-runtime: expected at least one runtime.');
+  }
+  return [...new Set(runtimes)];
 }
 
 export function defaultEvalModelForProvider(provider: EvalProvider): EvalProviderModel {

@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockRunAgentLoopWithEvalConfig, mockWriteEvalTrace } = vi.hoisted(() => ({
+const {
+  mockRunAgentLoopWithEvalConfig,
+  mockRunLangGraphAgentLoopWithEvalConfig,
+  mockWriteEvalTrace,
+} = vi.hoisted(() => ({
   mockRunAgentLoopWithEvalConfig: vi.fn(),
+  mockRunLangGraphAgentLoopWithEvalConfig: vi.fn(),
   mockWriteEvalTrace: vi.fn(),
 }));
 
@@ -12,6 +17,10 @@ vi.mock('../src/agent.ts', async (importOriginal) => {
     runAgentLoopWithEvalConfig: mockRunAgentLoopWithEvalConfig,
   };
 });
+
+vi.mock('../src/agent-langgraph.ts', () => ({
+  runLangGraphAgentLoopWithEvalConfig: mockRunLangGraphAgentLoopWithEvalConfig,
+}));
 
 vi.mock('../eval/trace.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../eval/trace.ts')>();
@@ -223,6 +232,54 @@ describe('SQR-128 Anthropic eval runner', () => {
             result: { outputSummary: 'json object (name, level, effect)' },
           }),
         ],
+      }),
+    );
+  });
+
+  it('routes LangGraph eval runs through the LangGraph adapter and labels the trace runtime', async () => {
+    mockRunLangGraphAgentLoopWithEvalConfig.mockResolvedValueOnce({
+      ...successfulAgentResult('claude-sonnet-4-6'),
+      trajectory: {
+        ...successfulAgentResult('claude-sonnet-4-6').trajectory,
+        model: 'langgraph:claude-sonnet-4-6',
+      },
+    });
+    mockWriteEvalTrace.mockResolvedValue(undefined);
+
+    await runAnthropicEvalCase({
+      case: baseCase,
+      runLabel: 'langgraph-smoke',
+      toolSurface: 'legacy',
+      agentRuntime: 'langgraph',
+      providerConfig: {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-6',
+        reasoningEffort: undefined,
+        maxOutputTokens: 2048,
+        timeoutMs: 30000,
+        toolLoopLimit: 6,
+        broadSearchSynthesisThreshold: 2,
+      },
+      traceClient,
+      traceId: 'trace-langgraph',
+    });
+
+    expect(mockRunAgentLoopWithEvalConfig).not.toHaveBeenCalled();
+    expect(mockRunLangGraphAgentLoopWithEvalConfig).toHaveBeenCalledWith(baseCase.question, {
+      toolSurface: 'legacy',
+      anthropicModel: 'claude-sonnet-4-6',
+      maxOutputTokens: 2048,
+      timeoutMs: 30000,
+      toolLoopLimit: 6,
+      broadSearchSynthesisThreshold: 2,
+    });
+    expect(mockWriteEvalTrace).toHaveBeenCalledWith(
+      traceClient,
+      expect.objectContaining({
+        traceId: 'trace-langgraph',
+        agentRuntime: 'langgraph',
+        model: 'claude-sonnet-4-6',
+        resolvedModel: 'langgraph:claude-sonnet-4-6',
       }),
     );
   });

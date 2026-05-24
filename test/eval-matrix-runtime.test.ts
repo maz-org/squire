@@ -291,6 +291,56 @@ describe('eval matrix runtime adapter', () => {
     );
   });
 
+  it('routes LangGraph runtime through the Anthropic runner with LangGraph trace identity', async () => {
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'langgraph-trace',
+      trace: trace({
+        traceId: 'langgraph-trace',
+        agentRuntime: 'langgraph',
+        resolvedModel: 'langgraph:claude-sonnet-4-6',
+      }),
+    });
+
+    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const output = await runner({
+      ...input('anthropic'),
+      agentRuntime: 'langgraph',
+      traceId: 'langgraph-trace',
+      traceUrl: 'https://langfuse.test/traces/langgraph-trace',
+    });
+
+    expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agentRuntime: 'langgraph',
+        providerConfig: expect.objectContaining({
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+        }),
+        traceId: 'langgraph-trace',
+      }),
+    );
+    expect(output).toMatchObject({
+      traceId: 'langgraph-trace',
+      traceUrl: 'https://langfuse.test/traces/langgraph-trace',
+      failureClass: 'none',
+    });
+  });
+
+  it('rejects LangGraph matrix rows for non-Anthropic providers', async () => {
+    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+
+    await expect(
+      runner({
+        ...input('openai'),
+        agentRuntime: 'langgraph',
+      }),
+    ).rejects.toThrow(/LangGraph eval runtime currently supports Anthropic/);
+  });
+
   it('falls back to the matrix cost estimate when provider traces have no cost', async () => {
     mockRunAnthropicEvalCase.mockResolvedValue({
       answer: 'Spyglass reveals the top card.',

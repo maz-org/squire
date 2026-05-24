@@ -124,7 +124,7 @@ async function runAnthropicMatrixCase(
     traceClient,
     traceWriter,
     traceId: input.traceId,
-    agentRuntime: 'claude-sdk',
+    agentRuntime: input.agentRuntime === 'langgraph' ? 'langgraph' : 'claude-sdk',
     scoreResult: (runResult) =>
       traceScoresForEvalResult(anthropic, {
         evalCase: input.evalCase,
@@ -220,6 +220,15 @@ export function createEvalMatrixRunner(
   return async (input) => {
     if (input.agentRuntime === 'deep-agents') {
       return runDeepAgentsMatrixCase(input, anthropic, traceClient, traceWriter);
+    }
+
+    if (input.agentRuntime === 'langgraph') {
+      if (input.providerConfig.provider !== 'anthropic') {
+        throw new Error(
+          'LangGraph eval runtime currently supports Anthropic provider configs only.',
+        );
+      }
+      return runAnthropicMatrixCase(input, anthropic, traceClient, traceWriter);
     }
 
     if (input.providerConfig.provider === 'anthropic') {

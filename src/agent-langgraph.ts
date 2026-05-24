@@ -9,7 +9,12 @@
  */
 
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
-import { runAgentLoopWithTrajectory, type AgentRunResult } from './agent.ts';
+import {
+  runAgentLoopWithEvalConfig,
+  runAgentLoopWithTrajectory,
+  type AgentRunResult,
+  type EvalAgentLoopOptions,
+} from './agent.ts';
 import type { AgentStreamEventMap, AgentStreamEventName, AskOptions, EmitFn } from './service.ts';
 
 const LangGraphState = Annotation.Root({
@@ -61,9 +66,28 @@ export async function runLangGraphAgentLoopWithTrajectory(
         }
       : undefined;
 
+  return runLangGraphAgentLoop(question, emit, (currentQuestion) =>
+    runAgentLoopWithTrajectory(currentQuestion, currentOptions),
+  );
+}
+
+export async function runLangGraphAgentLoopWithEvalConfig(
+  question: string,
+  options: EvalAgentLoopOptions,
+): Promise<AgentRunResult> {
+  return runLangGraphAgentLoop(question, undefined, (currentQuestion) =>
+    runAgentLoopWithEvalConfig(currentQuestion, options),
+  );
+}
+
+async function runLangGraphAgentLoop(
+  question: string,
+  emit: EmitFn | undefined,
+  currentRunner: (currentQuestion: string) => Promise<AgentRunResult>,
+): Promise<AgentRunResult> {
   const graph = new StateGraph(LangGraphState)
     .addNode('agent_loop', async (state: LangGraphStateValue) => {
-      const result = await runAgentLoopWithTrajectory(state.question, currentOptions);
+      const result = await currentRunner(state.question);
       return { result: markLangGraphTrajectory(result) };
     })
     .addNode('final_answer', async (state: LangGraphStateValue) => {

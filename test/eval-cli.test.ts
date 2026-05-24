@@ -104,6 +104,14 @@ describe('parseEvalArgs', () => {
       agentRuntime: 'deep-agents',
       matrixAgentRuntimes: ['deep-agents'],
     });
+    expect(parseEvalArgs(['--agent-runtime=langgraph'])).toMatchObject({
+      agentRuntime: 'langgraph',
+      matrixAgentRuntimes: ['langgraph'],
+    });
+    expect(parseEvalArgs(['--agent-runtime=claude-sdk,langgraph'])).toMatchObject({
+      agentRuntime: 'claude-sdk',
+      matrixAgentRuntimes: ['claude-sdk', 'langgraph'],
+    });
     expect(parseEvalArgs(['--agent-runtime=both']).matrixAgentRuntimes).toEqual([
       'claude-sdk',
       'deep-agents',
