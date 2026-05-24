@@ -134,6 +134,7 @@ describe('deployment configuration', () => {
 
     // The runtime app reads this provenance manifest directly, but the bulk
     // rule-source snapshots and PDFs should stay out of production images.
+    expect(dockerignore).toContain('!data/');
     expect(dockerignore).toContain('data/*');
     expect(dockerignore).toContain('!data/rule-sources/');
     expect(dockerignore).toContain('data/rule-sources/*');
