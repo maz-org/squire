@@ -1139,6 +1139,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // and persists the same sources. This handler just translates agent
   // events to wire events.
   return streamSSE(c, async (stream) => {
+    let progressSequence = 0;
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
@@ -1165,6 +1166,25 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
               // (REFERENCE fallback for utility/traversal tools) so the
               // tool-indicator UI doesn't need to know about nulls.
               label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+            }),
+          });
+          return;
+        }
+
+        if (event === 'tool_progress') {
+          const payload = data as { message?: unknown; toolName?: string };
+          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+          if (message.length === 0) {
+            return;
+          }
+          const name = payload.toolName ?? 'tool';
+          progressSequence += 1;
+          await stream.writeSSE({
+            event: 'tool-progress',
+            data: JSON.stringify({
+              id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
+              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+              message,
             }),
           });
           return;

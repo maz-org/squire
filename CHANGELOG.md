@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9] - 2026-05-24
+
+### Added
+
+- Added browser-visible `tool-progress` SSE events so safe agent progress can render as compact metadata rows without becoming answer prose.
+- Added regression coverage for progress rows, final-answer-only `text-delta`, final HTML replacement, and consulted-source footer preservation.
+
 ## [0.1.8] - 2026-05-17
 
 ### Changed
