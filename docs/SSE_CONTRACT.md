@@ -47,13 +47,17 @@ The browser consumes these SSE event names:
   - Replaces the pending answer UI with an error banner.
   - Payload: `{ "kind": string, "message": string, "recoverable": boolean }`
 
+The browser does not consume provider-native stream chunks directly. Any new
+internal event must be mapped here before it can become browser-visible.
+
 ## Required success-path invariants
 
 For every successful stream:
 
 1. The browser may receive zero or more `text-delta` events before completion.
    If present, their concatenation represents the plain-text incremental
-   answer.
+   answer. Planning narration, raw tool output, and debug data are never answer
+   text and must not be sent as `text-delta`.
 2. The browser must receive exactly one terminal `done` event.
 3. Any `text-delta` events must arrive before `done`.
 4. Tool events may appear before completion, but they do not count as answer
@@ -89,17 +93,33 @@ turns are not transparently retried after `ask()` starts. The browser may have
 already received partial text or tool events, so the safe terminal state is one
 recoverable error event plus one persisted assistant failure row.
 
+## Internal event vocabulary
+
+The conversation service emits Squire-owned internal events. These are typed in
+`src/service.ts` and are intentionally narrower than provider stream events:
+
+- `text`: final answer prose only. Tool-planning text such as "Let me search"
+  or raw retrieved fragments must not be emitted as `text`.
+- `tool_call`: a tool lookup or source traversal started.
+- `tool_result`: a tool lookup or source traversal completed.
+- `tool_progress`: optional user-safe progress from inside a long tool. This is
+  trace-only today and has no browser mapping.
+- `debug`: diagnostic data for traces/logs. This is never browser-visible.
+- `done`: internal completion signal only. The route emits browser `done` after
+  persistence so it can include sanitized HTML and persisted consulted sources.
+
 ## Translation rules
 
-The conversation service emits internal events like `text`, `tool_call`,
-`tool_result`, and `done`. The HTTP stream route is responsible for translating
-those into the browser contract above.
+The HTTP stream route is responsible for translating internal events into the
+browser contract above.
 
 The route, not the provider, owns the final browser ordering guarantees:
 
 - provider/internal `text` -> browser `text-delta`
 - provider/internal `tool_call` -> browser `tool-start`
 - provider/internal `tool_result` -> browser `tool-result`
+- internal `tool_progress` -> no browser event
+- internal `debug` -> no browser event
 - provider/internal `done` is only a completion signal
 - browser `done` is emitted by the route with the final sanitized HTML derived
   from the persisted assistant message and the persisted `consultedSources`
@@ -111,6 +131,10 @@ Regression tests should assert browser-visible behavior, not only persistence:
 
 - successful streams without incremental text still end with a visible
   `done.html` fragment
+- tool-planning text and raw tool output from intermediate model turns never
+  appear in `text-delta`
+- `tool_progress` and `debug` do not appear in browser SSE unless this contract
+  is deliberately expanded
 - `text-delta` content remains inert plain text even when it contains hostile
   markup
 - `done.html` is sanitized before browser insertion
