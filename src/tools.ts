@@ -302,6 +302,77 @@ function normalizeToolOpts(opts?: ToolOpts): NormalizedToolOpts {
   return { ...opts, game: normalizeToolGame(opts?.game) };
 }
 
+const CURRENT_RULE_SOURCE_SCORE_WINDOW = 0.08;
+const CURRENT_RULE_SOURCE_EXTRA_CANDIDATES = 4;
+
+function currentRuleSourceCandidateLimit(requestedLimit: number, game: GameId): number {
+  if (game !== GLOOMHAVEN_2E_GAME_ID) return requestedLimit;
+  // Pull a small surplus so GH2 FAQ/errata just below the raw vector cutoff can
+  // still correct or clarify a printed-source hit with a similar score.
+  return Math.max(
+    requestedLimit,
+    Math.min(requestedLimit + CURRENT_RULE_SOURCE_EXTRA_CANDIDATES, 20),
+  );
+}
+
+function currentRuleSourceRank(sourceType: RuleSourceType): number {
+  if (sourceType === 'errata') return 0;
+  if (sourceType === 'faq') return 1;
+  return 2;
+}
+
+function isGh2RuleCitation(citation: KnowledgeCitation | undefined): citation is KnowledgeCitation {
+  return citation?.sourceRef.startsWith(`source:${GLOOMHAVEN_2E_GAME_ID}/`) ?? false;
+}
+
+function rankRuleHitsForCurrentSources(hits: ScoredEntry[], game: GameId): ScoredEntry[] {
+  return hits
+    .map((hit, index) => ({
+      hit,
+      index,
+      provenance: ruleSourceProvenance(hit.source, normalizeToolGame(hit.game ?? game)),
+    }))
+    .sort((a, b) => {
+      const scoreDelta = b.hit.score - a.hit.score;
+      const aCurrent = a.provenance.game === GLOOMHAVEN_2E_GAME_ID;
+      const bCurrent = b.provenance.game === GLOOMHAVEN_2E_GAME_ID;
+      const closeEnough = Math.abs(scoreDelta) <= CURRENT_RULE_SOURCE_SCORE_WINDOW;
+
+      if (aCurrent && bCurrent && closeEnough) {
+        const sourceRankDelta =
+          currentRuleSourceRank(a.provenance.sourceType) -
+          currentRuleSourceRank(b.provenance.sourceType);
+        if (sourceRankDelta !== 0) return sourceRankDelta;
+      }
+
+      if (scoreDelta !== 0) return scoreDelta;
+      return a.index - b.index;
+    })
+    .map(({ hit }) => hit);
+}
+
+function compareKnowledgeHits(a: KnowledgeSearchHit, b: KnowledgeSearchHit): number {
+  const scoreDelta = b.score - a.score;
+  const aCitation = a.citations[0];
+  const bCitation = b.citations[0];
+
+  if (
+    a.entity.kind === 'rules_passage' &&
+    b.entity.kind === 'rules_passage' &&
+    isGh2RuleCitation(aCitation) &&
+    isGh2RuleCitation(bCitation) &&
+    aCitation.sourceType &&
+    bCitation.sourceType &&
+    Math.abs(scoreDelta) <= CURRENT_RULE_SOURCE_SCORE_WINDOW
+  ) {
+    const sourceRankDelta =
+      currentRuleSourceRank(aCitation.sourceType) - currentRuleSourceRank(bCitation.sourceType);
+    if (sourceRankDelta !== 0) return sourceRankDelta;
+  }
+
+  return scoreDelta;
+}
+
 const CARD_KIND_ALIASES: Record<string, CardType[]> = {
   item: ['items'],
   items: ['items'],
@@ -854,15 +925,18 @@ async function linksFor(
 export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
   const { game } = normalizeToolOpts(opts);
-  const hits: ScoredEntry[] = await search(queryEmbedding, topK, { game });
+  const candidateLimit = currentRuleSourceCandidateLimit(topK, game);
+  const hits: ScoredEntry[] = await search(queryEmbedding, candidateLimit, { game });
 
-  return hits.map((h) => ({
-    text: h.text,
-    source: h.source,
-    sourceLocator: ruleSourceLocator(h.chunkIndex),
-    score: h.score,
-    ...ruleSourceProvenance(h.source, h.game),
-  }));
+  return rankRuleHitsForCurrentSources(hits, game)
+    .slice(0, topK)
+    .map((h) => ({
+      text: h.text,
+      source: h.source,
+      sourceLocator: ruleSourceLocator(h.chunkIndex),
+      score: h.score,
+      ...ruleSourceProvenance(h.source, h.game),
+    }));
 }
 
 /**
@@ -1333,18 +1407,21 @@ export async function searchKnowledge(
 
   if (scope.includes('rules_passage')) {
     const queryEmbedding = await embed(query);
-    const rules = await search(queryEmbedding, perScope, { game });
+    const candidateLimit = currentRuleSourceCandidateLimit(perScope, game);
+    const rules = await search(queryEmbedding, candidateLimit, { game });
     hits.push(
-      ...rules.map((rule) => {
-        const entity = summarizeRule(rule, game);
-        return {
-          entity,
-          score: rule.score,
-          snippet: rule.text,
-          citations: citationForRule(rule, game),
-          nextRefs: [entity],
-        };
-      }),
+      ...rankRuleHitsForCurrentSources(rules, game)
+        .slice(0, perScope)
+        .map((rule) => {
+          const entity = summarizeRule(rule, game);
+          return {
+            entity,
+            score: rule.score,
+            snippet: rule.text,
+            citations: citationForRule(rule, game),
+            nextRefs: [entity],
+          };
+        }),
     );
   }
 
@@ -1412,7 +1489,7 @@ export async function searchKnowledge(
     );
   }
 
-  hits.sort((a, b) => b.score - a.score);
+  hits.sort(compareKnowledgeHits);
   return {
     ok: true,
     query,
