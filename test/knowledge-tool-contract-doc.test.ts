@@ -23,6 +23,8 @@ describe('knowledge tool contract documentation', () => {
 
     for (const ref of [
       'source:gloomhaven-2e/rulebook',
+      'source:gloomhaven-2e/faq',
+      'source:gloomhaven-2e/errata',
       'source:gloomhaven-2e/scenario-section-books',
       'source:gloomhaven-2e/cards',
       'rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42',

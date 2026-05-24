@@ -1,13 +1,14 @@
 /**
- * One-time indexer: reads all PDFs from `data/pdfs/`, chunks text, embeds,
- * and upserts the results into Postgres.
+ * One-time indexer: reads PDFs from `data/pdfs/` and HTML/Markdown/text
+ * snapshots from `data/rule-sources/`, chunks text, embeds, and upserts the
+ * results into Postgres.
  * Run with: npm run index
  */
 
 import 'dotenv/config';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { embedBatch } from './embedder.ts';
@@ -20,14 +21,17 @@ import {
 } from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
 import { SUPPORTED_GAME_IDS, gameIdFromSourceFilename } from './game.ts';
+import type { GameId } from './game.ts';
 
 // Re-exported so seed / deployment workflows can reference the current value.
 export { EMBEDDING_VERSION } from './vector-store.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PDFS_DIR = join(__dirname, '..', 'data', 'pdfs');
+const RULE_SOURCES_DIR = join(__dirname, '..', 'data', 'rule-sources');
 
 const MIN_CHUNK_CHARS = 50;
+const MIN_EXTRACTED_PDF_NON_WHITESPACE_CHARS = 100;
 const TARGET_CHUNK_CHARS = 1200;
 const MAX_CHUNK_CHARS = 1600;
 
@@ -37,8 +41,96 @@ interface Chunk {
   chunkIndex: number;
 }
 
+type SourceFormat = 'pdf' | 'text' | 'html';
+
+interface SourceDocument {
+  file: string;
+  filePath: string;
+  game: GameId;
+  format: SourceFormat;
+}
+
 export function computeContentHash(bytes: Buffer): string {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+export function htmlToIndexText(html: string): string {
+  return decodeHtmlEntities(
+    html
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<\/?(?:h[1-6]|p|div|section|article|main|header|footer)\b[^>]*>/gi, '\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<li\b[^>]*>/gi, '\n- ')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<\/?(?:ul|ol)\b[^>]*>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n[ \t]+/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim(),
+  );
+}
+
+function safeReadDir(dir: string): string[] {
+  try {
+    return readdirSync(dir);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw err;
+  }
+}
+
+function sourceFormatFor(file: string): SourceFormat | null {
+  const extension = extname(file).toLowerCase();
+  if (extension === '.pdf') return 'pdf';
+  if (extension === '.html' || extension === '.htm') return 'html';
+  if (extension === '.md' || extension === '.txt') return 'text';
+  return null;
+}
+
+function sourceStem(file: string): string {
+  const extension = extname(file);
+  return extension ? file.slice(0, -extension.length) : file;
+}
+
+function discoverSourceDocuments(): SourceDocument[] {
+  const ruleSourceFiles = safeReadDir(RULE_SOURCES_DIR);
+  const textSources = ruleSourceFiles
+    .map((file) => ({ file, format: sourceFormatFor(file) }))
+    .filter((source): source is { file: string; format: Exclude<SourceFormat, 'pdf'> } => {
+      return source.format === 'html' || source.format === 'text';
+    });
+  const textSourceStems = new Set(textSources.map((source) => sourceStem(source.file)));
+
+  const pdfSources = safeReadDir(PDFS_DIR)
+    .filter((file) => sourceFormatFor(file) === 'pdf')
+    .filter((file) => !textSourceStems.has(sourceStem(file)))
+    .map((file) => ({
+      file,
+      filePath: join(PDFS_DIR, file),
+      game: gameIdFromSourceFilename(file),
+      format: 'pdf' as const,
+    }));
+
+  const normalizedTextSources = textSources.map(({ file, format }) => ({
+    file,
+    filePath: join(RULE_SOURCES_DIR, file),
+    game: gameIdFromSourceFilename(file),
+    format,
+  }));
+
+  return [...pdfSources, ...normalizedTextSources];
 }
 
 /** Split text on double-newline boundaries into paragraphs. */
@@ -219,16 +311,38 @@ export function chunkText(text: string, source: string): Chunk[] {
   }));
 }
 
-async function extractText(pdfBytes: Buffer): Promise<string> {
+async function extractPdfText(pdfBytes: Buffer): Promise<string> {
   const data = await pdfParse(pdfBytes);
   return data.text as string;
 }
 
+export function assertUsablePdfText(source: string, text: string): void {
+  const nonWhitespaceChars = text.replace(/\s/g, '').length;
+  if (nonWhitespaceChars >= MIN_EXTRACTED_PDF_NON_WHITESPACE_CHARS) return;
+
+  throw new Error(
+    [
+      `PDF source ${source} produced only ${nonWhitespaceChars} non-whitespace character(s).`,
+      'This usually means the PDF is image-based or lacks a usable text layer.',
+      `Add a normalized text snapshot at data/rule-sources/${sourceStem(source)}.md or use a better extraction adapter before indexing.`,
+    ].join(' '),
+  );
+}
+
+async function extractSourceText(source: SourceDocument, bytes: Buffer): Promise<string> {
+  if (source.format === 'pdf') {
+    const text = await extractPdfText(bytes);
+    assertUsablePdfText(source.file, text);
+    return text;
+  }
+
+  const text = bytes.toString('utf8');
+  return source.format === 'html' ? htmlToIndexText(text) : text;
+}
+
 export async function main(): Promise<void> {
-  const files = readdirSync(PDFS_DIR)
-    .filter((f) => f.endsWith('.pdf'))
-    .map((file) => ({ file, game: gameIdFromSourceFilename(file) }));
-  console.log(`Found ${files.length} PDF(s) to index.`);
+  const files = discoverSourceDocuments();
+  console.log(`Found ${files.length} rule source(s) to index.`);
 
   const indexedSourceHashesByGame = new Map<string, Map<string, string | null>>();
   for (const game of SUPPORTED_GAME_IDS) {
@@ -246,16 +360,17 @@ export async function main(): Promise<void> {
     if (removedSources.length > 0) {
       const deleted = await deleteEntriesForSources(removedSources, game);
       console.log(
-        `Removed ${deleted} stale chunk(s) for ${removedSources.length} missing ${game} PDF(s).`,
+        `Removed ${deleted} stale chunk(s) for ${removedSources.length} missing ${game} rule source(s).`,
       );
     }
   }
 
   const allNewEntries: IndexEntry[] = [];
 
-  for (const { file, game } of files) {
-    const pdfBytes = readFileSync(join(PDFS_DIR, file));
-    const contentHash = computeContentHash(pdfBytes);
+  for (const { file, filePath, game, format } of files) {
+    const sourceBytes = readFileSync(filePath);
+    const bytes = Buffer.isBuffer(sourceBytes) ? sourceBytes : Buffer.from(sourceBytes);
+    const contentHash = computeContentHash(bytes);
     const indexedHash = indexedSourceHashesByGame.get(game)?.get(file);
 
     if (indexedHash === contentHash) {
@@ -269,7 +384,7 @@ export async function main(): Promise<void> {
     }
 
     console.log(`  Extracting: ${file}`);
-    const text = await extractText(pdfBytes);
+    const text = await extractSourceText({ file, filePath, game, format }, bytes);
     const chunks = chunkText(text, file);
     console.log(`    ${chunks.length} chunks — embedding...`);
 

@@ -234,15 +234,14 @@ artifacts, not the runtime store. At runtime, Postgres holds:
 
 The GHS card JSON files are refreshed automatically by the weekly CI workflow.
 
-The Frosthaven book vector index lives in Postgres (pgvector), not on disk. On
-a fresh clone, bring up the local DB and populate it before running the
-server:
+The rule-source vector index lives in Postgres (pgvector), not on disk. On a
+fresh clone, bring up the local DB and populate it before running the server:
 
 ```bash
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test   # if you plan to run the test suite in this checkout
-npm run index        # chunks + embeds Frosthaven book PDFs into the embeddings table (~2 min)
+npm run index        # chunks + embeds rule sources into the embeddings table (~2 min)
 npm run seed:dev     # seeds card_* tables, scenario/section-book tables, and a local dev user
 ```
 
@@ -268,7 +267,7 @@ and browser QA fail once session cookies or CSRF checks are exercised.
 `npm run seed:dev-user` (inserts a predictable dev user for testing
 authenticated paths; refuses to run when `NODE_ENV=production`).
 
-`npm run index` is idempotent — re-running it skips PDFs that are
+`npm run index` is idempotent — re-running it skips source files that are
 already in the `embeddings` table. `npm run seed:cards` is also
 idempotent — it upserts on `(game, source_id)`, so stale rows get
 overwritten in place. `npm run seed:scenario-section-books` is
@@ -514,7 +513,8 @@ test/          Unit tests (vitest)
 eval/          Evaluation framework and dataset
 docs/          Project documentation (SPEC, ARCHITECTURE, DEVELOPMENT, SECURITY, CONTRIBUTING)
 data/          Game data and generated artifacts (mostly gitignored)
-data/pdfs/     Frosthaven PDFs (rulebook, scenario/section books)
+data/pdfs/     Rulebook and scenario/section PDFs
+data/rule-sources/ HTML/text rule snapshots and source metadata
 .github/       CI workflows, Dependabot config
 ```
 

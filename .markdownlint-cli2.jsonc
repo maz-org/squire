@@ -1,4 +1,5 @@
 {
+  "ignores": ["data/**"],
   "config": {
     "MD013": false,
     // Keep MD024 enabled but only flag duplicate sibling headings. Lets

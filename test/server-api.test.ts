@@ -303,21 +303,21 @@ describe('GET /api/search/rules', () => {
         askReady: false,
         missingBootstrapSteps: ['npm run index'],
         errors: [
-          'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+          'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         ],
         capabilities: {
           rules: {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           },
         },
       }),
@@ -789,7 +789,7 @@ describe('POST /api/ask', () => {
         askReady: false,
         missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
         errors: [
-          'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+          'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           'No card data found in Postgres. Run `npm run seed:cards` first.',
         ],
         capabilities: {
@@ -797,7 +797,7 @@ describe('POST /api/ask', () => {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           },
           cards: {
             allowed: false,
@@ -808,7 +808,7 @@ describe('POST /api/ask', () => {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           },
         },
       }),
@@ -917,14 +917,14 @@ describe('bootstrapErrorResponse fast path', () => {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           },
           cards: { allowed: true, reason: null, message: null },
           ask: {
             allowed: false,
             reason: 'missing_index',
             message:
-              'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.',
+              'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
           },
         },
       }),

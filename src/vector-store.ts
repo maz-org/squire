@@ -1,5 +1,5 @@
 /**
- * Retrieval layer: Frosthaven book-corpus vector store backed by Postgres + pgvector.
+ * Retrieval layer: rule-source vector store backed by Postgres + pgvector.
  *
  * Replaces the previous flat-file `data/index.json` implementation. Everything
  * this module exports — including `EMBEDDING_VERSION` and the drift guard —
@@ -296,7 +296,7 @@ function wrapDbError(err: unknown): Error {
 }
 
 export const EMBEDDINGS_BOOTSTRAP_MESSAGE =
-  'Embeddings table is empty. Run `npm run index` to populate the Frosthaven book vector store.';
+  'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.';
 
 export interface RetrievalBootstrapStatus {
   ready: boolean;
