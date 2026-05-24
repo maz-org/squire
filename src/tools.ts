@@ -195,7 +195,7 @@ export interface KnowledgeEntitySummary {
 
 export interface KnowledgeCitation {
   sourceRef: string;
-  sourceType?: string;
+  sourceType?: RuleSourceType;
   sourceLabel: string;
   locator: string;
   sourceUrl?: string;
