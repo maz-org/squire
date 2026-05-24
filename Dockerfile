@@ -45,6 +45,7 @@ RUN apt-get update \
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=assets /app/dist ./dist
 COPY --chown=node:node package.json package-lock.json ./
+COPY --chown=node:node data/rule-sources/metadata.json ./data/rule-sources/metadata.json
 COPY --chown=node:node src ./src
 COPY --chown=node:node scripts ./scripts
 COPY --chown=node:node crontab ./crontab

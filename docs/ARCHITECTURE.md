@@ -346,7 +346,7 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 | OAuth tokens / clients         | N/A (Phase 1)                                                  | Postgres                 |
 | Conversation history           | Postgres `conversations` + `messages`                          | Postgres                 |
 
-pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source files are inputs to indexing, not deployed artifacts; PDFs live in `data/pdfs/`, HTML/text snapshots live in `data/rule-sources/`, and both are excluded from the production image.
+pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source files are inputs to indexing, not deployed artifacts; PDFs live in `data/pdfs/`, HTML/text snapshots live in `data/rule-sources/`, and both are excluded from the production image. The small `data/rule-sources/metadata.json` provenance manifest is deployed with the app because runtime search responses use it to label sources and freshness.
 
 Production data updates are decoupled from image deploys. The weekly GHS refresh
 workflow opens reviewable PRs for `data/extracted/`; after those PRs merge,
