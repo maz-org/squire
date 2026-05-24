@@ -78,12 +78,17 @@ function readMetadata(): RuleSourceMetadata[] {
   return JSON.parse(raw) as RuleSourceMetadata[];
 }
 
-const METADATA_BY_INDEXED_BASENAME = new Map<string, RuleSourceMetadata>();
+const METADATA_BY_GAME_AND_BASENAME = new Map<string, RuleSourceMetadata>();
+
+function metadataKey(game: GameId, file: string): string {
+  return `${game}:${basename(file)}`;
+}
+
 for (const source of readMetadata()) {
   for (const file of [source.file, source.normalizedFile].filter(
     (value): value is string => typeof value === 'string',
   )) {
-    METADATA_BY_INDEXED_BASENAME.set(basename(file), source);
+    METADATA_BY_GAME_AND_BASENAME.set(metadataKey(source.game, file), source);
   }
 }
 
@@ -96,15 +101,15 @@ export function ruleSourceLocator(chunkIndex: number): string {
 }
 
 export function ruleSourceProvenance(source: string, game: GameId): RuleSourceProvenance {
-  const metadata = METADATA_BY_INDEXED_BASENAME.get(basename(source));
+  const metadata = METADATA_BY_GAME_AND_BASENAME.get(metadataKey(game, source));
   const sourceType = metadata?.sourceType ?? inferSourceType(source);
   const sourceRefId = metadata?.id ?? sourceStem(source);
 
   return {
-    game: metadata?.game ?? game,
+    game,
     sourceType,
     sourceLabel: formatSourceLabel(source),
-    sourceRef: `source:${metadata?.game ?? game}/${sourceRefId}`,
+    sourceRef: `source:${game}/${sourceRefId}`,
     sourceUrl: metadata?.sourceUrl,
     freshness: metadata
       ? {
