@@ -91,7 +91,7 @@
     "hono": "^4.12.19",
     "htmx.org": "^2.0.10",
     "langchain": "^1.4.2",
-    "langsmith": "^0.7.1",
+    "langsmith": "^0.7.2",
     "markdown-it": "^14.2.0",
     "parse5": "^8.0.1",
     "pdf-parse": "^1.1.1",
