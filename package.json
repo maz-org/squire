@@ -90,7 +90,7 @@
     "google-auth-library": "^10.6.2",
     "hono": "^4.12.19",
     "htmx.org": "^2.0.10",
-    "langchain": "^1.4.0",
+    "langchain": "^1.4.2",
     "langsmith": "^0.7.1",
     "markdown-it": "^14.2.0",
     "parse5": "^8.0.1",
