@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse as parseHtml } from 'parse5';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { embedBatch } from './embedder.ts';
 import { shutdownServerPool } from './db.ts';
@@ -54,32 +55,67 @@ export function computeContentHash(bytes: Buffer): string {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 }
 
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+interface ParsedHtmlNode {
+  nodeName?: string;
+  tagName?: string;
+  value?: string;
+  childNodes?: ParsedHtmlNode[];
+}
+
+const HTML_BLOCK_TAGS = new Set([
+  'article',
+  'div',
+  'footer',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'main',
+  'p',
+  'section',
+]);
+
+const HTML_LIST_TAGS = new Set(['ol', 'ul']);
+const HTML_IGNORED_TAGS = new Set(['script', 'style', 'template']);
+
+function appendHtmlText(node: ParsedHtmlNode, parts: string[]): void {
+  if (node.nodeName === '#text') {
+    parts.push(node.value ?? '');
+    return;
+  }
+
+  const tagName = node.tagName?.toLowerCase();
+  if (tagName && HTML_IGNORED_TAGS.has(tagName)) return;
+
+  if (tagName && HTML_BLOCK_TAGS.has(tagName)) parts.push('\n\n');
+  if (tagName === 'br') parts.push('\n');
+  if (tagName === 'li') parts.push('\n- ');
+
+  for (const child of node.childNodes ?? []) {
+    appendHtmlText(child, parts);
+  }
+
+  if (tagName === 'li') parts.push('\n');
+  if (tagName && (HTML_BLOCK_TAGS.has(tagName) || HTML_LIST_TAGS.has(tagName))) {
+    parts.push('\n\n');
+  }
 }
 
 export function htmlToIndexText(html: string): string {
-  return decodeHtmlEntities(
-    html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<\/?(?:h[1-6]|p|div|section|article|main|header|footer)\b[^>]*>/gi, '\n\n')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<li\b[^>]*>/gi, '\n- ')
-      .replace(/<\/li>/gi, '\n')
-      .replace(/<\/?(?:ul|ol)\b[^>]*>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/[ \t]+\n/g, '\n')
-      .replace(/\n[ \t]+/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim(),
-  );
+  const parsed = parseHtml(html) as ParsedHtmlNode;
+  const parts: string[] = [];
+  appendHtmlText(parsed, parts);
+
+  return parts
+    .join('')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function safeReadDir(dir: string): string[] {
