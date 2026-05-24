@@ -77,9 +77,10 @@ describe('GH2 corpus regression sample queries', () => {
 
   it('stores eval-seed expectations with source-citation grading requirements', () => {
     for (const sample of loadSampleQueries()) {
-      expect(normalizedText(sample.evalSeed.expected)).toContain(
-        normalizedText(sample.requiredPhrases.at(-1) ?? ''),
-      );
+      const normalizedExpected = normalizedText(sample.evalSeed.expected);
+      for (const phrase of sample.requiredPhrases) {
+        expect(normalizedExpected).toContain(normalizedText(phrase));
+      }
       expect(sample.evalSeed.grading).toMatch(/Gloomhaven 2\.0|GH2/);
       expect(sample.evalSeed.grading).toMatch(/cite|citation|source/i);
       expect(sample.evalSeed.grading).toMatch(new RegExp(sample.expectedSourceType, 'i'));

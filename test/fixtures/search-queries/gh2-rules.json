@@ -27,7 +27,7 @@
     ],
     "forbiddenSourcePrefixes": ["fh-"],
     "evalSeed": {
-      "expected": "Yes. In Gloomhaven 2.0, a red hex AoE just determines the hexes where your potential targets are.",
+      "expected": "Can I skip targets in a red hex AoE attack? Yes. In Gloomhaven 2.0, a red hex AoE just determines the hexes where your potential targets are.",
       "grading": "Must answer for Gloomhaven 2.0/GH2, cite the FAQ source, and avoid any Frosthaven citation or Frosthaven-only framing."
     }
   },
