@@ -30,7 +30,13 @@ import {
   type BookRecordKind,
   type BookReferenceType,
 } from './scenario-section-schemas.ts';
-import { DEFAULT_GAME_ID, SUPPORTED_GAMES, gameDefinitionFor, requireGameId } from './game.ts';
+import {
+  DEFAULT_GAME_ID,
+  GLOOMHAVEN_2E_GAME_ID,
+  SUPPORTED_GAMES,
+  gameDefinitionFor,
+  requireGameId,
+} from './game.ts';
 import type { GameId } from './game.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
@@ -816,7 +822,7 @@ async function linksFor(
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
 /**
- * Search the indexed Frosthaven book corpus for passages relevant to a query.
+ * Search the indexed rule-source corpus for passages relevant to a query.
  * Returns structured results with text, raw source, display label, and
  * similarity score.
  *
@@ -892,42 +898,67 @@ export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesRes
     countsByType({ game }),
     getScenarioSectionBooksBootstrapStatus({ game }),
   ]);
+  const sources: SourceInfo[] = [
+    {
+      ref: `source:${game}/rulebook`,
+      label: `${gameDefinition.label} Rulebook`,
+      kinds: ['rules_passage'],
+      searchable: true,
+      openable: false,
+      relations: [],
+    },
+  ];
 
-  return {
-    ok: true,
-    games: GAME_INFO,
-    sources: [
+  if (game === GLOOMHAVEN_2E_GAME_ID) {
+    sources.push(
       {
-        ref: `source:${game}/rulebook`,
-        label: `${gameDefinition.label} Rulebook`,
+        ref: `source:${game}/faq`,
+        label: `${gameDefinition.label} FAQ`,
         kinds: ['rules_passage'],
         searchable: true,
         openable: false,
         relations: [],
       },
       {
-        ref: `source:${game}/scenario-section-books`,
-        label: 'Scenario and Section Books',
-        kinds: ['scenario', 'section'],
+        ref: `source:${game}/errata`,
+        label: `${gameDefinition.label} Errata`,
+        kinds: ['rules_passage'],
         searchable: true,
-        openable: true,
-        relations: [...BOOK_REFERENCE_TYPES],
-        counts: {
-          scenario: scenarioSectionStatus.scenarioCount,
-          section: scenarioSectionStatus.sectionCount,
-          relation: scenarioSectionStatus.linkCount,
-        },
+        openable: false,
+        relations: [],
       },
-      {
-        ref: `source:${game}/cards`,
-        label: 'GHS Card Data',
-        kinds: ['card_type', 'card'],
-        searchable: true,
-        openable: true,
-        relations: ['belongs_to_type'],
-        counts: cardCounts,
+    );
+  }
+
+  sources.push(
+    {
+      ref: `source:${game}/scenario-section-books`,
+      label: 'Scenario and Section Books',
+      kinds: ['scenario', 'section'],
+      searchable: true,
+      openable: true,
+      relations: [...BOOK_REFERENCE_TYPES],
+      counts: {
+        scenario: scenarioSectionStatus.scenarioCount,
+        section: scenarioSectionStatus.sectionCount,
+        relation: scenarioSectionStatus.linkCount,
       },
-    ],
+    },
+    {
+      ref: `source:${game}/cards`,
+      label: 'GHS Card Data',
+      kinds: ['card_type', 'card'],
+      searchable: true,
+      openable: true,
+      relations: ['belongs_to_type'],
+      counts: cardCounts,
+    },
+  );
+
+  return {
+    ok: true,
+    games: GAME_INFO,
+    sources,
     defaultGame: DEFAULT_GAME,
     warnings: scenarioSectionStatus.ready
       ? undefined

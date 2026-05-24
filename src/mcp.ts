@@ -112,7 +112,7 @@ export function createMcpServer(): McpServer {
     'search_rules',
     {
       description:
-        'Search the indexed Frosthaven books (rulebook, scenario book, section book, puzzle book) for passages relevant to a query.',
+        'Search the indexed rule sources (rulebooks, FAQ, errata, scenario/section books, puzzle book) for passages relevant to a query.',
       inputSchema: {
         query: z.string().describe('Search query'),
         topK: z.number().int().min(1).max(100).default(6).describe('Number of results'),

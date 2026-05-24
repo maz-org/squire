@@ -114,17 +114,17 @@ the same shared contract definitions.
 
 ## Entity Kinds
 
-| Kind            | Meaning                                                                                              | Current source                              | Ref examples                                                                                                  |
-| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `source`        | A knowledge source such as a rulebook, section book, card database, or future campaign record store  | Source metadata                             | `source:frosthaven/rulebook`, `source:gloomhaven-2e/rulebook`, `source:gloomhaven-2e/cards`                   |
-| `rules_passage` | A semantic book-search passage from indexed PDFs                                                     | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`, `rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42`               |
-| `scenario`      | A scenario-book scenario record                                                                      | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`, `scenario:gloomhaven-2e/061`                                                       |
-| `section`       | A section-book section record                                                                        | `getSection()`                              | `section:frosthaven/67.1`, `section:gloomhaven-2e/67.1`                                                       |
-| `card_type`     | A category of structured GHS card data                                                               | `listCardTypes()`                           | `card-type:frosthaven/items`, `card-type:gloomhaven-2e/items`                                                 |
-| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`, `card:gloomhaven-2e/items/gloomhavensecretariat:item/1` |
-| `campaign`      | Future campaign state                                                                                | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                                                                           |
-| `character`     | Future character state                                                                               | Future Phase 4 data                         | `character:frosthaven/<character-id>`                                                                         |
-| `party`         | Future party state                                                                                   | Future Phase 4 data                         | `party:frosthaven/<party-id>`                                                                                 |
+| Kind            | Meaning                                                                                                          | Current source                              | Ref examples                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `source`        | A knowledge source such as a rulebook, FAQ, errata, section book, card database, or future campaign record store | Source metadata                             | `source:frosthaven/rulebook`, `source:gloomhaven-2e/rulebook`, `source:gloomhaven-2e/faq`, `source:gloomhaven-2e/errata`, `source:gloomhaven-2e/cards` |
+| `rules_passage` | A semantic rule-source passage from indexed PDFs or HTML/text snapshots                                          | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`, `rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42`                                                        |
+| `scenario`      | A scenario-book scenario record                                                                                  | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`, `scenario:gloomhaven-2e/061`                                                                                                |
+| `section`       | A section-book section record                                                                                    | `getSection()`                              | `section:frosthaven/67.1`, `section:gloomhaven-2e/67.1`                                                                                                |
+| `card_type`     | A category of structured GHS card data                                                                           | `listCardTypes()`                           | `card_type:frosthaven/items`, `card_type:gloomhaven-2e/items`                                                                                          |
+| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest             | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`, `card:gloomhaven-2e/items/gloomhavensecretariat:item/1`                                          |
+| `campaign`      | Future campaign state                                                                                            | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                                                                                                                    |
+| `character`     | Future character state                                                                                           | Future Phase 4 data                         | `character:frosthaven/<character-id>`                                                                                                                  |
+| `party`         | Future party state                                                                                               | Future Phase 4 data                         | `party:frosthaven/<party-id>`                                                                                                                          |
 
 Refs are URL-safe strings with this formal shape:
 
@@ -410,6 +410,22 @@ Example for `inspect_sources({ "game": "gh2" })`:
     {
       "ref": "source:gloomhaven-2e/rulebook",
       "label": "Gloomhaven 2.0 Rulebook",
+      "kinds": ["rules_passage"],
+      "searchable": true,
+      "openable": false,
+      "relations": []
+    },
+    {
+      "ref": "source:gloomhaven-2e/faq",
+      "label": "Gloomhaven 2.0 FAQ",
+      "kinds": ["rules_passage"],
+      "searchable": true,
+      "openable": false,
+      "relations": []
+    },
+    {
+      "ref": "source:gloomhaven-2e/errata",
+      "label": "Gloomhaven 2.0 Errata",
       "kinds": ["rules_passage"],
       "searchable": true,
       "openable": false,

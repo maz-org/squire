@@ -29,18 +29,23 @@ vi.mock('../src/embedder.ts', () => ({
   embedBatch: mockEmbedBatch,
 }));
 
-const { mockGetIndexedSourceHashes, mockDeleteEntriesForSources, mockAddEntries } = vi.hoisted(
-  () => ({
-    mockGetIndexedSourceHashes: vi.fn(),
-    mockDeleteEntriesForSources: vi.fn(),
-    mockAddEntries: vi.fn(),
-  }),
-);
+const {
+  mockGetIndexedSourceHashes,
+  mockDeleteEntriesForSources,
+  mockAddEntries,
+  mockReplaceEntriesForSources,
+} = vi.hoisted(() => ({
+  mockGetIndexedSourceHashes: vi.fn(),
+  mockDeleteEntriesForSources: vi.fn(),
+  mockAddEntries: vi.fn(),
+  mockReplaceEntriesForSources: vi.fn(),
+}));
 
 vi.mock('../src/vector-store.ts', () => ({
   getIndexedSourceHashes: mockGetIndexedSourceHashes,
   deleteEntriesForSources: mockDeleteEntriesForSources,
   addEntries: mockAddEntries,
+  replaceEntriesForSources: mockReplaceEntriesForSources,
   ensureHnswIndex: vi.fn().mockResolvedValue(undefined),
   EMBEDDING_VERSION: 'test-version',
 }));
@@ -57,6 +62,8 @@ import {
   mergeParagraphsIntoChunks,
   detectHeading,
   extractHeading,
+  htmlToIndexText,
+  assertUsablePdfText,
   main,
 } from '../src/index-docs.ts';
 
@@ -89,6 +96,38 @@ describe('splitIntoParagraphs', () => {
     const text = 'One line\nAnother line\nThird line';
     const result = splitIntoParagraphs(text);
     expect(result).toEqual(['One line\nAnother line\nThird line']);
+  });
+});
+
+describe('htmlToIndexText', () => {
+  it('normalizes HTML source snapshots into indexable text', () => {
+    const html = `
+      <html>
+        <head><script>ignored()</script><style>.x { color: red; }</style></head>
+        <body>
+          <h1>Official FAQ</h1>
+          <p>Last Updated 2026-04-19</p>
+          <ul><li>First ruling &amp; note.</li><li>Second ruling.</li></ul>
+        </body>
+      </html>
+    `;
+
+    expect(htmlToIndexText(html)).toBe(
+      [
+        'Official FAQ',
+        'Last Updated 2026-04-19',
+        '- First ruling & note.',
+        '- Second ruling.',
+      ].join('\n\n'),
+    );
+  });
+});
+
+describe('assertUsablePdfText', () => {
+  it('fails loudly when a PDF has no usable text layer', () => {
+    expect(() => assertUsablePdfText('gh2-rule-book.pdf', '\n\n\n')).toThrow(
+      'data/rule-sources/gh2-rule-book.md',
+    );
   });
 });
 
@@ -290,6 +329,7 @@ describe('main', () => {
     vi.clearAllMocks();
     mockDeleteEntriesForSources.mockResolvedValue(0);
     mockAddEntries.mockResolvedValue(undefined);
+    mockReplaceEntriesForSources.mockResolvedValue(0);
   });
 
   it('skips unchanged files already in the index', async () => {
@@ -334,6 +374,98 @@ describe('main', () => {
     expect(newEntries[0].embedding).toEqual([0.1, 0.2]);
   });
 
+  it('rejects image-only PDFs without a normalized text source', async () => {
+    mockReaddirSync.mockImplementation((path) => {
+      const dir = String(path);
+      if (dir.endsWith('/pdfs')) return ['gh2-rule-book.pdf'];
+      if (dir.endsWith('/rule-sources')) return [];
+      return [];
+    });
+    mockReadFileSync.mockReturnValue(Buffer.from('image-only pdf bytes'));
+    mockPdfParse.mockResolvedValue({ text: '\n\n\n' });
+    mockGetIndexedSourceHashes.mockResolvedValue(new Map<string, string | null>());
+
+    await expect(main()).rejects.toThrow('PDF source gh2-rule-book.pdf produced only 0');
+    expect(mockAddEntries).not.toHaveBeenCalled();
+  });
+
+  it('processes GH2 HTML rule sources alongside PDFs', async () => {
+    const rulebookBytes = Buffer.from('pdf');
+    const faqHtml = Buffer.from(
+      '<html><body><h1>Official FAQ</h1><p>' + 'FAQ ruling. '.repeat(90) + '</p></body></html>',
+    );
+    const errataHtml = Buffer.from(
+      '<html><body><h1>Official Errata</h1><p>' +
+        'Errata ruling. '.repeat(90) +
+        '</p></body></html>',
+    );
+
+    mockReaddirSync.mockImplementation((path) => {
+      const dir = String(path);
+      if (dir.endsWith('/pdfs')) return ['gh2-rule-book.pdf'];
+      if (dir.endsWith('/rule-sources')) return ['gh2-faq.html', 'gh2-errata.html'];
+      return [];
+    });
+    mockReadFileSync.mockImplementation((path) => {
+      const file = String(path);
+      if (file.endsWith('gh2-rule-book.pdf')) return rulebookBytes;
+      if (file.endsWith('gh2-faq.html')) return faqHtml;
+      if (file.endsWith('gh2-errata.html')) return errataHtml;
+      throw new Error(`Unexpected read: ${file}`);
+    });
+    mockPdfParse.mockResolvedValue({ text: 'Rulebook text. '.repeat(90) });
+    mockGetIndexedSourceHashes.mockResolvedValue(new Map<string, string | null>());
+    mockEmbedBatch.mockImplementation((texts: string[]) =>
+      Promise.resolve(texts.map((_, index) => [index + 0.1, 0.2])),
+    );
+
+    await main();
+
+    expect(mockPdfParse).toHaveBeenCalledOnce();
+    expect(mockAddEntries).toHaveBeenCalledOnce();
+
+    const newEntries = mockAddEntries.mock.calls[0][0];
+    expect(new Set(newEntries.map((entry: { source: string }) => entry.source))).toEqual(
+      new Set(['gh2-rule-book.pdf', 'gh2-faq.html', 'gh2-errata.html']),
+    );
+    expect(new Set(newEntries.map((entry: { game: string }) => entry.game))).toEqual(
+      new Set(['gloomhaven-2e']),
+    );
+    expect(
+      newEntries.find((entry: { source: string }) => entry.source === 'gh2-faq.html').contentHash,
+    ).toBe(computeContentHash(faqHtml));
+  });
+
+  it('prefers a normalized text rule source over a same-stem PDF', async () => {
+    const rulebookText = Buffer.from('Normalized rulebook text. '.repeat(90));
+
+    mockReaddirSync.mockImplementation((path) => {
+      const dir = String(path);
+      if (dir.endsWith('/pdfs')) return ['gh2-rule-book.pdf'];
+      if (dir.endsWith('/rule-sources')) return ['gh2-rule-book.md'];
+      return [];
+    });
+    mockReadFileSync.mockImplementation((path) => {
+      const file = String(path);
+      if (file.endsWith('gh2-rule-book.md')) return rulebookText;
+      throw new Error(`Unexpected read: ${file}`);
+    });
+    mockGetIndexedSourceHashes.mockResolvedValue(new Map<string, string | null>());
+    mockEmbedBatch.mockResolvedValue([[0.1, 0.2]]);
+
+    await main();
+
+    expect(mockPdfParse).not.toHaveBeenCalled();
+    expect(mockAddEntries).toHaveBeenCalledOnce();
+
+    const newEntries = mockAddEntries.mock.calls[0][0];
+    expect(new Set(newEntries.map((entry: { source: string }) => entry.source))).toEqual(
+      new Set(['gh2-rule-book.md']),
+    );
+    expect(newEntries[0].game).toBe('gloomhaven-2e');
+    expect(newEntries[0].contentHash).toBe(computeContentHash(rulebookText));
+  });
+
   it('reindexes changed PDF files with the same filename', async () => {
     const longText = 'B'.repeat(900);
     mockReaddirSync.mockReturnValue(['fh-changed.pdf']);
@@ -350,13 +482,63 @@ describe('main', () => {
 
     await main();
 
-    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['fh-changed.pdf'], 'frosthaven');
+    expect(mockDeleteEntriesForSources).not.toHaveBeenCalled();
+    expect(mockReplaceEntriesForSources).toHaveBeenCalledOnce();
+    expect(mockReplaceEntriesForSources.mock.calls[0][0]).toEqual(
+      new Map([['frosthaven', ['fh-changed.pdf']]]),
+    );
     expect(mockPdfParse).toHaveBeenCalledOnce();
     expect(mockEmbedBatch).toHaveBeenCalledOnce();
-    const newEntries = mockAddEntries.mock.calls[0][0];
+    const newEntries = mockReplaceEntriesForSources.mock.calls[0][1];
     expect(newEntries[0].source).toBe('fh-changed.pdf');
     expect(newEntries[0].game).toBe('frosthaven');
     expect(newEntries[0].contentHash).toBe(computeContentHash(Buffer.from('changed pdf bytes')));
+  });
+
+  it('keeps existing changed-source rows when replacement embedding fails', async () => {
+    mockReaddirSync.mockReturnValue(['fh-changed.pdf']);
+    mockReadFileSync.mockReturnValue(Buffer.from('changed pdf bytes'));
+    mockPdfParse.mockResolvedValue({ text: 'B'.repeat(900) });
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-changed.pdf', 'old-hash']])
+          : new Map<string, string | null>(),
+      ),
+    );
+    mockEmbedBatch.mockRejectedValue(new Error('embedding failed'));
+
+    await expect(main()).rejects.toThrow('embedding failed');
+
+    expect(mockDeleteEntriesForSources).not.toHaveBeenCalled();
+    expect(mockReplaceEntriesForSources).not.toHaveBeenCalled();
+    expect(mockAddEntries).not.toHaveBeenCalled();
+  });
+
+  it('removes changed-source rows when replacement text produces no chunks', async () => {
+    mockReaddirSync.mockImplementation((path) => {
+      const dir = String(path);
+      if (dir.endsWith('/pdfs')) return [];
+      if (dir.endsWith('/rule-sources')) return ['fh-changed.md'];
+      return [];
+    });
+    mockReadFileSync.mockReturnValue(Buffer.from('short'));
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-changed.md', 'old-hash']])
+          : new Map<string, string | null>(),
+      ),
+    );
+
+    await main();
+
+    expect(mockReplaceEntriesForSources).toHaveBeenCalledOnce();
+    expect(mockReplaceEntriesForSources.mock.calls[0][0]).toEqual(
+      new Map([['frosthaven', ['fh-changed.md']]]),
+    );
+    expect(mockReplaceEntriesForSources.mock.calls[0][1]).toEqual([]);
+    expect(mockAddEntries).not.toHaveBeenCalled();
   });
 
   it('deletes embedding rows for PDFs that no longer exist', async () => {
@@ -379,6 +561,37 @@ describe('main', () => {
     expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['fh-removed.pdf'], 'frosthaven');
     expect(mockPdfParse).not.toHaveBeenCalled();
     expect(mockEmbedBatch).not.toHaveBeenCalled();
+    expect(mockAddEntries).not.toHaveBeenCalled();
+  });
+
+  it('keeps indexed rule source rows when the source file still exists', async () => {
+    const faqHtml = Buffer.from(
+      '<html><body><h1>Official FAQ</h1><p>' + 'FAQ ruling. '.repeat(90) + '</p></body></html>',
+    );
+    mockReaddirSync.mockImplementation((path) => {
+      const dir = String(path);
+      if (dir.endsWith('/pdfs')) return [];
+      if (dir.endsWith('/rule-sources')) return ['gh2-faq.html'];
+      return [];
+    });
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith('gh2-faq.html')) return faqHtml;
+      throw new Error(`Unexpected read: ${String(path)}`);
+    });
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'gloomhaven-2e'
+          ? new Map([
+              ['gh2-faq.html', computeContentHash(faqHtml)],
+              ['gh2-removed.html', 'removed-hash'],
+            ])
+          : new Map<string, string | null>(),
+      ),
+    );
+
+    await main();
+
+    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['gh2-removed.html'], 'gloomhaven-2e');
     expect(mockAddEntries).not.toHaveBeenCalled();
   });
 

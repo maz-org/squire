@@ -116,15 +116,15 @@ below.
 
 ## Database setup
 
-Squire uses Postgres + pgvector for indexed Frosthaven book embeddings, card
-data, scenario/section-book data, and OAuth state. Local dev runs it via
+Squire uses Postgres + pgvector for indexed rule-source embeddings, card data,
+scenario/section-book data, and OAuth state. Local dev runs it via
 docker-compose:
 
 ```bash
 docker compose up -d      # first run: creates the main-checkout DBs
 npm run db:migrate        # apply Drizzle migrations to the dev DB
 npm run db:migrate:test   # apply Drizzle migrations to the test DB
-npm run index             # populate Frosthaven book embeddings from data/pdfs/
+npm run index             # populate rule-source embeddings from data/pdfs/ and data/rule-sources/
 npm run seed:dev          # seed cards + scenario/section books + dev user
 ```
 
@@ -235,7 +235,7 @@ Stop the server with Ctrl-C or `kill $(lsof -ti :<port>)`.
 | ------ | ---------------------------- | ---------------------------------------------------------- |
 | GET    | `/api/live`                  | Liveness probe; no dependency checks                       |
 | GET    | `/api/health`                | Readiness check (`status`, `db`, `vector`, `embedder`)     |
-| GET    | `/api/search/rules?q=&topK=` | Vector search over indexed Frosthaven book passages        |
+| GET    | `/api/search/rules?q=&topK=` | Vector search over indexed rule-source passages            |
 | GET    | `/api/search/cards?q=&topK=` | Postgres FTS over the `card_*` tables, ranked by `ts_rank` |
 | GET    | `/api/card-types`            | List card types with record counts                         |
 | GET    | `/api/cards?type=&filter=`   | List cards of a type (filter is JSON)                      |
@@ -279,7 +279,7 @@ For the full state-machine rationale and endpoint policy table, see
 
 Squire exposes 9 atomic tools via MCP at `/mcp`:
 
-- `search_rules` — vector search over indexed Frosthaven book passages
+- `search_rules` — vector search over indexed rule-source passages
 - `find_scenario` — resolve a scenario query like `scenario 61` to matching scenario records
 - `get_scenario` — fetch an exact scenario record by canonical scenario ref
 - `get_section` — fetch an exact section record by section ref like `67.1`
@@ -503,10 +503,35 @@ new file type under `src/` or `test/`, add it to `lint-staged` and leave
 
 ## Data management
 
-Indexed Frosthaven books live in `data/pdfs/`. `src/index-docs.ts`
-(`npm run index`) chunks them, embeds each chunk with the local Xenova
-model, and upserts the result into the `embeddings` pgvector table. The
-flat-file `data/index.json` that used to hold this data was removed in
+Indexed rule sources live in `data/pdfs/` and `data/rule-sources/`.
+`src/index-docs.ts` (`npm run index`) chunks them, embeds each chunk with the
+local Xenova model, and upserts the result into the `embeddings` pgvector table.
+PDFs stay in `data/pdfs/`; HTML, Markdown, and plain-text rule snapshots stay
+in `data/rule-sources/`. Filenames must start with a supported game prefix
+(`fh-` or `gh2-`) so indexing can derive the `game` value. The
+`data/rule-sources/metadata.json` manifest records each non-GHS source's stable
+id, file path, game, source type, official URL, capture date, and refresh notes.
+When an official PDF is image-based, the metadata can also point at the
+normalized OCR snapshot used for indexing. To refresh an official source,
+replace the stable file in place, update the matching metadata record, refresh
+any normalized snapshot, and rerun `npm run index`; unchanged sources are
+skipped and changed sources are re-indexed by content hash.
+
+The current GH2 rulebook snapshot is the Apple Vision baseline, generated on
+macOS with:
+
+```bash
+swift scripts/ocr-pdf-apple-vision.swift \
+  data/pdfs/gh2-rule-book.pdf \
+  data/rule-sources/gh2-rule-book.md \
+  https://drive.google.com/file/d/16TmmCKa6zVVObj2qM-vIj9RcEAC3nfMT/view?usp=sharing \
+  2026-05-24
+```
+
+This is a baseline, not the final extraction decision. See
+[docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
+for the vendor evaluation plan.
+The flat-file `data/index.json` that used to hold this data was removed in
 SQR-33 — the runtime vector store is Postgres-only now.
 
 Extracted card data (`data/extracted/*.json`) is still checked into the
@@ -616,7 +641,7 @@ src/
   server.ts         # Hono HTTP server (REST + MCP transport)
   mcp.ts            # MCP tool registration (Streamable HTTP transport)
   agent.ts          # Knowledge agent loop (Claude Sonnet 4.6 + atomic tools)
-  index-docs.ts     # Frosthaven book PDF chunker + indexer (data/pdfs/)
+  index-docs.ts     # Rule-source chunker + indexer (data/pdfs/, data/rule-sources/)
   import-battle-goals.ts
   import-buildings.ts
   import-character-abilities.ts

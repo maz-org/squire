@@ -168,7 +168,7 @@ _Chat surface layout decision: the conversation page (`/chat/:id`) renders a sta
 
 ### Database
 
-- **Primary DB:** PostgreSQL. Indexed Frosthaven book embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
+- **Primary DB:** PostgreSQL. Indexed rule-source embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
 - **Vector DB:** pgvector extension on the same Postgres instance
 - **ORM:** Drizzle, with `drizzle-kit` for migrations
 
@@ -196,7 +196,7 @@ _Note: embedding model and vector store are two independent choices that can evo
 
 ### Document parsing
 
-- **Book-corpus ingestion:** `pdf-parse` for the Frosthaven PDFs in `data/pdfs/` (rulebook, scenario books, section books, puzzle book), chunked and embedded into pgvector via `src/index-docs.ts`.
+- **Rule-corpus ingestion:** `pdf-parse` for PDFs in `data/pdfs/` plus normalized HTML/Markdown/text snapshots in `data/rule-sources/`, chunked and embedded into pgvector via `src/index-docs.ts`.
 
 ### Authentication
 
@@ -277,7 +277,7 @@ Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2:
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 
 - **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2'` (extensible)
-- **Book chunks** are implicitly tagged via filename prefix in `data/pdfs/`: `fh-rule-book.pdf`, `fh-scenario-book-42-61.pdf`, `fh-section-book-62-81.pdf`, etc. The `source` field in the vector store carries the basename.
+- **Rule-source chunks** are implicitly tagged via filename prefix in `data/pdfs/` and `data/rule-sources/`: `fh-rule-book.pdf`, `gh2-rule-book.pdf`, `gh2-faq.html`, `gh2-errata.html`, etc. The `source` field in the vector store carries the basename.
 - **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2', prosperity: 4 })`)
 - **Agent system prompt** is told which game the user is asking about. Phase 2 uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
 
@@ -313,15 +313,16 @@ GHS is comprehensive enough for Phase 1 (rules Q&A) and most of the long-term re
 
 _Historical note: an earlier version of Squire used the worldhaven repository plus an OCR pipeline. Both were retired (commit `34a26a1`) once GHS proved sufficient._
 
-### Book Retrieval Data
+### Rule Retrieval Data
 
-#### Semantic book search
+#### Semantic rule search
 
-- Extract text from indexed Frosthaven book PDFs in `data/pdfs/` using `pdf-parse`
+- Extract text from indexed PDFs in `data/pdfs/` using `pdf-parse`, and from
+  HTML/Markdown/text snapshots in `data/rule-sources/`
 - Chunk into semantic sections in `src/index-docs.ts`
 - Generate embeddings via the local Xenova model (see [Stack → Embeddings](#embeddings))
 - Store in the `embeddings` pgvector table (populated by `npm run index`; idempotent per-source upserts)
-- Query through `searchRules()` for fuzzy rules/mechanics questions and other open-ended book-corpus lookups
+- Query through `searchRules()` for fuzzy rules/mechanics questions and other open-ended rule-corpus lookups
 
 #### Scenario/section-book research data
 
@@ -345,12 +346,12 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 | OAuth tokens / clients         | N/A (Phase 1)                                                  | Postgres                 |
 | Conversation history           | Postgres `conversations` + `messages`                          | Postgres                 |
 
-pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source PDFs (~164MB) are inputs to indexing, not deployed artifacts; they live in `data/pdfs/` for local development and are excluded from the production image.
+pgvector handles vector similarity search in the same database — no separate vector service at this scale. Source files are inputs to indexing, not deployed artifacts; PDFs live in `data/pdfs/`, HTML/text snapshots live in `data/rule-sources/`, and both are excluded from the production image.
 
 Production data updates are decoupled from image deploys. The weekly GHS refresh
 workflow opens reviewable PRs for `data/extracted/`; after those PRs merge,
 environment-protected GitHub Actions seed the production card tables. Separate
-production workflows seed scenario/section-book data and re-index PDF
+production workflows seed scenario/section-book data and re-index rule-source
 embeddings, with manual rebuild mode reserved for deliberate embedding
 model/version changes. The operator procedure lives in
 [docs/runbooks/production-operations.md](runbooks/production-operations.md).
@@ -498,13 +499,13 @@ The conversation agent **never calls atomic tools directly** — it always goes 
 
 Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that covers three retrieval surfaces:
 
-- semantic search over the indexed Frosthaven books
+- semantic search over indexed rule sources
 - deterministic scenario/section-book research data
 - generalized GHS card data across monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, and personal quests
 
 The same handful of tools handle every card type via parameter, rather than one tool per feature.
 
-- `searchRules(query, topK, opts?)` — vector search over the indexed Frosthaven book corpus. Returns raw `source`, display `sourceLabel`, and supports `opts.game`.
+- `searchRules(query, topK, opts?)` — vector search over the indexed rule-source corpus. Returns raw `source`, display `sourceLabel`, and supports `opts.game`.
 - `findScenario(query, opts?)` — resolve a human query like `scenario 61` or `Life and Death` to matching scenario records from the deterministic scenario-book layer.
 - `getScenario(ref, opts?)` — fetch an exact scenario record by canonical scenario ref, including printed-page metadata and raw page text.
 - `getSection(ref, opts?)` — fetch an exact section record by section ref like `67.1`, including canonical section text and source-page metadata.
@@ -593,7 +594,7 @@ These are **emergent capabilities** — Squire never built features for them, bu
 }
 ```
 
-`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using the indexed Frosthaven books, the deterministic scenario/section-book layer, and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
+`campaignId`, `userId`, and `game` are optional. Without them the knowledge agent answers general rules questions using indexed rule sources, the deterministic scenario/section-book layer, and card data. With them it personalizes — "what items should I bring?" depends on which character _you_ are playing in _this campaign_ of _which game_.
 
 The knowledge agent:
 
@@ -767,7 +768,7 @@ src/
   embedder.ts                   Local embeddings via Xenova all-MiniLM-L6-v2
   extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
   ghs-utils.ts                  Shared helpers for GHS imports
-  index-docs.ts                 PDF → chunks → embeddings → pgvector (npm run index)
+  index-docs.ts                 Rule sources → chunks → embeddings → pgvector (npm run index)
   instrumentation.ts            OpenTelemetry + Langfuse setup
   mcp.ts                        MCP tool registration (Streamable HTTP transport)
   query.ts                      CLI wrapper over the knowledge agent
@@ -804,7 +805,8 @@ src/
   import-scenario-section-books.ts   Printed scenario/section book importer
 
   data/
-    pdfs/                         Source rulebook + scenario / section PDFs (input to indexing)
+    pdfs/                         Rulebook + scenario / section PDFs (input to indexing)
+    rule-sources/                 HTML/text rule snapshots + source metadata
     extracted/*.json              GHS card extracts plus scenario-section-books.json seed / inspection artifact
 ```
 

@@ -824,6 +824,18 @@ describe('knowledge discovery tools', () => {
           label: 'Gloomhaven 2.0 Rulebook',
         }),
         expect.objectContaining({
+          ref: `source:${GLOOMHAVEN_2E_GAME_ID}/faq`,
+          label: 'Gloomhaven 2.0 FAQ',
+          kinds: ['rules_passage'],
+          searchable: true,
+        }),
+        expect.objectContaining({
+          ref: `source:${GLOOMHAVEN_2E_GAME_ID}/errata`,
+          label: 'Gloomhaven 2.0 Errata',
+          kinds: ['rules_passage'],
+          searchable: true,
+        }),
+        expect.objectContaining({
           ref: `source:${GLOOMHAVEN_2E_GAME_ID}/scenario-section-books`,
         }),
         expect.objectContaining({

@@ -8,8 +8,8 @@
  *    in `consulted_sources` (pre-SQR-105 rows) and mapped at render time.
  *
  * 2. Dynamic per-result labels (`retrievalSourceLabelToFooterLabel`): used by
- *    `search_rules`, which searches all four Frosthaven books and can surface
- *    passages from any of them. The actual books hit are extracted from the
+ *    `search_rules`, which searches indexed rule sources and can surface
+ *    passages from any of them. The actual sources hit are extracted from the
  *    result data in agent.ts and stored directly as ToolSourceLabel strings
  *    in `consulted_sources` (post-SQR-105 rows).
  *

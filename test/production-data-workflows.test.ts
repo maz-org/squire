@@ -165,15 +165,17 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('run: npm run production-data:check -- scenario-section-books');
   });
 
-  it('indexes production PDFs with normal and protected rebuild modes', async () => {
+  it('indexes production rule sources with normal and protected rebuild modes', async () => {
     const workflow = await readProjectFile('.github/workflows/production-reindex-pdfs.yml');
 
-    expect(workflow).toContain('name: Production reindex PDFs');
+    expect(workflow).toContain('name: Production reindex rule sources');
     expect(workflow).toContain('branches: [main]');
     expect(workflow).toContain('data/pdfs/**');
+    expect(workflow).toContain('data/rule-sources/**');
     expect(workflow).toContain('src/index-docs.ts');
     expect(workflow).toContain('src/vector-store.ts');
     expect(workflow).toContain('src/embedder.ts');
+    expect(workflow).toContain('src/retrieval-source.ts');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('rebuild:');
     expect(workflow).toContain('default: false');
@@ -195,11 +197,12 @@ describe('production data lifecycle workflows', () => {
       '## Production data lifecycle',
       'Production seed card data',
       'Production seed scenario and section books',
-      'Production reindex PDFs',
+      'Production reindex rule sources',
       'PRODUCTION_DATABASE_URL',
       'data/extracted/',
       'data/extracted/scenario-section-books.json',
       'data/pdfs/',
+      'data/rule-sources/',
       'npm run seed:cards',
       'npm run seed:scenario-section-books',
       'npm run index',
