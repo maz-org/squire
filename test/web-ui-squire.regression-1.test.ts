@@ -416,6 +416,36 @@ describe('squire.js chat form retargeting', () => {
     expect(source.closed).toBe(true);
   });
 
+  it('renders progress rows outside answer prose and keeps done/footer behavior intact', () => {
+    const { contentEl, footerEl, source, toolsEl } = bootPendingTranscript();
+
+    source.emit('tool-start', { id: 'follow_links', label: 'REFERENCE' });
+    source.emit('tool-progress', {
+      id: 'follow_links-progress-1',
+      label: 'SECTION BOOK',
+      message: 'Found Locked Down',
+    });
+
+    expect(contentEl.querySelector('p')).toBeNull();
+    expect(toolsEl.children).toHaveLength(2);
+    const progressRow = toolsEl.children[1];
+    expect(progressRow.dataset.toolLabel).toBe('SECTION BOOK');
+    expect(progressRow.querySelector('.squire-answer__tool-label')?.textContent).toBe('CHECKING');
+    expect(progressRow.querySelector('.squire-answer__tool-state')?.textContent).toBe(
+      'Found Locked Down',
+    );
+
+    source.emit('tool-result', { id: 'follow_links', labels: ['SECTION BOOK'], ok: true });
+    source.emit('done', {
+      html: '<p>The section is <strong>Locked Down</strong>.</p>',
+    });
+
+    expect(contentEl.innerHTML).toBe('<p>The section is <strong>Locked Down</strong>.</p>');
+    expect(toolsEl.children).toHaveLength(0);
+    expect(footerEl.textContent).toBe('CONSULTED · SECTION BOOK');
+    expect(footerEl.hidden).toBe(false);
+  });
+
   // SQR-98: the consulted footer must reflect the actual tool calls this
   // turn made — never placeholder text, never stale data from a prior
   // turn. These tests cover the ok:false exclusion, dedup + insertion
