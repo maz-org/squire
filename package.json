@@ -92,7 +92,7 @@
     "htmx.org": "^2.0.10",
     "langchain": "^1.4.0",
     "langsmith": "^0.7.1",
-    "markdown-it": "^14.1.1",
+    "markdown-it": "^14.2.0",
     "parse5": "^8.0.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",
