@@ -976,10 +976,19 @@ async function callClaude(
   const stream = requestOptions
     ? client.messages.stream(paramsWithTools, requestOptions)
     : client.messages.stream(paramsWithTools);
+  // Text emitted by a response that ends in tool_use is planning scratch, not answer prose.
+  const textDeltas: string[] = [];
   stream.on('text', (delta) => {
-    void emit('text', { delta });
+    textDeltas.push(delta);
   });
-  return stream.finalMessage();
+  const finalMessage = await stream.finalMessage();
+  const hasToolUse = finalMessage.content.some((block) => block.type === 'tool_use');
+  if (!hasToolUse) {
+    for (const delta of textDeltas) {
+      await emit('text', { delta });
+    }
+  }
+  return finalMessage;
 }
 
 /**
