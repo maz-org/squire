@@ -5,6 +5,12 @@
 
 import { embed } from './embedder.ts';
 import { formatRetrievalSourceLabel } from './retrieval-source.ts';
+import {
+  ruleSourceLocator,
+  ruleSourceProvenance,
+  type RuleSourceFreshness,
+  type RuleSourceType,
+} from './rule-source-provenance.ts';
 import { getEntryBySourceChunk, search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
 import {
@@ -43,8 +49,14 @@ import type { GameId } from './game.ts';
 
 export interface RuleResult {
   text: string;
+  game: GameId;
   source: string;
+  sourceRef: string;
+  sourceUrl?: string;
+  sourceType: RuleSourceType;
   sourceLabel: string;
+  sourceLocator: string;
+  freshness?: RuleSourceFreshness;
   score: number;
 }
 
@@ -109,8 +121,9 @@ export interface SourceInfo {
   searchable: boolean;
   openable: boolean;
   relations: string[];
+  sourceType?: RuleSourceType;
   counts?: Record<string, number>;
-  freshness?: Record<string, string | number>;
+  freshness?: RuleSourceFreshness;
 }
 
 export type KnowledgeKind = 'rules_passage' | 'scenario' | 'section' | 'card_type' | 'card';
@@ -182,8 +195,11 @@ export interface KnowledgeEntitySummary {
 
 export interface KnowledgeCitation {
   sourceRef: string;
+  sourceType?: RuleSourceType;
   sourceLabel: string;
   locator: string;
+  sourceUrl?: string;
+  freshness?: RuleSourceFreshness;
 }
 
 export interface KnowledgeLink {
@@ -671,11 +687,12 @@ function summarizeSection(section: SectionResult, game = DEFAULT_GAME): Knowledg
 }
 
 function summarizeRule(hit: ScoredEntry, game = DEFAULT_GAME): KnowledgeEntitySummary {
+  const provenance = ruleSourceProvenance(hit.source, normalizeToolGame(game));
   return {
     kind: 'rules_passage',
     ref: `rules:${game}/${hit.source}#chunk=${hit.chunkIndex}`,
-    title: `${formatRetrievalSourceLabel(hit.source)} passage ${hit.chunkIndex + 1}`,
-    sourceLabel: formatRetrievalSourceLabel(hit.source),
+    title: `${provenance.sourceLabel} ${ruleSourceLocator(hit.chunkIndex)}`,
+    sourceLabel: provenance.sourceLabel,
   };
 }
 
@@ -715,11 +732,15 @@ function citationForSection(section: SectionResult, game = DEFAULT_GAME): Knowle
 }
 
 function citationForRule(hit: ScoredEntry, game = DEFAULT_GAME): KnowledgeCitation[] {
+  const provenance = ruleSourceProvenance(hit.source, normalizeToolGame(game));
   return [
     {
-      sourceRef: sourceRefForPdf(game, hit.source),
-      sourceLabel: formatRetrievalSourceLabel(hit.source),
-      locator: `chunk ${hit.chunkIndex}`,
+      sourceRef: provenance.sourceRef,
+      sourceType: provenance.sourceType,
+      sourceLabel: provenance.sourceLabel,
+      locator: ruleSourceLocator(hit.chunkIndex),
+      ...(provenance.sourceUrl ? { sourceUrl: provenance.sourceUrl } : {}),
+      ...(provenance.freshness ? { freshness: provenance.freshness } : {}),
     },
   ];
 }
@@ -838,8 +859,9 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
   return hits.map((h) => ({
     text: h.text,
     source: h.source,
-    sourceLabel: formatRetrievalSourceLabel(h.source),
+    sourceLocator: ruleSourceLocator(h.chunkIndex),
     score: h.score,
+    ...ruleSourceProvenance(h.source, h.game),
   }));
 }
 
@@ -894,6 +916,7 @@ export async function listCards(
 export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesResult> {
   const game = normalizeToolGame(opts?.game);
   const gameDefinition = gameDefinitionFor(game);
+  const rulebook = ruleSourceProvenance(`${gameDefinition.sourcePrefix}-rule-book.pdf`, game);
   const [cardCounts, scenarioSectionStatus] = await Promise.all([
     countsByType({ game }),
     getScenarioSectionBooksBootstrapStatus({ game }),
@@ -906,10 +929,14 @@ export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesRes
       searchable: true,
       openable: false,
       relations: [],
+      sourceType: rulebook.sourceType,
+      ...(rulebook.freshness ? { freshness: rulebook.freshness } : {}),
     },
   ];
 
   if (game === GLOOMHAVEN_2E_GAME_ID) {
+    const faq = ruleSourceProvenance('gh2-faq.html', game);
+    const errata = ruleSourceProvenance('gh2-errata.html', game);
     sources.push(
       {
         ref: `source:${game}/faq`,
@@ -918,6 +945,8 @@ export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesRes
         searchable: true,
         openable: false,
         relations: [],
+        sourceType: faq.sourceType,
+        ...(faq.freshness ? { freshness: faq.freshness } : {}),
       },
       {
         ref: `source:${game}/errata`,
@@ -926,6 +955,8 @@ export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesRes
         searchable: true,
         openable: false,
         relations: [],
+        sourceType: errata.sourceType,
+        ...(errata.freshness ? { freshness: errata.freshness } : {}),
       },
     );
   }
@@ -1161,14 +1192,20 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
       return { ok: false, error: { code: 'not_found', message: `Rule passage not found: ${ref}` } };
     }
     const entity = summarizeRule(hit, ruleRef.game);
+    const provenance = ruleSourceProvenance(hit.source, ruleRef.game);
     return {
       ok: true,
       entity: {
         ...entity,
         data: {
           text: hit.text,
+          game: hit.game,
           source: hit.source,
+          sourceType: provenance.sourceType,
+          sourceLabel: provenance.sourceLabel,
+          sourceLocator: ruleSourceLocator(hit.chunkIndex),
           chunkIndex: hit.chunkIndex,
+          ...(provenance.freshness ? { freshness: provenance.freshness } : {}),
         },
       },
       citations: citationForRule(hit, ruleRef.game),

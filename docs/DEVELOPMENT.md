@@ -511,11 +511,15 @@ in `data/rule-sources/`. Filenames must start with a supported game prefix
 (`fh-` or `gh2-`) so indexing can derive the `game` value. The
 `data/rule-sources/metadata.json` manifest records each non-GHS source's stable
 id, file path, game, source type, official URL, capture date, and refresh notes.
-When an official PDF is image-based, the metadata can also point at the
-normalized OCR snapshot used for indexing. To refresh an official source,
-replace the stable file in place, update the matching metadata record, refresh
-any normalized snapshot, and rerun `npm run index`; unchanged sources are
-skipped and changed sources are re-indexed by content hash.
+FAQ and errata snapshots should also include the official source's
+`sourceLastUpdated` date when the upstream page publishes one. Runtime rule
+search and citation results derive their game, source type, source label,
+locator, URL, and freshness fields from this manifest without changing the
+embedding row keys. When an official PDF is image-based, the metadata can also
+point at the normalized OCR snapshot used for indexing. To refresh an official
+source, replace the stable file in place, update the matching metadata record,
+refresh any normalized snapshot, and rerun `npm run index`; unchanged sources
+are skipped and changed sources are re-indexed by content hash.
 
 The current GH2 rulebook snapshot is the Apple Vision baseline, generated on
 macOS with:

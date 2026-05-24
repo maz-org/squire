@@ -11,6 +11,7 @@ interface RuleSourceMetadata {
   sourceType: string;
   sourceUrl: string;
   capturedAt: string;
+  sourceLastUpdated?: string;
   refreshNotes: string;
 }
 
@@ -42,6 +43,7 @@ describe('GH2 rule source metadata', () => {
           game: 'gloomhaven-2e',
           sourceType: 'faq',
           sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/',
+          sourceLastUpdated: '2026-04-19',
         }),
         expect.objectContaining({
           id: 'gh2-errata',
@@ -49,6 +51,7 @@ describe('GH2 rule source metadata', () => {
           game: 'gloomhaven-2e',
           sourceType: 'errata',
           sourceUrl: 'https://cephalofairgames.github.io/gloomhaven2e-faq/#page_01',
+          sourceLastUpdated: '2026-04-19',
         }),
       ]),
     );
