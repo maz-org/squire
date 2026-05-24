@@ -1234,10 +1234,6 @@ template#squire-banner-fixtures {
   background: var(--surface-2);
 }
 
-.squire-answer__content:empty + .squire-answer__tools {
-  margin-top: 0;
-}
-
 .squire-answer__tools {
   display: grid;
   gap: 6px;
@@ -1275,6 +1271,48 @@ template#squire-banner-fixtures {
 
 .squire-answer__tool.is-error {
   color: var(--amber);
+}
+
+.squire-answer__artifacts {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.squire-answer__artifacts:empty {
+  display: none;
+}
+
+.squire-answer__artifact {
+  border-left: 2px solid var(--rule);
+  padding-left: 14px;
+  max-width: 100%;
+}
+
+.squire-answer__artifact-title {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--cream);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.squire-answer__artifact-source {
+  color: var(--sepia);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.squire-answer__artifact-source::before {
+  content: '·';
+  margin: 0 6px;
+  color: var(--sepia-dim);
+}
+
+.squire-answer__artifact-body {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .squire-answer--pending .squire-answer__content {

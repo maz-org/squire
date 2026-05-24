@@ -371,6 +371,46 @@ function clearToolStatusRows(toolsEl, toolEntries) {
   }
 }
 
+function renderAnswerArtifact(artifactsEl, artifactEntries, payload) {
+  if (!artifactsEl || !payload || payload.kind !== 'section-quote') return;
+  if (!payload.id || !payload.title || !payload.body) return;
+
+  var row = artifactEntries[payload.id];
+  if (!row) {
+    row = document.createElement('figure');
+    row.className = 'squire-answer__artifact';
+    row.dataset.artifactId = payload.id;
+
+    var heading = document.createElement('figcaption');
+    heading.className = 'squire-answer__artifact-title';
+    row.appendChild(heading);
+
+    var quote = document.createElement('blockquote');
+    quote.className = 'squire-answer__artifact-body squire-markdown';
+    row.appendChild(quote);
+
+    artifactEntries[payload.id] = row;
+    artifactsEl.appendChild(row);
+  }
+
+  var titleEl = row.querySelector('.squire-answer__artifact-title');
+  if (titleEl) {
+    titleEl.replaceChildren();
+    var titleText = document.createElement('span');
+    titleText.textContent = payload.title;
+    titleEl.appendChild(titleText);
+    if (payload.sourceLabel) {
+      var sourceEl = document.createElement('span');
+      sourceEl.className = 'squire-answer__artifact-source';
+      sourceEl.textContent = payload.sourceLabel;
+      titleEl.appendChild(sourceEl);
+    }
+  }
+
+  var bodyEl = row.querySelector('.squire-answer__artifact-body');
+  if (bodyEl) bodyEl.textContent = payload.body;
+}
+
 // SQR-108 / ADR 0012 D-3: pin-to-bottom helpers. Use page-level scroll
 // (the conversation page scrolls the document body — `.squire-frame` is
 // `min-height: 100vh` and the input dock sticky-pins to the viewport).
@@ -458,6 +498,7 @@ function attachPendingAnswerStream(answerEl) {
 
   var contentEl = answerEl.querySelector('.squire-answer__content');
   var toolsEl = answerEl.querySelector('.squire-answer__tools');
+  var artifactsEl = answerEl.querySelector('.squire-answer__artifacts');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
   // SQR-98: the consulted footer now lives inside the answer element so
   // each turn owns its own provenance slot. Historical turns render the
@@ -468,6 +509,7 @@ function attachPendingAnswerStream(answerEl) {
   var preToolBuffer = '';
   var seenFirstDelta = false;
   var toolPhaseStarted = false;
+  var artifactEntries = {};
   // Ordered-dedup set of provenance labels collected from tool-result
   // events during this turn. `Map` preserves insertion order, which we
   // rely on so the footer reads "CONSULTED · RULEBOOK · CARD INDEX" in
@@ -608,6 +650,16 @@ function attachPendingAnswerStream(answerEl) {
     if (!toolsEl) return;
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, resultLabels[0] || null, payload.ok === false ? 'error' : 'running');
+  });
+
+  source.addEventListener('answer-artifact', function (event) {
+    if (!artifactsEl || seenFirstDelta) return;
+    var payload = JSON.parse(event.data || '{}');
+    preToolBuffer = '';
+    toolPhaseStarted = true;
+    renderAnswerArtifact(artifactsEl, artifactEntries, payload);
+    if (skeletonEl) skeletonEl.hidden = true;
+    if (pinToBottom) scrollToBottom();
   });
 
   source.addEventListener('done', function (event) {

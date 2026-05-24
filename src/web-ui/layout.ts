@@ -286,8 +286,9 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
     data-stream-state="pending"
     data-stream-url="${streamUrl}"
   >
-    <div class="squire-answer__content squire-markdown"></div>
     <div class="squire-answer__tools" aria-live="off"></div>
+    <div class="squire-answer__artifacts" aria-live="polite"></div>
+    <div class="squire-answer__content squire-markdown"></div>
     <div class="squire-answer__skeleton" aria-hidden="true">
       <div class="squire-answer__skeleton-dropcap"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>

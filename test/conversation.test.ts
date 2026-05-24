@@ -1513,6 +1513,13 @@ describe('conversation web backend', () => {
         message: 'raw tool output',
         data: '>>> [Locked Down] >>> New Scenario: Life and Death 61',
       });
+      await options?.emit?.('artifact', {
+        kind: 'section_quote',
+        title: 'Locked Down',
+        body: 'New Scenario: Life and Death — 61',
+        sourceLabel: 'Section Book 62-81',
+        ref: 'section:frosthaven/67.1',
+      });
       await options?.emit?.('tool_result', {
         name: 'follow_links',
         ok: true,
@@ -1550,6 +1557,7 @@ describe('conversation web backend', () => {
     expect(events.map((event) => event.event)).toEqual([
       'tool-start',
       'tool-progress',
+      'answer-artifact',
       'tool-result',
       'text-delta',
       'done',
@@ -1560,6 +1568,17 @@ describe('conversation web backend', () => {
         id: 'follow_links-progress-1',
         label: 'REFERENCE',
         message: 'Tracing scenario 61 unlock links.',
+      },
+    });
+    expect(events).toContainEqual({
+      event: 'answer-artifact',
+      data: {
+        id: 'section-quote-1',
+        kind: 'section-quote',
+        title: 'Locked Down',
+        body: 'New Scenario: Life and Death — 61',
+        sourceLabel: 'SECTION BOOK',
+        ref: 'section:frosthaven/67.1',
       },
     });
     expect(events).toContainEqual({

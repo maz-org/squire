@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10] - 2026-05-24
+
+### Added
+
+- Added structured `answer-artifact` SSE events for safe section quote blocks that render outside answer prose.
+- Added browser rendering for section artifacts using text-only DOM insertion, plus regressions for artifact SSE mapping, hostile text handling, and final answer replacement.
+
 ## [0.1.9] - 2026-05-24
 
 ### Added
