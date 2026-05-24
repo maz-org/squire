@@ -1,6 +1,7 @@
 # Self-Describing Knowledge Tool Contract
 
-**Status:** Draft contract for SQR-116  
+**Status:** Draft contract for SQR-116, updated for Phase 2 GH2 support by
+SQR-187
 **Applies to:** Squire's internal knowledge-agent tool set, with MCP and REST
 compatibility projections  
 **Related ADR:** [ADR 0014](adr/0014-self-describing-knowledge-tool-contract.md)
@@ -113,17 +114,17 @@ the same shared contract definitions.
 
 ## Entity Kinds
 
-| Kind            | Meaning                                                                                              | Current source                              | Ref examples                                            |
-| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
-| `source`        | A knowledge source such as a rulebook, section book, card database, or future campaign record store  | Source metadata                             | `source:frosthaven/rulebook`, `source:frosthaven/cards` |
-| `rules_passage` | A semantic book-search passage from indexed PDFs                                                     | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`           |
-| `scenario`      | A scenario-book scenario record                                                                      | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`                               |
-| `section`       | A section-book section record                                                                        | `getSection()`                              | `section:frosthaven/67.1`                               |
-| `card_type`     | A category of structured GHS card data                                                               | `listCardTypes()`                           | `card-type:frosthaven/items`                            |
-| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`    |
-| `campaign`      | Future campaign state                                                                                | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                     |
-| `character`     | Future character state                                                                               | Future Phase 4 data                         | `character:frosthaven/<character-id>`                   |
-| `party`         | Future party state                                                                                   | Future Phase 4 data                         | `party:frosthaven/<party-id>`                           |
+| Kind            | Meaning                                                                                              | Current source                              | Ref examples                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `source`        | A knowledge source such as a rulebook, section book, card database, or future campaign record store  | Source metadata                             | `source:frosthaven/rulebook`, `source:gloomhaven-2e/rulebook`, `source:gloomhaven-2e/cards`                   |
+| `rules_passage` | A semantic book-search passage from indexed PDFs                                                     | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`, `rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42`               |
+| `scenario`      | A scenario-book scenario record                                                                      | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`, `scenario:gloomhaven-2e/061`                                                       |
+| `section`       | A section-book section record                                                                        | `getSection()`                              | `section:frosthaven/67.1`, `section:gloomhaven-2e/67.1`                                                       |
+| `card_type`     | A category of structured GHS card data                                                               | `listCardTypes()`                           | `card-type:frosthaven/items`, `card-type:gloomhaven-2e/items`                                                 |
+| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`, `card:gloomhaven-2e/items/gloomhavensecretariat:item/1` |
+| `campaign`      | Future campaign state                                                                                | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                                                                           |
+| `character`     | Future character state                                                                               | Future Phase 4 data                         | `character:frosthaven/<character-id>`                                                                         |
+| `party`         | Future party state                                                                                   | Future Phase 4 data                         | `party:frosthaven/<party-id>`                                                                                 |
 
 Refs are URL-safe strings with this formal shape:
 
@@ -145,15 +146,36 @@ Rules:
 - `open_entity` accepts a closed legacy-ref allowlist during migration, but
   returns the canonical new ref in the result.
 
+## Supported Games
+
+`inspect_sources()` is the source of truth for supported-game metadata. Phase 2
+supports two games:
+
+| Game            | Label            | Default | Accepted aliases                                                                                                                      |
+| --------------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `frosthaven`    | `Frosthaven`     | yes     | `fh`, `frost haven`                                                                                                                   |
+| `gloomhaven-2e` | `Gloomhaven 2.0` | no      | `gloomhaven-2`, `gloomhaven2`, `gloomhaven 2`, `gloomhaven 2.0`, `gloomhaven second edition`, `gloomhaven 2nd edition`, `gh2`, `gh2e` |
+
+Canonical refs and API payloads must use `gloomhaven-2e`, never aliases such as
+`gh2`, `gh2e`, or `gloomhaven2`. User-facing copy should show `Gloomhaven 2.0`.
+
+All search, resolve, open, and traversal operations run under one active game.
+The active game defaults to `frosthaven` when omitted. Passing `game:
+"gloomhaven-2e"` or an accepted alias filters vector rows, card rows,
+scenario/section rows, relationship traversal, source metadata, citations, and
+canonical refs to GH2. Comparison answers should make two explicit game-scoped
+calls rather than relying on a broad mixed-game query.
+
 Legacy refs allowed during migration:
 
-| Legacy shape                           | Interpreted as                           | Removal gate                                        |
-| -------------------------------------- | ---------------------------------------- | --------------------------------------------------- |
-| `gloomhavensecretariat:scenario/<nnn>` | `scenario:frosthaven/<nnn>`              | Remove after SQR-117 and SQR-118 eval parity passes |
-| `<section>.<variant>`                  | `section:frosthaven/<section>.<variant>` | Remove after SQR-117 and SQR-118 eval parity passes |
+| Legacy shape                           | No active game / `frosthaven` interpretation | With active game `gloomhaven-2e`            | Removal gate                                        |
+| -------------------------------------- | -------------------------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| `gloomhavensecretariat:scenario/<nnn>` | `scenario:frosthaven/<nnn>`                  | `scenario:gloomhaven-2e/<nnn>`              | Remove after SQR-117 and SQR-118 eval parity passes |
+| `<section>.<variant>`                  | `section:frosthaven/<section>.<variant>`     | `section:gloomhaven-2e/<section>.<variant>` | Remove after SQR-117 and SQR-118 eval parity passes |
 
-Bare legacy refs are Frosthaven-only. Callers that know the game must send the
-canonical ref.
+Bare legacy refs are Frosthaven-only unless the caller supplies an explicit
+active game. Callers that know the game should send the canonical game-qualified
+ref.
 
 ## Shared Result Shapes
 
@@ -279,7 +301,13 @@ Input schema:
 ```json
 {
   "type": "object",
-  "properties": {}
+  "properties": {
+    "game": {
+      "type": "string",
+      "default": "frosthaven",
+      "description": "Optional active game id or accepted alias. Defaults to Frosthaven."
+    }
+  }
 }
 ```
 
@@ -293,6 +321,11 @@ Output schema:
       "id": "frosthaven",
       "label": "Frosthaven",
       "default": true
+    },
+    {
+      "id": "gloomhaven-2e",
+      "label": "Gloomhaven 2.0",
+      "default": false
     }
   ],
   "sources": [
@@ -319,6 +352,11 @@ Example:
       "id": "frosthaven",
       "label": "Frosthaven",
       "default": true
+    },
+    {
+      "id": "gloomhaven-2e",
+      "label": "Gloomhaven 2.0",
+      "default": false
     }
   ],
   "sources": [
@@ -340,6 +378,53 @@ Example:
     },
     {
       "ref": "source:frosthaven/cards",
+      "label": "GHS Card Data",
+      "kinds": ["card_type", "card"],
+      "searchable": true,
+      "openable": true,
+      "relations": ["belongs_to_type"]
+    }
+  ],
+  "defaultGame": "frosthaven"
+}
+```
+
+Example for `inspect_sources({ "game": "gh2" })`:
+
+```json
+{
+  "ok": true,
+  "games": [
+    {
+      "id": "frosthaven",
+      "label": "Frosthaven",
+      "default": true
+    },
+    {
+      "id": "gloomhaven-2e",
+      "label": "Gloomhaven 2.0",
+      "default": false
+    }
+  ],
+  "sources": [
+    {
+      "ref": "source:gloomhaven-2e/rulebook",
+      "label": "Gloomhaven 2.0 Rulebook",
+      "kinds": ["rules_passage"],
+      "searchable": true,
+      "openable": false,
+      "relations": []
+    },
+    {
+      "ref": "source:gloomhaven-2e/scenario-section-books",
+      "label": "Scenario and Section Books",
+      "kinds": ["scenario", "section"],
+      "searchable": true,
+      "openable": true,
+      "relations": ["conclusion", "read_now", "section_link", "unlock", "cross_reference"]
+    },
+    {
+      "ref": "source:gloomhaven-2e/cards",
       "label": "GHS Card Data",
       "kinds": ["card_type", "card"],
       "searchable": true,
@@ -390,6 +475,10 @@ Output schema:
     {
       "label": "Open item 1",
       "ref": "card:frosthaven/items/gloomhavensecretariat:item/1"
+    },
+    {
+      "label": "Open GH2 item 1",
+      "ref": "card:gloomhaven-2e/items/gloomhavensecretariat:item/1"
     }
   ]
 }
@@ -408,7 +497,10 @@ Example for `section`:
   ],
   "filterFields": ["sectionNumber", "sectionVariant"],
   "relations": ["read_now", "section_link", "unlock", "cross_reference"],
-  "examples": [{ "label": "Open section 67.1", "ref": "section:frosthaven/67.1" }]
+  "examples": [
+    { "label": "Open section 67.1", "ref": "section:frosthaven/67.1" },
+    { "label": "Open GH2 section 67.1", "ref": "section:gloomhaven-2e/67.1" }
+  ]
 }
 ```
 
@@ -442,7 +534,11 @@ Input schema:
       "default": "candidates",
       "description": "Use candidates for normal resolution. Use single only when the caller needs exactly one ref."
     },
-    "game": { "type": "string", "default": "frosthaven" },
+    "game": {
+      "type": "string",
+      "default": "frosthaven",
+      "description": "Active game id or accepted alias. Filters candidates to one game."
+    },
     "limit": { "type": "integer", "minimum": 1, "maximum": 20, "default": 6 },
     "responseFormat": {
       "type": "string",
@@ -512,6 +608,27 @@ Example:
 }
 ```
 
+GH2 example:
+
+```json
+{
+  "ok": true,
+  "query": "scenario 61",
+  "candidates": [
+    {
+      "entity": {
+        "kind": "scenario",
+        "ref": "scenario:gloomhaven-2e/061",
+        "title": "Scenario 61",
+        "sourceLabel": "Scenario Book"
+      },
+      "confidence": 0.99,
+      "matchReason": "Exact scenario number"
+    }
+  ]
+}
+```
+
 Failure behavior:
 
 - Empty `candidates` is a successful miss, not an error.
@@ -544,6 +661,11 @@ Input schema:
   "type": "object",
   "properties": {
     "ref": { "type": "string" },
+    "game": {
+      "type": "string",
+      "default": "frosthaven",
+      "description": "Active game id or accepted alias. Used for legacy refs without a game qualifier."
+    },
     "include": {
       "type": "array",
       "items": {
@@ -624,6 +746,10 @@ Failure behavior:
 - `not_found` when the ref parses but no record exists.
 - Legacy refs such as `gloomhavensecretariat:scenario/061` and `67.1` are
   accepted during migration and normalized in the returned `entity.ref`.
+- Canonical game-qualified refs such as `section:gloomhaven-2e/67.1` ignore the
+  fallback `game` option because the ref itself names the game.
+- Bare legacy refs such as `67.1` use the active game when supplied and
+  otherwise default to Frosthaven.
 
 ### `search_knowledge(query, scope?, filters?)`
 
@@ -648,7 +774,11 @@ Input schema:
       "type": "object",
       "additionalProperties": true
     },
-    "game": { "type": "string", "default": "frosthaven" },
+    "game": {
+      "type": "string",
+      "default": "frosthaven",
+      "description": "Active game id or accepted alias. Filters all searched scopes to one game."
+    },
     "limit": { "type": "integer", "minimum": 1, "maximum": 20, "default": 6 },
     "responseFormat": {
       "type": "string",
@@ -719,6 +849,42 @@ Example:
 }
 ```
 
+GH2 example:
+
+```json
+{
+  "ok": true,
+  "query": "what does brittle do",
+  "results": [
+    {
+      "entity": {
+        "kind": "rules_passage",
+        "ref": "rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42",
+        "title": "Brittle",
+        "sourceLabel": "Rulebook"
+      },
+      "score": 0.89,
+      "snippet": "GH2 rulebook passage text...",
+      "citations": [
+        {
+          "sourceRef": "source:gloomhaven-2e/rulebook",
+          "sourceLabel": "Rulebook",
+          "locator": "rulebook passage"
+        }
+      ],
+      "nextRefs": [
+        {
+          "kind": "rules_passage",
+          "ref": "rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42",
+          "title": "Brittle",
+          "sourceLabel": "Rulebook"
+        }
+      ]
+    }
+  ]
+}
+```
+
 Failure behavior:
 
 - Empty `results` is a successful miss.
@@ -754,6 +920,11 @@ Input schema:
   "type": "object",
   "properties": {
     "ref": { "type": "string" },
+    "game": {
+      "type": "string",
+      "default": "frosthaven",
+      "description": "Active game id or accepted alias. Used for legacy refs without a game qualifier."
+    },
     "relation": {
       "type": "string",
       "description": "Relation advertised by inspect_sources() or schema(kind)."
@@ -902,14 +1073,17 @@ Client context efficiency:
 Target prompt shape:
 
 ```text
-You answer Frosthaven questions from Squire's knowledge sources.
+You answer Frosthaven and Gloomhaven 2.0 questions from Squire's knowledge
+sources.
 
 Use the knowledge tools to inspect available sources, resolve user language into
 canonical refs, open exact records, search broadly when the question is fuzzy,
 and traverse related records when an opened entity points somewhere else.
 
 Ground claims in retrieved data. Cite sources. Say when Squire does not have
-enough information. Do not invent rules, stats, item numbers, or scenario text.
+enough information. Use the active game when one is supplied. Do not mix
+Frosthaven and GH2 sources unless the user explicitly asks for a comparison. Do
+not invent rules, stats, item numbers, or scenario text.
 ```
 
 The prompt should not need to say:
@@ -935,8 +1109,8 @@ SQR-118 implement the contract. The suite must include both training prompts
 used during tool-description tuning and held-out prompts that are not inspected
 until the contract is ready for removal of old prompt choreography.
 
-1. "What sources can you inspect for Frosthaven, and which ones can you open
-   exactly?"
+1. "What sources can you inspect for Frosthaven and Gloomhaven 2.0, and which
+   ones can you open exactly?"
 2. "Show the section I should read at the conclusion of scenario 61."
 3. "Starting from section 103.1, follow the next two read-now links and tell me
    where I end up."
@@ -954,9 +1128,10 @@ until the contract is ready for removal of old prompt choreography.
 11. "Find the Algox Archer monster stat record, then search for any ability or
     card records that mention Algox Archer and explain which records are exact
     data versus fuzzy matches."
-12. "Resolve section 67.1 in Frosthaven and then try the same bare legacy ref
-    with an explicit Gloomhaven 2 game. The second path should reject or require
-    a canonical game-qualified ref."
+12. "Resolve section 67.1 in Frosthaven and then resolve the same bare legacy
+    ref with an explicit Gloomhaven 2.0 active game. The second path should not
+    reuse Frosthaven data; it should return the GH2 canonical ref if present or
+    a GH2-scoped not-found result if unavailable."
 
 Passing behavior:
 
@@ -966,6 +1141,8 @@ Passing behavior:
 - The agent traverses neighbor refs instead of guessing links from prose.
 - Answers include citations or source labels.
 - Ambiguous names produce candidates or a clarification, not a silent guess.
+- GH2 answers use `gloomhaven-2e` canonical refs even when the prompt says
+  `gh2`, `gh2e`, or `gloomhaven2`.
 
 Evaluation harness requirements:
 
