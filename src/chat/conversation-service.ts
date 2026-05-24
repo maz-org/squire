@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 
-import { ask, type HistoryMessage } from '../service.ts';
+import { ask, type HistoryMessage, type EmitFn } from '../service.ts';
 import { getDb } from '../db.ts';
 import * as ConversationRepository from '../db/repositories/conversation-repository.ts';
 import * as MessageRepository from '../db/repositories/message-repository.ts';
@@ -52,7 +52,7 @@ async function generateAssistantReply(
   history: HistoryMessage[],
   userId: string,
   correlation: { conversationId: string; userMessageId: string; requestId?: string },
-  emit: (event: string, data: unknown) => Promise<void>,
+  emit: EmitFn,
   options: { retryOnTransportError: boolean; onRetry?: () => void } = {
     retryOnTransportError: true,
   },
@@ -94,7 +94,7 @@ async function persistAssistantOutcome(input: {
   userId: string;
   currentUserMessageId: string;
   requestId?: string;
-  onEvent?: (event: string, data: unknown) => Promise<void>;
+  onEvent?: EmitFn;
   failureMessage?: string;
 }): Promise<ConversationMessage> {
   const priorMessages = await MessageRepository.listByConversationId(input.conversationId, {
@@ -112,7 +112,7 @@ async function persistAssistantOutcome(input: {
   // chokepoint — any path that produces an assistant message (streaming or
   // not) now persists sources.
   const capturedSources: string[] = [];
-  const captureOnEvent = async (event: string, data: unknown) => {
+  const captureOnEvent: EmitFn = async (event, data) => {
     if (event === 'tool_result') {
       const payload = data as { name?: string; ok?: boolean; sourceBooks?: string[] };
       // Require explicit ok === true. Absence-of-failure (ok undefined) is
@@ -313,7 +313,7 @@ export async function streamAssistantTurn(input: {
   userId: string;
   currentUserMessageId: string;
   requestId?: string;
-  onEvent: (event: string, data: unknown) => Promise<void>;
+  onEvent: EmitFn;
   failureMessage?: string;
 }): Promise<ConversationMessage> {
   return persistAssistantOutcome({

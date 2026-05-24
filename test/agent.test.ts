@@ -1585,4 +1585,64 @@ describe('runAgentLoop with emit (streaming)', () => {
       emit.mock.calls.filter(([event]) => event === 'text').map(([, payload]) => payload),
     ).toEqual([{ delta: 'Read section 67.1.' }]);
   });
+
+  it('keeps multi-hop traversal planning text out of streamed answer events', async () => {
+    const findScenarioMsg = textAndToolUseResponse(
+      'Let me find scenario 61 first.',
+      'find_scenario',
+      {
+        query: 'scenario 61',
+      },
+      'tool_find_scenario',
+    );
+    const followLinksMsg = textAndToolUseResponse(
+      'The scenario data does not list what unlocks it. I will trace section links.',
+      'follow_links',
+      {
+        fromKind: 'scenario',
+        fromRef: 'gloomhavensecretariat:scenario/061',
+        linkType: 'unlock',
+      },
+      'tool_follow_links',
+    );
+    const getSectionMsg = textAndToolUseResponse(
+      'I found a raw section-book fragment: >>> [Locked Down] >>> New Scenario: Life and Death 61.',
+      'get_section',
+      {
+        ref: '67.1',
+      },
+      'tool_get_section',
+    );
+    const finalMsg = textResponse('The unlock text is in [Locked Down].');
+    mockMessagesStream
+      .mockReturnValueOnce(mockStream(findScenarioMsg, ['Let me ', 'find scenario 61 first.']))
+      .mockReturnValueOnce(
+        mockStream(followLinksMsg, [
+          'The scenario data does not list what unlocks it. ',
+          'I will trace section links.',
+        ]),
+      )
+      .mockReturnValueOnce(
+        mockStream(getSectionMsg, [
+          'I found a raw section-book fragment: ',
+          '>>> [Locked Down] >>> New Scenario: Life and Death 61.',
+        ]),
+      )
+      .mockReturnValueOnce(mockStream(finalMsg, ['The unlock text is in [Locked Down].']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    const result = await runAgentLoop('what unlocks scenario 61?', {
+      emit,
+      toolSurface: 'legacy',
+    });
+
+    expect(result).toBe('The unlock text is in [Locked Down].');
+    const textDeltas = emit.mock.calls
+      .filter(([event]) => event === 'text')
+      .map(([, payload]) => (payload as { delta: string }).delta);
+    expect(textDeltas).toEqual(['The unlock text is in [Locked Down].']);
+    expect(textDeltas.join('')).not.toMatch(/Let me|scenario data|raw section-book fragment|>>>/);
+    expect(emit.mock.calls.filter(([event]) => event === 'tool_call')).toHaveLength(3);
+    expect(emit.mock.calls.filter(([event]) => event === 'tool_result')).toHaveLength(3);
+  });
 });
