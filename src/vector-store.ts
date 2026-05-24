@@ -83,14 +83,42 @@ export async function ensureHnswIndex(): Promise<void> {
   `);
 }
 
+async function insertEntries(
+  entries: IndexEntry[],
+  dbOrTx: Pick<ReturnType<typeof getDb>['db'], 'insert'>,
+): Promise<void> {
+  if (entries.length === 0) return;
+
+  const CHUNK = 500;
+  for (let i = 0; i < entries.length; i += CHUNK) {
+    const batch = entries.slice(i, i + CHUNK);
+    await dbOrTx
+      .insert(embeddingsTable)
+      .values(
+        batch.map((e) => ({
+          id: e.id,
+          source: e.source,
+          chunkIndex: e.chunkIndex,
+          text: e.text,
+          embedding: e.embedding,
+          game: resolveGame(e.game),
+          embeddingVersion: EMBEDDING_VERSION,
+          contentHash: e.contentHash,
+        })),
+      )
+      .onConflictDoNothing({
+        target: [embeddingsTable.game, embeddingsTable.source, embeddingsTable.chunkIndex],
+      });
+  }
+}
+
 /**
- * Upsert indexed-book chunk embeddings into the `embeddings` table.
+ * Upsert new rule-source chunk embeddings into the `embeddings` table.
  *
  * Idempotent: uses `ON CONFLICT (game, source, chunk_index) DO NOTHING`, so
- * reindexing the same PDF twice is a no-op. If chunking changes for an
- * existing PDF, delete rows for that source first (`DELETE FROM embeddings
- * WHERE game = $1 AND source = $2`) and reindex — see the tech spec's
- * diff-vs-rebuild table.
+ * indexing the same source twice is a no-op. Changed sources should use
+ * `replaceEntriesForSources()` so stale chunks are removed in the same
+ * transaction that inserts their replacements.
  *
  * Every row is stamped with the current `EMBEDDING_VERSION` as a drift guard.
  */
@@ -101,30 +129,41 @@ export async function addEntries(entries: IndexEntry[]): Promise<void> {
   // Chunk the insert so we don't blow the Postgres parameter limit on
   // pathological PDFs. 500 rows × 7 cols = 3500 params, safely below 65535.
   // Wrap the whole batching loop in a single transaction so a crash mid-way
-  // can't leave the table with a partial subset of chunks for a given PDF.
-  const CHUNK = 500;
+  // can't leave the table with a partial subset of chunks for a given source.
   await db.transaction(async (tx) => {
-    for (let i = 0; i < entries.length; i += CHUNK) {
-      const batch = entries.slice(i, i + CHUNK);
-      await tx
-        .insert(embeddingsTable)
-        .values(
-          batch.map((e) => ({
-            id: e.id,
-            source: e.source,
-            chunkIndex: e.chunkIndex,
-            text: e.text,
-            embedding: e.embedding,
-            game: resolveGame(e.game),
-            embeddingVersion: EMBEDDING_VERSION,
-            contentHash: e.contentHash,
-          })),
-        )
-        .onConflictDoNothing({
-          target: [embeddingsTable.game, embeddingsTable.source, embeddingsTable.chunkIndex],
-        });
-    }
+    await insertEntries(entries, tx);
   });
+}
+
+export async function replaceEntriesForSources(
+  replacedSourcesByGame: Map<GameId, string[]>,
+  entries: IndexEntry[],
+): Promise<number> {
+  const replacementCount = [...replacedSourcesByGame.values()].reduce(
+    (count, sources) => count + sources.length,
+    0,
+  );
+  if (replacementCount === 0) {
+    await addEntries(entries);
+    return 0;
+  }
+
+  const { db } = getDb('server');
+  let deletedCount = 0;
+  await db.transaction(async (tx) => {
+    for (const [game, sources] of replacedSourcesByGame) {
+      if (sources.length === 0) continue;
+      const rows = await tx
+        .delete(embeddingsTable)
+        .where(and(eq(embeddingsTable.game, game), inArray(embeddingsTable.source, sources)))
+        .returning({ id: embeddingsTable.id });
+      deletedCount += rows.length;
+    }
+
+    await insertEntries(entries, tx);
+  });
+
+  return deletedCount;
 }
 
 /**

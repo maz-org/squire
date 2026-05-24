@@ -19,6 +19,7 @@ import {
   deleteEntriesForSources,
   ensureHnswIndex,
   getIndexedSourceHashes,
+  replaceEntriesForSources,
 } from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
 import { SUPPORTED_GAME_IDS, gameIdFromSourceFilename } from './game.ts';
@@ -402,6 +403,7 @@ export async function main(): Promise<void> {
   }
 
   const allNewEntries: IndexEntry[] = [];
+  const changedSourcesByGame = new Map<GameId, string[]>();
 
   for (const { file, filePath, game, format } of files) {
     const sourceBytes = readFileSync(filePath);
@@ -415,8 +417,10 @@ export async function main(): Promise<void> {
     }
 
     if (indexedHash !== undefined) {
-      const deleted = await deleteEntriesForSources([file], game);
-      console.log(`  Re-indexing changed source: ${file} (${deleted} stale chunk(s) removed)`);
+      const changedSources = changedSourcesByGame.get(game) ?? [];
+      changedSources.push(file);
+      changedSourcesByGame.set(game, changedSources);
+      console.log(`  Re-indexing changed source: ${file}`);
     }
 
     console.log(`  Extracting: ${file}`);
@@ -451,7 +455,12 @@ export async function main(): Promise<void> {
     return;
   }
 
-  await addEntries(allNewEntries);
+  if (changedSourcesByGame.size > 0) {
+    const deleted = await replaceEntriesForSources(changedSourcesByGame, allNewEntries);
+    console.log(`Replaced ${deleted} stale chunk(s) for changed rule source(s).`);
+  } else {
+    await addEntries(allNewEntries);
+  }
   // Build HNSW post-insert so a cold `npm run index` isn't paying the
   // incremental-insert cost on every row. No-op if the index already exists.
   console.log('Building HNSW index...');

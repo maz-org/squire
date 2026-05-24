@@ -29,18 +29,23 @@ vi.mock('../src/embedder.ts', () => ({
   embedBatch: mockEmbedBatch,
 }));
 
-const { mockGetIndexedSourceHashes, mockDeleteEntriesForSources, mockAddEntries } = vi.hoisted(
-  () => ({
-    mockGetIndexedSourceHashes: vi.fn(),
-    mockDeleteEntriesForSources: vi.fn(),
-    mockAddEntries: vi.fn(),
-  }),
-);
+const {
+  mockGetIndexedSourceHashes,
+  mockDeleteEntriesForSources,
+  mockAddEntries,
+  mockReplaceEntriesForSources,
+} = vi.hoisted(() => ({
+  mockGetIndexedSourceHashes: vi.fn(),
+  mockDeleteEntriesForSources: vi.fn(),
+  mockAddEntries: vi.fn(),
+  mockReplaceEntriesForSources: vi.fn(),
+}));
 
 vi.mock('../src/vector-store.ts', () => ({
   getIndexedSourceHashes: mockGetIndexedSourceHashes,
   deleteEntriesForSources: mockDeleteEntriesForSources,
   addEntries: mockAddEntries,
+  replaceEntriesForSources: mockReplaceEntriesForSources,
   ensureHnswIndex: vi.fn().mockResolvedValue(undefined),
   EMBEDDING_VERSION: 'test-version',
 }));
@@ -324,6 +329,7 @@ describe('main', () => {
     vi.clearAllMocks();
     mockDeleteEntriesForSources.mockResolvedValue(0);
     mockAddEntries.mockResolvedValue(undefined);
+    mockReplaceEntriesForSources.mockResolvedValue(0);
   });
 
   it('skips unchanged files already in the index', async () => {
@@ -476,13 +482,37 @@ describe('main', () => {
 
     await main();
 
-    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['fh-changed.pdf'], 'frosthaven');
+    expect(mockDeleteEntriesForSources).not.toHaveBeenCalled();
+    expect(mockReplaceEntriesForSources).toHaveBeenCalledOnce();
+    expect(mockReplaceEntriesForSources.mock.calls[0][0]).toEqual(
+      new Map([['frosthaven', ['fh-changed.pdf']]]),
+    );
     expect(mockPdfParse).toHaveBeenCalledOnce();
     expect(mockEmbedBatch).toHaveBeenCalledOnce();
-    const newEntries = mockAddEntries.mock.calls[0][0];
+    const newEntries = mockReplaceEntriesForSources.mock.calls[0][1];
     expect(newEntries[0].source).toBe('fh-changed.pdf');
     expect(newEntries[0].game).toBe('frosthaven');
     expect(newEntries[0].contentHash).toBe(computeContentHash(Buffer.from('changed pdf bytes')));
+  });
+
+  it('keeps existing changed-source rows when replacement embedding fails', async () => {
+    mockReaddirSync.mockReturnValue(['fh-changed.pdf']);
+    mockReadFileSync.mockReturnValue(Buffer.from('changed pdf bytes'));
+    mockPdfParse.mockResolvedValue({ text: 'B'.repeat(900) });
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-changed.pdf', 'old-hash']])
+          : new Map<string, string | null>(),
+      ),
+    );
+    mockEmbedBatch.mockRejectedValue(new Error('embedding failed'));
+
+    await expect(main()).rejects.toThrow('embedding failed');
+
+    expect(mockDeleteEntriesForSources).not.toHaveBeenCalled();
+    expect(mockReplaceEntriesForSources).not.toHaveBeenCalled();
+    expect(mockAddEntries).not.toHaveBeenCalled();
   });
 
   it('deletes embedding rows for PDFs that no longer exist', async () => {
