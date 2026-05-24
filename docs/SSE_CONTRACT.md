@@ -24,7 +24,13 @@ The browser consumes these SSE event names:
   - Payload: `{ "id": string, "label": string }`
 - `tool-result`
   - Marks a tool row complete or failed.
-  - Payload: `{ "id": string, "label": string, "ok": boolean }`
+  - Payload: `{ "id": string, "labels": string[], "ok": boolean }`
+- `tool-progress`
+  - Adds a compact, user-safe progress row for long tool work.
+  - Payload: `{ "id": string, "label": string, "message": string }`
+  - `label` is safe tool/source metadata such as `SECTION BOOK` or the
+    `REFERENCE` fallback. `message` is already filtered by the service as
+    user-safe progress text; it is rendered as metadata, never answer prose.
 - `done`
   - Marks the stream complete and clears the pending answer UI.
   - Payload: `{ "html": string, "consultedSources": string[] | null }`
@@ -60,8 +66,8 @@ For every successful stream:
    text and must not be sent as `text-delta`.
 2. The browser must receive exactly one terminal `done` event.
 3. Any `text-delta` events must arrive before `done`.
-4. Tool events may appear before completion, but they do not count as answer
-   text.
+4. Tool events and progress events may appear before completion, but they do
+   not count as answer text.
 5. The terminal `done` event carries the final server-rendered sanitized HTML
    fragment, which replaces the pending plain-text transcript in the browser.
 6. The terminal `done` event carries `consultedSources` (persisted tool
@@ -102,8 +108,8 @@ The conversation service emits Squire-owned internal events. These are typed in
   or raw retrieved fragments must not be emitted as `text`.
 - `tool_call`: a tool lookup or source traversal started.
 - `tool_result`: a tool lookup or source traversal completed.
-- `tool_progress`: optional user-safe progress from inside a long tool. This is
-  trace-only today and has no browser mapping.
+- `tool_progress`: optional user-safe progress from inside a long tool. Routes
+  that expose it must map it to browser `tool-progress`, not `text-delta`.
 - `debug`: diagnostic data for traces/logs. This is never browser-visible.
 - `done`: internal completion signal only. The route emits browser `done` after
   persistence so it can include sanitized HTML and persisted consulted sources.
@@ -118,7 +124,7 @@ The route, not the provider, owns the final browser ordering guarantees:
 - provider/internal `text` -> browser `text-delta`
 - provider/internal `tool_call` -> browser `tool-start`
 - provider/internal `tool_result` -> browser `tool-result`
-- internal `tool_progress` -> no browser event
+- internal `tool_progress` -> browser `tool-progress`
 - internal `debug` -> no browser event
 - provider/internal `done` is only a completion signal
 - browser `done` is emitted by the route with the final sanitized HTML derived
@@ -133,8 +139,8 @@ Regression tests should assert browser-visible behavior, not only persistence:
   `done.html` fragment
 - tool-planning text and raw tool output from intermediate model turns never
   appear in `text-delta`
-- `tool_progress` and `debug` do not appear in browser SSE unless this contract
-  is deliberately expanded
+- `tool_progress` appears only as browser `tool-progress`; `debug` never appears
+  in browser SSE
 - `text-delta` content remains inert plain text even when it contains hostile
   markup
 - `done.html` is sanitized before browser insertion

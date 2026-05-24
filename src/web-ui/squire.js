@@ -352,6 +352,12 @@ function renderToolStatusRow(row, label, state) {
     return;
   }
 
+  if (state === 'progress') {
+    if (labelEl) labelEl.textContent = 'CHECKING';
+    stateEl.textContent = label || 'REFERENCE';
+    return;
+  }
+
   if (labelEl) labelEl.textContent = label || 'REFERENCE';
   stateEl.textContent = '';
 }
@@ -555,6 +561,21 @@ function attachPendingAnswerStream(answerEl) {
     toolPhaseStarted = true;
     var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
     renderToolStatusRow(row, payload.label, 'running');
+  });
+
+  source.addEventListener('tool-progress', function (event) {
+    if (!toolsEl) return;
+    if (seenFirstDelta) {
+      clearToolStatusRows(toolsEl, toolEntries);
+      return;
+    }
+    var payload = JSON.parse(event.data || '{}');
+    if (!payload.message) return;
+    preToolBuffer = '';
+    toolPhaseStarted = true;
+    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
+    if (payload.label) row.dataset.toolLabel = payload.label;
+    renderToolStatusRow(row, payload.message, 'progress');
   });
 
   source.addEventListener('tool-result', function (event) {

@@ -1502,7 +1502,7 @@ describe('conversation web backend', () => {
     ]);
   });
 
-  it('does not expose trace-only progress or debug events as browser text-delta', async () => {
+  it('exposes safe progress as metadata without leaking debug events into answer text', async () => {
     mockAsk.mockImplementationOnce(async (_question, options) => {
       await options?.emit?.('tool_call', { name: 'follow_links' });
       await options?.emit?.('tool_progress', {
@@ -1549,15 +1549,24 @@ describe('conversation web backend', () => {
     const events = parseSse(await streamRes.text());
     expect(events.map((event) => event.event)).toEqual([
       'tool-start',
+      'tool-progress',
       'tool-result',
       'text-delta',
       'done',
     ]);
     expect(events).toContainEqual({
+      event: 'tool-progress',
+      data: {
+        id: 'follow_links-progress-1',
+        label: 'REFERENCE',
+        message: 'Tracing scenario 61 unlock links.',
+      },
+    });
+    expect(events).toContainEqual({
       event: 'text-delta',
       data: { delta: 'Scenario 61 is unlocked by the Locked Down branch.' },
     });
-    expect(JSON.stringify(events)).not.toMatch(/Tracing scenario 61|raw tool output|>>>/);
+    expect(JSON.stringify(events)).not.toMatch(/raw tool output|>>>/);
     expect(events.at(-1)).toEqual({
       event: 'done',
       data: expect.objectContaining({
