@@ -1,0 +1,50 @@
+[
+  {
+    "id": "gh2-rule-scenario-level",
+    "query": "In Gloomhaven 2.0, how is the recommended scenario level calculated?",
+    "expectedSource": "gh2-rule-book.md",
+    "expectedSourceType": "rulebook",
+    "requiredPhrases": [
+      "At recommended difficulty",
+      "scenario level",
+      "average level of the characters divided by 2"
+    ],
+    "forbiddenSourcePrefixes": ["fh-"],
+    "evalSeed": {
+      "expected": "At recommended difficulty in Gloomhaven 2.0, the scenario level is the average level of the characters divided by 2.",
+      "grading": "Must answer for Gloomhaven 2.0/GH2, cite the rulebook source, and avoid any Frosthaven citation or Frosthaven-only framing."
+    }
+  },
+  {
+    "id": "gh2-faq-red-hex-aoe-targets",
+    "query": "In Gloomhaven 2.0, can I skip targets in a red hex AoE attack?",
+    "expectedSource": "gh2-faq.html",
+    "expectedSourceType": "faq",
+    "requiredPhrases": [
+      "Can I skip targets in a red hex AoE attack?",
+      "Yes",
+      "red hex AoE just determines the hexes where your potential targets are"
+    ],
+    "forbiddenSourcePrefixes": ["fh-"],
+    "evalSeed": {
+      "expected": "Yes. In Gloomhaven 2.0, a red hex AoE just determines the hexes where your potential targets are.",
+      "grading": "Must answer for Gloomhaven 2.0/GH2, cite the FAQ source, and avoid any Frosthaven citation or Frosthaven-only framing."
+    }
+  },
+  {
+    "id": "gh2-errata-campaign-sheet-section-29",
+    "query": "In Gloomhaven 2.0, the campaign sheet says to read section 29.5 after scenario 11 with 6 Demon Reputation. What is the current section?",
+    "expectedSource": "gh2-errata.html",
+    "expectedSourceType": "errata",
+    "requiredPhrases": [
+      "Read Section 29.5",
+      "should direct you to Section 29.1",
+      "There is no Section 29.5"
+    ],
+    "forbiddenSourcePrefixes": ["fh-"],
+    "evalSeed": {
+      "expected": "Use Section 29.1. The Gloomhaven 2.0 errata says the Campaign Sheet instruction to read Section 29.5 should direct you to Section 29.1, and that there is no Section 29.5.",
+      "grading": "Must answer for Gloomhaven 2.0/GH2, cite the errata source, state Section 29.1 instead of 29.5, and avoid any Frosthaven citation or Frosthaven-only framing."
+    }
+  }
+]
