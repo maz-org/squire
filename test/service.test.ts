@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const {
   mockRunAgentLoopWithTrajectory,
+  mockRunLangGraphAgentLoopWithTrajectory,
   mockAssertLlmBudgetAvailable,
   mockRecordLlmUsage,
   mockWriteSecurityLog,
@@ -14,6 +15,7 @@ const {
   mockGetScenarioSectionBooksBootstrapStatus,
 } = vi.hoisted(() => ({
   mockRunAgentLoopWithTrajectory: vi.fn(),
+  mockRunLangGraphAgentLoopWithTrajectory: vi.fn(),
   mockAssertLlmBudgetAvailable: vi.fn(),
   mockRecordLlmUsage: vi.fn(),
   mockWriteSecurityLog: vi.fn(),
@@ -26,6 +28,10 @@ const {
 
 vi.mock('../src/agent.ts', () => ({
   runAgentLoopWithTrajectory: mockRunAgentLoopWithTrajectory,
+}));
+
+vi.mock('../src/agent-langgraph.ts', () => ({
+  runLangGraphAgentLoopWithTrajectory: mockRunLangGraphAgentLoopWithTrajectory,
 }));
 
 vi.mock('../src/llm-budget.ts', () => ({
@@ -343,6 +349,24 @@ describe('ask', () => {
         stopReason: 'end_turn',
       },
     });
+    mockRunLangGraphAgentLoopWithTrajectory.mockResolvedValue({
+      answer: 'LangGraph answer.',
+      trajectory: {
+        toolCalls: [],
+        modelCalls: [],
+        finalAnswer: 'LangGraph answer.',
+        tokenUsage: {
+          inputTokens: 20,
+          outputTokens: 10,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+          totalTokens: 30,
+        },
+        model: 'langgraph:claude-sdk',
+        iterations: 1,
+        stopReason: 'end_turn',
+      },
+    });
   });
 
   it('checks the budget before delegating to the agent loop', async () => {
@@ -411,6 +435,27 @@ describe('ask', () => {
     };
     await ask('Follow-up', options);
     expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', options);
+  });
+
+  it('routes opt-in LangGraph runs behind ask without changing the default runner', async () => {
+    await initialize();
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    const result = await ask('What unlocks scenario 61?', {
+      emit,
+      runner: 'langgraph',
+      userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+
+    expect(result).toBe('LangGraph answer.');
+    expect(mockRunAgentLoopWithTrajectory).not.toHaveBeenCalled();
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith(
+      'What unlocks scenario 61?',
+      {
+        emit,
+        userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      },
+    );
   });
 
   it('initializes lazily when asked before warmup', async () => {

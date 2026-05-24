@@ -12,6 +12,7 @@ import {
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
 import { runAgentLoopWithTrajectory } from './agent.ts';
+import { runLangGraphAgentLoopWithTrajectory } from './agent-langgraph.ts';
 import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
 import {
@@ -555,6 +556,8 @@ export interface AskOptions {
   conversationId?: string;
   /** Persisted user-message UUID for trace/log correlation. */
   userMessageId?: string;
+  /** Hidden/eval-only runner selector. Production browser traffic defaults to `current`. */
+  runner?: 'current' | 'langgraph';
   /** Internal stream callback. Browser SSE translation happens in src/server.ts. */
   emit?: EmitFn;
   /** Internal route hint: `/api/ask` already rejected exhausted budgets before SSE starts. */
@@ -572,15 +575,16 @@ export async function ensureAskBudgetAvailable(userId?: string | null): Promise<
  */
 export async function ask(question: string, options?: AskOptions): Promise<string> {
   if (!isReady()) await initialize();
-  const { budgetPrechecked, ...agentOptions } = options ?? {};
+  const { budgetPrechecked, runner = 'current', ...agentOptions } = options ?? {};
   const userId = options?.userId ?? null;
   if (!budgetPrechecked) {
     await ensureAskBudgetAvailable(userId);
   }
-  const result = await runAgentLoopWithTrajectory(
-    question,
-    Object.keys(agentOptions).length > 0 ? agentOptions : undefined,
-  );
+  const runnerOptions = Object.keys(agentOptions).length > 0 ? agentOptions : undefined;
+  const result =
+    runner === 'langgraph'
+      ? await runLangGraphAgentLoopWithTrajectory(question, runnerOptions)
+      : await runAgentLoopWithTrajectory(question, runnerOptions);
   try {
     await recordLlmUsage({
       userId,
