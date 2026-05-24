@@ -450,7 +450,7 @@ export async function main(): Promise<void> {
     console.log();
   }
 
-  if (allNewEntries.length === 0) {
+  if (allNewEntries.length === 0 && changedSourcesByGame.size === 0) {
     console.log('Nothing new to index.');
     return;
   }

@@ -515,6 +515,32 @@ describe('main', () => {
     expect(mockAddEntries).not.toHaveBeenCalled();
   });
 
+  it('removes changed-source rows when replacement text produces no chunks', async () => {
+    mockReaddirSync.mockImplementation((path) => {
+      const dir = String(path);
+      if (dir.endsWith('/pdfs')) return [];
+      if (dir.endsWith('/rule-sources')) return ['fh-changed.md'];
+      return [];
+    });
+    mockReadFileSync.mockReturnValue(Buffer.from('short'));
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'frosthaven'
+          ? new Map([['fh-changed.md', 'old-hash']])
+          : new Map<string, string | null>(),
+      ),
+    );
+
+    await main();
+
+    expect(mockReplaceEntriesForSources).toHaveBeenCalledOnce();
+    expect(mockReplaceEntriesForSources.mock.calls[0][0]).toEqual(
+      new Map([['frosthaven', ['fh-changed.md']]]),
+    );
+    expect(mockReplaceEntriesForSources.mock.calls[0][1]).toEqual([]);
+    expect(mockAddEntries).not.toHaveBeenCalled();
+  });
+
   it('deletes embedding rows for PDFs that no longer exist', async () => {
     mockReaddirSync.mockReturnValue(['fh-kept.pdf']);
     const keptBytes = Buffer.from('kept pdf bytes');
