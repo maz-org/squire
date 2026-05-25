@@ -614,7 +614,7 @@ cd ~/data/ghs
 # Frosthaven only
 git sparse-checkout set data/fh
 
-# Gloomhaven 2nd Edition only
+# Gloomhaven (2nd Edition) only
 git sparse-checkout set data/gh2e
 
 # Both games in the same sparse checkout
@@ -628,7 +628,7 @@ subtree when `GHS_DATA_DIR` points at a checkout root; it defaults to `fh`:
 # Frosthaven
 GHS_DATA_DIR=~/data/ghs node src/import-monster-stats.ts
 
-# Gloomhaven 2nd Edition
+# Gloomhaven (2nd Edition)
 GHS_DATA_DIR=~/data/ghs GHS_DATA_GAME=gh2e node src/import-monster-stats.ts
 ```
 

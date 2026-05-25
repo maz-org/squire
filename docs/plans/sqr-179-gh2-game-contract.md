@@ -15,10 +15,10 @@ explicitly changes the contract.
 
 ## Game IDs
 
-| Meaning                                              | Canonical value | Notes                              |
-| ---------------------------------------------------- | --------------- | ---------------------------------- |
-| Frosthaven                                           | `frosthaven`    | Existing value. Do not rename.     |
-| Gloomhaven (2nd Edition) / Gloomhaven Second Edition | `gloomhaven-2e` | Canonical internal id for Phase 2. |
+| Meaning                                  | Canonical value | Notes                              |
+| ---------------------------------------- | --------------- | ---------------------------------- |
+| Frosthaven                               | `frosthaven`    | Existing value. Do not rename.     |
+| Gloomhaven (2nd Edition) / Gloomhaven 2e | `gloomhaven-2e` | Canonical internal id for Phase 2. |
 
 Use `gloomhaven-2e` everywhere Squire needs a stable machine id:
 

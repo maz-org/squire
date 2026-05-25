@@ -276,9 +276,9 @@ Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2:
 
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 
-- **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2'` (extensible)
+- **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2e'` (extensible)
 - **Rule-source chunks** are implicitly tagged via filename prefix in `data/pdfs/` and `data/rule-sources/`: `fh-rule-book.pdf`, `gh2-rule-book.pdf`, `gh2-faq.html`, `gh2-errata.html`, etc. The `source` field in the vector store carries the basename.
-- **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2', prosperity: 4 })`)
+- **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2e', prosperity: 4 })`)
 - **Agent system prompt** is told which game the user is asking about. Phase 2 uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
 
 The `game` column ships in **Phase 1** as part of the Storage & Data Migration project — every `card_*` table and the `embeddings` table includes `game text not null default 'frosthaven'` from day 1. Atomic tools accept the optional `game` parameter but don't filter on it until Phase 2. Pulling the column forward avoids 11 ALTER TABLE migrations later when GH2 lands. The `game` field on **import records** (the JSON shape produced by `src/import-*.ts`) is still added in Phase 2 alongside the GH2 import scripts, since today's Frosthaven importers don't need it.
@@ -289,7 +289,7 @@ The `game` column ships in **Phase 1** as part of the Storage & Data Migration p
 
 ### Static Game Data — Gloomhaven Secretariat (GHS)
 
-Squire imports static game data directly from **Gloomhaven Secretariat (GHS)** — an open-source Gloomhaven / Frosthaven companion app maintained by Lurkars on GitHub: <https://github.com/Lurkars/gloomhavensecretariat>. GHS maintains structured data in its `data/` subfolder, community-maintained and auto-formatted on commit. GHS already supports Gloomhaven 2nd Edition, which unblocks Phase 2.
+Squire imports static game data directly from **Gloomhaven Secretariat (GHS)** — an open-source Gloomhaven / Frosthaven companion app maintained by Lurkars on GitHub: <https://github.com/Lurkars/gloomhavensecretariat>. GHS maintains structured data in its `data/` subfolder, community-maintained and auto-formatted on commit. GHS already supports Gloomhaven (2nd Edition), which unblocks Phase 2.
 
 Squire has dedicated import scripts in `src/import-*.ts` for each card type:
 
@@ -368,7 +368,7 @@ _Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md
   characterId: string
   userId: string
   campaignId: string
-  game: 'frosthaven' | 'gloomhaven-2'
+  game: 'frosthaven' | 'gloomhaven-2e'
   className: string
   level: number
   xp: number

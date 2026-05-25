@@ -4,7 +4,7 @@
 **Target:** 2026-04-08
 **Produced by:** plan-eng-review session on 2026-04-07
 **Companion docs (read first):** `docs/ARCHITECTURE.md`, `docs/SPEC.md`, `docs/SECURITY.md`, `docs/DEVELOPMENT.md`
-**Companion checkpoint:** `docs/plans/storage-migration-review-checkpoint.md` — the interactive decision log that produced this spec. Read it if you need to know *why* a decision was made.
+**Companion checkpoint:** `docs/plans/storage-migration-review-checkpoint.md` — the interactive decision log that produced this spec. Read it if you need to know _why_ a decision was made.
 
 ---
 
@@ -48,15 +48,15 @@ data/extracted/*.json ───▶   card_* tables            ◀────  s
 
 ### Diff vs rebuild
 
-| Change | Diff-able? | Recovery |
-| --- | --- | --- |
-| New PDF added | Yes | `index-docs.ts` skip-by-source (already works) |
-| Existing PDF changed | Partial | `DELETE FROM embeddings WHERE source=$1` + reindex that source |
-| PDF removed | Yes | `DELETE FROM embeddings WHERE source=$1` |
-| Chunking logic changed | No | Full reindex — manual trigger with `rebuild: true` |
-| Embedding model or dimension changed | No | Drizzle schema migration (vector column type changes) + full reindex |
-| GHS card data updated | Yes | Idempotent upsert by `(game, <natural_id>)` |
-| Card schema changed | Yes | Drizzle migration + upsert-all |
+| Change                               | Diff-able? | Recovery                                                             |
+| ------------------------------------ | ---------- | -------------------------------------------------------------------- |
+| New PDF added                        | Yes        | `index-docs.ts` skip-by-source (already works)                       |
+| Existing PDF changed                 | Partial    | `DELETE FROM embeddings WHERE source=$1` + reindex that source       |
+| PDF removed                          | Yes        | `DELETE FROM embeddings WHERE source=$1`                             |
+| Chunking logic changed               | No         | Full reindex — manual trigger with `rebuild: true`                   |
+| Embedding model or dimension changed | No         | Drizzle schema migration (vector column type changes) + full reindex |
+| GHS card data updated                | Yes        | Idempotent upsert by `(game, <natural_id>)`                          |
+| Card schema changed                  | Yes        | Drizzle migration + upsert-all                                       |
 
 ### Drift guard: `embedding_version`
 
@@ -83,17 +83,23 @@ export const users = pgTable('users', {
 ### `sessions` (shell — populated by User Accounts)
 
 ```ts
-export const sessions = pgTable('sessions', {
-  id: text('id').primaryKey(), // opaque session token
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-}, (t) => ({
-  userIdx: index('sessions_user_idx').on(t.userId),
-  expiresIdx: index('sessions_expires_idx').on(t.expiresAt),
-}));
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(), // opaque session token
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+  },
+  (t) => ({
+    userIdx: index('sessions_user_idx').on(t.userId),
+    expiresIdx: index('sessions_expires_idx').on(t.expiresAt),
+  }),
+);
 ```
 
 ### `oauth_clients` (active — used from day 1)
@@ -114,83 +120,105 @@ export const oauthClients = pgTable('oauth_clients', {
 ### `oauth_authorization_codes` (active — hashed at rest per Decision 6)
 
 ```ts
-export const oauthAuthorizationCodes = pgTable('oauth_authorization_codes', {
-  // SHA-256 hex of the authorization code; the raw code is only ever in flight.
-  codeHash: text('code_hash').primaryKey(),
-  clientId: uuid('client_id').notNull().references(() => oauthClients.clientId, { onDelete: 'cascade' }),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // nullable until User Accounts wires consent
-  redirectUri: text('redirect_uri').notNull(),
-  codeChallenge: text('code_challenge').notNull(),
-  codeChallengeMethod: text('code_challenge_method').notNull().default('S256'),
-  scope: text('scope'),
-  state: text('state'),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(), // createdAt + 60s
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  expiresIdx: index('oauth_auth_codes_expires_idx').on(t.expiresAt),
-}));
+export const oauthAuthorizationCodes = pgTable(
+  'oauth_authorization_codes',
+  {
+    // SHA-256 hex of the authorization code; the raw code is only ever in flight.
+    codeHash: text('code_hash').primaryKey(),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => oauthClients.clientId, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // nullable until User Accounts wires consent
+    redirectUri: text('redirect_uri').notNull(),
+    codeChallenge: text('code_challenge').notNull(),
+    codeChallengeMethod: text('code_challenge_method').notNull().default('S256'),
+    scope: text('scope'),
+    state: text('state'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(), // createdAt + 60s
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    expiresIdx: index('oauth_auth_codes_expires_idx').on(t.expiresAt),
+  }),
+);
 ```
 
 ### `oauth_tokens` (active — hashed at rest per Decision 2, long-lived per Decision 2 clarification)
 
 ```ts
-export const oauthTokens = pgTable('oauth_tokens', {
-  // SHA-256 hex of the access token; raw token is only ever in flight.
-  tokenHash: text('token_hash').primaryKey(),
-  clientId: uuid('client_id').notNull().references(() => oauthClients.clientId, { onDelete: 'cascade' }),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // nullable until User Accounts wires consent
-  scope: text('scope'),
-  // Long-lived per feedback_long_lived_tokens memory and SECURITY.md §2 (as updated).
-  // 30-day default, may revisit if threat model changes.
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-}, (t) => ({
-  clientIdx: index('oauth_tokens_client_idx').on(t.clientId),
-  userIdx: index('oauth_tokens_user_idx').on(t.userId),
-  expiresIdx: index('oauth_tokens_expires_idx').on(t.expiresAt),
-}));
+export const oauthTokens = pgTable(
+  'oauth_tokens',
+  {
+    // SHA-256 hex of the access token; raw token is only ever in flight.
+    tokenHash: text('token_hash').primaryKey(),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => oauthClients.clientId, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }), // nullable until User Accounts wires consent
+    scope: text('scope'),
+    // Long-lived per feedback_long_lived_tokens memory and SECURITY.md §2 (as updated).
+    // 30-day default, may revisit if threat model changes.
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  },
+  (t) => ({
+    clientIdx: index('oauth_tokens_client_idx').on(t.clientId),
+    userIdx: index('oauth_tokens_user_idx').on(t.userId),
+    expiresIdx: index('oauth_tokens_expires_idx').on(t.expiresAt),
+  }),
+);
 ```
 
 ### `oauth_audit_log` (active — write on every auth event)
 
 ```ts
-export const oauthAuditLog = pgTable('oauth_audit_log', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  eventType: text('event_type').notNull(), // 'register' | 'authorize' | 'token_issue' | 'token_verify' | 'token_revoke' | 'token_expired' | 'code_exchange'
-  clientId: uuid('client_id').references(() => oauthClients.clientId, { onDelete: 'set null' }),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  outcome: text('outcome').notNull(), // 'success' | 'failure'
-  failureReason: text('failure_reason'), // short machine-readable code
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  clientIdx: index('oauth_audit_client_idx').on(t.clientId),
-  userIdx: index('oauth_audit_user_idx').on(t.userId),
-  createdIdx: index('oauth_audit_created_idx').on(t.createdAt),
-}));
+export const oauthAuditLog = pgTable(
+  'oauth_audit_log',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    eventType: text('event_type').notNull(), // 'register' | 'authorize' | 'token_issue' | 'token_verify' | 'token_revoke' | 'token_expired' | 'code_exchange'
+    clientId: uuid('client_id').references(() => oauthClients.clientId, { onDelete: 'set null' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    outcome: text('outcome').notNull(), // 'success' | 'failure'
+    failureReason: text('failure_reason'), // short machine-readable code
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    clientIdx: index('oauth_audit_client_idx').on(t.clientId),
+    userIdx: index('oauth_audit_user_idx').on(t.userId),
+    createdIdx: index('oauth_audit_created_idx').on(t.createdAt),
+  }),
+);
 ```
 
 ### `embeddings` (active — rulebook vectors, per Decision 4 + 9 drift guard)
 
 ```ts
-export const embeddings = pgTable('embeddings', {
-  id: text('id').primaryKey(), // `${source}::${chunkIndex}` — preserves existing ID shape
-  source: text('source').notNull(), // PDF filename basename
-  chunkIndex: integer('chunk_index').notNull(),
-  text: text('text').notNull(),
-  embedding: vector('embedding', { dimensions: 384 }).notNull(), // pgvector, Xenova MiniLM-L6-v2
-  game: text('game').notNull().default('frosthaven'), // Decision 4 — pulled forward from Phase 2
-  embeddingVersion: text('embedding_version').notNull(), // Decision 9 — drift guard
-}, (t) => ({
-  sourceChunkIdx: uniqueIndex('embeddings_source_chunk_idx').on(t.source, t.chunkIndex),
-  gameIdx: index('embeddings_game_idx').on(t.game),
-  // HNSW index for cosine similarity — see SQR-33 note on operator sign flip.
-  embeddingHnswIdx: index('embeddings_hnsw_idx')
-    .using('hnsw', sql`${embeddings.embedding} vector_cosine_ops`),
-}));
+export const embeddings = pgTable(
+  'embeddings',
+  {
+    id: text('id').primaryKey(), // `${source}::${chunkIndex}` — preserves existing ID shape
+    source: text('source').notNull(), // PDF filename basename
+    chunkIndex: integer('chunk_index').notNull(),
+    text: text('text').notNull(),
+    embedding: vector('embedding', { dimensions: 384 }).notNull(), // pgvector, Xenova MiniLM-L6-v2
+    game: text('game').notNull().default('frosthaven'), // Decision 4 — pulled forward from Phase 2
+    embeddingVersion: text('embedding_version').notNull(), // Decision 9 — drift guard
+  },
+  (t) => ({
+    sourceChunkIdx: uniqueIndex('embeddings_source_chunk_idx').on(t.source, t.chunkIndex),
+    gameIdx: index('embeddings_game_idx').on(t.game),
+    // HNSW index for cosine similarity — see SQR-33 note on operator sign flip.
+    embeddingHnswIdx: index('embeddings_hnsw_idx').using(
+      'hnsw',
+      sql`${embeddings.embedding} vector_cosine_ops`,
+    ),
+  }),
+);
 ```
 
 ### Card tables — 10 of them, all follow this shape
@@ -252,12 +280,12 @@ fixes, we unified on `(game, source_id)` for every card type.
 
 **Collisions found against the original per-type keys:**
 
-| Card type | Original key | Collisions | Root cause |
-| --- | --- | --- | --- |
-| `events` | `(game, event_type, number)` | 114 | Outpost summer/winter share numbering. Adding `season` would fix it but creates a NULLs-distinct edge case for boat events. |
-| `monster-abilities` | `(game, monster_type, card_name)` | 32 | The Boss deck is a *template* — every boss scenario instantiates its own variant with scenario-specific initiatives. There's no field in `MonsterAbilitySchema` that names which boss owns the card. |
-| `buildings` | `(game, building_number, level)` | 4 | Walls have no building number in the GHS domain. Importer was emitting `buildingNumber: undefined`. |
-| `scenarios` | `(game, index)` | 17 | Frosthaven solo scenarios share `index` values with the main campaign (e.g. main scenario 20 "Temple of Liberation" vs solo scenario 20 "Wonder of Nature"). The schema had no namespace field. |
+| Card type           | Original key                      | Collisions | Root cause                                                                                                                                                                                           |
+| ------------------- | --------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `events`            | `(game, event_type, number)`      | 114        | Outpost summer/winter share numbering. Adding `season` would fix it but creates a NULLs-distinct edge case for boat events.                                                                          |
+| `monster-abilities` | `(game, monster_type, card_name)` | 32         | The Boss deck is a _template_ — every boss scenario instantiates its own variant with scenario-specific initiatives. There's no field in `MonsterAbilitySchema` that names which boss owns the card. |
+| `buildings`         | `(game, building_number, level)`  | 4          | Walls have no building number in the GHS domain. Importer was emitting `buildingNumber: undefined`.                                                                                                  |
+| `scenarios`         | `(game, index)`                   | 17         | Frosthaven solo scenarios share `index` values with the main campaign (e.g. main scenario 20 "Temple of Liberation" vs solo scenario 20 "Wonder of Nature"). The schema had no namespace field.      |
 
 **Why `(game, source_id)` instead of patching each per-type key:**
 
@@ -296,7 +324,7 @@ fixes, we unified on `(game, source_id)` for every card type.
 **Drizzle implementation note:** the schema files at `src/db/schema/{core,auth,cards,index}.ts` ship in SQR-31 (this issue) along with `drizzle-orm` + `pg` as dependencies. SQR-32 still owns `src/db.ts`, the migration generation, the docker-compose Postgres service, and the CI service container — adding the deps early lets the schema files typecheck in this PR.
 
 **Parity-test note:** the `load(type)` parity snapshots for SQR-34 must
-be generated *after* `sourceId` lands in the Zod schemas, not before, or
+be generated _after_ `sourceId` lands in the Zod schemas, not before, or
 every snapshot will diff on the new field.
 
 ---
@@ -367,7 +395,9 @@ export function getDb(mode: Mode = 'server') {
     });
     return {
       db: drizzle(serverPool, { schema }),
-      close: async () => { /* server pool lives for process lifetime */ },
+      close: async () => {
+        /* server pool lives for process lifetime */
+      },
     };
   }
   const pool = new Pool({
@@ -442,7 +472,7 @@ Ripple sites to update:
 Two changes to the tool signatures, both deliberate:
 
 1. **All five tools become async.** `searchCards`, `listCardTypes`, `listCards`, and `getCard` were synchronous; they now return `Promise<...>`. `searchRules` was already async (because of the embedder), unchanged in that regard.
-2. **Each tool gains an optional `game` parameter.** `searchRules(query, topK, opts?)`, `searchCards(query, topK, opts?)`, `listCardTypes(opts?)`, `listCards(type, filter?, opts?)`, `getCard(type, id, opts?)`, where `opts = { game?: 'frosthaven' | 'gloomhaven-2' }` and defaults to `'frosthaven'`. Phase 1 ignores the value at the call sites; Phase 2 wires the per-session game selector through to the tool calls.
+2. **Each tool gains an optional `game` parameter.** `searchRules(query, topK, opts?)`, `searchCards(query, topK, opts?)`, `listCardTypes(opts?)`, `listCards(type, filter?, opts?)`, `getCard(type, id, opts?)`, where `opts = { game?: 'frosthaven' | 'gloomhaven-2e' }` and defaults to `'frosthaven'`. Phase 1 ignores the value at the call sites; Phase 2 wires the per-session game selector through to the tool calls.
 
 Return types are unchanged (`RuleResult[]`, `CardResult[]`, `CardTypeInfo[]`, etc.). The score semantics on `searchRules` are preserved by the operator sign-flip handling in `vector-store.ts`. The score semantics on `searchCards` shift from "keyword overlap count" to "ts_rank value" once SQR-34's FTS swap lands — same field, different distribution; PR description must call this out.
 
@@ -508,7 +538,7 @@ Test suite runtime target: under 15s. If it goes over, add a parallel-safe test 
 
 ## Regression tests (IRON RULE — mandatory)
 
-Three regressions the migration must not silently introduce. These get tests *before* the migration code is written.
+Three regressions the migration must not silently introduce. These get tests _before_ the migration code is written.
 
 ### 1. `load(type)` parity (SQR-34)
 
@@ -522,16 +552,16 @@ Fixed query set in `test/fixtures/search-queries.json`:
 
 ```json
 [
-  {"query": "poison condition", "expectedTopSources": ["monster-stats"]},
-  {"query": "drifter level 4", "expectedTopSources": ["character-abilities"]},
-  {"query": "prosperity 3 items", "expectedTopSources": ["items"]},
+  { "query": "poison condition", "expectedTopSources": ["monster-stats"] },
+  { "query": "drifter level 4", "expectedTopSources": ["character-abilities"] },
+  { "query": "prosperity 3 items", "expectedTopSources": ["items"] }
   // ... 20 total
 ]
 ```
 
 Pre-migration: capture top-6 IDs for each query. Post-migration: assert same top-6 IDs come back in the same order.
 
-**Expected failure mode:** if SQR-34 swaps the keyword scorer for `ts_rank`, ordering *will* change. That's an intentional decision, not a regression — update the snapshot in the same PR, explain the delta in the PR description, and get explicit approval.
+**Expected failure mode:** if SQR-34 swaps the keyword scorer for `ts_rank`, ordering _will_ change. That's an intentional decision, not a regression — update the snapshot in the same PR, explain the delta in the PR description, and get explicit approval.
 
 ### 3. Tokens survive process restart (new auth.ts rewrite issue)
 
@@ -571,12 +601,12 @@ SQR-36 (seed scripts)
 
 Parallelization across 4 worktrees / agents:
 
-| Lane | Sequence | Touches |
-| --- | --- | --- |
+| Lane  | Sequence                                                                           | Touches                                                                                                   |
+| ----- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | **A** | SQR-31 + SQR-32 (schema design + Postgres setup, one unit) → SQR-33 (vector store) | `src/db*`, `src/vector-store.ts`, `src/index-docs.ts`, `docker-compose.yml`, `.github/workflows/test.yml` |
-| **B** | wait for Lane A's `db.ts` + schema → SQR-34 (card data) | `src/extracted-data.ts`, `src/db/schema.ts` (card_* only) |
-| **C** | wait for Lane A's `db.ts` + schema → NEW auth.ts rewrite | `src/auth.ts`, `src/db/schema.ts` (oauth_* only) |
-| **D** | wait for A+B+C → SQR-35 (atomic tools async ripple) + SQR-36 (seed scripts) | `src/tools.ts`, `src/mcp.ts`, `src/service.ts`, `src/agent.ts`, `src/seed/*` |
+| **B** | wait for Lane A's `db.ts` + schema → SQR-34 (card data)                            | `src/extracted-data.ts`, `src/db/schema.ts` (card\_\* only)                                               |
+| **C** | wait for Lane A's `db.ts` + schema → NEW auth.ts rewrite                           | `src/auth.ts`, `src/db/schema.ts` (oauth\_\* only)                                                        |
+| **D** | wait for A+B+C → SQR-35 (atomic tools async ripple) + SQR-36 (seed scripts)        | `src/tools.ts`, `src/mcp.ts`, `src/service.ts`, `src/agent.ts`, `src/seed/*`                              |
 
 Lane A ships first. Lanes B and C run in parallel after A. Lane D consolidates.
 

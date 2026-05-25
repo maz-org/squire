@@ -265,10 +265,10 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 **Tasks:**
 
 - Ingest the Gloomhaven (2nd Edition) rulebook, scenario-book, and section-book PDFs into `data/pdfs/` and reindex / reseed (`npm run index`, `npm run seed:scenario-section-books`)
-- Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven 2nd Edition, so the import path is unblocked.
+- Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven (2nd Edition), so the import path is unblocked.
 - **Turn on the `game` dimension** so the agent doesn't mix Frosthaven and GH2 rules in the same answer. The Storage & Data Migration project (Phase 1) ships the `game` column on every `card_*` table and the `embeddings` table with `default 'frosthaven'`, so existing rows are tagged correctly. The runtime code that _populates_ and _filters_ on the column is Phase 2 work — none of this exists today. Phase 2 will:
-  - Update the GH2 import scripts to write `game: 'gloomhaven-2'` on each new row (the existing Frosthaven importers don't yet write a `game` field; they rely on the column default)
-  - Add filename-prefix → `game` derivation in `src/index-docs.ts` so rule chunks from `fh-*.pdf` get `game: 'frosthaven'` and chunks from `gh2-*.pdf` get `game: 'gloomhaven-2'`. Today `IndexEntry` in `src/vector-store.ts` has no `game` field at all — Phase 2 adds it alongside the index-docs.ts changes.
+  - Update the GH2 import scripts to write `game: 'gloomhaven-2e'` on each new row (the existing Frosthaven importers don't yet write a `game` field; they rely on the column default)
+  - Add filename-prefix → `game` derivation in `src/index-docs.ts` so rule chunks from `fh-*.pdf` get `game: 'frosthaven'` and chunks from `gh2-*.pdf` get `game: 'gloomhaven-2e'`. Today `IndexEntry` in `src/vector-store.ts` has no `game` field at all — Phase 2 adds it alongside the index-docs.ts changes.
   - Wire the optional `game` filter parameter on the atomic tools through to the agent system prompt and through every call site that knows the active game
 - Update the agent system prompt to know which game the user is asking about (per-session game selector for MVP; inferred from campaign once Phase 4 lands)
 - Smoke test: ask both a Frosthaven and a Gloomhaven (2nd Edition) rules question in the same session and verify no cross-contamination
@@ -276,7 +276,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 **Risks:**
 
 - **frosthaven-storyline.com may not support Gloomhaven (2nd Edition).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, his current campaign-tracking workflow breaks for the new game and the future Phase 6 ingestion path needs to be re-evaluated for GH2 specifically. Mitigation: confirm storyline GH2 support before this phase begins; if absent, consider switching campaign management to GHS itself for the GH2 campaign (GHS is also a campaign tracker, not just a data source — see Phase 6 ingestion options).
-- **Action item for Brian:** before this phase begins, verify that frosthaven-storyline.com (or its successor) supports Gloomhaven 2nd Edition. If not, plan the GH2 campaign-tracking workflow accordingly.
+- **Action item for Brian:** before this phase begins, verify that frosthaven-storyline.com (or its successor) supports Gloomhaven (2nd Edition). If not, plan the GH2 campaign-tracking workflow accordingly.
 
 **Out of scope:** original Gloomhaven (1st Edition), Jaws of the Lion, Crimson Scales, Forgotten Circles. Those stay in Future Enhancements.
 
@@ -483,7 +483,7 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
   - Header updated: Version 3.0, Owner: Product (PM), companion-doc note added.
 
 - **2026-04-07 (v2.1):** GH2 phase + cleanup of stale sections missed in v2.0.
-  - **New Phase 2: Gloomhaven (2nd Edition) content expansion.** Deadline-driven (Brian's group transitions to GH2 in ~mid-2026, ~3–4 months from now). Adds GH2 rulebook ingestion, GHS GH2 import scripts, and a `game` dimension to the data layer to prevent cross-contamination of FH and GH2 rules. Confirmed via web search that GHS supports Gloomhaven 2nd Edition.
+  - **New Phase 2: Gloomhaven (2nd Edition) content expansion.** Deadline-driven (Brian's group transitions to GH2 in ~mid-2026, ~3–4 months from now). Adds GH2 rulebook ingestion, GHS GH2 import scripts, and a `game` dimension to the data layer to prevent cross-contamination of FH and GH2 rules. Confirmed via web search that GHS supports Gloomhaven (2nd Edition).
   - **Phases renumbered:** old Phases 2–7 shifted down to 3–8. Eight phases total now. All in-document phase number cross-references updated.
   - **Phase 6 (Character state ingestion) gains a fifth option: GHS-as-tracker.** Brian uses GHS as the campaign tracker instead of frosthaven-storyline.com, and Squire reads campaign state directly from GHS. Especially compelling for the GH2 campaign since storyline.com may not support GH2.
   - **New Risk 8:** frosthaven-storyline.com may not support Gloomhaven (2nd Edition). Action item to confirm before Phase 2 begins; if absent, GH2 must use the GHS-as-tracker ingestion path.
