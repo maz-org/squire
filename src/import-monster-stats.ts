@@ -13,16 +13,16 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   loadLabels,
   resolveLabel,
   resolveGameTokens,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_MONSTER_DIR = join(GHS_DATA_DIR, 'monster');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'monster-stats.json');
 
 // ─── GHS types ───────────────────────────────────────────────────────────────
@@ -165,22 +165,25 @@ export function convertMonster(ghs: GhsMonster, labels: LabelData): ExtractedMon
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function importMonsterStats(): ExtractedMonster[] {
-  if (!existsSync(GHS_MONSTER_DIR)) {
+export function importMonsterStats(configInput: GhsImporterConfigInput = {}): ExtractedMonster[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsMonsterDir = join(config.dataDir, 'monster');
+
+  if (!existsSync(ghsMonsterDir)) {
     throw new Error(
-      `GHS data not found at ${GHS_MONSTER_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS data not found at ${ghsMonsterDir}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
+  const labels = loadLabels(config);
   const allResults: ExtractedMonster[] = [];
 
-  for (const file of readdirSync(GHS_MONSTER_DIR).sort()) {
+  for (const file of readdirSync(ghsMonsterDir).sort()) {
     if (!file.endsWith('.json')) continue;
     // Skip scenario-specific and solo variants
     if (file.includes('scenario') || file.includes('solo')) continue;
 
-    const ghs: GhsMonster = JSON.parse(readFileSync(join(GHS_MONSTER_DIR, file), 'utf-8'));
+    const ghs: GhsMonster = JSON.parse(readFileSync(join(ghsMonsterDir, file), 'utf-8'));
     const records = convertMonster(ghs, labels);
 
     for (const record of records) {

@@ -14,18 +14,18 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  GHS_DATA_DIR,
   capitalize,
   kebabToTitle,
   resolveLabel,
   formatAction,
   loadLabels,
+  resolveGhsImporterConfig,
   type GhsAction,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_ITEMS_PATH = join(GHS_DATA_DIR, 'items.json');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'items.json');
 
 // ─── GHS item type ──────────────────────────────────────────────────────────
@@ -160,15 +160,18 @@ export function convertItem(ghs: GhsItem, labels: LabelData): ExtractedItem {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importItems(): ExtractedItem[] {
-  if (!existsSync(GHS_ITEMS_PATH)) {
+export function importItems(configInput: GhsImporterConfigInput = {}): ExtractedItem[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsItemsPath = join(config.dataDir, 'items.json');
+
+  if (!existsSync(ghsItemsPath)) {
     throw new Error(
-      `GHS items data not found at ${GHS_ITEMS_PATH}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS items data not found at ${ghsItemsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
-  const items: GhsItem[] = JSON.parse(readFileSync(GHS_ITEMS_PATH, 'utf-8'));
+  const labels = loadLabels(config);
+  const items: GhsItem[] = JSON.parse(readFileSync(ghsItemsPath, 'utf-8'));
   const results: ExtractedItem[] = [];
 
   for (const item of items) {

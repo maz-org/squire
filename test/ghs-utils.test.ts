@@ -7,6 +7,7 @@ import {
   resolveGameTokens,
   formatAction,
   resolveGhsDataDir,
+  resolveGhsImporterConfig,
 } from '../src/ghs-utils.ts';
 
 // ─── GHS data path resolution ───────────────────────────────────────────────
@@ -61,6 +62,48 @@ describe('resolveGhsDataDir', () => {
         exists: () => false,
       }),
     ).toBe(join(root, 'data', 'gh2e'));
+  });
+});
+
+// ─── GHS importer configuration ─────────────────────────────────────────────
+
+describe('resolveGhsImporterConfig', () => {
+  it('maps game ids to GHS data subdirectories', () => {
+    const root = '/tmp/ghs';
+
+    expect(
+      resolveGhsImporterConfig({
+        game: 'frosthaven',
+        sourceDir: root,
+        exists: (path) => path === join(root, 'data', 'fh'),
+      }),
+    ).toMatchObject({
+      game: 'frosthaven',
+      sourceDir: root,
+      dataDir: join(root, 'data', 'fh'),
+    });
+
+    expect(
+      resolveGhsImporterConfig({
+        game: 'gh2',
+        sourceDir: root,
+        exists: (path) => path === join(root, 'data', 'gh2e'),
+      }),
+    ).toMatchObject({
+      game: 'gloomhaven-2e',
+      sourceDir: root,
+      dataDir: join(root, 'data', 'gh2e'),
+    });
+  });
+
+  it('rejects a direct source directory for the wrong game', () => {
+    expect(() =>
+      resolveGhsImporterConfig({
+        game: 'gh2',
+        sourceDir: '/tmp/ghs/data/fh',
+        exists: () => true,
+      }),
+    ).toThrow('does not match requested game');
   });
 });
 

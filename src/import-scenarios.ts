@@ -14,18 +14,18 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   loadLabels,
   resolveLabel,
   resolveGameTokens,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
 
 import { resolveSectionRefs } from './import-buildings.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_SCENARIO_DIR = join(GHS_DATA_DIR, 'scenarios');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'scenarios.json');
 
 // ─── GHS types (scenario-relevant subset) ───────────────────────────────────
@@ -193,21 +193,24 @@ export function convertScenario(
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importScenarios(): ExtractedScenario[] {
-  if (!existsSync(GHS_SCENARIO_DIR)) {
+export function importScenarios(configInput: GhsImporterConfigInput = {}): ExtractedScenario[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsScenarioDir = join(config.dataDir, 'scenarios');
+
+  if (!existsSync(ghsScenarioDir)) {
     throw new Error(
-      `GHS scenario data not found at ${GHS_SCENARIO_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS scenario data not found at ${ghsScenarioDir}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
+  const labels = loadLabels(config);
   const allResults: ExtractedScenario[] = [];
 
-  for (const file of readdirSync(GHS_SCENARIO_DIR).sort()) {
+  for (const file of readdirSync(ghsScenarioDir).sort()) {
     if (!file.endsWith('.json')) continue;
 
     const filenameBasename = file.slice(0, -'.json'.length);
-    const scenario: GhsScenario = JSON.parse(readFileSync(join(GHS_SCENARIO_DIR, file), 'utf-8'));
+    const scenario: GhsScenario = JSON.parse(readFileSync(join(ghsScenarioDir, file), 'utf-8'));
 
     const converted = convertScenario(scenario, filenameBasename, labels);
 
