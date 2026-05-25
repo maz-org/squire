@@ -69,9 +69,9 @@ export const CharacterAbilitySchema = z.object({
   cardName: z.string().describe('Name of the card'),
   characterClass: z.string().describe('Character class name'),
   level: z
-    .union([z.number().int(), z.literal('X')])
+    .union([z.number().int(), z.literal('X'), z.literal('M')])
     .nullable()
-    .describe('Card level number, "X" for lost cards with no level, or null'),
+    .describe('Card level number, "X" for lost cards, "M" for medical-pack cards, or null'),
   initiative: nullableInt.describe('Initiative number, or null if not visible'),
   top: z
     .object({
@@ -131,7 +131,7 @@ export const ItemSchema = z.object({
 
 export const EventSchema = z.object({
   sourceId: z.string().describe('GHS source identifier (e.g. gloomhavensecretariat:event/1234)'),
-  eventType: z.enum(['road', 'outpost', 'boat']).describe('Type of event'),
+  eventType: z.enum(['road', 'outpost', 'boat', 'city']).describe('Type of event'),
   season: z.enum(['summer', 'winter']).nullable().describe('Season if shown, or null'),
   number: z.string().describe('Event number as string'),
   flavorText: z.string().describe('Story/flavor text on the card'),

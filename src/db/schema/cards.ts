@@ -215,7 +215,7 @@ export const cardEvents = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     game: text('game').notNull().default('frosthaven'),
     sourceId: text('source_id').notNull(),
-    eventType: text('event_type').notNull(), // 'road' | 'outpost' | 'boat'
+    eventType: text('event_type').notNull(), // 'road' | 'outpost' | 'boat' | 'city'
     season: text('season'), // 'summer' | 'winter' | null
     number: text('number').notNull(),
     flavorText: text('flavor_text').notNull(),

@@ -570,14 +570,20 @@ authenticated routes and browser QA will break as soon as session cookies or
 CSRF validation enter the path.
 
 `npm run seed:cards` is idempotent — re-run it any time the extracted
-card JSON refreshes. It validates each record with the matching
+card JSON refreshes. By default it seeds Frosthaven's legacy flat files
+(`data/extracted/<type>.json`) and every game directory that exists
+(`data/extracted/gh2/<type>.json`). Set `SQUIRE_SEED_GAME=fh` or
+`SQUIRE_SEED_GAME=gh2` to seed only one game. It validates each record with the matching
 `SCHEMAS[type]` Zod schema and skips anything that fails (the failures are
 warned to stderr so you can see what got dropped). Records are upserted on
 `(game, source_id)`, so a stale card row gets overwritten in place.
 
 `npm run seed:scenario-section-books` is also idempotent. It replaces the
 `scenario_book_scenarios`, `section_book_sections`, and `book_references`
-rows for the active game from `data/extracted/scenario-section-books.json`.
+rows for Frosthaven from `data/extracted/scenario-section-books.json` and
+for GH2 from `data/extracted/gh2/scenario-section-books.json` when present.
+GH2 section rows are structured GHS metadata summaries, not printed section
+book prose.
 
 As of SQR-56 and SQR-103, runtime reads come from Postgres only:
 
@@ -620,15 +626,29 @@ subtree when `GHS_DATA_DIR` points at a checkout root; it defaults to `fh`:
 
 ```bash
 # Frosthaven
-GHS_DATA_DIR=~/data/ghs npx tsx src/import-monster-stats.ts
+GHS_DATA_DIR=~/data/ghs node src/import-monster-stats.ts
 
 # Gloomhaven 2nd Edition
-GHS_DATA_DIR=~/data/ghs GHS_DATA_GAME=gh2e npx tsx src/import-monster-stats.ts
+GHS_DATA_DIR=~/data/ghs GHS_DATA_GAME=gh2e node src/import-monster-stats.ts
 ```
 
 The clone lives outside the repo so it doesn't interfere with git or
-worktrees. Commit updated `data/extracted/*.json` files alongside your
-script changes.
+worktrees. Frosthaven imports write the legacy `data/extracted/*.json`
+files; GH2 imports write `data/extracted/gh2/*.json`. Run
+`src/import-ghs-scenario-section-books.ts` for GH2 scenario and section
+metadata. Commit updated extracted JSON files alongside your script changes.
+
+Current GH2 GHS coverage:
+
+- Supported card tables: items, monster stats, monster abilities, scenarios,
+  events, battle goals, character abilities, character mats, and personal
+  quests.
+- Supported scenario/section tables: scenario metadata, section metadata
+  summaries, and section-to-parent-scenario links.
+- Explicitly unsupported: GH2 buildings, because upstream GHS has no
+  `buildings.json` for GH2.
+- Deferred: GH2 treasure cards. Upstream GHS has `treasures.json`, but Squire
+  does not have a table-facing treasure card type yet.
 
 ## AI tooling setup
 

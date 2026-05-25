@@ -1,0 +1,5201 @@
+[
+  {
+    "cardName": "Trample",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 72,
+    "top": {
+      "action": "Attack 3, Pierce 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/1"
+  },
+  {
+    "cardName": "Eye for an Eye",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 13,
+    "top": {
+      "action": "Shield 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 3, Self",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/2"
+  },
+  {
+    "cardName": "Skewer",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 35,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 7",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/3"
+  },
+  {
+    "cardName": "Overwhelming Assault",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 61,
+    "top": {
+      "action": "Attack 7",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/4"
+  },
+  {
+    "cardName": "Balanced Measure",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 20,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/5"
+  },
+  {
+    "cardName": "Grab and Go",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 87,
+    "top": {
+      "action": "Loot 1",
+      "effects": [
+        "Heal 2, Self"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/6"
+  },
+  {
+    "cardName": "Warding Strength",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 32,
+    "top": {
+      "action": "Attack 2, Disarm",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On the next six sources of Damage from attacks targeting you, gain Shield 1, Retaliate 1 for the attack.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/7"
+  },
+  {
+    "cardName": "Shield Bash",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 15,
+    "top": {
+      "action": "Attack 4, Stun",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Shield 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/8"
+  },
+  {
+    "cardName": "Leaping Cleave",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 54,
+    "top": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Push 2, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/9"
+  },
+  {
+    "cardName": "Spare Dagger",
+    "characterClass": "Bruiser",
+    "level": 1,
+    "initiative": 27,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Pierce 1",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/10"
+  },
+  {
+    "cardName": "Sweeping Blow",
+    "characterClass": "Bruiser",
+    "level": "X",
+    "initiative": 23,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/11"
+  },
+  {
+    "cardName": "Fearsome Taunt",
+    "characterClass": "Bruiser",
+    "level": "X",
+    "initiative": 10,
+    "top": {
+      "action": "Attack 3, Push 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Shield 1",
+      "effects": [
+        "Whenever an enemy would attack one of your adjacent allies this round, you may have that attack target you instead, regardless of the attack's range and line-of-sight limitations."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/12"
+  },
+  {
+    "cardName": "Wall of Doom",
+    "characterClass": "Bruiser",
+    "level": "X",
+    "initiative": 18,
+    "top": {
+      "action": "Pull 2, Range 3, Muddle",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Pull 2, Range 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/13"
+  },
+  {
+    "cardName": "Intimidating Growl",
+    "characterClass": "Bruiser",
+    "level": 2,
+    "initiative": 51,
+    "top": {
+      "action": "Attack 2, Push 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "On your nex two move abilities, add Move +1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/14"
+  },
+  {
+    "cardName": "Juggernaut",
+    "characterClass": "Bruiser",
+    "level": 2,
+    "initiative": 34,
+    "top": {
+      "action": "Move 2",
+      "effects": [
+        "Attack 3"
+      ]
+    },
+    "bottom": {
+      "action": "On the next four sources of Damage you would suffer, negate that Damage.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/15"
+  },
+  {
+    "cardName": "Hook and Chain",
+    "characterClass": "Bruiser",
+    "level": 3,
+    "initiative": 42,
+    "top": {
+      "action": "Attack 3, Range 4, Pull 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "If you moved in a straight line in one direction with the move ability, perform:, where X is the number of hexes you moved."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/16"
+  },
+  {
+    "cardName": "Unstoppable Charge",
+    "characterClass": "Bruiser",
+    "level": 3,
+    "initiative": 86,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Stun, All, Range 1"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/17"
+  },
+  {
+    "cardName": "Whirlwind",
+    "characterClass": "Bruiser",
+    "level": 4,
+    "initiative": 28,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Push 3, All, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/18"
+  },
+  {
+    "cardName": "Push Through",
+    "characterClass": "Bruiser",
+    "level": 4,
+    "initiative": 57,
+    "top": {
+      "action": "Heal 5, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "During you next attack ability this round, add Attack +1 to all attacks.",
+      "effects": [
+        "Move 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/19"
+  },
+  {
+    "cardName": "Skirmishing Maneuver",
+    "characterClass": "Bruiser",
+    "level": 5,
+    "initiative": 29,
+    "top": {
+      "action": "Attack 2",
+      "effects": [
+        "Move 2",
+        "Attack 2"
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/20"
+  },
+  {
+    "cardName": "Defensive Tactics",
+    "characterClass": "Bruiser",
+    "level": 5,
+    "initiative": 39,
+    "top": {
+      "action": "The first time each round that you gain Shield or Retaliate from one of your ability or attack modifier cards, gain Shield 1 and Retaliate 1 for the round.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Pull 2, Target 2, Range 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/21"
+  },
+  {
+    "cardName": "Run Through",
+    "characterClass": "Bruiser",
+    "level": 6,
+    "initiative": 33,
+    "top": {
+      "action": "Attack 3, Pierce 2, Add Attack +1 on each undamaged target.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Push 1, Range 1, Immobilize"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/22"
+  },
+  {
+    "cardName": "Immovable Phalanx",
+    "characterClass": "Bruiser",
+    "level": 6,
+    "initiative": 17,
+    "top": {
+      "action": "Attack 4",
+      "effects": [
+        "Shield 1"
+      ]
+    },
+    "bottom": {
+      "action": "Once each turn, you may treat one move ability from your ability cards as an attack ability of equal value.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/23"
+  },
+  {
+    "cardName": "Let Fly",
+    "characterClass": "Bruiser",
+    "level": 7,
+    "initiative": 19,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Push 3",
+      "effects": [
+        "Move 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/24"
+  },
+  {
+    "cardName": "Selfish Retribution",
+    "characterClass": "Bruiser",
+    "level": 7,
+    "initiative": 8,
+    "top": {
+      "action": "Move 1",
+      "effects": [
+        "Loot 2"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/25"
+  },
+  {
+    "cardName": "Frenzied Onslaught",
+    "characterClass": "Bruiser",
+    "level": 8,
+    "initiative": 41,
+    "top": {
+      "action": "Move 2",
+      "effects": [
+        "Attack 3",
+        "Move 2",
+        "Attack 3"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/26"
+  },
+  {
+    "cardName": "Crippling Offensive",
+    "characterClass": "Bruiser",
+    "level": 8,
+    "initiative": 16,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3, Immobilize",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Muddle, All, Range 1",
+        "Shield 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/27"
+  },
+  {
+    "cardName": "Brute Force",
+    "characterClass": "Bruiser",
+    "level": 9,
+    "initiative": 9,
+    "top": {
+      "action": "Shield 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Add Attack +1 to each of your Push and Pull. Whenever you Push or Pull an enemy at least one hex, after the forced movement, that enemy and all enemies adjacent to it siffer Damage 1.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/28"
+  },
+  {
+    "cardName": "Face Your End",
+    "characterClass": "Bruiser",
+    "level": 9,
+    "initiative": 67,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3, Pull 2",
+      "effects": [
+        "Attack 3"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/bruiser/29"
+  },
+  {
+    "cardName": "Opposing Strike",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 46,
+    "top": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "At the end of this an your next four turns, perform:",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/116"
+  },
+  {
+    "cardName": "Crushing Grasp",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 35,
+    "top": {
+      "action": "Attack 4, Immobilize",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Create a 1-hex obstacle tile in an adjacent empty hex. All allies an enemies adjacent to the created tile suffer Damage 1.",
+      "effects": [
+        "Loot 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/117"
+  },
+  {
+    "cardName": "Avalanche",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 75,
+    "top": {
+      "action": "Attack 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 2, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/118"
+  },
+  {
+    "cardName": "Rumbling Advance",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 38,
+    "top": {
+      "action": "Heal 4, Range 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/119"
+  },
+  {
+    "cardName": "Massive Boulder",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 87,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/120"
+  },
+  {
+    "cardName": "Backup Ammunition",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 77,
+    "top": {
+      "action": "On your next four single-target ranged attack abilities, add Target +1.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/121"
+  },
+  {
+    "cardName": "Earthen Bulwark",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 41,
+    "top": {
+      "action": "Create two 1-hex obstacle tiles in empty hexes within Range 3 Square .",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Heal 1, Range 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/122"
+  },
+  {
+    "cardName": "Unstable Upheaval",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 13,
+    "top": {
+      "action": "Attack 3, EnemiesAdjacent",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/123"
+  },
+  {
+    "cardName": "Crater",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 61,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/124"
+  },
+  {
+    "cardName": "Dirt Tornado",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 82,
+    "top": {
+      "action": "Attack 1, Range 2, Muddle",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/125"
+  },
+  {
+    "cardName": "Earthen Clod",
+    "characterClass": "Cragheart",
+    "level": 1,
+    "initiative": 29,
+    "top": {
+      "action": "Attack 2, Range 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/126"
+  },
+  {
+    "cardName": "Heaving Swing",
+    "characterClass": "Cragheart",
+    "level": "X",
+    "initiative": 57,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Destroy an adjacent obstacle or suffer Damage 1 to add Attack +3 to your next melee attack this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/127"
+  },
+  {
+    "cardName": "Petrify",
+    "characterClass": "Cragheart",
+    "level": "X",
+    "initiative": 53,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Range 2",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/128"
+  },
+  {
+    "cardName": "Burrow",
+    "characterClass": "Cragheart",
+    "level": "X",
+    "initiative": 94,
+    "top": {
+      "action": "Heal 2, Target 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 7",
+      "effects": [
+        "Element earth, Immobilize"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/129"
+  },
+  {
+    "cardName": "Mud Eruption",
+    "characterClass": "Cragheart",
+    "level": 2,
+    "initiative": 25,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/130"
+  },
+  {
+    "cardName": "Sentient Growth",
+    "characterClass": "Cragheart",
+    "level": 2,
+    "initiative": 78,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": [
+        "Heal 2, Target all allies in the red hexes of the attack ability"
+      ]
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Heal 1, All, Range 1",
+        "Attack 1, EnemiesAdjacent"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/131"
+  },
+  {
+    "cardName": "Clear the Way",
+    "characterClass": "Cragheart",
+    "level": 3,
+    "initiative": 30,
+    "top": {
+      "action": "Relocate one adjacent 1-hex obstacle tile to an empty hex within Range 4 to perform:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/132"
+  },
+  {
+    "cardName": "Blunt Force",
+    "characterClass": "Cragheart",
+    "level": 3,
+    "initiative": 21,
+    "top": {
+      "action": "Attack 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 1",
+      "effects": [
+        "Heal 2, Self"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/133"
+  },
+  {
+    "cardName": "Rock Slide",
+    "characterClass": "Cragheart",
+    "level": 4,
+    "initiative": 81,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/134"
+  },
+  {
+    "cardName": "Kinetic Assault",
+    "characterClass": "Cragheart",
+    "level": 4,
+    "initiative": 19,
+    "top": {
+      "action": "Move 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Ward, Self",
+        "Retaliate 3, Range 3"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/135"
+  },
+  {
+    "cardName": "Solidify",
+    "characterClass": "Cragheart",
+    "level": 5,
+    "initiative": 17,
+    "top": {
+      "action": "Attack 3, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/136"
+  },
+  {
+    "cardName": "Stone Pummel",
+    "characterClass": "Cragheart",
+    "level": 5,
+    "initiative": 32,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Whenever you attack an adjacent enemy, you may destroy one 1-hex obstacle adjacent to both you and that enemy to add Attack +2 to the attack.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/137"
+  },
+  {
+    "cardName": "Dig Pit",
+    "characterClass": "Cragheart",
+    "level": 6,
+    "initiative": 88,
+    "top": {
+      "action": "Push 2, Range 1",
+      "effects": [
+        "Create one Damage 2, Stun trap in an adjacent empty hex.",
+        "Create one 1-hex obstacle tile in an empty hex adjacent to the created trap."
+      ]
+    },
+    "bottom": {
+      "action": "Heal 3, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/138"
+  },
+  {
+    "cardName": "Cataclysm",
+    "characterClass": "Cragheart",
+    "level": 6,
+    "initiative": 26,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/139"
+  },
+  {
+    "cardName": "Meteor",
+    "characterClass": "Cragheart",
+    "level": 7,
+    "initiative": 85,
+    "top": {
+      "action": "Element earth",
+      "effects": [
+        "Destroy any number of adjacent obstacles. For each obstacle destroyed, perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/140"
+  },
+  {
+    "cardName": "Brutal Momentum",
+    "characterClass": "Cragheart",
+    "level": 7,
+    "initiative": 37,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/141"
+  },
+  {
+    "cardName": "Rocky End",
+    "characterClass": "Cragheart",
+    "level": 8,
+    "initiative": 31,
+    "top": {
+      "action": "Attack 5, Muddle",
+      "effects": [
+        "Heal 5, Target all allies in the red hexes of the attack ability",
+        "Element earth, Create 1-hex obstacle tiles in each empty red hex of the attack ability, Experience 1."
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/142"
+  },
+  {
+    "cardName": "Entomb",
+    "characterClass": "Cragheart",
+    "level": 8,
+    "initiative": 23,
+    "top": {
+      "action": "Attack 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Create 1-hex obstacle tiles in an adjacent empty hex.",
+        "Destroy any number of obstacles within Range 3. For each obstacle destroyed, give Ward to one ally adjacent to the hex that obstacle occupied."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/143"
+  },
+  {
+    "cardName": "Wave of Destruction",
+    "characterClass": "Cragheart",
+    "level": 9,
+    "initiative": 74,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Add +X Attack to your next attack this turn, where X is twice the number of obstacles destroyed with the move ability.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/144"
+  },
+  {
+    "cardName": "Earth's Embrace",
+    "characterClass": "Cragheart",
+    "level": 9,
+    "initiative": 52,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/cragheart/145"
+  },
+  {
+    "cardName": "Spirit of the Night",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 35,
+    "top": {
+      "action": "Curse",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Curse, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/266"
+  },
+  {
+    "cardName": "Slice Through",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 15,
+    "top": {
+      "action": "Whenever you kill an enemy, you may discard this card to place one Tear in the hex they occupied.",
+      "effects": [
+        "Attack 4"
+      ]
+    },
+    "bottom": {
+      "action": "Element dark",
+      "effects": [
+        "Teleport to the hex occupied by one ally within eight hexes of you and simultaneously Teleport that ally to the hex occupied by you."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/267"
+  },
+  {
+    "cardName": "Eyes of the Night",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 93,
+    "top": {
+      "action": "Reveal the top card of each monster within Range 2's ability card deck.",
+      "effects": [
+        "Place one Tear in a hex within Range 2."
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/268"
+  },
+  {
+    "cardName": "Armor of the Night",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 10,
+    "top": {
+      "action": "Place your character token on an ally within Range 3 and one Tear in a hex adjacent to them. On the next source of Damage that ally would suffer, negate the Damage.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Pull 2, Range 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/269"
+  },
+  {
+    "cardName": "Swallowed by Fear",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 44,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Place one Tear in an adjacent hex.",
+      "effects": [
+        "Move 5",
+        "Attack 3"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/270"
+  },
+  {
+    "cardName": "Dancing Shadows",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 5,
+    "top": {
+      "action": "Enemies within Range 2 add Attack -1 to all their attacks this round.",
+      "effects": [
+        "Place one Tear in a hex within Range 2."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Element dark, Curse"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/271"
+  },
+  {
+    "cardName": "Silent Force",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 8,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Muddle, All, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/272"
+  },
+  {
+    "cardName": "Black Knives",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 77,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 3, Pierce 1",
+      "effects": [
+        "Loot 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/273"
+  },
+  {
+    "cardName": "Enervating Wound",
+    "characterClass": "Eclipse",
+    "level": 1,
+    "initiative": 14,
+    "top": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 3, Pierce 2, Wound"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Whenever an enemy dies within Range 2 (of you), you may discard this card to grant whoever killed that enemy:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/274"
+  },
+  {
+    "cardName": "Nightfall",
+    "characterClass": "Eclipse",
+    "level": "X",
+    "initiative": 28,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Element light"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/275"
+  },
+  {
+    "cardName": "Empowering Void",
+    "characterClass": "Eclipse",
+    "level": "X",
+    "initiative": 11,
+    "top": {
+      "action": "You and all allies add Attack +1, Pierce 1 to all attacks targeting enemies within Range 1 (of you) this round.",
+      "effects": [
+        "Place one Tear in an adjacent hex."
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/276"
+  },
+  {
+    "cardName": "Marked for Death",
+    "characterClass": "Eclipse",
+    "level": "X",
+    "initiative": 84,
+    "top": {
+      "action": "Place your character token on an enemy within Range 3 and one Tear in a hex adjacent to them. On your next attack targeting that enemy, add Attack +2 and gain advantage.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Strengthen, Self",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/277"
+  },
+  {
+    "cardName": "Unseen Dread",
+    "characterClass": "Eclipse",
+    "level": 2,
+    "initiative": 12,
+    "top": {
+      "action": "Place one Tear in a hex within Range 2.",
+      "effects": [
+        "Whenever an enemy enters a hex within Range 2 (of you) this round, that enemy gains Wound.",
+        "Element dark, At the end of this round, all enemies that have Wound suffer Damage 1, Experience 1."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/278"
+  },
+  {
+    "cardName": "Shroud in Shade",
+    "characterClass": "Eclipse",
+    "level": 2,
+    "initiative": 6,
+    "top": {
+      "action": "Attack 5",
+      "effects": [
+        "Negate the next source of Damage you would suffer this round."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "All attacks targeting you this round gain disadvantage.",
+        "Element dark, All attacks targeting allies within Range 2 (of you) this round gain disadvantage, Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/279"
+  },
+  {
+    "cardName": "Terror Blade",
+    "characterClass": "Eclipse",
+    "level": 3,
+    "initiative": 32,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Place two Tear in hexes within Range 3 that are not adjacent to each other and Teleport to one those hexes.",
+      "effects": [
+        "On your next two attacks, double the value of the attack."
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/280"
+  },
+  {
+    "cardName": "Prepare for the Kill",
+    "characterClass": "Eclipse",
+    "level": 3,
+    "initiative": 85,
+    "top": {
+      "action": "Whenever you remove a Tear you may discard this card to gain Strengthen and have all adjacent enemies suffer Damage 2.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/281"
+  },
+  {
+    "cardName": "Lurking Ruin",
+    "characterClass": "Eclipse",
+    "level": 4,
+    "initiative": 4,
+    "top": {
+      "action": "Poison",
+      "effects": [
+        "You and all allies gain advantage on all attacks targeting enemies that have Poison this round."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Whenever you or an ally attack an enemy within Range 2 (of you) this round, after the attack ability the attacker may perform:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/282"
+  },
+  {
+    "cardName": "Cursed Blades",
+    "characterClass": "Eclipse",
+    "level": 4,
+    "initiative": 18,
+    "top": {
+      "action": "Attack 3, Curse",
+      "effects": [
+        "Element dark"
+      ]
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/283"
+  },
+  {
+    "cardName": "Into the Night",
+    "characterClass": "Eclipse",
+    "level": 5,
+    "initiative": 17,
+    "top": {
+      "action": "Stun",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": [
+        "Grant one adjacent ally:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/284"
+  },
+  {
+    "cardName": "Seeping Tendrils",
+    "characterClass": "Eclipse",
+    "level": 5,
+    "initiative": 23,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Push 2, All, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/285"
+  },
+  {
+    "cardName": "Claws of the Night",
+    "characterClass": "Eclipse",
+    "level": 6,
+    "initiative": 56,
+    "top": {
+      "action": "Attack 5",
+      "effects": [
+        "At the end of your next turn, if you do not have Invisible, you may perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "When you next kill an enemy this round, place one Tear in the hex they occupied."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/286"
+  },
+  {
+    "cardName": "Dark Cloud",
+    "characterClass": "Eclipse",
+    "level": 6,
+    "initiative": 2,
+    "top": {
+      "action": "Muddle, All, Range 3",
+      "effects": [
+        "Reveal the top card of each monster within Range 3's ability card deck.",
+        "Place one Tear in a hex within Range 3."
+      ]
+    },
+    "bottom": {
+      "action": "Safeguard, Self",
+      "effects": [
+        "Move 4",
+        "Curse, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/287"
+  },
+  {
+    "cardName": "Quiet Frenzy",
+    "characterClass": "Eclipse",
+    "level": 7,
+    "initiative": 26,
+    "top": {
+      "action": "Curse",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Loot 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/287/duplicate-2"
+  },
+  {
+    "cardName": "Messenger of Death",
+    "characterClass": "Eclipse",
+    "level": 7,
+    "initiative": 63,
+    "top": {
+      "action": "Move 4",
+      "effects": [
+        "Attack 2, EnemiesMovedThrough",
+        "Element dark"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Element dark"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/288"
+  },
+  {
+    "cardName": "Prey on the Weak",
+    "characterClass": "Eclipse",
+    "level": 8,
+    "initiative": 38,
+    "top": {
+      "action": "Attack 5",
+      "effects": [
+        "If the target of the attack ability's current hit point value is half (rounded down) their maximum or less, gain Experience 1 and perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": [
+        "Attack 5, EnemiesAdjacent"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/290"
+  },
+  {
+    "cardName": "Shadowstrike",
+    "characterClass": "Eclipse",
+    "level": 8,
+    "initiative": 90,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/291"
+  },
+  {
+    "cardName": "Swallowed by Night",
+    "characterClass": "Eclipse",
+    "level": 9,
+    "initiative": 73,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "During this an the next four rounds, you may perform attack abilities while you have Invisible. When this card is moved from you active area to your lost pile, you become exhausted.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/292"
+  },
+  {
+    "cardName": "Voice of the Night",
+    "characterClass": "Eclipse",
+    "level": 9,
+    "initiative": 19,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/eclipse/293"
+  },
+  {
+    "cardName": "Submissive Affliction",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 48,
+    "top": {
+      "action": "Attack 2, Add Attack +1 for each negative condition the target has.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Control one enemy within Range 4:",
+      "effects": [
+        "Element ice, The controlled enemy suffers Damage 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/146"
+  },
+  {
+    "cardName": "Hidden in the Shadows",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 14,
+    "top": {
+      "action": "Attack 3, advantage",
+      "effects": [
+        "If the attack ability killed an enemy, perform:, Invisible"
+      ]
+    },
+    "bottom": {
+      "action": "If you have not moved this round, perform:, Invisible",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/147"
+  },
+  {
+    "cardName": "Scurry",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 20,
+    "top": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 2"
+      ]
+    },
+    "bottom": {
+      "action": "Loot 2",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/148"
+  },
+  {
+    "cardName": "Withering Claw",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 18,
+    "top": {
+      "action": "Augment Augment, Add Poison, Muddle to all your melee attacks.",
+      "effects": [
+        "Attack 2, Immobilize"
+      ]
+    },
+    "bottom": {
+      "action": "Control one enemy within Range 4:",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/149"
+  },
+  {
+    "cardName": "Frigid Apparition",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 10,
+    "top": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Attack 2, Stun"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/150"
+  },
+  {
+    "cardName": "The Mind's Weakness",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 75,
+    "top": {
+      "action": "Augment Augment, Add Attack +1 to all your melee attacks.",
+      "effects": [
+        "Attack 2",
+        "Control the target of the attack ability:"
+      ]
+    },
+    "bottom": {
+      "action": "Attack 1, Wound",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/151"
+  },
+  {
+    "cardName": "Pilfer",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 79,
+    "top": {
+      "action": "Loot 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/152"
+  },
+  {
+    "cardName": "Perverse Edge",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 8,
+    "top": {
+      "action": "Attack 3, Add Attack +2 and gain Experience 1 for each negative condition the target has.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Element ice, Stun",
+      "effects": [
+        "Move 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/153"
+  },
+  {
+    "cardName": "Empathetic Assault",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 12,
+    "top": {
+      "action": "Attack 4, Range 5, Disarm",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Heal 2, Self"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/154"
+  },
+  {
+    "cardName": "Psychic Blade",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 77,
+    "top": {
+      "action": "Augment Augment, Your single-target melee attack abilities may target enemies within 2 hexes (of you).",
+      "effects": [
+        "Attack 3, Curse",
+        "Control the target of the attack ability:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Add Curse to all your melee attacks this round."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/155"
+  },
+  {
+    "cardName": "Feedback Loop",
+    "characterClass": "Mindthief",
+    "level": 1,
+    "initiative": 51,
+    "top": {
+      "action": "Augment Augment, After each of your melee attack abilities, grant one of your summons:",
+      "effects": [
+        "Attack 2",
+        "Grant one of your summons:"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/156"
+  },
+  {
+    "cardName": "Possession",
+    "characterClass": "Mindthief",
+    "level": "X",
+    "initiative": 71,
+    "top": {
+      "action": "Control one enemy within Range 4:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Grant one of your summons:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/157"
+  },
+  {
+    "cardName": "Gnawing Horde",
+    "characterClass": "Mindthief",
+    "level": "X",
+    "initiative": 82,
+    "top": {
+      "action": "Summon Rat Swarm",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/158"
+  },
+  {
+    "cardName": "Fearsome Blade",
+    "characterClass": "Mindthief",
+    "level": 2,
+    "initiative": 27,
+    "top": {
+      "action": "Attack 2, Push 2, Curse",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Wound, Range 1",
+      "effects": [
+        "Move 4"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/159"
+  },
+  {
+    "cardName": "Hostile Takeover",
+    "characterClass": "Mindthief",
+    "level": 2,
+    "initiative": 9,
+    "top": {
+      "action": "Attack 2, Range 4, Immobilize",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Place a character token on a normal or elite enemy within Range 4. This round, during that enemy's turn, it treats its enemies as allies and its allies as enemies, with you controlling its abilities.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/160"
+  },
+  {
+    "cardName": "Brain Leech",
+    "characterClass": "Mindthief",
+    "level": 3,
+    "initiative": 21,
+    "top": {
+      "action": "Control one enemy within Range 4:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 1",
+      "effects": [
+        "If you performed the attack ability, perform:, Strengthen"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/161"
+  },
+  {
+    "cardName": "Cranium Overload",
+    "characterClass": "Mindthief",
+    "level": 3,
+    "initiative": 5,
+    "top": {
+      "action": "Designate a hex containing an enemy within Range 4 to perform:",
+      "effects": [
+        "If the attack ability killed an enemy, perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/162"
+  },
+  {
+    "cardName": "Frozen Shiv",
+    "characterClass": "Mindthief",
+    "level": 4,
+    "initiative": 16,
+    "top": {
+      "action": "Attack 4, Pierce 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 3",
+      "effects": [
+        "Move 3",
+        "Attack 3"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/163"
+  },
+  {
+    "cardName": "Silent Scream",
+    "characterClass": "Mindthief",
+    "level": 4,
+    "initiative": 83,
+    "top": {
+      "action": "Augment Augment, After each of your melee attack abilities, perform:",
+      "effects": [
+        "Attack 2, Disarm"
+      ]
+    },
+    "bottom": {
+      "action": "Control one enemy within Range 4:",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/164"
+  },
+  {
+    "cardName": "Mass Hysteria",
+    "characterClass": "Mindthief",
+    "level": 5,
+    "initiative": 11,
+    "top": {
+      "action": "Attack 1, Target 4, Range 4, Pierce 3, Muddle",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/165"
+  },
+  {
+    "cardName": "Gangling Abomination",
+    "characterClass": "Mindthief",
+    "level": 5,
+    "initiative": 81,
+    "top": {
+      "action": "Summon Rat Monstrosity",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Attack 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/166"
+  },
+  {
+    "cardName": "Telepathic Command",
+    "characterClass": "Mindthief",
+    "level": 6,
+    "initiative": 17,
+    "top": {
+      "action": "Grant one of your summons:, Invisible",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Grant one of your summons:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/167"
+  },
+  {
+    "cardName": "Dark Frenzy",
+    "characterClass": "Mindthief",
+    "level": 6,
+    "initiative": 39,
+    "top": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Control two enemies within Range 4:",
+        "Element ice, The controlled enemies suffer Damage 1, Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/168"
+  },
+  {
+    "cardName": "Domination",
+    "characterClass": "Mindthief",
+    "level": 7,
+    "initiative": 13,
+    "top": {
+      "action": "Control two enemies within Range 4 that are adjacent to each other:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "You may have two Augment active at once. If you play a third Augment, you must discard either of the other two. If you discard this card and you have two active Augment, you must discard one.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/169"
+  },
+  {
+    "cardName": "Psychic Projection",
+    "characterClass": "Mindthief",
+    "level": 7,
+    "initiative": 92,
+    "top": {
+      "action": "Augment Augment, Add Attack +1 to your melee attacks for each negative condition the target has.",
+      "effects": [
+        "Pull 2, Range 3",
+        "Attack 3"
+      ]
+    },
+    "bottom": {
+      "action": "Designate an unoccupied hex within Range 4.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/170"
+  },
+  {
+    "cardName": "Shared Nightmare",
+    "characterClass": "Mindthief",
+    "level": 8,
+    "initiative": 7,
+    "top": {
+      "action": "Attack 2, Target 2, Range 4, Poison",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Attack 1, Range 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/171"
+  },
+  {
+    "cardName": "Corrupting Embrace",
+    "characterClass": "Mindthief",
+    "level": 8,
+    "initiative": 15,
+    "top": {
+      "action": "Attack 1, Wound",
+      "effects": [
+        "Attack 2, Muddle"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "On your next four melee attacks, add Stun, Curse to the attack."
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/172"
+  },
+  {
+    "cardName": "Many as One",
+    "characterClass": "Mindthief",
+    "level": 9,
+    "initiative": 91,
+    "top": {
+      "action": "Summon Rat King",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Each round, the first of your allies who performs a melee attack ability gains the effects of each of your active Augment for that attack ability.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/173"
+  },
+  {
+    "cardName": "Phantasmal Killer",
+    "characterClass": "Mindthief",
+    "level": 9,
+    "initiative": 67,
+    "top": {
+      "action": "Augment Augment, After each of your control abilities, you may perform:",
+      "effects": [
+        "Attack 3, Wound"
+      ]
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Loot 1",
+        "Invisible, Self"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/mindthief/174"
+  },
+  {
+    "cardName": "Mobilizing Measure",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 8,
+    "top": {
+      "action": "Song SONG: Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Grant one adjacent ally:, Retaliate 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/351"
+  },
+  {
+    "cardName": "Bewildering Instrumental",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 11,
+    "top": {
+      "action": "Song SONG: High Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Grant one adjacent ally:, Shield 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/352"
+  },
+  {
+    "cardName": "Wearying Chant",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 19,
+    "top": {
+      "action": "Song SONG: High Note Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 2, Range 3",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/353"
+  },
+  {
+    "cardName": "Power Ballad",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 12,
+    "top": {
+      "action": "Song SONG: High Note High Note Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/354"
+  },
+  {
+    "cardName": "Dissonant Rhythm",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 14,
+    "top": {
+      "action": "Song SONG: High Note Low Note Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Muddle, Target 3, Range 3",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/355"
+  },
+  {
+    "cardName": "Increase Cadence",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 32,
+    "top": {
+      "action": "FontSize 150, High Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "At the end of this an your next five turns, gain one Note of your choice in addition to any other Note gained.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/356"
+  },
+  {
+    "cardName": "Intensifying Amplitude",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 56,
+    "top": {
+      "action": "Attack 1, Range 3, Wound",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "bottom": {
+      "action": "On your allies' next five attacks, add +X Attack where X is the number of use slots the character token has passed (0, 1, 2, 3, 4).",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/357"
+  },
+  {
+    "cardName": "Marching Beat",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 21,
+    "top": {
+      "action": "Strengthen, Target 2, Range 3",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "bottom": {
+      "action": "Grant one ally within Range 3 Square :",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/358"
+  },
+  {
+    "cardName": "Tuning the Outcome",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 44,
+    "top": {
+      "action": "Bless, Target 2, Range 3",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "bottom": {
+      "action": "Curse, Range 3",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/359"
+  },
+  {
+    "cardName": "Call to Action",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 27,
+    "top": {
+      "action": "Grant one ally within Range 3 Square :",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/360"
+  },
+  {
+    "cardName": "Singing Arrow",
+    "characterClass": "Music Note",
+    "level": 1,
+    "initiative": 85,
+    "top": {
+      "action": "Attack 2, Range 3, Curse",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "bottom": {
+      "action": "Grant one ally within Range 3 Square :",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/361"
+  },
+  {
+    "cardName": "Defensive Ditty",
+    "characterClass": "Music Note",
+    "level": "X",
+    "initiative": 9,
+    "top": {
+      "action": "Song SONG: High Note High Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/362"
+  },
+  {
+    "cardName": "Echoing Aria",
+    "characterClass": "Music Note",
+    "level": "X",
+    "initiative": 5,
+    "top": {
+      "action": "Song SONG: Low Note Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 1, Range 4",
+      "effects": [
+        "Loot 1",
+        "FontSize 150, High Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/363"
+  },
+  {
+    "cardName": "Provoke Terror",
+    "characterClass": "Music Note",
+    "level": "X",
+    "initiative": 89,
+    "top": {
+      "action": "Push 2, Range 4, Stun",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/364"
+  },
+  {
+    "cardName": "Onward to Battle",
+    "characterClass": "Music Note",
+    "level": 2,
+    "initiative": 91,
+    "top": {
+      "action": "Grant one ally within Range 3 Square :",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/365"
+  },
+  {
+    "cardName": "Soothing Lullaby",
+    "characterClass": "Music Note",
+    "level": 2,
+    "initiative": 20,
+    "top": {
+      "action": "Song SONG: High Note",
+      "effects": [
+        "At the end of each of your turns, perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Place your character token on a monster within Range 3. At the end of that enemy's turn this round, remove your character token and that enemy gains Disarm.",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/366"
+  },
+  {
+    "cardName": "Symphonic Medley",
+    "characterClass": "Music Note",
+    "level": 3,
+    "initiative": 62,
+    "top": {
+      "action": "Move 2",
+      "effects": [
+        "Attack 3, Range 2",
+        "FontSize 150, Low Note"
+      ]
+    },
+    "bottom": {
+      "action": "You may immediately play up to three cards from your hand to perform one 1-Note Song action, one 2-Note Song action, and one 3-Note Song action, ignoring the Note requirements of those actions.",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/367"
+  },
+  {
+    "cardName": "Ode to the Gambler",
+    "characterClass": "Music Note",
+    "level": 3,
+    "initiative": 15,
+    "top": {
+      "action": "Song SONG: High Note Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/368"
+  },
+  {
+    "cardName": "Hymn to the Oak",
+    "characterClass": "Music Note",
+    "level": 4,
+    "initiative": 10,
+    "top": {
+      "action": "Ward, Target 2, Range 3",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "bottom": {
+      "action": "Grant all allies:, Shield 1",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/369"
+  },
+  {
+    "cardName": "Alluring Serenade",
+    "characterClass": "Music Note",
+    "level": 4,
+    "initiative": 24,
+    "top": {
+      "action": "Song SONG: Low Note Low Note",
+      "effects": [
+        "At the end of each of your turns, perform:, Pull 3"
+      ]
+    },
+    "bottom": {
+      "action": "Heal 3, Range 4, Pull 3",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/370"
+  },
+  {
+    "cardName": "Change Tempo",
+    "characterClass": "Music Note",
+    "level": 5,
+    "initiative": 25,
+    "top": {
+      "action": "High Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Curse, Range 4",
+      "effects": [
+        "Bless, Range 4",
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/371"
+  },
+  {
+    "cardName": "Thrilling Solo",
+    "characterClass": "Music Note",
+    "level": 5,
+    "initiative": 60,
+    "top": {
+      "action": "Song SONG: High Note Low Note Low Note",
+      "effects": [
+        "Immediately after you perform your first attack ability from your ability cards each round, you may repeat that attack ability, adding Attack +1 (you may choose a new target)."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "FontSize 150, Low Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/372"
+  },
+  {
+    "cardName": "Pull the Strings",
+    "characterClass": "Music Note",
+    "level": 6,
+    "initiative": 34,
+    "top": {
+      "action": "Attack 2, Range 4",
+      "effects": [
+        "Control the target of the attach ability:",
+        "High Note"
+      ]
+    },
+    "bottom": {
+      "action": "Control one enemy within Range 5:",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/373"
+  },
+  {
+    "cardName": "Disorienting Dirge",
+    "characterClass": "Music Note",
+    "level": 6,
+    "initiative": 13,
+    "top": {
+      "action": "Song SONG: High Note High Note",
+      "effects": [
+        "All enemies gain disadvantage on all their attacks."
+      ]
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Negate the next Damage an ally within Range 2 would suffer this round."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/374"
+  },
+  {
+    "cardName": "Inspiring Anthem",
+    "characterClass": "Music Note",
+    "level": 7,
+    "initiative": 50,
+    "top": {
+      "action": "FontSize 150, Low Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Grant one ally:",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/375"
+  },
+  {
+    "cardName": "Wistful Wounding",
+    "characterClass": "Music Note",
+    "level": 7,
+    "initiative": 6,
+    "top": {
+      "action": "Song SONG: Low Note",
+      "effects": [
+        "You and each ally add Wound to your first attack each turn."
+      ]
+    },
+    "bottom": {
+      "action": "Grant one ally within Range 3 Square :, Retaliate 2",
+      "effects": [
+        "FontSize 150, High Note"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/376"
+  },
+  {
+    "cardName": "Commanding Presence",
+    "characterClass": "Music Note",
+    "level": 8,
+    "initiative": 65,
+    "top": {
+      "action": "FontSize 150, High Note",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/377"
+  },
+  {
+    "cardName": "Toughening Trill",
+    "characterClass": "Music Note",
+    "level": 8,
+    "initiative": 78,
+    "top": {
+      "action": "Song SONG: High Note Low Note",
+      "effects": [
+        "You and all allies gain Shield 1 and Retaliate 1 Range 2."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 2, Range 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/378"
+  },
+  {
+    "cardName": "Grand Finale",
+    "characterClass": "Music Note",
+    "level": 9,
+    "initiative": 46,
+    "top": {
+      "action": "Move 4",
+      "effects": [
+        "Control all enemies moved through with the move ability:",
+        "Gain one Note of your choice in addition to any other Note you gain this round."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "You may immediately play any number of cards from your hand and discard pile to perform Song actions of the cards, ignoring all Note requirements. Skip moving your character token on active Song this round."
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/379"
+  },
+  {
+    "cardName": "Captivating Performance",
+    "characterClass": "Music Note",
+    "level": 9,
+    "initiative": 71,
+    "top": {
+      "action": "Song SONG: High Note High Note Low Note Low Note",
+      "effects": [
+        "At the end of each of your turns, perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Move you character tokens on each of your active Song abilities backward one slot."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/music-note/380"
+  },
+  {
+    "cardName": "Battlefield Medicine",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 83,
+    "top": {
+      "action": "Disarm, Range 1",
+      "effects": [
+        "Give one adjacent ally one medical pack to gain Experience 1."
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/411"
+  },
+  {
+    "cardName": "First Aid",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 19,
+    "top": {
+      "action": "Heal 4, Range 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/412"
+  },
+  {
+    "cardName": "Curative Mixture",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 8,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Remove one negative condition from one adjacent ally."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/413"
+  },
+  {
+    "cardName": "Bloody Saw",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 25,
+    "top": {
+      "action": "Add Attack +1, Wound and gain Experience 1 if an ally has an active Prescription.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Safeguard, Self",
+      "effects": [
+        "Loot 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/414"
+  },
+  {
+    "cardName": "Prevention Is Key",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 13,
+    "top": {
+      "action": "Safeguard, All, Range 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "When you next perform a Prescription action this round, grant all adjacent allies and self:, Shield 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/415"
+  },
+  {
+    "cardName": "Hand of the Surgeon",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 62,
+    "top": {
+      "action": "Attack 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 1",
+      "effects": [
+        "Give one adjacent ally one medical pack to gain Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/416"
+  },
+  {
+    "cardName": "Booster Shot",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 42,
+    "top": {
+      "action": "Prescription Prescription",
+      "effects": [
+        "On the next four source of Damage from attacks targeting you, gain Shield 1 for the attack."
+      ]
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Strengthen, Ally, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/417"
+  },
+  {
+    "cardName": "Syringe",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 57,
+    "top": {
+      "action": "Prescription Prescription",
+      "effects": [
+        "On the next four attacks, add Attack +1."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Wound, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/418"
+  },
+  {
+    "cardName": "Needle Gun",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 44,
+    "top": {
+      "action": "Attack 2, Range 3, Pierce 1, Poison",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 1, Poison, Stun",
+      "effects": [
+        "Attack 1, Poison, Stun",
+        "Attack 1, Poison, Stun"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/419"
+  },
+  {
+    "cardName": "Vital Strikes",
+    "characterClass": "Saw",
+    "level": 1,
+    "initiative": 53,
+    "top": {
+      "action": "Add Attack +1 to all your attacks targeting damaged enemies.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/420"
+  },
+  {
+    "cardName": "Vaccine",
+    "characterClass": "Saw",
+    "level": "X",
+    "initiative": 15,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On the next three negative conditions an enemy would apply to you, prevent the condition.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/421"
+  },
+  {
+    "cardName": "Teamwork",
+    "characterClass": "Saw",
+    "level": "X",
+    "initiative": 89,
+    "top": {
+      "action": "Attack 2",
+      "effects": [
+        "Grant one adjacent ally:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Grant one adjacent ally:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/422"
+  },
+  {
+    "cardName": "Prep for Surgery",
+    "characterClass": "Saw",
+    "level": "X",
+    "initiative": 22,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "You may treat all your attack abilities and move abilities from your ability cards as heal abilities of equal value plus one. In such cases, ignore all added effects of those abilities. When treating a move ability as a heal ability, it has Range 1.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/423"
+  },
+  {
+    "cardName": "Hamstring",
+    "characterClass": "Saw",
+    "level": 2,
+    "initiative": 72,
+    "top": {
+      "action": "Attack 4, Immobilize",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/424"
+  },
+  {
+    "cardName": "Precaution",
+    "characterClass": "Saw",
+    "level": 2,
+    "initiative": 9,
+    "top": {
+      "action": "Grant all allies and self:, Shield 1",
+      "effects": [
+        "Each ally may move the character token backward one slot on one active Prescription they have."
+      ]
+    },
+    "bottom": {
+      "action": "Ward, Target 2, Range 1",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/425"
+  },
+  {
+    "cardName": "Regenerative Tissue",
+    "characterClass": "Saw",
+    "level": 3,
+    "initiative": 52,
+    "top": {
+      "action": "Heal 4, Range 1, Ward",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/426"
+  },
+  {
+    "cardName": "Blood Transfusion",
+    "characterClass": "Saw",
+    "level": 3,
+    "initiative": 79,
+    "top": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/427"
+  },
+  {
+    "cardName": "Experimental Stimulants",
+    "characterClass": "Saw",
+    "level": 4,
+    "initiative": 12,
+    "top": {
+      "action": "Grant one adjacent ally:, Retaliate 2",
+      "effects": [
+        "If the target has an active Prescription, gain Experience 1 and negate the next Damage they would suffer this round."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Heal 3, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/428"
+  },
+  {
+    "cardName": "Do No Harm",
+    "characterClass": "Saw",
+    "level": 4,
+    "initiative": 18,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Poison",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/429"
+  },
+  {
+    "cardName": "Hack to Bits",
+    "characterClass": "Saw",
+    "level": 5,
+    "initiative": 38,
+    "top": {
+      "action": "Attack 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Muddle, Range 1",
+        "Strengthen, Ally, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/430"
+  },
+  {
+    "cardName": "Fortifying Injection",
+    "characterClass": "Saw",
+    "level": 5,
+    "initiative": 5,
+    "top": {
+      "action": "Prescription Prescription",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": [
+        "Whenever an adjacent ally would suffer Damage this round, negate the Damage."
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/431"
+  },
+  {
+    "cardName": "Amputate",
+    "characterClass": "Saw",
+    "level": 6,
+    "initiative": 86,
+    "top": {
+      "action": "Attack 4, Wound, Immobilize",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 7, Target 1 ally, enemy, or self, Range 1",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/432"
+  },
+  {
+    "cardName": "Return the Favor",
+    "characterClass": "Saw",
+    "level": 6,
+    "initiative": 40,
+    "top": {
+      "action": "Attack 3",
+      "effects": [
+        "Grant one adjacent ally who has an active Prescription:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Remove one negative condition from one adjacent ally. If you do, gain Experience 1 and you may give one adjacent enemey the negative condition you removed."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/433"
+  },
+  {
+    "cardName": "Surgeon's Satchel",
+    "characterClass": "Saw",
+    "level": 7,
+    "initiative": 14,
+    "top": {
+      "action": "Loot 1",
+      "effects": [
+        "Heal 3, All, Range 1"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Give one adjacent ally one medical pack to gain Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/434"
+  },
+  {
+    "cardName": "Exacting Anger",
+    "characterClass": "Saw",
+    "level": 7,
+    "initiative": 49,
+    "top": {
+      "action": "Attack 4, Disarm",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Prescription Prescription",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/435"
+  },
+  {
+    "cardName": "Take Your Medicine",
+    "characterClass": "Saw",
+    "level": 8,
+    "initiative": 6,
+    "top": {
+      "action": "Prescription Prescription",
+      "effects": [
+        "At the start of your next three turns, gain one medical pack."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "In initiative order, each of your allies may immediately play one \"Medical Pack\" ability card from their hand to perform one action of the card"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/436"
+  },
+  {
+    "cardName": "Euthanize",
+    "characterClass": "Saw",
+    "level": 8,
+    "initiative": 27,
+    "top": {
+      "action": "Kill one adjacent damaged enemy that has at least two negative conditions and whose current hit point value is 8 or less.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/437"
+  },
+  {
+    "cardName": "Secret of the Oak",
+    "characterClass": "Saw",
+    "level": 9,
+    "initiative": 10,
+    "top": {
+      "action": "If the target of the heal ability has an active Prescription, gain Experience 1 and grant them:, Shield 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Whenever you or an ally perform a heal ability on a \"Medical Pack\" ability card, that character may add Attack +4 to their next attack that round of Move +4 to their next move ability that round.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/438"
+  },
+  {
+    "cardName": "Grisly Trauma",
+    "characterClass": "Saw",
+    "level": 9,
+    "initiative": 81,
+    "top": {
+      "action": "Attack 5, EnemiesAdjacent, Wound, Poison, Stun",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Add Target +1 to your next melee attack ability this round."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/439"
+  },
+  {
+    "cardName": "Medical Pack",
+    "characterClass": "Saw",
+    "level": "M",
+    "initiative": 50,
+    "top": {
+      "action": "Heal 4, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 6, Self",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/440"
+  },
+  {
+    "cardName": "Medical Pack",
+    "characterClass": "Saw",
+    "level": "M",
+    "initiative": 50,
+    "top": {
+      "action": "Heal 4, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 2, Self, Ward",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/441"
+  },
+  {
+    "cardName": "Medical Pack",
+    "characterClass": "Saw",
+    "level": "M",
+    "initiative": 50,
+    "top": {
+      "action": "Heal 4, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 3, Self, Safeguard",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/442"
+  },
+  {
+    "cardName": "Medical Pack",
+    "characterClass": "Saw",
+    "level": "M",
+    "initiative": 50,
+    "top": {
+      "action": "Heal 4, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 3, Self, Bless",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/443"
+  },
+  {
+    "cardName": "Medical Pack",
+    "characterClass": "Saw",
+    "level": "M",
+    "initiative": 50,
+    "top": {
+      "action": "Heal 4, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 1, Self, Strengthen",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/444"
+  },
+  {
+    "cardName": "Medical Pack",
+    "characterClass": "Saw",
+    "level": "M",
+    "initiative": 50,
+    "top": {
+      "action": "Heal 4, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "(ability text not yet available)",
+      "effects": [
+        "Heal 3, Self"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/saw/445"
+  },
+  {
+    "cardName": "Single Out",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 86,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On your next four attacks targeting enemies adjacent to none of their allies, add Attack +3",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/88"
+  },
+  {
+    "cardName": "Flanking Strike",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 4,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/89"
+  },
+  {
+    "cardName": "Swift Bow",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 36,
+    "top": {
+      "action": "Attack 3, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Loot each hex you entered with the move ability."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/90"
+  },
+  {
+    "cardName": "Quick Hands",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 23,
+    "top": {
+      "action": "Loot 1",
+      "effects": [
+        "Move 2"
+      ]
+    },
+    "bottom": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/91"
+  },
+  {
+    "cardName": "Sinister Opportunity",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 93,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/92"
+  },
+  {
+    "cardName": "Venom Shiv",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 8,
+    "top": {
+      "action": "Attack 3, Pierce 1, Poison",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Add Pierce 2 to all your ranged attacks this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/93"
+  },
+  {
+    "cardName": "Throwing Knives",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 10,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Pull 2, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/94"
+  },
+  {
+    "cardName": "Practiced Reflexes",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 64,
+    "top": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 3"
+      ]
+    },
+    "bottom": {
+      "action": "Destroy one trap in a hex you entered with the move ability to gain Experience 1.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/95"
+  },
+  {
+    "cardName": "Special Mixture",
+    "characterClass": "Silent Knife",
+    "level": 1,
+    "initiative": 33,
+    "top": {
+      "action": "Heal 3, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Poison, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/96"
+  },
+  {
+    "cardName": "Backstab",
+    "characterClass": "Silent Knife",
+    "level": "X",
+    "initiative": 6,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/97"
+  },
+  {
+    "cardName": "Smoke Bomb",
+    "characterClass": "Silent Knife",
+    "level": "X",
+    "initiative": 12,
+    "top": {
+      "action": "Invisible, Self",
+      "effects": [
+        "On your next attack while you have Invisible, double the value of the attack."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Control one adjacent enemy:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/98"
+  },
+  {
+    "cardName": "Trickster's Reversal",
+    "characterClass": "Silent Knife",
+    "level": "X",
+    "initiative": 9,
+    "top": {
+      "action": "On your next melee attack targeting an enemy that has Shield, add +(X+2) Attack, where X is the Shield value of the target.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Negate the next Damage you would suffer this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/99"
+  },
+  {
+    "cardName": "Open Wound",
+    "characterClass": "Silent Knife",
+    "level": 2,
+    "initiative": 11,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/100"
+  },
+  {
+    "cardName": "Stick to the Shadows",
+    "characterClass": "Silent Knife",
+    "level": 2,
+    "initiative": 26,
+    "top": {
+      "action": "On your next tree attacks, add Attack +1, Poison.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "If you are adjacent to no enemies, gain Invisible. At the end of the round, lose Invisible."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/101"
+  },
+  {
+    "cardName": "Hidden Daggers",
+    "characterClass": "Silent Knife",
+    "level": 3,
+    "initiative": 39,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": [
+        "Attack 2, Range 3",
+        "Attack 2, Range 3",
+        "Attack 2, Range 3",
+        "Attack 2, Range 3"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/102"
+  },
+  {
+    "cardName": "Flintlock",
+    "characterClass": "Silent Knife",
+    "level": 3,
+    "initiative": 51,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/103"
+  },
+  {
+    "cardName": "Flurry of Blades",
+    "characterClass": "Silent Knife",
+    "level": 4,
+    "initiative": 16,
+    "top": {
+      "action": "Attack 2, Target 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 7",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/104"
+  },
+  {
+    "cardName": "Gruesome Advantage",
+    "characterClass": "Silent Knife",
+    "level": 4,
+    "initiative": 90,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "When you next perform a melee attack targeting an enemy that has Poison this round, after the attack ability, perform:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/105"
+  },
+  {
+    "cardName": "Duelist's Advance",
+    "characterClass": "Silent Knife",
+    "level": 5,
+    "initiative": 7,
+    "top": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 4",
+        "Move 2"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Pull 1, Range 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/106"
+  },
+  {
+    "cardName": "Serrated Arrow",
+    "characterClass": "Silent Knife",
+    "level": 5,
+    "initiative": 95,
+    "top": {
+      "action": "Attack 4, Range 3, Wound",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On your next attack targeting an enemy that is both adjacent to any of your allies and none of its allies, double the value of the attack.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/107"
+  },
+  {
+    "cardName": "Dance of Daggers",
+    "characterClass": "Silent Knife",
+    "level": 6,
+    "initiative": 3,
+    "top": {
+      "action": "Negate the Damage and added effects of all attacks targeting you this round.",
+      "effects": [
+        "Immediately after each attack ability targeting you this round, gain Experience 1 and perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Gain advantage on all your attacks this round."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/108"
+  },
+  {
+    "cardName": "Cull the Weak",
+    "characterClass": "Silent Knife",
+    "level": 6,
+    "initiative": 62,
+    "top": {
+      "action": "Add Attack +1 and gain advantage, Experience 1 if the target is a normal monster.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Target 2 enemies whose current hit point value is 2 or less, Range 2",
+      "effects": [
+        "Loot 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/109"
+  },
+  {
+    "cardName": "Stiletto Storm",
+    "characterClass": "Silent Knife",
+    "level": 7,
+    "initiative": 80,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3",
+      "effects": [
+        "If all the targets of the attack ability were adjacent to none of their allies, perform:"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/110"
+  },
+  {
+    "cardName": "Spring the Trap",
+    "characterClass": "Silent Knife",
+    "level": 7,
+    "initiative": 13,
+    "top": {
+      "action": "Heal 5, Self",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Designate one adjacent trap.",
+      "effects": [
+        "Move 5",
+        "Relocate the designated trap to an adjacent featureless hex. If that hex is occupied by an enemy, spring the trap on that enemy and gain Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/111"
+  },
+  {
+    "cardName": "Visage of the Inevitable",
+    "characterClass": "Silent Knife",
+    "level": 8,
+    "initiative": 88,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Poison, All, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/112"
+  },
+  {
+    "cardName": "Crippling Poison",
+    "characterClass": "Silent Knife",
+    "level": 8,
+    "initiative": 4,
+    "top": {
+      "action": "Add Poison to all your attacks. Add Attack +1 to all your attacks targeting enemies that have Poison.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Add Immobilize to all your attacks targeting enemies adjacent to none of their allies this round."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/113"
+  },
+  {
+    "cardName": "Hired Help",
+    "characterClass": "Silent Knife",
+    "level": 9,
+    "initiative": 2,
+    "top": {
+      "action": "You may lose one of your money tokens to place a character token on an adjacent normal enemy. For the remainder of the scenario, that enemy is an ally to you and an enemy to all other monsters. You may replace its base with a blue base to more easily identify it. When that enemy dies, it drops an additional money token.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Disarm, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/114"
+  },
+  {
+    "cardName": "Watch It Burn",
+    "characterClass": "Silent Knife",
+    "level": 9,
+    "initiative": 98,
+    "top": {
+      "action": "Attack 2, EnemiesAdjacent, Wound, Immobilize",
+      "effects": [
+        "If you attacked at least three enemies with the attack ability, gain Experience 1 and perform:"
+      ]
+    },
+    "bottom": {
+      "action": "During you turn, you may play this card from your hand to perform this action (in addition to the two cards you have played for the round).",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/silent-knife/115"
+  },
+  {
+    "cardName": "Reviving Ether",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 80,
+    "top": {
+      "action": "Recover all cards in your lost pile.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/61"
+  },
+  {
+    "cardName": "Fire Orbs",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 69,
+    "top": {
+      "action": "Attack 3, Target 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/62"
+  },
+  {
+    "cardName": "Arcane Bolt",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 70,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 4, Range 3",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/63"
+  },
+  {
+    "cardName": "Flame Strike",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 26,
+    "top": {
+      "action": "Strengthen, Self",
+      "effects": [
+        "Loot 1"
+      ]
+    },
+    "bottom": {
+      "action": "Attack 1, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/64"
+  },
+  {
+    "cardName": "Icy Blast",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 20,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/65"
+  },
+  {
+    "cardName": "Aid from the Ether",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 36,
+    "top": {
+      "action": "Heal 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "When you next perform an action with Lost this round, Wild."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/66"
+  },
+  {
+    "cardName": "Frost Strike",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 78,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Element fire"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/67"
+  },
+  {
+    "cardName": "Emberfrost",
+    "characterClass": "Spellweaver",
+    "level": 1,
+    "initiative": 7,
+    "top": {
+      "action": "Attack 2, Range 4, Pierce 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/68"
+  },
+  {
+    "cardName": "Flameswell",
+    "characterClass": "Spellweaver",
+    "level": "X",
+    "initiative": 83,
+    "top": {
+      "action": "On your next four single-target ranged attack abilities, add Attack +2 to the attack.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 2, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/69"
+  },
+  {
+    "cardName": "Ice Armor",
+    "characterClass": "Spellweaver",
+    "level": "X",
+    "initiative": 25,
+    "top": {
+      "action": "Place a character token on one ally within Range 3. On the next three sources of 2 or more Damage they would suffer, negate the Damage.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On the next tree sources of 2 or more Damage you would suffer, negate the Damage.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/70"
+  },
+  {
+    "cardName": "Impaling Eruption",
+    "characterClass": "Spellweaver",
+    "level": "X",
+    "initiative": 91,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/71"
+  },
+  {
+    "cardName": "Freezing Nova",
+    "characterClass": "Spellweaver",
+    "level": 2,
+    "initiative": 22,
+    "top": {
+      "action": "Attack 2, Target the 4 enemies closest to you within 5 hexes, Immobilize",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/72"
+  },
+  {
+    "cardName": "Etheric Echo",
+    "characterClass": "Spellweaver",
+    "level": 2,
+    "initiative": 50,
+    "top": {
+      "action": "Play one Level 1 card from your lost pile other than Reviving Ether to perform an action with Lost of the card.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "When you next perform an action with Lost this round, gain Ward."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/73"
+  },
+  {
+    "cardName": "Heatwave",
+    "characterClass": "Spellweaver",
+    "level": 3,
+    "initiative": 12,
+    "top": {
+      "action": "Attack 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/74"
+  },
+  {
+    "cardName": "Arctic Shards",
+    "characterClass": "Spellweaver",
+    "level": 3,
+    "initiative": 24,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3, Muddle",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 10, Range 3",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/75"
+  },
+  {
+    "cardName": "Dancing Gales",
+    "characterClass": "Spellweaver",
+    "level": 4,
+    "initiative": 33,
+    "top": {
+      "action": "Element fire, Strengthen",
+      "effects": [
+        "Attack 3, Range 3",
+        "Element ice"
+      ]
+    },
+    "bottom": {
+      "action": "Attack 3, Range 3",
+      "effects": [
+        "Move 3",
+        "Attack 3, Range 3"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/76"
+  },
+  {
+    "cardName": "Cold Fire",
+    "characterClass": "Spellweaver",
+    "level": 4,
+    "initiative": 67,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Element wild"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/77"
+  },
+  {
+    "cardName": "Warm Up",
+    "characterClass": "Spellweaver",
+    "level": 5,
+    "initiative": 60,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": [
+        "On the next attack ability you perform from an action with Lost, add Attack +1 to all your attacks."
+      ]
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Loot 2"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/78"
+  },
+  {
+    "cardName": "Cool Down",
+    "characterClass": "Spellweaver",
+    "level": 5,
+    "initiative": 30,
+    "top": {
+      "action": "Heal 2, Target 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Range 4, Pierce 1",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/79"
+  },
+  {
+    "cardName": "Elemental Rays",
+    "characterClass": "Spellweaver",
+    "level": 6,
+    "initiative": 15,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/80"
+  },
+  {
+    "cardName": "Searing Glacier",
+    "characterClass": "Spellweaver",
+    "level": 6,
+    "initiative": 90,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "When you next perform an action with Lost this round, Recover one card from your discard pile."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/81"
+  },
+  {
+    "cardName": "Spell Mastery",
+    "characterClass": "Spellweaver",
+    "level": 7,
+    "initiative": 71,
+    "top": {
+      "action": "Attack 3, Range 4",
+      "effects": [
+        "You may play one card from your discard pile to perform an action with Lost of the card (the card is moved to your lost pile)."
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/82"
+  },
+  {
+    "cardName": "Chromatic Explosion",
+    "characterClass": "Spellweaver",
+    "level": 7,
+    "initiative": 10,
+    "top": {
+      "action": "Heal 4, Target all allies in the red hexes of the attack ability, Strengthen, Bless",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Choose an ally within Range 3. That ally gains Shield 3 for the next attack targeting them this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/83"
+  },
+  {
+    "cardName": "Frostflare Orbs",
+    "characterClass": "Spellweaver",
+    "level": 8,
+    "initiative": 46,
+    "top": {
+      "action": "Attack 5, Target 3, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/84"
+  },
+  {
+    "cardName": "Twin Beams",
+    "characterClass": "Spellweaver",
+    "level": 8,
+    "initiative": 19,
+    "top": {
+      "action": "Attack 1",
+      "effects": [
+        "Attack 1"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/85"
+  },
+  {
+    "cardName": "Freezing Vortex",
+    "characterClass": "Spellweaver",
+    "level": 9,
+    "initiative": 41,
+    "top": {
+      "action": "Attack 5, Range 3, After the attack ability, kill each target whose hit point value is 2 or less and create one 1-hex obstacle tile in the featureless hex they occupied.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/86"
+  },
+  {
+    "cardName": "Inferno",
+    "characterClass": "Spellweaver",
+    "level": 9,
+    "initiative": 96,
+    "top": {
+      "action": "Attack 2, Target all enemies within 2 hexes, Pierce 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "All allies and enemies in the same room as you suffer Damage 4.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/spellweaver/87"
+  },
+  {
+    "cardName": "Potent Potable",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 46,
+    "top": {
+      "action": "Attack 3, Range 3, Muddle",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On your next four single-target heal abilities, add Target +1.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/30"
+  },
+  {
+    "cardName": "Harmless Contraption",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 74,
+    "top": {
+      "action": "Summon Decoy",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/31"
+  },
+  {
+    "cardName": "Flamethrower",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 16,
+    "top": {
+      "action": "Attack 3, Pierce 2, Wound",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Grant all adjacent allies and self:, Shield 1",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/32"
+  },
+  {
+    "cardName": "Potent Potables",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 73,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 2, Range 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/33"
+  },
+  {
+    "cardName": "Ink Bomb",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 80,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/34"
+  },
+  {
+    "cardName": "Net Shooter",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 19,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Immobilize, Range 1",
+      "effects": [
+        "Move 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/35"
+  },
+  {
+    "cardName": "Stun Shot",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 20,
+    "top": {
+      "action": "Stun, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 1",
+      "effects": [
+        "Loot 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/36"
+  },
+  {
+    "cardName": "Reinvigorating Elixir",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 37,
+    "top": {
+      "action": "Heal 4, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "One ally within Range 3 may Recover all their cards from their discard pile.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/37"
+  },
+  {
+    "cardName": "Restorative Mist",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 17,
+    "top": {
+      "action": "Heal 4, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Heal 1, Allies, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/38"
+  },
+  {
+    "cardName": "Jet Propulsion",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 34,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 8",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/39"
+  },
+  {
+    "cardName": "Enhancement Field",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 61,
+    "top": {
+      "action": "Place the \"Enhancement Field\" token in an empty hex within Range 3.",
+      "effects": [
+        "Add Attack +1 to all attacks you and all allies perform while within Range 1 of the token."
+      ]
+    },
+    "bottom": {
+      "action": "You and all adjacent allies add Attack +1 to all attacks this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/40"
+  },
+  {
+    "cardName": "Toxic Bolt",
+    "characterClass": "Tinkerer",
+    "level": 1,
+    "initiative": 76,
+    "top": {
+      "action": "Attack 2, Range 3, Poison",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 6, Range 2",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/41"
+  },
+  {
+    "cardName": "Gas Canister",
+    "characterClass": "Tinkerer",
+    "level": "X",
+    "initiative": 22,
+    "top": {
+      "action": "Create one Damage 4 Square , Muddle trap in an adjacent empty hey.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/42"
+  },
+  {
+    "cardName": "Volatile Concoction",
+    "characterClass": "Tinkerer",
+    "level": "X",
+    "initiative": 18,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Create one Damage 2 Square , Poison trap in an adjacent empty hey.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/43"
+  },
+  {
+    "cardName": "Hook Gun",
+    "characterClass": "Tinkerer",
+    "level": "X",
+    "initiative": 72,
+    "top": {
+      "action": "Attack 2, Range 3, Pull 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Loot 2"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/44"
+  },
+  {
+    "cardName": "Repulsor Gun",
+    "characterClass": "Tinkerer",
+    "level": 2,
+    "initiative": 35,
+    "top": {
+      "action": "Attack 3, Range 3, Push 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Push 2, Range 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/45"
+  },
+  {
+    "cardName": "Crank Bow",
+    "characterClass": "Tinkerer",
+    "level": 2,
+    "initiative": 23,
+    "top": {
+      "action": "Attack 8, Range 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 2, Target 2, Range 2",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/46"
+  },
+  {
+    "cardName": "Teleportation Pad",
+    "characterClass": "Tinkerer",
+    "level": 3,
+    "initiative": 62,
+    "top": {
+      "action": "Place two \"Teleportation Pad\" tokens in empty hexes within Range 5.",
+      "effects": [
+        "You and all allies may threat the two hexes containing the tokens as being adjacent to each other during move abilities."
+      ]
+    },
+    "bottom": {
+      "action": "Teleport 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/47"
+  },
+  {
+    "cardName": "Stamina Booster",
+    "characterClass": "Tinkerer",
+    "level": 3,
+    "initiative": 48,
+    "top": {
+      "action": "Heal 5, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "One ally within Range 3 may Recover one card from their lost pile.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/48"
+  },
+  {
+    "cardName": "Dangerous Contraption",
+    "characterClass": "Tinkerer",
+    "level": 4,
+    "initiative": 10,
+    "top": {
+      "action": "Summon Battle Bot",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Grant one adjacent ally:, Shield 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/49"
+  },
+  {
+    "cardName": "Proximity Mine",
+    "characterClass": "Tinkerer",
+    "level": 4,
+    "initiative": 14,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Create one Damage 2 Square , Immobilize trap in an empty hey within Range 2 Square .",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/50"
+  },
+  {
+    "cardName": "Noxious Vials",
+    "characterClass": "Tinkerer",
+    "level": 5,
+    "initiative": 75,
+    "top": {
+      "action": "Attack 1, Range 3, Wound, Disarm",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/51"
+  },
+  {
+    "cardName": "Disintegration Beam",
+    "characterClass": "Tinkerer",
+    "level": 5,
+    "initiative": 36,
+    "top": {
+      "action": "Kill all enemies in the targeted area whose current hit point value is less than or equal to 5. Gain Experience 1 for each enemy killed.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/52"
+  },
+  {
+    "cardName": "Invigorating Aerosol",
+    "characterClass": "Tinkerer",
+    "level": 6,
+    "initiative": 21,
+    "top": {
+      "action": "Heal 3, Range 2",
+      "effects": [
+        "Move 2",
+        "Heal 4, Range 2"
+      ]
+    },
+    "bottom": {
+      "action": "At the end of this and your next four turns, perform:",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/53"
+  },
+  {
+    "cardName": "Auto Turret",
+    "characterClass": "Tinkerer",
+    "level": 6,
+    "initiative": 32,
+    "top": {
+      "action": "At the end of this and your next three turns, perform the following twice:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Ward, Range 3",
+      "effects": [
+        "Move 2",
+        "Poison, Range 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/54"
+  },
+  {
+    "cardName": "Murderous Contraption",
+    "characterClass": "Tinkerer",
+    "level": 7,
+    "initiative": 84,
+    "top": {
+      "action": "Summon Kill Bot",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 5, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/55"
+  },
+  {
+    "cardName": "Pernicious Fogger",
+    "characterClass": "Tinkerer",
+    "level": 7,
+    "initiative": 71,
+    "top": {
+      "action": "Place the \"Pernicious Fogger\" token in an empty hex within Range 3.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Strengthen, Range 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/56"
+  },
+  {
+    "cardName": "Cryonic Snare",
+    "characterClass": "Tinkerer",
+    "level": 8,
+    "initiative": 15,
+    "top": {
+      "action": "Create one Damage 4 Square , Wound, Stun trap in an empty hey within Range 2 Square .",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Grant one adjacent ally:, Retaliate 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/57"
+  },
+  {
+    "cardName": "Harsh Stimulants",
+    "characterClass": "Tinkerer",
+    "level": 8,
+    "initiative": 27,
+    "top": {
+      "action": "Grant one ally within Range 3:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Control one enemy within Range Square :",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/58"
+  },
+  {
+    "cardName": "Gravity Bomb",
+    "characterClass": "Tinkerer",
+    "level": 9,
+    "initiative": 85,
+    "top": {
+      "action": "Place the \"Gravity Bomb\" token in an empty hex within Range 4. At the end of your next turn, perform:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Range 3, Immobilize",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/59"
+  },
+  {
+    "cardName": "Chimeric Formula",
+    "characterClass": "Tinkerer",
+    "level": 9,
+    "initiative": 33,
+    "top": {
+      "action": "Heal 3, Ally, Range 3, Strengthen, Bless",
+      "effects": [
+        "The target of the heal ability may immediately play up to two cards from their hand, performing at most one top and one bottom action of the cards."
+      ]
+    },
+    "bottom": {
+      "action": "One ally within Range 3 may Recover one card from the lost pile of one ally adjacent to them.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/tinkerer/60"
+  },
+  {
+    "cardName": "Ice Spikes",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 48,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 5, Range 3, Immobilize",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/446"
+  },
+  {
+    "cardName": "Malleable Evocation",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 26,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Move one waning element to the strong column."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/447"
+  },
+  {
+    "cardName": "Formless Power",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 45,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "At the start of each of your turns, you may Wild to add Attack +1 to all your attacks this turn.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/448"
+  },
+  {
+    "cardName": "Shaping the Ether",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 54,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/449"
+  },
+  {
+    "cardName": "Stoking Hail",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 29,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Add Move +1 if one or more elements are strong or waning."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/450"
+  },
+  {
+    "cardName": "Magma Scales",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 14,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/451"
+  },
+  {
+    "cardName": "Infernal Vortex",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 35,
+    "top": {
+      "action": "Attack 1, All, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/452"
+  },
+  {
+    "cardName": "Frigid Torrent",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 39,
+    "top": {
+      "action": "Attack 5, Range 4, Disarm",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/453"
+  },
+  {
+    "cardName": "Pulsing Cores",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 40,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/454"
+  },
+  {
+    "cardName": "Dual Nature",
+    "characterClass": "Triangles",
+    "level": 1,
+    "initiative": 27,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": [
+        "Element earth"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/455"
+  },
+  {
+    "cardName": "Lingering Essence",
+    "characterClass": "Triangles",
+    "level": "X",
+    "initiative": 50,
+    "top": {
+      "action": "Whenever an enemy consumes an element, you may infuse that element.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/456"
+  },
+  {
+    "cardName": "Flash of Brilliance",
+    "characterClass": "Triangles",
+    "level": "X",
+    "initiative": 67,
+    "top": {
+      "action": "You or one ally within Range 3 may Recover one level 1 card from the discard pile.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Loot 1",
+      "effects": [
+        "Heal 1, Self"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/457"
+  },
+  {
+    "cardName": "Encompassing Shadow",
+    "characterClass": "Triangles",
+    "level": "X",
+    "initiative": 12,
+    "top": {
+      "action": "Invisible, Ally, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "All attacks targeting you or adjacent allies this round gain disadvantage."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/458"
+  },
+  {
+    "cardName": "Gravel Guard",
+    "characterClass": "Triangles",
+    "level": 2,
+    "initiative": 10,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Element fire, Create one Damage 2 trap in an empty hex within Range 3. All enemies adjacent to the trap suffer Damage 1",
+      "effects": [
+        "Move 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/459"
+  },
+  {
+    "cardName": "Wave of Frost",
+    "characterClass": "Triangles",
+    "level": 2,
+    "initiative": 47,
+    "top": {
+      "action": "Attack 1, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/460"
+  },
+  {
+    "cardName": "Arresting Gale",
+    "characterClass": "Triangles",
+    "level": 3,
+    "initiative": 65,
+    "top": {
+      "action": "Attack 1, Range 3, Stun",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Ward, Range 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/461"
+  },
+  {
+    "cardName": "Empowering Flame",
+    "characterClass": "Triangles",
+    "level": 3,
+    "initiative": 15,
+    "top": {
+      "action": "Attack 2, Range 3",
+      "effects": [
+        "Strengthen, Self"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Grant one ally within Range 2:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/462"
+  },
+  {
+    "cardName": "Burial",
+    "characterClass": "Triangles",
+    "level": 4,
+    "initiative": 77,
+    "top": {
+      "action": "Attack 4, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Range 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/463"
+  },
+  {
+    "cardName": "Chain Lightning",
+    "characterClass": "Triangles",
+    "level": 4,
+    "initiative": 23,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Heal 4, Range 2",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/464"
+  },
+  {
+    "cardName": "Obsidian Shards",
+    "characterClass": "Triangles",
+    "level": 5,
+    "initiative": 19,
+    "top": {
+      "action": "Attack 2, Target 2, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Element ice:earth"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/465"
+  },
+  {
+    "cardName": "Winter's Edge",
+    "characterClass": "Triangles",
+    "level": 5,
+    "initiative": 43,
+    "top": {
+      "action": "Attack 5, Range 2",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Element fire:air",
+      "effects": [
+        "Grant one ally within Range 3 Square :"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/466"
+  },
+  {
+    "cardName": "Pragmatic Reinforcement",
+    "characterClass": "Triangles",
+    "level": 6,
+    "initiative": 13,
+    "top": {
+      "action": "Heal 3, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/467"
+  },
+  {
+    "cardName": "Duskstorm",
+    "characterClass": "Triangles",
+    "level": 6,
+    "initiative": 17,
+    "top": {
+      "action": "Attack 2, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/468"
+  },
+  {
+    "cardName": "Elemental Juggernaut",
+    "characterClass": "Triangles",
+    "level": 7,
+    "initiative": 94,
+    "top": {
+      "action": "Summon Chromatic Construct",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/469"
+  },
+  {
+    "cardName": "Confluence of Elements",
+    "characterClass": "Triangles",
+    "level": 7,
+    "initiative": 64,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/470"
+  },
+  {
+    "cardName": "Prismatic Barrage",
+    "characterClass": "Triangles",
+    "level": 8,
+    "initiative": 33,
+    "top": {
+      "action": "Attack 2, Range 4",
+      "effects": [
+        "Element fire",
+        "Element earth"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/471"
+  },
+  {
+    "cardName": "Eye of the Hurricane",
+    "characterClass": "Triangles",
+    "level": 8,
+    "initiative": 25,
+    "top": {
+      "action": "Heal 2, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/472"
+  },
+  {
+    "cardName": "Ethereal Manifestation",
+    "characterClass": "Triangles",
+    "level": 9,
+    "initiative": 98,
+    "top": {
+      "action": "Summon Elemental Conduit",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/473"
+  },
+  {
+    "cardName": "Primal Duality",
+    "characterClass": "Triangles",
+    "level": 9,
+    "initiative": 11,
+    "top": {
+      "action": "Element fire:ice",
+      "effects": [
+        "Element air:earth",
+        "Element light:dark"
+      ]
+    },
+    "bottom": {
+      "action": "Element light, Recover one card from your discard pile, Dark.",
+      "effects": [
+        "Element dark",
+        "Loot 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/triangles/474"
+  }
+]

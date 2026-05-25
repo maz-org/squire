@@ -1,0 +1,2597 @@
+[
+  {
+    "scenarioGroup": "main",
+    "index": "0",
+    "name": "Training Course",
+    "complexity": null,
+    "monsters": [
+      "Training Dummy"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "2 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "intro",
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/000"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "1",
+    "name": "Bandit Camp",
+    "complexity": null,
+    "monsters": [
+      "Bandit Scout"
+    ],
+    "allies": [],
+    "unlocks": [
+      "2"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "intro",
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/001"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "2",
+    "name": "Ruinous Crypt",
+    "complexity": null,
+    "monsters": [
+      "Dark Ritual Cultist",
+      "Living Bones",
+      "Night Demon"
+    ],
+    "allies": [],
+    "unlocks": [
+      "3"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "intro",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/002"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "3",
+    "name": "Frozen Hollow",
+    "complexity": null,
+    "monsters": [
+      "Hound",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [
+      "4",
+      "5"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/003"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "4",
+    "name": "Crypt of the Damned",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [
+      "6",
+      "7"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/004"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "5",
+    "name": "Forgotten Crypt",
+    "complexity": null,
+    "monsters": [
+      "Cultist",
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [
+      "7",
+      "9",
+      "10",
+      "28"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Hail",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/005"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "6",
+    "name": "Decaying Crypt",
+    "complexity": null,
+    "monsters": [
+      "Crystal Rot",
+      "Living Bones",
+      "Living Corpse"
+    ],
+    "allies": [],
+    "unlocks": [
+      "11"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP, 5 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/006"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "7",
+    "name": "Black Barrow",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Bandit Scout"
+    ],
+    "allies": [],
+    "unlocks": [
+      "8"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/007"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "8",
+    "name": "Barrow Lair",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer"
+    ],
+    "allies": [],
+    "unlocks": [
+      "12",
+      "16"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/008"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "9",
+    "name": "Ruinous Rift",
+    "complexity": null,
+    "monsters": [
+      "Chaos Demon",
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Night Demon",
+      "Sun Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Hail",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/009"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "10",
+    "name": "Mountain Pass",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Inox Archer"
+    ],
+    "allies": [],
+    "unlocks": [
+      "13",
+      "14"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "city-guards",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/010"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "11",
+    "name": "Ritual Chamber",
+    "complexity": null,
+    "monsters": [
+      "Cultist",
+      "Living Corpse:+1"
+    ],
+    "allies": [],
+    "unlocks": [
+      "15"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/011"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "12",
+    "name": "Inox Encampment",
+    "complexity": null,
+    "monsters": [
+      "Inox Archer",
+      "Inox Guard",
+      "Inox Priest"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "20 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/012"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "13",
+    "name": "Icecrag Ascent",
+    "complexity": null,
+    "monsters": [
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [
+      "29",
+      "32"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/013"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "14",
+    "name": "Echo Chamber",
+    "complexity": null,
+    "monsters": [
+      "Ooze",
+      "Rending Drake"
+    ],
+    "allies": [],
+    "unlocks": [
+      "30",
+      "31"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/014"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "15",
+    "name": "Plane of Elemental Power",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "20 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/015"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "16",
+    "name": "Diamond Mine",
+    "complexity": null,
+    "monsters": [
+      "Bandit Scout",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "20 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/016"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "17",
+    "name": "Demonic Rift",
+    "complexity": null,
+    "monsters": [
+      "City Guard Scenario 17",
+      "Earth Demon",
+      "Night Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "city-guards",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/017"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "18",
+    "name": "Investigation",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "city-guards",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/018"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "19",
+    "name": "Military Outpost",
+    "complexity": null,
+    "monsters": [
+      "Chaos Demon",
+      "City Archer",
+      "City Guard"
+    ],
+    "allies": [
+      "Chaos Demon"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Cleansing Pillar 1"
+      }
+    ],
+    "rewards": "25 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/019"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "20",
+    "name": "Gloomhaven Warehouse",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "25 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/020"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "21",
+    "name": "The Ghost Fortress",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "City Archer",
+      "City Guard"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/021"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "22",
+    "name": "Doomcannon Demolition",
+    "complexity": null,
+    "monsters": [
+      "Flame Demon",
+      "Frost Demon",
+      "Living Bomb"
+    ],
+    "allies": [
+      "Living Bomb"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/022"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "23A",
+    "name": "Gloomhaven Square A (Demon Allies)",
+    "complexity": null,
+    "monsters": [
+      "Cultist",
+      "Earth Demon",
+      "Living Bones",
+      "Living Corpse",
+      "Night Demon"
+    ],
+    "allies": [
+      "Earth Demon",
+      "Night Demon"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/023A"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "23B",
+    "name": "Gloomhaven Square A (Military Allies)",
+    "complexity": null,
+    "monsters": [
+      "City Archer",
+      "City Guard",
+      "Cultist",
+      "Living Bones",
+      "Living Corpse"
+    ],
+    "allies": [
+      "City Archer",
+      "City Guard"
+    ],
+    "unlocks": [
+      "25"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "city-guards",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/023B"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "24",
+    "name": "Gloomhaven Square B",
+    "complexity": null,
+    "monsters": [
+      "City Archer",
+      "City Guard",
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [
+      "25"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/024"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "25A",
+    "name": "Gloomhaven Battlements A (Merchant Allies)",
+    "complexity": null,
+    "monsters": [
+      "Dark Ritual Cultist Scenario 25A",
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Living Bones",
+      "The Prime Demon Scenario 25",
+      "Wind Demon"
+    ],
+    "allies": [
+      "Dark Ritual Cultist Scenario 25A",
+      "Living Bones"
+    ],
+    "unlocks": [
+      "27"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "merchant-guild",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/025A"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "25B",
+    "name": "Gloomhaven Battlements A (Military Allies)",
+    "complexity": null,
+    "monsters": [
+      "City Archer",
+      "City Guard",
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "The Prime Demon Scenario 25",
+      "Wind Demon"
+    ],
+    "allies": [
+      "City Archer",
+      "City Guard"
+    ],
+    "unlocks": [
+      "27"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "city-guards",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/025B"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "26",
+    "name": "Gloomhaven Battlements B",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "City Archer",
+      "City Guard",
+      "Frost Demon",
+      "Wind Demon"
+    ],
+    "allies": [
+      "Frost Demon",
+      "Wind Demon"
+    ],
+    "unlocks": [
+      "23"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "demons",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/026"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "27",
+    "name": "Infernal Throne",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/027"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "28",
+    "name": "Temple of the Seer",
+    "complexity": null,
+    "monsters": [
+      "Stone Construct"
+    ],
+    "allies": [],
+    "unlocks": [
+      "39",
+      "42"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/028"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "29",
+    "name": "Scorched Summit",
+    "complexity": null,
+    "monsters": [
+      "Rending Drake",
+      "Spitting Drake",
+      "The Elder Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/029"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "30",
+    "name": "Shrine of the Depths",
+    "complexity": null,
+    "monsters": [
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [
+      "35"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/030"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "31",
+    "name": "Decrepit Wood",
+    "complexity": null,
+    "monsters": [
+      "Deep Terror",
+      "Giant Viper",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/031"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "32",
+    "name": "Savvas Armory",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/032"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "33",
+    "name": "Ancient Defense Network",
+    "complexity": null,
+    "monsters": [
+      "Living Corpse"
+    ],
+    "allies": [],
+    "unlocks": [
+      "34"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/033"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "34",
+    "name": "Timeworn Tomb",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/034"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "35",
+    "name": "Realm of the Voice",
+    "complexity": null,
+    "monsters": [
+      "Living Spirit",
+      "Night Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Vocal Chord A"
+      }
+    ],
+    "rewards": "30 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-voice",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/035"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "36",
+    "name": "Abandoned Sewers",
+    "complexity": null,
+    "monsters": [
+      "Giant Viper",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [
+      "37",
+      "38"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-sewers",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/036"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "37",
+    "name": "Deep Ruins",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "Stone Construct"
+    ],
+    "allies": [],
+    "unlocks": [
+      "41"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-sewers",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/037"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "38",
+    "name": "Drake Nest",
+    "complexity": null,
+    "monsters": [
+      "Flame Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-sewers",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/038"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "39",
+    "name": "Vibrant Grotto",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Forest Imp"
+    ],
+    "allies": [],
+    "unlocks": [
+      "40"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/039"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "40",
+    "name": "Wetlands Ambush",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [
+      "44"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/040"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "41",
+    "name": "Ancient Cistern",
+    "complexity": null,
+    "monsters": [
+      "Living Corpse",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [
+      "54"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 2",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-sewers",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/041"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "42",
+    "name": "Secluded Valley",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Forest Imp"
+    ],
+    "allies": [],
+    "unlocks": [
+      "43"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/042"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "43",
+    "name": "Chasing Secrets",
+    "complexity": null,
+    "monsters": [
+      "City Guard",
+      "Hound",
+      "Stone Construct"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/043"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "44",
+    "name": "Temple of the Elements",
+    "complexity": null,
+    "monsters": [
+      "Cultist",
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [
+      "45"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "100 gold, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "hail",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/044"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "45",
+    "name": "Plane of Night",
+    "complexity": null,
+    "monsters": [
+      "Deep Terror",
+      "Night Demon"
+    ],
+    "allies": [],
+    "unlocks": [
+      "38",
+      "46",
+      "47",
+      "48"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/045"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "46",
+    "name": "Doom Trench",
+    "complexity": null,
+    "monsters": [
+      "Deep Terror",
+      "Lurker Soldier"
+    ],
+    "allies": [],
+    "unlocks": [
+      "51"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/046"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "47",
+    "name": "Slave Pens",
+    "complexity": null,
+    "monsters": [
+      "Inox Archer",
+      "Inox Guard",
+      "Stone Construct"
+    ],
+    "allies": [],
+    "unlocks": [
+      "49"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Orchid",
+        "escort": true
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/047"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "48",
+    "name": "Treacherous Divide",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Cultist",
+      "Frost Demon",
+      "Living Bones",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [
+      "50",
+      "53"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/048"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "49",
+    "name": "Tribal Assault",
+    "complexity": null,
+    "monsters": [
+      "Hound",
+      "Inox Archer",
+      "Inox Guard"
+    ],
+    "allies": [],
+    "unlocks": [
+      "52"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Redthorn",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/049"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "50",
+    "name": "Nightmare Peak",
+    "complexity": null,
+    "monsters": [
+      "Frost Demon",
+      "Night Demon",
+      "Savvas Icestorm",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Door"
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/050"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "51",
+    "name": "Lair of the Unseeing Eye",
+    "complexity": null,
+    "monsters": [
+      "Lurker Soldier"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/051"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "52",
+    "name": "Shadow Weald",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Forest Imp",
+      "Harrower Infester",
+      "The Dark Rider"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/052"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "53",
+    "name": "Shrine of Strength",
+    "complexity": null,
+    "monsters": [
+      "Frost Demon",
+      "Savvas Icestorm",
+      "Stone Construct",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "30 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/053"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "54",
+    "name": "The Void",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "Cultist Scenario 54",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [
+      "55"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/054"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "55",
+    "name": "The Last Stand",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "Chaos Demon",
+      "Deep Terror",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [
+      "56"
+    ],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Hail",
+        "escort": true
+      },
+      {
+        "name": "Stone Pillar"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/055"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "56",
+    "name": "The Gloom",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "Chaos Demon",
+      "Deep Terror",
+      "Harrower Infester",
+      "The Gloom"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "50 XP, Prosperity 5",
+    "lootDeckConfig": {},
+    "flowChartGroup": "the-gloom",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/056"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "57",
+    "name": "Crypt Basement",
+    "complexity": null,
+    "monsters": [
+      "Giant Viper",
+      "Living Bones",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/057"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "58",
+    "name": "Palace of Ice",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear Scenario 58",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/058"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "59",
+    "name": "Foggy Thicket",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [
+      "60"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/059"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "60",
+    "name": "Bandit's Wood",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/060"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "61",
+    "name": "Dangerous Grove",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Forest Imp",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [
+      "62"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/061"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "62",
+    "name": "Alchemy Lab",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Rubble"
+      },
+      {
+        "name": "Rubble"
+      },
+      {
+        "name": "Robotic Lab Helper",
+        "escort": true
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/062"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "63",
+    "name": "Fading Lighthouse",
+    "complexity": null,
+    "monsters": [
+      "Flame Demon",
+      "Frost Demon",
+      "Giant Viper",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/063"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "64",
+    "name": "Roots of Chaos",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Night Demon",
+      "Sun Demon",
+      "The Convergence",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/064"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "65",
+    "name": "Hero's Mausoleum",
+    "complexity": null,
+    "monsters": [
+      "Crystal Rot",
+      "Living Corpse",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/065"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "66",
+    "name": "A Friend in Need",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Bandit Scout",
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "personal-quests",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/066"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "67",
+    "name": "Temple of the Eclipse",
+    "complexity": null,
+    "monsters": [
+      "Night Demon",
+      "Sun Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP, 15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/067"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "68",
+    "name": "Sunken Vessel",
+    "complexity": null,
+    "monsters": [
+      "Lurker Soldier"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/068"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "69",
+    "name": "Corrupted Cove",
+    "complexity": null,
+    "monsters": [
+      "Lurker Soldier",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 XP, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/069"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "70",
+    "name": "Underwater Lagoon",
+    "complexity": null,
+    "monsters": [
+      "Forest Imp",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [
+      "83"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP, 10 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/070"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "71",
+    "name": "Clockwork Factory",
+    "complexity": null,
+    "monsters": [
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/071"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "72",
+    "name": "Well of the Unfortunate",
+    "complexity": null,
+    "monsters": [
+      "Forest Imp",
+      "Vermling Priest",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/072"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "73",
+    "name": "Chained Isle",
+    "complexity": null,
+    "monsters": [
+      "Living Spirit",
+      "Night Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/073"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "74",
+    "name": "Windswept Highlands",
+    "complexity": null,
+    "monsters": [
+      "Spitting Drake",
+      "Sun Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/074"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "75",
+    "name": "Rockslide Ridge",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "Hound",
+      "Inox Archer"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "puzzle",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/075"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "76",
+    "name": "Oozing Grove",
+    "complexity": null,
+    "monsters": [
+      "Forest Imp",
+      "Giant Viper",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Tree (15-B)"
+      }
+    ],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "puzzle",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/076"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "77",
+    "name": "Harrower Hive",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "puzzle",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/077"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "78",
+    "name": "Vault of Secrets",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "City Guard",
+      "Stone Construct"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 3",
+    "lootDeckConfig": {},
+    "flowChartGroup": "puzzle",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/078"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "79",
+    "name": "Lurker Assault",
+    "complexity": null,
+    "monsters": [
+      "Lurker Soldier",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/079"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "80",
+    "name": "Lost Temple",
+    "complexity": null,
+    "monsters": [
+      "Stone Construct Scenario 80"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Chereth",
+        "escort": true
+      }
+    ],
+    "rewards": "100 gold, Prosperity 2",
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/080"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "81",
+    "name": "Overgrown Graveyard",
+    "complexity": null,
+    "monsters": [
+      "Living Bones",
+      "Living Corpse",
+      "Living Spirit"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/081"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "82",
+    "name": "Syndicate Hideout",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/082"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "83",
+    "name": "Lost Island",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Vermling Priest",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "random",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/083"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "84",
+    "name": "Wild Melee",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Bandit Scout",
+      "Cave Bear",
+      "Hound"
+    ],
+    "allies": [
+      "Cave Bear",
+      "Hound"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 XP, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/084"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "85",
+    "name": "Crossroads Station",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "Earth Demon",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/085"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "86",
+    "name": "Magma Pit",
+    "complexity": null,
+    "monsters": [
+      "Inox Archer",
+      "Inox Guard",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "15 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/086"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "87",
+    "name": "Sulfur Mine",
+    "complexity": null,
+    "monsters": [
+      "Hound",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/087"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "88",
+    "name": "Arcane Library",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Forest Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/088"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "89",
+    "name": "Community Service",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "Giant Viper",
+      "Living Corpse",
+      "Rending Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Objective"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/089"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "90",
+    "name": "Burning Mountain",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/090"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "91",
+    "name": "Shadows Within",
+    "complexity": null,
+    "monsters": [
+      "Cultist",
+      "Hound",
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/091"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "92",
+    "name": "Chronal Anchor",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Flame Demon",
+      "Frost Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Temporal Matrix",
+        "escort": true
+      }
+    ],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/092"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "93",
+    "name": "Harried Village",
+    "complexity": null,
+    "monsters": [
+      "Cave Bear",
+      "Lurker Soldier",
+      "Vermling Priest",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Villagers",
+        "escort": true
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/093"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "94",
+    "name": "A Watery Rescue",
+    "complexity": null,
+    "monsters": [
+      "Frost Demon",
+      "Lurker Soldier",
+      "Ooze"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/094"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "95",
+    "name": "Cargo Ship",
+    "complexity": null,
+    "monsters": [
+      "Bandit Scout",
+      "Deep Terror",
+      "Lurker Soldier"
+    ],
+    "allies": [],
+    "unlocks": [
+      "96"
+    ],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/095"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "96",
+    "name": "Back Alley Brawl",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Inox Guard"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 gold",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/096"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "97",
+    "name": "Vermling Camp",
+    "complexity": null,
+    "monsters": [
+      "Hound",
+      "Vermling Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "5 XP, Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/097"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "98",
+    "name": "Metamorphic Fault",
+    "complexity": null,
+    "monsters": [
+      "Deep Terror"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "10 XP",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/098"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "99",
+    "name": "Sintering Forge",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "Black Imp Scenario 99",
+      "Chaos Demon",
+      "Harrower Infester Scenario 99"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/099"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "100",
+    "name": "Silence Falls",
+    "complexity": null,
+    "monsters": [
+      "Chaos Demon",
+      "Crystal Rot",
+      "Living Bones",
+      "Living Corpse"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": "Prosperity 1",
+    "lootDeckConfig": {},
+    "flowChartGroup": "events",
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/100"
+  },
+  {
+    "scenarioGroup": "main",
+    "index": "S",
+    "name": "Challenger's Rift",
+    "complexity": null,
+    "monsters": [
+      "Chaos Demon",
+      "Forest Imp",
+      "Giant Viper",
+      "Living Bones",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": false,
+    "sourceId": "gloomhavensecretariat:scenario/S"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "100",
+    "name": "Elemental Secrets",
+    "complexity": null,
+    "monsters": [
+      "Flame Demon",
+      "Wind Demon"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo100_triangles"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "101",
+    "name": "The Caged Bear",
+    "complexity": null,
+    "monsters": [
+      "Earth Demon",
+      "Rending Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo101_two-mini"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "102",
+    "name": "The Sands of Time",
+    "complexity": null,
+    "monsters": [
+      "Giant Viper"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo102_crossed-swords"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "85",
+    "name": "A Night Out",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Bandit Scout"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo85_bruiser"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "86",
+    "name": "An Unfortunate Intrusion",
+    "complexity": null,
+    "monsters": [
+      "Ancient Artillery",
+      "Stone Construct Tinkerer Solo",
+      "Vermling Priest",
+      "Vermling Scout"
+    ],
+    "allies": [
+      "Ancient Artillery",
+      "Stone Construct Tinkerer Solo"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Stone Pillar"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo86_tinkerer"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "87",
+    "name": "Corrupted Apothecary",
+    "complexity": null,
+    "monsters": [
+      "Giant Viper"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo87_spellweaver"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "88",
+    "name": "Material Concerns",
+    "complexity": null,
+    "monsters": [
+      "Living Bones"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo88_silent-knife"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "89",
+    "name": "Stone Defense",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "Cave Bear",
+      "Rending Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [
+      {
+        "name": "Crystal"
+      }
+    ],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo89_cragheart"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "90",
+    "name": "Vermling Liberation",
+    "complexity": null,
+    "monsters": [
+      "Giant Viper",
+      "Harrower Infester"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo90_mindthief"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "91",
+    "name": "Caravan Escort",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer",
+      "Bandit Scout",
+      "City Guard Sun2 Solo"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo91_sun"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "92",
+    "name": "Storage Fees",
+    "complexity": null,
+    "monsters": [],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo92_three-spears"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "93",
+    "name": "Plane of Wild Beasts",
+    "complexity": null,
+    "monsters": [
+      "Hound",
+      "Spitting Drake"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo93_circles"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "94",
+    "name": "Harvesting the Night",
+    "complexity": null,
+    "monsters": [
+      "Deep Terror",
+      "Earth Demon",
+      "Forest Imp"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo94_eclipse"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "95",
+    "name": "Plagued Crypt",
+    "complexity": null,
+    "monsters": [
+      "Living Spirit Squidface Solo"
+    ],
+    "allies": [
+      "Living Spirit Squidface Solo"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo95_squidface"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "96",
+    "name": "Unnatural Insults",
+    "complexity": null,
+    "monsters": [
+      "Living Bones",
+      "Living Corpse"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo96_lightning"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "97",
+    "name": "Battle of the Bards",
+    "complexity": null,
+    "monsters": [
+      "Bandit Archer Music Note2 Solo",
+      "Bandit Scout Music Note2 Solo",
+      "City Archer",
+      "City Guard"
+    ],
+    "allies": [
+      "Bandit Archer Music Note2 Solo",
+      "Bandit Scout Music Note2 Solo"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo97_music-note"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "98",
+    "name": "Corrupted Hunt",
+    "complexity": null,
+    "monsters": [
+      "Hound"
+    ],
+    "allies": [],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo98_angry-face"
+  },
+  {
+    "scenarioGroup": "solo",
+    "index": "99",
+    "name": "Aftermath",
+    "complexity": null,
+    "monsters": [
+      "Black Imp",
+      "City Guard Saw2 Solo",
+      "Deep Terror",
+      "Earth Demon",
+      "Hawthorne"
+    ],
+    "allies": [
+      "City Guard Saw2 Solo",
+      "Hawthorne"
+    ],
+    "unlocks": [],
+    "requirements": [],
+    "objectives": [],
+    "rewards": null,
+    "lootDeckConfig": {},
+    "flowChartGroup": null,
+    "initial": true,
+    "sourceId": "gloomhavensecretariat:scenario/solo99_saw"
+  }
+]

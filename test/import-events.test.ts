@@ -86,6 +86,34 @@ describe('formatEffect', () => {
     ).toBe('Return one collective Small to the available supply.');
   });
 
+  it('resolves GH2 event label references from separate event labels', () => {
+    const labels = {
+      events: {
+        gh2e: {
+          city: {
+            'C-01': {
+              options: {
+                B: {
+                  outcomes: {
+                    0: {
+                      effects: {
+                        1: 'If a character owns "Steel Ring" 102, they gain 15 gold.',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    expect(formatEffect('data.events.gh2e.city.C-01.options.B.outcomes.0.effects.1', labels)).toBe(
+      'If a character owns "Steel Ring" 102, they gain 15 gold.',
+    );
+  });
+
   it('formats discard effect', () => {
     expect(formatEffect({ type: 'discard', alt: 'fh', values: [2, 'brittle'] })).toBe(
       'Discard 2 cards; gain Brittle',
@@ -342,6 +370,81 @@ describe('convertEvent', () => {
     expect(result.eventType).toBe('outpost');
     expect(result.season).toBe('winter');
     expect(result.number).toBe('05');
+  });
+
+  it('converts GH2 city events with data-backed narrative and option text', () => {
+    const labels = {
+      events: {
+        gh2e: {
+          city: {
+            'C-01': {
+              narrative: 'You are at the University.<br><br>A curator needs help.',
+              options: {
+                A: {
+                  narrative: 'Return the artifact.',
+                  outcomes: {
+                    0: {
+                      narrative: 'The curators thank you.',
+                    },
+                  },
+                },
+                B: {
+                  narrative: 'Keep the artifact.',
+                  outcomes: {
+                    0: {
+                      narrative: 'It feels lucky.',
+                      effects: {
+                        1: 'If a character owns "Steel Ring" 102, they gain 15 gold.',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const ghs = {
+      cardId: 'C-01',
+      edition: 'gh2e',
+      type: 'city',
+      narrative: 'data.events.gh2e.city.C-01.narrative',
+      options: [
+        {
+          label: 'A',
+          narrative: 'data.events.gh2e.city.C-01.options.A.narrative',
+          outcomes: [{ narrative: 'data.events.gh2e.city.C-01.options.A.outcomes.0.narrative' }],
+        },
+        {
+          label: 'B',
+          narrative: 'data.events.gh2e.city.C-01.options.B.narrative',
+          outcomes: [
+            {
+              narrative: 'data.events.gh2e.city.C-01.options.B.outcomes.0.narrative',
+              effects: ['data.events.gh2e.city.C-01.options.B.outcomes.0.effects.1'],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = convertEvent(ghs, labels);
+
+    expect(result).toMatchObject({
+      eventType: 'city',
+      season: null,
+      number: '01',
+      flavorText: 'You are at the University. A curator needs help.',
+      optionA: {
+        text: 'Return the artifact.',
+        outcome: 'The curators thank you.',
+      },
+      optionB: {
+        text: 'Keep the artifact.',
+        outcome: 'It feels lucky. If a character owns "Steel Ring" 102, they gain 15 gold.',
+      },
+    });
   });
 
   it('converts event with option C', () => {

@@ -10,7 +10,10 @@ import {
   bookReferences,
 } from '../../src/db/schema/scenario-section-books.ts';
 import { GLOOMHAVEN_2E_GAME_ID } from '../../src/game.ts';
-import { seedScenarioSectionBooks } from '../../src/seed/seed-scenario-section-books.ts';
+import {
+  seedAvailableScenarioSectionBookGames,
+  seedScenarioSectionBooks,
+} from '../../src/seed/seed-scenario-section-books.ts';
 import { ScenarioSectionBooksExtractSchema } from '../../src/scenario-section-schemas.ts';
 
 import { setupTestDb, teardownTestDb } from '../helpers/db.ts';
@@ -39,7 +42,7 @@ describe('seedScenarioSectionBooks', () => {
       await db.execute(
         sql`TRUNCATE book_references, section_book_sections, scenario_book_scenarios RESTART IDENTITY CASCADE`,
       );
-      await seedScenarioSectionBooks(db);
+      await seedAvailableScenarioSectionBookGames(db);
     } finally {
       await teardownTestDb();
     }
@@ -110,9 +113,34 @@ describe('seedScenarioSectionBooks', () => {
     expect(scenarios).toHaveLength(extract.scenarios.length);
   });
 
-  it('rejects unsupported game seeds until the extract is game-aware', async () => {
-    await expect(seedScenarioSectionBooks(db, { game: GLOOMHAVEN_2E_GAME_ID })).rejects.toThrow(
-      'seedScenarioSectionBooks currently supports only "frosthaven"',
-    );
+  it('seeds GH2 scenario stubs from the game-scoped scenario extract', async () => {
+    await seedScenarioSectionBooks(db, { game: GLOOMHAVEN_2E_GAME_ID });
+
+    const scenarios = await db
+      .select({ id: scenarioBookScenarios.id })
+      .from(scenarioBookScenarios)
+      .where(eq(scenarioBookScenarios.game, GLOOMHAVEN_2E_GAME_ID));
+    const sections = await db
+      .select({ id: sectionBookSections.id })
+      .from(sectionBookSections)
+      .where(eq(sectionBookSections.game, GLOOMHAVEN_2E_GAME_ID));
+    const links = await db
+      .select({ id: bookReferences.id })
+      .from(bookReferences)
+      .where(eq(bookReferences.game, GLOOMHAVEN_2E_GAME_ID));
+
+    expect(scenarios.length).toBeGreaterThan(0);
+    expect(sections.length).toBeGreaterThan(0);
+    expect(links.length).toBeGreaterThan(0);
+  });
+
+  it('seeds every available scenario/section game extract', async () => {
+    await seedAvailableScenarioSectionBookGames(db);
+
+    const gh2Scenarios = await db
+      .select({ id: scenarioBookScenarios.id })
+      .from(scenarioBookScenarios)
+      .where(eq(scenarioBookScenarios.game, GLOOMHAVEN_2E_GAME_ID));
+    expect(gh2Scenarios.length).toBeGreaterThan(0);
   });
 });

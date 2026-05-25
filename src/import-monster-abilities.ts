@@ -9,9 +9,8 @@
  * Output: data/extracted/monster-abilities.json
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname, basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { join, basename } from 'node:path';
 
 import {
   kebabToTitle,
@@ -23,9 +22,7 @@ import {
   type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'monster-abilities.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── Our extracted format ────────────────────────────────────────────────────
 
@@ -147,8 +144,8 @@ export function importMonsterAbilities(
 }
 
 if (process.argv[1]?.endsWith('import-monster-abilities.ts')) {
-  const results = importMonsterAbilities();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importMonsterAbilities(config);
+  const outputPath = writeExtractedRecords('monster-abilities', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

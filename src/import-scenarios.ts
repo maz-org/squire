@@ -9,9 +9,8 @@
  * Output: data/extracted/scenarios.json
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   kebabToTitle,
@@ -24,9 +23,7 @@ import {
 } from './ghs-utils.ts';
 
 import { resolveSectionRefs } from './import-buildings.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'scenarios.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS types (scenario-relevant subset) ───────────────────────────────────
 
@@ -225,8 +222,8 @@ export function importScenarios(configInput: GhsImporterConfigInput = {}): Extra
 }
 
 if (process.argv[1]?.endsWith('import-scenarios.ts')) {
-  const results = importScenarios();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importScenarios(config);
+  const outputPath = writeExtractedRecords('scenarios', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

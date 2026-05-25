@@ -12,6 +12,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/cross-game-isolation.test.ts',
   'test/dev-login.test.ts',
   'test/extracted-data.test.ts',
+  'test/gh2-imported-data.test.ts',
   'test/llm-budget.test.ts',
   'test/scenario-section-data.test.ts',
   'test/seed/seed-cards.test.ts',

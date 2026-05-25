@@ -6,14 +6,23 @@
 import 'dotenv/config';
 
 import { getDb } from '../src/db.ts';
-import { seedCards } from '../src/seed/seed-cards.ts';
+import { requireGameId } from '../src/game.ts';
+import { seedAvailableCardGames, seedCards } from '../src/seed/seed-cards.ts';
 
 async function main(): Promise<void> {
   const { db, close } = getDb('cli');
   try {
-    const results = await seedCards(db);
+    const explicitGame = process.env.SQUIRE_SEED_GAME ?? process.env.GHS_DATA_GAME;
+    const results = explicitGame
+      ? (await seedCards(db, { game: requireGameId(explicitGame) })).map((result) => ({
+          ...result,
+          game: requireGameId(explicitGame),
+        }))
+      : await seedAvailableCardGames(db);
     for (const r of results) {
-      console.log(`✓ ${r.type}: upserted ${r.inserted}, pruned ${r.pruned}, skipped ${r.skipped}`);
+      console.log(
+        `✓ ${r.game}/${r.type}: upserted ${r.inserted}, pruned ${r.pruned}, skipped ${r.skipped}`,
+      );
     }
   } finally {
     await close();

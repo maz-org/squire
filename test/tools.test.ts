@@ -478,17 +478,17 @@ describe('openEntity', () => {
     });
   });
 
-  it('does not open a default-game section for an explicit unsupported game ref', async () => {
+  it('opens an explicit GH2 section ref without falling back to Frosthaven', async () => {
     await expect(openEntity('section:gloomhaven2/67.1')).resolves.toMatchObject({
-      ok: false,
-      error: { code: 'not_found' },
+      ok: true,
+      entity: { ref: 'section:gloomhaven-2e/67.1' },
     });
   });
 
-  it('does not open a default-game scenario for an explicit unsupported game ref', async () => {
+  it('opens an explicit GH2 scenario ref without falling back to Frosthaven', async () => {
     await expect(openEntity('scenario:gloomhaven2/061')).resolves.toMatchObject({
-      ok: false,
-      error: { code: 'not_found' },
+      ok: true,
+      entity: { ref: 'scenario:gloomhaven-2e/061' },
     });
   });
 

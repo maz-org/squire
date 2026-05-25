@@ -109,9 +109,9 @@ describe('game isolation', () => {
     const gh2 = await getScenarioSectionBooksBootstrapStatus({ game: GLOOMHAVEN_2E_GAME_ID });
 
     expect(frosthaven.scenarioCount).toBeGreaterThan(gh2.scenarioCount);
-    expect(gh2.scenarioCount).toBe(1);
-    expect(gh2.sectionCount).toBe(1);
-    expect(gh2.linkCount).toBe(0);
-    expect(gh2.ready).toBe(false);
+    expect(gh2.scenarioCount).toBeGreaterThan(1);
+    expect(gh2.sectionCount).toBeGreaterThan(1);
+    expect(gh2.linkCount).toBeGreaterThan(0);
+    expect(gh2.ready).toBe(true);
   });
 });

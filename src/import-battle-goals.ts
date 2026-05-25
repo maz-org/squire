@@ -8,9 +8,8 @@
  * Output: data/extracted/battle-goals.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   loadLabels,
@@ -19,9 +18,7 @@ import {
   type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'battle-goals.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS source type ────────────────────────────────────────────────────────
 
@@ -90,8 +87,8 @@ export function importBattleGoals(configInput: GhsImporterConfigInput = {}): Ext
 }
 
 if (process.argv[1]?.endsWith('import-battle-goals.ts')) {
-  const results = importBattleGoals();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importBattleGoals(config);
+  const outputPath = writeExtractedRecords('battle-goals', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }
