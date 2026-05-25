@@ -13,10 +13,14 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { GHS_DATA_DIR, resolveGameTokens, stripHtml } from './ghs-utils.ts';
+import {
+  resolveGameTokens,
+  resolveGhsImporterConfig,
+  stripHtml,
+  type GhsImporterConfigInput,
+} from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_EVENTS_PATH = join(GHS_DATA_DIR, 'events.json');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'events.json');
 
 // ─── GHS types (event-relevant subset) ──────────────────────────────────────
@@ -422,14 +426,17 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importEvents(): ExtractedEvent[] {
-  if (!existsSync(GHS_EVENTS_PATH)) {
+export function importEvents(configInput: GhsImporterConfigInput = {}): ExtractedEvent[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsEventsPath = join(config.dataDir, 'events.json');
+
+  if (!existsSync(ghsEventsPath)) {
     throw new Error(
-      `GHS event data not found at ${GHS_EVENTS_PATH}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS event data not found at ${ghsEventsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const events: GhsEvent[] = JSON.parse(readFileSync(GHS_EVENTS_PATH, 'utf-8'));
+  const events: GhsEvent[] = JSON.parse(readFileSync(ghsEventsPath, 'utf-8'));
   const results = events.map((e) => convertEvent(e));
 
   for (const event of results) {

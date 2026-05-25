@@ -7,20 +7,21 @@
  * Output: data/extracted/personal-quests.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { gameDefinitionFor } from './game.ts';
 import {
-  GHS_DATA_DIR,
   resolveLabel,
   resolveGameTokens,
   loadLabels,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_PERSONAL_QUESTS_PATH = join(GHS_DATA_DIR, 'personal-quests.json');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'personal-quests.json');
 
 // ─── GHS types ──────────────────────────────────────────────────────────────
@@ -88,8 +89,12 @@ function resolveRequirementName(name: string, labels: LabelData): string {
  * Look up the quest title from labels. Falls back to "Personal Quest {cardId}"
  * if the label is missing.
  */
-function resolveQuestTitle(cardId: string, labels: LabelData): string {
-  const ref = `%data.personalQuest.fh.${cardId}.%`;
+function resolveQuestTitle(
+  cardId: string,
+  labels: LabelData,
+  gameLabelPrefix: string = 'fh',
+): string {
+  const ref = `%data.personalQuest.${gameLabelPrefix}.${cardId}.%`;
   const resolved = resolveLabel(ref, labels);
   if (resolved === ref) {
     return `Personal Quest ${cardId}`;
@@ -100,6 +105,7 @@ function resolveQuestTitle(cardId: string, labels: LabelData): string {
 export function convertPersonalQuest(
   ghs: GhsPersonalQuest,
   labels: LabelData,
+  gameLabelPrefix: string = 'fh',
 ): ExtractedPersonalQuest {
   const requirements: ExtractedRequirement[] = ghs.requirements.map((req) => {
     const description = resolveRequirementName(req.name, labels);
@@ -119,7 +125,7 @@ export function convertPersonalQuest(
   return {
     cardId: ghs.cardId,
     altId: ghs.altId,
-    name: resolveQuestTitle(ghs.cardId, labels),
+    name: resolveQuestTitle(ghs.cardId, labels, gameLabelPrefix),
     requirements,
     openEnvelope: ghs.openEnvelope,
     errata: ghs.errata ?? null,
@@ -129,14 +135,26 @@ export function convertPersonalQuest(
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importPersonalQuests(): ExtractedPersonalQuest[] {
-  const labels = loadLabels();
-  const quests: GhsPersonalQuest[] = JSON.parse(readFileSync(GHS_PERSONAL_QUESTS_PATH, 'utf-8'));
+export function importPersonalQuests(
+  configInput: GhsImporterConfigInput = {},
+): ExtractedPersonalQuest[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsPersonalQuestsPath = join(config.dataDir, 'personal-quests.json');
+
+  if (!existsSync(ghsPersonalQuestsPath)) {
+    throw new Error(
+      `GHS personal quest data not found at ${ghsPersonalQuestsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+    );
+  }
+
+  const labels = loadLabels(config);
+  const gameLabelPrefix = gameDefinitionFor(config.game).sourcePrefix;
+  const quests: GhsPersonalQuest[] = JSON.parse(readFileSync(ghsPersonalQuestsPath, 'utf-8'));
 
   const results: ExtractedPersonalQuest[] = [];
 
   for (const quest of quests) {
-    const converted = convertPersonalQuest(quest, labels);
+    const converted = convertPersonalQuest(quest, labels, gameLabelPrefix);
 
     // Verify all data/game tokens were resolved
     const allText = [

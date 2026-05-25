@@ -26,28 +26,67 @@ import { readFileSync, existsSync } from 'node:fs';
 import { basename, join, dirname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFragment, type DefaultTreeAdapterMap } from 'parse5';
+import {
+  DEFAULT_GAME_ID,
+  FROSTHAVEN_GAME_ID,
+  GLOOMHAVEN_2E_GAME_ID,
+  requireGameId,
+  type GameId,
+} from './game.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ─── GHS data paths ─────────────────────────────────────────────────────────
 
 const DEFAULT_GHS_GAME_DATA_SUBDIR = 'fh';
+const DEFAULT_GHS_SOURCE_DIR = join(__dirname, '..', 'data', 'gloomhavensecretariat');
+const GHS_GAME_DATA_SUBDIR_BY_GAME: Record<GameId, string> = {
+  [FROSTHAVEN_GAME_ID]: 'fh',
+  [GLOOMHAVEN_2E_GAME_ID]: 'gh2e',
+};
+const GHS_GAME_DATA_SUBDIRS = new Set(Object.values(GHS_GAME_DATA_SUBDIR_BY_GAME));
 
 interface ResolveGhsDataDirOptions {
   gameDataSubdir?: string;
   exists?: (path: string) => boolean;
 }
 
+export interface GhsImporterConfigInput {
+  game?: string;
+  sourceDir?: string;
+  exists?: (path: string) => boolean;
+}
+
+export interface GhsImporterConfig {
+  game: GameId;
+  sourceDir: string;
+  dataDir: string;
+  labelPath: string;
+  spoilerLabelPath: string;
+}
+
 function normalizeGhsGameDataSubdir(subdir: string): string {
   return subdir.replace(/^data[\\/]/, '');
 }
 
-function isDirectGhsGameDataDir(baseDir: string, gameDataSubdir: string): boolean {
+function ghsGameDataSubdirFor(game: GameId): string {
+  return GHS_GAME_DATA_SUBDIR_BY_GAME[game];
+}
+
+function resolveGhsGame(value: string | undefined): GameId {
+  if (value === undefined) return DEFAULT_GAME_ID;
+  return requireGameId(normalizeGhsGameDataSubdir(value));
+}
+
+function directGhsGameDataSubdir(baseDir: string): string | null {
   const normalizedBaseDir = normalize(baseDir);
-  return (
-    basename(normalizedBaseDir) === gameDataSubdir &&
-    basename(dirname(normalizedBaseDir)) === 'data'
-  );
+  const subdir = basename(normalizedBaseDir);
+  if (!GHS_GAME_DATA_SUBDIRS.has(subdir)) return null;
+  return basename(dirname(normalizedBaseDir)) === 'data' ? subdir : null;
+}
+
+function isDirectGhsGameDataDir(baseDir: string, gameDataSubdir: string): boolean {
+  return directGhsGameDataSubdir(baseDir) === gameDataSubdir;
 }
 
 /**
@@ -70,18 +109,41 @@ export function resolveGhsDataDir(baseDir: string, options: ResolveGhsDataDirOpt
   return candidate;
 }
 
-export const GHS_DATA_GAME = normalizeGhsGameDataSubdir(
-  process.env.GHS_DATA_GAME ?? DEFAULT_GHS_GAME_DATA_SUBDIR,
-);
+export function resolveGhsImporterConfig(input: GhsImporterConfigInput = {}): GhsImporterConfig {
+  const game = resolveGhsGame(input.game ?? process.env.GHS_DATA_GAME);
+  const gameDataSubdir = ghsGameDataSubdirFor(game);
+  const sourceDir = input.sourceDir ?? process.env.GHS_DATA_DIR ?? DEFAULT_GHS_SOURCE_DIR;
+  const directSubdir = directGhsGameDataSubdir(sourceDir);
 
-export const GHS_DATA_DIR = resolveGhsDataDir(
-  process.env.GHS_DATA_DIR ?? join(__dirname, '..', 'data', 'gloomhavensecretariat'),
-  { gameDataSubdir: GHS_DATA_GAME },
-);
+  if (directSubdir && directSubdir !== gameDataSubdir) {
+    throw new Error(
+      `GHS source directory ${sourceDir} uses data/${directSubdir}, which does not match requested game ${game} (expected data/${gameDataSubdir}).`,
+    );
+  }
 
-export const GHS_LABEL_PATH = join(GHS_DATA_DIR, 'label', 'en.json');
+  const dataDir = resolveGhsDataDir(sourceDir, {
+    gameDataSubdir,
+    exists: input.exists,
+  });
 
-export const GHS_SPOILER_LABEL_PATH = join(GHS_DATA_DIR, 'label', 'spoiler', 'en.json');
+  return {
+    game,
+    sourceDir,
+    dataDir,
+    labelPath: join(dataDir, 'label', 'en.json'),
+    spoilerLabelPath: join(dataDir, 'label', 'spoiler', 'en.json'),
+  };
+}
+
+const DEFAULT_GHS_IMPORTER_CONFIG = resolveGhsImporterConfig();
+
+export const GHS_DATA_GAME = ghsGameDataSubdirFor(DEFAULT_GHS_IMPORTER_CONFIG.game);
+
+export const GHS_DATA_DIR = DEFAULT_GHS_IMPORTER_CONFIG.dataDir;
+
+export const GHS_LABEL_PATH = DEFAULT_GHS_IMPORTER_CONFIG.labelPath;
+
+export const GHS_SPOILER_LABEL_PATH = DEFAULT_GHS_IMPORTER_CONFIG.spoilerLabelPath;
 
 // ─── GHS types ───────────────────────────────────────────────────────────────
 
@@ -248,12 +310,12 @@ function mergeLabels(a: LabelData, b: LabelData): LabelData {
  * Load and merge the base and spoiler English label files from GHS data.
  * Throws if label files are missing.
  */
-export function loadLabels(): LabelData {
-  if (!existsSync(GHS_LABEL_PATH) || !existsSync(GHS_SPOILER_LABEL_PATH)) {
+export function loadLabels(config: GhsImporterConfig = DEFAULT_GHS_IMPORTER_CONFIG): LabelData {
+  if (!existsSync(config.labelPath) || !existsSync(config.spoilerLabelPath)) {
     throw new Error('Missing GHS label data. Expected both base and spoiler English label files.');
   }
-  const baseLabels: LabelData = JSON.parse(readFileSync(GHS_LABEL_PATH, 'utf-8'));
-  const spoilerLabels: LabelData = JSON.parse(readFileSync(GHS_SPOILER_LABEL_PATH, 'utf-8'));
+  const baseLabels: LabelData = JSON.parse(readFileSync(config.labelPath, 'utf-8'));
+  const spoilerLabels: LabelData = JSON.parse(readFileSync(config.spoilerLabelPath, 'utf-8'));
   return mergeLabels(baseLabels, spoilerLabels);
 }
 

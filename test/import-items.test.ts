@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { convertItem, resolveNestedDataRefs } from '../src/import-items.ts';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { convertItem, importItems, resolveNestedDataRefs } from '../src/import-items.ts';
 import type { LabelData } from '../src/ghs-utils.ts';
 
 // ─── convertItem ────────────────────────────────────────────────────────────
@@ -277,6 +280,75 @@ describe('convertItem', () => {
 
     const result = convertItem(ghsItem, labels);
     expect(result.spent).toBe(false);
+  });
+});
+
+// ─── importItems ────────────────────────────────────────────────────────────
+
+function writeItemsFixture(
+  root: string,
+  subdir: 'fh' | 'gh2e',
+  labelKey: string,
+  name: string,
+  effect: string,
+): void {
+  const dataDir = join(root, 'data', subdir);
+  mkdirSync(join(dataDir, 'label', 'spoiler'), { recursive: true });
+  writeFileSync(
+    join(dataDir, 'label', 'en.json'),
+    JSON.stringify({ items: { [labelKey]: { '1': effect } } }),
+    'utf-8',
+  );
+  writeFileSync(join(dataDir, 'label', 'spoiler', 'en.json'), JSON.stringify({}), 'utf-8');
+  writeFileSync(
+    join(dataDir, 'items.json'),
+    JSON.stringify([
+      {
+        id: 1,
+        name,
+        count: 1,
+        edition: subdir === 'fh' ? 'fh' : 'gh2',
+        slot: 'head',
+        actions: [{ type: 'custom', value: `%data.items.${labelKey}.1%` }],
+      },
+    ]),
+    'utf-8',
+  );
+}
+
+describe('importItems', () => {
+  it('reads an explicit Frosthaven source directory', () => {
+    const root = mkdtempSync(join(tmpdir(), 'squire-ghs-fh-'));
+    try {
+      writeItemsFixture(root, 'fh', 'fh-1', 'FH Spyglass', 'Frosthaven item text');
+
+      const results = importItems({ game: 'frosthaven', sourceDir: root });
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        name: 'FH Spyglass',
+        effect: 'Frosthaven item text',
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('reads an explicit GH2 source directory', () => {
+    const root = mkdtempSync(join(tmpdir(), 'squire-ghs-gh2-'));
+    try {
+      writeItemsFixture(root, 'gh2e', 'gh2-1', 'GH2 Boots', 'Gloomhaven 2E item text');
+
+      const results = importItems({ game: 'gh2', sourceDir: root });
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        name: 'GH2 Boots',
+        effect: 'Gloomhaven 2E item text',
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

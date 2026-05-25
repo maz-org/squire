@@ -14,17 +14,17 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   formatAction,
   loadLabels,
+  resolveGhsImporterConfig,
   type GhsAbility,
   type GhsDeck,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_DECK_DIR = join(GHS_DATA_DIR, 'character', 'deck');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'character-abilities.json');
 
 // ─── Our extracted format ────────────────────────────────────────────────────
@@ -78,21 +78,26 @@ export function convertAbility(
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function importCharacterAbilities(): ExtractedCharacterAbility[] {
-  if (!existsSync(GHS_DECK_DIR)) {
+export function importCharacterAbilities(
+  configInput: GhsImporterConfigInput = {},
+): ExtractedCharacterAbility[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsDeckDir = join(config.dataDir, 'character', 'deck');
+
+  if (!existsSync(ghsDeckDir)) {
     throw new Error(
-      `GHS data not found at ${GHS_DECK_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS data not found at ${ghsDeckDir}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
+  const labels = loadLabels(config);
   const allResults: ExtractedCharacterAbility[] = [];
 
-  for (const file of readdirSync(GHS_DECK_DIR).sort()) {
+  for (const file of readdirSync(ghsDeckDir).sort()) {
     if (!file.endsWith('.json')) continue;
 
     const characterName = basename(file, '.json');
-    const deck: GhsDeck = JSON.parse(readFileSync(join(GHS_DECK_DIR, file), 'utf-8'));
+    const deck: GhsDeck = JSON.parse(readFileSync(join(ghsDeckDir, file), 'utf-8'));
 
     for (const ability of deck.abilities) {
       const converted = convertAbility(ability, characterName, labels);

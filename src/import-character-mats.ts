@@ -14,17 +14,17 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   capitalize,
   loadLabels,
   resolveLabel,
   resolveGameTokens,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_CHARACTER_DIR = join(GHS_DATA_DIR, 'character');
 const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'character-mats.json');
 
 // ─── GHS types ───────────────────────────────────────────────────────────────
@@ -281,20 +281,25 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function importCharacterMats(): ExtractedCharacterMat[] {
-  if (!existsSync(GHS_CHARACTER_DIR)) {
+export function importCharacterMats(
+  configInput: GhsImporterConfigInput = {},
+): ExtractedCharacterMat[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsCharacterDir = join(config.dataDir, 'character');
+
+  if (!existsSync(ghsCharacterDir)) {
     throw new Error(
-      `GHS data not found at ${GHS_CHARACTER_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS data not found at ${ghsCharacterDir}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
+  const labels = loadLabels(config);
   const allResults: ExtractedCharacterMat[] = [];
 
-  for (const file of readdirSync(GHS_CHARACTER_DIR).sort()) {
+  for (const file of readdirSync(ghsCharacterDir).sort()) {
     if (!file.endsWith('.json')) continue;
 
-    const ghs: GhsCharacter = JSON.parse(readFileSync(join(GHS_CHARACTER_DIR, file), 'utf-8'));
+    const ghs: GhsCharacter = JSON.parse(readFileSync(join(ghsCharacterDir, file), 'utf-8'));
     const record = convertCharacterMat(ghs, labels);
 
     const allText = [...record.perks, ...record.masteries];
