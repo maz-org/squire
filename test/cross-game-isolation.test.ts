@@ -23,6 +23,8 @@ import {
   searchCards,
   searchKnowledge,
 } from '../src/tools.ts';
+import { seedAvailableCardGames } from '../src/seed/seed-cards.ts';
+import { seedAvailableScenarioSectionBookGames } from '../src/seed/seed-scenario-section-books.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -145,6 +147,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await deleteVectorFixtures();
   await deleteGh2Fixtures();
+  const db = await setupTestDb();
+  await seedAvailableCardGames(db, { types: ['items'] });
+  await seedAvailableScenarioSectionBookGames(db);
   await teardownTestDb();
 });
 
