@@ -7,6 +7,15 @@ name: Refresh extracted data
 
 on:
   workflow_dispatch:
+    inputs:
+      ghs_data_paths:
+        description: 'Space-separated GHS sparse checkout paths, e.g. data/fh or data/fh data/gh2e'
+        required: false
+        default: 'data/fh'
+      ghs_data_game:
+        description: 'GHS game data subdirectory to import from'
+        required: false
+        default: 'fh'
   schedule:
     # Weekly on Sundays at 06:00 UTC
     - cron: '0 6 * * 0'
@@ -22,6 +31,9 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      GHS_DATA_PATHS: ${{ github.event.inputs.ghs_data_paths || 'data/fh' }}
+      GHS_DATA_GAME: ${{ github.event.inputs.ghs_data_game || 'fh' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -33,13 +45,14 @@ jobs:
 
       - run: npm ci
 
-      # Shallow-clone GHS with only the Frosthaven data subtree (~6 MB)
+      # Shallow-clone GHS with only the requested game data subtree(s).
       - name: Fetch GHS data
         run: |
           git clone --depth 1 --filter=blob:none --sparse \
             https://github.com/Lurkars/gloomhavensecretariat.git /tmp/ghs
           cd /tmp/ghs
-          git sparse-checkout set data/fh
+          read -r -a ghs_paths <<< "$GHS_DATA_PATHS"
+          git sparse-checkout set "${ghs_paths[@]}"
 
       # Run GHS imports (free — JSON parsing only)
       - name: Run GHS imports

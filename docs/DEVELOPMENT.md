@@ -603,13 +603,27 @@ the project and point the scripts at it via env var:
 ```bash
 git clone --depth 1 --filter=blob:none --sparse \
   https://github.com/Lurkars/gloomhavensecretariat.git ~/data/ghs
-cd ~/data/ghs && git sparse-checkout set data/fh
+cd ~/data/ghs
+
+# Frosthaven only
+git sparse-checkout set data/fh
+
+# Gloomhaven 2nd Edition only
+git sparse-checkout set data/gh2e
+
+# Both games in the same sparse checkout
+git sparse-checkout set data/fh data/gh2e
 ```
 
-Then run any import script:
+Then run any import script. `GHS_DATA_GAME` selects the GHS `data/<game>`
+subtree when `GHS_DATA_DIR` points at a checkout root; it defaults to `fh`:
 
 ```bash
+# Frosthaven
 GHS_DATA_DIR=~/data/ghs npx tsx src/import-monster-stats.ts
+
+# Gloomhaven 2nd Edition
+GHS_DATA_DIR=~/data/ghs GHS_DATA_GAME=gh2e npx tsx src/import-monster-stats.ts
 ```
 
 The clone lives outside the repo so it doesn't interfere with git or

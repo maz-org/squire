@@ -1,11 +1,58 @@
 import { describe, it, expect } from 'vitest';
+import { join } from 'node:path';
 import {
   kebabToTitle,
   stripHtml,
   resolveLabel,
   resolveGameTokens,
   formatAction,
+  resolveGhsDataDir,
 } from '../src/ghs-utils.ts';
+
+// ─── GHS data path resolution ───────────────────────────────────────────────
+
+describe('resolveGhsDataDir', () => {
+  it('defaults to the Frosthaven subtree when given a GHS checkout root', () => {
+    const root = '/tmp/ghs';
+
+    expect(resolveGhsDataDir(root, { exists: (path) => path === join(root, 'data', 'fh') })).toBe(
+      join(root, 'data', 'fh'),
+    );
+  });
+
+  it('selects the GH2 subtree when requested', () => {
+    const root = '/tmp/ghs';
+
+    expect(
+      resolveGhsDataDir(root, {
+        gameDataSubdir: 'gh2e',
+        exists: (path) => path === join(root, 'data', 'gh2e'),
+      }),
+    ).toBe(join(root, 'data', 'gh2e'));
+  });
+
+  it('keeps accepting a direct game data directory', () => {
+    const direct = '/tmp/ghs/data/gh2e';
+
+    expect(
+      resolveGhsDataDir(direct, {
+        gameDataSubdir: 'gh2e',
+        exists: () => false,
+      }),
+    ).toBe(direct);
+  });
+
+  it('keeps the requested subtree in the resolved path when it has not been checked out', () => {
+    const root = '/tmp/ghs';
+
+    expect(
+      resolveGhsDataDir(root, {
+        gameDataSubdir: 'gh2e',
+        exists: () => false,
+      }),
+    ).toBe(join(root, 'data', 'gh2e'));
+  });
+});
 
 // ─── kebabToTitle ────────────────────────────────────────────────────────────
 
