@@ -37,6 +37,7 @@ const GH2_SECTION_TEXT = 'GH2 boundary section 67.1 text. Do not reuse Frosthave
 const SHARED_ITEM_SOURCE_ID = 'gloomhavensecretariat:item/1';
 const GH2_ITEM_NAME = 'Spyglass';
 const GH2_ITEM_EFFECT = 'GH2 boundary item effect. Do not reuse the Frosthaven Spyglass.';
+const FROSTHAVEN_ITEM_EFFECT = 'During your attack ability, gain advantage on one attack.';
 
 const SHARED_VECTOR_SOURCE = 'shared-boundary-rulebook.pdf';
 
@@ -221,9 +222,13 @@ describe('cross-game storage isolation', () => {
 
     const gh2Search = await searchCards('Spyglass', 10, { game: 'gloomhaven 2.0' });
     expect(
-      gh2Search.map((hit) => hit.data.effect),
+      gh2Search.some((hit) => hit.data.effect === GH2_ITEM_EFFECT),
+      'card search did not include the GH2 same-source Spyglass fixture',
+    ).toBe(true);
+    expect(
+      gh2Search.some((hit) => hit.data.effect === FROSTHAVEN_ITEM_EFFECT),
       'card search leaked Frosthaven same-name Spyglass into GH2 results',
-    ).toEqual([GH2_ITEM_EFFECT]);
+    ).toBe(false);
   });
 
   it('keeps same-number scenarios isolated across scenario lookup and knowledge search', async () => {

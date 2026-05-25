@@ -1,0 +1,698 @@
+[
+  {
+    "name": "Angry Face",
+    "characterClass": "Orchid",
+    "handSize": 11,
+    "traits": [
+      "chaotic",
+      "intimidating",
+      "nimble"
+    ],
+    "hp": {
+      "1": 8,
+      "2": 9,
+      "3": 11,
+      "4": 12,
+      "5": 14,
+      "6": 15,
+      "7": 17,
+      "8": 18,
+      "9": 20
+    },
+    "perks": [
+      "Replace 1 -2 card with +0 card",
+      "Replace 3 -1 cards with -1 Angry Face performs: Attack 2, Range 5 cards",
+      "Replace 2 two +0 cards with two +1 cards",
+      "Add 2 +0 Grant one of your summons adjacent to the target: Attack cards",
+      "Add 2 +3 cards",
+      "Add 2 Rolling +0 Stun cards",
+      "Add 1 Rolling +1 card",
+      "At the start of each scenario, reveal the top card of each monster ability card deck in the scenario",
+      "Whenever you long rest, after you Recover your cards from your discard pile, you may play one card from your hand to perform a Doom action of the card",
+      "On each of your summons' turns, you may have them skip their turn and instead perform Move treating you as their focus"
+    ],
+    "masteries": [
+      "Kill 20 enemies that have Doom",
+      "In a single round, you and one of your summons must perform a combined total of 6 or more attack abilities"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/angry-face"
+  },
+  {
+    "name": "Bruiser",
+    "characterClass": "Inox",
+    "handSize": 10,
+    "traits": [
+      "intimidating",
+      "strong",
+      "armored"
+    ],
+    "hp": {
+      "1": 10,
+      "2": 12,
+      "3": 14,
+      "4": 16,
+      "5": 18,
+      "6": 20,
+      "7": 22,
+      "8": 24,
+      "9": 26
+    },
+    "perks": [
+      "Replace 2 -1 cards with +1 cards",
+      "Replace 2 -1 cards with Rolling +0 Shield 1 cards",
+      "Replace 2 +0 cards with Rolling +0 Add this card to your active area. On the next attack targeting you performed by an adjacent enemy, discard this card to gain Retaliate 2 for the attack cards",
+      "Replace 1 +0 card with +0 Stun card",
+      "Add 2 +1 Heal 2 cards",
+      "Add 2 +2 Push 2 cards",
+      "Add 1 +3 card",
+      "Add 1 Rolling +0 Disarm card and Rolling +0 Muddle card",
+      "Add 1 two +1 cards",
+      "Once each scenario, during your turn, you may perform: Loot 1, if this ability loots at least one money token, you may Recover one Body item",
+      "Whenever you long rest, add Move +1 to your first move ability the following round",
+      "Each character gains advantage on their first attack during the first round of each scenario"
+    ],
+    "masteries": [
+      "In 3 different scenarios, kill an enemy that you Pushed or Pulled that round",
+      "In a single scenario, across 3 consecutive rounds, play 6 different ability cards and cause enemies to suffer 7 or more damage during each of those rounds"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/bruiser"
+  },
+  {
+    "name": "Circles",
+    "characterClass": "Aesther",
+    "handSize": 12,
+    "traits": [
+      "arcane",
+      "chaotic",
+      "resourceful"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 1 -2 card with +0 card",
+      "Replace 3 -1 cards with +0 After the attack ability, grant one of your summons: Teleport 2 cards",
+      "Replace 3 +0 cards with +1 Invisible cards",
+      "Replace 1 +0 card with two Rolling +0 Wound cards",
+      "Replace 1 +0 card with two Rolling +0 Poison cards",
+      "Replace 1 two +1 cards with two +1 Curse cards",
+      "Add 1 +2 card",
+      "Add 1 +2 card",
+      "Add 1 +2 card",
+      "Add 1 two +1 cards",
+      "At the beginning of each round in which you long rest, all your summons gain Shield 1 for the round",
+      "Once each scenario, during your turn, Teleport one of your summons to an empty hex adjacent to you",
+      "Once each scenario, during ordering of initiative, after all ability cards have been revealed, all your summons gain Invisible"
+    ],
+    "masteries": [
+      "Perform 3 different summon actions before your first rest and keep those cards in your active area for the entire scenario",
+      "Perform 6 different summon abilities from your ability cards over the course of the first rounds of 6 scenarios"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/circles"
+  },
+  {
+    "name": "Cragheart",
+    "characterClass": "Savvas",
+    "handSize": 11,
+    "traits": [
+      "arcane",
+      "outcast",
+      "strong"
+    ],
+    "hp": {
+      "1": 10,
+      "2": 12,
+      "3": 14,
+      "4": 16,
+      "5": 18,
+      "6": 20,
+      "7": 22,
+      "8": 24,
+      "9": 26
+    },
+    "perks": [
+      "Replace 1 -2 card with +0 card",
+      "Replace 3 -1 cards with +1 cards",
+      "Replace 3 +0 cards with Rolling +1 Create one 1-hex obstacle tile in an empty hex adjacent to the target cards",
+      "Replace 2 +0 cards with two +1 Push 1 cards",
+      "Add 3 +2 Immobilize cards",
+      "Add 1 Rolling +0 Muddle card",
+      "You may ignore negative item effects and the appearance of a cursed item",
+      "Once each scenario, during your turn, you may destroy one 1-hex obstacle within Range 5 to Teleport to the hex it occupied",
+      "At the end of each of your rests, you may destroy one 1-hex obstacle within Range 3 to Earth",
+      "Whenever a new room is revealed, control all enemies in the newly revealed room: Move 1, this movement must end in an empty hex"
+    ],
+    "masteries": [
+      "For an entire scenario, create, destroy, or move at least one obstacle tile each round",
+      "In a single scenario, heal 8 or more hit points during a single round, deal 8 or more damage with a ranged attack ability, and deal 8 or more damage with a melee attack ability"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/cragheart"
+  },
+  {
+    "name": "Crossed Swords",
+    "characterClass": "Harrower",
+    "handSize": 11,
+    "traits": [
+      "armored",
+      "chaotic",
+      "outcast"
+    ],
+    "hp": {
+      "1": 8,
+      "2": 9,
+      "3": 11,
+      "4": 12,
+      "5": 14,
+      "6": 15,
+      "7": 17,
+      "8": 18,
+      "9": 20
+    },
+    "perks": [
+      "Replace 2 -1 cards with +0 Wound cards",
+      "Replace 2 -1 cards with +0 Poison cards",
+      "Replace 2 +0 cards with +1 cards",
+      "Replace 2 +0 cards with +1 cards",
+      "Replace 2 +0 cards with +0 Add Attack +1 for each card with a Lost in Envx's active area cards",
+      "Add 1 +1 card",
+      "Add 1 +1 card",
+      "Whenever you long rest, you may Teleport to a hex occupied by one of your summons and simultaneously Teleport that summon to the hex you occupied",
+      "Once each scenario, when you perform an action with Lost, you may immediately play one card from your hand to perform an action with Lost of the card",
+      "You may additionally bring four One Hand items, two Two Hands items, or two One Hand items and one Two Hands item into each scenario."
+    ],
+    "masteries": [
+      "Perform 6 different Persistent Lost abilities with no more than 3 of the 6 being summon abilities",
+      "Gain this mastery when you feel you deserve it"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/crossed-swords"
+  },
+  {
+    "name": "Eclipse",
+    "characterClass": "Aesther",
+    "handSize": 9,
+    "traits": [
+      "chaotic",
+      "intimidating",
+      "nimble"
+    ],
+    "hp": {
+      "1": 8,
+      "2": 9,
+      "3": 11,
+      "4": 12,
+      "5": 14,
+      "6": 15,
+      "7": 17,
+      "8": 18,
+      "9": 20
+    },
+    "perks": [
+      "Remove 1 -2 card",
+      "Remove 2 two -1 cards",
+      "Replace 1 -1 card with two Rolling +0 After the attack ability, grant one adjacent ally or self: Teleport 2 cards",
+      "Replace 1 null card with -2 card",
+      "Replace 2 two +0 cards with two +1 If this attack kills the target, shuffle one Curse card into the monster attack modifier deck cards",
+      "Replace 2 +0 cards with +2 cards",
+      "Replace 2 +1 cards with +0 Place one Tear in a hex adjacent to the target cards",
+      "Add 1 two +1 cards",
+      "Whenever you long rest, you may Dark",
+      "Once each scenario, during your turn, place one Tear in an adjacent hex",
+      "If a Curse causes an enemy to deal no Damage during its attack, that enemy suffers Damage 3"
+    ],
+    "masteries": [
+      "In a single scenario, infuse or consume Dark during each of your turns",
+      "In a single scenario, perform an attack ability during your turn in 5 consecutive rounds"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/eclipse"
+  },
+  {
+    "name": "Lightning",
+    "characterClass": "Inox",
+    "handSize": 9,
+    "traits": [
+      "chaotic",
+      "intimidating",
+      "strong"
+    ],
+    "hp": {
+      "1": 10,
+      "2": 12,
+      "3": 14,
+      "4": 16,
+      "5": 18,
+      "6": 20,
+      "7": 22,
+      "8": 24,
+      "9": 26
+    },
+    "perks": [
+      "Remove 1 -2 card",
+      "Replace 3 -1 cards with Rolling +0 Heal 1 cards",
+      "Replace 2 two +0 cards with +1 You may suffer Damage 2 to add Attack +2 cards",
+      "Replace 1 +0 card with two Rolling +0 Wound cards",
+      "Add 2 +2 cards",
+      "Add 1 Rolling +0 Stun card",
+      "Add 1 double Suffer Damage equal to half your current hit point value (rounded down) card",
+      "Add 1 +1 card",
+      "Whenever you heal from a long rest, add Heal +1",
+      "Once each scenario, when Damage from an attack would reduce your current hit point value to less than 1, instead set your current hit point value to 1 and perform: Attack 2, Target the attacker",
+      "At the end of each of your turns, you may control all adjacent enemies: Attack Target +0 Lightning"
+    ],
+    "masteries": [
+      "Kill 20 enemies with your retaliate",
+      "In a single scenario, end all your turns with your hit point value at half your maximum or lower without exhausting"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/lightning"
+  },
+  {
+    "name": "Mindthief",
+    "characterClass": "Vermling",
+    "handSize": 10,
+    "traits": [
+      "nimble",
+      "outcast",
+      "persuasive"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 2 two -1 cards with +0 After the attack ability, control the target: Move 1 cards",
+      "Replace 3 +0 cards with +1 Add Attack +1 for each negative condition the target has cards",
+      "Replace 2 +0 cards with +2 cards",
+      "Add 1 two +1 Immobilize cards",
+      "Add 3 +2 cards",
+      "Add 2 Rolling +0 Invisible Self cards",
+      "Add 1 Rolling +1 card",
+      "Whenever you control the attack of an enemy, you may have the enemy use your attack modifier deck",
+      "You are considered to be last in initiative order when determining monster focus",
+      "At the end of each of your rests, you may Ice|dark to control one enemy within Range 5: Attack 1"
+    ],
+    "masteries": [
+      "In a single scenario, kill 5 or more enemies with control abilities",
+      "In a single scenario, trigger the on-attack effect from four different Augments at least 3 times each"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/mindthief"
+  },
+  {
+    "name": "Music Note",
+    "characterClass": "Quatryl",
+    "handSize": 11,
+    "traits": [
+      "educated",
+      "nimble",
+      "persuasive"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 1 -2 card with -2 Bless Target 2 card",
+      "Replace 3 -1 cards with +0 Skip moving your character tokens on active Song at the end of this round cards",
+      "Replace 2 -1 cards with +0 Stun cards",
+      "Replace 2 two +0 cards with +1 Strengthen AllyShort cards",
+      "Replace 2 +0 cards with +1 cards and two +2 cards",
+      "Add 3 Rolling +0 Grant one ally: Move 2 or Attack 2 cards",
+      "Add 1 three Rolling +0 Curse cards",
+      "At the end of each scenario, each character in that scenario gains Experience 8 if you completed your battle goal",
+      "Whenever you perform a Song, if you have any unused Notes, gain one Note of your choice in addition to any other Note gained that round",
+      "During ordering of initiative in rounds in which you declare a long rest, gain one Note of your choice, and each of your allies may decrease their initiative by 10"
+    ],
+    "masteries": [
+      "In a single scenario, perform 7 different Song actions",
+      "In a single scenario, create 20 or more Notes and use each Note you create in a Song"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/music-note"
+  },
+  {
+    "name": "Saw",
+    "characterClass": "Human",
+    "handSize": 10,
+    "traits": [
+      "educated",
+      "persuasive",
+      "resourceful"
+    ],
+    "hp": {
+      "1": 8,
+      "2": 9,
+      "3": 11,
+      "4": 12,
+      "5": 14,
+      "6": 15,
+      "7": 17,
+      "8": 18,
+      "9": 20
+    },
+    "perks": [
+      "Remove 1 two -1 cards",
+      "Replace 1 -2 card with -2 Give one adjacent ally or self one medical pack card",
+      "Replace 3 -1 cards with +1 cards",
+      "Replace 2 two +0 cards with +1 You may gain Disarm to add Stun cards",
+      "Add 2 two +1 Add Attack +1 if an ally has an active Prescription cards",
+      "Add 2 Rolling +0 Heal 3 cards",
+      "Add Heal +1 to all heal abilities on \"Medical Pack\" ability cards",
+      "Each City Phase after completing a scenario, your or one ally's donation to the Sanctuary of the Great Oak is free",
+      "At the end of each of your rests, if an ally as an active Prescription, gain one \"Medical Pack\" ability card and move the token on one ally's active Prescription backward one slot"
+    ],
+    "masteries": [
+      "In a single scenario, give an ally a medical pack or Prescription each round except when performing a long rest",
+      "In a single scenario, never attack an undamaged enemy while there are any damaged monsters alive, and perform at least 10 attacks"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/saw"
+  },
+  {
+    "name": "Silent Knife",
+    "characterClass": "Human",
+    "handSize": 9,
+    "traits": [
+      "chaotic",
+      "nimble",
+      "resourceful"
+    ],
+    "hp": {
+      "1": 8,
+      "2": 9,
+      "3": 11,
+      "4": 12,
+      "5": 14,
+      "6": 15,
+      "7": 17,
+      "8": 18,
+      "9": 20
+    },
+    "perks": [
+      "Remove 1 -2 card",
+      "Remove 1 two -1 cards",
+      "Replace 3 -1 cards with +1 cards",
+      "Replace 3 +0 cards with +1 Gain one money token if this attack targeted an adjacent enemy cards",
+      "Replace 2 +0 cards with +2 cards",
+      "Replace 2 +1 cards with Rolling +1 Invisible Self cards",
+      "Add 2 +1 Disarm cards",
+      "At the end of each of your rests, you may place one of your money tokens in the hex occupied by an enemy within Range 3 to perform: Attack 1, Target that enemy, Range 3",
+      "Whenever you complete a city event, draw an attack modifier card as though you were performing an Attack 4. Gain an amount of gold equal to the Damage the attack would have dealt",
+      "Once each scenario, during your turn, you may perform: Invisible, self"
+    ],
+    "masteries": [
+      "For an entire scenario, only attack enemies that are adjacent to one of your allies or adjacent to none of their allies, and perform at least 10 attacks",
+      "End 3 scenarios with 12 or more money tokens"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/silent-knife"
+  },
+  {
+    "name": "Spellweaver",
+    "characterClass": "Orchid",
+    "handSize": 8,
+    "traits": [
+      "arcane",
+      "educated",
+      "resourceful"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 1 -2 card with +0 card",
+      "Replace 3 -1 cards with +0 cards",
+      "Replace 3 +0 cards with +1 Add Attack +2 if drawn during an action with Lost cards",
+      "Replace 2 +0 cards with +1 Curse cards",
+      "Add 2 +1 Stun cards",
+      "Add 2 +2 cards",
+      "Remove 1 +0 card",
+      "Once each scenario, when you would suffer Damage, you may gain Invisible and Stun to negate the Damage",
+      "Whenever you short rest, if Reviving Ether is in your discard pile, first Recover it",
+      "At the end of each of your turns during which you performed an action with Lost, gain Bless"
+    ],
+    "masteries": [
+      "In a single scenario, consume both Fire and Ice during the same turn 6 times",
+      "In a single scenario, perform 4 different Lost actions twice each"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/spellweaver"
+  },
+  {
+    "name": "Squidface",
+    "characterClass": "Harrower",
+    "handSize": 10,
+    "traits": [
+      "arcane",
+      "intimidating",
+      "outcast"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 2 -1 cards with +1 cards",
+      "Replace 2 -1 cards with +0 Give the target or one enemy within Range 2 of the target Plague cards",
+      "Replace 2 +0 cards with +1 Curse cards",
+      "Replace 2 +0 cards with +1 Immobilize cards",
+      "Replace 1 two +1 cards with two +2 cards",
+      "Add 2 +1 Stun cards",
+      "Add 1 three Rolling +0 Give the target or one enemy within Range 2 of the target Poison cards",
+      "Add 1 two Rolling +0 Heal 1 cards",
+      "Add 1 +1 card",
+      "You have Fly",
+      "Whenever you heal from a long rest, you may remove Poison from on ally to add Heal +1",
+      "Once each scenario, when an enemy that has a Plague would die, you first control that enemy and have it perform the abilities on its ability card, adding Plague to all its attack, then it dies"
+    ],
+    "masteries": [
+      "In a single turn, kill 3 or more enemies without drawing an attack modifier card",
+      "In a single scenario, either apply or remove Poison from an ally or enemy each round"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/squidface"
+  },
+  {
+    "name": "Sun",
+    "characterClass": "Valrath",
+    "handSize": 11,
+    "traits": [
+      "armored",
+      "educated",
+      "persuasive"
+    ],
+    "hp": {
+      "1": 10,
+      "2": 12,
+      "3": 14,
+      "4": 16,
+      "5": 18,
+      "6": 20,
+      "7": 22,
+      "8": 24,
+      "9": 26
+    },
+    "perks": [
+      "Replace 2 -1 cards with two +0 cards",
+      "Replace 3 +0 cards with Rolling +1 Shield 1 cards",
+      "Replace 2 +0 cards with +2 cards",
+      "Add 2 two +1 Heal 1 cards",
+      "Add 1 -1 You or an adjacent ally may Recover on level 1 card from the discard pile card",
+      "Add 1 Rolling +0 Stun card",
+      "Add 1 +1 card",
+      "Remove 1 -1 card",
+      "Whenever you open one or more doors during your turn, gain Shield 1, Retaliate 1 for the round",
+      "Whenever you long rest, you may Light",
+      "Whenever one of your heals would cause an ally's hit point value to increase beyond their maximum hit point value, that ally gains Ward"
+    ],
+    "masteries": [
+      "In a single scenario, infuse or consume Light during each of your turns",
+      "In a single scenario, deal 8 or more Damage with an attack 3 or more times"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/sun"
+  },
+  {
+    "name": "Three Spears",
+    "characterClass": "Valrath",
+    "handSize": 11,
+    "traits": [
+      "armored",
+      "resourceful",
+      "strong"
+    ],
+    "hp": {
+      "1": 10,
+      "2": 12,
+      "3": 14,
+      "4": 16,
+      "5": 18,
+      "6": 20,
+      "7": 22,
+      "8": 24,
+      "9": 26
+    },
+    "perks": [
+      "Replace 2 two -1 cards with +0 Muddle cards",
+      "Replace 3 +0 cards with +0 Gain 10 Supplies cards",
+      "Replace 1 two +0 cards with two Rolling +0 Pierce 3 cards",
+      "Replace 2 +1 cards with two +0 Gain the Barbed Strip or Iron Plate item cards",
+      "Replace 1 two +1 cards with two +2 cards",
+      "Add 2 Rolling +0 Gain the Scroll of Relocation or Sharpened Dirk item cards",
+      "Add 2 Rolling +0 Stun cards",
+      "Remove 1 +0 card",
+      "You may bring one additional Small item into each scenario",
+      "Your party may purchase items from each faction as though the items' costs were five gold less and your reputation with that faction was two greater",
+      "Whenever you long rest, gain 10 Supplies"
+    ],
+    "masteries": [
+      "In a single scenario, spend 50 Supplies to refresh 50 gold of lost items 3 times",
+      "For an entire scenario, give yourself or an ally an item from the Quartermaster Item Supply each round except when performing a long rest"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/three-spears"
+  },
+  {
+    "name": "Tinkerer",
+    "characterClass": "Quatryl",
+    "handSize": 12,
+    "traits": [
+      "educated",
+      "nimble",
+      "resourceful"
+    ],
+    "hp": {
+      "1": 8,
+      "2": 9,
+      "3": 11,
+      "4": 12,
+      "5": 14,
+      "6": 15,
+      "7": 17,
+      "8": 18,
+      "9": 20
+    },
+    "perks": [
+      "Replace 1 -2 card with +0 card",
+      "Replace 3 -1 cards with +0 Heal 1 cards",
+      "Replace 2 +0 cards with +1 Wound cards",
+      "Replace 2 +0 cards with +1 Poison cards",
+      "Replace 2 +0 cards with +1 Immobilize cards",
+      "Add 3 +2 Strengthen AllyShort cards",
+      "Add 1 +0 Heal 1 card",
+      "Once each scenario, one adjacent ally may use one of your potion Small items during their turn without it becoming Lost",
+      "Whenever you perform an action with Lost, you may Wild",
+      "Whenever you long rest, you may perform: Heal 2, Range 3"
+    ],
+    "masteries": [
+      "For an entire scenario, during each of your turns, give an enemy a negative condition, give an ally a positive condition, heal an ally, or grant an ally shield",
+      "Perform 11 different Lost actions"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/tinkerer"
+  },
+  {
+    "name": "Triangles",
+    "characterClass": "Savvas",
+    "handSize": 10,
+    "traits": [
+      "arcane",
+      "educated",
+      "intimidating"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 1 -1 card with +0 card",
+      "Replace 1 -1 card with +0 card",
+      "Replace 1 -1 card with +0 card",
+      "Replace 1 -1 card with +0 card",
+      "Replace 2 +0 cards with +1 cards",
+      "Replace 2 +0 cards with +1 cards",
+      "Replace 2 +0 cards with +1 cards",
+      "Add 2 two Rolling +0 cards",
+      "Add 1 Rolling +0 card",
+      "At the start of each scenario, you may Wild",
+      "Whenever you long rest, Consume: Wild",
+      "Fire, Ice, Air, and Earth do not wane at the end of each round"
+    ],
+    "masteries": [
+      "In a single scenario, consume 4 or more elements in a single turn 5 times",
+      "Once in 3 different scenarios, have all 6 elements strong or waning at the same time"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/triangles"
+  },
+  {
+    "name": "Two Mini",
+    "characterClass": "Vermling",
+    "handSize": 10,
+    "traits": [
+      "armored",
+      "outcast",
+      "strong"
+    ],
+    "hp": {
+      "1": 6,
+      "2": 7,
+      "3": 8,
+      "4": 9,
+      "5": 10,
+      "6": 11,
+      "7": 12,
+      "8": 13,
+      "9": 14
+    },
+    "perks": [
+      "Replace 3 -1 cards with Rolling +0 Heal 2 cards",
+      "Replace 3 +0 cards with +1 Wound cards",
+      "Replace 2 +0 cards with +2 Add Attack +1 if the Wildfury and Bear Summon are within Range 4 of each other cards",
+      "Replace 1 +2 card with +4 card",
+      "Add 2 two +1 cards",
+      "Add 2 +2 Push 2 cards",
+      "Add 1 +1 Safeguard AllyShort card",
+      "Whenever Bear Summon is attacked, treat and Double attack modifier card the enemy draws as Plus0 instead",
+      "Once each scenario, during your turn, Command: Move 4. If Bear Summon exits a hex adjacent to you during this movement, you may Teleport to an empty hex adjacent to Bear Summon at the end of the movement",
+      "At the start or end of each of your long rests, you may Air|earth and reduce your current hit point value by X (X must be at least 1) to Command: Heal, self"
+    ],
+    "masteries": [
+      "In a single scenario, infuse or consume Air or Earth during each of your turns",
+      "In a single scenario, kill 4 or more enemies with Command attacks of 7 or greater (after all bonuses, before attack modifiers)"
+    ],
+    "sourceId": "gloomhavensecretariat:character-mat/two-mini"
+  }
+]

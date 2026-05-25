@@ -9,9 +9,8 @@
  * Output: data/extracted/items.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   capitalize,
@@ -24,9 +23,7 @@ import {
   type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'items.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS item type ──────────────────────────────────────────────────────────
 
@@ -191,8 +188,8 @@ export function importItems(configInput: GhsImporterConfigInput = {}): Extracted
 }
 
 if (process.argv[1]?.endsWith('import-items.ts')) {
-  const results = importItems();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importItems(config);
+  const outputPath = writeExtractedRecords('items', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

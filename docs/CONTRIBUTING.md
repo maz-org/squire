@@ -270,9 +270,11 @@ authenticated paths; refuses to run when `NODE_ENV=production`).
 `npm run index` is idempotent — re-running it skips source files that are
 already in the `embeddings` table. `npm run seed:cards` is also
 idempotent — it upserts on `(game, source_id)`, so stale rows get
-overwritten in place. `npm run seed:scenario-section-books` is
-idempotent too — it refreshes the scenario/section-book runtime tables
-from the checked-in extract. If you change chunking logic, bump
+overwritten in place. By default it seeds Frosthaven's flat extracts and
+any game-scoped extract directories such as `data/extracted/gh2/`.
+`npm run seed:scenario-section-books` is idempotent too — it refreshes the
+scenario/section-book runtime tables from the checked-in Frosthaven extract
+and any game-scoped scenario/section extracts. If you change chunking logic, bump
 `EMBEDDING_VERSION` in `src/vector-store.ts` and re-run after clearing
 the affected sources.
 

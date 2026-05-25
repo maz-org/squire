@@ -13,8 +13,8 @@
 import { sql } from 'drizzle-orm';
 
 import { createStandaloneDb, resolveDatabaseUrl } from '../../src/db.ts';
-import { seedCards } from '../../src/seed/seed-cards.ts';
-import { seedScenarioSectionBooks } from '../../src/seed/seed-scenario-section-books.ts';
+import { seedAvailableCardGames } from '../../src/seed/seed-cards.ts';
+import { seedAvailableScenarioSectionBookGames } from '../../src/seed/seed-scenario-section-books.ts';
 
 export default async function globalSetup(): Promise<void> {
   const url = resolveDatabaseUrl();
@@ -40,8 +40,8 @@ export default async function globalSetup(): Promise<void> {
         book_references, section_book_sections, scenario_book_scenarios
         RESTART IDENTITY CASCADE
     `);
-    await seedCards(db);
-    await seedScenarioSectionBooks(db);
+    await seedAvailableCardGames(db);
+    await seedAvailableScenarioSectionBookGames(db);
   } finally {
     await handle.close();
   }

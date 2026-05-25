@@ -326,9 +326,12 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 
 #### Scenario/section-book research data
 
-- Parse the printed scenario and section books in `src/import-scenario-section-books.ts`
+- Parse Frosthaven printed scenario and section books in `src/import-scenario-section-books.ts`
+- Import GH2 scenario and section metadata summaries from GHS in
+  `src/import-ghs-scenario-section-books.ts`
 - Merge printed book structure with GHS scenario identity where possible
-- Generate a checked-in extract at `data/extracted/scenario-section-books.json`
+- Generate checked-in extracts at `data/extracted/scenario-section-books.json`
+  and `data/extracted/gh2/scenario-section-books.json`
 - Seed Postgres runtime tables via `npm run seed:scenario-section-books`:
   - `scenario_book_scenarios`
   - `section_book_sections`
@@ -803,11 +806,13 @@ src/
   import-personal-quests.ts     GHS importer
   import-scenarios.ts           GHS importer
   import-scenario-section-books.ts   Printed scenario/section book importer
+  import-ghs-scenario-section-books.ts   GHS scenario/section metadata importer
 
   data/
     pdfs/                         Rulebook + scenario / section PDFs (input to indexing)
     rule-sources/                 HTML/text rule snapshots + source metadata
-    extracted/*.json              GHS card extracts plus scenario-section-books.json seed / inspection artifact
+    extracted/*.json              Frosthaven GHS extracts plus scenario-section-books.json seed / inspection artifact
+    extracted/gh2/*.json          GH2 GHS extracts plus scenario/section metadata seed
 ```
 
 For developer setup, running the server, working on import scripts locally, and testing, see [DEVELOPMENT.md](DEVELOPMENT.md).

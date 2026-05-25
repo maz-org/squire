@@ -1,0 +1,667 @@
+[
+  {
+    "cardId": "01",
+    "altId": "537",
+    "name": "Political Intrigue",
+    "requirements": [
+      {
+        "description": "Votes",
+        "target": 30,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Solved Section 136.1",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class sun; unlock personal quest 16",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/01"
+  },
+  {
+    "cardId": "02",
+    "altId": "538",
+    "name": "Inn to Hospitality",
+    "requirements": [
+      {
+        "description": "Money Tokens looted",
+        "target": 60,
+        "options": null,
+        "dependsOn": null
+      }
+    ],
+    "openEnvelope": "unlock class three-spears; unlock personal quest 14",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/02"
+  },
+  {
+    "cardId": "03",
+    "altId": "539",
+    "name": "Augmented Abilities",
+    "requirements": [
+      {
+        "description": "Enhancements",
+        "target": 5,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 71.2",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class circles; unlock personal quest 12",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/03"
+  },
+  {
+    "cardId": "04",
+    "altId": "540",
+    "name": "The Fall of Man",
+    "requirements": [
+      {
+        "description": "Item 149 used",
+        "target": 10,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 115.2",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Follow \"Fading Lighthouse\" ScenarioNumber 63 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class eclipse; unlock personal quest 13",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/04"
+  },
+  {
+    "cardId": "05",
+    "altId": "541",
+    "name": "Seeker of Xorn",
+    "requirements": [
+      {
+        "description": "\"Crypt Basement\" Scenario 57 completed",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Item gained",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Poison gained",
+        "target": 7,
+        "options": null,
+        "dependsOn": [
+          2
+        ]
+      },
+      {
+        "description": "\"Palace of Ice\" Scenario 58 completed",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          3
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class squidface; unlock personal quest 17",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/05"
+  },
+  {
+    "cardId": "06",
+    "altId": "542",
+    "name": "Zealot of the Blood God",
+    "requirements": [
+      {
+        "description": "Scenarios completed with max. half HP",
+        "target": 10,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 122.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class lightning; unlock personal quest 21",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/06"
+  },
+  {
+    "cardId": "07",
+    "altId": "543",
+    "name": "A Tale to Tell",
+    "requirements": [
+      {
+        "description": "Treasures looted",
+        "target": 10,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 12.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class music-note; unlock personal quest 19",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/07"
+  },
+  {
+    "cardId": "08",
+    "altId": "544",
+    "name": "Take Back the Trees",
+    "requirements": [
+      {
+        "description": "Road Events",
+        "target": 10,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 64.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Follow \"Foggy Thicket\" ScenarioNumber 59 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2
+        ]
+      },
+      {
+        "description": "Follow \"Bandit's Wood\" ScenarioNumber 60 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class angry-face; unlock personal quest 20",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/08"
+  },
+  {
+    "cardId": "09",
+    "altId": "545",
+    "name": "Finding the Cure",
+    "requirements": [
+      {
+        "description": "Scenario Locations",
+        "target": 5,
+        "options": [
+          "Copperneck Mountains",
+          "Corpsewood",
+          "Dagger Forest",
+          "Gloomhaven",
+          "Lingering Swamp",
+          "Misty Sea",
+          "Watcher Mountains"
+        ],
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 55.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Follow \"Dangerous Grove\" ScenarioNumber 61 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2
+        ]
+      },
+      {
+        "description": "Follow \"Alchemy Lab\" ScenarioNumber 62 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class saw; unlock personal quest 15",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/09"
+  },
+  {
+    "cardId": "10",
+    "altId": "546",
+    "name": "Aberrant Slayer",
+    "requirements": [
+      {
+        "description": "Wild Enhancment",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 14.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Follow \"Roots of Chaos\" ScenarioNumber 64 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class triangles; unlock personal quest 22",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/10"
+  },
+  {
+    "cardId": "11",
+    "altId": "547",
+    "name": "Adoptive Parent",
+    "requirements": [
+      {
+        "description": "Scenarios with 3 or more Money Tokens looted",
+        "target": 10,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 122.5",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Follow \"A Friend in Need\" ScenarioNumber 66 to a conclusion",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1,
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class two-mini; unlock personal quest 18",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/11"
+  },
+  {
+    "cardId": "12",
+    "altId": "548",
+    "name": "Implement of Light",
+    "requirements": [
+      {
+        "description": "Shield of the Righteous Item 148",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Negated Damage 4 or more",
+        "target": 10,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Read Section 82.1",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class sun",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/12"
+  },
+  {
+    "cardId": "13",
+    "altId": "549",
+    "name": "Merchant Class",
+    "requirements": [
+      {
+        "description": "Head items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Body items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Legs items",
+        "target": 3,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "One Hand or Two Hands items",
+        "target": 5,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Small items",
+        "target": 5,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 129.1",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class three-spears",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/13"
+  },
+  {
+    "cardId": "14",
+    "altId": "550",
+    "name": "Eternal Wanderer",
+    "requirements": [
+      {
+        "description": "Scenarios completed",
+        "target": 12,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 52.2",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class circles",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/14"
+  },
+  {
+    "cardId": "15",
+    "altId": "551",
+    "name": "Escaping the Sin-Ra",
+    "requirements": [
+      {
+        "description": "Black Card Item 113",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Side Scenarios (> 56) completed",
+        "target": 6,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Read Section 128.2",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class eclipse",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/15"
+  },
+  {
+    "cardId": "16",
+    "altId": "552",
+    "name": "The Perfect Poison",
+    "requirements": [
+      {
+        "description": "Poison Dagger Item 7",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Poison Enemies",
+        "target": 30,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Read Section 8.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class squidface",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/16"
+  },
+  {
+    "cardId": "17",
+    "altId": "553",
+    "name": "Living on the Edge",
+    "requirements": [
+      {
+        "description": "Experimental Armor Item 150",
+        "target": 1,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Enemies suffered Damage",
+        "target": 20,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      },
+      {
+        "description": "Read Section 47.4",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          2
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class lightning",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/17"
+  },
+  {
+    "cardId": "18",
+    "altId": "554",
+    "name": "Battle Legend",
+    "requirements": [
+      {
+        "description": "Earned Checkmark from completed battle goals",
+        "target": 12,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 23.3",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class music-note",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/18"
+  },
+  {
+    "cardId": "19",
+    "altId": "555",
+    "name": "Martial Study",
+    "requirements": [
+      {
+        "description": "One Hand or Two Hands different items used",
+        "target": 8,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 67.2",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class angry-face",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/19"
+  },
+  {
+    "cardId": "20",
+    "altId": "556",
+    "name": "Piety in All Things",
+    "requirements": [
+      {
+        "description": "Gold donated to the Temple of the Great Oak",
+        "target": 120,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 51.5",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class saw",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/20"
+  },
+  {
+    "cardId": "21",
+    "altId": "557",
+    "name": "Pursuit of Proficiency",
+    "requirements": [
+      {
+        "description": "Experience from ability cards",
+        "target": 120,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 17.2",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class triangles",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/21"
+  },
+  {
+    "cardId": "22",
+    "altId": "558",
+    "name": "Trophy Hunt",
+    "requirements": [
+      {
+        "description": "Different types of monsters killed",
+        "target": 20,
+        "options": null,
+        "dependsOn": null
+      },
+      {
+        "description": "Read Section 21.1",
+        "target": 1,
+        "options": null,
+        "dependsOn": [
+          1
+        ]
+      }
+    ],
+    "openEnvelope": "unlock class two-mini",
+    "errata": null,
+    "sourceId": "gloomhavensecretariat:personal-quest/22"
+  }
+]

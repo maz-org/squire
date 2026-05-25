@@ -166,7 +166,7 @@ export interface GhsAction {
 export interface GhsAbility {
   name: string;
   cardId: number;
-  level: number | 'X';
+  level: number | 'X' | 'M';
   initiative: number;
   actions?: GhsAction[];
   bottomActions?: GhsAction[];
@@ -199,6 +199,13 @@ export function kebabToTitle(name: string): string {
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+function titleToken(name: string): string {
+  const cleaned = name.replace(/^(?:fh|gh2e)-/, '');
+  if (cleaned === 'onehand') return 'One Hand';
+  if (cleaned === 'twohand') return 'Two Hands';
+  return kebabToTitle(cleaned);
 }
 
 // ─── HTML stripping ─────────────────────────────────────────────────────────
@@ -245,7 +252,34 @@ export function stripHtml(text: string): string {
  */
 export function resolveGameTokens(text: string): string {
   const resolved = text.replace(/%game\.([^%]+)%/g, (_match, path: string) => {
+    const [family, rawValue] = path.split(':');
+    if (family === 'section' && rawValue) return ` Section ${rawValue}`;
+    if (family === 'itemFh' && rawValue) return ` Item ${rawValue}`;
+    if (family === 'customAction' && rawValue) return ` ${titleToken(rawValue)}`;
+    if (family === 'custom' && rawValue) return ` ${titleToken(rawValue)}`;
+
     const parts = path.split(/[.:]/);
+    if (parts[0] === 'action' && parts[2] === 'valueSign') {
+      const sign = Number(parts[3]) >= 0 && !String(parts[3]).startsWith('+') ? '+' : '';
+      return ` ${capitalize(parts[1])} ${sign}${parts[3]}`;
+    }
+    if (parts[0] === 'action' && parts.length >= 3 && /^-?\d+$/.test(parts.at(-1) ?? '')) {
+      return ` ${capitalize(parts[1])} ${parts.at(-1)}`;
+    }
+    if (parts[0] === 'itemFh' && parts[1]) return ` Item ${parts[1]}`;
+    if (parts[0] === 'action' && parts[1]) return ` ${capitalize(parts[1])}`;
+    if (parts[0] === 'card' && parts[1]) {
+      if (/^-?\d+$/.test(parts[2] ?? '')) return ` ${capitalize(parts[1])} ${parts[2]}`;
+      return ` ${capitalize(parts[1])}`;
+    }
+    if (parts[0] === 'condition' && parts[1]) return ` ${capitalize(parts[1])}`;
+    if (parts[0] === 'element' && parts[1]) return ` ${capitalize(parts[1])}`;
+    if (parts[0] === 'itemSlot' && parts[1]) return ` ${titleToken(parts[1])}`;
+    if (parts[0] === 'items' && parts[1] === 'slots' && parts[2]) return ` ${titleToken(parts[2])}`;
+    if (parts[0] === 'attackmodifier' && parts[1]) return ` ${titleToken(parts[1])}`;
+    if (parts[0] === 'enhancement' && parts[1]) return ` ${titleToken(parts[1])}`;
+    if (parts[0] === 'characterIcon' && parts[1]) return ` ${titleToken(parts[1])}`;
+
     const lastPart = parts[parts.length - 1];
     const isNumeric = /^\d+$/.test(lastPart);
 
@@ -273,16 +307,55 @@ export function resolveLabel(ref: string, labels: LabelData): string {
   if (!ref.startsWith('%data.')) return ref;
 
   const path = ref.slice(6, -1); // strip %data. and trailing %
-  const parts = path.split('.');
-
-  let current: unknown = labels;
-  for (const part of parts) {
-    if (current == null || typeof current !== 'object') return ref;
-    current = (current as Record<string, unknown>)[part];
+  if (path.startsWith('customAction:')) {
+    return titleToken(path.slice('customAction:'.length));
+  }
+  if (path.startsWith('characterColored.')) {
+    const coloredName = path.split(':').at(-1);
+    if (coloredName) return titleToken(coloredName);
+  }
+  if (path.startsWith('action.custom.')) {
+    return titleToken(path.slice('action.custom.'.length));
   }
 
+  const parts = path.split('.');
+
+  function lookup(pathParts: string[]): unknown {
+    let current: unknown = labels;
+    for (const part of pathParts) {
+      if (current == null || typeof current !== 'object') return undefined;
+      current = (current as Record<string, unknown>)[part];
+    }
+    return current;
+  }
+
+  let current = lookup(parts);
+  if (current == null && parts[0] === 'custom' && parts[1]?.startsWith('gh')) {
+    current = lookup(['custom', ...parts.slice(2)]);
+  }
+  if (current != null && typeof current === 'object') {
+    current = (current as Record<string, unknown>)[''];
+  }
   if (typeof current !== 'string') return ref;
-  return resolveGameTokens(stripHtml(current));
+  let resolved = resolveGameTokens(stripHtml(current));
+  for (let i = 0; i < 6; i++) {
+    const next = resolved.replace(/%data\.[^%]+%/g, (match) => {
+      const nested = resolveLabel(match, labels);
+      return nested === match ? match : nested;
+    });
+    if (next === resolved) break;
+    resolved = resolveGameTokens(next);
+  }
+  return resolved;
+}
+
+export function resolveTemplateText(text: string, labels: LabelData): string {
+  let resolved = text.replace(/%data\.[^%]+%/g, (match) => {
+    const label = resolveLabel(match, labels);
+    return label === match ? match : label;
+  });
+  resolved = resolveGameTokens(resolved);
+  return resolved;
 }
 
 /**
@@ -359,8 +432,8 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     const val = String(action.value);
     if (val === '%character.abilities.wip%') {
       text = '(ability text not yet available)';
-    } else if (val.startsWith('%data.')) {
-      text = resolveLabel(val, labels);
+    } else if (/%(?:data|game)\./.test(val)) {
+      text = resolveTemplateText(val, labels);
     } else {
       text = resolveGameTokens(val);
     }
@@ -371,10 +444,10 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     text = name ? `Summon ${kebabToTitle(String(name))}` : 'Summon';
   } else {
     const val = String(action.value);
-    if (val.startsWith('%data.')) {
-      // When the value is a label reference, resolve it directly —
-      // prepending the type name would duplicate words already in the label
-      text = resolveLabel(val, labels);
+    if (/%(?:data|game)\./.test(val)) {
+      // When the value is label-backed text, resolve it directly —
+      // prepending the type name would duplicate words already in the label.
+      text = resolveTemplateText(val, labels);
     } else {
       text = `${capitalize(action.type)} ${resolveGameTokens(val)}`;
     }
@@ -388,14 +461,14 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
       subParts.push(capitalize(String(sub.value)));
     } else if (sub.type === 'custom') {
       const val = String(sub.value);
-      const resolved = val.startsWith('%data.')
-        ? resolveLabel(val, labels)
+      const resolved = /%(?:data|game)\./.test(val)
+        ? resolveTemplateText(val, labels)
         : resolveGameTokens(val);
       subParts.push(resolved);
     } else {
       const val = String(sub.value);
-      const resolved = val.startsWith('%data.')
-        ? resolveLabel(val, labels)
+      const resolved = /%(?:data|game)\./.test(val)
+        ? resolveTemplateText(val, labels)
         : resolveGameTokens(val);
       subParts.push(`${capitalize(sub.type)} ${resolved}`);
     }
