@@ -50,11 +50,11 @@ describe('eval dataset', () => {
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(10);
   });
 
-  it('makes the cross-game ref case assert both the attempt and rejection', () => {
+  it('makes the cross-game ref case assert both game-qualified refs', () => {
     const cases = EvalDatasetSchema.parse(dataset);
     const evalCase = cases.find((candidate) => candidate.id === 'traj-invalid-cross-game-ref');
 
-    expect(evalCase?.finalAnswer?.grading).toMatch(/Gloomhaven 2 path is rejected/);
+    expect(evalCase?.finalAnswer?.grading).toMatch(/different game-qualified sections/);
     expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven-2e/67.1');
   });
 
