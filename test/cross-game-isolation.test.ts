@@ -24,6 +24,7 @@ import {
   searchKnowledge,
 } from '../src/tools.ts';
 import { seedAvailableCardGames } from '../src/seed/seed-cards.ts';
+import { seedScenarioSectionBooks } from '../src/seed/seed-scenario-section-books.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -149,6 +150,7 @@ afterAll(async () => {
     await deleteGh2Fixtures();
     const db = await setupTestDb();
     await seedAvailableCardGames(db, { types: ['items'] });
+    await seedScenarioSectionBooks(db, { game: GLOOMHAVEN_2E_GAME_ID });
   } finally {
     await teardownTestDb();
   }

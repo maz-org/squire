@@ -41,6 +41,9 @@ export const messages = pgTable(
       .references(() => conversations.id, { onDelete: 'cascade' }),
     role: text('role').notNull(),
     content: text('content').notNull(),
+    // Runtime context for user turns only. Keep nullable: assistant rows and
+    // historical rows do not have their own selected game, and messages are
+    // fetched by conversation rather than filtered by game.
     game: text('game'),
     isError: boolean('is_error').notNull().default(false),
     responseToMessageId: uuid('response_to_message_id').references((): AnyPgColumn => messages.id, {
