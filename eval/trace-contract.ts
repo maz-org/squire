@@ -1,6 +1,6 @@
 export const TRACE_CONTRACT_VERSION = 'sqr-125.trace-contract.v1' as const;
 
-export type LangfuseTarget =
+export type LangSmithTarget =
   | 'trace.metadata'
   | 'trace.input'
   | 'trace.output'
@@ -35,7 +35,7 @@ export type TraceDebugCategory =
 interface TraceFieldShape<Name extends string = string> {
   name: Name;
   required: boolean;
-  langfuseTarget: LangfuseTarget;
+  langsmithTarget: LangSmithTarget;
   debugCategory: TraceDebugCategory;
   includeInAppConversationHistory: boolean;
   description: string;
@@ -45,7 +45,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'contractVersion',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Trace contract version used to reject incompatible run comparisons.',
@@ -53,7 +53,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'environment',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description:
@@ -62,7 +62,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'provider',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Provider key, such as anthropic or openai.',
@@ -70,7 +70,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'model',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Requested model ID or alias from eval config.',
@@ -78,7 +78,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'resolvedModel',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Provider-returned concrete model ID when available.',
@@ -86,7 +86,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'runLabel',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Human run label from eval CLI/config.',
@@ -94,15 +94,15 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'datasetName',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
-    description: 'Langfuse dataset name used for the case.',
+    description: 'LangSmith dataset name used for the case.',
   },
   {
     name: 'caseId',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Eval case identifier from eval/dataset.json.',
@@ -110,7 +110,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'caseCategory',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'filter',
     includeInAppConversationHistory: false,
     description: 'Eval case category for grouped reports.',
@@ -118,7 +118,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'promptVersion',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'prompt',
     includeInAppConversationHistory: false,
     description: 'Stable prompt contract name or semantic version.',
@@ -126,7 +126,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'promptHash',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'prompt',
     includeInAppConversationHistory: false,
     description: 'Hash of the effective system prompt and prompt wrapper.',
@@ -134,7 +134,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'toolSurface',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'tooling',
     includeInAppConversationHistory: false,
     description: 'Squire tool surface selected for the eval run.',
@@ -142,7 +142,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'toolSchemaVersion',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'tooling',
     includeInAppConversationHistory: false,
     description: 'Stable Squire tool schema version used for compatibility checks.',
@@ -150,7 +150,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'toolSchemaHash',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'tooling',
     includeInAppConversationHistory: false,
     description: 'Hash of provider-rendered tool definitions.',
@@ -158,7 +158,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'modelSettings',
     required: true,
-    langfuseTarget: 'generation.modelParameters',
+    langsmithTarget: 'generation.modelParameters',
     debugCategory: 'provider',
     includeInAppConversationHistory: false,
     description: 'Temperature, max output, reasoning effort, timeout, and loop limits.',
@@ -166,7 +166,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'inputQuestion',
     required: true,
-    langfuseTarget: 'trace.input',
+    langsmithTarget: 'trace.input',
     debugCategory: 'report',
     includeInAppConversationHistory: false,
     description: 'Eval question text sent to the runner after redaction.',
@@ -174,7 +174,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'providerNativeTranscript',
     required: true,
-    langfuseTarget: 'generation.metadata',
+    langsmithTarget: 'generation.metadata',
     debugCategory: 'transcript',
     includeInAppConversationHistory: false,
     description:
@@ -183,7 +183,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'toolCalls',
     required: true,
-    langfuseTarget: 'span',
+    langsmithTarget: 'span',
     debugCategory: 'tooling',
     includeInAppConversationHistory: false,
     description: 'One child span per Squire tool call with call index, name, timing, and status.',
@@ -191,7 +191,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'toolArguments',
     required: true,
-    langfuseTarget: 'span.input',
+    langsmithTarget: 'span.input',
     debugCategory: 'tooling',
     includeInAppConversationHistory: false,
     description: 'Redacted provider-emitted tool arguments for each tool span.',
@@ -199,7 +199,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'toolResults',
     required: true,
-    langfuseTarget: 'span.output',
+    langsmithTarget: 'span.output',
     debugCategory: 'tooling',
     includeInAppConversationHistory: false,
     description: 'Redacted Squire tool results or summarized oversized results for each tool span.',
@@ -207,7 +207,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'errors',
     required: true,
-    langfuseTarget: 'span.metadata',
+    langsmithTarget: 'span.metadata',
     debugCategory: 'failure',
     includeInAppConversationHistory: false,
     description: 'Provider, schema, timeout, tool, judge, trace-write, and unknown errors.',
@@ -215,7 +215,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'retries',
     required: true,
-    langfuseTarget: 'span.metadata',
+    langsmithTarget: 'span.metadata',
     debugCategory: 'failure',
     includeInAppConversationHistory: false,
     description: 'Retry attempts, retry reason, delay, and final status for retryable operations.',
@@ -223,7 +223,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'timings',
     required: true,
-    langfuseTarget: 'span.metadata',
+    langsmithTarget: 'span.metadata',
     debugCategory: 'timing',
     includeInAppConversationHistory: false,
     description:
@@ -232,7 +232,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'tokenUsage',
     required: true,
-    langfuseTarget: 'generation.usageDetails',
+    langsmithTarget: 'generation.usageDetails',
     debugCategory: 'usage',
     includeInAppConversationHistory: false,
     description: 'Input, output, reasoning, cached, and total token counts when available.',
@@ -240,7 +240,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'costEstimate',
     required: true,
-    langfuseTarget: 'generation.costDetails',
+    langsmithTarget: 'generation.costDetails',
     debugCategory: 'cost',
     includeInAppConversationHistory: false,
     description: 'Estimated prompt, completion, reasoning, and total cost in USD.',
@@ -248,7 +248,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'stopReason',
     required: true,
-    langfuseTarget: 'generation.metadata',
+    langsmithTarget: 'generation.metadata',
     debugCategory: 'result',
     includeInAppConversationHistory: false,
     description:
@@ -257,7 +257,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'statusReason',
     required: true,
-    langfuseTarget: 'trace.metadata',
+    langsmithTarget: 'trace.metadata',
     debugCategory: 'failure',
     includeInAppConversationHistory: false,
     description: 'Normalized status or failure class for filtering failed runs.',
@@ -265,7 +265,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'finalAnswer',
     required: true,
-    langfuseTarget: 'generation.output',
+    langsmithTarget: 'generation.output',
     debugCategory: 'result',
     includeInAppConversationHistory: false,
     description: 'Final assistant answer used by eval scoring after redaction.',
@@ -273,7 +273,7 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'judgeScores',
     required: true,
-    langfuseTarget: 'score',
+    langsmithTarget: 'score',
     debugCategory: 'report',
     includeInAppConversationHistory: false,
     description: 'Correctness, pass/fail, trajectory, and other evaluator scores.',
@@ -281,10 +281,10 @@ const TRACE_FIELD_DEFINITIONS = [
   {
     name: 'summaryExport',
     required: false,
-    langfuseTarget: 'optional_export',
+    langsmithTarget: 'optional_export',
     debugCategory: 'report',
     includeInAppConversationHistory: false,
-    description: 'Local convenience export derived from Langfuse data, not the source of truth.',
+    description: 'Local convenience export derived from LangSmith data, not the source of truth.',
   },
 ] as const satisfies readonly TraceFieldShape[];
 

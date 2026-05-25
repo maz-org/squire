@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-05-24T20:43:11.580Z",
+  "note": "Historical pre-migration baseline report. traceUrl values intentionally point at Langfuse because this run was captured before the LangSmith migration.",
+  "runLabel": "sqr-225-scenario-61-traversal-2026-05-24",
+  "rows": [
+    {
+      "runLabel": "sqr-225-scenario-61-traversal-2026-05-24",
+      "caseId": "traj-scenario-conclusion-next-links",
+      "category": "trajectory",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "claude-sdk",
+      "ok": true,
+      "answer": "Here is everything you need:\n\n---\n\n## Scenario 61 – *\"Life and Death\"* → Conclusion: Section **67.1**\n\n### Summary of the Conclusion\nAfter surviving the cave full of Deep Terrors, the party emerges to find a group of cloaked figures gathered around a fire. Two elderly Orchids — **Moonshard** and **Terra** — reveal they have been awaiting the party for two hundred years. Terra explains they are preparing to stop the **Harbinger**, an ancient being bound deep within the earth whose dreams corrupt the world and weaken the seals containing it. A unique crystalline Savvas called the **Shattersong** is also introduced as part of their preparations. Crain connects this to his research on star iron.\n\n---\n\n### Rewards\n- **Unlock a class box.**\n\n### What it Unlocks / Points to Next\n\n| Type | Reference | Details |\n|------|-----------|---------|\n| 📅 Calendar Section | **140.3** | Add section 140.3 to the **calendar in one week** |\n\nSo the immediate next step is to mark **section 140.3** on your campaign calendar to be read one week from now. There are no directly unlocked scenarios listed in the conclusion itself — the unlock comes via that scheduled section.",
+      "score": 0,
+      "pass": false,
+      "latencyMs": 14635,
+      "tokenInput": 6,
+      "tokenCachedInput": 11483,
+      "tokenOutput": 572,
+      "tokenTotal": 18062,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008582,
+      "estimatedCostUsd": 0.008582,
+      "toolCallCount": 3,
+      "retryCount": 0,
+      "loopIterations": 4,
+      "failureClass": "none",
+      "traceId": "eval:sqr-225-scenario-61-traversal-2026-05-24:claude-sdk:anthropic:claude-sonnet-4-6:traj-scenario-conclusion-next-links",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-225-scenario-61-traversal-2026-05-24%3Aclaude-sdk%3Aanthropic%3Aclaude-sonnet-4-6%3Atraj-scenario-conclusion-next-links",
+      "promptVersion": "legacy-agent-v1",
+      "promptHash": "sha256:cdfe8e2666f8f3dc20a6de505e5b2ab142d99b160abc45955aa40ae29dd7730d",
+      "toolSurface": "legacy",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:0611df8f0a5fa485471c3006e431bde1a5fe6ec9bd552aa638c68a236b9e737a",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6",
+        "timeoutMs": 60000,
+        "toolLoopLimit": 6,
+        "broadSearchSynthesisThreshold": 2
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    },
+    {
+      "runLabel": "sqr-225-scenario-61-traversal-2026-05-24",
+      "caseId": "traj-scenario-conclusion-next-links",
+      "category": "trajectory",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here is the full breakdown:\n\n---\n\n## Scenario 61 – *Life and Death* — Conclusion (Section 67.1)\n\nThe conclusion section is **67.1**, read at the end of the round when all enemies are dead.\n\n### Narrative Summary\nYour party escapes the cave with Moonshard, emerging into the night air. Outside, you encounter a group of cloaked figures gathered around a fire, led by an ancient Orchid named **Terra**. She reveals she has foreseen this meeting for 200 years and introduces the **Shattersong** — a uniquely evolved lineage of Savvas, tuned to the thoughts of a great evil called the **Harbinger**. Terra explains that you and Crain have a crucial role in stopping the Harbinger before it breaks through the seals containing it.\n\n---\n\n### Rewards\n- **Unlock class box** (a new character class is unlocked).\n\n---\n\n### What It Unlocks / Points to Next\n\n| Type | Reference | Details |\n|---|---|---|\n| 📅 Calendar Section | **140.3** | Add section 140.3 to the calendar in **one week**. |\n\nSo the conclusion **does not immediately unlock a new scenario**, but it schedules **section 140.3** to appear on the campaign calendar in one week's time — which will likely trigger the next story development when that date arrives.",
+      "score": 0,
+      "pass": false,
+      "latencyMs": 15715,
+      "tokenInput": 6,
+      "tokenCachedInput": 15765,
+      "tokenOutput": 618,
+      "tokenTotal": 18133,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.009272,
+      "estimatedCostUsd": 0.009272,
+      "toolCallCount": 3,
+      "retryCount": 0,
+      "loopIterations": 4,
+      "failureClass": "none",
+      "traceId": "eval:sqr-225-scenario-61-traversal-2026-05-24:langgraph:anthropic:claude-sonnet-4-6:traj-scenario-conclusion-next-links",
+      "traceUrl": "https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-225-scenario-61-traversal-2026-05-24%3Alanggraph%3Aanthropic%3Aclaude-sonnet-4-6%3Atraj-scenario-conclusion-next-links",
+      "promptVersion": "legacy-agent-v1",
+      "promptHash": "sha256:cdfe8e2666f8f3dc20a6de505e5b2ab142d99b160abc45955aa40ae29dd7730d",
+      "toolSurface": "legacy",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:0611df8f0a5fa485471c3006e431bde1a5fe6ec9bd552aa638c68a236b9e737a",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6",
+        "timeoutMs": 60000,
+        "toolLoopLimit": 6,
+        "broadSearchSynthesisThreshold": 2
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      }
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.1,
+  "estimatedCostUsd": 0.017854
+}

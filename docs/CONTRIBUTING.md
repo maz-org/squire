@@ -29,9 +29,9 @@ Sign up at [github.com](https://github.com/signup) if you don't have an account.
 1. Sign up at [coderabbit.ai](https://coderabbit.ai/) using your GitHub account
 2. The free tier works for open-source repos
 
-**Langfuse (optional)** — for tracing and evaluation experiments:
+**LangSmith (optional)** — for tracing and evaluation experiments:
 
-All developers share a single Langfuse project so experiment runs can be
+All developers share a single LangSmith project so experiment runs can be
 compared against a common baseline. Ask
 [@bcm](https://github.com/bcm) for the shared project API keys and add them to
 your `.env` file.
@@ -200,10 +200,9 @@ SESSION_SECRET=<random 32+ character string>
 SQUIRE_ALLOWED_EMAILS=your-email@example.com
 
 # Optional — for tracing and evals (ask @bcm for the shared project keys)
-LANGFUSE_BASEURL=https://us.cloud.langfuse.com
-LANGFUSE_PROJECT_ID=...
-LANGFUSE_PUBLIC_KEY=pk-lf-...
-LANGFUSE_SECRET_KEY=sk-lf-...
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_PROJECT=...
+LANGSMITH_API_KEY=...
 
 # Optional locally; production requires REDIS_URL for app-level rate limits.
 # REDIS_URL=redis://localhost:6379
@@ -317,9 +316,9 @@ npm run format:check  # Prettier (check only)
 The eval framework measures RAG answer quality using LLM-as-judge scoring. Each
 question is sent through the full RAG pipeline, then a separate Claude call
 grades the answer against expected results on a 1–5 scale. Results are tracked
-in Langfuse so you can compare runs over time.
+in LangSmith so you can compare runs over time.
 
-Requires Langfuse credentials in `.env`.
+Requires LangSmith credentials in `.env`.
 
 **Seed the eval dataset (maintainer only):**
 
@@ -327,7 +326,7 @@ Requires Langfuse credentials in `.env`.
 npm run eval -- --seed
 ```
 
-Uploads the eval dataset (`eval/dataset.json`) to the shared Langfuse project.
+Uploads the eval dataset (`eval/dataset.json`) to the shared LangSmith project.
 This is a one-time project setup step managed by
 [@bcm](https://github.com/bcm). It needs to be re-run when eval cases are added
 or changed. The command is idempotent — running it again upserts items rather
@@ -340,7 +339,7 @@ npm run eval -- --name="baseline"
 ```
 
 Runs every question through the pipeline and grades it. Use `--name` to label
-the run — this is how you'll find it in the Langfuse UI. Run this before and
+the run — this is how you'll find it in the LangSmith UI. Run this before and
 after making changes to measure impact (e.g., `--name="before chunking fix"` and
 `--name="after chunking fix"`).
 
@@ -364,52 +363,22 @@ npm run eval -- --id=rule-poison
 Runs one specific eval case by ID (IDs are in `eval/dataset.json`). Useful for
 debugging a single failure without waiting for the full suite.
 
-**Find the Langfuse trace URL:**
+**Find the LangSmith trace URL:**
 
-Do not hand-build Langfuse UI links from a guessed trace ID. Filtered Anthropic
-evals create two useful Langfuse traces:
-
-- `eval.case` — Squire's deterministic trace, with ID
-  `eval:<run-label>:<provider>:<model>:<case-id>`. Use this for
-  `npm run eval -- --replay --trace-id=...` and API debugging.
-- `experiment-item-run` — Langfuse SDK's experiment item trace. This usually has
-  a short hex ID and is the safest browser UI link for filtered single-case
-  evals.
-
-For a UI link, query Langfuse and use the returned `htmlPath` instead of
-constructing `/project/.../traces/...` yourself:
+Matrix runs write a deterministic trace id for every row:
+`eval:<run-label>:<runtime>:<provider>:<model>:<case-id>`. When LangSmith
+credentials are configured, the local matrix report also includes a `traceUrl`
+that links to the LangSmith run. Use the report link as the source of truth
+instead of hand-building UI URLs.
 
 ```bash
-node - <<'NODE'
-import 'dotenv/config';
-
-const runLabel = 'sqr-153-identity-scope-smoke-2026-05-03';
-const caseId = 'tool-free-assistant-game';
-const fromTimestamp = '2026-05-03T18:00:00.000Z';
-const toTimestamp = '2026-05-03T18:10:00.000Z';
-
-const baseUrl = process.env.LANGFUSE_BASEURL ?? 'https://us.cloud.langfuse.com';
-const auth = Buffer.from(
-  `${process.env.LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`,
-).toString('base64');
-const url =
-  `${baseUrl}/api/public/traces?limit=20` +
-  `&fromTimestamp=${encodeURIComponent(fromTimestamp)}` +
-  `&toTimestamp=${encodeURIComponent(toTimestamp)}`;
-
-const response = await fetch(url, { headers: { authorization: `Basic ${auth}` } });
-const { data } = await response.json();
-for (const trace of data ?? []) {
-  const body = JSON.stringify(trace);
-  if (body.includes(runLabel) && body.includes(caseId)) {
-    console.log(`${trace.name}: ${baseUrl}${trace.htmlPath}`);
-  }
-}
-NODE
+npm run eval -- --matrix --id=rule-poison --name=debug-poison --local-report=/tmp/debug-poison.json
+node -e 'const r=require("/tmp/debug-poison.json"); console.log(r.rows.map(row => row.traceUrl ?? row.traceId).join("\n"))'
 ```
 
-If both traces are present, share the `experiment-item-run` URL for browser
-viewing and the `eval.case` trace ID for replay/debugging.
+Trace replay is not part of the LangSmith eval path yet. Until it is
+implemented, debug a failure from the local matrix row plus the linked LangSmith
+span tree.
 
 **Run and compare a model matrix experiment:**
 
@@ -420,7 +389,7 @@ npm run eval -- --compare-runs=/tmp/sqr-133-before.json,/tmp/sqr-133-after.json
 ```
 
 Matrix reports include pass rate, score, latency, token use, estimated cost,
-tool-call count, retry count, timeout rate, loop iterations, Langfuse trace
+tool-call count, retry count, timeout rate, loop iterations, LangSmith trace
 links, prompt/tool schema versions, and model knob values. The comparison
 command prints deltas by provider/model and rejects comparisons when prompt or
 tool schema versions differ; do not mix those runs, because a prompt or schema
@@ -532,4 +501,4 @@ data/rule-sources/ HTML/text rule snapshots and source metadata
 - **2026-04-07:** Updated to reflect PDF move to `data/pdfs/`.
 - **2026-04-06:** Updated to reflect retirement of OCR pipeline and Worldhaven dependency (commit `34a26a1`).
 - **2026-04-04:** Migrated data dependencies to git submodules (PR #146). Later replaced with committed extracted data + weekly CI refresh (PR #162).
-- **2026-03-22:** Initial CONTRIBUTING guide added alongside Git LFS for data files and Langfuse improvements (PR #17).
+- **2026-03-22:** Initial CONTRIBUTING guide added alongside Git LFS for data files and LangSmith improvements (PR #17).

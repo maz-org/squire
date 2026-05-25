@@ -67,12 +67,6 @@ export interface LangSmithTracePayload {
   feedback: LangSmithFeedbackCreate[];
 }
 
-export function langSmithTracingEnabled(cliEnabled: boolean, env: NodeJS.ProcessEnv): boolean {
-  if (cliEnabled) return true;
-  const raw = env.SQUIRE_EVAL_LANGSMITH_TRACING?.trim().toLowerCase();
-  return raw === '1' || raw === 'true' || raw === 'yes';
-}
-
 function requiredEnv(name: string, value: string | undefined): string {
   const trimmed = value?.trim();
   if (trimmed) return trimmed;

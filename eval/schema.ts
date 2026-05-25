@@ -123,7 +123,7 @@ export function validateRemoteDatasetShape(
 ): void {
   if (remoteItems.length !== expectedLocalCount) {
     throw new Error(
-      `Remote Langfuse dataset "${datasetName}" has ${remoteItems.length} item(s), but local eval/dataset.json has ${expectedLocalCount}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
+      `Remote LangSmith dataset "${datasetName}" has ${remoteItems.length} item(s), but local eval/dataset.json has ${expectedLocalCount}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
     );
   }
 
@@ -143,7 +143,7 @@ export function validateRemoteDatasetShape(
       .map((item) => `item ${item.index}: ${item.issues[0] ?? 'invalid expectedOutput'}`)
       .join('; ');
     throw new Error(
-      `Remote Langfuse dataset "${datasetName}" has ${invalidItems.length} invalid expectedOutput item(s). Sample: ${sample}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
+      `Remote LangSmith dataset "${datasetName}" has ${invalidItems.length} invalid expectedOutput item(s). Sample: ${sample}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
     );
   }
 }

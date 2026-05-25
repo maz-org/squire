@@ -294,7 +294,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 - Daily LLM cost budget with circuit breaker
 - Prompt injection resistance test suite (E2E, daily CI)
 - SAST scanning (Semgrep / CodeQL free tier)
-- Langfuse eval templates wired to production traces
+- LangSmith eval datasets and experiments wired to production traces
 - Browser E2E tests for web UI user journeys (Playwright)
 - REST API integration tests (daily CI with real Claude API, LLM-as-judge)
 
@@ -499,7 +499,7 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
   - **Game data:** Worldhaven and OCR pipeline retired (commit `34a26a1`). Replaced with Gloomhaven Secretariat (GHS) structured data — 10 import scripts in `src/import-*.ts`.
   - **Tools:** Reframed as a generalized atomic-tools API in `src/tools.ts` (`searchRules`, `searchCards`, `listCardTypes`, `listCards`, `getCard`) that works across all GHS card types. Per-feature operations are invocations, not new tools.
   - **MCP server:** Added as a first-class architectural fact. Treated as a third channel type alongside web UI and future Discord / iMessage. Internal MCP between conversation and knowledge agents was considered and dropped for simplicity.
-  - **Observability:** Added Langfuse + OpenTelemetry section. APM / RUM stack is open.
+  - **Observability:** Added LangSmith + OpenTelemetry section. APM / RUM stack is open.
   - **Hosting:** Vercel dropped (doesn't fit a long-running Hono Node server). Fly / Railway / Render / VPS as the open shortlist.
   - **Phases resequenced:** 7 phases instead of 6. Phase 1 = MVP rules Q&A; Phase 2 = multi-user platform; Phase 3 = campaign + character state (manual entry); Phase 4 = recommendation engine + build guides; Phase 5 = character state ingestion (browser extension preferred over Vision); Phase 6 = polish (voice + share/export); Phase 7 = additional channels.
   - **Voice and PWA:** Voice moved out of Phase 1 to Phase 6 (Brian uses iOS Monologue externally for now). PWA / IndexedDB / offline mode dropped entirely — Squire is a mobile-responsive web app, not a PWA.

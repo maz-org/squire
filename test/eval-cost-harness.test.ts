@@ -57,7 +57,7 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     loopIterations: 4,
     failureClass: 'quality',
     traceId: 'trace-before',
-    traceUrl: 'https://langfuse.test/trace-before',
+    traceUrl: 'https://smith.langchain.test/trace-before',
     promptVersion: 'redesigned-agent-v1',
     promptHash: 'sha256:prompt',
     toolSurface: 'redesigned',
@@ -104,7 +104,7 @@ function comparisonInput(): EvalRunComparisonInput {
           loopIterations: null,
           failureClass: 'timeout',
           traceId: 'timeout-before',
-          traceUrl: 'https://langfuse.test/timeout-before',
+          traceUrl: 'https://smith.langchain.test/timeout-before',
         }),
       ],
     },
@@ -129,7 +129,7 @@ function comparisonInput(): EvalRunComparisonInput {
           loopIterations: 2,
           failureClass: 'none',
           traceId: 'trace-after',
-          traceUrl: 'https://langfuse.test/trace-after',
+          traceUrl: 'https://smith.langchain.test/trace-after',
         }),
         row({
           runLabel: 'after',
@@ -148,7 +148,7 @@ function comparisonInput(): EvalRunComparisonInput {
           loopIterations: 3,
           failureClass: 'none',
           traceId: 'looting-after',
-          traceUrl: 'https://langfuse.test/looting-after',
+          traceUrl: 'https://smith.langchain.test/looting-after',
         }),
       ],
     },
@@ -200,7 +200,7 @@ describe('eval cost and performance harness', () => {
       ok: true,
       answer: 'ok',
       traceId,
-      traceUrl: `https://langfuse.test/project/default/traces/${traceId}`,
+      traceUrl: `https://smith.langchain.test/project/default/traces/${traceId}`,
       score: 1,
       pass: true,
       latencyMs: 500,
@@ -229,7 +229,6 @@ describe('eval cost and performance harness', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 2, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(result.rows[0]).toMatchObject({

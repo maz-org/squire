@@ -30,17 +30,17 @@ SESSION_SECRET=<random 32+ character string>
 # Email allowlist (comma-separated, controls who can log in)
 SQUIRE_ALLOWED_EMAILS=your-email@example.com
 
-# Optional (Langfuse observability)
-LANGFUSE_BASEURL=https://us.cloud.langfuse.com
-LANGFUSE_PROJECT_ID=...
-LANGFUSE_PUBLIC_KEY=...
-LANGFUSE_SECRET_KEY=...
+# LangSmith observability
+LANGSMITH_API_KEY=...
+LANGSMITH_PROJECT=squire-evals
+# LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+# LANGSMITH_WORKSPACE_ID=...
 
-# Trace environment label for Langfuse and LangSmith; defaults to NODE_ENV.
+# Trace environment label for LangSmith; defaults to NODE_ENV.
 SQUIRE_ENV=development
 
 # Daily LLM spend circuit breaker. Defaults shown here match the app defaults.
-# Budget accounting is local Postgres state; Langfuse is observability only.
+# Budget accounting is local Postgres state; LangSmith is observability only.
 # SQUIRE_LLM_DAILY_BUDGET_USD=10
 # SQUIRE_LLM_BUDGET_WARNING_THRESHOLD=0.8
 # SQUIRE_LLM_INPUT_USD_PER_MILLION_TOKENS=3
@@ -52,13 +52,6 @@ SQUIRE_ENV=development
 # local development falls back to in-process limits when unset.
 # REDIS_URL=redis://localhost:6379
 
-# Optional (LangSmith eval/prototype tracing)
-LANGSMITH_API_KEY=...
-LANGSMITH_PROJECT=squire-evals
-# LANGSMITH_ENDPOINT=https://api.smith.langchain.com
-# LANGSMITH_WORKSPACE_ID=...
-# SQUIRE_EVAL_LANGSMITH_TRACING=0
-
 # Production origin lock only. CloudFront sends this value as X-Origin-Secret.
 # ORIGIN_SHARED_SECRET=...
 ```
@@ -69,9 +62,7 @@ Generate `SESSION_SECRET` with:
 openssl rand -base64 48
 ```
 
-Do not set `LANGFUSE_TRACING_ENVIRONMENT`; `SQUIRE_ENV=development` is the
-local environment label that feeds Langfuse tracing. LangSmith variables are for
-eval/prototype tracing unless the runtime path explicitly starts using them.
+`SQUIRE_ENV=development` is the local environment label that feeds LangSmith tracing.
 
 `GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for
 production and non-local hosts. In local development, `/auth/google/start` and
@@ -277,17 +268,18 @@ For the full state-machine rationale and endpoint policy table, see
 
 ## MCP server
 
-Squire exposes 9 atomic tools via MCP at `/mcp`:
+Squire exposes the redesigned knowledge tools via MCP at `/mcp`:
 
-- `search_rules` — vector search over indexed rule-source passages
-- `find_scenario` — resolve a scenario query like `scenario 61` to matching scenario records
-- `get_scenario` — fetch an exact scenario record by canonical scenario ref
-- `get_section` — fetch an exact section record by section ref like `67.1`
-- `follow_links` — follow explicit scenario/section-book references from a known scenario or section
-- `search_cards` — Postgres FTS over the `card_*` tables, ranked by `ts_rank`
-- `list_card_types` — list available card categories with counts
-- `list_cards` — list cards of a type with optional field filter
-- `get_card` — look up a single card by type and canonical `sourceId`
+- `inspect_sources` — discover available games, sources, kinds, relations, and counts
+- `schema` — inspect fields, ref patterns, filters, examples, and relations for a kind
+- `resolve_entity` — resolve natural references to ranked opener-ready refs
+- `open_entity` — open one exact canonical ref
+- `search_knowledge` — search rules passages, scenarios, sections, and cards
+- `neighbors` — traverse known scenario/section relationships
+
+The old atomic MCP tools (`search_rules`, `search_cards`, `list_card_types`,
+`list_cards`, `get_card`, `find_scenario`, `get_scenario`, `get_section`, and
+`follow_links`) are no longer public. Use the redesigned tools above.
 
 The MCP endpoint uses Streamable HTTP transport in stateless mode and requires
 OAuth bearer auth. Local integration tests may stub token verification, but the

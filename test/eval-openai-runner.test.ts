@@ -238,7 +238,7 @@ describe('OpenAI Responses eval runner', () => {
     });
   });
 
-  it('writes SQR-127 trace artifacts when a trace client is provided', async () => {
+  it('writes SQR-127 trace artifacts when a trace writer is provided', async () => {
     const client = responsesClient({
       id: 'resp_final',
       model: 'gpt-5.5-2026-04-23',
@@ -247,7 +247,7 @@ describe('OpenAI Responses eval runner', () => {
       output: [{ type: 'message', content: [{ type: 'output_text', text: 'Done.' }] }],
       usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
     });
-    const batch = vi.fn();
+    const traceWriter = { writeTrace: vi.fn(async () => undefined) };
 
     await runOpenAiResponsesEvalCase({
       client,
@@ -255,21 +255,18 @@ describe('OpenAI Responses eval runner', () => {
       providerConfig,
       runLabel: 'trace-run',
       toolSurface: 'redesigned',
-      traceClient: { api: { ingestion: { batch } } },
+      traceWriter,
     });
 
-    expect(batch).toHaveBeenCalledWith(
+    expect(traceWriter.writeTrace).toHaveBeenCalledWith(
       expect.objectContaining({
-        metadata: { contractVersion: TRACE_CONTRACT_VERSION },
-        batch: expect.arrayContaining([
-          expect.objectContaining({ type: 'trace-create' }),
-          expect.objectContaining({ type: 'generation-create' }),
-        ]),
+        traceId: expect.stringContaining('trace-run'),
+        promptVersion: expect.any(String),
       }),
     );
   });
 
-  it('uses caller-provided trace ids and merges judge scores into the Langfuse trace', async () => {
+  it('uses caller-provided trace ids and merges judge scores into the eval trace', async () => {
     const client = responsesClient({
       id: 'resp_final',
       model: 'gpt-5.5-2026-04-23',

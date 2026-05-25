@@ -20,12 +20,10 @@ import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { DATASET_NAME } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import {
-  writeEvalTrace,
   type EvalTraceInput,
   type EvalTraceScore,
   type EvalTraceToolCall,
   type EvalTraceWriter,
-  type LangfuseTraceIngestionClient,
 } from './trace.ts';
 
 type DeepAgentsAnthropicConfig = EvalProviderConfig & {
@@ -44,7 +42,6 @@ export interface RunDeepAgentsEvalCaseOptions {
   runLabel: string;
   toolSurface: EvalToolSurface;
   providerConfig: DeepAgentsAnthropicConfig;
-  traceClient?: LangfuseTraceIngestionClient;
   traceWriter?: EvalTraceWriter;
   traceId?: string;
   judgeScores?: EvalTraceScore[];
@@ -53,11 +50,7 @@ export interface RunDeepAgentsEvalCaseOptions {
 }
 
 async function writeTrace(options: RunDeepAgentsEvalCaseOptions, trace: EvalTraceInput) {
-  if (options.traceWriter) {
-    await options.traceWriter.writeTrace(trace);
-    return;
-  }
-  if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
+  if (options.traceWriter) await options.traceWriter.writeTrace(trace);
 }
 
 export interface DeepAgentsEvalCaseResult extends AgentRunResult {
@@ -384,7 +377,7 @@ async function writeFailureTrace(
   endedAt: string,
   durationMs: number,
 ): Promise<void> {
-  if (!options.traceClient && !options.traceWriter) return;
+  if (!options.traceWriter) return;
   const statusReason = failureStatus(error);
   const message = error instanceof Error ? error.message : String(error);
   await writeTrace(options, {

@@ -25,7 +25,7 @@ describe('SQR-125 trace artifact contract', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('keeps provider, model, run, and case filters in Langfuse trace metadata', () => {
+  it('keeps provider, model, run, and case filters in LangSmith trace metadata', () => {
     for (const name of [
       'contractVersion',
       'provider',
@@ -43,12 +43,12 @@ describe('SQR-125 trace artifact contract', () => {
     ]) {
       expect(field(name)).toMatchObject({
         required: true,
-        langfuseTarget: 'trace.metadata',
+        langsmithTarget: 'trace.metadata',
       });
     }
   });
 
-  it('maps every required debugging field to an explicit Langfuse or export target', () => {
+  it('maps every required debugging field to an explicit LangSmith or export target', () => {
     const allowedTargets = new Set([
       'trace.metadata',
       'trace.input',
@@ -89,7 +89,7 @@ describe('SQR-125 trace artifact contract', () => {
     for (const name of requiredNames) {
       const contract = field(name);
       expect(contract.required).toBe(true);
-      expect(allowedTargets.has(contract.langfuseTarget)).toBe(true);
+      expect(allowedTargets.has(contract.langsmithTarget)).toBe(true);
       expect(contract.debugCategory).not.toBe('filter');
     }
   });
@@ -126,7 +126,7 @@ describe('SQR-125 trace artifact contract', () => {
     const doc = readFileSync(DOC_PATH, 'utf8');
     expect(doc).toContain(`# SQR-125 Side-by-Side Trace Artifact Contract`);
     expect(doc).toContain(TRACE_CONTRACT_VERSION);
-    expect(doc).toContain('Langfuse Placement Legend');
+    expect(doc).toContain('LangSmith Placement Legend');
     expect(doc).toContain('Provider-Native Transcript Rules');
     expect(doc).toContain('Redaction Rules');
   });

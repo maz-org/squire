@@ -164,8 +164,8 @@
     "category": "tool-free",
     "question": "What game is this assistant for? Answer in one short sentence.",
     "finalAnswer": {
-      "expected": "This assistant is for Frosthaven.",
-      "grading": "Must clearly say the assistant is for Frosthaven in one short sentence. Answers that hedge, mention another game, or say it does not know should fail."
+      "expected": "This assistant supports Frosthaven and Gloomhaven 2.0.",
+      "grading": "Must clearly say the assistant supports both Frosthaven and Gloomhaven 2.0 in one short sentence. Answers that omit either supported game, hedge, or say it does not know should fail."
     },
     "source": "src/agent.ts"
   },
@@ -321,10 +321,10 @@
   {
     "id": "traj-invalid-cross-game-ref",
     "category": "trajectory",
-    "question": "Resolve section 67.1 in Frosthaven and then try the same bare legacy ref with an explicit Gloomhaven 2 game. The second path should reject or require a canonical game-qualified ref.",
+    "question": "Resolve section 67.1 in Frosthaven and then resolve section 67.1 with an explicit Gloomhaven 2 game. Explain whether they are the same section.",
     "finalAnswer": {
-      "expected": "Frosthaven section 67.1 can be resolved and opened. The explicit Gloomhaven 2 section 67.1 lookup should fail or be reported as unavailable, and the assistant must not silently reuse the Frosthaven section for Gloomhaven 2.",
-      "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2 lookup. Must state that the Gloomhaven 2 path is rejected, unavailable, or requires a valid game-qualified ref. Answers that reuse Frosthaven data for Gloomhaven 2 should fail."
+      "expected": "Frosthaven section 67.1 and Gloomhaven 2.0 section 67.1 resolve to different game-qualified sections. The assistant must not reuse Frosthaven section text for the Gloomhaven 2.0 lookup.",
+      "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2 lookup and state that they are different game-qualified sections. Answers that reuse Frosthaven data for Gloomhaven 2 or imply the bare section id is globally unique should fail."
     },
     "trajectory": {
       "requiredTools": ["resolve_entity", "open_entity"],
@@ -332,7 +332,7 @@
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven-2e/67.1"],
       "maxToolCalls": 8,
-      "notes": "This covers missing-data and invalid-ref behavior without letting the agent silently reuse Frosthaven data for another game."
+      "notes": "This covers cross-game ref behavior without letting the agent silently reuse Frosthaven data for another game."
     },
     "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md"
   }

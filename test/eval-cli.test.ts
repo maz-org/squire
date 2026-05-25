@@ -7,8 +7,10 @@ describe('parseEvalArgs', () => {
     expect(parseEvalArgs([]).toolSurface).toBe('redesigned');
   });
 
-  it('accepts the legacy tool surface', () => {
-    expect(parseEvalArgs(['--tool-surface=legacy']).toolSurface).toBe('legacy');
+  it('rejects the legacy tool surface', () => {
+    expect(() => parseEvalArgs(['--tool-surface=legacy'])).toThrow(
+      /Invalid --tool-surface: legacy/,
+    );
   });
 
   it('rejects unknown tool surfaces', () => {
@@ -29,46 +31,22 @@ describe('parseEvalArgs', () => {
     expect(parseEvalArgs(['--local-report=/tmp/eval.json']).localReportPath).toBe('/tmp/eval.json');
   });
 
-  it('parses replay and trace diff options', () => {
-    expect(
-      parseEvalArgs([
-        '--replay',
-        '--trace-id=eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
-        '--diff-trace-id=eval:debug-run:case-1:openai',
-        '--diff-provider=openai',
-        '--diff-model=gpt-5.5',
-        '--diff-run-label=debug-run-openai',
-      ]).replay,
-    ).toEqual({
-      enabled: true,
-      traceId: 'eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
-      diffTraceId: 'eval:debug-run:case-1:openai',
-      diffProvider: 'openai',
-      diffModel: 'gpt-5.5',
-      diffRunLabel: 'debug-run-openai',
-    });
-  });
-
-  it('requires a single case id or explicit trace id for replay mode', () => {
-    expect(() => parseEvalArgs(['--replay'])).toThrow(/Invalid --replay: pass --id or --trace-id/);
-  });
-
-  it('requires a case id or explicit diff trace id for provider-based replay diffs', () => {
-    expect(() =>
-      parseEvalArgs([
-        '--replay',
-        '--trace-id=eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
-        '--diff-provider=openai',
-        '--diff-model=gpt-5.5',
-      ]),
-    ).toThrow(/Invalid replay diff: pass --id or --diff-trace-id/);
+  it('rejects replay flags until LangSmith replay is implemented', () => {
+    expect(() => parseEvalArgs(['--replay'])).toThrow(
+      /Eval trace replay is not implemented for LangSmith/,
+    );
+    expect(() => parseEvalArgs(['--trace-id=trace'])).toThrow(
+      /Eval trace replay is not implemented for LangSmith/,
+    );
+    expect(() => parseEvalArgs(['--diff-model=gpt-5.5'])).toThrow(
+      /Eval trace replay is not implemented for LangSmith/,
+    );
   });
 
   it('parses matrix runner guardrails', () => {
     expect(
       parseEvalArgs([
         '--matrix',
-        '--langsmith-tracing',
         '--allow-full-dataset',
         '--allow-estimated-cost',
         '--max-estimated-cost-usd=2.5',
@@ -79,7 +57,6 @@ describe('parseEvalArgs', () => {
       ]),
     ).toMatchObject({
       matrixMode: true,
-      langsmithTracing: true,
       matrixGuardrails: {
         allowFullDataset: true,
         allowEstimatedCostOverride: true,
@@ -91,23 +68,23 @@ describe('parseEvalArgs', () => {
     });
   });
 
-  it('parses LangSmith tracing opt-in from the environment', () => {
-    expect(
-      parseEvalArgs([], new Date('2026-05-01T02:00:00Z'), {
-        SQUIRE_EVAL_LANGSMITH_TRACING: 'true',
-      }).langsmithTracing,
-    ).toBe(true);
-  });
-
   it('parses eval agent runtime selection', () => {
     expect(parseEvalArgs(['--agent-runtime=deep-agents'])).toMatchObject({
       agentRuntime: 'deep-agents',
       matrixAgentRuntimes: ['deep-agents'],
     });
+    expect(parseEvalArgs(['--agent-runtime=langgraph'])).toMatchObject({
+      agentRuntime: 'langgraph',
+      matrixAgentRuntimes: ['langgraph'],
+    });
     expect(parseEvalArgs(['--agent-runtime=both']).matrixAgentRuntimes).toEqual([
-      'claude-sdk',
+      'langgraph',
       'deep-agents',
     ]);
+    expect(parseEvalArgs([]).matrixAgentRuntimes).toEqual(['langgraph']);
+    expect(() => parseEvalArgs(['--agent-runtime=claude-sdk'])).toThrow(
+      /Invalid --agent-runtime: claude-sdk/,
+    );
   });
 
   it('rejects unsupported eval agent runtimes', () => {
@@ -179,21 +156,6 @@ describe('parseEvalArgs', () => {
         expect.objectContaining({ provider, model }),
       );
     }
-  });
-
-  it('uses expanded candidate models in replay diffs', () => {
-    expect(
-      parseEvalArgs([
-        '--replay',
-        '--trace-id=eval:debug-run:anthropic:claude-sonnet-4-6:case-1',
-        '--diff-trace-id=eval:debug-run:case-1:haiku',
-        '--diff-provider=anthropic',
-        '--diff-model=claude-haiku-4-5',
-      ]).replay,
-    ).toMatchObject({
-      diffProvider: 'anthropic',
-      diffModel: 'claude-haiku-4-5',
-    });
   });
 
   it('parses local matrix report comparison inputs', () => {

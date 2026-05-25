@@ -19,9 +19,8 @@ const REQUIRED_SERVER_ENV = [
   'DATABASE_URL',
   'ANTHROPIC_API_KEY',
   'SESSION_SECRET',
-  'LANGFUSE_SECRET_KEY',
-  'LANGFUSE_PUBLIC_KEY',
-  'LANGFUSE_BASEURL',
+  'LANGSMITH_API_KEY',
+  'LANGSMITH_PROJECT',
   'GOOGLE_OAUTH_CLIENT_ID',
   'GOOGLE_OAUTH_CLIENT_SECRET',
   'ORIGIN_SHARED_SECRET',
@@ -81,7 +80,7 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
     invalid.push({ name: 'ORIGIN_SHARED_SECRET', message: 'must be at least 32 characters' });
   }
   validateUrl('DATABASE_URL', env.DATABASE_URL, invalid);
-  validateUrl('LANGFUSE_BASEURL', env.LANGFUSE_BASEURL, invalid);
+  validateUrl('LANGSMITH_ENDPOINT', env.LANGSMITH_ENDPOINT, invalid);
   validateUrl('REDIS_URL', env.REDIS_URL, invalid);
 
   if (hasText(env.HOST) && env.HOST!.trim() !== env.HOST) {

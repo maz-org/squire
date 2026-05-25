@@ -23,7 +23,7 @@ Question → Claude tool loop → exact scenario/section lookup and/or semantic 
 3. Fuzzy book-corpus questions use `search_rules`, and card queries use Postgres full-text search over the `card_*` tables
 4. Claude writes the final answer from the retrieved source material
 
-All queries are traced with [Langfuse](https://langfuse.com) for observability.
+All queries are traced with [LangSmith](https://www.langchain.com/langsmith) for observability.
 
 ## Setup
 
@@ -138,7 +138,7 @@ local setup instructions.
 Squire includes an evaluation framework for measuring answer quality:
 
 ```bash
-# Seed the eval dataset to Langfuse (first time)
+# Seed the eval dataset to LangSmith (first time)
 npm run eval -- --seed
 
 # Run all 17 eval cases
@@ -149,7 +149,7 @@ npm run eval -- --category=rulebook
 npm run eval -- --id=rule-poison
 ```
 
-Results are tracked in Langfuse with LLM-as-judge scoring (1-5 scale). Current baseline: **73% pass rate, 3.8/5 avg score**.
+Results are tracked in LangSmith with LLM-as-judge scoring (1-5 scale). Current baseline: **73% pass rate, 3.8/5 avg score**.
 
 ## Acknowledgments
 

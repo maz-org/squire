@@ -33,7 +33,7 @@ describe('deployment operations documentation', () => {
       'https://maz-squire.fly.dev/login',
       'Sign in with Google',
       'one real rules question',
-      'Langfuse',
+      'LangSmith',
       'env:production',
       'Troubleshoot one production chat',
       'metadata.conversationId',
@@ -90,12 +90,8 @@ describe('deployment operations documentation', () => {
       'SESSION_SECRET',
       'SQUIRE_ALLOWED_EMAILS',
       'SQUIRE_ENV=development',
-      'LANGFUSE_BASEURL',
-      'LANGFUSE_PROJECT_ID',
-      'LANGFUSE_PUBLIC_KEY',
-      'LANGFUSE_SECRET_KEY',
       'LANGSMITH_API_KEY',
-      'SQUIRE_EVAL_LANGSMITH_TRACING',
+      'LANGSMITH_PROJECT',
       'ORIGIN_SHARED_SECRET',
       'REDIS_URL',
     ]) {
@@ -103,13 +99,13 @@ describe('deployment operations documentation', () => {
     }
 
     expect(development).toContain('LANGSMITH_API_KEY');
-    expect(development).toContain('SQUIRE_EVAL_LANGSMITH_TRACING');
     expect(development).toContain('SQUIRE_ENV=development');
 
     expect(guide).toContain('app-runtime secrets');
     expect(guide).toContain('eval/developer-only');
-    expect(guide).toContain('Do not set `LANGFUSE_TRACING_ENVIRONMENT`');
-    expect(guide).toContain('LangSmith variables are eval/prototype tracing variables');
+    expect(guide).toContain(
+      '`SQUIRE_ENV` is the single source for the LangSmith environment label',
+    );
     expect(development).toContain('OAuth bearer auth');
   });
 });

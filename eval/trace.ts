@@ -5,30 +5,6 @@ export const TRACE_REDACTION_PLACEHOLDER = '[REDACTED]' as const;
 
 type JsonPrimitive = string | number | boolean | null;
 
-type TraceEventType = 'trace-create' | 'generation-create' | 'span-create' | 'score-create';
-
-interface LangfuseEvent<Body extends Record<string, unknown>> {
-  type: TraceEventType;
-  id: string;
-  timestamp: string;
-  body: Body;
-}
-
-export interface EvalTraceIngestionBatch {
-  batch: LangfuseEvent<Record<string, unknown>>[];
-  metadata: {
-    contractVersion: typeof TRACE_CONTRACT_VERSION;
-  };
-}
-
-export interface LangfuseTraceIngestionClient {
-  api: {
-    ingestion: {
-      batch: (payload: EvalTraceIngestionBatch) => unknown;
-    };
-  };
-}
-
 export interface EvalTraceWriter {
   writeTrace: (input: EvalTraceInput) => Promise<void>;
 }
@@ -161,12 +137,15 @@ function redactValue(value: unknown): unknown {
   return value;
 }
 
-function requiredTraceMetadata(input: EvalTraceInput): Record<string, unknown> {
-  const environment = traceEnvironment(input);
+export function traceEnvironment(input: Pick<EvalTraceInput, 'environment'>): string {
+  const environment = input.environment?.trim();
+  return environment ? resolveSquireEnv({ SQUIRE_ENV: environment }) : resolveSquireEnv();
+}
 
+export function evalTraceContractMetadata(input: EvalTraceInput): Record<string, unknown> {
   return {
     contractVersion: TRACE_CONTRACT_VERSION,
-    environment,
+    environment: traceEnvironment(input),
     agentRuntime: input.agentRuntime,
     provider: input.provider,
     model: input.model,
@@ -181,172 +160,6 @@ function requiredTraceMetadata(input: EvalTraceInput): Record<string, unknown> {
     toolSchemaVersion: input.toolSchemaVersion,
     toolSchemaHash: input.toolSchemaHash,
     statusReason: input.statusReason,
-  };
-}
-
-function traceEnvironment(input: EvalTraceInput): string {
-  const environment = input.environment?.trim();
-  return environment ? resolveSquireEnv({ SQUIRE_ENV: environment }) : resolveSquireEnv();
-}
-
-function generationIdFor(input: EvalTraceInput): string {
-  return input.generationId ?? `${input.traceId}:generation`;
-}
-
-function scoreIdFor(input: EvalTraceInput, score: EvalTraceScore): string {
-  return `${input.traceId}:score:${score.name}`;
-}
-
-function scoreDataTypeFor(score: EvalTraceScore): string {
-  return typeof score.value === 'number' ? 'NUMERIC' : 'CATEGORICAL';
-}
-
-function timestampFor(input: EvalTraceInput): string {
-  return input.startedAt;
-}
-
-function event(
-  type: TraceEventType,
-  id: string,
-  timestamp: string,
-  body: Record<string, unknown>,
-): LangfuseEvent<Record<string, unknown>> {
-  return { type, id, timestamp, body };
-}
-
-export function buildEvalTraceIngestionBatch(input: EvalTraceInput): EvalTraceIngestionBatch {
-  const generationId = generationIdFor(input);
-  const timestamp = timestampFor(input);
-  const traceMetadata = requiredTraceMetadata(input);
-  const environment = traceEnvironment(input);
-
-  const traceEvent = event('trace-create', `${input.traceId}:trace-create`, timestamp, {
-    id: input.traceId,
-    timestamp: input.startedAt,
-    name: 'eval.case',
-    environment,
-    input: redactTracePayload({ question: input.inputQuestion }),
-    output: redactTracePayload({
-      finalAnswer: input.finalAnswer,
-      statusReason: input.statusReason,
-    }),
-    metadata: redactTracePayload(traceMetadata),
-    tags: [
-      'eval',
-      `env:${environment}`,
-      input.agentRuntime,
-      input.provider,
-      input.model,
-      input.runLabel,
-    ],
-  });
-
-  const generationEvent = event(
-    'generation-create',
-    `${generationId}:generation-create`,
-    timestamp,
-    {
-      id: generationId,
-      traceId: input.traceId,
-      name: 'eval.model_call',
-      startTime: input.startedAt,
-      endTime: input.endedAt,
-      completionStartTime: input.completionStartedAt,
-      environment,
-      model: input.model,
-      input: redactTracePayload({ request: input.providerRequest }),
-      output: redactTracePayload({
-        finalAnswer: input.finalAnswer,
-        response: input.providerResponse,
-      }),
-      modelParameters: redactTracePayload(input.modelSettings),
-      usageDetails: redactTracePayload(input.tokenUsage),
-      costDetails: redactTracePayload(input.costEstimate),
-      metadata: redactTracePayload({
-        provider: input.provider,
-        resolvedModel: input.resolvedModel,
-        stopReason: input.stopReason,
-        statusReason: input.statusReason,
-        providerNativeTranscript: input.providerNativeTranscript,
-        errors: input.errors,
-        retries: input.retries,
-        timings: {
-          startedAt: input.startedAt,
-          endedAt: input.endedAt,
-          durationMs: input.durationMs,
-        },
-      }),
-    },
-  );
-
-  const toolEvents = input.toolCalls.map((toolCall) => {
-    const spanId = toolCall.id ?? `${input.traceId}:tool:${toolCall.callIndex}`;
-    return event('span-create', `${spanId}:span-create`, toolCall.startedAt ?? timestamp, {
-      id: spanId,
-      traceId: input.traceId,
-      parentObservationId: generationId,
-      name: `eval.tool_call.${toolCall.toolName}`,
-      startTime: toolCall.startedAt,
-      endTime: toolCall.endedAt,
-      environment,
-      input: redactTracePayload(toolCall.arguments),
-      output: redactTracePayload(toolCall.result),
-      metadata: redactTracePayload({
-        toolName: toolCall.toolName,
-        toolCallId: toolCall.toolCallId,
-        providerToolCallId: toolCall.providerToolCallId,
-        callIndex: toolCall.callIndex,
-        ok: toolCall.ok,
-        durationMs: toolCall.durationMs,
-        startedAt: toolCall.startedAt,
-        endedAt: toolCall.endedAt,
-        sourceLabels: toolCall.sourceLabels ?? [],
-        canonicalRefs: toolCall.canonicalRefs ?? [],
-        errors: toolCall.errors ?? [],
-        retries: toolCall.retries ?? [],
-      }),
-    });
-  });
-
-  const scoreEvents = input.judgeScores.map((score) => {
-    const scoreId = scoreIdFor(input, score);
-    return event('score-create', `${scoreId}:score-create`, timestamp, {
-      id: scoreId,
-      traceId: input.traceId,
-      name: score.name,
-      value: score.value,
-      dataType: scoreDataTypeFor(score),
-      comment: score.comment,
-      environment,
-      metadata: redactTracePayload(score.metadata ?? {}),
-    });
-  });
-
-  return {
-    batch: [traceEvent, generationEvent, ...toolEvents, ...scoreEvents],
-    metadata: {
-      contractVersion: TRACE_CONTRACT_VERSION,
-    },
-  };
-}
-
-export async function writeEvalTrace(
-  client: LangfuseTraceIngestionClient,
-  input: EvalTraceInput,
-): Promise<void> {
-  const response = await client.api.ingestion.batch(buildEvalTraceIngestionBatch(input));
-  const errors =
-    response && typeof response === 'object' && 'errors' in response
-      ? (response.errors as unknown)
-      : undefined;
-  if (Array.isArray(errors) && errors.length > 0) {
-    throw new Error(`Langfuse trace ingestion failed: ${JSON.stringify(errors)}`);
-  }
-}
-
-export function langfuseTraceWriter(client: LangfuseTraceIngestionClient): EvalTraceWriter {
-  return {
-    writeTrace: (input) => writeEvalTrace(client, input),
   };
 }
 

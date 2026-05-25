@@ -20,9 +20,9 @@ knowledge, and traverse related records without a long routing prompt.
 The prompt should explain role and answer quality. Tool names, schemas, and
 outputs should explain tool choreography.
 
-## Current Problem
+## Replaced Tool Surface
 
-The current tool set works, but it is shaped around known workflows:
+The old tool set worked, but it was shaped around known workflows:
 
 - `search_rules`
 - `search_cards`
@@ -34,10 +34,10 @@ The current tool set works, but it is shaped around known workflows:
 - `get_section`
 - `follow_links`
 
-The agent prompt currently says when to use each one. That makes routing fragile:
-new data types need prompt edits, exact lookups need special wording, and the
-model has to remember that scenarios, sections, cards, and book passages all use
-different lookup verbs.
+Those tools have been removed from the production agent and public MCP surface.
+The LangGraph production runtime uses the redesigned contract tools only:
+`inspect_sources`, `schema`, `resolve_entity`, `open_entity`,
+`search_knowledge`, and `neighbors`.
 
 ## Contract Principles
 
@@ -1019,33 +1019,31 @@ Failure behavior:
 
 ## Migration Map
 
-| Old tool          | New public path                                                                                       | Adapter expectation                                |
-| ----------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `search_rules`    | `search_knowledge(query, scope: ["rules_passage"])`                                                   | Remains an internal adapter over `searchRules()`   |
-| `search_cards`    | `search_knowledge(query, scope: ["card"])`                                                            | Remains an internal adapter over `searchCards()`   |
-| `list_card_types` | `inspect_sources()` and `schema("card_type")`                                                         | Remains an internal adapter over `listCardTypes()` |
-| `list_cards`      | `search_knowledge(query, scope: ["card"], filters)` or `open_entity(card-type ref)` for type browsing | Remains an internal adapter over `listCards()`     |
-| `get_card`        | `open_entity(card ref)`                                                                               | Remains an internal adapter over `getCard()`       |
-| `find_scenario`   | `resolve_entity(query, kinds: ["scenario"])`                                                          | Remains an internal adapter over `findScenario()`  |
-| `get_scenario`    | `open_entity(scenario ref)`                                                                           | Remains an internal adapter over `getScenario()`   |
-| `get_section`     | `open_entity(section ref)`                                                                            | Remains an internal adapter over `getSection()`    |
-| `follow_links`    | `neighbors(ref, relation)`                                                                            | Remains an internal adapter over `followLinks()`   |
+| Old tool          | New public path                                                                                       | Adapter expectation             |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `search_rules`    | `search_knowledge(query, scope: ["rules_passage"])`                                                   | Removed from agent/MCP surfaces |
+| `search_cards`    | `search_knowledge(query, scope: ["card"])`                                                            | Removed from agent/MCP surfaces |
+| `list_card_types` | `inspect_sources()` and `schema("card_type")`                                                         | Removed from agent/MCP surfaces |
+| `list_cards`      | `search_knowledge(query, scope: ["card"], filters)` or `open_entity(card-type ref)` for type browsing | Removed from agent/MCP surfaces |
+| `get_card`        | `open_entity(card ref)`                                                                               | Removed from agent/MCP surfaces |
+| `find_scenario`   | `resolve_entity(query, kinds: ["scenario"])`                                                          | Removed from agent/MCP surfaces |
+| `get_scenario`    | `open_entity(scenario ref)`                                                                           | Removed from agent/MCP surfaces |
+| `get_section`     | `open_entity(section ref)`                                                                            | Removed from agent/MCP surfaces |
+| `follow_links`    | `neighbors(ref, relation)`                                                                            | Removed from agent/MCP surfaces |
 
-Migration sequence:
+Completed migration sequence:
 
 1. Add shared contract types and ref parsing.
 2. Add new tools beside old tools in agent and MCP surfaces.
-3. Update the agent prompt to prefer the new contract and remove routing
-   choreography.
-4. Keep old tools registered until evals show parity.
-5. Hide or retire old public names only after MCP and REST callers have a
-   compatibility window.
+3. Update the agent prompt to prefer the new contract and remove routing choreography.
+4. Move production to the LangGraph runtime.
+5. Remove old public MCP tools and stop using legacy tools in production.
 
 ## MCP and REST Compatibility
 
 MCP:
 
-- MCP may expose `squire_*` names beside old tools during migration.
+- MCP exposes the redesigned tool names directly.
 - Output stays JSON text content for MCP clients, but the JSON payload follows
   the schemas above.
 - `isError` is reserved for transport or execution errors. Domain misses return
@@ -1066,12 +1064,12 @@ REST:
 - REST responses should use the same JSON shapes as MCP payloads.
 - Old REST endpoints stay stable unless a later issue explicitly replaces them.
 
-Claude SDK agent loop:
+LangGraph agent runtime:
 
 - Anthropic tool schemas should be generated from, or at least tested against,
   the same contract definitions used by MCP registration.
-- `AGENT_SYSTEM_PROMPT` should stop listing tool order rules once the new tools
-  are available.
+- The graph planner uses the redesigned tool schemas only.
+- The final-answer node never receives legacy tool schemas.
 
 Client context efficiency:
 

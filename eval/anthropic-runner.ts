@@ -4,20 +4,18 @@ import {
   AGENT_TOOLS,
   LEGACY_AGENT_SYSTEM_PROMPT,
   LEGACY_AGENT_TOOLS,
-  runAgentLoopWithEvalConfig,
   type AgentRunResult,
   type AnthropicEvalModel,
 } from '../src/agent.ts';
+import { runLangGraphAgentLoopWithEvalConfig } from '../src/agent-langgraph.ts';
 import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { DATASET_NAME } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import {
-  writeEvalTrace,
   type EvalTraceWriter,
   type EvalTraceScore,
   type EvalTraceInput,
   type EvalTraceToolCall,
-  type LangfuseTraceIngestionClient,
 } from './trace.ts';
 
 export type AnthropicEvalFailureClass = 'access' | 'api' | 'timeout' | 'tool' | 'quality';
@@ -45,7 +43,6 @@ export interface RunAnthropicEvalCaseOptions {
     provider: 'anthropic';
     model: AnthropicEvalModel;
   };
-  traceClient?: LangfuseTraceIngestionClient;
   traceWriter?: EvalTraceWriter;
   traceId?: string;
   judgeScores?: EvalTraceScore[];
@@ -54,11 +51,7 @@ export interface RunAnthropicEvalCaseOptions {
 }
 
 async function writeTrace(options: RunAnthropicEvalCaseOptions, trace: EvalTraceInput) {
-  if (options.traceWriter) {
-    await options.traceWriter.writeTrace(trace);
-    return;
-  }
-  if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
+  if (options.traceWriter) await options.traceWriter.writeTrace(trace);
 }
 
 interface StatusClassificationInput {
@@ -270,7 +263,7 @@ async function writeFailureTrace(
   endedAt: string,
   durationMs: number,
 ): Promise<void> {
-  if (!options.traceClient && !options.traceWriter) return;
+  if (!options.traceWriter) return;
 
   const statusReason = classifyAnthropicEvalFailure(error);
   const message = error instanceof Error ? error.message : String(error);
@@ -340,7 +333,7 @@ export async function runAnthropicEvalCase(
   const traceId = traceIdFor(options);
 
   try {
-    const result = await runAgentLoopWithEvalConfig(options.case.question, {
+    const result = await runLangGraphAgentLoopWithEvalConfig(options.case.question, {
       toolSurface: options.toolSurface,
       anthropicModel: options.providerConfig.model,
       maxOutputTokens: options.providerConfig.maxOutputTokens,

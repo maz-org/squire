@@ -114,7 +114,7 @@ function input(provider: 'anthropic' | 'openai'): EvalMatrixRunnerInput {
     runLabel: 'matrix-run',
     toolSurface: 'redesigned',
     traceId: `${provider}-trace`,
-    traceUrl: `https://langfuse.test/traces/${provider}-trace`,
+    traceUrl: `https://smith.langchain.test/traces/${provider}-trace`,
     attempt: 1,
   };
 }
@@ -153,21 +153,20 @@ describe('eval matrix runtime adapter', () => {
       trace: trace({ traceId: 'anthropic-trace' }),
     });
 
-    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
     const output = await runner(input('anthropic'));
 
     expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
       expect.objectContaining({
         traceId: 'anthropic-trace',
         runLabel: 'matrix-run',
-        traceClient: {},
         traceWriter: expect.objectContaining({ writeTrace: expect.any(Function) }),
       }),
     );
     expect(output).toMatchObject({
       ok: true,
       traceId: 'anthropic-trace',
-      traceUrl: 'https://langfuse.test/traces/anthropic-trace',
+      traceUrl: 'https://smith.langchain.test/traces/anthropic-trace',
       score: 0.8,
       pass: true,
       tokenUsage: { input: 10, output: 5, total: 15 },
@@ -192,7 +191,7 @@ describe('eval matrix runtime adapter', () => {
       }),
     });
 
-    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
     await runner(anthropicInput('claude-haiku-4-5'));
 
     expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
@@ -215,15 +214,11 @@ describe('eval matrix runtime adapter', () => {
       trace: trace({ traceId: 'anthropic-trace' }),
     });
 
-    const runner = createEvalMatrixRunner(
-      {} as never,
-      {
-        LANGSMITH_API_KEY: 'key',
-        LANGSMITH_PROJECT: 'squire-evals',
-        OPENAI_API_KEY: 'test-key',
-      },
-      { langsmithTracing: true },
-    );
+    const runner = createEvalMatrixRunner({
+      LANGSMITH_API_KEY: 'key',
+      LANGSMITH_PROJECT: 'squire-evals',
+      OPENAI_API_KEY: 'test-key',
+    });
     await runner(input('anthropic'));
 
     expect(mockCreateLangSmithTraceWriterFromEnv).toHaveBeenCalledWith(
@@ -234,7 +229,6 @@ describe('eval matrix runtime adapter', () => {
     );
     expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
       expect.objectContaining({
-        traceClient: {},
         traceWriter: expect.objectContaining({ writeTrace: expect.any(Function) }),
       }),
     );
@@ -261,12 +255,12 @@ describe('eval matrix runtime adapter', () => {
       };
     });
 
-    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
     const output = await runner({
       ...input('anthropic'),
       agentRuntime: 'deep-agents',
       traceId: 'deep-agents-trace',
-      traceUrl: 'https://langfuse.test/traces/deep-agents-trace',
+      traceUrl: 'https://smith.langchain.test/traces/deep-agents-trace',
     });
 
     expect(mockRunDeepAgentsEvalCase).toHaveBeenCalledWith(
@@ -280,7 +274,7 @@ describe('eval matrix runtime adapter', () => {
     );
     expect(output).toMatchObject({
       traceId: 'deep-agents-trace',
-      traceUrl: 'https://langfuse.test/traces/deep-agents-trace',
+      traceUrl: 'https://smith.langchain.test/traces/deep-agents-trace',
       failureClass: 'none',
     });
     expect(mockTraceScoresForEvalResult).toHaveBeenCalledWith(
@@ -289,6 +283,56 @@ describe('eval matrix runtime adapter', () => {
         toolCalls: [expect.objectContaining({ name: 'inspect_sources' })],
       }),
     );
+  });
+
+  it('routes LangGraph runtime through the Anthropic runner with LangGraph trace identity', async () => {
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'langgraph-trace',
+      trace: trace({
+        traceId: 'langgraph-trace',
+        agentRuntime: 'langgraph',
+        resolvedModel: 'langgraph:claude-sonnet-4-6',
+      }),
+    });
+
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
+    const output = await runner({
+      ...input('anthropic'),
+      agentRuntime: 'langgraph',
+      traceId: 'langgraph-trace',
+      traceUrl: 'https://smith.langchain.test/traces/langgraph-trace',
+    });
+
+    expect(mockRunAnthropicEvalCase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agentRuntime: 'langgraph',
+        providerConfig: expect.objectContaining({
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+        }),
+        traceId: 'langgraph-trace',
+      }),
+    );
+    expect(output).toMatchObject({
+      traceId: 'langgraph-trace',
+      traceUrl: 'https://smith.langchain.test/traces/langgraph-trace',
+      failureClass: 'none',
+    });
+  });
+
+  it('rejects LangGraph matrix rows for non-Anthropic providers', async () => {
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
+
+    await expect(
+      runner({
+        ...input('openai'),
+        agentRuntime: 'langgraph',
+      }),
+    ).rejects.toThrow(/LangGraph eval runtime currently supports Anthropic/);
   });
 
   it('falls back to the matrix cost estimate when provider traces have no cost', async () => {
@@ -301,7 +345,7 @@ describe('eval matrix runtime adapter', () => {
       trace: trace({ traceId: 'anthropic-trace', costEstimate: { totalUsd: 0 } }),
     });
 
-    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
     const output = await runner(input('anthropic'));
 
     expect(output.estimatedCostUsd).toBe(0.05);
@@ -336,7 +380,7 @@ describe('eval matrix runtime adapter', () => {
       }),
     });
 
-    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
 
     await expect(runner(input('openai'))).rejects.toMatchObject({ status: 429 });
   });
@@ -399,7 +443,7 @@ describe('eval matrix runtime adapter', () => {
       };
     });
 
-    const runner = createEvalMatrixRunner({} as never, { OPENAI_API_KEY: 'test-key' });
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
     const output = await runner(input('openai'));
 
     expect(mockTraceScoresForEvalResult).not.toHaveBeenCalled();

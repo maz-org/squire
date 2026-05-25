@@ -116,8 +116,6 @@ export interface RunEvalMatrixOptions {
   agentRuntimes?: EvalAgentRuntime[];
   runner: EvalMatrixRunner;
   guardrails: EvalMatrixGuardrails;
-  langfuseBaseUrl: string;
-  langfuseProjectId?: string;
   langsmithProjectUrl?: string;
   onProgress?: (event: EvalMatrixProgressEvent) => void;
 }
@@ -283,10 +281,6 @@ export function traceIdForMatrixRow(
   ].join(':');
 }
 
-export function langfuseTraceUrl(baseUrl: string, projectId: string, traceId: string): string {
-  return `${baseUrl.replace(/\/$/, '')}/project/${encodeURIComponent(projectId)}/traces/${encodeURIComponent(traceId)}`;
-}
-
 function estimateMatrixCost(
   cases: EvalCase[],
   configs: EvalProviderConfig[],
@@ -298,7 +292,7 @@ function estimateMatrixCost(
 function agentRuntimesFor(options: { agentRuntimes?: EvalAgentRuntime[] }): EvalAgentRuntime[] {
   return options.agentRuntimes && options.agentRuntimes.length > 0
     ? options.agentRuntimes
-    : ['claude-sdk'];
+    : ['langgraph'];
 }
 
 function roundUsd(value: number): number {
@@ -545,11 +539,7 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
     agentRuntimes,
   );
   assertEvalMatrixGuardrails(options);
-  const configuredLangfuseProjectId = options.langfuseProjectId?.trim();
-  const langfuseProjectId =
-    configuredLangfuseProjectId && configuredLangfuseProjectId.length > 0
-      ? configuredLangfuseProjectId
-      : 'default';
+  const langsmithProjectUrl = options.langsmithProjectUrl?.trim();
 
   const inputs = options.cases.flatMap((evalCase) =>
     agentRuntimes.flatMap((agentRuntime) =>
@@ -567,9 +557,9 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
           runLabel: options.runLabel,
           toolSurface: options.toolSurface,
           traceId,
-          traceUrl: langfuseTraceUrl(options.langfuseBaseUrl, langfuseProjectId, traceId),
-          langsmithTraceUrl: options.langsmithProjectUrl
-            ? langSmithRunUrl(options.langsmithProjectUrl, traceId)
+          traceUrl: langsmithProjectUrl ? langSmithRunUrl(langsmithProjectUrl, traceId) : traceId,
+          langsmithTraceUrl: langsmithProjectUrl
+            ? langSmithRunUrl(langsmithProjectUrl, traceId)
             : undefined,
           attempt: 1,
         };

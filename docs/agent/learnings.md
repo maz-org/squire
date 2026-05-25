@@ -51,7 +51,7 @@ Use gbrain for semantic questions and historical context:
 
 ```bash
 gbrain search "second turn submit QA"
-gbrain search "Langfuse authoritative evals"
+gbrain search "LangSmith authoritative evals"
 gbrain search "qa branch server worktree"
 ```
 

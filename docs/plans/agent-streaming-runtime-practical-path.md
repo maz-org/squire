@@ -2,8 +2,11 @@
 
 Date: 2026-05-24
 
-Status: planning artifact for a standalone Linear project. This work is
-outside the main Squire product phase initiatives.
+Status: superseded for runtime direction by
+[SQR-225 Production LangGraph Runtime Eng Review](./sqr-225-production-langgraph-runtime-eng-review.md)
+and [ADR 0019](../adr/0019-langgraph-production-knowledge-agent.md). The
+streaming event contract pieces remain useful; the runtime plan no longer stops
+at an eval-only LangGraph adapter.
 
 Related docs:
 
@@ -28,8 +31,9 @@ The practical path has two steps:
 
 1. Fix the current stack so model text from tool-planning turns never reaches
    the answer body.
-2. Add an eval-gated LangGraph runner that separates final-answer token streams
-   from tool, progress, state, and debug streams.
+2. Replace the current production loop with a real LangGraph
+   planner/retriever/verifier/final-answer graph that separates final-answer
+   token streams from tool, progress, state, and debug streams.
 
 The project is not complete with answer-body hygiene alone. The target UX also
 requires browser-visible progress rows, structured artifact events, and an
@@ -105,7 +109,7 @@ Claude streaming text delta from a final-answer turn
   quoted section block.
 - Add regression tests using the scenario-61 unlock flow or an equivalent
   fixture where the model first narrates a tool lookup.
-- Add a LangGraph runner behind `ask()` as an eval-only or feature-flagged path.
+- Add a production LangGraph runner behind `ask()`.
 - Map LangGraph stream modes into Squire internal events.
 - Compare the LangGraph runner to the current Claude SDK runner on final answer
   quality, trajectory quality, latency, cost, trace clarity, and stream hygiene.
@@ -114,7 +118,7 @@ Claude streaming text delta from a final-answer turn
 
 - Replacing Squire's Hono app, auth, Postgres store, or web conversation model.
 - Exposing LangGraph or LangSmith streams directly to the browser.
-- Moving production traffic to LangGraph without eval results and a later ADR.
+- Moving production traffic to a wrapper graph that preserves the old loop.
 - Adding remote LangSmith Agent Server.
 - Adding Deep Agents to production web chat.
 - Redesigning the visual chat surface.
@@ -311,22 +315,21 @@ The LangGraph runner must report:
 
 ### Implementation Tasks
 
-1. Add regression coverage for scratch-text leakage in the current runner.
-2. Change the current Claude streaming path so text from tool-use responses is
-   not emitted as answer prose.
-3. Add `tool_progress` to the internal event type and browser mapper so
-   user-safe status rows can appear outside answer prose.
-4. Add structured artifact events for retrieved/quoted content, with browser
-   sanitization and non-text-delta rendering.
-5. Add stream-hygiene assertions to conversation or agent tests.
-6. Add a runner selector behind `ask()` if a clean selector does not already
-   exist for eval/runtime variants.
-7. Implement the minimal LangGraph runner behind an eval-only flag, with an
-   explicit final-answer node.
-8. Map LangGraph stream modes into Squire internal events.
-9. Add eval matrix rows for current vs LangGraph runner.
-10. Write a comparison report and decide whether LangGraph should stay eval-only,
-    ship behind a hidden flag, or be dropped.
+This original task list has been replaced by
+[SQR-225 Production LangGraph Runtime Eng Review](./sqr-225-production-langgraph-runtime-eng-review.md).
+The active implementation tasks are:
+
+1. Split the current agent file into focused prompt, type, tool, tracing,
+   artifact, and runtime modules.
+2. Build a typed LangGraph planner/retriever/verifier/final-answer runtime with
+   checkpointing.
+3. Enforce the final-answer node as the only source of answer text.
+4. Remove legacy tools from internal agent use and public MCP.
+5. Make new eval commands LangGraph-only and compare against frozen old-loop
+   artifacts.
+6. Add the production reset runbook or workflow needed to remove old provenance
+   compatibility.
+7. Update architecture, SSE, eval, and MCP docs after implementation lands.
 
 ### Worktree Parallelization
 
@@ -345,7 +348,7 @@ clear:
 
 ## Linear Scope Boundary
 
-The current issue split is:
+The original issue split was:
 
 - SQR-222: fix current-runner scratch-text leakage.
 - SQR-223: lock the stream-hygiene event contract in tests.
@@ -360,6 +363,9 @@ SQR-225 and SQR-226 must stay blocked while SQR-224, SQR-236, or SQR-237 remain
 unfinished. The project should not be marked complete until those UX pieces are
 shipped or a later explicit decision removes them from scope.
 
+That gate is now folded into SQR-225's production graph plan. SSE resume/replay
+is the only explicitly deferred reliability piece and is tracked by SQR-238.
+
 ## Acceptance Criteria
 
 - The May 10 screenshot failure cannot reproduce in local browser QA.
@@ -367,13 +373,15 @@ shipped or a later explicit decision removes them from scope.
 - Final answer text still streams when the model is actually answering.
 - `done.html` remains the authoritative final rendered answer.
 - Existing consulted-source footer behavior is preserved.
-- LangGraph runner is available for eval comparison but not production default.
+- LangGraph is the production knowledge-agent runtime.
 - The LangGraph runner has an explicit final-answer node, and only that node's
   message stream can become answer body text.
 - Browser-visible progress rows render for safe tool/custom events without
   becoming answer prose.
 - Structured artifacts can carry retrieved/quoted content without using
   `text-delta`.
+- Graph checkpointing is enabled for production runs.
+- SSE resume/replay remains deferred only through SQR-238.
 - Eval report clearly states whether LangGraph improves stream hygiene, answer
   quality, trace clarity, latency, and implementation clarity.
 

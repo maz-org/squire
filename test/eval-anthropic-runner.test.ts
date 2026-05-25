@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockRunAgentLoopWithEvalConfig, mockWriteEvalTrace } = vi.hoisted(() => ({
+const {
+  mockRunAgentLoopWithEvalConfig,
+  mockRunLangGraphAgentLoopWithEvalConfig,
+  mockWriteEvalTrace,
+} = vi.hoisted(() => ({
   mockRunAgentLoopWithEvalConfig: vi.fn(),
+  mockRunLangGraphAgentLoopWithEvalConfig: vi.fn(),
   mockWriteEvalTrace: vi.fn(),
 }));
 
@@ -12,6 +17,10 @@ vi.mock('../src/agent.ts', async (importOriginal) => {
     runAgentLoopWithEvalConfig: mockRunAgentLoopWithEvalConfig,
   };
 });
+
+vi.mock('../src/agent-langgraph.ts', () => ({
+  runLangGraphAgentLoopWithEvalConfig: mockRunLangGraphAgentLoopWithEvalConfig,
+}));
 
 vi.mock('../eval/trace.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../eval/trace.ts')>();
@@ -27,15 +36,6 @@ import {
   classifyAnthropicEvalStatus,
   runAnthropicEvalCase,
 } from '../eval/anthropic-runner.ts';
-import type { LangfuseTraceIngestionClient } from '../eval/trace.ts';
-
-const traceClient: LangfuseTraceIngestionClient = {
-  api: {
-    ingestion: {
-      batch: vi.fn(),
-    },
-  },
-};
 
 const baseCase = {
   id: 'building-alchemist',
@@ -111,8 +111,8 @@ describe('SQR-128 Anthropic eval runner', () => {
     vi.clearAllMocks();
   });
 
-  it('runs Sonnet and Opus through the same eval-only Claude loop with only model config changed', async () => {
-    mockRunAgentLoopWithEvalConfig
+  it('runs Sonnet and Opus through the production LangGraph eval runtime with only model config changed', async () => {
+    mockRunLangGraphAgentLoopWithEvalConfig
       .mockResolvedValueOnce(successfulAgentResult('claude-sonnet-4-6'))
       .mockResolvedValueOnce(successfulAgentResult('claude-opus-4-7'));
     mockWriteEvalTrace.mockResolvedValue(undefined);
@@ -129,7 +129,6 @@ describe('SQR-128 Anthropic eval runner', () => {
         timeoutMs: 30000,
         toolLoopLimit: 6,
       },
-      traceClient,
     });
     await runAnthropicEvalCase({
       case: baseCase,
@@ -143,17 +142,17 @@ describe('SQR-128 Anthropic eval runner', () => {
         timeoutMs: 30000,
         toolLoopLimit: 6,
       },
-      traceClient,
     });
 
-    expect(mockRunAgentLoopWithEvalConfig).toHaveBeenNthCalledWith(1, baseCase.question, {
+    expect(mockRunAgentLoopWithEvalConfig).not.toHaveBeenCalled();
+    expect(mockRunLangGraphAgentLoopWithEvalConfig).toHaveBeenNthCalledWith(1, baseCase.question, {
       toolSurface: 'redesigned',
       anthropicModel: 'claude-sonnet-4-6',
       maxOutputTokens: 2048,
       timeoutMs: 30000,
       toolLoopLimit: 6,
     });
-    expect(mockRunAgentLoopWithEvalConfig).toHaveBeenNthCalledWith(2, baseCase.question, {
+    expect(mockRunLangGraphAgentLoopWithEvalConfig).toHaveBeenNthCalledWith(2, baseCase.question, {
       toolSurface: 'redesigned',
       anthropicModel: 'claude-opus-4-7',
       maxOutputTokens: 2048,
@@ -163,7 +162,9 @@ describe('SQR-128 Anthropic eval runner', () => {
   });
 
   it('writes SQR-127 trace payloads with Anthropic model settings and provider-native turns', async () => {
-    mockRunAgentLoopWithEvalConfig.mockResolvedValueOnce(successfulAgentResult('claude-opus-4-7'));
+    mockRunLangGraphAgentLoopWithEvalConfig.mockResolvedValueOnce(
+      successfulAgentResult('claude-opus-4-7'),
+    );
     mockWriteEvalTrace.mockResolvedValue(undefined);
 
     await runAnthropicEvalCase({
@@ -178,12 +179,11 @@ describe('SQR-128 Anthropic eval runner', () => {
         timeoutMs: 45000,
         toolLoopLimit: 4,
       },
-      traceClient,
+      traceWriter: { writeTrace: mockWriteEvalTrace },
       traceId: 'trace-opus',
     });
 
     expect(mockWriteEvalTrace).toHaveBeenCalledWith(
-      traceClient,
       expect.objectContaining({
         traceId: 'trace-opus',
         runLabel: 'opus-smoke',
@@ -227,8 +227,57 @@ describe('SQR-128 Anthropic eval runner', () => {
     );
   });
 
+  it('routes LangGraph eval runs through the LangGraph adapter and labels the trace runtime', async () => {
+    mockRunLangGraphAgentLoopWithEvalConfig.mockResolvedValueOnce({
+      ...successfulAgentResult('claude-sonnet-4-6'),
+      trajectory: {
+        ...successfulAgentResult('claude-sonnet-4-6').trajectory,
+        model: 'langgraph:claude-sonnet-4-6',
+      },
+    });
+    mockWriteEvalTrace.mockResolvedValue(undefined);
+
+    await runAnthropicEvalCase({
+      case: baseCase,
+      runLabel: 'langgraph-smoke',
+      toolSurface: 'legacy',
+      agentRuntime: 'langgraph',
+      providerConfig: {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-6',
+        reasoningEffort: undefined,
+        maxOutputTokens: 2048,
+        timeoutMs: 30000,
+        toolLoopLimit: 6,
+        broadSearchSynthesisThreshold: 2,
+      },
+      traceWriter: { writeTrace: mockWriteEvalTrace },
+      traceId: 'trace-langgraph',
+    });
+
+    expect(mockRunAgentLoopWithEvalConfig).not.toHaveBeenCalled();
+    expect(mockRunLangGraphAgentLoopWithEvalConfig).toHaveBeenCalledWith(baseCase.question, {
+      toolSurface: 'legacy',
+      anthropicModel: 'claude-sonnet-4-6',
+      maxOutputTokens: 2048,
+      timeoutMs: 30000,
+      toolLoopLimit: 6,
+      broadSearchSynthesisThreshold: 2,
+    });
+    expect(mockWriteEvalTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        traceId: 'trace-langgraph',
+        agentRuntime: 'langgraph',
+        model: 'claude-sonnet-4-6',
+        resolvedModel: 'langgraph:claude-sonnet-4-6',
+      }),
+    );
+  });
+
   it('marks answer-quality failures when result scoring returns a failed pass score', async () => {
-    mockRunAgentLoopWithEvalConfig.mockResolvedValueOnce(successfulAgentResult('claude-opus-4-7'));
+    mockRunLangGraphAgentLoopWithEvalConfig.mockResolvedValueOnce(
+      successfulAgentResult('claude-opus-4-7'),
+    );
     mockWriteEvalTrace.mockResolvedValue(undefined);
 
     await runAnthropicEvalCase({
@@ -243,7 +292,7 @@ describe('SQR-128 Anthropic eval runner', () => {
         timeoutMs: 45000,
         toolLoopLimit: 4,
       },
-      traceClient,
+      traceWriter: { writeTrace: mockWriteEvalTrace },
       traceId: 'trace-quality',
       scoreResult: async () => [
         { name: 'correctness', value: 0.4, comment: 'Missing upgrade distinction.' },
@@ -252,7 +301,6 @@ describe('SQR-128 Anthropic eval runner', () => {
     });
 
     expect(mockWriteEvalTrace).toHaveBeenCalledWith(
-      traceClient,
       expect.objectContaining({
         traceId: 'trace-quality',
         statusReason: 'quality',

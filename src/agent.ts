@@ -5,11 +5,6 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import {
-  createObservationAttributes,
-  createTraceAttributes,
-  LangfuseOtelSpanAttributes,
-} from '@langfuse/tracing';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import type { Attributes } from '@opentelemetry/api';
 import {
@@ -58,13 +53,13 @@ const MAX_RULE_SEARCHES_BEFORE_SYNTHESIS = 3;
 /** Maximum number of history messages to include. */
 const MAX_HISTORY_TURNS = 20;
 
-const FORCE_SYNTHESIS_PROMPT =
+export const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
-const NEIGHBORS_TARGET_PROMPT =
+export const NEIGHBORS_TARGET_PROMPT =
   'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.';
 
-const RESOLUTION_TARGET_PROMPT =
+export const RESOLUTION_TARGET_PROMPT =
   'You now have canonical candidate refs. If the user asked for an exact record or source text, open the best matching exact ref before answering. If the user also asked for fuzzy/contextual matches, keep those separate and use search only for the fuzzy part.';
 
 const ANSWER_FORMATTING_PROMPT = `Formatting:
@@ -412,7 +407,7 @@ export type AgentToolName = (typeof ALL_AGENT_TOOLS)[number]['name'];
 
 export type AgentToolSurface = 'redesigned' | 'legacy';
 
-function selectedAgentSurface(surface: AgentToolSurface | undefined): {
+export function selectedAgentSurface(surface: AgentToolSurface | undefined): {
   system: string;
   tools: readonly Tool[];
 } {
@@ -536,17 +531,86 @@ function compactForTrace(value: unknown, depth = 0): unknown {
   return result;
 }
 
-function langfuseUsageDetails(usage: TokenUsage): Record<string, number> {
+function langsmithUsageMetadata(usage: TokenUsage): Record<string, unknown> {
   return {
-    input: usage.inputTokens,
-    output: usage.outputTokens,
-    total: usage.totalTokens,
-    cacheCreationInput: usage.cacheCreationInputTokens,
-    cacheReadInput: usage.cacheReadInputTokens,
+    input_tokens: usage.inputTokens,
+    output_tokens: usage.outputTokens,
+    total_tokens: usage.totalTokens,
+    input_token_details: {
+      cache_creation: usage.cacheCreationInputTokens,
+      cache_read: usage.cacheReadInputTokens,
+    },
   };
 }
 
-function tokenUsageFromMessage(message: Message): TokenUsage {
+function jsonTraceAttribute(value: unknown): string {
+  return truncateForAttribute(JSON.stringify(value));
+}
+
+function primitiveTraceAttribute(value: unknown): string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? value
+    : jsonTraceAttribute(value);
+}
+
+function langsmithMetadataAttributes(metadata: Record<string, unknown> = {}): Attributes {
+  return Object.fromEntries(
+    Object.entries(metadata)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [`langsmith.metadata.${key}`, primitiveTraceAttribute(value)]),
+  );
+}
+
+function createTraceAttributes({
+  input,
+  output,
+}: {
+  input?: unknown;
+  output?: unknown;
+}): Attributes {
+  return {
+    'langsmith.traceable': 'true',
+    ...(input === undefined ? {} : { 'gen_ai.prompt': jsonTraceAttribute(input) }),
+    ...(output === undefined ? {} : { 'gen_ai.completion': jsonTraceAttribute(output) }),
+  };
+}
+
+function createObservationAttributes(
+  runType: 'agent' | 'generation' | 'tool',
+  options: {
+    input?: unknown;
+    output?: unknown;
+    model?: string;
+    modelParameters?: Record<string, unknown>;
+    usageDetails?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    level?: 'ERROR';
+    statusMessage?: string;
+  },
+): Attributes {
+  const spanKind = runType === 'agent' ? 'chain' : runType === 'generation' ? 'llm' : 'tool';
+  return {
+    'langsmith.traceable': 'true',
+    'langsmith.span.kind': spanKind,
+    'langsmith.trace.name': `squire.agent.${runType}`,
+    ...(options.model ? { 'gen_ai.request.model': options.model } : {}),
+    ...(options.input === undefined ? {} : { 'gen_ai.prompt': jsonTraceAttribute(options.input) }),
+    ...(options.output === undefined
+      ? {}
+      : { 'gen_ai.completion': jsonTraceAttribute(options.output) }),
+    ...(options.usageDetails
+      ? { 'langsmith.usage_metadata': jsonTraceAttribute(options.usageDetails) }
+      : {}),
+    ...langsmithMetadataAttributes({
+      ...(options.metadata ?? {}),
+      ...(options.modelParameters ? { invocation_params: options.modelParameters } : {}),
+      ...(options.level ? { level: options.level } : {}),
+      ...(options.statusMessage ? { statusMessage: options.statusMessage } : {}),
+    }),
+  };
+}
+
+export function tokenUsageFromMessage(message: Message): TokenUsage {
   const usage = emptyTokenUsage();
   addUsage(usage, message);
   return usage;
@@ -600,7 +664,7 @@ function agentRunTraceAttributes({
       ...(result
         ? {
             output: { finalAnswer: result.answer },
-            usageDetails: langfuseUsageDetails(result.trajectory.tokenUsage),
+            usageDetails: langsmithUsageMetadata(result.trajectory.tokenUsage),
           }
         : {}),
       metadata: {
@@ -618,7 +682,7 @@ function agentRunTraceAttributes({
       },
     }),
     ...agentCorrelationAttributes(options),
-    [LangfuseOtelSpanAttributes.TRACE_TAGS]: agentTraceTags({ model, toolSurface, evalRun }),
+    'langsmith.span.tags': agentTraceTags({ model, toolSurface, evalRun }).join(', '),
   };
 }
 
@@ -648,7 +712,7 @@ function agentCorrelationAttributes(options: AskOptions | undefined): Attributes
   return attributes;
 }
 
-function addUsage(total: TokenUsage, response: Message): void {
+export function addUsage(total: TokenUsage, response: Message): void {
   total.inputTokens += response.usage.input_tokens;
   total.outputTokens += response.usage.output_tokens;
   total.cacheCreationInputTokens += response.usage.cache_creation_input_tokens ?? 0;
@@ -660,7 +724,7 @@ function addUsage(total: TokenUsage, response: Message): void {
     total.cacheReadInputTokens;
 }
 
-function emptyTokenUsage(): TokenUsage {
+export function emptyTokenUsage(): TokenUsage {
   return {
     inputTokens: 0,
     outputTokens: 0,
@@ -710,7 +774,7 @@ export function summarizeToolOutput(content: string): { summary: string; canonic
   }
 }
 
-function hasUsefulNeighborsResult(result: ToolCallResult): boolean {
+export function hasUsefulNeighborsResult(result: ToolCallResult): boolean {
   try {
     const parsed = JSON.parse(result.content) as {
       ok?: unknown;
@@ -722,7 +786,7 @@ function hasUsefulNeighborsResult(result: ToolCallResult): boolean {
   }
 }
 
-function hasUsefulResolutionResult(result: ToolCallResult): boolean {
+export function hasUsefulResolutionResult(result: ToolCallResult): boolean {
   try {
     const parsed = JSON.parse(result.content) as {
       ok?: unknown;
@@ -762,7 +826,7 @@ const DISCOVERY_ONLY_TOOL_NAMES = new Set<AgentToolName>([
   'resolve_entity',
 ]);
 
-function isBroadRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
+export function isBroadRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
   if (toolName === 'search_rules') return true;
   if (toolName !== 'search_knowledge') return false;
 
@@ -771,7 +835,7 @@ function isBroadRuleSearchTool(toolName: string, input: Record<string, unknown>)
   return scope.length > 0 && scope.every((kind) => kind === 'rules_passage');
 }
 
-function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
+export function isNonRuleSearchTool(toolName: string, input: Record<string, unknown>): boolean {
   if (DISCOVERY_ONLY_TOOL_NAMES.has(toolName as AgentToolName)) return false;
   if (toolName === 'open_entity' && typeof input.ref === 'string') {
     return !input.ref.startsWith('rules:');
@@ -942,7 +1006,7 @@ export async function executeToolCall(
  * Call the Claude API, either streaming or non-streaming based on emit.
  * Returns the final Message in both cases.
  */
-async function callClaude(
+export async function callClaude(
   messages: MessageParam[],
   emit?: EmitFn,
   opts: {
@@ -1223,7 +1287,7 @@ async function runAgentLoopInternal(
               content: compactForTrace(message.content),
             },
             model,
-            usageDetails: langfuseUsageDetails(tokenUsageFromMessage(message)),
+            usageDetails: langsmithUsageMetadata(tokenUsageFromMessage(message)),
             metadata: {
               stopReason: message.stop_reason ?? 'unknown',
             },

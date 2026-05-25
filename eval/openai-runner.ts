@@ -24,10 +24,8 @@ import {
   type EvalTraceScore,
   type EvalTraceToolCall,
   type EvalTraceWriter,
-  type LangfuseTraceIngestionClient,
 } from './trace.ts';
 import { TRACE_CONTRACT_VERSION } from './trace-contract.ts';
-import { writeEvalTrace } from './trace.ts';
 
 export type OpenAiEvalFailureClass =
   | 'none'
@@ -128,7 +126,6 @@ export interface RunOpenAiResponsesEvalCaseOptions {
   providerConfig: EvalProviderConfig;
   runLabel: string;
   toolSurface: EvalToolSurface;
-  traceClient?: LangfuseTraceIngestionClient;
   traceWriter?: EvalTraceWriter;
   traceId?: string;
   judgeScores?: EvalTraceScore[];
@@ -155,11 +152,7 @@ export class OpenAiEvalRunnerError extends Error {
 }
 
 async function writeTrace(options: RunOpenAiResponsesEvalCaseOptions, trace: EvalTraceInput) {
-  if (options.traceWriter) {
-    await options.traceWriter.writeTrace(trace);
-    return;
-  }
-  if (options.traceClient) await writeEvalTrace(options.traceClient, trace);
+  if (options.traceWriter) await options.traceWriter.writeTrace(trace);
 }
 
 export function classifyOpenAiResponsesFailure(

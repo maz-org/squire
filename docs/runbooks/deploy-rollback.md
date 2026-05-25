@@ -12,7 +12,7 @@ That command is wired as Fly's `release_command`, so a non-zero exit from
 migration aborts the deploy and leaves the previous app image live.
 
 For the day-to-day operator checklist, including DNS, CloudFront, AWS WAF,
-OAuth, question-answer, and Langfuse checks, see
+OAuth, question-answer, and LangSmith checks, see
 [production-operations.md](production-operations.md).
 
 ## One-time provisioning
@@ -32,9 +32,9 @@ flyctl redis create --name squire-rate-limit --region iad
 flyctl secrets set \
   ANTHROPIC_API_KEY='...' \
   SESSION_SECRET='...' \
-  LANGFUSE_SECRET_KEY='...' \
-  LANGFUSE_PUBLIC_KEY='...' \
-  LANGFUSE_BASEURL='...' \
+  LANGSMITH_API_KEY='...' \
+  LANGSMITH_PROJECT='squire-production' \
+  LANGSMITH_ENDPOINT='https://api.smith.langchain.com' \
   GOOGLE_OAUTH_CLIENT_ID='...' \
   GOOGLE_OAUTH_CLIENT_SECRET='...' \
   SQUIRE_ALLOWED_EMAILS='...' \

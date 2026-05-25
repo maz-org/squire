@@ -8,8 +8,8 @@ const { mockInitialize, mockAsk } = vi.hoisted(() => ({
   mockAsk: vi.fn(),
 }));
 
-const { mockRunAgentLoopWithTrajectory } = vi.hoisted(() => ({
-  mockRunAgentLoopWithTrajectory: vi.fn(),
+const { mockRunLangGraphAgentLoopWithTrajectory } = vi.hoisted(() => ({
+  mockRunLangGraphAgentLoopWithTrajectory: vi.fn(),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -17,8 +17,8 @@ vi.mock('../src/service.ts', () => ({
   ask: mockAsk,
 }));
 
-vi.mock('../src/agent.ts', () => ({
-  runAgentLoopWithTrajectory: mockRunAgentLoopWithTrajectory,
+vi.mock('../src/agent-langgraph.ts', () => ({
+  runLangGraphAgentLoopWithTrajectory: mockRunLangGraphAgentLoopWithTrajectory,
 }));
 
 import { askFrosthaven, askFrosthavenWithTrajectory } from '../src/query.ts';
@@ -28,7 +28,7 @@ describe('askFrosthaven', () => {
     vi.clearAllMocks();
     mockInitialize.mockResolvedValue(undefined);
     mockAsk.mockResolvedValue('Mocked answer from service');
-    mockRunAgentLoopWithTrajectory.mockResolvedValue({
+    mockRunLangGraphAgentLoopWithTrajectory.mockResolvedValue({
       answer: 'Mocked trajectory answer',
       trajectory: {
         toolCalls: [],
@@ -85,7 +85,7 @@ describe('askFrosthaven', () => {
     await askFrosthavenWithTrajectory('What is the loot action?', options);
 
     expect(mockInitialize).toHaveBeenCalled();
-    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith(
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith(
       'What is the loot action?',
       options,
     );

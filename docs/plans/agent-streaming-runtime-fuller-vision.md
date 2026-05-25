@@ -2,14 +2,16 @@
 
 Date: 2026-05-24
 
-Status: planning artifact. This is the long-term vision paired with
-[agent-streaming-runtime-practical-path.md](./agent-streaming-runtime-practical-path.md).
-It is not a commitment to move Squire's production runtime now.
+Status: updated by
+[SQR-225 Production LangGraph Runtime Eng Review](./sqr-225-production-langgraph-runtime-eng-review.md)
+and [ADR 0019](../adr/0019-langgraph-production-knowledge-agent.md). LangGraph
+is now the planned production Q&A runtime; Deep Agents remains a later option
+for longer tasks.
 
 ## Purpose
 
-Explain how LangGraph and Deep Agents could fit Squire if the practical streaming
-project proves the runtime model is useful.
+Explain how LangGraph and Deep Agents fit Squire after the project chose a
+production LangGraph graph for all Q&A.
 
 The short version:
 
@@ -37,9 +39,9 @@ assistant that shows the right layer of work to the player:
 
 LangGraph and Deep Agents matter only if they help Squire separate those layers.
 
-## Current Baseline
+## Current Baseline To Replace
 
-The production baseline stays:
+The production baseline currently being replaced is:
 
 ```text
 Browser / REST / MCP
@@ -51,23 +53,19 @@ Browser / REST / MCP
             -> Squire Postgres + pgvector + canonical game data
 ```
 
-ADR 0015 already keeps LangChain, LangGraph, Deep Agents, and LangSmith at the
-intelligence boundary behind `/api/ask`. The LangSmith deployment report also
-keeps remote Agent Server out of Phase 1.
-
-The fuller vision keeps those ownership boundaries unless a new ADR changes
-them.
+ADR 0019 supersedes the old eval-only posture. The ownership boundary stays the
+same, but the runtime inside `ask()` changes from the current loop to a local
+LangGraph graph.
 
 ## Target Runtime Shape
 
 ```text
 Squire web, REST, MCP, future channels
   -> ask service
-    -> AgentRuntime interface
-      -> Claude SDK runner
-      -> LangGraph local runner
-      -> Deep Agents runner for complex tasks
-      -> future remote agent adapter if justified
+    -> LangGraph local graph for production Q&A
+      -> classify / plan / retrieve / verify / final-answer nodes
+    -> future Deep Agents runner for complex tasks
+    -> future remote agent adapter if justified
     -> Squire tool registry
       -> search/open/traverse cards and books
       -> future campaign and character tools
@@ -260,7 +258,8 @@ Runtime-owned state can become product state only after a new ADR defines:
 
 ## LangSmith and Remote Runtime
 
-Remote LangSmith Agent Server is a later option, not part of the practical path.
+Remote LangSmith Agent Server is a later option, not part of the production
+Q&A migration.
 
 It becomes interesting if Squire needs:
 
