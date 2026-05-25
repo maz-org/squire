@@ -8,15 +8,17 @@
  * Output: data/extracted/battle-goals.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { GHS_DATA_DIR, loadLabels, resolveGameTokens, type LabelData } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_BATTLE_GOALS_PATH = join(GHS_DATA_DIR, 'battle-goals.json');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'battle-goals.json');
+import {
+  loadLabels,
+  resolveGameTokens,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
+  type LabelData,
+} from './ghs-utils.ts';
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS source type ────────────────────────────────────────────────────────
 
@@ -56,15 +58,18 @@ export function convertBattleGoal(ghs: GhsBattleGoal, labels: LabelData): Extrac
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importBattleGoals(): ExtractedBattleGoal[] {
-  if (!existsSync(GHS_BATTLE_GOALS_PATH)) {
+export function importBattleGoals(configInput: GhsImporterConfigInput = {}): ExtractedBattleGoal[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsBattleGoalsPath = join(config.dataDir, 'battle-goals.json');
+
+  if (!existsSync(ghsBattleGoalsPath)) {
     throw new Error(
-      `GHS data not found at ${GHS_BATTLE_GOALS_PATH}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS data not found at ${ghsBattleGoalsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
-  const ghsData: GhsBattleGoal[] = JSON.parse(readFileSync(GHS_BATTLE_GOALS_PATH, 'utf-8'));
+  const labels = loadLabels(config);
+  const ghsData: GhsBattleGoal[] = JSON.parse(readFileSync(ghsBattleGoalsPath, 'utf-8'));
 
   const results: ExtractedBattleGoal[] = [];
 
@@ -82,8 +87,8 @@ export function importBattleGoals(): ExtractedBattleGoal[] {
 }
 
 if (process.argv[1]?.endsWith('import-battle-goals.ts')) {
-  const results = importBattleGoals();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importBattleGoals(config);
+  const outputPath = writeExtractedRecords('battle-goals', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

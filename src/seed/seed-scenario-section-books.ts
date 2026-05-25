@@ -9,20 +9,25 @@
  * there is no skip-by-source cache to go stale.
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { eq } from 'drizzle-orm';
 
 import type { Db } from '../db.ts';
-import { DEFAULT_GAME_ID, FROSTHAVEN_GAME_ID } from '../game.ts';
+import { DEFAULT_GAME_ID, FROSTHAVEN_GAME_ID, requireGameId } from '../game.ts';
 import {
   bookReferences,
   scenarioBookScenarios,
   sectionBookSections,
 } from '../db/schema/scenario-section-books.ts';
 import { ScenarioSectionBooksExtractSchema } from '../scenario-section-schemas.ts';
+import {
+  availableExtractedGames,
+  extractedDataPath,
+  readExtractedRecords,
+} from '../extracted-paths.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXTRACTED_PATH = join(
@@ -36,6 +41,7 @@ const EXTRACTED_PATH = join(
 
 export interface SeedScenarioSectionBooksOptions {
   game?: string;
+  extractedDir?: string;
 }
 
 export interface SeedScenarioSectionBooksResult {
@@ -49,15 +55,51 @@ export async function seedScenarioSectionBooks(
   db: Db,
   opts: SeedScenarioSectionBooksOptions = {},
 ): Promise<SeedScenarioSectionBooksResult[]> {
-  const game = opts.game ?? DEFAULT_GAME_ID;
-  if (game !== FROSTHAVEN_GAME_ID) {
-    throw new Error(
-      `seedScenarioSectionBooks currently supports only "frosthaven"; got ${JSON.stringify(game)}`,
-    );
-  }
-  const extract = ScenarioSectionBooksExtractSchema.parse(
-    JSON.parse(readFileSync(EXTRACTED_PATH, 'utf-8')),
-  );
+  const game = requireGameId(opts.game ?? DEFAULT_GAME_ID);
+  const gameScopedExtractPath = extractedDataPath('scenario-section-books', game, {
+    extractedDir: opts.extractedDir,
+  });
+  const extract =
+    game === FROSTHAVEN_GAME_ID || existsSync(gameScopedExtractPath)
+      ? ScenarioSectionBooksExtractSchema.parse(
+          JSON.parse(
+            readFileSync(
+              game === FROSTHAVEN_GAME_ID ? EXTRACTED_PATH : gameScopedExtractPath,
+              'utf-8',
+            ),
+          ),
+        )
+      : ScenarioSectionBooksExtractSchema.parse({
+          scenarios: readExtractedRecords('scenarios', game, {
+            extractedDir: opts.extractedDir,
+          }).map((scenario) => ({
+            ref: scenario.sourceId,
+            scenarioGroup: scenario.scenarioGroup,
+            scenarioIndex: scenario.index,
+            name: scenario.name,
+            complexity: scenario.complexity ?? null,
+            flowChartGroup: scenario.flowChartGroup ?? null,
+            initial: scenario.initial ?? false,
+            sourcePdf: null,
+            sourcePage: null,
+            rawText: null,
+            metadata: {
+              sourceId: scenario.sourceId,
+              monsters: scenario.monsters,
+              allies: scenario.allies,
+              unlocks: scenario.unlocks,
+              requirements: scenario.requirements,
+              objectives: scenario.objectives,
+              rewards: scenario.rewards,
+              lootDeckConfig: scenario.lootDeckConfig,
+            },
+          })),
+          sections: [],
+          links: [],
+          warnings: [
+            `${game}: seeded scenario metadata from GHS; printed scenario/section prose and links are not imported for this game yet.`,
+          ],
+        });
 
   const scenarioRows = extract.scenarios.map((scenario) => ({ game, ...scenario }));
   const sectionRows = extract.sections.map((section) => ({ game, ...section }));
@@ -108,4 +150,18 @@ export async function seedScenarioSectionBooks(
       },
     ];
   });
+}
+
+export async function seedAvailableScenarioSectionBookGames(
+  db: Db,
+  opts: Omit<SeedScenarioSectionBooksOptions, 'game'> = {},
+): Promise<Array<SeedScenarioSectionBooksResult & { game: string }>> {
+  const results: Array<SeedScenarioSectionBooksResult & { game: string }> = [];
+
+  for (const game of availableExtractedGames({ extractedDir: opts.extractedDir })) {
+    const gameResults = await seedScenarioSectionBooks(db, { ...opts, game });
+    results.push(...gameResults.map((result) => ({ ...result, game })));
+  }
+
+  return results;
 }

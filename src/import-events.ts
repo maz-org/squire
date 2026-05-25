@@ -9,15 +9,19 @@
  * Output: data/extracted/events.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { GHS_DATA_DIR, resolveGameTokens, stripHtml } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_EVENTS_PATH = join(GHS_DATA_DIR, 'events.json');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'events.json');
+import {
+  loadLabels,
+  resolveLabel,
+  resolveGameTokens,
+  resolveGhsImporterConfig,
+  stripHtml,
+  type GhsImporterConfigInput,
+  type LabelData,
+} from './ghs-utils.ts';
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS types (event-relevant subset) ──────────────────────────────────────
 
@@ -56,7 +60,7 @@ interface GhsEvent {
 // ─── Our extracted format ───────────────────────────────────────────────────
 
 interface ExtractedEvent {
-  eventType: 'road' | 'outpost' | 'boat';
+  eventType: 'road' | 'outpost' | 'boat' | 'city';
   season: 'summer' | 'winter' | null;
   number: string;
   flavorText: string;
@@ -69,12 +73,16 @@ interface ExtractedEvent {
 // ─── Type mapping ───────────────────────────────────────────────────────────
 
 function parseEventType(ghsType: string): {
-  eventType: 'road' | 'outpost' | 'boat';
+  eventType: 'road' | 'outpost' | 'boat' | 'city';
   season: 'summer' | 'winter' | null;
 } {
   switch (ghsType) {
     case 'boat':
       return { eventType: 'boat', season: null };
+    case 'city':
+      return { eventType: 'city', season: null };
+    case 'road':
+      return { eventType: 'road', season: null };
     case 'summer-road':
       return { eventType: 'road', season: 'summer' };
     case 'winter-road':
@@ -88,6 +96,20 @@ function parseEventType(ghsType: string): {
   }
 }
 
+function loadEventLabels(config: ReturnType<typeof resolveGhsImporterConfig>): LabelData {
+  const labels = loadLabels(config);
+  const eventLabelPath = join(config.dataDir, 'label', 'events', 'en.json');
+  if (!existsSync(eventLabelPath)) return labels;
+  const eventLabels = JSON.parse(readFileSync(eventLabelPath, 'utf-8')) as LabelData;
+  return { ...labels, ...eventLabels };
+}
+
+function resolveEventText(text: string, labels: LabelData): string {
+  const ref = text.startsWith('data.') ? `%${text}%` : text;
+  const resolved = ref.startsWith('%data.') ? resolveLabel(ref, labels) : ref;
+  return resolveGameTokens(stripHtml(resolved));
+}
+
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
@@ -98,9 +120,9 @@ function capitalize(s: string): string {
  * Convert a single GHS effect into human-readable text.
  * Returns null for effects that don't produce readable text (like outcome references).
  */
-export function formatEffect(effect: GhsEffect): string | null {
+export function formatEffect(effect: GhsEffect, labels: LabelData = {}): string | null {
   if (typeof effect === 'string') {
-    return resolveGameTokens(effect);
+    return resolveEventText(effect, labels);
   }
 
   const { type, values = [] } = effect;
@@ -198,8 +220,10 @@ export function formatEffect(effect: GhsEffect): string | null {
     // Battle goals, checkboxes
     case 'battleGoal':
       return 'Gain a battle goal check';
-    case 'checkbox':
-      return `Gain ${values[0]} perk check${(values[0] as number) !== 1 ? 's' : ''}`;
+    case 'checkbox': {
+      const valueText = values.map((value) => resolveEventText(String(value), labels)).join(', ');
+      return `Gain ${valueText} perk check${values[0] !== 1 ? 's' : ''}`;
+    }
 
     // Buildings
     case 'upgradeBuilding':
@@ -238,7 +262,7 @@ export function formatEffect(effect: GhsEffect): string | null {
     case 'additionally':
     case 'outcomes': {
       const parts = (values as GhsEffect[])
-        .map((v) => formatEffect(v))
+        .map((v) => formatEffect(v, labels))
         .filter((s): s is string => s !== null);
       return parts.length > 0 ? parts.join('. ') : null;
     }
@@ -328,7 +352,7 @@ function formatCondition(condition: GhsCondition): string {
  * Flatten structured GHS outcomes into a single readable text string.
  * Each outcome may have a condition (prefix), narrative, and effects.
  */
-export function formatOutcomes(outcomes: GhsOutcome[]): string {
+export function formatOutcomes(outcomes: GhsOutcome[], labels: LabelData = {}): string {
   const parts: string[] = [];
 
   for (const outcome of outcomes) {
@@ -339,9 +363,9 @@ export function formatOutcomes(outcomes: GhsOutcome[]): string {
           // This is a conditional effect like { condition: ..., type: 'outcome', values: ['C'] }
           // If it's just an outcome ref, skip it
           if (e.type === 'outcome') return null;
-          return formatEffect(e);
+          return formatEffect(e, labels);
         }
-        return formatEffect(e);
+        return formatEffect(e, labels);
       })
       .filter((s): s is string => s !== null);
 
@@ -357,7 +381,7 @@ export function formatOutcomes(outcomes: GhsOutcome[]): string {
 
     // Add narrative
     if (outcome.narrative) {
-      text += resolveGameTokens(stripHtml(outcome.narrative));
+      text += resolveEventText(outcome.narrative, labels);
     }
 
     // Add effects
@@ -382,7 +406,7 @@ export function formatOutcomes(outcomes: GhsOutcome[]): string {
 /**
  * Convert a single GHS event object into our extracted format.
  */
-export function convertEvent(ghs: GhsEvent): ExtractedEvent {
+export function convertEvent(ghs: GhsEvent, labels: LabelData = {}): ExtractedEvent {
   const { eventType, season } = parseEventType(ghs.type);
 
   // Extract event number from cardId (e.g., "B-01" → "01", "SR-42" → "42")
@@ -401,8 +425,8 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
     const opt = optionsByLabel[label];
     if (!opt) return null;
     return {
-      text: opt.narrative ? resolveGameTokens(stripHtml(opt.narrative)) : '',
-      outcome: formatOutcomes(opt.outcomes ?? []),
+      text: opt.narrative ? resolveEventText(opt.narrative, labels) : '',
+      outcome: formatOutcomes(opt.outcomes ?? [], labels),
     };
   };
 
@@ -412,7 +436,7 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
     eventType,
     season,
     number,
-    flavorText: resolveGameTokens(stripHtml(ghs.narrative)),
+    flavorText: resolveEventText(ghs.narrative, labels),
     optionA: optionA ?? { text: '', outcome: '' },
     optionB: buildOption('B'),
     optionC: buildOption('C'),
@@ -422,15 +446,19 @@ export function convertEvent(ghs: GhsEvent): ExtractedEvent {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importEvents(): ExtractedEvent[] {
-  if (!existsSync(GHS_EVENTS_PATH)) {
+export function importEvents(configInput: GhsImporterConfigInput = {}): ExtractedEvent[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsEventsPath = join(config.dataDir, 'events.json');
+
+  if (!existsSync(ghsEventsPath)) {
     throw new Error(
-      `GHS event data not found at ${GHS_EVENTS_PATH}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS event data not found at ${ghsEventsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const events: GhsEvent[] = JSON.parse(readFileSync(GHS_EVENTS_PATH, 'utf-8'));
-  const results = events.map((e) => convertEvent(e));
+  const labels = loadEventLabels(config);
+  const events: GhsEvent[] = JSON.parse(readFileSync(ghsEventsPath, 'utf-8'));
+  const results = events.map((e) => convertEvent(e, labels));
 
   for (const event of results) {
     const allText = [
@@ -455,8 +483,8 @@ export function importEvents(): ExtractedEvent[] {
 }
 
 if (process.argv[1]?.endsWith('import-events.ts')) {
-  const results = importEvents();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importEvents(config);
+  const outputPath = writeExtractedRecords('events', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

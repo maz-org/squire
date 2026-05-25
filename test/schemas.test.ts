@@ -248,6 +248,20 @@ describe('EventSchema', () => {
     expect(schema.safeParse(data).success).toBe(true);
   });
 
+  it('accepts a GH2 city event', () => {
+    const data = {
+      sourceId: 'gloomhavensecretariat:event/C-01',
+      eventType: 'city',
+      season: null,
+      number: '01',
+      flavorText: 'A city event.',
+      optionA: { text: 'A', outcome: 'A outcome' },
+      optionB: { text: 'B', outcome: 'B outcome' },
+      optionC: null,
+    };
+    expect(schema.safeParse(data).success).toBe(true);
+  });
+
   it('rejects invalid event type', () => {
     const data = {
       sourceId: 'gloomhavensecretariat:event/999',

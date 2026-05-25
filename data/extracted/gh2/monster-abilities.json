@@ -1,0 +1,3034 @@
+[
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Long Shot",
+    "initiative": 46,
+    "abilities": [
+      "Focus on the enemy farthest away within Range 7",
+      "Attack 1, Range 7"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/600"
+  },
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Exploding Ammunition",
+    "initiative": 71,
+    "abilities": [],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/601"
+  },
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Grenade",
+    "initiative": 37,
+    "abilities": [
+      "Push 1, Target All, Range 1",
+      "Attack 1, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/603"
+  },
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Massive Blast",
+    "initiative": 57,
+    "abilities": [
+      "Push 1, Target All, Range 1",
+      "Attack 1, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/604"
+  },
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Heavy Shot",
+    "initiative": 95,
+    "abilities": [
+      "Attack 1, Range 5"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/605"
+  },
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Defensive Ordinance",
+    "initiative": 17,
+    "abilities": [
+      "Push 2, Target All, Range 1",
+      "Attack 2, Range 5",
+      "Shield 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/606"
+  },
+  {
+    "monsterType": "Ancient Artillery",
+    "cardName": "Concussive Burst",
+    "initiative": 46,
+    "abilities": [
+      "Attack 1, Range 5, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/607"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Shoot Foot",
+    "initiative": 29,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 5, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/648"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Set Trap",
+    "initiative": 14,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 5",
+      "Create one Damage 3 trap in an adjacent empty hex closest to an enemy."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/649"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Close In",
+    "initiative": 32,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/650"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Hasty Assault",
+    "initiative": 16,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/651"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Power Shot",
+    "initiative": 64,
+    "abilities": [
+      "Attack 1, Range 5"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/652"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Nothing Special",
+    "initiative": 31,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/653"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Calculated Strike",
+    "initiative": 44,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/654"
+  },
+  {
+    "monsterType": "Archer",
+    "cardName": "Twin Bolts",
+    "initiative": 56,
+    "abilities": [
+      "Attack 1, Target 2, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/archer/655"
+  },
+  {
+    "monsterType": "Bandit Archer Music Note2 Solo",
+    "cardName": "Bandit Archer Music Note2 Solo",
+    "initiative": 29,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bandit-archer-music-note2-solo/ordinal-1"
+  },
+  {
+    "monsterType": "Bandit Scout Music Note2 Solo",
+    "cardName": "Bandit Scout Music Note2 Solo",
+    "initiative": 28,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bandit-scout-music-note2-solo/ordinal-1"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "Rotting Embrace",
+    "initiative": 21,
+    "abilities": [
+      "Move 2",
+      "Muddle, Range 1",
+      "If Bloated Victim dies this round, all figures adjacent to the hex it occupied suffer Damage 1 and gain Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/752"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "Calculated Strike",
+    "initiative": 82,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/753"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "hasty Assault",
+    "initiative": 47,
+    "abilities": [
+      "Move 2",
+      "Attack 1, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/754"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "Nothing Special",
+    "initiative": 68,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/755"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "Reckless Charge",
+    "initiative": 91,
+    "abilities": [
+      "Move 3",
+      "Element earth, Target 2",
+      "If the move ability was performed, Bloated Victim suffers Damage 1."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/757"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "Release Gas",
+    "initiative": 71,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 2",
+      "Poison, All, Range 1",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/758"
+  },
+  {
+    "monsterType": "Bloated Victim",
+    "cardName": "Violent Slam",
+    "initiative": 32,
+    "abilities": [
+      "Attack 2, Target 2, Push 1",
+      "If the attack ability was performed, Bloated Victim suffers Damage 1."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/759"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Accelerated Power",
+    "initiative": 11,
+    "abilities": [
+      "Special 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/744"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Accelerated Power",
+    "initiative": 14,
+    "abilities": [
+      "Special 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/745"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Accelerated Power",
+    "initiative": 17,
+    "abilities": [
+      "Special 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/746"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Lingering Strength",
+    "initiative": 85,
+    "abilities": [
+      "Special 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/747"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Lingering Strength",
+    "initiative": 79,
+    "abilities": [
+      "Special 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/748"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Lingering Strength",
+    "initiative": 73,
+    "abilities": [
+      "Special 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/749"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Nothing Special",
+    "initiative": 36,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/750"
+  },
+  {
+    "monsterType": "Boss",
+    "cardName": "Twin Shots",
+    "initiative": 52,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/boss/751"
+  },
+  {
+    "monsterType": "Candlekeeper Trice Scenario 56",
+    "cardName": "We Will See",
+    "initiative": 1,
+    "abilities": [
+      "Move 3",
+      "Attack 3, Wound, Advantage",
+      "ElementHalf fire:light"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/candlekeeper-trice-scenario-56/0"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Hasty Assault",
+    "initiative": 13,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/704"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Low Slash",
+    "initiative": 14,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/705"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Full Force",
+    "initiative": 29,
+    "abilities": [
+      "Attack 1, Muddle"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/706"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Nothing Special",
+    "initiative": 41,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/707"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Calculated Strike",
+    "initiative": 60,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/708"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Rampage",
+    "initiative": 80,
+    "abilities": [
+      "Attack 1",
+      "Move 2",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/709"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Claw Swipes",
+    "initiative": 61,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/710"
+  },
+  {
+    "monsterType": "Cave Bear",
+    "cardName": "Hibernate",
+    "initiative": 3,
+    "abilities": [
+      "Retaliate 2",
+      "Heal 2, Self, Safeguard"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/711"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Chilling Breath",
+    "initiative": 14,
+    "abilities": [
+      "Move 1",
+      "Attack 0",
+      "Element ice, Retaliate 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/544"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Heat Blast",
+    "initiative": 1,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/545"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Seismic Punch",
+    "initiative": 67,
+    "abilities": [
+      "Move 2",
+      "Attack 1, Push 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/546"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Whirlwind",
+    "initiative": 20,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 2",
+      "Element air, Shield 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/547"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "White Claws",
+    "initiative": 42,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Advantage",
+      "Element light"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/548"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Black Tendrils",
+    "initiative": 51,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element dark, Invisible"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/549"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Arcane Explosion",
+    "initiative": 77,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/550"
+  },
+  {
+    "monsterType": "Chaos Demon",
+    "cardName": "Hungry Maw",
+    "initiative": 98,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/551"
+  },
+  {
+    "monsterType": "City Guard Saw2 Solo",
+    "cardName": "City Guard Saw2 Solo",
+    "initiative": 100,
+    "abilities": [
+      "Remove City Guard from the map after being healed fully or given a medical pack."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/city-guard-saw2-solo/ordinal-1"
+  },
+  {
+    "monsterType": "City Guard Scenario 17",
+    "cardName": "Nothing Special",
+    "initiative": 30,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/city-guard-scenario-17/0"
+  },
+  {
+    "monsterType": "City Guard Sun2 Solo",
+    "cardName": "City Guard Sun2 Solo",
+    "initiative": 1,
+    "abilities": [
+      "Acts immediately after Sun.",
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/city-guard-sun2-solo/ordinal-1"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Drain Essence",
+    "initiative": 28,
+    "abilities": [
+      "Attack 0, Range 4, Muddle",
+      "If the attack ability was performed, Crystal Rot performs:"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/784"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Unholy Gifts",
+    "initiative": 40,
+    "abilities": [
+      "Move 1",
+      "Heal 1, Target 2, Range 3, Ward"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/786"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Rise and Fall",
+    "initiative": 34,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3",
+      "Heal 1, Range 3, Safeguard"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/787"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Dark Communion",
+    "initiative": 18,
+    "abilities": [
+      "Muddle, All, Range 4",
+      "Living Bones, Living Corpses, and Living Spirits within Range 4 add Attack +1 to all their attacks this round."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/788"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Nothing special",
+    "initiative": 49,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/789"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Last Resort",
+    "initiative": 87,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3",
+      "Add Disarm if there are no Living Bones, Living Corpses or Living Spirits within Range 3."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/790"
+  },
+  {
+    "monsterType": "Crystal Rot",
+    "cardName": "Shadow Bolt",
+    "initiative": 67,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/791"
+  },
+  {
+    "monsterType": "Cultist Scenario 54",
+    "cardName": "Volatile Conduct",
+    "initiative": 10,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "If Cultist dies this round, first remove all negative conditions and perform:"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/760"
+  },
+  {
+    "monsterType": "Cultist Scenario 54",
+    "cardName": "Harrowing Harvest",
+    "initiative": 27,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/762"
+  },
+  {
+    "monsterType": "Cultist Scenario 54",
+    "cardName": "Dark Ritual",
+    "initiative": 63,
+    "abilities": [
+      "The highest health enemy within Range 5 and within line-of-sight suffers X."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/764"
+  },
+  {
+    "monsterType": "Cultist Scenario 54",
+    "cardName": "Unholy Guard",
+    "initiative": 21,
+    "abilities": [
+      "Move 1",
+      "Heal 3, Range 3, Safeguard"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/766"
+  },
+  {
+    "monsterType": "Cultist Scenario 82",
+    "cardName": "Volatile Conduct",
+    "initiative": 10,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "If Cultist dies this round, first remove all negative conditions and perform:"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/760"
+  },
+  {
+    "monsterType": "Cultist Scenario 82",
+    "cardName": "Harrowing Harvest",
+    "initiative": 27,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/762"
+  },
+  {
+    "monsterType": "Cultist Scenario 82",
+    "cardName": "Dark Ritual",
+    "initiative": 63,
+    "abilities": [
+      "Summon",
+      "SufferDamage 1",
+      "Stun, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/764"
+  },
+  {
+    "monsterType": "Cultist Scenario 82",
+    "cardName": "Unholy Guard",
+    "initiative": 21,
+    "abilities": [
+      "Move 1",
+      "Heal 3, Range 3, Safeguard"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/766"
+  },
+  {
+    "monsterType": "Cultist",
+    "cardName": "Volatile Conduct",
+    "initiative": 10,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "If Cultist dies this round, first remove all negative conditions and perform:"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist/760"
+  },
+  {
+    "monsterType": "Cultist",
+    "cardName": "Harrowing Harvest",
+    "initiative": 27,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist/762"
+  },
+  {
+    "monsterType": "Cultist",
+    "cardName": "Dark Ritual",
+    "initiative": 63,
+    "abilities": [
+      "Summon",
+      "SufferDamage 1",
+      "Stun, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist/764"
+  },
+  {
+    "monsterType": "Cultist",
+    "cardName": "Unholy Guard",
+    "initiative": 21,
+    "abilities": [
+      "Move 1",
+      "Heal 3, Range 3, Safeguard"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/cultist/766"
+  },
+  {
+    "monsterType": "Dark Ritual Cultist Scenario 25A",
+    "cardName": "Dark Ritual",
+    "initiative": 63,
+    "abilities": [
+      "SufferDamage 1",
+      "Stun, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/dark-ritual-cultist-scenario-25A/764"
+  },
+  {
+    "monsterType": "Dark Ritual Cultist",
+    "cardName": "Dark Ritual",
+    "initiative": 63,
+    "abilities": [
+      "Summon",
+      "SufferDamage 1",
+      "Stun, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/dark-ritual-cultist/764"
+  },
+  {
+    "monsterType": "Deep Terror Scenario 51",
+    "cardName": "Beam of Annihilation",
+    "initiative": 60,
+    "abilities": [
+      "Attack 0, Pierce 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror-scenario-51/633"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Horrible Glare",
+    "initiative": 65,
+    "abilities": [
+      "Attack 1, Range 3, Target 3, Curse"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/632"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Beam of Annihilation",
+    "initiative": 60,
+    "abilities": [
+      "Attack 0, Pierce 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/633"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Burning Gaze",
+    "initiative": 84,
+    "abilities": [
+      "Attack 1, EnemiesAdjacent",
+      "Attack 0, Range 4, Wound"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/635"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Rooted Fear",
+    "initiative": 75,
+    "abilities": [
+      "Attack 1, Poison",
+      "Attack 1, Range 5, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/636"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Disruptive Frenzy",
+    "initiative": 75,
+    "abilities": [
+      "Attack 2, Disarm",
+      "Attack 1, Target 2, Range 3, Muddle"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/637"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Terrible Growth",
+    "initiative": 96,
+    "abilities": [
+      "Attack 2, Range 6",
+      "If the attack ability was performed"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/638"
+  },
+  {
+    "monsterType": "Deep Terror",
+    "cardName": "Ray of Hate",
+    "initiative": 54,
+    "abilities": [
+      "Attack 0, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/639"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Long Shot",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row A"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/626"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Exploding Ammunition",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row B"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/627"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Grenade",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row A"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/629"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Massive Blast",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row B"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/630"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Heavy Shot",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row B"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/631"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Defensive Ordinance",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row A"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/632"
+  },
+  {
+    "monsterType": "Doomcannon",
+    "cardName": "Concussive Burst",
+    "initiative": 99,
+    "abilities": [
+      "Attack 1, Target all in row A"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/633"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Strong Growth",
+    "initiative": 40,
+    "abilities": [
+      "Heal 4, Self",
+      "Element earth, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/576"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Hasty Assault",
+    "initiative": 42,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/577"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Nothing Special",
+    "initiative": 62,
+    "abilities": [
+      "Move 0",
+      "Attack 0",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/578"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Boulder Throw",
+    "initiative": 71,
+    "abilities": [
+      "Attack 0, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/579"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Calculated Strike",
+    "initiative": 83,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/580"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Ground Slam",
+    "initiative": 93,
+    "abilities": [
+      "Move 1",
+      "Attack 1, EnemiesAdjacent"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/581"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Reckless Charge",
+    "initiative": 79,
+    "abilities": [
+      "Move 1",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/582"
+  },
+  {
+    "monsterType": "Earth Demon",
+    "cardName": "Earthen Eruption",
+    "initiative": 87,
+    "abilities": [
+      "Move 0",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/583"
+  },
+  {
+    "monsterType": "Egg Scenario 50",
+    "cardName": "Hatch",
+    "initiative": 99,
+    "abilities": [
+      "Heal 1, Self",
+      "If health increased beyond max: Destroy Egg and spawn one Normal Night Demon in same hex."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/egg-scenario-50/0"
+  },
+  {
+    "monsterType": "First Shield Harmon Scenario 56",
+    "cardName": "To Fear is to Die",
+    "initiative": 1,
+    "abilities": [
+      "If odd round:, Grant all allies: Shield 1",
+      "If even round:, Grant all allies: Retaliate 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/first-shield-harmon-scenario-56/0"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Hasty Assault",
+    "initiative": 3,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 4",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/552"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Nothing Special",
+    "initiative": 24,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 4",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/553"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Explosive Blast",
+    "initiative": 46,
+    "abilities": [
+      "Attack 0, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/554"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Fire Spout",
+    "initiative": 8,
+    "abilities": [
+      "Move 1",
+      "Create one Damage 4 trap in an adjacent empty hex closest to an enemy",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/555"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Intense Torch",
+    "initiative": 49,
+    "abilities": [
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/556"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Calculated Strike",
+    "initiative": 67,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/557"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Heat Aura",
+    "initiative": 77,
+    "abilities": [
+      "Attack 0, EnemiesAdjacent",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/558"
+  },
+  {
+    "monsterType": "Flame Demon",
+    "cardName": "Raging Blaze",
+    "initiative": 30,
+    "abilities": [
+      "Element fire, All adjacent enemies suffer Damage 2",
+      "Move 0",
+      "Attack 2, Target 2, Range 4, Wound"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/559"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Gather the Frost",
+    "initiative": 18,
+    "abilities": [
+      "Immobilize, Target All, Range 2",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/560"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Hasty Assault",
+    "initiative": 38,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/561"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Frozen Shards",
+    "initiative": 58,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Range 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/562"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Nothing Special",
+    "initiative": 58,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/563"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Cold Claws",
+    "initiative": 78,
+    "abilities": [
+      "Move 1",
+      "Attack 0",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/564"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Chilled to the Bone",
+    "initiative": 58,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Pierce 3",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/566"
+  },
+  {
+    "monsterType": "Frost Demon",
+    "cardName": "Ice Barrier",
+    "initiative": 18,
+    "abilities": [
+      "Move 1",
+      "Shield 2",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/667"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Surround",
+    "initiative": 32,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Add Attack +2 if the target is adjacent to any of the Giant Viper's allies"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/768"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Defensive Strike",
+    "initiative": 11,
+    "abilities": [
+      "Shield 1",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/770"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Calculated Strike",
+    "initiative": 58,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/771"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Swift Fangs",
+    "initiative": 33,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/772"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Find Cover",
+    "initiative": 18,
+    "abilities": [
+      "Move 1",
+      "Attack 1, All attacks targeting Giant Viper this round gain disadvantage."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/773"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Toxic Frenzy",
+    "initiative": 43,
+    "abilities": [
+      "Move 1",
+      "Attack 1, EnemiesAdjacent"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/774"
+  },
+  {
+    "monsterType": "Giant Viper",
+    "cardName": "Constrict",
+    "initiative": 23,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Immobilize",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/775"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Parry and Thrust",
+    "initiative": 15,
+    "abilities": [
+      "Shield 1",
+      "Retaliate 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/640"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Calculated Strike",
+    "initiative": 70,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/641"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Throwing Axe",
+    "initiative": 35,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Range 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/642"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Venom Shiv",
+    "initiative": 15,
+    "abilities": [
+      "Attack 0, Poison",
+      "Shield 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/643"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Hasty Assault",
+    "initiative": 30,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/644"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Nothing Special",
+    "initiative": 50,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/645"
+  },
+  {
+    "monsterType": "Guard",
+    "cardName": "Psych Up",
+    "initiative": 55,
+    "abilities": [
+      "Move 1",
+      "Attack 0",
+      "Strengthen, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/guard/647"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Biting Gnats",
+    "initiative": 38,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/688"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Centipede Strike",
+    "initiative": 7,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Poison",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/689"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Restore the Swarm",
+    "initiative": 16,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Heal 5, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/690"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Drain the Essence",
+    "initiative": 7,
+    "abilities": [
+      "Attack 1, Range 3, Muddle",
+      "Heal 4, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/691"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Spiked Mandibles",
+    "initiative": 16,
+    "abilities": [
+      "Attack 2, Immobilize",
+      "Retaliate 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/692"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Angry Bulwark",
+    "initiative": 2,
+    "abilities": [
+      "Shield 2",
+      "Retaliate 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/693"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Piercing Parasites",
+    "initiative": 30,
+    "abilities": [
+      "Move 1",
+      "Attack 0",
+      "Element dark, Perform \" Heal, self\" where X is twice the number of enemies targeted by the attack ability."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/694"
+  },
+  {
+    "monsterType": "Harrower Infester",
+    "cardName": "Clouds of Hate",
+    "initiative": 38,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Target 2, Wound"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/695"
+  },
+  {
+    "monsterType": "Hawthorne",
+    "cardName": "Hawthorne",
+    "initiative": 30,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hawthorne/ordinal-1"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Gripping Teeth",
+    "initiative": 6,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/712"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Horrowing Howl",
+    "initiative": 7,
+    "abilities": [
+      "Move 0",
+      "Muddle, Target All, Range 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/713"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Pack Hunting",
+    "initiative": 19,
+    "abilities": [
+      "Move 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/714"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Nothing Special",
+    "initiative": 26,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/716"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Calculated Strike",
+    "initiative": 83,
+    "abilities": [
+      "Move 2",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/718"
+  },
+  {
+    "monsterType": "Hound",
+    "cardName": "Sharp Fangs",
+    "initiative": 72,
+    "abilities": [
+      "Attack 1, Pierce 2",
+      "Move 2",
+      "Attack 1, Pierce 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/hound/719"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Phase Out",
+    "initiative": 5,
+    "abilities": [
+      "Shield 5",
+      "Heal 1, Self",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/696"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Nothing Special",
+    "initiative": 37,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/697"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Restoration",
+    "initiative": 42,
+    "abilities": [
+      "Move 1",
+      "Heal 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/699"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Rotten Sting",
+    "initiative": 43,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/700"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Calculated Strike",
+    "initiative": 76,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/701"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Dark Charm",
+    "initiative": 43,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3, Curse"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/702"
+  },
+  {
+    "monsterType": "Imp",
+    "cardName": "Tip the Scales",
+    "initiative": 24,
+    "abilities": [
+      "Strengthen, Target All, Range 2",
+      "Muddle, Target All, Range 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/imp/703"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Accelerated Power",
+    "initiative": 11,
+    "abilities": [
+      "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Special 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/874"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Accelerated Power",
+    "initiative": 14,
+    "abilities": [
+      "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Special 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/875"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Accelerated Power",
+    "initiative": 17,
+    "abilities": [
+      "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Special 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/876"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Lingering Strength",
+    "initiative": 85,
+    "abilities": [
+      "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Special 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/877"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Lingering Strength",
+    "initiative": 79,
+    "abilities": [
+      "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Special 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/878"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Lingering Strength",
+    "initiative": 73,
+    "abilities": [
+      "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Special 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/879"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Nothing Special",
+    "initiative": 36,
+    "abilities": [
+      "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/880"
+  },
+  {
+    "monsterType": "Jekserah Scenario 23",
+    "cardName": "Twin Shots",
+    "initiative": 52,
+    "abilities": [
+      "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
+      "Move 1",
+      "Attack 1, Target 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/881"
+  },
+  {
+    "monsterType": "Jekserah Scenario 56",
+    "cardName": "Purple Glow",
+    "initiative": 1,
+    "abilities": [
+      "If odd round:",
+      "If even round:"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-56/0"
+  },
+  {
+    "monsterType": "Living Bomb",
+    "cardName": "Nothing Really",
+    "initiative": 66,
+    "abilities": [
+      "Move 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bomb/0"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Calculated Strike",
+    "initiative": 64,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/616"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Drain Life",
+    "initiative": 20,
+    "abilities": [
+      "Move 2",
+      "Attack 0",
+      "Heal 2, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/617"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Hasty Assault",
+    "initiative": 25,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/618"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Nothing Special",
+    "initiative": 45,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/619"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Power Slash",
+    "initiative": 81,
+    "abilities": [
+      "Attack 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/621"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Focused Stabs",
+    "initiative": 74,
+    "abilities": [
+      "Move 0",
+      "Attack 0, EnemyOneAll"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/622"
+  },
+  {
+    "monsterType": "Living Bones",
+    "cardName": "Eternal Life",
+    "initiative": 12,
+    "abilities": [
+      "Shield 1",
+      "Heal 2, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-bones/623"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Rotting Embrace",
+    "initiative": 21,
+    "abilities": [
+      "Move 1",
+      "If Living Corpse dies this round, all figures adjacent to the hex it occupied suffer Damage 1 and gain Poison."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/752"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Calculated Strike",
+    "initiative": 82,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/753"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Hasty Assault",
+    "initiative": 47,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/754"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Nothing Special",
+    "initiative": 66,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/755"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Reckless Charge",
+    "initiative": 91,
+    "abilities": [
+      "Move 2",
+      "Element earth",
+      "If the move ability was performed, Living Corpse suffers Damage 1."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/757"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Release Gas",
+    "initiative": 71,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "Poison, All, Range 1",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/758"
+  },
+  {
+    "monsterType": "Living Corpse",
+    "cardName": "Violent Slam",
+    "initiative": 32,
+    "abilities": [
+      "Attack 2, Push 1",
+      "If the attack ability was performed, Living Corpse suffers Damage 1."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/759"
+  },
+  {
+    "monsterType": "Living Spirit Squidface Solo",
+    "cardName": "Living Spirit Squidface Solo",
+    "initiative": 22,
+    "abilities": [
+      "Living Spirits without Poison do not act."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit-squidface-solo/ordinal-1"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Sap Strength",
+    "initiative": 22,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3, Muddle"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/608"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Booming Scream",
+    "initiative": 33,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 3, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/609"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Nothing Special",
+    "initiative": 48,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/610"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Coupled Chain",
+    "initiative": 61,
+    "abilities": [
+      "Attack 0, Target 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/612"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Leech Warmth",
+    "initiative": 75,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 2",
+      "Heal 1, Self",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/613"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Angry Howl",
+    "initiative": 55,
+    "abilities": [
+      "Move 0",
+      "Curse, Target 3, Range 2",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/614"
+  },
+  {
+    "monsterType": "Living Spirit",
+    "cardName": "Icy Glare",
+    "initiative": 67,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/615"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Defensive Claws",
+    "initiative": 11,
+    "abilities": [
+      "Wound, All, Range 1",
+      "Shield 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/624"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Hasty Assault",
+    "initiative": 28,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/625"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Nothing Special",
+    "initiative": 38,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/626"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Focused Strikes",
+    "initiative": 38,
+    "abilities": [
+      "Move 0",
+      "Attack 0, EnemyOneAll"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/627"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Calculated Strike",
+    "initiative": 61,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/628"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Berserk Rage",
+    "initiative": 64,
+    "abilities": [
+      "Attack 1, Target 2 enemies within 2 hexes, Muddle"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/629"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Strength of the Deep",
+    "initiative": 41,
+    "abilities": [
+      "Element ice, Strengthen",
+      "Move 0",
+      "Attack 1, Wound"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/630"
+  },
+  {
+    "monsterType": "Lurker Soldier",
+    "cardName": "Hardened by Frost",
+    "initiative": 23,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "Shield 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/631"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Hasty Assault",
+    "initiative": 4,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/584"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Into Darkness",
+    "initiative": 37,
+    "abilities": [
+      "Move 1",
+      "Attack 2",
+      "Element dark, Invisible"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/585"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Nothing Special",
+    "initiative": 22,
+    "abilities": [
+      "Move 0",
+      "Attack 0",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/586"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Black Thorns",
+    "initiative": 26,
+    "abilities": [
+      "Attack 2, Target 3, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/587"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Death's Embrace",
+    "initiative": 46,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/588"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Calculated Strike",
+    "initiative": 41,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/589"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "Impale",
+    "initiative": 35,
+    "abilities": [
+      "Attack 1",
+      "Attack 1, Pierce 2",
+      "Element light, Curse"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/590"
+  },
+  {
+    "monsterType": "Night Demon",
+    "cardName": "The Night Feeds",
+    "initiative": 15,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "All adjacent allies and enemies suffer Damage 1.",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/night-demon/591"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Hasty Assault",
+    "initiative": 36,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/736"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Nothing Special",
+    "initiative": 57,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/737"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Toxic Explosion",
+    "initiative": 59,
+    "abilities": [
+      "Attack 0, Target 2, Range 3, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/738"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Plasma Ward",
+    "initiative": 85,
+    "abilities": [
+      "Push 1, Target All, Range 1, Poison",
+      "Attack 1, Range 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/739"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Calculated Strike",
+    "initiative": 66,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 4",
+      "Element dark"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/740"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Split",
+    "initiative": 94,
+    "abilities": [
+      "SufferDamage 2",
+      "Summon, with H equal to the summoning Ooze's current hit point value (limited by a normal Ooze's maximum hit point values)."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/741"
+  },
+  {
+    "monsterType": "Ooze",
+    "cardName": "Feed",
+    "initiative": 66,
+    "abilities": [
+      "Move 1",
+      "Loot 1",
+      "Heal 2, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/ooze/743"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Drain Speed",
+    "initiative": 8,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Range 3, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/656"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Drain Strength",
+    "initiative": 8,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3, Disarm"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/657"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Nothing Special",
+    "initiative": 62,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/658"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Tend to the Clan",
+    "initiative": 23,
+    "abilities": [
+      "Move 0",
+      "Heal 3, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/659"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Calculated Strike",
+    "initiative": 74,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/661"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Divine Energy",
+    "initiative": 89,
+    "abilities": [
+      "Move 1",
+      "Heal 1, Allies, Range 1",
+      "Bless, Self"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/662"
+  },
+  {
+    "monsterType": "Priest",
+    "cardName": "Angry Hex",
+    "initiative": 9,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 2, Range 3, Curse"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/priest/663"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Hasty Assault",
+    "initiative": 12,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/720"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Swift Claws",
+    "initiative": 13,
+    "abilities": [
+      "Attack 1",
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/721"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Nothing Special",
+    "initiative": 25,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/722"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Calculated Strike",
+    "initiative": 39,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/723"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Venom Glands",
+    "initiative": 54,
+    "abilities": [
+      "Move 2",
+      "Attack 1, Target 2, Range 3, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/724"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Dangerous Fury",
+    "initiative": 59,
+    "abilities": [
+      "Move 2",
+      "Attack 1, Target 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/725"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Unending Frenzy",
+    "initiative": 72,
+    "abilities": [
+      "Attack 1",
+      "Attack 1",
+      "Attack 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/726"
+  },
+  {
+    "monsterType": "Rending Drake",
+    "cardName": "Empowering Rest",
+    "initiative": 6,
+    "abilities": [
+      "Shield 2",
+      "Heal 2, Self, Strengthen"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/727"
+  },
+  {
+    "monsterType": "Savvas Icestorm Scenario 40",
+    "cardName": "Hardened Frost",
+    "initiative": 19,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3",
+      "Grant all allies within Range 2 and self:, Shield 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/797"
+  },
+  {
+    "monsterType": "Savvas Icestorm Scenario 40",
+    "cardName": "Freezing Winds",
+    "initiative": 14,
+    "abilities": [
+      "Attack 0, Range 4",
+      "Retaliate 2",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/798"
+  },
+  {
+    "monsterType": "Savvas Icestorm Scenario 40",
+    "cardName": "Frozen Shell",
+    "initiative": 14,
+    "abilities": [
+      "Shield 4",
+      "Heal 2, Range 3",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/799"
+  },
+  {
+    "monsterType": "Savvas Icestorm Scenario 40",
+    "cardName": "Forceful Gust",
+    "initiative": 47,
+    "abilities": [
+      "Disarm, Target All, Range 1",
+      "Move 0",
+      "Attack 1, Range 4",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/800"
+  },
+  {
+    "monsterType": "Savvas Icestorm Scenario 40",
+    "cardName": "Cone of Cold",
+    "initiative": 35,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/801"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Repulsive Torrent",
+    "initiative": 70,
+    "abilities": [
+      "Push 2, Target All, Range 1",
+      "Attack 1, Range 5"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/680"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Call to the Wind",
+    "initiative": 98,
+    "abilities": [
+      "Summon",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/681"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Call to the Frost",
+    "initiative": 98,
+    "abilities": [
+      "Summon",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/682"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Hardened Frost",
+    "initiative": 19,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3",
+      "Grant all allies within Range 2 and self:, Shield 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/683"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Freezing Winds",
+    "initiative": 14,
+    "abilities": [
+      "Attack 0, Range 4",
+      "Retaliate 2",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/684"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Frozen Shell",
+    "initiative": 14,
+    "abilities": [
+      "Shield 4",
+      "Heal 2, Range 3",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/685"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Forceful Gust",
+    "initiative": 47,
+    "abilities": [
+      "Disarm, Target All, Range 1",
+      "Move 0",
+      "Attack 1, Range 4",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/686"
+  },
+  {
+    "monsterType": "Savvas Icestorm",
+    "cardName": "Cone of Cold",
+    "initiative": 35,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/687"
+  },
+  {
+    "monsterType": "Savvas Lavaflow Scenario 40",
+    "cardName": "Circle of Fire",
+    "initiative": 22,
+    "abilities": [
+      "Move 1",
+      "Attack 1, EnemiesAdjacent",
+      "Element fire, Retaliate 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/788"
+  },
+  {
+    "monsterType": "Savvas Lavaflow Scenario 40",
+    "cardName": "Rock Bomb",
+    "initiative": 68,
+    "abilities": [
+      "Move 1",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/789"
+  },
+  {
+    "monsterType": "Savvas Lavaflow Scenario 40",
+    "cardName": "Stone Spikes",
+    "initiative": 41,
+    "abilities": [
+      "Move 0",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/790"
+  },
+  {
+    "monsterType": "Savvas Lavaflow Scenario 40",
+    "cardName": "Strength of the Mountain",
+    "initiative": 31,
+    "abilities": [
+      "Heal 4, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/792"
+  },
+  {
+    "monsterType": "Savvas Lavaflow Scenario 40",
+    "cardName": "Fire Bolts",
+    "initiative": 68,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 2, Range 3",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/793"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Call to the Flame",
+    "initiative": 97,
+    "abilities": [
+      "Summon",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/672"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Call to the Earth",
+    "initiative": 97,
+    "abilities": [
+      "Summon",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/673"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Circle of Fire",
+    "initiative": 22,
+    "abilities": [
+      "Move 1",
+      "Attack 1, EnemiesAdjacent",
+      "Element fire, Retaliate 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/674"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Rock Bomb",
+    "initiative": 68,
+    "abilities": [
+      "Move 1",
+      "Element earth"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/675"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Stone Spikes",
+    "initiative": 41,
+    "abilities": [
+      "Move 0",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/676"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Flowing Magma",
+    "initiative": 51,
+    "abilities": [
+      "All enemies within Range 4 suffer Damage 2.",
+      "Element fire, Wound",
+      "Element earth, Disarm"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/677"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Strength of the Mountain",
+    "initiative": 31,
+    "abilities": [
+      "Heal 4, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/678"
+  },
+  {
+    "monsterType": "Savvas Lavaflow",
+    "cardName": "Fire Bolts",
+    "initiative": 68,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Target 2, Range 3",
+      "Element fire"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/679"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Cruel Bow",
+    "initiative": 29,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3, Wound"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/664"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Hasty Assault",
+    "initiative": 40,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/665"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Nothing Special",
+    "initiative": 53,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/666"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Rancid Arrow",
+    "initiative": 54,
+    "abilities": [
+      "Move 2",
+      "Attack 0, Range 3, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/667"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Calculated Strike",
+    "initiative": 69,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/668"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Noxious Blade",
+    "initiative": 92,
+    "abilities": [
+      "Attack 2, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/669"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Rapid Bolts",
+    "initiative": 79,
+    "abilities": [
+      "Attack 1, Target 2, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/670"
+  },
+  {
+    "monsterType": "Scout",
+    "cardName": "Greed",
+    "initiative": 35,
+    "abilities": [
+      "Move 1",
+      "Loot 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/scout/671"
+  },
+  {
+    "monsterType": "Shyreth",
+    "cardName": "Shyreth",
+    "initiative": 8,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/shyreth/ordinal-1"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Hasty Assault",
+    "initiative": 32,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/728"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Nothing Special",
+    "initiative": 52,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/729"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Splashing Bile",
+    "initiative": 57,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/730"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Venom Glands",
+    "initiative": 27,
+    "abilities": [
+      "Attack 0, Target 2, Range 4, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/731"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Calculated Strike",
+    "initiative": 87,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 4"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/732"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Subduing Spit",
+    "initiative": 89,
+    "abilities": [
+      "Attack 2, Range 4, Stun"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/733"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Empowering Rest",
+    "initiative": 6,
+    "abilities": [
+      "Shield 2",
+      "Heal 2, Self, Strengthen"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/734"
+  },
+  {
+    "monsterType": "Spitting Drake",
+    "cardName": "Explosive Vomit",
+    "initiative": 89,
+    "abilities": [
+      "Move 1",
+      "Attack 2, Range 3, Poison"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/735"
+  },
+  {
+    "monsterType": "Spymaster Argeise",
+    "cardName": "Fire Grenade",
+    "initiative": 1,
+    "abilities": [
+      "Move 3",
+      "Attack 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/spymaster-argeise/0"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Runic Feeedback",
+    "initiative": 10,
+    "abilities": [
+      "Retaliate 3, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/776"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Taxing Advance",
+    "initiative": 28,
+    "abilities": [
+      "Move 1",
+      "Attack 0",
+      "If the move ability was performed, Stone Construct suffers Damage 1."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/777"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Hasty Assault",
+    "initiative": 51,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/778"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Nothing Special",
+    "initiative": 64,
+    "abilities": [
+      "Move 0",
+      "Attack 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/779"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Sacrificial Hurl",
+    "initiative": 72,
+    "abilities": [
+      "Attack 1, Range 3",
+      "If the attack ability was performed, Stone Construct suffers Damage 1."
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/780"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Calculated Strike",
+    "initiative": 90,
+    "abilities": [
+      "Move 1",
+      "Attack 1"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/781"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Ground Pound",
+    "initiative": 83,
+    "abilities": [
+      "Move 0",
+      "Attack 0, EnemiesAdjacent"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/782"
+  },
+  {
+    "monsterType": "Stone Construct",
+    "cardName": "Runic Draw",
+    "initiative": 28,
+    "abilities": [
+      "Move 1",
+      "Attack 2, Range 3, Pull 2, Immobilize"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/783"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Ray of Warmth",
+    "initiative": 17,
+    "abilities": [
+      "Heal 3, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/592"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Brilliant Aura",
+    "initiative": 36,
+    "abilities": [
+      "Move 0",
+      "Attack 0, EnemiesAdjacent",
+      "Element light"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/593"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Star Strike",
+    "initiative": 68,
+    "abilities": [
+      "Move 0",
+      "Attack 1",
+      "Element light"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/595"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Vicious Opportunity",
+    "initiative": 73,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element light"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/596"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Supernova",
+    "initiative": 95,
+    "abilities": [
+      "Move 1",
+      "Attack 0, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/597"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Glowing Sweep",
+    "initiative": 88,
+    "abilities": [
+      "Move 1",
+      "Attack 1, EnemiesAdjacent",
+      "Element dark, Muddle"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/598"
+  },
+  {
+    "monsterType": "Sun Demon",
+    "cardName": "Shining Orb",
+    "initiative": 50,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/599"
+  },
+  {
+    "monsterType": "The Prime Demon Scenario 25",
+    "cardName": "Summoning",
+    "initiative": 1,
+    "abilities": [
+      "Refer to special rules"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/the-prime-demon-scenario-25/0"
+  },
+  {
+    "monsterType": "The Prime Demon Scenario 56",
+    "cardName": "Trident",
+    "initiative": 1,
+    "abilities": [
+      "Move 4",
+      "Attack 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/the-prime-demon-scenario-56/0"
+  },
+  {
+    "monsterType": "Training Dummy",
+    "cardName": "Nothing",
+    "initiative": 99,
+    "abilities": [
+      "Does Not Act"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/training-dummy/0"
+  },
+  {
+    "monsterType": "Training Partner",
+    "cardName": "Nothing Special",
+    "initiative": 50,
+    "abilities": [
+      "Move 2",
+      "Attack 2"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/training-partner/0"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Repulsive Torrent",
+    "initiative": 70,
+    "abilities": [
+      "Push 2, Target All, Range 1",
+      "Attack 1, Range 5"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/794"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Call to the Wind",
+    "initiative": 98,
+    "abilities": [
+      "Summon",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/795"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Call to the Frost",
+    "initiative": 98,
+    "abilities": [
+      "Spawn one Lurker Soldier at B. It is Normal for 2 characters and Elite for 3-4.",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/796"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Hardened Frost",
+    "initiative": 19,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Range 3",
+      "Grant all allies within Range 2 and self:, Shield 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/797"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Freezing Winds",
+    "initiative": 14,
+    "abilities": [
+      "Attack 0, Range 4",
+      "Retaliate 2",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/798"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Frozen Shell",
+    "initiative": 14,
+    "abilities": [
+      "Shield 4",
+      "Heal 2, Range 3",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/799"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Forceful Gust",
+    "initiative": 47,
+    "abilities": [
+      "Disarm, Target All, Range 1",
+      "Move 0",
+      "Attack 1, Range 4",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/800"
+  },
+  {
+    "monsterType": "Tyrant Of The Tides",
+    "cardName": "Cone of Cold",
+    "initiative": 35,
+    "abilities": [
+      "Move 1",
+      "Attack 1",
+      "Element ice"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/801"
+  },
+  {
+    "monsterType": "Vermling Scout Mindthief2 Solo",
+    "cardName": "Vermling Scout Mindthief2 Solo",
+    "initiative": 29,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3, Wound"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/vermling-scout-mindthief2-solo/ordinal-1"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Into Thin Air",
+    "initiative": 9,
+    "abilities": [
+      "Attack 1, Range 2",
+      "Heal 1, Self",
+      "Element air, Invisible"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/568"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Tailwind",
+    "initiative": 21,
+    "abilities": [
+      "Move 0",
+      "Attack 0, Range 3, Pull 1",
+      "Element air"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/569"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Whirlwinds",
+    "initiative": 29,
+    "abilities": [
+      "Move 0",
+      "Attack 1, Target 2, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/571"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Cyclone",
+    "initiative": 37,
+    "abilities": [
+      "Move 0"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/572"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Cutting Blast",
+    "initiative": 43,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/573"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Blast of Air",
+    "initiative": 43,
+    "abilities": [
+      "Push 1, Target All, Range 1",
+      "Attack 0, Range 4, Disarm"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/574"
+  },
+  {
+    "monsterType": "Wind Demon",
+    "cardName": "Eye of the Storm",
+    "initiative": 2,
+    "abilities": [
+      "Move 1",
+      "Attack 1, Range 3",
+      "Shield 1",
+      "Element wild"
+    ],
+    "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/575"
+  }
+]

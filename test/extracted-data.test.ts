@@ -383,7 +383,7 @@ describe('game isolation', () => {
     const counts = await countsByType({ game: FROSTHAVEN_GAME_ID });
     const gh2Counts = await countsByType({ game: GLOOMHAVEN_2E_GAME_ID });
     expect(counts['monster-stats']).toBeGreaterThan(0);
-    expect(gh2Counts['monster-stats']).toBe(1);
+    expect(gh2Counts['monster-stats']).toBeGreaterThan(1);
   });
 
   it('returns GH2 rows only for explicit Gloomhaven 2.0 queries', async () => {
@@ -402,7 +402,7 @@ describe('game isolation', () => {
     expect(searched[0]?.sourceId).toBe(GH2_ISOLATION_SOURCE_ID);
 
     const summary = await extractedStats({ game: GLOOMHAVEN_2E_GAME_ID });
-    expect(summary).toContain('monster-stats: 1');
+    expect(summary).toMatch(/monster-stats: \d+/);
   });
 });
 

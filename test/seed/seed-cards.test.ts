@@ -21,7 +21,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { cardItems } from '../../src/db/schema/cards.ts';
 import { schema } from '../../src/db.ts';
-import { seedCards } from '../../src/seed/seed-cards.ts';
+import { seedAvailableCardGames, seedCards } from '../../src/seed/seed-cards.ts';
 import { CARD_TYPES, type CardType } from '../../src/schemas.ts';
 
 import { setupTestDb, teardownTestDb } from '../helpers/db.ts';
@@ -53,7 +53,7 @@ describe('seedCards', () => {
     // "too many clients" errors on the next test file.
     try {
       await db.execute(sql`TRUNCATE card_items RESTART IDENTITY CASCADE`);
-      await seedCards(db, { types: ['items'] });
+      await seedAvailableCardGames(db, { types: ['items'] });
     } finally {
       await teardownTestDb();
     }
@@ -129,7 +129,7 @@ describe('seedCards', () => {
         const [tampered] = await db
           .select()
           .from(cardItems)
-          .where(eq(cardItems.sourceId, victim.sourceId));
+          .where(and(eq(cardItems.game, 'frosthaven'), eq(cardItems.sourceId, victim.sourceId)));
         expect(tampered.name).toBe('HAND-EDITED SENTINEL');
 
         // Re-seed and verify the upsert overwrote the edit.
@@ -138,7 +138,7 @@ describe('seedCards', () => {
         const [restored] = await db
           .select()
           .from(cardItems)
-          .where(eq(cardItems.sourceId, victim.sourceId));
+          .where(and(eq(cardItems.game, 'frosthaven'), eq(cardItems.sourceId, victim.sourceId)));
         expect(restored.name).toBe(originalName);
       } finally {
         // Belt-and-suspenders: if the test above failed, leave the row clean
@@ -148,6 +148,42 @@ describe('seedCards', () => {
           .set({ name: originalName })
           .where(and(eq(cardItems.game, 'frosthaven'), eq(cardItems.sourceId, victim.sourceId)));
       }
+    });
+  });
+
+  describe('game-scoped extracts', () => {
+    it('seeds GH2 rows from data/extracted/gh2 without mixing them into Frosthaven', async () => {
+      await db
+        .delete(cardItems)
+        .where(
+          and(
+            eq(cardItems.game, 'gloomhaven-2e'),
+            eq(cardItems.sourceId, 'gloomhavensecretariat:item/1'),
+          ),
+        );
+
+      await seedAvailableCardGames(db, { types: ['items'] });
+
+      const [gh2Item] = await db
+        .select()
+        .from(cardItems)
+        .where(
+          and(
+            eq(cardItems.game, 'gloomhaven-2e'),
+            eq(cardItems.sourceId, 'gloomhavensecretariat:item/1'),
+          ),
+        );
+      expect(gh2Item).toMatchObject({
+        game: 'gloomhaven-2e',
+        sourceId: 'gloomhavensecretariat:item/1',
+      });
+
+      const [frosthavenItem] = await db
+        .select()
+        .from(cardItems)
+        .where(and(eq(cardItems.game, 'frosthaven'), eq(cardItems.sourceId, gh2Item.sourceId)));
+      expect(frosthavenItem).toBeDefined();
+      expect(frosthavenItem.game).toBe('frosthaven');
     });
   });
 });

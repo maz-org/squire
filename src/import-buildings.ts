@@ -10,21 +10,19 @@
  * Output: data/extracted/buildings.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
+import { DEFAULT_GAME_ID } from './game.ts';
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   resolveLabel,
   loadLabels,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_BUILDINGS_PATH = join(GHS_DATA_DIR, 'buildings.json');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'buildings.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS building type ─────────────────────────────────────────────────────
 
@@ -203,15 +201,24 @@ export function convertBuilding(ghs: GhsBuilding, labels: LabelData): ExtractedB
 
 // ─── Main ──────────────────────────────────────────────────────────────────
 
-export function importBuildings(): ExtractedBuilding[] {
-  if (!existsSync(GHS_BUILDINGS_PATH)) {
+export function importBuildings(configInput: GhsImporterConfigInput = {}): ExtractedBuilding[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsBuildingsPath = join(config.dataDir, 'buildings.json');
+
+  if (!existsSync(ghsBuildingsPath)) {
+    if (config.game !== DEFAULT_GAME_ID) {
+      console.warn(
+        `[import-buildings] ${config.game}: no buildings.json at ${ghsBuildingsPath}; writing an empty extract because this game has no supported building deck in GHS.`,
+      );
+      return [];
+    }
     throw new Error(
-      `GHS buildings data not found at ${GHS_BUILDINGS_PATH}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS buildings data not found at ${ghsBuildingsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
-  const buildings: GhsBuilding[] = JSON.parse(readFileSync(GHS_BUILDINGS_PATH, 'utf-8'));
+  const labels = loadLabels(config);
+  const buildings: GhsBuilding[] = JSON.parse(readFileSync(ghsBuildingsPath, 'utf-8'));
   const results: ExtractedBuilding[] = [];
 
   for (const building of buildings) {
@@ -232,8 +239,8 @@ export function importBuildings(): ExtractedBuilding[] {
 }
 
 if (process.argv[1]?.endsWith('import-buildings.ts')) {
-  const results = importBuildings();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importBuildings(config);
+  const outputPath = writeExtractedRecords('buildings', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

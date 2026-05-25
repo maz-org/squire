@@ -7,21 +7,20 @@
  * Output: data/extracted/personal-quests.json
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
+import { GLOOMHAVEN_2E_GAME_ID, gameDefinitionFor } from './game.ts';
 import {
-  GHS_DATA_DIR,
   resolveLabel,
   resolveGameTokens,
+  resolveTemplateText,
   loadLabels,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_PERSONAL_QUESTS_PATH = join(GHS_DATA_DIR, 'personal-quests.json');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'personal-quests.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS types ──────────────────────────────────────────────────────────────
 
@@ -38,7 +37,9 @@ interface GhsPersonalQuest {
   altId: string;
   spoiler?: boolean;
   requirements: GhsRequirement[];
-  openEnvelope: string;
+  openEnvelope?: string;
+  unlockCharacter?: string;
+  unlockPQ?: string;
   errata?: string;
 }
 
@@ -80,7 +81,7 @@ function resolveCharacterTokens(text: string): string {
  * Handles %data.% label references, %game.% tokens, and %character.% tokens.
  */
 function resolveRequirementName(name: string, labels: LabelData): string {
-  const base = name.startsWith('%data.') ? resolveLabel(name, labels) : name;
+  const base = /%(?:data|game)\./.test(name) ? resolveTemplateText(name, labels) : name;
   return resolveCharacterTokens(resolveGameTokens(base));
 }
 
@@ -88,8 +89,12 @@ function resolveRequirementName(name: string, labels: LabelData): string {
  * Look up the quest title from labels. Falls back to "Personal Quest {cardId}"
  * if the label is missing.
  */
-function resolveQuestTitle(cardId: string, labels: LabelData): string {
-  const ref = `%data.personalQuest.fh.${cardId}.%`;
+function resolveQuestTitle(
+  cardId: string,
+  labels: LabelData,
+  gameLabelPrefix: string = 'fh',
+): string {
+  const ref = `%data.personalQuest.${gameLabelPrefix}.${cardId}.%`;
   const resolved = resolveLabel(ref, labels);
   if (resolved === ref) {
     return `Personal Quest ${cardId}`;
@@ -100,12 +105,13 @@ function resolveQuestTitle(cardId: string, labels: LabelData): string {
 export function convertPersonalQuest(
   ghs: GhsPersonalQuest,
   labels: LabelData,
+  gameLabelPrefix: string = 'fh',
 ): ExtractedPersonalQuest {
   const requirements: ExtractedRequirement[] = ghs.requirements.map((req) => {
     const description = resolveRequirementName(req.name, labels);
 
     const options = req.checkbox
-      ? req.checkbox.map((opt) => resolveCharacterTokens(resolveGameTokens(opt)))
+      ? req.checkbox.map((opt) => resolveRequirementName(opt, labels))
       : null;
 
     return {
@@ -119,9 +125,16 @@ export function convertPersonalQuest(
   return {
     cardId: ghs.cardId,
     altId: ghs.altId,
-    name: resolveQuestTitle(ghs.cardId, labels),
+    name: resolveQuestTitle(ghs.cardId, labels, gameLabelPrefix),
     requirements,
-    openEnvelope: ghs.openEnvelope,
+    openEnvelope:
+      ghs.openEnvelope ??
+      [
+        ghs.unlockCharacter ? `unlock class ${resolveCharacterTokens(ghs.unlockCharacter)}` : null,
+        ghs.unlockPQ ? `unlock personal quest ${ghs.unlockPQ}` : null,
+      ]
+        .filter((part): part is string => part !== null)
+        .join('; '),
     errata: ghs.errata ?? null,
     sourceId: `gloomhavensecretariat:personal-quest/${ghs.cardId}`,
   };
@@ -129,14 +142,27 @@ export function convertPersonalQuest(
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export function importPersonalQuests(): ExtractedPersonalQuest[] {
-  const labels = loadLabels();
-  const quests: GhsPersonalQuest[] = JSON.parse(readFileSync(GHS_PERSONAL_QUESTS_PATH, 'utf-8'));
+export function importPersonalQuests(
+  configInput: GhsImporterConfigInput = {},
+): ExtractedPersonalQuest[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsPersonalQuestsPath = join(config.dataDir, 'personal-quests.json');
+
+  if (!existsSync(ghsPersonalQuestsPath)) {
+    throw new Error(
+      `GHS personal quest data not found at ${ghsPersonalQuestsPath}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+    );
+  }
+
+  const labels = loadLabels(config);
+  const gameLabelPrefix =
+    config.game === GLOOMHAVEN_2E_GAME_ID ? 'gh2e' : gameDefinitionFor(config.game).sourcePrefix;
+  const quests: GhsPersonalQuest[] = JSON.parse(readFileSync(ghsPersonalQuestsPath, 'utf-8'));
 
   const results: ExtractedPersonalQuest[] = [];
 
   for (const quest of quests) {
-    const converted = convertPersonalQuest(quest, labels);
+    const converted = convertPersonalQuest(quest, labels, gameLabelPrefix);
 
     // Verify all data/game tokens were resolved
     const allText = [
@@ -156,8 +182,8 @@ export function importPersonalQuests(): ExtractedPersonalQuest[] {
 }
 
 if (process.argv[1]?.endsWith('import-personal-quests.ts')) {
-  const results = importPersonalQuests();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importPersonalQuests(config);
+  const outputPath = writeExtractedRecords('personal-quests', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

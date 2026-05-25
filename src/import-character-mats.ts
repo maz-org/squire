@@ -9,23 +9,20 @@
  * Output: data/extracted/character-mats.json
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   capitalize,
   loadLabels,
   resolveLabel,
   resolveGameTokens,
+  resolveGhsImporterConfig,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_CHARACTER_DIR = join(GHS_DATA_DIR, 'character');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'character-mats.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── GHS types ───────────────────────────────────────────────────────────────
 
@@ -170,11 +167,11 @@ function formatModifier(mod: GhsAttackModifier, labels: LabelData): string {
   const effectParts: string[] = [];
   for (const effect of mod.effects ?? []) {
     if (effect.type === 'condition' || effect.type === 'specialTarget') {
-      effectParts.push(capitalize(String(effect.value ?? '')));
+      effectParts.push(capitalize(resolvePerkText(String(effect.value ?? ''), labels)));
       // Nested effects (e.g., condition with specialTarget)
       for (const sub of effect.effects ?? []) {
         if (sub.type === 'specialTarget' || sub.type === 'condition') {
-          effectParts.push(capitalize(String(sub.value)));
+          effectParts.push(capitalize(resolvePerkText(String(sub.value), labels)));
         }
       }
     } else if (effect.type === 'custom') {
@@ -281,20 +278,25 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function importCharacterMats(): ExtractedCharacterMat[] {
-  if (!existsSync(GHS_CHARACTER_DIR)) {
+export function importCharacterMats(
+  configInput: GhsImporterConfigInput = {},
+): ExtractedCharacterMat[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsCharacterDir = join(config.dataDir, 'character');
+
+  if (!existsSync(ghsCharacterDir)) {
     throw new Error(
-      `GHS data not found at ${GHS_CHARACTER_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS data not found at ${ghsCharacterDir}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
+  const labels = loadLabels(config);
   const allResults: ExtractedCharacterMat[] = [];
 
-  for (const file of readdirSync(GHS_CHARACTER_DIR).sort()) {
+  for (const file of readdirSync(ghsCharacterDir).sort()) {
     if (!file.endsWith('.json')) continue;
 
-    const ghs: GhsCharacter = JSON.parse(readFileSync(join(GHS_CHARACTER_DIR, file), 'utf-8'));
+    const ghs: GhsCharacter = JSON.parse(readFileSync(join(ghsCharacterDir, file), 'utf-8'));
     const record = convertCharacterMat(ghs, labels);
 
     const allText = [...record.perks, ...record.masteries];
@@ -310,8 +312,8 @@ export function importCharacterMats(): ExtractedCharacterMat[] {
 }
 
 if (process.argv[1]?.endsWith('import-character-mats.ts')) {
-  const results = importCharacterMats();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importCharacterMats(config);
+  const outputPath = writeExtractedRecords('character-mats', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

@@ -51,6 +51,7 @@ import type { CardType } from './schemas.ts';
 import { requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
+import { startHttpServer } from './server-start.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import {
   registerClient,
@@ -1647,62 +1648,14 @@ app.post('/api/ask', async (c) => {
 // ─── Server startup ──────────────────────────────────────────────────────────
 
 export async function startServer(): Promise<void> {
-  const config = loadServerConfig();
-  const configuredPort = config.port;
-  const runtime = getWorktreeRuntime();
   const { createAdaptorServer } = await import('@hono/node-server');
-
-  if (configuredPort === undefined) {
-    while (true) {
-      const claim = await claimWorktreePort({
-        checkoutRoot: runtime.checkoutRoot,
-        checkoutSlug: runtime.checkoutSlug,
-        isMainCheckout: runtime.isMainCheckout,
-      });
-      const server = createAdaptorServer({ fetch: app.fetch });
-      try {
-        await listen(server, claim.port, config.host);
-        server.once('close', () => {
-          void claim.release();
-        });
-        startBootstrapLifecycle();
-        console.log(`Squire server listening on port ${claim.port}`);
-        return;
-      } catch (error) {
-        await claim.release();
-        const errno = error as NodeJS.ErrnoException;
-        if (errno.code !== 'EADDRINUSE' || runtime.isMainCheckout) throw error;
-      }
-    }
-  }
-
-  const server = createAdaptorServer({ fetch: app.fetch });
-  await listen(server, configuredPort, config.host);
-  startBootstrapLifecycle();
-  console.log(`Squire server listening on port ${configuredPort}`);
-}
-
-async function listen(
-  server: import('node:net').Server,
-  port: number,
-  host?: string,
-): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    const onError = (error: Error) => {
-      server.off('listening', onListening);
-      reject(error);
-    };
-    const onListening = () => {
-      server.off('error', onError);
-      resolve();
-    };
-    server.once('error', onError);
-    server.once('listening', onListening);
-    if (host) {
-      server.listen(port, host);
-    } else {
-      server.listen(port);
-    }
+  await startHttpServer({
+    appFetch: app.fetch,
+    createAdaptorServer,
+    loadServerConfig,
+    getWorktreeRuntime,
+    claimWorktreePort,
+    startBootstrapLifecycle,
   });
 }
 

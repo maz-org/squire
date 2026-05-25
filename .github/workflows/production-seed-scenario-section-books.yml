@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - 'data/extracted/scenario-section-books.json'
+      - 'data/extracted/gh2/scenario-section-books.json'
       - 'data/pdfs/**'
+      - 'src/import-ghs-scenario-section-books.ts'
       - 'src/import-scenario-section-books.ts'
       - 'src/scenario-section-data.ts'
       - 'src/scenario-section-schemas.ts'

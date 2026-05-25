@@ -7,6 +7,15 @@ name: Refresh extracted data
 
 on:
   workflow_dispatch:
+    inputs:
+      ghs_data_paths:
+        description: 'Space-separated GHS sparse checkout paths, e.g. data/fh or data/fh data/gh2e'
+        required: false
+        default: 'data/fh data/gh2e'
+      ghs_data_game:
+        description: 'GHS game data subdirectory to import from, or all'
+        required: false
+        default: 'all'
   schedule:
     # Weekly on Sundays at 06:00 UTC
     - cron: '0 6 * * 0'
@@ -22,6 +31,9 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      GHS_DATA_PATHS: ${{ github.event.inputs.ghs_data_paths || 'data/fh data/gh2e' }}
+      GHS_DATA_GAMES: ${{ github.event.inputs.ghs_data_game || 'all' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -33,29 +45,42 @@ jobs:
 
       - run: npm ci
 
-      # Shallow-clone GHS with only the Frosthaven data subtree (~6 MB)
+      # Shallow-clone GHS with only the requested game data subtree(s).
       - name: Fetch GHS data
         run: |
           git clone --depth 1 --filter=blob:none --sparse \
             https://github.com/Lurkars/gloomhavensecretariat.git /tmp/ghs
           cd /tmp/ghs
-          git sparse-checkout set data/fh
+          read -r -a ghs_paths <<< "$GHS_DATA_PATHS"
+          git sparse-checkout set "${ghs_paths[@]}"
 
       # Run GHS imports (free — JSON parsing only)
       - name: Run GHS imports
         env:
           GHS_DATA_DIR: /tmp/ghs
         run: |
-          npx tsx src/import-monster-stats.ts
-          npx tsx src/import-character-abilities.ts
-          npx tsx src/import-character-mats.ts
-          npx tsx src/import-scenarios.ts
-          npx tsx src/import-personal-quests.ts
-          npx tsx src/import-events.ts
-          npx tsx src/import-battle-goals.ts
-          npx tsx src/import-buildings.ts
-          npx tsx src/import-items.ts
-          npx tsx src/import-monster-abilities.ts
+          if [ "$GHS_DATA_GAMES" = "all" ]; then
+            ghs_games=(fh gh2)
+          else
+            read -r -a ghs_games <<< "$GHS_DATA_GAMES"
+          fi
+
+          for game in "${ghs_games[@]}"; do
+            export GHS_DATA_GAME="$game"
+            node src/import-monster-stats.ts
+            node src/import-character-abilities.ts
+            node src/import-character-mats.ts
+            node src/import-scenarios.ts
+            node src/import-personal-quests.ts
+            node src/import-events.ts
+            node src/import-battle-goals.ts
+            node src/import-buildings.ts
+            node src/import-items.ts
+            node src/import-monster-abilities.ts
+            if [ "$game" != "fh" ]; then
+              node src/import-ghs-scenario-section-books.ts
+            fi
+          done
 
       # Open a PR if any extracted data changed
       - name: Check for changes

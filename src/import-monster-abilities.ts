@@ -9,23 +9,20 @@
  * Output: data/extracted/monster-abilities.json
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname, basename } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { join, basename } from 'node:path';
 
 import {
-  GHS_DATA_DIR,
   kebabToTitle,
   formatAction,
   loadLabels,
+  resolveGhsImporterConfig,
   type GhsAbility,
   type GhsDeck,
+  type GhsImporterConfigInput,
   type LabelData,
 } from './ghs-utils.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const GHS_DECK_DIR = join(GHS_DATA_DIR, 'monster', 'deck');
-const OUTPUT_PATH = join(__dirname, '..', 'data', 'extracted', 'monster-abilities.json');
+import { writeExtractedRecords } from './extracted-paths.ts';
 
 // ─── Our extracted format ────────────────────────────────────────────────────
 
@@ -75,21 +72,26 @@ export function convertMonsterAbility(
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export function importMonsterAbilities(): ExtractedMonsterAbility[] {
-  if (!existsSync(GHS_DECK_DIR)) {
+export function importMonsterAbilities(
+  configInput: GhsImporterConfigInput = {},
+): ExtractedMonsterAbility[] {
+  const config = resolveGhsImporterConfig(configInput);
+  const ghsDeckDir = join(config.dataDir, 'monster', 'deck');
+
+  if (!existsSync(ghsDeckDir)) {
     throw new Error(
-      `GHS data not found at ${GHS_DECK_DIR}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
+      `GHS data not found at ${ghsDeckDir}. Set GHS_DATA_DIR or clone GHS into data/gloomhavensecretariat/`,
     );
   }
 
-  const labels = loadLabels();
+  const labels = loadLabels(config);
   const allResults: ExtractedMonsterAbility[] = [];
 
-  for (const file of readdirSync(GHS_DECK_DIR).sort()) {
+  for (const file of readdirSync(ghsDeckDir).sort()) {
     if (!file.endsWith('.json')) continue;
 
     const deckName = basename(file, '.json');
-    const deck: GhsDeck = JSON.parse(readFileSync(join(GHS_DECK_DIR, file), 'utf-8'));
+    const deck: GhsDeck = JSON.parse(readFileSync(join(ghsDeckDir, file), 'utf-8'));
 
     // Sort by cardId so dedupe is deterministic — keep the lowest-ID copy.
     // Some decks omit cardId entirely (see SQR-62); treat missing as -Infinity
@@ -142,8 +144,8 @@ export function importMonsterAbilities(): ExtractedMonsterAbility[] {
 }
 
 if (process.argv[1]?.endsWith('import-monster-abilities.ts')) {
-  const results = importMonsterAbilities();
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-  writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2), 'utf-8');
-  console.log(`Wrote ${results.length} records to ${OUTPUT_PATH}`);
+  const config = resolveGhsImporterConfig();
+  const results = importMonsterAbilities(config);
+  const outputPath = writeExtractedRecords('monster-abilities', config.game, results);
+  console.log(`Wrote ${results.length} records to ${outputPath}`);
 }

@@ -11,10 +11,6 @@
  * See `docs/plans/sqr-34-execution.md` §Session A — SQR-55 for context.
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { and, eq, getTableColumns, notInArray, sql } from 'drizzle-orm';
 import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
 
@@ -41,9 +37,7 @@ import {
   cardScenarios,
 } from '../db/schema/cards.ts';
 import { CARD_TYPES, SCHEMAS, type CardType } from '../schemas.ts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const EXTRACTED_DIR = join(__dirname, '..', '..', 'data', 'extracted');
+import { availableExtractedGames, readExtractedRecords } from '../extracted-paths.ts';
 
 // Map each card type to its Drizzle table. Centralizing the mapping here
 // keeps the seed and the (future) `extracted-data.ts` rewrite in lockstep.
@@ -65,6 +59,8 @@ export interface SeedCardsOptions {
   game?: string;
   /** Restrict to a subset of card types. Defaults to all 10. */
   types?: CardType[];
+  /** Override for tests that need an isolated extracted-data directory. */
+  extractedDir?: string;
 }
 
 export interface SeedCardsResult {
@@ -87,8 +83,7 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
   for (const type of types) {
     const table = TYPE_TO_TABLE[type] as CardTable;
     const schema = SCHEMAS[type];
-    const path = join(EXTRACTED_DIR, `${type}.json`);
-    const raw = JSON.parse(readFileSync(path, 'utf-8')) as Array<Record<string, unknown>>;
+    const raw = readExtractedRecords(type, game, { extractedDir: opts.extractedDir });
 
     const rows: Record<string, unknown>[] = [];
     let skipped = 0;
@@ -156,6 +151,20 @@ export async function seedCards(db: Db, opts: SeedCardsOptions = {}): Promise<Se
     });
 
     results.push({ type, inserted: rows.length, pruned, skipped });
+  }
+
+  return results;
+}
+
+export async function seedAvailableCardGames(
+  db: Db,
+  opts: Omit<SeedCardsOptions, 'game'> = {},
+): Promise<Array<SeedCardsResult & { game: string }>> {
+  const results: Array<SeedCardsResult & { game: string }> = [];
+
+  for (const game of availableExtractedGames({ extractedDir: opts.extractedDir })) {
+    const gameResults = await seedCards(db, { ...opts, game });
+    results.push(...gameResults.map((result) => ({ ...result, game })));
   }
 
   return results;

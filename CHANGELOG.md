@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.11] - 2026-05-25
+
+### Added
+
+- Added GH2 GHS extracted data for supported card tables, including items, monsters, events, battle goals, character data, personal quests, and scenario cards.
+- Added GH2 scenario and section metadata extracts, plus all-game seeding for card and scenario/section runtime tables.
+- Added game-scoped extracted-data paths and refresh workflow coverage for `data/extracted/gh2/`.
+
+### Changed
+
+- Documented GH2 import coverage, unsupported building data, and deferred treasure imports.
+- Tightened cross-game seed/search tests so GH2 records do not fall back to Frosthaven data.
+
 ## [0.1.10] - 2026-05-24
 
 ### Added

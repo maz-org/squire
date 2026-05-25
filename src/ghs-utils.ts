@@ -23,23 +23,127 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { basename, join, dirname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFragment, type DefaultTreeAdapterMap } from 'parse5';
+import {
+  DEFAULT_GAME_ID,
+  FROSTHAVEN_GAME_ID,
+  GLOOMHAVEN_2E_GAME_ID,
+  requireGameId,
+  type GameId,
+} from './game.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ─── GHS data paths ─────────────────────────────────────────────────────────
 
-export const GHS_DATA_DIR = process.env.GHS_DATA_DIR
-  ? existsSync(join(process.env.GHS_DATA_DIR, 'data', 'fh'))
-    ? join(process.env.GHS_DATA_DIR, 'data', 'fh')
-    : process.env.GHS_DATA_DIR
-  : join(__dirname, '..', 'data', 'gloomhavensecretariat', 'data', 'fh');
+const DEFAULT_GHS_GAME_DATA_SUBDIR = 'fh';
+const DEFAULT_GHS_SOURCE_DIR = join(__dirname, '..', 'data', 'gloomhavensecretariat');
+const GHS_GAME_DATA_SUBDIR_BY_GAME: Record<GameId, string> = {
+  [FROSTHAVEN_GAME_ID]: 'fh',
+  [GLOOMHAVEN_2E_GAME_ID]: 'gh2e',
+};
+const GHS_GAME_DATA_SUBDIRS = new Set(Object.values(GHS_GAME_DATA_SUBDIR_BY_GAME));
 
-export const GHS_LABEL_PATH = join(GHS_DATA_DIR, 'label', 'en.json');
+interface ResolveGhsDataDirOptions {
+  gameDataSubdir?: string;
+  exists?: (path: string) => boolean;
+}
 
-export const GHS_SPOILER_LABEL_PATH = join(GHS_DATA_DIR, 'label', 'spoiler', 'en.json');
+export interface GhsImporterConfigInput {
+  game?: string;
+  sourceDir?: string;
+  exists?: (path: string) => boolean;
+}
+
+export interface GhsImporterConfig {
+  game: GameId;
+  sourceDir: string;
+  dataDir: string;
+  labelPath: string;
+  spoilerLabelPath: string;
+}
+
+function normalizeGhsGameDataSubdir(subdir: string): string {
+  return subdir.replace(/^data[\\/]/, '');
+}
+
+function ghsGameDataSubdirFor(game: GameId): string {
+  return GHS_GAME_DATA_SUBDIR_BY_GAME[game];
+}
+
+function resolveGhsGame(value: string | undefined): GameId {
+  if (value === undefined) return DEFAULT_GAME_ID;
+  return requireGameId(normalizeGhsGameDataSubdir(value));
+}
+
+function directGhsGameDataSubdir(baseDir: string): string | null {
+  const normalizedBaseDir = normalize(baseDir);
+  const subdir = basename(normalizedBaseDir);
+  if (!GHS_GAME_DATA_SUBDIRS.has(subdir)) return null;
+  return basename(dirname(normalizedBaseDir)) === 'data' ? subdir : null;
+}
+
+function isDirectGhsGameDataDir(baseDir: string, gameDataSubdir: string): boolean {
+  return directGhsGameDataSubdir(baseDir) === gameDataSubdir;
+}
+
+/**
+ * Resolve either a GHS checkout root (`.../gloomhavensecretariat`) or a direct
+ * game data directory (`.../data/fh`, `.../data/gh2e`) to the importable folder.
+ */
+export function resolveGhsDataDir(baseDir: string, options: ResolveGhsDataDirOptions = {}): string {
+  const gameDataSubdir = normalizeGhsGameDataSubdir(
+    options.gameDataSubdir ?? DEFAULT_GHS_GAME_DATA_SUBDIR,
+  );
+
+  if (isDirectGhsGameDataDir(baseDir, gameDataSubdir)) return baseDir;
+
+  const candidate = join(baseDir, 'data', gameDataSubdir);
+  const exists = options.exists ?? existsSync;
+  if (exists(candidate)) return candidate;
+  if (exists(join(baseDir, 'label', 'en.json')) || exists(join(baseDir, 'items.json'))) {
+    return baseDir;
+  }
+  return candidate;
+}
+
+export function resolveGhsImporterConfig(input: GhsImporterConfigInput = {}): GhsImporterConfig {
+  const game = resolveGhsGame(input.game ?? process.env.GHS_DATA_GAME);
+  const gameDataSubdir = ghsGameDataSubdirFor(game);
+  const sourceDir = input.sourceDir ?? process.env.GHS_DATA_DIR ?? DEFAULT_GHS_SOURCE_DIR;
+  const directSubdir = directGhsGameDataSubdir(sourceDir);
+
+  if (directSubdir && directSubdir !== gameDataSubdir) {
+    throw new Error(
+      `GHS source directory ${sourceDir} uses data/${directSubdir}, which does not match requested game ${game} (expected data/${gameDataSubdir}).`,
+    );
+  }
+
+  const dataDir = resolveGhsDataDir(sourceDir, {
+    gameDataSubdir,
+    exists: input.exists,
+  });
+
+  return {
+    game,
+    sourceDir,
+    dataDir,
+    labelPath: join(dataDir, 'label', 'en.json'),
+    spoilerLabelPath: join(dataDir, 'label', 'spoiler', 'en.json'),
+  };
+}
+
+const DEFAULT_GHS_IMPORTER_CONFIG = resolveGhsImporterConfig();
+
+export const GHS_DATA_GAME = ghsGameDataSubdirFor(DEFAULT_GHS_IMPORTER_CONFIG.game);
+
+export const GHS_DATA_DIR = DEFAULT_GHS_IMPORTER_CONFIG.dataDir;
+
+export const GHS_LABEL_PATH = DEFAULT_GHS_IMPORTER_CONFIG.labelPath;
+
+export const GHS_SPOILER_LABEL_PATH = DEFAULT_GHS_IMPORTER_CONFIG.spoilerLabelPath;
 
 // ─── GHS types ───────────────────────────────────────────────────────────────
 
@@ -62,7 +166,7 @@ export interface GhsAction {
 export interface GhsAbility {
   name: string;
   cardId: number;
-  level: number | 'X';
+  level: number | 'X' | 'M';
   initiative: number;
   actions?: GhsAction[];
   bottomActions?: GhsAction[];
@@ -95,6 +199,13 @@ export function kebabToTitle(name: string): string {
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+function titleToken(name: string): string {
+  const cleaned = name.replace(/^(?:fh|gh2e)-/, '');
+  if (cleaned === 'onehand') return 'One Hand';
+  if (cleaned === 'twohand') return 'Two Hands';
+  return kebabToTitle(cleaned);
 }
 
 // ─── HTML stripping ─────────────────────────────────────────────────────────
@@ -141,7 +252,34 @@ export function stripHtml(text: string): string {
  */
 export function resolveGameTokens(text: string): string {
   const resolved = text.replace(/%game\.([^%]+)%/g, (_match, path: string) => {
+    const [family, rawValue] = path.split(':');
+    if (family === 'section' && rawValue) return ` Section ${rawValue}`;
+    if (family === 'itemFh' && rawValue) return ` Item ${rawValue}`;
+    if (family === 'customAction' && rawValue) return ` ${titleToken(rawValue)}`;
+    if (family === 'custom' && rawValue) return ` ${titleToken(rawValue)}`;
+
     const parts = path.split(/[.:]/);
+    if (parts[0] === 'action' && parts[2] === 'valueSign') {
+      const sign = Number(parts[3]) >= 0 && !String(parts[3]).startsWith('+') ? '+' : '';
+      return ` ${capitalize(parts[1])} ${sign}${parts[3]}`;
+    }
+    if (parts[0] === 'action' && parts.length >= 3 && /^-?\d+$/.test(parts.at(-1) ?? '')) {
+      return ` ${capitalize(parts[1])} ${parts.at(-1)}`;
+    }
+    if (parts[0] === 'itemFh' && parts[1]) return ` Item ${parts[1]}`;
+    if (parts[0] === 'action' && parts[1]) return ` ${capitalize(parts[1])}`;
+    if (parts[0] === 'card' && parts[1]) {
+      if (/^-?\d+$/.test(parts[2] ?? '')) return ` ${capitalize(parts[1])} ${parts[2]}`;
+      return ` ${capitalize(parts[1])}`;
+    }
+    if (parts[0] === 'condition' && parts[1]) return ` ${capitalize(parts[1])}`;
+    if (parts[0] === 'element' && parts[1]) return ` ${capitalize(parts[1])}`;
+    if (parts[0] === 'itemSlot' && parts[1]) return ` ${titleToken(parts[1])}`;
+    if (parts[0] === 'items' && parts[1] === 'slots' && parts[2]) return ` ${titleToken(parts[2])}`;
+    if (parts[0] === 'attackmodifier' && parts[1]) return ` ${titleToken(parts[1])}`;
+    if (parts[0] === 'enhancement' && parts[1]) return ` ${titleToken(parts[1])}`;
+    if (parts[0] === 'characterIcon' && parts[1]) return ` ${titleToken(parts[1])}`;
+
     const lastPart = parts[parts.length - 1];
     const isNumeric = /^\d+$/.test(lastPart);
 
@@ -169,16 +307,55 @@ export function resolveLabel(ref: string, labels: LabelData): string {
   if (!ref.startsWith('%data.')) return ref;
 
   const path = ref.slice(6, -1); // strip %data. and trailing %
-  const parts = path.split('.');
-
-  let current: unknown = labels;
-  for (const part of parts) {
-    if (current == null || typeof current !== 'object') return ref;
-    current = (current as Record<string, unknown>)[part];
+  if (path.startsWith('customAction:')) {
+    return titleToken(path.slice('customAction:'.length));
+  }
+  if (path.startsWith('characterColored.')) {
+    const coloredName = path.split(':').at(-1);
+    if (coloredName) return titleToken(coloredName);
+  }
+  if (path.startsWith('action.custom.')) {
+    return titleToken(path.slice('action.custom.'.length));
   }
 
+  const parts = path.split('.');
+
+  function lookup(pathParts: string[]): unknown {
+    let current: unknown = labels;
+    for (const part of pathParts) {
+      if (current == null || typeof current !== 'object') return undefined;
+      current = (current as Record<string, unknown>)[part];
+    }
+    return current;
+  }
+
+  let current = lookup(parts);
+  if (current == null && parts[0] === 'custom' && parts[1]?.startsWith('gh')) {
+    current = lookup(['custom', ...parts.slice(2)]);
+  }
+  if (current != null && typeof current === 'object') {
+    current = (current as Record<string, unknown>)[''];
+  }
   if (typeof current !== 'string') return ref;
-  return resolveGameTokens(stripHtml(current));
+  let resolved = resolveGameTokens(stripHtml(current));
+  for (let i = 0; i < 6; i++) {
+    const next = resolved.replace(/%data\.[^%]+%/g, (match) => {
+      const nested = resolveLabel(match, labels);
+      return nested === match ? match : nested;
+    });
+    if (next === resolved) break;
+    resolved = resolveGameTokens(next);
+  }
+  return resolved;
+}
+
+export function resolveTemplateText(text: string, labels: LabelData): string {
+  let resolved = text.replace(/%data\.[^%]+%/g, (match) => {
+    const label = resolveLabel(match, labels);
+    return label === match ? match : label;
+  });
+  resolved = resolveGameTokens(resolved);
+  return resolved;
 }
 
 /**
@@ -206,12 +383,12 @@ function mergeLabels(a: LabelData, b: LabelData): LabelData {
  * Load and merge the base and spoiler English label files from GHS data.
  * Throws if label files are missing.
  */
-export function loadLabels(): LabelData {
-  if (!existsSync(GHS_LABEL_PATH) || !existsSync(GHS_SPOILER_LABEL_PATH)) {
+export function loadLabels(config: GhsImporterConfig = DEFAULT_GHS_IMPORTER_CONFIG): LabelData {
+  if (!existsSync(config.labelPath) || !existsSync(config.spoilerLabelPath)) {
     throw new Error('Missing GHS label data. Expected both base and spoiler English label files.');
   }
-  const baseLabels: LabelData = JSON.parse(readFileSync(GHS_LABEL_PATH, 'utf-8'));
-  const spoilerLabels: LabelData = JSON.parse(readFileSync(GHS_SPOILER_LABEL_PATH, 'utf-8'));
+  const baseLabels: LabelData = JSON.parse(readFileSync(config.labelPath, 'utf-8'));
+  const spoilerLabels: LabelData = JSON.parse(readFileSync(config.spoilerLabelPath, 'utf-8'));
   return mergeLabels(baseLabels, spoilerLabels);
 }
 
@@ -255,8 +432,8 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     const val = String(action.value);
     if (val === '%character.abilities.wip%') {
       text = '(ability text not yet available)';
-    } else if (val.startsWith('%data.')) {
-      text = resolveLabel(val, labels);
+    } else if (/%(?:data|game)\./.test(val)) {
+      text = resolveTemplateText(val, labels);
     } else {
       text = resolveGameTokens(val);
     }
@@ -267,10 +444,10 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     text = name ? `Summon ${kebabToTitle(String(name))}` : 'Summon';
   } else {
     const val = String(action.value);
-    if (val.startsWith('%data.')) {
-      // When the value is a label reference, resolve it directly —
-      // prepending the type name would duplicate words already in the label
-      text = resolveLabel(val, labels);
+    if (/%(?:data|game)\./.test(val)) {
+      // When the value is label-backed text, resolve it directly —
+      // prepending the type name would duplicate words already in the label.
+      text = resolveTemplateText(val, labels);
     } else {
       text = `${capitalize(action.type)} ${resolveGameTokens(val)}`;
     }
@@ -284,14 +461,14 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
       subParts.push(capitalize(String(sub.value)));
     } else if (sub.type === 'custom') {
       const val = String(sub.value);
-      const resolved = val.startsWith('%data.')
-        ? resolveLabel(val, labels)
+      const resolved = /%(?:data|game)\./.test(val)
+        ? resolveTemplateText(val, labels)
         : resolveGameTokens(val);
       subParts.push(resolved);
     } else {
       const val = String(sub.value);
-      const resolved = val.startsWith('%data.')
-        ? resolveLabel(val, labels)
+      const resolved = /%(?:data|game)\./.test(val)
+        ? resolveTemplateText(val, labels)
         : resolveGameTokens(val);
       subParts.push(`${capitalize(sub.type)} ${resolved}`);
     }
