@@ -151,13 +151,13 @@ Rules:
 `inspect_sources()` is the source of truth for supported-game metadata. Phase 2
 supports two games:
 
-| Game            | Label            | Default | Accepted aliases                                                                                                                      |
-| --------------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `frosthaven`    | `Frosthaven`     | yes     | `fh`, `frost haven`                                                                                                                   |
-| `gloomhaven-2e` | `Gloomhaven 2.0` | no      | `gloomhaven-2`, `gloomhaven2`, `gloomhaven 2`, `gloomhaven 2.0`, `gloomhaven second edition`, `gloomhaven 2nd edition`, `gh2`, `gh2e` |
+| Game            | Label                      | Default | Accepted aliases                                                                                                                      |
+| --------------- | -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `frosthaven`    | `Frosthaven`               | yes     | `fh`, `frost haven`                                                                                                                   |
+| `gloomhaven-2e` | `Gloomhaven (2nd Edition)` | no      | `gloomhaven-2`, `gloomhaven2`, `gloomhaven 2`, `gloomhaven 2.0`, `gloomhaven second edition`, `gloomhaven 2nd edition`, `gh2`, `gh2e` |
 
 Canonical refs and API payloads must use `gloomhaven-2e`, never aliases such as
-`gh2`, `gh2e`, or `gloomhaven2`. User-facing copy should show `Gloomhaven 2.0`.
+`gh2`, `gh2e`, or `gloomhaven2`. User-facing copy should show `Gloomhaven (2nd Edition)`.
 
 All search, resolve, open, and traversal operations run under one active game.
 The active game defaults to `frosthaven` when omitted. Passing `game:
@@ -324,7 +324,7 @@ Output schema:
     },
     {
       "id": "gloomhaven-2e",
-      "label": "Gloomhaven 2.0",
+      "label": "Gloomhaven (2nd Edition)",
       "default": false
     }
   ],
@@ -355,7 +355,7 @@ Example:
     },
     {
       "id": "gloomhaven-2e",
-      "label": "Gloomhaven 2.0",
+      "label": "Gloomhaven (2nd Edition)",
       "default": false
     }
   ],
@@ -402,14 +402,14 @@ Example for `inspect_sources({ "game": "gh2" })`:
     },
     {
       "id": "gloomhaven-2e",
-      "label": "Gloomhaven 2.0",
+      "label": "Gloomhaven (2nd Edition)",
       "default": false
     }
   ],
   "sources": [
     {
       "ref": "source:gloomhaven-2e/rulebook",
-      "label": "Gloomhaven 2.0 Rulebook",
+      "label": "Gloomhaven (2nd Edition) Rulebook",
       "kinds": ["rules_passage"],
       "searchable": true,
       "openable": false,
@@ -417,7 +417,7 @@ Example for `inspect_sources({ "game": "gh2" })`:
     },
     {
       "ref": "source:gloomhaven-2e/faq",
-      "label": "Gloomhaven 2.0 FAQ",
+      "label": "Gloomhaven (2nd Edition) FAQ",
       "kinds": ["rules_passage"],
       "searchable": true,
       "openable": false,
@@ -425,7 +425,7 @@ Example for `inspect_sources({ "game": "gh2" })`:
     },
     {
       "ref": "source:gloomhaven-2e/errata",
-      "label": "Gloomhaven 2.0 Errata",
+      "label": "Gloomhaven (2nd Edition) Errata",
       "kinds": ["rules_passage"],
       "searchable": true,
       "openable": false,
@@ -1089,7 +1089,7 @@ Client context efficiency:
 Target prompt shape:
 
 ```text
-You answer Frosthaven and Gloomhaven 2.0 questions from Squire's knowledge
+You answer Frosthaven and Gloomhaven (2nd Edition) questions from Squire's knowledge
 sources.
 
 Use the knowledge tools to inspect available sources, resolve user language into
@@ -1125,7 +1125,7 @@ SQR-118 implement the contract. The suite must include both training prompts
 used during tool-description tuning and held-out prompts that are not inspected
 until the contract is ready for removal of old prompt choreography.
 
-1. "What sources can you inspect for Frosthaven and Gloomhaven 2.0, and which
+1. "What sources can you inspect for Frosthaven and Gloomhaven (2nd Edition), and which
    ones can you open exactly?"
 2. "Show the section I should read at the conclusion of scenario 61."
 3. "Starting from section 103.1, follow the next two read-now links and tell me
@@ -1145,7 +1145,7 @@ until the contract is ready for removal of old prompt choreography.
     card records that mention Algox Archer and explain which records are exact
     data versus fuzzy matches."
 12. "Resolve section 67.1 in Frosthaven and then resolve the same bare legacy
-    ref with an explicit Gloomhaven 2.0 active game. The second path should not
+    ref with an explicit Gloomhaven (2nd Edition) active game. The second path should not
     reuse Frosthaven data; it should return the GH2 canonical ref if present or
     a GH2-scoped not-found result if unavailable."
 

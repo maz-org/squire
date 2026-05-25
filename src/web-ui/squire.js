@@ -8,6 +8,140 @@
 // .squire-answer .cite adds .is-active; tap anywhere else clears it.
 // Five lines of vanilla JS — no framework, no dependency. Keyboard
 // focus is already covered by the global :focus-visible ring.
+var ACTIVE_GAME_STORAGE_KEY = 'squire.activeGame';
+var FALLBACK_DEFAULT_ACTIVE_GAME = 'frosthaven';
+var fallbackSupportedActiveGames = {
+  frosthaven: true,
+  'gloomhaven-2e': true,
+};
+var defaultActiveGame = FALLBACK_DEFAULT_ACTIVE_GAME;
+var supportedActiveGames = fallbackSupportedActiveGames;
+var activeGame = defaultActiveGame;
+var activeGameInitialized = false;
+
+function isSupportedActiveGame(value) {
+  return (
+    typeof value === 'string' && Object.prototype.hasOwnProperty.call(supportedActiveGames, value)
+  );
+}
+
+function firstSupportedActiveGame() {
+  for (var key in supportedActiveGames) {
+    if (Object.prototype.hasOwnProperty.call(supportedActiveGames, key)) return key;
+  }
+  return FALLBACK_DEFAULT_ACTIVE_GAME;
+}
+
+function hydrateActiveGameConfig() {
+  var picker = document.querySelector ? document.querySelector('.squire-game-picker') : null;
+  var supported = {};
+  var defaultGame = '';
+
+  if (picker && picker.dataset && picker.dataset.supportedGames) {
+    var ids = picker.dataset.supportedGames.split(/\s+/);
+    for (var i = 0; i < ids.length; i += 1) {
+      if (ids[i]) supported[ids[i]] = true;
+    }
+    defaultGame = picker.dataset.defaultGame || '';
+  }
+
+  var radios = document.querySelectorAll
+    ? document.querySelectorAll('input[name="activeGame"]')
+    : [];
+  if (Object.keys(supported).length === 0) {
+    for (var j = 0; j < radios.length; j += 1) {
+      if (radios[j].value) supported[radios[j].value] = true;
+    }
+  }
+  if (!defaultGame) {
+    for (var k = 0; k < radios.length; k += 1) {
+      if (radios[k].checked && radios[k].value) {
+        defaultGame = radios[k].value;
+        break;
+      }
+    }
+  }
+
+  if (Object.keys(supported).length > 0) supportedActiveGames = supported;
+  defaultActiveGame =
+    typeof defaultGame === 'string' &&
+    Object.prototype.hasOwnProperty.call(supportedActiveGames, defaultGame)
+      ? defaultGame
+      : firstSupportedActiveGame();
+  if (!isSupportedActiveGame(activeGame)) activeGame = defaultActiveGame;
+}
+
+function readStoredActiveGame() {
+  try {
+    var stored = window.localStorage && window.localStorage.getItem(ACTIVE_GAME_STORAGE_KEY);
+    return isSupportedActiveGame(stored) ? stored : defaultActiveGame;
+  } catch {
+    return defaultActiveGame;
+  }
+}
+
+function persistActiveGame(value) {
+  try {
+    if (window.localStorage) window.localStorage.setItem(ACTIVE_GAME_STORAGE_KEY, value);
+  } catch {
+    // Storage can be blocked in private browsing. The hidden form field still
+    // carries the current selection for this page view.
+  }
+}
+
+function setHiddenGameInputs(value) {
+  var inputs = document.querySelectorAll ? document.querySelectorAll('input[name="game"]') : [];
+  for (var i = 0; i < inputs.length; i += 1) {
+    inputs[i].value = value;
+  }
+
+  var form = document.querySelector('.squire-input-dock');
+  var formInput = form && form.querySelector ? form.querySelector('input[name="game"]') : null;
+  if (formInput) formInput.value = value;
+}
+
+function setActiveGame(value, persist) {
+  activeGame = isSupportedActiveGame(value) ? value : defaultActiveGame;
+
+  var radios = document.querySelectorAll
+    ? document.querySelectorAll('input[name="activeGame"]')
+    : [];
+  for (var i = 0; i < radios.length; i += 1) {
+    radios[i].checked = radios[i].value === activeGame;
+  }
+  setHiddenGameInputs(activeGame);
+
+  if (persist) persistActiveGame(activeGame);
+}
+
+function bindActiveGameRadio(radio) {
+  radio.addEventListener('change', function () {
+    if (!radio.checked) return;
+    setActiveGame(radio.value, true);
+  });
+}
+
+function syncActiveGameControls() {
+  hydrateActiveGameConfig();
+
+  var radios = document.querySelectorAll
+    ? document.querySelectorAll('input[name="activeGame"]')
+    : [];
+
+  if (!activeGameInitialized) {
+    activeGame = readStoredActiveGame();
+    activeGameInitialized = true;
+  }
+  setActiveGame(activeGame, false);
+
+  for (var i = 0; i < radios.length; i += 1) {
+    var radio = radios[i];
+    if (radio.dataset && radio.dataset.squireGameBound === 'true') continue;
+    if (radio.dataset) radio.dataset.squireGameBound = 'true';
+    bindActiveGameRadio(radio);
+  }
+}
+
 document.addEventListener('click', function (e) {
   var t = e.target;
   var cite = t && t.closest ? t.closest('.squire-answer .cite') : null;
@@ -26,6 +160,7 @@ document.addEventListener('submit', function (e) {
 
   var questionInput = form.querySelector('input[name="question"]');
   var submitButton = form.querySelector('button[type="submit"]');
+  setHiddenGameInputs(activeGame);
   ensureIdempotencyKey(form);
 
   // SQR-108 QA: do NOT mutate `submitButton.textContent` here. The
@@ -821,6 +956,9 @@ document.addEventListener('htmx:configRequest', function (event) {
   if (idempotencyKey && event.detail && event.detail.parameters) {
     event.detail.parameters.idempotencyKey = idempotencyKey;
   }
+  if (event.detail && event.detail.parameters) {
+    event.detail.parameters.game = activeGame;
+  }
 });
 
 document.addEventListener('htmx:afterSwap', function (event) {
@@ -831,6 +969,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
   var questionInput = form && form.querySelector('input[name="question"]');
   if (questionInput) questionInput.value = '';
   syncChatFormAction();
+  syncActiveGameControls();
 
   var swapTarget = event.detail && event.detail.target;
   var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
@@ -860,6 +999,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
 
 document.addEventListener('DOMContentLoaded', function () {
   syncChatFormAction();
+  syncActiveGameControls();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
   // back/forward navigation and refresh, so we don't pin or auto-scroll on
   // initial load. We only flag pin on submit (above) and re-evaluate it

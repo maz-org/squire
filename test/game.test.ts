@@ -15,7 +15,7 @@ describe('game id helpers', () => {
     expect(normalizeGameId('gloomhaven-2e')).toBe(GLOOMHAVEN_2E_GAME_ID);
   });
 
-  it('centralizes accepted aliases for Gloomhaven 2.0', () => {
+  it('centralizes accepted aliases for Gloomhaven (2nd Edition)', () => {
     const aliases = [
       'gloomhaven-2',
       'gloomhaven2',

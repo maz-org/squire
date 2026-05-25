@@ -368,10 +368,10 @@ describe('runAgentLoop', () => {
 
   it('keeps assistant identity and support scope current for supported games', () => {
     for (const prompt of [AGENT_SYSTEM_PROMPT, LEGACY_AGENT_SYSTEM_PROMPT]) {
-      expect(prompt).toContain('Squire supports Frosthaven and Gloomhaven 2.0');
+      expect(prompt).toContain('Squire supports Frosthaven and Gloomhaven (2nd Edition)');
       expect(prompt).toContain('assistant identity or support-scope questions');
       expect(prompt).toContain(
-        'For Gloomhaven 2.0 current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.',
+        'For Gloomhaven (2nd Edition) current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.',
       );
       expect(prompt).toContain('Cite FAQ or errata when you rely on it');
       expect(prompt).toContain(

@@ -901,10 +901,11 @@ function buildToolStatusId(name: string): string {
 
 async function readQuestionForm(
   c: Context,
-): Promise<{ question: string; idempotencyKey?: string }> {
+): Promise<{ question: string; idempotencyKey?: string; game?: string }> {
   const form = await c.req.formData();
   const questionValue = form.get('question');
   const idempotencyValue = form.get('idempotencyKey');
+  const gameValue = form.get('game');
 
   return {
     question: typeof questionValue === 'string' ? questionValue.trim() : '',
@@ -912,7 +913,13 @@ async function readQuestionForm(
       typeof idempotencyValue === 'string' && idempotencyValue.trim().length > 0
         ? idempotencyValue.trim()
         : undefined,
+    game:
+      typeof gameValue === 'string' && gameValue.trim().length > 0 ? gameValue.trim() : undefined,
   };
+}
+
+function readChatGame(game: string | undefined): string | undefined {
+  return game === undefined ? undefined : requireGameId(game);
 }
 
 // ADR 0012: a "pending" turn is any persisted user message without an
@@ -1000,16 +1007,24 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
 app.post('/chat', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const { question, idempotencyKey } = await readQuestionForm(c);
+  const { question, idempotencyKey, game: rawGame } = await readQuestionForm(c);
 
   if (!question) return badChatRequest(c, 'Question is required');
   if (!idempotencyKey) return badChatRequest(c, 'Idempotency key is required');
+  let game: string | undefined;
+  try {
+    game = readChatGame(rawGame);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return badChatRequest(c, message);
+  }
 
   if (isHtmxRequest(c)) {
     const pending = await createPendingConversation({
       userId: session.userId,
       question,
       idempotencyKey,
+      game,
     });
 
     c.header('Cache-Control', 'no-store');
@@ -1054,6 +1069,7 @@ app.post('/chat', async (c) => {
     userId: session.userId,
     question,
     idempotencyKey,
+    game,
     requestId,
   });
 
@@ -1065,14 +1081,22 @@ app.post('/chat', async (c) => {
 app.post('/chat/:conversationId/messages', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const { question } = await readQuestionForm(c);
+  const { question, game: rawGame } = await readQuestionForm(c);
   if (!question) return badChatRequest(c, 'Question is required');
+  let game: string | undefined;
+  try {
+    game = readChatGame(rawGame);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return badChatRequest(c, message);
+  }
 
   if (isHtmxRequest(c)) {
     const pending = await createPendingFollowUp({
       conversationId: c.req.param('conversationId'),
       userId: session.userId,
       question,
+      game,
     });
     if (!pending?.currentUserMessage) return c.notFound();
 
@@ -1096,6 +1120,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
     conversationId: c.req.param('conversationId'),
     userId: session.userId,
     question,
+    game,
     requestId,
   });
   if (!conversation) return c.notFound();
@@ -1148,6 +1173,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       question: loaded.message.content,
       userId: session.userId,
       currentUserMessageId: loaded.message.id,
+      game: loaded.message.game ?? undefined,
       requestId,
       onEvent: async (event, data) => {
         if (event === 'text') {

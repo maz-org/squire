@@ -23,7 +23,7 @@ ARCHITECTURE.md is the system shape, not the implementation. Before adding anyth
 
 ## Overview
 
-Squire is a Frosthaven / Gloomhaven 2.0 knowledge agent. Its rules-Q&A core is built today; the multi-user platform, campaign state, recommendation engine, character-state ingestion, polish, and additional channels land in later phases (see [SPEC.md](SPEC.md) Development Phases).
+Squire is a Frosthaven / Gloomhaven (2nd Edition) knowledge agent. Its rules-Q&A core is built today; the multi-user platform, campaign state, recommendation engine, character-state ingestion, polish, and additional channels land in later phases (see [SPEC.md](SPEC.md) Development Phases).
 
 The system is organized as a single Hono server that hosts:
 
@@ -272,13 +272,13 @@ The web channel passes a `Session` domain object through the request lifecycle. 
 
 ## Game Dimension
 
-Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2: Gloomhaven 2.0. Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
+Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2: Gloomhaven (2nd Edition). Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
 
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 
-- **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2'` (extensible)
+- **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2e'` (extensible)
 - **Rule-source chunks** are implicitly tagged via filename prefix in `data/pdfs/` and `data/rule-sources/`: `fh-rule-book.pdf`, `gh2-rule-book.pdf`, `gh2-faq.html`, `gh2-errata.html`, etc. The `source` field in the vector store carries the basename.
-- **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2', prosperity: 4 })`)
+- **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2e', prosperity: 4 })`)
 - **Agent system prompt** is told which game the user is asking about. Phase 2 uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
 
 The `game` column ships in **Phase 1** as part of the Storage & Data Migration project — every `card_*` table and the `embeddings` table includes `game text not null default 'frosthaven'` from day 1. Atomic tools accept the optional `game` parameter but don't filter on it until Phase 2. Pulling the column forward avoids 11 ALTER TABLE migrations later when GH2 lands. The `game` field on **import records** (the JSON shape produced by `src/import-*.ts`) is still added in Phase 2 alongside the GH2 import scripts, since today's Frosthaven importers don't need it.
@@ -289,7 +289,7 @@ The `game` column ships in **Phase 1** as part of the Storage & Data Migration p
 
 ### Static Game Data — Gloomhaven Secretariat (GHS)
 
-Squire imports static game data directly from **Gloomhaven Secretariat (GHS)** — an open-source Gloomhaven / Frosthaven companion app maintained by Lurkars on GitHub: <https://github.com/Lurkars/gloomhavensecretariat>. GHS maintains structured data in its `data/` subfolder, community-maintained and auto-formatted on commit. GHS already supports Gloomhaven 2nd Edition, which unblocks Phase 2.
+Squire imports static game data directly from **Gloomhaven Secretariat (GHS)** — an open-source Gloomhaven / Frosthaven companion app maintained by Lurkars on GitHub: <https://github.com/Lurkars/gloomhavensecretariat>. GHS maintains structured data in its `data/` subfolder, community-maintained and auto-formatted on commit. GHS already supports Gloomhaven (2nd Edition), which unblocks Phase 2.
 
 Squire has dedicated import scripts in `src/import-*.ts` for each card type:
 
@@ -368,7 +368,7 @@ _Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md
   characterId: string
   userId: string
   campaignId: string
-  game: 'frosthaven' | 'gloomhaven-2'
+  game: 'frosthaven' | 'gloomhaven-2e'
   className: string
   level: number
   xp: number
@@ -831,7 +831,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 5. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via Langfuse, model tiering (Haiku for cheap cases) when justified.
 
-6. **frosthaven-storyline.com may not support Gloomhaven 2.0 (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
+6. **frosthaven-storyline.com may not support Gloomhaven (2nd Edition) (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
 
 7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, scenario/section books, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
 
@@ -849,7 +849,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 - **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
-- **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
+- **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven (2nd Edition). If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
 ---
 
@@ -880,4 +880,4 @@ For developer setup, running the server, working on import scripts locally, and 
 
 - **2026-04-07 (v1.0.1):** Final-pass cleanup. Fixed bogus "~34GB+" PDF size to actual ~164MB.
 
-- **2026-04-07 (v1.0):** Born from the v3.0 split of `frosthaven-agent-product-spec.md`. Absorbed all Technical Architecture content (Stack, Data Architecture, Agent Architecture, MCP Server, Observability, Deployment, Cost), tech risks, and tech open questions from the old single-file spec. Absorbed the architectural principles, two-agent split rationale, atomic tools rationale, code structure, and Mermaid diagrams from the old `docs/architecture-plan.md` (which is now deleted). Fixed the v2.1 misstatement about the two-agent split: only the internal MCP _transport_ was dropped, not the split itself. Added the `game` dimension section for Frosthaven + Gloomhaven 2.0 support. Updated all code references (`src/*.ts`) including the 10 import scripts. The old `docs/architecture-plan.md` content is preserved in git history before this commit.
+- **2026-04-07 (v1.0):** Born from the v3.0 split of `frosthaven-agent-product-spec.md`. Absorbed all Technical Architecture content (Stack, Data Architecture, Agent Architecture, MCP Server, Observability, Deployment, Cost), tech risks, and tech open questions from the old single-file spec. Absorbed the architectural principles, two-agent split rationale, atomic tools rationale, code structure, and Mermaid diagrams from the old `docs/architecture-plan.md` (which is now deleted). Fixed the v2.1 misstatement about the two-agent split: only the internal MCP _transport_ was dropped, not the split itself. Added the `game` dimension section for Frosthaven + Gloomhaven (2nd Edition) support. Updated all code references (`src/*.ts`) including the 10 import scripts. The old `docs/architecture-plan.md` content is preserved in git history before this commit.

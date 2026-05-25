@@ -26,7 +26,7 @@ export const SUPPORTED_GAMES: readonly GameDefinition[] = [
   },
   {
     id: GLOOMHAVEN_2E_GAME_ID,
-    label: 'Gloomhaven 2.0',
+    label: 'Gloomhaven (2nd Edition)',
     default: false,
     sourcePrefix: 'gh2',
     aliases: [

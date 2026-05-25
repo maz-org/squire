@@ -17,7 +17,7 @@ Squire is **the agent**, not a specific app. It's reachable through multiple **c
 
 **MVP (Phase 1):** A mobile-friendly web chat where Brian can pull out his phone at the table, log in with Google, and ask any Frosthaven rules question. Hosted publicly at `squire.maz.org` behind CloudFront and AWS WAF. The agent answers using semantic search across the Frosthaven books, deterministic scenario/section-book traversal for anchored story-book questions, and a generalized atomic-tools API over Gloomhaven Secretariat (GHS) structured game data.
 
-**Long-term product (Phases 2–8):** Gloomhaven 2.0 content expansion, multi-user platform, campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion, polish (voice input, share/export, spoiler protection), and additional channels (Discord, iMessage).
+**Long-term product (Phases 2–8):** Gloomhaven (2nd Edition) content expansion, multi-user platform, campaign and character state, the recommendation engine (card selection at level-up, inventory optimization, pre-combat hand selection, long-term build planning), character state ingestion, polish (voice input, share/export, spoiler protection), and additional channels (Discord, iMessage).
 
 **Primary Use Cases:**
 
@@ -139,7 +139,7 @@ Character and campaign state lands in **Phase 4 (Campaign & character state)** w
 ### Data Sources (current)
 
 - **Static game data:** Gloomhaven Secretariat (GHS) structured data — see Data Architecture section. Imported via dedicated `src/import-*.ts` scripts.
-- **Book corpus:** the official Frosthaven rulebook, scenario books, section books, and puzzle book PDFs. The book corpus supports both semantic retrieval and exact scenario/section lookup. Gloomhaven 2.0 book ingestion lands in Phase 2.
+- **Book corpus:** the official Frosthaven rulebook, scenario books, section books, and puzzle book PDFs. The book corpus supports both semantic retrieval and exact scenario/section lookup. Gloomhaven (2nd Edition) book ingestion lands in Phase 2.
 
 ### Data Sources (future, by phase)
 
@@ -186,7 +186,7 @@ Context-aware chat with bounded conversation history (older messages summarized 
 
 **Status:** deferred to post-MVP.
 
-Phase 1 displays a clear warning: "This tool may contain spoilers for Frosthaven (and Gloomhaven 2.0) content including locked classes, scenarios, and events." Users self-regulate what they ask. This dramatically reduces MVP complexity and lets development effort focus on core features.
+Phase 1 displays a clear warning: "This tool may contain spoilers for Frosthaven and Gloomhaven (2nd Edition) content including locked classes, scenarios, and events." Users self-regulate what they ask. This dramatically reduces MVP complexity and lets development effort focus on core features.
 
 If user feedback indicates spoiler protection is valuable, it can be added in Phase 7 (Polish) once campaign state is available to drive filtering. The data model already exists from Phase 4 (campaign progress, prosperity, completed scenarios).
 
@@ -256,31 +256,31 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 ---
 
-### Phase 2: Gloomhaven 2.0 content expansion
+### Phase 2: Gloomhaven (2nd Edition) content expansion
 
 **Goal:** Brian can pull out his phone at the GH2 table the day his group transitions and Squire works for the new game.
 
-**Deadline-driven:** Brian's group has roughly 3–4 months left in their Frosthaven campaign before transitioning to Gloomhaven 2.0 (~mid-2026). Squire needs to be useful at the GH2 table when that happens. This is the only phase in the plan with a hard external deadline, which is why it sits right after MVP and ahead of multi-user.
+**Deadline-driven:** Brian's group has roughly 3–4 months left in their Frosthaven campaign before transitioning to Gloomhaven (2nd Edition) (~mid-2026). Squire needs to be useful at the GH2 table when that happens. This is the only phase in the plan with a hard external deadline, which is why it sits right after MVP and ahead of multi-user.
 
 **Tasks:**
 
-- Ingest the Gloomhaven 2.0 rulebook, scenario-book, and section-book PDFs into `data/pdfs/` and reindex / reseed (`npm run index`, `npm run seed:scenario-section-books`)
-- Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven 2nd Edition, so the import path is unblocked.
+- Ingest the Gloomhaven (2nd Edition) rulebook, scenario-book, and section-book PDFs into `data/pdfs/` and reindex / reseed (`npm run index`, `npm run seed:scenario-section-books`)
+- Add GH2 data import scripts mirroring the existing GHS Frosthaven imports (`import-character-abilities.ts`, `import-items.ts`, `import-monster-stats.ts`, etc.). Gloomhaven Secretariat already supports Gloomhaven (2nd Edition), so the import path is unblocked.
 - **Turn on the `game` dimension** so the agent doesn't mix Frosthaven and GH2 rules in the same answer. The Storage & Data Migration project (Phase 1) ships the `game` column on every `card_*` table and the `embeddings` table with `default 'frosthaven'`, so existing rows are tagged correctly. The runtime code that _populates_ and _filters_ on the column is Phase 2 work — none of this exists today. Phase 2 will:
-  - Update the GH2 import scripts to write `game: 'gloomhaven-2'` on each new row (the existing Frosthaven importers don't yet write a `game` field; they rely on the column default)
-  - Add filename-prefix → `game` derivation in `src/index-docs.ts` so rule chunks from `fh-*.pdf` get `game: 'frosthaven'` and chunks from `gh2-*.pdf` get `game: 'gloomhaven-2'`. Today `IndexEntry` in `src/vector-store.ts` has no `game` field at all — Phase 2 adds it alongside the index-docs.ts changes.
+  - Update the GH2 import scripts to write `game: 'gloomhaven-2e'` on each new row (the existing Frosthaven importers don't yet write a `game` field; they rely on the column default)
+  - Add filename-prefix → `game` derivation in `src/index-docs.ts` so rule chunks from `fh-*.pdf` get `game: 'frosthaven'` and chunks from `gh2-*.pdf` get `game: 'gloomhaven-2e'`. Today `IndexEntry` in `src/vector-store.ts` has no `game` field at all — Phase 2 adds it alongside the index-docs.ts changes.
   - Wire the optional `game` filter parameter on the atomic tools through to the agent system prompt and through every call site that knows the active game
 - Update the agent system prompt to know which game the user is asking about (per-session game selector for MVP; inferred from campaign once Phase 4 lands)
-- Smoke test: ask both a Frosthaven and a Gloomhaven 2.0 rules question in the same session and verify no cross-contamination
+- Smoke test: ask both a Frosthaven and a Gloomhaven (2nd Edition) rules question in the same session and verify no cross-contamination
 
 **Risks:**
 
-- **frosthaven-storyline.com may not support Gloomhaven 2.0.** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, his current campaign-tracking workflow breaks for the new game and the future Phase 6 ingestion path needs to be re-evaluated for GH2 specifically. Mitigation: confirm storyline GH2 support before this phase begins; if absent, consider switching campaign management to GHS itself for the GH2 campaign (GHS is also a campaign tracker, not just a data source — see Phase 6 ingestion options).
-- **Action item for Brian:** before this phase begins, verify that frosthaven-storyline.com (or its successor) supports Gloomhaven 2nd Edition. If not, plan the GH2 campaign-tracking workflow accordingly.
+- **frosthaven-storyline.com may not support Gloomhaven (2nd Edition).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, his current campaign-tracking workflow breaks for the new game and the future Phase 6 ingestion path needs to be re-evaluated for GH2 specifically. Mitigation: confirm storyline GH2 support before this phase begins; if absent, consider switching campaign management to GHS itself for the GH2 campaign (GHS is also a campaign tracker, not just a data source — see Phase 6 ingestion options).
+- **Action item for Brian:** before this phase begins, verify that frosthaven-storyline.com (or its successor) supports Gloomhaven (2nd Edition). If not, plan the GH2 campaign-tracking workflow accordingly.
 
 **Out of scope:** original Gloomhaven (1st Edition), Jaws of the Lion, Crimson Scales, Forgotten Circles. Those stay in Future Enhancements.
 
-**Deliverable:** When Brian's group sits down for their first Gloomhaven 2.0 scenario, Squire answers GH2 rules questions correctly, never mixes them up with Frosthaven rules, and works from the same phone-at-the-table workflow as the MVP.
+**Deliverable:** When Brian's group sits down for their first Gloomhaven (2nd Edition) scenario, Squire answers GH2 rules questions correctly, never mixes them up with Frosthaven rules, and works from the same phone-at-the-table workflow as the MVP.
 
 ---
 
@@ -359,12 +359,12 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 2. **Manual JSON export → upload** — user exports localStorage, uploads to Squire (lo-fi, no extension to maintain)
 3. **Sync via the storyline server protocol** — reverse-engineer the websocket sync to make Squire look like another client (fragile, unsupported)
 4. **Screenshot → Claude Vision** — original spec approach. Image preprocessing via Sharp (resize, normalize, compress) before sending to Claude Vision API. Cost ~$0.15–0.30 per character sync. Kept as a fallback for users who can't install an extension.
-5. **GHS as the campaign tracker** — Brian (or the user) uses **Gloomhaven Secretariat** as the campaign tracker instead of frosthaven-storyline.com, and Squire reads campaign state directly from GHS. Squire already imports static GHS data — extending it to read live user state is a much smaller jump than reverse-engineering a third-party site. Especially compelling for the **Gloomhaven 2.0** campaign (Phase 2), since storyline.com may not support GH2 at all. Tradeoff: requires Brian to switch his campaign-tracking workflow from storyline to GHS, which only happens if he likes GHS as a tracker.
+5. **GHS as the campaign tracker** — Brian (or the user) uses **Gloomhaven Secretariat** as the campaign tracker instead of frosthaven-storyline.com, and Squire reads campaign state directly from GHS. Squire already imports static GHS data — extending it to read live user state is a much smaller jump than reverse-engineering a third-party site. Especially compelling for the **Gloomhaven (2nd Edition)** campaign (Phase 2), since storyline.com may not support GH2 at all. Tradeoff: requires Brian to switch his campaign-tracking workflow from storyline to GHS, which only happens if he likes GHS as a tracker.
 
 **Risks:**
 
 - **Browser-extension fragility (options 1 and 2).** The browser-extension and JSON-export approaches inherit the same class of risk as the original scraping concerns — site DOM/localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
-- **storyline.com may not support Gloomhaven 2.0.** All four storyline-based options (1–4) become non-viable for the GH2 campaign if storyline doesn't support GH2. Mitigation: option 5 (GHS-as-tracker) sidesteps this entirely. Confirm storyline GH2 support before this phase begins; if absent, GH2 must use option 5.
+- **storyline.com may not support Gloomhaven (2nd Edition).** All four storyline-based options (1–4) become non-viable for the GH2 campaign if storyline doesn't support GH2. Mitigation: option 5 (GHS-as-tracker) sidesteps this entirely. Confirm storyline GH2 support before this phase begins; if absent, GH2 must use option 5.
 
 **Tasks (once approach is chosen):**
 
@@ -483,10 +483,10 @@ Squire is a deep Gloomhaven / Frosthaven knowledge agent. The MVP is small on pu
   - Header updated: Version 3.0, Owner: Product (PM), companion-doc note added.
 
 - **2026-04-07 (v2.1):** GH2 phase + cleanup of stale sections missed in v2.0.
-  - **New Phase 2: Gloomhaven 2.0 content expansion.** Deadline-driven (Brian's group transitions to GH2 in ~mid-2026, ~3–4 months from now). Adds GH2 rulebook ingestion, GHS GH2 import scripts, and a `game` dimension to the data layer to prevent cross-contamination of FH and GH2 rules. Confirmed via web search that GHS supports Gloomhaven 2nd Edition.
+  - **New Phase 2: Gloomhaven (2nd Edition) content expansion.** Deadline-driven (Brian's group transitions to GH2 in ~mid-2026, ~3–4 months from now). Adds GH2 rulebook ingestion, GHS GH2 import scripts, and a `game` dimension to the data layer to prevent cross-contamination of FH and GH2 rules. Confirmed via web search that GHS supports Gloomhaven (2nd Edition).
   - **Phases renumbered:** old Phases 2–7 shifted down to 3–8. Eight phases total now. All in-document phase number cross-references updated.
   - **Phase 6 (Character state ingestion) gains a fifth option: GHS-as-tracker.** Brian uses GHS as the campaign tracker instead of frosthaven-storyline.com, and Squire reads campaign state directly from GHS. Especially compelling for the GH2 campaign since storyline.com may not support GH2.
-  - **New Risk 8:** frosthaven-storyline.com may not support Gloomhaven 2.0. Action item to confirm before Phase 2 begins; if absent, GH2 must use the GHS-as-tracker ingestion path.
+  - **New Risk 8:** frosthaven-storyline.com may not support Gloomhaven (2nd Edition). Action item to confirm before Phase 2 begins; if absent, GH2 must use the GHS-as-tracker ingestion path.
   - **Cleanup of three stale mid-document sections** that were missed in v2.0 and contradicted the v2.0 phase decisions:
     - **Character State Management** — was still describing worldhaven and screenshot/Vision extraction as the current architecture. Replaced with a brief pointer to Phase 4 (manual entry) and Phase 6 (automated ingestion).
     - **User Interface & Experience** — was still saying "Voice required for Phase 1" and "Progressive Web App for offline capability." Both directly contradicted v2.0 decisions. Rewritten to describe MVP reality (Hono JSX + HTMX, mobile-responsive, text only, no PWA) with forward references to Phases 5 and 7 for richer output and voice.

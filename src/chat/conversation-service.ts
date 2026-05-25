@@ -47,25 +47,44 @@ function toHistory(messages: ConversationMessage[]): HistoryMessage[] {
   }));
 }
 
+function agentOptions(input: {
+  history: HistoryMessage[];
+  userId: string;
+  correlation: { conversationId: string; userMessageId: string; requestId?: string };
+  game?: string;
+  emit: EmitFn;
+}) {
+  return {
+    history: input.history,
+    userId: input.userId,
+    requestId: input.correlation.requestId,
+    conversationId: input.correlation.conversationId,
+    userMessageId: input.correlation.userMessageId,
+    ...(input.game ? { game: input.game } : {}),
+    emit: input.emit,
+  };
+}
+
 async function generateAssistantReply(
   question: string,
   history: HistoryMessage[],
   userId: string,
   correlation: { conversationId: string; userMessageId: string; requestId?: string },
   emit: EmitFn,
-  options: { retryOnTransportError: boolean; onRetry?: () => void } = {
+  options: { retryOnTransportError: boolean; game?: string; onRetry?: () => void } = {
     retryOnTransportError: true,
   },
 ) {
-  try {
-    return await ask(question, {
+  const baseOptions = () =>
+    agentOptions({
       history,
       userId,
-      requestId: correlation.requestId,
-      conversationId: correlation.conversationId,
-      userMessageId: correlation.userMessageId,
+      correlation,
+      game: options.game,
       emit,
     });
+  try {
+    return await ask(question, baseOptions());
   } catch (err) {
     if (!isRetryableTransportError(err) || !options.retryOnTransportError) {
       throw err;
@@ -77,14 +96,7 @@ async function generateAssistantReply(
     // accumulator state populated by the failed first attempt.
     options.onRetry?.();
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return ask(question, {
-      history,
-      userId,
-      requestId: correlation.requestId,
-      conversationId: correlation.conversationId,
-      userMessageId: correlation.userMessageId,
-      emit,
-    });
+    return ask(question, baseOptions());
   }
 }
 
@@ -93,6 +105,7 @@ async function persistAssistantOutcome(input: {
   question: string;
   userId: string;
   currentUserMessageId: string;
+  game?: string;
   requestId?: string;
   onEvent?: EmitFn;
   failureMessage?: string;
@@ -169,6 +182,7 @@ async function persistAssistantOutcome(input: {
           // On SSE the client has already seen a partial stream; silently
           // restarting would mix two runs into one DOM update.
           retryOnTransportError: input.onEvent === undefined,
+          game: input.game,
           // Failed attempt may have pushed tool names before throwing — reset
           // so the persisted sources match the successful attempt only.
           onRetry: () => {
@@ -228,6 +242,7 @@ async function createConversationTurn(input: {
   userId: string;
   question: string;
   idempotencyKey: string;
+  game?: string;
 }): Promise<PendingConversationTurn> {
   const result = await getDb('server').db.transaction(async (tx) => {
     const existingOrCreated = await ConversationRepository.getOrCreateByIdempotencyKey(tx, {
@@ -246,6 +261,7 @@ async function createConversationTurn(input: {
       conversationId: existingOrCreated.conversation.id,
       role: 'user',
       content: input.question,
+      game: input.game ?? null,
     });
     await ConversationRepository.touchLastMessageAt(
       tx,
@@ -272,6 +288,7 @@ export async function createPendingConversation(input: {
   userId: string;
   question: string;
   idempotencyKey: string;
+  game?: string;
 }): Promise<PendingConversationTurn> {
   return createConversationTurn(input);
 }
@@ -280,6 +297,7 @@ export async function createPendingFollowUp(input: {
   conversationId: string;
   userId: string;
   question: string;
+  game?: string;
 }): Promise<PendingConversationTurn | null> {
   const existingConversation = await ConversationRepository.findOwnedById(
     input.userId,
@@ -292,6 +310,7 @@ export async function createPendingFollowUp(input: {
       conversationId: input.conversationId,
       role: 'user',
       content: input.question,
+      game: input.game ?? null,
     });
     await ConversationRepository.touchLastMessageAt(
       tx,
@@ -312,6 +331,7 @@ export async function streamAssistantTurn(input: {
   question: string;
   userId: string;
   currentUserMessageId: string;
+  game?: string;
   requestId?: string;
   onEvent: EmitFn;
   failureMessage?: string;
@@ -321,6 +341,7 @@ export async function streamAssistantTurn(input: {
     question: input.question,
     userId: input.userId,
     currentUserMessageId: input.currentUserMessageId,
+    game: input.game,
     requestId: input.requestId,
     onEvent: input.onEvent,
     failureMessage: input.failureMessage,
@@ -331,6 +352,7 @@ export async function startConversation(input: {
   userId: string;
   question: string;
   idempotencyKey: string;
+  game?: string;
   requestId?: string;
 }): Promise<Conversation> {
   const result = await createConversationTurn(input);
@@ -340,6 +362,7 @@ export async function startConversation(input: {
       question: result.currentUserMessage.content,
       userId: input.userId,
       currentUserMessageId: result.currentUserMessage.id,
+      game: result.currentUserMessage.game ?? input.game,
       requestId: input.requestId,
     });
   }
@@ -354,6 +377,7 @@ export async function appendMessage(input: {
   conversationId: string;
   userId: string;
   question: string;
+  game?: string;
   requestId?: string;
 }): Promise<Conversation | null> {
   const result = await createPendingFollowUp(input);
@@ -364,6 +388,7 @@ export async function appendMessage(input: {
     question: input.question,
     userId: input.userId,
     currentUserMessageId: result.currentUserMessage.id,
+    game: result.currentUserMessage.game ?? input.game,
     requestId: input.requestId,
   });
 

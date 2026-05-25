@@ -30,6 +30,7 @@ import {
   UNSUPPORTED_MARKDOWN_FEATURES,
   UNSUPPORTED_MARKDOWN_SPECIMEN,
 } from './markdown-styleguide.ts';
+import { DEFAULT_GAME_ID, SUPPORTED_GAME_IDS, SUPPORTED_GAMES } from '../game.ts';
 import type { ConversationMessage, Session } from '../db/repositories/types.ts';
 
 export interface LayoutShellOptions {
@@ -137,6 +138,31 @@ function renderAccountMenu(session: Session, csrfToken: string): HtmlEscapedStri
       </section>
     </div>
   </details>` as HtmlEscapedString;
+}
+
+function renderActiveGamePicker(): HtmlEscapedString {
+  const labels = new Map<string, string>([['gloomhaven-2e', 'Gloomhaven 2e']]);
+  return html`<fieldset
+    class="squire-game-picker"
+    aria-label="Active game"
+    data-default-game="${DEFAULT_GAME_ID}"
+    data-supported-games="${SUPPORTED_GAME_IDS.join(' ')}"
+  >
+    <legend class="squire-game-picker__legend">Active game</legend>
+    ${SUPPORTED_GAMES.map(
+      (game) =>
+        html`<label class="squire-game-picker__option">
+          <input
+            class="squire-game-picker__input"
+            type="radio"
+            name="activeGame"
+            value="${game.id}"
+            ${game.id === DEFAULT_GAME_ID ? html`checked` : html``}
+          />
+          <span>${labels.get(game.id) ?? game.label}</span>
+        </label>`,
+    )}
+  </fieldset>` as HtmlEscapedString;
 }
 
 async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedString> {
@@ -319,10 +345,11 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const chatFormAction = options.chatFormAction ?? '/chat';
   const chatFormHxTarget = options.chatFormHxTarget ?? '#squire-surface';
   const chatFormHxSwap = options.chatFormHxSwap ?? 'innerHTML';
-  const headerContext = options.headerContext ?? 'FROSTHAVEN · RULES';
+  const headerContext = options.headerContext ?? 'HAVEN · RULES';
   const columnClassName = options.columnClassName ?? 'squire-column';
   const chatFormHiddenFields = [
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
+    { name: 'game', value: DEFAULT_GAME_ID },
     ...(options.chatFormHiddenFields ?? []),
   ];
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
@@ -358,7 +385,9 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     <span class="squire-monogram" aria-hidden="true">S</span>
                     <span class="squire-wordmark">Squire</span>
                   </a>
-                  <span class="squire-context">${headerContext}</span>
+                  ${showChatChrome
+                    ? renderActiveGamePicker()
+                    : html`<span class="squire-context">${headerContext}</span>`}
                   <div class="squire-header__account">
                     ${renderAccountMenu(options.session, authenticatedCsrfToken)}
                   </div>`
@@ -473,7 +502,7 @@ export async function renderLoginPage(options: LoginPageOptions = {}): Promise<H
       <section class="squire-auth-page__stack" aria-label="Sign in to Squire">
         <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
         <span class="squire-wordmark squire-wordmark--auth">Squire</span>
-        <p class="squire-tagline">A FROSTHAVEN COMPANION</p>
+        <p class="squire-tagline">A HAVEN RULES COMPANION</p>
         <a
           href="/auth/google/start"
           class="squire-button squire-button--primary squire-button--google"
@@ -506,7 +535,7 @@ export async function renderNotInvitedPage(): Promise<HtmlEscapedString> {
       <section class="squire-auth-page__stack" aria-label="Not invited to Squire">
         <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
         <span class="squire-wordmark squire-wordmark--auth">Squire</span>
-        <p class="squire-tagline">A FROSTHAVEN COMPANION</p>
+        <p class="squire-tagline">A HAVEN RULES COMPANION</p>
         ${renderAuthBanner({
           label: 'NOT YET INVITED',
           message: "Squire is single-user during Phase 1. Reach out if you'd like access.",
@@ -522,7 +551,7 @@ export async function renderEmailNotVerifiedPage(): Promise<HtmlEscapedString> {
       <section class="squire-auth-page__stack" aria-label="Google email not verified">
         <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
         <span class="squire-wordmark squire-wordmark--auth">Squire</span>
-        <p class="squire-tagline">A FROSTHAVEN COMPANION</p>
+        <p class="squire-tagline">A HAVEN RULES COMPANION</p>
         <div class="squire-banner squire-banner--error" role="alert">
           <span class="squire-banner__label">GOOGLE EMAIL NOT VERIFIED</span>
           <p class="squire-banner__body">

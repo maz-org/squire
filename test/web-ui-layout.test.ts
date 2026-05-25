@@ -146,7 +146,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('class="squire-auth-page"');
     expect(body).toContain('class="squire-monogram squire-monogram--masthead"');
     expect(body).toContain('class="squire-wordmark squire-wordmark--auth"');
-    expect(body).toContain('A FROSTHAVEN COMPANION');
+    expect(body).toContain('A HAVEN RULES COMPANION');
     expect(body).toContain('href="/auth/google/start"');
     expect(body).toContain('Sign in with Google');
   });
@@ -195,7 +195,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-header__brand"');
     expect(body).toMatch(/<a[^>]*class="squire-header__brand"[^>]*href="\/"[^>]*>/);
-    expect(body).toContain('class="squire-context">FROSTHAVEN · RULES<');
+    expect(body).toContain('class="squire-game-picker"');
     expect(body).toContain('class="squire-account-menu"');
     expect(body).toContain('class="squire-account-menu__avatar"');
     expect(body).toContain('Open account menu for Test User');
@@ -207,6 +207,20 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     );
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="_csrf"[^>]*value="[^"]+"/);
     expect(body).toMatch(/>\s*Log out\s*</);
+  });
+
+  it('renders an active-game selector in the header and submits the current game with chat forms', async () => {
+    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
+
+    expect(body).toContain('class="squire-game-picker"');
+    expect(body).toContain('aria-label="Active game"');
+    expect(body).toMatch(
+      /<input[^>]*type="radio"[^>]*name="activeGame"[^>]*value="frosthaven"[^>]*checked/,
+    );
+    expect(body).toMatch(/<input[^>]*type="radio"[^>]*name="activeGame"[^>]*value="gloomhaven-2e"/);
+    expect(body).toContain('Frosthaven');
+    expect(body).toContain('Gloomhaven 2e');
+    expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="game"[^>]*value="frosthaven"/);
   });
 
   it('requires a csrf token when rendering authenticated chrome', async () => {

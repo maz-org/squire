@@ -47,7 +47,7 @@ The second case is the real frame. The first is just the most obvious symptom.
 - Building a general-purpose GraphRAG platform
 - Replacing semantic search entirely
 - Encoding a huge relationship ontology
-- Shipping Gloomhaven 2.0 support in this issue
+- Shipping Gloomhaven (2nd Edition) support in this issue
 - Solving every cross-document reasoning problem in one pass
 
 This issue should solve Frosthaven scenario/section traversal cleanly and leave

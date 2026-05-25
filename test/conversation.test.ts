@@ -289,6 +289,64 @@ describe('conversation web backend', () => {
     ]);
   });
 
+  it('stores the selected game on the user turn and forwards it to the non-SSE agent path', async () => {
+    mockAsk.mockResolvedValueOnce('GH2 answer.');
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'How does advantage work?',
+        idempotencyKey: 'idem-gh2-first',
+        game: 'gloomhaven-2e',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(createRes.status).toBe(302);
+    expect(mockAsk).toHaveBeenCalledWith(
+      'How does advantage work?',
+      expect.objectContaining({ game: 'gloomhaven-2e' }),
+    );
+
+    const { db } = getDb('server');
+    const storedMessages = await db.execute(sql`
+      select role, content, game
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      { role: 'user', content: 'How does advantage work?', game: 'gloomhaven-2e' },
+      { role: 'assistant', content: 'GH2 answer.', game: null },
+    ]);
+  });
+
+  it('rejects unsupported web chat game values before creating messages', async () => {
+    const auth = await createAuthContext();
+
+    const response = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: formBody({
+        question: 'This should not persist',
+        idempotencyKey: 'idem-bad-game',
+        game: 'jaws-of-the-lion',
+      }),
+      redirect: 'manual',
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain('Unsupported game id');
+    expect(mockAsk).not.toHaveBeenCalled();
+
+    const { db } = getDb('server');
+    const messageCount = await db.execute(sql`select count(*)::int as count from messages`);
+    expect(messageCount.rows[0].count).toBe(0);
+  });
+
   it('persists consulted_sources on the non-SSE plain-form fallback path (SQR-98 regression)', async () => {
     // Regression guard from Codex review 2026-04-20: the first SQR-98 pass
     // only populated `messages.consulted_sources` from the SSE handler's
@@ -906,6 +964,39 @@ describe('conversation web backend', () => {
     const doneData = doneEvent?.data as Record<string, unknown>;
     expect(doneData).not.toHaveProperty('recentQuestionsNavHtml');
     expect(doneData.html).toBe('<p>Third answer.</p>\n');
+  });
+
+  it('forwards the selected game from an HTMX pending turn into the SSE agent path', async () => {
+    mockAsk.mockResolvedValueOnce('GH2 streamed answer.');
+    const auth = await createAuthContext();
+
+    const response = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Can GH2 summons open doors?',
+        idempotencyKey: 'idem-gh2-sse',
+        game: 'gloomhaven-2e',
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    expect(streamRes.status).toBe(200);
+    await streamRes.text();
+
+    expect(mockAsk).toHaveBeenCalledWith(
+      'Can GH2 summons open doors?',
+      expect.objectContaining({ game: 'gloomhaven-2e' }),
+    );
   });
 
   it('persists the user turn and a generic assistant failure turn when ask fails', async () => {

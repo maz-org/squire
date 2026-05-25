@@ -303,6 +303,85 @@ function bootPendingTranscript() {
 }
 
 describe('squire.js chat form retargeting', () => {
+  it('SQR-203: initializes the active game from localStorage, falls back safely, and syncs hidden chat fields', () => {
+    const listeners = new Map<string, Array<() => void>>();
+    const changeListeners = new Map<string, Array<() => void>>();
+    const storedValues: string[] = [];
+    const hiddenGame = { value: '' };
+    const frosthavenRadio = {
+      value: 'frosthaven',
+      checked: false,
+      addEventListener(event: string, callback: () => void) {
+        changeListeners.set('frosthaven:' + event, [
+          ...(changeListeners.get('frosthaven:' + event) ?? []),
+          callback,
+        ]);
+      },
+    };
+    const gloomhavenRadio = {
+      value: 'gloomhaven-2e',
+      checked: false,
+      addEventListener(event: string, callback: () => void) {
+        changeListeners.set('gloomhaven-2e:' + event, [
+          ...(changeListeners.get('gloomhaven-2e:' + event) ?? []),
+          callback,
+        ]);
+      },
+    };
+    const form = {
+      setAttribute() {},
+      querySelector(selector: string) {
+        return selector === 'input[name="game"]' ? hiddenGame : null;
+      },
+    };
+    const document = {
+      addEventListener(event: string, callback: () => void) {
+        listeners.set(event, [...(listeners.get(event) ?? []), callback]);
+      },
+      querySelector(selector: string) {
+        return selector === '.squire-input-dock' ? form : null;
+      },
+      querySelectorAll(selector: string) {
+        if (selector === 'input[name="activeGame"]') return [frosthavenRadio, gloomhavenRadio];
+        return [];
+      },
+      documentElement: { scrollHeight: 0 },
+    };
+
+    const context = vm.createContext({
+      document,
+      window: {
+        location: { pathname: '/' },
+        crypto: {},
+        EventSource: function () {},
+        addEventListener: () => {},
+        scrollY: 0,
+        innerHeight: 0,
+        scrollTo: () => {},
+        localStorage: {
+          getItem: () => 'jaws-of-the-lion',
+          setItem: (_key: string, value: string) => {
+            storedValues.push(value);
+          },
+        },
+      },
+    });
+
+    vm.runInContext(scriptSource, context);
+    for (const callback of listeners.get('DOMContentLoaded') ?? []) callback();
+
+    expect(hiddenGame.value).toBe('frosthaven');
+    expect(frosthavenRadio.checked).toBe(true);
+    expect(gloomhavenRadio.checked).toBe(false);
+
+    frosthavenRadio.checked = false;
+    gloomhavenRadio.checked = true;
+    for (const callback of changeListeners.get('gloomhaven-2e:change') ?? []) callback();
+
+    expect(hiddenGame.value).toBe('gloomhaven-2e');
+    expect(storedValues).toEqual(['gloomhaven-2e']);
+  });
+
   it('SQR-108: /chat/:id sets the append-fragment swap contract', () => {
     const attributes = runSquireScript('/chat/c7b7ac29-2173-48c5-9f6f-4d618e555db5');
 
