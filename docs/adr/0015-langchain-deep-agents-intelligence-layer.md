@@ -2,7 +2,8 @@
 type: ADR
 id: '0015'
 title: 'Evaluate LangChain and Deep Agents at the intelligence boundary'
-status: active
+status: superseded
+superseded_by: '0019'
 date: 2026-05-03
 ---
 
@@ -12,7 +13,7 @@ SQR-91 asks whether LangChain Deep Agents and LangSmith Deployment should change
 Squire's deployment path. The useful question is narrower than "should
 LangChain host the app?" Squire already has a Hono web app, REST API, MCP
 endpoint, Postgres + pgvector data store, conversation service, SSE contract,
-Langfuse trace/eval path, and a stable `ask()` service boundary. The
+LangSmith trace/eval path, and a stable `ask()` service boundary. The
 intelligence layer behind `/api/ask` is the place where LangChain, LangGraph,
 Deep Agents, or LangSmith could matter.
 
@@ -105,15 +106,15 @@ The eval seam is also explicit. The future runner must plug into the matrix eval
 harness, preserve trace links, and be compared against the current Sonnet
 baseline before it can receive production traffic.
 
-Langfuse remains the authoritative LLM trace and eval path. LangSmith evals may
-be prototyped as a parallel export or comparison path, but replacing Langfuse
+LangSmith remains the authoritative LLM trace and eval path. LangSmith evals may
+be prototyped as a parallel export or comparison path, but replacing LangSmith
 requires a later decision with trace-link, dataset, judge, and report parity.
 Trace-link parity means the eval report can map each row back to the same
 logical run across systems: provider/model, run label, dataset item or case ID,
 Squire trace ID, request ID when present, judge run ID, report ID, timestamps,
 and parent-child relationships between the agent run, model calls, tool calls,
 and scores. Any LangSmith export must define that mapping in one schema or
-export spec before tests can treat it as equivalent to Langfuse.
+export spec before tests can treat it as equivalent to LangSmith.
 
 Any Deep Agents production experiment must use safe backends. The in-memory
 state backend is acceptable for eval-only runs only when each eval gets a fresh

@@ -7,11 +7,11 @@ OpenAI runs side by side. It is the handoff from SQR-125 to the trace writer in
 SQR-127. It does not implement provider runners, OpenAI tool schema rendering,
 or production `/api/ask` routing.
 
-Langfuse is the source of truth for eval traces. Local JSON reports may mirror a
-subset for quick inspection, but they must be derived from Langfuse run or trace
+LangSmith is the source of truth for eval traces. Local JSON reports may mirror a
+subset for quick inspection, but they must be derived from LangSmith run or trace
 data.
 
-## Langfuse Placement Legend
+## LangSmith Placement Legend
 
 | Placement                    | Use                                                                  |
 | ---------------------------- | -------------------------------------------------------------------- |
@@ -29,13 +29,13 @@ data.
 | `span.input`                 | Redacted tool arguments or judge input.                              |
 | `span.output`                | Redacted tool results or judge output.                               |
 | `span.metadata`              | Tool status, retry data, timings, errors, and source refs.           |
-| `score`                      | Langfuse scores for correctness, pass/fail, and trajectory.          |
+| `score`                      | LangSmith scores for correctness, pass/fail, and trajectory.         |
 | `optional_export`            | Convenience exports only, never the authoritative trace.             |
 
 ## Required Filter Fields
 
 These fields must be written to `trace.metadata` on every eval case trace so
-Langfuse filtering and grouped reporting work without parsing nested blobs.
+LangSmith filtering and grouped reporting work without parsing nested blobs.
 
 | Field               | Example                         | Notes                                                |
 | ------------------- | ------------------------------- | ---------------------------------------------------- |
@@ -44,7 +44,7 @@ Langfuse filtering and grouped reporting work without parsing nested blobs.
 | `model`             | `gpt-5.5`                       | Requested model alias or exact ID.                   |
 | `resolvedModel`     | `gpt-5.5-2026-04-23`            | Provider-returned concrete model ID when available.  |
 | `runLabel`          | `sqr-123-baseline`              | Human run label from CLI/config.                     |
-| `datasetName`       | `frosthaven-qa`                 | Langfuse dataset name.                               |
+| `datasetName`       | `frosthaven-qa`                 | LangSmith dataset name.                              |
 | `caseId`            | `building-alchemist`            | Eval case ID from `eval/dataset.json`.               |
 | `caseCategory`      | `card-data`                     | Eval category from `eval/dataset.json`.              |
 | `promptVersion`     | `redesigned-agent-v1`           | Stable prompt contract name or semantic version.     |
@@ -56,7 +56,7 @@ Langfuse filtering and grouped reporting work without parsing nested blobs.
 
 ## Required Debug Fields
 
-Every field below must have a known Langfuse placement or be explicitly marked
+Every field below must have a known LangSmith placement or be explicitly marked
 as optional export data. SQR-127 should fail fast if a required field is absent.
 
 | Field                      | Placement                    | Required | Purpose                                                     |
@@ -95,14 +95,14 @@ Rules:
   OpenAI background `status`.
 - Keep normalized Squire tool trajectory fields next to provider-native items so
   reports can compare both "what Squire saw" and "what the provider emitted."
-- If a provider-native object is too large for usable Langfuse UI display, write
+- If a provider-native object is too large for usable LangSmith UI display, write
   a redacted summary in `generation.metadata` and mirror the redacted full object
-  in an optional export linked from the trace. The Langfuse trace remains the
+  in an optional export linked from the trace. The LangSmith trace remains the
   source of truth.
 
 ## Generation Shape
 
-Each provider model call should be a Langfuse generation observation.
+Each provider model call should be a LangSmith generation observation.
 
 Minimum generation fields:
 
@@ -160,7 +160,7 @@ happen before the span is written.
 
 ## Scores
 
-Write item-level evaluator results as Langfuse scores:
+Write item-level evaluator results as LangSmith scores:
 
 | Score name         | Value shape     | Notes                                           |
 | ------------------ | --------------- | ----------------------------------------------- |
@@ -179,7 +179,7 @@ Run summaries may aggregate these scores, but per-case scores are required.
 
 ## Redaction Rules
 
-Redaction runs before any Langfuse write, local export write, or console report.
+Redaction runs before any LangSmith write, local export write, or console report.
 It must process nested objects, arrays, provider-native blobs, tool arguments,
 tool results, errors, and retry metadata.
 
@@ -215,10 +215,10 @@ this eval trace contract.
 Optional exports are allowed for CI artifacts and local debugging, but they are
 not the source of truth. They may include:
 
-- Full redacted provider request/response JSON when too large for Langfuse UI.
+- Full redacted provider request/response JSON when too large for LangSmith UI.
 - A compact side-by-side transcript diff.
 - A cost summary grouped by provider and model.
-- A failed-case replay bundle derived from Langfuse data.
+- A failed-case replay bundle derived from LangSmith data.
 
 Optional exports must include `contractVersion`, `runLabel`, `caseId`,
 `provider`, `model`, `promptHash`, and `toolSchemaHash` so stale exports are easy
@@ -245,7 +245,7 @@ filterable but not compatibility blockers.
 - SQR-126 owns OpenAI strict tool schema rendering and the stable
   `toolSchemaVersion`/`toolSchemaHash` values exposed by
   `eval/openai-schema.ts`.
-- SQR-127 owns the trace writer, redaction utility, and Langfuse generation/span
+- SQR-127 owns the trace writer, redaction utility, and LangSmith generation/span
   mapping that must satisfy this contract.
 - SQR-128 and SQR-129 own provider runners and should emit provider-native items
   into this contract without changing production app history.

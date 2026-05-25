@@ -20,7 +20,7 @@ The current split matters:
 - The knowledge agent owns domain reasoning and model/tool calls.
 - The SSE route owns browser-visible stream event ordering.
 - ADR 0013 keeps Phase 1 production on this current Hono, conversation-service,
-  Claude SDK, SSE, Langfuse, and OpenTelemetry path.
+  Claude SDK, SSE, LangSmith, and OpenTelemetry path.
 
 Reliability behavior needs to protect the transcript first. A failed model call
 must not lose the user's question, duplicate an assistant answer, or silently mix

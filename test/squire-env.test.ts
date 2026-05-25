@@ -14,8 +14,7 @@ describe('SQUIRE_ENV', () => {
     expect(resolveSquireEnv({})).toBe('development');
   });
 
-  it('rejects values Langfuse cannot accept as environment names', () => {
-    expect(() => resolveSquireEnv({ SQUIRE_ENV: 'langfuse-prod' })).toThrow(/SQUIRE_ENV/);
+  it('rejects values that cannot be used as trace environment names', () => {
     expect(() => resolveSquireEnv({ SQUIRE_ENV: 'review/app' })).toThrow(/SQUIRE_ENV/);
     expect(() => resolveSquireEnv({ SQUIRE_ENV: 'review:app' })).toThrow(/SQUIRE_ENV/);
     expect(() => resolveSquireEnv({ SQUIRE_ENV: 'review@app' })).toThrow(/SQUIRE_ENV/);

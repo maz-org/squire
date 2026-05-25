@@ -31,15 +31,6 @@ export interface EvalProviderConfig {
   broadSearchSynthesisThreshold?: number | undefined;
 }
 
-export interface EvalReplayCliOptions {
-  enabled: boolean;
-  traceId: string | undefined;
-  diffTraceId: string | undefined;
-  diffProvider: EvalProvider | undefined;
-  diffModel: EvalProviderModel | undefined;
-  diffRunLabel: string | undefined;
-}
-
 export interface EvalMatrixGuardrails {
   allowFullDataset: boolean;
   allowEstimatedCostOverride: boolean;
@@ -59,8 +50,6 @@ export interface EvalCliOptions {
   providerConfig: EvalProviderConfig;
   agentRuntime: EvalAgentRuntime;
   matrixAgentRuntimes: EvalAgentRuntime[];
-  langsmithTracing: boolean;
-  replay: EvalReplayCliOptions | undefined;
   matrixMode: boolean;
   matrixGuardrails: EvalMatrixGuardrails;
   comparison: EvalRunComparisonCliOptions | undefined;
@@ -98,17 +87,16 @@ function assertProvider(value: string): EvalProvider {
 }
 
 function assertAgentRuntime(value: string): EvalAgentRuntime {
-  if (value === 'claude-sdk' || value === 'deep-agents' || value === 'langgraph') return value;
+  if (value === 'deep-agents' || value === 'langgraph') return value;
 
   throw new Error(
-    `Invalid --agent-runtime: ${value}. Expected "claude-sdk", "deep-agents", "langgraph", or "both".`,
+    `Invalid --agent-runtime: ${value}. Expected "langgraph", "deep-agents", or "both".`,
   );
 }
 
 function matrixAgentRuntimesFor(args: string[], env: NodeJS.ProcessEnv): EvalAgentRuntime[] {
-  const raw =
-    settingFor(args, '--agent-runtime=', env, 'SQUIRE_EVAL_AGENT_RUNTIME') ?? 'claude-sdk';
-  if (raw === 'both') return ['claude-sdk', 'deep-agents'];
+  const raw = settingFor(args, '--agent-runtime=', env, 'SQUIRE_EVAL_AGENT_RUNTIME') ?? 'langgraph';
+  if (raw === 'both') return ['langgraph', 'deep-agents'];
   const runtimes = raw
     .split(',')
     .map((value) => value.trim())
@@ -167,44 +155,6 @@ function positiveIntegerFor(
   return parsed;
 }
 
-function replayOptionsFor(
-  args: string[],
-  idFilter: string | undefined,
-  provider: EvalProvider,
-): EvalReplayCliOptions | undefined {
-  const enabled = args.includes('--replay');
-  const traceId = valueFor(args, '--trace-id=');
-  const diffTraceId = valueFor(args, '--diff-trace-id=');
-  const diffRunLabel = valueFor(args, '--diff-run-label=');
-  const rawDiffProvider = valueFor(args, '--diff-provider=');
-  const diffProvider = rawDiffProvider ? assertProvider(rawDiffProvider) : undefined;
-  const rawDiffModel = valueFor(args, '--diff-model=');
-  const diffModel = rawDiffModel ? assertModel(diffProvider ?? provider, rawDiffModel) : undefined;
-
-  if (!enabled && !traceId && !diffTraceId && !diffProvider && !diffModel && !diffRunLabel) {
-    return undefined;
-  }
-
-  if (!enabled) {
-    throw new Error('Invalid replay options: pass --replay when using replay trace flags.');
-  }
-  if (!traceId && !idFilter) {
-    throw new Error('Invalid --replay: pass --id or --trace-id.');
-  }
-  if (!diffTraceId && !idFilter && (diffProvider || diffModel || diffRunLabel)) {
-    throw new Error('Invalid replay diff: pass --id or --diff-trace-id.');
-  }
-
-  return {
-    enabled,
-    traceId,
-    diffTraceId,
-    diffProvider,
-    diffModel,
-    diffRunLabel,
-  };
-}
-
 function optionalPositiveIntegerFor(args: string[], prefix: string, fallback: number): number {
   const value = valueFor(args, prefix);
   if (!value) return fallback;
@@ -255,19 +205,26 @@ function comparisonOptionsFor(args: string[]): EvalRunComparisonCliOptions | und
   };
 }
 
-function booleanEnvEnabled(value: string | undefined): boolean {
-  const normalized = value?.trim().toLowerCase();
-  return normalized === '1' || normalized === 'true' || normalized === 'yes';
-}
-
 export function parseEvalArgs(
   args: string[],
   now = new Date(),
   env: NodeJS.ProcessEnv = process.env,
 ): EvalCliOptions {
+  const removedReplayFlags = [
+    '--replay',
+    '--trace-id=',
+    '--diff-trace-id=',
+    '--diff-provider=',
+    '--diff-model=',
+    '--diff-run-label=',
+  ];
+  if (args.some((arg) => removedReplayFlags.some((flag) => arg === flag || arg.startsWith(flag)))) {
+    throw new Error('Eval trace replay is not implemented for LangSmith; use matrix reports.');
+  }
+
   const surface = valueFor(args, '--tool-surface=') ?? 'redesigned';
-  if (surface !== 'redesigned' && surface !== 'legacy') {
-    throw new Error(`Invalid --tool-surface: ${surface}. Expected "redesigned" or "legacy".`);
+  if (surface !== 'redesigned') {
+    throw new Error(`Invalid --tool-surface: ${surface}. Expected "redesigned".`);
   }
 
   const legacyName = valueFor(args, '--name=');
@@ -327,9 +284,6 @@ export function parseEvalArgs(
     },
     agentRuntime: matrixAgentRuntimes[0],
     matrixAgentRuntimes,
-    langsmithTracing:
-      args.includes('--langsmith-tracing') || booleanEnvEnabled(env.SQUIRE_EVAL_LANGSMITH_TRACING),
-    replay: replayOptionsFor(args, valueFor(args, '--id='), provider),
     matrixMode: args.includes('--matrix'),
     matrixGuardrails: {
       allowFullDataset: args.includes('--allow-full-dataset'),

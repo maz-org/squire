@@ -369,15 +369,15 @@ describe('ask', () => {
     });
   });
 
-  it('checks the budget before delegating to the agent loop', async () => {
+  it('checks the budget before delegating to the LangGraph agent', async () => {
     await initialize();
     const result = await ask('What is the loot action?');
     expect(mockAssertLlmBudgetAvailable).toHaveBeenCalledWith({ userId: null });
-    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith(
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith(
       'What is the loot action?',
       undefined,
     );
-    expect(result).toBe('You pick up loot tokens in your hex.');
+    expect(result).toBe('LangGraph answer.');
   });
 
   it('records trajectory usage after the agent returns', async () => {
@@ -388,13 +388,13 @@ describe('ask', () => {
 
     expect(mockRecordLlmUsage).toHaveBeenCalledWith({
       userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-      model: 'claude-sonnet-4-6',
+      model: 'langgraph:claude-sdk',
       usage: {
-        inputTokens: 100,
-        outputTokens: 50,
-        cacheCreationInputTokens: 20,
-        cacheReadInputTokens: 10,
-        totalTokens: 180,
+        inputTokens: 20,
+        outputTokens: 10,
+        cacheCreationInputTokens: 0,
+        cacheReadInputTokens: 0,
+        totalTokens: 30,
       },
     });
   });
@@ -404,13 +404,13 @@ describe('ask', () => {
 
     const result = await ask('What is the loot action?');
 
-    expect(result).toBe('You pick up loot tokens in your hex.');
+    expect(result).toBe('LangGraph answer.');
     expect(mockWriteSecurityLog).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'llm_budget_accounting_failed',
         level: 'error',
         fields: expect.objectContaining({
-          model: 'claude-sonnet-4-6',
+          model: 'langgraph:claude-sdk',
           has_user_id: false,
           error_type: 'Error',
         }),
@@ -422,10 +422,10 @@ describe('ask', () => {
     mockAssertLlmBudgetAvailable.mockRejectedValueOnce(new Error('daily budget exceeded'));
 
     await expect(ask('What is the loot action?')).rejects.toThrow(/daily budget exceeded/i);
-    expect(mockRunAgentLoopWithTrajectory).not.toHaveBeenCalled();
+    expect(mockRunLangGraphAgentLoopWithTrajectory).not.toHaveBeenCalled();
   });
 
-  it('passes options through to runAgentLoop', async () => {
+  it('passes production options through to the LangGraph agent', async () => {
     await initialize();
     const options = {
       history: [{ role: 'user' as const, content: 'What is loot?' }],
@@ -434,16 +434,17 @@ describe('ask', () => {
       game: 'gh2',
     };
     await ask('Follow-up', options);
-    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', options);
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', options);
   });
 
-  it('routes opt-in LangGraph runs behind ask without changing the default runner', async () => {
+  it('uses LangGraph as the production runner and strips deprecated selectors', async () => {
     await initialize();
     const emit = vi.fn().mockResolvedValue(undefined);
 
     const result = await ask('What unlocks scenario 61?', {
       emit,
       runner: 'langgraph',
+      toolSurface: 'legacy',
       userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     });
 
@@ -461,7 +462,7 @@ describe('ask', () => {
   it('initializes lazily when asked before warmup', async () => {
     await ask('test');
     expect(mockInitializeRetrieval).toHaveBeenCalled();
-    expect(mockRunAgentLoopWithTrajectory).toHaveBeenCalledWith('test', undefined);
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith('test', undefined);
   });
 
   it('does not run the agent loop after readiness has regressed', async () => {

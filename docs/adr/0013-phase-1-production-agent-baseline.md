@@ -2,7 +2,8 @@
 type: ADR
 id: '0013'
 title: 'Keep Phase 1 production on the current knowledge-agent path'
-status: active
+status: superseded
+superseded_by: '0019'
 date: 2026-04-26
 ---
 
@@ -18,7 +19,7 @@ already working:
 - The knowledge agent uses the current Claude SDK tool loop.
 - The web conversation service owns persisted turns, ownership checks, SSE,
   and presentation while delegating domain reasoning to the knowledge agent.
-- Langfuse and OpenTelemetry remain the trace and eval path.
+- LangSmith and OpenTelemetry remain the trace and eval path.
 
 There are good reasons to keep this stable during the redesign. Moving
 production to LangChain, Deep Agents, LangGraph, or LangSmith Deployment before
@@ -30,7 +31,7 @@ retrieval contract is good enough.
 ## Decision
 
 **Phase 1 production stays on the current Hono, Postgres + pgvector, Claude SDK
-tool-loop, conversation-service, SSE, Langfuse, and OpenTelemetry path while the
+tool-loop, conversation-service, SSE, LangSmith, and OpenTelemetry path while the
 retrieval redesign happens. Deep Agents and LangSmith Deployment stay deferred
 until after the Step 3 eval report.**
 

@@ -158,7 +158,7 @@ describe('eval dataset', () => {
     }
   });
 
-  it('rejects stale remote Langfuse dataset shapes before a full run', () => {
+  it('rejects stale remote LangSmith dataset shapes before a full run', () => {
     expect(() =>
       validateRemoteDatasetShape(
         [
@@ -171,7 +171,7 @@ describe('eval dataset', () => {
     ).toThrow(/invalid expectedOutput/);
   });
 
-  it('rejects remote Langfuse datasets with a stale item count', () => {
+  it('rejects remote LangSmith datasets with a stale item count', () => {
     expect(() =>
       validateRemoteDatasetShape(
         [{ expectedOutput: { finalAnswer: { expected: 'ok', grading: 'ok' } } }],
@@ -181,7 +181,7 @@ describe('eval dataset', () => {
     ).toThrow(/has 1 item/);
   });
 
-  it('rejects malformed remote Langfuse expected outputs', () => {
+  it('rejects malformed remote LangSmith expected outputs', () => {
     expect(() =>
       validateRemoteDatasetShape(
         [

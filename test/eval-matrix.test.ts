@@ -5,7 +5,6 @@ import {
   DEFAULT_EVAL_MATRIX_MODELS,
   defaultEvalMatrixModels,
   formatEvalMatrixTable,
-  langfuseTraceUrl,
   runEvalMatrix,
   type EvalMatrixRunner,
 } from '../eval/matrix.ts';
@@ -56,13 +55,7 @@ function successfulRunner(): EvalMatrixRunner {
 }
 
 describe('eval matrix runner', () => {
-  it('builds Langfuse trace links with the configured project id', () => {
-    expect(langfuseTraceUrl('https://langfuse.test/', 'project-123', 'eval:run:model:case')).toBe(
-      'https://langfuse.test/project/project-123/traces/eval%3Arun%3Amodel%3Acase',
-    );
-  });
-
-  it('falls back to the default Langfuse project id when configured blank', async () => {
+  it('uses deterministic trace ids when no LangSmith project URL is provided', async () => {
     const runner = successfulRunner();
 
     const result = await runEvalMatrix({
@@ -80,11 +73,9 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
-      langfuseProjectId: '   ',
     });
 
-    expect(result.rows[0]?.traceUrl).toContain('/project/default/traces/');
+    expect(result.rows[0]?.traceUrl).toBe(result.rows[0]?.traceId);
   });
 
   it('adds LangSmith row links when a project URL is provided', async () => {
@@ -105,8 +96,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
-      langfuseProjectId: 'project-123',
       langsmithProjectUrl: 'https://smith.langchain.com/o/org-id/projects/p/project-id',
     });
 
@@ -142,8 +131,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
-      langfuseProjectId: 'project-123',
     });
 
     expect(result.rows.map((row) => `${row.provider}:${row.model}`)).toEqual([
@@ -174,7 +161,7 @@ describe('eval matrix runner', () => {
           toolCallCount: 1,
           retryCount: 0,
           loopIterations: 2,
-          traceUrl: expect.stringContaining('/project/project-123/traces/'),
+          traceUrl: expect.stringContaining('eval:matrix-smoke:langgraph:openai:gpt-5.5'),
         }),
       ]),
     );
@@ -199,8 +186,7 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
-      langfuseProjectId: 'project-123',
+      langsmithProjectUrl: 'https://smith.langchain.test/o/org/projects/p/project',
     });
 
     expect(result.rows.map((row) => row.agentRuntime)).toEqual(['claude-sdk', 'deep-agents']);
@@ -292,7 +278,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
     await runEvalMatrix({
       cases: [selectedCase, secondCase],
@@ -309,7 +294,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(runner).toHaveBeenCalledTimes(28);
@@ -324,7 +308,7 @@ describe('eval matrix runner', () => {
         ok: true,
         answer: 'ok',
         traceId,
-        traceUrl: `https://langfuse.test/project/default/traces/${traceId}`,
+        traceUrl: `https://smith.langchain.test/project/default/traces/${traceId}`,
         score: 1,
         pass: true,
         latencyMs: 500,
@@ -351,7 +335,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(result.rows).toHaveLength(7);
@@ -388,7 +371,6 @@ describe('eval matrix runner', () => {
           continueOnModelFailure: true,
           providerConcurrency: { anthropic: 1, openai: 1 },
         },
-        langfuseBaseUrl: 'https://langfuse.test',
       }),
     ).rejects.toThrow(/2 case\(s\), 7 model\(s\), 2 runtime\(s\)/);
 
@@ -409,7 +391,6 @@ describe('eval matrix runner', () => {
           continueOnModelFailure: true,
           providerConcurrency: { anthropic: 1, openai: 1 },
         },
-        langfuseBaseUrl: 'https://langfuse.test',
       }),
     ).rejects.toThrow(/1 case\(s\), 7 model\(s\), 2 runtime\(s\)/);
   });
@@ -437,7 +418,7 @@ describe('eval matrix runner', () => {
       ok: true,
       answer: 'priced',
       traceId,
-      traceUrl: `https://langfuse.test/project/default/traces/${traceId}`,
+      traceUrl: `https://smith.langchain.test/project/default/traces/${traceId}`,
       score: 1,
       pass: true,
       latencyMs: 500,
@@ -466,7 +447,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(result).toMatchObject({
@@ -508,7 +488,7 @@ describe('eval matrix runner', () => {
       ok: true,
       answer: 'priced',
       traceId,
-      traceUrl: `https://langfuse.test/project/default/traces/${traceId}`,
+      traceUrl: `https://smith.langchain.test/project/default/traces/${traceId}`,
       score: 1,
       pass: true,
       latencyMs: 500,
@@ -534,7 +514,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(result.rows[0]).toMatchObject({
@@ -560,7 +539,7 @@ describe('eval matrix runner', () => {
         ok: true,
         answer: 'ok after retry',
         traceId: 'retry-trace',
-        traceUrl: 'https://langfuse.test/project/default/traces/retry-trace',
+        traceUrl: 'https://smith.langchain.test/project/default/traces/retry-trace',
         score: 1,
         pass: true,
         latencyMs: 900,
@@ -586,7 +565,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(runner).toHaveBeenCalledTimes(2);
@@ -622,7 +600,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
     });
 
     expect(runner).toHaveBeenCalledTimes(2);
@@ -651,7 +628,6 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
       onProgress,
     });
 
@@ -674,7 +650,7 @@ describe('eval matrix runner', () => {
     );
   });
 
-  it('formats the matrix summary table with comparison fields and Langfuse links', async () => {
+  it('formats the matrix summary table with comparison fields and LangSmith links', async () => {
     const result = await runEvalMatrix({
       cases: [selectedCase],
       runLabel: 'matrix-table',
@@ -690,7 +666,7 @@ describe('eval matrix runner', () => {
         continueOnModelFailure: true,
         providerConcurrency: { anthropic: 1, openai: 1 },
       },
-      langfuseBaseUrl: 'https://langfuse.test',
+      langsmithProjectUrl: 'https://smith.langchain.test/o/org/projects/p/project',
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
@@ -698,6 +674,6 @@ describe('eval matrix runner', () => {
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');
-    expect(formatEvalMatrixTable(result.rows)).toContain('https://langfuse.test');
+    expect(formatEvalMatrixTable(result.rows)).toContain('https://smith.langchain.test');
   });
 });

@@ -19,7 +19,7 @@ campaign and character records would add more routing text. The result is a
 prompt that teaches tool choreography instead of answer quality.
 
 ADR 0013 keeps Phase 1 production on the current Hono, Postgres, Claude SDK,
-conversation-service, SSE, MCP, REST, Langfuse, and OpenTelemetry path while
+conversation-service, SSE, MCP, REST, LangSmith, and OpenTelemetry path while
 retrieval is redesigned. This decision must improve the retrieval contract
 without changing that production baseline.
 

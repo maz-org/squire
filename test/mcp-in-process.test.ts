@@ -1,54 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const {
-  mockSearchRules,
-  mockSearchCards,
   mockSearchKnowledge,
-  mockListCardTypes,
-  mockListCards,
-  mockGetCard,
   mockOpenEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
-  mockFindScenario,
-  mockGetScenario,
-  mockGetSection,
-  mockFollowLinks,
   mockNeighbors,
 } = vi.hoisted(() => ({
-  mockSearchRules: vi.fn(),
-  mockSearchCards: vi.fn(),
   mockSearchKnowledge: vi.fn(),
-  mockListCardTypes: vi.fn(),
-  mockListCards: vi.fn(),
-  mockGetCard: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
-  mockFindScenario: vi.fn(),
-  mockGetScenario: vi.fn(),
-  mockGetSection: vi.fn(),
-  mockFollowLinks: vi.fn(),
   mockNeighbors: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({
-  searchRules: mockSearchRules,
-  searchCards: mockSearchCards,
   searchKnowledge: mockSearchKnowledge,
-  listCardTypes: mockListCardTypes,
-  listCards: mockListCards,
-  getCard: mockGetCard,
   openEntity: mockOpenEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
-  findScenario: mockFindScenario,
-  getScenario: mockGetScenario,
-  getSection: mockGetSection,
-  followLinks: mockFollowLinks,
   neighbors: mockNeighbors,
 }));
 
@@ -57,13 +30,6 @@ import { createInProcessClient } from '../src/mcp.ts';
 describe('in-process MCP client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListCardTypes.mockReturnValue([
-      { type: 'monster-stats', count: 10 },
-      { type: 'items', count: 5 },
-    ]);
-    mockSearchRules.mockResolvedValue([
-      { text: 'Loot: pick up tokens.', source: 'rulebook.pdf:42', score: 0.9 },
-    ]);
     mockInspectSources.mockResolvedValue({
       ok: true,
       sources: [],
@@ -72,7 +38,6 @@ describe('in-process MCP client', () => {
     });
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
-    mockGetCard.mockReturnValue({ name: 'Algox Archer' });
     mockSearchKnowledge.mockResolvedValue({ ok: true, query: 'loot', results: [] });
     mockOpenEntity.mockResolvedValue({
       ok: true,
@@ -105,40 +70,32 @@ describe('in-process MCP client', () => {
     await client.close();
   });
 
-  it('lists tools via in-process transport', async () => {
+  it('lists redesigned tools via in-process transport', async () => {
     const client = await createInProcessClient();
     const { tools } = await client.listTools();
-    expect(tools.length).toBe(15);
-    const names = tools.map((t) => t.name);
-    expect(names).toContain('inspect_sources');
-    expect(names).toContain('schema');
-    expect(names).toContain('resolve_entity');
-    expect(names).toContain('search_rules');
-    expect(names).toContain('find_scenario');
-    expect(names).toContain('get_scenario');
-    expect(names).toContain('get_section');
-    expect(names).toContain('follow_links');
-    expect(names).toContain('open_entity');
-    expect(names).toContain('search_knowledge');
-    expect(names).toContain('neighbors');
-    expect(names).toContain('list_card_types');
-    expect(names).toContain('get_card');
+    expect(tools.map((tool) => tool.name)).toEqual([
+      'inspect_sources',
+      'schema',
+      'resolve_entity',
+      'open_entity',
+      'search_knowledge',
+      'neighbors',
+    ]);
     await client.close();
   });
 
-  it('calls a tool via in-process transport', async () => {
+  it('calls a redesigned tool via in-process transport', async () => {
     const client = await createInProcessClient();
-    const result = await client.callTool({ name: 'list_card_types', arguments: {} });
-    expect(mockListCardTypes).toHaveBeenCalled();
+    const result = await client.callTool({
+      name: 'search_knowledge',
+      arguments: { query: 'loot' },
+    });
+    expect(mockSearchKnowledge).toHaveBeenCalledWith('loot', {
+      scope: undefined,
+      limit: 6,
+    });
     const content = result.content as Array<{ type: string; text: string }>;
-    expect(content[0].text).toContain('monster-stats');
-    await client.close();
-  });
-
-  it('can call search_rules', async () => {
-    const client = await createInProcessClient();
-    await client.callTool({ name: 'search_rules', arguments: { query: 'loot' } });
-    expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
+    expect(content[0].text).toContain('loot');
     await client.close();
   });
 

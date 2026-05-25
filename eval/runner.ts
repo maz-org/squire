@@ -1,14 +1,12 @@
-import { LangfuseClient } from '@langfuse/client';
-import { LANGFUSE_DEFAULT_BASE_URL } from '../src/instrumentation.ts';
+import { type EvalCliOptions, type EvalProviderConfig } from './cli.ts';
 import {
-  defaultEvalModelForProvider,
-  type EvalCliOptions,
-  type EvalProviderConfig,
-} from './cli.ts';
-import { filterEvalCases, loadEvalCases, seedDataset } from './dataset.ts';
+  createLangSmithDatasetClient,
+  filterEvalCases,
+  loadEvalCases,
+  seedDataset,
+} from './dataset.ts';
 import { compareEvalRuns, formatEvalRunComparison, readEvalMatrixReport } from './cost-harness.ts';
 import { evalCaseHasFinalAnswer } from './schema.ts';
-import { runFiltered, runOnDataset } from './experiments.ts';
 import { runLocalReport } from './local-report.ts';
 import { langSmithProjectUrlFromEnv } from './langsmith-trace.ts';
 import { runOpenAiLocalReport } from './openai-runner.ts';
@@ -22,12 +20,6 @@ import {
   type EvalMatrixSelection,
 } from './matrix.ts';
 import { createEvalMatrixRunner } from './matrix-runtime.ts';
-import {
-  diffEvalTraces,
-  formatEvalTraceDiff,
-  replayEvalFailure,
-  type LangfuseEvalTraceReadClient,
-} from './replay.ts';
 
 function describeProviderConfig(config: EvalProviderConfig): string {
   const tuning = [
@@ -84,11 +76,53 @@ function assertCurrentRunnerSupportsProviderConfig(config: EvalProviderConfig): 
 
 function assertCurrentCommandSupportsAgentRuntime(options: EvalCliOptions): void {
   if (options.matrixMode) return;
-  if (options.matrixAgentRuntimes.every((runtime) => runtime === 'claude-sdk')) return;
+  if (options.matrixAgentRuntimes.every((runtime) => runtime === 'langgraph')) return;
 
-  throw new Error(
-    'Deep Agents and LangGraph runtimes are eval-matrix only; pass --matrix with --agent-runtime.',
+  throw new Error('Deep Agents runtimes are eval-matrix only; pass --matrix with --agent-runtime.');
+}
+
+function selectionFor(options: EvalCliOptions): EvalMatrixSelection {
+  return options.idFilter ? 'id' : options.categoryFilter ? 'category' : 'all';
+}
+
+async function runLangSmithMatrix(
+  options: EvalCliOptions,
+  env: NodeJS.ProcessEnv,
+  cases: ReturnType<typeof loadEvalCases>,
+  modelConfigs: EvalProviderConfig[],
+  agentRuntimes = options.matrixAgentRuntimes,
+  guardrails = options.matrixGuardrails,
+): Promise<void> {
+  const selection = selectionFor(options);
+  assertEvalMatrixGuardrails({
+    cases,
+    modelConfigs,
+    agentRuntimes,
+    selection,
+    guardrails,
+  });
+  console.log(
+    `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) and ${agentRuntimes.length} runtime(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
   );
+  const langsmithProjectUrl = await langSmithProjectUrlFromEnv(env);
+  const result = await runEvalMatrix({
+    cases,
+    runLabel: options.runName,
+    toolSurface: options.toolSurface,
+    selection,
+    modelConfigs,
+    agentRuntimes,
+    runner: createEvalMatrixRunner(env),
+    guardrails,
+    langsmithProjectUrl,
+    onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
+  });
+
+  console.log(formatEvalMatrixTable(result.rows));
+  if (options.localReportPath) {
+    writeEvalMatrixLocalReport(options.localReportPath, result);
+    console.log(`\nWrote eval matrix report: ${options.localReportPath}`);
+  }
 }
 
 export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = process.env) {
@@ -101,53 +135,8 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
     return;
   }
 
-  if (options.replay) {
-    const caseId = options.idFilter ?? options.replay.traceId;
-    if (!caseId) throw new Error('Replay mode requires --id or --trace-id.');
-
-    const langfuse = new LangfuseClient({
-      baseUrl: env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
-    }) as unknown as LangfuseEvalTraceReadClient;
-
-    const replay = await replayEvalFailure({
-      client: langfuse,
-      traceId: options.replay.traceId,
-      runLabel: options.runName,
-      caseId,
-      provider: options.providerConfig.provider,
-      model: options.providerConfig.model,
-    });
-    console.log(replay.transcript);
-    if (replay.traceUrl) console.log(`\nView in Langfuse: ${replay.traceUrl}`);
-
-    if (
-      options.replay.diffTraceId ||
-      options.replay.diffProvider ||
-      options.replay.diffModel ||
-      options.replay.diffRunLabel
-    ) {
-      const diffProvider = options.replay.diffProvider ?? options.providerConfig.provider;
-      const diffReplay = await replayEvalFailure({
-        client: langfuse,
-        traceId: options.replay.diffTraceId,
-        runLabel: options.replay.diffRunLabel ?? options.runName,
-        caseId,
-        provider: diffProvider,
-        model:
-          options.replay.diffModel ??
-          (diffProvider === options.providerConfig.provider
-            ? options.providerConfig.model
-            : defaultEvalModelForProvider(diffProvider)),
-      });
-      console.log(`\n${formatEvalTraceDiff(diffEvalTraces(replay.trace, diffReplay.trace))}`);
-      if (diffReplay.traceUrl) console.log(`\nDiff trace in Langfuse: ${diffReplay.traceUrl}`);
-    }
-    return;
-  }
-
   const allCases = loadEvalCases();
   const cases = filterEvalCases(allCases, options);
-  const isFiltered = !!(options.categoryFilter || options.idFilter);
 
   if (cases.length === 0) {
     throw new Error('No matching eval cases found.');
@@ -164,10 +153,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   console.log(`Eval agent runtime: ${describeAgentRuntimes(options.matrixAgentRuntimes)}`);
 
   if (options.shouldSeed) {
-    const langfuse = new LangfuseClient({
-      baseUrl: env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
-    });
-    await seedDataset(langfuse, allCases);
+    await seedDataset(await createLangSmithDatasetClient(env), allCases);
     return;
   }
 
@@ -175,100 +161,19 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   assertCurrentCommandSupportsAgentRuntime(options);
 
   if (options.matrixMode) {
-    const langfuseBaseUrl = env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL;
-    const langfuseProjectId = env.LANGFUSE_PROJECT_ID;
-    const langfuse = new LangfuseClient({ baseUrl: langfuseBaseUrl });
-    const selection: EvalMatrixSelection = options.idFilter
-      ? 'id'
-      : options.categoryFilter
-        ? 'category'
-        : 'all';
     const modelConfigs = options.matrixAgentRuntimes.some((runtime) => runtime !== 'claude-sdk')
       ? [options.providerConfig]
       : defaultEvalMatrixModels(options.providerConfig);
-    assertEvalMatrixGuardrails({
-      cases,
-      modelConfigs,
-      agentRuntimes: options.matrixAgentRuntimes,
-      selection,
-      guardrails: options.matrixGuardrails,
-    });
-    console.log(
-      `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) and ${options.matrixAgentRuntimes.length} runtime(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
-    );
-    const matrixRunner = createEvalMatrixRunner(langfuse, env, {
-      langsmithTracing: options.langsmithTracing,
-    });
-    const langsmithProjectUrl = options.langsmithTracing
-      ? await langSmithProjectUrlFromEnv(env)
-      : undefined;
-    const result = await runEvalMatrix({
-      cases,
-      runLabel: options.runName,
-      toolSurface: options.toolSurface,
-      selection,
-      modelConfigs,
-      agentRuntimes: options.matrixAgentRuntimes,
-      runner: matrixRunner,
-      guardrails: options.matrixGuardrails,
-      langfuseBaseUrl,
-      langfuseProjectId,
-      langsmithProjectUrl,
-      onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
-    });
-
-    console.log(formatEvalMatrixTable(result.rows));
-    if (options.localReportPath) {
-      writeEvalMatrixLocalReport(options.localReportPath, result);
-      console.log(`\nWrote eval matrix report: ${options.localReportPath}`);
-    }
+    await runLangSmithMatrix(options, env, cases, modelConfigs);
     return;
   }
 
   if (options.providerConfig.provider === 'openai') {
     if (!options.localReportPath) {
-      const langfuseBaseUrl = env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL;
-      const langfuse = new LangfuseClient({ baseUrl: langfuseBaseUrl });
-      const selection: EvalMatrixSelection = options.idFilter
-        ? 'id'
-        : options.categoryFilter
-          ? 'category'
-          : 'all';
-      const modelConfigs = [options.providerConfig];
-      const guardrails = {
+      await runLangSmithMatrix(options, env, cases, [options.providerConfig], ['langgraph'], {
         ...options.matrixGuardrails,
         allowFullDataset: true,
-      };
-      assertEvalMatrixGuardrails({
-        cases,
-        modelConfigs,
-        agentRuntimes: ['claude-sdk'],
-        selection,
-        guardrails,
       });
-      console.log(
-        `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
-      );
-      const langsmithProjectUrl = options.langsmithTracing
-        ? await langSmithProjectUrlFromEnv(env)
-        : undefined;
-      const result = await runEvalMatrix({
-        cases,
-        runLabel: options.runName,
-        toolSurface: options.toolSurface,
-        selection,
-        modelConfigs,
-        agentRuntimes: ['claude-sdk'],
-        runner: createEvalMatrixRunner(langfuse, env, {
-          langsmithTracing: options.langsmithTracing,
-        }),
-        guardrails,
-        langfuseBaseUrl,
-        langfuseProjectId: env.LANGFUSE_PROJECT_ID,
-        langsmithProjectUrl,
-        onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
-      });
-      console.log(formatEvalMatrixTable(result.rows));
       return;
     }
     console.log(
@@ -293,28 +198,8 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
     return;
   }
 
-  const langfuse = new LangfuseClient({
-    baseUrl: env.LANGFUSE_BASEURL ?? LANGFUSE_DEFAULT_BASE_URL,
+  await runLangSmithMatrix(options, env, cases, [options.providerConfig], ['langgraph'], {
+    ...options.matrixGuardrails,
+    allowFullDataset: true,
   });
-
-  console.log(
-    `Running ${cases.length} eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
-  );
-  if (isFiltered) {
-    await runFiltered(
-      langfuse,
-      cases,
-      options.runName,
-      options.toolSurface,
-      options.providerConfig,
-    );
-  } else {
-    await runOnDataset(
-      langfuse,
-      options.runName,
-      options.toolSurface,
-      allCases.length,
-      options.providerConfig,
-    );
-  }
 }

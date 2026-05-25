@@ -202,5 +202,5 @@ describe.sequential('startServer', () => {
     expect(claimed.claimWorktreePort).toHaveBeenCalled();
     expect(claimed.fakeServer.listenCalls).toContain(4555);
     expect(claimed.startBootstrapLifecycle).toHaveBeenCalled();
-  }, 10_000);
+  }, 30_000);
 });

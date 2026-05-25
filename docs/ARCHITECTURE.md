@@ -40,22 +40,16 @@ All channels (web UI, MCP, REST, future Discord / iMessage) talk to the same kno
 
 ## Current Production Baseline
 
-Phase 1 production stays on the current Hono server, Postgres + pgvector
-runtime store, Claude SDK tool loop, conversation service, SSE contract, and
-Langfuse/OpenTelemetry trace path. The deployed production host is the Fly app
-`maz-squire`, with Fly Managed Postgres, Route 53, CloudFront, and AWS WAF.
-[ADR 0015 — Evaluate LangChain and Deep Agents at the intelligence boundary](adr/0015-langchain-deep-agents-intelligence-layer.md)
-keeps Deep Agents and LangSmith Deployment out of the Phase 1 app-hosting
-decision, but treats LangChain, Deep Agents, and LangSmith evals as candidates
-for the intelligence and eval layers behind `/api/ask`. The earlier retrieval
-redesign gate is recorded in
-[ADR 0013 — Keep Phase 1 production on the current knowledge-agent path](adr/0013-phase-1-production-agent-baseline.md).
+Phase 1 production stays on the Hono server, Postgres + pgvector runtime store,
+conversation service, Squire-owned SSE contract, and LangSmith/OpenTelemetry
+trace path. The deployed production host is the Fly app `maz-squire`, with Fly
+Managed Postgres, Route 53, CloudFront, and AWS WAF.
 
-The Step 3 eval report is checked in at
-[docs/plans/sqr-122-retrieval-eval-decision-report.md](plans/sqr-122-retrieval-eval-decision-report.md).
-Its decision is to keep Phase 1 production on the legacy prompt-routed tool
-surface and defer the redesigned self-describing tool surface until its
-final-answer regressions and remaining trajectory failures are fixed.
+[ADR 0019 — Replace the hand-owned knowledge loop with a production LangGraph graph](adr/0019-langgraph-production-knowledge-agent.md)
+supersedes the earlier eval-only runtime posture in ADR 0013 and ADR 0015.
+Squire still owns the app, data, auth, conversation, REST, MCP, and browser
+streaming boundaries. The knowledge-agent runtime behind `ask()` is now a local
+LangGraph graph using the redesigned knowledge tools.
 
 The active baseline is:
 
@@ -63,22 +57,25 @@ The active baseline is:
 - Postgres + pgvector hold the runtime retrieval layers.
 - Fly hosts the production app and Fly Managed Postgres hosts the production
   database.
-- The knowledge agent uses the current Claude SDK tool loop.
-- LangChain / Deep Agents may be added as a parallel eval-only runner behind
-  the same service boundary, but production traffic stays on the current runner
-  until evals and a later ADR justify switching.
+- The knowledge agent uses a LangGraph planner/retriever/verifier/final-answer
+  graph backed by Anthropic model calls.
+- Only the graph's `final_answer` node emits answer-body text.
+- Deep Agents remain future work for longer research/planning tasks, not normal
+  production Q&A.
 - The web conversation service owns persisted turns, ownership checks, SSE,
   and presentation, then delegates domain reasoning to the knowledge agent.
 - `/api/ask`, the in-process service entry, the CLI wrapper, and the eval
   runner all route through the same service boundary.
-- Langfuse remains the authoritative LLM trace/eval path for now;
+- LangSmith remains the authoritative LLM trace/eval path for now;
   OpenTelemetry provides the trace export/transport feeding it.
 
 Existing regression coverage protects the current path:
 
-- `test/agent.test.ts` protects the agent loop and atomic tool use.
+- `test/agent-langgraph.test.ts` protects the production graph boundary.
+- `test/agent.test.ts` protects reusable tool execution helpers and the retired
+  loop while it remains in the tree.
 - `test/service.test.ts` protects service readiness and delegation to
-  `runAgentLoop`.
+  `runLangGraphAgentLoopWithTrajectory`.
 - `test/conversation.test.ts` protects the web conversation service, stored
   turns, and browser SSE route.
 - `test/server-api.test.ts` protects REST endpoints and `/api/ask` SSE.
@@ -217,7 +214,7 @@ _Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. S
 ### Observability infrastructure
 
 - `@opentelemetry/sdk-node` for OTel traces from the agent loop, tool calls, and HTTP handlers (initialized in `src/instrumentation.ts`)
-- `@langfuse/client`, `@langfuse/otel`, `@langfuse/tracing` for LLM trace export and eval pipeline
+- `langsmith` for LLM trace export and eval pipeline
 
 See [Observability](#observability) below.
 
@@ -437,16 +434,21 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
 
 ## Agent Architecture
 
-### Core agent loop
+### Core agent graph
 
 1. **Input:** User message (text)
 2. **Context gathering:** Load recent conversation history (currently the most
    recent 20 non-error messages), identify caller identity from session, load
    campaign context if available
-3. **Tool use:** Claude calls atomic tools to retrieve relevant book passages, exact scenarios, exact sections, explicit book references, cards, items, monsters, or scenarios
-4. **Reasoning:** Claude synthesizes a response from tool results
-5. **Response:** Stream back to the channel (web UI via SSE, MCP via protocol response)
-6. **Memory:** Persist conversation turn for future context
+3. **Planning:** LangGraph `plan_retrieval` decides which redesigned knowledge
+   tools are needed.
+4. **Tool use:** `execute_tools` calls `inspect_sources`, `schema`,
+   `resolve_entity`, `open_entity`, `search_knowledge`, or `neighbors`.
+5. **Verification:** `verify_sources` checks whether the run has answerable
+   retrieved evidence.
+6. **Answering:** `final_answer` synthesizes the response and is the only node
+   allowed to stream answer-body text.
+7. **Memory:** Persist conversation turn for future context.
 
 ### Two-agent model
 
@@ -460,19 +462,16 @@ graph TB
         end
         subgraph knowledge["Knowledge Agent"]
             ask["/api/ask + in-process entry"]
-            agentloop["Agent loop<br/>(retrieval, reasoning, generation)"]
+            agentloop["LangGraph agent<br/>(plan, retrieve, verify, answer)"]
             ask --> agentloop
         end
         subgraph tools["Atomic Tools (src/tools.ts)"]
-            t1["searchRules"]
-            t2["searchCards"]
-            t3["listCardTypes"]
-            t4["listCards"]
-            t5["getCard"]
-            t6["findScenario"]
-            t7["getScenario"]
-            t8["getSection"]
-            t9["followLinks"]
+            t1["inspectSources"]
+            t2["getSchema"]
+            t3["resolveEntity"]
+            t4["openEntity"]
+            t5["searchKnowledge"]
+            t6["neighbors"]
         end
         subgraph mcp["MCP Server (src/mcp.ts)"]
             mcpep["/mcp"]
@@ -481,10 +480,9 @@ graph TB
             restep["/api/*"]
         end
         conv -->|in-process function call| ask
-        agentloop --> t1 & t2 & t3 & t4 & t5 & t6 & t7 & t8 & t9
-        mcpep --> t1 & t2 & t3 & t4 & t5 & t6 & t7 & t8 & t9
+        agentloop --> t1 & t2 & t3 & t4 & t5 & t6
+        mcpep --> t1 & t2 & t3 & t4 & t5 & t6
         restep --> agentloop
-        restep --> t1 & t2 & t3 & t4 & t5 & t6 & t7 & t8 & t9
     end
 
     claudecode["Claude Code"] -->|OAuth 2.1| mcpep
@@ -503,58 +501,34 @@ Squire exposes a **generalized atomic-tools API** in `src/tools.ts` that covers 
 - deterministic scenario/section-book research data
 - generalized GHS card data across monsters, items, events, buildings, scenarios, character abilities, character mats, battle goals, and personal quests
 
-The same handful of tools handle every card type via parameter, rather than one tool per feature.
-
-- `searchRules(query, topK, opts?)` — vector search over the indexed rule-source corpus. Returns raw `source`, display `sourceLabel`, and supports `opts.game`.
-- `findScenario(query, opts?)` — resolve a human query like `scenario 61` or `Life and Death` to matching scenario records from the deterministic scenario-book layer.
-- `getScenario(ref, opts?)` — fetch an exact scenario record by canonical scenario ref, including printed-page metadata and raw page text.
-- `getSection(ref, opts?)` — fetch an exact section record by section ref like `67.1`, including canonical section text and source-page metadata.
-- `followLinks(fromKind, fromRef, linkType?, opts?)` — follow explicit printed scenario/section-book references, optionally filtered by link type such as `conclusion` or `section_link`.
-- `searchCards(query, topK, opts?)` — Postgres full-text search across all 10 `card_*` tables, ranked by `ts_rank` over per-table `search_vector` columns with `setweight`-tuned A/B/C/D field weights.
-- `listCardTypes(opts?)` — discovery. Returns all GHS data types with record counts via a single `UNION ALL` of `count(*)` per table.
-- `listCards(type, filter?, opts?)` — list records of a given type with field-level AND filter, plus optional `opts.game`.
-- `getCard(type, id, opts?)` — exact lookup by canonical `sourceId` via the `(game, source_id)` unique index. The per-type natural-key map was retired in SQR-56 after natural-key verification turned up four collisions.
-
-Squire is moving this public retrieval surface toward the
-[Self-Describing Knowledge Tool Contract](KNOWLEDGE_TOOL_CONTRACT.md). The next
-contract is designed first for the knowledge agent behind `/api/ask`. It keeps
-the existing tools as adapters, but gives that agent discovery, schema
-inspection, entity resolution, exact opening, broad search, and neighbor
-traversal through a smaller set of domain-shaped operations:
+The production agent and MCP surface use the
+[Self-Describing Knowledge Tool Contract](KNOWLEDGE_TOOL_CONTRACT.md):
 `inspect_sources`, `schema`, `resolve_entity`, `open_entity`,
-`search_knowledge`, and `neighbors`. External MCP names may use a `squire_`
-prefix as a projection detail when clients load tools from many servers. See
-[ADR 0014](adr/0014-self-describing-knowledge-tool-contract.md).
+`search_knowledge`, and `neighbors`. These domain-shaped tools wrap the lower
+level data-access helpers in `src/tools.ts`.
 
 ```mermaid
 graph TB
-    subgraph discovery["Discovery"]
-        lct["listCardTypes()"]
-        lc["listCards(type, filter?)"]
-    end
-    subgraph access["Data Access"]
-        gc["getCard(type, id)"]
-        sr["searchRules(query, topK?)"]
-        sc["searchCards(query, topK?)"]
-        fs["findScenario(query)"]
-        gs["getScenario(ref)"]
-        gsec["getSection(ref)"]
-        fl["followLinks(kind, ref, type?)"]
+    subgraph contract["Knowledge Contract"]
+        is["inspectSources()"]
+        sch["getSchema(kind)"]
+        re["resolveEntity(query)"]
+        oe["openEntity(ref)"]
+        sk["searchKnowledge(query)"]
+        nb["neighbors(ref)"]
     end
     subgraph campaign["Campaign State (Phase 4+)"]
         gcmp["getCharacterState()"]
         gpi["getPartyInfo()"]
     end
 
-    sr --> vs["Vector Store<br/>(pgvector)"]
-    sc --> ed["Extracted Data<br/>(Postgres)"]
-    gc --> ed
-    lct --> ed
-    lc --> ed
-    fs --> ssd["Scenario/Section Books<br/>(Postgres)"]
-    gs --> ssd
-    gsec --> ssd
-    fl --> ssd
+    sk --> vs["Vector Store<br/>(pgvector)"]
+    sk --> ed["Extracted Data<br/>(Postgres)"]
+    oe --> ed
+    oe --> ssd["Scenario/Section Books<br/>(Postgres)"]
+    re --> ed
+    re --> ssd
+    nb --> ssd
     gcmp --> ps["Player State<br/>(Postgres)"]
     gpi --> ps
 ```
@@ -693,7 +667,7 @@ An earlier design considered using **internal MCP** as the transport between the
 
 Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP handlers via `@opentelemetry/sdk-node`. Initialization lives in `src/instrumentation.ts`.
 
-**LLM observability and evals: Langfuse.** Trace exports flow into Langfuse via `@langfuse/otel` and `@langfuse/tracing`. Each conversation, tool call, and model call is captured as a structured trace. Langfuse's built-in LLM-as-judge eval templates grade production traces (planned). Langfuse was chosen specifically for its eval system, which is more capable than alternatives for LLM-as-judge workflows.
+**LLM observability and evals: LangSmith.** Trace exports flow into LangSmith via `langsmith` and its OpenTelemetry exporter. Each conversation, tool call, and model call is captured as a structured trace. LangSmith's built-in LLM-as-judge eval templates grade production traces (planned). LangSmith was chosen because it is the native tracing and evaluation surface for the LangChain/LangGraph runtime.
 
 Runtime agent traces carry safe correlation metadata so an operator can follow
 one user-visible answer without reading PII from stdout logs. Web-chat traces
@@ -704,7 +678,7 @@ user/campaign IDs. The browser response includes `X-Request-ID`; the web chat
 URL and stream URL expose the conversation and user-message IDs needed to find
 the persisted turn.
 
-**APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make Langfuse a better fit for evals — so even if Datadog is adopted for APM / RUM, Langfuse stays for LLM-specific observability. See [Open Tech Questions](#open-tech-questions).
+**APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make LangSmith a better fit for evals — so even if Datadog is adopted for APM / RUM, LangSmith stays for LLM-specific observability. See [Open Tech Questions](#open-tech-questions).
 
 ---
 
@@ -750,7 +724,8 @@ Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. P
 
 ```text
 src/
-  agent.ts                      Conversation + knowledge agent loop, model invocation
+  agent-langgraph.ts            Production LangGraph knowledge-agent runtime
+  agent.ts                      Shared agent prompts, tools, trajectory types, retired loop helpers
   auth.ts                       Thin facade over SquireOAuthProvider (OAuth 2.1 for MCP/REST)
   auth/
     google.ts                   Google OAuth web login: consent URL, callback, allowlist
@@ -769,7 +744,7 @@ src/
   extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
   ghs-utils.ts                  Shared helpers for GHS imports
   index-docs.ts                 Rule sources → chunks → embeddings → pgvector (npm run index)
-  instrumentation.ts            OpenTelemetry + Langfuse setup
+  instrumentation.ts            OpenTelemetry + LangSmith setup
   mcp.ts                        MCP tool registration (Streamable HTTP transport)
   query.ts                      CLI wrapper over the knowledge agent
   schemas.ts                    Zod schemas for all GHS card types
@@ -816,7 +791,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 ## Tech Risks
 
-1. **Embedding quality.** The local Xenova model is chosen for simplicity, not for retrieval quality. If RAG accuracy isn't good enough at production scale, the planned upgrade is Voyage AI. The vector store (pgvector) doesn't change. Mitigation: monitor retrieval quality via Langfuse evals; swap embeddings if scores drop.
+1. **Embedding quality.** The local Xenova model is chosen for simplicity, not for retrieval quality. If RAG accuracy isn't good enough at production scale, the planned upgrade is Voyage AI. The vector store (pgvector) doesn't change. Mitigation: monitor retrieval quality via LangSmith evals; swap embeddings if scores drop.
 
 2. **Browser-extension fragility (Phase 6).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM / localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
 
@@ -824,7 +799,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 4. **Build guide content nuance (Phase 5).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
 
-5. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via Langfuse, model tiering (Haiku for cheap cases) when justified.
+5. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via LangSmith, model tiering (Haiku for cheap cases) when justified.
 
 6. **frosthaven-storyline.com may not support Gloomhaven 2.0 (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
 
@@ -842,7 +817,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 ## Open Tech Questions
 
-- **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with Langfuse staying for LLM-specific observability), or stay Langfuse-only and skip APM until volume demands it?
+- **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with LangSmith staying for LLM-specific observability), or stay LangSmith-only and skip APM until volume demands it?
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
 - **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven 2.0. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
@@ -857,7 +832,7 @@ For developer setup, running the server, working on import scripts locally, and 
 - **2026-04-26:** SQR-114 recorded the Phase 1 production-agent
   baseline while the retrieval redesign runs. Production stays on the current
   Hono, Postgres + pgvector, Claude SDK tool loop, conversation-service, SSE,
-  Langfuse, and OpenTelemetry path. Deep Agents and LangSmith Deployment are
+  LangSmith, and OpenTelemetry path. Deep Agents and LangSmith Deployment are
   deferred until after the Step 3 eval report.
 
 - **2026-04-21 (v1.0.8):** SQR-105 fixed the consulted footer to show the actual book(s) surfaced by `search_rules` rather than always showing "RULEBOOK". `search_rules` searches all four Frosthaven books; the specific books hit are now extracted from the tool result in `agent.ts` and stored as `ToolSourceLabel` strings in `consulted_sources`, bypassing the old static tool-name → label map for that tool. Added "PUZZLE BOOK" as a recognised provenance label (the Puzzle Book was indexed but never attributed). `aggregateSourceLabels` handles both storage formats (old tool-name strings and new label strings) transparently.

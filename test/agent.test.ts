@@ -282,7 +282,7 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
   });
 
-  it('adds Langfuse-native input, output, usage, and tags to runtime agent traces', async () => {
+  it('adds LangSmith-native input, output, usage, and tags to runtime agent traces', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Loot tokens are picked up in your hex.'));
 
     await runAgentLoopWithTrajectory('What is the loot action?', {
@@ -295,27 +295,26 @@ describe('runAgentLoop', () => {
     });
 
     const runAttributes = spanAttributes('squire.agent.run');
-    expect(parseJsonAttribute(runAttributes, 'langfuse.trace.input')).toEqual({
+    expect(parseJsonAttribute(runAttributes, 'gen_ai.prompt')).toEqual({
       question: 'What is the loot action?',
     });
-    expect(parseJsonAttribute(runAttributes, 'langfuse.trace.output')).toEqual({
+    expect(parseJsonAttribute(runAttributes, 'gen_ai.completion')).toEqual({
       finalAnswer: 'Loot tokens are picked up in your hex.',
     });
-    expect(runAttributes['langfuse.observation.type']).toBe('agent');
-    expect(parseJsonAttribute(runAttributes, 'langfuse.observation.usage_details')).toEqual({
-      input: 100,
-      output: 50,
-      total: 150,
-      cacheCreationInput: 0,
-      cacheReadInput: 0,
+    expect(runAttributes['langsmith.span.kind']).toBe('chain');
+    expect(parseJsonAttribute(runAttributes, 'langsmith.usage_metadata')).toEqual({
+      input_tokens: 100,
+      output_tokens: 50,
+      total_tokens: 150,
+      input_token_details: { cache_creation: 0, cache_read: 0 },
     });
     expect(runAttributes).toMatchObject({
-      'langfuse.observation.metadata.squireEnv': 'test',
-      'langfuse.observation.metadata.requestId': 'req-sqr-87',
-      'langfuse.observation.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
-      'langfuse.observation.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-      'langfuse.observation.metadata.userId': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
-      'langfuse.observation.metadata.campaignId': '8ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langsmith.metadata.squireEnv': 'test',
+      'langsmith.metadata.requestId': 'req-sqr-87',
+      'langsmith.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
+      'langsmith.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langsmith.metadata.userId': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langsmith.metadata.campaignId': '8ba7b810-9dad-11d1-80b4-00c04fd430c8',
       'squire.env': 'test',
       'squire.request_id': 'req-sqr-87',
       'squire.conversation_id': '550e8400-e29b-41d4-a716-446655440000',
@@ -323,26 +322,20 @@ describe('runAgentLoop', () => {
       'squire.user_id': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
       'squire.campaign_id': '8ba7b810-9dad-11d1-80b4-00c04fd430c8',
     });
-    expect(runAttributes['langfuse.trace.tags']).toEqual([
-      'agent',
-      'runtime',
-      'anthropic',
-      'claude-sdk',
-      'claude-sonnet-4-6',
-      'legacy',
-      'env:test',
-    ]);
+    expect(runAttributes['langsmith.span.tags']).toBe(
+      'agent, runtime, anthropic, claude-sdk, claude-sonnet-4-6, legacy, env:test',
+    );
 
     const iterationAttributes = spanAttributes('squire.agent.iteration');
-    expect(iterationAttributes['langfuse.observation.type']).toBe('generation');
-    expect(iterationAttributes['langfuse.observation.model.name']).toBe('claude-sonnet-4-6');
-    expect(parseJsonAttribute(iterationAttributes, 'langfuse.observation.input')).toMatchObject({
+    expect(iterationAttributes['langsmith.span.kind']).toBe('llm');
+    expect(iterationAttributes['gen_ai.request.model']).toBe('claude-sonnet-4-6');
+    expect(parseJsonAttribute(iterationAttributes, 'gen_ai.prompt')).toMatchObject({
       iteration: 1,
       allowTools: true,
       toolSurface: 'legacy',
       messages: [{ role: 'user', content: 'What is the loot action?' }],
     });
-    expect(parseJsonAttribute(iterationAttributes, 'langfuse.observation.output')).toMatchObject({
+    expect(parseJsonAttribute(iterationAttributes, 'gen_ai.completion')).toMatchObject({
       stopReason: 'end_turn',
       content: [{ type: 'text', text: 'Loot tokens are picked up in your hex.' }],
     });
@@ -639,12 +632,12 @@ describe('runAgentLoop', () => {
     expect(result.trajectory.toolCalls[0]?.durationMs).toEqual(expect.any(Number));
 
     const toolAttributes = spanAttributes('squire.agent.tool');
-    expect(toolAttributes['langfuse.observation.type']).toBe('tool');
-    expect(parseJsonAttribute(toolAttributes, 'langfuse.observation.input')).toEqual({
+    expect(toolAttributes['langsmith.span.kind']).toBe('tool');
+    expect(parseJsonAttribute(toolAttributes, 'gen_ai.prompt')).toEqual({
       name: 'search_rules',
       input: { query: 'loot action' },
     });
-    expect(parseJsonAttribute(toolAttributes, 'langfuse.observation.output')).toEqual({
+    expect(parseJsonAttribute(toolAttributes, 'gen_ai.completion')).toEqual({
       ok: true,
       summary: 'json array (1 item)',
       sourceLabels: ['Rulebook'],

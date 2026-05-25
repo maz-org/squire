@@ -11,7 +11,6 @@ import {
   initializeRetrieval,
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
-import { runAgentLoopWithTrajectory } from './agent.ts';
 import { runLangGraphAgentLoopWithTrajectory } from './agent-langgraph.ts';
 import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
@@ -548,8 +547,8 @@ export type EmitFn = <EventName extends AgentStreamEventName>(
 export interface AskOptions {
   history?: HistoryMessage[];
   /**
-   * Phase 1 defaults to the legacy prompt-routed tools after the SQR-122 eval
-   * report. `redesigned` remains selectable for the follow-up retrieval work.
+   * Deprecated compatibility option. Production LangGraph runs always use the
+   * redesigned knowledge-tool surface.
    */
   toolSurface?: 'redesigned' | 'legacy';
   /** Active game id or alias for knowledge-tool routing. Defaults to Frosthaven when omitted. */
@@ -564,7 +563,7 @@ export interface AskOptions {
   conversationId?: string;
   /** Persisted user-message UUID for trace/log correlation. */
   userMessageId?: string;
-  /** Hidden/eval-only runner selector. Production browser traffic defaults to `current`. */
+  /** Deprecated compatibility option. Production always uses LangGraph. */
   runner?: 'current' | 'langgraph';
   /** Internal stream callback. Browser SSE translation happens in src/server.ts. */
   emit?: EmitFn;
@@ -583,16 +582,20 @@ export async function ensureAskBudgetAvailable(userId?: string | null): Promise<
  */
 export async function ask(question: string, options?: AskOptions): Promise<string> {
   if (!isReady()) await initialize();
-  const { budgetPrechecked, runner = 'current', ...agentOptions } = options ?? {};
+  const {
+    budgetPrechecked,
+    runner: _runner,
+    toolSurface: _toolSurface,
+    ...agentOptions
+  } = options ?? {};
+  void _runner;
+  void _toolSurface;
   const userId = options?.userId ?? null;
   if (!budgetPrechecked) {
     await ensureAskBudgetAvailable(userId);
   }
   const runnerOptions = Object.keys(agentOptions).length > 0 ? agentOptions : undefined;
-  const result =
-    runner === 'langgraph'
-      ? await runLangGraphAgentLoopWithTrajectory(question, runnerOptions)
-      : await runAgentLoopWithTrajectory(question, runnerOptions);
+  const result = await runLangGraphAgentLoopWithTrajectory(question, runnerOptions);
   try {
     await recordLlmUsage({
       userId,

@@ -81,10 +81,10 @@ app-runtime secrets and settings belong in Fly:
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `SQUIRE_ALLOWED_EMAILS`
 - `SQUIRE_ENV=production`
-- `LANGFUSE_BASEURL`
-- `LANGFUSE_PROJECT_ID`
-- `LANGFUSE_PUBLIC_KEY`
-- `LANGFUSE_SECRET_KEY`
+- `LANGSMITH_API_KEY`
+- `LANGSMITH_PROJECT`
+- `LANGSMITH_ENDPOINT` (optional; defaults to LangSmith Cloud)
+- `LANGSMITH_WORKSPACE_ID` (when required by the API key)
 - `ORIGIN_SHARED_SECRET`
 - `REDIS_URL`
 - `SQUIRE_LLM_DAILY_BUDGET_USD=10`
@@ -95,8 +95,8 @@ app-runtime secrets and settings belong in Fly:
 - `SQUIRE_LLM_CACHE_READ_INPUT_USD_PER_MILLION_TOKENS=0.3`
 
 The LLM budget circuit breaker uses Postgres as the durable ledger and resets
-at UTC midnight. Langfuse remains the trace/debug surface; do not rely on it for
-budget admission.
+at UTC midnight. LangSmith remains the trace/debug surface; do not rely on it
+for budget admission.
 
 GitHub repository secrets:
 
@@ -112,11 +112,9 @@ them:
 - `LANGSMITH_PROJECT`
 - `LANGSMITH_ENDPOINT`
 - `LANGSMITH_WORKSPACE_ID`
-- `SQUIRE_EVAL_LANGSMITH_TRACING`
 - eval model/provider knobs from `.env.example`
 
-Do not set `LANGFUSE_TRACING_ENVIRONMENT`. `SQUIRE_ENV` is the single source for
-the Langfuse environment label. LangSmith variables are eval/prototype tracing variables; they are not required for the production ask path today.
+`SQUIRE_ENV` is the single source for the LangSmith environment label.
 
 ## Deploy
 
@@ -284,7 +282,7 @@ Then verify the user flow in a browser:
 4. Ask one real rules question.
 5. Confirm the answer renders, streams, and cites sources.
 
-Check Langfuse after the question:
+Check LangSmith after the question:
 
 - Filter to `env:production`.
 - Confirm the root `squire.agent.run` trace has the user input and final output.
@@ -309,7 +307,7 @@ chat behavior.
    conversation UUID. The pending answer stream URL
    `/chat/<conversationId>/messages/<userMessageId>/stream` gives the user
    message UUID for the exact turn.
-2. Search Langfuse in `env:production` for a `squire.agent.run` trace whose
+2. Search LangSmith in `env:production` for a `squire.agent.run` trace whose
    metadata has that `conversationId` and `userMessageId`. If the report came
    from REST `/api/ask`, search by the `X-Request-ID` response header or caller
    log value instead.
@@ -325,7 +323,7 @@ chat behavior.
    input/output, stop reason, and token usage. Tool observations show tool name,
    compact input, output summary, source labels, canonical refs, and tool
    errors.
-5. If Langfuse has no trace for the turn, check Fly logs around the same time
+5. If LangSmith has no trace for the turn, check Fly logs around the same time
    and request ID:
 
    ```bash

@@ -6,7 +6,7 @@
 import 'dotenv/config';
 // MUST be the first application import — PgInstrumentation has to patch `pg`
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
-// reach Langfuse in production. Same pattern as query.ts and eval/run.ts.
+// reach LangSmith in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';

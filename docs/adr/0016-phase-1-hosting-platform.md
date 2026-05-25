@@ -32,7 +32,7 @@ The host must satisfy:
 - A CloudFront-friendly origin: TLS to Fly's `fly.dev` hostname, custom-domain
   DNS in Route 53, and an origin-secret lock between CloudFront and Fly
   (SQR-58 contract).
-- Logs and metrics passthrough to Langfuse + OpenTelemetry without per-platform
+- Logs and metrics passthrough to LangSmith + OpenTelemetry without per-platform
   middleware.
 - Phase 1 budget: ~$100/month for hosting end-to-end, with headroom for
   observability and future model upgrades.

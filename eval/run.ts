@@ -1,7 +1,7 @@
 /**
- * RAG pipeline evaluation runner using Langfuse datasets & experiments.
+ * RAG pipeline evaluation runner using LangSmith traces and datasets.
  *
- * First run:  node eval/run.ts --seed        # upload dataset to Langfuse
+ * First run:  node eval/run.ts --seed        # upload dataset to LangSmith
  * Run eval:   node eval/run.ts               # run all questions on redesigned tools
  * Legacy:     node eval/run.ts --tool-surface=legacy
  * Filtered:   node eval/run.ts --category=rulebook

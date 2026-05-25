@@ -6,7 +6,6 @@ import {
   langSmithRootRunIdForTraceId,
   langSmithRunUrl,
   langSmithTraceConfigFromEnv,
-  langSmithTracingEnabled,
   type LangSmithTraceClient,
 } from '../eval/langsmith-trace.ts';
 import { DATASET_NAME } from '../eval/dataset.ts';
@@ -108,21 +107,6 @@ const baseTrace: EvalTraceInput = {
 };
 
 describe('LangSmith eval trace writer', () => {
-  it('keeps LangSmith tracing off unless CLI or env explicitly enables it', () => {
-    expect(langSmithTracingEnabled(false, {})).toBe(false);
-    expect(langSmithTracingEnabled(true, {})).toBe(true);
-    expect(
-      langSmithTracingEnabled(false, {
-        SQUIRE_EVAL_LANGSMITH_TRACING: '1',
-      }),
-    ).toBe(true);
-    expect(
-      langSmithTracingEnabled(false, {
-        SQUIRE_EVAL_LANGSMITH_TRACING: 'false',
-      }),
-    ).toBe(false);
-  });
-
   it('requires API key and project when enabled', () => {
     expect(() => langSmithTraceConfigFromEnv({ LANGSMITH_PROJECT: 'squire-evals' })).toThrow(
       /LANGSMITH_API_KEY/,

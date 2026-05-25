@@ -35,7 +35,7 @@ describe('eval runner', () => {
       loopIterations: 4,
       failureClass: 'quality',
       traceId: 'trace-before',
-      traceUrl: 'https://langfuse.test/trace-before',
+      traceUrl: 'https://smith.langchain.test/trace-before',
       promptVersion: 'redesigned-agent-v1',
       promptHash: 'sha256:prompt',
       toolSurface: 'redesigned',
@@ -112,7 +112,7 @@ describe('eval runner', () => {
           loopIterations: 3,
           failureClass: 'none',
           traceId: 'trace',
-          traceUrl: 'https://langfuse.test/trace',
+          traceUrl: 'https://smith.langchain.test/trace',
           promptVersion: 'redesigned-agent-v1',
           promptHash: 'sha256:prompt',
           toolSurface: 'redesigned',
@@ -131,7 +131,7 @@ describe('eval runner', () => {
     );
   });
 
-  it('honors estimated-cost guardrails for plain OpenAI Langfuse runs', async () => {
+  it('honors estimated-cost guardrails for plain OpenAI LangSmith runs', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     await expect(
@@ -153,6 +153,6 @@ describe('eval runner', () => {
 
     await expect(
       runEval(parseEvalArgs(['--agent-runtime=both', '--id=rule-poison']), {}),
-    ).rejects.toThrow(/Deep Agents and LangGraph runtimes are eval-matrix only/);
+    ).rejects.toThrow(/Deep Agents runtimes are eval-matrix only/);
   });
 });

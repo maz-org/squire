@@ -87,7 +87,7 @@ describe('Deep Agents eval runner', () => {
   });
 
   it('creates a fresh state-backed Deep Agent and writes runtime-aware traces', async () => {
-    const traceClient = { api: { ingestion: { batch: vi.fn() } } };
+    const traceWriter = { writeTrace: vi.fn(async () => undefined) };
 
     const result = await runDeepAgentsEvalCase({
       case: {
@@ -105,8 +105,8 @@ describe('Deep Agents eval runner', () => {
         timeoutMs: undefined,
         toolLoopLimit: undefined,
       },
-      traceClient,
       traceId: 'eval:runtime-smoke:deep-agents:anthropic:claude-sonnet-4-6:item-spyglass',
+      traceWriter,
       judgeScores: [{ name: 'pass', value: 'pass' }],
       now: nextNow(),
     });
@@ -124,16 +124,8 @@ describe('Deep Agents eval runner', () => {
       'inspect_sources',
       'deep_agents.write_todos',
     ]);
-    expect(traceClient.api.ingestion.batch).toHaveBeenCalledWith(
-      expect.objectContaining({
-        batch: expect.arrayContaining([
-          expect.objectContaining({
-            body: expect.objectContaining({
-              metadata: expect.objectContaining({ agentRuntime: 'deep-agents' }),
-            }),
-          }),
-        ]),
-      }),
+    expect(traceWriter.writeTrace).toHaveBeenCalledWith(
+      expect.objectContaining({ agentRuntime: 'deep-agents' }),
     );
   });
 });

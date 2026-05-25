@@ -1,60 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const {
-  mockSearchRules,
-  mockSearchCards,
   mockSearchKnowledge,
-  mockListCardTypes,
-  mockListCards,
-  mockGetCard,
   mockOpenEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
-  mockFindScenario,
-  mockGetScenario,
-  mockGetSection,
-  mockFollowLinks,
   mockNeighbors,
 } = vi.hoisted(() => ({
-  mockSearchRules: vi.fn(),
-  mockSearchCards: vi.fn(),
   mockSearchKnowledge: vi.fn(),
-  mockListCardTypes: vi.fn(),
-  mockListCards: vi.fn(),
-  mockGetCard: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
-  mockFindScenario: vi.fn(),
-  mockGetScenario: vi.fn(),
-  mockGetSection: vi.fn(),
-  mockFollowLinks: vi.fn(),
   mockNeighbors: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({
-  searchRules: mockSearchRules,
-  searchCards: mockSearchCards,
   searchKnowledge: mockSearchKnowledge,
-  listCardTypes: mockListCardTypes,
-  listCards: mockListCards,
-  getCard: mockGetCard,
   openEntity: mockOpenEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
-  findScenario: mockFindScenario,
-  getScenario: mockGetScenario,
-  getSection: mockGetSection,
-  followLinks: mockFollowLinks,
   neighbors: mockNeighbors,
 }));
 
-import { createMcpServer } from '../src/mcp.ts';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { createMcpServer } from '../src/mcp.ts';
 
 interface TextContent {
   type: 'text';
@@ -73,58 +46,9 @@ async function connectClient() {
   return client;
 }
 
-describe('MCP tool registration', () => {
+describe('MCP redesigned tool registration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFindScenario.mockResolvedValue([
-      {
-        ref: 'gloomhavensecretariat:scenario/061',
-        scenarioGroup: 'main',
-        scenarioIndex: '61',
-        name: 'Life and Death',
-        complexity: 2,
-        flowChartGroup: null,
-        initial: false,
-        sourcePdf: 'fh-scenario-book-42-61.pdf',
-        sourcePage: 0,
-        rawText: 'Scenario 61',
-        metadata: {},
-      },
-    ]);
-    mockGetScenario.mockResolvedValue({
-      ref: 'gloomhavensecretariat:scenario/061',
-      scenarioGroup: 'main',
-      scenarioIndex: '61',
-      name: 'Life and Death',
-      complexity: 2,
-      flowChartGroup: null,
-      initial: false,
-      sourcePdf: 'fh-scenario-book-42-61.pdf',
-      sourcePage: 0,
-      rawText: 'Scenario 61',
-      metadata: {},
-    });
-    mockGetSection.mockResolvedValue({
-      ref: '67.1',
-      title: 'Conclusion',
-      body: 'Section text',
-      sourcePdf: 'fh-section-book-62-81.pdf',
-      sourcePage: 0,
-      rawText: 'Section text',
-      metadata: {},
-    });
-    mockFollowLinks.mockResolvedValue([
-      {
-        fromKind: 'scenario',
-        fromRef: 'gloomhavensecretariat:scenario/061',
-        toKind: 'section',
-        toRef: '67.1',
-        linkType: 'conclusion',
-        label: 'Read Section 67.1',
-        context: null,
-        metadata: {},
-      },
-    ]);
     mockInspectSources.mockResolvedValue({
       ok: true,
       sources: [],
@@ -159,29 +83,31 @@ describe('MCP tool registration', () => {
     });
   });
 
-  it('registers old tools, discovery tools, and canonical knowledge tools', async () => {
+  it('registers redesigned knowledge tools only', async () => {
     const client = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    expect(names).toContain('inspect_sources');
-    expect(names).toContain('schema');
-    expect(names).toContain('resolve_entity');
-    expect(names).toContain('search_rules');
-    expect(names).toContain('find_scenario');
-    expect(names).toContain('get_scenario');
-    expect(names).toContain('get_section');
-    expect(names).toContain('follow_links');
-    expect(names).toContain('open_entity');
-    expect(names).toContain('search_knowledge');
-    expect(names).toContain('neighbors');
-    expect(names).toContain('search_cards');
-    expect(names).toContain('list_card_types');
-    expect(names).toContain('list_cards');
-    expect(names).toContain('get_card');
-    expect(tools).toHaveLength(15);
+
+    expect(names).toEqual([
+      'inspect_sources',
+      'schema',
+      'resolve_entity',
+      'open_entity',
+      'search_knowledge',
+      'neighbors',
+    ]);
+    expect(names).not.toContain('search_rules');
+    expect(names).not.toContain('search_cards');
+    expect(names).not.toContain('list_card_types');
+    expect(names).not.toContain('list_cards');
+    expect(names).not.toContain('get_card');
+    expect(names).not.toContain('find_scenario');
+    expect(names).not.toContain('get_scenario');
+    expect(names).not.toContain('get_section');
+    expect(names).not.toContain('follow_links');
   });
 
-  it('wires the discovery tools through to handlers', async () => {
+  it('wires discovery tools through to handlers', async () => {
     const client = await connectClient();
 
     await expect(
@@ -212,48 +138,8 @@ describe('MCP tool registration', () => {
     });
   });
 
-  it('wires the traversal tools through to handlers', async () => {
+  it('wires canonical search, open, and traversal tools through to handlers', async () => {
     const client = await connectClient();
-
-    await expect(
-      client.callTool({
-        name: 'find_scenario',
-        arguments: { query: 'scenario 61', game: 'gh2' },
-      }),
-    ).resolves.toBeDefined();
-    expect(mockFindScenario).toHaveBeenCalledWith('scenario 61', { game: 'gh2' });
-
-    await expect(
-      client.callTool({
-        name: 'get_scenario',
-        arguments: { ref: 'gloomhavensecretariat:scenario/061', game: 'gh2' },
-      }),
-    ).resolves.toBeDefined();
-    expect(mockGetScenario).toHaveBeenCalledWith('gloomhavensecretariat:scenario/061', {
-      game: 'gh2',
-    });
-
-    await expect(
-      client.callTool({ name: 'get_section', arguments: { ref: '67.1', game: 'gh2' } }),
-    ).resolves.toBeDefined();
-    expect(mockGetSection).toHaveBeenCalledWith('67.1', { game: 'gh2' });
-
-    await expect(
-      client.callTool({
-        name: 'follow_links',
-        arguments: {
-          fromKind: 'scenario',
-          fromRef: 'gloomhavensecretariat:scenario/061',
-          game: 'gh2',
-        },
-      }),
-    ).resolves.toBeDefined();
-    expect(mockFollowLinks).toHaveBeenCalledWith(
-      'scenario',
-      'gloomhavensecretariat:scenario/061',
-      undefined,
-      { game: 'gh2' },
-    );
 
     await expect(
       client.callTool({
@@ -263,17 +149,16 @@ describe('MCP tool registration', () => {
     ).resolves.toBeDefined();
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1', { game: 'gh2' });
 
-    await expect(
-      client.callTool({
-        name: 'search_knowledge',
-        arguments: { query: 'loot', limit: 3, game: 'gh2' },
-      }),
-    ).resolves.toBeDefined();
+    const searchResult = await client.callTool({
+      name: 'search_knowledge',
+      arguments: { query: 'loot', limit: 3, game: 'gh2' },
+    });
     expect(mockSearchKnowledge).toHaveBeenCalledWith('loot', {
       scope: undefined,
       limit: 3,
       game: 'gh2',
     });
+    expect(getTextContent(searchResult)[0].text).toContain('loot');
 
     await expect(
       client.callTool({
@@ -286,135 +171,5 @@ describe('MCP tool registration', () => {
       limit: 20,
       game: 'gh2',
     });
-  });
-});
-
-describe('search_rules tool', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSearchRules.mockResolvedValue([
-      { text: 'Loot: pick up tokens.', source: 'rulebook.pdf:42', score: 0.9 },
-    ]);
-  });
-
-  it('calls searchRules and returns results', async () => {
-    const client = await connectClient();
-    const result = await client.callTool({
-      name: 'search_rules',
-      arguments: { query: 'loot', game: 'gh2' },
-    });
-    expect(mockSearchRules).toHaveBeenCalledWith('loot', 6, { game: 'gh2' });
-    const content = getTextContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].text).toContain('Loot');
-  });
-
-  it('respects topK parameter', async () => {
-    const client = await connectClient();
-    await client.callTool({ name: 'search_rules', arguments: { query: 'loot', topK: 3 } });
-    expect(mockSearchRules).toHaveBeenCalledWith('loot', 3);
-  });
-});
-
-describe('search_cards tool', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockSearchCards.mockReturnValue([
-      { type: 'monster-stats', data: { name: 'Algox Archer' }, score: 2 },
-    ]);
-  });
-
-  it('calls searchCards and returns results', async () => {
-    const client = await connectClient();
-    const result = await client.callTool({
-      name: 'search_cards',
-      arguments: { query: 'algox archer', game: 'gh2' },
-    });
-    expect(mockSearchCards).toHaveBeenCalledWith('algox archer', 6, { game: 'gh2' });
-    const content = getTextContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].text).toContain('Algox Archer');
-  });
-});
-
-describe('list_card_types tool', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockListCardTypes.mockReturnValue([
-      { type: 'monster-stats', count: 10 },
-      { type: 'items', count: 5 },
-    ]);
-  });
-
-  it('returns card types', async () => {
-    const client = await connectClient();
-    const result = await client.callTool({
-      name: 'list_card_types',
-      arguments: { game: 'gh2' },
-    });
-    expect(mockListCardTypes).toHaveBeenCalledWith({ game: 'gh2' });
-    const content = getTextContent(result);
-    expect(content).toHaveLength(1);
-    const text = content[0].text;
-    expect(text).toContain('monster-stats');
-    expect(text).toContain('items');
-  });
-});
-
-describe('list_cards tool', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockListCards.mockReturnValue([{ name: 'Algox Archer' }]);
-  });
-
-  it('calls listCards with type', async () => {
-    const client = await connectClient();
-    await client.callTool({
-      name: 'list_cards',
-      arguments: { type: 'monster-stats', game: 'gh2' },
-    });
-    expect(mockListCards).toHaveBeenCalledWith('monster-stats', undefined, { game: 'gh2' });
-  });
-
-  it('passes filter when provided', async () => {
-    const client = await connectClient();
-    await client.callTool({
-      name: 'list_cards',
-      arguments: { type: 'monster-stats', filter: '{"name":"Algox Archer"}', game: 'gh2' },
-    });
-    expect(mockListCards).toHaveBeenCalledWith(
-      'monster-stats',
-      { name: 'Algox Archer' },
-      { game: 'gh2' },
-    );
-  });
-});
-
-describe('get_card tool', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetCard.mockReturnValue({ name: 'Algox Archer', levelRange: '0-3' });
-  });
-
-  it('returns a card', async () => {
-    const client = await connectClient();
-    const result = await client.callTool({
-      name: 'get_card',
-      arguments: { type: 'monster-stats', id: 'Algox Archer', game: 'gh2' },
-    });
-    expect(mockGetCard).toHaveBeenCalledWith('monster-stats', 'Algox Archer', { game: 'gh2' });
-    const content = getTextContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].text).toContain('Algox Archer');
-  });
-
-  it('returns error when card not found', async () => {
-    mockGetCard.mockReturnValue(null);
-    const client = await connectClient();
-    const result = await client.callTool({
-      name: 'get_card',
-      arguments: { type: 'monster-stats', id: 'Nonexistent' },
-    });
-    expect(result.isError).toBe(true);
   });
 });

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LangfuseClient } from '@langfuse/client';
+import { Client as LangSmithClient } from 'langsmith';
 import { EvalDatasetSchema, type EvalCase } from './schema.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -25,23 +25,23 @@ export function filterEvalCases(
   return selected;
 }
 
-// Idempotent: Langfuse returns the existing dataset on duplicate create, and
-// upserts items when an id is provided. Safe to run repeatedly.
-export async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): Promise<void> {
-  console.log(`Seeding dataset "${DATASET_NAME}" with ${cases.length} items...`);
+export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): Promise<void> {
+  console.log(`Seeding LangSmith dataset "${DATASET_NAME}" with ${cases.length} items...`);
 
-  await langfuse.api.datasets.create({
-    name: DATASET_NAME,
-    description: 'Frosthaven rules Q&A evaluation set',
-    metadata: { version: '1.0' },
-  });
+  const hasDataset = await client.hasDataset({ datasetName: DATASET_NAME });
+  if (!hasDataset) {
+    await client.createDataset(DATASET_NAME, {
+      description: 'Frosthaven rules Q&A evaluation set',
+      metadata: { version: '1.0' },
+    });
+  }
 
-  for (const c of cases) {
-    await langfuse.api.datasetItems.create({
-      datasetName: DATASET_NAME,
+  await client.createExamples(
+    cases.map((c) => ({
       id: c.id,
-      input: { question: c.question },
-      expectedOutput: {
+      dataset_name: DATASET_NAME,
+      inputs: { question: c.question },
+      outputs: {
         finalAnswer: c.finalAnswer,
         trajectory: c.trajectory,
       },
@@ -52,8 +52,18 @@ export async function seedDataset(langfuse: LangfuseClient, cases: EvalCase[]): 
         hasFinalAnswer: !!c.finalAnswer,
         hasTrajectory: !!c.trajectory,
       },
-    });
-    process.stdout.write('.');
-  }
+    })),
+  );
+
   console.log('\nDataset seeded.');
+}
+
+export async function createLangSmithDatasetClient(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<LangSmithClient> {
+  return new LangSmithClient({
+    apiKey: env.LANGSMITH_API_KEY,
+    apiUrl: env.LANGSMITH_ENDPOINT,
+    workspaceId: env.LANGSMITH_WORKSPACE_ID,
+  });
 }

@@ -4,10 +4,18 @@ Date: 2026-05-24
 
 ## Decision
 
-Keep LangGraph eval-only for now. The adapter is useful for stream hygiene because
-it gives Squire an explicit `agent_loop -> final_answer` graph boundary, but this
-SQR-225 run does not show answer-quality or traversal-quality improvement over
-the current runner.
+Superseded on 2026-05-25 by
+[SQR-225 Production LangGraph Runtime Eng Review](./sqr-225-production-langgraph-runtime-eng-review.md)
+and [ADR 0019](../adr/0019-langgraph-production-knowledge-agent.md).
+
+The original result below is still valid as a measurement of the first adapter:
+it wrapped the current loop and did not improve answer quality. It is no longer
+the project direction.
+
+The active decision is to build a real production LangGraph graph for all
+Squire Q&A and remove the hand-owned production loop.
+
+## Original Decision
 
 Do not move production traffic. Do not advance to hidden browser QA until the
 underlying scenario/section traversal quality issue is fixed or a real graph
@@ -71,13 +79,6 @@ Trace ids:
 - `eval:sqr-225-scenario-61-traversal-2026-05-24:claude-sdk:anthropic:claude-sonnet-4-6:traj-scenario-conclusion-next-links`
 - `eval:sqr-225-scenario-61-traversal-2026-05-24:langgraph:anthropic:claude-sonnet-4-6:traj-scenario-conclusion-next-links`
 
-Trace URLs:
-
-- <https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-225-scenario-61-unlock-2026-05-24%3Aclaude-sdk%3Aanthropic%3Aclaude-sonnet-4-6%3Ascenario-61-unlock>
-- <https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-225-scenario-61-unlock-2026-05-24%3Alanggraph%3Aanthropic%3Aclaude-sonnet-4-6%3Ascenario-61-unlock>
-- <https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-225-scenario-61-traversal-2026-05-24%3Aclaude-sdk%3Aanthropic%3Aclaude-sonnet-4-6%3Atraj-scenario-conclusion-next-links>
-- <https://us.cloud.langfuse.com/project/cmn1deprv071ead07hellcosn/traces/eval%3Asqr-225-scenario-61-traversal-2026-05-24%3Alanggraph%3Aanthropic%3Aclaude-sonnet-4-6%3Atraj-scenario-conclusion-next-links>
-
 ## Stream Hygiene
 
 LangGraph adds a better boundary for streaming:
@@ -137,15 +138,11 @@ the planning policy, retrieval policy, or stopping behavior.
 
 ## Recommendation
 
-Keep LangGraph in eval-only mode.
+Superseded recommendation: do not keep iterating on the wrapper adapter.
 
-The next useful work is not more adapter plumbing. It is either:
-
-- fix the scenario/section traversal failure in the existing agent loop, then
-  rerun this comparison; or
-- build a real graph-shaped planner/retriever/final-answer flow and compare that
-  to the current loop.
-
-DeepAgents should stay out of this path until LangGraph shows value beyond
-stream hygiene. The current DeepAgents role remains separate: longer-horizon
-research and planning experiments, not the minimal browser streaming fix.
+The active recommendation is to build the real graph-shaped
+planner/retriever/verifier/final-answer flow from
+[SQR-225 Production LangGraph Runtime Eng Review](./sqr-225-production-langgraph-runtime-eng-review.md)
+and remove the old production loop. Deep Agents stays out of the critical path
+for normal Q&A and remains a later option for longer research and planning
+tasks.

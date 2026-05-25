@@ -7,7 +7,8 @@
 
 import 'dotenv/config';
 import { sdk } from './instrumentation.ts';
-import { runAgentLoopWithTrajectory, type AgentRunResult } from './agent.ts';
+import { type AgentRunResult } from './agent.ts';
+import { runLangGraphAgentLoopWithTrajectory } from './agent-langgraph.ts';
 import { initialize, ask } from './service.ts';
 import type { AskOptions } from './service.ts';
 
@@ -26,8 +27,8 @@ export async function askFrosthavenWithTrajectory(
 ): Promise<AgentRunResult> {
   await initialize();
   return options
-    ? runAgentLoopWithTrajectory(question, options)
-    : runAgentLoopWithTrajectory(question);
+    ? runLangGraphAgentLoopWithTrajectory(question, options)
+    : runLangGraphAgentLoopWithTrajectory(question);
 }
 
 // CLI entrypoint

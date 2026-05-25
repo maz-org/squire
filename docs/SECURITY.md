@@ -35,7 +35,7 @@ to Claude. Every input path is a prompt injection surface.
   into the model
 - Never include the system prompt or tool schemas in LLM output
 - Input length limits on questions and history
-- Anomaly detection via Langfuse traces (e.g., responses that contain
+- Anomaly detection via LangSmith traces (e.g., responses that contain
   code, URLs, or instructions)
 - Rate limit per-user to bound abuse
 
@@ -141,7 +141,7 @@ API keys and signing keys are high-value targets.
   account takeover for any user
 - Postgres credentials in environment variables — database compromise
   leads to all user data
-- Langfuse keys — expose all query/response traces
+- LangSmith keys — expose all query/response traces and eval datasets
 
 **Mitigations:**
 
@@ -347,11 +347,11 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 - MCP server reports `name: 'squire', version: '0.1.0'`
   (fingerprinting)
 - `/api/card-types` reveals the data schema (game data, not sensitive)
-- Langfuse traces could be exposed if misconfigured
+- LangSmith traces could be exposed if misconfigured
 
 **Mitigations:**
 
-- Restrict Langfuse access
+- Restrict LangSmith access
 - Do not expose stack traces in production (already handled by global
   error handler)
 - Consider stripping version from MCP server info in production
