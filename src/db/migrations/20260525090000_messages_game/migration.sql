@@ -1,0 +1,2 @@
+ALTER TABLE messages
+  ADD COLUMN game TEXT DEFAULT NULL;

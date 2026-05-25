@@ -11,10 +11,10 @@ describe('knowledge tool contract documentation', () => {
 
     expect(contract).toContain('| `frosthaven`');
     expect(contract).toContain('| `gloomhaven-2e`');
-    expect(contract).toContain('`Gloomhaven 2.0`');
+    expect(contract).toContain('`Gloomhaven (2nd Edition)`');
     expect(contract).toContain('"defaultGame": "frosthaven"');
     expect(contract).toContain('"id": "gloomhaven-2e"');
-    expect(contract).toContain('"label": "Gloomhaven 2.0"');
+    expect(contract).toContain('"label": "Gloomhaven (2nd Edition)"');
     expect(contract).toContain('"default": false');
   });
 

@@ -1,5 +1,5 @@
 /**
- * Query the Frosthaven knowledge base.
+ * Query the Squire game knowledge base.
  * Usage: node src/query.ts "What is the loot action?"
  *
  * This is a thin CLI wrapper over service.ts. All RAG logic lives there.
@@ -12,7 +12,7 @@ import { initialize, ask } from './service.ts';
 import type { AskOptions } from './service.ts';
 
 /**
- * Answer a Frosthaven rules question using RAG + structured card data.
+ * Answer a supported Haven rules question using RAG + structured card data.
  * Delegates to service.ts for all logic.
  */
 export async function askFrosthaven(question: string, options?: AskOptions): Promise<string> {

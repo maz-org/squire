@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.12] - 2026-05-25
+
+### Added
+
+- Added an active-game selector for Frosthaven and Gloomhaven (2nd Edition) in the authenticated chat header.
+- Added local browser persistence for the selected game, including fallback behavior for unsupported stored values.
+- Added web chat routing so selected games are validated, stored on user turns, and forwarded through SSE and non-SSE agent paths.
+
+### Changed
+
+- Updated Frosthaven-only UI and runtime copy to describe Squire as a supported Haven rules companion.
+- Restored shared GH2 item fixtures after cross-game isolation tests so shuffled DB test runs keep imported GH2 data available.
+
 ## [0.1.11] - 2026-05-25
 
 ### Added

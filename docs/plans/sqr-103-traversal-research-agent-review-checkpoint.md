@@ -41,7 +41,7 @@ The approved design direction is:
 - sparse explicit reference artifact, not a full graph platform
 - deterministic traversal tools for scenarios and sections
 - semantic search as fallback, not primary planner
-- game-scoped shape so Gloomhaven 2.0 can be added later
+- game-scoped shape so Gloomhaven (2nd Edition) can be added later
 
 The motivating failure is the scenario 61 conclusion question, which currently
 times out and forces manual PDF chain-following.
@@ -85,7 +85,7 @@ These are the main risks to challenge during eng review:
 1. Overbuilding a new storage/model layer when a generated artifact is enough
 2. Underbuilding by leaving too much chain-following inside the model
 3. Failing to define clean test coverage for chained traversal
-4. Forgetting the Gloomhaven 2.0 extension seam while optimizing for Frosthaven
+4. Forgetting the Gloomhaven (2nd Edition) extension seam while optimizing for Frosthaven
 
 ---
 

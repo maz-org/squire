@@ -510,7 +510,8 @@ describe('Authenticated web UI', () => {
     expect(res.status).toBe(200);
 
     const body = await res.text();
-    expect(body).toContain('FROSTHAVEN · RULES');
+    expect(body).toContain('class="squire-game-picker"');
+    expect(body).toContain('Gloomhaven 2e');
     expect(body).toContain('class="squire-account-menu"');
     expect(body).toContain('src="https://example.com/brian.png"');
     expect(body).toContain('href="/styleguide/markdown"');

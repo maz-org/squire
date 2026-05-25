@@ -2,7 +2,7 @@
 
 ## Context
 
-SQR-188 and SQR-189 add the official Gloomhaven 2.0 rulebook, FAQ, and errata
+SQR-188 and SQR-189 add the official Gloomhaven (2nd Edition) rulebook, FAQ, and errata
 as first-class rule sources. The official GH2 rulebook PDF is image-based for
 our current parser: `pdf-parse` sees 74 pages but extracts no non-whitespace
 text. The current branch therefore uses a checked-in Apple Vision OCR Markdown
