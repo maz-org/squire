@@ -23,7 +23,7 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { basename, join, dirname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFragment, type DefaultTreeAdapterMap } from 'parse5';
 
@@ -31,11 +31,53 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ─── GHS data paths ─────────────────────────────────────────────────────────
 
-export const GHS_DATA_DIR = process.env.GHS_DATA_DIR
-  ? existsSync(join(process.env.GHS_DATA_DIR, 'data', 'fh'))
-    ? join(process.env.GHS_DATA_DIR, 'data', 'fh')
-    : process.env.GHS_DATA_DIR
-  : join(__dirname, '..', 'data', 'gloomhavensecretariat', 'data', 'fh');
+const DEFAULT_GHS_GAME_DATA_SUBDIR = 'fh';
+
+interface ResolveGhsDataDirOptions {
+  gameDataSubdir?: string;
+  exists?: (path: string) => boolean;
+}
+
+function normalizeGhsGameDataSubdir(subdir: string): string {
+  return subdir.replace(/^data[\\/]/, '');
+}
+
+function isDirectGhsGameDataDir(baseDir: string, gameDataSubdir: string): boolean {
+  const normalizedBaseDir = normalize(baseDir);
+  return (
+    basename(normalizedBaseDir) === gameDataSubdir &&
+    basename(dirname(normalizedBaseDir)) === 'data'
+  );
+}
+
+/**
+ * Resolve either a GHS checkout root (`.../gloomhavensecretariat`) or a direct
+ * game data directory (`.../data/fh`, `.../data/gh2e`) to the importable folder.
+ */
+export function resolveGhsDataDir(baseDir: string, options: ResolveGhsDataDirOptions = {}): string {
+  const gameDataSubdir = normalizeGhsGameDataSubdir(
+    options.gameDataSubdir ?? DEFAULT_GHS_GAME_DATA_SUBDIR,
+  );
+
+  if (isDirectGhsGameDataDir(baseDir, gameDataSubdir)) return baseDir;
+
+  const candidate = join(baseDir, 'data', gameDataSubdir);
+  const exists = options.exists ?? existsSync;
+  if (exists(candidate)) return candidate;
+  if (exists(join(baseDir, 'label', 'en.json')) || exists(join(baseDir, 'items.json'))) {
+    return baseDir;
+  }
+  return candidate;
+}
+
+export const GHS_DATA_GAME = normalizeGhsGameDataSubdir(
+  process.env.GHS_DATA_GAME ?? DEFAULT_GHS_GAME_DATA_SUBDIR,
+);
+
+export const GHS_DATA_DIR = resolveGhsDataDir(
+  process.env.GHS_DATA_DIR ?? join(__dirname, '..', 'data', 'gloomhavensecretariat'),
+  { gameDataSubdir: GHS_DATA_GAME },
+);
 
 export const GHS_LABEL_PATH = join(GHS_DATA_DIR, 'label', 'en.json');
 
