@@ -81,8 +81,8 @@ app-runtime secrets and settings belong in Fly:
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `SQUIRE_ALLOWED_EMAILS`
 - `SQUIRE_ENV=production`
-- `LANGSMITH_API_KEY`
-- `LANGSMITH_PROJECT`
+- `LANGSMITH_API_KEY` (optional tracing; absence must not block startup)
+- `LANGSMITH_PROJECT` (optional tracing; defaults to `squire-production`)
 - `LANGSMITH_ENDPOINT` (optional; defaults to LangSmith Cloud)
 - `LANGSMITH_WORKSPACE_ID` (when required by the API key)
 - `ORIGIN_SHARED_SECRET`
