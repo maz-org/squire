@@ -29,8 +29,6 @@ describe('validateServerEnv', () => {
       'DATABASE_URL',
       'ANTHROPIC_API_KEY',
       'SESSION_SECRET',
-      'LANGSMITH_API_KEY',
-      'LANGSMITH_PROJECT',
       'GOOGLE_OAUTH_CLIENT_ID',
       'GOOGLE_OAUTH_CLIENT_SECRET',
       'ORIGIN_SHARED_SECRET',
@@ -48,6 +46,16 @@ describe('validateServerEnv', () => {
     if (!result.success) throw new Error('expected valid env');
     expect(result.data.port).toBe(8080);
     expect(result.data.host).toBe('0.0.0.0');
+  });
+
+  it('does not make LangSmith tracing credentials boot-critical in production', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      LANGSMITH_API_KEY: undefined,
+      LANGSMITH_PROJECT: undefined,
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it('allows development to use the managed local database default', () => {
