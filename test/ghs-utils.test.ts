@@ -42,6 +42,16 @@ describe('resolveGhsDataDir', () => {
     ).toBe(direct);
   });
 
+  it('does not treat path suffix text as a direct game data directory', () => {
+    const root = '/tmp/notdata/fh';
+
+    expect(
+      resolveGhsDataDir(root, {
+        exists: () => false,
+      }),
+    ).toBe(join(root, 'data', 'fh'));
+  });
+
   it('keeps the requested subtree in the resolved path when it has not been checked out', () => {
     const root = '/tmp/ghs';
 

@@ -23,7 +23,7 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { basename, join, dirname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFragment, type DefaultTreeAdapterMap } from 'parse5';
 
@@ -43,7 +43,11 @@ function normalizeGhsGameDataSubdir(subdir: string): string {
 }
 
 function isDirectGhsGameDataDir(baseDir: string, gameDataSubdir: string): boolean {
-  return baseDir.endsWith(`${join('data', gameDataSubdir)}`);
+  const normalizedBaseDir = normalize(baseDir);
+  return (
+    basename(normalizedBaseDir) === gameDataSubdir &&
+    basename(dirname(normalizedBaseDir)) === 'data'
+  );
 }
 
 /**
