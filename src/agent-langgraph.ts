@@ -47,6 +47,8 @@ const GRAPH_RUNTIME_PREFIX = 'langgraph';
 const FINAL_ANSWER_PROMPT =
   'Write the final answer now using only verified tool results in this run. Do not call tools. If the verified results are insufficient, say exactly what is missing instead of guessing.';
 
+// LangGraph treats neighbors as discovery so returned refs must be opened or
+// searched before final_answer can use them.
 const DISCOVERY_ONLY_TOOL_NAMES = new Set([
   'inspect_sources',
   'schema',

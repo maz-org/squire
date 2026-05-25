@@ -386,7 +386,7 @@ describe('game isolation', () => {
     expect(gh2Counts['monster-stats']).toBeGreaterThan(1);
   });
 
-  it('returns GH2 rows only for explicit Gloomhaven 2.0 queries', async () => {
+  it('returns GH2 rows only for explicit Gloomhaven (2nd Edition) queries', async () => {
     const row = await loadOne('monster-stats', GH2_ISOLATION_SOURCE_ID, {
       game: GLOOMHAVEN_2E_GAME_ID,
     });

@@ -576,7 +576,7 @@ export async function ensureAskBudgetAvailable(userId?: string | null): Promise<
 }
 
 /**
- * Answer a Frosthaven rules question using the knowledge agent.
+ * Answer a supported Haven rules question using the knowledge agent.
  * The agent decides which tools to call based on the question,
  * iterates until it has enough context, then produces a grounded answer.
  */

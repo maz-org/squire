@@ -20,11 +20,11 @@ The migration is fenced by two parity regression tests built **before** the rewr
 
 Each sub-issue is a separate PR off `main`. Session B starts from Session A's merged state, etc. — no long-lived integration branch.
 
-| Sub-issue | Title | Lands when |
-| --- | --- | --- |
-| **SQR-55** (Session A) | Seed-cards module + parity snapshots + eval baseline | Tests still green; nothing rewritten yet |
+| Sub-issue              | Title                                                             | Lands when                                         |
+| ---------------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
+| **SQR-55** (Session A) | Seed-cards module + parity snapshots + eval baseline              | Tests still green; nothing rewritten yet           |
 | **SQR-56** (Session B) | FTS schema + extracted-data Postgres rewrite + async tools ripple | Typecheck clean; search-parity test red on purpose |
-| **SQR-57** (Session C) | Test rewrites, FTS snapshot refresh, eval delta | All tests green; eval delta documented |
+| **SQR-57** (Session C) | Test rewrites, FTS snapshot refresh, eval delta                   | All tests green; eval delta documented             |
 
 ---
 
@@ -87,20 +87,21 @@ Each sub-issue is a separate PR off `main`. Session B starts from Session A's me
    - Add `searchVector` generated column to each of the 10 card tables: `.generatedAlwaysAs(sql\`...\`, { mode: 'stored' })`.
    - Build the tsvector from text/array columns only (NOT jsonb — keeps it simple, recall is sufficient). Use `coalesce(col, '')` for nullable text and `array_to_string(arr_col, ' ', '')` for text arrays. Per-type field lists:
 
-     | Table | Fields concatenated into tsvector |
-     | --- | --- |
-     | `card_monster_stats` | `name`, `level_range`, `array_to_string(immunities, ' ', '')`, `coalesce(notes, '')` |
-     | `card_monster_abilities` | `monster_type`, `card_name`, `array_to_string(abilities, ' ', '')` |
-     | `card_character_abilities` | `card_name`, `character_class`, `coalesce(level, '')` |
-     | `card_character_mats` | `name`, `character_class`, `array_to_string(traits, ' ', '')`, `array_to_string(perks, ' ', '')`, `array_to_string(masteries, ' ', '')` |
-     | `card_items` | `number`, `name`, `slot`, `effect` |
-     | `card_events` | `event_type`, `coalesce(season, '')`, `number`, `flavor_text` |
-     | `card_battle_goals` | `name`, `condition` |
-     | `card_buildings` | `coalesce(building_number, '')`, `name`, `effect`, `coalesce(notes, '')` |
-     | `card_scenarios` | `scenario_group`, `index`, `name`, `array_to_string(monsters, ' ', '')`, `array_to_string(allies, ' ', '')`, `array_to_string(unlocks, ' ', '')`, `coalesce(rewards, '')` |
-     | `card_personal_quests` | `card_id`, `name`, `open_envelope` |
+     | Table                      | Fields concatenated into tsvector                                                                                                                                         |
+     | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+     | `card_monster_stats`       | `name`, `level_range`, `array_to_string(immunities, ' ', '')`, `coalesce(notes, '')`                                                                                      |
+     | `card_monster_abilities`   | `monster_type`, `card_name`, `array_to_string(abilities, ' ', '')`                                                                                                        |
+     | `card_character_abilities` | `card_name`, `character_class`, `coalesce(level, '')`                                                                                                                     |
+     | `card_character_mats`      | `name`, `character_class`, `array_to_string(traits, ' ', '')`, `array_to_string(perks, ' ', '')`, `array_to_string(masteries, ' ', '')`                                   |
+     | `card_items`               | `number`, `name`, `slot`, `effect`                                                                                                                                        |
+     | `card_events`              | `event_type`, `coalesce(season, '')`, `number`, `flavor_text`                                                                                                             |
+     | `card_battle_goals`        | `name`, `condition`                                                                                                                                                       |
+     | `card_buildings`           | `coalesce(building_number, '')`, `name`, `effect`, `coalesce(notes, '')`                                                                                                  |
+     | `card_scenarios`           | `scenario_group`, `index`, `name`, `array_to_string(monsters, ' ', '')`, `array_to_string(allies, ' ', '')`, `array_to_string(unlocks, ' ', '')`, `coalesce(rewards, '')` |
+     | `card_personal_quests`     | `card_id`, `name`, `open_envelope`                                                                                                                                        |
 
    - Add a GIN index per table: `index('card_<type>_search_idx').using('gin', t.searchVector)`. If Drizzle 0.45's `.using('gin', ...)` doesn't accept it, declare in raw SQL inside the migration file.
+
 3. **Migration.** `npx drizzle-kit generate` → `src/db/migrations/0002_card_fts.sql`. Drizzle's stored-generated tsvector support is rough; if generation produces wrong SQL, hand-write the migration: per-table `ALTER TABLE card_<type> ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (to_tsvector('english', <expr>)) STORED; CREATE INDEX card_<type>_search_idx ON card_<type> USING gin(search_vector);`. Keep schema.ts and migration in sync so future drizzle introspection round-trips cleanly.
 4. **Apply migration.** `npm run db:migrate` (dev) and `npm run db:migrate:test` (test). Smoke check: `psql ... -c "SELECT search_vector FROM card_battle_goals LIMIT 1;"` returns a non-null tsvector.
 5. **Rewrite `src/extracted-data.ts`:**
@@ -126,10 +127,12 @@ Each sub-issue is a separate PR off `main`. Session B starts from Session A's me
 
      - Wrap as subquery, `ORDER BY score DESC LIMIT $3`.
      - Reshape: payload comes back as a parsed JS object (pg jsonb). Build `record = { _type: card_type, ...payload }`.
+
    - `export async function searchExtracted(query, k, opts?): Promise<ExtractedRecord[]>` is `searchExtractedRanked(...).then(rs => rs.map(r => r.record))`.
    - `recordToText` and `formatExtracted` UNCHANGED.
    - `export async function extractedStats(): Promise<string>` — single CTE counting all 10 tables, format as before.
    - **No JSON fallback** — per Decision 9 of the tech spec, throw a clear error if the DB is unreachable.
+
 6. **Async ripple in `src/tools.ts`:**
    - Drop `scoreRecord`, `STOPWORDS`, the tokenizer, `ID_FIELDS` map.
    - `searchRules(query, topK, opts?)` — already async; just add `opts?: { game? }`. If `vector-store.search()` doesn't yet support a game filter, leave a TODO comment referencing the Phase 2 issue.
@@ -160,14 +163,14 @@ Each sub-issue is a separate PR off `main`. Session B starts from Session A's me
 1. **Branch + issue prep.** `gitBranchName` from SQR-57 off latest `main`. Move SQR-57 to In Progress.
 2. **Extend `test/helpers/db.ts#resetTestDb`.** TRUNCATE all 10 `card_*` tables in addition to the existing list. RESTART IDENTITY CASCADE handles dependencies.
 3. **Rewrite `test/extracted-data.test.ts`:**
-   - Drop `vi.mock('node:fs', …)` and FAKE_* fixtures entirely.
+   - Drop `vi.mock('node:fs', …)` and FAKE\_\* fixtures entirely.
    - Imports: `setupTestDb`, `resetTestDb` from `./helpers/db.ts`; `seedCards` from `../src/seed/seed-cards.ts`; `load`, `searchExtracted`, `searchExtractedRanked`, `formatExtracted`, `extractedStats` from `../src/extracted-data.ts`.
    - `let db; beforeAll(async () => { db = await setupTestDb(); });`
    - `beforeEach(async () => { await resetTestDb(); await seedCards(db); });`
    - `describe('load parity')` — `for (const type of TYPES)` deepEqual against `test/fixtures/parity-snapshots/<type>.json`.
    - `describe('searchExtracted parity')` — for each query in `cards.json`, assert top-6 sourceIds match in order.
    - `describe('idempotency')` — seed twice, query count for each table, assert equal.
-   - `describe('game filter')` — insert a synthetic `gloomhaven-2` battle goal directly via Drizzle, assert `load('battle-goals', { game: 'gloomhaven-2' })` returns it and the default-`frosthaven` call doesn't.
+   - `describe('game filter')` — insert a synthetic `gloomhaven-2e` battle goal directly via Drizzle, assert `load('battle-goals', { game: 'gloomhaven-2e' })` returns it and the default-`frosthaven` call doesn't.
    - Keep `recordToText` / `formatExtracted` tests as pure-function tests (no DB).
 4. **Fix other test files broken by ripple.** Drop fs mocks, add the same `setupTestDb` + `seedCards` pattern, add `await` to tool call sites:
    - `test/tools.test.ts` — also update `getCard` assertions to use `sourceId` values from the seeded fixtures (the natural-key lookup is gone).
@@ -252,7 +255,7 @@ Each sub-issue is a separate PR off `main`. Session B starts from Session A's me
 - Linear is the tracker. Move sub-issues to In Progress before starting; assign to yourself.
 - Always use PRs. Never push to main. Never force-push.
 - TDD where feasible — parity snapshot tests come **before** the extracted-data rewrite.
-- Document *why* in the codebase. Resolved decisions above belong here, not in PR comments alone.
+- Document _why_ in the codebase. Resolved decisions above belong here, not in PR comments alone.
 - Conventional Commits. Small focused commits within each PR.
 - No JSON fallback (Decision 9). No 15-min token rotation (long-lived tokens are deliberate). Merge main if it moves; do not rebase.
 - Don't open separate Linear issues for adjacent data-quality fixes that surface during the work — fold them into the current PR per `feedback_fold_in_data_fixes`.

@@ -103,7 +103,9 @@ describe('deployment operations documentation', () => {
 
     expect(guide).toContain('app-runtime secrets');
     expect(guide).toContain('eval/developer-only');
-    expect(guide).toContain('SQUIRE_ENV` is the single source for the LangSmith environment label');
+    expect(guide).toContain(
+      '`SQUIRE_ENV` is the single source for the LangSmith environment label',
+    );
     expect(development).toContain('OAuth bearer auth');
   });
 });

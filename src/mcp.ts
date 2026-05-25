@@ -38,7 +38,7 @@ export function createMcpServer(): McpServer {
     'inspect_sources',
     {
       description:
-        'Discover available Frosthaven knowledge sources, entity kinds, relation kinds, and live record counts before choosing a lookup tool.',
+        'Discover available game knowledge sources, entity kinds, relation kinds, and live record counts before choosing a lookup tool.',
       inputSchema: {
         game: gameSchema,
       },

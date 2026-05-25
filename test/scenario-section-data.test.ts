@@ -93,7 +93,7 @@ describe('game isolation', () => {
     expect(sections).toEqual([]);
   });
 
-  it('returns GH2 rows only for explicit Gloomhaven 2.0 queries', async () => {
+  it('returns GH2 rows only for explicit Gloomhaven (2nd Edition) queries', async () => {
     const scenario = await getScenario(GH2_SCENARIO_REF, { game: GLOOMHAVEN_2E_GAME_ID });
     expect(scenario).toMatchObject({ ref: GH2_SCENARIO_REF, name: GH2_SCENARIO_NAME });
 

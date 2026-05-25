@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { seedDataset } from '../eval/dataset.ts';
 import {
   EvalDatasetSchema,
   countTrajectoryCases,
@@ -192,5 +193,30 @@ describe('eval dataset', () => {
         'frosthaven-qa',
       ),
     ).toThrow(/invalid expectedOutput/);
+  });
+
+  it('reseeds LangSmith examples without using slug ids as UUIDs', async () => {
+    const [evalCase] = EvalDatasetSchema.parse(dataset);
+    const client = {
+      hasDataset: vi.fn().mockResolvedValue(true),
+      listExamples: vi.fn(async function* () {
+        yield { id: '550e8400-e29b-41d4-a716-446655440000' };
+      }),
+      deleteExamples: vi.fn().mockResolvedValue(undefined),
+      createExamples: vi.fn().mockResolvedValue([]),
+    };
+
+    await seedDataset(client as unknown as Parameters<typeof seedDataset>[0], [evalCase]);
+
+    expect(client.deleteExamples).toHaveBeenCalledWith(['550e8400-e29b-41d4-a716-446655440000'], {
+      hardDelete: true,
+    });
+    const [[createdExamples]] = client.createExamples.mock.calls;
+    const [createdExample] = createdExamples;
+    expect(createdExample).not.toHaveProperty('id');
+    expect(createdExample).toMatchObject({
+      dataset_name: 'frosthaven-qa',
+      metadata: expect.objectContaining({ slug: evalCase.id }),
+    });
   });
 });

@@ -69,6 +69,11 @@ export interface ConversationMessage {
   conversationId: string;
   role: 'user' | 'assistant';
   content: string;
+  /**
+   * Runtime game context for user turns. Null for assistant rows and for
+   * historical rows written before the active-game selector existed.
+   */
+  game?: string | null;
   isError: boolean;
   responseToMessageId: string | null;
   /**
@@ -92,6 +97,7 @@ export interface CreateConversationMessageInput {
   conversationId: string;
   role: 'user' | 'assistant';
   content: string;
+  game?: string | null;
   isError?: boolean;
   responseToMessageId?: string | null;
   /**

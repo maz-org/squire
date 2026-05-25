@@ -1044,7 +1044,7 @@ describe('knowledge discovery tools', () => {
     expect(result.defaultGame).toBe('frosthaven');
     expect(result.games).toEqual([
       { id: 'frosthaven', label: 'Frosthaven', default: true },
-      { id: GLOOMHAVEN_2E_GAME_ID, label: 'Gloomhaven 2.0', default: false },
+      { id: GLOOMHAVEN_2E_GAME_ID, label: 'Gloomhaven (2nd Edition)', default: false },
     ]);
     expect(result.sources).toEqual(
       expect.arrayContaining([
@@ -1085,11 +1085,11 @@ describe('knowledge discovery tools', () => {
       expect.arrayContaining([
         expect.objectContaining({
           ref: `source:${GLOOMHAVEN_2E_GAME_ID}/rulebook`,
-          label: 'Gloomhaven 2.0 Rulebook',
+          label: 'Gloomhaven (2nd Edition) Rulebook',
         }),
         expect.objectContaining({
           ref: `source:${GLOOMHAVEN_2E_GAME_ID}/faq`,
-          label: 'Gloomhaven 2.0 FAQ',
+          label: 'Gloomhaven (2nd Edition) FAQ',
           kinds: ['rules_passage'],
           searchable: true,
           freshness: expect.objectContaining({
@@ -1099,7 +1099,7 @@ describe('knowledge discovery tools', () => {
         }),
         expect.objectContaining({
           ref: `source:${GLOOMHAVEN_2E_GAME_ID}/errata`,
-          label: 'Gloomhaven 2.0 Errata',
+          label: 'Gloomhaven (2nd Edition) Errata',
           kinds: ['rules_passage'],
           searchable: true,
           freshness: expect.objectContaining({

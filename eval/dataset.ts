@@ -36,9 +36,16 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
     });
   }
 
+  const existingExampleIds: string[] = [];
+  for await (const example of client.listExamples({ datasetName: DATASET_NAME })) {
+    existingExampleIds.push(example.id);
+  }
+  if (existingExampleIds.length > 0) {
+    await client.deleteExamples(existingExampleIds, { hardDelete: true });
+  }
+
   await client.createExamples(
     cases.map((c) => ({
-      id: c.id,
       dataset_name: DATASET_NAME,
       inputs: { question: c.question },
       outputs: {
@@ -46,7 +53,7 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
         trajectory: c.trajectory,
       },
       metadata: {
-        id: c.id,
+        slug: c.id,
         category: c.category,
         source: c.source,
         hasFinalAnswer: !!c.finalAnswer,

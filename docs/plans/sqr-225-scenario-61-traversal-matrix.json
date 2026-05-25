@@ -1,5 +1,6 @@
 {
   "generatedAt": "2026-05-24T20:43:11.580Z",
+  "note": "Historical pre-migration baseline report. traceUrl values intentionally point at Langfuse because this run was captured before the LangSmith migration.",
   "runLabel": "sqr-225-scenario-61-traversal-2026-05-24",
   "rows": [
     {
