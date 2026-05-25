@@ -1,206 +1,133 @@
 import { EventEmitter } from 'node:events';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Server } from 'node:net';
+import { describe, expect, it, vi } from 'vitest';
+
+import { startHttpServer, type StartHttpServerDeps } from '../src/server-start.ts';
+import type { ServerConfig } from '../src/config.ts';
 
 class FakeServer extends EventEmitter {
-  listenCalls: number[] = [];
+  listenCalls: Array<{ port: number; host?: string }> = [];
+  private readonly listenError?: NodeJS.ErrnoException;
 
-  listen(port: number, _host?: string): this {
-    this.listenCalls.push(port);
+  constructor(listenError?: NodeJS.ErrnoException) {
+    super();
+    this.listenError = listenError;
+  }
+
+  listen(port: number, host?: string): this {
+    this.listenCalls.push({ port, host });
     queueMicrotask(() => {
-      this.emit('listening');
+      if (this.listenError) {
+        this.emit('error', this.listenError);
+      } else {
+        this.emit('listening');
+      }
     });
     return this;
   }
 }
 
-async function loadStartServer(options: {
-  configuredPort?: string;
-  configuredHost?: string;
-  claimedPort?: number;
-  bootstrapImpl?: () => unknown;
+function eaddrinuse(): NodeJS.ErrnoException {
+  const error = new Error('address in use') as NodeJS.ErrnoException;
+  error.code = 'EADDRINUSE';
+  return error;
+}
+
+function buildDeps(options: {
+  config: Pick<ServerConfig, 'port' | 'host'>;
+  servers: FakeServer[];
+  claimedPorts?: number[];
+  isMainCheckout?: boolean;
 }) {
-  vi.resetModules();
+  const releases = (options.claimedPorts ?? [4555]).map(() => vi.fn().mockResolvedValue(undefined));
+  let claimIndex = 0;
+  let serverIndex = 0;
 
-  if (options.configuredPort === undefined) {
-    vi.unstubAllEnvs();
-    delete process.env.PORT;
-  } else {
-    vi.stubEnv('PORT', options.configuredPort);
-  }
-  if (options.configuredHost === undefined) {
-    delete process.env.HOST;
-  } else {
-    vi.stubEnv('HOST', options.configuredHost);
-  }
-  vi.stubEnv('NODE_ENV', 'test');
-  vi.stubEnv('VITEST', 'true');
-
-  const fakeServer = new FakeServer();
-  const createAdaptorServer = vi.fn(() => fakeServer);
-  const claimRelease = vi.fn().mockResolvedValue(undefined);
-  const claimWorktreePort = vi.fn().mockResolvedValue({
-    port: options.claimedPort ?? 4555,
-    release: claimRelease,
-  });
-  const startBootstrapLifecycle = vi.fn(options.bootstrapImpl ?? (() => undefined));
-
-  vi.doMock('@hono/node-server', () => ({
-    createAdaptorServer,
-  }));
-  vi.doMock('../src/instrumentation.ts', () => ({}));
-  vi.doMock('../src/service.ts', () => ({
-    ask: vi.fn(),
-    ensureBootstrapStatus: vi.fn().mockResolvedValue({
-      lifecycle: 'boot_blocked',
-      ready: false,
-      bootstrapReady: false,
-      warmingUp: false,
-      indexSize: 0,
-      cardCount: 0,
-      ruleQueriesReady: false,
-      cardQueriesReady: false,
-      askReady: false,
-      missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
-      errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
-        'No card data found in Postgres. Run `npm run seed:cards` first.',
-      ],
-      capabilities: {
-        rules: {
-          allowed: false,
-          reason: 'missing_index',
-          message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
-        },
-        cards: {
-          allowed: false,
-          reason: 'missing_cards',
-          message: 'No card data found in Postgres. Run `npm run seed:cards` first.',
-        },
-        ask: {
-          allowed: false,
-          reason: 'missing_index',
-          message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
-        },
-      },
+  const deps: StartHttpServerDeps = {
+    appFetch: vi.fn(async () => new Response('ok')),
+    createAdaptorServer: vi.fn(() => {
+      const server = options.servers[serverIndex];
+      serverIndex += 1;
+      return server as unknown as Server;
     }),
-    getBootstrapStatus: vi.fn().mockReturnValue({
-      lifecycle: 'boot_blocked',
-      ready: false,
-      bootstrapReady: false,
-      warmingUp: false,
-      indexSize: 0,
-      cardCount: 0,
-      ruleQueriesReady: false,
-      cardQueriesReady: false,
-      askReady: false,
-      missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
-      errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
-        'No card data found in Postgres. Run `npm run seed:cards` first.',
-      ],
-      capabilities: {
-        rules: {
-          allowed: false,
-          reason: 'missing_index',
-          message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
-        },
-        cards: {
-          allowed: false,
-          reason: 'missing_cards',
-          message: 'No card data found in Postgres. Run `npm run seed:cards` first.',
-        },
-        ask: {
-          allowed: false,
-          reason: 'missing_index',
-          message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
-        },
-      },
-    }),
-    isReady: vi.fn().mockReturnValue(false),
-    startBootstrapLifecycle,
-  }));
-  vi.doMock('../src/db.ts', () => ({
+    loadServerConfig: vi.fn(() => ({
+      nodeEnv: 'test',
+      port: options.config.port,
+      host: options.config.host,
+    })),
     getWorktreeRuntime: vi.fn(() => ({
       checkoutRoot: '/tmp/squire',
       checkoutSlug: 'squire',
-      isMainCheckout: false,
+      isMainCheckout: options.isMainCheckout ?? false,
     })),
-    shutdownServerPool: vi.fn().mockResolvedValue(undefined),
-  }));
-  vi.doMock('../src/worktree-runtime.ts', () => ({
-    claimWorktreePort,
-  }));
-  vi.doMock('../src/tools.ts', () => ({
-    searchRules: vi.fn(),
-    searchCards: vi.fn(),
-    listCardTypes: vi.fn(),
-    listCards: vi.fn(),
-    getCard: vi.fn(),
-  }));
-  vi.doMock('../src/health.ts', () => ({
-    runReadinessChecks: vi.fn().mockResolvedValue({
-      status: 'ok',
-      db: { status: 'ok' },
-      vector: { status: 'ok' },
-      embedder: { status: 'ok' },
+    claimWorktreePort: vi.fn(async () => {
+      const index = claimIndex;
+      claimIndex += 1;
+      return {
+        port: options.claimedPorts?.[index] ?? 4555,
+        release: releases[index],
+      };
     }),
-  }));
-  vi.doMock('../src/auth.ts', () => ({
-    registerClient: vi.fn(),
-    createAuthorizationCode: vi.fn(),
-    exchangeAuthorizationCode: vi.fn(),
-    verifyAccessToken: vi.fn().mockResolvedValue({
-      token: 'stub',
-      clientId: 'stub-client',
-      scopes: [],
-      expiresAt: Math.floor(Date.now() / 1000) + 3600,
-    }),
-    getAuthProvider: vi.fn(),
-    resetAuthProvider: vi.fn(),
-    OAuthError: class OAuthError extends Error {},
-  }));
-
-  const mod = await import('../src/server.ts');
-  return {
-    startServer: mod.startServer,
-    fakeServer,
-    createAdaptorServer,
-    claimWorktreePort,
-    startBootstrapLifecycle,
+    startBootstrapLifecycle: vi.fn(),
+    log: vi.fn(),
   };
+
+  return { deps, releases };
 }
 
-describe.sequential('startServer', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('binds the configured port and the claimed worktree port', async () => {
-    const configured = await loadStartServer({
-      configuredPort: '4123',
+describe('startHttpServer', () => {
+  it('binds the configured port without claiming a worktree port', async () => {
+    const server = new FakeServer();
+    const { deps } = buildDeps({
+      config: { port: 4123, host: '127.0.0.1' },
+      servers: [server],
     });
 
-    await configured.startServer();
+    await startHttpServer(deps);
 
-    expect(configured.fakeServer.listenCalls).toContain(4123);
-    expect(configured.startBootstrapLifecycle).toHaveBeenCalled();
+    expect(deps.claimWorktreePort).not.toHaveBeenCalled();
+    expect(server.listenCalls).toEqual([{ port: 4123, host: '127.0.0.1' }]);
+    expect(deps.startBootstrapLifecycle).toHaveBeenCalledOnce();
+  });
 
-    const claimed = await loadStartServer({
-      claimedPort: 4555,
+  it('binds a claimed worktree port and releases it when the server closes', async () => {
+    const server = new FakeServer();
+    const { deps, releases } = buildDeps({
+      config: { port: undefined, host: undefined },
+      claimedPorts: [4555],
+      servers: [server],
     });
 
-    await claimed.startServer();
+    await startHttpServer(deps);
 
-    expect(claimed.claimWorktreePort).toHaveBeenCalled();
-    expect(claimed.fakeServer.listenCalls).toContain(4555);
-    expect(claimed.startBootstrapLifecycle).toHaveBeenCalled();
-  }, 30_000);
+    expect(deps.claimWorktreePort).toHaveBeenCalledWith({
+      checkoutRoot: '/tmp/squire',
+      checkoutSlug: 'squire',
+      isMainCheckout: false,
+    });
+    expect(server.listenCalls).toEqual([{ port: 4555, host: undefined }]);
+    expect(deps.startBootstrapLifecycle).toHaveBeenCalledOnce();
+
+    server.emit('close');
+
+    expect(releases[0]).toHaveBeenCalledOnce();
+  });
+
+  it('releases and retries a claimed worktree port that is already in use', async () => {
+    const busyServer = new FakeServer(eaddrinuse());
+    const retryServer = new FakeServer();
+    const { deps, releases } = buildDeps({
+      config: { port: undefined, host: undefined },
+      claimedPorts: [4555, 4556],
+      servers: [busyServer, retryServer],
+    });
+
+    await startHttpServer(deps);
+
+    expect(busyServer.listenCalls).toEqual([{ port: 4555, host: undefined }]);
+    expect(retryServer.listenCalls).toEqual([{ port: 4556, host: undefined }]);
+    expect(releases[0]).toHaveBeenCalledOnce();
+    expect(releases[1]).not.toHaveBeenCalled();
+    expect(deps.startBootstrapLifecycle).toHaveBeenCalledOnce();
+  });
 });
