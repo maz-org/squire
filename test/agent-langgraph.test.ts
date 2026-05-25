@@ -126,6 +126,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         scope: ['rules_passage'],
       }),
     );
+    mockMessagesCreate.mockResolvedValueOnce(
+      textResponse('I have enough evidence to answer from the rulebook result.'),
+    );
     mockMessagesStream.mockReturnValueOnce(
       mockStream(textResponse('Use loot abilities to pick up loot tokens.'), [
         'Use loot abilities ',
@@ -145,6 +148,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.answer).toBe('Use loot abilities to pick up loot tokens.');
     expect(result.trajectory.model).toBe('langgraph:claude-sonnet-4-6');
     expect(result.trajectory.toolCalls).toHaveLength(1);
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: expect.arrayContaining([expect.objectContaining({ name: 'search_knowledge' })]),
@@ -173,7 +177,8 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))
       .mockResolvedValueOnce(
         toolUseResponse('open_entity', { ref: 'section:frosthaven/79.4' }, 'tool_open_section'),
-      );
+      )
+      .mockResolvedValueOnce(textResponse('I have the target section content.'));
     mockMessagesStream.mockReturnValueOnce(
       mockStream(textResponse('Section 79.4 unlocks Scenario 61.'), [
         'Section 79.4 unlocks ',
@@ -191,7 +196,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     );
 
     expect(result.answer).toBe('Section 79.4 unlocks Scenario 61.');
-    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(3);
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/79.4');
     expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
       'neighbors',

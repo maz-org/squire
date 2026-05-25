@@ -527,7 +527,7 @@ async function runLangGraphAgentLoop(
     .addEdge(START, 'plan_retrieval')
     .addEdge('execute_tools', 'verify_sources')
     .addConditionalEdges('verify_sources', (state: LangGraphStateValue) => {
-      if (state.readyToAnswer || state.forceSynthesis || state.iterations >= maxIterations) {
+      if (state.forceSynthesis || state.iterations >= maxIterations) {
         return 'final_answer';
       }
       return 'plan_retrieval';
