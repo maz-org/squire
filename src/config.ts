@@ -56,7 +56,11 @@ function hasEnabledLangSmithTracing(env: Env): boolean {
 }
 
 function hasLangSmithCredentials(env: Env): boolean {
-  return hasText(env.LANGSMITH_API_KEY) || hasText(env.LANGSMITH_PROJECT);
+  return (
+    hasText(env.LANGSMITH_API_KEY) ||
+    hasText(env.LANGCHAIN_API_KEY) ||
+    hasText(env.LANGSMITH_PROJECT)
+  );
 }
 
 function validateUrl(

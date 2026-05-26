@@ -74,6 +74,22 @@ describe('validateServerEnv', () => {
     });
   });
 
+  it('rejects production LangChain tracing credentials without tracing enabled', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      LANGSMITH_API_KEY: undefined,
+      LANGSMITH_TRACING: undefined,
+      LANGCHAIN_API_KEY: 'langchain-key',
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error('expected invalid env');
+    expect(result.error.invalid).toContainEqual({
+      name: 'LANGSMITH_TRACING',
+      message: 'must be "true" when LANGSMITH_API_KEY or LANGSMITH_PROJECT is set',
+    });
+  });
+
   it('allows development to use the managed local database default', () => {
     const result = validateServerEnv({
       ...validProductionEnv,
