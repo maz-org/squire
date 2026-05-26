@@ -119,7 +119,7 @@ function spanAttributes(name: string): Record<string, unknown> {
 
 function parseJsonAttribute(attributes: Record<string, unknown>, key: string): unknown {
   const value = attributes[key];
-  if (typeof value !== 'string') return value;
+  if (typeof value !== 'string') throw new Error(`Expected ${key} to be a JSON string attribute.`);
   return JSON.parse(value);
 }
 
@@ -305,6 +305,10 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       'squire.agent.iterations': 1,
       'squire.agent.tool_call_count': 1,
       'squire.agent.stop_reason': 'end_turn',
+      'squire.agent.input_tokens': 180,
+      'squire.agent.output_tokens': 70,
+      'squire.agent.cache_creation_input_tokens': 0,
+      'squire.agent.cache_read_input_tokens': 0,
     });
     expect(attributes['langsmith.span.tags']).toBe(
       'agent, runtime, anthropic, langgraph, claude-sonnet-4-6, redesigned, env:test',

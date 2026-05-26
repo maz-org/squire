@@ -203,6 +203,11 @@ function langgraphRunTraceAttributes({
           'squire.agent.iterations': result.trajectory.iterations,
           'squire.agent.tool_call_count': result.trajectory.toolCalls.length,
           'squire.agent.stop_reason': result.trajectory.stopReason ?? 'unknown',
+          'squire.agent.input_tokens': result.trajectory.tokenUsage.inputTokens,
+          'squire.agent.output_tokens': result.trajectory.tokenUsage.outputTokens,
+          'squire.agent.cache_creation_input_tokens':
+            result.trajectory.tokenUsage.cacheCreationInputTokens,
+          'squire.agent.cache_read_input_tokens': result.trajectory.tokenUsage.cacheReadInputTokens,
         }
       : {}),
     'squire.agent.runtime': GRAPH_RUNTIME_PREFIX,
