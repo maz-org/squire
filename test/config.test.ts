@@ -70,7 +70,8 @@ describe('validateServerEnv', () => {
     if (result.success) throw new Error('expected invalid env');
     expect(result.error.invalid).toContainEqual({
       name: 'LANGSMITH_TRACING',
-      message: 'must be "true" when LANGSMITH_API_KEY or LANGSMITH_PROJECT is set',
+      message:
+        'must be "true" when LANGSMITH_API_KEY, LANGCHAIN_API_KEY, or LANGSMITH_PROJECT is set',
     });
   });
 
@@ -78,6 +79,7 @@ describe('validateServerEnv', () => {
     const result = validateServerEnv({
       ...validProductionEnv,
       LANGSMITH_API_KEY: undefined,
+      LANGSMITH_PROJECT: undefined,
       LANGSMITH_TRACING: undefined,
       LANGCHAIN_API_KEY: 'langchain-key',
     });
@@ -86,7 +88,8 @@ describe('validateServerEnv', () => {
     if (result.success) throw new Error('expected invalid env');
     expect(result.error.invalid).toContainEqual({
       name: 'LANGSMITH_TRACING',
-      message: 'must be "true" when LANGSMITH_API_KEY or LANGSMITH_PROJECT is set',
+      message:
+        'must be "true" when LANGSMITH_API_KEY, LANGCHAIN_API_KEY, or LANGSMITH_PROJECT is set',
     });
   });
 

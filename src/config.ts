@@ -104,7 +104,8 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
   ) {
     invalid.push({
       name: 'LANGSMITH_TRACING',
-      message: 'must be "true" when LANGSMITH_API_KEY or LANGSMITH_PROJECT is set',
+      message:
+        'must be "true" when LANGSMITH_API_KEY, LANGCHAIN_API_KEY, or LANGSMITH_PROJECT is set',
     });
   }
 
