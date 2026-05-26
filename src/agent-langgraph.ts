@@ -8,6 +8,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Annotation, END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
+import { SpanStatusCode, trace, type Attributes } from '@opentelemetry/api';
 import { randomUUID } from 'node:crypto';
 import {
   FORCE_SYNTHESIS_PROMPT,
@@ -33,6 +34,7 @@ import {
 } from './agent.ts';
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
+import { resolveSquireEnv } from './squire-env.ts';
 
 type Message = Anthropic.Message;
 type MessageParam = Anthropic.MessageParam;
@@ -46,6 +48,7 @@ const MAX_RULE_SEARCHES_BEFORE_SYNTHESIS = 3;
 const GRAPH_RUNTIME_PREFIX = 'langgraph';
 const FINAL_ANSWER_PROMPT =
   'Write the final answer now using only verified tool results in this run. Do not call tools. If the verified results are insufficient, say exactly what is missing instead of guessing.';
+const tracer = trace.getTracer('squire.agent');
 
 // LangGraph treats neighbors as discovery so returned refs must be opened or
 // searched before final_answer can use them.
@@ -103,6 +106,121 @@ function toolUseBlocks(message: Message | undefined) {
 
 function cloneUsage(usage: TokenUsage): TokenUsage {
   return { ...usage };
+}
+
+function jsonTraceAttribute(value: unknown): string {
+  return JSON.stringify(value);
+}
+
+function primitiveTraceAttribute(value: unknown): string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? value
+    : jsonTraceAttribute(value);
+}
+
+function langsmithUsageMetadata(usage: TokenUsage): Record<string, unknown> {
+  return {
+    input_tokens: usage.inputTokens,
+    output_tokens: usage.outputTokens,
+    total_tokens: usage.totalTokens,
+    input_token_details: {
+      cache_creation: usage.cacheCreationInputTokens,
+      cache_read: usage.cacheReadInputTokens,
+    },
+  };
+}
+
+function langgraphCorrelationMetadata(options: AskOptions | undefined): Record<string, string> {
+  const metadata: Record<string, string> = {
+    runtime: GRAPH_RUNTIME_PREFIX,
+    squireEnv: resolveSquireEnv(),
+  };
+  if (options?.requestId) metadata.requestId = options.requestId;
+  if (options?.conversationId) metadata.conversationId = options.conversationId;
+  if (options?.userMessageId) metadata.userMessageId = options.userMessageId;
+  if (options?.userId) metadata.userId = options.userId;
+  if (options?.campaignId) metadata.campaignId = options.campaignId;
+  if (options?.game) metadata.game = requireGameId(options.game);
+  return metadata;
+}
+
+function langgraphCorrelationAttributes(options: AskOptions | undefined): Attributes {
+  const attributes: Attributes = {
+    'squire.env': resolveSquireEnv(),
+  };
+  if (options?.requestId) attributes['squire.request_id'] = options.requestId;
+  if (options?.conversationId) attributes['squire.conversation_id'] = options.conversationId;
+  if (options?.userMessageId) attributes['squire.user_message_id'] = options.userMessageId;
+  if (options?.userId) attributes['squire.user_id'] = options.userId;
+  if (options?.campaignId) attributes['squire.campaign_id'] = options.campaignId;
+  if (options?.game) attributes['squire.game'] = requireGameId(options.game);
+  return attributes;
+}
+
+function langsmithMetadataAttributes(metadata: Record<string, unknown>): Attributes {
+  return Object.fromEntries(
+    Object.entries(metadata)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [`langsmith.metadata.${key}`, primitiveTraceAttribute(value)]),
+  );
+}
+
+function langgraphTraceTags(model: string): string {
+  return [
+    'agent',
+    'runtime',
+    'anthropic',
+    GRAPH_RUNTIME_PREFIX,
+    model,
+    'redesigned',
+    `env:${resolveSquireEnv()}`,
+  ].join(', ');
+}
+
+function langgraphRunTraceAttributes({
+  question,
+  model,
+  options,
+  result,
+}: {
+  question: string;
+  model: string;
+  options?: AskOptions;
+  result?: AgentRunResult;
+}): Attributes {
+  return {
+    'langsmith.traceable': 'true',
+    'langsmith.span.kind': 'chain',
+    'langsmith.trace.name': 'squire.agent.langgraph',
+    'langsmith.span.tags': langgraphTraceTags(model),
+    'gen_ai.prompt': jsonTraceAttribute({ question }),
+    ...(result
+      ? {
+          'gen_ai.completion': jsonTraceAttribute({ finalAnswer: result.answer }),
+          'langsmith.usage_metadata': jsonTraceAttribute(
+            langsmithUsageMetadata(result.trajectory.tokenUsage),
+          ),
+          'squire.agent.iterations': result.trajectory.iterations,
+          'squire.agent.tool_call_count': result.trajectory.toolCalls.length,
+          'squire.agent.stop_reason': result.trajectory.stopReason ?? 'unknown',
+        }
+      : {}),
+    'squire.agent.runtime': GRAPH_RUNTIME_PREFIX,
+    'squire.agent.model': `${GRAPH_RUNTIME_PREFIX}:${model}`,
+    ...langsmithMetadataAttributes({
+      ...langgraphCorrelationMetadata(options),
+      model,
+      toolSurface: 'redesigned',
+      ...(result
+        ? {
+            iterations: result.trajectory.iterations,
+            toolCallCount: result.trajectory.toolCalls.length,
+            stopReason: result.trajectory.stopReason ?? 'unknown',
+          }
+        : {}),
+    }),
+    ...langgraphCorrelationAttributes(options),
+  };
 }
 
 function appendModelCall(
@@ -529,7 +647,7 @@ async function runLangGraphAgentLoop(
     .addEdge(START, 'plan_retrieval')
     .addEdge('execute_tools', 'verify_sources')
     .addConditionalEdges('verify_sources', (state: LangGraphStateValue) => {
-      if (state.forceSynthesis || state.iterations >= maxIterations) {
+      if (state.readyToAnswer || state.forceSynthesis || state.iterations >= maxIterations) {
         return 'final_answer';
       }
       return 'plan_retrieval';
@@ -537,12 +655,47 @@ async function runLangGraphAgentLoop(
     .addEdge('final_answer', END)
     .compile({ checkpointer: graphCheckpointer });
 
-  const finalState = await graph.invoke(createInitialState(question, options), {
-    configurable: { thread_id: threadIdFor(options) },
+  return tracer.startActiveSpan('squire.agent.langgraph.run', async (span) => {
+    try {
+      span.setAttributes(
+        langgraphRunTraceAttributes({
+          question,
+          model: config.model,
+          options,
+        }),
+      );
+      const finalState = await graph.invoke(createInitialState(question, options), {
+        configurable: { thread_id: threadIdFor(options) },
+      });
+      const result = {
+        answer: finalState.finalAnswer,
+        trajectory: trajectoryFromState(finalState, config.model),
+      };
+      span.setAttributes(
+        langgraphRunTraceAttributes({
+          question,
+          model: config.model,
+          options,
+          result,
+        }),
+      );
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      span.setAttributes({
+        'gen_ai.completion': jsonTraceAttribute({ error: message }),
+        ...langsmithMetadataAttributes({
+          ...langgraphCorrelationMetadata(options),
+          level: 'ERROR',
+          statusMessage: message,
+        }),
+        ...langgraphCorrelationAttributes(options),
+      });
+      span.recordException(error as Error);
+      span.setStatus({ code: SpanStatusCode.ERROR, message });
+      throw error;
+    } finally {
+      span.end();
+    }
   });
-
-  return {
-    answer: finalState.finalAnswer,
-    trajectory: trajectoryFromState(finalState, config.model),
-  };
 }
