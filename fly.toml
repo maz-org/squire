@@ -12,6 +12,7 @@ NODE_ENV = "production"
 SQUIRE_ENV = "production"
 PORT = "8080"
 HOST = "0.0.0.0"
+LANGSMITH_TRACING = "true"
 
 [processes]
 app = "node src/server.ts"

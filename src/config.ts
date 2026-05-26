@@ -46,6 +46,23 @@ function hasText(value: string | undefined): boolean {
   return value !== undefined && value.trim().length > 0;
 }
 
+function hasEnabledLangSmithTracing(env: Env): boolean {
+  return (
+    env.LANGSMITH_TRACING === 'true' ||
+    env.LANGCHAIN_TRACING === 'true' ||
+    env.LANGSMITH_TRACING_V2 === 'true' ||
+    env.LANGCHAIN_TRACING_V2 === 'true'
+  );
+}
+
+function hasLangSmithCredentials(env: Env): boolean {
+  return (
+    hasText(env.LANGSMITH_API_KEY) ||
+    hasText(env.LANGCHAIN_API_KEY) ||
+    hasText(env.LANGSMITH_PROJECT)
+  );
+}
+
 function validateUrl(
   name: string,
   value: string | undefined,
@@ -80,6 +97,17 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
   validateUrl('DATABASE_URL', env.DATABASE_URL, invalid);
   validateUrl('LANGSMITH_ENDPOINT', env.LANGSMITH_ENDPOINT, invalid);
   validateUrl('REDIS_URL', env.REDIS_URL, invalid);
+  if (
+    nodeEnv === 'production' &&
+    hasLangSmithCredentials(env) &&
+    !hasEnabledLangSmithTracing(env)
+  ) {
+    invalid.push({
+      name: 'LANGSMITH_TRACING',
+      message:
+        'must be "true" when LANGSMITH_API_KEY, LANGCHAIN_API_KEY, or LANGSMITH_PROJECT is set',
+    });
+  }
 
   if (hasText(env.HOST) && env.HOST!.trim() !== env.HOST) {
     invalid.push({ name: 'HOST', message: 'must not contain leading or trailing whitespace' });

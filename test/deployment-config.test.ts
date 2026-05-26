@@ -146,6 +146,7 @@ describe('deployment configuration', () => {
 
     expect(flyConfig).toContain('app = "maz-squire"');
     expect(flyConfig).toContain('SQUIRE_ENV = "production"');
+    expect(flyConfig).toContain('LANGSMITH_TRACING = "true"');
     expect(flyConfig).toContain('release_command = "node scripts/db-migrate.ts"');
     expect(flyConfig).toContain('internal_port = 8080');
     expect(flyConfig).toContain('auto_stop_machines = "off"');

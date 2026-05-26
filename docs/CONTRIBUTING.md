@@ -203,6 +203,7 @@ SQUIRE_ALLOWED_EMAILS=your-email@example.com
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 LANGSMITH_PROJECT=...
 LANGSMITH_API_KEY=...
+LANGSMITH_TRACING=true
 
 # Optional locally; production requires REDIS_URL for app-level rate limits.
 # REDIS_URL=redis://localhost:6379

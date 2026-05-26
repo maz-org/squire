@@ -14,6 +14,7 @@ describe('validateServerEnv', () => {
     SESSION_SECRET: 'x'.repeat(32),
     LANGSMITH_API_KEY: 'langsmith-key',
     LANGSMITH_PROJECT: 'squire-production',
+    LANGSMITH_TRACING: 'true',
     GOOGLE_OAUTH_CLIENT_ID: 'google-client',
     GOOGLE_OAUTH_CLIENT_SECRET: 'google-secret',
     ORIGIN_SHARED_SECRET: 'origin-secret'.repeat(3),
@@ -53,9 +54,43 @@ describe('validateServerEnv', () => {
       ...validProductionEnv,
       LANGSMITH_API_KEY: undefined,
       LANGSMITH_PROJECT: undefined,
+      LANGSMITH_TRACING: undefined,
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('rejects production LangSmith credentials without tracing enabled', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      LANGSMITH_TRACING: undefined,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error('expected invalid env');
+    expect(result.error.invalid).toContainEqual({
+      name: 'LANGSMITH_TRACING',
+      message:
+        'must be "true" when LANGSMITH_API_KEY, LANGCHAIN_API_KEY, or LANGSMITH_PROJECT is set',
+    });
+  });
+
+  it('rejects production LangChain tracing credentials without tracing enabled', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      LANGSMITH_API_KEY: undefined,
+      LANGSMITH_PROJECT: undefined,
+      LANGSMITH_TRACING: undefined,
+      LANGCHAIN_API_KEY: 'langchain-key',
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error('expected invalid env');
+    expect(result.error.invalid).toContainEqual({
+      name: 'LANGSMITH_TRACING',
+      message:
+        'must be "true" when LANGSMITH_API_KEY, LANGCHAIN_API_KEY, or LANGSMITH_PROJECT is set',
+    });
   });
 
   it('allows development to use the managed local database default', () => {
