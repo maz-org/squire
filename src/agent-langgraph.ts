@@ -58,6 +58,12 @@ const DISCOVERY_ONLY_TOOL_NAMES = new Set([
   'resolve_entity',
   'neighbors',
 ]);
+const DIRECT_EVIDENCE_TOOL_NAMES = new Set([
+  'open_entity',
+  'get_card',
+  'get_scenario',
+  'get_section',
+]);
 const graphCheckpointer = new MemorySaver();
 
 const LangGraphState = Annotation.Root({
@@ -352,6 +358,10 @@ function hasAnswerableToolCalls(toolCalls: ToolTrajectoryStep[]): boolean {
   });
 }
 
+function hasDirectOpenedEvidence(toolCalls: ToolTrajectoryStep[]): boolean {
+  return toolCalls.some((call) => call.ok && DIRECT_EVIDENCE_TOOL_NAMES.has(call.name));
+}
+
 function shouldForceSynthesis(state: LangGraphStateValue, threshold: number): boolean {
   return state.broadRuleSearches >= threshold && !state.hasUsedNonRuleSearchTool;
 }
@@ -598,7 +608,7 @@ async function runLangGraphAgentLoop(
       };
     })
     .addNode('verify_sources', async (state: LangGraphStateValue) => {
-      const readyToAnswer = hasAnswerableToolCalls(state.toolCalls);
+      const readyToAnswer = hasDirectOpenedEvidence(state.toolCalls);
       await emitGraphDebug(emit, 'LangGraph verify_sources node completed.', {
         readyToAnswer,
         toolCallCount: state.toolCalls.length,
@@ -610,6 +620,21 @@ async function runLangGraphAgentLoop(
         readyToAnswer: state.readyToAnswer,
         stopReason: state.stopReason,
       });
+      const draftAnswer =
+        state.lastResponse && !hasToolUse(state.lastResponse)
+          ? textFromMessage(state.lastResponse)
+          : '';
+      if (draftAnswer) {
+        if (emit) {
+          await emit('text', { delta: draftAnswer });
+          await emit('done', {});
+        }
+        return {
+          finalAnswer: draftAnswer,
+          stopReason: state.stopReason as StopReason | null,
+        };
+      }
+
       const finalMessages: MessageParam[] = [
         ...state.messages,
         { role: 'user' as const, content: FINAL_ANSWER_PROMPT },

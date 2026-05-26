@@ -170,18 +170,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('runs a staged graph and emits answer text only from final_answer', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('search_knowledge', {
-        query: 'loot',
-        scope: ['rules_passage'],
-      }),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('Use loot abilities to pick up loot tokens.'), [
-        'Use loot abilities ',
-        'to pick up loot tokens.',
-      ]),
-    );
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
     const emitted: Array<[AgentStreamEventName, unknown]> = [];
 
     const result = await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
@@ -195,15 +191,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.answer).toBe('Use loot abilities to pick up loot tokens.');
     expect(result.trajectory.model).toBe('langgraph:claude-sonnet-4-6');
     expect(result.trajectory.toolCalls).toHaveLength(1);
-    expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+    expect(mockMessagesStream).not.toHaveBeenCalled();
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: expect.arrayContaining([expect.objectContaining({ name: 'search_knowledge' })]),
       }),
     );
-    expect(mockMessagesStream).toHaveBeenCalledWith(
-      expect.not.objectContaining({ tools: expect.anything() }),
-    );
+    expect(mockMessagesStream).not.toHaveBeenCalled();
 
     const userVisibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(userVisibleEvents).toEqual([
@@ -213,8 +208,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         { name: 'search_knowledge', input: { query: 'loot', scope: ['rules_passage'] } },
       ],
       ['tool_result', { name: 'search_knowledge', ok: true, sourceBooks: ['Rulebook'] }],
-      ['text', { delta: 'Use loot abilities ' }],
-      ['text', { delta: 'to pick up loot tokens.' }],
+      ['text', { delta: 'Use loot abilities to pick up loot tokens.' }],
       ['done', {}],
     ]);
   });
@@ -251,15 +245,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('adds LangSmith-native root trace attributes for production LangGraph runs', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('search_knowledge', {
-        query: 'loot',
-        scope: ['rules_passage'],
-      }),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('Use loot abilities to pick up loot tokens.')),
-    );
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
 
     await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
       emit: async () => undefined,
@@ -302,7 +295,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       'squire.user_id': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
       'squire.game': 'frosthaven',
       'squire.agent.runtime': 'langgraph',
-      'squire.agent.iterations': 1,
+      'squire.agent.iterations': 2,
       'squire.agent.tool_call_count': 1,
       'squire.agent.stop_reason': 'end_turn',
       'squire.agent.input_tokens': 180,
