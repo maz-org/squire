@@ -6,12 +6,49 @@ const {
   mockSearchKnowledge,
   mockNeighbors,
   mockOpenEntity,
+  mockStartedSpans,
+  mockStartActiveSpan,
 } = vi.hoisted(() => ({
   mockMessagesCreate: vi.fn(),
   mockMessagesStream: vi.fn(),
   mockSearchKnowledge: vi.fn(),
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
+  mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
+  mockStartActiveSpan: vi.fn((name: string, ...args: unknown[]) => {
+    const callback = args.find((arg) => typeof arg === 'function') as
+      | ((span: {
+          attributes: Record<string, unknown>;
+          setAttributes: (attributes: Record<string, unknown>) => void;
+          recordException: (error: unknown) => void;
+          setStatus: (status: unknown) => void;
+          end: () => void;
+        }) => unknown)
+      | undefined;
+    if (!callback) throw new Error(`No span callback for ${name}`);
+
+    const attributes: Record<string, unknown> = {};
+    const span = {
+      attributes,
+      setAttributes: (nextAttributes: Record<string, unknown>) => {
+        Object.assign(attributes, nextAttributes);
+      },
+      recordException: vi.fn(),
+      setStatus: vi.fn(),
+      end: vi.fn(),
+    };
+    mockStartedSpans.push({ name, span });
+    return callback(span);
+  }),
+}));
+
+vi.mock('@opentelemetry/api', () => ({
+  SpanStatusCode: { ERROR: 2 },
+  trace: {
+    getTracer: () => ({
+      startActiveSpan: mockStartActiveSpan,
+    }),
+  },
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -74,9 +111,22 @@ function mockStream(finalMessage: Record<string, unknown>, textDeltas: string[] 
   };
 }
 
+function spanAttributes(name: string): Record<string, unknown> {
+  const record = mockStartedSpans.find((entry) => entry.name === name);
+  if (!record) throw new Error(`No span named ${name}`);
+  return record.span.attributes;
+}
+
+function parseJsonAttribute(attributes: Record<string, unknown>, key: string): unknown {
+  const value = attributes[key];
+  if (typeof value !== 'string') throw new Error(`Expected ${key} to be a JSON string attribute.`);
+  return JSON.parse(value);
+}
+
 describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    mockStartedSpans.length = 0;
     mockSearchKnowledge.mockResolvedValue({
       ok: true,
       query: 'loot',
@@ -120,21 +170,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('runs a staged graph and emits answer text only from final_answer', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('search_knowledge', {
-        query: 'loot',
-        scope: ['rules_passage'],
-      }),
-    );
-    mockMessagesCreate.mockResolvedValueOnce(
-      textResponse('I have enough evidence to answer from the rulebook result.'),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('Use loot abilities to pick up loot tokens.'), [
-        'Use loot abilities ',
-        'to pick up loot tokens.',
-      ]),
-    );
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
     const emitted: Array<[AgentStreamEventName, unknown]> = [];
 
     const result = await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
@@ -149,14 +192,13 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.trajectory.model).toBe('langgraph:claude-sonnet-4-6');
     expect(result.trajectory.toolCalls).toHaveLength(1);
     expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+    expect(mockMessagesStream).not.toHaveBeenCalled();
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: expect.arrayContaining([expect.objectContaining({ name: 'search_knowledge' })]),
       }),
     );
-    expect(mockMessagesStream).toHaveBeenCalledWith(
-      expect.not.objectContaining({ tools: expect.anything() }),
-    );
+    expect(mockMessagesStream).not.toHaveBeenCalled();
 
     const userVisibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(userVisibleEvents).toEqual([
@@ -166,8 +208,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         { name: 'search_knowledge', input: { query: 'loot', scope: ['rules_passage'] } },
       ],
       ['tool_result', { name: 'search_knowledge', ok: true, sourceBooks: ['Rulebook'] }],
-      ['text', { delta: 'Use loot abilities ' }],
-      ['text', { delta: 'to pick up loot tokens.' }],
+      ['text', { delta: 'Use loot abilities to pick up loot tokens.' }],
       ['done', {}],
     ]);
   });
@@ -177,8 +218,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))
       .mockResolvedValueOnce(
         toolUseResponse('open_entity', { ref: 'section:frosthaven/79.4' }, 'tool_open_section'),
-      )
-      .mockResolvedValueOnce(textResponse('I have the target section content.'));
+      );
     mockMessagesStream.mockReturnValueOnce(
       mockStream(textResponse('Section 79.4 unlocks Scenario 61.'), [
         'Section 79.4 unlocks ',
@@ -196,11 +236,75 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     );
 
     expect(result.answer).toBe('Section 79.4 unlocks Scenario 61.');
-    expect(mockMessagesCreate).toHaveBeenCalledTimes(3);
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/79.4');
     expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
       'neighbors',
       'open_entity',
     ]);
+  });
+
+  it('adds LangSmith-native root trace attributes for production LangGraph runs', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('search_knowledge', {
+          query: 'loot',
+          scope: ['rules_passage'],
+        }),
+      )
+      .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
+
+    await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
+      emit: async () => undefined,
+      toolSurface: 'redesigned',
+      requestId: 'req-langgraph',
+      conversationId: '550e8400-e29b-41d4-a716-446655440000',
+      userMessageId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      userId: '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      game: 'frosthaven',
+    });
+
+    const attributes = spanAttributes('squire.agent.langgraph.run');
+    expect(parseJsonAttribute(attributes, 'gen_ai.prompt')).toEqual({
+      question: 'How does loot work?',
+    });
+    expect(parseJsonAttribute(attributes, 'gen_ai.completion')).toEqual({
+      finalAnswer: 'Use loot abilities to pick up loot tokens.',
+    });
+    expect(parseJsonAttribute(attributes, 'langsmith.usage_metadata')).toEqual({
+      input_tokens: 180,
+      output_tokens: 70,
+      total_tokens: 250,
+      input_token_details: { cache_creation: 0, cache_read: 0 },
+    });
+    expect(attributes).toMatchObject({
+      'langsmith.traceable': 'true',
+      'langsmith.span.kind': 'chain',
+      'langsmith.trace.name': 'squire.agent.langgraph',
+      'langsmith.metadata.runtime': 'langgraph',
+      'langsmith.metadata.squireEnv': 'test',
+      'langsmith.metadata.requestId': 'req-langgraph',
+      'langsmith.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
+      'langsmith.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langsmith.metadata.userId': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'langsmith.metadata.game': 'frosthaven',
+      'squire.env': 'test',
+      'squire.request_id': 'req-langgraph',
+      'squire.conversation_id': '550e8400-e29b-41d4-a716-446655440000',
+      'squire.user_message_id': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'squire.user_id': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
+      'squire.game': 'frosthaven',
+      'squire.agent.runtime': 'langgraph',
+      'squire.agent.iterations': 2,
+      'squire.agent.tool_call_count': 1,
+      'squire.agent.stop_reason': 'end_turn',
+      'squire.agent.input_tokens': 180,
+      'squire.agent.output_tokens': 70,
+      'squire.agent.cache_creation_input_tokens': 0,
+      'squire.agent.cache_read_input_tokens': 0,
+    });
+    expect(attributes['langsmith.span.tags']).toBe(
+      'agent, runtime, anthropic, langgraph, claude-sonnet-4-6, redesigned, env:test',
+    );
   });
 });
