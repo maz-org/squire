@@ -8,6 +8,7 @@ import { LangSmithOTLPSpanProcessor } from 'langsmith/experimental/otel/processo
 import { LangSmithOTLPTraceExporter } from 'langsmith/experimental/otel/exporter';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { applySquireEnv } from './squire-env.ts';
+import { langsmithOtelHeaders } from './langsmith-otel.ts';
 
 const squireEnv = applySquireEnv();
 const langsmithProject = process.env.LANGSMITH_PROJECT ?? 'squire-production';
@@ -17,6 +18,7 @@ const sdk = new NodeSDK({
     new LangSmithOTLPSpanProcessor(
       new LangSmithOTLPTraceExporter({
         projectName: langsmithProject,
+        headers: langsmithOtelHeaders(),
         transformExportedSpan: (span) => {
           span.attributes['langsmith.metadata.environment'] = squireEnv;
           return span;

@@ -33,6 +33,7 @@ SQUIRE_ALLOWED_EMAILS=your-email@example.com
 # LangSmith observability
 LANGSMITH_API_KEY=...
 LANGSMITH_PROJECT=squire-evals
+LANGSMITH_TRACING=true
 # LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 # LANGSMITH_WORKSPACE_ID=...
 
