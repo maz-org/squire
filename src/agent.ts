@@ -489,6 +489,11 @@ export interface EvalAgentLoopOptions {
   timeoutMs?: number;
   toolLoopLimit?: number;
   broadSearchSynthesisThreshold?: number;
+  game?: string;
+  requestId?: string;
+  evalCaseId?: string;
+  evalSuite?: string;
+  evalCaseCategory?: string;
 }
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
@@ -696,6 +701,9 @@ function agentCorrelationMetadata(options: AskOptions | undefined): Record<strin
   if (options?.userId) metadata.userId = options.userId;
   if (options?.campaignId) metadata.campaignId = options.campaignId;
   if (options?.game) metadata.game = requireGameId(options.game);
+  if (options?.evalCaseId) metadata.evalCaseId = options.evalCaseId;
+  if (options?.evalSuite) metadata.evalSuite = options.evalSuite;
+  if (options?.evalCaseCategory) metadata.evalCaseCategory = options.evalCaseCategory;
   return metadata;
 }
 
@@ -709,6 +717,11 @@ function agentCorrelationAttributes(options: AskOptions | undefined): Attributes
   if (options?.userId) attributes['squire.user_id'] = options.userId;
   if (options?.campaignId) attributes['squire.campaign_id'] = options.campaignId;
   if (options?.game) attributes['squire.game'] = requireGameId(options.game);
+  if (options?.evalCaseId) attributes['squire.eval_case_id'] = options.evalCaseId;
+  if (options?.evalSuite) attributes['squire.eval_suite'] = options.evalSuite;
+  if (options?.evalCaseCategory) {
+    attributes['squire.eval_case_category'] = options.evalCaseCategory;
+  }
   return attributes;
 }
 
@@ -1145,12 +1158,20 @@ export async function runAgentLoopWithEvalConfig(
           question,
           model: options.anthropicModel,
           toolSurface: options.toolSurface,
+          options,
           evalRun: true,
         }),
       );
       const result = await runAgentLoopInternal(
         question,
-        { toolSurface: options.toolSurface },
+        {
+          toolSurface: options.toolSurface,
+          game: options.game,
+          requestId: options.requestId,
+          evalCaseId: options.evalCaseId,
+          evalSuite: options.evalSuite,
+          evalCaseCategory: options.evalCaseCategory,
+        },
         {
           model: options.anthropicModel,
           maxOutputTokens: options.maxOutputTokens,
@@ -1164,6 +1185,7 @@ export async function runAgentLoopWithEvalConfig(
           question,
           model: result.trajectory.model,
           toolSurface: options.toolSurface,
+          options,
           result,
           evalRun: true,
         }),
@@ -1182,6 +1204,7 @@ export async function runAgentLoopWithEvalConfig(
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       runSpan.setAttributes({
+        ...agentCorrelationAttributes(options),
         ...createTraceAttributes({
           output: { error: message },
         }),

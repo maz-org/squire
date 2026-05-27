@@ -11,6 +11,19 @@ export interface EvalScoringInput {
   toolCalls: ToolTrajectoryStep[];
 }
 
+function evalFailureClass(evalCase: EvalCase, scores: EvalTraceScore[]): string | undefined {
+  const failed = scores.some(
+    (score) =>
+      (score.name === 'pass' || score.name === 'trajectory_pass') && score.value === 'fail',
+  );
+  if (!failed) return undefined;
+  if (evalCase.suite === 'cross-game-boundary') return 'cross_game_contamination';
+  if (scores.some((score) => score.name === 'trajectory_pass' && score.value === 'fail')) {
+    return 'retrieval';
+  }
+  return 'answer_quality';
+}
+
 export async function traceScoresForEvalResult(
   anthropic: Anthropic,
   input: EvalScoringInput,
@@ -56,6 +69,9 @@ export async function traceScoresForEvalResult(
       },
     );
   }
+
+  const failureClass = evalFailureClass(input.evalCase, scores);
+  if (failureClass) scores.push({ name: 'failure_class', value: failureClass });
 
   return scores.length > 0 ? scores : undefined;
 }

@@ -8,7 +8,7 @@ import {
 } from '../src/agent.ts';
 import type { ToolTrajectoryStep, TokenUsage } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
-import { DATASET_NAME } from './dataset.ts';
+import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import {
   OPENAI_TOOL_SCHEMA_VERSION,
   executeOpenAiToolCall,
@@ -280,8 +280,12 @@ function createResponsesRequest(
     parallel_tool_calls: false,
     include: ['reasoning.encrypted_content'],
     metadata: {
-      dataset: DATASET_NAME,
+      dataset: langSmithDatasetNameForCase(evalCase),
       caseId: evalCase.id,
+      game: evalCase.game,
+      suite: evalCase.suite,
+      runtime: evalCase.runtime,
+      caseCategory: evalCase.caseCategory,
     },
   };
   if (providerConfig.maxOutputTokens) request.max_output_tokens = providerConfig.maxOutputTokens;
@@ -530,9 +534,13 @@ export async function runOpenAiResponsesEvalCase(
     return {
       traceId: options.traceId ?? `eval:${options.runLabel}:${options.evalCase.id}:openai`,
       runLabel: options.runLabel,
-      datasetName: DATASET_NAME,
+      datasetName: langSmithDatasetNameForCase(options.evalCase),
       caseId: options.evalCase.id,
-      caseCategory: options.evalCase.category,
+      game: options.evalCase.game,
+      suite: options.evalCase.suite,
+      caseCategory: options.evalCase.caseCategory,
+      sourceAuthority: sourceAuthorityForCase(options.evalCase),
+      gamePair: gamePairForCase(options.evalCase),
       agentRuntime: 'claude-sdk',
       provider: 'openai',
       model: options.providerConfig.model,
@@ -822,7 +830,7 @@ export async function runOpenAiLocalReport(
     console.log(result.ok ? '\u2713' : '\u2717');
     results.push({
       id: evalCase.id,
-      category: evalCase.category,
+      category: evalCase.caseCategory,
       question: evalCase.question,
       answer: result.answer,
       ok: result.ok,
@@ -838,7 +846,9 @@ export async function runOpenAiLocalReport(
     runLabel,
     provider: 'openai',
     model: providerConfig.model,
-    datasetName: DATASET_NAME,
+    datasetNames: [...new Set(cases.map(langSmithDatasetNameForCase))],
+    games: [...new Set(cases.map((evalCase) => evalCase.game))],
+    suites: [...new Set(cases.map((evalCase) => evalCase.suite))],
     results,
   };
 

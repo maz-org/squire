@@ -19,8 +19,11 @@ const baseTrace: EvalTraceInput = {
   runLabel: 'sqr-162-test-run',
   datasetName: DATASET_NAME,
   caseId: 'case-1',
+  game: 'frosthaven',
+  suite: 'table-qa',
   caseCategory: 'buildings',
-  agentRuntime: 'claude-sdk',
+  sourceAuthority: 'structured-data',
+  agentRuntime: 'langgraph',
   provider: 'openai',
   model: 'gpt-5.5',
   resolvedModel: 'gpt-5.5-2026-04-23',
@@ -149,6 +152,10 @@ describe('LangSmith eval trace writer', () => {
           provider: 'openai',
           model: 'gpt-5.5',
           runLabel: 'sqr-162-test-run',
+          game: 'frosthaven',
+          suite: 'table-qa',
+          sourceAuthority: 'structured-data',
+          agentRuntime: 'langgraph',
           failureClass: 'none',
           pass: true,
           score: 1,
@@ -156,7 +163,11 @@ describe('LangSmith eval trace writer', () => {
       },
       tags: expect.arrayContaining([
         'case:case-1',
+        'game:frosthaven',
+        'suite:table-qa',
+        'runtime:langgraph',
         'category:buildings',
+        'authority:structured-data',
         'env:test',
         'failure:none',
         'pass:true',
@@ -184,6 +195,11 @@ describe('LangSmith eval trace writer', () => {
       parent_run_id: payload.modelRunId,
       inputs: { query: 'Alchemist', sessionId: '[REDACTED]' },
       outputs: { items: [{ name: 'Alchemist', userEmail: '[REDACTED]' }] },
+      extra: {
+        metadata: expect.objectContaining({
+          graphNode: 'tool_execution',
+        }),
+      },
     });
     expect(payload.feedback).toEqual([
       expect.objectContaining({

@@ -1,14 +1,14 @@
 /**
  * RAG pipeline evaluation runner using LangSmith traces and datasets.
  *
- * First run:  node eval/run.ts --seed        # upload dataset to LangSmith
- * Run eval:   node eval/run.ts               # run all questions on redesigned tools
- * Legacy:     node eval/run.ts --tool-surface=legacy
- * Filtered:   node eval/run.ts --category=rulebook
+ * First run:  node eval/run.ts --seed        # upload suite datasets to LangSmith
+ * Run eval:   node eval/run.ts               # run all questions on LangGraph
+ * Filtered:   node eval/run.ts --game=frosthaven --suite=table-qa
+ *             node eval/run.ts --category=rulebook
  *             node eval/run.ts --id=rule-poison
  * Named run:  node eval/run.ts --run-label="after chunking fix"
  * Local JSON: node eval/run.ts --local-report=/tmp/eval.json
- * Matrix:     node eval/run.ts --matrix --id=rule-poison
+ * Matrix:     node eval/run.ts --matrix --id=rule-poison --agent-runtime=langgraph
  */
 
 import 'dotenv/config';

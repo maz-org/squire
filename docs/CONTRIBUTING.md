@@ -327,33 +327,48 @@ Requires LangSmith credentials in `.env`.
 npm run eval -- --seed
 ```
 
-Uploads the eval dataset (`eval/dataset.json`) to the shared LangSmith project.
-This is a one-time project setup step managed by
-[@bcm](https://github.com/bcm). It needs to be re-run when eval cases are added
-or changed. The command is idempotent — running it again upserts items rather
-than duplicating them. Regular contributors don't need to run this.
+Uploads the split eval fixtures under `eval/suites/` to the shared LangSmith
+project. The active dataset names are:
+
+- `squire/frosthaven/table-qa`
+- `squire/frosthaven/trajectory`
+- `squire/gloomhaven-2e/table-qa`
+- `squire/gloomhaven-2e/trajectory`
+- `squire/cross-game/boundary`
+
+This is a maintainer step. It needs to be re-run when eval cases are added or
+changed. The command clears and recreates examples in each touched dataset so
+LangSmith metadata stays aligned with the local fixtures. Regular contributors
+don't need to run this.
+
+The current parity baseline is 17 Frosthaven final-answer cases and 11
+Frosthaven trajectory cases, mirrored by 17 Gloomhaven 2e final-answer cases
+and 11 Gloomhaven 2e trajectory cases. Cross-game boundary cases are counted
+separately from per-game parity.
 
 **Run all eval cases:**
 
 ```bash
-npm run eval -- --name="baseline"
+npm run eval -- --run-label="baseline"
 ```
 
-Runs every question through the pipeline and grades it. Use `--name` to label
-the run — this is how you'll find it in the LangSmith UI. Run this before and
-after making changes to measure impact (e.g., `--name="before chunking fix"` and
-`--name="after chunking fix"`).
+Runs every question through the LangGraph eval path and grades it. Use
+`--run-label` to label the run — this is how you'll find it in the LangSmith UI.
+Run this before and after changing retrieval or answer behavior.
 
 **Run a single category:**
 
 ```bash
 npm run eval -- --category=rulebook
+npm run eval -- --game=frosthaven --suite=trajectory
+npm run eval -- --game=gloomhaven-2e --suite=table-qa
+npm run eval -- --suite=cross-game-boundary
 ```
 
 Only runs questions in that category (`rulebook`, `monster-stats`, `items`,
-`buildings`, `scenarios`, `tool-free`). Useful when you're working on a
-specific part of the pipeline — e.g., run `--category=items` after fixing item
-number extraction.
+`buildings`, `scenarios`, `tool-free`, `trajectory`) or in the selected
+game/suite. Useful when you're working on a specific part of the pipeline —
+e.g., run `--category=items` after fixing item number extraction.
 
 **Run a single question:**
 
@@ -361,7 +376,7 @@ number extraction.
 npm run eval -- --id=rule-poison
 ```
 
-Runs one specific eval case by ID (IDs are in `eval/dataset.json`). Useful for
+Runs one specific eval case by ID (IDs are in `eval/suites/*.json`). Useful for
 debugging a single failure without waiting for the full suite.
 
 **Find the LangSmith trace URL:**
@@ -377,6 +392,14 @@ npm run eval -- --matrix --id=rule-poison --name=debug-poison --local-report=/tm
 node -e 'const r=require("/tmp/debug-poison.json"); console.log(r.rows.map(row => row.traceUrl ?? row.traceId).join("\n"))'
 ```
 
+Without LangSmith credentials, selected local report paths still work for code
+paths that do not need to create remote trace links. With LangSmith enabled, the
+report includes `game`, `suite`, `category`, `source_authority`, `game_pair`,
+`runtime_model`, `failure_class`, `trace`, and `langsmith_trace` for each row.
+When `--local-report=/path/report.json` is used in matrix mode, sibling
+`/path/report.tsv` and `/path/report.md` files are written with the same
+filtering columns for quick triage.
+
 Trace replay is not part of the LangSmith eval path yet. Until it is
 implemented, debug a failure from the local matrix row plus the linked LangSmith
 span tree.
@@ -387,6 +410,12 @@ span tree.
 npm run eval -- --matrix --id=building-alchemist --name=sqr-133-before --local-report=/tmp/sqr-133-before.json
 npm run eval -- --matrix --id=building-alchemist --name=sqr-133-after --tool-loop-limit=4 --broad-search-synthesis-threshold=2 --local-report=/tmp/sqr-133-after.json
 npm run eval -- --compare-runs=/tmp/sqr-133-before.json,/tmp/sqr-133-after.json
+```
+
+The default runtime is `langgraph`. Deep Agents comparison rows are opt-in:
+
+```bash
+npm run eval -- --matrix --id=rule-poison --agent-runtime=both --run-label=runtime-compare
 ```
 
 Matrix reports include pass rate, score, latency, token use, estimated cost,

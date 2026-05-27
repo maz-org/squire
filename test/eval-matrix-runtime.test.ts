@@ -48,6 +48,10 @@ import type { EvalTraceInput } from '../eval/trace.ts';
 
 const evalCase: EvalCase = {
   id: 'item-spyglass',
+  game: 'frosthaven',
+  suite: 'table-qa',
+  runtime: 'langgraph',
+  caseCategory: 'card-data',
   category: 'card-data',
   source: 'unit-test',
   question: 'What does Spyglass do?',
@@ -63,7 +67,9 @@ function trace(overrides: Partial<EvalTraceInput> = {}): EvalTraceInput {
     runLabel: 'matrix-run',
     datasetName: 'squire-evals',
     caseId: evalCase.id,
-    caseCategory: evalCase.category,
+    game: evalCase.game,
+    suite: evalCase.suite,
+    caseCategory: evalCase.caseCategory,
     agentRuntime: 'claude-sdk',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',

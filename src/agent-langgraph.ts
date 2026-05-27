@@ -418,7 +418,11 @@ export async function runLangGraphAgentLoopWithEvalConfig(
 ): Promise<AgentRunResult> {
   return runLangGraphAgentLoop(
     question,
-    { toolSurface: 'redesigned' },
+    {
+      toolSurface: 'redesigned',
+      game: options.game,
+      requestId: options.requestId,
+    },
     {
       model: options.anthropicModel,
       maxOutputTokens: options.maxOutputTokens,

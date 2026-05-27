@@ -1,0 +1,442 @@
+[
+  {
+    "id": "gh2-rule-scenario-level",
+    "category": "rulebook",
+    "question": "In Gloomhaven (2nd Edition), how is the recommended scenario level calculated?",
+    "finalAnswer": {
+      "expected": "At recommended difficulty, the scenario level is half the average character level, rounded up.",
+      "grading": "Must mention half the average character level and rounding up. Must answer for Gloomhaven (2nd Edition), not Frosthaven."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-long-rest-init",
+    "category": "rulebook",
+    "question": "What is the initiative value of a long rest in Gloomhaven (2nd Edition)?",
+    "finalAnswer": {
+      "expected": "A long rest has initiative 99.",
+      "grading": "Must state initiative 99. Must not say the long rest is always last regardless of effects above initiative 99."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-long-rest-steps",
+    "category": "rulebook",
+    "question": "What are the steps a character performs when taking a long rest in Gloomhaven (2nd Edition)?",
+    "finalAnswer": {
+      "expected": "The character chooses one discarded card to lose, returns the rest of the discarded cards to hand, may Heal 2 self, and recovers spent items.",
+      "grading": "Must mention losing one discarded card, returning the rest to hand, optional Heal 2 self, and recovering spent items. Answers that use Frosthaven-only wording without Gloomhaven 2e support should fail."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-poison",
+    "category": "rulebook",
+    "question": "What does the Poison condition do in Gloomhaven (2nd Edition)?",
+    "finalAnswer": {
+      "expected": "All attacks targeting the figure gain +1 Attack. Poison is removed when the figure is healed, but the heal does not increase hit points.",
+      "grading": "Must mention +1 Attack on attacks targeting the figure and that healing removes Poison without increasing HP. Must not cite Frosthaven."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-wound",
+    "category": "rulebook",
+    "question": "What does the Wound condition do in Gloomhaven (2nd Edition)?",
+    "finalAnswer": {
+      "expected": "The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.",
+      "grading": "Must mention 1 damage at the start of each turn and removal by healing."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-advantage",
+    "category": "rulebook",
+    "question": "How does advantage work with attack modifier cards in Gloomhaven (2nd Edition)?",
+    "finalAnswer": {
+      "expected": "With advantage, the attacker draws two modifier cards and uses the better one, with rolling and ambiguous cases resolved by the Gloomhaven 2e attack modifier rules.",
+      "grading": "Must mention drawing two modifiers and using the better result. Should not import the Frosthaven-specific character-choice wording."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-small-items",
+    "category": "rulebook",
+    "question": "How many small items can a character bring into a Gloomhaven (2nd Edition) scenario?",
+    "finalAnswer": {
+      "expected": "A character can bring a number of small items equal to half their level, rounded up.",
+      "grading": "Must state half the character's level rounded up. Must answer for Gloomhaven (2nd Edition)."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-rule-looting-definition",
+    "category": "rulebook",
+    "question": "What is looting in Gloomhaven (2nd Edition)?",
+    "finalAnswer": {
+      "expected": "Looting collects money tokens and treasure tiles. Loot X loots all valid tokens or tiles within range X, characters perform end-of-turn looting in their own hex, and monsters can loot money tokens but cannot loot treasure tiles.",
+      "grading": "Must define looting as collecting money tokens and treasure tiles, include Loot X or end-of-turn looting, and distinguish monster looting limits. Must not answer with Frosthaven loot-deck rules."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-faq-red-hex-aoe-targets",
+    "category": "rulebook",
+    "question": "In Gloomhaven (2nd Edition), can I skip targets in a red hex AoE attack?",
+    "finalAnswer": {
+      "expected": "Yes. A red hex AoE defines the hexes for potential targets; targeting is still non-mandatory unless another rule says otherwise.",
+      "grading": "Must answer yes and explain that red hexes define potential targets. Must cite or rely on the Gloomhaven 2e FAQ, not a Frosthaven source."
+    },
+    "source": "gh2-faq.html",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-errata-campaign-sheet-section-29",
+    "category": "rulebook",
+    "question": "In Gloomhaven (2nd Edition), the campaign sheet says to read section 29.5 after scenario 11 with 6 Demon Reputation. What is the current section?",
+    "finalAnswer": {
+      "expected": "The current section is 29.1. The errata says there is no section 29.5.",
+      "grading": "Must identify section 29.1 and mention that section 29.5 is the outdated campaign sheet reference. Must not substitute a Frosthaven section."
+    },
+    "source": "gh2-errata.html",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-item-weathered-boots",
+    "category": "items",
+    "question": "What does the Weathered Boots item do in Gloomhaven 2e, and what is its item number?",
+    "finalAnswer": {
+      "expected": "Weathered Boots are item #001. They are legs-slot boots costing 15 gold; during your move ability, they add Move +1.",
+      "grading": "Must state item #001 and Move +1 during a move ability. Slot and 15 gold cost are useful supporting details. Must not answer with Frosthaven Spyglass."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-scouting-lens",
+    "category": "items",
+    "question": "What does the Scouting Lens item do in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "Scouting Lens is item #005, a head-slot item costing 10 gold. During your attack ability, it adds Pierce 1 to one attack.",
+      "grading": "Must mention Pierce 1 to one attack. Item #005, head slot, and 10 gold cost are useful details. Must not claim it grants advantage."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-monster-bandit-scout",
+    "category": "monster-stats",
+    "question": "What are the stats of a normal Bandit Scout at level 1 in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "HP 6, Move 3, Attack 2.",
+      "grading": "Must include HP 6, Move 3, and Attack 2 from the Gloomhaven 2e Bandit Scout stat data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-living-bones-immunity",
+    "category": "monster-stats",
+    "question": "What conditions are Living Bones immune to in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "Living Bones have no condition immunities in the checked-in Gloomhaven 2e monster stat data.",
+      "grading": "Must state that the immunities list is empty or that Living Bones have no condition immunities. Do not confuse notes such as Shield or Target with immunities."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-scenario-11-reward",
+    "category": "scenarios",
+    "question": "What is Gloomhaven 2e scenario 11 called, and what does it unlock?",
+    "finalAnswer": {
+      "expected": "Scenario 11 is Ritual Chamber. It unlocks scenario 15 and rewards 10 XP.",
+      "grading": "Must identify Ritual Chamber, scenario 15, and the 10 XP reward. Must use the Gloomhaven 2e structured scenario data."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-section-67-1",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is section 67.1, and which scenario is its parent?",
+    "finalAnswer": {
+      "expected": "Section 67.1 is The Last Stand. Its parent scenario is 55.",
+      "grading": "Must identify section 67.1 as The Last Stand and parent scenario 55. Must not use Frosthaven section 67.1."
+    },
+    "source": "data/extracted/gh2/scenario-section-books.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-tool-free-assistant-game",
+    "category": "tool-free",
+    "question": "What game should I select for Gloomhaven second edition? Answer in one short sentence.",
+    "finalAnswer": {
+      "expected": "Select Gloomhaven 2e, or select Gloomhaven (2nd Edition) when the UI uses the long form.",
+      "grading": "Must use either the short display name Gloomhaven 2e or the long display name Gloomhaven (2nd Edition). Must avoid stale copy such as the old second-edition alias."
+    },
+    "source": "src/game.ts",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "tool-free"
+  },
+  {
+    "id": "gh2-traj-source-discovery",
+    "category": "trajectory",
+    "question": "What Gloomhaven 2e sources can you inspect, and which ones can you open exactly?",
+    "trajectory": {
+      "requiredTools": ["inspect_sources"],
+      "requiredToolKinds": ["discovery"],
+      "forbiddenToolKinds": ["traversal"],
+      "requiredRefs": [],
+      "maxToolCalls": 3,
+      "notes": "LangGraph node coverage: classification/source discovery should use inspect_sources before routing to final_answer."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-scenario-section-open",
+    "category": "trajectory",
+    "question": "For Gloomhaven 2e scenario 61, find a related section and open it.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "neighbors", "open_entity"],
+      "requiredToolKinds": ["resolution", "traversal", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["scenario:gloomhaven-2e/061", "section:gloomhaven-2e/121.4"],
+      "maxToolCalls": 7,
+      "notes": "LangGraph node coverage: retrieval planning resolves the scenario, traversal finds related sections, and tool execution opens the section."
+    },
+    "source": "data/extracted/gh2/scenario-section-books.json",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-section-parent-scenario",
+    "category": "trajectory",
+    "question": "In Gloomhaven 2e, open section 67.1 and identify its parent scenario.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity", "neighbors"],
+      "requiredToolKinds": ["resolution", "open", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:gloomhaven-2e/67.1", "scenario:gloomhaven-2e/055"],
+      "maxToolCalls": 6,
+      "notes": "LangGraph node coverage: source verification should use opened section data before final_answer."
+    },
+    "source": "data/extracted/gh2/scenario-section-books.json",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-exact-item-open",
+    "category": "trajectory",
+    "question": "What does Gloomhaven 2e item 1 do, and what source ID did you use to open it?",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["card:gloomhaven-2e/items/gloomhavensecretariat:item/1"],
+      "maxToolCalls": 6,
+      "notes": "LangGraph node coverage: retrieval planning should resolve the exact item before final_answer."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-rule-poison-citation",
+    "category": "trajectory",
+    "question": "What are the Gloomhaven 2e rules for Poison? Cite the source you used.",
+    "trajectory": {
+      "requiredTools": ["search_knowledge"],
+      "requiredToolKinds": ["search"],
+      "forbiddenTools": ["get_card", "find_scenario"],
+      "requiredRefs": [],
+      "maxToolCalls": 4,
+      "notes": "LangGraph node coverage: retrieval planning should choose rule search, not structured card lookup."
+    },
+    "source": "gh2-rule-book.md",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-ambiguous-bandit-scout",
+    "category": "trajectory",
+    "question": "Find Bandit Scout records in Gloomhaven 2e, then open the best matching monster stat record.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenToolKinds": ["traversal"],
+      "requiredRefs": [
+        "card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-scout/0-3"
+      ],
+      "maxToolCalls": 5,
+      "notes": "LangGraph node coverage: classification and retrieval planning should prefer structured monster stats."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-scenario-neighbors",
+    "category": "trajectory",
+    "question": "What scenarios or sections are directly related to Gloomhaven 2e scenario 61?",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "neighbors"],
+      "requiredToolKinds": ["resolution", "traversal"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["scenario:gloomhaven-2e/061"],
+      "maxToolCalls": 6,
+      "notes": "LangGraph node coverage: traversal should stay in the Gloomhaven 2e graph."
+    },
+    "source": "data/extracted/gh2/scenario-section-books.json",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-errata-section-29",
+    "category": "trajectory",
+    "question": "The Gloomhaven 2e campaign sheet points me to section 29.5 after scenario 11 with 6 Demon Reputation. Verify the current section.",
+    "trajectory": {
+      "requiredTools": ["search_knowledge"],
+      "requiredToolKinds": ["search"],
+      "forbiddenToolKinds": ["traversal"],
+      "requiredRefs": [],
+      "maxToolCalls": 4,
+      "notes": "LangGraph node coverage: retrieval planning should use errata search before source verification."
+    },
+    "source": "gh2-errata.html",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-faq-red-hex",
+    "category": "trajectory",
+    "question": "Can Gloomhaven 2e red hex AoE attacks skip targets? Cite the FAQ or rule source.",
+    "trajectory": {
+      "requiredTools": ["search_knowledge"],
+      "requiredToolKinds": ["search"],
+      "forbiddenTools": ["get_card", "find_scenario"],
+      "requiredRefs": [],
+      "maxToolCalls": 4,
+      "notes": "LangGraph node coverage: retrieval planning should choose FAQ/rule search and route to final_answer after verification."
+    },
+    "source": "gh2-faq.html",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-card-fuzzy-vs-exact",
+    "category": "trajectory",
+    "question": "Find the Gloomhaven 2e Bandit Scout monster stat record, then search for any card records that mention Bandit Scout and explain exact data versus fuzzy matches.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity", "search_knowledge"],
+      "requiredToolKinds": ["resolution", "open", "search"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": [
+        "card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-scout/0-3"
+      ],
+      "maxToolCalls": 8,
+      "notes": "LangGraph node coverage: retrieval planning and source verification should separate exact structured data from fuzzy search results."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "gh2-traj-no-frosthaven-source",
+    "category": "trajectory",
+    "question": "Open Gloomhaven 2e section 67.1 and explain why a Frosthaven section with the same number is not enough evidence.",
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:gloomhaven-2e/67.1"],
+      "maxToolCalls": 6,
+      "notes": "LangGraph node coverage: source verification should reject wrong-game evidence before final_answer."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
+    "game": "gloomhaven-2e",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  }
+]

@@ -31,6 +31,24 @@ describe('parseEvalArgs', () => {
     expect(parseEvalArgs(['--local-report=/tmp/eval.json']).localReportPath).toBe('/tmp/eval.json');
   });
 
+  it('parses game and suite filters', () => {
+    expect(parseEvalArgs(['--game=gloomhaven-2e', '--suite=cross-game-boundary'])).toMatchObject({
+      gameFilter: 'gloomhaven-2e',
+      suiteFilter: 'cross-game-boundary',
+    });
+    expect(parseEvalArgs(['--game=gh2'])).toMatchObject({
+      gameFilter: 'gloomhaven-2e',
+    });
+  });
+
+  it('rejects unknown game filters', () => {
+    expect(() => parseEvalArgs(['--game=unknownhaven'])).toThrow(/Invalid --game/);
+  });
+
+  it('rejects empty suite filters', () => {
+    expect(() => parseEvalArgs(['--suite='])).toThrow(/Invalid --suite: value cannot be empty/);
+  });
+
   it('rejects replay flags until LangSmith replay is implemented', () => {
     expect(() => parseEvalArgs(['--replay'])).toThrow(
       /Eval trace replay is not implemented for LangSmith/,

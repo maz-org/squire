@@ -1,3 +1,5 @@
+import { requireGameId } from '../src/game.ts';
+
 export type EvalToolSurface = 'redesigned' | 'legacy';
 export type EvalAgentRuntime = 'claude-sdk' | 'deep-agents' | 'langgraph';
 export type EvalProvider = 'anthropic' | 'openai';
@@ -42,6 +44,8 @@ export interface EvalMatrixGuardrails {
 
 export interface EvalCliOptions {
   shouldSeed: boolean;
+  gameFilter: string | undefined;
+  suiteFilter: string | undefined;
   categoryFilter: string | undefined;
   idFilter: string | undefined;
   runName: string;
@@ -92,6 +96,15 @@ function assertAgentRuntime(value: string): EvalAgentRuntime {
   throw new Error(
     `Invalid --agent-runtime: ${value}. Expected "langgraph", "deep-agents", or "both".`,
   );
+}
+
+function assertGameFilter(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    return requireGameId(value);
+  } catch {
+    throw new Error(`Invalid --game: ${value}. Expected "frosthaven" or "gloomhaven-2e".`);
+  }
 }
 
 function matrixAgentRuntimesFor(args: string[], env: NodeJS.ProcessEnv): EvalAgentRuntime[] {
@@ -253,6 +266,8 @@ export function parseEvalArgs(
 
   return {
     shouldSeed: args.includes('--seed'),
+    gameFilter: assertGameFilter(valueFor(args, '--game=')),
+    suiteFilter: valueFor(args, '--suite='),
     categoryFilter: valueFor(args, '--category='),
     idFilter: valueFor(args, '--id='),
     runName,

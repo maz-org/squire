@@ -92,7 +92,12 @@ describe('Deep Agents eval runner', () => {
     const result = await runDeepAgentsEvalCase({
       case: {
         id: 'item-spyglass',
+        game: 'frosthaven',
+        suite: 'table-qa',
+        runtime: 'langgraph',
+        caseCategory: 'card-data',
         category: 'card-data',
+        source: 'unit-test',
         question: 'What does Spyglass do?',
       },
       runLabel: 'runtime-smoke',
@@ -127,5 +132,34 @@ describe('Deep Agents eval runner', () => {
     expect(traceWriter.writeTrace).toHaveBeenCalledWith(
       expect.objectContaining({ agentRuntime: 'deep-agents' }),
     );
+  });
+
+  it('classifies trajectory failures as quality failures', async () => {
+    const result = await runDeepAgentsEvalCase({
+      case: {
+        id: 'traj-failure',
+        game: 'frosthaven',
+        suite: 'trajectory',
+        runtime: 'langgraph',
+        caseCategory: 'trajectory',
+        category: 'trajectory',
+        source: 'unit-test',
+        question: 'Find a source.',
+      },
+      runLabel: 'runtime-smoke',
+      toolSurface: 'redesigned',
+      providerConfig: {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-6',
+        reasoningEffort: undefined,
+        maxOutputTokens: undefined,
+        timeoutMs: undefined,
+        toolLoopLimit: undefined,
+      },
+      judgeScores: [{ name: 'trajectory_pass', value: 'fail' }],
+      now: nextNow(),
+    });
+
+    expect(result.trace.statusReason).toBe('quality');
   });
 });

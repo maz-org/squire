@@ -18,6 +18,8 @@ describe('eval runner', () => {
     const baseRow = {
       runLabel: 'before',
       caseId: 'building-alchemist',
+      game: 'frosthaven',
+      suite: 'table-qa',
       category: 'card-data',
       provider: 'anthropic',
       model: 'claude-sonnet-4-6',
@@ -91,6 +93,8 @@ describe('eval runner', () => {
         row: {
           runLabel: 'progress',
           caseId: 'rule-poison',
+          game: 'frosthaven',
+          suite: 'table-qa',
           category: 'rulebook',
           agentRuntime: 'claude-sdk',
           provider: 'openai',

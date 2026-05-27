@@ -22,6 +22,10 @@ describe('eval scoring summaries', () => {
     const scores = await traceScoresForEvalResult({} as never, {
       evalCase: {
         id: 'traj-card-fuzzy-vs-exact',
+        game: 'frosthaven',
+        suite: 'trajectory',
+        runtime: 'langgraph',
+        caseCategory: 'trajectory',
         category: 'trajectory',
         source: 'unit-test',
         question: 'Find Algox Archer.',
@@ -66,6 +70,58 @@ describe('eval scoring summaries', () => {
           comment: expect.stringContaining(
             'missing required ref: card:frosthaven/monster-stats/gloomhavensecretariat:monster-stat/algox-archer/0-3',
           ),
+        }),
+        expect.objectContaining({
+          name: 'failure_class',
+          value: 'retrieval',
+        }),
+      ]),
+    );
+  });
+
+  it('labels boundary failures as cross-game contamination', async () => {
+    const scores = await traceScoresForEvalResult({} as never, {
+      evalCase: {
+        id: 'boundary-section-67-gh2-then-fh',
+        game: 'frosthaven',
+        suite: 'cross-game-boundary',
+        runtime: 'langgraph',
+        caseCategory: 'trajectory',
+        category: 'trajectory',
+        source: 'unit-test',
+        question: 'Compare section refs.',
+        trajectory: {
+          requiredTools: ['open_entity'],
+          requiredToolKinds: ['open'],
+          forbiddenTools: [],
+          forbiddenToolKinds: [],
+          requiredRefs: ['section:gloomhaven-2e/67.1', 'section:frosthaven/67.1'],
+          maxToolCalls: 3,
+        },
+      },
+      answer: '',
+      toolCalls: [
+        {
+          iteration: 1,
+          id: 'call_1',
+          name: 'open_entity',
+          input: { ref: 'section:frosthaven/67.1' },
+          ok: true,
+          outputSummary: 'section text',
+          sourceLabels: [],
+          canonicalRefs: ['section:frosthaven/67.1'],
+          startedAt: '2026-05-03T00:00:00.000Z',
+          endedAt: '2026-05-03T00:00:00.001Z',
+          durationMs: 1,
+        },
+      ],
+    });
+
+    expect(scores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'failure_class',
+          value: 'cross_game_contamination',
         }),
       ]),
     );

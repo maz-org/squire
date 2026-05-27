@@ -58,7 +58,11 @@ export interface EvalTraceInput {
   runLabel: string;
   datasetName: string;
   caseId: string;
+  game: string;
+  suite: string;
   caseCategory: string;
+  sourceAuthority?: string;
+  gamePair?: string;
   agentRuntime: string;
   provider: 'anthropic' | 'openai';
   model: string;
@@ -153,7 +157,11 @@ export function evalTraceContractMetadata(input: EvalTraceInput): Record<string,
     runLabel: input.runLabel,
     datasetName: input.datasetName,
     caseId: input.caseId,
+    game: input.game,
+    suite: input.suite,
     caseCategory: input.caseCategory,
+    sourceAuthority: input.sourceAuthority,
+    gamePair: input.gamePair,
     promptVersion: input.promptVersion,
     promptHash: input.promptHash,
     toolSurface: input.toolSurface,
