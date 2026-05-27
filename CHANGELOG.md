@@ -7,6 +7,7 @@
 - Improved Gloomhaven (2nd Edition) condition-rule retrieval so core definitions stay ahead of loose FAQ keyword hits while interaction questions still use normal relevance ordering.
 - Updated GH2 eval expectations for advantage and direct open-ref cross-game boundary prompts to match the checked-in rules and prompt wording.
 - Marked structured `ok: false` tool payloads as unsuccessful evidence in agent trajectories.
+- Updated agent prompts to search current FAQ/errata before opening section references for correction or outdated-reference questions.
 
 ### Fixed
 

@@ -427,6 +427,19 @@ export interface ToolCallResult {
   sourceBooks?: string[];
 }
 
+function toolFailureResult(code: string, message: string): ToolCallResult {
+  return {
+    content: JSON.stringify(
+      {
+        ok: false,
+        error: { code, message },
+      },
+      null,
+      2,
+    ),
+  };
+}
+
 export interface ToolExecutionContext {
   /** Active game from runtime context. Explicit tool input overrides this. */
   game?: string;
@@ -991,7 +1004,7 @@ export async function executeToolCall(
       const card = gameOpts
         ? await getCard(input.type as CardType, input.id as string, gameOpts)
         : await getCard(input.type as CardType, input.id as string);
-      if (!card) return { content: `Card not found: ${input.type}/${input.id}` };
+      if (!card) return toolFailureResult('not_found', `Card not found: ${input.type}/${input.id}`);
       return { content: JSON.stringify(card, null, 2) };
     }
     case 'find_scenario': {
@@ -1004,14 +1017,14 @@ export async function executeToolCall(
       const scenario = gameOpts
         ? await getScenario(input.ref as string, gameOpts)
         : await getScenario(input.ref as string);
-      if (!scenario) return { content: `Scenario not found: ${input.ref}` };
+      if (!scenario) return toolFailureResult('not_found', `Scenario not found: ${input.ref}`);
       return { content: JSON.stringify(scenario, null, 2) };
     }
     case 'get_section': {
       const section = gameOpts
         ? await getSection(input.ref as string, gameOpts)
         : await getSection(input.ref as string);
-      if (!section) return { content: `Section not found: ${input.ref}` };
+      if (!section) return toolFailureResult('not_found', `Section not found: ${input.ref}`);
       return { content: JSON.stringify(section, null, 2) };
     }
     case 'follow_links': {
@@ -1024,7 +1037,7 @@ export async function executeToolCall(
       return { content: JSON.stringify(links, null, 2) };
     }
     default:
-      return { content: `Unknown tool: ${name}` };
+      return toolFailureResult('unknown_tool', `Unknown tool: ${name}`);
   }
 }
 
