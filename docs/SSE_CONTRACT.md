@@ -16,6 +16,14 @@ Scope:
 
 The browser consumes these SSE event names:
 
+Every browser-visible event written after `ask()` starts carries an SSE `id`
+field. The id is the turn-local persisted event sequence (`1`, `2`, `3`, ...),
+scoped to `(conversationId, userMessageId)`. The browser may reconnect with
+`Last-Event-ID`; the server replays only stored events with a larger sequence.
+The `userMessageId` is also the LangGraph `thread_id` for the run, so SSE
+replay and graph execution are keyed to the same turn. The SSE event log is not
+a durable LangGraph node checkpoint.
+
 - `text-delta`
   - Appends assistant answer text.
   - Payload: `{ "delta": string }`
@@ -63,6 +71,34 @@ The browser consumes these SSE event names:
 The browser does not consume provider-native stream chunks directly. Any new
 internal event must be mapped here before it can become browser-visible.
 
+## Resume and Replay
+
+`GET /chat/:conversationId/messages/:messageId/stream` writes browser-visible
+events to `message_stream_events` before sending them over SSE. The durable log
+covers answer text, tool rows, progress rows, structured artifacts, terminal
+`done`, and terminal `error`.
+
+Replay rules:
+
+1. `Last-Event-ID` is parsed as a turn-local integer sequence. Missing or
+   invalid values mean replay from the beginning.
+2. The server sends only events with `sequence > Last-Event-ID`.
+3. If a stored `done` or `error` is replayed, the route closes without calling
+   the agent again.
+4. If non-terminal events exist and the original turn is still running, the
+   reconnecting stream polls the persisted event log until a terminal event is
+   available.
+5. If non-terminal events exist but no generation lock remains, the process
+   cannot safely continue the prior graph run. The route persists one assistant
+   failure row if needed, appends a terminal `error`, and closes.
+
+This means already-written stream text is durable across browser reconnects and
+server restarts. It does not mean an interrupted LangGraph run can always resume
+model/tool execution exactly where it stopped; that requires a durable graph
+checkpoint for the interrupted node. When no active lock or completed assistant
+row exists, Squire prefers one explicit failure over duplicating answer text or
+tool artifacts from a restarted run.
+
 ## Required success-path invariants
 
 For every successful stream:
@@ -82,6 +118,9 @@ For every successful stream:
    from `tool-result` events as they arrive; `consultedSources` is the
    authoritative replay payload used when no tool events fired during this
    connection (duplicate `/stream` hit, reconnect, already-persisted row).
+7. On replay, the same persisted event ids are reused. Replayed `text-delta`,
+   tool, progress, artifact, and terminal events must not be regenerated with
+   new ids.
 
 Important:
 

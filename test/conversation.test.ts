@@ -54,7 +54,7 @@ import { createCsrfToken } from '../src/auth/csrf.ts';
 import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
-import { loadConversation } from '../src/chat/conversation-service.ts';
+import { GENERIC_FAILURE_MESSAGE, loadConversation } from '../src/chat/conversation-service.ts';
 import { users } from '../src/db/schema/core.ts';
 import { conversations, messages } from '../src/db/schema/conversations.ts';
 
@@ -194,7 +194,10 @@ async function seedConversationWithTurns(
   };
 }
 
-function parseSse(text: string): Array<{ event: string; data: unknown }> {
+function parseSse(
+  text: string,
+  options: { includeIds?: boolean } = {},
+): Array<{ id?: string | null; event: string; data: unknown }> {
   // Keep these assertions aligned with docs/SSE_CONTRACT.md, which defines the
   // browser-visible event model rather than the service's internal emit API.
   return text
@@ -203,8 +206,10 @@ function parseSse(text: string): Array<{ event: string; data: unknown }> {
     .filter(Boolean)
     .map((chunk) => {
       const event = chunk.match(/^event:\s*(.+)$/m)?.[1] ?? 'message';
+      const id = chunk.match(/^id:\s*(.+)$/m)?.[1] ?? null;
       const rawData = chunk.match(/^data:\s*(.+)$/m)?.[1] ?? '{}';
       return {
+        ...(options.includeIds ? { id } : {}),
         event,
         data: JSON.parse(rawData),
       };
@@ -958,7 +963,7 @@ describe('conversation web backend', () => {
     expect(streamUrl).toBeTruthy();
 
     const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
-    const events = parseSse(await streamRes.text());
+    const events = parseSse(await streamRes.text(), { includeIds: true });
     const doneEvent = events.at(-1);
     expect(doneEvent?.event).toBe('done');
     const doneData = doneEvent?.data as Record<string, unknown>;
@@ -1555,21 +1560,25 @@ describe('conversation web backend', () => {
     const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
     expect(streamRes.status).toBe(200);
     expect(streamRes.headers.get('content-security-policy')).toBeNull();
-    const events = parseSse(await streamRes.text());
+    const events = parseSse(await streamRes.text(), { includeIds: true });
     expect(events).toEqual([
       {
+        id: expect.any(String),
         event: 'tool-start',
         data: { id: 'rulebook', label: 'RULEBOOK' },
       },
       {
+        id: expect.any(String),
         event: 'text-delta',
         data: { delta: 'Loot tokens in your hex are picked up with **style**.' },
       },
       {
+        id: expect.any(String),
         event: 'tool-result',
         data: { id: 'rulebook', labels: ['RULEBOOK'], ok: true },
       },
       {
+        id: expect.any(String),
         event: 'done',
         data: expect.objectContaining({
           html: '<p>Loot tokens in your hex are picked up with <strong>style</strong>.</p>\n',
@@ -1589,6 +1598,261 @@ describe('conversation web backend', () => {
         role: 'assistant',
         content: 'Loot tokens in your hex are picked up with **style**.',
         isError: false,
+      },
+    ]);
+  });
+
+  it('replays stored stream events after Last-Event-ID without re-running the agent', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_call', { name: 'search_rules' });
+      await options?.emit?.('text', { delta: 'First half. ' });
+      await options?.emit?.('text', { delta: 'Second half.' });
+      await options?.emit?.('tool_result', { name: 'search_rules', ok: true });
+      await options?.emit?.('done', {});
+      return 'First half. Second half.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Replay this stream',
+        idempotencyKey: 'idem-stream-replay',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const firstStreamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const firstEvents = parseSse(await firstStreamRes.text(), { includeIds: true });
+    expect(firstEvents.map((event) => event.event)).toEqual([
+      'tool-start',
+      'text-delta',
+      'text-delta',
+      'tool-result',
+      'done',
+    ]);
+    expect(firstEvents.map((event) => event.id)).toEqual(['1', '2', '3', '4', '5']);
+
+    mockAsk.mockClear();
+    const replayRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`, {
+      headers: {
+        'Last-Event-ID': '2',
+      },
+    });
+    const replayEvents = parseSse(await replayRes.text(), { includeIds: true });
+
+    expect(mockAsk).not.toHaveBeenCalled();
+    expect(replayEvents.map((event) => event.id)).toEqual(['3', '4', '5']);
+    expect(replayEvents.map((event) => event.event)).toEqual(['text-delta', 'tool-result', 'done']);
+  });
+
+  it('waits for an active stream and replays the terminal event on reconnect', async () => {
+    let finishAnswer!: () => void;
+    const answerGate = new Promise<void>((resolve) => {
+      finishAnswer = resolve;
+    });
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: 'Partial live answer.' });
+      await answerGate;
+      await options?.emit?.('done', {});
+      return 'Partial live answer.';
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Reconnect while running',
+        idempotencyKey: 'idem-stream-active-reconnect',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const firstStreamPromise = requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const userMessageId = streamUrl!.split('/').at(-2)!;
+    await vi.waitFor(async () => {
+      const rows = await getDb('server').db.execute(sql`
+        select sequence, event
+        from message_stream_events
+        where user_message_id = ${userMessageId}
+      `);
+      expect(rows.rows).toEqual([{ sequence: 1, event: 'text-delta' }]);
+    });
+
+    const replayPromise = requestWithAuth(auth, `http://localhost:3000${streamUrl}`, {
+      headers: {
+        'Last-Event-ID': '1',
+      },
+    });
+    await vi.waitFor(() => {
+      expect(mockAsk).toHaveBeenCalledTimes(1);
+    });
+
+    finishAnswer();
+
+    const firstEvents = parseSse(await (await firstStreamPromise).text(), { includeIds: true });
+    expect(firstEvents.map((event) => event.id)).toEqual(['1', '2']);
+    expect(firstEvents.map((event) => event.event)).toEqual(['text-delta', 'done']);
+
+    const replayEvents = parseSse(await (await replayPromise).text(), { includeIds: true });
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+    expect(replayEvents).toEqual([
+      {
+        id: '2',
+        event: 'done',
+        data: expect.objectContaining({
+          html: '<p>Partial live answer.</p>\n',
+        }),
+      },
+    ]);
+  });
+
+  it('replays a stored terminal error after reconnect without re-running the agent', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: 'Partial answer.' });
+      throw new Error('network connection lost');
+    });
+
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'Replay failed stream',
+        idempotencyKey: 'idem-stream-error-replay',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const firstStreamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const firstEvents = parseSse(await firstStreamRes.text(), { includeIds: true });
+    expect(firstEvents.map((event) => event.event)).toEqual(['text-delta', 'error']);
+    expect(firstEvents.map((event) => event.id)).toEqual(['1', '2']);
+
+    mockAsk.mockClear();
+    const replayRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`, {
+      headers: {
+        'Last-Event-ID': '1',
+      },
+    });
+    const replayEvents = parseSse(await replayRes.text(), { includeIds: true });
+
+    expect(mockAsk).not.toHaveBeenCalled();
+    expect(replayEvents).toEqual([
+      {
+        id: '2',
+        event: 'error',
+        data: {
+          kind: 'transport',
+          message: 'Trouble connecting. Please try again.',
+          recoverable: true,
+        },
+      },
+    ]);
+  });
+
+  it('terminates a partially persisted stream after process restart without duplicating text', async () => {
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        userId: auth.userId,
+      })
+      .returning();
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'Interrupted question',
+      })
+      .returning();
+    await db.execute(sql`
+      insert into message_stream_events (
+        conversation_id,
+        user_message_id,
+        sequence,
+        event,
+        payload
+      )
+      values (
+        ${conversation.id},
+        ${userMessage.id},
+        1,
+        'text-delta',
+        ${JSON.stringify({ delta: 'Already streamed.' })}::jsonb
+      )
+    `);
+
+    const streamRes = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${conversation.id}/messages/${userMessage.id}/stream`,
+      {
+        headers: {
+          'Last-Event-ID': '1',
+        },
+      },
+    );
+    const events = parseSse(await streamRes.text(), { includeIds: true });
+
+    expect(mockAsk).not.toHaveBeenCalled();
+    expect(events).toEqual([
+      {
+        id: '2',
+        event: 'error',
+        data: {
+          kind: 'transport',
+          message: 'Trouble connecting. Please try again.',
+          recoverable: true,
+        },
+      },
+    ]);
+
+    const storedMessages = await db.execute(sql`
+      select role, content, is_error as "isError", response_to_message_id as "responseToMessageId"
+      from messages
+      order by created_at asc, id asc
+    `);
+    expect(storedMessages.rows).toEqual([
+      {
+        role: 'user',
+        content: 'Interrupted question',
+        isError: false,
+        responseToMessageId: null,
+      },
+      {
+        role: 'assistant',
+        content: GENERIC_FAILURE_MESSAGE,
+        isError: true,
+        responseToMessageId: userMessage.id,
       },
     ]);
   });

@@ -348,6 +348,43 @@ export async function streamAssistantTurn(input: {
   });
 }
 
+export async function persistAssistantFailureTurn(input: {
+  conversationId: string;
+  userMessageId: string;
+  content?: string;
+}): Promise<ConversationMessage> {
+  return getDb('server').db.transaction(async (tx) => {
+    await tx.execute(sql`
+      select pg_advisory_xact_lock(
+        hashtext(${input.conversationId}),
+        hashtext(${input.userMessageId})
+      )
+    `);
+
+    const existingAssistantMessage = await MessageRepository.findAssistantResponse({
+      conversationId: input.conversationId,
+      responseToMessageId: input.userMessageId,
+    });
+    if (existingAssistantMessage) {
+      return existingAssistantMessage;
+    }
+
+    const failureMessage = await MessageRepository.createResponse(tx, {
+      conversationId: input.conversationId,
+      role: 'assistant',
+      content: input.content ?? GENERIC_FAILURE_MESSAGE,
+      isError: true,
+      responseToMessageId: input.userMessageId,
+    });
+    await ConversationRepository.touchLastMessageAt(
+      tx,
+      input.conversationId,
+      failureMessage.createdAt,
+    );
+    return failureMessage;
+  });
+}
+
 export async function startConversation(input: {
   userId: string;
   question: string;

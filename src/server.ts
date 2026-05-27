@@ -102,9 +102,12 @@ import {
   GENERIC_FAILURE_MESSAGE,
   loadConversation,
   loadConversationMessage,
+  persistAssistantFailureTurn,
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
+import * as MessageStreamEventRepository from './db/repositories/message-stream-event-repository.ts';
+import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
 
 export const app = new Hono();
 
@@ -971,6 +974,18 @@ export function computePendingStreamUrls(
 // cost. Older turns are dropped (no "load earlier" affordance yet — file
 // a follow-up if anyone scrolls past 50 turns and feels the cliff).
 const TRANSCRIPT_MESSAGE_LIMIT = 100;
+const STREAM_REPLAY_POLL_MS = 100;
+const STREAM_REPLAY_MAX_POLLS = 1_200;
+
+function parseLastEventSequence(headerValue: string | undefined): number {
+  if (!headerValue) return 0;
+  const parsed = Number.parseInt(headerValue, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 app.get('/chat/:conversationId', async (c) => {
   const session = c.get('session')!;
@@ -1133,6 +1148,9 @@ app.post('/chat/:conversationId/messages', async (c) => {
 app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
+  const lastEventSequence = parseLastEventSequence(
+    c.req.header('last-event-id') ?? c.req.header('Last-Event-ID'),
+  );
   const loaded = await loadConversationMessage({
     conversationId: c.req.param('conversationId'),
     messageId: c.req.param('messageId'),
@@ -1168,6 +1186,138 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   return streamSSE(c, async (stream) => {
     let progressSequence = 0;
     let artifactSequence = 0;
+    let replayCursor = lastEventSequence;
+
+    const writeStoredEvent = async (
+      storedEvent: MessageStreamEventRepository.MessageStreamEvent,
+    ) => {
+      await stream.writeSSE({
+        id: String(storedEvent.sequence),
+        event: storedEvent.event,
+        data: JSON.stringify(storedEvent.payload),
+      });
+      replayCursor = storedEvent.sequence;
+    };
+
+    const persistAndWrite = async (
+      event: BrowserStreamEventName,
+      payload: Record<string, unknown>,
+    ) => {
+      const storedEvent = await MessageStreamEventRepository.append({
+        conversationId: loaded.conversation.id,
+        userMessageId: loaded.message.id,
+        event,
+        payload,
+      });
+      if (storedEvent.sequence > replayCursor) {
+        await writeStoredEvent(storedEvent);
+      }
+      return storedEvent;
+    };
+
+    const replayStoredEvents = async (): Promise<{
+      wroteAny: boolean;
+      reachedTerminal: boolean;
+    }> => {
+      const storedEvents = await MessageStreamEventRepository.listAfter({
+        userMessageId: loaded.message.id,
+        afterSequence: replayCursor,
+      });
+      let wroteAny = false;
+      let reachedTerminal = false;
+      for (const storedEvent of storedEvents) {
+        await writeStoredEvent(storedEvent);
+        wroteAny = true;
+        if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
+          reachedTerminal = true;
+          break;
+        }
+      }
+      return { wroteAny, reachedTerminal };
+    };
+
+    const appendTerminalForAssistantMessage = async (
+      assistantMessage: Awaited<ReturnType<typeof streamAssistantTurn>>,
+    ) => {
+      if (assistantMessage.isError) {
+        await persistAndWrite('error', {
+          kind: 'transport',
+          message:
+            assistantMessage.content === GENERIC_FAILURE_MESSAGE
+              ? 'Trouble connecting. Please try again.'
+              : assistantMessage.content,
+          recoverable: true,
+        });
+        return;
+      }
+
+      await persistAndWrite('done', {
+        html: renderAssistantContentHtml(assistantMessage.content),
+        // SQR-98: send the persisted consulted_sources along with `done` so
+        // the client can rebuild the footer on replay — duplicate /stream
+        // hits, HTMX reconnects, or any path where persistAssistantOutcome
+        // returns an already-persisted row return here with no tool_result
+        // events fired. Without this, the footer would stay hidden on the
+        // reconnected turn until a full page reload.
+        // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
+        // dropped — the conversation page is a scrolling transcript with
+        // no recent-questions chip rail to refresh.
+        consultedSources: assistantMessage.consultedSources,
+      });
+    };
+
+    const existingTerminal = await MessageStreamEventRepository.findTerminal(loaded.message.id);
+    if (existingTerminal && existingTerminal.sequence <= replayCursor) {
+      return;
+    }
+
+    const initialReplay = await replayStoredEvents();
+    if (initialReplay.reachedTerminal) {
+      return;
+    }
+
+    const hasPriorStreamEvents = replayCursor > 0 || initialReplay.wroteAny;
+    if (hasPriorStreamEvents) {
+      for (let polls = 0; polls < STREAM_REPLAY_MAX_POLLS; polls += 1) {
+        if (
+          !(await MessageStreamEventRepository.isTurnGenerationLocked({
+            conversationId: loaded.conversation.id,
+            userMessageId: loaded.message.id,
+          }))
+        ) {
+          const replay = await replayStoredEvents();
+          if (replay.reachedTerminal) {
+            return;
+          }
+
+          const assistantMessage = await persistAssistantFailureTurn({
+            conversationId: loaded.conversation.id,
+            userMessageId: loaded.message.id,
+          });
+          await appendTerminalForAssistantMessage(assistantMessage);
+          return;
+        }
+
+        await delay(STREAM_REPLAY_POLL_MS);
+        const replay = await replayStoredEvents();
+        if (replay.reachedTerminal) {
+          return;
+        }
+      }
+
+      const replay = await replayStoredEvents();
+      if (replay.reachedTerminal) {
+        return;
+      }
+
+      const assistantMessage = await persistAssistantFailureTurn({
+        conversationId: loaded.conversation.id,
+        userMessageId: loaded.message.id,
+      });
+      await appendTerminalForAssistantMessage(assistantMessage);
+      return;
+    }
+
     const assistantMessage = await streamAssistantTurn({
       conversationId: loaded.conversation.id,
       question: loaded.message.content,
@@ -1177,25 +1327,19 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       requestId,
       onEvent: async (event, data) => {
         if (event === 'text') {
-          await stream.writeSSE({
-            event: 'text-delta',
-            data: JSON.stringify(data),
-          });
+          await persistAndWrite('text-delta', data);
           return;
         }
 
         if (event === 'tool_call') {
           const payload = data as { name?: string };
           const name = payload.name ?? 'tool';
-          await stream.writeSSE({
-            event: 'tool-start',
-            data: JSON.stringify({
-              id: buildToolStatusId(name),
-              // Keep the SSE wire contract: always send a string label
-              // (REFERENCE fallback for utility/traversal tools) so the
-              // tool-indicator UI doesn't need to know about nulls.
-              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
-            }),
+          await persistAndWrite('tool-start', {
+            id: buildToolStatusId(name),
+            // Keep the SSE wire contract: always send a string label
+            // (REFERENCE fallback for utility/traversal tools) so the
+            // tool-indicator UI doesn't need to know about nulls.
+            label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
           });
           return;
         }
@@ -1208,13 +1352,10 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           }
           const name = payload.toolName ?? 'tool';
           progressSequence += 1;
-          await stream.writeSSE({
-            event: 'tool-progress',
-            data: JSON.stringify({
-              id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
-              label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
-              message,
-            }),
+          await persistAndWrite('tool-progress', {
+            id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
+            label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+            message,
           });
           return;
         }
@@ -1242,16 +1383,13 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
                 : retrievalSourceLabelToFooterLabel(rawSourceLabel);
           const ref = typeof payload.ref === 'string' ? payload.ref.trim() : '';
           artifactSequence += 1;
-          await stream.writeSSE({
-            event: 'answer-artifact',
-            data: JSON.stringify({
-              id: `section-quote-${artifactSequence}`,
-              kind: 'section-quote',
-              title,
-              body,
-              sourceLabel,
-              ref: ref.length > 0 ? ref : null,
-            }),
+          await persistAndWrite('answer-artifact', {
+            id: `section-quote-${artifactSequence}`,
+            kind: 'section-quote',
+            title,
+            body,
+            sourceLabel,
+            ref: ref.length > 0 ? ref : null,
           });
           return;
         }
@@ -1268,50 +1406,17 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
                   .map(retrievalSourceLabelToFooterLabel)
                   .filter((l): l is NonNullable<typeof l> => l !== null)
               : [toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL];
-          await stream.writeSSE({
-            event: 'tool-result',
-            data: JSON.stringify({
-              id: buildToolStatusId(name),
-              labels: labels.length > 0 ? labels : [TOOL_SOURCE_FALLBACK_LABEL],
-              ok: payload.ok ?? true,
-            }),
+          await persistAndWrite('tool-result', {
+            id: buildToolStatusId(name),
+            labels: labels.length > 0 ? labels : [TOOL_SOURCE_FALLBACK_LABEL],
+            ok: payload.ok ?? true,
           });
           return;
         }
       },
     });
 
-    if (assistantMessage.isError) {
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({
-          kind: 'transport',
-          message:
-            assistantMessage.content === GENERIC_FAILURE_MESSAGE
-              ? 'Trouble connecting. Please try again.'
-              : assistantMessage.content,
-          recoverable: true,
-        }),
-      });
-      return;
-    }
-
-    await stream.writeSSE({
-      event: 'done',
-      data: JSON.stringify({
-        html: renderAssistantContentHtml(assistantMessage.content),
-        // SQR-98: send the persisted consulted_sources along with `done` so
-        // the client can rebuild the footer on replay — duplicate /stream
-        // hits, HTMX reconnects, or any path where persistAssistantOutcome
-        // returns an already-persisted row return here with no tool_result
-        // events fired. Without this, the footer would stay hidden on the
-        // reconnected turn until a full page reload.
-        // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
-        // dropped — the conversation page is a scrolling transcript with
-        // no recent-questions chip rail to refresh.
-        consultedSources: assistantMessage.consultedSources,
-      }),
-    });
+    await appendTerminalForAssistantMessage(assistantMessage);
   });
 });
 

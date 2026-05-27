@@ -220,11 +220,22 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
     </html>`;
 }
 
+function messageIdFromStreamUrl(streamUrl: string): string | null {
+  return streamUrl.match(/\/messages\/([^/]+)\/stream$/)?.[1] ?? null;
+}
+
 function renderQuestionTurn(
   content: string,
-  options: { eyebrowLabel?: string } = {},
+  options: { eyebrowLabel?: string; messageId?: string } = {},
 ): HtmlEscapedString {
-  return html`<article class="squire-turn squire-question">
+  const labelId = options.messageId ? `squire-question-label-${options.messageId}` : null;
+  return html`<article
+    class="squire-turn squire-question"
+    data-testid="question-turn"
+    ${options.messageId ? html`data-message-id="${options.messageId}"` : html``}
+    ${labelId ? html`aria-labelledby="${labelId}"` : html`aria-label="Your question"`}
+  >
+    <h2 class="sr-only" ${labelId ? html`id="${labelId}"` : html``}>Your question</h2>
     ${options.eyebrowLabel
       ? html`<span class="squire-question__eyebrow">${options.eyebrowLabel}</span>`
       : html``}
@@ -233,7 +244,7 @@ function renderQuestionTurn(
 }
 
 function renderAnswerContent(content: HtmlEscapedString): HtmlEscapedString {
-  return html`<div class="squire-answer__content squire-markdown">
+  return html`<div class="squire-answer__content squire-markdown" data-testid="answer-content">
     ${content}
   </div>` as HtmlEscapedString;
 }
@@ -270,6 +281,7 @@ function renderMarkdownSpecimenCard(options: {
 // populate on `done`. Collapsing to one constant locks the contract.
 const HIDDEN_CONSULTED_FOOTER = html`<footer
   class="squire-toolcall"
+  data-testid="consulted-footer"
   aria-live="off"
   hidden
 ></footer>` as HtmlEscapedString;
@@ -285,7 +297,7 @@ function renderConsultedFooter(message: ConversationMessage): HtmlEscapedString 
   if (labels.length === 0) {
     return HIDDEN_CONSULTED_FOOTER;
   }
-  return html`<footer class="squire-toolcall" aria-live="off">
+  return html`<footer class="squire-toolcall" data-testid="consulted-footer" aria-live="off">
     ${formatConsultedFooter(labels)}
   </footer>` as HtmlEscapedString;
 }
@@ -294,9 +306,17 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   const content = message.isError
     ? (html`<p>${message.content}</p>` as HtmlEscapedString)
     : renderAssistantContent(message.content);
+  const labelId = `squire-answer-label-${message.id}`;
   return html`<article
     class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
+    data-testid="answer-turn"
+    data-message-id="${message.id}"
+    ${message.responseToMessageId
+      ? html`data-response-to-message-id="${message.responseToMessageId}"`
+      : html``}
+    aria-labelledby="${labelId}"
   >
+    <h2 class="sr-only" id="${labelId}">Squire answer</h2>
     ${renderAnswerContent(content)} ${renderConsultedFooter(message)}
   </article>` as HtmlEscapedString;
 }
@@ -307,14 +327,22 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
   // `<article class="squire-answer--pending">` itself, so squire.js can find
   // the active stream regardless of whether the article was rendered as part
   // of a full transcript or appended via `hx-swap="beforeend"`.
+  const userMessageId = messageIdFromStreamUrl(streamUrl);
+  const labelId = userMessageId
+    ? `squire-pending-answer-label-${userMessageId}`
+    : 'squire-pending-answer-label';
   return html`<article
     class="squire-turn squire-answer squire-answer--pending"
+    data-testid="answer-turn"
+    ${userMessageId ? html`data-response-to-message-id="${userMessageId}"` : html``}
     data-stream-state="pending"
     data-stream-url="${streamUrl}"
+    aria-labelledby="${labelId}"
   >
-    <div class="squire-answer__tools" aria-live="off"></div>
-    <div class="squire-answer__artifacts" aria-live="polite"></div>
-    <div class="squire-answer__content squire-markdown"></div>
+    <h2 class="sr-only" id="${labelId}">Squire answer</h2>
+    <div class="squire-answer__tools" data-testid="answer-progress" aria-live="off"></div>
+    <div class="squire-answer__artifacts" data-testid="answer-artifacts" aria-live="polite"></div>
+    <div class="squire-answer__content squire-markdown" data-testid="answer-content"></div>
     <div class="squire-answer__skeleton" aria-hidden="true">
       <div class="squire-answer__skeleton-dropcap"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--full"></div>
@@ -796,6 +824,7 @@ export function renderConversationTranscript(options: {
 
   return html`<section
     class="squire-transcript"
+    data-testid="conversation-transcript"
     role="log"
     aria-live="polite"
     aria-label="Conversation transcript"
@@ -808,7 +837,9 @@ export function renderConversationTranscript(options: {
       // SSE; (3) orphan question with no assistant row and no stream URL —
       // shows the question alone (defensive: no expected production path
       // produces this, but a crashed/aborted stream could leave one behind).
-      return html`${renderQuestionTurn(pair.userMessage.content)}
+      return html`${renderQuestionTurn(pair.userMessage.content, {
+        messageId: pair.userMessage.id,
+      })}
       ${pair.assistantMessage
         ? renderAnswerTurn(pair.assistantMessage)
         : streamUrl
@@ -828,6 +859,8 @@ export function renderConversationTurnAppendFragment(options: {
   question: string;
   streamUrl: string;
 }): HtmlEscapedString {
-  return html`${renderQuestionTurn(options.question)}
+  return html`${renderQuestionTurn(options.question, {
+    messageId: messageIdFromStreamUrl(options.streamUrl) ?? undefined,
+  })}
   ${renderPendingAnswerSkeleton(options.streamUrl)}` as HtmlEscapedString;
 }

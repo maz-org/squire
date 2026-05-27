@@ -425,13 +425,26 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   means "no source tools fired" or "pre-SQR-98 row"; both render with the
   footer hidden
 - Browser streaming contract:
+  - transcript markup carries stable `data-testid` hooks for headless QA:
+    `conversation-transcript`, `question-turn`, `answer-turn`,
+    `answer-content`, `answer-progress`, `answer-artifacts`, and
+    `consulted-footer`
+  - question and answer `<article>` elements are accessible by stable
+    visually-hidden headings ("Your question", "Squire answer") so browser
+    accessibility snapshots expose transcript content as named turns
   - `text-delta` appends inert plain text only
+  - browser-visible events after `ask()` starts are persisted in
+    `message_stream_events` with turn-local SSE ids, so reconnects can replay
+    from `Last-Event-ID` without re-running the agent
   - terminal `done` carries the sanitized final HTML fragment and the
     persisted `consultedSources` for replay (the `recentQuestionsNavHtml`
     field was removed in SQR-108 / ADR 0012 — the conversation page is a
     scrolling transcript with no chip rail to refresh)
   - the same server-side renderer is used for persisted reloads and final
     post-stream replacement
+  - if a process dies after partial stream events but before a terminal event,
+    the reconnect path persists one assistant failure and terminal `error`
+    rather than restarting graph execution and duplicating prior deltas
 
 ---
 

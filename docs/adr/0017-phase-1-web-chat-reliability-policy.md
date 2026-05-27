@@ -74,6 +74,20 @@ SSE stream
           └── failure -> persist one assistant failure, emit terminal error
 ```
 
+SSE events written after `ask()` starts are also persisted in
+`message_stream_events` with a turn-local sequence id. On browser reconnect,
+the stream route honors `Last-Event-ID` and replays only later stored events.
+If a terminal `done` or `error` already exists, replay closes without calling
+the agent again. The stream log is keyed by `userMessageId`, which is also the
+LangGraph `thread_id` for the run.
+
+If a reconnect finds partial stored events and the original generation is still
+locked, the route waits for more stored events and relays them. If partial
+stored events exist but no generation lock remains, the previous graph run is
+not safely resumable from the SSE layer alone. The route persists one assistant
+failure row if needed and appends a terminal stream error instead of restarting
+the agent and risking duplicate answer text or artifacts.
+
 Duplicate assistant turns are avoided by taking a transaction-scoped advisory
 lock on the `(conversationId, userMessageId)` pair and reusing any existing
 assistant response for that user message.
@@ -113,6 +127,11 @@ alerts. SQR-86 only fixes the policy boundary and tests.
 - Plain-form users can recover from one clear transport failure without seeing
   an error.
 - SSE users never see a mixed stream from two backend attempts.
+- Browser reconnects replay already-persisted stream events by id instead of
+  depending on in-process buffers.
+- A process crash can preserve already-written stream text, progress rows, and
+  artifacts, but cannot continue an incomplete graph run unless a completed
+  assistant row or active generation lock exists.
 - The transcript has exactly one assistant outcome per user message: answer or
   failure.
 - The retry classifier remains a small private implementation detail tested
