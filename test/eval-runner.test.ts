@@ -159,4 +159,12 @@ describe('eval runner', () => {
       runEval(parseEvalArgs(['--agent-runtime=both', '--id=rule-poison']), {}),
     ).rejects.toThrow(/Deep Agents runtimes are eval-matrix only/);
   });
+
+  it('rejects local fixture-only report execution outside matrix mode', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await expect(
+      runEval(parseEvalArgs(['--id=rule-poison', '--local-report=/tmp/rule-poison.json']), {}),
+    ).rejects.toThrow(/Local fixture-only eval execution has been removed/);
+  });
 });

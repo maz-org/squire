@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.14] - 2026-05-27
+
+### Added
+
+- Moved eval execution onto native LangSmith datasets and experiments, with dataset-linked experiment rows, feedback metrics, and local report experiment URLs.
+- Added LangSmith dataset loading and stale/missing dataset validation before eval execution.
+
+### Changed
+
+- Published eval fixtures with `caseId` inputs and `expectedOutput` outputs so LangSmith datasets are the execution source while `eval/suites/*` remains the checked-in publish source.
+- Removed local fixture-only eval execution outside the dataset-backed matrix report path.
+
 ## [0.1.13] - 2026-05-27
 
 ### Changed

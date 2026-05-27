@@ -72,7 +72,11 @@ export type EvalRuntime = z.infer<typeof EvalRuntimeSchema>;
 export type EvalSuite = z.infer<typeof EvalSuiteSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
-export type EvalCase = z.infer<typeof EvalCaseSchema>;
+export type EvalCase = z.infer<typeof EvalCaseSchema> & {
+  langsmithExampleId?: string;
+  langsmithDatasetId?: string;
+  langsmithDatasetName?: string;
+};
 export type EvalGame = GameId;
 
 export interface ObservedToolCall {

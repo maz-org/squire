@@ -315,9 +315,8 @@ npm run format:check  # Prettier (check only)
 ### Running evaluations
 
 The eval framework measures RAG answer quality using LLM-as-judge scoring. Each
-question is sent through the full RAG pipeline, then a separate Claude call
-grades the answer against expected results on a 1–5 scale. Results are tracked
-in LangSmith so you can compare runs over time.
+question is sent through the full RAG pipeline, then LangSmith records the
+result as an experiment row against the dataset example that produced it.
 
 Requires LangSmith credentials in `.env`.
 
@@ -327,8 +326,9 @@ Requires LangSmith credentials in `.env`.
 npm run eval -- --seed
 ```
 
-Uploads the split eval fixtures under `eval/suites/` to the shared LangSmith
-project. The active dataset names are:
+Publishes the split eval fixtures under `eval/suites/` to LangSmith datasets.
+The checked-in fixtures are the reviewable source; LangSmith datasets are the
+execution source. The active dataset names are:
 
 - `squire/frosthaven/table-qa`
 - `squire/frosthaven/trajectory`
@@ -336,10 +336,11 @@ project. The active dataset names are:
 - `squire/gloomhaven-2e/trajectory`
 - `squire/cross-game/boundary`
 
-This is a maintainer step. It needs to be re-run when eval cases are added or
+This is a maintainer step. It must be re-run when eval cases are added or
 changed. The command clears and recreates examples in each touched dataset so
-LangSmith metadata stays aligned with the local fixtures. Regular contributors
-don't need to run this.
+LangSmith metadata stays aligned with the local fixtures. Eval execution fails
+instead of falling back to local fixtures when credentials are missing or a
+remote dataset is missing/stale.
 
 The current parity baseline is 17 Frosthaven final-answer cases and 11
 Frosthaven trajectory cases, mirrored by 17 Gloomhaven 2e final-answer cases
@@ -352,9 +353,10 @@ separately from per-game parity.
 npm run eval -- --run-label="baseline"
 ```
 
-Runs every question through the LangGraph eval path and grades it. Use
-`--run-label` to label the run — this is how you'll find it in the LangSmith UI.
-Run this before and after changing retrieval or answer behavior.
+Loads examples from the LangSmith datasets, runs every question through the
+LangGraph eval path, and creates native LangSmith experiment(s). Use
+`--run-label` to label the run. Run this before and after changing retrieval or
+answer behavior.
 
 **Run a single category:**
 
@@ -376,26 +378,25 @@ e.g., run `--category=items` after fixing item number extraction.
 npm run eval -- --id=rule-poison
 ```
 
-Runs one specific eval case by ID (IDs are in `eval/suites/*.json`). Useful for
-debugging a single failure without waiting for the full suite.
+Runs one specific eval case by ID. IDs are still reviewed in `eval/suites/*.json`,
+but execution reads the seeded LangSmith dataset example. Useful for debugging a
+single failure without waiting for the full suite.
 
-**Find the LangSmith trace URL:**
+**Find the LangSmith experiment and trace URL:**
 
-Matrix runs write a deterministic trace id for every row:
-`eval:<run-label>:<runtime>:<provider>:<model>:<case-id>`. When LangSmith
-credentials are configured, the local matrix report also includes a `traceUrl`
-that links to the LangSmith run. Use the report link as the source of truth
-instead of hand-building UI URLs.
+Eval runs use LangSmith's native `evaluate()` flow. Each dataset/runtime/model
+combination creates an experiment linked to the source dataset. The local matrix
+report includes the experiment URL plus each row's LangSmith run URL.
 
 ```bash
 npm run eval -- --matrix --id=rule-poison --name=debug-poison --local-report=/tmp/debug-poison.json
 node -e 'const r=require("/tmp/debug-poison.json"); console.log(r.rows.map(row => row.traceUrl ?? row.traceId).join("\n"))'
 ```
 
-Without LangSmith credentials, selected local report paths still work for code
-paths that do not need to create remote trace links. With LangSmith enabled, the
-report includes `game`, `suite`, `category`, `source_authority`, `game_pair`,
-`runtime_model`, `failure_class`, `trace`, and `langsmith_trace` for each row.
+Without LangSmith credentials, eval execution does not run. With LangSmith
+enabled, the report includes `game`, `suite`, `category`, `source_authority`,
+`game_pair`, `runtime_model`, `failure_class`, `trace`, and `langsmith_trace`
+for each row.
 When `--local-report=/path/report.json` is used in matrix mode, sibling
 `/path/report.tsv` and `/path/report.md` files are written with the same
 filtering columns for quick triage.

@@ -7,6 +7,7 @@ import {
   filterEvalCases,
   gamePairForCase,
   langSmithDatasetNameForCase,
+  loadLangSmithEvalCases,
   loadEvalCases,
   seedDataset,
   sourceAuthorityForCase,
@@ -175,6 +176,25 @@ describe('eval dataset', () => {
     }
   });
 
+  it('allows section-parent questions to answer from opened section refs', () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'gh2-traj-section-parent-scenario');
+
+    expect(evalCase?.trajectory?.requiredTools).toEqual(['open_entity']);
+    expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['open']);
+    expect(evalCase?.trajectory?.requiredRefs).toEqual(
+      expect.arrayContaining(['section:gloomhaven-2e/67.1', 'scenario:gloomhaven-2e/055']),
+    );
+  });
+
+  it('allows explicit GH2 section-open checks to skip resolution', () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'gh2-traj-no-frosthaven-source');
+
+    expect(evalCase?.question).toMatch(/\bOpen Gloomhaven 2e section 67\.1\b/);
+    expect(evalCase?.trajectory?.requiredTools).toEqual(['open_entity']);
+    expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['open']);
+    expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven-2e/67.1');
+  });
+
   it('keeps the GH2 advantage expectation aligned with the checked-in rulebook wording', () => {
     const evalCase = cases.find((candidate) => candidate.id === 'gh2-rule-advantage');
 
@@ -314,6 +334,85 @@ describe('eval dataset', () => {
     ).toThrow(/invalid expectedOutput/);
   });
 
+  it('loads eval cases from LangSmith examples and preserves example ids', async () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'rule-poison');
+    expect(evalCase).toBeDefined();
+    const client = {
+      hasDataset: vi.fn().mockResolvedValue(true),
+      readDataset: vi.fn().mockResolvedValue({
+        id: 'dataset-fh-table',
+        name: 'squire/frosthaven/table-qa',
+      }),
+      listExamples: vi.fn(async function* () {
+        yield {
+          id: 'example-rule-poison',
+          dataset_id: 'dataset-fh-table',
+          created_at: '2026-05-01T00:00:00.000Z',
+          inputs: { question: 'stale remote question' },
+          outputs: {
+            expectedOutput: {
+              finalAnswer: {
+                expected: 'stale remote expected answer',
+                grading: 'stale remote grading',
+              },
+            },
+          },
+          metadata: {
+            slug: evalCase!.id,
+            game: evalCase!.game,
+            suite: evalCase!.suite,
+            runtime: evalCase!.runtime,
+            category: evalCase!.category,
+            caseCategory: evalCase!.caseCategory,
+            source: evalCase!.source,
+          },
+          runs: [],
+        };
+      }),
+    };
+
+    const loaded = await loadLangSmithEvalCases(client, [evalCase!], {
+      gameFilter: undefined,
+      suiteFilter: undefined,
+      categoryFilter: undefined,
+      idFilter: 'rule-poison',
+    });
+
+    expect(loaded.cases).toHaveLength(1);
+    expect(loaded.cases[0]).toMatchObject({
+      id: 'rule-poison',
+      question: evalCase!.question,
+      finalAnswer: evalCase!.finalAnswer,
+      langsmithExampleId: 'example-rule-poison',
+      langsmithDatasetId: 'dataset-fh-table',
+      langsmithDatasetName: 'squire/frosthaven/table-qa',
+    });
+    expect(loaded.datasets).toEqual([
+      {
+        id: 'dataset-fh-table',
+        name: 'squire/frosthaven/table-qa',
+      },
+    ]);
+  });
+
+  it('fails when a required LangSmith dataset is missing', async () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'rule-poison');
+    const client = {
+      hasDataset: vi.fn().mockResolvedValue(false),
+      readDataset: vi.fn(),
+      listExamples: vi.fn(),
+    };
+
+    await expect(
+      loadLangSmithEvalCases(client, [evalCase!], {
+        gameFilter: undefined,
+        suiteFilter: undefined,
+        categoryFilter: undefined,
+        idFilter: 'rule-poison',
+      }),
+    ).rejects.toThrow(/Missing LangSmith dataset "squire\/frosthaven\/table-qa"/);
+  });
+
   it('reseeds LangSmith examples without using slug ids as UUIDs', async () => {
     const [evalCase] = cases;
     const client = {
@@ -335,6 +434,12 @@ describe('eval dataset', () => {
     expect(createdExample).not.toHaveProperty('id');
     expect(createdExample).toMatchObject({
       dataset_name: 'squire/frosthaven/table-qa',
+      outputs: {
+        expectedOutput: {
+          finalAnswer: evalCase!.finalAnswer,
+          trajectory: evalCase!.trajectory,
+        },
+      },
       metadata: expect.objectContaining({
         slug: evalCase!.id,
         game: 'frosthaven',

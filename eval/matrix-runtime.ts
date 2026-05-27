@@ -183,9 +183,15 @@ async function runOpenAiMatrixCase(
   return outputFromTrace(result.trace, result.answer, result.ok, input.traceUrl);
 }
 
-export function createEvalMatrixRunner(env: NodeJS.ProcessEnv = process.env): EvalMatrixRunner {
+export function createEvalMatrixRunner(
+  env: NodeJS.ProcessEnv = process.env,
+  options: { langSmithTracing?: boolean } = {},
+): EvalMatrixRunner {
   const anthropic = new Anthropic();
-  const traceWriter = withEvalTraceEnvironment(createLangSmithTraceWriterFromEnv(env), env);
+  const traceWriter =
+    options.langSmithTracing === false
+      ? undefined
+      : withEvalTraceEnvironment(createLangSmithTraceWriterFromEnv(env), env);
   const openAiClient = createOpenAiResponsesClient(env);
 
   return async (input) => {

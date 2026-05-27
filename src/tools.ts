@@ -212,6 +212,13 @@ export interface KnowledgeEntity extends KnowledgeEntitySummary {
   data: Record<string, unknown>;
 }
 
+interface RulePassageContext {
+  ref: string;
+  title: string;
+  text: string;
+  chunkIndex: number;
+}
+
 export interface KnowledgeError {
   code: 'invalid_ref' | 'not_found' | 'ambiguous' | 'invalid_filter' | 'unsupported_relation';
   message: string;
@@ -304,6 +311,7 @@ function normalizeToolOpts(opts?: ToolOpts): NormalizedToolOpts {
 
 const CURRENT_RULE_SOURCE_SCORE_WINDOW = 0.08;
 const CURRENT_RULE_SOURCE_EXTRA_CANDIDATES = 12;
+const CONDITION_DEFINITION_CANDIDATE_LIMIT = 20;
 const CONDITION_NAMES = [
   'bane',
   'bless',
@@ -323,7 +331,11 @@ const CONDITION_NAMES = [
 ] as const;
 type ConditionName = (typeof CONDITION_NAMES)[number];
 
-function currentRuleSourceCandidateLimit(requestedLimit: number, game: GameId): number {
+function currentRuleSourceCandidateLimit(requestedLimit: number, game: GameId, query = ''): number {
+  if (isConditionDefinitionQueryForAnyCondition(query)) {
+    return Math.max(requestedLimit, CONDITION_DEFINITION_CANDIDATE_LIMIT);
+  }
+
   if (game !== GLOOMHAVEN_2E_GAME_ID) return requestedLimit;
   // Pull a small surplus so GH2 FAQ/errata just below the raw vector cutoff can
   // still correct or clarify a printed-source hit with a similar score.
@@ -371,6 +383,7 @@ function isConditionDefinitionQuery(queryText: string, conditions: ConditionName
       new RegExp(`\\bwhat\\s+does\\s+(?:the\\s+)?${escaped}\\s+condition\\s+do\\b`).test(
         queryText,
       ) ||
+      new RegExp(`\\b${escaped}\\s+condition\\b`).test(queryText) ||
       new RegExp(`\\bdefine\\s+(?:the\\s+)?${escaped}\\b`).test(queryText) ||
       new RegExp(`\\b(?:definition|effect|rules?)\\s+(?:for|of)\\s+(?:the\\s+)?${escaped}\\b`).test(
         queryText,
@@ -381,6 +394,12 @@ function isConditionDefinitionQuery(queryText: string, conditions: ConditionName
       new RegExp(`\\b${escaped}\\s+condition\\s+(?:mean|do)\\b`).test(queryText)
     );
   });
+}
+
+function isConditionDefinitionQueryForAnyCondition(query: string): boolean {
+  const queryText = query.toLowerCase();
+  const conditions = CONDITION_NAMES.filter((name) => containsConditionWord(queryText, name));
+  return isConditionDefinitionQuery(queryText, conditions);
 }
 
 function containsConditionWord(text: string, condition: ConditionName): boolean {
@@ -442,10 +461,8 @@ function compareKnowledgeHits(a: KnowledgeSearchHit, b: KnowledgeSearchHit, quer
   if (
     a.entity.kind === 'rules_passage' &&
     b.entity.kind === 'rules_passage' &&
-    isGh2RuleCitation(aCitation) &&
-    isGh2RuleCitation(bCitation) &&
-    aCitation.sourceType &&
-    bCitation.sourceType &&
+    aCitation?.sourceType &&
+    bCitation?.sourceType &&
     query
   ) {
     const aDefinition = isConditionDefinitionText(query, a.snippet, aCitation.sourceType);
@@ -1022,7 +1039,7 @@ async function linksFor(
 export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
   const { game } = normalizeToolOpts(opts);
-  const candidateLimit = currentRuleSourceCandidateLimit(topK, game);
+  const candidateLimit = currentRuleSourceCandidateLimit(topK, game, query);
   const hits: ScoredEntry[] = await search(queryEmbedding, candidateLimit, { game });
 
   return rankRuleHitsForCurrentSources(hits, game, query)
@@ -1340,6 +1357,27 @@ export async function incomingLinks(
   return loadIncomingReferences(toKind, normalizedRef, linkType, normalizeToolOpts(opts));
 }
 
+async function adjacentRulePassageContext(hit: ScoredEntry): Promise<RulePassageContext[]> {
+  const candidates = await Promise.all(
+    [hit.chunkIndex - 1, hit.chunkIndex + 1]
+      .filter((chunkIndex) => chunkIndex >= 0)
+      .map((chunkIndex) => getEntryBySourceChunk(hit.source, chunkIndex, { game: hit.game })),
+  );
+
+  return candidates
+    .filter((candidate): candidate is ScoredEntry => candidate !== null)
+    .sort((a, b) => a.chunkIndex - b.chunkIndex)
+    .map((candidate) => {
+      const entity = summarizeRule(candidate, candidate.game);
+      return {
+        ref: entity.ref,
+        title: entity.title,
+        text: candidate.text,
+        chunkIndex: candidate.chunkIndex,
+      };
+    });
+}
+
 export async function openEntity(ref: string, opts?: ToolOpts): Promise<KnowledgeOpenResult> {
   const game = normalizeToolGame(opts?.game);
 
@@ -1362,6 +1400,7 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
     if (!hit) {
       return { ok: false, error: { code: 'not_found', message: `Rule passage not found: ${ref}` } };
     }
+    const adjacentPassages = await adjacentRulePassageContext(hit);
     const entity = summarizeRule(hit, ruleRef.game);
     const provenance = ruleSourceProvenance(hit.source, ruleRef.game);
     return {
@@ -1376,12 +1415,25 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           sourceLabel: provenance.sourceLabel,
           sourceLocator: ruleSourceLocator(hit.chunkIndex),
           chunkIndex: hit.chunkIndex,
+          adjacentPassages,
           ...(provenance.freshness ? { freshness: provenance.freshness } : {}),
         },
       },
       citations: citationForRule(hit, ruleRef.game),
       links: [],
-      related: [],
+      related: adjacentPassages.map((passage) => ({
+        relation: 'adjacent_passage',
+        target: {
+          kind: 'rules_passage',
+          ref: passage.ref,
+          title: passage.title,
+          sourceLabel: provenance.sourceLabel,
+        },
+        reason:
+          passage.chunkIndex < hit.chunkIndex
+            ? 'Previous passage from the same source.'
+            : 'Next passage from the same source.',
+      })),
     };
   }
 
@@ -1504,7 +1556,7 @@ export async function searchKnowledge(
 
   if (scope.includes('rules_passage')) {
     const queryEmbedding = await embed(query);
-    const candidateLimit = currentRuleSourceCandidateLimit(perScope, game);
+    const candidateLimit = currentRuleSourceCandidateLimit(perScope, game, query);
     const rules = await search(queryEmbedding, candidateLimit, { game });
     hits.push(
       ...rankRuleHitsForCurrentSources(rules, game, query)

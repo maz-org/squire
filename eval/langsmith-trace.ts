@@ -24,6 +24,7 @@ interface LangSmithRunCreate {
   inputs: Record<string, unknown>;
   outputs?: Record<string, unknown>;
   error?: string;
+  reference_example_id?: string;
   extra?: Record<string, unknown>;
   tags?: string[];
   dotted_order?: string;
@@ -144,6 +145,7 @@ function commonMetadata(trace: EvalTraceInput): Record<string, unknown> {
     squireTraceId: trace.traceId,
     runLabel: trace.runLabel,
     datasetName: trace.datasetName,
+    referenceExampleId: trace.referenceExampleId,
     caseId: trace.caseId,
     game: trace.game,
     suite: trace.suite,
@@ -252,6 +254,7 @@ export function buildLangSmithRuns(
       finalAnswer: trace.finalAnswer,
       statusReason: trace.statusReason,
     },
+    reference_example_id: trace.referenceExampleId,
     error: traceError(trace),
     tags,
     extra: {

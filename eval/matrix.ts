@@ -30,6 +30,7 @@ export interface EvalMatrixRunnerInput {
   traceId: string;
   traceUrl: string;
   langsmithTraceUrl?: string;
+  referenceExampleId?: string;
   attempt: number;
 }
 
@@ -88,6 +89,7 @@ export interface EvalMatrixRow {
   traceId: string;
   traceUrl: string;
   langsmithTraceUrl?: string;
+  referenceExampleId?: string;
   promptVersion: string;
   promptHash: string;
   toolSurface: EvalToolSurface;
@@ -96,6 +98,8 @@ export interface EvalMatrixRow {
   modelSettings: EvalModelSettings;
   runSettings: EvalMatrixRunSettings;
   runUrl?: string;
+  langsmithExperimentName?: string;
+  langsmithExperimentUrl?: string;
   error?: string;
 }
 
@@ -104,6 +108,7 @@ export interface EvalMatrixResult {
   rows: EvalMatrixRow[];
   guardrailEstimatedCostUsd: number;
   estimatedCostUsd: number;
+  langsmithExperimentUrls?: string[];
 }
 
 export interface EvalMatrixProgressEvent {
@@ -270,6 +275,16 @@ function slugPart(value: string): string {
   return value.replace(/[^a-zA-Z0-9_.-]/g, '-');
 }
 
+export function experimentNameForMatrixDataset(
+  runLabel: string,
+  datasetName: string,
+  suffix?: string,
+): string {
+  return ['squire-eval', slugPart(runLabel), slugPart(datasetName), suffix && slugPart(suffix)]
+    .filter(Boolean)
+    .join('-');
+}
+
 export function traceIdForMatrixRow(
   runLabel: string,
   evalCase: EvalCase,
@@ -411,7 +426,7 @@ async function runWithRetries(
   }
 }
 
-function rowFromOutput(
+export function rowFromOutput(
   input: EvalMatrixRunnerInput,
   output: EvalMatrixRunnerOutput,
   retryCount: number,
@@ -450,6 +465,7 @@ function rowFromOutput(
     traceId: output.traceId,
     traceUrl: output.traceUrl,
     langsmithTraceUrl: output.langsmithTraceUrl ?? input.langsmithTraceUrl,
+    referenceExampleId: input.referenceExampleId,
     ...compatibility,
     modelSettings: {
       ...evalModelSettingsFor(input.providerConfig),
@@ -460,7 +476,7 @@ function rowFromOutput(
   };
 }
 
-function rowFromError(
+export function rowFromError(
   input: EvalMatrixRunnerInput,
   error: unknown,
   retryCount: number,
@@ -497,6 +513,7 @@ function rowFromError(
     traceId: input.traceId,
     traceUrl: input.traceUrl,
     langsmithTraceUrl: input.langsmithTraceUrl,
+    referenceExampleId: input.referenceExampleId,
     ...compatibility,
     modelSettings: evalModelSettingsFor(input.providerConfig),
     runSettings: evalMatrixRunSettingsFor(guardrails),
@@ -504,7 +521,7 @@ function rowFromError(
   };
 }
 
-async function runMatrixInput(
+export async function runMatrixInput(
   input: EvalMatrixRunnerInput,
   runner: EvalMatrixRunner,
   guardrails: EvalMatrixGuardrails,
@@ -574,6 +591,7 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
           langsmithTraceUrl: langsmithProjectUrl
             ? langSmithRunUrl(langsmithProjectUrl, traceId)
             : undefined,
+          referenceExampleId: evalCase.langsmithExampleId,
           attempt: 1,
         };
       }),
