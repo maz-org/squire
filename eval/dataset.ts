@@ -2,8 +2,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client as LangSmithClient } from 'langsmith';
+import type { Dataset, Example } from 'langsmith/schemas';
 import { normalizeGameId, requireGameId, type GameId } from '../src/game.ts';
-import { EvalDatasetSchema, EvalSuiteSchema, type EvalCase } from './schema.ts';
+import {
+  EvalCaseSchema,
+  EvalDatasetSchema,
+  EvalSuiteSchema,
+  validateRemoteDatasetShape,
+  type EvalCase,
+} from './schema.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +31,23 @@ export interface EvalBaselineCounts {
   finalAnswerCases: number;
   trajectoryCases: number;
   boundaryCases: number;
+}
+
+export interface LangSmithEvalDataset {
+  id: string;
+  name: string;
+}
+
+export interface LangSmithEvalCases {
+  cases: EvalCase[];
+  datasets: LangSmithEvalDataset[];
+  examplesByDatasetName: Map<string, Example[]>;
+}
+
+export interface LangSmithEvalDatasetClient {
+  hasDataset: (input: { datasetName: string }) => Promise<boolean>;
+  readDataset: (input: { datasetName: string }) => Promise<Pick<Dataset, 'id' | 'name'>>;
+  listExamples: (input: { datasetName: string }) => AsyncIterable<Example>;
 }
 
 export function sourceAuthorityForCase(evalCase: EvalCase): string {
@@ -88,6 +112,122 @@ export function langSmithDatasetNameForCase(evalCase: EvalCase): string {
   return `squire/${evalCase.game}/${evalCase.suite}`;
 }
 
+function expectedOutputFromExample(example: Pick<Example, 'outputs'>): unknown {
+  const outputs = example.outputs ?? {};
+  if ('expectedOutput' in outputs) return outputs.expectedOutput;
+  return {
+    finalAnswer: outputs.finalAnswer,
+    trajectory: outputs.trajectory,
+  };
+}
+
+function stringMetadata(
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): string | undefined {
+  const value = metadata?.[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function caseIdForExample(example: Pick<Example, 'id' | 'inputs' | 'metadata'>): string {
+  const metadata = example.metadata ?? {};
+  const inputCaseId = typeof example.inputs.caseId === 'string' ? example.inputs.caseId : undefined;
+  return (
+    stringMetadata(metadata, 'slug') ??
+    stringMetadata(metadata, 'caseId') ??
+    inputCaseId ??
+    example.id
+  );
+}
+
+function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
+  const metadata = example.metadata ?? {};
+  const expectedOutput = expectedOutputFromExample(example) as {
+    finalAnswer?: unknown;
+    trajectory?: unknown;
+  };
+  const question =
+    typeof example.inputs.question === 'string' ? example.inputs.question : undefined;
+  const rawCase = {
+    id: caseIdForExample(example),
+    game: stringMetadata(metadata, 'game'),
+    suite: stringMetadata(metadata, 'suite'),
+    runtime: stringMetadata(metadata, 'runtime') ?? 'langgraph',
+    caseCategory: stringMetadata(metadata, 'caseCategory') ?? stringMetadata(metadata, 'category'),
+    category: stringMetadata(metadata, 'category') ?? stringMetadata(metadata, 'caseCategory'),
+    question,
+    source: stringMetadata(metadata, 'source') ?? datasetName,
+    finalAnswer: expectedOutput.finalAnswer,
+    trajectory: expectedOutput.trajectory,
+  };
+  return {
+    ...EvalCaseSchema.parse(rawCase),
+    langsmithExampleId: example.id,
+    langsmithDatasetId: example.dataset_id,
+    langsmithDatasetName: datasetName,
+  };
+}
+
+function caseKey(datasetName: string, caseId: string): string {
+  return `${datasetName}:${caseId}`;
+}
+
+export async function loadLangSmithEvalCases(
+  client: LangSmithEvalDatasetClient,
+  localCases: EvalCase[],
+  filters: EvalCaseFilters,
+): Promise<LangSmithEvalCases> {
+  const selectedLocalCases = filterEvalCases(localCases, filters);
+  if (selectedLocalCases.length === 0)
+    return { cases: [], datasets: [], examplesByDatasetName: new Map() };
+
+  const datasetNames = [...new Set(selectedLocalCases.map(langSmithDatasetNameForCase))];
+  const datasets: LangSmithEvalDataset[] = [];
+  const examplesByDatasetName = new Map<string, Example[]>();
+  const remoteCasesByKey = new Map<string, EvalCase>();
+
+  for (const datasetName of datasetNames) {
+    if (!(await client.hasDataset({ datasetName }))) {
+      throw new Error(
+        `Missing LangSmith dataset "${datasetName}". Run \`npm run eval -- --seed\` with LangSmith credentials before running evals.`,
+      );
+    }
+
+    const dataset = await client.readDataset({ datasetName });
+    datasets.push({ id: dataset.id, name: dataset.name });
+
+    const examples: Example[] = [];
+    for await (const example of client.listExamples({ datasetName })) {
+      examples.push(example);
+    }
+    examplesByDatasetName.set(datasetName, examples);
+
+    validateRemoteDatasetShape(
+      examples.map((example) => ({ expectedOutput: expectedOutputFromExample(example) })),
+      localCases.filter((evalCase) => langSmithDatasetNameForCase(evalCase) === datasetName).length,
+      datasetName,
+    );
+
+    for (const example of examples) {
+      const remoteCase = evalCaseFromExample(example, datasetName);
+      remoteCasesByKey.set(caseKey(datasetName, remoteCase.id), remoteCase);
+    }
+  }
+
+  const cases = selectedLocalCases.map((localCase) => {
+    const datasetName = langSmithDatasetNameForCase(localCase);
+    const remoteCase = remoteCasesByKey.get(caseKey(datasetName, localCase.id));
+    if (!remoteCase) {
+      throw new Error(
+        `LangSmith dataset "${datasetName}" is missing eval case "${localCase.id}". Run \`npm run eval -- --seed\` before running evals.`,
+      );
+    }
+    return remoteCase;
+  });
+
+  return { cases, datasets, examplesByDatasetName };
+}
+
 export function baselineCountsFor(cases: EvalCase[], gameInput: string): EvalBaselineCounts {
   const game = requireGameId(gameInput);
   const gameCases = cases.filter((evalCase) => evalCase.game === game);
@@ -129,10 +269,12 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
     await client.createExamples(
       datasetCases.map((c) => ({
         dataset_name: datasetName,
-        inputs: { question: c.question },
+        inputs: { question: c.question, caseId: c.id },
         outputs: {
-          finalAnswer: c.finalAnswer,
-          trajectory: c.trajectory,
+          expectedOutput: {
+            finalAnswer: c.finalAnswer,
+            trajectory: c.trajectory,
+          },
         },
         metadata: {
           slug: c.id,
@@ -157,6 +299,11 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
 export async function createLangSmithDatasetClient(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<LangSmithClient> {
+  if (!env.LANGSMITH_API_KEY?.trim()) {
+    throw new Error(
+      'LangSmith eval execution requires LANGSMITH_API_KEY. Run `npm run eval -- --seed` after configuring LangSmith credentials, then rerun the eval.',
+    );
+  }
   return new LangSmithClient({
     apiKey: env.LANGSMITH_API_KEY,
     apiUrl: env.LANGSMITH_ENDPOINT,

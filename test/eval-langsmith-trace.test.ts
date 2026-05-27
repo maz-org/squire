@@ -223,6 +223,26 @@ describe('LangSmith eval trace writer', () => {
     expect(JSON.stringify(payload)).not.toContain('player@example.test');
   });
 
+  it('links root eval runs to LangSmith dataset examples', () => {
+    const payload = buildLangSmithRuns(
+      {
+        ...baseTrace,
+        referenceExampleId: 'example-case-1',
+      },
+      { projectName: 'squire-evals-case-1' },
+    );
+
+    expect(payload.runs[0]).toMatchObject({
+      project_name: 'squire-evals-case-1',
+      reference_example_id: 'example-case-1',
+      extra: {
+        metadata: expect.objectContaining({
+          referenceExampleId: 'example-case-1',
+        }),
+      },
+    });
+  });
+
   it('builds deterministic run URLs for matrix reports', () => {
     expect(
       langSmithRunUrl(

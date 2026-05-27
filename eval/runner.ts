@@ -2,23 +2,21 @@ import { type EvalCliOptions, type EvalProviderConfig } from './cli.ts';
 import {
   createLangSmithDatasetClient,
   filterEvalCases,
+  loadLangSmithEvalCases,
   loadEvalCases,
   seedDataset,
 } from './dataset.ts';
 import { compareEvalRuns, formatEvalRunComparison, readEvalMatrixReport } from './cost-harness.ts';
 import { evalCaseHasFinalAnswer } from './schema.ts';
-import { runLocalReport } from './local-report.ts';
-import { langSmithProjectUrlFromEnv } from './langsmith-trace.ts';
-import { runOpenAiLocalReport } from './openai-runner.ts';
 import {
   assertEvalMatrixGuardrails,
   defaultEvalMatrixModels,
   formatEvalMatrixTable,
-  runEvalMatrix,
   writeEvalMatrixLocalReport,
   type EvalMatrixProgressEvent,
   type EvalMatrixSelection,
 } from './matrix.ts';
+import { runLangSmithNativeEvalMatrix } from './langsmith-eval.ts';
 import { createEvalMatrixRunner } from './matrix-runtime.ts';
 
 function describeProviderConfig(config: EvalProviderConfig): string {
@@ -103,24 +101,29 @@ async function runLangSmithMatrix(
     selection,
     guardrails,
   });
+  const client = await createLangSmithDatasetClient(env);
+  const loaded = await loadLangSmithEvalCases(client, loadEvalCases(), options);
+  cases = loaded.cases;
   console.log(
-    `Running ${cases.length} eval case(s) across ${modelConfigs.length} model(s) and ${agentRuntimes.length} runtime(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
+    `Running ${cases.length} LangSmith dataset eval case(s) across ${modelConfigs.length} model(s) and ${agentRuntimes.length} runtime(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
   );
-  const langsmithProjectUrl = await langSmithProjectUrlFromEnv(env);
-  const result = await runEvalMatrix({
+  const result = await runLangSmithNativeEvalMatrix({
     cases,
+    examplesByDatasetName: loaded.examplesByDatasetName,
     runLabel: options.runName,
     toolSurface: options.toolSurface,
     selection,
     modelConfigs,
     agentRuntimes,
-    runner: createEvalMatrixRunner(env),
+    runner: createEvalMatrixRunner(env, { langSmithTracing: false }),
     guardrails,
-    langsmithProjectUrl,
-    onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
+    client,
   });
 
   console.log(formatEvalMatrixTable(result.rows));
+  if (result.langsmithExperimentUrls?.length) {
+    console.log(`\nLangSmith experiment(s):\n${result.langsmithExperimentUrls.join('\n')}`);
+  }
   if (options.localReportPath) {
     writeEvalMatrixLocalReport(options.localReportPath, result);
     console.log(`\nWrote eval matrix report: ${options.localReportPath}`);
@@ -170,33 +173,17 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
     return;
   }
 
-  if (options.providerConfig.provider === 'openai') {
-    if (!options.localReportPath) {
-      await runLangSmithMatrix(options, env, cases, [options.providerConfig], ['langgraph'], {
-        ...options.matrixGuardrails,
-        allowFullDataset: true,
-      });
-      return;
-    }
-    console.log(
-      `Running ${cases.length} OpenAI eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
+  if (options.localReportPath) {
+    throw new Error(
+      'Local fixture-only eval execution has been removed. Use LangSmith credentials and dataset-backed eval execution; --local-report is supported through --matrix.',
     );
-    await runOpenAiLocalReport(
-      cases,
-      options.runName,
-      options.providerConfig,
-      options.toolSurface,
-      options.localReportPath,
-      env,
-    );
-    return;
   }
 
-  if (options.localReportPath) {
-    console.log(
-      `Running ${cases.length} local eval(s) as "${options.runName}" on ${options.toolSurface} tools...\n`,
-    );
-    await runLocalReport(cases, options.runName, options.toolSurface, options.localReportPath);
+  if (options.providerConfig.provider === 'openai') {
+    await runLangSmithMatrix(options, env, cases, [options.providerConfig], ['langgraph'], {
+      ...options.matrixGuardrails,
+      allowFullDataset: true,
+    });
     return;
   }
 

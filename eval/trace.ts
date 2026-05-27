@@ -57,6 +57,7 @@ export interface EvalTraceInput {
   environment?: string;
   runLabel: string;
   datasetName: string;
+  referenceExampleId?: string;
   caseId: string;
   game: string;
   suite: string;

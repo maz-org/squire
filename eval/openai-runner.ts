@@ -535,6 +535,7 @@ export async function runOpenAiResponsesEvalCase(
       traceId: options.traceId ?? `eval:${options.runLabel}:${options.evalCase.id}:openai`,
       runLabel: options.runLabel,
       datasetName: langSmithDatasetNameForCase(options.evalCase),
+      referenceExampleId: options.evalCase.langsmithExampleId,
       caseId: options.evalCase.id,
       game: options.evalCase.game,
       suite: options.evalCase.suite,
