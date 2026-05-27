@@ -181,6 +181,8 @@ export async function runLangSmithNativeEvalMatrix(
           metadata: {
             runLabel: options.runLabel,
             datasetName,
+            retrievalExperimentDataset: process.env.SQUIRE_RETRIEVAL_EXPERIMENT_DATASET ?? null,
+            retrievalExperimentVariant: process.env.SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT ?? 'local',
             selection: options.selection,
             agentRuntime,
             provider: providerConfig.provider,

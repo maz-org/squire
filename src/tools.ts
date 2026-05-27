@@ -4,6 +4,7 @@
  */
 
 import { embed } from './embedder.ts';
+import { rerankExperimentHits, retrievalExperimentVariant } from './retrieval-experiment.ts';
 import { formatRetrievalSourceLabel } from './retrieval-source.ts';
 import {
   ruleSourceLocator,
@@ -1040,7 +1041,13 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
   const queryEmbedding = await embed(query);
   const { game } = normalizeToolOpts(opts);
   const candidateLimit = currentRuleSourceCandidateLimit(topK, game, query);
-  const hits: ScoredEntry[] = await search(queryEmbedding, candidateLimit, { game });
+  const experimentCandidateLimit =
+    retrievalExperimentVariant() === 'local' ? candidateLimit : Math.max(candidateLimit, 40);
+  const hits: ScoredEntry[] = await rerankExperimentHits(
+    query,
+    await search(queryEmbedding, experimentCandidateLimit, { game }),
+    topK,
+  );
 
   return rankRuleHitsForCurrentSources(hits, game, query)
     .slice(0, topK)
@@ -1557,7 +1564,13 @@ export async function searchKnowledge(
   if (scope.includes('rules_passage')) {
     const queryEmbedding = await embed(query);
     const candidateLimit = currentRuleSourceCandidateLimit(perScope, game, query);
-    const rules = await search(queryEmbedding, candidateLimit, { game });
+    const experimentCandidateLimit =
+      retrievalExperimentVariant() === 'local' ? candidateLimit : Math.max(candidateLimit, 40);
+    const rules = await rerankExperimentHits(
+      query,
+      await search(queryEmbedding, experimentCandidateLimit, { game }),
+      perScope,
+    );
     hits.push(
       ...rankRuleHitsForCurrentSources(rules, game, query)
         .slice(0, perScope)

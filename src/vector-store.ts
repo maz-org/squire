@@ -20,6 +20,7 @@ import { getDb } from './db.ts';
 import { embeddings as embeddingsTable } from './db/schema/core.ts';
 import { DEFAULT_GAME_ID, requireGameId } from './game.ts';
 import type { GameId } from './game.ts';
+import { searchVoyageExperiment, usesVoyageExperimentEmbeddings } from './retrieval-experiment.ts';
 
 export interface IndexEntry {
   id: string;
@@ -248,6 +249,9 @@ export async function search(
   opts: SearchOptions = {},
 ): Promise<ScoredEntry[]> {
   const game = resolveGame(opts.game);
+  if (usesVoyageExperimentEmbeddings()) {
+    return searchVoyageExperiment(queryEmbedding, k, game);
+  }
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
   try {
