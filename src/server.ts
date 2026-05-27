@@ -1285,6 +1285,11 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             userMessageId: loaded.message.id,
           }))
         ) {
+          const replay = await replayStoredEvents();
+          if (replay.reachedTerminal) {
+            return;
+          }
+
           const assistantMessage = await persistAssistantFailureTurn({
             conversationId: loaded.conversation.id,
             userMessageId: loaded.message.id,
@@ -1298,6 +1303,11 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         if (replay.reachedTerminal) {
           return;
         }
+      }
+
+      const replay = await replayStoredEvents();
+      if (replay.reachedTerminal) {
+        return;
       }
 
       const assistantMessage = await persistAssistantFailureTurn({

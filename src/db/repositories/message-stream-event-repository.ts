@@ -138,19 +138,11 @@ export async function isTurnGenerationLocked(input: {
 }): Promise<boolean> {
   const { db } = getDb('server');
   const result = await db.execute(sql`
-    select pg_try_advisory_lock(
+    select pg_try_advisory_xact_lock(
       hashtext(${input.conversationId}),
       hashtext(${input.userMessageId})
     ) as acquired
   `);
   const acquired = Boolean((result.rows[0] as { acquired?: boolean } | undefined)?.acquired);
-  if (acquired) {
-    await db.execute(sql`
-      select pg_advisory_unlock(
-        hashtext(${input.conversationId}),
-        hashtext(${input.userMessageId})
-      )
-    `);
-  }
   return !acquired;
 }
