@@ -1,3 +1,5 @@
+import { requireGameId } from '../src/game.ts';
+
 export type EvalToolSurface = 'redesigned' | 'legacy';
 export type EvalAgentRuntime = 'claude-sdk' | 'deep-agents' | 'langgraph';
 export type EvalProvider = 'anthropic' | 'openai';
@@ -98,8 +100,11 @@ function assertAgentRuntime(value: string): EvalAgentRuntime {
 
 function assertGameFilter(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  if (value === 'frosthaven' || value === 'gloomhaven-2e') return value;
-  throw new Error(`Invalid --game: ${value}. Expected "frosthaven" or "gloomhaven-2e".`);
+  try {
+    return requireGameId(value);
+  } catch {
+    throw new Error(`Invalid --game: ${value}. Expected "frosthaven" or "gloomhaven-2e".`);
+  }
 }
 
 function matrixAgentRuntimesFor(args: string[], env: NodeJS.ProcessEnv): EvalAgentRuntime[] {

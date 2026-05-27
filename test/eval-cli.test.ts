@@ -36,10 +36,13 @@ describe('parseEvalArgs', () => {
       gameFilter: 'gloomhaven-2e',
       suiteFilter: 'cross-game-boundary',
     });
+    expect(parseEvalArgs(['--game=gh2'])).toMatchObject({
+      gameFilter: 'gloomhaven-2e',
+    });
   });
 
   it('rejects unknown game filters', () => {
-    expect(() => parseEvalArgs(['--game=gloomhaven 2.0'])).toThrow(/Invalid --game/);
+    expect(() => parseEvalArgs(['--game=unknownhaven'])).toThrow(/Invalid --game/);
   });
 
   it('rejects empty suite filters', () => {

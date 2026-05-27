@@ -207,6 +207,39 @@ describe('eval matrix runner', () => {
     ]);
   });
 
+  it('keeps same-id rows distinct across games and suites', async () => {
+    const runner = successfulRunner();
+    const sameIdGh2Case: EvalCase = {
+      ...selectedCase,
+      game: 'gloomhaven-2e',
+      suite: 'trajectory',
+      caseCategory: 'rules',
+      category: 'rules',
+    };
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase, sameIdGh2Case],
+      runLabel: 'matrix-cross-game-same-id',
+      toolSurface: 'redesigned',
+      selection: 'all',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: true,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+
+    expect(result.rows.map((row) => `${row.game}:${row.suite}:${row.caseId}`)).toEqual([
+      'frosthaven:table-qa:item-spyglass',
+      'gloomhaven-2e:trajectory:item-spyglass',
+    ]);
+  });
+
   it('prints game, suite, category, and LangSmith trace columns in local tables', async () => {
     const runner = successfulRunner();
 

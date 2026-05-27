@@ -599,11 +599,11 @@ export async function runEvalMatrix(options: RunEvalMatrixOptions): Promise<Eval
   );
   const unorderedRows = rowsByProvider.flat();
   const rowKey = (row: EvalMatrixRow) =>
-    `${row.caseId}:${row.agentRuntime}:${row.provider}:${row.model}`;
+    `${row.game}:${row.suite}:${row.caseId}:${row.agentRuntime}:${row.provider}:${row.model}`;
   const rowsByKey = new Map(unorderedRows.map((row) => [rowKey(row), row]));
   const rows = inputs.map((input) =>
     rowsByKey.get(
-      `${input.evalCase.id}:${input.agentRuntime}:${input.providerConfig.provider}:${input.providerConfig.model}`,
+      `${input.evalCase.game}:${input.evalCase.suite}:${input.evalCase.id}:${input.agentRuntime}:${input.providerConfig.provider}:${input.providerConfig.model}`,
     ),
   );
   const completedRows = rows.filter((row): row is EvalMatrixRow => !!row);

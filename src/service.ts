@@ -563,6 +563,12 @@ export interface AskOptions {
   conversationId?: string;
   /** Persisted user-message UUID for trace/log correlation. */
   userMessageId?: string;
+  /** Eval case id for trace correlation in eval-only agent runs. */
+  evalCaseId?: string;
+  /** Eval suite for trace correlation in eval-only agent runs. */
+  evalSuite?: string;
+  /** Eval case category for trace correlation in eval-only agent runs. */
+  evalCaseCategory?: string;
   /** Deprecated compatibility option. Production always uses LangGraph. */
   runner?: 'current' | 'langgraph';
   /** Internal stream callback. Browser SSE translation happens in src/server.ts. */
