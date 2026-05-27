@@ -278,12 +278,12 @@
     "category": "trajectory",
     "question": "In Gloomhaven 2e, open section 67.1 and identify its parent scenario.",
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["open_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:gloomhaven-2e/67.1", "scenario:gloomhaven-2e/055"],
       "maxToolCalls": 6,
-      "notes": "The section record itself contains the parent scenario ref, so resolve+open is sufficient; traversal remains covered by adjacent scenario/section cases."
+      "notes": "The explicit game-qualified section can be opened directly; the section record itself contains the parent scenario ref, and traversal remains covered by adjacent scenario/section cases."
     },
     "source": "data/extracted/gh2/scenario-section-books.json",
     "game": "gloomhaven-2e",
@@ -426,12 +426,12 @@
     "category": "trajectory",
     "question": "Open Gloomhaven 2e section 67.1 and explain why a Frosthaven section with the same number is not enough evidence.",
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["open_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:gloomhaven-2e/67.1"],
       "maxToolCalls": 6,
-      "notes": "LangGraph node coverage: source verification should reject wrong-game evidence before final_answer."
+      "notes": "LangGraph node coverage: source verification should open the explicit GH2 section and reject wrong-game evidence before final_answer."
     },
     "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
     "game": "gloomhaven-2e",

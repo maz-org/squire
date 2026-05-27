@@ -179,11 +179,20 @@ describe('eval dataset', () => {
   it('allows section-parent questions to answer from opened section refs', () => {
     const evalCase = cases.find((candidate) => candidate.id === 'gh2-traj-section-parent-scenario');
 
-    expect(evalCase?.trajectory?.requiredTools).toEqual(['resolve_entity', 'open_entity']);
-    expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['resolution', 'open']);
+    expect(evalCase?.trajectory?.requiredTools).toEqual(['open_entity']);
+    expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['open']);
     expect(evalCase?.trajectory?.requiredRefs).toEqual(
       expect.arrayContaining(['section:gloomhaven-2e/67.1', 'scenario:gloomhaven-2e/055']),
     );
+  });
+
+  it('allows explicit GH2 section-open checks to skip resolution', () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'gh2-traj-no-frosthaven-source');
+
+    expect(evalCase?.question).toMatch(/\bOpen Gloomhaven 2e section 67\.1\b/);
+    expect(evalCase?.trajectory?.requiredTools).toEqual(['open_entity']);
+    expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['open']);
+    expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven-2e/67.1');
   });
 
   it('keeps the GH2 advantage expectation aligned with the checked-in rulebook wording', () => {
