@@ -544,14 +544,30 @@ describe('renderConversationTurnAppendFragment (SQR-108 / ADR 0012 E-3)', () => 
     // is meant to drop into an existing transcript via `beforeend`.
     expect(body).not.toMatch(/<section[^>]*class="squire-transcript/);
     expect(body).toMatch(/<article[^>]*class="squire-turn squire-question"/);
+    expect(body).toContain('data-testid="question-turn"');
+    expect(body).toContain('data-message-id="msg-456"');
+    expect(body).toContain('aria-labelledby="squire-question-label-msg-456"');
+    expect(body).toContain(
+      '<h2 class="sr-only" id="squire-question-label-msg-456">Your question</h2>',
+    );
     expect(body).toContain('Can I loot through a doorway?');
     expect(body).toMatch(
       /<article[^>]*class="squire-turn squire-answer squire-answer--pending"[^>]*data-stream-state="pending"[^>]*data-stream-url="\/chat\/conv-123\/messages\/msg-456\/stream"/,
     );
-    expect(body).toMatch(/<div[^>]*class="squire-answer__content squire-markdown"><\/div>/);
-    expect(body).toMatch(/<div[^>]*class="squire-answer__tools"[^>]*aria-live="off"><\/div>/);
+    expect(body).toContain('data-testid="answer-turn"');
+    expect(body).toContain('data-response-to-message-id="msg-456"');
+    expect(body).toContain('aria-labelledby="squire-pending-answer-label-msg-456"');
+    expect(body).toContain(
+      '<h2 class="sr-only" id="squire-pending-answer-label-msg-456">Squire answer</h2>',
+    );
     expect(body).toMatch(
-      /<div[^>]*class="squire-answer__artifacts"[^>]*aria-live="polite"><\/div>/,
+      /<div[^>]*class="squire-answer__content squire-markdown"[^>]*data-testid="answer-content"[^>]*><\/div>/,
+    );
+    expect(body).toMatch(
+      /<div[^>]*class="squire-answer__tools"[^>]*data-testid="answer-progress"[^>]*aria-live="off"><\/div>/,
+    );
+    expect(body).toMatch(
+      /<div[^>]*class="squire-answer__artifacts"[^>]*data-testid="answer-artifacts"[^>]*aria-live="polite"><\/div>/,
     );
     expect(body).toMatch(/class="squire-answer__skeleton"[^>]*aria-hidden="true"/);
     expect(body).toContain('squire-answer__skeleton-dropcap');
@@ -606,7 +622,31 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     expect(body).toMatch(
       /<section[^>]*class="squire-transcript"[^>]*role="log"[^>]*aria-live="polite"/,
     );
+    expect(body).toContain('data-testid="conversation-transcript"');
     expect(body).toContain('data-conversation-id="conv-123"');
+  });
+
+  it('renders stable headless-test hooks and named turn articles', () => {
+    const body = String(
+      actualLayout.renderConversationTranscript({
+        conversationId: 'conv-123',
+        messages: messages.slice(0, 2),
+      }),
+    );
+
+    expect(body).toContain('data-testid="conversation-transcript"');
+    expect(body).toMatch(
+      /<article[^>]*class="squire-turn squire-question"[^>]*data-testid="question-turn"[^>]*data-message-id="m1"[^>]*aria-labelledby="squire-question-label-m1"/,
+    );
+    expect(body).toContain('<h2 class="sr-only" id="squire-question-label-m1">Your question</h2>');
+    expect(body).toMatch(
+      /<article[^>]*class="squire-turn squire-answer"[^>]*data-testid="answer-turn"[^>]*data-message-id="m2"[^>]*data-response-to-message-id="m1"[^>]*aria-labelledby="squire-answer-label-m2"/,
+    );
+    expect(body).toContain('<h2 class="sr-only" id="squire-answer-label-m2">Squire answer</h2>');
+    expect(body).toMatch(
+      /<div[^>]*class="squire-answer__content squire-markdown"[^>]*data-testid="answer-content"/,
+    );
+    expect(body).toMatch(/<footer[^>]*data-testid="consulted-footer"/);
   });
 
   it('renders prior turns oldest-first then a pending skeleton for any user message in pendingStreamUrls', () => {
@@ -786,7 +826,9 @@ describe('conversation transcript rendering helpers', () => {
         }),
       );
 
-      const contentStart = body.indexOf('squire-answer__content squire-markdown">');
+      const contentStart = body.search(
+        /class="squire-answer__content squire-markdown"[^>]*data-testid="answer-content"/,
+      );
       expect(contentStart).not.toBe(-1);
       const contentSlice = body.slice(contentStart);
       expect(contentSlice).toContain(leadElement);
