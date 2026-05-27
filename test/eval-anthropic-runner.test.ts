@@ -36,9 +36,14 @@ import {
   classifyAnthropicEvalStatus,
   runAnthropicEvalCase,
 } from '../eval/anthropic-runner.ts';
+import type { EvalCase } from '../eval/schema.ts';
 
-const baseCase = {
+const baseCase: EvalCase = {
   id: 'building-alchemist',
+  game: 'frosthaven',
+  suite: 'table-qa',
+  runtime: 'langgraph',
+  caseCategory: 'buildings',
   category: 'buildings',
   source: 'dataset',
   question: 'What does the level 1 Alchemist unlock?',

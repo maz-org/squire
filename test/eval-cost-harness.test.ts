@@ -11,6 +11,10 @@ import type { EvalCase } from '../eval/schema.ts';
 
 const evalCase: EvalCase = {
   id: 'building-alchemist',
+  game: 'frosthaven',
+  suite: 'table-qa',
+  runtime: 'langgraph',
+  caseCategory: 'card-data',
   category: 'card-data',
   source: 'unit-test',
   question: 'What does the Alchemist cost?',
@@ -36,6 +40,8 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
   return {
     runLabel: 'before',
     caseId: 'building-alchemist',
+    game: 'frosthaven',
+    suite: 'table-qa',
     category: 'card-data',
     agentRuntime: 'claude-sdk',
     provider: 'anthropic',

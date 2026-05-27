@@ -18,7 +18,7 @@ import {
 import { langSmithRunUrl } from './langsmith-trace.ts';
 import type { EvalCase } from './schema.ts';
 
-export type EvalMatrixSelection = 'id' | 'category' | 'all';
+export type EvalMatrixSelection = 'id' | 'category' | 'suite' | 'all';
 
 export interface EvalMatrixRunnerInput {
   evalCase: EvalCase;
@@ -60,6 +60,8 @@ export type EvalMatrixRunner = (input: EvalMatrixRunnerInput) => Promise<EvalMat
 export interface EvalMatrixRow {
   runLabel: string;
   caseId: string;
+  game: string;
+  suite: string;
   category: string;
   agentRuntime: EvalAgentRuntime;
   provider: EvalProvider;
@@ -418,7 +420,9 @@ function rowFromOutput(
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
-    category: input.evalCase.category,
+    game: input.evalCase.game,
+    suite: input.evalCase.suite,
+    category: input.evalCase.caseCategory,
     provider: input.providerConfig.provider,
     model: input.providerConfig.model,
     agentRuntime: input.agentRuntime,
@@ -461,7 +465,9 @@ function rowFromError(
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
-    category: input.evalCase.category,
+    game: input.evalCase.game,
+    suite: input.evalCase.suite,
+    category: input.evalCase.caseCategory,
     provider: input.providerConfig.provider,
     model: input.providerConfig.model,
     agentRuntime: input.agentRuntime,
@@ -613,12 +619,15 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
       [
         row.caseId,
+        row.game,
+        row.suite,
+        row.category,
         `${row.agentRuntime}:${row.provider}:${row.model}`,
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,

@@ -1,8 +1,19 @@
 import { z } from 'zod';
 
-import { FROSTHAVEN_GAME_ID, normalizeGameId } from '../src/game.ts';
+import {
+  FROSTHAVEN_GAME_ID,
+  SUPPORTED_GAME_IDS,
+  normalizeGameId,
+  type GameId,
+} from '../src/game.ts';
 
 const ToolKindSchema = z.enum(['discovery', 'resolution', 'search', 'open', 'traversal']);
+export const EvalRuntimeSchema = z.enum(['langgraph', 'deep-agents']);
+export const EvalSuiteSchema = z.enum(['table-qa', 'trajectory', 'cross-game-boundary']);
+const EvalGameSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? (normalizeGameId(value) ?? value) : value),
+  z.enum(SUPPORTED_GAME_IDS),
+);
 
 export const TrajectoryExpectationSchema = z
   .object({
@@ -26,6 +37,10 @@ export const FinalAnswerExpectationSchema = z
 export const EvalCaseSchema = z
   .object({
     id: z.string().min(1),
+    game: EvalGameSchema,
+    suite: EvalSuiteSchema,
+    runtime: EvalRuntimeSchema,
+    caseCategory: z.string().min(1),
     category: z.string().min(1),
     question: z.string().min(1),
     source: z.string().min(1),
@@ -35,6 +50,9 @@ export const EvalCaseSchema = z
   .strict()
   .refine((evalCase) => evalCase.finalAnswer || evalCase.trajectory, {
     message: 'Eval cases must define finalAnswer, trajectory, or both.',
+  })
+  .refine((evalCase) => evalCase.category === evalCase.caseCategory, {
+    message: 'Eval case category and caseCategory must match.',
   });
 
 export const EvalDatasetSchema = z.array(EvalCaseSchema);
@@ -50,9 +68,12 @@ const RemoteExpectedOutputSchema = z
   });
 
 export type ToolKind = z.infer<typeof ToolKindSchema>;
+export type EvalRuntime = z.infer<typeof EvalRuntimeSchema>;
+export type EvalSuite = z.infer<typeof EvalSuiteSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
 export type EvalCase = z.infer<typeof EvalCaseSchema>;
+export type EvalGame = GameId;
 
 export interface ObservedToolCall {
   name: string;
@@ -123,7 +144,7 @@ export function validateRemoteDatasetShape(
 ): void {
   if (remoteItems.length !== expectedLocalCount) {
     throw new Error(
-      `Remote LangSmith dataset "${datasetName}" has ${remoteItems.length} item(s), but local eval/dataset.json has ${expectedLocalCount}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
+      `Remote LangSmith dataset "${datasetName}" has ${remoteItems.length} item(s), but local eval/suites fixtures have ${expectedLocalCount}. Run \`node eval/run.ts --seed\` before running the full dataset.`,
     );
   }
 

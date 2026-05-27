@@ -82,7 +82,9 @@ function assertCurrentCommandSupportsAgentRuntime(options: EvalCliOptions): void
 }
 
 function selectionFor(options: EvalCliOptions): EvalMatrixSelection {
-  return options.idFilter ? 'id' : options.categoryFilter ? 'category' : 'all';
+  if (options.idFilter) return 'id';
+  if (options.gameFilter || options.suiteFilter) return 'suite';
+  return options.categoryFilter ? 'category' : 'all';
 }
 
 async function runLangSmithMatrix(
@@ -143,9 +145,9 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   }
 
   if (options.shouldSeed) {
-    const finalAnswerCount = allCases.filter(evalCaseHasFinalAnswer).length;
+    const finalAnswerCount = cases.filter(evalCaseHasFinalAnswer).length;
     console.log(
-      `Loaded ${allCases.length} eval case(s): ${finalAnswerCount} final-answer, ${allCases.length - finalAnswerCount} trajectory-only.`,
+      `Loaded ${cases.length} eval case(s): ${finalAnswerCount} final-answer, ${cases.length - finalAnswerCount} trajectory-only.`,
     );
   }
 
@@ -153,7 +155,7 @@ export async function runEval(options: EvalCliOptions, env: NodeJS.ProcessEnv = 
   console.log(`Eval agent runtime: ${describeAgentRuntimes(options.matrixAgentRuntimes)}`);
 
   if (options.shouldSeed) {
-    await seedDataset(await createLangSmithDatasetClient(env), allCases);
+    await seedDataset(await createLangSmithDatasetClient(env), cases);
     return;
   }
 

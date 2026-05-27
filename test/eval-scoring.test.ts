@@ -22,6 +22,10 @@ describe('eval scoring summaries', () => {
     const scores = await traceScoresForEvalResult({} as never, {
       evalCase: {
         id: 'traj-card-fuzzy-vs-exact',
+        game: 'frosthaven',
+        suite: 'trajectory',
+        runtime: 'langgraph',
+        caseCategory: 'trajectory',
         category: 'trajectory',
         source: 'unit-test',
         question: 'Find Algox Archer.',

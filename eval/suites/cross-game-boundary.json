@@ -1,0 +1,24 @@
+[
+  {
+    "id": "traj-invalid-cross-game-ref",
+    "category": "trajectory",
+    "question": "Resolve section 67.1 in Frosthaven and then resolve section 67.1 with an explicit Gloomhaven 2e game. Explain whether they are the same section.",
+    "finalAnswer": {
+      "expected": "Frosthaven section 67.1 and Gloomhaven 2e section 67.1 resolve to different game-qualified sections. The assistant must not reuse Frosthaven section text for the Gloomhaven 2e lookup.",
+      "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2e lookup and state that they are different game-qualified sections. Answers that reuse Frosthaven data for Gloomhaven 2 or imply the bare section id is globally unique should fail."
+    },
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven-2e/67.1"],
+      "maxToolCalls": 8,
+      "notes": "This covers cross-game ref behavior without letting the agent silently reuse Frosthaven data for another game."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
+    "game": "gloomhaven-2e",
+    "suite": "cross-game-boundary",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  }
+]

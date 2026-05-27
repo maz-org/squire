@@ -7,7 +7,11 @@
       "expected": "99",
       "grading": "The answer must state the initiative is 99."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-long-rest-steps",
@@ -17,7 +21,11 @@
       "expected": "1. Lose one card from discard pile, return remaining to hand. 2. Perform Heal 2 self (optional). 3. Recover all spent items.",
       "grading": "Must mention all three steps: losing a card from discard (mandatory), Heal 2 self (optional), and recovering spent items. Order matters."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-scenario-level",
@@ -27,7 +35,11 @@
       "expected": "Average level of the characters divided by 2, rounded up.",
       "grading": "Must mention dividing average character level by 2 and rounding up."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-poison",
@@ -37,7 +49,11 @@
       "expected": "All attacks targeting the figure gain +1 Attack. Poison is removed when healed, but prevents the heal from increasing hit points.",
       "grading": "Must mention +1 Attack on attacks targeting the figure AND that poison prevents healing from increasing HP while being removed by healing."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-brittle",
@@ -47,7 +63,11 @@
       "expected": "Next time the figure would suffer damage, they suffer double that damage instead, then brittle is removed. Also removed by healing.",
       "grading": "Must mention double damage on next damage source and removal after triggering. Should mention healing also removes it."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-advantage",
@@ -57,7 +77,11 @@
       "expected": "Draw two modifiers and use one. Monsters always use the better one. Characters may use either one.",
       "grading": "Must mention drawing two modifiers. Must distinguish that monsters use the better one while characters may choose either."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-small-items",
@@ -67,7 +91,11 @@
       "expected": "Half their level, rounded up.",
       "grading": "Must state half the character's level rounded up."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "rule-looting-definition",
@@ -77,7 +105,11 @@
       "expected": "Characters loot by using Loot X abilities to collect loot tokens and treasure tiles within range X, and by automatically looting loot tokens in their own hex at the end of their turn. Looted loot tokens draw from the loot deck; monsters can loot tokens with Loot abilities but do not draw loot cards and cannot loot treasure tiles.",
       "grading": "Must define looting as collecting loot tokens and treasure tiles. Must mention Loot X range or automatic end-of-turn looting. Must not answer with step-budget exhaustion or an inability to answer."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "monster-vermling-scout",
@@ -87,7 +119,11 @@
       "expected": "HP 3, Move 3, Attack 1.",
       "grading": "Must include all three stats: HP 3, Move 3, Attack 1. Range is not a stat card value; do not penalize for omitting it."
     },
-    "source": "data/extracted/monster-stats.json"
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "monster-stats"
   },
   {
     "id": "monster-living-bones-immunity",
@@ -97,7 +133,11 @@
       "expected": "Living Bones have no condition immunities in the checked-in Frosthaven monster stat data.",
       "grading": "Must state that Living Bones have no condition immunities, or that the immunities list is empty. Must not claim poison or wound immunity."
     },
-    "source": "data/extracted/monster-stats.json"
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "monster-stats"
   },
   {
     "id": "monster-flame-demon-elite",
@@ -107,7 +147,11 @@
       "expected": "HP 3, Move 3, Attack 2. Shield 3.",
       "grading": "Must include HP 3, Move 3, Attack 2. Shield 3 is a bonus. Range is not a stat card value; do not penalize for omitting it."
     },
-    "source": "data/extracted/monster-stats.json"
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "monster-stats"
   },
   {
     "id": "building-alchemist",
@@ -117,7 +161,11 @@
       "expected": "The Alchemist is built at campaign start. Its level 1 initial build cost is no cost: 0 prosperity, 0 gold, 0 lumber, 0 metal, and 0 hide. The level 1 card's upgrade cost to reach level 2 is 1 prosperity, 2 lumber, 2 metal, and 1 hide.",
       "grading": "Must say the level 1 Alchemist has no initial build cost or all-zero initial build cost. If the answer discusses the listed card cost or upgrading, it must distinguish the level 1 upgrade cost (1 prosperity, 2 lumber, 2 metal, and 1 hide) from the initial build cost. Effect text is not required; do not penalize an answer only for including the sourced level 1 effect, \"Characters cannot use potions.\" Penalize answers that claim level 1 is unbuilt, ruined, not operational, or must be upgraded before the building exists."
     },
-    "source": "data/extracted/buildings.json"
+    "source": "data/extracted/buildings.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "buildings"
   },
   {
     "id": "item-spyglass",
@@ -127,7 +175,11 @@
       "expected": "Item #001. Head slot, craft cost 1 metal. During your attack ability, gain advantage on one attack.",
       "grading": "Must state item number 001 (not 082). Must mention gaining advantage on one attack. Should identify the head slot and craft cost 1 metal. Must not say 40 gold, small item slot, or 2 uses."
     },
-    "source": "data/extracted/items.json"
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "items"
   },
   {
     "id": "item-crude-boots",
@@ -137,7 +189,11 @@
       "expected": "Legs slot, craft cost 2 hide. During your move ability, add +1 movement.",
       "grading": "Must mention +1 movement during move ability. Craft cost of 2 hide is a bonus. Must not say Crude Boots has no cost."
     },
-    "source": "data/extracted/items.json"
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "items"
   },
   {
     "id": "scenario-61-unlock",
@@ -147,7 +203,11 @@
       "expected": "Section 79.4 unlocks Life and Death (scenario 61). It is the Crain/star iron section whose rewards include New Scenario: Life and Death.",
       "grading": "Must reference section 79.4 and the Crain/star iron context or the New Scenario: Life and Death reward."
     },
-    "source": "fh-section-book-62-81.pdf"
+    "source": "fh-section-book-62-81.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios"
   },
   {
     "id": "rule-wound",
@@ -157,17 +217,25 @@
       "expected": "The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.",
       "grading": "Must mention 1 damage at start of turns and removal by healing."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook"
   },
   {
     "id": "tool-free-assistant-game",
     "category": "tool-free",
     "question": "What game is this assistant for? Answer in one short sentence.",
     "finalAnswer": {
-      "expected": "This assistant supports Frosthaven and Gloomhaven 2.0.",
-      "grading": "Must clearly say the assistant supports both Frosthaven and Gloomhaven 2.0 in one short sentence. Answers that omit either supported game, hedge, or say it does not know should fail."
+      "expected": "This assistant supports Frosthaven and Gloomhaven 2e.",
+      "grading": "Must clearly say the assistant supports both Frosthaven and Gloomhaven 2e in one short sentence. Answers that omit either supported game, hedge, or say it does not know should fail."
     },
-    "source": "src/agent.ts"
+    "source": "src/agent.ts",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "tool-free"
   },
   {
     "id": "traj-source-discovery",
@@ -181,7 +249,11 @@
       "maxToolCalls": 3,
       "notes": "A source-shape question should use discovery, not answer from prompt memory."
     },
-    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md"
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-scenario-conclusion-open",
@@ -194,7 +266,11 @@
       "requiredRefs": ["scenario:frosthaven/061", "section:frosthaven/67.1"],
       "maxToolCalls": 5
     },
-    "source": "fh-scenario-book-62-81.pdf"
+    "source": "fh-scenario-book-62-81.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-section-read-now-chain",
@@ -207,7 +283,11 @@
       "requiredRefs": ["section:frosthaven/103.1"],
       "maxToolCalls": 7
     },
-    "source": "fh-section-book-102-121.pdf"
+    "source": "fh-section-book-102-121.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-exact-item-open",
@@ -220,7 +300,11 @@
       "requiredRefs": ["card:frosthaven/items/gloomhavensecretariat:item/1"],
       "maxToolCalls": 6
     },
-    "source": "data/extracted/items.json"
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-rule-brittle-citation",
@@ -233,7 +317,11 @@
       "requiredRefs": [],
       "maxToolCalls": 4
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-ambiguous-algox-archer",
@@ -248,7 +336,11 @@
       ],
       "maxToolCalls": 5
     },
-    "source": "data/extracted/monster-stats.json"
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-scenario-neighbors",
@@ -261,7 +353,11 @@
       "requiredRefs": ["scenario:frosthaven/061"],
       "maxToolCalls": 6
     },
-    "source": "fh-scenario-book-62-81.pdf"
+    "source": "fh-scenario-book-62-81.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-section-unlocks-scenario",
@@ -274,7 +370,11 @@
       "requiredRefs": ["section:frosthaven/66.2", "scenario:frosthaven/116"],
       "maxToolCalls": 4
     },
-    "source": "fh-section-book-62-81.pdf"
+    "source": "fh-section-book-62-81.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-scenario-conclusion-next-links",
@@ -287,7 +387,11 @@
       "requiredRefs": ["scenario:frosthaven/061", "section:frosthaven/67.1"],
       "maxToolCalls": 7
     },
-    "source": "fh-scenario-book-62-81.pdf"
+    "source": "fh-scenario-book-62-81.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-rule-during-scenario",
@@ -301,7 +405,11 @@
       "maxToolCalls": 5,
       "notes": "The scenario mention is incidental; the answer should not traverse scenario books just because a scenario number appears."
     },
-    "source": "fh-rule-book.pdf"
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   },
   {
     "id": "traj-card-fuzzy-vs-exact",
@@ -316,24 +424,10 @@
       ],
       "maxToolCalls": 8
     },
-    "source": "data/extracted/monster-stats.json"
-  },
-  {
-    "id": "traj-invalid-cross-game-ref",
-    "category": "trajectory",
-    "question": "Resolve section 67.1 in Frosthaven and then resolve section 67.1 with an explicit Gloomhaven 2 game. Explain whether they are the same section.",
-    "finalAnswer": {
-      "expected": "Frosthaven section 67.1 and Gloomhaven 2.0 section 67.1 resolve to different game-qualified sections. The assistant must not reuse Frosthaven section text for the Gloomhaven 2.0 lookup.",
-      "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2 lookup and state that they are different game-qualified sections. Answers that reuse Frosthaven data for Gloomhaven 2 or imply the bare section id is globally unique should fail."
-    },
-    "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
-      "forbiddenTools": ["search_rules"],
-      "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven-2e/67.1"],
-      "maxToolCalls": 8,
-      "notes": "This covers cross-game ref behavior without letting the agent silently reuse Frosthaven data for another game."
-    },
-    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md"
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "trajectory",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   }
 ]

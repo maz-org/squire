@@ -92,7 +92,12 @@ describe('Deep Agents eval runner', () => {
     const result = await runDeepAgentsEvalCase({
       case: {
         id: 'item-spyglass',
+        game: 'frosthaven',
+        suite: 'table-qa',
+        runtime: 'langgraph',
+        caseCategory: 'card-data',
         category: 'card-data',
+        source: 'unit-test',
         question: 'What does Spyglass do?',
       },
       runLabel: 'runtime-smoke',

@@ -11,8 +11,10 @@ import {
 const baseTrace: EvalTraceInput = {
   traceId: 'trace-1',
   runLabel: 'unit',
-  datasetName: 'frosthaven-qa',
+  datasetName: 'squire/frosthaven/table-qa',
   caseId: 'case-1',
+  game: 'frosthaven',
+  suite: 'table-qa',
   caseCategory: 'rules',
   agentRuntime: 'langgraph',
   provider: 'anthropic',

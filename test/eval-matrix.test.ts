@@ -12,6 +12,10 @@ import type { EvalCase } from '../eval/schema.ts';
 
 const selectedCase: EvalCase = {
   id: 'item-spyglass',
+  game: 'frosthaven',
+  suite: 'table-qa',
+  runtime: 'langgraph',
+  caseCategory: 'card-data',
   category: 'card-data',
   source: 'unit-test',
   question: 'What does Spyglass do?',
@@ -23,6 +27,10 @@ const selectedCase: EvalCase = {
 
 const secondCase: EvalCase = {
   id: 'rule-advantage',
+  game: 'frosthaven',
+  suite: 'trajectory',
+  runtime: 'langgraph',
+  caseCategory: 'rules',
   category: 'rules',
   source: 'unit-test',
   question: 'How does advantage work?',
@@ -147,6 +155,8 @@ describe('eval matrix runner', () => {
       expect.arrayContaining([
         expect.objectContaining({
           caseId: 'item-spyglass',
+          game: 'frosthaven',
+          suite: 'table-qa',
           provider: 'openai',
           model: 'gpt-5.5',
           score: 0.8,
@@ -194,6 +204,33 @@ describe('eval matrix runner', () => {
       'eval:runtime-compare:claude-sdk:anthropic:claude-sonnet-4-6:item-spyglass',
       'eval:runtime-compare:deep-agents:anthropic:claude-sonnet-4-6:item-spyglass',
     ]);
+  });
+
+  it('prints game, suite, category, and LangSmith trace columns in local tables', async () => {
+    const runner = successfulRunner();
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-metadata',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+      langsmithProjectUrl: 'https://smith.langchain.test/o/org/projects/p/project',
+    });
+
+    const table = formatEvalMatrixTable(result.rows);
+    expect(table.split('\n')[0]).toContain('game\tsuite\tcategory');
+    expect(table).toContain('frosthaven\ttable-qa\tcard-data');
+    expect(table).toContain('langsmith_trace');
   });
 
   it('shares provider-safe tuning knobs across the default matrix models', () => {
@@ -670,7 +707,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+      'case\tgame\tsuite\tcategory\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');

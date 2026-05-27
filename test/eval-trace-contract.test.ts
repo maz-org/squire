@@ -34,6 +34,8 @@ describe('SQR-125 trace artifact contract', () => {
       'runLabel',
       'datasetName',
       'caseId',
+      'game',
+      'suite',
       'caseCategory',
       'promptHash',
       'promptVersion',

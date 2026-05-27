@@ -22,6 +22,10 @@ const providerConfig: EvalProviderConfig = {
 
 const evalCase: EvalCase = {
   id: 'item-spyglass',
+  game: 'frosthaven',
+  suite: 'table-qa',
+  runtime: 'langgraph',
+  caseCategory: 'card-data',
   category: 'card-data',
   source: 'unit-test',
   question: 'What does Spyglass do?',
@@ -634,6 +638,8 @@ describe('OpenAI Responses eval runner', () => {
       evalCase: {
         ...evalCase,
         id: 'traj-card-fuzzy-vs-exact',
+        suite: 'trajectory',
+        caseCategory: 'trajectory',
         category: 'trajectory',
         question: 'Find Algox Archer and explain exact versus fuzzy matches.',
         trajectory: {

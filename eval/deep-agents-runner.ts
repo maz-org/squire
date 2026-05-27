@@ -17,8 +17,9 @@ import {
   type ToolTrajectoryStep,
 } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
-import { DATASET_NAME } from './dataset.ts';
+import { langSmithDatasetNameForCase } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
+import type { EvalCase } from './schema.ts';
 import {
   type EvalTraceInput,
   type EvalTraceScore,
@@ -31,11 +32,7 @@ type DeepAgentsAnthropicConfig = EvalProviderConfig & {
   model: 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'claude-haiku-4-5';
 };
 
-interface DeepAgentEvalCase {
-  id: string;
-  category: string;
-  question: string;
-}
+type DeepAgentEvalCase = EvalCase;
 
 export interface RunDeepAgentsEvalCaseOptions {
   case: DeepAgentEvalCase;
@@ -384,9 +381,11 @@ async function writeFailureTrace(
     traceId,
     generationId: `${traceId}:generation`,
     runLabel: options.runLabel,
-    datasetName: DATASET_NAME,
+    datasetName: langSmithDatasetNameForCase(options.case),
     caseId: options.case.id,
-    caseCategory: options.case.category,
+    game: options.case.game,
+    suite: options.case.suite,
+    caseCategory: options.case.caseCategory,
     agentRuntime: AGENT_RUNTIME,
     provider: 'anthropic',
     model: options.providerConfig.model,
@@ -510,9 +509,11 @@ export async function runDeepAgentsEvalCase(
       traceId,
       generationId: `${traceId}:generation`,
       runLabel: options.runLabel,
-      datasetName: DATASET_NAME,
+      datasetName: langSmithDatasetNameForCase(options.case),
       caseId: options.case.id,
-      caseCategory: options.case.category,
+      game: options.case.game,
+      suite: options.case.suite,
+      caseCategory: options.case.caseCategory,
       agentRuntime: AGENT_RUNTIME,
       provider: 'anthropic',
       model: options.providerConfig.model,
