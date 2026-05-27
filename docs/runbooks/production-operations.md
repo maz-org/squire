@@ -291,8 +291,9 @@ Check LangSmith after the question:
 - Confirm `metadata.requestId` is present for the HTTP request that generated
   the answer.
 - Confirm web-chat traces include `metadata.conversationId`,
-  `metadata.userMessageId`, and `metadata.userId`; REST `/api/ask` traces may
-  also include `metadata.campaignId` when the caller provides it.
+  `metadata.thread_id` matching that conversation ID, `metadata.userMessageId`,
+  and `metadata.userId`; REST `/api/ask` traces may also include
+  `metadata.campaignId` when the caller provides it.
 - Confirm agent-run tags identify runtime, provider, model, tool surface, and
   production traffic.
 - Confirm child generation and tool observations show model/provider usage,
@@ -314,8 +315,8 @@ chat behavior.
    log value instead.
 3. In the root trace, inspect:
    - input question and final answer or error output
-   - `metadata.userId`, `metadata.conversationId`, `metadata.userMessageId`,
-     `metadata.requestId`, `metadata.squireEnv`
+   - `metadata.userId`, `metadata.conversationId`, `metadata.thread_id`,
+     `metadata.userMessageId`, `metadata.requestId`, `metadata.squireEnv`
    - `metadata.model`, `metadata.toolSurface`, iterations, tool-call count, and
      stop reason
    - tags: `runtime`, provider (`anthropic`), SDK (`claude-sdk`), model, tool

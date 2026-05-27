@@ -142,6 +142,8 @@ function langgraphCorrelationMetadata(options: AskOptions | undefined): Record<s
     runtime: GRAPH_RUNTIME_PREFIX,
     squireEnv: resolveSquireEnv(),
   };
+  const langsmithThreadId = langsmithThreadIdFor(options);
+  if (langsmithThreadId) metadata.thread_id = langsmithThreadId;
   if (options?.requestId) metadata.requestId = options.requestId;
   if (options?.conversationId) metadata.conversationId = options.conversationId;
   if (options?.userMessageId) metadata.userMessageId = options.userMessageId;
@@ -149,6 +151,10 @@ function langgraphCorrelationMetadata(options: AskOptions | undefined): Record<s
   if (options?.campaignId) metadata.campaignId = options.campaignId;
   if (options?.game) metadata.game = requireGameId(options.game);
   return metadata;
+}
+
+function langsmithThreadIdFor(options: AskOptions | undefined): string | undefined {
+  return options?.conversationId ?? options?.userMessageId;
 }
 
 function langgraphCorrelationAttributes(options: AskOptions | undefined): Attributes {
@@ -702,6 +708,7 @@ async function runLangGraphAgentLoop(
       );
       const finalState = await graph.invoke(createInitialState(question, options), {
         configurable: { thread_id: threadIdFor(options) },
+        metadata: langgraphCorrelationMetadata(options),
       });
       const result = {
         answer: finalState.finalAnswer,

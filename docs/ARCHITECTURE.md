@@ -687,12 +687,12 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 Runtime agent traces carry safe correlation metadata so an operator can follow
 one user-visible answer without reading PII from stdout logs. Web-chat traces
-include request ID, conversation ID, user-message ID, user ID, `SQUIRE_ENV`,
-provider/model, tool surface, stop reason, token usage, and compact tool
-summaries. REST `/api/ask` traces include request ID and any caller-provided
-user/campaign IDs. The browser response includes `X-Request-ID`; the web chat
-URL and stream URL expose the conversation and user-message IDs needed to find
-the persisted turn.
+include request ID, conversation ID, LangSmith `thread_id` equal to the
+conversation ID, user-message ID, user ID, `SQUIRE_ENV`, provider/model, tool
+surface, stop reason, token usage, and compact tool summaries. REST `/api/ask`
+traces include request ID and any caller-provided user/campaign IDs. The
+browser response includes `X-Request-ID`; the web chat URL and stream URL expose
+the conversation and user-message IDs needed to find the persisted turn.
 
 **APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make LangSmith a better fit for evals — so even if Datadog is adopted for APM / RUM, LangSmith stays for LLM-specific observability. See [Open Tech Questions](#open-tech-questions).
 
