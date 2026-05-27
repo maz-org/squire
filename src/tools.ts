@@ -303,7 +303,25 @@ function normalizeToolOpts(opts?: ToolOpts): NormalizedToolOpts {
 }
 
 const CURRENT_RULE_SOURCE_SCORE_WINDOW = 0.08;
-const CURRENT_RULE_SOURCE_EXTRA_CANDIDATES = 4;
+const CURRENT_RULE_SOURCE_EXTRA_CANDIDATES = 12;
+const CONDITION_NAMES = [
+  'bane',
+  'bless',
+  'brittle',
+  'curse',
+  'disarm',
+  'immobilize',
+  'impair',
+  'invisible',
+  'muddle',
+  'poison',
+  'regenerate',
+  'strengthen',
+  'stun',
+  'ward',
+  'wound',
+] as const;
+type ConditionName = (typeof CONDITION_NAMES)[number];
 
 function currentRuleSourceCandidateLimit(requestedLimit: number, game: GameId): number {
   if (game !== GLOOMHAVEN_2E_GAME_ID) return requestedLimit;
@@ -321,11 +339,72 @@ function currentRuleSourceRank(sourceType: RuleSourceType): number {
   return 2;
 }
 
+function isConditionDefinitionText(
+  query: string,
+  text: string,
+  sourceType: RuleSourceType,
+): boolean {
+  if (sourceType !== 'rulebook') return false;
+  const queryText = query.toLowerCase();
+  const hitText = text.toLowerCase();
+  const conditions = CONDITION_NAMES.filter((name) => containsConditionWord(queryText, name));
+  if (conditions.length === 0 || !isConditionDefinitionQuery(queryText, conditions)) return false;
+
+  // Short glossary definitions are easy for vector search to bury below FAQ
+  // edge cases. Keep the actual rulebook definition visible when the query asks
+  // what a condition does.
+  return conditions.some((condition) => hitText.includes(`${condition}:`));
+}
+
+function isConditionDefinitionQuery(queryText: string, conditions: ConditionName[]): boolean {
+  if (
+    conditions.length > 1 &&
+    /\b(?:against|combine|during|interact|timing|versus|vs|while|with)\b/.test(queryText)
+  ) {
+    return false;
+  }
+
+  return conditions.some((condition) => {
+    const escaped = condition.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return (
+      new RegExp(`\\bwhat\\s+(?:does|is)\\s+(?:the\\s+)?${escaped}\\b`).test(queryText) ||
+      new RegExp(`\\bwhat\\s+does\\s+(?:the\\s+)?${escaped}\\s+condition\\s+do\\b`).test(
+        queryText,
+      ) ||
+      new RegExp(`\\bdefine\\s+(?:the\\s+)?${escaped}\\b`).test(queryText) ||
+      new RegExp(`\\b(?:definition|effect|rules?)\\s+(?:for|of)\\s+(?:the\\s+)?${escaped}\\b`).test(
+        queryText,
+      ) ||
+      new RegExp(`\\b${escaped}\\s+(?:condition\\s+)?(?:definition|effect|rules?)\\b`).test(
+        queryText,
+      ) ||
+      new RegExp(`\\b${escaped}\\s+condition\\s+(?:mean|do)\\b`).test(queryText)
+    );
+  });
+}
+
+function containsConditionWord(text: string, condition: ConditionName): boolean {
+  const escaped = condition.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}\\b`).test(text);
+}
+
+function isConditionDefinitionHit(
+  query: string,
+  hit: ScoredEntry,
+  sourceType: RuleSourceType,
+): boolean {
+  return isConditionDefinitionText(query, hit.text, sourceType);
+}
+
 function isGh2RuleCitation(citation: KnowledgeCitation | undefined): citation is KnowledgeCitation {
   return citation?.sourceRef.startsWith(`source:${GLOOMHAVEN_2E_GAME_ID}/`) ?? false;
 }
 
-function rankRuleHitsForCurrentSources(hits: ScoredEntry[], game: GameId): ScoredEntry[] {
+function rankRuleHitsForCurrentSources(
+  hits: ScoredEntry[],
+  game: GameId,
+  query = '',
+): ScoredEntry[] {
   return hits
     .map((hit, index) => ({
       hit,
@@ -333,6 +412,10 @@ function rankRuleHitsForCurrentSources(hits: ScoredEntry[], game: GameId): Score
       provenance: ruleSourceProvenance(hit.source, normalizeToolGame(hit.game ?? game)),
     }))
     .sort((a, b) => {
+      const aDefinition = isConditionDefinitionHit(query, a.hit, a.provenance.sourceType);
+      const bDefinition = isConditionDefinitionHit(query, b.hit, b.provenance.sourceType);
+      if (aDefinition !== bDefinition) return aDefinition ? -1 : 1;
+
       const scoreDelta = b.hit.score - a.hit.score;
       const aCurrent = a.provenance.game === GLOOMHAVEN_2E_GAME_ID;
       const bCurrent = b.provenance.game === GLOOMHAVEN_2E_GAME_ID;
@@ -351,10 +434,24 @@ function rankRuleHitsForCurrentSources(hits: ScoredEntry[], game: GameId): Score
     .map(({ hit }) => hit);
 }
 
-function compareKnowledgeHits(a: KnowledgeSearchHit, b: KnowledgeSearchHit): number {
+function compareKnowledgeHits(a: KnowledgeSearchHit, b: KnowledgeSearchHit, query = ''): number {
   const scoreDelta = b.score - a.score;
   const aCitation = a.citations[0];
   const bCitation = b.citations[0];
+
+  if (
+    a.entity.kind === 'rules_passage' &&
+    b.entity.kind === 'rules_passage' &&
+    isGh2RuleCitation(aCitation) &&
+    isGh2RuleCitation(bCitation) &&
+    aCitation.sourceType &&
+    bCitation.sourceType &&
+    query
+  ) {
+    const aDefinition = isConditionDefinitionText(query, a.snippet, aCitation.sourceType);
+    const bDefinition = isConditionDefinitionText(query, b.snippet, bCitation.sourceType);
+    if (aDefinition !== bDefinition) return aDefinition ? -1 : 1;
+  }
 
   if (
     a.entity.kind === 'rules_passage' &&
@@ -928,7 +1025,7 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
   const candidateLimit = currentRuleSourceCandidateLimit(topK, game);
   const hits: ScoredEntry[] = await search(queryEmbedding, candidateLimit, { game });
 
-  return rankRuleHitsForCurrentSources(hits, game)
+  return rankRuleHitsForCurrentSources(hits, game, query)
     .slice(0, topK)
     .map((h) => ({
       text: h.text,
@@ -1410,7 +1507,7 @@ export async function searchKnowledge(
     const candidateLimit = currentRuleSourceCandidateLimit(perScope, game);
     const rules = await search(queryEmbedding, candidateLimit, { game });
     hits.push(
-      ...rankRuleHitsForCurrentSources(rules, game)
+      ...rankRuleHitsForCurrentSources(rules, game, query)
         .slice(0, perScope)
         .map((rule) => {
           const entity = summarizeRule(rule, game);
@@ -1489,7 +1586,7 @@ export async function searchKnowledge(
     );
   }
 
-  hits.sort(compareKnowledgeHits);
+  hits.sort((a, b) => compareKnowledgeHits(a, b, query));
   return {
     ok: true,
     query,

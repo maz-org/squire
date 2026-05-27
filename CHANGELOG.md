@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.13] - 2026-05-27
+
+### Changed
+
+- Improved Gloomhaven (2nd Edition) condition-rule retrieval so core definitions stay ahead of loose FAQ keyword hits while interaction questions still use normal relevance ordering.
+- Updated GH2 eval expectations for advantage and direct open-ref cross-game boundary prompts to match the checked-in rules and prompt wording.
+- Marked structured `ok: false` tool payloads as unsuccessful evidence in agent trajectories.
+
+### Fixed
+
+- Restored GH2 scenario/section seed data after canonical-ref cleanup tests so shuffled DB test runs keep GH2 records available.
+
 ## [0.1.12] - 2026-05-25
 
 ### Added

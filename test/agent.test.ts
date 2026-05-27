@@ -114,6 +114,7 @@ import {
   runAgentLoopWithEvalConfig,
   runAgentLoopWithTrajectory,
   executeToolCall,
+  isToolResultOk,
   AGENT_TOOLS,
   LEGACY_AGENT_TOOLS,
   AGENT_SYSTEM_PROMPT,
@@ -1474,6 +1475,24 @@ describe('executeToolCall', () => {
   it('returns error for unknown tool', async () => {
     const result = await executeToolCall('unknown_tool', {});
     expect(result.content).toContain('Unknown tool');
+  });
+});
+
+describe('isToolResultOk', () => {
+  it('treats structured not_found tool payloads as unsuccessful evidence', () => {
+    expect(
+      isToolResultOk({
+        content: JSON.stringify({
+          ok: false,
+          error: { code: 'not_found', message: 'Section not found' },
+        }),
+      }),
+    ).toBe(false);
+  });
+
+  it('treats successful structured payloads and plain text as usable tool results', () => {
+    expect(isToolResultOk({ content: JSON.stringify({ ok: true, results: [] }) })).toBe(true);
+    expect(isToolResultOk({ content: 'plain legacy tool output' })).toBe(true);
   });
 });
 

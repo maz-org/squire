@@ -57,6 +57,7 @@ import { findScenarios } from '../src/scenario-section-data.ts';
 import { getDb } from '../src/db.ts';
 import { scenarioBookScenarios } from '../src/db/schema/scenario-section-books.ts';
 import { GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
+import { seedAvailableScenarioSectionBookGames } from '../src/seed/seed-scenario-section-books.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -581,6 +582,7 @@ describe('GH2 canonical entity refs', () => {
       DELETE FROM scenario_book_scenarios
       WHERE game = ${GLOOMHAVEN_2E_GAME_ID} AND ref = ${GH2_CANONICAL_SCENARIO_REF}
     `);
+    await seedAvailableScenarioSectionBookGames(db);
   });
 
   it('normalizes alias-qualified GH2 scenario refs to the canonical game id', async () => {
@@ -786,6 +788,170 @@ describe('searchKnowledge', () => {
       'faq',
       'rulebook',
     ]);
+  });
+
+  it.each([
+    {
+      condition: 'Poison',
+      definition:
+        'Poison: All attacks targeting the figure gain +1 Attack. Poison is removed when the figure is healed.',
+    },
+    {
+      condition: 'Wound',
+      definition:
+        'Wound: The figure suffers 1 damage at the start of each of their turns. Wound is removed when the figure is healed.',
+    },
+  ])(
+    'keeps GH2 rulebook $condition condition definitions ahead of loose FAQ keyword hits',
+    async ({ condition, definition }) => {
+      mockSearch.mockResolvedValueOnce([
+        {
+          id: 'gh2-faq.html::70',
+          text: `FAQ edge case about ${condition} timing and targeting order.`,
+          source: 'gh2-faq.html',
+          chunkIndex: 70,
+          game: GLOOMHAVEN_2E_GAME_ID,
+          score: 0.55,
+        },
+        {
+          id: 'gh2-faq.html::14',
+          text: `Personal Quest text mentioning ${condition} without defining it.`,
+          source: 'gh2-faq.html',
+          chunkIndex: 14,
+          game: GLOOMHAVEN_2E_GAME_ID,
+          score: 0.49,
+        },
+        {
+          id: 'gh2-rule-book.md::55',
+          text: definition,
+          source: 'gh2-rule-book.md',
+          chunkIndex: 55,
+          game: GLOOMHAVEN_2E_GAME_ID,
+          score: 0.38,
+        },
+      ]);
+
+      const result = await searchKnowledge(`What does the ${condition} condition do?`, {
+        scope: ['rules_passage'],
+        limit: 3,
+        game: 'gh2',
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error(result.error.message);
+      expect(result.results[0]).toMatchObject({
+        entity: expect.objectContaining({
+          ref: 'rules:gloomhaven-2e/gh2-rule-book.md#chunk=55',
+        }),
+        snippet: expect.stringContaining(`${condition}:`),
+      });
+    },
+  );
+
+  it('promotes condition definitions for generated condition-rules searches', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-faq.html::70',
+        text: 'FAQ edge case about Poison timing and targeting order.',
+        source: 'gh2-faq.html',
+        chunkIndex: 70,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.55,
+      },
+      {
+        id: 'gh2-rule-book.md::55',
+        text: 'Poison: All attacks targeting the figure gain +1 Attack. Poison is removed when the figure is healed.',
+        source: 'gh2-rule-book.md',
+        chunkIndex: 55,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.38,
+      },
+    ]);
+
+    const result = await searchKnowledge('Gloomhaven 2e Poison condition rules official', {
+      scope: ['rules_passage'],
+      limit: 2,
+      game: 'gh2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        ref: 'rules:gloomhaven-2e/gh2-rule-book.md#chunk=55',
+      }),
+      snippet: expect.stringContaining('Poison:'),
+    });
+  });
+
+  it('does not promote condition definitions for interaction questions', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-faq.html::70',
+        text: 'FAQ edge case about Poison and Ward timing during an attack.',
+        source: 'gh2-faq.html',
+        chunkIndex: 70,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.55,
+      },
+      {
+        id: 'gh2-rule-book.md::55',
+        text: 'Poison: All attacks targeting the figure gain +1 Attack. Poison is removed when the figure is healed.',
+        source: 'gh2-rule-book.md',
+        chunkIndex: 55,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.38,
+      },
+    ]);
+
+    const result = await searchKnowledge('How does Poison interact with Ward?', {
+      scope: ['rules_passage'],
+      limit: 2,
+      game: 'gh2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        ref: 'rules:gloomhaven-2e/gh2-faq.html#chunk=70',
+      }),
+    });
+  });
+
+  it('does not treat condition names as substrings inside unrelated words', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-faq.html::70',
+        text: 'FAQ edge case about campaign reward timing.',
+        source: 'gh2-faq.html',
+        chunkIndex: 70,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.55,
+      },
+      {
+        id: 'gh2-rule-book.md::55',
+        text: 'Ward: The next attack targeting the figure gains disadvantage.',
+        source: 'gh2-rule-book.md',
+        chunkIndex: 55,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.38,
+      },
+    ]);
+
+    const result = await searchKnowledge('How do campaign rewards work?', {
+      scope: ['rules_passage'],
+      limit: 2,
+      game: 'gh2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        ref: 'rules:gloomhaven-2e/gh2-faq.html#chunk=70',
+      }),
+    });
   });
 
   it('returns an empty successful result set for no-result searches', async () => {

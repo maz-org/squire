@@ -80,6 +80,8 @@ Grounding rules:
 - If the available data does not answer the question, say what is missing instead of guessing.
 - For Gloomhaven (2nd Edition) current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.
 - Cite FAQ or errata when you rely on it. Rulebook-only answers are allowed when no current-source clarification applies.
+- For Gloomhaven (2nd Edition) correction, errata, campaign sheet, "current section," or outdated-reference questions, search current FAQ/errata rule passages before opening a section ref. A missing section ref is not enough to answer a correction question.
+- For core rule or condition-definition questions, search rules passages directly. If FAQ/errata hits only discuss edge cases, keep searching for the rulebook definition before answering.
 - Resolve natural user language to refs when exact records are needed, then open or traverse those refs.
 - For scenario/section relationship questions, resolve the named scenario or section first, then open or traverse the canonical ref.
 - For named or numbered card-data records such as item 1, Spyglass, monsters, buildings, events, battle goals, personal quests, and character mats, resolve the record first and then open the exact canonical ref returned by resolve_entity.
@@ -111,6 +113,8 @@ Scope rules:
 
 Guidelines:
 - For Gloomhaven (2nd Edition) current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.
+- For Gloomhaven (2nd Edition) correction, errata, campaign sheet, "current section," or outdated-reference questions, search current FAQ/errata rule passages before opening a section ref. A missing section ref is not enough to answer a correction question.
+- For core rule or condition-definition questions, search rules passages directly. If FAQ/errata hits only discuss edge cases, keep searching for the rulebook definition before answering.
 - Cite FAQ or errata when you rely on it. Rulebook-only answers are allowed when no current-source clarification applies.
 - Use inspect_sources and schema when you need to discover available kinds, filters, refs, or relations
 - Use resolve_entity to turn natural references into opener-ready scenario, section, card type, or card refs
@@ -811,6 +815,15 @@ export function hasUsefulResolutionResult(result: ToolCallResult): boolean {
   }
 }
 
+export function isToolResultOk(result: ToolCallResult): boolean {
+  try {
+    const parsed = JSON.parse(result.content) as { ok?: unknown };
+    return parsed.ok !== false;
+  } catch {
+    return true;
+  }
+}
+
 function sourceLabelsFromResult(value: unknown): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
@@ -1448,16 +1461,17 @@ async function runAgentLoopInternal(
                   { game: activeGame },
                 );
                 const { summary, canonicalRefs } = summarizeToolOutput(result.content);
+                const toolOk = isToolResultOk(result);
                 span.setAttributes({
                   ...createObservationAttributes('tool', {
                     output: {
-                      ok: true,
+                      ok: toolOk,
                       summary,
                       sourceLabels: result.sourceBooks ?? [],
                       canonicalRefs,
                     },
                   }),
-                  'squire.agent.tool.ok': true,
+                  'squire.agent.tool.ok': toolOk,
                   'squire.agent.tool.output_summary': summary,
                   'squire.agent.tool.source_labels': result.sourceBooks ?? [],
                   'squire.agent.tool.canonical_refs': canonicalRefs,
@@ -1491,12 +1505,13 @@ async function runAgentLoopInternal(
           }
           const toolEndedAtMs = Date.now();
           const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content);
+          const toolOk = !isError && isToolResultOk(toolResult);
           toolCalls.push({
             iteration: i + 1,
             id: block.id,
             name: block.name,
             input: block.input as Record<string, unknown>,
-            ok: !isError,
+            ok: toolOk,
             outputSummary: summary,
             sourceLabels: toolResult.sourceBooks ?? [],
             canonicalRefs,
@@ -1519,7 +1534,7 @@ async function runAgentLoopInternal(
           if (emit) {
             await emit('tool_result', {
               name: block.name,
-              ok: !isError,
+              ok: toolOk,
               sourceBooks: toolResult.sourceBooks,
             });
           }
