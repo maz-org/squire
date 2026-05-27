@@ -659,7 +659,10 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
 }
 
 function markdownCell(value: string | number | boolean | null | undefined): string {
-  return formatNullable(value).replace(/\|/g, '\\|');
+  return formatNullable(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '<br>')
+    .replace(/\|/g, '\\|');
 }
 
 export function formatEvalMatrixMarkdown(rows: EvalMatrixRow[]): string {

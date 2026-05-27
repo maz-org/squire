@@ -4,6 +4,7 @@ import type { EvalProviderConfig } from '../eval/cli.ts';
 import {
   DEFAULT_EVAL_MATRIX_MODELS,
   defaultEvalMatrixModels,
+  formatEvalMatrixMarkdown,
   formatEvalMatrixTable,
   runEvalMatrix,
   type EvalMatrixRunner,
@@ -231,6 +232,31 @@ describe('eval matrix runner', () => {
     expect(table.split('\n')[0]).toContain('game\tsuite\tcategory\tsource_authority\tgame_pair');
     expect(table).toContain('frosthaven\ttable-qa\tcard-data\tunknown');
     expect(table).toContain('langsmith_trace');
+  });
+
+  it('escapes Markdown table cell delimiters and existing backslashes', async () => {
+    const runner = successfulRunner();
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-markdown',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+    result.rows[0]!.traceUrl = 'path\\with\\slashes | pipe';
+
+    const markdown = formatEvalMatrixMarkdown(result.rows);
+
+    expect(markdown).toContain('path\\\\with\\\\slashes \\| pipe');
   });
 
   it('shares provider-safe tuning knobs across the default matrix models', () => {
