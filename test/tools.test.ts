@@ -901,6 +901,53 @@ describe('searchKnowledge', () => {
     },
   );
 
+  it('promotes Frosthaven condition definitions from a wider candidate set', async () => {
+    mockSearch.mockImplementationOnce(async (_v: number[], k = 6) => {
+      expect(k).toBeGreaterThanOrEqual(20);
+      return [
+        {
+          id: 'fh-rule-book.pdf::128',
+          text: 'Attack Effects: These are effects that apply to all attack abilities performed by a monster of this type.',
+          source: 'fh-rule-book.pdf',
+          chunkIndex: 128,
+          game: 'frosthaven',
+          score: 0.52,
+        },
+        {
+          id: 'fh-rule-book.pdf::97',
+          text: 'Conditions: A condition ability causes the target of the ability to gain that condition.',
+          source: 'fh-rule-book.pdf',
+          chunkIndex: 97,
+          game: 'frosthaven',
+          score: 0.38,
+        },
+        {
+          id: 'fh-rule-book.pdf::100',
+          text: 'Poison: All attacks targeting the figure gain +1 Attack. Poison is removed when the figure is healed.',
+          source: 'fh-rule-book.pdf',
+          chunkIndex: 100,
+          game: 'frosthaven',
+          score: 0.36,
+        },
+      ];
+    });
+
+    const result = await searchKnowledge('Poison condition', {
+      scope: ['rules_passage'],
+      limit: 2,
+      game: 'frosthaven',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results[0]).toMatchObject({
+      entity: expect.objectContaining({
+        ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=100',
+      }),
+      snippet: expect.stringContaining('Poison:'),
+    });
+  });
+
   it('promotes condition definitions for generated condition-rules searches', async () => {
     mockSearch.mockResolvedValueOnce([
       {

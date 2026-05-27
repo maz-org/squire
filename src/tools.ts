@@ -311,6 +311,7 @@ function normalizeToolOpts(opts?: ToolOpts): NormalizedToolOpts {
 
 const CURRENT_RULE_SOURCE_SCORE_WINDOW = 0.08;
 const CURRENT_RULE_SOURCE_EXTRA_CANDIDATES = 12;
+const CONDITION_DEFINITION_CANDIDATE_LIMIT = 20;
 const CONDITION_NAMES = [
   'bane',
   'bless',
@@ -330,7 +331,11 @@ const CONDITION_NAMES = [
 ] as const;
 type ConditionName = (typeof CONDITION_NAMES)[number];
 
-function currentRuleSourceCandidateLimit(requestedLimit: number, game: GameId): number {
+function currentRuleSourceCandidateLimit(requestedLimit: number, game: GameId, query = ''): number {
+  if (isConditionDefinitionQueryForAnyCondition(query)) {
+    return Math.max(requestedLimit, CONDITION_DEFINITION_CANDIDATE_LIMIT);
+  }
+
   if (game !== GLOOMHAVEN_2E_GAME_ID) return requestedLimit;
   // Pull a small surplus so GH2 FAQ/errata just below the raw vector cutoff can
   // still correct or clarify a printed-source hit with a similar score.
@@ -378,6 +383,7 @@ function isConditionDefinitionQuery(queryText: string, conditions: ConditionName
       new RegExp(`\\bwhat\\s+does\\s+(?:the\\s+)?${escaped}\\s+condition\\s+do\\b`).test(
         queryText,
       ) ||
+      new RegExp(`\\b${escaped}\\s+condition\\b`).test(queryText) ||
       new RegExp(`\\bdefine\\s+(?:the\\s+)?${escaped}\\b`).test(queryText) ||
       new RegExp(`\\b(?:definition|effect|rules?)\\s+(?:for|of)\\s+(?:the\\s+)?${escaped}\\b`).test(
         queryText,
@@ -388,6 +394,12 @@ function isConditionDefinitionQuery(queryText: string, conditions: ConditionName
       new RegExp(`\\b${escaped}\\s+condition\\s+(?:mean|do)\\b`).test(queryText)
     );
   });
+}
+
+function isConditionDefinitionQueryForAnyCondition(query: string): boolean {
+  const queryText = query.toLowerCase();
+  const conditions = CONDITION_NAMES.filter((name) => containsConditionWord(queryText, name));
+  return isConditionDefinitionQuery(queryText, conditions);
 }
 
 function containsConditionWord(text: string, condition: ConditionName): boolean {
@@ -449,10 +461,8 @@ function compareKnowledgeHits(a: KnowledgeSearchHit, b: KnowledgeSearchHit, quer
   if (
     a.entity.kind === 'rules_passage' &&
     b.entity.kind === 'rules_passage' &&
-    isGh2RuleCitation(aCitation) &&
-    isGh2RuleCitation(bCitation) &&
-    aCitation.sourceType &&
-    bCitation.sourceType &&
+    aCitation?.sourceType &&
+    bCitation?.sourceType &&
     query
   ) {
     const aDefinition = isConditionDefinitionText(query, a.snippet, aCitation.sourceType);
@@ -1029,7 +1039,7 @@ async function linksFor(
 export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
   const { game } = normalizeToolOpts(opts);
-  const candidateLimit = currentRuleSourceCandidateLimit(topK, game);
+  const candidateLimit = currentRuleSourceCandidateLimit(topK, game, query);
   const hits: ScoredEntry[] = await search(queryEmbedding, candidateLimit, { game });
 
   return rankRuleHitsForCurrentSources(hits, game, query)
@@ -1546,7 +1556,7 @@ export async function searchKnowledge(
 
   if (scope.includes('rules_passage')) {
     const queryEmbedding = await embed(query);
-    const candidateLimit = currentRuleSourceCandidateLimit(perScope, game);
+    const candidateLimit = currentRuleSourceCandidateLimit(perScope, game, query);
     const rules = await search(queryEmbedding, candidateLimit, { game });
     hits.push(
       ...rankRuleHitsForCurrentSources(rules, game, query)
