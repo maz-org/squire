@@ -712,6 +712,8 @@ function agentCorrelationMetadata(options: AskOptions | undefined): Record<strin
   const metadata: Record<string, string> = {
     squireEnv: resolveSquireEnv(),
   };
+  const threadId = agentThreadIdFor(options);
+  if (threadId) metadata.thread_id = threadId;
   if (options?.requestId) metadata.requestId = options.requestId;
   if (options?.conversationId) metadata.conversationId = options.conversationId;
   if (options?.userMessageId) metadata.userMessageId = options.userMessageId;
@@ -722,6 +724,10 @@ function agentCorrelationMetadata(options: AskOptions | undefined): Record<strin
   if (options?.evalSuite) metadata.evalSuite = options.evalSuite;
   if (options?.evalCaseCategory) metadata.evalCaseCategory = options.evalCaseCategory;
   return metadata;
+}
+
+function agentThreadIdFor(options: AskOptions | undefined): string | undefined {
+  return options?.conversationId ?? options?.userMessageId;
 }
 
 function agentCorrelationAttributes(options: AskOptions | undefined): Attributes {
@@ -1274,6 +1280,7 @@ async function runAgentLoopInternal(
   const maxIterations = config.toolLoopLimit ?? MAX_AGENT_ITERATIONS;
   const broadSearchSynthesisThreshold =
     config.broadSearchSynthesisThreshold ?? MAX_RULE_SEARCHES_BEFORE_SYNTHESIS;
+  const correlationMetadata = agentCorrelationMetadata(options);
 
   const messages: MessageParam[] = [
     ...truncatedHistory.map((m: HistoryMessage) => ({
@@ -1313,6 +1320,7 @@ async function runAgentLoopInternal(
               tool_surface: toolSurface ?? 'legacy',
             },
             metadata: {
+              ...correlationMetadata,
               iteration: i + 1,
               allowTools: !forceSynthesis,
               messageCount: messages.length,
@@ -1338,6 +1346,7 @@ async function runAgentLoopInternal(
             model,
             usageDetails: langsmithUsageMetadata(tokenUsageFromMessage(message)),
             metadata: {
+              ...correlationMetadata,
               stopReason: message.stop_reason ?? 'unknown',
             },
           }),
@@ -1354,6 +1363,7 @@ async function runAgentLoopInternal(
         span.setAttributes(
           createObservationAttributes('generation', {
             output: { error: message },
+            metadata: correlationMetadata,
             level: 'ERROR',
             statusMessage: message,
           }),
@@ -1458,6 +1468,7 @@ async function runAgentLoopInternal(
                       input: compactForTrace(block.input),
                     },
                     metadata: {
+                      ...correlationMetadata,
                       iteration: i + 1,
                       toolId: block.id,
                       toolName: block.name,
@@ -1483,6 +1494,7 @@ async function runAgentLoopInternal(
                       sourceLabels: result.sourceBooks ?? [],
                       canonicalRefs,
                     },
+                    metadata: correlationMetadata,
                   }),
                   'squire.agent.tool.ok': toolOk,
                   'squire.agent.tool.output_summary': summary,
@@ -1495,6 +1507,7 @@ async function runAgentLoopInternal(
                 span.setAttributes(
                   createObservationAttributes('tool', {
                     output: { ok: false, error: message },
+                    metadata: correlationMetadata,
                     level: 'ERROR',
                     statusMessage: message,
                   }),

@@ -311,6 +311,7 @@ describe('runAgentLoop', () => {
     });
     expect(runAttributes).toMatchObject({
       'langsmith.metadata.squireEnv': 'test',
+      'langsmith.metadata.thread_id': '550e8400-e29b-41d4-a716-446655440000',
       'langsmith.metadata.requestId': 'req-sqr-87',
       'langsmith.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
       'langsmith.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
@@ -330,6 +331,11 @@ describe('runAgentLoop', () => {
     const iterationAttributes = spanAttributes('squire.agent.iteration');
     expect(iterationAttributes['langsmith.span.kind']).toBe('llm');
     expect(iterationAttributes['gen_ai.request.model']).toBe('claude-sonnet-4-6');
+    expect(iterationAttributes).toMatchObject({
+      'langsmith.metadata.thread_id': '550e8400-e29b-41d4-a716-446655440000',
+      'langsmith.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
+      'langsmith.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
     expect(parseJsonAttribute(iterationAttributes, 'gen_ai.prompt')).toMatchObject({
       iteration: 1,
       allowTools: true,
@@ -339,6 +345,32 @@ describe('runAgentLoop', () => {
     expect(parseJsonAttribute(iterationAttributes, 'gen_ai.completion')).toMatchObject({
       stopReason: 'end_turn',
       content: [{ type: 'text', text: 'Loot tokens are picked up in your hex.' }],
+    });
+  });
+
+  it('propagates LangSmith thread metadata to legacy tool spans', async () => {
+    mockSearchRules.mockResolvedValueOnce([
+      {
+        text: 'Loot: pick up all loot tokens.',
+        source: 'rulebook.pdf:42',
+        score: 0.9,
+      },
+    ]);
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('search_rules', { query: 'loot action' }))
+      .mockResolvedValueOnce(textResponse('You pick up loot tokens.'));
+
+    await runAgentLoopWithTrajectory('What is the loot action?', {
+      toolSurface: 'legacy',
+      conversationId: '550e8400-e29b-41d4-a716-446655440000',
+      userMessageId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+
+    const toolAttributes = spanAttributes('squire.agent.tool');
+    expect(toolAttributes).toMatchObject({
+      'langsmith.metadata.thread_id': '550e8400-e29b-41d4-a716-446655440000',
+      'langsmith.metadata.conversationId': '550e8400-e29b-41d4-a716-446655440000',
+      'langsmith.metadata.userMessageId': '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
     });
   });
 

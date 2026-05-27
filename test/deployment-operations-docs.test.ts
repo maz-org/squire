@@ -37,6 +37,7 @@ describe('deployment operations documentation', () => {
       'env:production',
       'Troubleshoot one production chat',
       'metadata.conversationId',
+      'metadata.thread_id',
       'metadata.userMessageId',
       'metadata.requestId',
       'X-Request-ID',

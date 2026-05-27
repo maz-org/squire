@@ -20,9 +20,10 @@ Every browser-visible event written after `ask()` starts carries an SSE `id`
 field. The id is the turn-local persisted event sequence (`1`, `2`, `3`, ...),
 scoped to `(conversationId, userMessageId)`. The browser may reconnect with
 `Last-Event-ID`; the server replays only stored events with a larger sequence.
-The `userMessageId` is also the LangGraph `thread_id` for the run, so SSE
-replay and graph execution are keyed to the same turn. The SSE event log is not
-a durable LangGraph node checkpoint.
+The `userMessageId` is also the LangGraph checkpoint `thread_id` for the run, so
+SSE replay and graph execution are keyed to the same turn. LangSmith uses
+`metadata.thread_id = conversationId` to group all turns in the conversation.
+The SSE event log is not a durable LangGraph node checkpoint.
 
 - `text-delta`
   - Appends assistant answer text.
