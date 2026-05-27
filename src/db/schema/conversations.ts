@@ -1,6 +1,8 @@
+import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
   boolean,
+  integer,
   index,
   jsonb,
   pgTable,
@@ -60,5 +62,29 @@ export const messages = pgTable(
   (t) => [
     index('messages_conversation_created_at_idx').on(t.conversationId, t.createdAt),
     uniqueIndex('messages_response_to_message_id_idx').on(t.responseToMessageId),
+  ],
+);
+
+export const messageStreamEvents = pgTable(
+  'message_stream_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    userMessageId: uuid('user_message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    sequence: integer('sequence').notNull(),
+    event: text('event').notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('message_stream_events_user_message_sequence_idx').on(t.userMessageId, t.sequence),
+    uniqueIndex('message_stream_events_user_message_terminal_idx')
+      .on(t.userMessageId)
+      .where(sql`${t.event} in ('done', 'error')`),
+    index('message_stream_events_conversation_message_idx').on(t.conversationId, t.userMessageId),
   ],
 );

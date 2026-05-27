@@ -324,7 +324,23 @@ chat behavior.
    input/output, stop reason, and token usage. Tool observations show tool name,
    compact input, output summary, source labels, canonical refs, and tool
    errors.
-5. If LangSmith has no trace for the turn, check Fly logs around the same time
+5. If the user saw a reconnect, duplicate text, or a stream that ended early,
+   inspect the durable SSE log for that user message. Event `sequence` values
+   are the browser `id` / `Last-Event-ID` values.
+
+   ```sql
+   select sequence, event, payload, created_at
+   from message_stream_events
+   where user_message_id = '<userMessageId>'
+   order by sequence;
+   ```
+
+   A stored `done` or `error` means reconnects should replay and close without
+   another agent run. Partial non-terminal rows with no active generation lock
+   are expected to end in one persisted assistant failure rather than a silent
+   graph restart.
+
+6. If LangSmith has no trace for the turn, check Fly logs around the same time
    and request ID:
 
    ```bash
@@ -332,7 +348,7 @@ chat behavior.
    fly logs -a maz-squire --no-tail | grep '<conversationId>'
    ```
 
-6. If the failure follows a deploy, check the GitHub deploy run before changing
+7. If the failure follows a deploy, check the GitHub deploy run before changing
    app code:
 
    ```bash
