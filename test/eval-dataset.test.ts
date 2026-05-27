@@ -160,6 +160,28 @@ describe('eval dataset', () => {
     expect(evalCase?.trajectory?.requiredRefs).toContain('section:gloomhaven-2e/67.1');
   });
 
+  it('does not require resolution for cross-game cases that explicitly ask to open refs', () => {
+    const scenarioCase = cases.find(
+      (candidate) => candidate.id === 'boundary-scenario-61-fh-then-gh2',
+    );
+    const sectionCase = cases.find(
+      (candidate) => candidate.id === 'boundary-section-67-gh2-then-fh',
+    );
+
+    for (const evalCase of [scenarioCase, sectionCase]) {
+      expect(evalCase?.question).toMatch(/\bOpen\b/);
+      expect(evalCase?.trajectory?.requiredTools).toEqual(['open_entity']);
+      expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['open']);
+    }
+  });
+
+  it('keeps the GH2 advantage expectation aligned with the checked-in rulebook wording', () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'gh2-rule-advantage');
+
+    expect(evalCase?.finalAnswer?.expected).toMatch(/character may use either/i);
+    expect(evalCase?.finalAnswer?.grading).not.toMatch(/Frosthaven-specific character-choice/);
+  });
+
   it('treats read-now chain traversal as a neighbors requirement', () => {
     const evalCase = cases.find((candidate) => candidate.id === 'traj-section-read-now-chain');
 

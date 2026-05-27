@@ -114,6 +114,7 @@ import {
   runAgentLoopWithEvalConfig,
   runAgentLoopWithTrajectory,
   executeToolCall,
+  isToolResultOk,
   AGENT_TOOLS,
   LEGACY_AGENT_TOOLS,
   AGENT_SYSTEM_PROMPT,
@@ -1390,7 +1391,13 @@ describe('executeToolCall', () => {
   it('returns not found for missing card', async () => {
     mockGetCard.mockReturnValue(null);
     const result = await executeToolCall('get_card', { type: 'items', id: 'missing' });
-    expect(result.content).toContain('Card not found');
+    expect(JSON.parse(result.content)).toEqual({
+      ok: false,
+      error: {
+        code: 'not_found',
+        message: 'Card not found: items/missing',
+      },
+    });
   });
 
   it('dispatches find_scenario', async () => {
@@ -1473,7 +1480,31 @@ describe('executeToolCall', () => {
 
   it('returns error for unknown tool', async () => {
     const result = await executeToolCall('unknown_tool', {});
-    expect(result.content).toContain('Unknown tool');
+    expect(JSON.parse(result.content)).toEqual({
+      ok: false,
+      error: {
+        code: 'unknown_tool',
+        message: 'Unknown tool: unknown_tool',
+      },
+    });
+  });
+});
+
+describe('isToolResultOk', () => {
+  it('treats structured not_found tool payloads as unsuccessful evidence', () => {
+    expect(
+      isToolResultOk({
+        content: JSON.stringify({
+          ok: false,
+          error: { code: 'not_found', message: 'Section not found' },
+        }),
+      }),
+    ).toBe(false);
+  });
+
+  it('treats successful structured payloads and plain text as usable tool results', () => {
+    expect(isToolResultOk({ content: JSON.stringify({ ok: true, results: [] }) })).toBe(true);
+    expect(isToolResultOk({ content: 'plain legacy tool output' })).toBe(true);
   });
 });
 
@@ -1576,6 +1607,34 @@ describe('runAgentLoop with emit (streaming)', () => {
       sourceBooks: ['Rulebook'],
     });
     expect(emit).toHaveBeenCalledWith('done', {});
+  });
+
+  it('emits and records structured ok:false tool payloads as unsuccessful', async () => {
+    mockGetCard.mockReturnValueOnce(null);
+    const toolMsg = toolUseResponse('get_card', {
+      type: 'items',
+      id: 'missing',
+    });
+    const finalMsg = textResponse('I could not find that card.');
+    mockMessagesStream
+      .mockReturnValueOnce(mockStream(toolMsg))
+      .mockReturnValueOnce(mockStream(finalMsg, ['I could not find that card.']));
+    const emit = vi.fn().mockResolvedValue(undefined);
+
+    const result = await runAgentLoopWithTrajectory('test', { emit, toolSurface: 'legacy' });
+
+    expect(result.trajectory.toolCalls[0]).toMatchObject({
+      name: 'get_card',
+      ok: false,
+      outputSummary: 'json object (ok, error)',
+    });
+    expect(emit).toHaveBeenCalledWith(
+      'tool_result',
+      expect.objectContaining({
+        name: 'get_card',
+        ok: false,
+      }),
+    );
   });
 
   it('does not treat streamed scratch text before tool use as the final answer', async () => {

@@ -30,8 +30,8 @@
       "grading": "Must identify both game-qualified scenario records and state that they are not the same scenario. Answers that silently reuse one game's scenario 61 for the other game should fail."
     },
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["open_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["scenario:frosthaven/061", "scenario:gloomhaven-2e/061"],
       "maxToolCalls": 8,
@@ -52,8 +52,8 @@
       "grading": "Must distinguish the two game-qualified section refs and reject cross-game evidence reuse. Answers that cite only one game or blend both sections should fail."
     },
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["open_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:gloomhaven-2e/67.1", "section:frosthaven/67.1"],
       "maxToolCalls": 8,

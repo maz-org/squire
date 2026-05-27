@@ -74,8 +74,8 @@
     "category": "rulebook",
     "question": "How does advantage work with attack modifier cards in Gloomhaven (2nd Edition)?",
     "finalAnswer": {
-      "expected": "With advantage, the attacker draws two modifier cards and uses the better one, with rolling and ambiguous cases resolved by the Gloomhaven 2e attack modifier rules.",
-      "grading": "Must mention drawing two modifiers and using the better result. Should not import the Frosthaven-specific character-choice wording."
+      "expected": "With advantage, the attacker draws two modifier cards and uses one of them. A monster uses the better one, while a character may use either one. Rolling and ambiguous cases are resolved by the Gloomhaven 2e attack modifier rules.",
+      "grading": "Must mention drawing two modifiers. Must mention that monsters use the better one and characters may use either one. Should include the rolling modifier rule or ambiguity handling."
     },
     "source": "gh2-rule-book.md",
     "game": "gloomhaven-2e",

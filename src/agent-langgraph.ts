@@ -21,6 +21,7 @@ import {
   executeToolCall,
   hasUsefulNeighborsResult,
   hasUsefulResolutionResult,
+  isToolResultOk,
   isBroadRuleSearchTool,
   isNonRuleSearchTool,
   summarizeToolOutput,
@@ -546,12 +547,13 @@ async function runLangGraphAgentLoop(
 
         const toolEndedAtMs = Date.now();
         const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content);
+        const toolOk = !isError && isToolResultOk(toolResult);
         nextToolCalls.push({
           iteration: state.iterations,
           id: block.id,
           name: block.name,
           input,
-          ok: !isError,
+          ok: toolOk,
           outputSummary: summary,
           sourceLabels: toolResult.sourceBooks ?? [],
           canonicalRefs,
@@ -571,7 +573,7 @@ async function runLangGraphAgentLoop(
         if (emit) {
           await emit('tool_result', {
             name: block.name,
-            ok: !isError,
+            ok: toolOk,
             sourceBooks: toolResult.sourceBooks,
           });
           const artifact = sectionArtifactFromToolResult(block.name, toolResult);
