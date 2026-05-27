@@ -148,6 +148,8 @@ function commonMetadata(trace: EvalTraceInput): Record<string, unknown> {
     game: trace.game,
     suite: trace.suite,
     caseCategory: trace.caseCategory,
+    sourceAuthority: trace.sourceAuthority,
+    gamePair: trace.gamePair,
     agentRuntime: trace.agentRuntime,
     provider: trace.provider,
     model: trace.model,
@@ -177,6 +179,14 @@ function objectPayload(value: unknown): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   return { value };
+}
+
+function graphNodeForToolRun(toolName: string): string {
+  if (toolName === 'inspect_sources' || toolName === 'schema') return 'classification';
+  if (toolName === 'resolve_entity') return 'retrieval_planning';
+  if (toolName === 'neighbors') return 'routing';
+  if (toolName === 'open_entity' || toolName.startsWith('get_')) return 'source_verification';
+  return 'tool_execution';
 }
 
 function scoreFeedback(rootRunId: string, trace: EvalTraceInput): LangSmithFeedbackCreate[] {
@@ -223,6 +233,8 @@ export function buildLangSmithRuns(
     `suite:${trace.suite}`,
     `runtime:${trace.agentRuntime}`,
     `category:${trace.caseCategory}`,
+    `authority:${trace.sourceAuthority ?? 'unknown'}`,
+    ...(trace.gamePair ? [`game_pair:${trace.gamePair}`] : []),
     `failure:${failureClass(trace)}`,
     `pass:${passValue(trace) === true ? 'true' : passValue(trace) === false ? 'false' : 'unknown'}`,
   ];
@@ -320,6 +332,7 @@ export function buildLangSmithRuns(
           callIndex: toolCall.callIndex,
           ok: toolCall.ok,
           durationMs: toolCall.durationMs,
+          graphNode: graphNodeForToolRun(toolCall.toolName),
           sourceLabels: toolCall.sourceLabels ?? [],
           canonicalRefs: toolCall.canonicalRefs ?? [],
           errors: toolCall.errors ?? [],

@@ -8,7 +8,7 @@ import {
 } from '../src/agent.ts';
 import type { ToolTrajectoryStep, TokenUsage } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
-import { langSmithDatasetNameForCase } from './dataset.ts';
+import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import {
   OPENAI_TOOL_SCHEMA_VERSION,
   executeOpenAiToolCall,
@@ -539,6 +539,8 @@ export async function runOpenAiResponsesEvalCase(
       game: options.evalCase.game,
       suite: options.evalCase.suite,
       caseCategory: options.evalCase.caseCategory,
+      sourceAuthority: sourceAuthorityForCase(options.evalCase),
+      gamePair: gamePairForCase(options.evalCase),
       agentRuntime: 'claude-sdk',
       provider: 'openai',
       model: options.providerConfig.model,

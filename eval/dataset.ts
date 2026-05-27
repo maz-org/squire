@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client as LangSmithClient } from 'langsmith';
-import { requireGameId, type GameId } from '../src/game.ts';
+import { normalizeGameId, requireGameId, type GameId } from '../src/game.ts';
 import { EvalDatasetSchema, EvalSuiteSchema, type EvalCase } from './schema.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,6 +24,33 @@ export interface EvalBaselineCounts {
   finalAnswerCases: number;
   trajectoryCases: number;
   boundaryCases: number;
+}
+
+export function sourceAuthorityForCase(evalCase: EvalCase): string {
+  if (/faq/i.test(evalCase.source)) return 'faq';
+  if (/errata/i.test(evalCase.source)) return 'errata';
+  if (/rule-?book|rules/i.test(evalCase.source)) return 'rulebook';
+  if (/scenario-section-books|section-book|scenario-book/i.test(evalCase.source)) {
+    return 'scenario-section-books';
+  }
+  if (evalCase.source.startsWith('data/extracted/')) return 'structured-data';
+  if (evalCase.source.startsWith('docs/')) return 'contract';
+  if (evalCase.source.startsWith('src/')) return 'application';
+  return 'unknown';
+}
+
+export function gamePairForCase(evalCase: EvalCase): string | undefined {
+  if (evalCase.suite !== 'cross-game-boundary') return undefined;
+
+  const games = new Set<GameId>([evalCase.game]);
+  for (const ref of evalCase.trajectory?.requiredRefs ?? []) {
+    const match = ref.match(/^[^:]+:([^/]+)\//);
+    const game = match ? normalizeGameId(match[1]) : undefined;
+    if (game) games.add(game);
+  }
+
+  const orderedGames = (['frosthaven', 'gloomhaven-2e'] as const).filter((game) => games.has(game));
+  return orderedGames.length > 1 ? orderedGames.join(':') : undefined;
 }
 
 export function loadEvalCases(): EvalCase[] {
@@ -115,6 +142,8 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
           category: c.category,
           caseCategory: c.caseCategory,
           source: c.source,
+          sourceAuthority: sourceAuthorityForCase(c),
+          gamePair: gamePairForCase(c),
           hasFinalAnswer: !!c.finalAnswer,
           hasTrajectory: !!c.trajectory,
         },

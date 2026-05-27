@@ -9,7 +9,7 @@ import {
 } from '../src/agent.ts';
 import { runLangGraphAgentLoopWithEvalConfig } from '../src/agent-langgraph.ts';
 import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
-import { langSmithDatasetNameForCase } from './dataset.ts';
+import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import type { EvalCase } from './schema.ts';
 import {
@@ -70,7 +70,12 @@ export function classifyAnthropicEvalFailure(error: unknown): AnthropicEvalFailu
 
 export function classifyAnthropicEvalStatus(input: StatusClassificationInput): string {
   if (input.toolCalls.some((call) => !call.ok)) return 'tool';
-  if (input.judgeScores.some((score) => score.name === 'pass' && score.value === 'fail')) {
+  if (
+    input.judgeScores.some(
+      (score) =>
+        (score.name === 'pass' || score.name === 'trajectory_pass') && score.value === 'fail',
+    )
+  ) {
     return 'quality';
   }
   return 'completed';
@@ -196,6 +201,8 @@ async function writeSuccessTrace(
     game: options.case.game,
     suite: options.case.suite,
     caseCategory: options.case.caseCategory,
+    sourceAuthority: sourceAuthorityForCase(options.case),
+    gamePair: gamePairForCase(options.case),
     agentRuntime: options.agentRuntime ?? 'claude-sdk',
     provider: 'anthropic',
     model: options.providerConfig.model,
@@ -275,6 +282,8 @@ async function writeFailureTrace(
     game: options.case.game,
     suite: options.case.suite,
     caseCategory: options.case.caseCategory,
+    sourceAuthority: sourceAuthorityForCase(options.case),
+    gamePair: gamePairForCase(options.case),
     agentRuntime: options.agentRuntime ?? 'claude-sdk',
     provider: 'anthropic',
     model: options.providerConfig.model,
@@ -340,6 +349,11 @@ export async function runAnthropicEvalCase(
       timeoutMs: options.providerConfig.timeoutMs,
       toolLoopLimit: options.providerConfig.toolLoopLimit,
       broadSearchSynthesisThreshold: options.providerConfig.broadSearchSynthesisThreshold,
+      game: options.case.game,
+      requestId: traceId,
+      evalCaseId: options.case.id,
+      evalSuite: options.case.suite,
+      evalCaseCategory: options.case.caseCategory,
     });
     const endedAtDate = now();
     const endedAt = endedAtDate.toISOString();

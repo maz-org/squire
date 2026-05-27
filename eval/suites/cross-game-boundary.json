@@ -20,5 +20,49 @@
     "suite": "cross-game-boundary",
     "runtime": "langgraph",
     "caseCategory": "trajectory"
+  },
+  {
+    "id": "boundary-scenario-61-fh-then-gh2",
+    "category": "trajectory",
+    "question": "Open Frosthaven scenario 61, then open Gloomhaven 2e scenario 61. Are they the same scenario?",
+    "finalAnswer": {
+      "expected": "No. Frosthaven scenario 61 is Life and Death, while Gloomhaven 2e scenario 61 is Dangerous Grove. They must be treated as different game-qualified scenarios.",
+      "grading": "Must identify both game-qualified scenario records and state that they are not the same scenario. Answers that silently reuse one game's scenario 61 for the other game should fail."
+    },
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["scenario:frosthaven/061", "scenario:gloomhaven-2e/061"],
+      "maxToolCalls": 8,
+      "notes": "This covers same-number scenario contamination in Frosthaven-then-Gloomhaven 2e order."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
+    "game": "gloomhaven-2e",
+    "suite": "cross-game-boundary",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
+  },
+  {
+    "id": "boundary-section-67-gh2-then-fh",
+    "category": "trajectory",
+    "question": "Open Gloomhaven 2e section 67.1, then open Frosthaven section 67.1. Explain whether either section can be used as evidence for the other game.",
+    "finalAnswer": {
+      "expected": "No. Gloomhaven 2e section 67.1 and Frosthaven section 67.1 are separate game-qualified sections, so neither section can be used as evidence for the other game.",
+      "grading": "Must distinguish the two game-qualified section refs and reject cross-game evidence reuse. Answers that cite only one game or blend both sections should fail."
+    },
+    "trajectory": {
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
+      "forbiddenTools": ["search_rules"],
+      "requiredRefs": ["section:gloomhaven-2e/67.1", "section:frosthaven/67.1"],
+      "maxToolCalls": 8,
+      "notes": "This covers same-number section contamination in Gloomhaven 2e-then-Frosthaven order."
+    },
+    "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
+    "game": "frosthaven",
+    "suite": "cross-game-boundary",
+    "runtime": "langgraph",
+    "caseCategory": "trajectory"
   }
 ]

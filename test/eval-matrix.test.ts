@@ -228,8 +228,8 @@ describe('eval matrix runner', () => {
     });
 
     const table = formatEvalMatrixTable(result.rows);
-    expect(table.split('\n')[0]).toContain('game\tsuite\tcategory');
-    expect(table).toContain('frosthaven\ttable-qa\tcard-data');
+    expect(table.split('\n')[0]).toContain('game\tsuite\tcategory\tsource_authority\tgame_pair');
+    expect(table).toContain('frosthaven\ttable-qa\tcard-data\tunknown');
     expect(table).toContain('langsmith_trace');
   });
 
@@ -707,7 +707,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tgame\tsuite\tcategory\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+      'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');

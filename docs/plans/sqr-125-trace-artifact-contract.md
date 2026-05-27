@@ -49,6 +49,8 @@ LangSmith filtering and grouped reporting work without parsing nested blobs.
 | `game`              | `frosthaven`                    | Canonical game id.                                   |
 | `suite`             | `table-qa`                      | Eval suite used for grouping.                        |
 | `caseCategory`      | `card-data`                     | Eval category from `eval/suites/*.json`.             |
+| `sourceAuthority`   | `structured-data`               | Source authority bucket for filtering failures.      |
+| `gamePair`          | `frosthaven:gloomhaven-2e`      | Boundary suite game pair when applicable.            |
 | `promptVersion`     | `redesigned-agent-v1`           | Stable prompt contract name or semantic version.     |
 | `promptHash`        | `sha256:...`                    | Hash of system prompt plus prompt wrapper.           |
 | `toolSurface`       | `redesigned`                    | Existing Squire tool surface name.                   |

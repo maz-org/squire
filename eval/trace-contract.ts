@@ -132,6 +132,22 @@ const TRACE_FIELD_DEFINITIONS = [
     description: 'Eval case category for grouped reports.',
   },
   {
+    name: 'sourceAuthority',
+    required: false,
+    langsmithTarget: 'trace.metadata',
+    debugCategory: 'filter',
+    includeInAppConversationHistory: false,
+    description: 'Source authority bucket, such as rulebook, faq, errata, or structured-data.',
+  },
+  {
+    name: 'gamePair',
+    required: false,
+    langsmithTarget: 'trace.metadata',
+    debugCategory: 'filter',
+    includeInAppConversationHistory: false,
+    description: 'Boundary suite game pair, such as frosthaven:gloomhaven-2e.',
+  },
+  {
     name: 'promptVersion',
     required: true,
     langsmithTarget: 'trace.metadata',

@@ -341,6 +341,11 @@ changed. The command clears and recreates examples in each touched dataset so
 LangSmith metadata stays aligned with the local fixtures. Regular contributors
 don't need to run this.
 
+The current parity baseline is 17 Frosthaven final-answer cases and 11
+Frosthaven trajectory cases, mirrored by 17 Gloomhaven 2e final-answer cases
+and 11 Gloomhaven 2e trajectory cases. Cross-game boundary cases are counted
+separately from per-game parity.
+
 **Run all eval cases:**
 
 ```bash
@@ -357,6 +362,7 @@ Run this before and after changing retrieval or answer behavior.
 npm run eval -- --category=rulebook
 npm run eval -- --game=frosthaven --suite=trajectory
 npm run eval -- --game=gloomhaven-2e --suite=table-qa
+npm run eval -- --suite=cross-game-boundary
 ```
 
 Only runs questions in that category (`rulebook`, `monster-stats`, `items`,
@@ -388,8 +394,11 @@ node -e 'const r=require("/tmp/debug-poison.json"); console.log(r.rows.map(row =
 
 Without LangSmith credentials, selected local report paths still work for code
 paths that do not need to create remote trace links. With LangSmith enabled, the
-report includes `game`, `suite`, `category`, `runtime_model`, `trace`, and
-`langsmith_trace` for each row.
+report includes `game`, `suite`, `category`, `source_authority`, `game_pair`,
+`runtime_model`, `failure_class`, `trace`, and `langsmith_trace` for each row.
+When `--local-report=/path/report.json` is used in matrix mode, sibling
+`/path/report.tsv` and `/path/report.md` files are written with the same
+filtering columns for quick triage.
 
 Trace replay is not part of the LangSmith eval path yet. Until it is
 implemented, debug a failure from the local matrix row plus the linked LangSmith

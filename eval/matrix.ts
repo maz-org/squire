@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, extname } from 'node:path';
 import type {
   EvalMatrixGuardrails,
   EvalAgentRuntime,
@@ -16,6 +16,7 @@ import {
   type EvalModelSettings,
 } from './run-metadata.ts';
 import { langSmithRunUrl } from './langsmith-trace.ts';
+import { gamePairForCase, sourceAuthorityForCase } from './dataset.ts';
 import type { EvalCase } from './schema.ts';
 
 export type EvalMatrixSelection = 'id' | 'category' | 'suite' | 'all';
@@ -63,6 +64,8 @@ export interface EvalMatrixRow {
   game: string;
   suite: string;
   category: string;
+  sourceAuthority?: string;
+  gamePair?: string;
   agentRuntime: EvalAgentRuntime;
   provider: EvalProvider;
   model: EvalProviderConfig['model'];
@@ -423,6 +426,8 @@ function rowFromOutput(
     game: input.evalCase.game,
     suite: input.evalCase.suite,
     category: input.evalCase.caseCategory,
+    sourceAuthority: sourceAuthorityForCase(input.evalCase),
+    gamePair: gamePairForCase(input.evalCase),
     provider: input.providerConfig.provider,
     model: input.providerConfig.model,
     agentRuntime: input.agentRuntime,
@@ -468,6 +473,8 @@ function rowFromError(
     game: input.evalCase.game,
     suite: input.evalCase.suite,
     category: input.evalCase.caseCategory,
+    sourceAuthority: sourceAuthorityForCase(input.evalCase),
+    gamePair: gamePairForCase(input.evalCase),
     provider: input.providerConfig.provider,
     model: input.providerConfig.model,
     agentRuntime: input.agentRuntime,
@@ -619,7 +626,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tgame\tsuite\tcategory\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -628,6 +635,8 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.game,
         row.suite,
         row.category,
+        row.sourceAuthority ?? '',
+        row.gamePair ?? '',
         `${row.agentRuntime}:${row.provider}:${row.model}`,
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,
@@ -641,12 +650,62 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.retryCount,
         formatNullable(row.loopIterations),
         row.traceUrl,
-        row.langsmithTraceUrl ?? '',
-        row.error ?? '',
+        formatNullable(row.langsmithTraceUrl),
+        formatNullable(row.error),
       ].join('\t'),
     );
   }
   return lines.join('\n');
+}
+
+function markdownCell(value: string | number | boolean | null | undefined): string {
+  return formatNullable(value).replace(/\|/g, '\\|');
+}
+
+export function formatEvalMatrixMarkdown(rows: EvalMatrixRow[]): string {
+  const headers = [
+    'case',
+    'game',
+    'suite',
+    'category',
+    'source authority',
+    'game pair',
+    'runtime model',
+    'pass',
+    'failure class',
+    'score',
+    'trace',
+    'LangSmith trace',
+  ];
+  const lines = [`| ${headers.join(' | ')} |`, `| ${headers.map(() => '---').join(' | ')} |`];
+  for (const row of rows) {
+    lines.push(
+      `| ${[
+        row.caseId,
+        row.game,
+        row.suite,
+        row.category,
+        row.sourceAuthority,
+        row.gamePair,
+        `${row.agentRuntime}:${row.provider}:${row.model}`,
+        row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
+        row.failureClass,
+        row.score,
+        row.traceUrl,
+        row.langsmithTraceUrl ?? '',
+      ]
+        .map(markdownCell)
+        .join(' | ')} |`,
+    );
+  }
+  return lines.join('\n');
+}
+
+function siblingReportPath(outputPath: string, extension: '.tsv' | '.md'): string {
+  const currentExtension = extname(outputPath);
+  return currentExtension
+    ? `${outputPath.slice(0, -currentExtension.length)}${extension}`
+    : `${outputPath}${extension}`;
 }
 
 export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatrixResult): void {
@@ -661,5 +720,10 @@ export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatri
       null,
       2,
     )}\n`,
+  );
+  writeFileSync(siblingReportPath(outputPath, '.tsv'), `${formatEvalMatrixTable(result.rows)}\n`);
+  writeFileSync(
+    siblingReportPath(outputPath, '.md'),
+    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${formatEvalMatrixMarkdown(result.rows)}\n`,
   );
 }

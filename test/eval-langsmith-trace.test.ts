@@ -22,6 +22,7 @@ const baseTrace: EvalTraceInput = {
   game: 'frosthaven',
   suite: 'table-qa',
   caseCategory: 'buildings',
+  sourceAuthority: 'structured-data',
   agentRuntime: 'langgraph',
   provider: 'openai',
   model: 'gpt-5.5',
@@ -153,6 +154,7 @@ describe('LangSmith eval trace writer', () => {
           runLabel: 'sqr-162-test-run',
           game: 'frosthaven',
           suite: 'table-qa',
+          sourceAuthority: 'structured-data',
           agentRuntime: 'langgraph',
           failureClass: 'none',
           pass: true,
@@ -165,6 +167,7 @@ describe('LangSmith eval trace writer', () => {
         'suite:table-qa',
         'runtime:langgraph',
         'category:buildings',
+        'authority:structured-data',
         'env:test',
         'failure:none',
         'pass:true',
@@ -192,6 +195,11 @@ describe('LangSmith eval trace writer', () => {
       parent_run_id: payload.modelRunId,
       inputs: { query: 'Alchemist', sessionId: '[REDACTED]' },
       outputs: { items: [{ name: 'Alchemist', userEmail: '[REDACTED]' }] },
+      extra: {
+        metadata: expect.objectContaining({
+          graphNode: 'tool_execution',
+        }),
+      },
     });
     expect(payload.feedback).toEqual([
       expect.objectContaining({

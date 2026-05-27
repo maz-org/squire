@@ -156,6 +156,11 @@ describe('SQR-128 Anthropic eval runner', () => {
       maxOutputTokens: 2048,
       timeoutMs: 30000,
       toolLoopLimit: 6,
+      game: 'frosthaven',
+      requestId: 'eval:matrix-smoke:claude-sdk:anthropic:claude-sonnet-4-6:building-alchemist',
+      evalCaseId: 'building-alchemist',
+      evalSuite: 'table-qa',
+      evalCaseCategory: 'buildings',
     });
     expect(mockRunLangGraphAgentLoopWithEvalConfig).toHaveBeenNthCalledWith(2, baseCase.question, {
       toolSurface: 'redesigned',
@@ -163,6 +168,11 @@ describe('SQR-128 Anthropic eval runner', () => {
       maxOutputTokens: 2048,
       timeoutMs: 30000,
       toolLoopLimit: 6,
+      game: 'frosthaven',
+      requestId: 'eval:matrix-smoke:claude-sdk:anthropic:claude-opus-4-7:building-alchemist',
+      evalCaseId: 'building-alchemist',
+      evalSuite: 'table-qa',
+      evalCaseCategory: 'buildings',
     });
   });
 
@@ -268,6 +278,11 @@ describe('SQR-128 Anthropic eval runner', () => {
       timeoutMs: 30000,
       toolLoopLimit: 6,
       broadSearchSynthesisThreshold: 2,
+      game: 'frosthaven',
+      requestId: 'trace-langgraph',
+      evalCaseId: 'building-alchemist',
+      evalSuite: 'table-qa',
+      evalCaseCategory: 'buildings',
     });
     expect(mockWriteEvalTrace).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -358,6 +373,12 @@ describe('SQR-128 Anthropic eval runner', () => {
       classifyAnthropicEvalStatus({
         toolCalls: [],
         judgeScores: [{ name: 'pass', value: 'fail' }],
+      }),
+    ).toBe('quality');
+    expect(
+      classifyAnthropicEvalStatus({
+        toolCalls: [],
+        judgeScores: [{ name: 'trajectory_pass', value: 'fail' }],
       }),
     ).toBe('quality');
   });

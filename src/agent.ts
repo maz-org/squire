@@ -489,6 +489,11 @@ export interface EvalAgentLoopOptions {
   timeoutMs?: number;
   toolLoopLimit?: number;
   broadSearchSynthesisThreshold?: number;
+  game?: string;
+  requestId?: string;
+  evalCaseId?: string;
+  evalSuite?: string;
+  evalCaseCategory?: string;
 }
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;

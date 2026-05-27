@@ -5,9 +5,11 @@ import { join } from 'node:path';
 import {
   baselineCountsFor,
   filterEvalCases,
+  gamePairForCase,
   langSmithDatasetNameForCase,
   loadEvalCases,
   seedDataset,
+  sourceAuthorityForCase,
 } from '../eval/dataset.ts';
 import {
   EvalDatasetSchema,
@@ -60,9 +62,9 @@ describe('eval dataset', () => {
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(29);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(18);
-    expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(10);
+    expect(cases).toHaveLength(59);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(37);
+    expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
   });
 
   it('requires explicit eval metadata on cases', () => {
@@ -109,7 +111,13 @@ describe('eval dataset', () => {
       game: 'frosthaven',
       finalAnswerCases: 17,
       trajectoryCases: 11,
-      boundaryCases: 0,
+      boundaryCases: 1,
+    });
+    expect(baselineCountsFor(cases, 'gloomhaven-2e')).toEqual({
+      game: 'gloomhaven-2e',
+      finalAnswerCases: 17,
+      trajectoryCases: 11,
+      boundaryCases: 2,
     });
   });
 
@@ -131,6 +139,18 @@ describe('eval dataset', () => {
           suite: 'trajectory',
         }),
     ).toBe('squire/gloomhaven-2e/trajectory');
+  });
+
+  it('derives source authority and game-pair metadata for reports and LangSmith examples', () => {
+    const faqCase = cases.find((candidate) => candidate.id === 'gh2-faq-red-hex-aoe-targets');
+    const structuredCase = cases.find((candidate) => candidate.id === 'gh2-item-weathered-boots');
+    const boundaryCase = cases.find(
+      (candidate) => candidate.id === 'boundary-scenario-61-fh-then-gh2',
+    );
+
+    expect(faqCase && sourceAuthorityForCase(faqCase)).toBe('faq');
+    expect(structuredCase && sourceAuthorityForCase(structuredCase)).toBe('structured-data');
+    expect(boundaryCase && gamePairForCase(boundaryCase)).toBe('frosthaven:gloomhaven-2e');
   });
 
   it('makes the cross-game ref case assert both game-qualified refs', () => {
@@ -299,6 +319,7 @@ describe('eval dataset', () => {
         suite: 'table-qa',
         runtime: 'langgraph',
         caseCategory: evalCase!.caseCategory,
+        sourceAuthority: 'rulebook',
       }),
     });
   });

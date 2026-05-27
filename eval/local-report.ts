@@ -4,7 +4,7 @@ import { dirname } from 'node:path';
 import { AGENT_SYSTEM_PROMPT, LEGACY_AGENT_SYSTEM_PROMPT, type TokenUsage } from '../src/agent.ts';
 import { askFrosthavenWithTrajectory } from '../src/query.ts';
 import type { EvalToolSurface } from './cli.ts';
-import { langSmithDatasetNameForCase } from './dataset.ts';
+import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import { judgeAnswer } from './evaluators.ts';
 import { scoreTrajectory, type EvalCase } from './schema.ts';
 
@@ -70,6 +70,8 @@ export async function runLocalReport(
         suite: c.suite,
         runtime: c.runtime,
         category: c.caseCategory,
+        sourceAuthority: sourceAuthorityForCase(c),
+        gamePair: gamePairForCase(c),
         source: c.source,
         hasFinalAnswerExpectation: Boolean(c.finalAnswer),
         hasTrajectoryExpectation: Boolean(c.trajectory),
@@ -100,6 +102,8 @@ export async function runLocalReport(
         suite: c.suite,
         runtime: c.runtime,
         category: c.caseCategory,
+        sourceAuthority: sourceAuthorityForCase(c),
+        gamePair: gamePairForCase(c),
         source: c.source,
         hasFinalAnswerExpectation: Boolean(c.finalAnswer),
         hasTrajectoryExpectation: Boolean(c.trajectory),

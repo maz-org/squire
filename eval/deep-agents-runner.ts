@@ -17,7 +17,7 @@ import {
   type ToolTrajectoryStep,
 } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
-import { langSmithDatasetNameForCase } from './dataset.ts';
+import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import type { EvalCase } from './schema.ts';
 import {
@@ -318,8 +318,14 @@ function mergeMetricScores(metricScores: EvalTraceScore[], scores: EvalTraceScor
 
 function classifyStatus(result: AgentRunResult, judgeScores: EvalTraceScore[]): string {
   if (result.trajectory.toolCalls.some((call) => !call.ok)) return 'tool';
-  if (judgeScores.some((score) => score.name === 'pass' && score.value === 'fail'))
+  if (
+    judgeScores.some(
+      (score) =>
+        (score.name === 'pass' || score.name === 'trajectory_pass') && score.value === 'fail',
+    )
+  ) {
     return 'quality';
+  }
   return 'completed';
 }
 
@@ -386,6 +392,8 @@ async function writeFailureTrace(
     game: options.case.game,
     suite: options.case.suite,
     caseCategory: options.case.caseCategory,
+    sourceAuthority: sourceAuthorityForCase(options.case),
+    gamePair: gamePairForCase(options.case),
     agentRuntime: AGENT_RUNTIME,
     provider: 'anthropic',
     model: options.providerConfig.model,
@@ -514,6 +522,8 @@ export async function runDeepAgentsEvalCase(
       game: options.case.game,
       suite: options.case.suite,
       caseCategory: options.case.caseCategory,
+      sourceAuthority: sourceAuthorityForCase(options.case),
+      gamePair: gamePairForCase(options.case),
       agentRuntime: AGENT_RUNTIME,
       provider: 'anthropic',
       model: options.providerConfig.model,
