@@ -121,6 +121,27 @@ describe('LangSmith native eval runner', () => {
         evaluationConcurrency: 2,
       }),
     );
+    const evaluator = mockEvaluate.mock.calls[0][1].evaluators[0];
+    expect(
+      evaluator({
+        outputs: {
+          caseId: 'rule-poison',
+          pass: false,
+          score: 0,
+          failureClass: 'answer_quality',
+          latencyMs: 250,
+          estimatedCostUsd: 0.01,
+          retryCount: 0,
+          toolCallCount: 1,
+          loopIterations: 2,
+        },
+      }),
+    ).toEqual({
+      results: expect.arrayContaining([
+        { key: 'failure_class', value: 'answer_quality' },
+        { key: 'correctness', score: 0 },
+      ]),
+    });
     expect(runner).toHaveBeenCalledWith(
       expect.objectContaining({
         evalCase: expect.objectContaining({ id: 'rule-poison' }),

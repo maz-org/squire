@@ -468,6 +468,59 @@ describe('openEntity', () => {
     ]);
   });
 
+  it('includes adjacent rule passages when opening a rule chunk', async () => {
+    mockGetEntryBySourceChunk
+      .mockResolvedValueOnce({
+        id: 'rulebook-1',
+        text: 'Continuation: treasure tiles use the Treasure Index.',
+        source: 'fh-rule-book.pdf',
+        chunkIndex: 1,
+        game: 'frosthaven',
+        score: 0.71,
+      })
+      .mockResolvedValueOnce({
+        id: 'rulebook-0',
+        text: 'Loot X lets a figure loot all loot tokens and treasure tiles within range X.',
+        source: 'fh-rule-book.pdf',
+        chunkIndex: 0,
+        game: 'frosthaven',
+        score: 0.7,
+      })
+      .mockResolvedValueOnce({
+        id: 'rulebook-2',
+        text: 'Recover lets a character recover discarded or lost ability cards.',
+        source: 'fh-rule-book.pdf',
+        chunkIndex: 2,
+        game: 'frosthaven',
+        score: 0.69,
+      });
+
+    const result = await openEntity('rules:frosthaven/fh-rule-book.pdf#chunk=1');
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.entity.data.adjacentPassages).toEqual([
+      expect.objectContaining({
+        ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=0',
+        text: expect.stringContaining('Loot X'),
+      }),
+      expect.objectContaining({
+        ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=2',
+        text: expect.stringContaining('Recover'),
+      }),
+    ]);
+    expect(result.related).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          relation: 'adjacent_passage',
+          target: expect.objectContaining({
+            ref: 'rules:frosthaven/fh-rule-book.pdf#chunk=0',
+          }),
+        }),
+      ]),
+    );
+  });
+
   it('returns structured not_found and invalid_ref failures', async () => {
     await expect(openEntity('section:frosthaven/9999.9')).resolves.toMatchObject({
       ok: false,

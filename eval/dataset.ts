@@ -222,7 +222,12 @@ export async function loadLangSmithEvalCases(
         `LangSmith dataset "${datasetName}" is missing eval case "${localCase.id}". Run \`npm run eval -- --seed\` before running evals.`,
       );
     }
-    return remoteCase;
+    return {
+      ...localCase,
+      langsmithExampleId: remoteCase.langsmithExampleId,
+      langsmithDatasetId: remoteCase.langsmithDatasetId,
+      langsmithDatasetName: remoteCase.langsmithDatasetName,
+    };
   });
 
   return { cases, datasets, examplesByDatasetName };
@@ -299,14 +304,18 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
 export async function createLangSmithDatasetClient(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<LangSmithClient> {
-  if (!env.LANGSMITH_API_KEY?.trim()) {
+  const apiKey = env.LANGSMITH_API_KEY?.trim();
+  const apiUrl = env.LANGSMITH_ENDPOINT?.trim() || undefined;
+  const workspaceId = env.LANGSMITH_WORKSPACE_ID?.trim() || undefined;
+
+  if (!apiKey) {
     throw new Error(
       'LangSmith eval execution requires LANGSMITH_API_KEY. Run `npm run eval -- --seed` after configuring LangSmith credentials, then rerun the eval.',
     );
   }
   return new LangSmithClient({
-    apiKey: env.LANGSMITH_API_KEY,
-    apiUrl: env.LANGSMITH_ENDPOINT,
-    workspaceId: env.LANGSMITH_WORKSPACE_ID,
+    apiKey,
+    apiUrl,
+    workspaceId,
   });
 }

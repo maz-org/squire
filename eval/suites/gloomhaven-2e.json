@@ -278,12 +278,12 @@
     "category": "trajectory",
     "question": "In Gloomhaven 2e, open section 67.1 and identify its parent scenario.",
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity", "neighbors"],
-      "requiredToolKinds": ["resolution", "open", "traversal"],
+      "requiredTools": ["resolve_entity", "open_entity"],
+      "requiredToolKinds": ["resolution", "open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:gloomhaven-2e/67.1", "scenario:gloomhaven-2e/055"],
       "maxToolCalls": 6,
-      "notes": "LangGraph node coverage: source verification should use opened section data before final_answer."
+      "notes": "The section record itself contains the parent scenario ref, so resolve+open is sufficient; traversal remains covered by adjacent scenario/section cases."
     },
     "source": "data/extracted/gh2/scenario-section-books.json",
     "game": "gloomhaven-2e",

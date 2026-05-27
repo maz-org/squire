@@ -83,7 +83,7 @@ function matrixRowEvaluator({
       { key: 'retry_count', score: row.retryCount },
       { key: 'tool_call_count', score: row.toolCallCount },
       { key: 'loop_iterations', score: row.loopIterations },
-    ].filter((result) => result.score !== null && result.score !== undefined),
+    ].filter((result) => result.score != null || result.value != null),
   };
 }
 

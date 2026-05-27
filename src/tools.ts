@@ -212,6 +212,13 @@ export interface KnowledgeEntity extends KnowledgeEntitySummary {
   data: Record<string, unknown>;
 }
 
+interface RulePassageContext {
+  ref: string;
+  title: string;
+  text: string;
+  chunkIndex: number;
+}
+
 export interface KnowledgeError {
   code: 'invalid_ref' | 'not_found' | 'ambiguous' | 'invalid_filter' | 'unsupported_relation';
   message: string;
@@ -1340,6 +1347,27 @@ export async function incomingLinks(
   return loadIncomingReferences(toKind, normalizedRef, linkType, normalizeToolOpts(opts));
 }
 
+async function adjacentRulePassageContext(hit: ScoredEntry): Promise<RulePassageContext[]> {
+  const candidates = await Promise.all(
+    [hit.chunkIndex - 1, hit.chunkIndex + 1]
+      .filter((chunkIndex) => chunkIndex >= 0)
+      .map((chunkIndex) => getEntryBySourceChunk(hit.source, chunkIndex, { game: hit.game })),
+  );
+
+  return candidates
+    .filter((candidate): candidate is ScoredEntry => candidate !== null)
+    .sort((a, b) => a.chunkIndex - b.chunkIndex)
+    .map((candidate) => {
+      const entity = summarizeRule(candidate, candidate.game);
+      return {
+        ref: entity.ref,
+        title: entity.title,
+        text: candidate.text,
+        chunkIndex: candidate.chunkIndex,
+      };
+    });
+}
+
 export async function openEntity(ref: string, opts?: ToolOpts): Promise<KnowledgeOpenResult> {
   const game = normalizeToolGame(opts?.game);
 
@@ -1362,6 +1390,7 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
     if (!hit) {
       return { ok: false, error: { code: 'not_found', message: `Rule passage not found: ${ref}` } };
     }
+    const adjacentPassages = await adjacentRulePassageContext(hit);
     const entity = summarizeRule(hit, ruleRef.game);
     const provenance = ruleSourceProvenance(hit.source, ruleRef.game);
     return {
@@ -1376,12 +1405,25 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           sourceLabel: provenance.sourceLabel,
           sourceLocator: ruleSourceLocator(hit.chunkIndex),
           chunkIndex: hit.chunkIndex,
+          adjacentPassages,
           ...(provenance.freshness ? { freshness: provenance.freshness } : {}),
         },
       },
       citations: citationForRule(hit, ruleRef.game),
       links: [],
-      related: [],
+      related: adjacentPassages.map((passage) => ({
+        relation: 'adjacent_passage',
+        target: {
+          kind: 'rules_passage',
+          ref: passage.ref,
+          title: passage.title,
+          sourceLabel: provenance.sourceLabel,
+        },
+        reason:
+          passage.chunkIndex < hit.chunkIndex
+            ? 'Previous passage from the same source.'
+            : 'Next passage from the same source.',
+      })),
     };
   }
 

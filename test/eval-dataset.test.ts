@@ -176,6 +176,16 @@ describe('eval dataset', () => {
     }
   });
 
+  it('allows section-parent questions to answer from opened section refs', () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'gh2-traj-section-parent-scenario');
+
+    expect(evalCase?.trajectory?.requiredTools).toEqual(['resolve_entity', 'open_entity']);
+    expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['resolution', 'open']);
+    expect(evalCase?.trajectory?.requiredRefs).toEqual(
+      expect.arrayContaining(['section:gloomhaven-2e/67.1', 'scenario:gloomhaven-2e/055']),
+    );
+  });
+
   it('keeps the GH2 advantage expectation aligned with the checked-in rulebook wording', () => {
     const evalCase = cases.find((candidate) => candidate.id === 'gh2-rule-advantage');
 
@@ -329,10 +339,13 @@ describe('eval dataset', () => {
           id: 'example-rule-poison',
           dataset_id: 'dataset-fh-table',
           created_at: '2026-05-01T00:00:00.000Z',
-          inputs: { question: evalCase!.question },
+          inputs: { question: 'stale remote question' },
           outputs: {
             expectedOutput: {
-              finalAnswer: evalCase!.finalAnswer,
+              finalAnswer: {
+                expected: 'stale remote expected answer',
+                grading: 'stale remote grading',
+              },
             },
           },
           metadata: {
@@ -360,6 +373,7 @@ describe('eval dataset', () => {
     expect(loaded.cases[0]).toMatchObject({
       id: 'rule-poison',
       question: evalCase!.question,
+      finalAnswer: evalCase!.finalAnswer,
       langsmithExampleId: 'example-rule-poison',
       langsmithDatasetId: 'dataset-fh-table',
       langsmithDatasetName: 'squire/frosthaven/table-qa',
