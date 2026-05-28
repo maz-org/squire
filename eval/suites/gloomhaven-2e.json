@@ -196,6 +196,20 @@
     "caseCategory": "monster-stats"
   },
   {
+    "id": "gh2-monster-living-spirit-elite-level-7-hp",
+    "category": "monster-stats",
+    "question": "How many hit points does an elite level 7 Living Spirit have in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "An elite level 7 Living Spirit has 10 hit points.",
+      "grading": "Must answer 10 HP from the Gloomhaven 2e Living Spirit monster stat row for levels 4-7. Must not stop at the levels 0-3 row or say the data is missing."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "monster-stats"
+  },
+  {
     "id": "gh2-scenario-11-reward",
     "category": "scenarios",
     "question": "What is Gloomhaven 2e scenario 11 called, and what does it unlock?",

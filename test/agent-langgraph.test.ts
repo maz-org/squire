@@ -4,6 +4,7 @@ const {
   mockMessagesCreate,
   mockMessagesStream,
   mockSearchKnowledge,
+  mockListCards,
   mockNeighbors,
   mockOpenEntity,
   mockStartedSpans,
@@ -12,6 +13,7 @@ const {
   mockMessagesCreate: vi.fn(),
   mockMessagesStream: vi.fn(),
   mockSearchKnowledge: vi.fn(),
+  mockListCards: vi.fn(),
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
@@ -67,7 +69,7 @@ vi.mock('../src/tools.ts', () => ({
   searchRules: vi.fn(),
   searchCards: vi.fn(),
   listCardTypes: vi.fn(),
-  listCards: vi.fn(),
+  listCards: mockListCards,
   getCard: vi.fn(),
   findScenario: vi.fn(),
   getScenario: vi.fn(),
@@ -178,6 +180,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         }),
       )
       .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Use loot abilities to pick up loot tokens.'), [
+        'Use loot abilities ',
+        'to pick up loot tokens.',
+      ]),
+    );
     const emitted: Array<[AgentStreamEventName, unknown]> = [];
 
     const result = await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
@@ -192,14 +200,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.trajectory.model).toBe('langgraph:claude-sonnet-4-6');
     expect(result.trajectory.toolCalls).toHaveLength(1);
     expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
-    expect(mockMessagesStream).not.toHaveBeenCalled();
+    expect(mockMessagesStream).toHaveBeenCalledTimes(1);
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: expect.arrayContaining([expect.objectContaining({ name: 'search_knowledge' })]),
       }),
     );
-    expect(mockMessagesStream).not.toHaveBeenCalled();
-
     const userVisibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(userVisibleEvents).toEqual([
       ['tool_progress', { message: 'Searching selected sources', toolName: 'search_knowledge' }],
@@ -208,9 +214,48 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         { name: 'search_knowledge', input: { query: 'loot', scope: ['rules_passage'] } },
       ],
       ['tool_result', { name: 'search_knowledge', ok: true, sourceBooks: ['Rulebook'] }],
-      ['text', { delta: 'Use loot abilities to pick up loot tokens.' }],
+      ['text', { delta: 'Use loot abilities ' }],
+      ['text', { delta: 'to pick up loot tokens.' }],
       ['done', {}],
     ]);
+  });
+
+  it('does not expose post-tool retrieval prose as the final answer', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('list_cards', {
+          type: 'monster-stats',
+          filter: { name: 'Living Spirit' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        textResponse('The stat card only covers levels 0-3. I need to check levels 4-7.'),
+      )
+      .mockResolvedValueOnce(textResponse('An elite level 7 Living Spirit has 10 hit points.'));
+    mockListCards.mockResolvedValueOnce([
+      {
+        name: 'Living Spirit',
+        levelRange: '0-3',
+        sourceId: 'gloomhavensecretariat:monster-stat/living-spirit/0-3',
+      },
+      {
+        name: 'Living Spirit',
+        levelRange: '4-7',
+        sourceId: 'gloomhavensecretariat:monster-stat/living-spirit/4-7',
+        elite: { '7': { hp: 10, move: 4, attack: 6 } },
+      },
+    ]);
+
+    const result = await runLangGraphAgentLoopWithTrajectory(
+      'How many hit points does an elite level 7 Living Spirit have?',
+      {
+        toolSurface: 'redesigned',
+        userMessageId: 'message-living-spirit',
+      },
+    );
+
+    expect(result.answer).toBe('An elite level 7 Living Spirit has 10 hit points.');
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(3);
   });
 
   it('continues after neighbors before finalizing answers that need target content', async () => {
@@ -252,7 +297,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
           scope: ['rules_passage'],
         }),
       )
-      .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
+      .mockResolvedValueOnce(textResponse('I found the loot rule.'));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Use loot abilities to pick up loot tokens.'), [
+        'Use loot abilities to pick up loot tokens.',
+      ]),
+    );
 
     await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
       emit: async () => undefined,
@@ -272,9 +322,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       finalAnswer: 'Use loot abilities to pick up loot tokens.',
     });
     expect(parseJsonAttribute(attributes, 'langsmith.usage_metadata')).toEqual({
-      input_tokens: 180,
-      output_tokens: 70,
-      total_tokens: 250,
+      input_tokens: 260,
+      output_tokens: 90,
+      total_tokens: 350,
       input_token_details: { cache_creation: 0, cache_read: 0 },
     });
     expect(attributes).toMatchObject({
@@ -299,8 +349,8 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       'squire.agent.iterations': 2,
       'squire.agent.tool_call_count': 1,
       'squire.agent.stop_reason': 'end_turn',
-      'squire.agent.input_tokens': 180,
-      'squire.agent.output_tokens': 70,
+      'squire.agent.input_tokens': 260,
+      'squire.agent.output_tokens': 90,
       'squire.agent.cache_creation_input_tokens': 0,
       'squire.agent.cache_read_input_tokens': 0,
     });

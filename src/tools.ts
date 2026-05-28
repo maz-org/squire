@@ -669,6 +669,14 @@ function displayTitleForCard(record: Record<string, unknown>, type: CardType): s
   return type;
 }
 
+function resolutionTitleForCard(record: Record<string, unknown>, type: CardType): string {
+  const title = displayTitleForCard(record, type);
+  if (type === 'monster-stats' && typeof record.levelRange === 'string') {
+    return `${title} (levels ${record.levelRange})`;
+  }
+  return title;
+}
+
 function cardMatchConfidence(
   query: string,
   record: Record<string, unknown>,
@@ -700,8 +708,31 @@ function cardMatchReason(query: string, record: Record<string, unknown>, type: C
 }
 
 function extractLevelQuery(query: string): number | null {
-  const match = query.match(/\blevel\s+(\d+)\b/i);
-  return match ? Number(match[1]) : null;
+  const match = query.match(/\b(?:level|lvl)\s+(\d+)\b|\bl\s*(\d+)\b/i);
+  return match ? Number(match[1] ?? match[2]) : null;
+}
+
+function levelRangeIncludes(levelRange: unknown, level: number): boolean {
+  if (typeof levelRange !== 'string') return false;
+  const match = levelRange.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+  if (!match) return false;
+  const min = Number(match[1]);
+  const max = Number(match[2]);
+  return Number.isFinite(min) && Number.isFinite(max) && level >= min && level <= max;
+}
+
+function recordLevelMatches(
+  type: CardType,
+  record: Record<string, unknown>,
+  level: number,
+): boolean {
+  if (type === 'monster-stats') return levelRangeIncludes(record.levelRange, level);
+
+  const value = record.level;
+  if (typeof value === 'number') return value === level;
+  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value) === level;
+
+  return false;
 }
 
 function extractExactItemNumberQuery(query: string): number | null {
@@ -714,6 +745,22 @@ function normalizedCardNumber(record: Record<string, unknown>): number | null {
   if (typeof value !== 'string' && typeof value !== 'number') return null;
   const match = String(value).match(/^0*(\d{1,3})$/);
   return match ? Number(match[1]) : null;
+}
+
+function naturalCardSearchScore(
+  query: string,
+  record: Record<string, unknown>,
+  type: CardType,
+): number {
+  let score = cardMatchConfidence(query, record, type);
+  if (
+    type === 'monster-stats' &&
+    /\b(?:hp|hit points?|level|elite|normal|monsters?|stats?|stat block)\b/i.test(query) &&
+    !/\b(?:abilit(?:y|ies)|deck)\b/i.test(query)
+  ) {
+    score += 0.1;
+  }
+  return score;
 }
 
 async function resolveCards(
@@ -735,11 +782,11 @@ async function resolveCards(
     const records = await load(type, normalizedOpts);
     for (const rawRecord of records) {
       const record = stripInternalKeys(rawRecord);
-      if (level !== null && record.level !== level) continue;
+      if (level !== null && !recordLevelMatches(type, record, level)) continue;
 
       const sourceId = record.sourceId;
       if (typeof sourceId !== 'string') continue;
-      const title = displayTitleForCard(record, type);
+      const title = resolutionTitleForCard(record, type);
       if (type === 'items' && exactItemNumber !== null) {
         if (normalizedCardNumber(record) !== exactItemNumber) continue;
         candidates.push({
@@ -779,7 +826,7 @@ async function resolveCards(
           source: `source:${game}/cards`,
           sourceLabel: 'GHS Card Data',
         },
-        confidence: cardMatchConfidence(query, record, type),
+        confidence: naturalCardSearchScore(query, record, type),
         matchReason: cardMatchReason(query, record, type),
       });
     }
@@ -790,13 +837,14 @@ async function resolveCards(
     for (const { record } of ranked) {
       if (!cardTypes.includes(record._type)) continue;
       const stripped = stripInternalKeys(record);
+      if (level !== null && !recordLevelMatches(record._type, stripped, level)) continue;
       const sourceId = stripped.sourceId;
       if (typeof sourceId !== 'string') continue;
       candidates.push({
         entity: {
           kind: 'card',
           ref: canonicalCardRef(record._type, sourceId, game),
-          title: displayTitleForCard(stripped, record._type),
+          title: resolutionTitleForCard(stripped, record._type),
           source: `source:${game}/cards`,
           sourceLabel: 'GHS Card Data',
         },
@@ -1075,8 +1123,23 @@ export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Pro
  * Returns structured results with card type, data, and `ts_rank` score.
  */
 export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Promise<CardResult[]> {
-  const ranked = await searchExtractedRanked(query, topK, normalizeToolOpts(opts));
-  return ranked.map(({ record, score }) => {
+  const normalizedOpts = normalizeToolOpts(opts);
+  const level = extractLevelQuery(query);
+  const naturalLevelMatches =
+    level === null ? [] : await searchCardsByNaturalFields(query, topK, normalizedOpts);
+  if (naturalLevelMatches.length > 0) return naturalLevelMatches;
+
+  const ranked = await searchExtractedRanked(query, topK, normalizedOpts);
+  const rankedLevelMatches =
+    level === null
+      ? ranked
+      : ranked.filter(({ record }) =>
+          recordLevelMatches(record._type, stripInternalKeys(record), level),
+        );
+  if (rankedLevelMatches.length === 0) {
+    return searchCardsByNaturalFields(query, topK, normalizedOpts);
+  }
+  return rankedLevelMatches.map(({ record, score }) => {
     const { _type, ...rest } = record;
     return {
       type: _type,
@@ -1084,6 +1147,54 @@ export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Pro
       score,
     };
   });
+}
+
+async function searchCardsByNaturalFields(
+  query: string,
+  topK: number,
+  opts: ToolOpts,
+): Promise<CardResult[]> {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery === '') return [];
+
+  const level = extractLevelQuery(query);
+  const matches: CardResult[] = [];
+  for (const type of TYPES) {
+    const records = await load(type, opts);
+    for (const rawRecord of records) {
+      const record = stripInternalKeys(rawRecord);
+      if (level !== null && !recordLevelMatches(type, record, level)) continue;
+
+      const searchable = [
+        record.name,
+        record.cardName,
+        record.monsterType,
+        record.characterClass,
+        record.number,
+        record.sourceId,
+      ]
+        .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')
+        .map((v) => String(v).toLowerCase());
+      const matchesNaturalName = searchable.some(
+        (value) => normalizedQuery.includes(value) || value.includes(normalizedQuery),
+      );
+      if (!matchesNaturalName) continue;
+
+      matches.push({
+        type,
+        data: record,
+        score: naturalCardSearchScore(query, record, type),
+      });
+    }
+  }
+
+  return matches
+    .sort((a, b) => {
+      const scoreDelta = b.score - a.score;
+      if (scoreDelta !== 0) return scoreDelta;
+      return displayTitleForCard(a.data, a.type).localeCompare(displayTitleForCard(b.data, b.type));
+    })
+    .slice(0, topK);
 }
 
 // ─── Discovery tools ─────────────────────────────────────────────────────────

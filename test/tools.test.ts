@@ -1284,6 +1284,57 @@ describe('searchCards', () => {
     expect(results[0].type).toBe('monster-stats');
   });
 
+  it('resolves GH2 high-level monster stat questions to the matching level band', async () => {
+    const results = await searchCards(
+      'how many hit points does an elite level 7 living spirit have',
+      6,
+      {
+        game: 'gloomhaven-2e',
+      },
+    );
+
+    expect(results[0]).toMatchObject({
+      type: 'monster-stats',
+      data: {
+        name: 'Living Spirit',
+        levelRange: '4-7',
+        sourceId: 'gloomhavensecretariat:monster-stat/living-spirit/4-7',
+        elite: {
+          '7': {
+            hp: 10,
+          },
+        },
+      },
+    });
+  });
+
+  it('applies level filters when a monster stat query falls through to ranked search', async () => {
+    const results = await searchCards('spirit shield elite l7', 6, {
+      game: 'gloomhaven-2e',
+    });
+
+    expect(results[0]).toMatchObject({
+      type: 'monster-stats',
+      data: {
+        name: 'Living Spirit',
+        levelRange: '4-7',
+        sourceId: 'gloomhavensecretariat:monster-stat/living-spirit/4-7',
+        elite: {
+          '7': {
+            hp: 10,
+          },
+        },
+      },
+    });
+    expect(
+      results.some(
+        (result) =>
+          result.type === 'monster-stats' &&
+          result.data.sourceId === 'gloomhavensecretariat:monster-stat/living-spirit/0-3',
+      ),
+    ).toBe(false);
+  });
+
   it('respects topK parameter', async () => {
     const results = await searchCards('attack', 2);
     expect(results.length).toBeLessThanOrEqual(2);
@@ -1540,7 +1591,7 @@ describe('knowledge discovery tools', () => {
       expect.objectContaining({
         kind: 'card',
         ref: expect.stringMatching(/^card:frosthaven\/monster-stats\//),
-        title: 'Living Bones',
+        title: expect.stringMatching(/^Living Bones \(levels /),
       }),
     );
     expect(monster.candidates[0].entity).not.toHaveProperty('data');
@@ -1559,6 +1610,38 @@ describe('knowledge discovery tools', () => {
       ]),
     );
     expect(ability.candidates[0].entity).not.toHaveProperty('data');
+  });
+
+  it('resolveEntity keeps only the matching GH2 monster stat level band', async () => {
+    const result = await resolveEntity('elite level 7 living spirit', {
+      kinds: ['monster-stat'],
+      game: 'gloomhaven-2e',
+      limit: 3,
+    });
+
+    expect(result.candidates.map((candidate) => candidate.entity.ref)).toContain(
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/4-7',
+    );
+    expect(result.candidates.map((candidate) => candidate.entity.ref)).not.toContain(
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/0-3',
+    );
+  });
+
+  it('resolveEntity ranks generic monster queries toward stat rows before ability cards', async () => {
+    const result = await resolveEntity('Living Spirit monster', {
+      kinds: ['monster'],
+      game: 'gloomhaven-2e',
+      limit: 6,
+    });
+
+    expect(result.candidates.slice(0, 2).map((candidate) => candidate.entity.ref)).toEqual([
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/0-3',
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/4-7',
+    ]);
+    expect(result.candidates.slice(0, 2).map((candidate) => candidate.entity.title)).toEqual([
+      'Living Spirit (levels 0-3)',
+      'Living Spirit (levels 4-7)',
+    ]);
   });
 
   it('resolveEntity treats item number queries as exact item refs', async () => {

@@ -633,7 +633,7 @@ async function runLangGraphAgentLoop(
         stopReason: state.stopReason,
       });
       const draftAnswer =
-        state.lastResponse && !hasToolUse(state.lastResponse)
+        state.toolCalls.length === 0 && state.lastResponse && !hasToolUse(state.lastResponse)
           ? textFromMessage(state.lastResponse)
           : '';
       if (draftAnswer) {
