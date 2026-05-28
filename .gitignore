@@ -150,6 +150,8 @@ vite.config.ts.timestamp-*
 
 # Eval results (regeneratable)
 eval/results/*.json
+eval/results/pdf-extraction/raw/**
+!eval/results/pdf-extraction/raw/.gitkeep
 
 # Raw data repos (cloned locally for import script development, not submodules)
 data/gloomhavensecretariat/
