@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   const { db, close } = getDb('cli');
   try {
     const explicitGame = process.env.SQUIRE_SEED_GAME ?? process.env.GHS_DATA_GAME;
-    const game = explicitGame ? requireGameId(explicitGame) : null;
+    const game = explicitGame && explicitGame !== 'all' ? requireGameId(explicitGame) : null;
     const results = game
       ? (await seedScenarioSectionBooks(db, { game })).map((result) => ({ ...result, game }))
       : await seedAvailableScenarioSectionBookGames(db);

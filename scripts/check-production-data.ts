@@ -4,7 +4,10 @@ import { pathToFileURL } from 'node:url';
 
 import { sql } from 'drizzle-orm';
 
-import { createStandaloneDb, type Db } from '../src/db.ts';
+import { createStandaloneDb, shutdownServerPool, type Db } from '../src/db.ts';
+import { requireGameId, SUPPORTED_GAME_IDS } from '../src/game.ts';
+import type { GameId } from '../src/game.ts';
+import { getCard, searchRules } from '../src/tools.ts';
 
 const CARD_TABLES = [
   'card_monster_stats',
@@ -26,6 +29,12 @@ const SCENARIO_SECTION_TABLES = [
 ] as const;
 
 type CheckCommand = 'cards' | 'scenario-section-books' | 'embeddings' | 'all';
+type ProductionDataCommand = CheckCommand | 'smoke' | 'verify-url' | 'truncate-embeddings';
+
+export interface ProductionDataOptions {
+  command: ProductionDataCommand;
+  games: GameId[];
+}
 
 export function assertProductionDatabaseUrl(rawUrl: string | undefined): string {
   const url = rawUrl?.trim();
@@ -106,17 +115,26 @@ export function assertProductionRuntimeEnv(env: NodeJS.ProcessEnv = process.env)
   }
 }
 
-async function countTable(db: Db, table: string): Promise<number> {
+async function countTableForGame(db: Db, table: string, game: GameId): Promise<number> {
   const result = await db.execute<{ count: number }>(
-    sql.raw(`SELECT COUNT(*)::int AS count FROM ${table}`),
+    sql`SELECT COUNT(*)::int AS count FROM ${sql.raw(table)} WHERE game = ${game}`,
   );
   return Number(result.rows[0]?.count ?? 0);
 }
 
-async function checkCards(db: Db): Promise<void> {
+const REQUIRED_CARD_TABLES_BY_GAME: Record<GameId, readonly (typeof CARD_TABLES)[number][]> = {
+  frosthaven: CARD_TABLES,
+  // Upstream GHS does not publish GH2 buildings yet. Treat that as expected
+  // missing coverage while still requiring every supported GH2 card table.
+  'gloomhaven-2e': CARD_TABLES.filter((table) => table !== 'card_buildings'),
+};
+
+async function checkCards(db: Db, games: readonly GameId[]): Promise<void> {
   const counts = new Map<string, number>();
-  for (const table of CARD_TABLES) {
-    counts.set(table, await countTable(db, table));
+  for (const game of games) {
+    for (const table of REQUIRED_CARD_TABLES_BY_GAME[game]) {
+      counts.set(`${game}/${table}`, await countTableForGame(db, table, game));
+    }
   }
 
   const emptyTables = [...counts.entries()]
@@ -129,14 +147,16 @@ async function checkCards(db: Db): Promise<void> {
 
   const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
   console.log(
-    `OK card data sanity check passed across ${CARD_TABLES.length} tables (${total} rows).`,
+    `OK card data sanity check passed for ${games.join(', ')} across ${counts.size} game/table pair(s) (${total} rows).`,
   );
 }
 
-async function checkScenarioSectionBooks(db: Db): Promise<void> {
+async function checkScenarioSectionBooks(db: Db, games: readonly GameId[]): Promise<void> {
   const counts = new Map<string, number>();
-  for (const table of SCENARIO_SECTION_TABLES) {
-    counts.set(table, await countTable(db, table));
+  for (const game of games) {
+    for (const table of SCENARIO_SECTION_TABLES) {
+      counts.set(`${game}/${table}`, await countTableForGame(db, table, game));
+    }
   }
 
   const emptyTables = [...counts.entries()]
@@ -156,7 +176,13 @@ async function checkScenarioSectionBooks(db: Db): Promise<void> {
   );
 }
 
-async function checkEmbeddings(db: Db): Promise<void> {
+async function checkEmbeddingsForGames(db: Db, games: readonly GameId[]): Promise<void> {
+  for (const game of games) {
+    await checkEmbeddingsForGame(db, game);
+  }
+}
+
+async function checkEmbeddingsForGame(db: Db, game: GameId): Promise<void> {
   const result = await db.execute<{
     count: number;
     source_count: number;
@@ -167,45 +193,103 @@ async function checkEmbeddings(db: Db): Promise<void> {
       COUNT(DISTINCT source)::int AS source_count,
       COUNT(*) FILTER (WHERE content_hash IS NULL OR content_hash = '')::int AS missing_hash_count
     FROM rule_source_embeddings
+    WHERE game = ${game}
   `);
 
   const row = result.rows[0] ?? { count: 0, source_count: 0, missing_hash_count: 0 };
   if (row.count <= 0 || row.source_count <= 0) {
-    throw new Error('Embedding sanity check failed. The rule_source_embeddings table is empty.');
+    throw new Error(
+      `Embedding sanity check failed for ${game}. The rule_source_embeddings table has no rows for that game.`,
+    );
   }
   if (row.missing_hash_count > 0) {
     throw new Error(
-      `Embedding sanity check failed. ${row.missing_hash_count} row(s) are missing content_hash.`,
+      `Embedding sanity check failed for ${game}. ${row.missing_hash_count} row(s) are missing content_hash.`,
     );
   }
 
   console.log(
-    `OK embedding sanity check passed: ${row.count} chunks across ${row.source_count} source(s).`,
+    `OK embedding sanity check passed for ${game}: ${row.count} chunks across ${row.source_count} source(s).`,
   );
 }
 
-async function truncateEmbeddings(db: Db): Promise<void> {
-  await db.execute(sql`TRUNCATE TABLE rule_source_embeddings`);
-  console.log('OK truncated embeddings for a production rebuild.');
-}
-
-async function runCheck(db: Db, command: CheckCommand): Promise<void> {
-  if (command === 'cards' || command === 'all') await checkCards(db);
-  if (command === 'scenario-section-books' || command === 'all') {
-    await checkScenarioSectionBooks(db);
+async function truncateEmbeddings(db: Db, games: readonly GameId[]): Promise<void> {
+  if (games.length === SUPPORTED_GAME_IDS.length) {
+    await db.execute(sql`TRUNCATE TABLE rule_source_embeddings`);
+    console.log('OK truncated embeddings for every production game.');
+    return;
   }
-  if (command === 'embeddings' || command === 'all') await checkEmbeddings(db);
+
+  for (const game of games) {
+    await db.execute(sql`DELETE FROM rule_source_embeddings WHERE game = ${game}`);
+  }
+  console.log(`OK truncated embeddings for production game scope: ${games.join(', ')}.`);
 }
 
-function parseCommand(
-  rawCommand: string | undefined,
-): CheckCommand | 'verify-url' | 'truncate-embeddings' {
+const SMOKE_CARD_CHECKS: Record<GameId, { id: string; name: string }> = {
+  frosthaven: { id: 'gloomhavensecretariat:item/1', name: 'Spyglass' },
+  'gloomhaven-2e': { id: 'gloomhavensecretariat:item/1', name: 'Weathered Boots' },
+};
+
+function smokeGamesForScope(games: readonly GameId[]): GameId[] {
+  const smokeGames = new Set<GameId>(games);
+  if (smokeGames.has('gloomhaven-2e')) smokeGames.add('frosthaven');
+  return [...SUPPORTED_GAME_IDS].filter((game) => smokeGames.has(game));
+}
+
+async function checkRulesSmoke(game: GameId): Promise<void> {
+  const hits = await searchRules('advantage and disadvantage', 3, { game });
+  if (hits.length <= 0) {
+    throw new Error(`Production smoke failed for ${game}: rules search returned no hits.`);
+  }
+  const wrongGameHit = hits.find((hit) => hit.game !== game);
+  if (wrongGameHit) {
+    throw new Error(
+      `Production smoke failed for ${game}: rules search returned ${wrongGameHit.game} source ${wrongGameHit.source}.`,
+    );
+  }
+}
+
+async function checkStructuredSmoke(game: GameId): Promise<void> {
+  const expected = SMOKE_CARD_CHECKS[game];
+  const card = await getCard('items', expected.id, { game });
+  if (!card) {
+    throw new Error(`Production smoke failed for ${game}: item ${expected.id} was not found.`);
+  }
+  if (card.name !== expected.name) {
+    throw new Error(
+      `Production smoke failed for ${game}: item ${expected.id} resolved to ${JSON.stringify(
+        card.name,
+      )}, expected ${JSON.stringify(expected.name)}.`,
+    );
+  }
+}
+
+async function runSmoke(games: readonly GameId[]): Promise<void> {
+  const smokeGames = smokeGamesForScope(games);
+  for (const game of smokeGames) {
+    await checkRulesSmoke(game);
+    await checkStructuredSmoke(game);
+  }
+  console.log(`OK production smoke checks passed for ${smokeGames.join(', ')}.`);
+}
+
+async function runCheck(db: Db, command: CheckCommand, games: readonly GameId[]): Promise<void> {
+  if (command === 'cards' || command === 'all') await checkCards(db, games);
+  if (command === 'scenario-section-books' || command === 'all') {
+    await checkScenarioSectionBooks(db, games);
+  }
+  if (command === 'embeddings' || command === 'all') await checkEmbeddingsForGames(db, games);
+}
+
+function parseCommand(rawCommand: string | undefined): ProductionDataCommand {
   const command = rawCommand ?? 'all';
   if (
     command === 'cards' ||
     command === 'scenario-section-books' ||
     command === 'embeddings' ||
     command === 'all' ||
+    command === 'smoke' ||
     command === 'verify-url' ||
     command === 'truncate-embeddings'
   ) {
@@ -216,8 +300,49 @@ function parseCommand(
   );
 }
 
+function resolveGameScope(rawGame: string | undefined): GameId[] {
+  if (!rawGame || rawGame === 'all') return [...SUPPORTED_GAME_IDS];
+  return [requireGameId(rawGame)];
+}
+
+export function parseProductionDataOptions(
+  argv: readonly string[] = process.argv.slice(2),
+  env: NodeJS.ProcessEnv = process.env,
+): ProductionDataOptions {
+  const args = [...argv];
+  let commandArg: string | undefined;
+  let rawGame: string | undefined;
+
+  while (args.length > 0) {
+    const arg = args.shift();
+    if (arg === '--game') {
+      rawGame = args.shift();
+      if (!rawGame) throw new Error('--game requires a value.');
+      continue;
+    }
+    if (arg?.startsWith('--game=')) {
+      rawGame = arg.slice('--game='.length);
+      if (!rawGame) throw new Error('--game requires a value.');
+      continue;
+    }
+    if (arg?.startsWith('-')) {
+      throw new Error(`Unknown production data option "${arg}". Expected --game <game>.`);
+    }
+    if (commandArg !== undefined) {
+      throw new Error(`Unexpected extra production data command "${arg}".`);
+    }
+    commandArg = arg;
+  }
+
+  const command = parseCommand(commandArg);
+  return {
+    command,
+    games: resolveGameScope(rawGame ?? env.SQUIRE_DATA_GAME),
+  };
+}
+
 async function main(): Promise<void> {
-  const command = parseCommand(process.argv[2]);
+  const { command, games } = parseProductionDataOptions();
   assertProductionRuntimeEnv();
   getProductionDatabaseTargetUrl();
 
@@ -227,12 +352,21 @@ async function main(): Promise<void> {
   }
 
   const url = getProductionDatabaseConnectionUrl();
+  if (command === 'smoke') {
+    try {
+      await runSmoke(games);
+    } finally {
+      await shutdownServerPool();
+    }
+    return;
+  }
+
   const handle = createStandaloneDb({ url, max: 1 });
   try {
     if (command === 'truncate-embeddings') {
-      await truncateEmbeddings(handle.db);
+      await truncateEmbeddings(handle.db, games);
     } else {
-      await runCheck(handle.db, command);
+      await runCheck(handle.db, command, games);
     }
   } finally {
     await handle.close();

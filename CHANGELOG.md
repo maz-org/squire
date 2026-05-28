@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.15] - 2026-05-28
+
+### Added
+
+- Added production data game scopes for Frosthaven-only, Gloomhaven 2e-only, and all-game seed and reindex workflows.
+- Added production smoke checks that run game-scoped rules search, verify a structured item lookup, and confirm Frosthaven still responds after a GH2-scoped refresh.
+
+### Changed
+
+- Scoped production embedding rebuilds and stale-source deletion to the selected game unless the operator explicitly chooses all games.
+- Updated GH2 production refresh runbooks, development docs, architecture notes, and the product spec to reflect current Frosthaven and Gloomhaven 2e support.
+
 ## [0.1.14] - 2026-05-27
 
 ### Added

@@ -13,10 +13,19 @@ on:
   workflow_dispatch:
     inputs:
       rebuild:
-        description: 'Truncate and rebuild all rule-source embeddings before indexing'
+        description: 'Truncate and rebuild the selected rule-source embeddings before indexing'
         required: false
         type: boolean
         default: false
+      game:
+        description: 'Game rule sources to index'
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - frosthaven
+          - gloomhaven-2e
 
 permissions:
   contents: read
@@ -38,6 +47,8 @@ jobs:
       VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
       NODE_ENV: production
       SQUIRE_ENV: production
+      SQUIRE_DATA_GAME: ${{ github.event.inputs.game || 'all' }}
+      SQUIRE_INDEX_GAME: ${{ github.event.inputs.game || 'all' }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -90,7 +101,10 @@ jobs:
         run: npm run index
 
       - name: Sanity check embeddings
-        run: npm run production-data:check -- embeddings
+        run: npm run production-data:check -- embeddings --game "$SQUIRE_DATA_GAME"
+
+      - name: Smoke check production retrieval
+        run: npm run production-data:smoke -- --game "$SQUIRE_DATA_GAME"
 
       - name: Stop Fly Postgres proxy
         if: always()
