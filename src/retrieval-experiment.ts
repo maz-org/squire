@@ -13,6 +13,8 @@ export type RetrievalExperimentVariant =
 const VOYAGE_EMBEDDING_MODEL = 'voyage-4-large';
 const VOYAGE_RERANK_MODEL = 'rerank-2.5';
 const COHERE_RERANK_MODEL = 'rerank-v4.0-pro';
+const VOYAGE_EMBEDDING_DIMENSION = 1024;
+const PROVIDER_ATTEMPT_TIMEOUT_MS = 30_000;
 export const VOYAGE_EXPERIMENT_EMBEDDING_VERSION = `${VOYAGE_EMBEDDING_MODEL}:dim1024:experiment-v1`;
 
 export function retrievalExperimentVariant(
@@ -55,6 +57,10 @@ function retryDelayMs(response: Response, attempt: number): number {
   return Math.min(60_000, 2000 * 2 ** attempt);
 }
 
+function providerRetryDelayMs(attempt: number): number {
+  return Math.min(60_000, 2000 * 2 ** attempt);
+}
+
 async function postJson(
   url: string,
   apiKey: string,
@@ -62,14 +68,32 @@ async function postJson(
 ): Promise<unknown> {
   const maxAttempts = 6;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PROVIDER_ATTEMPT_TIMEOUT_MS);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${apiKey}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (attempt < maxAttempts - 1) {
+        await sleep(providerRetryDelayMs(attempt));
+        continue;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`retrieval experiment provider request failed after retries: ${message}`, {
+        cause: error,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
     const json = (await response.json().catch(() => undefined)) as unknown;
     if (response.status === 429 && attempt < maxAttempts - 1) {
       await sleep(retryDelayMs(response, attempt));
@@ -92,11 +116,24 @@ async function postJson(
 function parseVoyageEmbeddings(json: unknown): number[][] {
   const data = (json as { data?: unknown }).data;
   if (!Array.isArray(data)) throw new Error('Voyage embeddings response did not include data.');
-  return data.map((item) => {
+  return data.map((item, itemIndex) => {
     const embedding = (item as { embedding?: unknown }).embedding;
     if (!Array.isArray(embedding))
-      throw new Error('Voyage embedding item did not include embedding.');
-    return embedding.map(Number);
+      throw new Error(`parseVoyageEmbeddings: item ${itemIndex} did not include embedding.`);
+    if (embedding.length !== VOYAGE_EMBEDDING_DIMENSION) {
+      throw new Error(
+        `parseVoyageEmbeddings: item ${itemIndex} returned ${embedding.length} dimension(s), expected ${VOYAGE_EMBEDDING_DIMENSION}.`,
+      );
+    }
+    return embedding.map((value, valueIndex) => {
+      const number = Number(value);
+      if (!Number.isFinite(number)) {
+        throw new Error(
+          `parseVoyageEmbeddings: item ${itemIndex} dimension ${valueIndex} was not finite.`,
+        );
+      }
+      return number;
+    });
   });
 }
 
@@ -112,7 +149,7 @@ export async function embedVoyageExperiment(
       input: texts,
       model: VOYAGE_EMBEDDING_MODEL,
       input_type: inputType,
-      output_dimension: 1024,
+      output_dimension: VOYAGE_EMBEDDING_DIMENSION,
       output_dtype: 'float',
     },
   );

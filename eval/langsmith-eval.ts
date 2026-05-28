@@ -59,6 +59,10 @@ function millisecondsToSecondsScore(latencyMs: number | null): number | null {
   return latencyMs === null ? null : Number((latencyMs / 1000).toFixed(3));
 }
 
+function trimmedEnvValue(name: string): string | null {
+  return process.env[name]?.trim() || null;
+}
+
 function matrixRowEvaluator({
   outputs,
 }: {
@@ -186,8 +190,9 @@ export async function runLangSmithNativeEvalMatrix(
           metadata: {
             runLabel: options.runLabel,
             datasetName,
-            retrievalExperimentDataset: process.env.SQUIRE_RETRIEVAL_EXPERIMENT_DATASET ?? null,
-            retrievalExperimentVariant: process.env.SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT ?? 'local',
+            retrievalExperimentDataset: trimmedEnvValue('SQUIRE_RETRIEVAL_EXPERIMENT_DATASET'),
+            retrievalExperimentVariant:
+              trimmedEnvValue('SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT') ?? 'local',
             selection: options.selection,
             agentRuntime,
             provider: providerConfig.provider,
