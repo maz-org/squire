@@ -59,6 +59,7 @@ export interface SearchOptions {
 export const EMBEDDING_VERSION = 'voyage-4-large:dim1024:prod-v1';
 
 const DEFAULT_GAME = DEFAULT_GAME_ID;
+const EXPECTED_EMBEDDING_DIMENSIONS = 1024;
 
 function resolveGame(game?: GameId | string): GameId {
   if (game === undefined) return DEFAULT_GAME;
@@ -251,6 +252,12 @@ export async function search(
   k = 8,
   opts: SearchOptions = {},
 ): Promise<ScoredEntry[]> {
+  if (queryEmbedding.length !== EXPECTED_EMBEDDING_DIMENSIONS) {
+    throw new Error(
+      `Invalid query embedding dimension: expected ${EXPECTED_EMBEDDING_DIMENSIONS}, got ${queryEmbedding.length}`,
+    );
+  }
+
   const game = resolveGame(opts.game);
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 

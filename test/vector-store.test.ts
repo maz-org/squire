@@ -333,6 +333,12 @@ describe('search', () => {
     expect(results).toEqual([]);
   });
 
+  it('rejects query embeddings with the wrong dimension before querying pgvector', async () => {
+    await expect(search([1, 0, 0], 5)).rejects.toThrow(
+      'Invalid query embedding dimension: expected 1024, got 3',
+    );
+  });
+
   it('defaults to game=frosthaven and filters out other games for the same query', async () => {
     const sharedText = 'When a monster dies, place a loot token.';
     await addEntries([

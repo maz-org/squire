@@ -50,7 +50,7 @@ jobs:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          changed="$(git diff-tree --no-commit-id --name-only -r "$HEAD_SHA")"
+          changed="$(git diff-tree --no-commit-id --name-only -r -m "$HEAD_SHA")"
           if ! printf '%s\n' "$changed" | grep -Eq '^(data/pdfs/|data/rule-sources/|src/index-docs\.ts$|src/vector-store\.ts$|src/embedder\.ts$|src/retrieval-source\.ts$)'; then
             echo "No production rule-source reindex needed for this deploy."
             exit 0

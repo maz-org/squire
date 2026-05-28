@@ -165,7 +165,7 @@ attacker could run up significant costs.
   embedding + Claude API
 - Amplification via long conversation histories — passing large
   `history` arrays increases token consumption
-- MCP tool abuse — `search_rules` triggers Voyage embedding per call,
+- MCP tool abuse — `search_knowledge` triggers Voyage embedding per call,
   increasing provider spend
 
 **Mitigations:**

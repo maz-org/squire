@@ -259,8 +259,8 @@ cause:
 - Card or scenario/section seed failure: fix the checked-in extract or seed code,
   merge the fix, then rerun the relevant workflow.
 - Rule-source indexing failure: rerun normal mode after fixing the source file
-  or indexing code. Use `rebuild: true` only when the existing `embeddings` rows
-  are known to be wrong as a set.
+  or indexing code. Use `rebuild: true` only when the existing
+  `rule_source_embeddings` rows are known to be wrong as a set.
 
 ## Post-deploy checks
 
