@@ -82,6 +82,29 @@ Existing regression coverage protects the current path:
 - `test/mcp.test.ts`, `test/mcp-in-process.test.ts`, and
   `test/mcp-transport.test.ts` protect the MCP surface.
 
+### Agent Streaming Runtime Closeout
+
+The Agent Streaming Runtime project closed with LangGraph as the production
+runtime, not eval-only, hidden QA only, canary-only, or dropped. The first
+adapter comparison showed that wrapping the old loop improved stream boundaries
+but did not improve answer quality; the durable decision in ADR 0019 was to
+replace the loop with the staged graph now reflected in production.
+
+The UX bar that blocked that decision is accounted for in production:
+
+| Target UX piece                           | Production status                                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------------------- |
+| Final-answer-node routing                 | `final_answer` is the only graph node allowed to emit answer-body text.           |
+| Browser-visible progress rows             | `tool-progress` maps to persisted `answer-progress` rows outside answer prose.    |
+| Structured artifact events                | `artifact` maps to persisted `answer-artifact` blocks outside answer prose.       |
+| Updates/debug excluded from visible prose | Non-final LangGraph messages remain debug/trace data, not browser answer content. |
+| Reconnect/replay reliability              | `message_stream_events` and `Last-Event-ID` replay shipped after the graph work.  |
+
+SQR-224, SQR-225, SQR-236, SQR-237, and SQR-238 are complete. SQR-239 remains a
+normal retrieval-quality follow-up, not a blocker for the streaming runtime
+architecture. Deep Agents and remote LangSmith Agent Server stay out of the
+production Q&A path until a separate decision explicitly reopens them.
+
 ---
 
 ## Architectural Principles
