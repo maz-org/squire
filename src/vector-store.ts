@@ -44,6 +44,7 @@ export interface ScoredEntry {
   chunkIndex: number;
   game: GameId;
   score: number;
+  scoreKind?: 'vector' | 'rerank';
 }
 
 export interface SearchOptions {
@@ -285,6 +286,7 @@ export async function search(
       game: r.game,
       // Postgres numeric arithmetic can return strings in edge cases; coerce.
       score: Number(r.score),
+      scoreKind: 'vector',
     }));
   } catch (err) {
     throw wrapDbError(err);
@@ -324,6 +326,7 @@ export async function getEntryBySourceChunk(
       text: row.text,
       game: row.game,
       score: 1,
+      scoreKind: 'vector',
     };
   } catch (err) {
     throw wrapDbError(err);

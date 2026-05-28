@@ -14,9 +14,11 @@ interface EvalRunOutput {
   toolSurface?: EvalToolSurface;
 }
 
-const JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven board game rules assistant.
+const JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven and Gloomhaven (2nd Edition) board game rules assistant.
 
 Given a question, expected answer, grading criteria, and the actual answer from the system, evaluate whether the actual answer is correct.
+Use the grading criteria as the source of truth. Accept semantically equivalent wording unless the grading criteria explicitly forbids it.
+Do not penalize extra correct context, examples, caveats, or optional variants unless they contradict the expected answer or grading criteria.
 
 Score on a 1-5 scale:
 5 = Perfect — all required information present and accurate

@@ -55,6 +55,10 @@ function targetOutputFrom(outputs: unknown): EvalMatrixRow | undefined {
   return typeof candidate.caseId === 'string' ? (candidate as unknown as EvalMatrixRow) : undefined;
 }
 
+function millisecondsToSecondsScore(latencyMs: number | null): number | null {
+  return latencyMs === null ? null : Number((latencyMs / 1000).toFixed(3));
+}
+
 function matrixRowEvaluator({
   outputs,
 }: {
@@ -78,7 +82,8 @@ function matrixRowEvaluator({
       { key: 'pass', score: row.pass },
       { key: 'correctness', score: row.score },
       { key: 'failure_class', value: row.failureClass },
-      { key: 'latency_ms', score: row.latencyMs },
+      { key: 'latency_ms', value: row.latencyMs },
+      { key: 'latency_seconds', score: millisecondsToSecondsScore(row.latencyMs) },
       { key: 'estimated_cost_usd', score: row.estimatedCostUsd },
       { key: 'retry_count', score: row.retryCount },
       { key: 'tool_call_count', score: row.toolCallCount },

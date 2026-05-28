@@ -188,6 +188,7 @@ export async function searchVoyageExperiment(
     text: row.text,
     game: row.game,
     score: Number(row.score),
+    scoreKind: 'vector',
   }));
 }
 
@@ -267,6 +268,7 @@ export async function rerankExperimentHits(
     .map((result) => ({
       ...hits[result.index],
       score: result.relevanceScore,
+      scoreKind: 'rerank' as const,
     }));
   if (reranked.length === 0) return hits;
 

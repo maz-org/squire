@@ -2129,7 +2129,7 @@ the figure is healed.
 of the figure's next turn.
 Poison: All attacks targeting the figure
 Curse: The figure must shuffle a curse card into
-gain "+1 /f." Poison is removed when the figure
+gain "+1 Attack." Poison is removed when the figure
 their attack modifier deck. If the figure does
 is healed but, unlike wound, poison prevents
 not use an attack modifier deck, curse has no

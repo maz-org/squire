@@ -57,7 +57,7 @@ export const FORCE_SYNTHESIS_PROMPT =
   'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.';
 
 export const NEIGHBORS_TARGET_PROMPT =
-  'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.';
+  'If this neighbors result completes the requested traversal, use it as the traversal answer. For multi-hop traversal questions, call neighbors on the returned canonical target for the next hop until the requested number of hops is complete. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.';
 
 export const RESOLUTION_TARGET_PROMPT =
   'You now have canonical candidate refs. If the user asked for an exact record or source text, open the best matching exact ref before answering. If the user also asked for fuzzy/contextual matches, keep those separate and use search only for the fuzzy part.';

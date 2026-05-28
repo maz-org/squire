@@ -140,6 +140,8 @@ describe('LangSmith native eval runner', () => {
       results: expect.arrayContaining([
         { key: 'failure_class', value: 'answer_quality' },
         { key: 'correctness', score: 0 },
+        { key: 'latency_ms', value: 250 },
+        { key: 'latency_seconds', score: 0.25 },
       ]),
     });
     expect(runner).toHaveBeenCalledWith(

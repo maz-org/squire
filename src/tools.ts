@@ -240,6 +240,7 @@ export type KnowledgeOpenResult =
 export interface KnowledgeSearchHit {
   entity: KnowledgeEntitySummary;
   score: number;
+  scoreKind?: ScoredEntry['scoreKind'];
   snippet: string;
   citations: KnowledgeCitation[];
   nextRefs: KnowledgeEntitySummary[];
@@ -420,6 +421,13 @@ function isGh2RuleCitation(citation: KnowledgeCitation | undefined): citation is
   return citation?.sourceRef.startsWith(`source:${GLOOMHAVEN_2E_GAME_ID}/`) ?? false;
 }
 
+function hasComparableVectorScores(
+  a?: ScoredEntry['scoreKind'],
+  b?: ScoredEntry['scoreKind'],
+): boolean {
+  return (a ?? 'vector') === 'vector' && (b ?? 'vector') === 'vector';
+}
+
 function rankRuleHitsForCurrentSources(
   hits: ScoredEntry[],
   game: GameId,
@@ -439,7 +447,9 @@ function rankRuleHitsForCurrentSources(
       const scoreDelta = b.hit.score - a.hit.score;
       const aCurrent = a.provenance.game === GLOOMHAVEN_2E_GAME_ID;
       const bCurrent = b.provenance.game === GLOOMHAVEN_2E_GAME_ID;
-      const closeEnough = Math.abs(scoreDelta) <= CURRENT_RULE_SOURCE_SCORE_WINDOW;
+      const closeEnough =
+        hasComparableVectorScores(a.hit.scoreKind, b.hit.scoreKind) &&
+        Math.abs(scoreDelta) <= CURRENT_RULE_SOURCE_SCORE_WINDOW;
 
       if (aCurrent && bCurrent && closeEnough) {
         const sourceRankDelta =
@@ -478,6 +488,7 @@ function compareKnowledgeHits(a: KnowledgeSearchHit, b: KnowledgeSearchHit, quer
     isGh2RuleCitation(bCitation) &&
     aCitation.sourceType &&
     bCitation.sourceType &&
+    hasComparableVectorScores(a.scoreKind, b.scoreKind) &&
     Math.abs(scoreDelta) <= CURRENT_RULE_SOURCE_SCORE_WINDOW
   ) {
     const sourceRankDelta =
@@ -1579,6 +1590,7 @@ export async function searchKnowledge(
           return {
             entity,
             score: rule.score,
+            scoreKind: rule.scoreKind,
             snippet: rule.text,
             citations: citationForRule(rule, game),
             nextRefs: [entity],

@@ -19,7 +19,7 @@ interface ChunkRow extends Record<string, unknown> {
   content_hash: string | null;
 }
 
-async function missingVoyageRows(): Promise<ChunkRow[]> {
+async function staleVoyageRows(): Promise<ChunkRow[]> {
   const handle = createStandaloneDb({ max: 1 });
   try {
     const rows = await handle.db.execute<ChunkRow>(sql`
@@ -29,6 +29,11 @@ async function missingVoyageRows(): Promise<ChunkRow[]> {
         ON v.id = e.id
        AND v.embedding_version = ${VOYAGE_EXPERIMENT_EMBEDDING_VERSION}
       WHERE v.id IS NULL
+         OR v.content_hash IS DISTINCT FROM e.content_hash
+         OR v.text IS DISTINCT FROM e.text
+         OR v.source IS DISTINCT FROM e.source
+         OR v.chunk_index IS DISTINCT FROM e.chunk_index
+         OR v.game IS DISTINCT FROM e.game
       ORDER BY e.game, e.source, e.chunk_index
     `);
     return rows.rows;
@@ -80,8 +85,8 @@ async function upsertVoyageRows(rows: ChunkRow[], embeddings: number[][]): Promi
 
 async function indexVoyage(): Promise<void> {
   await ensureVoyageExperimentTable();
-  const rows = await missingVoyageRows();
-  console.log(`Voyage experiment index missing ${rows.length} chunk(s).`);
+  const rows = await staleVoyageRows();
+  console.log(`Voyage experiment index has ${rows.length} stale or missing chunk(s).`);
   const batchSize = 8;
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
