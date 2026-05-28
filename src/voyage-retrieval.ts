@@ -1,46 +1,13 @@
-import { sql } from 'drizzle-orm';
-
-import { getDb } from './db.ts';
-import { requireGameId, type GameId } from './game.ts';
 import type { ScoredEntry } from './vector-store.ts';
-
-export type RetrievalExperimentVariant =
-  | 'local'
-  | 'voyage'
-  | 'voyage-voyage-rerank'
-  | 'voyage-cohere-rerank';
 
 const VOYAGE_EMBEDDING_MODEL = 'voyage-4-large';
 const VOYAGE_RERANK_MODEL = 'rerank-2.5';
-const COHERE_RERANK_MODEL = 'rerank-v4.0-pro';
-const VOYAGE_EMBEDDING_DIMENSION = 1024;
+export const VOYAGE_EMBEDDING_DIMENSION = 1024;
 const PROVIDER_ATTEMPT_TIMEOUT_MS = 30_000;
-export const VOYAGE_EXPERIMENT_EMBEDDING_VERSION = `${VOYAGE_EMBEDDING_MODEL}:dim1024:experiment-v1`;
-
-export function retrievalExperimentVariant(
-  env: NodeJS.ProcessEnv = process.env,
-): RetrievalExperimentVariant {
-  const raw = env.SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT?.trim() || 'local';
-  if (
-    raw === 'local' ||
-    raw === 'voyage' ||
-    raw === 'voyage-voyage-rerank' ||
-    raw === 'voyage-cohere-rerank'
-  ) {
-    return raw;
-  }
-  throw new Error(
-    `Invalid SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT: ${raw}. Expected local, voyage, voyage-voyage-rerank, or voyage-cohere-rerank.`,
-  );
-}
-
-export function usesVoyageExperimentEmbeddings(env: NodeJS.ProcessEnv = process.env): boolean {
-  return retrievalExperimentVariant(env).startsWith('voyage');
-}
 
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name} is required for SQR-247 retrieval experiment.`);
+  if (!value) throw new Error(`${name} is required for Voyage retrieval.`);
   return value;
 }
 
@@ -87,7 +54,7 @@ async function postJson(
         continue;
       }
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`retrieval experiment provider request failed after retries: ${message}`, {
+      throw new Error(`Voyage retrieval provider request failed after retries: ${message}`, {
         cause: error,
       });
     } finally {
@@ -104,13 +71,11 @@ async function postJson(
         typeof (json as { message?: unknown })?.message === 'string'
           ? (json as { message: string }).message
           : response.statusText;
-      throw new Error(
-        `retrieval experiment provider request failed (${response.status}): ${message}`,
-      );
+      throw new Error(`Voyage retrieval provider request failed (${response.status}): ${message}`);
     }
     return json;
   }
-  throw new Error('retrieval experiment provider request failed after retries.');
+  throw new Error('Voyage retrieval provider request failed after retries.');
 }
 
 function parseVoyageEmbeddings(json: unknown): number[][] {
@@ -137,7 +102,7 @@ function parseVoyageEmbeddings(json: unknown): number[][] {
   });
 }
 
-export async function embedVoyageExperiment(
+export async function embedVoyage(
   texts: string[],
   inputType: 'query' | 'document',
 ): Promise<number[][]> {
@@ -162,86 +127,15 @@ export async function embedVoyageExperiment(
   return embeddings;
 }
 
-export async function ensureVoyageExperimentTable(): Promise<void> {
-  const { db } = getDb('server');
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS retrieval_experiment_voyage_embeddings (
-      id text PRIMARY KEY,
-      source text NOT NULL,
-      chunk_index integer NOT NULL,
-      text text NOT NULL,
-      game text NOT NULL,
-      content_hash text,
-      embedding_version text NOT NULL,
-      embedding vector(1024) NOT NULL,
-      UNIQUE (game, source, chunk_index)
-    )
-  `);
-  await db.execute(sql`
-    CREATE INDEX IF NOT EXISTS retrieval_experiment_voyage_game_idx
-      ON retrieval_experiment_voyage_embeddings (game)
-  `);
-  await db.execute(sql`
-    CREATE INDEX IF NOT EXISTS retrieval_experiment_voyage_hnsw_idx
-      ON retrieval_experiment_voyage_embeddings
-      USING hnsw (embedding vector_cosine_ops)
-  `);
-}
-
-export async function searchVoyageExperiment(
-  queryEmbedding: number[],
-  k: number,
-  game: GameId | string,
-): Promise<ScoredEntry[]> {
-  const resolvedGame = requireGameId(game);
-  const vectorLiteral = `[${queryEmbedding.join(',')}]`;
-  const { db } = getDb('server');
-  const result = await db.execute<{
-    id: string;
-    source: string;
-    chunk_index: number;
-    text: string;
-    game: GameId;
-    score: number;
-  }>(sql`
-    SELECT
-      id,
-      source,
-      chunk_index,
-      text,
-      game,
-      1 - (embedding <=> ${vectorLiteral}::vector) AS score
-    FROM retrieval_experiment_voyage_embeddings
-    WHERE game = ${resolvedGame}
-      AND embedding_version = ${VOYAGE_EXPERIMENT_EMBEDDING_VERSION}
-    ORDER BY embedding <=> ${vectorLiteral}::vector
-    LIMIT ${k}
-  `);
-
-  return result.rows.map((row) => ({
-    id: row.id,
-    source: row.source,
-    chunkIndex: Number(row.chunk_index),
-    text: row.text,
-    game: row.game,
-    score: Number(row.score),
-    scoreKind: 'vector',
-  }));
-}
-
 interface RerankResult {
   index: number;
   relevanceScore: number;
 }
 
-function parseRerankResults(json: unknown, provider: 'voyage' | 'cohere'): RerankResult[] {
+function parseVoyageRerankResults(json: unknown): RerankResult[] {
   const results =
-    provider === 'voyage'
-      ? ((json as { data?: unknown; results?: unknown }).data ??
-        (json as { results?: unknown }).results)
-      : (json as { results?: unknown }).results;
-  if (!Array.isArray(results))
-    throw new Error(`${provider} rerank response did not include results.`);
+    (json as { data?: unknown; results?: unknown }).data ?? (json as { results?: unknown }).results;
+  if (!Array.isArray(results)) throw new Error('Voyage rerank response did not include results.');
   return results.map((item) => {
     const record = item as { index?: unknown; relevance_score?: unknown; relevanceScore?: unknown };
     return {
@@ -263,37 +157,18 @@ async function rerankVoyage(
     top_k: topK,
     truncation: true,
   });
-  return parseRerankResults(json, 'voyage');
+  return parseVoyageRerankResults(json);
 }
 
-async function rerankCohere(
-  query: string,
-  documents: string[],
-  topK: number,
-): Promise<RerankResult[]> {
-  const json = await postJson('https://api.cohere.com/v2/rerank', requiredEnv('COHERE_API_KEY'), {
-    query,
-    documents,
-    model: COHERE_RERANK_MODEL,
-    top_n: topK,
-  });
-  return parseRerankResults(json, 'cohere');
-}
-
-export async function rerankExperimentHits(
+export async function rerankRuleSourceHits(
   query: string,
   hits: ScoredEntry[],
   topK: number,
 ): Promise<ScoredEntry[]> {
-  const variant = retrievalExperimentVariant();
-  if (variant !== 'voyage-voyage-rerank' && variant !== 'voyage-cohere-rerank') return hits;
   if (hits.length <= 1) return hits;
 
   const documents = hits.map((hit) => [`source: ${hit.source}`, hit.text].join('\n\n'));
-  const results =
-    variant === 'voyage-voyage-rerank'
-      ? await rerankVoyage(query, documents, Math.min(topK, hits.length))
-      : await rerankCohere(query, documents, Math.min(topK, hits.length));
+  const results = await rerankVoyage(query, documents, Math.min(topK, hits.length));
   const reranked = results
     .filter(
       (result) =>
@@ -311,4 +186,8 @@ export async function rerankExperimentHits(
 
   const seen = new Set(reranked.map((hit) => hit.id));
   return [...reranked, ...hits.filter((hit) => !seen.has(hit.id))];
+}
+
+export function isEmbedderLoaded(): boolean {
+  return Boolean(process.env.VOYAGE_API_KEY?.trim());
 }

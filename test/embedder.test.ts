@@ -1,86 +1,51 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockModel, mockPipeline } = vi.hoisted(() => {
-  const model = vi.fn().mockResolvedValue({ data: new Float32Array([0.1, 0.2, 0.3]) });
-  const pipeline = vi.fn().mockResolvedValue(model);
-  return { mockModel: model, mockPipeline: pipeline };
-});
+const { mockEmbedVoyage } = vi.hoisted(() => ({
+  mockEmbedVoyage: vi.fn(),
+}));
 
-vi.mock('@xenova/transformers', () => ({
-  pipeline: mockPipeline,
+vi.mock('../src/voyage-retrieval.ts', () => ({
+  embedVoyage: mockEmbedVoyage,
+  isEmbedderLoaded: () => true,
 }));
 
 describe('embedder', () => {
   beforeEach(async () => {
     vi.resetModules();
-    mockModel.mockClear();
-    mockPipeline.mockClear();
+    mockEmbedVoyage.mockReset();
   });
 
   describe('embed', () => {
-    it('returns an array of numbers', async () => {
+    it('uses Voyage query embeddings', async () => {
+      mockEmbedVoyage.mockResolvedValueOnce([[0.1, 0.2, 0.3]]);
       const { embed } = await import('../src/embedder.ts');
-      const result = await embed('hello world');
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.every((n) => typeof n === 'number')).toBe(true);
-    });
 
-    it('returns the correct values from the model output', async () => {
-      const { embed } = await import('../src/embedder.ts');
-      const result = await embed('hello world');
-      expect(result).toHaveLength(3);
-      expect(result[0]).toBeCloseTo(0.1);
-      expect(result[1]).toBeCloseTo(0.2);
-      expect(result[2]).toBeCloseTo(0.3);
-    });
-
-    it('calls the model with pooling mean and normalize true', async () => {
-      const { embed } = await import('../src/embedder.ts');
-      await embed('test text');
-      expect(mockModel).toHaveBeenCalledWith('test text', { pooling: 'mean', normalize: true });
-    });
-
-    it('initializes the pipeline with the correct model', async () => {
-      const { embed } = await import('../src/embedder.ts');
-      await embed('test');
-      expect(mockPipeline).toHaveBeenCalledWith('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-    });
-
-    it('only initializes the model once across multiple calls (singleton)', async () => {
-      const { embed } = await import('../src/embedder.ts');
-      await embed('first');
-      await embed('second');
-      await embed('third');
-      expect(mockPipeline).toHaveBeenCalledTimes(1);
+      await expect(embed('hello world')).resolves.toEqual([0.1, 0.2, 0.3]);
+      expect(mockEmbedVoyage).toHaveBeenCalledWith(['hello world'], 'query');
     });
   });
 
   describe('embedBatch', () => {
-    it('returns the correct number of results', async () => {
+    it('uses Voyage document embeddings', async () => {
+      mockEmbedVoyage.mockResolvedValueOnce([
+        [0.1, 0.2],
+        [0.3, 0.4],
+      ]);
       const { embedBatch } = await import('../src/embedder.ts');
-      const texts = ['one', 'two', 'three'];
-      const results = await embedBatch(texts);
-      expect(results).toHaveLength(3);
+
+      await expect(embedBatch(['one', 'two'])).resolves.toEqual([
+        [0.1, 0.2],
+        [0.3, 0.4],
+      ]);
+      expect(mockEmbedVoyage).toHaveBeenCalledWith(['one', 'two'], 'document');
     });
 
-    it('returns an array of number arrays', async () => {
+    it('returns an empty array for empty input', async () => {
+      mockEmbedVoyage.mockResolvedValueOnce([]);
       const { embedBatch } = await import('../src/embedder.ts');
-      const results = await embedBatch(['a', 'b']);
-      expect(results.every((r) => Array.isArray(r) && r.every((n) => typeof n === 'number'))).toBe(
-        true,
-      );
-    });
 
-    it('calls the model once per text', async () => {
-      const { embedBatch } = await import('../src/embedder.ts');
-      await embedBatch(['x', 'y', 'z']);
-      expect(mockModel).toHaveBeenCalledTimes(3);
-    });
-
-    it('returns empty array for empty input', async () => {
-      const { embedBatch } = await import('../src/embedder.ts');
-      const results = await embedBatch([]);
-      expect(results).toEqual([]);
+      await expect(embedBatch([])).resolves.toEqual([]);
+      expect(mockEmbedVoyage).toHaveBeenCalledWith([], 'document');
     });
   });
 });

@@ -165,7 +165,7 @@ _Chat surface layout decision: the conversation page (`/chat/:id`) renders a sta
 
 ### Database
 
-- **Primary DB:** PostgreSQL. Indexed rule-source embeddings live in the `embeddings` pgvector table (SQR-33). Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
+- **Primary DB:** PostgreSQL. Indexed rule-source embeddings live in the `rule_source_embeddings` pgvector table. Extracted GHS card data lives in 10 `card_*` tables with per-table `search_vector` (tsvector) generated columns and GIN indexes for full-text search (SQR-56). The committed `data/extracted/*.json` files are now seed inputs to `src/seed/seed-cards.ts`, not the runtime store.
 - **Vector DB:** pgvector extension on the same Postgres instance
 - **ORM:** Drizzle, with `drizzle-kit` for migrations
 
@@ -173,11 +173,9 @@ _Rationale for Drizzle: first-class pgvector support (Prisma's is preview-only a
 
 ### Embeddings
 
-- **Current:** `@xenova/transformers` running in-process. Model `Xenova/all-MiniLM-L6-v2` (384 dimensions, mean-pooled, normalized). See `src/embedder.ts`.
+- **Current:** Voyage AI `voyage-4-large` embeddings at 1024 dimensions. See `src/embedder.ts`.
 
-  _Rationale: chosen for simplicity getting started — no API key, no network roundtrip during indexing, no per-token cost._
-
-- **Upgrade path:** if retrieval quality doesn't hold up at production scale, swap to **Voyage AI** (purpose-built for retrieval, strong benchmark performance, integrates cleanly with Anthropic-based stacks). The vector store (pgvector) is independent and doesn't change.
+  _Rationale: chosen after the SQR-247 retrieval bakeoff because it improved eval correctness over the local embedding path. The runtime intentionally has no local embedding fallback._
 
 _Note: embedding model and vector store are two independent choices that can evolve separately._
 
@@ -317,8 +315,8 @@ _Historical note: an earlier version of Squire used the worldhaven repository pl
 - Extract text from indexed PDFs in `data/pdfs/` using `pdf-parse`, and from
   HTML/Markdown/text snapshots in `data/rule-sources/`
 - Chunk into semantic sections in `src/index-docs.ts`
-- Generate embeddings via the local Xenova model (see [Stack → Embeddings](#embeddings))
-- Store in the `embeddings` pgvector table (populated by `npm run index`; idempotent per-source upserts)
+- Generate embeddings via Voyage AI (see [Stack → Embeddings](#embeddings))
+- Store in the `rule_source_embeddings` pgvector table (populated by `npm run index`; idempotent per-source upserts)
 - Query through `searchRules()` for fuzzy rules/mechanics questions and other open-ended rule-corpus lookups
 
 #### Scenario/section-book research data
@@ -756,7 +754,7 @@ src/
     schema/                     Drizzle schema (core, auth, cards, scenario/section books) — barrel in index.ts
     repositories/               Domain repositories (Session, User) with row-to-domain mapping
     migrations/                 SQL migration files (numbered, hand-written for FTS)
-  embedder.ts                   Local embeddings via Xenova all-MiniLM-L6-v2
+  embedder.ts                   Voyage embedding client
   extracted-data.ts             Postgres-backed card load + FTS search via ts_rank
   ghs-utils.ts                  Shared helpers for GHS imports
   index-docs.ts                 Rule sources → chunks → embeddings → pgvector (npm run index)
@@ -809,7 +807,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 ## Tech Risks
 
-1. **Embedding quality.** The local Xenova model is chosen for simplicity, not for retrieval quality. If RAG accuracy isn't good enough at production scale, the planned upgrade is Voyage AI. The vector store (pgvector) doesn't change. Mitigation: monitor retrieval quality via LangSmith evals; swap embeddings if scores drop.
+1. **Embedding quality.** Squire uses Voyage AI embeddings after the SQR-247 retrieval bakeoff. The vector store (pgvector) is independent of the embedding provider. Mitigation: monitor retrieval quality via LangSmith evals and rerun provider bakeoffs when scores drop.
 
 2. **Browser-extension fragility (Phase 6).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM / localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
 

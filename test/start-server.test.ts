@@ -62,7 +62,7 @@ async function loadStartServer(options: {
       askReady: false,
       missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
       errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+        'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         'No card data found in Postgres. Run `npm run seed:cards` first.',
       ],
       capabilities: {
@@ -70,7 +70,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+            'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         },
         cards: {
           allowed: false,
@@ -81,7 +81,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+            'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         },
       },
     }),
@@ -97,7 +97,7 @@ async function loadStartServer(options: {
       askReady: false,
       missingBootstrapSteps: ['npm run index', 'npm run seed:cards'],
       errors: [
-        'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+        'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         'No card data found in Postgres. Run `npm run seed:cards` first.',
       ],
       capabilities: {
@@ -105,7 +105,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+            'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         },
         cards: {
           allowed: false,
@@ -116,7 +116,7 @@ async function loadStartServer(options: {
           allowed: false,
           reason: 'missing_index',
           message:
-            'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+            'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
         },
       },
     }),

@@ -47,7 +47,6 @@ const providerConfig: EvalProviderConfig = {
 describe('LangSmith native eval runner', () => {
   it('runs matrix rows through LangSmith evaluate with dataset examples', async () => {
     vi.stubEnv('SQUIRE_RETRIEVAL_EXPERIMENT_DATASET', '   ');
-    vi.stubEnv('SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT', '   ');
     mockEvaluate.mockImplementation(async (target, options) => {
       const output = await target(options.data[0].inputs);
       return {
@@ -125,7 +124,6 @@ describe('LangSmith native eval runner', () => {
           'squire-eval-native-run-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6',
         metadata: expect.objectContaining({
           retrievalExperimentDataset: null,
-          retrievalExperimentVariant: 'local',
         }),
         targetConcurrency: 2,
         evaluationConcurrency: 2,

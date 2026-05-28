@@ -31,7 +31,7 @@ describe('checkEmbeddingVersion', () => {
     warnSpy.mockRestore();
   });
 
-  it('no-ops silently when the embeddings table is empty', async () => {
+  it('no-ops silently when the rule-source embeddings table is empty', async () => {
     mockExecute.mockResolvedValueOnce({ rows: [] });
     await checkEmbeddingVersion();
     expect(warnSpy).not.toHaveBeenCalled();
@@ -47,21 +47,21 @@ describe('checkEmbeddingVersion', () => {
 
   it('logs a drift warning when a different version is present', async () => {
     mockExecute.mockResolvedValueOnce({
-      rows: [{ embedding_version: 'xenova-minilm-l6-v2.v0' }],
+      rows: [{ embedding_version: 'voyage-4-large:dim1024:old' }],
     });
     await checkEmbeddingVersion();
     expect(warnSpy).toHaveBeenCalledTimes(1);
     const message = warnSpy.mock.calls[0][0] as string;
     expect(message).toContain('EMBEDDING VERSION DRIFT');
     expect(message).toContain(EMBEDDING_VERSION);
-    expect(message).toContain('xenova-minilm-l6-v2.v0');
+    expect(message).toContain('voyage-4-large:dim1024:old');
   });
 
   it('warns when current + stale versions coexist (partial reindex silently mixes incompatible embeddings)', async () => {
     mockExecute.mockResolvedValueOnce({
       rows: [
         { embedding_version: EMBEDDING_VERSION },
-        { embedding_version: 'xenova-minilm-l6-v2.v0' },
+        { embedding_version: 'voyage-4-large:dim1024:old' },
       ],
     });
     await checkEmbeddingVersion();
@@ -72,11 +72,13 @@ describe('checkEmbeddingVersion', () => {
     const message = warnSpy.mock.calls[0][0] as string;
     expect(message).toContain('MIXED EMBEDDING VERSIONS');
     expect(message).toContain(EMBEDDING_VERSION);
-    expect(message).toContain('xenova-minilm-l6-v2.v0');
+    expect(message).toContain('voyage-4-large:dim1024:old');
   });
 
   it('swallows database errors with a non-fatal warning', async () => {
-    mockExecute.mockRejectedValueOnce(new Error('relation "embeddings" does not exist'));
+    mockExecute.mockRejectedValueOnce(
+      new Error('relation "rule_source_embeddings" does not exist'),
+    );
     await expect(checkEmbeddingVersion()).resolves.toBeUndefined();
     expect(warnSpy).toHaveBeenCalledTimes(1);
     const message = warnSpy.mock.calls[0][0] as string;

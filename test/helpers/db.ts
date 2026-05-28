@@ -44,8 +44,8 @@ export async function setupTestDb(): Promise<ReturnType<typeof createStandaloneD
 export async function resetTestDb(): Promise<void> {
   if (!db) throw new Error('resetTestDb called before setupTestDb');
   await db.execute(sql`
-    TRUNCATE llm_budget_warnings, llm_budget_ledger, messages, conversations, embeddings, oauth_audit_log, oauth_tokens,
-             oauth_authorization_codes, oauth_clients, sessions, users
+    TRUNCATE llm_budget_warnings, llm_budget_ledger, messages, conversations, rule_source_embeddings, embeddings,
+             oauth_audit_log, oauth_tokens, oauth_authorization_codes, oauth_clients, sessions, users
              RESTART IDENTITY CASCADE
   `);
 }

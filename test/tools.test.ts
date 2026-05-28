@@ -10,9 +10,10 @@
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import { sql } from 'drizzle-orm';
 
-const { mockSearch, mockGetEntryBySourceChunk } = vi.hoisted(() => ({
+const { mockSearch, mockGetEntryBySourceChunk, mockRerankRuleSourceHits } = vi.hoisted(() => ({
   mockSearch: vi.fn(),
   mockGetEntryBySourceChunk: vi.fn(),
+  mockRerankRuleSourceHits: vi.fn(async (_query: string, hits: unknown[]) => hits),
 }));
 
 vi.mock('../src/vector-store.ts', () => ({
@@ -21,7 +22,11 @@ vi.mock('../src/vector-store.ts', () => ({
 }));
 
 vi.mock('../src/embedder.ts', () => ({
-  embed: vi.fn().mockResolvedValue(Array(384).fill(0.05)),
+  embed: vi.fn().mockResolvedValue(Array(1024).fill(0.05)),
+}));
+
+vi.mock('../src/voyage-retrieval.ts', () => ({
+  rerankRuleSourceHits: mockRerankRuleSourceHits,
 }));
 
 import {

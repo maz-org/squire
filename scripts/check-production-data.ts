@@ -166,12 +166,12 @@ async function checkEmbeddings(db: Db): Promise<void> {
       COUNT(*)::int AS count,
       COUNT(DISTINCT source)::int AS source_count,
       COUNT(*) FILTER (WHERE content_hash IS NULL OR content_hash = '')::int AS missing_hash_count
-    FROM embeddings
+    FROM rule_source_embeddings
   `);
 
   const row = result.rows[0] ?? { count: 0, source_count: 0, missing_hash_count: 0 };
   if (row.count <= 0 || row.source_count <= 0) {
-    throw new Error('Embedding sanity check failed. The embeddings table is empty.');
+    throw new Error('Embedding sanity check failed. The rule_source_embeddings table is empty.');
   }
   if (row.missing_hash_count > 0) {
     throw new Error(
@@ -185,7 +185,7 @@ async function checkEmbeddings(db: Db): Promise<void> {
 }
 
 async function truncateEmbeddings(db: Db): Promise<void> {
-  await db.execute(sql`TRUNCATE TABLE embeddings`);
+  await db.execute(sql`TRUNCATE TABLE rule_source_embeddings`);
   console.log('OK truncated embeddings for a production rebuild.');
 }
 

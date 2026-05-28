@@ -17,10 +17,9 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { getDb } from './db.ts';
-import { embeddings as embeddingsTable } from './db/schema/core.ts';
+import { ruleSourceEmbeddings as embeddingsTable } from './db/schema/core.ts';
 import { DEFAULT_GAME_ID, requireGameId } from './game.ts';
 import type { GameId } from './game.ts';
-import { searchVoyageExperiment, usesVoyageExperimentEmbeddings } from './retrieval-experiment.ts';
 
 export interface IndexEntry {
   id: string;
@@ -57,7 +56,7 @@ export interface SearchOptions {
  * changes. Stamped onto every row inserted via `addEntries()` and checked
  * on server startup by `checkEmbeddingVersion()` as a drift guard.
  */
-export const EMBEDDING_VERSION = 'xenova-minilm-l6-v2.v1';
+export const EMBEDDING_VERSION = 'voyage-4-large:dim1024:prod-v1';
 
 const DEFAULT_GAME = DEFAULT_GAME_ID;
 
@@ -67,7 +66,7 @@ function resolveGame(game?: GameId | string): GameId {
 }
 
 /**
- * Ensure the HNSW cosine index exists on `embeddings.embedding`.
+ * Ensure the HNSW cosine index exists on `rule_source_embeddings.embedding`.
  *
  * Called by `index-docs.ts` after the bulk insert completes. HNSW is much
  * cheaper to build once against a populated table than to maintain during
@@ -79,8 +78,8 @@ function resolveGame(game?: GameId | string): GameId {
 export async function ensureHnswIndex(): Promise<void> {
   const { db } = getDb('server');
   await db.execute(sql`
-    CREATE INDEX IF NOT EXISTS embeddings_hnsw_idx
-      ON embeddings
+    CREATE INDEX IF NOT EXISTS rule_source_embeddings_hnsw_idx
+      ON rule_source_embeddings
       USING hnsw (embedding vector_cosine_ops)
   `);
 }
@@ -115,7 +114,8 @@ async function insertEntries(
 }
 
 /**
- * Upsert new rule-source chunk embeddings into the `embeddings` table.
+ * Upsert new rule-source chunk embeddings into the `rule_source_embeddings`
+ * table.
  *
  * Idempotent: uses `ON CONFLICT (game, source, chunk_index) DO NOTHING`, so
  * indexing the same source twice is a no-op. Changed sources should use
@@ -169,7 +169,8 @@ export async function replaceEntriesForSources(
 }
 
 /**
- * Return the set of `source` values already present in the embeddings table.
+ * Return the set of `source` values already present in the rule-source
+ * embeddings table.
  * Used by `index-docs.ts` to skip PDFs that are already indexed.
  */
 export async function getIndexedSources(
@@ -179,7 +180,7 @@ export async function getIndexedSources(
   try {
     const { db } = getDb('server');
     const rows = await db.execute<{ source: string }>(
-      sql`SELECT DISTINCT source FROM embeddings WHERE game = ${resolvedGame}`,
+      sql`SELECT DISTINCT source FROM rule_source_embeddings WHERE game = ${resolvedGame}`,
     );
     return new Set(rows.rows.map((r) => r.source));
   } catch (err) {
@@ -188,7 +189,8 @@ export async function getIndexedSources(
 }
 
 /**
- * Return PDF source hashes already represented in the embeddings table.
+ * Return PDF source hashes already represented in the rule-source embeddings
+ * table.
  *
  * A null hash means the source exists only as pre-SQR-47 rows. The indexer
  * treats that as stale because it cannot prove the derived chunks match the
@@ -208,7 +210,7 @@ export async function getIndexedSourceHashes(
           WHEN COUNT(DISTINCT content_hash) = 1 THEN MIN(content_hash)
           ELSE NULL
         END AS content_hash
-      FROM embeddings
+      FROM rule_source_embeddings
       WHERE game = ${resolvedGame}
       GROUP BY source
     `);
@@ -238,7 +240,7 @@ export async function deleteEntriesForSources(
 }
 
 /**
- * Top-k nearest-neighbour search over the `embeddings` table.
+ * Top-k nearest-neighbour search over the `rule_source_embeddings` table.
  *
  * Returns a `ScoredEntry[]` with the existing contract: `score` is a cosine
  * similarity in `[0, 1]` (high = more similar). See the module-level comment
@@ -250,9 +252,6 @@ export async function search(
   opts: SearchOptions = {},
 ): Promise<ScoredEntry[]> {
   const game = resolveGame(opts.game);
-  if (usesVoyageExperimentEmbeddings()) {
-    return searchVoyageExperiment(queryEmbedding, k, game);
-  }
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
   try {
@@ -272,7 +271,7 @@ export async function search(
         text,
         game,
         1 - (embedding <=> ${vectorLiteral}::vector) AS score
-      FROM embeddings
+      FROM rule_source_embeddings
       WHERE game = ${game}
       ORDER BY embedding <=> ${vectorLiteral}::vector
       LIMIT ${k}
@@ -310,7 +309,7 @@ export async function getEntryBySourceChunk(
       game: GameId;
     }>(sql`
       SELECT id, source, chunk_index, text, game
-      FROM embeddings
+      FROM rule_source_embeddings
       WHERE game = ${game}
         AND source = ${source}
         AND chunk_index = ${chunkIndex}
@@ -342,7 +341,7 @@ function wrapDbError(err: unknown): Error {
 }
 
 export const EMBEDDINGS_BOOTSTRAP_MESSAGE =
-  'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.';
+  'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.';
 
 export interface RetrievalBootstrapStatus {
   ready: boolean;
@@ -356,7 +355,7 @@ export async function getRetrievalBootstrapStatus(): Promise<RetrievalBootstrapS
   try {
     const { db } = getDb('server');
     const result = await db.execute<{ count: string }>(
-      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
+      sql`SELECT COUNT(*)::text AS count FROM rule_source_embeddings`,
     );
     const count = Number(result.rows[0]?.count ?? 0);
     if (count === 0) {
@@ -380,8 +379,9 @@ export async function getRetrievalBootstrapStatus(): Promise<RetrievalBootstrapS
 }
 
 /**
- * Bring the retrieval layer into a ready state: verify the embeddings table
- * is populated, warm the embedder, and run the embedding-version drift guard.
+ * Bring the retrieval layer into a ready state: verify the rule-source
+ * embeddings table is populated, warm the embedder, and run the
+ * embedding-version drift guard.
  *
  * Throws if the table is empty — that's an unrecoverable misconfiguration
  * (data not indexed yet) and the caller needs to surface it loudly.
@@ -401,19 +401,19 @@ export async function initializeRetrieval(
 }
 
 /**
- * Verify the embeddings persisted in Postgres were produced by the current
- * code's `EMBEDDING_VERSION`. Logs a loud warning on mismatch — does not
- * throw, because the server can still serve queries against stale embeddings,
- * the results just won't reflect any chunking/model changes.
+ * Verify the rule-source embeddings persisted in Postgres were produced by the
+ * current code's `EMBEDDING_VERSION`. Logs a loud warning on mismatch — does
+ * not throw, because the server can still serve queries against stale
+ * embeddings, the results just won't reflect any chunking/model changes.
  *
- * No-ops if the embeddings table is empty or doesn't exist (early dev before
- * migrations have run).
+ * No-ops if the rule-source embeddings table is empty or doesn't exist (early
+ * dev before migrations have run).
  */
 export async function checkEmbeddingVersion(): Promise<void> {
   try {
     const { db } = getDb('server');
     const result = await db.execute<{ embedding_version: string }>(
-      sql`SELECT DISTINCT embedding_version FROM embeddings`,
+      sql`SELECT DISTINCT embedding_version FROM rule_source_embeddings`,
     );
     const versions = result.rows.map((r) => r.embedding_version);
     if (versions.length === 0) return;
@@ -424,7 +424,7 @@ export async function checkEmbeddingVersion(): Promise<void> {
       const label = versions.length > 1 ? 'MIXED EMBEDDING VERSIONS' : 'EMBEDDING VERSION DRIFT';
       console.warn(
         `⚠️  ${label}: code expects "${EMBEDDING_VERSION}" but ` +
-          `embeddings table contains [${versions.join(', ')}]. ` +
+          `rule_source_embeddings table contains [${versions.join(', ')}]. ` +
           `Run \`npm run index\` to reindex.`,
       );
     }

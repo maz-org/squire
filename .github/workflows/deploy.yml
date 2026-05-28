@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 permissions:
+  actions: read
   contents: read
   deployments: write
 
@@ -42,6 +43,42 @@ jobs:
 
       - name: Verify Fly deploy token is configured
         run: test -n "$FLY_API_TOKEN"
+
+      - name: Wait for production rule-source reindex when retrieval changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          changed="$(git diff-tree --no-commit-id --name-only -r "$HEAD_SHA")"
+          if ! printf '%s\n' "$changed" | grep -Eq '^(data/pdfs/|data/rule-sources/|src/index-docs\.ts$|src/vector-store\.ts$|src/embedder\.ts$|src/retrieval-source\.ts$)'; then
+            echo "No production rule-source reindex needed for this deploy."
+            exit 0
+          fi
+
+          echo "Retrieval/indexing files changed; waiting for production reindex workflow for $HEAD_SHA."
+          run_id=""
+          for _ in {1..30}; do
+            run_id="$(
+              gh run list \
+                --workflow production-reindex-pdfs.yml \
+                --branch main \
+                --json databaseId,headSha \
+                --jq ".[] | select(.headSha == \"$HEAD_SHA\") | .databaseId" \
+                | head -n 1
+            )"
+            if [ -n "$run_id" ]; then
+              break
+            fi
+            sleep 10
+          done
+
+          if [ -z "$run_id" ]; then
+            echo "Production reindex workflow did not start for retrieval/indexing changes."
+            exit 1
+          fi
+
+          gh run watch "$run_id" --exit-status --interval 30
 
       - name: Deploy to Fly
         run: flyctl deploy -a maz-squire --remote-only
