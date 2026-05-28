@@ -1308,6 +1308,33 @@ describe('searchCards', () => {
     });
   });
 
+  it('applies level filters when a monster stat query falls through to ranked search', async () => {
+    const results = await searchCards('spirit shield elite l7', 6, {
+      game: 'gloomhaven-2e',
+    });
+
+    expect(results[0]).toMatchObject({
+      type: 'monster-stats',
+      data: {
+        name: 'Living Spirit',
+        levelRange: '4-7',
+        sourceId: 'gloomhavensecretariat:monster-stat/living-spirit/4-7',
+        elite: {
+          '7': {
+            hp: 10,
+          },
+        },
+      },
+    });
+    expect(
+      results.some(
+        (result) =>
+          result.type === 'monster-stats' &&
+          result.data.sourceId === 'gloomhavensecretariat:monster-stat/living-spirit/0-3',
+      ),
+    ).toBe(false);
+  });
+
   it('respects topK parameter', async () => {
     const results = await searchCards('attack', 2);
     expect(results.length).toBeLessThanOrEqual(2);

@@ -708,8 +708,8 @@ function cardMatchReason(query: string, record: Record<string, unknown>, type: C
 }
 
 function extractLevelQuery(query: string): number | null {
-  const match = query.match(/\blevel\s+(\d+)\b/i);
-  return match ? Number(match[1]) : null;
+  const match = query.match(/\b(?:level|lvl)\s+(\d+)\b|\bl\s*(\d+)\b/i);
+  return match ? Number(match[1] ?? match[2]) : null;
 }
 
 function levelRangeIncludes(levelRange: unknown, level: number): boolean {
@@ -732,7 +732,7 @@ function recordLevelMatches(
   if (typeof value === 'number') return value === level;
   if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value) === level;
 
-  return true;
+  return false;
 }
 
 function extractExactItemNumberQuery(query: string): number | null {
@@ -837,6 +837,7 @@ async function resolveCards(
     for (const { record } of ranked) {
       if (!cardTypes.includes(record._type)) continue;
       const stripped = stripInternalKeys(record);
+      if (level !== null && !recordLevelMatches(record._type, stripped, level)) continue;
       const sourceId = stripped.sourceId;
       if (typeof sourceId !== 'string') continue;
       candidates.push({
@@ -1129,8 +1130,16 @@ export async function searchCards(query: string, topK = 6, opts?: ToolOpts): Pro
   if (naturalLevelMatches.length > 0) return naturalLevelMatches;
 
   const ranked = await searchExtractedRanked(query, topK, normalizedOpts);
-  if (ranked.length === 0) return searchCardsByNaturalFields(query, topK, normalizedOpts);
-  return ranked.map(({ record, score }) => {
+  const rankedLevelMatches =
+    level === null
+      ? ranked
+      : ranked.filter(({ record }) =>
+          recordLevelMatches(record._type, stripInternalKeys(record), level),
+        );
+  if (rankedLevelMatches.length === 0) {
+    return searchCardsByNaturalFields(query, topK, normalizedOpts);
+  }
+  return rankedLevelMatches.map(({ record, score }) => {
     const { _type, ...rest } = record;
     return {
       type: _type,
