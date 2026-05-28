@@ -63,8 +63,8 @@ describe('eval dataset', () => {
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(59);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(37);
+    expect(cases).toHaveLength(60);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(38);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
   });
 
@@ -116,7 +116,7 @@ describe('eval dataset', () => {
     });
     expect(baselineCountsFor(cases, 'gloomhaven-2e')).toEqual({
       game: 'gloomhaven-2e',
-      finalAnswerCases: 17,
+      finalAnswerCases: 18,
       trajectoryCases: 11,
       boundaryCases: 2,
     });
@@ -200,6 +200,16 @@ describe('eval dataset', () => {
 
     expect(evalCase?.finalAnswer?.expected).toMatch(/character may use either/i);
     expect(evalCase?.finalAnswer?.grading).not.toMatch(/Frosthaven-specific character-choice/);
+  });
+
+  it('guards the GH2 high-level Living Spirit monster-stat smoke miss', () => {
+    const evalCase = cases.find(
+      (candidate) => candidate.id === 'gh2-monster-living-spirit-elite-level-7-hp',
+    );
+
+    expect(evalCase?.question).toMatch(/elite level 7 Living Spirit/i);
+    expect(evalCase?.finalAnswer?.expected).toMatch(/10 hit points/i);
+    expect(evalCase?.finalAnswer?.grading).toMatch(/levels 4-7/i);
   });
 
   it('treats read-now chain traversal as a neighbors requirement', () => {
