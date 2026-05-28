@@ -10,16 +10,11 @@
  *    (pgvector operator sign-flip)
  *  - `search()` honours the optional `game` filter (default 'frosthaven')
  *  - `getIndexedSources()` returns what `addEntries` wrote
- *  - Parity regression against the pre-migration flat-file top-6 snapshot
  */
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { sql } from 'drizzle-orm';
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 
-import { embeddings as embeddingsTable } from '../src/db/schema/core.ts';
+import { ruleSourceEmbeddings as embeddingsTable } from '../src/db/schema/core.ts';
 import { GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
 import {
   EMBEDDING_VERSION,
@@ -34,11 +29,8 @@ import type { IndexEntry } from '../src/vector-store.ts';
 
 import { setupTestDb, resetTestDb, teardownTestDb } from './helpers/db.ts';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const FIXTURES = join(__dirname, 'fixtures');
-
 // Helper: deterministic normalized vector pointing along a chosen axis.
-function axisVector(axis: number, dim = 384): number[] {
+function axisVector(axis: number, dim = 1024): number[] {
   const v = new Array<number>(dim).fill(0);
   v[axis] = 1;
   return v;
@@ -150,7 +142,7 @@ describe('addEntries', () => {
   it('handles an empty batch as a no-op', async () => {
     await addEntries([]);
     const result = await db.execute<{ count: string }>(
-      sql`SELECT COUNT(*)::text AS count FROM embeddings`,
+      sql`SELECT COUNT(*)::text AS count FROM rule_source_embeddings`,
     );
     expect(Number(result.rows[0].count)).toBe(0);
   });
@@ -341,6 +333,12 @@ describe('search', () => {
     expect(results).toEqual([]);
   });
 
+  it('rejects query embeddings with the wrong dimension before querying pgvector', async () => {
+    await expect(search([1, 0, 0], 5)).rejects.toThrow(
+      'Invalid query embedding dimension: expected 1024, got 3',
+    );
+  });
+
   it('defaults to game=frosthaven and filters out other games for the same query', async () => {
     const sharedText = 'When a monster dies, place a loot token.';
     await addEntries([
@@ -450,78 +448,4 @@ describe('getEntryBySourceChunk', () => {
       game: GLOOMHAVEN_2E_GAME_ID,
     });
   });
-});
-
-// ─── Parity regression (IRON RULE) ───────────────────────────────────────────
-
-describe('parity regression vs flat-file vector store', () => {
-  interface ParityEntry {
-    id: string;
-    text: string;
-    embedding: number[];
-    source: string;
-    chunkIndex: number;
-  }
-  interface QueryCase {
-    query: string;
-    expectedTopIds: string[];
-  }
-
-  // Lazy imports so vitest's file-level module graph doesn't pay the cost of
-  // the embedder cold start for test files that don't need it.
-  it('returns the same top-6 IDs as the pre-migration flat file', async () => {
-    const { embed } = await import('../src/embedder.ts');
-
-    const entries: ParityEntry[] = JSON.parse(
-      readFileSync(join(FIXTURES, 'vector-parity-fixture.json'), 'utf-8'),
-    );
-    const queries: QueryCase[] = JSON.parse(
-      readFileSync(join(FIXTURES, 'search-queries', 'rules.json'), 'utf-8'),
-    );
-
-    await addEntries(
-      entries.map((e) => ({
-        id: e.id,
-        text: e.text,
-        embedding: e.embedding,
-        source: e.source,
-        chunkIndex: e.chunkIndex,
-      })),
-    );
-
-    for (const { query, expectedTopIds } of queries) {
-      const v = await embed(query);
-      const hits = await search(v, 6);
-      // Compare as sets: pgvector and the old flat-file implementation can
-      // tie-break near-identical cosine scores in different orders, so the
-      // faithful parity assertion is "same 6 IDs retrieved," not "same order."
-      const gotIds = hits.map((h) => h.id).sort();
-      expect(gotIds, `query="${query}"`).toEqual([...expectedTopIds].sort());
-    }
-  }, 240_000);
-
-  it('surfaces section-book passages for the scenario 61 unlock question', async () => {
-    const { embed } = await import('../src/embedder.ts');
-
-    const entries: ParityEntry[] = JSON.parse(
-      readFileSync(join(FIXTURES, 'vector-parity-fixture.json'), 'utf-8'),
-    );
-
-    await addEntries(
-      entries.map((e) => ({
-        id: e.id,
-        text: e.text,
-        embedding: e.embedding,
-        source: e.source,
-        chunkIndex: e.chunkIndex,
-      })),
-    );
-
-    const hits = await search(
-      await embed('What section text unlocks scenario 61 (Life and Death) in Frosthaven?'),
-      6,
-    );
-
-    expect(hits.some((hit) => hit.source === 'fh-section-book-62-81.pdf')).toBe(true);
-  }, 240_000);
 });

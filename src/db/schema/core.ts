@@ -1,14 +1,13 @@
 /**
- * Core schema: users, sessions, embeddings.
+ * Core schema: users, sessions, rule-source embeddings.
  *
  * - `users` and `sessions` are shells in Phase 1 — populated a day later by the
  *   User Accounts project. They exist now so the auth tables can `references()`
  *   them and so SQR-32's migration can create everything in one shot.
- * - `embeddings` holds the indexed-book RAG vectors (replaces `data/index.json`).
- *   Includes `game` (default 'frosthaven') from day 1 — pulled forward from
- *   Phase 2 to avoid an ALTER TABLE later. Includes `embedding_version` as a
- *   code-vs-data drift guard (see tech spec §Drift guard), and `content_hash`
- *   so data-only PDF changes can invalidate stale derived rows.
+ * - `rule_source_embeddings` holds the active indexed-book RAG vectors.
+ *   Includes `game`, `embedding_version` as a code-vs-data drift guard (see
+ *   tech spec §Drift guard), and `content_hash` so data-only source changes can
+ *   invalidate stale derived rows.
  *
  * The HNSW index is declared via raw SQL in the migration (SQR-32) rather
  * than here, because Drizzle's index builder doesn't yet support pgvector
@@ -53,32 +52,21 @@ export const sessions = pgTable(
 
 // ─── Embeddings ─────────────────────────────────────────────────────────────
 
-export const embeddings = pgTable(
-  'embeddings',
+export const ruleSourceEmbeddings = pgTable(
+  'rule_source_embeddings',
   {
-    // Preserves the existing `${source}::${chunkIndex}` ID shape used today.
     id: text('id').primaryKey(),
-    source: text('source').notNull(), // PDF filename basename
+    source: text('source').notNull(),
     chunkIndex: integer('chunk_index').notNull(),
     text: text('text').notNull(),
-    // Xenova MiniLM-L6-v2 produces 384-dimensional pre-normalized vectors.
-    embedding: vector('embedding', { dimensions: 384 }).notNull(),
-    // `game` ships in Phase 1 so SQR-32 doesn't need an ALTER TABLE later.
-    // Phase 2 wires `index-docs.ts` to derive game from filename prefix.
+    // Voyage voyage-4-large produces 1024-dimensional vectors for this corpus.
+    embedding: vector('embedding', { dimensions: 1024 }).notNull(),
     game: text('game').notNull().default('frosthaven'),
-    // Bumped whenever chunking logic or the embedder changes — see drift guard.
     embeddingVersion: text('embedding_version').notNull(),
-    // SHA-256 of the source PDF bytes. Nullable so existing production rows can
-    // migrate without a table rewrite; the next index run backfills by reindexing.
     contentHash: text('content_hash'),
   },
   (t) => [
-    uniqueIndex('embeddings_game_source_chunk_idx').on(t.game, t.source, t.chunkIndex),
-    index('embeddings_game_idx').on(t.game),
-    // HNSW index is added in the migration (raw SQL) — Drizzle's index builder
-    // doesn't expose pgvector operator classes yet. Placeholder reference here
-    // so future readers know where to look:
-    //   CREATE INDEX embeddings_hnsw_idx ON embeddings
-    //     USING hnsw (embedding vector_cosine_ops);
+    uniqueIndex('rule_source_embeddings_game_source_chunk_idx').on(t.game, t.source, t.chunkIndex),
+    index('rule_source_embeddings_game_idx').on(t.game),
   ],
 );

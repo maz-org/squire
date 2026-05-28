@@ -54,7 +54,7 @@ vi.mock('../src/embedder.ts', () => ({
 
 vi.mock('../src/vector-store.ts', () => ({
   EMBEDDINGS_BOOTSTRAP_MESSAGE:
-    'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+    'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
   getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
   initializeRetrieval: mockInitializeRetrieval,
 }));
@@ -139,7 +139,7 @@ describe('initialize', () => {
       ready: false,
       indexSize: 0,
       error:
-        'Embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
+        'Rule-source embeddings table is empty. Run `npm run index` to populate the rule-source vector store.',
       missingStep: 'npm run index',
       reason: 'missing_index',
     });

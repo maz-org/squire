@@ -98,7 +98,7 @@ The checked-in extracts under `data/extracted/` are committed seed inputs and
 inspection artifacts, not the runtime store. At runtime, Postgres holds three
 separate retrieval layers:
 
-- `embeddings` for semantic book search (`npm run index`)
+- `rule_source_embeddings` for semantic book search (`npm run index`)
 - `card_*` tables for GHS card data (`npm run seed:cards`)
 - `scenario_book_scenarios`, `section_book_sections`, and `book_references`
   for exact scenario/section lookup (`npm run seed:scenario-section-books`)
@@ -259,7 +259,7 @@ adding a new endpoint or capability:
 
 Examples:
 
-- rule search depends on both the embeddings table and the embedder, because it
+- rule search depends on both the rule_source_embeddings table and the embedder, because it
   calls `embed(query)` on every request
 - card lookup depends on seeded card tables, but not on embedder warmup
 - ask depends on successful warmup as well as bootstrap data
@@ -497,8 +497,8 @@ new file type under `src/` or `test/`, add it to `lint-staged` and leave
 ## Data management
 
 Indexed rule sources live in `data/pdfs/` and `data/rule-sources/`.
-`src/index-docs.ts` (`npm run index`) chunks them, embeds each chunk with the
-local Xenova model, and upserts the result into the `embeddings` pgvector table.
+`src/index-docs.ts` (`npm run index`) chunks them, embeds each chunk with
+Voyage, and upserts the result into the `rule_source_embeddings` pgvector table.
 PDFs stay in `data/pdfs/`; HTML, Markdown, and plain-text rule snapshots stay
 in `data/rule-sources/`. Filenames must start with a supported game prefix
 (`fh-` or `gh2-`) so indexing can derive the `game` value. The
@@ -542,7 +542,7 @@ Local bootstrap on a fresh clone:
 docker compose up -d
 npm ci
 npm run db:migrate
-npm run index              # populates the embeddings table (~2 min)
+npm run index              # populates the rule_source_embeddings table
 npm run seed:dev           # seeds card_* tables, scenario/section-book tables, and the local dev user
 ```
 
@@ -685,7 +685,7 @@ src/
   import-scenarios.ts
   import-scenario-section-books.ts
   query.ts          # Thin CLI wrapper over service.ts
-  embedder.ts       # Local embedding via all-MiniLM-L6-v2
+  embedder.ts       # Voyage embedding client
   vector-store.ts   # pgvector cosine similarity search
   extracted-data.ts # Postgres-backed card load + FTS via ts_rank
   scenario-section-data.ts    # Postgres-backed exact scenario/section lookups + link following

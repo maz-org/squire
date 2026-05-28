@@ -43,7 +43,7 @@ const FROSTHAVEN_ITEM_EFFECT = 'During your attack ability, gain advantage on on
 
 const SHARED_VECTOR_SOURCE = 'shared-boundary-rulebook.pdf';
 
-function axisVector(axis: number, dim = 384): number[] {
+function axisVector(axis: number, dim = 1024): number[] {
   const v = new Array<number>(dim).fill(0);
   v[axis] = 1;
   return v;

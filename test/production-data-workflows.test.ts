@@ -190,6 +190,19 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('run: npm run production-data:check -- embeddings');
   });
 
+  it('waits for production rule-source reindex before Fly deploy when retrieval changed', async () => {
+    const workflow = await readProjectFile('.github/workflows/deploy.yml');
+
+    expect(workflow).toContain('actions: read');
+    expect(workflow).toContain('Wait for production rule-source reindex when retrieval changed');
+    expect(workflow).toContain('src/vector-store\\.ts');
+    expect(workflow).toContain('production-reindex-pdfs.yml');
+    expect(workflow).toContain('gh run watch "$run_id" --exit-status --interval 30');
+    expect(
+      workflow.indexOf('Wait for production rule-source reindex when retrieval changed'),
+    ).toBeLessThan(workflow.indexOf('- name: Deploy to Fly'));
+  });
+
   it('documents normal production data refresh and recovery paths', async () => {
     const runbook = await readProjectFile('docs/runbooks/production-operations.md');
 

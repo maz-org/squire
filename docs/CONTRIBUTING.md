@@ -241,7 +241,7 @@ fresh clone, bring up the local DB and populate it before running the server:
 docker compose up -d
 npm run db:migrate
 npm run db:migrate:test   # if you plan to run the test suite in this checkout
-npm run index        # chunks + embeds rule sources into the embeddings table (~2 min)
+npm run index        # chunks + embeds rule sources into rule_source_embeddings
 npm run seed:dev     # seeds card_* tables, scenario/section-book tables, and a local dev user
 ```
 
@@ -268,7 +268,7 @@ and browser QA fail once session cookies or CSRF checks are exercised.
 authenticated paths; refuses to run when `NODE_ENV=production`).
 
 `npm run index` is idempotent — re-running it skips source files that are
-already in the `embeddings` table. `npm run seed:cards` is also
+already in the `rule_source_embeddings` table. `npm run seed:cards` is also
 idempotent — it upserts on `(game, source_id)`, so stale rows get
 overwritten in place. By default it seeds Frosthaven's flat extracts and
 any game-scoped extract directories such as `data/extracted/gh2/`.

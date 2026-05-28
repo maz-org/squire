@@ -46,10 +46,10 @@ Given the app handles isolation, bootstrap is small:
 7. `npm run index` — extract + embed the Frosthaven PDFs into the per-worktree
    dev DB's vector store. Hash-keyed per source file, so the first run takes a
    minute or two and subsequent runs are an instant "Skipping (already
-   indexed)" sweep. **Best-effort:** the first run downloads
-   `Xenova/all-MiniLM-L6-v2` (~40MB). Both adapters wrap the command so that a
-   network failure doesn't block the dev server — `/chat` errors until
-   `npm run index` succeeds, but the rest of the app comes up.
+   indexed)" sweep. **Best-effort:** indexing requires `VOYAGE_API_KEY`. Both
+   adapters wrap the command so that a provider or network failure doesn't block
+   the dev server — `/chat` errors until `npm run index` succeeds, but the rest
+   of the app comes up.
 
 Steps 6 and 7 exist so `/chat` works immediately in a fresh worktree without
 a separate manual seed pass. The test DB is intentionally **not** seeded or
@@ -104,8 +104,8 @@ npm run db:migrate:test
 # Seeding + indexing are both best-effort. seed:dev touches card data,
 # scenario/section records, and the dev user — any of which can fail on
 # a flaky network or a parser change without being a reason to abort the
-# whole bootstrap. Indexing downloads ~40MB of embedding model on first
-# run. Dev server still comes up in either case; /chat errors until the
+# whole bootstrap. Indexing requires VOYAGE_API_KEY and provider access.
+# Dev server still comes up in either case; /chat errors until the
 # failing step succeeds.
 npm run seed:dev || echo "[worktree-setup] WARN: seeding failed — /chat may error until 'npm run seed:dev' succeeds" >&2
 npm run index || echo "[worktree-setup] WARN: indexing failed — /chat will error until 'npm run index' succeeds" >&2

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { embedVoyageExperiment } from '../src/retrieval-experiment.ts';
+import { embedVoyage, rerankRuleSourceHits } from '../src/voyage-retrieval.ts';
 
 const originalVoyageApiKey = process.env.VOYAGE_API_KEY;
 
@@ -8,7 +8,7 @@ function embedding(dimensions = 1024): number[] {
   return Array.from({ length: dimensions }, (_, index) => index / dimensions);
 }
 
-describe('embedVoyageExperiment', () => {
+describe('embedVoyage', () => {
   beforeEach(() => {
     process.env.VOYAGE_API_KEY = 'test-voyage-key';
   });
@@ -27,7 +27,7 @@ describe('embedVoyageExperiment', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await embedVoyageExperiment(['poison rules'], 'query');
+    const result = await embedVoyage(['poison rules'], 'query');
 
     expect(result).toHaveLength(1);
     expect(result[0]).toHaveLength(1024);
@@ -46,7 +46,7 @@ describe('embedVoyageExperiment', () => {
       ),
     );
 
-    await expect(embedVoyageExperiment(['poison rules'], 'query')).rejects.toThrow(
+    await expect(embedVoyage(['poison rules'], 'query')).rejects.toThrow(
       'parseVoyageEmbeddings: item 0 returned 2 dimension(s), expected 1024.',
     );
   });
@@ -63,7 +63,7 @@ describe('embedVoyageExperiment', () => {
       ),
     );
 
-    await expect(embedVoyageExperiment(['poison rules'], 'query')).rejects.toThrow(
+    await expect(embedVoyage(['poison rules'], 'query')).rejects.toThrow(
       'parseVoyageEmbeddings: item 0 dimension 7 was not finite.',
     );
   });
@@ -78,12 +78,64 @@ describe('embedVoyageExperiment', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = expect(embedVoyageExperiment(['poison rules'], 'query')).rejects.toThrow(
-      'retrieval experiment provider request failed after retries: aborted',
+    const result = expect(embedVoyage(['poison rules'], 'query')).rejects.toThrow(
+      'Voyage retrieval provider request failed after retries: aborted',
     );
 
     await vi.runAllTimersAsync();
     await result;
     expect(fetchMock).toHaveBeenCalledTimes(6);
+  });
+});
+
+describe('rerankRuleSourceHits', () => {
+  beforeEach(() => {
+    process.env.VOYAGE_API_KEY = 'test-voyage-key';
+  });
+
+  afterEach(() => {
+    process.env.VOYAGE_API_KEY = originalVoyageApiKey;
+    vi.unstubAllGlobals();
+  });
+
+  it('uses Voyage rerank scores and preserves unreturned vector hits after reranked hits', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          data: [{ index: 1, relevance_score: 0.97 }],
+        }),
+      ),
+    );
+
+    const result = await rerankRuleSourceHits(
+      'poison',
+      [
+        {
+          id: 'a',
+          text: 'first',
+          source: 'rules.pdf',
+          chunkIndex: 0,
+          game: 'frosthaven',
+          score: 0.91,
+          scoreKind: 'vector',
+        },
+        {
+          id: 'b',
+          text: 'second',
+          source: 'faq.html',
+          chunkIndex: 1,
+          game: 'frosthaven',
+          score: 0.9,
+          scoreKind: 'vector',
+        },
+      ],
+      1,
+    );
+
+    expect(result.map((hit) => [hit.id, hit.scoreKind, hit.score])).toEqual([
+      ['b', 'rerank', 0.97],
+      ['a', 'vector', 0.91],
+    ]);
   });
 });

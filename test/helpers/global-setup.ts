@@ -8,7 +8,8 @@
  *
  * The card tables are read-only for tests, so a single seed at the start of
  * the run is sufficient. Other tables that mutate during tests
- * (`embeddings`, oauth_*, etc.) are still reset per-test by `resetTestDb`.
+ * (`rule_source_embeddings`, oauth_*, etc.) are still reset per-test by
+ * `resetTestDb`.
  */
 import { sql } from 'drizzle-orm';
 

@@ -8,6 +8,14 @@ Run a dev-only bakeoff using the existing LangSmith-backed eval datasets, pick a
 winner, delete the temporary experiment harness, and ship only the winning
 retrieval stack.
 
+## Outcome
+
+The bakeoff selected Voyage embeddings plus Voyage rerank. The final production
+runtime uses `voyage-4-large` 1024-dimensional embeddings in
+`rule_source_embeddings` and Voyage `rerank-2.5` for rule-source reranking.
+Temporary provider switching, Cohere support, the local runtime fallback, and
+the experiment indexing script were removed before shipping the winner.
+
 The shipped PR must not preserve generic provider switching, experiment
 variants, local fallback, or unused provider data. It should contain the winner's
 schema, indexer, runtime retrieval path, readiness checks, docs, and final eval

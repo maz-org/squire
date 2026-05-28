@@ -165,8 +165,8 @@ attacker could run up significant costs.
   embedding + Claude API
 - Amplification via long conversation histories — passing large
   `history` arrays increases token consumption
-- MCP tool abuse — `search_rules` triggers local embedding per call,
-  exhausting CPU
+- MCP tool abuse — `search_knowledge` triggers Voyage embedding per call,
+  increasing provider spend
 
 **Mitigations:**
 
@@ -322,8 +322,8 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 **Attack scenarios:**
 
-- Flood `/api/search/rules` — each request runs the local embedding
-  model (CPU-bound)
+- Flood `/api/search/rules` — each request runs Voyage embedding
+  (provider-bound)
 - Flood `/mcp` with a valid bearer token — each request creates a new McpServer + transport
   (memory-bound)
 - Large `topK` values (capped at 100, but 100 results times concurrent

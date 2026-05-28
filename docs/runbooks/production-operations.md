@@ -238,12 +238,13 @@ rows for removed rule sources are deleted. Use this path for ordinary source
 updates and chunking changes.
 
 Manual rebuild mode accepts `rebuild: true`. Because that truncates the
-`embeddings` table before running `npm run index`, it should only be used for a
-deliberate embedding model/version change or a known corrupt index. The
-protected GitHub `production` environment is the approval gate for that rebuild.
-After changing the embedding model or vector dimensions, confirm the migration
-path first; a model-only change with the same dimensions can use rebuild mode,
-while a dimensionality change needs a schema migration before indexing.
+`rule_source_embeddings` table before running `npm run index`, it should only be
+used for a deliberate embedding model/version change or a known corrupt index.
+The protected GitHub `production` environment is the approval gate for that
+rebuild. After changing the embedding model or vector dimensions, confirm the
+migration path first; a model-only change with the same dimensions can use
+rebuild mode, while a dimensionality change needs a schema migration before
+indexing.
 
 ### Partial failure recovery
 
@@ -258,8 +259,8 @@ cause:
 - Card or scenario/section seed failure: fix the checked-in extract or seed code,
   merge the fix, then rerun the relevant workflow.
 - Rule-source indexing failure: rerun normal mode after fixing the source file
-  or indexing code. Use `rebuild: true` only when the existing `embeddings` rows
-  are known to be wrong as a set.
+  or indexing code. Use `rebuild: true` only when the existing
+  `rule_source_embeddings` rows are known to be wrong as a set.
 
 ## Post-deploy checks
 

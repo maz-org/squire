@@ -4,7 +4,6 @@
  */
 
 import { embed } from './embedder.ts';
-import { rerankExperimentHits, retrievalExperimentVariant } from './retrieval-experiment.ts';
 import { formatRetrievalSourceLabel } from './retrieval-source.ts';
 import {
   ruleSourceLocator,
@@ -14,6 +13,7 @@ import {
 } from './rule-source-provenance.ts';
 import { getEntryBySourceChunk, search } from './vector-store.ts';
 import type { ScoredEntry } from './vector-store.ts';
+import { rerankRuleSourceHits } from './voyage-retrieval.ts';
 import {
   countsByType,
   formatExtracted,
@@ -1045,18 +1045,17 @@ async function linksFor(
  * similarity score.
  *
  * `opts.game` is threaded through to `vector-store.search`, which filters
- * on the `game` column of the embeddings table. Defaults to `'frosthaven'`
- * when omitted.
+ * on the `game` column of the rule-source embeddings table. Defaults to
+ * `'frosthaven'` when omitted.
  */
 export async function searchRules(query: string, topK = 6, opts?: ToolOpts): Promise<RuleResult[]> {
   const queryEmbedding = await embed(query);
   const { game } = normalizeToolOpts(opts);
   const candidateLimit = currentRuleSourceCandidateLimit(topK, game, query);
-  const experimentCandidateLimit =
-    retrievalExperimentVariant() === 'local' ? candidateLimit : Math.max(candidateLimit, 40);
-  const hits: ScoredEntry[] = await rerankExperimentHits(
+  const rerankCandidateLimit = Math.max(candidateLimit, 40);
+  const hits: ScoredEntry[] = await rerankRuleSourceHits(
     query,
-    await search(queryEmbedding, experimentCandidateLimit, { game }),
+    await search(queryEmbedding, rerankCandidateLimit, { game }),
     topK,
   );
 
@@ -1575,11 +1574,10 @@ export async function searchKnowledge(
   if (scope.includes('rules_passage')) {
     const queryEmbedding = await embed(query);
     const candidateLimit = currentRuleSourceCandidateLimit(perScope, game, query);
-    const experimentCandidateLimit =
-      retrievalExperimentVariant() === 'local' ? candidateLimit : Math.max(candidateLimit, 40);
-    const rules = await rerankExperimentHits(
+    const rerankCandidateLimit = Math.max(candidateLimit, 40);
+    const rules = await rerankRuleSourceHits(
       query,
-      await search(queryEmbedding, experimentCandidateLimit, { game }),
+      await search(queryEmbedding, rerankCandidateLimit, { game }),
       perScope,
     );
     hits.push(

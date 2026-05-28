@@ -191,8 +191,6 @@ export async function runLangSmithNativeEvalMatrix(
             runLabel: options.runLabel,
             datasetName,
             retrievalExperimentDataset: trimmedEnvValue('SQUIRE_RETRIEVAL_EXPERIMENT_DATASET'),
-            retrievalExperimentVariant:
-              trimmedEnvValue('SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT') ?? 'local',
             selection: options.selection,
             agentRuntime,
             provider: providerConfig.provider,
