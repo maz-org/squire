@@ -6,6 +6,7 @@ import {
   assertProductionDatabaseUrl,
   getProductionDatabaseConnectionUrl,
   getProductionDatabaseTargetUrl,
+  parseProductionDataOptions,
 } from '../scripts/check-production-data.ts';
 
 async function readProjectFile(path: string): Promise<string> {
@@ -33,6 +34,9 @@ describe('production data lifecycle workflows', () => {
     );
     expect(packageJson.scripts?.['production-data:check']).toBe(
       'node scripts/check-production-data.ts',
+    );
+    expect(packageJson.scripts?.['production-data:smoke']).toBe(
+      'node scripts/check-production-data.ts smoke',
     );
     expect(packageJson.scripts?.['production-data:truncate-embeddings']).toBe(
       'node scripts/check-production-data.ts truncate-embeddings',
@@ -119,6 +123,32 @@ describe('production data lifecycle workflows', () => {
     ).toThrow(/local Fly proxy/);
   });
 
+  it('parses production data check commands with explicit game scopes', () => {
+    expect(parseProductionDataOptions(['cards'])).toEqual({
+      command: 'cards',
+      games: ['frosthaven', 'gloomhaven-2e'],
+    });
+    expect(parseProductionDataOptions(['embeddings', '--game', 'gh2'])).toEqual({
+      command: 'embeddings',
+      games: ['gloomhaven-2e'],
+    });
+    expect(parseProductionDataOptions(['--game=gh2', 'smoke'])).toEqual({
+      command: 'smoke',
+      games: ['gloomhaven-2e'],
+    });
+    expect(
+      parseProductionDataOptions(['scenario-section-books'], {
+        SQUIRE_DATA_GAME: 'frosthaven',
+      }),
+    ).toEqual({
+      command: 'scenario-section-books',
+      games: ['frosthaven'],
+    });
+    expect(() => parseProductionDataOptions(['cards', '--game', 'jotl'])).toThrow(
+      /Unsupported game id/,
+    );
+  });
+
   it('seeds production card data only through the protected production environment', async () => {
     const workflow = await readProjectFile('.github/workflows/production-seed-cards.yml');
 
@@ -127,11 +157,18 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('data/extracted/**');
     expect(workflow).toContain('!data/extracted/scenario-section-books.json');
     expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('game:');
+    expect(workflow).toContain('options:');
+    expect(workflow).toContain('- all');
+    expect(workflow).toContain('- frosthaven');
+    expect(workflow).toContain('- gloomhaven-2e');
     expect(workflow).toContain('name: production');
     expect(workflow).toContain('FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}');
     expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
     expect(workflow).toContain('NODE_ENV: production');
     expect(workflow).toContain('SQUIRE_ENV: production');
+    expect(workflow).toContain("SQUIRE_DATA_GAME: ${{ github.event.inputs.game || 'all' }}");
+    expect(workflow).toContain("SQUIRE_SEED_GAME: ${{ github.event.inputs.game || 'all' }}");
     expect(workflow).toContain('superfly/flyctl-actions/setup-flyctl');
     expect(workflow).toContain('flyctl wireguard websockets enable');
     expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
@@ -139,7 +176,7 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain('run: npm run seed:cards');
-    expect(workflow).toContain('run: npm run production-data:check -- cards');
+    expect(workflow).toContain('npm run production-data:check -- cards --game "$SQUIRE_DATA_GAME"');
     expect(workflow).not.toContain('refresh-data');
   });
 
@@ -156,13 +193,21 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('src/seed/seed-scenario-section-books.ts');
     expect(workflow).toContain('scripts/seed-scenario-section-books.ts');
     expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('game:');
+    expect(workflow).toContain('- all');
+    expect(workflow).toContain('- frosthaven');
+    expect(workflow).toContain('- gloomhaven-2e');
     expect(workflow).toContain('name: production');
     expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain("SQUIRE_DATA_GAME: ${{ github.event.inputs.game || 'all' }}");
+    expect(workflow).toContain("SQUIRE_SEED_GAME: ${{ github.event.inputs.game || 'all' }}");
     expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain('run: npm run seed:scenario-section-books');
-    expect(workflow).toContain('run: npm run production-data:check -- scenario-section-books');
+    expect(workflow).toContain(
+      'npm run production-data:check -- scenario-section-books --game "$SQUIRE_DATA_GAME"',
+    );
   });
 
   it('indexes production rule sources with normal and protected rebuild modes', async () => {
@@ -178,16 +223,25 @@ describe('production data lifecycle workflows', () => {
     expect(workflow).toContain('src/retrieval-source.ts');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('rebuild:');
+    expect(workflow).toContain('game:');
+    expect(workflow).toContain('- all');
+    expect(workflow).toContain('- frosthaven');
+    expect(workflow).toContain('- gloomhaven-2e');
     expect(workflow).toContain('default: false');
     expect(workflow).toContain('name: production');
     expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain("SQUIRE_DATA_GAME: ${{ github.event.inputs.game || 'all' }}");
+    expect(workflow).toContain("SQUIRE_INDEX_GAME: ${{ github.event.inputs.game || 'all' }}");
     expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
     expect(workflow).toContain('run: npm run production-data:verify-db-url');
     expect(workflow).toContain('run: npm run db:migrate');
     expect(workflow).toContain("if: github.event_name == 'workflow_dispatch' && inputs.rebuild");
     expect(workflow).toContain('run: npm run production-data:truncate-embeddings');
     expect(workflow).toContain('run: npm run index');
-    expect(workflow).toContain('run: npm run production-data:check -- embeddings');
+    expect(workflow).toContain(
+      'npm run production-data:check -- embeddings --game "$SQUIRE_DATA_GAME"',
+    );
+    expect(workflow).toContain('npm run production-data:smoke -- --game "$SQUIRE_DATA_GAME"');
   });
 
   it('waits for production rule-source reindex before Fly deploy when retrieval changed', async () => {
@@ -220,7 +274,13 @@ describe('production data lifecycle workflows', () => {
       'npm run seed:cards',
       'npm run seed:scenario-section-books',
       'npm run index',
+      'npm run production-data:smoke',
+      'rules search',
+      'item lookup',
       'workflow_dispatch',
+      'frosthaven',
+      'gloomhaven-2e',
+      'both games',
       'rebuild',
       'embedding model/version change',
       'Partial failure',

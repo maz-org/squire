@@ -13,10 +13,11 @@ async function main(): Promise<void> {
   const { db, close } = getDb('cli');
   try {
     const explicitGame = process.env.SQUIRE_SEED_GAME ?? process.env.GHS_DATA_GAME;
-    const results = explicitGame
-      ? (await seedCards(db, { game: requireGameId(explicitGame) })).map((result) => ({
+    const game = explicitGame && explicitGame !== 'all' ? requireGameId(explicitGame) : null;
+    const results = game
+      ? (await seedCards(db, { game })).map((result) => ({
           ...result,
-          game: requireGameId(explicitGame),
+          game,
         }))
       : await seedAvailableCardGames(db);
     for (const r of results) {

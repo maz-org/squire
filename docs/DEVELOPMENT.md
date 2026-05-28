@@ -512,7 +512,13 @@ embedding row keys. When an official PDF is image-based, the metadata can also
 point at the normalized OCR snapshot used for indexing. To refresh an official
 source, replace the stable file in place, update the matching metadata record,
 refresh any normalized snapshot, and rerun `npm run index`; unchanged sources
-are skipped and changed sources are re-indexed by content hash.
+are skipped and changed sources are re-indexed by content hash. Set
+`SQUIRE_INDEX_GAME=frosthaven`, `SQUIRE_INDEX_GAME=gloomhaven-2e`, or
+`SQUIRE_INDEX_GAME=all` when you need to scope a local or production reindex to
+one game or both games. `npm run index` needs Postgres and `VOYAGE_API_KEY`.
+After indexing production data, `npm run production-data:smoke -- --game gh2`
+performs a real GH2 rules search, a GH2 item lookup, and a Frosthaven
+preservation check; it needs the production DB proxy plus `VOYAGE_API_KEY`.
 
 The current GH2 rulebook snapshot is the Apple Vision baseline, generated on
 macOS with:
@@ -565,18 +571,22 @@ CSRF validation enter the path.
 `npm run seed:cards` is idempotent — re-run it any time the extracted
 card JSON refreshes. By default it seeds Frosthaven's legacy flat files
 (`data/extracted/<type>.json`) and every game directory that exists
-(`data/extracted/gh2/<type>.json`). Set `SQUIRE_SEED_GAME=fh` or
-`SQUIRE_SEED_GAME=gh2` to seed only one game. It validates each record with the matching
-`SCHEMAS[type]` Zod schema and skips anything that fails (the failures are
-warned to stderr so you can see what got dropped). Records are upserted on
-`(game, source_id)`, so a stale card row gets overwritten in place.
+(`data/extracted/gh2/<type>.json`). Set `SQUIRE_SEED_GAME=frosthaven`,
+`SQUIRE_SEED_GAME=gloomhaven-2e`, or their `fh` / `gh2` aliases to seed only
+one game. `SQUIRE_SEED_GAME=all` is equivalent to leaving the variable unset.
+It validates each record with the matching `SCHEMAS[type]` Zod schema and skips
+anything that fails (the failures are warned to stderr so you can see what got
+dropped). Records are upserted on `(game, source_id)`, so a stale card row gets
+overwritten in place.
 
 `npm run seed:scenario-section-books` is also idempotent. It replaces the
 `scenario_book_scenarios`, `section_book_sections`, and `book_references`
 rows for Frosthaven from `data/extracted/scenario-section-books.json` and
 for GH2 from `data/extracted/gh2/scenario-section-books.json` when present.
 GH2 section rows are structured GHS metadata summaries, not printed section
-book prose.
+book prose. It uses the same `SQUIRE_SEED_GAME=frosthaven`,
+`SQUIRE_SEED_GAME=gloomhaven-2e`, and `SQUIRE_SEED_GAME=all` scope as card
+seeding.
 
 As of SQR-56 and SQR-103, runtime reads come from Postgres only:
 

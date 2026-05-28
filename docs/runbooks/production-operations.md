@@ -175,6 +175,18 @@ the environment secret `PRODUCTION_DATABASE_URL` to `DATABASE_URL`. They also se
 running migrations, and fail rather than silently writing to localhost or an
 obvious dev/test database.
 
+Manual runs for card data, scenario/section-book data, and rule-source
+embeddings include a `game` input:
+
+- `all` seeds or indexes both games.
+- `frosthaven` scopes the run to Frosthaven only.
+- `gloomhaven-2e` scopes the run to Gloomhaven (2nd Edition) only.
+
+Push-triggered runs default to `all`. Use the game-scoped runs for recovery,
+partial refreshes, and GH2-only verification. The production checks use the
+same scope, so a GH2-only run proves GH2 tables without depending on Frosthaven
+row counts, and a Frosthaven-only run leaves GH2 rows alone.
+
 ### Card data
 
 `Production seed card data` runs on merges to `main` that change
@@ -188,12 +200,14 @@ The workflow runs:
 npm run production-data:verify-db-url
 npm run db:migrate
 npm run seed:cards
-npm run production-data:check -- cards
+npm run production-data:check -- cards --game "$SQUIRE_DATA_GAME"
 ```
 
 `npm run seed:cards` is idempotent: it upserts current card rows and prunes rows
 that disappeared from the checked-in extract. The final sanity check requires
-every `card_*` table to contain data.
+every supported `card_*` table for the selected game to contain data. GH2
+building cards are intentionally excluded until upstream GHS publishes that
+data.
 
 ### Scenario and section books
 
@@ -208,7 +222,7 @@ The workflow runs:
 npm run production-data:verify-db-url
 npm run db:migrate
 npm run seed:scenario-section-books
-npm run production-data:check -- scenario-section-books
+npm run production-data:check -- scenario-section-books --game "$SQUIRE_DATA_GAME"
 ```
 
 `npm run seed:scenario-section-books` is safe to rerun. The sanity check requires
@@ -229,17 +243,23 @@ Normal mode runs:
 npm run production-data:verify-db-url
 npm run db:migrate
 npm run index
-npm run production-data:check -- embeddings
+npm run production-data:check -- embeddings --game "$SQUIRE_DATA_GAME"
+npm run production-data:smoke -- --game "$SQUIRE_DATA_GAME"
 ```
 
 Normal `npm run index` mode is content-hash based: unchanged rule sources are
 skipped, changed rule sources are re-indexed, new rule sources are added, and
-rows for removed rule sources are deleted. Use this path for ordinary source
-updates and chunking changes.
+rows for removed rule sources are deleted for the selected game only. Use this
+path for ordinary source updates and chunking changes. The smoke check performs
+a real game-scoped rules search and an item lookup. A GH2-scoped smoke run also
+checks a Frosthaven item and rules search so a GH2 refresh cannot silently break
+the existing Frosthaven table flow.
 
 Manual rebuild mode accepts `rebuild: true`. Because that truncates the
-`rule_source_embeddings` table before running `npm run index`, it should only be
-used for a deliberate embedding model/version change or a known corrupt index.
+selected `rule_source_embeddings` scope before running `npm run index`, it
+should only be used for a deliberate embedding model/version change or a known
+corrupt index. `game: all` truncates both games; `game: frosthaven` and
+`game: gloomhaven-2e` rebuild only that game's rows.
 The protected GitHub `production` environment is the approval gate for that
 rebuild. After changing the embedding model or vector dimensions, confirm the
 migration path first; a model-only change with the same dimensions can use

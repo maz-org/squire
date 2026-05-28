@@ -22,7 +22,7 @@ import {
   replaceEntriesForSources,
 } from './vector-store.ts';
 import type { IndexEntry } from './vector-store.ts';
-import { SUPPORTED_GAME_IDS, gameIdFromSourceFilename } from './game.ts';
+import { SUPPORTED_GAME_IDS, gameIdFromSourceFilename, requireGameId } from './game.ts';
 import type { GameId } from './game.ts';
 
 // Re-exported so seed / deployment workflows can reference the current value.
@@ -168,6 +168,12 @@ function discoverSourceDocuments(): SourceDocument[] {
   }));
 
   return [...pdfSources, ...normalizedTextSources];
+}
+
+export function resolveIndexGames(env: NodeJS.ProcessEnv = process.env): GameId[] {
+  const rawGame = env.SQUIRE_INDEX_GAME ?? env.SQUIRE_DATA_GAME ?? env.GHS_DATA_GAME;
+  if (!rawGame || rawGame === 'all') return [...SUPPORTED_GAME_IDS];
+  return [requireGameId(rawGame)];
 }
 
 /** Split text on double-newline boundaries into paragraphs. */
@@ -378,15 +384,17 @@ async function extractSourceText(source: SourceDocument, bytes: Buffer): Promise
 }
 
 export async function main(): Promise<void> {
-  const files = discoverSourceDocuments();
-  console.log(`Found ${files.length} rule source(s) to index.`);
+  const games = resolveIndexGames();
+  const selectedGames = new Set<GameId>(games);
+  const files = discoverSourceDocuments().filter((source) => selectedGames.has(source.game));
+  console.log(`Found ${files.length} rule source(s) to index for ${games.join(', ')}.`);
 
   const indexedSourceHashesByGame = new Map<string, Map<string, string | null>>();
-  for (const game of SUPPORTED_GAME_IDS) {
+  for (const game of games) {
     indexedSourceHashesByGame.set(game, await getIndexedSourceHashes(game));
   }
 
-  for (const game of SUPPORTED_GAME_IDS) {
+  for (const game of games) {
     const indexedSourceHashes = indexedSourceHashesByGame.get(game) ?? new Map();
     const currentSources = new Set(
       files.filter((source) => source.game === game).map((source) => source.file),

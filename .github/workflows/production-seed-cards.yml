@@ -7,6 +7,16 @@ on:
       - 'data/extracted/**'
       - '!data/extracted/scenario-section-books.json'
   workflow_dispatch:
+    inputs:
+      game:
+        description: 'Game data to seed'
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - frosthaven
+          - gloomhaven-2e
 
 permissions:
   contents: read
@@ -27,6 +37,8 @@ jobs:
       PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
       NODE_ENV: production
       SQUIRE_ENV: production
+      SQUIRE_DATA_GAME: ${{ github.event.inputs.game || 'all' }}
+      SQUIRE_SEED_GAME: ${{ github.event.inputs.game || 'all' }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -75,7 +87,7 @@ jobs:
         run: npm run seed:cards
 
       - name: Sanity check card data
-        run: npm run production-data:check -- cards
+        run: npm run production-data:check -- cards --game "$SQUIRE_DATA_GAME"
 
       - name: Stop Fly Postgres proxy
         if: always()

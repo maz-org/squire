@@ -290,16 +290,19 @@ The web channel passes a `Session` domain object through the request lifecycle. 
 
 ## Game Dimension
 
-Squire targets multiple games in the \*haven family. Today: Frosthaven. Phase 2: Gloomhaven (2nd Edition). Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
+Squire targets multiple games in the \*haven family. Today: Frosthaven and Gloomhaven (2nd Edition). Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
 
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 
 - **Card records** carry an explicit `game` field: `'frosthaven' | 'gloomhaven-2e'` (extensible)
 - **Rule-source chunks** are implicitly tagged via filename prefix in `data/pdfs/` and `data/rule-sources/`: `fh-rule-book.pdf`, `gh2-rule-book.pdf`, `gh2-faq.html`, `gh2-errata.html`, etc. The `source` field in the vector store carries the basename.
 - **Atomic tools** accept an optional `game` filter parameter (e.g., `listCards('items', { game: 'gloomhaven-2e', prosperity: 4 })`)
-- **Agent system prompt** is told which game the user is asking about. Phase 2 uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
+- **Agent system prompt** is told which game the user is asking about. The current web UI uses a per-session game selector. Phase 4+ infers game from the user's active campaign.
 
-The `game` column ships in **Phase 1** as part of the Storage & Data Migration project — every `card_*` table and the `embeddings` table includes `game text not null default 'frosthaven'` from day 1. Atomic tools accept the optional `game` parameter but don't filter on it until Phase 2. Pulling the column forward avoids 11 ALTER TABLE migrations later when GH2 lands. The `game` field on **import records** (the JSON shape produced by `src/import-*.ts`) is still added in Phase 2 alongside the GH2 import scripts, since today's Frosthaven importers don't need it.
+The `game` column ships on every `card_*` table, every scenario/section-book
+table, and the `rule_source_embeddings` table. Runtime reads, import records,
+seeders, and the LangGraph agent all preserve that game scope so GH2 answers do
+not cite Frosthaven sources and Frosthaven answers do not cite GH2 sources.
 
 ---
 
@@ -373,8 +376,10 @@ Production data updates are decoupled from image deploys. The weekly GHS refresh
 workflow opens reviewable PRs for `data/extracted/`; after those PRs merge,
 environment-protected GitHub Actions seed the production card tables. Separate
 production workflows seed scenario/section-book data and re-index rule-source
-embeddings, with manual rebuild mode reserved for deliberate embedding
-model/version changes. The operator procedure lives in
+embeddings. Those workflows accept `all`, `frosthaven`, or `gloomhaven-2e`
+game scopes so operators can refresh one game without deleting or requiring
+rows for the other. Manual embedding rebuild mode is reserved for deliberate
+embedding model/version changes or known corrupt indexes. The operator procedure lives in
 [docs/runbooks/production-operations.md](runbooks/production-operations.md).
 
 ### Character State
@@ -840,7 +845,7 @@ For developer setup, running the server, working on import scripts locally, and 
 
 5. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via LangSmith, model tiering (Haiku for cheap cases) when justified.
 
-6. **frosthaven-storyline.com may not support Gloomhaven (2nd Edition) (Phase 2 / Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by transition time, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 2 begins.
+6. **frosthaven-storyline.com may not support Gloomhaven (2nd Edition) (Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 when automated ingestion begins, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 6 begins.
 
 7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, scenario/section books, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
 
@@ -858,11 +863,18 @@ For developer setup, running the server, working on import scripts locally, and 
 
 - **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with LangSmith staying for LLM-specific observability), or stay LangSmith-only and skip APM until volume demands it?
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
-- **Storyline GH2 support (Phase 2 prerequisite).** Confirm whether frosthaven-storyline.com supports Gloomhaven (2nd Edition). If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
+- **Storyline GH2 support (Phase 6 input).** Confirm whether frosthaven-storyline.com supports Gloomhaven (2nd Edition) before automated character/campaign ingestion begins. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
 ---
 
 ## Changelog
+
+- **2026-05-27:** SQR-216 through SQR-219 refreshed the GH2 production data
+  architecture. Production card seeding, scenario/section-book seeding, and
+  rule-source reindexing now accept `all`, `frosthaven`, and `gloomhaven-2e`
+  scopes. The architecture now reflects that Frosthaven and Gloomhaven (2nd
+  Edition) are both current supported games, while campaign tracking and
+  automated ingestion remain later-phase work.
 
 - **2026-05-06:** SQR-59 picked the Phase 1 hosting platform: Fly.io app + Fly Managed Postgres (Basic) in one region, no staging. SQR-58 later put Route 53, CloudFront, and AWS WAF in front of the Fly origin with an origin-secret lock. App-to-DB traffic stays on private 6PN. Migrations run via `release_command` before traffic cutover. ARCHITECTURE.md §Deployment and §Cost updated to reflect the concrete pick. Reasoning, alternatives (Neon, Railway, Render, VPS, Cloudflare Workers), and re-evaluation triggers in [ADR 0016](adr/0016-phase-1-hosting-platform.md). Unblocks SQR-58 (WAF), SQR-42 (Dockerize), SQR-43 (migrate-on-deploy), SQR-44 (CI/CD).
 

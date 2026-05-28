@@ -1,6 +1,6 @@
 {
   "name": "squire",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Frosthaven AI assistant with RAG over rulebooks",
   "type": "module",
   "engines": {
@@ -23,6 +23,7 @@
     "sessions:sweep-expired": "node scripts/sweep-expired-sessions.ts",
     "production-data:verify-db-url": "node scripts/check-production-data.ts verify-url",
     "production-data:check": "node scripts/check-production-data.ts",
+    "production-data:smoke": "node scripts/check-production-data.ts smoke",
     "production-data:truncate-embeddings": "node scripts/check-production-data.ts truncate-embeddings",
     "query": "node src/query.ts",
     "serve": "node src/server.ts",

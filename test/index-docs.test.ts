@@ -65,6 +65,7 @@ import {
   htmlToIndexText,
   assertUsablePdfText,
   main,
+  resolveIndexGames,
 } from '../src/index-docs.ts';
 
 describe('splitIntoParagraphs', () => {
@@ -327,9 +328,23 @@ describe('chunkText', () => {
 describe('main', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.SQUIRE_INDEX_GAME;
+    delete process.env.SQUIRE_DATA_GAME;
+    delete process.env.GHS_DATA_GAME;
     mockDeleteEntriesForSources.mockResolvedValue(0);
     mockAddEntries.mockResolvedValue(undefined);
     mockReplaceEntriesForSources.mockResolvedValue(0);
+  });
+
+  it('resolves an optional game scope for production reindex workflows', () => {
+    expect(resolveIndexGames({})).toEqual(['frosthaven', 'gloomhaven-2e']);
+    expect(resolveIndexGames({ SQUIRE_INDEX_GAME: 'all' })).toEqual([
+      'frosthaven',
+      'gloomhaven-2e',
+    ]);
+    expect(resolveIndexGames({ SQUIRE_INDEX_GAME: 'gh2' })).toEqual(['gloomhaven-2e']);
+    expect(resolveIndexGames({ SQUIRE_DATA_GAME: 'frosthaven' })).toEqual(['frosthaven']);
+    expect(() => resolveIndexGames({ SQUIRE_INDEX_GAME: 'jotl' })).toThrow(/Unsupported game id/);
   });
 
   it('skips unchanged files already in the index', async () => {
@@ -562,6 +577,43 @@ describe('main', () => {
     expect(mockPdfParse).not.toHaveBeenCalled();
     expect(mockEmbedBatch).not.toHaveBeenCalled();
     expect(mockAddEntries).not.toHaveBeenCalled();
+  });
+
+  it('scopes stale deletion and indexing to the selected production game', async () => {
+    process.env.SQUIRE_INDEX_GAME = 'gh2';
+    const gh2Bytes = Buffer.from('gh2 changed pdf bytes');
+    mockReaddirSync.mockReturnValue(['fh-kept.pdf', 'gh2-changed.pdf']);
+    mockReadFileSync.mockImplementation((path) => {
+      if (String(path).endsWith('gh2-changed.pdf')) return gh2Bytes;
+      return Buffer.from('unexpected frosthaven read');
+    });
+    mockPdfParse.mockResolvedValue({ text: 'GH2 rules text. '.repeat(90) });
+    mockGetIndexedSourceHashes.mockImplementation((game: string) =>
+      Promise.resolve(
+        game === 'gloomhaven-2e'
+          ? new Map([
+              ['gh2-changed.pdf', 'old-hash'],
+              ['gh2-removed.pdf', 'removed-hash'],
+            ])
+          : new Map([['fh-removed.pdf', 'removed-fh-hash']]),
+      ),
+    );
+    mockEmbedBatch.mockResolvedValue([[0.2, 0.3]]);
+
+    await main();
+
+    expect(mockGetIndexedSourceHashes).toHaveBeenCalledTimes(1);
+    expect(mockGetIndexedSourceHashes).toHaveBeenCalledWith('gloomhaven-2e');
+    expect(mockDeleteEntriesForSources).toHaveBeenCalledWith(['gh2-removed.pdf'], 'gloomhaven-2e');
+    expect(mockDeleteEntriesForSources).not.toHaveBeenCalledWith(['fh-removed.pdf'], 'frosthaven');
+    expect(mockReplaceEntriesForSources).toHaveBeenCalledWith(
+      new Map([['gloomhaven-2e', ['gh2-changed.pdf']]]),
+      expect.any(Array),
+    );
+    const newEntries = mockReplaceEntriesForSources.mock.calls[0][1];
+    expect(new Set(newEntries.map((entry: { game: string }) => entry.game))).toEqual(
+      new Set(['gloomhaven-2e']),
+    );
   });
 
   it('keeps indexed rule source rows when the source file still exists', async () => {
