@@ -195,6 +195,7 @@ describe('production data lifecycle workflows', () => {
 
     expect(workflow).toContain('actions: read');
     expect(workflow).toContain('Wait for production rule-source reindex when retrieval changed');
+    expect(workflow).toContain('gh api "repos/${{ github.repository }}/commits/$HEAD_SHA"');
     expect(workflow).toContain('src/vector-store\\.ts');
     expect(workflow).toContain('production-reindex-pdfs.yml');
     expect(workflow).toContain('gh run watch "$run_id" --exit-status --interval 30');
