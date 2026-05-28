@@ -120,6 +120,7 @@ import {
   AGENT_SYSTEM_PROMPT,
   LEGACY_AGENT_SYSTEM_PROMPT,
   MAX_AGENT_ITERATIONS,
+  NEIGHBORS_TARGET_PROMPT,
 } from '../src/agent.ts';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -544,8 +545,7 @@ describe('runAgentLoop', () => {
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
     expect(mockMessagesCreate.mock.calls[2][0].messages).toContainEqual({
       role: 'user',
-      content:
-        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.',
+      content: NEIGHBORS_TARGET_PROMPT,
     });
   });
 
@@ -566,8 +566,7 @@ describe('runAgentLoop', () => {
     expect(result).toBe('I could not find an unlock from that scenario.');
     expect(mockMessagesCreate.mock.calls[1][0].messages).not.toContainEqual({
       role: 'user',
-      content:
-        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.',
+      content: NEIGHBORS_TARGET_PROMPT,
     });
   });
 
@@ -837,8 +836,7 @@ describe('runAgentLoop', () => {
 
     expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual({
       role: 'user',
-      content:
-        'If this neighbors result completes the requested traversal, use it as the traversal answer. If the question asks to show, open, quote, cite, list, or explain returned section/scenario content, call open_entity on the returned canonical ref before answering. Do not answer from a pointer alone when the user asked for the target text or its contents. Do not search for another path unless neighbors returned no relevant target.',
+      content: NEIGHBORS_TARGET_PROMPT,
     });
   });
 

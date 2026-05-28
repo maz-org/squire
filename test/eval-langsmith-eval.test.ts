@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { mockEvaluate } = vi.hoisted(() => ({
   mockEvaluate: vi.fn(),
@@ -12,6 +12,10 @@ import { runLangSmithNativeEvalMatrix } from '../eval/langsmith-eval.ts';
 import type { EvalProviderConfig } from '../eval/cli.ts';
 import type { EvalMatrixRunner } from '../eval/matrix.ts';
 import type { EvalCase } from '../eval/schema.ts';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const evalCase: EvalCase = {
   id: 'rule-poison',
@@ -42,6 +46,8 @@ const providerConfig: EvalProviderConfig = {
 
 describe('LangSmith native eval runner', () => {
   it('runs matrix rows through LangSmith evaluate with dataset examples', async () => {
+    vi.stubEnv('SQUIRE_RETRIEVAL_EXPERIMENT_DATASET', '   ');
+    vi.stubEnv('SQUIRE_RETRIEVAL_EXPERIMENT_VARIANT', '   ');
     mockEvaluate.mockImplementation(async (target, options) => {
       const output = await target(options.data[0].inputs);
       return {
@@ -117,6 +123,10 @@ describe('LangSmith native eval runner', () => {
         data: [expect.objectContaining({ id: 'example-rule-poison' })],
         experimentPrefix:
           'squire-eval-native-run-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6',
+        metadata: expect.objectContaining({
+          retrievalExperimentDataset: null,
+          retrievalExperimentVariant: 'local',
+        }),
         targetConcurrency: 2,
         evaluationConcurrency: 2,
       }),
@@ -140,6 +150,8 @@ describe('LangSmith native eval runner', () => {
       results: expect.arrayContaining([
         { key: 'failure_class', value: 'answer_quality' },
         { key: 'correctness', score: 0 },
+        { key: 'latency_ms', value: 250 },
+        { key: 'latency_seconds', score: 0.25 },
       ]),
     });
     expect(runner).toHaveBeenCalledWith(

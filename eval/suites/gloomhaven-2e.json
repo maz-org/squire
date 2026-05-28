@@ -5,7 +5,7 @@
     "question": "In Gloomhaven (2nd Edition), how is the recommended scenario level calculated?",
     "finalAnswer": {
       "expected": "At recommended difficulty, the scenario level is half the average character level, rounded up.",
-      "grading": "Must mention half the average character level and rounding up. Must answer for Gloomhaven (2nd Edition), not Frosthaven."
+      "grading": "Must mention half the average character level and rounding up. Must answer for Gloomhaven (2nd Edition), not Frosthaven. Do not penalize extra non-conflicting details about solo mode, open information variants, or adjustable difficulty if the standard recommended formula is clear."
     },
     "source": "gh2-rule-book.md",
     "game": "gloomhaven-2e",
@@ -215,7 +215,7 @@
     "question": "In Gloomhaven 2e, what is section 67.1, and which scenario is its parent?",
     "finalAnswer": {
       "expected": "Section 67.1 is The Last Stand. Its parent scenario is 55.",
-      "grading": "Must identify section 67.1 as The Last Stand and parent scenario 55. Must not use Frosthaven section 67.1."
+      "grading": "Must identify section 67.1 as The Last Stand and identify its parent as scenario 55. Accept answers that also note scenario 55 is titled The Last Stand. Must not use Frosthaven section 67.1."
     },
     "source": "data/extracted/gh2/scenario-section-books.json",
     "game": "gloomhaven-2e",

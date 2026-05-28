@@ -252,6 +252,33 @@ describe('searchRules', () => {
     expect(results.map((result) => result.sourceType)).toEqual(['rulebook', 'errata']);
   });
 
+  it('does not apply the vector score window to reranker scores', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-rule-book.pdf::10',
+        text: 'Reranker-selected printed rulebook answer.',
+        source: 'gh2-rule-book.pdf',
+        chunkIndex: 10,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.91,
+        scoreKind: 'rerank',
+      },
+      {
+        id: 'gh2-faq.html::3',
+        text: 'Lower-ranked FAQ clarification.',
+        source: 'gh2-faq.html',
+        chunkIndex: 3,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.88,
+        scoreKind: 'rerank',
+      },
+    ]);
+
+    const results = await searchRules('gh2 reranked rulebook question', 2, { game: 'gh2' });
+
+    expect(results.map((result) => result.sourceType)).toEqual(['rulebook', 'faq']);
+  });
+
   it('considers a small surplus of GH2 rule hits so close FAQ results can enter topK', async () => {
     mockSearch.mockImplementationOnce(async (_v: number[], k = 6) =>
       [
@@ -841,6 +868,39 @@ describe('searchKnowledge', () => {
       'faq',
       'rulebook',
     ]);
+  });
+
+  it('preserves reranker ordering in rules-passage knowledge search', async () => {
+    mockSearch.mockResolvedValueOnce([
+      {
+        id: 'gh2-rule-book.pdf::10',
+        text: 'Reranker-selected printed rulebook answer.',
+        source: 'gh2-rule-book.pdf',
+        chunkIndex: 10,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.91,
+        scoreKind: 'rerank',
+      },
+      {
+        id: 'gh2-faq.html::3',
+        text: 'Lower-ranked FAQ clarification.',
+        source: 'gh2-faq.html',
+        chunkIndex: 3,
+        game: GLOOMHAVEN_2E_GAME_ID,
+        score: 0.88,
+        scoreKind: 'rerank',
+      },
+    ]);
+
+    const result = await searchKnowledge('gh2 reranked rulebook question', {
+      scope: ['rules_passage'],
+      limit: 2,
+      game: 'gh2',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.results.map((hit) => hit.citations[0]?.sourceType)).toEqual(['rulebook', 'faq']);
   });
 
   it.each([

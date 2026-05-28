@@ -108,6 +108,8 @@ export function filterEvalCases(cases: EvalCase[], filters: EvalCaseFilters): Ev
 }
 
 export function langSmithDatasetNameForCase(evalCase: EvalCase): string {
+  const experimentDataset = process.env.SQUIRE_RETRIEVAL_EXPERIMENT_DATASET?.trim();
+  if (experimentDataset) return experimentDataset;
   if (evalCase.suite === 'cross-game-boundary') return CROSS_GAME_BOUNDARY_DATASET_NAME;
   return `squire/${evalCase.game}/${evalCase.suite}`;
 }

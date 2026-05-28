@@ -20,6 +20,7 @@ import { getDb } from './db.ts';
 import { embeddings as embeddingsTable } from './db/schema/core.ts';
 import { DEFAULT_GAME_ID, requireGameId } from './game.ts';
 import type { GameId } from './game.ts';
+import { searchVoyageExperiment, usesVoyageExperimentEmbeddings } from './retrieval-experiment.ts';
 
 export interface IndexEntry {
   id: string;
@@ -43,6 +44,7 @@ export interface ScoredEntry {
   chunkIndex: number;
   game: GameId;
   score: number;
+  scoreKind?: 'vector' | 'rerank';
 }
 
 export interface SearchOptions {
@@ -248,6 +250,9 @@ export async function search(
   opts: SearchOptions = {},
 ): Promise<ScoredEntry[]> {
   const game = resolveGame(opts.game);
+  if (usesVoyageExperimentEmbeddings()) {
+    return searchVoyageExperiment(queryEmbedding, k, game);
+  }
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
   try {
@@ -281,6 +286,7 @@ export async function search(
       game: r.game,
       // Postgres numeric arithmetic can return strings in edge cases; coerce.
       score: Number(r.score),
+      scoreKind: 'vector',
     }));
   } catch (err) {
     throw wrapDbError(err);
@@ -320,6 +326,7 @@ export async function getEntryBySourceChunk(
       text: row.text,
       game: row.game,
       score: 1,
+      scoreKind: 'vector',
     };
   } catch (err) {
     throw wrapDbError(err);
