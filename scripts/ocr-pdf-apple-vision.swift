@@ -124,7 +124,7 @@ for index in 0..<document.pageCount {
 
 let header =
   """
-  # Gloomhaven: Second Edition Rulebook OCR Text Snapshot
+  # Gloomhaven (2nd Edition) Rulebook OCR Text Snapshot
 
   Source PDF: \(arguments.inputPath)
   Official source URL: \(arguments.sourceURL)

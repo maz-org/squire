@@ -7,7 +7,7 @@
     "sourceType": "rulebook",
     "sourceUrl": "https://drive.google.com/file/d/16TmmCKa6zVVObj2qM-vIj9RcEAC3nfMT/view?usp=sharing",
     "capturedAt": "2026-05-24",
-    "refreshNotes": "Official Gloomhaven 2.0 rulebook linked from the Cephalofair Gloomhaven page. The linked PDF is image-based, so indexing uses the normalized OCR text snapshot in data/rule-sources/gh2-rule-book.md. Refresh by replacing the PDF with the current linked file, regenerating the OCR snapshot with scripts/ocr-pdf-apple-vision.swift, and preserving both stable filenames."
+    "refreshNotes": "Official Gloomhaven (2nd Edition) rulebook linked from the Cephalofair Gloomhaven page. The linked PDF is image-based, so indexing uses the normalized OCR text snapshot in data/rule-sources/gh2-rule-book.md. Refresh by replacing the PDF with the current linked file, regenerating the OCR snapshot with scripts/ocr-pdf-apple-vision.swift, and preserving both stable filenames."
   },
   {
     "id": "gh2-faq",
@@ -17,7 +17,7 @@
     "sourceUrl": "https://cephalofairgames.github.io/gloomhaven2e-faq/",
     "capturedAt": "2026-05-24",
     "sourceLastUpdated": "2026-04-19",
-    "refreshNotes": "Official Gloomhaven: Second Edition FAQ HTML snapshot. The page showed Last Updated 2026-04-19 when captured. Use for retrieval and citation indexing only; do not use for model training."
+    "refreshNotes": "Official Gloomhaven (2nd Edition) FAQ HTML snapshot. The page showed Last Updated 2026-04-19 when captured. Use for retrieval and citation indexing only; do not use for model training."
   },
   {
     "id": "gh2-errata",
