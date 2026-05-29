@@ -49,6 +49,11 @@ export interface ScoredEntry {
 export interface SearchOptions {
   /** Game filter. Defaults to `'frosthaven'`. */
   game?: GameId | string;
+  /**
+   * Optional source prefix filter. Production callers omit this; eval callers
+   * use it to keep temporary chunks isolated while preserving pgvector ordering.
+   */
+  sourcePrefix?: string;
 }
 
 /**
@@ -64,6 +69,10 @@ const EXPECTED_EMBEDDING_DIMENSIONS = 1024;
 function resolveGame(game?: GameId | string): GameId {
   if (game === undefined) return DEFAULT_GAME;
   return requireGameId(game);
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (match) => `\\${match}`);
 }
 
 /**
@@ -260,6 +269,9 @@ export async function search(
 
   const game = resolveGame(opts.game);
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
+  const sourcePrefixFilter = opts.sourcePrefix
+    ? sql`AND source LIKE ${`${escapeLikePattern(opts.sourcePrefix)}%`} ESCAPE '\\'`
+    : sql``;
 
   try {
     const { db } = getDb('server');
@@ -280,6 +292,7 @@ export async function search(
         1 - (embedding <=> ${vectorLiteral}::vector) AS score
       FROM rule_source_embeddings
       WHERE game = ${game}
+        ${sourcePrefixFilter}
       ORDER BY embedding <=> ${vectorLiteral}::vector
       LIMIT ${k}
     `);
