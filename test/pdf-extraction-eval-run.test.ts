@@ -146,4 +146,55 @@ describe('PDF extraction eval run', () => {
     expect(result.manifest.normalizedArtifactPath).toContain('/normalized/apple-vision/');
     expect(result.report.failureModes.map((mode) => mode.id)).toContain('reading-order');
   });
+
+  it('loads the checked-in ground truth when the caller runs outside the repo root', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const cwd = process.cwd();
+    process.chdir(await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-cwd-')));
+
+    try {
+      const registry = createProviderRegistry();
+      registry.register({
+        id: 'apple-vision',
+        displayName: 'Apple Vision',
+        version: artifact.providerVersion,
+        extract: vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue(artifact),
+      });
+
+      await runPdfExtractionEval(
+        {
+          provider: 'apple-vision',
+          sourcePath: artifact.source.path,
+          pages: [30],
+          outputDir,
+          runLabel: 'apple-vision-page-30',
+          retryCount: 0,
+          allowFullRulebook: false,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 1,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          providerConfigHash: artifact.providerConfigHash,
+          scoreArtifact: async (artifact, groundTruth) => {
+            expect(groundTruth).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  id: 'gh2-rulebook-p30-loot-ability',
+                  page: 30,
+                }),
+              ]),
+            );
+            return scoreExtractionArtifact(artifact, groundTruth);
+          },
+        },
+      );
+    } finally {
+      process.chdir(cwd);
+    }
+  });
 });

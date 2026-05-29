@@ -70,7 +70,10 @@ function reportPathFor(
 }
 
 async function loadGroundTruth(): Promise<GroundTruthRecord[]> {
-  const raw = await readFile('eval/pdf-extraction/ground-truth/gh2-rulebook-v1.json', 'utf8');
+  const raw = await readFile(
+    new URL('./ground-truth/gh2-rulebook-v1.json', import.meta.url),
+    'utf8',
+  );
   return GroundTruthDatasetSchema.parse(JSON.parse(raw));
 }
 

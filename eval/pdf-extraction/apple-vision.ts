@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { mkdir, readFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import type { PdfExtractionProvider, PdfExtractionRunInput } from './provider.ts';
@@ -60,7 +61,11 @@ function rawOutputPath(input: PdfExtractionRunInput, sourceHash: string): string
 }
 
 async function runAppleVisionOcr(input: AppleVisionOcrRunInput): Promise<void> {
-  await execFileAsync('swift', [input.scriptPath, input.sourcePath, input.outputPath], {
+  const moduleDir = dirname(fileURLToPath(import.meta.url));
+  const scriptPath = isAbsolute(input.scriptPath)
+    ? input.scriptPath
+    : resolve(moduleDir, '..', '..', input.scriptPath);
+  await execFileAsync('swift', [scriptPath, input.sourcePath, input.outputPath], {
     timeout: input.timeoutMs,
     maxBuffer: 1024 * 1024 * 128,
   });
