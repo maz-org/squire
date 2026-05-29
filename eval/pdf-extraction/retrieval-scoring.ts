@@ -98,9 +98,15 @@ function validateEmbeddingShape(embedding: number[], label: string): void {
 
 function failureClassFor(error: unknown): RetrievalFailureClass {
   const message = error instanceof Error ? error.message : String(error);
-  if (/dimension|finite/.test(message)) return 'invalid_embedding_shape';
+  if (/dimension|finite/i.test(message)) return 'invalid_embedding_shape';
   if (/rerank/i.test(message)) return 'rerank_failure';
-  if (/embedding|Voyage/i.test(message)) return 'embedding_failure';
+  if (
+    /(document embedding|query embedding|failed to embed|\bembed\b|vectori[sz]e|voyage embed)/i.test(
+      message,
+    )
+  ) {
+    return 'embedding_failure';
+  }
   return 'storage_failure';
 }
 
@@ -232,7 +238,8 @@ async function scoreRetrievalQuery(
   }
 
   if (hits.length === 0) failureClasses.push('no_hits');
-  const top5 = hits.slice(0, options.topK);
+  const ranked = hits.slice(0, options.topK);
+  const top5 = ranked.slice(0, DEFAULT_TOP_K);
   const top1Hit = top5.slice(0, 1).some((hit) => sourcePage(hit.source) === record.page);
   const top3Hit = top5.slice(0, 3).some((hit) => sourcePage(hit.source) === record.page);
   const top5Hit = top5.some((hit) => sourcePage(hit.source) === record.page);

@@ -87,12 +87,14 @@ function record(overrides: Partial<GroundTruthRecord> = {}): GroundTruthRecord {
 function deps(input: {
   documentEmbeddings?: number[][];
   queryEmbeddings?: number[][];
+  search?: PdfExtractionRetrievalScoringDeps['search'];
   rerank?: PdfExtractionRetrievalScoringDeps['rerank'];
 }): PdfExtractionRetrievalScoringDeps {
   let queryIndex = 0;
   return {
-    embedDocuments: async () => input.documentEmbeddings ?? [axisVector(0)],
+    embedDocuments: async (texts) => input.documentEmbeddings ?? texts.map(() => axisVector(0)),
     embedQuery: async () => input.queryEmbeddings?.[queryIndex++] ?? axisVector(0),
+    search: input.search,
     rerank: input.rerank ?? (async (_query: string, hits: ScoredEntry[]) => hits),
   };
 }
@@ -190,6 +192,44 @@ describe('PDF extraction production retrieval scoring', () => {
       page: 30,
       scoreKind: 'rerank',
     });
+  });
+
+  it('keeps top-5 scoring fixed when callers request more hits', async () => {
+    const summary = await scoreExtractionArtifactWithProductionRetrieval(
+      artifactWithPages([
+        { pageNumber: 25, text: 'Setup\n\nScenario setup text.' },
+        { pageNumber: 26, text: 'Movement\n\nMove abilities spend movement points.' },
+        { pageNumber: 27, text: 'Attack\n\nAttack abilities draw attack modifiers.' },
+        { pageNumber: 28, text: 'Heal\n\nHeal abilities remove damage.' },
+        { pageNumber: 29, text: 'Elements\n\nElements can be infused and consumed.' },
+        {
+          pageNumber: 30,
+          text: 'Loot\n\nLoot X lets a figure loot all money tokens and treasure tiles within range X.',
+        },
+      ]),
+      [record()],
+      { runId: 'run-top-k-six', topK: 6 },
+      deps({
+        search: async () =>
+          [25, 26, 27, 28, 29, 30].map((page, index) => ({
+            id: `hit-${page}`,
+            source: `eval/pdf-extraction/run-top-k-six/marker-datalab/page-${page}/gh2-rule-book.pdf`,
+            chunkIndex: 0,
+            text: page === 30 ? record().expectedText : `Distractor page ${page}`,
+            game: GLOOMHAVEN_2E_GAME_ID,
+            score: 1 - index * 0.01,
+            scoreKind: 'vector',
+          })),
+      }),
+    );
+
+    expect(summary.retrieval.top5Hits).toBe(0);
+    expect(summary.retrieval.queryScores?.[0]).toMatchObject({
+      top1Hit: false,
+      top3Hit: false,
+      top5Hit: false,
+    });
+    expect(summary.retrieval.queryScores?.[0]?.hits).toHaveLength(5);
   });
 
   it('uses the GH2 game filter so same-namespace Frosthaven rows cannot win', async () => {
@@ -325,6 +365,28 @@ describe('PDF extraction production retrieval scoring', () => {
       citeableContextHit: false,
       failureClasses: ['missing_expected_region'],
     });
+  });
+
+  it('classifies vector-store failures separately from embedding provider failures', async () => {
+    const summary = await scoreExtractionArtifactWithProductionRetrieval(
+      artifactWithPages([
+        {
+          pageNumber: 30,
+          text: 'Loot\n\nLoot X lets a figure loot all money tokens and treasure tiles within range X.',
+        },
+      ]),
+      [record()],
+      { runId: 'run-storage-failure' },
+      deps({
+        documentEmbeddings: [axisVector(0)],
+        search: async () => {
+          throw new Error('relation "rule_source_embeddings" does not exist');
+        },
+      }),
+    );
+
+    expect(summary.retrieval.failureClasses).toEqual(['storage_failure']);
+    expect(summary.failures).toContain('retrieval scoring: storage_failure');
   });
 
   it('records invalid embedding shape before vector storage', async () => {
