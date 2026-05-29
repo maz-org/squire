@@ -7,6 +7,12 @@ export interface PdfExtractionCliOptions {
   outputDir: string;
   runLabel: string;
   retryCount: number;
+  allowFullRulebook: boolean;
+  allowEstimatedCostOverride: boolean;
+  maxEstimatedCostUsd: number;
+  providerConcurrency: number;
+  refreshProviderOutput: boolean;
+  timeoutMs: number;
 }
 
 function valueFor(args: string[], prefix: string): string | undefined {
@@ -50,6 +56,26 @@ function parseNonNegativeInteger(args: string[], prefix: string, fallback: numbe
   return parsed;
 }
 
+function parsePositiveInteger(args: string[], prefix: string, fallback: number): number {
+  const raw = valueFor(args, prefix);
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a positive integer.`);
+  }
+  return parsed;
+}
+
+function parseNonNegativeNumber(args: string[], prefix: string, fallback: number): number {
+  const raw = valueFor(args, prefix);
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid ${prefix.slice(0, -1)}: expected a non-negative number.`);
+  }
+  return parsed;
+}
+
 function rejectUnknownFlags(args: string[]): void {
   const supportedPrefixes = [
     '--provider=',
@@ -59,8 +85,14 @@ function rejectUnknownFlags(args: string[]): void {
     '--run-label=',
     '--retry-count=',
     '--max-estimated-cost-usd=',
+    '--provider-concurrency=',
+    '--timeout-ms=',
   ];
-  const supportedLiterals = new Set(['--allow-full-rulebook']);
+  const supportedLiterals = new Set([
+    '--allow-full-rulebook',
+    '--allow-estimated-cost',
+    '--refresh-provider-output',
+  ]);
 
   for (const arg of args) {
     if (!arg.startsWith('--')) continue;
@@ -75,20 +107,14 @@ function rejectUnknownFlags(args: string[]): void {
 export function parsePdfExtractionArgs(args: string[]): PdfExtractionCliOptions {
   rejectUnknownFlags(args);
 
-  if (args.includes('--allow-full-rulebook')) {
-    throw new Error('Full-rulebook provider runs are implemented by SQR-250.');
-  }
-  if (args.some((arg) => arg.startsWith('--max-estimated-cost-usd='))) {
-    throw new Error('Cost guardrails are implemented by SQR-250.');
-  }
-
   const provider = parseProvider(args);
   const sourcePath = valueFor(args, '--source=');
   if (!sourcePath) throw new Error('Missing --source.');
 
+  const allowFullRulebook = args.includes('--allow-full-rulebook');
   const pages = parsePages(valueFor(args, '--pages='));
-  if (pages.length === 0) {
-    throw new Error('Selected pages are required until the guarded full-rulebook runner exists.');
+  if (pages.length === 0 && !allowFullRulebook) {
+    throw new Error('Selected pages are required unless --allow-full-rulebook is set.');
   }
 
   return {
@@ -98,5 +124,11 @@ export function parsePdfExtractionArgs(args: string[]): PdfExtractionCliOptions 
     outputDir: valueFor(args, '--output-dir=') ?? 'eval/results/pdf-extraction',
     runLabel: valueFor(args, '--run-label=') ?? `pdf-extraction-${new Date().toISOString()}`,
     retryCount: parseNonNegativeInteger(args, '--retry-count=', 0),
+    allowFullRulebook,
+    allowEstimatedCostOverride: args.includes('--allow-estimated-cost'),
+    maxEstimatedCostUsd: parseNonNegativeNumber(args, '--max-estimated-cost-usd=', 1),
+    providerConcurrency: parsePositiveInteger(args, '--provider-concurrency=', 1),
+    refreshProviderOutput: args.includes('--refresh-provider-output'),
+    timeoutMs: parsePositiveInteger(args, '--timeout-ms=', 120_000),
   };
 }

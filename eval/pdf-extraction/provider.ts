@@ -10,6 +10,7 @@ export interface PdfExtractionRunInput {
   outputDir: string;
   runLabel: string;
   retryCount: number;
+  timeoutMs?: number;
 }
 
 export interface PdfExtractionProvider {

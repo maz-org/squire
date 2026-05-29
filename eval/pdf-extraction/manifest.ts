@@ -8,10 +8,26 @@ export interface ExtractionManifestCache {
   hit: boolean;
 }
 
+export interface ExtractionManifestExecution {
+  selectedPages: number[];
+  fullRulebook: boolean;
+  fullRulebookOverride: boolean;
+  estimatedCostUsd?: number;
+  maxEstimatedCostUsd?: number;
+  costOverride: boolean;
+  retryLimit: number;
+  retryCount: number;
+  timeoutMs?: number;
+  concurrencyLimit?: number;
+  rateLimitCount: number;
+  refreshedProviderOutput: boolean;
+}
+
 export interface ExtractionManifestInput {
   artifactPath: string;
   normalizedArtifactHash: string;
   cache: ExtractionManifestCache;
+  execution?: ExtractionManifestExecution;
 }
 
 export interface ExtractionManifest {
@@ -29,6 +45,7 @@ export interface ExtractionManifest {
   cost: ExtractionArtifact['cost'];
   privacy: ExtractionArtifact['privacy'];
   cache: ExtractionManifestCache;
+  execution: ExtractionManifestExecution;
 }
 
 export function buildExtractionManifest(
@@ -50,6 +67,20 @@ export function buildExtractionManifest(
     cost: artifact.cost,
     privacy: artifact.privacy,
     cache: input.cache,
+    execution: input.execution ?? {
+      selectedPages: artifact.run.pageRange ?? artifact.pages.map((page) => page.pageNumber),
+      fullRulebook: !artifact.run.pageRange || artifact.run.pageRange.length === 0,
+      fullRulebookOverride: false,
+      estimatedCostUsd: artifact.cost.estimatedUsd,
+      maxEstimatedCostUsd: undefined,
+      costOverride: false,
+      retryLimit: 0,
+      retryCount: 0,
+      timeoutMs: undefined,
+      concurrencyLimit: undefined,
+      rateLimitCount: 0,
+      refreshedProviderOutput: false,
+    },
   };
 }
 
