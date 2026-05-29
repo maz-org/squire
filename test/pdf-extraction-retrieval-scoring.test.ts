@@ -222,6 +222,36 @@ describe('PDF extraction production retrieval scoring', () => {
     });
   });
 
+  it('treats eval run ids as literal source prefixes', async () => {
+    await addEntries([
+      {
+        id: 'wildcard-contaminant',
+        source: 'eval/pdf-extraction/run-likeAX/marker-datalab/page-99/gh2',
+        chunkIndex: 0,
+        text: 'Loot X lets a figure loot all money tokens and treasure tiles within range X.',
+        embedding: axisVector(0),
+        game: GLOOMHAVEN_2E_GAME_ID,
+      },
+    ]);
+
+    const summary = await scoreExtractionArtifactWithProductionRetrieval(
+      artifactWithPages([
+        {
+          pageNumber: 30,
+          text: 'Loot\n\nLoot X lets a figure loot all money tokens and treasure tiles within range X.',
+        },
+      ]),
+      [record()],
+      { runId: 'run-like_%' },
+      deps({ documentEmbeddings: [axisVector(1)] }),
+    );
+
+    expect(summary.retrieval.queryScores?.[0]?.hits[0]).toMatchObject({
+      page: 30,
+      source: 'eval/pdf-extraction/run-like_%/marker-datalab/page-30/gh2-rule-book.pdf',
+    });
+  });
+
   it('flags misleading retrieved context as not citeable', async () => {
     const summary = await scoreExtractionArtifactWithProductionRetrieval(
       artifactWithPages([

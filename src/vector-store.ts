@@ -71,6 +71,10 @@ function resolveGame(game?: GameId | string): GameId {
   return requireGameId(game);
 }
 
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (match) => `\\${match}`);
+}
+
 /**
  * Ensure the HNSW cosine index exists on `rule_source_embeddings.embedding`.
  *
@@ -266,7 +270,7 @@ export async function search(
   const game = resolveGame(opts.game);
   const vectorLiteral = `[${queryEmbedding.join(',')}]`;
   const sourcePrefixFilter = opts.sourcePrefix
-    ? sql`AND source LIKE ${`${opts.sourcePrefix}%`}`
+    ? sql`AND source LIKE ${`${escapeLikePattern(opts.sourcePrefix)}%`} ESCAPE '\\'`
     : sql``;
 
   try {
