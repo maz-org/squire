@@ -74,9 +74,7 @@ function defaultCacheKey(input: PdfExtractionRunnerInput): string {
 }
 
 function isRetryableFailure(failureClass: ExtractionFailureClass): boolean {
-  return (
-    failureClass === 'rate_limit' || failureClass === 'timeout' || failureClass === 'provider_error'
-  );
+  return failureClass === 'rate_limit' || failureClass === 'provider_error';
 }
 
 function validateGuardrails(input: PdfExtractionRunnerInput): void {

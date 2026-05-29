@@ -446,4 +446,31 @@ describe('runPdfExtraction', () => {
       },
     ]);
   });
+
+  it('does not retry timed-out provider calls without provider abort support', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-timeout-retry-'));
+    const extract = vi.fn<PdfExtractionProvider['extract']>(() => new Promise(() => undefined));
+    const registry = registryWith({
+      id: 'aws-textract',
+      displayName: 'AWS Textract',
+      version: 'textract-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtraction({
+        registry,
+        provider: 'aws-textract',
+        sourcePath: 'data/pdfs/gh2-rule-book.pdf',
+        sourceHash: artifact.source.sha256,
+        providerConfigHash: artifact.providerConfigHash,
+        pages: [30],
+        outputDir,
+        runLabel: 'run-textract-page-30',
+        retryCount: 2,
+        timeoutMs: 1,
+      }),
+    ).rejects.toThrow(/timed out after 1ms/);
+    expect(extract).toHaveBeenCalledTimes(1);
+  });
 });
