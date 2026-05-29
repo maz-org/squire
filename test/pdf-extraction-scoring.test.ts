@@ -124,7 +124,10 @@ describe('PDF extraction scorer', () => {
       pages: [
         {
           ...baseArtifact.pages[0],
-          blocks: [baseArtifact.pages[0].blocks[1], baseArtifact.pages[0].blocks[0]],
+          blocks: [
+            { ...baseArtifact.pages[0].blocks[0], order: 1 },
+            { ...baseArtifact.pages[0].blocks[1], order: 0 },
+          ],
           tables: [
             {
               ...baseArtifact.pages[0].tables[0],
@@ -141,6 +144,34 @@ describe('PDF extraction scorer', () => {
     const summary = score(badArtifact);
     expect(summary.structure.readingOrderScore).toBeLessThan(1);
     expect(summary.structure.tableCellRecall).toBeLessThan(1);
+  });
+
+  it('uses explicit block order instead of array position for reading order', () => {
+    const unsortedArtifact = {
+      ...baseArtifact,
+      pages: [
+        {
+          ...baseArtifact.pages[0],
+          blocks: [baseArtifact.pages[0].blocks[1], baseArtifact.pages[0].blocks[0]],
+        },
+      ],
+    };
+
+    expect(score(unsortedArtifact).structure.readingOrderScore).toBe(1);
+  });
+
+  it('penalizes missing ground-truth pages across structure metrics', () => {
+    const missingPageArtifact = {
+      ...baseArtifact,
+      pages: [],
+    };
+
+    const summary = score(missingPageArtifact);
+    expect(summary.structure.headingRecall).toBeLessThan(1);
+    expect(summary.structure.tableCellRecall).toBeLessThan(1);
+    expect(summary.structure.readingOrderScore).toBeLessThan(1);
+    expect(summary.structure.noiseRatio).toBe(1);
+    expect(summary.failures).toEqual(expect.arrayContaining([expect.stringContaining('missing')]));
   });
 
   it('reports page-number noise and bad heading hierarchy', () => {

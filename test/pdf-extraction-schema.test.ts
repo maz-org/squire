@@ -128,6 +128,32 @@ describe('PDF extraction artifact schema', () => {
     expect(() => ExtractionArtifactSchema.parse(artifact)).toThrow(/Unrecognized key/);
   });
 
+  it('enforces run status and failure metadata invariants', () => {
+    expect(() =>
+      validateExtractionArtifact({
+        ...validArtifact(),
+        run: {
+          ...validArtifact().run,
+          status: 'succeeded',
+          failure: {
+            class: 'provider_error',
+            message: 'provider returned an unexpected response',
+          },
+        },
+      }),
+    ).toThrow(/failure must be absent/);
+
+    expect(() =>
+      validateExtractionArtifact({
+        ...validArtifact(),
+        run: {
+          ...validArtifact().run,
+          status: 'failed',
+        },
+      }),
+    ).toThrow(/failure is required/);
+  });
+
   it('normalizes provider config hashes with stable key ordering', () => {
     expect(computeProviderConfigHash({ region: 'us-east-1', featureTypes: ['TABLES'] })).toBe(
       computeProviderConfigHash({ featureTypes: ['TABLES'], region: 'us-east-1' }),

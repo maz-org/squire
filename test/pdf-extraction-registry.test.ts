@@ -46,5 +46,12 @@ describe('PDF extraction provider registry', () => {
     expect(classifyProviderError(new Error('estimated cost exceeds configured ceiling'))).toBe(
       'cost_guardrail',
     );
+    expect(classifyProviderError(new Error('unsupported configuration'))).toBe(
+      'unsupported_configuration',
+    );
+    expect(classifyProviderError(new Error('partial page failure on page 30'))).toBe(
+      'partial_page_failure',
+    );
+    expect(classifyProviderError(new Error('provider returned nonsense'))).toBe('provider_error');
   });
 });

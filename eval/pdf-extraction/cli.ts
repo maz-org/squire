@@ -50,7 +50,31 @@ function parseNonNegativeInteger(args: string[], prefix: string, fallback: numbe
   return parsed;
 }
 
+function rejectUnknownFlags(args: string[]): void {
+  const supportedPrefixes = [
+    '--provider=',
+    '--source=',
+    '--pages=',
+    '--output-dir=',
+    '--run-label=',
+    '--retry-count=',
+    '--max-estimated-cost-usd=',
+  ];
+  const supportedLiterals = new Set(['--allow-full-rulebook']);
+
+  for (const arg of args) {
+    if (!arg.startsWith('--')) continue;
+    const isKnownPrefix = supportedPrefixes.some((prefix) => arg.startsWith(prefix));
+    const isKnownLiteral = supportedLiterals.has(arg);
+    if (!isKnownPrefix && !isKnownLiteral) {
+      throw new Error(`Unknown argument: ${arg}.`);
+    }
+  }
+}
+
 export function parsePdfExtractionArgs(args: string[]): PdfExtractionCliOptions {
+  rejectUnknownFlags(args);
+
   if (args.includes('--allow-full-rulebook')) {
     throw new Error('Full-rulebook provider runs are implemented by SQR-250.');
   }

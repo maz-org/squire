@@ -1,10 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-import type { ExtractionArtifact, RawArtifactRefSchema } from './schema.ts';
-import type { z } from 'zod';
-
-type RawArtifactRef = z.infer<typeof RawArtifactRefSchema>;
+import type { ExtractionArtifact, RawArtifactRef } from './schema.ts';
 
 export interface ExtractionManifestCache {
   key: string;

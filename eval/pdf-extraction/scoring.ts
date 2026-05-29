@@ -112,13 +112,25 @@ function containsMisleadingContext(page: ExtractionPage, record: GroundTruthReco
   return record.forbiddenRetrievalContextTerms.some((term) => text.includes(normalizeText(term)));
 }
 
+function earliestBlockOrder(
+  page: ExtractionPage,
+  predicate: (block: ExtractionPage['blocks'][number]) => boolean,
+): number | undefined {
+  const orders = page.blocks
+    .map((block, index) => (predicate(block) ? (block.order ?? index) : undefined))
+    .filter((order): order is number => order !== undefined);
+  if (orders.length === 0) return undefined;
+  return Math.min(...orders);
+}
+
 function readingOrderScore(page: ExtractionPage): number {
-  const headingIndex = page.blocks.findIndex((block) => block.type === 'heading');
-  const contentIndex = page.blocks.findIndex(
+  const headingOrder = earliestBlockOrder(page, (block) => block.type === 'heading');
+  const contentOrder = earliestBlockOrder(
+    page,
     (block) => block.type !== 'heading' && block.type !== 'page-number',
   );
-  if (headingIndex < 0 || contentIndex < 0) return 1;
-  return headingIndex < contentIndex ? 1 : 0;
+  if (headingOrder === undefined || contentOrder === undefined) return 1;
+  return headingOrder < contentOrder ? 1 : 0;
 }
 
 function noiseRatio(page: ExtractionPage): number {
@@ -162,6 +174,8 @@ export function scoreExtractionArtifact(
       characterErrorRates.push(1);
       headingRecalls.push(0);
       tableRecalls.push(record.expectedTables.length > 0 ? 0 : 1);
+      readingScores.push(0);
+      noiseScores.push(1);
       continue;
     }
 

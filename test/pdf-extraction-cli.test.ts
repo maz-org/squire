@@ -50,6 +50,17 @@ describe('parsePdfExtractionArgs', () => {
     );
   });
 
+  it('rejects unknown flags so typos cannot silently fall back to defaults', () => {
+    expect(() =>
+      parsePdfExtractionArgs([
+        '--provider=aws-textract',
+        '--source=data/pdfs/gh2-rule-book.pdf',
+        '--pages=30',
+        '--retrycount=2',
+      ]),
+    ).toThrow(/Unknown argument: --retrycount=2/);
+  });
+
   it('requires selected pages until the guarded full-rulebook runner exists', () => {
     expect(() =>
       parsePdfExtractionArgs(['--provider=llamaparse', '--source=data/pdfs/gh2-rule-book.pdf']),

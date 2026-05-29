@@ -126,7 +126,23 @@ export const ExtractionArtifactSchema = z
           .strict()
           .optional(),
       })
-      .strict(),
+      .strict()
+      .superRefine((run, ctx) => {
+        if (run.status === 'succeeded' && run.failure) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['failure'],
+            message: 'failure must be absent when status is succeeded',
+          });
+        }
+        if ((run.status === 'failed' || run.status === 'partial') && !run.failure) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['failure'],
+            message: 'failure is required when status is failed or partial',
+          });
+        }
+      }),
     cost: z
       .object({
         estimatedUsd: z.number().finite().nonnegative(),
@@ -184,6 +200,7 @@ export type ExtractionFailureClass = z.infer<typeof ExtractionFailureClassSchema
 export type ExtractionArtifact = z.infer<typeof ExtractionArtifactSchema>;
 export type ExtractionPage = z.infer<typeof ExtractionPageSchema>;
 export type ExtractionBlock = z.infer<typeof ExtractionBlockSchema>;
+export type RawArtifactRef = z.infer<typeof RawArtifactRefSchema>;
 export type GroundTruthRecord = z.infer<typeof GroundTruthRecordSchema>;
 
 function stableStringify(value: unknown): string {
