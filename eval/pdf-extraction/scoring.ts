@@ -23,6 +23,52 @@ export interface RetrievalScoreSummary {
   top3Hits: number;
   top5Hits: number;
   citeableContextHits: number;
+  queryScores?: RetrievalQueryScore[];
+  failureClasses?: RetrievalFailureClass[];
+  scoreKindCounts?: {
+    vector: number;
+    rerank: number;
+  };
+  embedding?: {
+    model: string;
+    dimensions: number;
+    version: string;
+  };
+}
+
+export type RetrievalFailureClass =
+  | 'embedding_failure'
+  | 'invalid_embedding_shape'
+  | 'missing_expected_page'
+  | 'missing_expected_region'
+  | 'misleading_context'
+  | 'no_hits'
+  | 'rerank_failure'
+  | 'storage_failure';
+
+export interface RetrievalHitScore {
+  rank: number;
+  id: string;
+  source: string;
+  page: number | null;
+  chunkIndex: number;
+  game: string;
+  score: number;
+  scoreKind: 'vector' | 'rerank';
+}
+
+export interface RetrievalQueryScore {
+  recordId: string;
+  query: string;
+  expectedSource: string;
+  expectedPage: number;
+  expectedRegion?: GroundTruthRecord['region'];
+  top1Hit: boolean;
+  top3Hit: boolean;
+  top5Hit: boolean;
+  citeableContextHit: boolean;
+  hits: RetrievalHitScore[];
+  failureClasses: RetrievalFailureClass[];
 }
 
 export interface ExtractionScoreSummary {
