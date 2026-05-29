@@ -58,7 +58,8 @@ Use JSONL records shaped like:
   "expectedHeadings": ["Loot"],
   "expectedText": "Loot X is an ability that allows a figure to loot all loot tokens...",
   "expectedTables": [],
-  "retrievalQueries": ["How does Loot X work?", "Can monsters loot treasure tiles?"]
+  "retrievalQueries": ["How does Loot X work?", "Can monsters loot treasure tiles?"],
+  "forbiddenRetrievalContextTerms": ["summon loot tokens"]
 }
 ```
 
@@ -77,22 +78,71 @@ Initial sample set:
 The first dataset should cover 25-40 page/region records. It should be small
 enough to review by hand and broad enough to catch the Apple Vision failures.
 
+## Shared Harness Contract
+
+SQR-227 owns the provider-neutral harness. The canonical output is a rich Squire
+artifact under `eval/pdf-extraction/`; LangChain `Document[]` is only a
+projection layer for interoperability with retrieval and agent tooling. This
+keeps scoring, caching, privacy review, and provider comparisons tied to one
+stable contract instead of whatever shape a vendor SDK happens to return.
+
+The shared harness contains:
+
+- A strict normalized artifact schema with source hash, provider config hash,
+  provider/version, run status, page dimensions, ordered blocks, bounding boxes,
+  tables, raw artifact digests, latency, cost, and privacy metadata.
+- A provider registry and runner so Apple Vision, AWS Textract, LlamaParse,
+  Unstructured, and Marker/Datalab adapters all plug into the same execution
+  path.
+- A deterministic scorer skeleton for text fidelity, structure, retrieval
+  usefulness, latency, cost, privacy, and failure reporting.
+- Adversarial scorer fixtures for missing text, bad reading order, table cell
+  swaps, page-number noise, and bad heading hierarchy.
+- A manifest policy that permits checked-in schema fixtures, ground truth,
+  summaries, manifests, and small redacted samples while keeping full raw
+  provider payloads out of git by default.
+
+The shared failure taxonomy is `timeout`, `rate_limit`, `credential_failure`,
+`provider_error`, `partial_page_failure`, `invalid_artifact`, `cost_guardrail`,
+and `unsupported_configuration`.
+
 ## Adapter Contract
 
 Each provider adapter should produce one normalized JSON artifact:
 
 ```json
 {
+  "schemaVersion": "squire-pdf-extraction-v1",
   "provider": "aws-textract",
   "providerVersion": "2026-05",
-  "source": "data/pdfs/gh2-rule-book.pdf",
-  "startedAt": "2026-05-24T00:00:00Z",
-  "completedAt": "2026-05-24T00:00:00Z",
-  "latencyMs": 0,
-  "costUsd": 0,
+  "providerConfigHash": "sha256:...",
+  "source": {
+    "path": "data/pdfs/gh2-rule-book.pdf",
+    "sha256": "sha256:..."
+  },
+  "run": {
+    "id": "aws-textract-selected-pages",
+    "startedAt": "2026-05-24T00:00:00Z",
+    "completedAt": "2026-05-24T00:00:00Z",
+    "status": "succeeded",
+    "pageRange": [30],
+    "latencyMs": 0
+  },
+  "cost": {
+    "estimatedUsd": 0,
+    "pagesProcessed": 1
+  },
+  "privacy": {
+    "retentionPolicy": "provider-specific policy",
+    "trainingUse": "unknown"
+  },
+  "rawArtifacts": [],
   "pages": [
     {
-      "page": 30,
+      "pageNumber": 30,
+      "width": 612,
+      "height": 792,
+      "unit": "pt",
       "markdown": "...",
       "text": "...",
       "blocks": [],
@@ -160,14 +210,15 @@ and create targeted cleanup rules for its known failure modes.
 
 ## Implementation Milestones
 
-1. Add ground-truth dataset and scorer.
-2. Add Apple Vision adapter output as the baseline fixture.
-3. Add managed-provider adapters for AWS Textract, LlamaParse, and
+1. Add shared harness schema, registry, runner, manifest, projection, and scorer.
+2. Add ground-truth dataset.
+3. Add Apple Vision adapter output as the baseline fixture.
+4. Add managed-provider adapters for AWS Textract, LlamaParse, and
    Unstructured.
-4. Add Marker/Datalab adapter or managed Datalab run.
-5. Produce a decision report with quality, retrieval, cost, privacy, and
+5. Add Marker/Datalab adapter or managed Datalab run.
+6. Produce a decision report with quality, retrieval, cost, privacy, and
    operational tradeoffs.
-6. Replace `data/rule-sources/gh2-rule-book.md` only after a provider wins.
+7. Replace `data/rule-sources/gh2-rule-book.md` only after a provider wins.
 
 ## Acceptance Criteria
 
