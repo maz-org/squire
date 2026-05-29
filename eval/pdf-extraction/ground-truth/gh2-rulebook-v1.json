@@ -1,0 +1,654 @@
+[
+  {
+    "id": "gh2-rulebook-p02-toc-core-rules",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 2,
+    "region": null,
+    "category": "toc-ordering",
+    "expectedText": "The table of contents lists important ability concepts before the later campaign appendices: Line-of-Sight on page 19, Advantage and Disadvantage on page 25, Conditions on page 26, Suffer Damage on page 27, Loot on page 30, City Phase on page 53, and Appendix G: Index on page 68.",
+    "expectedHeadings": ["Table of Contents"],
+    "expectedTables": [
+      {
+        "id": "p02-core-rules-toc",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Line-of-Sight" },
+          { "row": 0, "column": 1, "text": "19" },
+          { "row": 1, "column": 0, "text": "Advantage and Disadvantage" },
+          { "row": 1, "column": 1, "text": "25" },
+          { "row": 2, "column": 0, "text": "Conditions" },
+          { "row": 2, "column": 1, "text": "26" },
+          { "row": 3, "column": 0, "text": "Loot" },
+          { "row": 3, "column": 1, "text": "30" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "Where is the line-of-sight rule in Gloomhaven 2e?",
+      "What page has the Gloomhaven (2nd Edition) loot rules?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p02-toc-campaign-appendices",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 2,
+    "region": null,
+    "category": "toc-ordering",
+    "expectedText": "The contents page keeps campaign material after the scenario rules. Campaign Overview is page 48, Campaign Sheet is page 50, City Phase is page 53, Appendix E: Treasure Index is page 66, and Appendix G: Index is page 68.",
+    "expectedHeadings": ["Table of Contents"],
+    "expectedTables": [
+      {
+        "id": "p02-campaign-toc",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Campaign Overview" },
+          { "row": 0, "column": 1, "text": "48" },
+          { "row": 1, "column": 0, "text": "Campaign Sheet" },
+          { "row": 1, "column": 1, "text": "50" },
+          { "row": 2, "column": 0, "text": "City Phase" },
+          { "row": 2, "column": 1, "text": "53" },
+          { "row": 3, "column": 0, "text": "Appendix G: Index" },
+          { "row": 3, "column": 1, "text": "68" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "Where does the Gloomhaven 2e rulebook cover the City Phase?",
+      "Which appendix has the Gloomhaven (2nd Edition) index?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p14-doors-treasures",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 14,
+    "region": null,
+    "category": "diagram-icon-heavy",
+    "expectedText": "Closed doors do not hinder normal character movement, but they otherwise act as walls. No figure can enter a closed door with forced movement. Treasure can be looted by characters; when a treasure is looted, its effect is applied and the treasure tile is removed from the map.",
+    "expectedHeadings": ["Doors", "Treasures"],
+    "expectedTables": [
+      {
+        "id": "p14-overlay-examples",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Closed Door" },
+          { "row": 0, "column": 1, "text": "Open Door/Corridor" },
+          { "row": 1, "column": 0, "text": "Goal treasure" },
+          { "row": 1, "column": 1, "text": "Treasure Index" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "Can forced movement push a figure through a closed door in Gloomhaven 2e?",
+      "What happens when a numbered treasure is looted?"
+    ],
+    "forbiddenRetrievalContextTerms": ["stone pillar"]
+  },
+  {
+    "id": "gh2-rulebook-p15-scenario-level-table",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 15,
+    "region": null,
+    "category": "table-reference",
+    "expectedText": "Scenario level changes monster base stats, trap and hazardous terrain damage, gold from money tokens, and bonus experience for completing a scenario. The recommended difficulty can be changed at the start of any scenario from level 0 to level 7.",
+    "expectedHeadings": ["Scenario Level"],
+    "expectedTables": [
+      {
+        "id": "p15-scenario-level-chart",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Scenario Level" },
+          { "row": 0, "column": 1, "text": "0" },
+          { "row": 0, "column": 2, "text": "1" },
+          { "row": 0, "column": 3, "text": "2" },
+          { "row": 0, "column": 4, "text": "3" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "What does scenario level affect in Gloomhaven 2e?",
+      "Can the party change the recommended scenario level?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p19-line-of-sight",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 19,
+    "region": null,
+    "category": "line-of-sight",
+    "expectedText": "When any figure or hex is targeted by any ability, the acting figure must have a clear line-of-sight to the target. Line-of-sight exists if a line can be drawn from any part of the acting figure's hex to any part of the target hex without touching a wall line.",
+    "expectedHeadings": ["Important Ability Concepts", "Line-of-Sight"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "How do you determine line-of-sight in Gloomhaven 2e?",
+      "What blocks line-of-sight in Gloomhaven (2nd Edition)?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p19-los-hyphenation",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 19,
+    "region": null,
+    "category": "broken-hyphenation",
+    "expectedText": "Only walls and closed doors block line-of-sight. Non-targeted abilities are not affected by line-of-sight. If an ability lets a figure perform it as if occupying a different hex, draw the line from that hex.",
+    "expectedHeadings": ["Line-of-Sight"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "Do closed doors block line-of-sight in Gloomhaven 2e?",
+      "Are non-targeted abilities affected by line-of-sight?"
+    ],
+    "forbiddenRetrievalContextTerms": ["line of sight limi"]
+  },
+  {
+    "id": "gh2-rulebook-p20-added-effects-reading-order",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 20,
+    "region": null,
+    "category": "sidebar-callout-insertion",
+    "expectedText": "Added effects are attached to an ability and modify it in some way. Common added effects and conditions are usually listed in a highlighted section to the right of the ability, while conditional effects are listed below the ability.",
+    "expectedHeadings": ["Area of Effect", "Added Effects"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "Where are added effects shown on Gloomhaven 2e ability cards?",
+      "How are conditional effects displayed on an ability?"
+    ],
+    "forbiddenRetrievalContextTerms": ["Range X", "Target X"]
+  },
+  {
+    "id": "gh2-rulebook-p23-attack-modification-order",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 23,
+    "region": null,
+    "category": "table-reference",
+    "expectedText": "When an attack is performed, the base attack value is modified in this order: all applicable attack bonuses and penalties, then an attack modifier card, then the target's shield bonus, then ward. After all modifications, the target suffers the resulting damage.",
+    "expectedHeadings": ["Attack", "Attack Modification Order"],
+    "expectedTables": [
+      {
+        "id": "p23-attack-modification-order",
+        "cells": [
+          { "row": 0, "column": 0, "text": "1" },
+          { "row": 0, "column": 1, "text": "Attack bonuses and penalties" },
+          { "row": 1, "column": 0, "text": "2" },
+          { "row": 1, "column": 1, "text": "Attack modifier card" },
+          { "row": 2, "column": 0, "text": "3" },
+          { "row": 2, "column": 1, "text": "Shield" },
+          { "row": 3, "column": 0, "text": "4" },
+          { "row": 3, "column": 1, "text": "Ward" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "What is the attack modification order in Gloomhaven 2e?",
+      "When does ward apply during attack damage?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p24-attack-effect-timing",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 24,
+    "region": null,
+    "category": "table-reference",
+    "expectedText": "Attack effects are attached to an attack and are applied either during damage resolution or after the attack resolves. Conditions and forced movement apply after the attack resolves, while attack bonuses and pierce apply during damage resolution.",
+    "expectedHeadings": ["Attack Effects", "Timing of Attack Effects"],
+    "expectedTables": [
+      {
+        "id": "p24-attack-effect-timing",
+        "cells": [
+          { "row": 0, "column": 0, "text": "+ Attack" },
+          { "row": 0, "column": 1, "text": "during damage resolution" },
+          { "row": 1, "column": 0, "text": "Pierce" },
+          { "row": 1, "column": 1, "text": "during damage resolution" },
+          { "row": 2, "column": 0, "text": "Conditions" },
+          { "row": 2, "column": 1, "text": "after the attack resolves" },
+          { "row": 3, "column": 0, "text": "Forced Movement" },
+          { "row": 3, "column": 1, "text": "after the attack resolves" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "When do conditions from an attack effect apply in Gloomhaven 2e?",
+      "Does forced movement from an attack apply during damage resolution?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p25-advantage-disadvantage",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 25,
+    "region": null,
+    "category": "advantage-disadvantage",
+    "expectedText": "With advantage, the attacker draws two modifiers and uses one of them. A monster always uses the better one, but a character may use either one. With disadvantage, the attacker draws two modifiers and always uses the worse one.",
+    "expectedHeadings": ["Advantage and Disadvantage"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "How does advantage work in Gloomhaven 2e?",
+      "Can a character choose either modifier with advantage?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p25-rolling-modifier-examples",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 25,
+    "region": null,
+    "category": "diagram-icon-heavy",
+    "expectedText": "If the first draw with advantage or disadvantage is a rolling modifier, the attacker draws additional modifiers until a non-rolling modifier is drawn. They then draw one more modifier and ignore any rolling icon on it.",
+    "expectedHeadings": ["Advantage and Disadvantage"],
+    "expectedTables": [
+      {
+        "id": "p25-rolling-example-captions",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Example 1" },
+          { "row": 0, "column": 1, "text": "+1 modifier is used" },
+          { "row": 1, "column": 0, "text": "Example 4" },
+          { "row": 1, "column": 1, "text": "+0 modifier is used" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "How do rolling modifiers work with advantage in Gloomhaven 2e?",
+      "What happens if the second draw is rolling during disadvantage?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p26-positive-conditions",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 26,
+    "region": null,
+    "category": "conditions-positive",
+    "expectedText": "A figure cannot have multiple instances of the same condition; gaining a condition already present resets its duration. Ward makes the next damage from any source become half damage rounded down and is then removed.",
+    "expectedHeadings": ["Conditions", "Positive Conditions"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "Can a figure have multiple copies of the same condition in Gloomhaven 2e?",
+      "How does ward reduce damage?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p27-negative-conditions",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 27,
+    "region": null,
+    "category": "conditions-negative",
+    "expectedText": "Wound makes the figure suffer 1 damage at the start of each of their turns and is removed when the figure is healed. Poison gives all attacks targeting the figure +1 Attack and is removed when the figure is healed, but prevents the heal from increasing hit points.",
+    "expectedHeadings": ["Negative Conditions"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "What does wound do in Gloomhaven 2e?",
+      "Does poison prevent healing from increasing hit points?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p27-suffer-damage",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 27,
+    "region": null,
+    "category": "suffer-damage",
+    "expectedText": "Some abilities cause figures to suffer damage without an attack being performed. This damage is not modified by anything except ward. Suffer damage is not a targeted ability.",
+    "expectedHeadings": ["Suffer Damage"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "Is suffer damage a targeted ability in Gloomhaven 2e?",
+      "Can shield reduce suffer damage?"
+    ],
+    "forbiddenRetrievalContextTerms": ["Attack Modification Order"]
+  },
+  {
+    "id": "gh2-rulebook-p30-loot-ability",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 30,
+    "region": null,
+    "category": "loot",
+    "expectedText": "Loot X is an ability that lets a figure loot all money tokens and treasure tiles within range X, including any in their current hex. It is unaffected by figures or overlay tiles. Monsters can loot money tokens but cannot loot treasure tiles.",
+    "expectedHeadings": ["Loot"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "How does Loot X work in Gloomhaven 2e?",
+      "Can monsters loot treasure tiles?"
+    ],
+    "forbiddenRetrievalContextTerms": ["Fearsome Taunt", "Stun Shot"]
+  },
+  {
+    "id": "gh2-rulebook-p30-loot-sidebar-boundary",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 30,
+    "region": null,
+    "category": "sidebar-callout-insertion",
+    "expectedText": "When a numbered treasure is looted, reference the treasure's number in the Treasure Index and apply the effect. Only the looting character gains the reward unless it is a random item design or random scenario.",
+    "expectedHeadings": ["Loot"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "Who gains the reward from a numbered treasure in Gloomhaven 2e?",
+      "Where do you look up numbered treasure rewards?"
+    ],
+    "forbiddenRetrievalContextTerms": ["Fearsome Taunt", "push an enemy"]
+  },
+  {
+    "id": "gh2-rulebook-p36-character-damage-negation",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 36,
+    "region": null,
+    "category": "character-damage-negation",
+    "expectedText": "When a character would suffer damage after ward is applied, they must reduce their red hit point dial by that amount or negate the damage. Damage can be negated by an active ability or effect, or by losing cards from hand or discard.",
+    "expectedHeadings": ["Character Damage"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "How can a character negate damage in Gloomhaven 2e?",
+      "Can active area cards be lost to negate damage?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p39-monster-focus",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 39,
+    "region": null,
+    "category": "monster-focus",
+    "expectedText": "At the start of its turn, a monster finds a focus. The focus is the enemy it can perform its attack on using the fewest movement points. If the monster cannot attack, it focuses as if for a single-target melee attack.",
+    "expectedHeadings": ["Focus"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "How does a monster choose focus in Gloomhaven 2e?",
+      "Does a disarmed monster still find focus?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p39-focus-priority-diagram",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 39,
+    "region": null,
+    "category": "diagram-icon-heavy",
+    "expectedText": "If the shortest possible path would bring the monster within range of multiple enemies, it focuses on the one closest by range to its current hex. If those enemies are equally close, it focuses on the one who acts earliest in initiative order.",
+    "expectedHeadings": ["Focus", "Path Priority"],
+    "expectedTables": [
+      {
+        "id": "p39-focus-priority",
+        "cells": [
+          { "row": 0, "column": 0, "text": "fewest movement points" },
+          { "row": 1, "column": 0, "text": "closest by range" },
+          { "row": 2, "column": 0, "text": "earliest initiative" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "How do monsters break focus ties in Gloomhaven 2e?",
+      "Does monster focus require line-of-sight?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p40-monster-movement",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 40,
+    "region": null,
+    "category": "monster-movement",
+    "expectedText": "A monster only moves on its turn if a move ability is listed on its ability card. It uses the fewest movement points required to maximize attacks for the current turn, and if it cannot attack its focus this turn, it only moves if it can shorten the path to its focus.",
+    "expectedHeadings": ["Monster Movement"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "When does a monster move in Gloomhaven 2e?",
+      "Will a monster move if it cannot shorten the path to its focus?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p40-heading-noise",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 40,
+    "region": null,
+    "category": "heading-noise",
+    "expectedText": "Monster Movement is followed by Monster Attacks on the same page. The extraction should preserve the real section order and not promote diagram captions such as no monster path or blocked monster path above the Monster Movement heading.",
+    "expectedHeadings": ["Monster Movement", "Monster Attacks"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "Where does the Monster Attacks section begin in Gloomhaven 2e?",
+      "What should be treated as the page heading for monster movement?"
+    ],
+    "forbiddenRetrievalContextTerms": ["RANGED MONSTER ATTACK", "Vermling Priest"]
+  },
+  {
+    "id": "gh2-rulebook-p48-campaign-overview",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 48,
+    "region": null,
+    "category": "campaign-overview",
+    "expectedText": "The campaign represents the entire scope of the game, played across many Scenario Phases and City Phases. The collective group of characters is the party. Characters may join or leave, but it is always the same party throughout the campaign.",
+    "expectedHeadings": ["Campaign Overview"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "What is the party in Gloomhaven 2e campaign rules?",
+      "How does the Gloomhaven (2nd Edition) rulebook define the campaign?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p53-city-phase",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 53,
+    "region": null,
+    "category": "city-phase",
+    "expectedText": "After each Scenario Phase, the party must return to Gloomhaven and perform a City Phase except when a scenario was lost and replayed immediately or when a force-linked scenario must be played immediately. The City Phase has two steps: City Event and Downtime.",
+    "expectedHeadings": ["City Phase", "City Event", "Downtime"],
+    "expectedTables": [],
+    "retrievalQueries": [
+      "When does the party perform a City Phase in Gloomhaven 2e?",
+      "What are the two steps of the City Phase?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p62-monster-turn-guide-focus-table",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 62,
+    "region": null,
+    "category": "table-reference",
+    "expectedText": "Appendix B starts the Monster Turn Guide with an initial check, then movement path checks, then focus selection. If no path exists to an attack hex, the monster cannot find a focus and will not move or attack.",
+    "expectedHeadings": ["Appendix B: Monster Turn Guide", "Initial Check", "Find focus"],
+    "expectedTables": [
+      {
+        "id": "p62-monster-focus-priority",
+        "cells": [
+          { "row": 0, "column": 0, "text": "fewer negative hexes" },
+          { "row": 1, "column": 0, "text": "fewer movement points" },
+          { "row": 2, "column": 0, "text": "closer by range" },
+          { "row": 3, "column": 0, "text": "earlier in initiative order" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "What priority list does the monster turn guide use for focus?",
+      "What happens if a monster has no path to an attack hex?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p63-monster-movement-guide",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 63,
+    "region": null,
+    "category": "diagram-icon-heavy",
+    "expectedText": "For move abilities, the monster must end its movement with a shorter path to its attack hex or else it will not move. It chooses a path that triggers the fewest negative hexes and moves to an attack hex that can attack its focus and the most other enemies.",
+    "expectedHeadings": ["Perform Monster Abilities"],
+    "expectedTables": [
+      {
+        "id": "p63-monster-movement-priority",
+        "cells": [
+          { "row": 0, "column": 0, "text": "shorter path to its attack hex" },
+          { "row": 1, "column": 0, "text": "fewest negative hexes" },
+          { "row": 2, "column": 0, "text": "most other enemies" },
+          { "row": 3, "column": 0, "text": "fewest possible disadvantaged attacks" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "When will a Gloomhaven 2e monster refuse to move?",
+      "How does a monster choose among attack hexes?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p64-important-reminders-attacks",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 64,
+    "region": null,
+    "category": "dense-reference",
+    "expectedText": "Appendix C reminds players that a separate attack modifier card is drawn for each target of an attack ability. A shield bonus only reduces damage from attacks, not other damage sources, but the bonus applies to all attacks.",
+    "expectedHeadings": ["Appendix C: Important Reminders", "Attacks and Damage"],
+    "expectedTables": [
+      {
+        "id": "p64-attacks-reminders",
+        "cells": [
+          { "row": 0, "column": 0, "text": "separate attack modifier card" },
+          { "row": 1, "column": 0, "text": "shield bonus only reduces damage from attacks" },
+          { "row": 2, "column": 0, "text": "character can negate all damage from one source" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "Does shield reduce suffer damage in Gloomhaven 2e?",
+      "How many attack modifier cards are drawn for multiple targets?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p66-treasure-index",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 66,
+    "region": null,
+    "category": "dense-reference",
+    "expectedText": "Appendix E is the Treasure Index and warns players not to read it except to reference specific numbered treasures when looted. The index maps treasure numbers to rewards such as gold, items, random item designs, random side scenarios, or suffer-damage effects.",
+    "expectedHeadings": ["Appendix E: Treasure Index"],
+    "expectedTables": [
+      {
+        "id": "p66-treasure-index-examples",
+        "cells": [
+          { "row": 0, "column": 0, "text": "01" },
+          { "row": 0, "column": 1, "text": "Gain Magma Waders" },
+          { "row": 1, "column": 0, "text": "10" },
+          { "row": 1, "column": 1, "text": "Gain 30 gold" },
+          { "row": 2, "column": 0, "text": "36" },
+          { "row": 2, "column": 1, "text": "Gain a random item design" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "What is Appendix E in Gloomhaven 2e?",
+      "Where are numbered treasure rewards listed?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p68-index-core-terms",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 68,
+    "region": null,
+    "category": "dense-reference",
+    "expectedText": "Appendix G is the index. It lists rule terms with page references, including Advantage on pages 25 and 26, Disadvantage on pages 25, 27, 40, and 63, Line-of-sight on pages 19, 20, and 39, and Loot on pages 14, 18, 30, 35, 41, and 64.",
+    "expectedHeadings": ["Appendix G: Index"],
+    "expectedTables": [
+      {
+        "id": "p68-index-core-terms",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Advantage" },
+          { "row": 0, "column": 1, "text": "25, 26" },
+          { "row": 1, "column": 0, "text": "Disadvantage" },
+          { "row": 1, "column": 1, "text": "25, 27, 40, 63" },
+          { "row": 2, "column": 0, "text": "Line-of-sight" },
+          { "row": 2, "column": 1, "text": "19, 20, 39" },
+          { "row": 3, "column": 0, "text": "Loot" },
+          { "row": 3, "column": 1, "text": "14, 18, 30, 35, 41, 64" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "What index pages mention line-of-sight in Gloomhaven 2e?",
+      "Where does the Gloomhaven (2nd Edition) index list Loot?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p68-index-monster-terms",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 68,
+    "region": null,
+    "category": "table-reference",
+    "expectedText": "The index also maps monster-related terms to their sections: Focus appears on pages 29, 39, 40, 41, 44, 62, and 63; Monster movement appears on pages 37, 39, 40, and 62 through 64; Monster turn appears on pages 37, 38 through 43, 62, and 63.",
+    "expectedHeadings": ["Appendix G: Index"],
+    "expectedTables": [
+      {
+        "id": "p68-index-monster-terms",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Focus" },
+          { "row": 0, "column": 1, "text": "29, 39, 40-41, 44, 62-63" },
+          { "row": 1, "column": 0, "text": "Monster movement" },
+          { "row": 1, "column": 1, "text": "37-39, 40, 62-64" },
+          { "row": 2, "column": 0, "text": "Monster turn" },
+          { "row": 2, "column": 1, "text": "37, 38-43, 62-63" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "Where does the Gloomhaven 2e index point for monster movement?",
+      "Which pages does the index cite for monster focus?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p74-quick-reference-attack-timing",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 74,
+    "region": null,
+    "category": "table-reference",
+    "expectedText": "The Quick Reference repeats the timing of attack effects. +X Attack and Pierce happen during damage resolution. +X Target, Conditions, Forced Movement, and other added effects happen after the attack resolves. Elemental Infusions happen at the end of the turn.",
+    "expectedHeadings": ["Quick Reference", "Timing of Attack Effects"],
+    "expectedTables": [
+      {
+        "id": "p74-attack-effect-timing",
+        "cells": [
+          { "row": 0, "column": 0, "text": "+X Attack" },
+          { "row": 0, "column": 1, "text": "during damage resolution" },
+          { "row": 1, "column": 0, "text": "Conditions" },
+          { "row": 1, "column": 1, "text": "after the attack resolves" },
+          { "row": 2, "column": 0, "text": "Elemental Infusions" },
+          { "row": 2, "column": 1, "text": "at the end of the turn" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "What does the Gloomhaven 2e quick reference say about attack effect timing?",
+      "When do elemental infusions happen?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  },
+  {
+    "id": "gh2-rulebook-p74-quick-reference-targeted-abilities",
+    "source": "data/pdfs/gh2-rule-book.pdf",
+    "page": 74,
+    "region": null,
+    "category": "dense-reference",
+    "expectedText": "The Quick Reference lists targeted abilities as Attack, Conditions, Heal, Forced Movement, Commanding Figures, and Manipulating Tiles. It also lists the Scenario Phase sequence: Card Selection, Ordering of Initiative, Character and Monster Turns, and End of Round.",
+    "expectedHeadings": ["Quick Reference", "Targeted Abilities", "Scenario Phase"],
+    "expectedTables": [
+      {
+        "id": "p74-targeted-abilities",
+        "cells": [
+          { "row": 0, "column": 0, "text": "Attack" },
+          { "row": 1, "column": 0, "text": "Conditions" },
+          { "row": 2, "column": 0, "text": "Heal" },
+          { "row": 3, "column": 0, "text": "Forced Movement" },
+          { "row": 4, "column": 0, "text": "Commanding Figures" },
+          { "row": 5, "column": 0, "text": "Manipulating Tiles" }
+        ]
+      }
+    ],
+    "retrievalQueries": [
+      "Which abilities are targeted in Gloomhaven 2e?",
+      "What steps are in the Gloomhaven (2nd Edition) Scenario Phase?"
+    ],
+    "forbiddenRetrievalContextTerms": []
+  }
+]
