@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "squire-pdf-extraction-manifest-v1",
+  "provider": "apple-vision",
+  "providerVersion": "macos-vision-ocr-markdown-v1",
+  "runId": "apple-vision-baseline",
+  "runStatus": "succeeded",
+  "sourcePath": "data/pdfs/gh2-rule-book.pdf",
+  "sourceHash": "sha256:a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27",
+  "providerConfigHash": "sha256:09bfbe2f8f6a3de3d82fae814a2a69687507dd57938f6d6fd434908902b15eb2",
+  "normalizedArtifactPath": "eval/results/pdf-extraction/normalized/apple-vision/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/09bfbe2f8f6a3de3d82fae814a2a69687507dd57938f6d6fd434908902b15eb2/pages-2-30-31-32-33-41-42-57-72.json",
+  "normalizedArtifactHash": "sha256:e3d6f6abca301551408ffdc9fb72b30af97ff273cbac13613ab47318535b2b49",
+  "rawArtifacts": [
+    {
+      "kind": "provider-markdown",
+      "path": "eval/results/pdf-extraction/raw/apple-vision/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/09bfbe2f8f6a3de3d82fae814a2a69687507dd57938f6d6fd434908902b15eb2/apple-vision-baseline.md",
+      "sha256": "sha256:fd5fea840bf440df6d6a17968ddfbfd6e6387e03ae00a73c12cd37ff7c8c73f7",
+      "redacted": false,
+      "persisted": true
+    }
+  ],
+  "cost": {
+    "estimatedUsd": 0,
+    "actualUsd": 0,
+    "pagesProcessed": 9,
+    "costPerPageUsd": 0
+  },
+  "privacy": {
+    "retentionPolicy": "local macOS Vision OCR output is retained only in the configured eval output directory",
+    "trainingUse": "not-used-for-training"
+  },
+  "cache": {
+    "key": "apple-vision:sha256:a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27:sha256:09bfbe2f8f6a3de3d82fae814a2a69687507dd57938f6d6fd434908902b15eb2:2,30,31,32,33,41,42,57,72",
+    "hit": false
+  },
+  "execution": {
+    "selectedPages": [2, 30, 31, 32, 33, 41, 42, 57, 72],
+    "fullRulebook": false,
+    "fullRulebookOverride": false,
+    "estimatedCostUsd": 0,
+    "maxEstimatedCostUsd": 1,
+    "costOverride": false,
+    "retryLimit": 0,
+    "retryCount": 0,
+    "timeoutMs": 600000,
+    "concurrencyLimit": 1,
+    "rateLimitCount": 0,
+    "refreshedProviderOutput": true
+  }
+}

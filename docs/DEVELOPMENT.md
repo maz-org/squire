@@ -531,6 +531,25 @@ swift scripts/ocr-pdf-apple-vision.swift \
   2026-05-24
 ```
 
+The reproducible eval baseline uses the shared provider registry, guardrails,
+cache, manifest, production retrieval scorer, and score report:
+
+```bash
+npm run pdf-extraction:run -- \
+  --provider=apple-vision \
+  --source=data/pdfs/gh2-rule-book.pdf \
+  --pages=2,30,31,32,33,41,42,57,72 \
+  --output-dir=eval/results/pdf-extraction \
+  --run-label=apple-vision-baseline
+```
+
+The live Apple Vision path is macOS-only and should be treated as an explicit
+local smoke run. Commit-time tests mock the Swift wrapper and validate the
+normalized artifact, manifest, and report shape without running Vision. The
+report scorer indexes the selected provider pages into temporary eval sources,
+runs the ground-truth retrieval queries with the production embedding and
+reranking path, and cleans those eval sources up afterward.
+
 This is a baseline, not the final extraction decision. See
 [docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
 for the vendor evaluation plan.

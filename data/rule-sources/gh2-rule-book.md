@@ -1,4 +1,4 @@
-# Gloomhaven: Second Edition Rulebook OCR Text Snapshot
+# Gloomhaven (2nd Edition) Rulebook OCR Text Snapshot
 
 Source PDF: data/pdfs/gh2-rule-book.pdf
 Official source URL: https://drive.google.com/file/d/16TmmCKa6zVVObj2qM-vIj9RcEAC3nfMT/view?usp=sharing

@@ -5,6 +5,7 @@ import {
   createProviderRegistry,
   type PdfExtractionProvider,
 } from '../eval/pdf-extraction/provider.ts';
+import { createPdfExtractionProviderRegistry } from '../eval/pdf-extraction/providers.ts';
 
 function provider(id: PdfExtractionProvider['id']): PdfExtractionProvider {
   return {
@@ -16,6 +17,15 @@ function provider(id: PdfExtractionProvider['id']): PdfExtractionProvider {
 }
 
 describe('PDF extraction provider registry', () => {
+  it('wires Apple Vision into the default extraction provider registry', () => {
+    const registry = createPdfExtractionProviderRegistry();
+
+    expect(registry.get('apple-vision')).toMatchObject({
+      id: 'apple-vision',
+      displayName: 'Apple Vision',
+    });
+  });
+
   it('registers providers by stable id and lists them in insertion order', () => {
     const registry = createProviderRegistry();
     registry.register(provider('apple-vision'));

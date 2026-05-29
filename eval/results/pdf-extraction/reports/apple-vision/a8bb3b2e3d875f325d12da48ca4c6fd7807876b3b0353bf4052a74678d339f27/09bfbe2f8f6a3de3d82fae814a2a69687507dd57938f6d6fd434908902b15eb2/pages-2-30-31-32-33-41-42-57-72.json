@@ -1,0 +1,606 @@
+{
+  "schemaVersion": "squire-pdf-extraction-report-v1",
+  "provider": "apple-vision",
+  "providerVersion": "macos-vision-ocr-markdown-v1",
+  "runId": "apple-vision-baseline",
+  "baselineComparator": {
+    "provider": "apple-vision",
+    "role": "baseline"
+  },
+  "normalizedArtifactPath": "eval/results/pdf-extraction/normalized/apple-vision/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/09bfbe2f8f6a3de3d82fae814a2a69687507dd57938f6d6fd434908902b15eb2/pages-2-30-31-32-33-41-42-57-72.json",
+  "manifestPath": "eval/results/pdf-extraction/manifests/apple-vision/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/09bfbe2f8f6a3de3d82fae814a2a69687507dd57938f6d6fd434908902b15eb2/pages-2-30-31-32-33-41-42-57-72.json",
+  "score": {
+    "provider": "apple-vision",
+    "providerVersion": "macos-vision-ocr-markdown-v1",
+    "text": {
+      "requiredPhraseRecall": 0.9011764705882352,
+      "averageCharacterErrorRate": 1
+    },
+    "structure": {
+      "headingRecall": 1,
+      "readingOrderScore": 1,
+      "tableCellRecall": 0.5,
+      "noiseRatio": 0.2615546218487395
+    },
+    "retrieval": {
+      "queryCount": 8,
+      "top1Hits": 7,
+      "top3Hits": 7,
+      "top5Hits": 7,
+      "citeableContextHits": 0,
+      "queryScores": [
+        {
+          "recordId": "gh2-rulebook-p02-toc-core-rules",
+          "query": "Where is the line-of-sight rule in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.71484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.59765625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.44921875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.431640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-31/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-31/gh2-rule-book.pdf",
+              "page": 31,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.41796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p02-toc-core-rules",
+          "query": "What page has the Gloomhaven (2nd Edition) loot rules?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": false,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.60546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.59375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.5625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.55859375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p02-toc-campaign-appendices",
+          "query": "Where does the Gloomhaven 2e rulebook cover the City Phase?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.6328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.5,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-57/chunk-4",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-57/gh2-rule-book.pdf",
+              "page": 57,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.455078125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-32/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-32/gh2-rule-book.pdf",
+              "page": 32,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.41796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p02-toc-campaign-appendices",
+          "query": "Which appendix has the Gloomhaven (2nd Edition) index?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.498046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.443359375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-57/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-57/gh2-rule-book.pdf",
+              "page": 57,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.443359375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.43359375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-ability",
+          "query": "How does Loot X work in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.62890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.54296875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.52734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-3",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.484375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-ability",
+          "query": "Can monsters loot treasure tiles?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.87890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.86328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.56640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-3",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.474609375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-sidebar-boundary",
+          "query": "Who gains the reward from a numbered treasure in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.8125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-57/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-57/gh2-rule-book.pdf",
+              "page": 57,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.3984375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.392578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.38671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.3671875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-sidebar-boundary",
+          "query": "Where do you look up numbered treasure rewards?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.470703125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-2",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.35546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/chunk-0",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.294921875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/chunk-1",
+              "source": "eval/pdf-extraction/apple-vision-baseline/apple-vision/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.29296875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        }
+      ],
+      "failureClasses": ["misleading_context"],
+      "scoreKindCounts": {
+        "vector": 0,
+        "rerank": 8
+      },
+      "embedding": {
+        "model": "voyage-4-large",
+        "dimensions": 1024,
+        "version": "voyage-4-large:dim1024:prod-v1"
+      }
+    },
+    "latencyMs": 40967,
+    "cost": {
+      "estimatedUsd": 0,
+      "actualUsd": 0,
+      "pagesProcessed": 9,
+      "costPerPageUsd": 0
+    },
+    "privacy": {
+      "retentionPolicy": "local macOS Vision OCR output is retained only in the configured eval output directory",
+      "trainingUse": "not-used-for-training"
+    },
+    "failures": [
+      "misleading retrieval context on gh2-rulebook-p30-loot-ability",
+      "misleading retrieval context on gh2-rulebook-p30-loot-sidebar-boundary",
+      "retrieval scoring: misleading_context"
+    ]
+  },
+  "failureModes": [
+    {
+      "id": "reading-order",
+      "label": "Reading order",
+      "observed": false,
+      "evidence": []
+    },
+    {
+      "id": "page-numbers",
+      "label": "Page numbers",
+      "observed": true,
+      "evidence": ["page 2", "page 30", "page 31", "page 32", "page 33"]
+    },
+    {
+      "id": "toc-ordering",
+      "label": "Table of contents ordering",
+      "observed": true,
+      "evidence": ["page 2"]
+    },
+    {
+      "id": "heading-noise",
+      "label": "Heading noise",
+      "observed": false,
+      "evidence": []
+    },
+    {
+      "id": "broken-hyphenation",
+      "label": "Broken hyphenation",
+      "observed": true,
+      "evidence": ["page 32"]
+    },
+    {
+      "id": "sidebar-callout-insertion",
+      "label": "Sidebar and callout insertion",
+      "observed": true,
+      "evidence": [
+        "misleading retrieval context on gh2-rulebook-p30-loot-ability",
+        "misleading retrieval context on gh2-rulebook-p30-loot-sidebar-boundary"
+      ]
+    }
+  ]
+}
