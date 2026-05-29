@@ -102,6 +102,20 @@ The shared harness contains:
   summaries, manifests, and small redacted samples while keeping full raw
   provider payloads out of git by default.
 
+SQR-250 hardens the runner so paid provider execution is explicit and
+repeatable:
+
+- Selected-page runs are the default. A full Gloomhaven (2nd Edition) rulebook
+  run must pass `--allow-full-rulebook`.
+- Estimated provider cost is checked before provider work. Runs that exceed
+  `--max-estimated-cost-usd` must pass `--allow-estimated-cost`.
+- Successful normalized provider artifacts are cached by provider, source hash,
+  provider config hash, and page set. Re-runs reuse the artifact unless
+  `--refresh-provider-output` is passed.
+- The manifest records cache hits, retry count, rate-limit count, timeout,
+  concurrency cap, estimated and actual cost, and whether full-rulebook or cost
+  overrides were used.
+
 The shared failure taxonomy is `timeout`, `rate_limit`, `credential_failure`,
 `provider_error`, `partial_page_failure`, `invalid_artifact`, `cost_guardrail`,
 and `unsupported_configuration`.

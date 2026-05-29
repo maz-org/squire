@@ -12,6 +12,9 @@ describe('parsePdfExtractionArgs', () => {
         '--output-dir=eval/results/pdf-extraction',
         '--run-label=textract-smoke',
         '--retry-count=2',
+        '--max-estimated-cost-usd=0.50',
+        '--provider-concurrency=1',
+        '--timeout-ms=60000',
       ]),
     ).toEqual({
       provider: 'aws-textract',
@@ -20,25 +23,30 @@ describe('parsePdfExtractionArgs', () => {
       outputDir: 'eval/results/pdf-extraction',
       runLabel: 'textract-smoke',
       retryCount: 2,
+      allowFullRulebook: false,
+      allowEstimatedCostOverride: false,
+      maxEstimatedCostUsd: 0.5,
+      providerConcurrency: 1,
+      refreshProviderOutput: false,
+      timeoutMs: 60000,
     });
   });
 
-  it('rejects full-rulebook and cost guardrail flags reserved for SQR-250', () => {
-    expect(() =>
+  it('parses explicit full-rulebook and cost override flags', () => {
+    expect(
       parsePdfExtractionArgs([
         '--provider=aws-textract',
         '--source=data/pdfs/gh2-rule-book.pdf',
         '--allow-full-rulebook',
-      ]),
-    ).toThrow(/Full-rulebook provider runs are implemented by SQR-250/);
-
-    expect(() =>
-      parsePdfExtractionArgs([
-        '--provider=aws-textract',
-        '--source=data/pdfs/gh2-rule-book.pdf',
+        '--allow-estimated-cost',
         '--max-estimated-cost-usd=1',
       ]),
-    ).toThrow(/Cost guardrails are implemented by SQR-250/);
+    ).toMatchObject({
+      pages: [],
+      allowFullRulebook: true,
+      allowEstimatedCostOverride: true,
+      maxEstimatedCostUsd: 1,
+    });
   });
 
   it('rejects empty and unsupported providers', () => {
@@ -64,6 +72,26 @@ describe('parsePdfExtractionArgs', () => {
   it('requires selected pages until the guarded full-rulebook runner exists', () => {
     expect(() =>
       parsePdfExtractionArgs(['--provider=llamaparse', '--source=data/pdfs/gh2-rule-book.pdf']),
-    ).toThrow(/Selected pages are required/);
+    ).toThrow(/Selected pages are required unless --allow-full-rulebook is set/);
+  });
+
+  it('rejects invalid guardrail values', () => {
+    expect(() =>
+      parsePdfExtractionArgs([
+        '--provider=llamaparse',
+        '--source=data/pdfs/gh2-rule-book.pdf',
+        '--pages=30',
+        '--max-estimated-cost-usd=-1',
+      ]),
+    ).toThrow(/Invalid --max-estimated-cost-usd/);
+
+    expect(() =>
+      parsePdfExtractionArgs([
+        '--provider=llamaparse',
+        '--source=data/pdfs/gh2-rule-book.pdf',
+        '--pages=30',
+        '--provider-concurrency=0',
+      ]),
+    ).toThrow(/Invalid --provider-concurrency/);
   });
 });
