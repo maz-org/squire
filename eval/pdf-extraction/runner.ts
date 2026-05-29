@@ -1,5 +1,6 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, rename, unlink } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { ZodError } from 'zod';
 
 import { buildExtractionManifest, type ExtractionManifest } from './manifest.ts';
 import {
@@ -116,6 +117,9 @@ async function readCachedArtifact(artifactPath: string): Promise<ExtractionArtif
     if (typeof error === 'object' && error && 'code' in error && error.code === 'ENOENT') {
       return undefined;
     }
+    if (error instanceof SyntaxError || error instanceof ZodError) {
+      return undefined;
+    }
     throw error;
   }
 }
@@ -125,7 +129,64 @@ async function writeNormalizedArtifact(
   artifact: ExtractionArtifact,
 ): Promise<void> {
   await mkdir(dirname(artifactPath), { recursive: true });
-  await writeFile(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
+  const tempPath = `${artifactPath}.${process.pid}.${Date.now()}.tmp`;
+  const file = await open(tempPath, 'w');
+  try {
+    await file.writeFile(`${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
+    await file.sync();
+  } finally {
+    await file.close();
+  }
+  try {
+    await rename(tempPath, artifactPath);
+  } catch (error) {
+    await unlink(tempPath).catch(() => undefined);
+    throw error;
+  }
+}
+
+function pageSetLabel(pages: number[]): string {
+  return pages.length === 0 ? 'full-rulebook' : pages.join(',');
+}
+
+function normalizePageSet(pages: number[]): number[] {
+  return [...new Set(pages)].sort((left, right) => left - right);
+}
+
+function assertPageSelectionMatchesRequest(
+  artifact: ExtractionArtifact,
+  input: PdfExtractionRunnerInput,
+): void {
+  const artifactRunPages = artifact.run.pageRange ?? [];
+  if (input.pages.length === 0) {
+    if (artifactRunPages.length > 0) {
+      throw new Error(
+        `Page artifact mismatch: expected full-rulebook, got ${pageSetLabel(normalizePageSet(artifactRunPages))}.`,
+      );
+    }
+    if (
+      artifact.source.pageCount !== undefined &&
+      artifact.pages.length !== artifact.source.pageCount
+    ) {
+      throw new Error(
+        `Page artifact mismatch: expected ${artifact.source.pageCount} full-rulebook pages, got ${artifact.pages.length}.`,
+      );
+    }
+    return;
+  }
+
+  const expectedPages = normalizePageSet(input.pages);
+  const actualPages = normalizePageSet(
+    artifactRunPages.length > 0 ? artifactRunPages : artifact.pages.map((page) => page.pageNumber),
+  );
+  if (
+    expectedPages.length !== actualPages.length ||
+    expectedPages.some((page, index) => page !== actualPages[index])
+  ) {
+    throw new Error(
+      `Page artifact mismatch: expected ${pageSetLabel(expectedPages)}, got ${pageSetLabel(actualPages)}.`,
+    );
+  }
 }
 
 function assertArtifactMatchesRequest(
@@ -147,6 +208,7 @@ function assertArtifactMatchesRequest(
       `Provider config artifact hash mismatch: expected ${input.providerConfigHash}, got ${artifact.providerConfigHash}.`,
     );
   }
+  assertPageSelectionMatchesRequest(artifact, input);
 }
 
 function buildManifestForArtifact(

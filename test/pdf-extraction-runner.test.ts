@@ -1,6 +1,6 @@
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -321,6 +321,78 @@ describe('runPdfExtraction', () => {
         provider: 'aws-textract',
       },
     );
+  });
+
+  it('treats corrupt cached artifacts as cache misses and refreshes them', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-corrupt-cache-'));
+    const artifactPath = join(outputDir, 'normalized', 'aws-textract', 'pages-30.json');
+    await mkdir(dirname(artifactPath), { recursive: true });
+    await writeFile(artifactPath, '{not valid json', 'utf8');
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue(artifact);
+    const registry = registryWith({
+      id: 'aws-textract',
+      displayName: 'AWS Textract',
+      version: 'textract-test',
+      extract,
+    });
+
+    const result = await runPdfExtraction({
+      registry,
+      provider: 'aws-textract',
+      sourcePath: 'data/pdfs/gh2-rule-book.pdf',
+      sourceHash: artifact.source.sha256,
+      providerConfigHash: artifact.providerConfigHash,
+      artifactPath,
+      pages: [30],
+      outputDir,
+      runLabel: 'run-textract-page-30',
+      retryCount: 0,
+    });
+
+    expect(extract).toHaveBeenCalledTimes(1);
+    expect(result.manifest.cache.hit).toBe(false);
+    expect(JSON.parse(await readFile(artifactPath, 'utf8'))).toMatchObject({
+      schemaVersion: 'squire-pdf-extraction-v1',
+      provider: 'aws-textract',
+    });
+  });
+
+  it('rejects provider artifacts whose page set does not match the request', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-page-mismatch-'));
+    const wrongPageArtifact = {
+      ...artifact,
+      run: {
+        ...artifact.run,
+        pageRange: [31],
+      },
+      pages: [
+        {
+          ...artifact.pages[0],
+          pageNumber: 31,
+        },
+      ],
+    } satisfies ExtractionArtifact;
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue(wrongPageArtifact);
+    const registry = registryWith({
+      id: 'aws-textract',
+      displayName: 'AWS Textract',
+      version: 'textract-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtraction({
+        registry,
+        provider: 'aws-textract',
+        sourcePath: 'data/pdfs/gh2-rule-book.pdf',
+        sourceHash: artifact.source.sha256,
+        providerConfigHash: artifact.providerConfigHash,
+        pages: [30],
+        outputDir,
+        runLabel: 'run-textract-page-30',
+        retryCount: 0,
+      }),
+    ).rejects.toThrow(/Page artifact mismatch: expected 30, got 31/);
   });
 
   it('refreshes content-addressed artifacts when explicitly requested', async () => {
