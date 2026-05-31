@@ -17,6 +17,7 @@ import {
   renderOpenAiStrictToolSchemas,
   type OpenAiStrictFunctionTool,
 } from './openai-schema.ts';
+import { assertRuleSourceRetrievalReady } from './retrieval-preflight.ts';
 import type { EvalCase } from './schema.ts';
 import {
   type EvalTraceError,
@@ -634,6 +635,14 @@ export async function runOpenAiResponsesEvalCase(
       trace,
     };
   };
+
+  try {
+    await assertRuleSourceRetrievalReady(options.evalCase);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(errorTrace('tool_execution', message));
+    return finish(false, '', 'tool_execution', 'tool_execution', message);
+  }
 
   for (let i = 0; i < toolLoopLimit + (allowForcedSynthesisTurn ? 1 : 0); i++) {
     iterations = i + 1;
