@@ -144,34 +144,69 @@ const LLAMAPARSE_CREDIT_USD = 0.00125;
 const LLAMAPARSE_DEFAULT_COST_PER_PAGE_USD = 0.05;
 
 export const LLAMAPARSE_PROVIDER_VERSION = 'llamaparse-v2-rest-parse-v1';
-export const LLAMAPARSE_PROVIDER_CONFIG = {
-  api: 'LlamaParse REST v1 beta files + v2 parse',
-  tier: LLAMAPARSE_DEFAULT_TIER,
-  version: LLAMAPARSE_DEFAULT_VERSION,
-  expand: LLAMAPARSE_EXPAND,
-  selectedPages: 'page_ranges.target_pages-v1',
-  pageSizeFallback: { width: 612, height: 792, unit: 'pt' },
-  outputOptions: {
-    markdown: {
-      tables: {
-        output_tables_as_markdown: true,
+
+function providerConfigFor(input: {
+  tier: LlamaParseTier;
+  version: string;
+  disableCache: boolean;
+  costPerPageUsd: number;
+}) {
+  return {
+    api: 'LlamaParse REST v1 beta files + v2 parse',
+    tier: input.tier,
+    version: input.version,
+    expand: LLAMAPARSE_EXPAND,
+    selectedPages: 'page_ranges.target_pages-v1',
+    pageSizeFallback: { width: 612, height: 792, unit: 'pt' },
+    outputOptions: {
+      markdown: {
+        tables: {
+          output_tables_as_markdown: true,
+        },
       },
     },
-  },
-  processingOptions: {
-    ocrParameters: { languages: ['en'] },
-  },
-  processingControl: {
-    timeouts: { baseInSeconds: 300, extraTimePerPageInSeconds: 30 },
-    jobFailureConditions: {
-      allowedPageFailureRatio: 0.01,
-      failOnMarkdownReconstructionError: true,
+    processingOptions: {
+      ocrParameters: { languages: ['en'] },
     },
-  },
-};
+    processingControl: {
+      timeouts: { baseInSeconds: 300, extraTimePerPageInSeconds: 30 },
+      jobFailureConditions: {
+        allowedPageFailureRatio: 0.01,
+        failOnMarkdownReconstructionError: true,
+      },
+    },
+    disableCache: input.disableCache,
+    costPerPageUsd: input.costPerPageUsd,
+  };
+}
+
+export const LLAMAPARSE_PROVIDER_CONFIG = providerConfigFor({
+  tier: LLAMAPARSE_DEFAULT_TIER,
+  version: LLAMAPARSE_DEFAULT_VERSION,
+  disableCache: false,
+  costPerPageUsd: LLAMAPARSE_DEFAULT_COST_PER_PAGE_USD,
+});
 export const LLAMAPARSE_PROVIDER_CONFIG_HASH = computeProviderConfigHash(
   LLAMAPARSE_PROVIDER_CONFIG,
 );
+
+export function llamaParseProviderConfigHash(input: {
+  tier: LlamaParseTier;
+  version: string;
+  disableCache: boolean;
+  costPerPageUsd: number;
+}): string {
+  return computeProviderConfigHash(providerConfigFor(input));
+}
+
+export function llamaParseProviderConfigHashFromEnv(): string {
+  return llamaParseProviderConfigHash({
+    tier: tierFromEnv(),
+    version: versionFromEnv(),
+    disableCache: disableCacheFromEnv(),
+    costPerPageUsd: costPerPageFromEnv(),
+  });
+}
 
 function sha256(bytes: Buffer | string): string {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -185,8 +220,12 @@ function safePathSegment(value: string): string {
   return value.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'run';
 }
 
-function rawOutputPath(input: PdfExtractionRunInput, sourceHash: string): string {
-  return `${input.outputDir}/raw/llamaparse/${sourceHash.slice(7)}/${LLAMAPARSE_PROVIDER_CONFIG_HASH.slice(7)}/${safePathSegment(input.runLabel)}.json`;
+function rawOutputPath(
+  input: PdfExtractionRunInput,
+  sourceHash: string,
+  providerConfigHash: string,
+): string {
+  return `${input.outputDir}/raw/llamaparse/${sourceHash.slice(7)}/${providerConfigHash.slice(7)}/${safePathSegment(input.runLabel)}.json`;
 }
 
 function round(value: number): number {
@@ -334,6 +373,15 @@ function pageNumbersFromResult(result: LlamaParseResult): number[] {
     if (value && value > 0) pageNumbers.add(value);
   }
   return [...pageNumbers].sort((left, right) => left - right);
+}
+
+function sourcePageCountFromResult(
+  result: LlamaParseResult,
+  requestedPages: number[],
+): number | undefined {
+  if (requestedPages.length > 0) return undefined;
+  const pageNumbers = pageNumbersFromResult(result);
+  return pageNumbers.length === 0 ? undefined : Math.max(...pageNumbers);
 }
 
 function indexByPage<T extends { page_number?: number }>(pages: T[] | undefined): Map<number, T> {
@@ -486,14 +534,21 @@ function requestIdFrom(response: Response): string | undefined {
   );
 }
 
-async function readJsonResponse(response: Response): Promise<unknown> {
+export async function readLlamaParseJsonResponse(response: Response): Promise<unknown> {
   const text = await response.text();
-  const parsed = text ? (JSON.parse(text) as unknown) : {};
+  let parsed: unknown = {};
+  if (text) {
+    try {
+      parsed = JSON.parse(text) as unknown;
+    } catch {
+      parsed = { detail: text };
+    }
+  }
   if (!response.ok) {
     const detail =
       typeof parsed === 'object' && parsed && 'detail' in parsed
         ? JSON.stringify((parsed as { detail?: unknown }).detail)
-        : response.statusText;
+        : text || response.statusText;
     throw Object.assign(new Error(`LlamaParse HTTP ${response.status}: ${detail}`), {
       status: response.status,
     });
@@ -521,7 +576,7 @@ async function createLlamaParseRestRuntime(): Promise<LlamaParseRuntime> {
         },
         body: form,
       });
-      const json = (await readJsonResponse(response)) as { id?: unknown };
+      const json = (await readLlamaParseJsonResponse(response)) as { id?: unknown };
       if (typeof json.id !== 'string') {
         throw new Error('provider error: LlamaParse file upload did not return an id.');
       }
@@ -549,7 +604,7 @@ async function createLlamaParseRestRuntime(): Promise<LlamaParseRuntime> {
           processing_control: input.request.processing_control,
         }),
       });
-      const json = (await readJsonResponse(response)) as {
+      const json = (await readLlamaParseJsonResponse(response)) as {
         id?: unknown;
         status?: unknown;
       };
@@ -571,7 +626,7 @@ async function createLlamaParseRestRuntime(): Promise<LlamaParseRuntime> {
           Authorization: `Bearer ${apiKey}`,
         },
       });
-      const json = (await readJsonResponse(response)) as LlamaParseResult;
+      const json = (await readLlamaParseJsonResponse(response)) as LlamaParseResult;
       return {
         ...json,
         requestId: requestIdFrom(response),
@@ -668,20 +723,26 @@ export function createLlamaParseProvider(deps: LlamaParseProviderDeps = {}): Pdf
       const startedAt = now();
       const startMs = Date.now();
       const sourceHash = await fileSha256(input.sourcePath);
-      const outputPath = rawOutputPath(input, sourceHash);
+      const providerConfigHash = llamaParseProviderConfigHash({
+        tier,
+        version,
+        disableCache,
+        costPerPageUsd,
+      });
+      const outputPath = rawOutputPath(input, sourceHash, providerConfigHash);
       await mkdir(dirname(outputPath), { recursive: true });
       const runtime = deps.runtime ?? (await createLlamaParseRestRuntime());
 
       try {
-        const upload = await runtime.uploadFile({
-          sourcePath: input.sourcePath,
-          purpose: 'parse',
-        });
         const request = makeRequest({
           pages: input.pages,
           tier,
           version,
           disableCache,
+        });
+        const upload = await runtime.uploadFile({
+          sourcePath: input.sourcePath,
+          purpose: 'parse',
         });
         const start = await runtime.startParse({
           fileId: upload.fileId,
@@ -698,6 +759,7 @@ export function createLlamaParseProvider(deps: LlamaParseProviderDeps = {}): Pdf
         const selectedPages = normalizePages(result, input.pages);
         const completedAt = now();
         const pagesProcessed = selectedPages.length;
+        const sourcePageCount = sourcePageCountFromResult(result, input.pages);
         const estimatedUsd = round(pagesProcessed * costPerPageUsd);
         const rawPayload = {
           fileId: upload.fileId,
@@ -711,11 +773,11 @@ export function createLlamaParseProvider(deps: LlamaParseProviderDeps = {}): Pdf
           schemaVersion: 'squire-pdf-extraction-v1',
           provider: 'llamaparse',
           providerVersion: LLAMAPARSE_PROVIDER_VERSION,
-          providerConfigHash: LLAMAPARSE_PROVIDER_CONFIG_HASH,
+          providerConfigHash,
           source: {
             path: input.sourcePath,
             sha256: sourceHash,
-            pageCount: Math.max(...pageNumbersFromResult(result), ...input.pages),
+            ...(sourcePageCount !== undefined ? { pageCount: sourcePageCount } : {}),
           },
           run: {
             id: input.runLabel,
@@ -754,6 +816,8 @@ export function createLlamaParseProvider(deps: LlamaParseProviderDeps = {}): Pdf
             expand: request.expand,
             pageRanges: request.page_ranges,
             disableCache,
+            parsedPageCount: pagesProcessed,
+            sourcePageCount,
             parseSettings: {
               outputOptions: request.output_options,
               processingControl: request.processing_control,

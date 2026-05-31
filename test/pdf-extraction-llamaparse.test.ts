@@ -7,6 +7,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createLlamaParseProvider,
   LLAMAPARSE_PROVIDER_CONFIG_HASH,
+  llamaParseProviderConfigHash,
+  readLlamaParseJsonResponse,
   type LlamaParseRuntime,
 } from '../eval/pdf-extraction/llamaparse.ts';
 import { validateExtractionArtifact } from '../eval/pdf-extraction/schema.ts';
@@ -135,6 +137,7 @@ describe('LlamaParse PDF extraction provider', () => {
       expand: ['markdown', 'text', 'items', 'metadata', 'job_metadata'],
     });
     expect(validateExtractionArtifact(artifact)).toEqual(artifact);
+    expect(artifact.source.pageCount).toBeUndefined();
     expect(artifact).toMatchObject({
       provider: 'llamaparse',
       providerConfigHash: LLAMAPARSE_PROVIDER_CONFIG_HASH,
@@ -163,6 +166,7 @@ describe('LlamaParse PDF extraction provider', () => {
         requestIds: ['upload-request-1', 'parse-request-1'],
         expand: ['markdown', 'text', 'items', 'metadata', 'job_metadata'],
         pageRanges: { target_pages: '30' },
+        parsedPageCount: 1,
         parseSettings: expect.any(Object),
         ocrSettings: { languages: ['en'] },
       },
@@ -273,6 +277,51 @@ describe('LlamaParse PDF extraction provider', () => {
         retryCount: 0,
       }),
     ).rejects.toMatchObject({ status: 429 });
+  });
+
+  it('preserves HTTP status on non-JSON provider errors', async () => {
+    await expect(
+      readLlamaParseJsonResponse(
+        new Response('upstream unavailable', {
+          status: 502,
+          statusText: 'Bad Gateway',
+        }),
+      ),
+    ).rejects.toMatchObject({
+      status: 502,
+      message: expect.stringContaining('upstream unavailable'),
+    });
+  });
+
+  it('hashes the effective runtime provider configuration', async () => {
+    const { outputDir, sourcePath } = await sourceFixture();
+    const provider = createLlamaParseProvider({
+      runtime: llamaParseRuntime(),
+      tier: 'cost_effective',
+      version: '2026-01-08',
+      disableCache: true,
+      costPerPageUsd: 0.02,
+      now: () => '2026-05-31T00:00:00.000Z',
+    });
+
+    const artifact = await provider.extract({
+      sourcePath,
+      pages: [30],
+      outputDir,
+      runLabel: 'llamaparse effective config',
+      retryCount: 0,
+    });
+
+    expect(artifact.providerConfigHash).toBe(
+      llamaParseProviderConfigHash({
+        tier: 'cost_effective',
+        version: '2026-01-08',
+        disableCache: true,
+        costPerPageUsd: 0.02,
+      }),
+    );
+    expect(artifact.providerConfigHash).not.toBe(LLAMAPARSE_PROVIDER_CONFIG_HASH);
+    expect(artifact.rawArtifacts[0].path).toContain(artifact.providerConfigHash.slice(7));
   });
 
   it('rejects completed jobs that omit requested page output', async () => {
