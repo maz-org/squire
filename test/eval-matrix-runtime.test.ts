@@ -330,15 +330,58 @@ describe('eval matrix runtime adapter', () => {
     });
   });
 
-  it('rejects LangGraph matrix rows for non-Anthropic providers', async () => {
+  it('routes LangGraph OpenAI matrix rows through the OpenAI runner with LangGraph trace identity', async () => {
+    mockRunOpenAiResponsesEvalCase.mockResolvedValue({
+      ok: true,
+      answer: 'Spyglass reveals the top card.',
+      failureClass: 'none',
+      trajectory: {
+        toolCalls: [],
+        finalAnswer: 'Spyglass reveals the top card.',
+        tokenUsage: {
+          inputTokens: 10,
+          outputTokens: 5,
+          cacheCreationInputTokens: 0,
+          cacheReadInputTokens: 0,
+          totalTokens: 15,
+        },
+        model: 'gpt-5.5',
+        iterations: 2,
+        stopReason: 'completed',
+      },
+      trace: trace({
+        traceId: 'openai-langgraph-trace',
+        agentRuntime: 'langgraph',
+        provider: 'openai',
+        model: 'gpt-5.5',
+        resolvedModel: 'gpt-5.5',
+      }),
+    });
     const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
 
-    await expect(
-      runner({
-        ...input('openai'),
+    const output = await runner({
+      ...input('openai'),
+      agentRuntime: 'langgraph',
+      traceId: 'openai-langgraph-trace',
+      traceUrl: 'https://smith.langchain.test/traces/openai-langgraph-trace',
+    });
+
+    expect(mockRunOpenAiResponsesEvalCase).toHaveBeenCalledWith(
+      expect.objectContaining({
         agentRuntime: 'langgraph',
+        providerConfig: expect.objectContaining({
+          provider: 'openai',
+          model: 'gpt-5.5',
+        }),
+        traceId: 'openai-langgraph-trace',
       }),
-    ).rejects.toThrow(/LangGraph eval runtime currently supports Anthropic/);
+    );
+    expect(output).toMatchObject({
+      ok: true,
+      traceId: 'openai-langgraph-trace',
+      traceUrl: 'https://smith.langchain.test/traces/openai-langgraph-trace',
+      failureClass: 'none',
+    });
   });
 
   it('falls back to the matrix cost estimate when provider traces have no cost', async () => {

@@ -7,7 +7,7 @@ import {
   type ToolCallResult,
 } from '../src/agent.ts';
 import type { ToolTrajectoryStep, TokenUsage } from '../src/agent.ts';
-import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
+import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import {
   OPENAI_TOOL_SCHEMA_VERSION,
@@ -124,6 +124,7 @@ export interface RunOpenAiResponsesEvalCaseOptions {
   client?: OpenAiResponsesClient;
   evalCase: EvalCase;
   providerConfig: EvalProviderConfig;
+  agentRuntime?: EvalAgentRuntime;
   runLabel: string;
   toolSurface: EvalToolSurface;
   traceWriter?: EvalTraceWriter;
@@ -542,7 +543,7 @@ export async function runOpenAiResponsesEvalCase(
       caseCategory: options.evalCase.caseCategory,
       sourceAuthority: sourceAuthorityForCase(options.evalCase),
       gamePair: gamePairForCase(options.evalCase),
-      agentRuntime: 'claude-sdk',
+      agentRuntime: options.agentRuntime ?? 'claude-sdk',
       provider: 'openai',
       model: options.providerConfig.model,
       resolvedModel,
