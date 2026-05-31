@@ -161,6 +161,7 @@ async function runOpenAiMatrixCase(
     client,
     evalCase: input.evalCase,
     providerConfig: input.providerConfig,
+    agentRuntime: input.agentRuntime,
     runLabel: input.runLabel,
     toolSurface: input.toolSurface,
     traceWriter,
@@ -197,15 +198,6 @@ export function createEvalMatrixRunner(
   return async (input) => {
     if (input.agentRuntime === 'deep-agents') {
       return runDeepAgentsMatrixCase(input, anthropic, traceWriter);
-    }
-
-    if (input.agentRuntime === 'langgraph') {
-      if (input.providerConfig.provider !== 'anthropic') {
-        throw new Error(
-          'LangGraph eval runtime currently supports Anthropic provider configs only.',
-        );
-      }
-      return runAnthropicMatrixCase(input, anthropic, traceWriter);
     }
 
     if (input.providerConfig.provider === 'anthropic') {
