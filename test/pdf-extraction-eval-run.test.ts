@@ -241,4 +241,48 @@ describe('PDF extraction eval run', () => {
     );
     expect(extract).not.toHaveBeenCalled();
   });
+
+  it('applies LlamaParse selected-page cost guardrails before provider work', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const registry = createProviderRegistry();
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
+      ...artifact,
+      provider: 'llamaparse',
+    });
+    registry.register({
+      id: 'llamaparse',
+      displayName: 'LlamaParse',
+      version: 'llamaparse-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtractionEval(
+        {
+          provider: 'llamaparse',
+          sourcePath: artifact.source.path,
+          pages: [30],
+          outputDir,
+          runLabel: 'llamaparse-page-30',
+          retryCount: 0,
+          allowFullRulebook: false,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 0.001,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          providerConfigHash: artifact.providerConfigHash,
+          groundTruth: [],
+          scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
+        },
+      ),
+    ).rejects.toThrow(
+      /Estimated PDF extraction cost \$0.05 exceeds --max-estimated-cost-usd=0.001/,
+    );
+    expect(extract).not.toHaveBeenCalled();
+  });
 });

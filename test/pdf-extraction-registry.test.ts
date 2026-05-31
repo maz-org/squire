@@ -28,6 +28,10 @@ describe('PDF extraction provider registry', () => {
       id: 'aws-textract',
       displayName: 'AWS Textract',
     });
+    expect(registry.get('llamaparse')).toMatchObject({
+      id: 'llamaparse',
+      displayName: 'LlamaParse',
+    });
   });
 
   it('registers providers by stable id and lists them in insertion order', () => {
