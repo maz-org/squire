@@ -200,16 +200,6 @@ export function createEvalMatrixRunner(
       return runDeepAgentsMatrixCase(input, anthropic, traceWriter);
     }
 
-    if (input.agentRuntime === 'langgraph') {
-      if (input.providerConfig.provider === 'anthropic') {
-        return runAnthropicMatrixCase(input, anthropic, traceWriter);
-      }
-      if (input.providerConfig.provider === 'openai') {
-        return runOpenAiMatrixCase(input, anthropic, traceWriter, openAiClient, env);
-      }
-      throw new Error(`Matrix runner does not support provider ${input.providerConfig.provider}.`);
-    }
-
     if (input.providerConfig.provider === 'anthropic') {
       return runAnthropicMatrixCase(input, anthropic, traceWriter);
     }
