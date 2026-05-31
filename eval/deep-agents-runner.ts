@@ -18,6 +18,7 @@ import {
 } from '../src/agent.ts';
 import type { EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
+import { assertRuleSourceRetrievalReady } from './retrieval-preflight.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import type { EvalCase } from './schema.ts';
 import {
@@ -441,6 +442,7 @@ export async function runDeepAgentsEvalCase(
   const toolCalls: ToolTrajectoryStep[] = [];
 
   try {
+    await assertRuleSourceRetrievalReady(options.case);
     const model = new ChatAnthropic({
       model: options.providerConfig.model,
       maxTokens: options.providerConfig.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,

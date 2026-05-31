@@ -10,6 +10,7 @@ import {
 import { runLangGraphAgentLoopWithEvalConfig } from '../src/agent-langgraph.ts';
 import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
+import { assertRuleSourceRetrievalReady } from './retrieval-preflight.ts';
 import { ANTHROPIC_TOOL_SCHEMA_VERSION } from './run-metadata.ts';
 import type { EvalCase } from './schema.ts';
 import {
@@ -344,6 +345,7 @@ export async function runAnthropicEvalCase(
   const traceId = traceIdFor(options);
 
   try {
+    await assertRuleSourceRetrievalReady(options.case);
     const result = await runLangGraphAgentLoopWithEvalConfig(options.case.question, {
       toolSurface: options.toolSurface,
       anthropicModel: options.providerConfig.model,

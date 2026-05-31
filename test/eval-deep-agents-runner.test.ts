@@ -1,14 +1,21 @@
 import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockChatAnthropic, mockCreateDeepAgent, mockExecuteToolCall, mockStateBackend, mockTool } =
-  vi.hoisted(() => ({
-    mockChatAnthropic: vi.fn(),
-    mockCreateDeepAgent: vi.fn(),
-    mockExecuteToolCall: vi.fn(),
-    mockStateBackend: vi.fn(),
-    mockTool: vi.fn((func, fields) => ({ ...fields, func })),
-  }));
+const {
+  mockChatAnthropic,
+  mockCreateDeepAgent,
+  mockExecuteToolCall,
+  mockGetRetrievalBootstrapStatus,
+  mockStateBackend,
+  mockTool,
+} = vi.hoisted(() => ({
+  mockChatAnthropic: vi.fn(),
+  mockCreateDeepAgent: vi.fn(),
+  mockExecuteToolCall: vi.fn(),
+  mockGetRetrievalBootstrapStatus: vi.fn(),
+  mockStateBackend: vi.fn(),
+  mockTool: vi.fn((func, fields) => ({ ...fields, func })),
+}));
 
 vi.mock('@langchain/anthropic', () => ({
   ChatAnthropic: mockChatAnthropic,
@@ -31,6 +38,14 @@ vi.mock('../src/agent.ts', async (importOriginal) => {
   };
 });
 
+vi.mock('../src/vector-store.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/vector-store.ts')>();
+  return {
+    ...actual,
+    getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
+  };
+});
+
 import { runDeepAgentsEvalCase } from '../eval/deep-agents-runner.ts';
 
 function nextNow() {
@@ -47,6 +62,7 @@ function nextNow() {
 describe('Deep Agents eval runner', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 12 });
     mockExecuteToolCall.mockResolvedValue({
       content: JSON.stringify({ ok: true, ref: 'card:frosthaven/item/1' }),
       sourceBooks: ['Item 1'],
@@ -161,5 +177,58 @@ describe('Deep Agents eval runner', () => {
     });
 
     expect(result.trace.statusReason).toBe('quality');
+  });
+
+  it('fails rule-source evals before creating a Deep Agent when retrieval bootstrap is not ready', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValueOnce({
+      ready: false,
+      indexSize: 0,
+      error: 'Rule-source embeddings table is empty. Run `npm run index`.',
+      missingStep: 'npm run index',
+      reason: 'missing_index',
+    });
+    const traceWriter = { writeTrace: vi.fn(async () => undefined) };
+
+    await expect(
+      runDeepAgentsEvalCase({
+        case: {
+          id: 'gh2-rule-scenario-level',
+          game: 'gloomhaven-2e',
+          suite: 'table-qa',
+          runtime: 'langgraph',
+          caseCategory: 'rulebook',
+          category: 'rulebook',
+          source: 'GH2 Rulebook',
+          question: 'What is the recommended scenario level?',
+        },
+        runLabel: 'runtime-smoke',
+        toolSurface: 'redesigned',
+        providerConfig: {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          reasoningEffort: undefined,
+          maxOutputTokens: undefined,
+          timeoutMs: undefined,
+          toolLoopLimit: undefined,
+        },
+        traceWriter,
+        traceId: 'trace-deep-agents-rule-preflight',
+        now: nextNow(),
+      }),
+    ).rejects.toThrow('Rule-source retrieval is not ready for eval case gh2-rule-scenario-level');
+
+    expect(mockCreateDeepAgent).not.toHaveBeenCalled();
+    expect(traceWriter.writeTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        traceId: 'trace-deep-agents-rule-preflight',
+        statusReason: 'tool',
+        errors: [
+          expect.objectContaining({
+            type: 'tool',
+            message: expect.stringContaining('npm run index'),
+          }),
+        ],
+      }),
+    );
   });
 });
