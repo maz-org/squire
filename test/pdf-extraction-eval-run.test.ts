@@ -197,4 +197,48 @@ describe('PDF extraction eval run', () => {
       process.chdir(cwd);
     }
   });
+
+  it('applies AWS Textract selected-page cost guardrails before provider work', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const registry = createProviderRegistry();
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
+      ...artifact,
+      provider: 'aws-textract',
+    });
+    registry.register({
+      id: 'aws-textract',
+      displayName: 'AWS Textract',
+      version: 'textract-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtractionEval(
+        {
+          provider: 'aws-textract',
+          sourcePath: artifact.source.path,
+          pages: [30],
+          outputDir,
+          runLabel: 'aws-textract-page-30',
+          retryCount: 0,
+          allowFullRulebook: false,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 0.001,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          providerConfigHash: artifact.providerConfigHash,
+          groundTruth: [],
+          scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
+        },
+      ),
+    ).rejects.toThrow(
+      /Estimated PDF extraction cost \$0.01 exceeds --max-estimated-cost-usd=0.001/,
+    );
+    expect(extract).not.toHaveBeenCalled();
+  });
 });

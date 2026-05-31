@@ -41,6 +41,11 @@ function validArtifact(overrides: Partial<ExtractionArtifact> = {}): ExtractionA
       trainingUse: 'not-used-for-training',
       region: 'us-east-1',
     },
+    providerMetadata: {
+      mode: 'polling',
+      jobId: 'job-123',
+      requestIds: ['start-request-1', 'get-request-1'],
+    },
     rawArtifacts: [
       {
         kind: 'provider-json',
@@ -109,6 +114,10 @@ describe('PDF extraction artifact schema', () => {
     expect(parsed.rawArtifacts[0]).toMatchObject({
       kind: 'provider-json',
       persisted: false,
+    });
+    expect(parsed.providerMetadata).toMatchObject({
+      mode: 'polling',
+      jobId: 'job-123',
     });
   });
 

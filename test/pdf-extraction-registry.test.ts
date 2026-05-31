@@ -17,12 +17,16 @@ function provider(id: PdfExtractionProvider['id']): PdfExtractionProvider {
 }
 
 describe('PDF extraction provider registry', () => {
-  it('wires Apple Vision into the default extraction provider registry', () => {
+  it('wires baseline provider adapters into the default extraction provider registry', () => {
     const registry = createPdfExtractionProviderRegistry();
 
     expect(registry.get('apple-vision')).toMatchObject({
       id: 'apple-vision',
       displayName: 'Apple Vision',
+    });
+    expect(registry.get('aws-textract')).toMatchObject({
+      id: 'aws-textract',
+      displayName: 'AWS Textract',
     });
   });
 

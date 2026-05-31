@@ -71,6 +71,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@aws-sdk/client-textract": "^3.1057.0",
     "@hono/node-server": "^2.0.4",
     "@langchain/anthropic": "^1.4.0",
     "@langchain/core": "^1.1.44",
@@ -93,6 +95,7 @@
     "langsmith": "^0.7.3",
     "markdown-it": "^14.2.0",
     "parse5": "^8.0.1",
+    "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.21.0",
     "rate-limiter-flexible": "^11.1.0",

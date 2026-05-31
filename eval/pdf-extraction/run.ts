@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import { APPLE_VISION_PROVIDER_CONFIG_HASH } from './apple-vision.ts';
+import { AWS_TEXTRACT_PROVIDER_CONFIG_HASH, estimatedAwsTextractCostUsd } from './aws-textract.ts';
 import { parsePdfExtractionArgs, type PdfExtractionCliOptions } from './cli.ts';
 import { writeExtractionManifest } from './manifest.ts';
 import type { ProviderRegistry } from './provider.ts';
@@ -46,7 +47,14 @@ async function fileSha256(path: string): Promise<string> {
 function providerConfigHash(provider: PdfExtractionProviderId, override?: string): string {
   if (override) return override;
   if (provider === 'apple-vision') return APPLE_VISION_PROVIDER_CONFIG_HASH;
+  if (provider === 'aws-textract') return AWS_TEXTRACT_PROVIDER_CONFIG_HASH;
   throw new Error(`Unsupported PDF extraction provider config: ${provider}.`);
+}
+
+function estimatedCostUsdFor(input: PdfExtractionCliOptions): number | undefined {
+  if (input.provider === 'apple-vision') return 0;
+  if (input.provider === 'aws-textract') return estimatedAwsTextractCostUsd(input.pages);
+  return undefined;
 }
 
 function pageKey(pages: number[]): string {
@@ -114,7 +122,7 @@ export async function runPdfExtractionEval(
     allowFullRulebook: input.allowFullRulebook,
     allowEstimatedCostOverride: input.allowEstimatedCostOverride,
     maxEstimatedCostUsd: input.maxEstimatedCostUsd,
-    estimatedCostUsd: input.provider === 'apple-vision' ? 0 : undefined,
+    estimatedCostUsd: estimatedCostUsdFor(input),
     providerConcurrency: input.providerConcurrency,
     refreshProviderOutput: input.refreshProviderOutput,
     timeoutMs: input.timeoutMs,

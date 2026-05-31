@@ -158,6 +158,7 @@ export const ExtractionArtifactSchema = z
         region: z.string().min(1).optional(),
       })
       .strict(),
+    providerMetadata: z.record(z.string(), z.unknown()).optional(),
     rawArtifacts: z.array(RawArtifactRefSchema),
     pages: z.array(ExtractionPageSchema),
   })
@@ -200,6 +201,8 @@ export type ExtractionFailureClass = z.infer<typeof ExtractionFailureClassSchema
 export type ExtractionArtifact = z.infer<typeof ExtractionArtifactSchema>;
 export type ExtractionPage = z.infer<typeof ExtractionPageSchema>;
 export type ExtractionBlock = z.infer<typeof ExtractionBlockSchema>;
+export type ExtractionTable = z.infer<typeof ExtractionTableSchema>;
+export type ExtractionTableCell = z.infer<typeof ExtractionTableCellSchema>;
 export type RawArtifactRef = z.infer<typeof RawArtifactRefSchema>;
 export type GroundTruthRecord = z.infer<typeof GroundTruthRecordSchema>;
 

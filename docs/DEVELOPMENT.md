@@ -550,6 +550,47 @@ report scorer indexes the selected provider pages into temporary eval sources,
 runs the ground-truth retrieval queries with the production embedding and
 reranking path, and cleans those eval sources up afterward.
 
+AWS Textract is available as a paid, opt-in extraction adapter. The adapter uses
+`StartDocumentAnalysis` / `GetDocumentAnalysis` with `TABLES` and `LAYOUT`,
+uploads the local PDF to `AWS_TEXTRACT_S3_BUCKET`, polls for completion, writes
+the raw provider JSON under `eval/results/pdf-extraction/raw/aws-textract/`, and
+deletes the uploaded S3 input unless `AWS_TEXTRACT_KEEP_S3_INPUT=1` is set. For
+selected-page runs, it first writes a temporary page-subset PDF so the Textract
+job and cost ceiling match the requested smoke pages. The normalized artifact
+records polling mode, JobId, request IDs, S3 locator, region, latency, page
+count, estimated cost, page map, and Textract warnings in `providerMetadata`.
+
+Required live-run environment:
+
+```bash
+AWS_REGION=us-east-1
+AWS_TEXTRACT_S3_BUCKET=<bucket-for-temporary-eval-inputs>
+# optional:
+AWS_TEXTRACT_S3_PREFIX=pdf-extraction/aws-textract
+AWS_TEXTRACT_COST_PER_PAGE_USD=0.015
+AWS_TEXTRACT_KEEP_S3_INPUT=0
+```
+
+Run selected pages first and keep the cost ceiling low:
+
+```bash
+npm run pdf-extraction:run -- \
+  --provider=aws-textract \
+  --source=data/pdfs/gh2-rule-book.pdf \
+  --pages=2,30,31,32,33,41,42,57,72 \
+  --output-dir=eval/results/pdf-extraction \
+  --run-label=aws-textract-smoke \
+  --max-estimated-cost-usd=0.25 \
+  --timeout-ms=600000
+```
+
+Full-rulebook Textract runs must pass `--allow-full-rulebook`; if the estimated
+selected-page cost exceeds `--max-estimated-cost-usd`, pass
+`--allow-estimated-cost` only after checking the intended spend. Commit-time
+tests mock the Textract and S3 runtime and cover success, async job failure,
+poll timeout, rate-limit mapping, partial page warnings, and table
+normalization.
+
 This is a baseline, not the final extraction decision. See
 [docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
 for the vendor evaluation plan.
