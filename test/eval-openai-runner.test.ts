@@ -1,4 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { mockGetRetrievalBootstrapStatus } = vi.hoisted(() => ({
+  mockGetRetrievalBootstrapStatus: vi.fn(),
+}));
+
+vi.mock('../src/vector-store.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/vector-store.ts')>();
+  return {
+    ...actual,
+    getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
+  };
+});
 
 import type { EvalProviderConfig } from '../eval/cli.ts';
 import {
@@ -44,6 +56,11 @@ function responsesClient(...responses: unknown[]): OpenAiResponsesClient {
 }
 
 describe('OpenAI Responses eval runner', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 12 });
+  });
+
   it('advertises only redesigned tools for redesigned eval runs', async () => {
     const client = responsesClient({
       id: 'resp_1',
@@ -107,6 +124,59 @@ describe('OpenAI Responses eval runner', () => {
     });
 
     expect(result.trace.agentRuntime).toBe('langgraph');
+  });
+
+  it('fails rule-source evals before creating a response when retrieval bootstrap is not ready', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValueOnce({
+      ready: false,
+      indexSize: 0,
+      error: 'Rule-source embeddings table is empty. Run `npm run index`.',
+      missingStep: 'npm run index',
+      reason: 'missing_index',
+    });
+    const client = responsesClient({
+      id: 'resp_unused',
+      status: 'completed',
+      output_text: 'unused',
+      output: [],
+    });
+    const traceWriter = { writeTrace: vi.fn(async () => undefined) };
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase: {
+        ...evalCase,
+        id: 'gh2-rule-scenario-level',
+        game: 'gloomhaven-2e',
+        source: 'GH2 Rulebook',
+        question: 'What is the recommended scenario level?',
+      },
+      providerConfig,
+      runLabel: 'unit-openai',
+      toolSurface: 'redesigned',
+      traceWriter,
+      traceId: 'trace-openai-rule-preflight',
+    });
+
+    expect(client.responses.create).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      ok: false,
+      answer: '',
+      failureClass: 'tool_execution',
+      failureMessage: expect.stringContaining('npm run index'),
+    });
+    expect(traceWriter.writeTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        traceId: 'trace-openai-rule-preflight',
+        statusReason: 'tool_execution',
+        errors: [
+          expect.objectContaining({
+            type: 'tool_execution',
+            message: expect.stringContaining('Rule-source retrieval is not ready'),
+          }),
+        ],
+      }),
+    );
   });
 
   it('runs a manual stateless Responses tool loop without previous_response_id', async () => {

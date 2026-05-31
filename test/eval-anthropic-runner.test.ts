@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   mockRunAgentLoopWithEvalConfig,
   mockRunLangGraphAgentLoopWithEvalConfig,
+  mockGetRetrievalBootstrapStatus,
   mockWriteEvalTrace,
 } = vi.hoisted(() => ({
   mockRunAgentLoopWithEvalConfig: vi.fn(),
   mockRunLangGraphAgentLoopWithEvalConfig: vi.fn(),
+  mockGetRetrievalBootstrapStatus: vi.fn(),
   mockWriteEvalTrace: vi.fn(),
 }));
 
@@ -21,6 +23,14 @@ vi.mock('../src/agent.ts', async (importOriginal) => {
 vi.mock('../src/agent-langgraph.ts', () => ({
   runLangGraphAgentLoopWithEvalConfig: mockRunLangGraphAgentLoopWithEvalConfig,
 }));
+
+vi.mock('../src/vector-store.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/vector-store.ts')>();
+  return {
+    ...actual,
+    getRetrievalBootstrapStatus: mockGetRetrievalBootstrapStatus,
+  };
+});
 
 vi.mock('../eval/trace.ts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../eval/trace.ts')>();
@@ -114,6 +124,7 @@ function successfulAgentResult(model: 'claude-sonnet-4-6' | 'claude-opus-4-7') {
 describe('SQR-128 Anthropic eval runner', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 12 });
   });
 
   it('runs Sonnet and Opus through the production LangGraph eval runtime with only model config changed', async () => {
@@ -334,6 +345,56 @@ describe('SQR-128 Anthropic eval runner', () => {
           { name: 'correctness', value: 0.4, comment: 'Missing upgrade distinction.' },
           { name: 'pass', value: 'fail', comment: 'Expected upgrade cost distinction.' },
         ],
+      }),
+    );
+  });
+
+  it('fails rule-source evals before the model when retrieval bootstrap is not ready', async () => {
+    mockGetRetrievalBootstrapStatus.mockResolvedValueOnce({
+      ready: false,
+      indexSize: 0,
+      error: 'Rule-source embeddings table is empty. Run `npm run index`.',
+      missingStep: 'npm run index',
+      reason: 'missing_index',
+    });
+    mockWriteEvalTrace.mockResolvedValue(undefined);
+
+    await expect(
+      runAnthropicEvalCase({
+        case: {
+          ...baseCase,
+          id: 'gh2-rule-scenario-level',
+          game: 'gloomhaven-2e',
+          source: 'GH2 Rulebook',
+          question: 'What is the recommended scenario level?',
+        },
+        runLabel: 'rule-preflight',
+        toolSurface: 'redesigned',
+        providerConfig: {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          reasoningEffort: undefined,
+          maxOutputTokens: 2048,
+          timeoutMs: 30000,
+          toolLoopLimit: 6,
+        },
+        traceWriter: { writeTrace: mockWriteEvalTrace },
+        traceId: 'trace-rule-preflight',
+      }),
+    ).rejects.toThrow('Rule-source retrieval is not ready for eval case gh2-rule-scenario-level');
+
+    expect(mockRunLangGraphAgentLoopWithEvalConfig).not.toHaveBeenCalled();
+    expect(mockWriteEvalTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        traceId: 'trace-rule-preflight',
+        statusReason: 'tool',
+        errors: [
+          expect.objectContaining({
+            type: 'tool',
+            message: expect.stringContaining('npm run index'),
+          }),
+        ],
+        judgeScores: [{ name: 'failure_class', value: 'tool' }],
       }),
     );
   });
