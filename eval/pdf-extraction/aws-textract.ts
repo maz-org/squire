@@ -110,8 +110,19 @@ export interface AwsTextractRuntime {
   cleanupDocument?(input: AwsTextractDocumentLocation): Promise<void>;
 }
 
+export interface PreparedAwsTextractDocument {
+  sourcePath: string;
+  sourcePageCount?: number;
+  pageMap?: number[];
+}
+
 export interface AwsTextractProviderDeps {
   runtime?: AwsTextractRuntime;
+  prepareDocument?: (input: {
+    sourcePath: string;
+    pages: number[];
+    outputPath: string;
+  }) => Promise<PreparedAwsTextractDocument>;
   now?: () => string;
   sleep?: (ms: number) => Promise<void>;
   region?: string;
@@ -128,6 +139,7 @@ export const AWS_TEXTRACT_PROVIDER_CONFIG = {
   api: 'StartDocumentAnalysis/GetDocumentAnalysis',
   featureTypes: AWS_TEXTRACT_FEATURE_TYPES,
   mode: 'polling',
+  selectedPageInput: 'temporary-page-subset-pdf-v1',
   pageSize: { width: 612, height: 792, unit: 'pt' },
   costPerPageUsd: AWS_TEXTRACT_DEFAULT_COST_PER_PAGE_USD,
 };
@@ -149,6 +161,10 @@ function safePathSegment(value: string): string {
 
 function rawOutputPath(input: PdfExtractionRunInput, sourceHash: string): string {
   return `${input.outputDir}/raw/aws-textract/${sourceHash.slice(7)}/${AWS_TEXTRACT_PROVIDER_CONFIG_HASH.slice(7)}/${safePathSegment(input.runLabel)}.json`;
+}
+
+function preparedInputPath(input: PdfExtractionRunInput, sourceHash: string): string {
+  return `${input.outputDir}/raw/aws-textract/${sourceHash.slice(7)}/${AWS_TEXTRACT_PROVIDER_CONFIG_HASH.slice(7)}/${safePathSegment(input.runLabel)}-input.pdf`;
 }
 
 function round(value: number): number {
@@ -367,6 +383,28 @@ function normalizePages(
   });
 }
 
+function remapBlocks(
+  blocks: AwsTextractBlock[],
+  pageMap: number[] | undefined,
+): AwsTextractBlock[] {
+  if (!pageMap || pageMap.length === 0) return blocks;
+  return blocks.map((block) => {
+    if (block.page === undefined) return block;
+    return { ...block, page: pageMap[block.page - 1] };
+  });
+}
+
+function remapWarnings(
+  warnings: AwsTextractWarning[],
+  pageMap: number[] | undefined,
+): AwsTextractWarning[] {
+  if (!pageMap || pageMap.length === 0) return warnings;
+  return warnings.map((warning) => ({
+    ...warning,
+    pages: warning.pages?.map((page) => pageMap[page - 1] ?? page),
+  }));
+}
+
 function textractError(error: unknown): Error {
   if (typeof error === 'object' && error && 'name' in error) {
     const name = String((error as { name?: unknown }).name);
@@ -472,6 +510,43 @@ async function collectAnalysis(
 
 async function defaultSleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function prepareTextractInputDocument(input: {
+  sourcePath: string;
+  pages: number[];
+  outputPath: string;
+}): Promise<PreparedAwsTextractDocument> {
+  const { PDFDocument } = await import('pdf-lib');
+  const sourcePdf = await PDFDocument.load(await readFile(input.sourcePath));
+  const sourcePageCount = sourcePdf.getPageCount();
+
+  if (input.pages.length === 0) {
+    return { sourcePath: input.sourcePath, sourcePageCount };
+  }
+
+  for (const page of input.pages) {
+    if (page > sourcePageCount) {
+      throw new Error(
+        `partial page failure: requested page ${page} exceeds source page count ${sourcePageCount}.`,
+      );
+    }
+  }
+
+  const outputPdf = await PDFDocument.create();
+  const copiedPages = await outputPdf.copyPages(
+    sourcePdf,
+    input.pages.map((page) => page - 1),
+  );
+  for (const page of copiedPages) outputPdf.addPage(page);
+
+  await mkdir(dirname(input.outputPath), { recursive: true });
+  await writeFile(input.outputPath, await outputPdf.save());
+  return {
+    sourcePath: input.outputPath,
+    sourcePageCount,
+    pageMap: input.pages,
+  };
 }
 
 function regionFromEnv(): string {
@@ -618,6 +693,7 @@ export function createAwsTextractProvider(
   deps: AwsTextractProviderDeps = {},
 ): PdfExtractionProvider {
   const now = deps.now ?? (() => new Date().toISOString());
+  const prepareDocument = deps.prepareDocument ?? prepareTextractInputDocument;
   const sleep = deps.sleep ?? defaultSleep;
   const region = deps.region ?? regionFromEnv();
   const pollIntervalMs = deps.pollIntervalMs ?? 2_000;
@@ -633,13 +709,19 @@ export function createAwsTextractProvider(
       const startMs = Date.now();
       const sourceHash = await fileSha256(input.sourcePath);
       const outputPath = rawOutputPath(input, sourceHash);
+      const inputPath = preparedInputPath(input, sourceHash);
       await mkdir(dirname(outputPath), { recursive: true });
       const runtime = deps.runtime ?? (await createAwsSdkTextractRuntime(region));
       let documentLocation: AwsTextractDocumentLocation | undefined;
 
       try {
-        documentLocation = await runtime.uploadDocument({
+        const preparedDocument = await prepareDocument({
           sourcePath: input.sourcePath,
+          pages: input.pages,
+          outputPath: inputPath,
+        });
+        documentLocation = await runtime.uploadDocument({
+          sourcePath: preparedDocument.sourcePath,
           runLabel: input.runLabel,
         });
         const start = await runtime.startDocumentAnalysis({
@@ -655,14 +737,18 @@ export function createAwsTextractProvider(
           pollIntervalMs,
           sleep,
         );
-        assertWarningsDoNotAffectRequestedPages(analysis.warnings, input.pages);
-        const selectedPages = normalizePages(analysis.blocks, input.pages, analysis.pageCount);
+        const blocks = remapBlocks(analysis.blocks, preparedDocument.pageMap);
+        const warnings = remapWarnings(analysis.warnings, preparedDocument.pageMap);
+        assertWarningsDoNotAffectRequestedPages(warnings, input.pages);
+        const selectedPages = normalizePages(blocks, input.pages, preparedDocument.sourcePageCount);
         const completedAt = now();
         const rawPayload = {
           jobId: start.jobId,
           source: documentLocation,
+          uploadedSourcePath: preparedDocument.sourcePath,
+          pageMap: preparedDocument.pageMap,
           modelVersion: analysis.modelVersion,
-          warnings: analysis.warnings,
+          warnings,
           responses: analysis.responses,
         };
         const rawJson = `${JSON.stringify(rawPayload, null, 2)}\n`;
@@ -677,7 +763,7 @@ export function createAwsTextractProvider(
           source: {
             path: input.sourcePath,
             sha256: sourceHash,
-            pageCount: analysis.pageCount,
+            pageCount: preparedDocument.sourcePageCount ?? analysis.pageCount,
           },
           run: {
             id: input.runLabel,
@@ -704,8 +790,10 @@ export function createAwsTextractProvider(
             jobId: start.jobId,
             requestIds: [start.requestId, ...analysis.requestIds].filter(Boolean),
             s3: documentLocation,
+            uploadedSourcePath: preparedDocument.sourcePath,
+            pageMap: preparedDocument.pageMap,
             featureTypes: [...AWS_TEXTRACT_FEATURE_TYPES],
-            warnings: analysis.warnings,
+            warnings,
             modelVersion: analysis.modelVersion,
           },
           rawArtifacts: [

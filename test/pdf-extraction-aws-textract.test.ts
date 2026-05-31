@@ -24,19 +24,19 @@ function textractRuntime(overrides: Partial<AwsTextractRuntime> = {}): AwsTextra
     getDocumentAnalysis: vi.fn().mockResolvedValue({
       jobStatus: 'SUCCEEDED',
       requestId: 'get-request-1',
-      documentMetadata: { pages: 30 },
+      documentMetadata: { pages: 1 },
       analyzeDocumentModelVersion: '1.0',
       blocks: [
         {
           id: 'page-30',
           blockType: 'PAGE',
-          page: 30,
+          page: 1,
           relationships: [{ type: 'CHILD', ids: ['title-30', 'line-30', 'table-30'] }],
         },
         {
           id: 'title-30',
           blockType: 'LAYOUT_SECTION_HEADER',
-          page: 30,
+          page: 1,
           text: 'Loot',
           confidence: 99,
           geometry: { boundingBox: { left: 0.1, top: 0.1, width: 0.2, height: 0.04 } },
@@ -44,7 +44,7 @@ function textractRuntime(overrides: Partial<AwsTextractRuntime> = {}): AwsTextra
         {
           id: 'line-30',
           blockType: 'LINE',
-          page: 30,
+          page: 1,
           text: 'Loot X lets a figure loot all loot tokens within range X.',
           confidence: 98,
           geometry: { boundingBox: { left: 0.1, top: 0.16, width: 0.7, height: 0.04 } },
@@ -52,14 +52,14 @@ function textractRuntime(overrides: Partial<AwsTextractRuntime> = {}): AwsTextra
         {
           id: 'table-30',
           blockType: 'TABLE',
-          page: 30,
+          page: 1,
           relationships: [{ type: 'CHILD', ids: ['cell-1', 'cell-2'] }],
           geometry: { boundingBox: { left: 0.1, top: 0.3, width: 0.5, height: 0.1 } },
         },
         {
           id: 'cell-1',
           blockType: 'CELL',
-          page: 30,
+          page: 1,
           rowIndex: 1,
           columnIndex: 1,
           rowSpan: 1,
@@ -69,15 +69,15 @@ function textractRuntime(overrides: Partial<AwsTextractRuntime> = {}): AwsTextra
         {
           id: 'cell-2',
           blockType: 'CELL',
-          page: 30,
+          page: 1,
           rowIndex: 1,
           columnIndex: 2,
           rowSpan: 1,
           columnSpan: 1,
           relationships: [{ type: 'CHILD', ids: ['word-range'] }],
         },
-        { id: 'word-loot', blockType: 'WORD', page: 30, text: 'Loot' },
-        { id: 'word-range', blockType: 'WORD', page: 30, text: 'Range' },
+        { id: 'word-loot', blockType: 'WORD', page: 1, text: 'Loot' },
+        { id: 'word-range', blockType: 'WORD', page: 1, text: 'Range' },
       ],
     }),
     cleanupDocument: vi.fn().mockResolvedValue(undefined),
@@ -92,12 +92,22 @@ async function sourceFixture() {
   return { outputDir, sourcePath };
 }
 
+function prepareDocument() {
+  return vi.fn(async (input: { pages: number[]; outputPath: string }) => ({
+    sourcePath: input.outputPath,
+    sourcePageCount: 74,
+    pageMap: input.pages,
+  }));
+}
+
 describe('AWS Textract PDF extraction provider', () => {
   it('wraps async Textract output in the shared normalized artifact schema', async () => {
     const { outputDir, sourcePath } = await sourceFixture();
     const runtime = textractRuntime();
+    const prepare = prepareDocument();
     const provider = createAwsTextractProvider({
       runtime,
+      prepareDocument: prepare,
       now: () => '2026-05-30T00:00:00.000Z',
       costPerPageUsd: 0.015,
     });
@@ -111,8 +121,13 @@ describe('AWS Textract PDF extraction provider', () => {
       timeoutMs: 120_000,
     });
 
-    expect(runtime.uploadDocument).toHaveBeenCalledWith({
+    expect(prepare).toHaveBeenCalledWith({
       sourcePath,
+      pages: [30],
+      outputPath: expect.stringContaining('/raw/aws-textract/'),
+    });
+    expect(runtime.uploadDocument).toHaveBeenCalledWith({
+      sourcePath: expect.stringContaining('textract-smoke-input.pdf'),
       runLabel: 'textract smoke',
     });
     expect(runtime.startDocumentAnalysis).toHaveBeenCalledWith({
@@ -158,6 +173,8 @@ describe('AWS Textract PDF extraction provider', () => {
           bucket: 'squire-evals',
           key: 'pdf-extraction/aws-textract/run.pdf',
         },
+        uploadedSourcePath: expect.stringContaining('textract-smoke-input.pdf'),
+        pageMap: [30],
       },
     });
     expect(artifact.rawArtifacts[0]).toMatchObject({
@@ -211,6 +228,7 @@ describe('AWS Textract PDF extraction provider', () => {
           requestId: 'get-request-failed',
         }),
       }),
+      prepareDocument: prepareDocument(),
       now: () => '2026-05-30T00:00:00.000Z',
     });
 
@@ -236,6 +254,7 @@ describe('AWS Textract PDF extraction provider', () => {
           requestId: 'get-request-progress',
         }),
       }),
+      prepareDocument: prepareDocument(),
       sleep: vi.fn().mockResolvedValue(undefined),
       maxPollAttempts: 2,
       now: () => '2026-05-30T00:00:00.000Z',
@@ -262,6 +281,7 @@ describe('AWS Textract PDF extraction provider', () => {
           }),
         ),
       }),
+      prepareDocument: prepareDocument(),
       now: () => '2026-05-30T00:00:00.000Z',
     });
 
@@ -283,11 +303,12 @@ describe('AWS Textract PDF extraction provider', () => {
         getDocumentAnalysis: vi.fn().mockResolvedValue({
           jobStatus: 'PARTIAL_SUCCESS',
           requestId: 'get-request-partial',
-          documentMetadata: { pages: 31 },
-          warnings: [{ errorCode: 'PAGE_ERROR', pages: [31] }],
+          documentMetadata: { pages: 2 },
+          warnings: [{ errorCode: 'PAGE_ERROR', pages: [2] }],
           blocks: [],
         }),
       }),
+      prepareDocument: prepareDocument(),
       now: () => '2026-05-30T00:00:00.000Z',
     });
 

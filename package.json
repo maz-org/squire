@@ -95,6 +95,7 @@
     "langsmith": "^0.7.2",
     "markdown-it": "^14.2.0",
     "parse5": "^8.0.1",
+    "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",
     "rate-limiter-flexible": "^11.1.0",

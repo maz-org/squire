@@ -554,10 +554,11 @@ AWS Textract is available as a paid, opt-in extraction adapter. The adapter uses
 `StartDocumentAnalysis` / `GetDocumentAnalysis` with `TABLES` and `LAYOUT`,
 uploads the local PDF to `AWS_TEXTRACT_S3_BUCKET`, polls for completion, writes
 the raw provider JSON under `eval/results/pdf-extraction/raw/aws-textract/`, and
-deletes the uploaded S3 input unless `AWS_TEXTRACT_KEEP_S3_INPUT=1` is set. The
-normalized artifact records polling mode, JobId, request IDs, S3 locator,
-region, latency, page count, estimated cost, and Textract warnings in
-`providerMetadata`.
+deletes the uploaded S3 input unless `AWS_TEXTRACT_KEEP_S3_INPUT=1` is set. For
+selected-page runs, it first writes a temporary page-subset PDF so the Textract
+job and cost ceiling match the requested smoke pages. The normalized artifact
+records polling mode, JobId, request IDs, S3 locator, region, latency, page
+count, estimated cost, page map, and Textract warnings in `providerMetadata`.
 
 Required live-run environment:
 
