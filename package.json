@@ -94,7 +94,7 @@
     "markdown-it": "^14.2.0",
     "parse5": "^8.0.1",
     "pdf-parse": "^1.1.1",
-    "pg": "^8.20.0",
+    "pg": "^8.21.0",
     "rate-limiter-flexible": "^11.1.0",
     "tailwindcss": "^4.2.4",
     "zod": "^4.4.3"
