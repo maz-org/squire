@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   AWS_TEXTRACT_PROVIDER_CONFIG_HASH,
+  createClientRequestToken,
   createAwsTextractProvider,
   type AwsTextractRuntime,
 } from '../eval/pdf-extraction/aws-textract.ts';
@@ -101,6 +102,25 @@ function prepareDocument() {
 }
 
 describe('AWS Textract PDF extraction provider', () => {
+  it('scopes AWS idempotency tokens to provider configuration', () => {
+    const baselineToken = createClientRequestToken(
+      'sha256:abc',
+      [30],
+      'textract smoke',
+      'sha256:config-a',
+    );
+    const changedConfigToken = createClientRequestToken(
+      'sha256:abc',
+      [30],
+      'textract smoke',
+      'sha256:config-b',
+    );
+
+    expect(baselineToken).toMatch(/^textract-[a-f0-9]{16}$/);
+    expect(changedConfigToken).toMatch(/^textract-[a-f0-9]{16}$/);
+    expect(changedConfigToken).not.toEqual(baselineToken);
+  });
+
   it('wraps async Textract output in the shared normalized artifact schema', async () => {
     const { outputDir, sourcePath } = await sourceFixture();
     const runtime = textractRuntime();

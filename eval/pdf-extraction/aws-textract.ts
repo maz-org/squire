@@ -571,9 +571,14 @@ function s3BucketFromEnv(): string {
   return bucket;
 }
 
-function createClientRequestToken(sourceHash: string, pages: number[], runLabel: string): string {
+export function createClientRequestToken(
+  sourceHash: string,
+  pages: number[],
+  runLabel: string,
+  providerConfigHash = AWS_TEXTRACT_PROVIDER_CONFIG_HASH,
+): string {
   const digest = createHash('sha256')
-    .update(`${sourceHash}:${pages.join(',')}:${runLabel}`)
+    .update(`${sourceHash}:${providerConfigHash}:${pages.join(',')}:${runLabel}`)
     .digest('hex')
     .slice(0, 16);
   return `textract-${digest}`;
