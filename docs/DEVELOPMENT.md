@@ -591,6 +591,58 @@ tests mock the Textract and S3 runtime and cover success, async job failure,
 poll timeout, rate-limit mapping, partial page warnings, and table
 normalization.
 
+LlamaParse is also available as a paid, opt-in extraction adapter. The adapter
+uses the LlamaParse REST v1 beta file upload API and REST v2 parse API
+directly, starts parse jobs with markdown/text/items/metadata expansion, writes
+raw provider JSON under `eval/results/pdf-extraction/raw/llamaparse/`, and
+normalizes page markdown, text, headings, tables, page metadata, request IDs,
+cache hints, and estimated cost into the shared extraction artifact.
+Selected-page runs pass
+`page_ranges.target_pages` to LlamaParse so the smoke run and cost guardrail
+match the requested pages.
+
+Required live-run environment:
+
+```bash
+LLAMA_CLOUD_API_KEY=...
+# optional:
+LLAMA_CLOUD_BASE_URL=https://api.cloud.llamaindex.ai
+LLAMAPARSE_TIER=agentic
+LLAMAPARSE_VERSION=latest
+LLAMAPARSE_REGION=us
+LLAMAPARSE_DISABLE_CACHE=0
+LLAMAPARSE_COST_PER_PAGE_USD=0.05
+# or, if estimating from credits:
+# LLAMAPARSE_CREDITS_PER_PAGE=40
+```
+
+The `fast` tier is rejected by this eval because it cannot return the markdown
+and item payloads needed for table and block normalization. LlamaParse pricing
+varies by tier and options, so keep `LLAMAPARSE_COST_PER_PAGE_USD` or
+`LLAMAPARSE_CREDITS_PER_PAGE` aligned with the current account pricing before
+running live evals. Cached parse data is a provider-side concern; set
+`LLAMAPARSE_DISABLE_CACHE=1` when a run must avoid provider cache reuse.
+
+Run selected pages first and keep the cost ceiling explicit:
+
+```bash
+npm run pdf-extraction:run -- \
+  --provider=llamaparse \
+  --source=data/pdfs/gh2-rule-book.pdf \
+  --pages=2,30,31,32,33,41,42,57,72 \
+  --output-dir=eval/results/pdf-extraction \
+  --run-label=llamaparse-smoke \
+  --max-estimated-cost-usd=0.50 \
+  --timeout-ms=600000
+```
+
+Full-rulebook LlamaParse runs must pass `--allow-full-rulebook`; if the
+estimated selected-page cost exceeds `--max-estimated-cost-usd`, pass
+`--allow-estimated-cost` only after checking the intended spend. Commit-time
+tests mock the REST runtime and cover success, async job failure, poll timeout,
+rate-limit mapping, invalid output, heading normalization, table normalization,
+and selected-page cost guardrails.
+
 This is a baseline, not the final extraction decision. See
 [docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
 for the vendor evaluation plan.

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { APPLE_VISION_PROVIDER_CONFIG_HASH } from './apple-vision.ts';
 import { AWS_TEXTRACT_PROVIDER_CONFIG_HASH, estimatedAwsTextractCostUsd } from './aws-textract.ts';
 import { parsePdfExtractionArgs, type PdfExtractionCliOptions } from './cli.ts';
+import { LLAMAPARSE_PROVIDER_CONFIG_HASH, estimatedLlamaParseCostUsd } from './llamaparse.ts';
 import { writeExtractionManifest } from './manifest.ts';
 import type { ProviderRegistry } from './provider.ts';
 import { createPdfExtractionProviderRegistry } from './providers.ts';
@@ -48,12 +49,14 @@ function providerConfigHash(provider: PdfExtractionProviderId, override?: string
   if (override) return override;
   if (provider === 'apple-vision') return APPLE_VISION_PROVIDER_CONFIG_HASH;
   if (provider === 'aws-textract') return AWS_TEXTRACT_PROVIDER_CONFIG_HASH;
+  if (provider === 'llamaparse') return LLAMAPARSE_PROVIDER_CONFIG_HASH;
   throw new Error(`Unsupported PDF extraction provider config: ${provider}.`);
 }
 
 function estimatedCostUsdFor(input: PdfExtractionCliOptions): number | undefined {
   if (input.provider === 'apple-vision') return 0;
   if (input.provider === 'aws-textract') return estimatedAwsTextractCostUsd(input.pages);
+  if (input.provider === 'llamaparse') return estimatedLlamaParseCostUsd(input.pages);
   return undefined;
 }
 
