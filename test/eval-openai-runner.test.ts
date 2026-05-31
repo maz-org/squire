@@ -83,6 +83,32 @@ describe('OpenAI Responses eval runner', () => {
     );
   });
 
+  it('records the requested agent runtime in OpenAI eval traces', async () => {
+    const client = responsesClient({
+      id: 'resp_1',
+      model: 'gpt-5.5-2026-04-23',
+      status: 'completed',
+      output_text: 'Spyglass reveals the top card.',
+      output: [
+        {
+          type: 'message',
+          content: [{ type: 'output_text', text: 'Spyglass reveals the top card.' }],
+        },
+      ],
+    });
+
+    const result = await runOpenAiResponsesEvalCase({
+      client,
+      evalCase,
+      providerConfig,
+      agentRuntime: 'langgraph',
+      runLabel: 'unit-openai',
+      toolSurface: 'redesigned',
+    });
+
+    expect(result.trace.agentRuntime).toBe('langgraph');
+  });
+
   it('runs a manual stateless Responses tool loop without previous_response_id', async () => {
     const reasoningItem = {
       type: 'reasoning',

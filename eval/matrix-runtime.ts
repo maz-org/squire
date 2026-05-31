@@ -161,6 +161,7 @@ async function runOpenAiMatrixCase(
     client,
     evalCase: input.evalCase,
     providerConfig: input.providerConfig,
+    agentRuntime: input.agentRuntime,
     runLabel: input.runLabel,
     toolSurface: input.toolSurface,
     traceWriter,
@@ -200,12 +201,13 @@ export function createEvalMatrixRunner(
     }
 
     if (input.agentRuntime === 'langgraph') {
-      if (input.providerConfig.provider !== 'anthropic') {
-        throw new Error(
-          'LangGraph eval runtime currently supports Anthropic provider configs only.',
-        );
+      if (input.providerConfig.provider === 'anthropic') {
+        return runAnthropicMatrixCase(input, anthropic, traceWriter);
       }
-      return runAnthropicMatrixCase(input, anthropic, traceWriter);
+      if (input.providerConfig.provider === 'openai') {
+        return runOpenAiMatrixCase(input, anthropic, traceWriter, openAiClient, env);
+      }
+      throw new Error(`Matrix runner does not support provider ${input.providerConfig.provider}.`);
     }
 
     if (input.providerConfig.provider === 'anthropic') {
