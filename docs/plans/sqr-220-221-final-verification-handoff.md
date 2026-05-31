@@ -123,8 +123,8 @@ Tooling:
 
 Evidence:
 
-- GH2 answer screenshot: `/tmp/squire-prod-gh2-answer-mobile.png`
-- Frosthaven answer screenshot: `/tmp/squire-prod-fh-answer-mobile.png`
+- GH2 answer screenshot: [sqr-220-221-gh2-answer-mobile.png](../artifacts/sqr-220-221-gh2-answer-mobile.png)
+- Frosthaven answer screenshot: [sqr-220-221-fh-answer-mobile.png](../artifacts/sqr-220-221-fh-answer-mobile.png)
 - Browser console: no console messages for login, authenticated home, GH2 answer, or Frosthaven answer.
 
 GH2 flow:
