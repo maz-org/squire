@@ -32,6 +32,10 @@ describe('PDF extraction provider registry', () => {
       id: 'llamaparse',
       displayName: 'LlamaParse',
     });
+    expect(registry.get('unstructured')).toMatchObject({
+      id: 'unstructured',
+      displayName: 'Unstructured',
+    });
   });
 
   it('registers providers by stable id and lists them in insertion order', () => {

@@ -2,7 +2,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runPdfExtractionEval } from '../eval/pdf-extraction/run.ts';
 import {
@@ -65,6 +65,10 @@ const artifact = {
     },
   ],
 } satisfies ExtractionArtifact;
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe('PDF extraction eval run', () => {
   it('runs Apple Vision through the shared runner and writes manifest plus score report', async () => {
@@ -282,6 +286,51 @@ describe('PDF extraction eval run', () => {
       ),
     ).rejects.toThrow(
       /Estimated PDF extraction cost \$0.05 exceeds --max-estimated-cost-usd=0.001/,
+    );
+    expect(extract).not.toHaveBeenCalled();
+  });
+
+  it('applies Unstructured selected-page cost guardrails before provider work', async () => {
+    vi.stubEnv('UNSTRUCTURED_COST_PER_PAGE_USD', '0.03');
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const registry = createProviderRegistry();
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
+      ...artifact,
+      provider: 'unstructured',
+    });
+    registry.register({
+      id: 'unstructured',
+      displayName: 'Unstructured',
+      version: 'unstructured-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtractionEval(
+        {
+          provider: 'unstructured',
+          sourcePath: artifact.source.path,
+          pages: [30],
+          outputDir,
+          runLabel: 'unstructured-page-30',
+          retryCount: 0,
+          allowFullRulebook: false,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 0.001,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          providerConfigHash: artifact.providerConfigHash,
+          groundTruth: [],
+          scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
+        },
+      ),
+    ).rejects.toThrow(
+      /Estimated PDF extraction cost \$0.03 exceeds --max-estimated-cost-usd=0.001/,
     );
     expect(extract).not.toHaveBeenCalled();
   });
