@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "squire-pdf-extraction-manifest-v1",
+  "provider": "marker-datalab",
+  "providerVersion": "datalab-convert-v1-marker-chandra",
+  "runId": "marker-datalab-full-rulebook",
+  "runStatus": "succeeded",
+  "sourcePath": "data/pdfs/gh2-rule-book.pdf",
+  "sourceHash": "sha256:a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27",
+  "providerConfigHash": "sha256:102c7993a2ccd947bdc4e61cf6106adcf96d807505fa7d49a376138188fa0b02",
+  "normalizedArtifactPath": "eval/results/pdf-extraction/normalized/marker-datalab/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/102c7993a2ccd947bdc4e61cf6106adcf96d807505fa7d49a376138188fa0b02/full-rulebook.json",
+  "normalizedArtifactHash": "sha256:548794b5435c156981dd2ad5c22dbe8b8f817aef463a0cfd216f194f7f0e47ad",
+  "rawArtifacts": [
+    {
+      "kind": "provider-json",
+      "path": "eval/results/pdf-extraction/raw/marker-datalab/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/102c7993a2ccd947bdc4e61cf6106adcf96d807505fa7d49a376138188fa0b02/marker-datalab-full-rulebook.json",
+      "sha256": "sha256:f783c0e09377cacb22d45db987f7208ff7e26cbb5b17418a2a6336711e3e2a97",
+      "redacted": true,
+      "persisted": true
+    }
+  ],
+  "cost": {
+    "estimatedUsd": 0.444,
+    "actualUsd": 0.45,
+    "pagesProcessed": 74,
+    "costPerPageUsd": 0.006
+  },
+  "privacy": {
+    "retentionPolicy": "Datalab managed conversion stores hosted results temporarily and documents result deletion after processing; raw outputs are persisted only in the configured eval output directory.",
+    "trainingUse": "not-used-for-training",
+    "region": "us"
+  },
+  "cache": {
+    "key": "marker-datalab:sha256:a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27:sha256:102c7993a2ccd947bdc4e61cf6106adcf96d807505fa7d49a376138188fa0b02:full-rulebook",
+    "hit": true
+  },
+  "execution": {
+    "selectedPages": [],
+    "fullRulebook": true,
+    "fullRulebookOverride": true,
+    "estimatedCostUsd": 0.444,
+    "maxEstimatedCostUsd": 0.5,
+    "costOverride": false,
+    "retryLimit": 0,
+    "retryCount": 0,
+    "timeoutMs": 1800000,
+    "concurrencyLimit": 1,
+    "rateLimitCount": 0,
+    "refreshedProviderOutput": false
+  }
+}

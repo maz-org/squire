@@ -1,0 +1,4019 @@
+{
+  "schemaVersion": "squire-pdf-extraction-report-v1",
+  "provider": "marker-datalab",
+  "providerVersion": "datalab-convert-v1-marker-chandra",
+  "runId": "marker-datalab-full-rulebook",
+  "baselineComparator": {
+    "provider": "apple-vision",
+    "role": "baseline"
+  },
+  "normalizedArtifactPath": "eval/results/pdf-extraction/normalized/marker-datalab/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/102c7993a2ccd947bdc4e61cf6106adcf96d807505fa7d49a376138188fa0b02/full-rulebook.json",
+  "manifestPath": "eval/results/pdf-extraction/manifests/marker-datalab/a8bb3b2e3d875f325d12da48ca4c6fd7807876b3b0353bf4052a74678d339f27/102c7993a2ccd947bdc4e61cf6106adcf96d807505fa7d49a376138188fa0b02/full-rulebook.json",
+  "score": {
+    "provider": "marker-datalab",
+    "providerVersion": "datalab-convert-v1-marker-chandra",
+    "text": {
+      "requiredPhraseRecall": 0.8818968893563571,
+      "averageCharacterErrorRate": 1
+    },
+    "structure": {
+      "headingRecall": 1,
+      "readingOrderScore": 0.9354838709677419,
+      "tableCellRecall": 0.5201612903225806,
+      "noiseRatio": 0.07275146987570835
+    },
+    "retrieval": {
+      "queryCount": 62,
+      "top1Hits": 47,
+      "top3Hits": 56,
+      "top5Hits": 60,
+      "citeableContextHits": 16,
+      "queryScores": [
+        {
+          "recordId": "gh2-rulebook-p02-toc-core-rules",
+          "query": "Where is the line-of-sight rule in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": false,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.81640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.78515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.78515625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p02-toc-core-rules",
+          "query": "What page has the Gloomhaven (2nd Edition) loot rules?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.7734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.6875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.67578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.66015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p02-toc-campaign-appendices",
+          "query": "Where does the Gloomhaven 2e rulebook cover the City Phase?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-53/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-53/gh2-rule-book.pdf",
+              "page": 53,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.92578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.7890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.78125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/gh2-rule-book.pdf",
+              "page": 46,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.76171875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p02-toc-campaign-appendices",
+          "query": "Which appendix has the Gloomhaven (2nd Edition) index?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 2,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.75390625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.62890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-6/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-6/gh2-rule-book.pdf",
+              "page": 6,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.62890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-60/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-60/gh2-rule-book.pdf",
+              "page": 60,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.57421875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p14-doors-treasures",
+          "query": "Can forced movement push a figure through a closed door in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 14,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.87890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-22/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-22/gh2-rule-book.pdf",
+              "page": 22,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.62890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.61328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.58984375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p14-doors-treasures",
+          "query": "What happens when a numbered treasure is looted?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 14,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.8828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.75,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p15-scenario-level-table",
+          "query": "What does scenario level affect in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 15,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-15/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-15/gh2-rule-book.pdf",
+              "page": 15,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-15/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-15/gh2-rule-book.pdf",
+              "page": 15,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.82421875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-45/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-45/gh2-rule-book.pdf",
+              "page": 45,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.70703125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p15-scenario-level-table",
+          "query": "Can the party change the recommended scenario level?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 15,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-15/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-15/gh2-rule-book.pdf",
+              "page": 15,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-59/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-59/gh2-rule-book.pdf",
+              "page": 59,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.68359375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-57/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-57/gh2-rule-book.pdf",
+              "page": 57,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.64453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.55859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p19-line-of-sight",
+          "query": "How do you determine line-of-sight in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 19,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.90234375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.80859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.734375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p19-line-of-sight",
+          "query": "What blocks line-of-sight in Gloomhaven (2nd Edition)?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 19,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.86328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.78515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-13/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-13/gh2-rule-book.pdf",
+              "page": 13,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.7578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-44/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-44/gh2-rule-book.pdf",
+              "page": 44,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.6796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p19-los-hyphenation",
+          "query": "Do closed doors block line-of-sight in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 19,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.90234375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.78515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.73046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-44/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-44/gh2-rule-book.pdf",
+              "page": 44,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-13/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-13/gh2-rule-book.pdf",
+              "page": 13,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.7109375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p19-los-hyphenation",
+          "query": "Are non-targeted abilities affected by line-of-sight?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 19,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.92578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.69921875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.6953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/gh2-rule-book.pdf",
+              "page": 20,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6171875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p20-added-effects-reading-order",
+          "query": "Where are added effects shown on Gloomhaven 2e ability cards?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 20,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/gh2-rule-book.pdf",
+              "page": 20,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/gh2-rule-book.pdf",
+              "page": 20,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.76171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.75390625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-21/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-21/gh2-rule-book.pdf",
+              "page": 21,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.69140625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p20-added-effects-reading-order",
+          "query": "How are conditional effects displayed on an ability?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 20,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/gh2-rule-book.pdf",
+              "page": 20,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/gh2-rule-book.pdf",
+              "page": 20,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.73046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.67578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-20/gh2-rule-book.pdf",
+              "page": 20,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p23-attack-modification-order",
+          "query": "What is the attack modification order in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 23,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.91015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.8515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.734375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p23-attack-modification-order",
+          "query": "When does ward apply during attack damage?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 23,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.55078125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p24-attack-effect-timing",
+          "query": "When do conditions from an attack effect apply in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 24,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.6953125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p24-attack-effect-timing",
+          "query": "Does forced movement from an attack apply during damage resolution?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 24,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.80078125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.69921875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.66796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-31/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-31/gh2-rule-book.pdf",
+              "page": 31,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.578125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p25-advantage-disadvantage",
+          "query": "How does advantage work in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 25,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.83203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.7109375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.7109375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.67578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.65234375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p25-advantage-disadvantage",
+          "query": "Can a character choose either modifier with advantage?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 25,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.82421875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.6171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.5703125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.55078125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p25-rolling-modifier-examples",
+          "query": "How do rolling modifiers work with advantage in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 25,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p25-rolling-modifier-examples",
+          "query": "What happens if the second draw is rolling during disadvantage?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 25,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.80078125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.69140625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p26-positive-conditions",
+          "query": "Can a figure have multiple copies of the same condition in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 26,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.90234375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-33/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-33/gh2-rule-book.pdf",
+              "page": 33,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.6953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.65625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-25/gh2-rule-book.pdf",
+              "page": 25,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-31/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-31/gh2-rule-book.pdf",
+              "page": 31,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.52734375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p26-positive-conditions",
+          "query": "How does ward reduce damage?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 26,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.81640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.61328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-29/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-29/gh2-rule-book.pdf",
+              "page": 29,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.57421875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.56640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.53515625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p27-negative-conditions",
+          "query": "What does wound do in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 27,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.84375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-65/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-65/gh2-rule-book.pdf",
+              "page": 65,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.5625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.53125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.52734375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p27-negative-conditions",
+          "query": "Does poison prevent healing from increasing hit points?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 27,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.9140625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.86328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-65/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-65/gh2-rule-book.pdf",
+              "page": 65,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.42578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-54/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-54/gh2-rule-book.pdf",
+              "page": 54,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.42578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.41796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p27-suffer-damage",
+          "query": "Is suffer damage a targeted ability in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 27,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.8984375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.68359375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-69/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-69/gh2-rule-book.pdf",
+              "page": 69,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.62109375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-35/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-35/gh2-rule-book.pdf",
+              "page": 35,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.59375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p27-suffer-damage",
+          "query": "Can shield reduce suffer damage?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 27,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-29/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-29/gh2-rule-book.pdf",
+              "page": 29,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.5859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-67/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-67/gh2-rule-book.pdf",
+              "page": 67,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.578125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-ability",
+          "query": "How does Loot X work in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.9140625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.65234375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.58984375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.58203125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-ability",
+          "query": "Can monsters loot treasure tiles?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.91015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.7265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.68359375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-35/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-35/gh2-rule-book.pdf",
+              "page": 35,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-sidebar-boundary",
+          "query": "Who gains the reward from a numbered treasure in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.84765625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/gh2-rule-book.pdf",
+              "page": 46,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.56640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-67/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-67/gh2-rule-book.pdf",
+              "page": 67,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.54296875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p30-loot-sidebar-boundary",
+          "query": "Where do you look up numbered treasure rewards?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 30,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.67578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.65234375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5234375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p36-character-damage-negation",
+          "query": "How can a character negate damage in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 36,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.91796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.8125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-10/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-10/gh2-rule-book.pdf",
+              "page": 10,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.75390625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p36-character-damage-negation",
+          "query": "Can active area cards be lost to negate damage?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 36,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.8984375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-36/gh2-rule-book.pdf",
+              "page": 36,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.7109375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-28/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-28/gh2-rule-book.pdf",
+              "page": 28,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.60546875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p39-monster-focus",
+          "query": "How does a monster choose focus in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 39,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.9140625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.8515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.84375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p39-monster-focus",
+          "query": "Does a disarmed monster still find focus?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 39,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.78125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.7578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.5390625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p39-focus-priority-diagram",
+          "query": "How do monsters break focus ties in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 39,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.71484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.66015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.62890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.59375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p39-focus-priority-diagram",
+          "query": "Does monster focus require line-of-sight?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 39,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.91015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-44/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-44/gh2-rule-book.pdf",
+              "page": 44,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.609375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p40-monster-movement",
+          "query": "When does a monster move in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 40,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.77734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-38/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-38/gh2-rule-book.pdf",
+              "page": 38,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-38/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-38/gh2-rule-book.pdf",
+              "page": 38,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.6796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.66796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p40-monster-movement",
+          "query": "Will a monster move if it cannot shorten the path to its focus?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 40,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.89453125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.84765625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.78125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p40-heading-noise",
+          "query": "Where does the Monster Attacks section begin in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 40,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.7734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.7265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5703125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.56640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.56640625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p40-heading-noise",
+          "query": "What should be treated as the page heading for monster movement?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 40,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.57421875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.5234375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.47265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.431640625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p48-campaign-overview",
+          "query": "What is the party in Gloomhaven 2e campaign rules?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 48,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-48/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-48/gh2-rule-book.pdf",
+              "page": 48,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.8671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-3/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-3/gh2-rule-book.pdf",
+              "page": 3,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-50/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-50/gh2-rule-book.pdf",
+              "page": 50,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.70703125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-50/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-50/gh2-rule-book.pdf",
+              "page": 50,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.61328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-69/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-69/gh2-rule-book.pdf",
+              "page": 69,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.60546875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p48-campaign-overview",
+          "query": "How does the Gloomhaven (2nd Edition) rulebook define the campaign?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 48,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-48/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-48/gh2-rule-book.pdf",
+              "page": 48,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.90625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-7/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-7/gh2-rule-book.pdf",
+              "page": 7,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.76171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-50/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-50/gh2-rule-book.pdf",
+              "page": 50,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-3/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-3/gh2-rule-book.pdf",
+              "page": 3,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-47/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-47/gh2-rule-book.pdf",
+              "page": 47,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.66796875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p53-city-phase",
+          "query": "When does the party perform a City Phase in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 53,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-53/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-53/gh2-rule-book.pdf",
+              "page": 53,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.92578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/gh2-rule-book.pdf",
+              "page": 46,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-45/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-45/gh2-rule-book.pdf",
+              "page": 45,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.75390625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.73046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p53-city-phase",
+          "query": "What are the two steps of the City Phase?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 53,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-53/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-53/gh2-rule-book.pdf",
+              "page": 53,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.921875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/gh2-rule-book.pdf",
+              "page": 46,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.54296875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-45/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-45/gh2-rule-book.pdf",
+              "page": 45,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.5390625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p62-monster-turn-guide-focus-table",
+          "query": "What priority list does the monster turn guide use for focus?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 62,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.76953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.68359375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.66015625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.65234375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p62-monster-turn-guide-focus-table",
+          "query": "What happens if a monster has no path to an attack hex?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 62,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.87109375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.8515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8046875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p63-monster-movement-guide",
+          "query": "When will a Gloomhaven 2e monster refuse to move?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 63,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-38/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-38/gh2-rule-book.pdf",
+              "page": 38,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.78125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.75,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p63-monster-movement-guide",
+          "query": "How does a monster choose among attack hexes?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 63,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": true,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.83203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.83203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.80859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.80859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.7890625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p64-important-reminders-attacks",
+          "query": "Does shield reduce suffer damage in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 64,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.78515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-29/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-29/gh2-rule-book.pdf",
+              "page": 29,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-26/gh2-rule-book.pdf",
+              "page": 26,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-27/gh2-rule-book.pdf",
+              "page": 27,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-67/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-67/gh2-rule-book.pdf",
+              "page": 67,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.62890625,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p64-important-reminders-attacks",
+          "query": "How many attack modifier cards are drawn for multiple targets?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 64,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-64/gh2-rule-book.pdf",
+              "page": 64,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.8515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-23/gh2-rule-book.pdf",
+              "page": 23,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.60546875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p66-treasure-index",
+          "query": "What is Appendix E in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 66,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.75,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.56640625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-10/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-10/gh2-rule-book.pdf",
+              "page": 10,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-4/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-4/gh2-rule-book.pdf",
+              "page": 4,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.54296875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p66-treasure-index",
+          "query": "Where are numbered treasure rewards listed?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 66,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6796875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.63671875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.5859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-14/gh2-rule-book.pdf",
+              "page": 14,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.578125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p68-index-core-terms",
+          "query": "What index pages mention line-of-sight in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 68,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.84765625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.79296875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.78515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.76171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.74609375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p68-index-core-terms",
+          "query": "Where does the Gloomhaven (2nd Edition) index list Loot?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 68,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-30/gh2-rule-book.pdf",
+              "page": 30,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.69921875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.6328125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-66/gh2-rule-book.pdf",
+              "page": 66,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.62109375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p68-index-monster-terms",
+          "query": "Where does the Gloomhaven 2e index point for monster movement?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 68,
+          "top1Hit": true,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-68/gh2-rule-book.pdf",
+              "page": 68,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.7265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-40/gh2-rule-book.pdf",
+              "page": 40,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6953125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-63/gh2-rule-book.pdf",
+              "page": 63,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.5703125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p68-index-monster-terms",
+          "query": "Which pages does the index cite for monster focus?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 68,
+          "top1Hit": false,
+          "top3Hit": false,
+          "top5Hit": false,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.67578125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.6171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-2/gh2-rule-book.pdf",
+              "page": 2,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.609375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-39/gh2-rule-book.pdf",
+              "page": 39,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.59375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-62/gh2-rule-book.pdf",
+              "page": 62,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.578125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": []
+        },
+        {
+          "recordId": "gh2-rulebook-p74-quick-reference-attack-timing",
+          "query": "What does the Gloomhaven 2e quick reference say about attack effect timing?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 74,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.8515625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-3",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 3,
+              "game": "gloomhaven-2e",
+              "score": 0.8203125,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.72265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-5",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 5,
+              "game": "gloomhaven-2e",
+              "score": 0.71875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.6484375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p74-quick-reference-attack-timing",
+          "query": "When do elemental infusions happen?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 74,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-21/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-21/gh2-rule-book.pdf",
+              "page": 21,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.85546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/chunk-4",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-24/gh2-rule-book.pdf",
+              "page": 24,
+              "chunkIndex": 4,
+              "game": "gloomhaven-2e",
+              "score": 0.83984375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.77734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.76171875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-21/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-21/gh2-rule-book.pdf",
+              "page": 21,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.73828125,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p74-quick-reference-targeted-abilities",
+          "query": "Which abilities are targeted in Gloomhaven 2e?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 74,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-2",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 2,
+              "game": "gloomhaven-2e",
+              "score": 0.85546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.80859375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-31/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-31/gh2-rule-book.pdf",
+              "page": 31,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.77734375,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-41/gh2-rule-book.pdf",
+              "page": 41,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.7265625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-19/gh2-rule-book.pdf",
+              "page": 19,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.65234375,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        },
+        {
+          "recordId": "gh2-rulebook-p74-quick-reference-targeted-abilities",
+          "query": "What steps are in the Gloomhaven (2nd Edition) Scenario Phase?",
+          "expectedSource": "data/pdfs/gh2-rule-book.pdf",
+          "expectedPage": 74,
+          "top1Hit": false,
+          "top3Hit": true,
+          "top5Hit": true,
+          "citeableContextHit": false,
+          "hits": [
+            {
+              "rank": 1,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-7/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-7/gh2-rule-book.pdf",
+              "page": 7,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.94140625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 2,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-0",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 0,
+              "game": "gloomhaven-2e",
+              "score": 0.87890625,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 3,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-8/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-8/gh2-rule-book.pdf",
+              "page": 8,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.85546875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 4,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-74/gh2-rule-book.pdf",
+              "page": 74,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.79296875,
+              "scoreKind": "rerank"
+            },
+            {
+              "rank": 5,
+              "id": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/chunk-1",
+              "source": "eval/pdf-extraction/marker-datalab-full-rulebook/marker-datalab/page-46/gh2-rule-book.pdf",
+              "page": 46,
+              "chunkIndex": 1,
+              "game": "gloomhaven-2e",
+              "score": 0.79296875,
+              "scoreKind": "rerank"
+            }
+          ],
+          "failureClasses": ["misleading_context"]
+        }
+      ],
+      "failureClasses": ["misleading_context"],
+      "scoreKindCounts": {
+        "vector": 0,
+        "rerank": 62
+      },
+      "embedding": {
+        "model": "voyage-4-large",
+        "dimensions": 1024,
+        "version": "voyage-4-large:dim1024:prod-v1"
+      }
+    },
+    "latencyMs": 141510,
+    "cost": {
+      "estimatedUsd": 0.444,
+      "actualUsd": 0.45,
+      "pagesProcessed": 74,
+      "costPerPageUsd": 0.006
+    },
+    "privacy": {
+      "retentionPolicy": "Datalab managed conversion stores hosted results temporarily and documents result deletion after processing; raw outputs are persisted only in the configured eval output directory.",
+      "trainingUse": "not-used-for-training",
+      "region": "us"
+    },
+    "failures": [
+      "misleading retrieval context on gh2-rulebook-p14-doors-treasures",
+      "heading hierarchy mismatch on gh2-rulebook-p14-doors-treasures",
+      "heading hierarchy mismatch on gh2-rulebook-p24-attack-effect-timing",
+      "misleading retrieval context on gh2-rulebook-p30-loot-ability",
+      "misleading retrieval context on gh2-rulebook-p30-loot-sidebar-boundary",
+      "misleading retrieval context on gh2-rulebook-p40-heading-noise",
+      "retrieval scoring: misleading_context"
+    ]
+  },
+  "failureModes": [
+    {
+      "id": "reading-order",
+      "label": "Reading order",
+      "observed": true,
+      "evidence": ["page 5", "page 6", "page 11", "page 14", "page 24"]
+    },
+    {
+      "id": "page-numbers",
+      "label": "Page numbers",
+      "observed": true,
+      "evidence": ["page 8"]
+    },
+    {
+      "id": "toc-ordering",
+      "label": "Table of contents ordering",
+      "observed": true,
+      "evidence": ["page 2", "page 52", "page 59", "page 60", "page 66"]
+    },
+    {
+      "id": "heading-noise",
+      "label": "Heading noise",
+      "observed": true,
+      "evidence": [
+        "heading hierarchy mismatch on gh2-rulebook-p14-doors-treasures",
+        "heading hierarchy mismatch on gh2-rulebook-p24-attack-effect-timing",
+        "misleading retrieval context on gh2-rulebook-p40-heading-noise"
+      ]
+    },
+    {
+      "id": "broken-hyphenation",
+      "label": "Broken hyphenation",
+      "observed": false,
+      "evidence": []
+    },
+    {
+      "id": "sidebar-callout-insertion",
+      "label": "Sidebar and callout insertion",
+      "observed": true,
+      "evidence": [
+        "misleading retrieval context on gh2-rulebook-p14-doors-treasures",
+        "misleading retrieval context on gh2-rulebook-p30-loot-ability",
+        "misleading retrieval context on gh2-rulebook-p30-loot-sidebar-boundary",
+        "misleading retrieval context on gh2-rulebook-p40-heading-noise"
+      ]
+    }
+  ]
+}

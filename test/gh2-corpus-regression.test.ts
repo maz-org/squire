@@ -34,7 +34,7 @@ function sourceText(source: string): string {
 }
 
 function normalizedText(text: string): string {
-  return text.replace(/\s+/g, ' ').trim().toLowerCase();
+  return text.replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 describe('GH2 corpus regression sample queries', () => {

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.16] - 2026-06-01
+
+### Added
+
+- Added the Gloomhaven (2nd Edition) Marker/Datalab rulebook refresh command, including full-rulebook cost guardrails, production source promotion, and extraction metadata recording.
+- Added the full Marker/Datalab extraction artifact, manifest, and report for the refreshed Gloomhaven (2nd Edition) rulebook source.
+
+### Changed
+
+- Replaced the Gloomhaven (2nd Edition) rulebook OCR snapshot with the selected Marker/Datalab normalized source while keeping Apple Vision documented as the local fallback path.
+- Updated GH2 rule-source metadata and docs with provider, hashes, capture date, refresh procedure, and reindex/smoke-test steps.
+
 ## [0.1.15] - 2026-05-28
 
 ### Added

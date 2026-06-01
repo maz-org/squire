@@ -13,6 +13,13 @@ interface RuleSourceMetadata {
   capturedAt: string;
   sourceLastUpdated?: string;
   refreshNotes: string;
+  extractionProvider?: string;
+  extractionProviderVersion?: string;
+  extractionProviderConfigHash?: string;
+  sourceHash?: string;
+  normalizedArtifactHash?: string;
+  normalizedFileHash?: string;
+  fallbackExtractionProvider?: string;
 }
 
 async function readMetadata(): Promise<RuleSourceMetadata[]> {
@@ -36,6 +43,8 @@ describe('GH2 rule source metadata', () => {
           game: 'gloomhaven-2e',
           sourceType: 'rulebook',
           sourceUrl: expect.stringContaining('drive.google.com'),
+          extractionProvider: 'marker-datalab',
+          fallbackExtractionProvider: 'apple-vision',
         }),
         expect.objectContaining({
           id: 'gh2-faq',
@@ -59,6 +68,13 @@ describe('GH2 rule source metadata', () => {
     for (const source of sources) {
       expect(source.capturedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(source.refreshNotes).not.toHaveLength(0);
+      if (source.id === 'gh2-rule-book') {
+        expect(source.extractionProviderVersion).not.toHaveLength(0);
+        expect(source.extractionProviderConfigHash).toMatch(/^sha256:[a-f0-9]{64}$/);
+        expect(source.sourceHash).toMatch(/^sha256:[a-f0-9]{64}$/);
+        expect(source.normalizedArtifactHash).toMatch(/^sha256:[a-f0-9]{64}$/);
+        expect(source.normalizedFileHash).toMatch(/^sha256:[a-f0-9]{64}$/);
+      }
       await expect(access(join(import.meta.dirname, '..', source.file))).resolves.toBeUndefined();
       if (source.normalizedFile) {
         await expect(
