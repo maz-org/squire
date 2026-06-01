@@ -31,6 +31,7 @@ import {
 export interface PdfExtractionEvalRunDeps {
   registry?: ProviderRegistry;
   sourceHash?: string;
+  sourcePageCount?: number;
   providerConfigHash?: string;
   groundTruth?: GroundTruthRecord[];
   scoreArtifact?: (
@@ -136,10 +137,18 @@ export async function runPdfExtractionEval(
   input: PdfExtractionCliOptions,
   deps: PdfExtractionEvalRunDeps = {},
 ): Promise<PdfExtractionEvalRunResult> {
-  const sourceInfo = deps.sourceHash ? undefined : await readSourceInfo(input.sourcePath);
+  if (
+    deps.sourcePageCount !== undefined &&
+    (!Number.isInteger(deps.sourcePageCount) || deps.sourcePageCount < 1)
+  ) {
+    throw new Error('PDF extraction source page count must be a positive integer.');
+  }
+  const needsSourceInfo = !deps.sourceHash || (input.pages.length === 0 && !deps.sourcePageCount);
+  const sourceInfo = needsSourceInfo ? await readSourceInfo(input.sourcePath) : undefined;
   const sourceHash = deps.sourceHash ?? sourceInfo?.sha256;
   if (!sourceHash) throw new Error(`Unable to hash PDF extraction source ${input.sourcePath}.`);
-  const sourcePageCount = sourceInfo?.pageCount ?? Math.max(input.pages.length, 1);
+  const sourcePageCount =
+    sourceInfo?.pageCount ?? deps.sourcePageCount ?? Math.max(input.pages.length, 1);
   const configHash = providerConfigHash(input.provider, deps.providerConfigHash);
   const result = await runPdfExtraction({
     registry: deps.registry ?? createPdfExtractionProviderRegistry(),

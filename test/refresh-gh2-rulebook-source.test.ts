@@ -87,6 +87,10 @@ describe('GH2 rulebook refresh source promotion', () => {
       maxEstimatedCostUsd: 0.74,
       refreshProviderOutput: true,
     });
+
+    expect(() => parseGh2RulebookRefreshArgs(['--capture-date=2026-02-30'])).toThrow(
+      'Invalid --capture-date: expected a valid calendar date.',
+    );
   });
 
   it('builds a stable Markdown snapshot from a full Marker/Datalab artifact', () => {
@@ -165,6 +169,8 @@ describe('GH2 rulebook refresh source promotion', () => {
     expect(result.normalizedFileHash).toMatch(/^sha256:[a-f0-9]{64}$/);
     expect(metadata[0]).toMatchObject({
       id: 'gh2-rule-book',
+      file: 'data/pdfs/gh2-rule-book.pdf',
+      normalizedFile: outputPath,
       sourceUrl:
         'https://drive.google.com/file/d/16TmmCKa6zVVObj2qM-vIj9RcEAC3nfMT/view?usp=sharing',
       capturedAt: '2026-06-01',

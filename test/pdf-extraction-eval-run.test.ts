@@ -384,8 +384,7 @@ describe('PDF extraction eval run', () => {
     const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
     const sourcePath = join(outputDir, 'gh2-rule-book.pdf');
     const pdf = await PDFDocument.create();
-    pdf.addPage();
-    pdf.addPage();
+    for (let page = 0; page < 100; page += 1) pdf.addPage();
     await writeFile(sourcePath, await pdf.save());
     const registry = createProviderRegistry();
     const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
@@ -417,13 +416,59 @@ describe('PDF extraction eval run', () => {
         },
         {
           registry,
+          sourceHash: artifact.source.sha256,
           providerConfigHash: artifact.providerConfigHash,
           groundTruth: [],
           scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
         },
       ),
     ).rejects.toThrow(
-      /Estimated PDF extraction cost \$0.01 exceeds --max-estimated-cost-usd=0.001/,
+      /Estimated PDF extraction cost \$0.60 exceeds --max-estimated-cost-usd=0.001/,
+    );
+    expect(extract).not.toHaveBeenCalled();
+  });
+
+  it('uses an injected full-rulebook source page count when the source hash is injected', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const registry = createProviderRegistry();
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
+      ...artifact,
+      provider: 'marker-datalab',
+    });
+    registry.register({
+      id: 'marker-datalab',
+      displayName: 'Marker/Datalab',
+      version: 'marker-datalab-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtractionEval(
+        {
+          provider: 'marker-datalab',
+          sourcePath: artifact.source.path,
+          pages: [],
+          outputDir,
+          runLabel: 'marker-datalab-full-rulebook',
+          retryCount: 0,
+          allowFullRulebook: true,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 0.001,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          sourcePageCount: 100,
+          providerConfigHash: artifact.providerConfigHash,
+          groundTruth: [],
+          scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
+        },
+      ),
+    ).rejects.toThrow(
+      /Estimated PDF extraction cost \$0.60 exceeds --max-estimated-cost-usd=0.001/,
     );
     expect(extract).not.toHaveBeenCalled();
   });

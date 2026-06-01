@@ -136,6 +136,7 @@ export function parseGh2RulebookRefreshArgs(args: readonly string[]): Gh2Ruleboo
   const runLabel =
     valueFor(args, '--run-label=') ??
     `marker-datalab-gh2-rulebook-refresh-${new Date().toISOString()}`;
+  const capturedAt = valueFor(args, '--capture-date=');
 
   return {
     sourcePath: valueFor(args, '--source=') ?? DEFAULT_SOURCE_PATH,
@@ -146,7 +147,7 @@ export function parseGh2RulebookRefreshArgs(args: readonly string[]): Gh2Ruleboo
     maxEstimatedCostUsd: parseNonNegativeNumber(args, '--max-estimated-cost-usd=', 0.5),
     timeoutMs: parsePositiveInteger(args, '--timeout-ms=', 1_800_000),
     refreshProviderOutput: args.includes('--refresh-provider-output'),
-    capturedAt: valueFor(args, '--capture-date='),
+    capturedAt: capturedAt ? parseIsoDateOnly(capturedAt, '--capture-date') : undefined,
   };
 }
 
@@ -154,8 +155,19 @@ function sha256Text(text: string): string {
   return `sha256:${createHash('sha256').update(text).digest('hex')}`;
 }
 
+function parseIsoDateOnly(value: string, label: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`Invalid ${label}: expected YYYY-MM-DD.`);
+  }
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    throw new Error(`Invalid ${label}: expected a valid calendar date.`);
+  }
+  return value;
+}
+
 function captureDateFor(artifact: ExtractionArtifact, override?: string): string {
-  if (override) return override;
+  if (override) return parseIsoDateOnly(override, 'capture date');
   const completedAt = artifact.run.completedAt ?? artifact.run.startedAt;
   return completedAt.slice(0, 10);
 }
@@ -228,6 +240,7 @@ async function updateMetadata(input: {
   normalizedArtifactPath: string;
   normalizedArtifactHash: string;
   normalizedFileHash: string;
+  outputPath: string;
 }): Promise<void> {
   const raw = await readFile(input.metadataPath, 'utf8');
   const metadata = JSON.parse(raw) as RuleSourceMetadata[];
@@ -236,8 +249,8 @@ async function updateMetadata(input: {
     throw new Error('data/rule-sources/metadata.json is missing gh2-rule-book metadata.');
   }
 
-  rulebook.file = DEFAULT_SOURCE_PATH;
-  rulebook.normalizedFile = DEFAULT_OUTPUT_PATH;
+  rulebook.file = input.artifact.source.path;
+  rulebook.normalizedFile = input.outputPath;
   rulebook.game = 'gloomhaven-2e';
   rulebook.sourceType = 'rulebook';
   rulebook.sourceUrl = DEFAULT_SOURCE_URL;
@@ -325,6 +338,7 @@ export async function promoteGh2RulebookArtifact(
     normalizedArtifactPath: input.normalizedArtifactPath,
     normalizedArtifactHash: input.normalizedArtifactHash,
     normalizedFileHash,
+    outputPath: input.outputPath,
   });
   return { normalizedFileHash };
 }
