@@ -520,7 +520,34 @@ After indexing production data, `npm run production-data:smoke -- --game gh2`
 performs a real GH2 rules search, a GH2 item lookup, and a Frosthaven
 preservation check; it needs the production DB proxy plus `VOYAGE_API_KEY`.
 
-The current GH2 rulebook snapshot is the Apple Vision baseline, generated on
+The current Gloomhaven (2nd Edition) rulebook snapshot is the Marker/Datalab
+production refresh output selected by
+[SQR-234](plans/sqr-234-pdf-extraction-vendor-decision-report.md). Refresh the
+stable normalized source with:
+
+```bash
+npm run rulebook:refresh:gh2 -- \
+  --run-label=marker-datalab-full-rulebook \
+  --max-estimated-cost-usd=0.50 \
+  --timeout-ms=1800000
+```
+
+The command runs the full Gloomhaven (2nd Edition) PDF through the shared
+Marker/Datalab eval runner, writes the normalized artifact, manifest, and report
+under `eval/results/pdf-extraction/`, promotes the generated Markdown into
+`data/rule-sources/gh2-rule-book.md`, and updates
+`data/rule-sources/metadata.json` with provider, provider version/config,
+source hash, normalized artifact hash, normalized file hash, capture date, run
+id, and report paths. The full-rulebook cost guard estimates spend from the
+source PDF page count before making the provider request. After a refresh,
+review the table of contents and page 30 manually, then reindex and smoke test:
+
+```bash
+SQUIRE_INDEX_GAME=gloomhaven-2e npm run index
+NODE_ENV=production SQUIRE_ENV=production npm run production-data:smoke -- --game gh2
+```
+
+Apple Vision remains the local fallback. Regenerate the fallback snapshot on
 macOS with:
 
 ```bash
@@ -528,7 +555,7 @@ swift scripts/ocr-pdf-apple-vision.swift \
   data/pdfs/gh2-rule-book.pdf \
   data/rule-sources/gh2-rule-book.md \
   https://drive.google.com/file/d/16TmmCKa6zVVObj2qM-vIj9RcEAC3nfMT/view?usp=sharing \
-  2026-05-24
+  <capture-date>
 ```
 
 The reproducible eval baseline uses the shared provider registry, guardrails,
@@ -736,19 +763,22 @@ npm run pdf-extraction:run -- \
   --timeout-ms=600000
 ```
 
-Full-rulebook Marker/Datalab runs must pass `--allow-full-rulebook`; if the
-estimated selected-page cost exceeds `--max-estimated-cost-usd`, pass
-`--allow-estimated-cost` only after checking the intended spend. Commit-time
-tests mock the Datalab runtime and cover success, failed requests, poll timeout,
-rate-limit mapping, invalid output, provider config hashing, table geometry,
-and selected-page cost guardrails. Local Marker remains useful for future
-self-hosted comparisons, but this adapter intentionally targets managed Datalab
-so the eval harness can run without installing local PyTorch/Surya model
-weights.
+Full-rulebook Marker/Datalab eval runs must pass `--allow-full-rulebook`; the
+GH2 production refresh wrapper passes it for you. If the estimated cost exceeds
+`--max-estimated-cost-usd`, pass `--allow-estimated-cost` to the raw eval runner
+only after checking the intended spend. Commit-time tests mock the Datalab
+runtime and cover success, failed requests, poll timeout, rate-limit mapping,
+invalid output, provider config hashing, table geometry, selected-page cost
+guardrails, full-rulebook cost guardrails, and production source promotion.
+Local Marker remains useful for future self-hosted comparisons, but this adapter
+intentionally targets managed Datalab so the eval harness can run without
+installing local PyTorch/Surya model weights.
 
-This is a baseline, not the final extraction decision. See
+See
 [docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
-for the vendor evaluation plan.
+for the original vendor evaluation plan and
+[docs/plans/sqr-234-pdf-extraction-vendor-decision-report.md](plans/sqr-234-pdf-extraction-vendor-decision-report.md)
+for the selected provider decision.
 The flat-file `data/index.json` that used to hold this data was removed in
 SQR-33 — the runtime vector store is Postgres-only now.
 

@@ -1,7 +1,8 @@
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { PDFDocument } from 'pdf-lib';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runPdfExtractionEval } from '../eval/pdf-extraction/run.ts';
@@ -375,6 +376,99 @@ describe('PDF extraction eval run', () => {
       ),
     ).rejects.toThrow(
       /Estimated PDF extraction cost \$0.01 exceeds --max-estimated-cost-usd=0.001/,
+    );
+    expect(extract).not.toHaveBeenCalled();
+  });
+
+  it('estimates Marker/Datalab full-rulebook cost from the source PDF page count', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const sourcePath = join(outputDir, 'gh2-rule-book.pdf');
+    const pdf = await PDFDocument.create();
+    for (let page = 0; page < 100; page += 1) pdf.addPage();
+    await writeFile(sourcePath, await pdf.save());
+    const registry = createProviderRegistry();
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
+      ...artifact,
+      provider: 'marker-datalab',
+    });
+    registry.register({
+      id: 'marker-datalab',
+      displayName: 'Marker/Datalab',
+      version: 'marker-datalab-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtractionEval(
+        {
+          provider: 'marker-datalab',
+          sourcePath,
+          pages: [],
+          outputDir,
+          runLabel: 'marker-datalab-full-rulebook',
+          retryCount: 0,
+          allowFullRulebook: true,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 0.001,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          providerConfigHash: artifact.providerConfigHash,
+          groundTruth: [],
+          scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
+        },
+      ),
+    ).rejects.toThrow(
+      /Estimated PDF extraction cost \$0.60 exceeds --max-estimated-cost-usd=0.001/,
+    );
+    expect(extract).not.toHaveBeenCalled();
+  });
+
+  it('uses an injected full-rulebook source page count when the source hash is injected', async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
+    const registry = createProviderRegistry();
+    const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({
+      ...artifact,
+      provider: 'marker-datalab',
+    });
+    registry.register({
+      id: 'marker-datalab',
+      displayName: 'Marker/Datalab',
+      version: 'marker-datalab-test',
+      extract,
+    });
+
+    await expect(
+      runPdfExtractionEval(
+        {
+          provider: 'marker-datalab',
+          sourcePath: artifact.source.path,
+          pages: [],
+          outputDir,
+          runLabel: 'marker-datalab-full-rulebook',
+          retryCount: 0,
+          allowFullRulebook: true,
+          allowEstimatedCostOverride: false,
+          maxEstimatedCostUsd: 0.001,
+          providerConcurrency: 1,
+          refreshProviderOutput: false,
+          timeoutMs: 120_000,
+        },
+        {
+          registry,
+          sourceHash: artifact.source.sha256,
+          sourcePageCount: 100,
+          providerConfigHash: artifact.providerConfigHash,
+          groundTruth: [],
+          scoreArtifact: async () => scoreExtractionArtifact(artifact, []),
+        },
+      ),
+    ).rejects.toThrow(
+      /Estimated PDF extraction cost \$0.60 exceeds --max-estimated-cost-usd=0.001/,
     );
     expect(extract).not.toHaveBeenCalled();
   });

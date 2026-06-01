@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
+import { PDFDocument } from 'pdf-lib';
+
 import { APPLE_VISION_PROVIDER_CONFIG_HASH } from './apple-vision.ts';
 import { AWS_TEXTRACT_PROVIDER_CONFIG_HASH, estimatedAwsTextractCostUsd } from './aws-textract.ts';
 import { parsePdfExtractionArgs, type PdfExtractionCliOptions } from './cli.ts';
@@ -29,6 +31,7 @@ import {
 export interface PdfExtractionEvalRunDeps {
   registry?: ProviderRegistry;
   sourceHash?: string;
+  sourcePageCount?: number;
   providerConfigHash?: string;
   groundTruth?: GroundTruthRecord[];
   scoreArtifact?: (
@@ -49,8 +52,13 @@ function sha256(bytes: Buffer): string {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 }
 
-async function fileSha256(path: string): Promise<string> {
-  return sha256(await readFile(path));
+async function readSourceInfo(path: string): Promise<{ sha256: string; pageCount: number }> {
+  const bytes = await readFile(path);
+  const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
+  return {
+    sha256: sha256(bytes),
+    pageCount: pdf.getPageCount(),
+  };
 }
 
 function providerConfigHash(provider: PdfExtractionProviderId, override?: string): string {
@@ -63,12 +71,19 @@ function providerConfigHash(provider: PdfExtractionProviderId, override?: string
   throw new Error(`Unsupported PDF extraction provider config: ${provider}.`);
 }
 
-function estimatedCostUsdFor(input: PdfExtractionCliOptions): number | undefined {
+function estimatedCostUsdFor(
+  input: PdfExtractionCliOptions,
+  sourcePageCount: number,
+): number | undefined {
+  const pages =
+    input.pages.length > 0
+      ? input.pages
+      : Array.from({ length: sourcePageCount }, (_value, index) => index + 1);
   if (input.provider === 'apple-vision') return 0;
-  if (input.provider === 'aws-textract') return estimatedAwsTextractCostUsd(input.pages);
-  if (input.provider === 'llamaparse') return estimatedLlamaParseCostUsd(input.pages);
-  if (input.provider === 'unstructured') return estimatedUnstructuredCostUsd(input.pages);
-  if (input.provider === 'marker-datalab') return estimatedMarkerDatalabCostUsd(input.pages);
+  if (input.provider === 'aws-textract') return estimatedAwsTextractCostUsd(pages);
+  if (input.provider === 'llamaparse') return estimatedLlamaParseCostUsd(pages);
+  if (input.provider === 'unstructured') return estimatedUnstructuredCostUsd(pages);
+  if (input.provider === 'marker-datalab') return estimatedMarkerDatalabCostUsd(pages);
   return undefined;
 }
 
@@ -122,7 +137,18 @@ export async function runPdfExtractionEval(
   input: PdfExtractionCliOptions,
   deps: PdfExtractionEvalRunDeps = {},
 ): Promise<PdfExtractionEvalRunResult> {
-  const sourceHash = deps.sourceHash ?? (await fileSha256(input.sourcePath));
+  if (
+    deps.sourcePageCount !== undefined &&
+    (!Number.isInteger(deps.sourcePageCount) || deps.sourcePageCount < 1)
+  ) {
+    throw new Error('PDF extraction source page count must be a positive integer.');
+  }
+  const needsSourceInfo = !deps.sourceHash || (input.pages.length === 0 && !deps.sourcePageCount);
+  const sourceInfo = needsSourceInfo ? await readSourceInfo(input.sourcePath) : undefined;
+  const sourceHash = deps.sourceHash ?? sourceInfo?.sha256;
+  if (!sourceHash) throw new Error(`Unable to hash PDF extraction source ${input.sourcePath}.`);
+  const sourcePageCount =
+    sourceInfo?.pageCount ?? deps.sourcePageCount ?? Math.max(input.pages.length, 1);
   const configHash = providerConfigHash(input.provider, deps.providerConfigHash);
   const result = await runPdfExtraction({
     registry: deps.registry ?? createPdfExtractionProviderRegistry(),
@@ -137,7 +163,7 @@ export async function runPdfExtractionEval(
     allowFullRulebook: input.allowFullRulebook,
     allowEstimatedCostOverride: input.allowEstimatedCostOverride,
     maxEstimatedCostUsd: input.maxEstimatedCostUsd,
-    estimatedCostUsd: estimatedCostUsdFor(input),
+    estimatedCostUsd: estimatedCostUsdFor(input, sourcePageCount),
     providerConcurrency: input.providerConcurrency,
     refreshProviderOutput: input.refreshProviderOutput,
     timeoutMs: input.timeoutMs,

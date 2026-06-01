@@ -1,6 +1,6 @@
 {
   "name": "squire",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Frosthaven AI assistant with RAG over rulebooks",
   "type": "module",
   "engines": {
@@ -29,6 +29,7 @@
     "serve": "node src/server.ts",
     "eval": "node eval/run.ts",
     "pdf-extraction:run": "node eval/pdf-extraction/run.ts",
+    "rulebook:refresh:gh2": "node scripts/refresh-gh2-rulebook-source.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.split.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
