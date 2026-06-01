@@ -287,14 +287,14 @@ export async function readMarkerDatalabJsonResponse(response: Response): Promise
   return parsed;
 }
 
-async function createMarkerDatalabRestRuntime(): Promise<MarkerDatalabRuntime> {
+export async function createMarkerDatalabRestRuntime(): Promise<MarkerDatalabRuntime> {
   const apiKey = apiKeyFromEnv();
   const baseUrl = baseUrlFromEnv();
   return {
     async startConvert(input) {
       const form = new FormData();
       form.append(
-        'file.0',
+        'file',
         new Blob([await readFile(input.sourcePath)], { type: 'application/pdf' }),
         basename(input.sourcePath),
       );
@@ -730,6 +730,14 @@ function actualCostUsd(result: MarkerDatalabConvertResult): number | undefined {
   return undefined;
 }
 
+function rawResult(result: MarkerDatalabConvertResult): MarkerDatalabConvertResult {
+  if (!result.result_url) return result;
+  return {
+    ...result,
+    result_url: '[redacted]',
+  };
+}
+
 export function estimatedMarkerDatalabCostUsd(pages: number[]): number | undefined {
   if (pages.length === 0) return undefined;
   const mode = modeFromEnv();
@@ -785,7 +793,7 @@ export function createMarkerDatalabProvider(
         const rawPayload = {
           request,
           start,
-          result,
+          result: rawResult(result),
         };
         const rawJson = `${JSON.stringify(rawPayload, null, 2)}\n`;
         await writeFile(outputPath, rawJson, 'utf8');
@@ -844,7 +852,7 @@ export function createMarkerDatalabProvider(
               kind: 'provider-json',
               path: outputPath,
               sha256: sha256(rawJson),
-              redacted: false,
+              redacted: result.result_url !== undefined,
               persisted: true,
             },
           ],

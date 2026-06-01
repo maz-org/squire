@@ -2,10 +2,11 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createMarkerDatalabProvider,
+  createMarkerDatalabRestRuntime,
   markerDatalabProviderConfigHash,
   MARKER_DATALAB_PROVIDER_CONFIG_HASH,
   readMarkerDatalabJsonResponse,
@@ -95,6 +96,11 @@ async function sourceFixture() {
   await writeFile(sourcePath, 'fake pdf bytes', 'utf8');
   return { outputDir, sourcePath };
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 
 describe('Marker/Datalab PDF extraction provider', () => {
   it('wraps selected-page Datalab output in the shared normalized artifact schema', async () => {
@@ -284,6 +290,61 @@ describe('Marker/Datalab PDF extraction provider', () => {
     });
   });
 
+  it('uploads local PDFs with the Datalab file multipart field', async () => {
+    const { sourcePath } = await sourceFixture();
+    vi.stubEnv('DATALAB_API_KEY', 'test-key');
+    vi.stubEnv('DATALAB_BASE_URL', 'https://datalab.test');
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url, init) => {
+      expect(url).toBe('https://datalab.test/api/v1/convert');
+      expect(init?.method).toBe('POST');
+      expect(init?.headers).toMatchObject({
+        Accept: 'application/json',
+        'X-API-Key': 'test-key',
+      });
+      const body = init?.body as FormData;
+      expect(body.get('file')).toBeInstanceOf(Blob);
+      expect(body.get('file.0')).toBeNull();
+      expect(body.get('mode')).toBe('accurate');
+      expect(body.get('output_format')).toBe('markdown,json,chunks');
+      expect(body.get('page_range')).toBe('29');
+      return new Response(
+        JSON.stringify({
+          request_id: 'request-123',
+          request_check_url: '/api/v1/convert/request-123',
+          success: true,
+          versions: { marker: '1.10.2' },
+        }),
+        { status: 200 },
+      );
+    });
+    vi.stubGlobal('fetch', fetch);
+
+    const runtime = await createMarkerDatalabRestRuntime();
+    const result = await runtime.startConvert({
+      sourcePath,
+      request: {
+        mode: 'accurate',
+        outputFormat: 'markdown,json,chunks',
+        pageRange: '29',
+        paginate: true,
+        addBlockIds: true,
+        includeMarkdownInChunks: true,
+        disableImageExtraction: false,
+        disableImageCaptions: false,
+        tokenEfficientMarkdown: false,
+        skipCache: false,
+        saveCheckpoint: false,
+        extras: 'table_row_bboxes,extract_links,new_block_types',
+      },
+    });
+
+    expect(result).toEqual({
+      requestId: 'request-123',
+      requestCheckUrl: 'https://datalab.test/api/v1/convert/request-123',
+      versions: { marker: '1.10.2' },
+    });
+  });
+
   it('hashes the effective runtime provider configuration', async () => {
     const { outputDir, sourcePath } = await sourceFixture();
     const provider = createMarkerDatalabProvider({
@@ -311,6 +372,36 @@ describe('Marker/Datalab PDF extraction provider', () => {
     );
     expect(artifact.providerConfigHash).not.toBe(MARKER_DATALAB_PROVIDER_CONFIG_HASH);
     expect(artifact.rawArtifacts[0].path).toContain(artifact.providerConfigHash.slice(7));
+  });
+
+  it('redacts signed result URLs from persisted raw provider output', async () => {
+    const { outputDir, sourcePath } = await sourceFixture();
+    const signedResultUrl = 'https://signed.datalab.test/result.json?token=secret';
+    const provider = createMarkerDatalabProvider({
+      runtime: markerDatalabRuntime({
+        getConvertResult: vi.fn().mockResolvedValue({
+          ...((await markerDatalabRuntime().getConvertResult({
+            requestId: 'request-123',
+            requestCheckUrl: 'https://www.datalab.to/api/v1/convert/request-123',
+          })) as object),
+          result_url: signedResultUrl,
+        }),
+      }),
+      now: () => '2026-06-01T00:00:00.000Z',
+    });
+
+    const artifact = await provider.extract({
+      sourcePath,
+      pages: [30],
+      outputDir,
+      runLabel: 'marker-datalab redacted result url',
+      retryCount: 0,
+    });
+
+    expect(artifact.rawArtifacts[0].redacted).toBe(true);
+    const raw = await readFile(artifact.rawArtifacts[0].path!, 'utf8');
+    expect(raw).not.toContain(signedResultUrl);
+    expect(raw).toContain('"result_url": "[redacted]"');
   });
 
   it('rejects completed requests that omit requested page output', async () => {
