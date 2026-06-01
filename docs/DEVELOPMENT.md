@@ -643,6 +643,62 @@ tests mock the REST runtime and cover success, async job failure, poll timeout,
 rate-limit mapping, invalid output, heading normalization, table normalization,
 and selected-page cost guardrails.
 
+Unstructured is also available as a paid, opt-in extraction adapter. The adapter
+uses Unstructured's workflow on-demand jobs API for local files rather than the
+legacy partition endpoint: it creates a temporary workflow job with
+`POST /jobs/`, polls `GET /jobs/{id}`, reads status details from
+`GET /jobs/{id}/details`, downloads provider JSON with
+`GET /jobs/{id}/download`, and writes raw provider JSON under
+`eval/results/pdf-extraction/raw/unstructured/`. This matches Unstructured's
+current production workflow path for local files and keeps the old partition
+endpoint out of the eval contract.
+
+Selected-page runs first write a temporary page-subset PDF, then remap
+Unstructured's one-based subset page numbers back to the original Gloomhaven
+(2nd Edition) page numbers. The default workflow uses High Res partitioning with
+coordinates and table structure enabled, plus table-to-HTML enrichment. Optional
+generative OCR enrichment can be enabled when the account has an available
+provider/model. The normalized artifact records workflow settings, JobId,
+workflow metadata, processing status, node stats, page map, table HTML parsing,
+coordinates, estimated cost, and retention assumptions in `providerMetadata`.
+
+Required live-run environment:
+
+```bash
+UNSTRUCTURED_API_KEY=...
+# optional:
+UNSTRUCTURED_API_URL=https://platform.unstructuredapp.io/api/v1
+UNSTRUCTURED_REGION=us
+UNSTRUCTURED_PARTITION_STRATEGY=hi_res
+UNSTRUCTURED_TABLE_TO_HTML=1
+UNSTRUCTURED_COST_PER_PAGE_USD=0.03
+# optional generative OCR, if enabled for the account:
+UNSTRUCTURED_GENERATIVE_OCR_SUBTYPE=openai_ocr
+UNSTRUCTURED_GENERATIVE_OCR_PROVIDER_TYPE=openai
+UNSTRUCTURED_GENERATIVE_OCR_MODEL=<model-name>
+```
+
+Run selected pages first and keep the cost ceiling explicit:
+
+```bash
+npm run pdf-extraction:run -- \
+  --provider=unstructured \
+  --source=data/pdfs/gh2-rule-book.pdf \
+  --pages=2,30,31,32,33,41,42,57,72 \
+  --output-dir=eval/results/pdf-extraction \
+  --run-label=unstructured-smoke \
+  --max-estimated-cost-usd=0.30 \
+  --timeout-ms=600000
+```
+
+Full-rulebook Unstructured runs must pass `--allow-full-rulebook`; if the
+estimated selected-page cost exceeds `--max-estimated-cost-usd`, pass
+`--allow-estimated-cost` only after checking the intended spend. Commit-time
+tests mock the workflow-job runtime and cover success, failed jobs, poll
+timeouts, rate-limit mapping, invalid output, table normalization, coordinate
+normalization, optional generative OCR settings, and selected-page cost
+guardrails.
+
 This is a baseline, not the final extraction decision. See
 [docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
 for the vendor evaluation plan.

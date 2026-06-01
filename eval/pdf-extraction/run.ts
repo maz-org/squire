@@ -13,6 +13,10 @@ import { buildPdfExtractionReport, writePdfExtractionReport } from './report.ts'
 import { runPdfExtraction, type PdfExtractionRunnerResult } from './runner.ts';
 import type { ExtractionScoreSummary } from './scoring.ts';
 import {
+  estimatedUnstructuredCostUsd,
+  unstructuredProviderConfigHashFromEnv,
+} from './unstructured.ts';
+import {
   GroundTruthDatasetSchema,
   type GroundTruthRecord,
   type PdfExtractionProviderId,
@@ -50,6 +54,7 @@ function providerConfigHash(provider: PdfExtractionProviderId, override?: string
   if (provider === 'apple-vision') return APPLE_VISION_PROVIDER_CONFIG_HASH;
   if (provider === 'aws-textract') return AWS_TEXTRACT_PROVIDER_CONFIG_HASH;
   if (provider === 'llamaparse') return llamaParseProviderConfigHashFromEnv();
+  if (provider === 'unstructured') return unstructuredProviderConfigHashFromEnv();
   throw new Error(`Unsupported PDF extraction provider config: ${provider}.`);
 }
 
@@ -57,6 +62,7 @@ function estimatedCostUsdFor(input: PdfExtractionCliOptions): number | undefined
   if (input.provider === 'apple-vision') return 0;
   if (input.provider === 'aws-textract') return estimatedAwsTextractCostUsd(input.pages);
   if (input.provider === 'llamaparse') return estimatedLlamaParseCostUsd(input.pages);
+  if (input.provider === 'unstructured') return estimatedUnstructuredCostUsd(input.pages);
   return undefined;
 }
 
