@@ -582,6 +582,11 @@ function attr(node: HtmlNode, name: string): string | undefined {
   return node.attrs?.find((entry) => entry.name.toLowerCase() === name)?.value;
 }
 
+function positiveSpan(value: string | undefined): number {
+  const parsed = Number(value ?? '1');
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+}
+
 function tableCellsFromHtml(html: string): ExtractionTableCell[] {
   const fragment = parseFragment(html) as HtmlNode;
   return nodesByTag(fragment, 'tr').flatMap((row, rowIndex) =>
@@ -590,8 +595,8 @@ function tableCellsFromHtml(html: string): ExtractionTableCell[] {
       .map((cell, columnIndex) => ({
         row: rowIndex,
         column: columnIndex,
-        rowSpan: Number(attr(cell, 'rowspan') ?? 1),
-        columnSpan: Number(attr(cell, 'colspan') ?? 1),
+        rowSpan: positiveSpan(attr(cell, 'rowspan')),
+        columnSpan: positiveSpan(attr(cell, 'colspan')),
         text: htmlTextFromNode(cell),
       })),
   );

@@ -59,7 +59,7 @@ function markerDatalabRuntime(overrides: Partial<MarkerDatalabRuntime> = {}): Ma
             {
               id: '/page/29/Table/2',
               block_type: 'Table',
-              html: '<table><tr><th>Term</th><th>Meaning</th></tr><tr><td>Loot</td><td>Range</td></tr></table>',
+              html: '<table><tr><th rowspan="0" colspan="foo">Term</th><th rowspan="2" colspan="3">Meaning</th></tr><tr><td>Loot</td><td>Range</td></tr></table>',
               polygon: [
                 [64, 300],
                 [260, 300],
@@ -189,8 +189,20 @@ describe('Marker/Datalab PDF extraction provider', () => {
         expect.objectContaining({
           bbox: { x: 64, y: 300, width: 196, height: 60 },
           cells: [
-            expect.objectContaining({ row: 0, column: 0, text: 'Term' }),
-            expect.objectContaining({ row: 0, column: 1, text: 'Meaning' }),
+            expect.objectContaining({
+              row: 0,
+              column: 0,
+              rowSpan: 1,
+              columnSpan: 1,
+              text: 'Term',
+            }),
+            expect.objectContaining({
+              row: 0,
+              column: 1,
+              rowSpan: 2,
+              columnSpan: 3,
+              text: 'Meaning',
+            }),
             expect.objectContaining({ row: 1, column: 0, text: 'Loot' }),
             expect.objectContaining({ row: 1, column: 1, text: 'Range' }),
           ],
