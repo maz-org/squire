@@ -36,6 +36,10 @@ describe('PDF extraction provider registry', () => {
       id: 'unstructured',
       displayName: 'Unstructured',
     });
+    expect(registry.get('marker-datalab')).toMatchObject({
+      id: 'marker-datalab',
+      displayName: 'Marker/Datalab',
+    });
   });
 
   it('registers providers by stable id and lists them in insertion order', () => {

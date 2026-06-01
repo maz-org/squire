@@ -662,6 +662,17 @@ provider/model. The normalized artifact records workflow settings, JobId,
 workflow metadata, processing status, node stats, page map, table HTML parsing,
 coordinates, estimated cost, and retention assumptions in `providerMetadata`.
 
+Marker/Datalab is available as a paid, opt-in extraction adapter. The adapter
+uses Datalab's managed Convert API, which runs the Marker/Chandra document
+conversion stack and returns Markdown, JSON, and chunks from a single request.
+The adapter defaults to `accurate` mode for the image-heavy Gloomhaven (2nd
+Edition) rulebook, requests table row bounding boxes and link extraction, writes
+raw provider JSON under `eval/results/pdf-extraction/raw/marker-datalab/`, and
+normalizes page markdown, text, headings, table cells, geometry, images,
+versions, parse quality, provider cost, and latency into the shared extraction
+artifact. Selected-page runs pass Datalab's zero-indexed `page_range`, so
+`--pages=30` is sent as `page_range=29`.
+
 Required live-run environment:
 
 ```bash
@@ -677,6 +688,21 @@ UNSTRUCTURED_GENERATIVE_OCR_SUBTYPE=openai_ocr
 UNSTRUCTURED_GENERATIVE_OCR_PROVIDER_TYPE=openai
 UNSTRUCTURED_GENERATIVE_OCR_MODEL=<model-name>
 ```
+
+```bash
+DATALAB_API_KEY=...
+# optional:
+DATALAB_BASE_URL=https://www.datalab.to
+DATALAB_MODE=accurate
+DATALAB_REGION=us
+DATALAB_SKIP_CACHE=0
+DATALAB_COST_PER_PAGE_USD=0.006
+```
+
+The default cost estimate follows Datalab's published managed API pricing:
+`fast` and `balanced` use `$0.004` per page, while `accurate` uses `$0.006` per
+page. Keep `DATALAB_COST_PER_PAGE_USD` aligned with account pricing if that
+changes.
 
 Run selected pages first and keep the cost ceiling explicit:
 
@@ -698,6 +724,27 @@ tests mock the workflow-job runtime and cover success, failed jobs, poll
 timeouts, rate-limit mapping, invalid output, table normalization, coordinate
 normalization, optional generative OCR settings, and selected-page cost
 guardrails.
+
+```bash
+npm run pdf-extraction:run -- \
+  --provider=marker-datalab \
+  --source=data/pdfs/gh2-rule-book.pdf \
+  --pages=2,30,31,32,33,41,42,57,72 \
+  --output-dir=eval/results/pdf-extraction \
+  --run-label=marker-datalab-smoke \
+  --max-estimated-cost-usd=0.10 \
+  --timeout-ms=600000
+```
+
+Full-rulebook Marker/Datalab runs must pass `--allow-full-rulebook`; if the
+estimated selected-page cost exceeds `--max-estimated-cost-usd`, pass
+`--allow-estimated-cost` only after checking the intended spend. Commit-time
+tests mock the Datalab runtime and cover success, failed requests, poll timeout,
+rate-limit mapping, invalid output, provider config hashing, table geometry,
+and selected-page cost guardrails. Local Marker remains useful for future
+self-hosted comparisons, but this adapter intentionally targets managed Datalab
+so the eval harness can run without installing local PyTorch/Surya model
+weights.
 
 This is a baseline, not the final extraction decision. See
 [docs/plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md](plans/sqr-188-189-pdf-extraction-vendor-eval-plan.md)
