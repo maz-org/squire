@@ -2,7 +2,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { runPdfExtractionEval } from '../eval/pdf-extraction/run.ts';
 import {
@@ -65,6 +65,10 @@ const artifact = {
     },
   ],
 } satisfies ExtractionArtifact;
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe('PDF extraction eval run', () => {
   it('runs Apple Vision through the shared runner and writes manifest plus score report', async () => {
@@ -287,6 +291,7 @@ describe('PDF extraction eval run', () => {
   });
 
   it('applies Unstructured selected-page cost guardrails before provider work', async () => {
+    vi.stubEnv('UNSTRUCTURED_COST_PER_PAGE_USD', '0.03');
     const outputDir = await mkdtemp(join(tmpdir(), 'squire-pdf-extraction-eval-run-'));
     const registry = createProviderRegistry();
     const extract = vi.fn<PdfExtractionProvider['extract']>().mockResolvedValue({

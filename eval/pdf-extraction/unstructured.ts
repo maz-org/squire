@@ -355,12 +355,11 @@ function tableForElement(
 ): ExtractionTable {
   const html = element.metadata?.text_as_html;
   const cells = html ? cellsFromHtmlTable(html) : fallbackTableCells(element.text ?? '');
+  const bbox = coordinatesBBox(element.metadata?.coordinates);
   return {
     id: element.element_id ?? `p${pageNumberValue}-table-${order}`,
     order,
-    ...(coordinatesBBox(element.metadata?.coordinates)
-      ? { bbox: coordinatesBBox(element.metadata?.coordinates) }
-      : {}),
+    ...(bbox ? { bbox } : {}),
     cells,
   };
 }
@@ -370,17 +369,15 @@ function blockForElement(
   pageNumberValue: number,
   order: number,
 ): ExtractionBlock {
+  const bbox = coordinatesBBox(element.metadata?.coordinates);
+  const conf = confidence(element.metadata?.detection_class_prob);
   return {
     id: element.element_id ?? `p${pageNumberValue}-b${order}`,
     type: blockType(element),
     order,
     text: element.text ?? '',
-    ...(coordinatesBBox(element.metadata?.coordinates)
-      ? { bbox: coordinatesBBox(element.metadata?.coordinates) }
-      : {}),
-    ...(confidence(element.metadata?.detection_class_prob) !== undefined
-      ? { confidence: confidence(element.metadata?.detection_class_prob) }
-      : {}),
+    ...(bbox ? { bbox } : {}),
+    ...(conf !== undefined ? { confidence: conf } : {}),
   };
 }
 
