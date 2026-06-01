@@ -35,13 +35,13 @@ production-identical retrieval scoring path: Voyage embeddings
 `voyage-4-large:dim1024:prod-v1` plus Cohere reranking. The retrieval columns
 are hit counts out of 8 ground-truth queries.
 
-| Provider       | Run label                               | Required phrase recall | Reading order | Noise ratio | Top 1 | Top 3 | Top 5 | Citeable context | Selected cost | Latency |
-| -------------- | --------------------------------------- | ---------------------: | ------------: | ----------: | ----: | ----: | ----: | ---------------: | ------------: | ------: |
-| Apple Vision   | `apple-vision-baseline`                 |                  0.901 |          1.00 |       0.262 |     7 |     7 |     7 |                0 |        $0.000 |   41.0s |
-| AWS Textract   | `sqr-234-aws-textract-selected-pages`   |                  0.901 |          0.00 |       0.314 |     7 |     7 |     8 |                0 |        $0.135 |   20.4s |
-| LlamaParse     | `sqr-234-llamaparse-selected-pages`     |                  0.901 |          1.00 |       0.158 |     6 |     8 |     8 |                2 |        $0.450 |   61.8s |
-| Unstructured   | `sqr-234-unstructured-selected-pages`   |                  0.926 |          0.50 |       0.080 |     6 |     8 |     8 |                2 |        $0.270 |   76.4s |
-| Marker/Datalab | `sqr-234-marker-datalab-selected-pages` |                  0.901 |          1.00 |       0.150 |     7 |     8 |     8 |                2 |        $0.060 |   49.4s |
+| Provider       | Run label                               | Required phrase recall | Reading order | Noise ratio | Top 1 | Top 3 | Top 5 | Citable context | Selected cost | Latency |
+| -------------- | --------------------------------------- | ---------------------: | ------------: | ----------: | ----: | ----: | ----: | --------------: | ------------: | ------: |
+| Apple Vision   | `apple-vision-baseline`                 |                  0.901 |          1.00 |       0.262 |     7 |     7 |     7 |               0 |        $0.000 |   41.0s |
+| AWS Textract   | `sqr-234-aws-textract-selected-pages`   |                  0.901 |          0.00 |       0.314 |     7 |     7 |     8 |               0 |        $0.135 |   20.4s |
+| LlamaParse     | `sqr-234-llamaparse-selected-pages`     |                  0.901 |          1.00 |       0.158 |     6 |     8 |     8 |               2 |        $0.450 |   61.8s |
+| Unstructured   | `sqr-234-unstructured-selected-pages`   |                  0.926 |          0.50 |       0.080 |     6 |     8 |     8 |               2 |        $0.270 |   76.4s |
+| Marker/Datalab | `sqr-234-marker-datalab-selected-pages` |                  0.901 |          1.00 |       0.150 |     7 |     8 |     8 |               2 |        $0.060 |   49.4s |
 
 The scorer's `averageCharacterErrorRate` was `1.0` for every provider in this
 run, so it was not useful for provider ranking. The decision uses required
@@ -53,7 +53,7 @@ failure classes instead.
 ### Apple Vision
 
 Apple Vision remains valuable as the zero-cost local baseline. It has good
-top 1 retrieval on the selected pages, but it returned no citeable-context
+top 1 retrieval on the selected pages, but it returned no citable-context
 hits and still carried the known misleading-context failure on the page 30
 loot cases. Its noise ratio was also materially worse than the managed parser
 candidates.
@@ -65,13 +65,13 @@ Keep it only as the fallback until SQR-235 lands the Datalab refresh path.
 Textract was fast and operationally clean, but the output is OCR/layout
 primitive oriented rather than rulebook-ready Markdown. It had the worst
 reading-order score, the highest noise ratio, heading hierarchy mismatches,
-and no citeable-context hits. It is not the right primary provider for this
+and no citable-context hits. It is not the right primary provider for this
 rulebook refresh path.
 
 ### LlamaParse
 
 LlamaParse produced useful Markdown and matched Datalab on top 3, top 5, and
-citeable-context counts. It is weaker than Datalab for this project because it
+citable-context counts. It is weaker than Datalab for this project because it
 had lower top 1 retrieval, higher selected-page cost, slower selected-page
 latency, and an `unknown` training-use posture in the artifact.
 
@@ -90,14 +90,14 @@ It is a credible secondary candidate, but not the first production path.
 ### Marker/Datalab
 
 Marker/Datalab is the selected provider. It tied Apple Vision on top 1 retrieval,
-beat Apple Vision on top 3, top 5, citeable-context hits, and noise ratio, and
+beat Apple Vision on top 3, top 5, citable-context hits, and noise ratio, and
 kept a clean reading-order score. It also had the lowest managed-provider cost
 and the artifact records `trainingUse: not-used-for-training`.
 
 The remaining retrieval failure class is still `misleading_context` on some
 queries. That is not unique to Datalab; it appears across all providers on the
 same page 30 boundaries. Datalab is still the best candidate because it turns
-the two numbered-treasure queries into citeable context while preserving the
+the two numbered-treasure queries into citable context while preserving the
 same or better retrieval envelope.
 
 ## Cost Ceiling
