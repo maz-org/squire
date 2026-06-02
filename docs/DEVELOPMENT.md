@@ -459,6 +459,7 @@ npm run test:slow:pdf # Real scenario/section PDF extraction check
 npm run test:full     # Fast suite plus real scenario/section PDF extraction
 npm run test:watch    # Watch mode
 npm run e2e:api-agent # Scheduled/manual authenticated API + agent smoke
+npm run e2e:browser   # Scheduled/manual browser UI smoke
 npm run typecheck     # TypeScript type checking
 npm run lint          # ESLint
 npm run lint:css      # stylelint (CSS, Tailwind v4 aware — SQR-70)
@@ -486,6 +487,14 @@ an over-budget ledger row and verifies `/api/ask` returns the JSON
 daily schedule and manual dispatch with `SQUIRE_LLM_DAILY_BUDGET_USD=0.25` so
 provider spend is capped. For an already-running server, set
 `SQUIRE_E2E_START_SERVER=0` and `SQUIRE_E2E_BASE_URL=http://localhost:<port>`.
+
+`npm run e2e:browser` is the scheduled/manual browser smoke from SQR-24. It
+starts the real Hono app in test mode with the dev-login route enabled, signs in
+as the seeded local dev user, drives the chat UI in Playwright on desktop and a
+tablet-sized viewport, and checks active-game payloads, browser SSE rendering,
+citations, follow-up game context, and logged-out redirects. It stubs only the
+browser `/chat/:conversationId/messages/:messageId/stream` response, so it does
+not make live provider calls or require indexed rule-source embeddings.
 
 SQR-148 added an explicit test split for measuring safe parallelism:
 `test/helpers/test-slices.ts` lists the DB-backed test files that use the
