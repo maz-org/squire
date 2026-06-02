@@ -8,6 +8,8 @@ const shared = {
   sequence: { shuffle: true },
 };
 
+const BROWSER_E2E_TEST_FILES = ['test/e2e/**'];
+
 export default defineConfig({
   test: {
     coverage: {
@@ -33,6 +35,8 @@ export default defineConfig({
             ...DB_BACKED_TEST_FILES,
             // Kept on the dedicated slow path: `npm run test:slow:pdf`.
             ...SLOW_PDF_TEST_FILES,
+            // Playwright specs run through `npm run e2e:browser`, not Vitest.
+            ...BROWSER_E2E_TEST_FILES,
           ],
           fileParallelism: true,
         },

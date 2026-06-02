@@ -1,5 +1,7 @@
 import { defineConfig, configDefaults } from 'vitest/config';
 
+const BROWSER_E2E_TEST_FILES = ['test/e2e/**'];
+
 export default defineConfig({
   test: {
     // SQUIRE_DEV_LOGIN=1 is required since SQR-106 for the dev-login route to
@@ -12,7 +14,12 @@ export default defineConfig({
     // pre-migration commit would silently double the suite and run its older
     // tests against the same `squire_test` DB, producing confusing false
     // failures (seen during /document-release on SQR-56).
-    exclude: [...configDefaults.exclude, 'data/**', '.claude/worktrees/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'data/**',
+      '.claude/worktrees/**',
+      ...BROWSER_E2E_TEST_FILES,
+    ],
     // Seed card_* tables ONCE per run. Per-file seeding raced under vitest's
     // parallel runner — see test/helpers/global-setup.ts for the gory details.
     globalSetup: ['./test/helpers/global-setup.ts'],
