@@ -683,7 +683,10 @@ function markdownCell(value: string | number | boolean | null | undefined): stri
     .replace(/\|/g, '\\|');
 }
 
-export function formatEvalMatrixMarkdown(rows: EvalMatrixRow[]): string {
+export function formatEvalMatrixMarkdown(
+  rows: EvalMatrixRow[],
+  experimentUrls: string[] = [],
+): string {
   const headers = [
     'case',
     'game',
@@ -719,6 +722,14 @@ export function formatEvalMatrixMarkdown(rows: EvalMatrixRow[]): string {
         .join(' | ')} |`,
     );
   }
+  if (experimentUrls.length > 0) {
+    lines.push(
+      '',
+      '## LangSmith Experiments',
+      '',
+      ...[...new Set(experimentUrls)].map((url) => `- ${url}`),
+    );
+  }
   return lines.join('\n');
 }
 
@@ -745,6 +756,6 @@ export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatri
   writeFileSync(siblingReportPath(outputPath, '.tsv'), `${formatEvalMatrixTable(result.rows)}\n`);
   writeFileSync(
     siblingReportPath(outputPath, '.md'),
-    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${formatEvalMatrixMarkdown(result.rows)}\n`,
+    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${formatEvalMatrixMarkdown(result.rows, result.langsmithExperimentUrls ?? [])}\n`,
   );
 }

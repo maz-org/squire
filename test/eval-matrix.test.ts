@@ -292,6 +292,35 @@ describe('eval matrix runner', () => {
     expect(markdown).toContain('path\\\\with\\\\slashes \\| pipe');
   });
 
+  it('prints LangSmith experiment URLs in the Markdown report', async () => {
+    const runner = successfulRunner();
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-experiment-links',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+
+    const markdown = formatEvalMatrixMarkdown(result.rows, [
+      'https://smith.langchain.test/o/org/projects/p/experiment-a',
+      'https://smith.langchain.test/o/org/projects/p/experiment-b',
+    ]);
+
+    expect(markdown).toContain('## LangSmith Experiments');
+    expect(markdown).toContain('- https://smith.langchain.test/o/org/projects/p/experiment-a');
+    expect(markdown).toContain('- https://smith.langchain.test/o/org/projects/p/experiment-b');
+  });
+
   it('shares provider-safe tuning knobs across the default matrix models', () => {
     expect(
       defaultEvalMatrixModels({

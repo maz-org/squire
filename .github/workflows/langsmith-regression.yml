@@ -1,0 +1,212 @@
+name: LangSmith Regression
+
+on:
+  schedule:
+    - cron: '42 9 * * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Eval target to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - frosthaven-table-qa
+          - frosthaven-trajectory
+          - gloomhaven-2e-table-qa
+          - gloomhaven-2e-trajectory
+          - cross-game-boundary
+          - adversarial-boundary
+      provider:
+        description: Eval provider
+        required: true
+        default: anthropic
+        type: choice
+        options:
+          - anthropic
+          - openai
+      model:
+        description: Provider model
+        required: true
+        default: claude-sonnet-4-6
+        type: string
+      run_purpose:
+        description: Run label purpose segment
+        required: true
+        default: manual
+        type: choice
+        options:
+          - manual
+          - scheduled
+          - pre-merge
+          - debug
+      max_estimated_cost_usd:
+        description: Per-target matrix cost ceiling
+        required: true
+        default: '3'
+        type: string
+      timeout_ms:
+        description: Per-case timeout in milliseconds
+        required: true
+        default: '60000'
+        type: string
+
+permissions:
+  contents: read
+  attestations: read
+
+jobs:
+  regression:
+    name: ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: frosthaven-table-qa
+            game: frosthaven
+            suite: table-qa
+          - label: frosthaven-trajectory
+            game: frosthaven
+            suite: trajectory
+          - label: gloomhaven-2e-table-qa
+            game: gloomhaven-2e
+            suite: table-qa
+          - label: gloomhaven-2e-trajectory
+            game: gloomhaven-2e
+            suite: trajectory
+          - label: cross-game-boundary
+            game: ''
+            suite: cross-game-boundary
+          - label: adversarial-boundary
+            game: ''
+            suite: adversarial-boundary
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: squire
+          POSTGRES_PASSWORD: squire
+          POSTGRES_DB: squire_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U squire -d squire_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://squire:squire@localhost:5432/squire_test
+      TEST_DATABASE_URL: postgres://squire:squire@localhost:5432/squire_test
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      LANGSMITH_PROJECT: ${{ vars.LANGSMITH_PROJECT || 'squire-evals' }}
+      LANGSMITH_TRACING: 'true'
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      TARGET_INPUT: ${{ inputs.target || 'all' }}
+      PROVIDER_INPUT: ${{ inputs.provider || 'anthropic' }}
+      MODEL_INPUT: ${{ inputs.model || 'claude-sonnet-4-6' }}
+      RUN_PURPOSE_INPUT: ${{ inputs.run_purpose || '' }}
+      MAX_ESTIMATED_COST_USD_INPUT: ${{ inputs.max_estimated_cost_usd || '3' }}
+      TIMEOUT_MS_INPUT: ${{ inputs.timeout_ms || '60000' }}
+
+    steps:
+      - name: Select eval target
+        id: select
+        run: |
+          selected=false
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            selected=true
+          elif [[ "$TARGET_INPUT" == "all" || "$TARGET_INPUT" == "${{ matrix.label }}" ]]; then
+            selected=true
+          fi
+          echo "selected=$selected" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v6
+        if: steps.select.outputs.selected == 'true'
+
+      - uses: actions/setup-node@v6
+        if: steps.select.outputs.selected == 'true'
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.select.outputs.selected == 'true'
+        run: npm ci
+
+      - name: Verify eval credentials
+        if: steps.select.outputs.selected == 'true'
+        run: |
+          missing=()
+          [[ -n "$LANGSMITH_API_KEY" ]] || missing+=("LANGSMITH_API_KEY")
+          if [[ -z "$ANTHROPIC_API_KEY" ]]; then
+            missing+=("ANTHROPIC_API_KEY")
+          fi
+          if [[ "$PROVIDER_INPUT" == "openai" && -z "$OPENAI_API_KEY" ]]; then
+            missing+=("OPENAI_API_KEY")
+          fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required secret(s): %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+      - name: Run database migrations
+        if: steps.select.outputs.selected == 'true'
+        run: npm run db:migrate
+
+      - name: Build retrieval indexes
+        if: steps.select.outputs.selected == 'true'
+        run: npm run index
+
+      - name: Seed structured game data
+        if: steps.select.outputs.selected == 'true'
+        run: npm run seed
+
+      - name: Run LangSmith eval matrix
+        if: steps.select.outputs.selected == 'true'
+        run: |
+          timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          purpose="$RUN_PURPOSE_INPUT"
+          if [[ -z "$purpose" ]]; then
+            purpose="${{ github.event_name }}"
+          fi
+          run_label="sqr-25-${purpose}-${{ matrix.label }}-${GITHUB_SHA::7}-${timestamp}"
+          report_json="eval/results/langsmith/${run_label}.json"
+          cmd=(
+            npm run eval --
+            --matrix
+            "--provider=$PROVIDER_INPUT"
+            "--model=$MODEL_INPUT"
+            "--suite=${{ matrix.suite }}"
+            "--run-label=$run_label"
+            "--timeout-ms=$TIMEOUT_MS_INPUT"
+            --tool-loop-limit=6
+            --broad-search-synthesis-threshold=2
+            "--max-estimated-cost-usd=$MAX_ESTIMATED_COST_USD_INPUT"
+            "--local-report=$report_json"
+          )
+          if [[ -n "${{ matrix.game }}" ]]; then
+            cmd+=("--game=${{ matrix.game }}")
+          fi
+          printf 'Running %s\n' "${cmd[*]}"
+          "${cmd[@]}"
+          report_md="${report_json%.json}.md"
+          echo "REPORT_MD=$report_md" >> "$GITHUB_ENV"
+
+      - name: Add report to job summary
+        if: steps.select.outputs.selected == 'true' && always()
+        run: |
+          if [[ -n "${REPORT_MD:-}" && -f "$REPORT_MD" ]]; then
+            cat "$REPORT_MD" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No LangSmith eval report was written." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v5
+        if: steps.select.outputs.selected == 'true' && always()
+        with:
+          name: langsmith-regression-${{ matrix.label }}
+          path: eval/results/langsmith/
+          if-no-files-found: warn
