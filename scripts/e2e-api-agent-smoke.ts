@@ -98,26 +98,40 @@ function urlFor(baseUrl: string, path: string): string {
 function createTimedFetch(fetchImpl: FetchLike, timeoutMs: number): FetchLike {
   return async (url, init = {}) => {
     const controller = new AbortController();
-    const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+    let timedOut = false;
+    let timeout: ReturnType<typeof globalThis.setTimeout> | undefined;
+    const timeoutError = new Error(`Timed out after ${timeoutMs}ms fetching ${String(url)}`);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeout = globalThis.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+        reject(timeoutError);
+      }, timeoutMs);
+    });
 
     try {
-      const response = await fetchImpl(url, {
-        ...init,
-        signal: controller.signal,
-      });
-      const body = await response.arrayBuffer();
-      return new Response(body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-      });
+      return await Promise.race([
+        (async () => {
+          const response = await fetchImpl(url, {
+            ...init,
+            signal: controller.signal,
+          });
+          const body = await response.arrayBuffer();
+          return new Response(body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          });
+        })(),
+        timeoutPromise,
+      ]);
     } catch (error) {
-      if (controller.signal.aborted) {
+      if (timedOut || controller.signal.aborted) {
         throw new Error(`Timed out after ${timeoutMs}ms fetching ${String(url)}`, { cause: error });
       }
       throw error;
     } finally {
-      globalThis.clearTimeout(timeout);
+      if (timeout !== undefined) globalThis.clearTimeout(timeout);
     }
   };
 }

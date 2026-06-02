@@ -147,6 +147,7 @@ jobs:
     name: Authenticated API and agent E2E smoke
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: pgvector/pgvector:pg16

@@ -111,6 +111,7 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}');
     expect(workflow).toContain('VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}');
     expect(workflow).toContain("SQUIRE_LLM_DAILY_BUDGET_USD: '0.25'");
+    expect(workflow).toContain('timeout-minutes: 15');
     expect(workflow).toContain('run: npm run e2e:api-agent');
 
     expect(development).toContain('npm run e2e:api-agent');

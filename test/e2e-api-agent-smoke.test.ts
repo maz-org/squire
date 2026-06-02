@@ -146,7 +146,7 @@ describe('scheduled API and agent E2E smoke runner', () => {
   });
 
   it('times out a hung agent request', async () => {
-    const fetch: FetchLike = async (url, init = {}) => {
+    const fetch: FetchLike = async (url) => {
       const parsed = new URL(String(url));
 
       if (parsed.pathname === '/api/live') return jsonResponse({ status: 'ok' });
@@ -184,11 +184,7 @@ describe('scheduled API and agent E2E smoke runner', () => {
         });
       }
       if (parsed.pathname === '/api/ask') {
-        return new Promise<Response>((_, reject) => {
-          init.signal?.addEventListener('abort', () => reject(new Error('aborted')), {
-            once: true,
-          });
-        });
+        return new Promise<Response>(() => undefined);
       }
 
       throw new Error(`Unexpected request: ${parsed.pathname}`);
