@@ -16,6 +16,8 @@ Create a `.env` file in the project root:
 ```bash
 # Required
 ANTHROPIC_API_KEY=...
+# Required for rule indexing and retrieval
+VOYAGE_API_KEY=...
 # Required when running OpenAI-backed evals
 OPENAI_API_KEY=...
 
@@ -456,6 +458,7 @@ npm run test:coverage:serial # Previous serial coverage path, useful for compari
 npm run test:slow:pdf # Real scenario/section PDF extraction check
 npm run test:full     # Fast suite plus real scenario/section PDF extraction
 npm run test:watch    # Watch mode
+npm run e2e:api-agent # Scheduled/manual authenticated API + agent smoke
 npm run typecheck     # TypeScript type checking
 npm run lint          # ESLint
 npm run lint:css      # stylelint (CSS, Tailwind v4 aware — SQR-70)
@@ -473,6 +476,16 @@ suite and does not reparse the full scenario/section PDF set. The checked-in
 scenario/section extract has fast regression coverage; `npm run test:slow:pdf`
 and the scheduled/manual CI path run the real PDF parser when that parser or
 source PDFs need verification.
+
+`npm run e2e:api-agent` is the scheduled/manual authenticated API and agent
+smoke from SQR-23. By default it starts `npm run serve`, waits for `/api/live`
+and `/api/health`, mints a real OAuth bearer token, checks `/api/search/rules`
+for Frosthaven and Gloomhaven 2e, makes two live `/api/ask` calls, then inserts
+an over-budget ledger row and verifies `/api/ask` returns the JSON
+`llm_budget_exceeded` 429 before opening an SSE stream. CI runs it only on the
+daily schedule and manual dispatch with `SQUIRE_LLM_DAILY_BUDGET_USD=0.25` so
+provider spend is capped. For an already-running server, set
+`SQUIRE_E2E_START_SERVER=0` and `SQUIRE_E2E_BASE_URL=http://localhost:<port>`.
 
 SQR-148 added an explicit test split for measuring safe parallelism:
 `test/helpers/test-slices.ts` lists the DB-backed test files that use the

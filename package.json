@@ -41,6 +41,7 @@
     "test:full": "vitest run",
     "test:coverage:full": "vitest run --coverage",
     "test:watch": "vitest",
+    "e2e:api-agent": "node scripts/e2e-api-agent-smoke.ts",
     "agent:check": "node scripts/check-agent-parity.ts",
     "security:alerts:dry-run": "SECURITY_ALERT_DRY_RUN=1 node scripts/sync-security-alerts-to-linear.ts",
     "security:alerts:validate-config": "node scripts/sync-security-alerts-to-linear.ts --validate-config",
