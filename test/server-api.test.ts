@@ -136,6 +136,7 @@ vi.mock('../src/auth.ts', () => ({
 }));
 
 import { app } from '../src/server.ts';
+import { verifyAccessToken } from '../src/auth.ts';
 import {
   API_ASK_RATE_LIMIT_POLICY,
   API_CARD_SEARCH_RATE_LIMIT_POLICY,
@@ -147,6 +148,8 @@ import {
   type RateLimitConsumeInput,
   type RateLimitDecision,
 } from '../src/rate-limit.ts';
+
+const mockVerifyAccessToken = vi.mocked(verifyAccessToken);
 
 /** Stub bearer header — the mocked `verifyAccessToken` accepts anything. */
 async function auth(): Promise<Record<string, string>> {
@@ -326,6 +329,27 @@ describe('GET /api/search/rules', () => {
     expect(limiter.calls).toEqual([
       { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
       { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
+  });
+
+  it('uses token user identity for rule-search rate limits when present', async () => {
+    const limiter = installOneRequestLimiter();
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'user-123' },
+    });
+
+    const res = await app.request('/api/search/rules?q=loot+action', {
+      headers: await auth(),
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockSearchRules).toHaveBeenCalledTimes(1);
+    expect(limiter.calls).toEqual([
+      { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'user:user-123' },
     ]);
   });
 
