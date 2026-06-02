@@ -9,7 +9,12 @@ import {
 
 const ToolKindSchema = z.enum(['discovery', 'resolution', 'search', 'open', 'traversal']);
 export const EvalRuntimeSchema = z.enum(['langgraph', 'deep-agents']);
-export const EvalSuiteSchema = z.enum(['table-qa', 'trajectory', 'cross-game-boundary']);
+export const EvalSuiteSchema = z.enum([
+  'table-qa',
+  'trajectory',
+  'cross-game-boundary',
+  'adversarial-boundary',
+]);
 const EvalGameSchema = z.preprocess(
   (value) => (typeof value === 'string' ? (normalizeGameId(value) ?? value) : value),
   z.enum(SUPPORTED_GAME_IDS),
@@ -26,6 +31,30 @@ export const TrajectoryExpectationSchema = z
     notes: z.string().min(1).optional(),
   })
   .strict();
+
+export const AnswerSafetyExpectationSchema = z
+  .object({
+    requiredAnswerPatterns: z.array(z.string().min(1)).default([]),
+    forbiddenAnswerPatterns: z.array(z.string().min(1)).default([]),
+    requiredCanonicalRefPatterns: z.array(z.string().min(1)).default([]),
+    forbiddenCanonicalRefPatterns: z.array(z.string().min(1)).default([]),
+    requiredSourceLabelPatterns: z.array(z.string().min(1)).default([]),
+    forbiddenSourceLabelPatterns: z.array(z.string().min(1)).default([]),
+    notes: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine(
+    (safety) =>
+      safety.requiredAnswerPatterns.length > 0 ||
+      safety.forbiddenAnswerPatterns.length > 0 ||
+      safety.requiredCanonicalRefPatterns.length > 0 ||
+      safety.forbiddenCanonicalRefPatterns.length > 0 ||
+      safety.requiredSourceLabelPatterns.length > 0 ||
+      safety.forbiddenSourceLabelPatterns.length > 0,
+    {
+      message: 'Safety expectations must define at least one required or forbidden pattern.',
+    },
+  );
 
 export const FinalAnswerExpectationSchema = z
   .object({
@@ -46,10 +75,11 @@ export const EvalCaseSchema = z
     source: z.string().min(1),
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
+    safety: AnswerSafetyExpectationSchema.optional(),
   })
   .strict()
-  .refine((evalCase) => evalCase.finalAnswer || evalCase.trajectory, {
-    message: 'Eval cases must define finalAnswer, trajectory, or both.',
+  .refine((evalCase) => evalCase.finalAnswer || evalCase.trajectory || evalCase.safety, {
+    message: 'Eval cases must define finalAnswer, trajectory, safety, or a combination.',
   })
   .refine((evalCase) => evalCase.category === evalCase.caseCategory, {
     message: 'Eval case category and caseCategory must match.',
@@ -61,17 +91,24 @@ const RemoteExpectedOutputSchema = z
   .object({
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
+    safety: AnswerSafetyExpectationSchema.optional(),
   })
   .strict()
-  .refine((expectedOutput) => expectedOutput.finalAnswer || expectedOutput.trajectory, {
-    message: 'Remote expectedOutput must define finalAnswer, trajectory, or both.',
-  });
+  .refine(
+    (expectedOutput) =>
+      expectedOutput.finalAnswer || expectedOutput.trajectory || expectedOutput.safety,
+    {
+      message:
+        'Remote expectedOutput must define finalAnswer, trajectory, safety, or a combination.',
+    },
+  );
 
 export type ToolKind = z.infer<typeof ToolKindSchema>;
 export type EvalRuntime = z.infer<typeof EvalRuntimeSchema>;
 export type EvalSuite = z.infer<typeof EvalSuiteSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
+export type AnswerSafetyExpectation = z.infer<typeof AnswerSafetyExpectationSchema>;
 export type EvalCase = z.infer<typeof EvalCaseSchema> & {
   langsmithExampleId?: string;
   langsmithDatasetId?: string;
@@ -83,9 +120,15 @@ export interface ObservedToolCall {
   name: string;
   input: unknown;
   canonicalRefs?: string[];
+  sourceLabels?: string[];
 }
 
 export interface TrajectoryScore {
+  pass: boolean;
+  failures: string[];
+}
+
+export interface AnswerSafetyScore {
   pass: boolean;
   failures: string[];
 }
@@ -135,6 +178,12 @@ export function evalCaseHasTrajectory(
   evalCase: EvalCase,
 ): evalCase is EvalCase & { trajectory: TrajectoryExpectation } {
   return evalCase.trajectory !== undefined;
+}
+
+export function evalCaseHasSafety(
+  evalCase: EvalCase,
+): evalCase is EvalCase & { safety: AnswerSafetyExpectation } {
+  return evalCase.safety !== undefined;
 }
 
 export function countTrajectoryCases(cases: EvalCase[]): number {
@@ -263,6 +312,79 @@ export function scoreTrajectory(
     );
     if (!hasRef) {
       failures.push(`missing required ref: ${ref}`);
+    }
+  }
+
+  return { pass: failures.length === 0, failures };
+}
+
+function compileSafetyPattern(
+  pattern: string,
+  label: string,
+  failures: string[],
+): RegExp | undefined {
+  try {
+    return new RegExp(pattern, 'iu');
+  } catch (error) {
+    failures.push(
+      `invalid ${label} pattern "${pattern}": ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return undefined;
+  }
+}
+
+function valuesMatchPattern(values: string[], pattern: string, label: string, failures: string[]) {
+  const regex = compileSafetyPattern(pattern, label, failures);
+  if (!regex) return null;
+  return values.some((value) => regex.test(value));
+}
+
+export function scoreAnswerSafety(
+  expected: AnswerSafetyExpectation,
+  answer: string,
+  actual: ObservedToolCall[],
+): AnswerSafetyScore {
+  const failures: string[] = [];
+  const canonicalRefs = actual.flatMap((call) => call.canonicalRefs ?? []);
+  const sourceLabels = actual.flatMap((call) => call.sourceLabels ?? []);
+
+  for (const pattern of expected.requiredAnswerPatterns) {
+    const regex = compileSafetyPattern(pattern, 'required answer', failures);
+    if (regex && !regex.test(answer)) {
+      failures.push(`missing required answer pattern: ${pattern}`);
+    }
+  }
+
+  for (const pattern of expected.forbiddenAnswerPatterns) {
+    const regex = compileSafetyPattern(pattern, 'forbidden answer', failures);
+    if (regex && regex.test(answer)) {
+      failures.push(`forbidden answer pattern matched: ${pattern}`);
+    }
+  }
+
+  for (const pattern of expected.requiredCanonicalRefPatterns) {
+    const matched = valuesMatchPattern(canonicalRefs, pattern, 'required canonical ref', failures);
+    if (matched === false) {
+      failures.push(`missing required canonical ref pattern: ${pattern}`);
+    }
+  }
+
+  for (const pattern of expected.forbiddenCanonicalRefPatterns) {
+    if (valuesMatchPattern(canonicalRefs, pattern, 'forbidden canonical ref', failures)) {
+      failures.push(`forbidden canonical ref pattern matched: ${pattern}`);
+    }
+  }
+
+  for (const pattern of expected.requiredSourceLabelPatterns) {
+    const matched = valuesMatchPattern(sourceLabels, pattern, 'required source label', failures);
+    if (matched === false) {
+      failures.push(`missing required source label pattern: ${pattern}`);
+    }
+  }
+
+  for (const pattern of expected.forbiddenSourceLabelPatterns) {
+    if (valuesMatchPattern(sourceLabels, pattern, 'forbidden source label', failures)) {
+      failures.push(`forbidden source label pattern matched: ${pattern}`);
     }
   }
 

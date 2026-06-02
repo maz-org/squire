@@ -2,7 +2,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { AgentRunResult } from '../src/agent.ts';
 import type { EvalToolSurface } from './cli.ts';
 import {
+  scoreAnswerSafety,
   scoreTrajectory,
+  type AnswerSafetyExpectation,
   type FinalAnswerExpectation,
   type TrajectoryExpectation,
 } from './schema.ts';
@@ -74,7 +76,11 @@ export function buildEvaluators(anthropic: Anthropic) {
       expectedOutput?: unknown;
     }) => {
       const exp = expectedOutput as
-        | { finalAnswer?: FinalAnswerExpectation; trajectory?: TrajectoryExpectation }
+        | {
+            finalAnswer?: FinalAnswerExpectation;
+            trajectory?: TrajectoryExpectation;
+            safety?: AnswerSafetyExpectation;
+          }
         | undefined;
       const runOutput =
         output && typeof output === 'object' && 'answer' in output
@@ -153,6 +159,30 @@ export function buildEvaluators(anthropic: Anthropic) {
         );
       }
 
+      if (exp?.safety) {
+        const safety = scoreAnswerSafety(
+          exp.safety,
+          runOutput.answer,
+          runOutput.trajectory.toolCalls,
+        );
+        evaluations.push(
+          {
+            name: 'answer_safety',
+            value: safety.pass ? 1 : 0,
+            dataType: 'NUMERIC' as const,
+            comment:
+              safety.failures.length === 0
+                ? 'Answer and source metadata matched safety expectations'
+                : safety.failures.join('; '),
+          },
+          {
+            name: 'safety_pass',
+            value: safety.pass ? 'pass' : 'fail',
+            dataType: 'CATEGORICAL' as const,
+          },
+        );
+      }
+
       return evaluations;
     },
   ];
@@ -180,6 +210,13 @@ export function buildRunEvaluators() {
       const trajectoryPassCount = itemResults
         .flatMap((r) => r.evaluations)
         .filter((e) => e.name === 'trajectory_pass' && e.value === 'pass').length;
+      const safetyScores = itemResults
+        .flatMap((r) => r.evaluations)
+        .filter((e) => e.name === 'answer_safety')
+        .map((e) => e.value as number);
+      const safetyPassCount = itemResults
+        .flatMap((r) => r.evaluations)
+        .filter((e) => e.name === 'safety_pass' && e.value === 'pass').length;
 
       console.log(`\n--- Summary ---`);
       const scoredCount = scores.length;
@@ -189,6 +226,9 @@ export function buildRunEvaluators() {
       console.log(`Avg correctness: ${(avg * 5).toFixed(2)}/5`);
       if (trajectoryScores.length > 0) {
         console.log(`Trajectory pass rate: ${trajectoryPassCount}/${trajectoryScores.length}`);
+      }
+      if (safetyScores.length > 0) {
+        console.log(`Safety pass rate: ${safetyPassCount}/${safetyScores.length}`);
       }
 
       return {
