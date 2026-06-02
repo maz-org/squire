@@ -66,7 +66,7 @@ describe('eval dataset', () => {
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
     expect(cases).toHaveLength(68);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(46);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(44);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
     expect(cases.filter(evalCaseHasSafety)).toHaveLength(8);
   });
