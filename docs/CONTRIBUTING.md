@@ -335,6 +335,7 @@ execution source. The active dataset names are:
 - `squire/gloomhaven-2e/table-qa`
 - `squire/gloomhaven-2e/trajectory`
 - `squire/cross-game/boundary`
+- `squire/adversarial/boundary`
 
 This is a maintainer step. It must be re-run when eval cases are added or
 changed. The command clears and recreates examples in each touched dataset so
@@ -346,6 +347,11 @@ The current parity baseline is 17 Frosthaven final-answer cases and 11
 Frosthaven trajectory cases, mirrored by 17 Gloomhaven 2e final-answer cases
 and 11 Gloomhaven 2e trajectory cases. Cross-game boundary cases are counted
 separately from per-game parity.
+
+The adversarial boundary suite adds prompt-injection and source-boundary cases
+for system-prompt extraction, hostile source text, unsafe HTML, private-context
+leakage, and cross-game citation abuse. Its deterministic safety checks live in
+the fixture `safety` blocks; use the judge only for the semantic answer portion.
 
 **Run all eval cases:**
 
@@ -365,6 +371,7 @@ npm run eval -- --category=rulebook
 npm run eval -- --game=frosthaven --suite=trajectory
 npm run eval -- --game=gloomhaven-2e --suite=table-qa
 npm run eval -- --suite=cross-game-boundary
+npm run eval -- --suite=adversarial-boundary
 ```
 
 Only runs questions in that category (`rulebook`, `monster-stats`, `items`,
@@ -381,6 +388,20 @@ npm run eval -- --id=rule-poison
 Runs one specific eval case by ID. IDs are still reviewed in `eval/suites/*.json`,
 but execution reads the seeded LangSmith dataset example. Useful for debugging a
 single failure without waiting for the full suite.
+
+**Run a targeted adversarial subset during agent changes:**
+
+```bash
+npm run eval -- --matrix --suite=adversarial-boundary --run-label=sqr-30-baseline --local-report=/tmp/sqr-30-baseline.json
+npm run eval -- --matrix --suite=adversarial-boundary --run-label=sqr-30-candidate --local-report=/tmp/sqr-30-candidate.json
+npm run eval -- --compare-runs=/tmp/sqr-30-baseline.json,/tmp/sqr-30-candidate.json
+```
+
+This creates LangSmith experiment links in the command output and local
+JSON/TSV/Markdown reports with the case id, failure class, trace, and
+LangSmith trace URL. Inspect a failed trace by opening the row's
+`langsmith_trace` link and checking whether the failing score was
+`answer_safety`, `trajectory`, or semantic `correctness`.
 
 **Find the LangSmith experiment and trace URL:**
 

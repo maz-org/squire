@@ -141,15 +141,18 @@ Squire includes an evaluation framework for measuring answer quality:
 # Seed the eval dataset to LangSmith (first time)
 npm run eval -- --seed
 
-# Run all 17 eval cases
+# Run the LangSmith-backed eval suite
 npm run eval -- --name="my experiment"
 
 # Run a subset
 npm run eval -- --category=rulebook
+npm run eval -- --suite=adversarial-boundary
 npm run eval -- --id=rule-poison
 ```
 
-Results are tracked in LangSmith with LLM-as-judge scoring (1-5 scale). Current baseline: **73% pass rate, 3.8/5 avg score**.
+Results are tracked in LangSmith with judge scoring for semantic answer quality
+and deterministic checks for tool trajectory, citation/source boundaries, and
+unsafe output.
 
 ## Acknowledgments
 

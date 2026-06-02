@@ -18,6 +18,7 @@ export const DATASET_NAME = 'squire/frosthaven/table-qa';
 export const EVAL_SUITES_DIR = join(__dirname, 'suites');
 
 const CROSS_GAME_BOUNDARY_DATASET_NAME = 'squire/cross-game/boundary';
+const ADVERSARIAL_BOUNDARY_DATASET_NAME = 'squire/adversarial/boundary';
 
 export interface EvalCaseFilters {
   gameFilter: string | undefined;
@@ -58,17 +59,25 @@ export function sourceAuthorityForCase(evalCase: EvalCase): string {
     return 'scenario-section-books';
   }
   if (evalCase.source.startsWith('data/extracted/')) return 'structured-data';
+  if (evalCase.source.startsWith('eval/fixtures/adversarial/')) return 'adversarial-fixture';
   if (evalCase.source.startsWith('docs/')) return 'contract';
   if (evalCase.source.startsWith('src/')) return 'application';
   return 'unknown';
 }
 
 export function gamePairForCase(evalCase: EvalCase): string | undefined {
-  if (evalCase.suite !== 'cross-game-boundary') return undefined;
+  if (evalCase.suite !== 'cross-game-boundary' && evalCase.suite !== 'adversarial-boundary') {
+    return undefined;
+  }
 
   const games = new Set<GameId>([evalCase.game]);
-  for (const ref of evalCase.trajectory?.requiredRefs ?? []) {
-    const match = ref.match(/^[^:]+:([^/]+)\//);
+  const refLikePatterns = [
+    ...(evalCase.trajectory?.requiredRefs ?? []),
+    ...(evalCase.safety?.requiredCanonicalRefPatterns ?? []),
+    ...(evalCase.safety?.forbiddenCanonicalRefPatterns ?? []),
+  ];
+  for (const ref of refLikePatterns) {
+    const match = ref.match(/(?:^|\^)[^:]+:([^/]+)\//);
     const game = match ? normalizeGameId(match[1]) : undefined;
     if (game) games.add(game);
   }
@@ -111,6 +120,7 @@ export function langSmithDatasetNameForCase(evalCase: EvalCase): string {
   const experimentDataset = process.env.SQUIRE_RETRIEVAL_EXPERIMENT_DATASET?.trim();
   if (experimentDataset) return experimentDataset;
   if (evalCase.suite === 'cross-game-boundary') return CROSS_GAME_BOUNDARY_DATASET_NAME;
+  if (evalCase.suite === 'adversarial-boundary') return ADVERSARIAL_BOUNDARY_DATASET_NAME;
   return `squire/${evalCase.game}/${evalCase.suite}`;
 }
 
@@ -147,6 +157,7 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
   const expectedOutput = expectedOutputFromExample(example) as {
     finalAnswer?: unknown;
     trajectory?: unknown;
+    safety?: unknown;
   };
   const question =
     typeof example.inputs.question === 'string' ? example.inputs.question : undefined;
@@ -161,6 +172,7 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
     source: stringMetadata(metadata, 'source') ?? datasetName,
     finalAnswer: expectedOutput.finalAnswer,
     trajectory: expectedOutput.trajectory,
+    safety: expectedOutput.safety,
   };
   return {
     ...EvalCaseSchema.parse(rawCase),
@@ -238,11 +250,13 @@ export async function loadLangSmithEvalCases(
 export function baselineCountsFor(cases: EvalCase[], gameInput: string): EvalBaselineCounts {
   const game = requireGameId(gameInput);
   const gameCases = cases.filter((evalCase) => evalCase.game === game);
-  const nonBoundaryCases = gameCases.filter((evalCase) => evalCase.suite !== 'cross-game-boundary');
+  const parityCases = gameCases.filter(
+    (evalCase) => evalCase.suite === 'table-qa' || evalCase.suite === 'trajectory',
+  );
   return {
     game,
-    finalAnswerCases: nonBoundaryCases.filter((evalCase) => evalCase.finalAnswer).length,
-    trajectoryCases: nonBoundaryCases.filter((evalCase) => evalCase.trajectory).length,
+    finalAnswerCases: parityCases.filter((evalCase) => evalCase.finalAnswer).length,
+    trajectoryCases: parityCases.filter((evalCase) => evalCase.trajectory).length,
     boundaryCases: gameCases.filter((evalCase) => evalCase.suite === 'cross-game-boundary').length,
   };
 }
@@ -281,6 +295,7 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
           expectedOutput: {
             finalAnswer: c.finalAnswer,
             trajectory: c.trajectory,
+            safety: c.safety,
           },
         },
         metadata: {
@@ -295,6 +310,7 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
           gamePair: gamePairForCase(c),
           hasFinalAnswer: !!c.finalAnswer,
           hasTrajectory: !!c.trajectory,
+          hasSafety: !!c.safety,
         },
       })),
     );

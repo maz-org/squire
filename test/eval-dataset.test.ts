@@ -16,6 +16,7 @@ import {
   EvalDatasetSchema,
   countTrajectoryCases,
   evalCaseHasFinalAnswer,
+  evalCaseHasSafety,
   evalCaseHasTrajectory,
   validateRemoteDatasetShape,
 } from '../eval/schema.ts';
@@ -51,21 +52,23 @@ describe('eval dataset', () => {
   it('loads split final-answer, trajectory, and boundary fixtures', () => {
     expect(existsSync(join(process.cwd(), 'eval/suites/frosthaven.json'))).toBe(true);
     expect(existsSync(join(process.cwd(), 'eval/suites/cross-game-boundary.json'))).toBe(true);
+    expect(existsSync(join(process.cwd(), 'eval/suites/adversarial-boundary.json'))).toBe(true);
     expect(() => EvalDatasetSchema.parse(cases)).not.toThrow();
 
     expect(new Set(cases.map((evalCase) => evalCase.game))).toEqual(
       new Set(['frosthaven', 'gloomhaven-2e']),
     );
     expect(new Set(cases.map((evalCase) => evalCase.suite))).toEqual(
-      new Set(['table-qa', 'trajectory', 'cross-game-boundary']),
+      new Set(['table-qa', 'trajectory', 'cross-game-boundary', 'adversarial-boundary']),
     );
     expect(new Set(cases.map((evalCase) => evalCase.runtime))).toEqual(new Set(['langgraph']));
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(60);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(38);
+    expect(cases).toHaveLength(68);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(46);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
+    expect(cases.filter(evalCaseHasSafety)).toHaveLength(8);
   });
 
   it('requires explicit eval metadata on cases', () => {
@@ -105,6 +108,15 @@ describe('eval dataset', () => {
         idFilter: 'traj-invalid-cross-game-ref',
       }).map((evalCase) => evalCase.id),
     ).toEqual(['traj-invalid-cross-game-ref']);
+
+    expect(
+      filterEvalCases(cases, {
+        gameFilter: undefined,
+        suiteFilter: 'adversarial-boundary',
+        categoryFilter: 'system-prompt-extraction',
+        idFilter: undefined,
+      }).map((evalCase) => evalCase.id),
+    ).toEqual(['adv-system-prompt-extraction']);
   });
 
   it('derives the Frosthaven parity baseline from fixture metadata', () => {
@@ -133,6 +145,11 @@ describe('eval dataset', () => {
       'squire/cross-game/boundary',
     );
     expect(
+      langSmithDatasetNameForCase(
+        cases.find((evalCase) => evalCase.id === 'adv-system-prompt-extraction')!,
+      ),
+    ).toBe('squire/adversarial/boundary');
+    expect(
       frosthavenCase &&
         langSmithDatasetNameForCase({
           ...frosthavenCase,
@@ -148,10 +165,41 @@ describe('eval dataset', () => {
     const boundaryCase = cases.find(
       (candidate) => candidate.id === 'boundary-scenario-61-fh-then-gh2',
     );
+    const adversarialCase = cases.find(
+      (candidate) => candidate.id === 'adv-citation-source-boundary',
+    );
 
     expect(faqCase && sourceAuthorityForCase(faqCase)).toBe('faq');
     expect(structuredCase && sourceAuthorityForCase(structuredCase)).toBe('structured-data');
     expect(boundaryCase && gamePairForCase(boundaryCase)).toBe('frosthaven:gloomhaven-2e');
+    expect(adversarialCase && sourceAuthorityForCase(adversarialCase)).toBe('adversarial-fixture');
+    expect(adversarialCase && gamePairForCase(adversarialCase)).toBe('frosthaven:gloomhaven-2e');
+  });
+
+  it('defines deterministic safety contracts for the adversarial boundary suite', () => {
+    const adversarialCases = cases.filter((evalCase) => evalCase.suite === 'adversarial-boundary');
+
+    expect(adversarialCases.map((evalCase) => evalCase.caseCategory).sort()).toEqual([
+      'citation-source-boundary',
+      'data-exfiltration',
+      'history-context-injection',
+      'hostile-source-text',
+      'poisoned-source-entry',
+      'role-manipulation',
+      'system-prompt-extraction',
+      'unsafe-html-output',
+    ]);
+    for (const evalCase of adversarialCases) {
+      expect(evalCase.safety).toBeDefined();
+      expect(
+        (evalCase.safety?.forbiddenAnswerPatterns.length ?? 0) +
+          (evalCase.safety?.requiredAnswerPatterns.length ?? 0) +
+          (evalCase.safety?.requiredCanonicalRefPatterns.length ?? 0) +
+          (evalCase.safety?.forbiddenCanonicalRefPatterns.length ?? 0) +
+          (evalCase.safety?.requiredSourceLabelPatterns.length ?? 0) +
+          (evalCase.safety?.forbiddenSourceLabelPatterns.length ?? 0),
+      ).toBeGreaterThan(0);
+    }
   });
 
   it('makes the cross-game ref case assert both game-qualified refs', () => {
