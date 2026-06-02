@@ -97,6 +97,31 @@ describe('deployment configuration', () => {
     expect(workflow).not.toContain('run: npx vitest run --coverage');
   });
 
+  it('defines scheduled and manual LangSmith regression evals', async () => {
+    const workflow = await readProjectFile('.github/workflows/langsmith-regression.yml');
+    const parsed = parse(workflow) as {
+      name?: string;
+      on?: Record<string, unknown>;
+      jobs?: Record<string, unknown>;
+    };
+
+    expect(parsed.name).toBe('LangSmith Regression');
+    expect(workflow).toContain('cron:');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('suite: adversarial-boundary');
+    expect(workflow).toContain('suite: cross-game-boundary');
+    expect(workflow).toContain('game: frosthaven');
+    expect(workflow).toContain('game: gloomhaven-2e');
+    expect(workflow).toContain('npm run eval --');
+    expect(workflow).toContain('--matrix');
+    expect(workflow).toContain('--max-estimated-cost-usd=');
+    expect(workflow).toContain('LANGSMITH_API_KEY');
+    expect(workflow).toContain('ANTHROPIC_API_KEY');
+    expect(workflow).toContain('OPENAI_API_KEY');
+    expect(workflow).toContain('cat "$REPORT_MD" >> "$GITHUB_STEP_SUMMARY"');
+    expect(workflow).toContain('actions/upload-artifact');
+  });
+
   it('defines the scheduled authenticated API and agent smoke command', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;
