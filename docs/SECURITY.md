@@ -310,9 +310,42 @@ development-scoped dependencies`. The repository is public, so GitHub enables
   token with secret-scanning alert read access.
 - CodeQL code scanning runs on PRs, `main`, and a weekly schedule via
   `.github/workflows/codeql.yml` for JavaScript/TypeScript and GitHub Actions
-  workflow analysis. The repository is public, so GitHub Copilot Autofix for
-  supported CodeQL alerts is plan-eligible; verify the repo/org setting after
-  the first CodeQL alerts exist.
+  workflow analysis.
+
+#### Security gate contract
+
+| Gate                       | Trigger                                                                      | Owner       | Blocks or fails                                                                                          | Alert behavior                                                                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CI actionlint              | `CI` on PRs to `main`, pushes to `main`, daily schedule, and manual dispatch | Maintainers | Fails the `CI` check when workflow syntax or action rules fail                                           | GitHub check failure only; not mirrored to Linear                                                                                                          |
+| Dependency Review          | PRs to `main`                                                                | Maintainers | Fails the PR check for new high/critical runtime dependency vulnerabilities                              | GitHub shows lower-severity findings without blocking; high/critical alerts are picked up by Security Alert Linear Sync                                    |
+| CodeQL                     | PRs to `main`, pushes to `main`, and weekly Monday scan                      | Maintainers | Fails the CodeQL workflow if analysis or upload fails                                                    | GitHub code scanning alerts; high/critical alerts are picked up by Security Alert Linear Sync                                                              |
+| Dependabot alerts          | GitHub security alert feed and weekly Dependabot update checks               | Maintainers | Existing alerts do not directly block unrelated PRs; dependency changes are blocked by Dependency Review | GitHub Dependabot alerts; high/critical alerts are picked up by Security Alert Linear Sync                                                                 |
+| Secret scanning alerts     | GitHub secret scanning alert feed                                            | Maintainers | Secret scanning alerts do not directly block unrelated PRs in this repo contract                         | GitHub secret scanning alerts; high/critical alerts are picked up by Security Alert Linear Sync when `SECURITY_ALERTS_GITHUB_TOKEN` can read that endpoint |
+| Security Alert Linear Sync | Daily schedule and manual dispatch                                           | Maintainers | Fails on missing Linear config or non-secret-scanning API errors; manual dispatch defaults to dry run    | Creates or updates Linear issues with the `Security` label for high/critical Dependabot, CodeQL, and secret scanning alerts                                |
+
+#### SQR-26 audit evidence, 2026-06-01
+
+- `npm run lint:actions` passed locally.
+- `npm run security:alerts:validate-config` passed and resolved the Linear
+  target team, project, and `Security` label.
+- `SECURITY_ALERT_REPOSITORY=maz-org/squire SECURITY_ALERT_GITHUB_TOKEN="$(gh auth token)" npm run security:alerts:dry-run`
+  passed with no high/critical GitHub security alerts to create or update in
+  Linear.
+- GitHub alert inspection found one open Dependabot alert, medium severity
+  `uuid` in `package-lock.json`, and zero open CodeQL or secret scanning
+  alerts.
+- `npm audit --omit=dev --audit-level=high` passed; the remaining runtime audit
+  noise was the same medium `uuid` advisory.
+- Recent GitHub Actions history showed successful `CI`, checked-in `CodeQL`, and
+  `Security Alert Linear Sync` runs. GitHub also lists an active dynamic/default
+  CodeQL workflow, but the checked-in `codeql.yml` is the documented contract.
+- `uvx semgrep scan --config=auto src scripts .github` produced findings, but
+  review found false positives in the deploy workflow, read-only data lookup,
+  fixed condition regexes, fixed search prefix regex, and font preconnect code.
+  The one section-book parser regex finding is import-pipeline code built from
+  parser-captured section refs, not a public runtime input. No Semgrep gate was
+  added because the scan did not show a meaningful gap beyond the existing
+  CodeQL, Dependency Review, alert sync, and actionlint gates.
 - Integrity checksums on extracted data and on the `embeddings` pgvector
   table contents (or on canonical reindex artifacts)
 - Do not run the extraction pipeline in production — import
@@ -358,9 +391,9 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 ## Priority Recommendations
 
-1. Keep CodeQL code scanning healthy: confirm the first default-branch run
-   succeeds, verify Copilot Autofix availability for supported alerts, and keep
-   alert triage flowing into Linear
+1. Keep the security gates healthy: run actionlint before changing workflows,
+   keep Dependency Review blocking high/critical runtime introductions, and keep
+   high/critical GitHub security alert triage flowing into Linear
 2. Design campaign data isolation before building campaign state — the
    player entity must enforce access boundaries, and the knowledge
    agent must scope its context to prevent LLM-mediated data leaks
@@ -372,6 +405,9 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 ## Changelog
 
+- **2026-06-01:** Audited security gate triggers, owners, blocking behavior,
+  alert routing, and the Semgrep decision; no new Semgrep gate was added because the
+  default scan did not find a meaningful gap (SQR-26).
 - **2026-05-19:** Replaced stale pre-auth `/mcp` wording with the current
   bearer-auth and origin-lock boundary (SQR-87).
 - **2026-05-17:** Recorded Dependabot auto-triage preset behavior and review
@@ -381,7 +417,7 @@ development-scoped dependencies`. The repository is public, so GitHub enables
   (SQR-52, ADR 0018).
 - **2026-05-16:** Added GitHub security alert routing into Linear for high/critical Dependabot, CodeQL, and secret scanning alerts (SQR-167).
 - **2026-05-16:** Added Dependency Review PR workflow to block high/critical runtime vulnerability introductions (SQR-165).
-- **2026-05-16:** Added CodeQL code scanning workflow and noted Copilot Autofix eligibility/verification path (SQR-164).
+- **2026-05-16:** Added CodeQL code scanning workflow for JavaScript/TypeScript and GitHub Actions analysis (SQR-164).
 - **2026-04-07:** Reconciled with SPEC v3.0 / ARCHITECTURE v1.0 split. Migrated GitHub Issue references (#12, #55–#59) to Linear projects (User Accounts SQR-37/38/39/40, Security Hardening). Added header note pointing at the new product and tech specs.
 - **2026-04-07:** Renamed from `docs/security-review.md` to `docs/SECURITY.md` as part of the ALL_CAPS docs consolidation.
 - **2026-04-06:** Updated to reflect retirement of OCR pipeline and Worldhaven dependency (commit `34a26a1`).
