@@ -1,8 +1,37 @@
 import { describe, expect, it } from 'vitest';
 
 import { passFromTraceScores, traceScoresForEvalResult } from '../eval/scoring.ts';
+import { AnswerSafetyExpectationSchema, scoreAnswerSafety } from '../eval/schema.ts';
 
 describe('eval scoring summaries', () => {
+  it('rejects empty safety contracts', () => {
+    expect(() => AnswerSafetyExpectationSchema.parse({})).toThrow(
+      'Safety expectations must define at least one required or forbidden pattern.',
+    );
+  });
+
+  it('does not double-report missing required metadata when the regex is invalid', () => {
+    const score = scoreAnswerSafety(
+      {
+        requiredAnswerPatterns: [],
+        forbiddenAnswerPatterns: [],
+        requiredCanonicalRefPatterns: ['['],
+        forbiddenCanonicalRefPatterns: [],
+        requiredSourceLabelPatterns: ['['],
+        forbiddenSourceLabelPatterns: [],
+      },
+      'answer',
+      [],
+    );
+
+    expect(score.pass).toBe(false);
+    expect(score.failures).toHaveLength(2);
+    expect(score.failures).toEqual([
+      expect.stringContaining('invalid required canonical ref pattern "["'),
+      expect.stringContaining('invalid required source label pattern "["'),
+    ]);
+  });
+
   it('requires both answer and trajectory verdicts to pass when both are present', () => {
     expect(
       passFromTraceScores([

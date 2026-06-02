@@ -42,7 +42,19 @@ export const AnswerSafetyExpectationSchema = z
     forbiddenSourceLabelPatterns: z.array(z.string().min(1)).default([]),
     notes: z.string().min(1).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (safety) =>
+      safety.requiredAnswerPatterns.length > 0 ||
+      safety.forbiddenAnswerPatterns.length > 0 ||
+      safety.requiredCanonicalRefPatterns.length > 0 ||
+      safety.forbiddenCanonicalRefPatterns.length > 0 ||
+      safety.requiredSourceLabelPatterns.length > 0 ||
+      safety.forbiddenSourceLabelPatterns.length > 0,
+    {
+      message: 'Safety expectations must define at least one required or forbidden pattern.',
+    },
+  );
 
 export const FinalAnswerExpectationSchema = z
   .object({
@@ -323,7 +335,7 @@ function compileSafetyPattern(
 
 function valuesMatchPattern(values: string[], pattern: string, label: string, failures: string[]) {
   const regex = compileSafetyPattern(pattern, label, failures);
-  if (!regex) return false;
+  if (!regex) return null;
   return values.some((value) => regex.test(value));
 }
 
@@ -351,7 +363,8 @@ export function scoreAnswerSafety(
   }
 
   for (const pattern of expected.requiredCanonicalRefPatterns) {
-    if (!valuesMatchPattern(canonicalRefs, pattern, 'required canonical ref', failures)) {
+    const matched = valuesMatchPattern(canonicalRefs, pattern, 'required canonical ref', failures);
+    if (matched === false) {
       failures.push(`missing required canonical ref pattern: ${pattern}`);
     }
   }
@@ -363,7 +376,8 @@ export function scoreAnswerSafety(
   }
 
   for (const pattern of expected.requiredSourceLabelPatterns) {
-    if (!valuesMatchPattern(sourceLabels, pattern, 'required source label', failures)) {
+    const matched = valuesMatchPattern(sourceLabels, pattern, 'required source label', failures);
+    if (matched === false) {
       failures.push(`missing required source label pattern: ${pattern}`);
     }
   }
