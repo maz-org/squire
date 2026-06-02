@@ -6,9 +6,28 @@ name = "squire"
 script = '''
 source "$HOME/.nvm/nvm.sh"
 nvm use
+export PATH="$NVM_BIN:$PATH"
 ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
 npm install --ignore-scripts
-docker compose up -d
+wait_for_postgres() {
+  for attempt in {1..60}; do
+    if docker exec squire-postgres pg_isready -U squire -d squire >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[worktree-setup] ERROR: postgres did not become ready within 60s" >&2
+  return 1
+}
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker-compose up -d >/dev/null
+else
+  echo "[worktree-setup] ERROR: Docker Compose is not available" >&2
+  exit 1
+fi
+wait_for_postgres || exit 1
 npm run db:migrate
 npm run db:migrate:test
 # Seeding + indexing are both best-effort. seed:dev touches card data,

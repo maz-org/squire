@@ -33,6 +33,7 @@ if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
   # shellcheck disable=SC1091
   . "$HOME/.nvm/nvm.sh"
   nvm use >/dev/null
+  export PATH="$NVM_BIN:$PATH"
 fi
 
 if [[ ! -e .env && -e "$source_tree/.env" ]]; then
@@ -53,7 +54,26 @@ log "ensuring docker services are up"
 # up a per-worktree stack and collide on container_name/host port.)
 # Per-worktree DB and port isolation happens at app startup via
 # src/worktree-runtime.ts, not here.
-COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
+wait_for_postgres() {
+  for attempt in {1..60}; do
+    if docker exec squire-postgres pg_isready -U squire -d squire >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  log "ERROR: postgres did not become ready within 60s"
+  return 1
+}
+
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker-compose up -d >/dev/null
+else
+  log "ERROR: Docker Compose is not available"
+  exit 1
+fi
+wait_for_postgres || exit 1
 
 log "running migrations"
 npm run --silent db:migrate
