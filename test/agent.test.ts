@@ -398,6 +398,9 @@ describe('runAgentLoop', () => {
       expect(prompt).toContain('Squire supports Frosthaven and Gloomhaven (2nd Edition)');
       expect(prompt).toContain('assistant identity or support-scope questions');
       expect(prompt).toContain(
+        'Do not compare Frosthaven and Gloomhaven (2nd Edition) unless the user asks for a genuine comparison',
+      );
+      expect(prompt).toContain(
         'For Gloomhaven (2nd Edition) current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.',
       );
       expect(prompt).toContain('Cite FAQ or errata when you rely on it');
@@ -1329,6 +1332,42 @@ describe('executeToolCall', () => {
       game: 'gh2',
     });
     expect(result.sourceBooks).toEqual(['Rulebook', 'Card Index']);
+  });
+
+  it('collects sourceRef provenance from tool output for deterministic source-boundary scoring', async () => {
+    mockSearchKnowledge.mockResolvedValueOnce({
+      ok: true,
+      query: 'poison',
+      results: [
+        {
+          kind: 'rules_passage',
+          ref: 'rules:gloomhaven-2e/gh2-rule-book#chunk=114',
+          title: 'Poison',
+          snippet: 'Poison text',
+          citations: [
+            {
+              sourceRef: 'source:gloomhaven-2e/rulebook',
+              sourceLabel: 'Gloomhaven 2e Rulebook',
+            },
+          ],
+        },
+      ],
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('search_knowledge', { query: 'poison' }))
+      .mockResolvedValueOnce(textResponse('Poison answer'));
+
+    const result = await runAgentLoopWithTrajectory('What does Poison do in Gloomhaven 2e?', {
+      toolSurface: 'redesigned',
+      game: 'gloomhaven-2e',
+    });
+
+    expect(result.trajectory.toolCalls[0]?.canonicalRefs).toEqual(
+      expect.arrayContaining([
+        'rules:gloomhaven-2e/gh2-rule-book#chunk=114',
+        'source:gloomhaven-2e/rulebook',
+      ]),
+    );
   });
 
   it('dispatches open_entity and collects citation source labels', async () => {

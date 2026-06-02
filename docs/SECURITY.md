@@ -405,15 +405,19 @@ development-scoped dependencies`. The repository is public, so GitHub enables
    agent must scope its context to prevent LLM-mediated data leaks
 3. Keep expanding the Redis/Valkey-backed app limiter from SQR-52 across the
    remaining interactive surfaces; WAF remains the coarse outer layer
-4. Establish a prompt injection test suite — adversarial test cases in
-   the E2E suite that try to extract the system prompt, manipulate
-   responses, or cause the LLM to output HTML
+4. Keep the prompt-injection eval suite seeded and scheduled — the
+   `adversarial-boundary` suite tries to extract hidden instructions,
+   manipulate responses, poison source text, cross game/source boundaries,
+   exfiltrate private context, and cause unsafe HTML output
 
 ## Changelog
 
 - **2026-06-01:** Audited security gate triggers, owners, blocking behavior,
   alert routing, and the Semgrep decision; no new Semgrep gate was added because the
   default scan did not find a meaningful gap (SQR-26).
+- **2026-06-02:** Added the LangSmith `adversarial-boundary` eval suite for
+  prompt injection, source-boundary, private-context, and unsafe-output
+  regression coverage (SQR-30).
 - **2026-05-19:** Replaced stale pre-auth `/mcp` wording with the current
   bearer-auth and origin-lock boundary (SQR-87).
 - **2026-05-17:** Recorded Dependabot auto-triage preset behavior and review
