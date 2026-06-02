@@ -133,4 +133,65 @@ describe('scheduled API and agent E2E smoke runner', () => {
     expect(calls).toContain('GET /api/search/rules?q=advantage&topK=3&game=gloomhaven-2e');
     expect(calls.filter((call) => call === 'POST /api/ask')).toHaveLength(3);
   });
+
+  it('times out a hung agent request', async () => {
+    const fetch: FetchLike = async (url, init = {}) => {
+      const parsed = new URL(String(url));
+
+      if (parsed.pathname === '/api/live') return jsonResponse({ status: 'ok' });
+      if (parsed.pathname === '/api/health') {
+        return jsonResponse({
+          status: 'ok',
+          db: { status: 'ok' },
+          vector: { status: 'ok' },
+          embedder: { status: 'ok' },
+        });
+      }
+      if (parsed.pathname === '/register') {
+        return jsonResponse({ client_id: 'client-1' }, { status: 201 });
+      }
+      if (parsed.pathname === '/authorize') {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: 'http://localhost:8080/callback?code=code-1' },
+        });
+      }
+      if (parsed.pathname === '/token') {
+        return jsonResponse({ access_token: 'token-1', token_type: 'bearer' });
+      }
+      if (parsed.pathname === '/api/search/rules') {
+        const game = parsed.searchParams.get('game');
+        const expected = E2E_SMOKE_GAMES.find((entry) => entry.game === game);
+        return jsonResponse({
+          results: [
+            {
+              game,
+              source: expected?.expectedSourceMarker + 'rule-book.pdf',
+              sourceLabel: expected?.expectedSourceLabel,
+            },
+          ],
+        });
+      }
+      if (parsed.pathname === '/api/ask') {
+        return new Promise<Response>((_, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new Error('aborted')), {
+            once: true,
+          });
+        });
+      }
+
+      throw new Error(`Unexpected request: ${parsed.pathname}`);
+    };
+
+    await expect(
+      runApiAgentSmoke({
+        baseUrl: 'http://localhost:3000',
+        fetch,
+        clearBudgetExhaustion: async () => undefined,
+        seedBudgetExhaustion: async () => undefined,
+        logger: () => undefined,
+        requestTimeoutMs: 5,
+      }),
+    ).rejects.toThrow(/Timed out after 5ms fetching http:\/\/localhost:3000\/api\/ask/);
+  });
 });

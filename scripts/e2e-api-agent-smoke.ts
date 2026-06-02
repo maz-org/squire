@@ -15,6 +15,7 @@ const CODE_CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
 const DEFAULT_PORT = '3000';
 const DEFAULT_BUDGET_USD = '0.25';
 const DEFAULT_SERVER_WAIT_MS = 120_000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
 const BUDGET_GUARD_MODEL = 'squire-e2e-budget-guard';
 const OVERRUN_COST_USD_MICROS = 1_000_000;
 
@@ -61,6 +62,7 @@ interface SmokeOptions {
   logger?: Logger;
   clearBudgetExhaustion?: () => Promise<void>;
   seedBudgetExhaustion?: () => Promise<void>;
+  requestTimeoutMs?: number;
 }
 
 export interface SmokeResult {
@@ -91,6 +93,33 @@ function normalizeBaseUrl(raw: string): string {
 
 function urlFor(baseUrl: string, path: string): string {
   return `${normalizeBaseUrl(baseUrl)}${path}`;
+}
+
+function createTimedFetch(fetchImpl: FetchLike, timeoutMs: number): FetchLike {
+  return async (url, init = {}) => {
+    const controller = new AbortController();
+    const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetchImpl(url, {
+        ...init,
+        signal: controller.signal,
+      });
+      const body = await response.arrayBuffer();
+      return new Response(body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error(`Timed out after ${timeoutMs}ms fetching ${String(url)}`, { cause: error });
+      }
+      throw error;
+    } finally {
+      globalThis.clearTimeout(timeout);
+    }
+  };
 }
 
 async function readBody(res: Response): Promise<string> {
@@ -360,7 +389,10 @@ async function runBudgetExhaustionCheck(baseUrl: string, fetchImpl: FetchLike, t
 }
 
 export async function runApiAgentSmoke(options: SmokeOptions): Promise<SmokeResult> {
-  const fetchImpl = options.fetch ?? fetch;
+  const fetchImpl = createTimedFetch(
+    options.fetch ?? fetch,
+    options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+  );
   const logger = options.logger ?? console.log;
   const clearBudgetExhaustion = options.clearBudgetExhaustion ?? clearBudgetExhaustionLedger;
   const seedBudgetExhaustion = options.seedBudgetExhaustion ?? seedBudgetExhaustionLedger;
@@ -444,8 +476,9 @@ async function main() {
       });
     }
 
-    await waitForJsonOk(fetch, urlFor(baseUrl, '/api/live'), DEFAULT_SERVER_WAIT_MS);
-    await waitForJsonOk(fetch, urlFor(baseUrl, '/api/health'), DEFAULT_SERVER_WAIT_MS);
+    const timedFetch = createTimedFetch(fetch, DEFAULT_REQUEST_TIMEOUT_MS);
+    await waitForJsonOk(timedFetch, urlFor(baseUrl, '/api/live'), DEFAULT_SERVER_WAIT_MS);
+    await waitForJsonOk(timedFetch, urlFor(baseUrl, '/api/health'), DEFAULT_SERVER_WAIT_MS);
     const result = await runApiAgentSmoke({ baseUrl, logger });
     log(
       logger,
