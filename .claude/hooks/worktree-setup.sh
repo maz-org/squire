@@ -54,7 +54,26 @@ log "ensuring docker services are up"
 # up a per-worktree stack and collide on container_name/host port.)
 # Per-worktree DB and port isolation happens at app startup via
 # src/worktree-runtime.ts, not here.
-COMPOSE_PROJECT_NAME=squire docker compose up -d --wait --wait-timeout 60 >/dev/null
+wait_for_postgres() {
+  for attempt in {1..60}; do
+    if docker exec squire-postgres pg_isready -U squire -d squire >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  log "ERROR: postgres did not become ready within 60s"
+  return 1
+}
+
+if docker compose up --help 2>/dev/null | grep -q -- '--wait'; then
+  COMPOSE_PROJECT_NAME=squire docker compose up -d --wait --wait-timeout 60 >/dev/null
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker-compose up -d >/dev/null
+  wait_for_postgres
+else
+  COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
+  wait_for_postgres
+fi
 
 log "running migrations"
 npm run --silent db:migrate

@@ -59,8 +59,9 @@ indexed — test suites own their fixtures.
 Step 4 is the only subtle one: `docker-compose.yml` hardcodes
 `container_name: squire-postgres` and binds host port `5432:5432`, so every
 checkout must share the same container. The setup script must run
-`docker compose up -d --wait --wait-timeout 60` against the project name
-`squire`.
+against the project name `squire`, wait for the existing Postgres healthcheck
+when Docker Compose V2 supports `--wait`, and otherwise poll `pg_isready` inside
+the container before migrations run.
 
 ### Manual `.env` setup
 
@@ -101,7 +102,25 @@ nvm use
 export PATH="$NVM_BIN:$PATH"
 ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
 npm install --ignore-scripts
-docker compose up -d --wait --wait-timeout 60
+wait_for_postgres() {
+  for attempt in {1..60}; do
+    if docker exec squire-postgres pg_isready -U squire -d squire >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[worktree-setup] ERROR: postgres did not become ready within 60s" >&2
+  return 1
+}
+if docker compose up --help 2>/dev/null | grep -q -- '--wait'; then
+  COMPOSE_PROJECT_NAME=squire docker compose up -d --wait --wait-timeout 60
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker-compose up -d
+  wait_for_postgres
+else
+  COMPOSE_PROJECT_NAME=squire docker compose up -d
+  wait_for_postgres
+fi
 npm run db:migrate
 npm run db:migrate:test
 # Seeding + indexing are both best-effort. seed:dev touches card data,
