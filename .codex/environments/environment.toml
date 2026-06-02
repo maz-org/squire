@@ -19,15 +19,15 @@ wait_for_postgres() {
   echo "[worktree-setup] ERROR: postgres did not become ready within 60s" >&2
   return 1
 }
-if docker compose up --help 2>/dev/null | grep -q -- '--wait'; then
-  COMPOSE_PROJECT_NAME=squire docker compose up -d --wait --wait-timeout 60
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
 elif command -v docker-compose >/dev/null 2>&1; then
-  COMPOSE_PROJECT_NAME=squire docker-compose up -d
-  wait_for_postgres
+  COMPOSE_PROJECT_NAME=squire docker-compose up -d >/dev/null
 else
-  COMPOSE_PROJECT_NAME=squire docker compose up -d
-  wait_for_postgres
+  echo "[worktree-setup] ERROR: Docker Compose is not available" >&2
+  exit 1
 fi
+wait_for_postgres || exit 1
 npm run db:migrate
 npm run db:migrate:test
 # Seeding + indexing are both best-effort. seed:dev touches card data,

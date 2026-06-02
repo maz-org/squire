@@ -65,15 +65,15 @@ wait_for_postgres() {
   return 1
 }
 
-if docker compose up --help 2>/dev/null | grep -q -- '--wait'; then
-  COMPOSE_PROJECT_NAME=squire docker compose up -d --wait --wait-timeout 60 >/dev/null
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
 elif command -v docker-compose >/dev/null 2>&1; then
   COMPOSE_PROJECT_NAME=squire docker-compose up -d >/dev/null
-  wait_for_postgres
 else
-  COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
-  wait_for_postgres
+  log "ERROR: Docker Compose is not available"
+  exit 1
 fi
+wait_for_postgres || exit 1
 
 log "running migrations"
 npm run --silent db:migrate
