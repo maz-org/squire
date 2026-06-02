@@ -33,6 +33,7 @@ if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
   # shellcheck disable=SC1091
   . "$HOME/.nvm/nvm.sh"
   nvm use >/dev/null
+  export PATH="$NVM_BIN:$PATH"
 fi
 
 if [[ ! -e .env && -e "$source_tree/.env" ]]; then
@@ -53,7 +54,7 @@ log "ensuring docker services are up"
 # up a per-worktree stack and collide on container_name/host port.)
 # Per-worktree DB and port isolation happens at app startup via
 # src/worktree-runtime.ts, not here.
-COMPOSE_PROJECT_NAME=squire docker compose up -d >/dev/null
+COMPOSE_PROJECT_NAME=squire docker compose up -d --wait --wait-timeout 60 >/dev/null
 
 log "running migrations"
 npm run --silent db:migrate

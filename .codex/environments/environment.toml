@@ -6,9 +6,10 @@ name = "squire"
 script = '''
 source "$HOME/.nvm/nvm.sh"
 nvm use
+export PATH="$NVM_BIN:$PATH"
 ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
 npm install --ignore-scripts
-docker compose up -d
+docker compose up -d --wait --wait-timeout 60
 npm run db:migrate
 npm run db:migrate:test
 # Seeding + indexing are both best-effort. seed:dev touches card data,

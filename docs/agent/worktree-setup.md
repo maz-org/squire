@@ -33,7 +33,8 @@ Given the app handles isolation, bootstrap is small:
    copy it when the worktree needs different local values.
 3. `npm install --ignore-scripts` (husky hooks would otherwise refuse to
    install into a linked worktree).
-4. Bring up the **one** shared `squire-postgres` container.
+4. Bring up the **one** shared `squire-postgres` container and wait for its
+   healthcheck before running migrations.
 5. Run `db:migrate` and `db:migrate:test` — both are worktree-aware and create
    `squire_<slug>` / `squire_<slug>_test` on first run.
 6. `npm run seed:dev` — upsert card data, scenario/section book records, and
@@ -58,7 +59,8 @@ indexed — test suites own their fixtures.
 Step 4 is the only subtle one: `docker-compose.yml` hardcodes
 `container_name: squire-postgres` and binds host port `5432:5432`, so every
 checkout must share the same container. The setup script must run
-`docker compose up -d` against the project name `squire`.
+`docker compose up -d --wait --wait-timeout 60` against the project name
+`squire`.
 
 ### Manual `.env` setup
 
@@ -96,9 +98,10 @@ Codex runs `setup.script` on worktree creation.
 script = '''
 source "$HOME/.nvm/nvm.sh"
 nvm use
+export PATH="$NVM_BIN:$PATH"
 ln -sfn "$CODEX_SOURCE_TREE_PATH/.env" .env
 npm install --ignore-scripts
-docker compose up -d
+docker compose up -d --wait --wait-timeout 60
 npm run db:migrate
 npm run db:migrate:test
 # Seeding + indexing are both best-effort. seed:dev touches card data,
@@ -151,7 +154,8 @@ Two intentional differences from the Codex script:
    name each time and try to stand up a second `squire-postgres` alongside
    the one from the source tree or another worktree. Pinning the project
    name forces every worktree onto the one shared container, matching
-   Codex's implicit behavior.
+   Codex's implicit behavior. It also waits on the same Postgres healthcheck
+   before migrations run.
 
 Other than those two points, the commands are identical. Both adapters are
 safe to run concurrently on the same machine: the port-claim registry in
