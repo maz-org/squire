@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.17] - 2026-06-02
+
+### Added
+
+- Documented the final security gate contract for actionlint, Dependency Review, CodeQL, Dependabot alerts, secret scanning alerts, and Security Alert Linear Sync.
+- Added SQR-26 audit evidence covering alert routing dry runs, current GitHub security alert counts, runtime audit status, recent workflow health, and the Semgrep decision.
+
+### Changed
+
+- Updated production operations runbooks with the GitHub secrets and commands operators need to validate security-alert routing.
+- Removed stale Copilot Autofix wording from the security review and pinned the current CodeQL workflow contract in tests.
+
 ## [0.1.16] - 2026-06-01
 
 ### Added

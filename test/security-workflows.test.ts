@@ -28,6 +28,39 @@ describe('security workflows', () => {
     expect(securityDocs).toContain('low and moderate findings stay non-blocking');
   });
 
+  it('documents the CodeQL and security gate contract', async () => {
+    const workflow = await readProjectFile('.github/workflows/codeql.yml');
+    const securityDocs = await readProjectFile('docs/SECURITY.md');
+    const productionRunbook = await readProjectFile('docs/runbooks/production-operations.md');
+
+    expect(workflow).toContain('name: CodeQL');
+    expect(workflow).toContain('push:');
+    expect(workflow).toContain('pull_request:');
+    expect(workflow).toContain('schedule:');
+    expect(workflow).toContain('security-events: write');
+    expect(workflow).toContain('language: [javascript, actions]');
+    expect(workflow).toContain('uses: github/codeql-action/init@v4');
+    expect(workflow).toContain('uses: github/codeql-action/analyze@v4');
+
+    expect(securityDocs).toContain('Security gate contract');
+    expect(securityDocs).toContain('CI actionlint');
+    expect(securityDocs).toContain('Dependency Review');
+    expect(securityDocs).toContain('Security Alert Linear Sync');
+    expect(securityDocs).toContain('SQR-26 audit evidence, 2026-06-01');
+    expect(securityDocs).toContain('uvx semgrep scan --config=auto src scripts .github');
+    expect(securityDocs).toContain('Semgrep gate was');
+    expect(securityDocs).toContain('added because the scan did not show a meaningful gap');
+    expect(securityDocs).not.toContain('Copilot Autofix');
+    expect(securityDocs).not.toContain('Snyk');
+    expect(securityDocs).not.toContain('GitHub Advanced Security');
+
+    expect(productionRunbook).toContain('## Security gates');
+    expect(productionRunbook).toContain('npm run lint:actions');
+    expect(productionRunbook).toContain(
+      'gh run list --workflow codeql.yml --branch main --limit 5',
+    );
+  });
+
   it('keeps the MCP threat model aligned with the bearer-auth route', async () => {
     const securityDocs = await readProjectFile('docs/SECURITY.md');
     const server = await readProjectFile('src/server.ts');
@@ -44,6 +77,7 @@ describe('security workflows', () => {
   it('routes high and critical security alerts into Linear', async () => {
     const workflow = await readProjectFile('.github/workflows/security-alert-linear-sync.yml');
     const securityDocs = await readProjectFile('docs/SECURITY.md');
+    const productionRunbook = await readProjectFile('docs/runbooks/production-operations.md');
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;
     };
@@ -72,5 +106,13 @@ describe('security workflows', () => {
     expect(securityDocs).toContain('npm run security:alerts:validate-config');
     expect(securityDocs).toContain('Secret scanning alert reads require');
     expect(securityDocs).toContain('SECURITY_ALERT_DRY_RUN=1');
+
+    expect(productionRunbook).toContain('LINEAR_API_KEY');
+    expect(productionRunbook).toContain('SECURITY_ALERTS_GITHUB_TOKEN');
+    expect(productionRunbook).toContain('npm run security:alerts:validate-config');
+    expect(productionRunbook).toContain('SECURITY_ALERT_REPOSITORY=maz-org/squire');
+    expect(productionRunbook).toContain(
+      "gh api 'repos/maz-org/squire/secret-scanning/alerts?state=open&per_page=100' --jq 'length'",
+    );
   });
 });
