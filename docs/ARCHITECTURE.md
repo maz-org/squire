@@ -621,6 +621,12 @@ The knowledge agent:
 
 Today this is already a real tool loop. The system prompt nudges Claude to prefer deterministic scenario/section traversal when a question is anchored to a scenario number, title, or section ref, and to fall back to semantic book search for fuzzier questions. The HTTP entry point is still a convenience path; the retrieval strategy is no longer a hard-coded `searchRules + searchCards` bundle.
 
+The REST entry point is protected by bearer auth, a 30-request/minute
+Redis/Valkey-backed app limit per token user or OAuth client, bounded request
+text, and a daily LLM budget precheck before the SSE stream opens. Budget
+exhaustion returns a distinct `llm_budget_exceeded` 429 response; request-rate
+exhaustion returns `rate_limited` with `Retry-After`.
+
 The conversation agent calls this entry point via in-process function call, not HTTP. The HTTP endpoint exists for testing and for other channels (CLI, scripts, future Discord bot).
 
 ---

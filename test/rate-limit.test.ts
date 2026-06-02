@@ -2,6 +2,7 @@ import type { RedisClientType } from '@redis/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  createRateLimiterFromEnv,
   FlexibleRateLimitStore,
   hashRateLimitIdentity,
   InMemoryTokenBucketStore,
@@ -207,5 +208,39 @@ describe('RateLimiter', () => {
     });
     expect(staleClient.destroy).toHaveBeenCalledTimes(1);
     expect(freshClient.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails closed instead of allowing requests when Redis connect fails', async () => {
+    const failingClient = createFakeRedisClient({
+      connectPromise: new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('redis unavailable')), 0);
+      }),
+    });
+    const freshClient = createFakeRedisClient({});
+    const store = new RedisRateLimitStore('redis://example.test:6379', failingClient, {
+      clientFactory: () => freshClient,
+      operationTimeoutMs: 50,
+    });
+
+    await expect(
+      store.consume({
+        key: 'squire:rate-limit:test',
+        capacity: 10,
+        refillTokens: 10,
+        refillIntervalMs: 3_600_000,
+        cost: 1,
+        nowMs: 0,
+      }),
+    ).rejects.toThrow('redis unavailable');
+    expect(failingClient.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires Redis configuration in production', () => {
+    expect(() =>
+      createRateLimiterFromEnv({
+        NODE_ENV: 'production',
+        SESSION_SECRET: 'rate-limit-unit-test-secret',
+      } as NodeJS.ProcessEnv),
+    ).toThrow('REDIS_URL must be set in production to enable app rate limiting');
   });
 });

@@ -170,12 +170,14 @@ attacker could run up significant costs.
 
 **Mitigations:**
 
-- Redis/Valkey-backed app rate limits for interactive surfaces, with tighter
-  limits on expensive routes such as `/api/ask`, `/mcp`, and
-  `/api/search/rules`
+- Redis/Valkey-backed app rate limits for interactive surfaces: `/api/ask`
+  is limited to 30/minute, `/api/search/rules` and `/api/search/cards` are
+  limited to 60/minute, and `/mcp` is limited to 120/minute. Authenticated
+  API limits key by token user when present, otherwise OAuth client id.
 - Daily cost budget with circuit breaker (reject requests when budget
   exceeded)
-- Cap `history` array length in `/api/ask`
+- Cap `/api/ask` request size: 2,000-character question, 20 history messages,
+  and 2,000 characters per history message
 - Embedding result cache (same query leads to same embedding)
 - Monitor API spend with alerts
 
@@ -367,6 +369,10 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 - Redis/Valkey-backed app rate limits per trusted IP, OAuth client, and token
   user where available
+- Production requires `REDIS_URL`; limiter outages fail closed with HTTP 503
+  and `rate_limit_unavailable` security logs
+- `/api/ask` has a daily LLM budget precheck before opening the SSE stream; its
+  budget-exhaustion response is distinct from rate-limit exhaustion
 - Connection limits
 - Response size limits
 - Consider caching for embeddings and frequent queries
