@@ -104,6 +104,13 @@ GitHub repository secrets:
 - `FLY_API_TOKEN`
 - `AUTO_MERGE_APP_ID`
 - `AUTO_MERGE_PRIVATE_KEY`
+- `LINEAR_API_KEY`
+- `SECURITY_ALERTS_GITHUB_TOKEN`
+
+GitHub `production` environment secrets:
+
+- `PRODUCTION_DATABASE_URL`
+- `VOYAGE_API_KEY`
 
 eval/developer-only variables stay out of Fly unless the runtime starts using
 them:
@@ -116,6 +123,31 @@ them:
 - eval model/provider knobs from `.env.example`
 
 `SQUIRE_ENV` is the single source for the LangSmith environment label.
+
+## Security gates
+
+The permanent gate contract lives in [SECURITY.md](../SECURITY.md). Use these
+checks when changing workflows, dependency policy, or GitHub security-alert
+routing:
+
+```bash
+npm run lint:actions
+npm run security:alerts:validate-config
+SECURITY_ALERT_REPOSITORY=maz-org/squire SECURITY_ALERT_GITHUB_TOKEN="$(gh auth token)" npm run security:alerts:dry-run
+npm audit --omit=dev --audit-level=high
+gh api 'repos/maz-org/squire/dependabot/alerts?state=open&per_page=100' --jq 'length'
+gh api 'repos/maz-org/squire/code-scanning/alerts?state=open&per_page=100' --jq 'length'
+gh api 'repos/maz-org/squire/secret-scanning/alerts?state=open&per_page=100' --jq 'length'
+gh run list --workflow codeql.yml --branch main --limit 5
+gh run list --workflow "Security Alert Linear Sync" --limit 5
+```
+
+`Security Alert Linear Sync` mirrors high/critical Dependabot, CodeQL, and
+secret scanning alerts into Linear with the `Security` label. The manual
+workflow dispatch defaults to dry run; set `dry_run` to false only after
+`npm run security:alerts:validate-config` succeeds. The workflow falls back to
+`github.token` if `SECURITY_ALERTS_GITHUB_TOKEN` is absent, but secret scanning
+alert reads require the dedicated token.
 
 ## Deploy
 
