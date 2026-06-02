@@ -461,13 +461,25 @@ function pipeChildOutput(child: ChildProcess) {
   child.stderr?.on('data', (chunk: Buffer) => process.stderr.write(chunk));
 }
 
+function signalChild(child: ChildProcess, signal: NodeJS.Signals) {
+  if (child.pid && process.platform !== 'win32') {
+    try {
+      process.kill(-child.pid, signal);
+      return;
+    } catch {
+      // Fall through to signaling the direct child.
+    }
+  }
+  child.kill(signal);
+}
+
 async function stopServer(child: ChildProcess | null) {
   if (!child || child.exitCode !== null) return;
-  child.kill('SIGTERM');
+  signalChild(child, 'SIGTERM');
   await Promise.race([
     new Promise<void>((resolve) => child.once('exit', () => resolve())),
     sleep(5_000).then(() => {
-      if (child.exitCode === null) child.kill('SIGKILL');
+      if (child.exitCode === null) signalChild(child, 'SIGKILL');
     }),
   ]);
 }
@@ -485,6 +497,7 @@ async function main() {
       log(logger, `starting server at ${baseUrl}`);
       server = spawn('npm', ['run', 'serve'], {
         env: serverEnv(baseUrl),
+        detached: process.platform !== 'win32',
         stdio: ['ignore', 'pipe', 'pipe'],
       });
       pipeChildOutput(server);
