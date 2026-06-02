@@ -458,6 +458,42 @@ Tunable eval-only knobs:
 - `--retry-count=`
 - `--max-estimated-cost-usd=` with `--allow-estimated-cost`
 
+**Scheduled LangSmith regression runs:**
+
+The `LangSmith Regression` GitHub Actions workflow runs on a daily schedule and
+can also be started manually. It runs the curated Phase 3 targets as native
+LangSmith matrix experiments:
+
+- Frosthaven `table-qa` and `trajectory`
+- Gloomhaven 2e `table-qa` and `trajectory`
+- `cross-game-boundary`
+- `adversarial-boundary`
+
+Use the scheduled run as the standing regression signal for answer quality,
+tool trajectory, source boundaries, game routing, prompt injection, and safety
+cases. Use manual `target=all` before merging a retrieval, prompt, tool-routing,
+eval-harness, or model/provider change with broad effect. Use one manual target
+when the change only affects that surface, for example `adversarial-boundary`
+after a prompt-injection fix or `cross-game-boundary` after game-routing work.
+Use `--id=<case>` locally for single-case debugging before spending a full CI
+target run.
+
+Each workflow job writes JSON, TSV, and Markdown reports under
+`eval/results/langsmith/`, uploads them as a GitHub artifact, and appends the
+Markdown report to the job summary. The Markdown report includes the LangSmith
+experiment URLs. Open the failed row's `LangSmith trace` link first, then check
+the row's `failure class`, `score`, tool-call count, loop count, and evaluator
+scores in the trace tree.
+
+For before/after checks, run the same target twice with distinct `run_purpose`
+values, then use the two experiment URLs from the job summaries in LangSmith's
+experiment comparison view.
+
+The workflow keeps spend bounded by running one provider/model per target,
+serial provider concurrency, explicit timeouts, and a per-target
+`max_estimated_cost_usd` input. Raise that input only for a deliberate full
+manual run.
+
 ## Pre-commit hooks
 
 Git hooks are installed automatically when you run `npm install`. Squire pins
