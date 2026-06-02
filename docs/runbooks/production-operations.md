@@ -53,6 +53,11 @@ AWS WAF remains the coarse outer filter. Squire-specific limits live in the app
 and use Redis/Valkey-compatible `rate-limiter-flexible` counters (`REDIS_URL`) so
 limits are shared across app machines and restarts.
 
+Production startup fails when `NODE_ENV=production` and `REDIS_URL` is missing.
+If the Redis/Valkey limiter is unavailable at request time, protected app routes
+fail closed with HTTP 503 and a structured `rate_limit_unavailable` security
+log rather than falling back to unlimited traffic.
+
 `POST /register` is limited to 10 requests per hour per trusted client IP.
 Rate-limit denials return 429 with `Retry-After` and emit structured security
 log events with a hashed identity. They do not write `oauth_audit_log` rows;
@@ -69,6 +74,25 @@ fall back to the trusted client IP resolver, then a shared `unknown` bucket if n
 trusted IP can be resolved. MCP denials return HTTP 429 before the Streamable
 HTTP transport starts and emit the same structured `rate_limit_rejected` log
 shape with `identity_kind` set to `user`, `client`, `ip`, or `unknown`.
+
+Route-control matrix:
+
+| Route                                                   | Auth                       | App rate limit                                                              | Budget breaker             | Notes                                                                                               |
+| ------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------- |
+| `/api/live`, `/api/health`                              | None                       | None                                                                        | None                       | Intentionally public health/readiness endpoints.                                                    |
+| `POST /register`                                        | None                       | 10/hour per trusted client IP                                               | None                       | Dynamic OAuth client registration.                                                                  |
+| `GET /auth/google/start`                                | Session bootstrap          | 10/minute per trusted client IP                                             | None                       | Google sign-in initiation.                                                                          |
+| `GET /auth/google/callback`                             | Session bootstrap          | 20/minute per trusted client IP                                             | None                       | Google sign-in callback.                                                                            |
+| `GET /api/search/rules`                                 | Bearer token               | 60/minute per token user, otherwise OAuth client                            | None                       | Runs embedding/vector/rerank retrieval work.                                                        |
+| `GET /api/search/cards`                                 | Bearer token               | 60/minute per token user, otherwise OAuth client                            | None                       | Runs card search over extracted data.                                                               |
+| `POST /api/ask`                                         | Bearer token               | 30/minute per token user, otherwise OAuth client                            | Daily LLM budget precheck  | Caps question text at 2,000 chars, history at 20 messages, and each history message at 2,000 chars. |
+| `/mcp`                                                  | Bearer token after limiter | 120/minute per token user, otherwise OAuth client, trusted IP, or `unknown` | None at transport boundary | Returns 429 before creating the Streamable HTTP transport.                                          |
+| `/api/card-types`, `/api/cards`, `/api/cards/:type/:id` | Bearer token               | None                                                                        | None                       | Catalog reads use checked-in/imported game data only; no provider/model work.                       |
+
+Rate-limit exhaustion returns HTTP 429 with `error: "rate_limited"` and a
+`Retry-After` header. LLM budget exhaustion returns HTTP 429 with
+`error: "llm_budget_exceeded"` before opening the `/api/ask` SSE stream and does
+not include `Retry-After`; the budget resets at UTC midnight.
 
 ## Secrets and environment
 

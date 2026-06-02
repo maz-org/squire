@@ -83,6 +83,24 @@ export const MCP_REQUEST_RATE_LIMIT_POLICY: RateLimitPolicy = {
   windowMs: 60 * 1000,
 };
 
+export const API_ASK_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'api_ask_request',
+  limit: 30,
+  windowMs: 60 * 1000,
+};
+
+export const API_RULE_SEARCH_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'api_search_rules',
+  limit: 60,
+  windowMs: 60 * 1000,
+};
+
+export const API_CARD_SEARCH_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'api_search_cards',
+  limit: 60,
+  windowMs: 60 * 1000,
+};
+
 function hasText(value: string | undefined): value is string {
   return value !== undefined && value.trim().length > 0;
 }

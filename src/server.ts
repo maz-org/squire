@@ -29,6 +29,9 @@ import { originSharedSecretMiddleware } from './origin-lock.ts';
 import { resolveTrustedClientIp } from './http/trusted-client-ip.ts';
 import { LlmBudgetExceededError } from './llm-budget.ts';
 import {
+  API_ASK_RATE_LIMIT_POLICY,
+  API_CARD_SEARCH_RATE_LIMIT_POLICY,
+  API_RULE_SEARCH_RATE_LIMIT_POLICY,
   GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY,
   GOOGLE_OAUTH_START_RATE_LIMIT_POLICY,
   getDefaultRateLimiter,
@@ -303,9 +306,27 @@ interface McpRateLimitResult {
   identityKind: McpRateLimitIdentityKind;
 }
 
+type ApiRateLimitIdentityKind = 'user' | 'client';
+
+interface ApiRateLimitIdentity {
+  kind: ApiRateLimitIdentityKind;
+  value: string;
+}
+
+interface ApiRateLimitResult {
+  decision: RateLimitDecision;
+  identityKind: ApiRateLimitIdentityKind;
+}
+
 function authInfoUserId(authInfo: AuthInfo): string | undefined {
   const userId = authInfo.extra?.userId;
   return typeof userId === 'string' && userId.trim().length > 0 ? userId : undefined;
+}
+
+function resolveApiRateLimitIdentity(authInfo: AuthInfo): ApiRateLimitIdentity {
+  const userId = authInfoUserId(authInfo);
+  if (userId) return { kind: 'user', value: `user:${userId}` };
+  return { kind: 'client', value: `client:${authInfo.clientId}` };
 }
 
 function resolveMcpRateLimitIdentity(
@@ -330,6 +351,18 @@ async function checkMcpRateLimit(
   const identity = resolveMcpRateLimitIdentity(c, authInfo);
   const decision = await getDefaultRateLimiter().consume({
     policy: MCP_REQUEST_RATE_LIMIT_POLICY,
+    identity: identity.value,
+  });
+  return { decision, identityKind: identity.kind };
+}
+
+async function checkApiRateLimit(
+  authInfo: AuthInfo,
+  policy: RateLimitPolicy,
+): Promise<ApiRateLimitResult> {
+  const identity = resolveApiRateLimitIdentity(authInfo);
+  const decision = await getDefaultRateLimiter().consume({
+    policy,
     identity: identity.value,
   });
   return { decision, identityKind: identity.kind };
@@ -363,6 +396,34 @@ function mcpRateLimitedResponse(c: Context, result: McpRateLimitResult) {
   );
 }
 
+function apiRateLimitedResponse(c: Context, result: ApiRateLimitResult, route: string) {
+  const retryAfterSeconds = Math.max(1, result.decision.retryAfterSeconds);
+  writeSecurityLog({
+    event: 'rate_limit_rejected',
+    fields: {
+      route,
+      method: c.req.method,
+      policy: result.decision.policy.name,
+      limit: result.decision.policy.limit,
+      window_ms: result.decision.policy.windowMs,
+      identity_hash: result.decision.identityHash,
+      identity_kind: result.identityKind,
+      retry_after_seconds: retryAfterSeconds,
+      reset_after_seconds: result.decision.resetAfterSeconds,
+    },
+  });
+
+  c.header('Retry-After', String(retryAfterSeconds));
+  return c.json(
+    {
+      error: 'rate_limited',
+      error_description: 'Too many API requests. Try again later.',
+      retry_after_seconds: retryAfterSeconds,
+    },
+    429,
+  );
+}
+
 function budgetExceededResponse(c: Context, error: LlmBudgetExceededError) {
   return c.json(
     {
@@ -374,6 +435,32 @@ function budgetExceededResponse(c: Context, error: LlmBudgetExceededError) {
       remaining_usd: error.status.remainingUsd,
     },
     429,
+  );
+}
+
+function apiRateLimitUnavailableResponse(
+  c: Context,
+  error: unknown,
+  route: string,
+  policy: RateLimitPolicy,
+) {
+  writeSecurityLog({
+    event: 'rate_limit_unavailable',
+    level: 'error',
+    fields: {
+      route,
+      method: c.req.method,
+      policy: policy.name,
+      ...errorLogFields(error),
+    },
+  });
+
+  return c.json(
+    {
+      error: 'temporarily_unavailable',
+      error_description: 'API is temporarily unavailable. Try again later.',
+    },
+    503,
   );
 }
 
@@ -1466,6 +1553,29 @@ function requireBearerAuth(): MiddlewareHandler {
   };
 }
 
+function requireBearerAuthAndRateLimit(policy: RateLimitPolicy, route: string): MiddlewareHandler {
+  return async (c, next) => {
+    const authResult = await authenticateBearer(c);
+    if (!authResult.ok) {
+      return bearerAuthFailureResponse(c, authResult);
+    }
+
+    let rateLimit: ApiRateLimitResult;
+    try {
+      rateLimit = await checkApiRateLimit(authResult.authInfo, policy);
+    } catch (error) {
+      return apiRateLimitUnavailableResponse(c, error, route, policy);
+    }
+
+    if (!rateLimit.decision.allowed) {
+      return apiRateLimitedResponse(c, rateLimit, route);
+    }
+
+    c.set('authInfo', authResult.authInfo);
+    await next();
+  };
+}
+
 function requireMcpAuthAndRateLimit(): MiddlewareHandler {
   return async (c, next) => {
     const authResult = await authenticateBearer(c);
@@ -1492,11 +1602,18 @@ function requireMcpAuthAndRateLimit(): MiddlewareHandler {
 }
 
 // Protect API endpoints (except health) and MCP
-app.use('/api/search/*', requireBearerAuth());
+app.use(
+  '/api/search/rules',
+  requireBearerAuthAndRateLimit(API_RULE_SEARCH_RATE_LIMIT_POLICY, '/api/search/rules'),
+);
+app.use(
+  '/api/search/cards',
+  requireBearerAuthAndRateLimit(API_CARD_SEARCH_RATE_LIMIT_POLICY, '/api/search/cards'),
+);
 app.use('/api/cards/*', requireBearerAuth());
 app.use('/api/cards', requireBearerAuth());
 app.use('/api/card-types', requireBearerAuth());
-app.use('/api/ask', requireBearerAuth());
+app.use('/api/ask', requireBearerAuthAndRateLimit(API_ASK_RATE_LIMIT_POLICY, '/api/ask'));
 app.use('/mcp', requireMcpAuthAndRateLimit());
 
 // ─── MCP transport ───────────────────────────────────────────────────────────
@@ -1707,16 +1824,20 @@ app.get('/api/cards', async (c) => {
 
 // ─── Ask endpoint ────────────────────────────────────────────────────────────
 
+const ASK_QUESTION_MAX_CHARS = 2_000;
+const ASK_HISTORY_MAX_ITEMS = 20;
+const ASK_HISTORY_MESSAGE_MAX_CHARS = 2_000;
+
 const AskRequestSchema = z.object({
-  question: z.string().min(1),
+  question: z.string().min(1).max(ASK_QUESTION_MAX_CHARS),
   history: z
     .array(
       z.object({
         role: z.enum(['user', 'assistant']),
-        content: z.string(),
+        content: z.string().max(ASK_HISTORY_MESSAGE_MAX_CHARS),
       }),
     )
-    .max(20)
+    .max(ASK_HISTORY_MAX_ITEMS)
     .optional(),
   campaignId: z.string().uuid().optional(),
   userId: z.string().uuid().optional(),

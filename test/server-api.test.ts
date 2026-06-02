@@ -11,7 +11,7 @@
  * conflicts, and lets CI reports point at the right owner.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { parseSSE } from './helpers/server-oauth-helpers.ts';
 import { LlmBudgetExceededError } from '../src/llm-budget.ts';
@@ -136,10 +136,62 @@ vi.mock('../src/auth.ts', () => ({
 }));
 
 import { app } from '../src/server.ts';
+import { verifyAccessToken } from '../src/auth.ts';
+import {
+  API_ASK_RATE_LIMIT_POLICY,
+  API_CARD_SEARCH_RATE_LIMIT_POLICY,
+  API_RULE_SEARCH_RATE_LIMIT_POLICY,
+  hashRateLimitIdentity,
+  resetRateLimiterForTesting,
+  setRateLimiterForTesting,
+  type RateLimiter,
+  type RateLimitConsumeInput,
+  type RateLimitDecision,
+} from '../src/rate-limit.ts';
+
+const mockVerifyAccessToken = vi.mocked(verifyAccessToken);
 
 /** Stub bearer header — the mocked `verifyAccessToken` accepts anything. */
 async function auth(): Promise<Record<string, string>> {
   return { Authorization: 'Bearer stub-token' };
+}
+
+function installOneRequestLimiter() {
+  const counts = new Map<string, number>();
+  const calls: RateLimitConsumeInput[] = [];
+
+  const limiter = {
+    async consume(input: RateLimitConsumeInput): Promise<RateLimitDecision> {
+      calls.push(input);
+      const used = (counts.get(input.identity) ?? 0) + 1;
+      counts.set(input.identity, used);
+      const allowed = used <= 1;
+      return {
+        allowed,
+        policy: input.policy,
+        identityHash: hashRateLimitIdentity(input.identity, 'api-rate-limit-test-secret'),
+        remaining: 0,
+        retryAfterSeconds: allowed ? 0 : 30,
+        resetAfterSeconds: 30,
+      };
+    },
+  };
+
+  setRateLimiterForTesting(limiter as unknown as RateLimiter);
+  return { calls };
+}
+
+function installUnavailableLimiter(error = new Error('redis unavailable')) {
+  const calls: RateLimitConsumeInput[] = [];
+  const limiter = {
+    async consume(input: RateLimitConsumeInput): Promise<RateLimitDecision> {
+      calls.push(input);
+      throw error;
+    },
+  };
+
+  setRateLimiterForTesting(limiter as unknown as RateLimiter);
+  return { calls };
 }
 
 function resetRouteMocks() {
@@ -158,6 +210,10 @@ function resetRouteMocks() {
   mockGetCard.mockReset();
   mockRunReadinessChecks.mockReset();
 }
+
+afterEach(() => {
+  resetRateLimiterForTesting();
+});
 
 describe('GET /api/health', () => {
   beforeEach(() => {
@@ -249,6 +305,67 @@ describe('GET /api/search/rules', () => {
     expect(body.results[0]).toHaveProperty('source');
     expect(body.results[0]).toHaveProperty('sourceLabel');
     expect(body.results[0]).toHaveProperty('score');
+  });
+
+  it('rate limits authenticated rule searches before provider-backed work', async () => {
+    const limiter = installOneRequestLimiter();
+
+    const allowed = await app.request('/api/search/rules?q=loot+action', {
+      headers: await auth(),
+    });
+    expect(allowed.status).toBe(200);
+
+    const rejected = await app.request('/api/search/rules?q=loot+action', {
+      headers: await auth(),
+    });
+
+    expect(rejected.status).toBe(429);
+    expect(rejected.headers.get('Retry-After')).toBe('30');
+    await expect(rejected.json()).resolves.toMatchObject({
+      error: 'rate_limited',
+      retry_after_seconds: 30,
+    });
+    expect(mockSearchRules).toHaveBeenCalledTimes(1);
+    expect(limiter.calls).toEqual([
+      { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+      { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
+  });
+
+  it('uses token user identity for rule-search rate limits when present', async () => {
+    const limiter = installOneRequestLimiter();
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'user-123' },
+    });
+
+    const res = await app.request('/api/search/rules?q=loot+action', {
+      headers: await auth(),
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockSearchRules).toHaveBeenCalledTimes(1);
+    expect(limiter.calls).toEqual([
+      { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'user:user-123' },
+    ]);
+  });
+
+  it('fails closed when the rule-search limiter is unavailable', async () => {
+    const limiter = installUnavailableLimiter();
+
+    const res = await app.request('/api/search/rules?q=loot+action', { headers: await auth() });
+
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toMatchObject({
+      error: 'temporarily_unavailable',
+    });
+    expect(mockSearchRules).not.toHaveBeenCalled();
+    expect(limiter.calls).toEqual([
+      { policy: API_RULE_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
   });
 
   it('passes query and topK to searchRules', async () => {
@@ -351,6 +468,46 @@ describe('GET /api/search/cards', () => {
     expect(body.results[0]).toHaveProperty('type');
     expect(body.results[0]).toHaveProperty('data');
     expect(body.results[0]).toHaveProperty('score');
+  });
+
+  it('rate limits authenticated card searches before card work', async () => {
+    const limiter = installOneRequestLimiter();
+
+    const allowed = await app.request('/api/search/cards?q=algox+archer', {
+      headers: await auth(),
+    });
+    expect(allowed.status).toBe(200);
+
+    const rejected = await app.request('/api/search/cards?q=algox+archer', {
+      headers: await auth(),
+    });
+
+    expect(rejected.status).toBe(429);
+    expect(rejected.headers.get('Retry-After')).toBe('30');
+    await expect(rejected.json()).resolves.toMatchObject({
+      error: 'rate_limited',
+      retry_after_seconds: 30,
+    });
+    expect(mockSearchCards).toHaveBeenCalledTimes(1);
+    expect(limiter.calls).toEqual([
+      { policy: API_CARD_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+      { policy: API_CARD_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
+  });
+
+  it('fails closed when the card-search limiter is unavailable', async () => {
+    const limiter = installUnavailableLimiter();
+
+    const res = await app.request('/api/search/cards?q=algox+archer', { headers: await auth() });
+
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toMatchObject({
+      error: 'temporarily_unavailable',
+    });
+    expect(mockSearchCards).not.toHaveBeenCalled();
+    expect(limiter.calls).toEqual([
+      { policy: API_CARD_SEARCH_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
   });
 
   it('passes query and topK to searchCards', async () => {
@@ -554,6 +711,56 @@ describe('POST /api/ask', () => {
     );
   });
 
+  it('rate limits authenticated ask requests before budget and model work', async () => {
+    const limiter = installOneRequestLimiter();
+
+    const allowed = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is the loot action?' }),
+    });
+    expect(allowed.status).toBe(200);
+
+    const rejected = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is the loot action?' }),
+    });
+
+    expect(rejected.status).toBe(429);
+    expect(rejected.headers.get('Retry-After')).toBe('30');
+    await expect(rejected.json()).resolves.toMatchObject({
+      error: 'rate_limited',
+      retry_after_seconds: 30,
+    });
+    expect(mockEnsureAskBudgetAvailable).toHaveBeenCalledTimes(1);
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+    expect(limiter.calls).toEqual([
+      { policy: API_ASK_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+      { policy: API_ASK_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
+  });
+
+  it('fails closed when the ask limiter is unavailable', async () => {
+    const limiter = installUnavailableLimiter();
+
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What is the loot action?' }),
+    });
+
+    expect(res.status).toBe(503);
+    await expect(res.json()).resolves.toMatchObject({
+      error: 'temporarily_unavailable',
+    });
+    expect(mockEnsureAskBudgetAvailable).not.toHaveBeenCalled();
+    expect(mockAsk).not.toHaveBeenCalled();
+    expect(limiter.calls).toEqual([
+      { policy: API_ASK_RATE_LIMIT_POLICY, identity: 'client:stub-client' },
+    ]);
+  });
+
   it('returns 429 before opening the stream when the LLM budget is exhausted', async () => {
     mockEnsureAskBudgetAvailable.mockRejectedValueOnce(
       new LlmBudgetExceededError({
@@ -572,11 +779,13 @@ describe('POST /api/ask', () => {
     });
 
     expect(res.status).toBe(429);
+    expect(res.headers.get('Retry-After')).toBeNull();
     expect(res.headers.get('content-type')).toContain('application/json');
     expect(await res.json()).toMatchObject({
       error: 'llm_budget_exceeded',
       error_description: 'Daily LLM budget exhausted. Try again tomorrow.',
     });
+    expect(mockEnsureAskBudgetAvailable).toHaveBeenCalledWith(null);
     expect(mockAsk).not.toHaveBeenCalled();
   });
 
@@ -609,6 +818,17 @@ describe('POST /api/ask', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 400 before budget checks when the question is too large', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'x'.repeat(2_001) }),
+    });
+    expect(res.status).toBe(400);
+    expect(mockEnsureAskBudgetAvailable).not.toHaveBeenCalled();
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
   it('returns 400 for invalid JSON body', async () => {
     const res = await app.request('/api/ask', {
       method: 'POST',
@@ -629,6 +849,38 @@ describe('POST /api/ask', () => {
       body: JSON.stringify({ question: 'What about traps?', history }),
     });
     expect(mockAsk).toHaveBeenCalledWith('What about traps?', expect.objectContaining({ history }));
+  });
+
+  it('returns 400 before budget checks when history has too many items', async () => {
+    const history = Array.from({ length: 21 }, () => ({
+      role: 'user',
+      content: 'What is loot?',
+    }));
+
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({ question: 'What about traps?', history }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockEnsureAskBudgetAvailable).not.toHaveBeenCalled();
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 before budget checks when a history message is too large', async () => {
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({
+        question: 'What about traps?',
+        history: [{ role: 'user', content: 'x'.repeat(2_001) }],
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(mockEnsureAskBudgetAvailable).not.toHaveBeenCalled();
+    expect(mockAsk).not.toHaveBeenCalled();
   });
 
   it('ignores client-supplied userId on the bearer API path', async () => {
