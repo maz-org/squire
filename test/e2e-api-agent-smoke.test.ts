@@ -34,6 +34,17 @@ describe('scheduled API and agent E2E smoke runner', () => {
     ]);
   });
 
+  it('parses CRLF-delimited SSE events', () => {
+    expect(
+      parseSseEvents(
+        'event: text\r\ndata: {"delta":"Loot"}\r\n\r\nevent: done\r\ndata: {}\r\n\r\n',
+      ),
+    ).toEqual([
+      { event: 'text', data: { delta: 'Loot' } },
+      { event: 'done', data: {} },
+    ]);
+  });
+
   it('runs health, bearer auth, per-game search, per-game ask, and budget checks', async () => {
     const calls: string[] = [];
     const budgetSteps: string[] = [];
@@ -124,7 +135,7 @@ describe('scheduled API and agent E2E smoke runner', () => {
     expect(result.games).toEqual(['frosthaven', 'gloomhaven-2e']);
     expect(result.providerCalls).toBe(2);
     expect(result.budgetExceededBeforeStream).toBe(true);
-    expect(budgetSteps).toEqual(['clear', 'seed']);
+    expect(budgetSteps).toEqual(['clear', 'seed', 'clear']);
     expect(calls).toContain('GET /api/live');
     expect(calls).toContain('GET /api/health');
     expect(calls).toContain('POST /register');

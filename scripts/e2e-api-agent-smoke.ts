@@ -151,6 +151,7 @@ function containsRequiredTerms(answer: string, terms: readonly string[]): boolea
 
 export function parseSseEvents(text: string): SseEvent[] {
   return text
+    .replace(/\r\n/g, '\n')
     .split(/\n\n+/)
     .map((block) => block.trim())
     .filter((block) => block.length > 0)
@@ -416,7 +417,11 @@ export async function runApiAgentSmoke(options: SmokeOptions): Promise<SmokeResu
 
   log(logger, 'seeding budget ledger and checking pre-stream 429');
   await seedBudgetExhaustion();
-  await runBudgetExhaustionCheck(baseUrl, fetchImpl, token);
+  try {
+    await runBudgetExhaustionCheck(baseUrl, fetchImpl, token);
+  } finally {
+    await clearBudgetExhaustion();
+  }
 
   return {
     games: E2E_SMOKE_GAMES.map((game) => game.game),
