@@ -3,6 +3,14 @@ name: LangSmith Regression
 on:
   schedule:
     - cron: '42 9 * * *'
+  pull_request:
+    paths:
+      - '.github/workflows/langsmith-regression.yml'
+      - 'eval/**'
+      - 'test/deployment-config.test.ts'
+      - 'test/eval-matrix-runtime.test.ts'
+      - 'package-lock.json'
+      - 'package.json'
   workflow_dispatch:
     inputs:
       target:
@@ -57,8 +65,29 @@ permissions:
   attestations: read
 
 jobs:
+  preflight:
+    name: LangSmith eval workflow preflight
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run LangSmith eval preflight tests
+        run: npm test -- test/eval-matrix-runtime.test.ts test/deployment-config.test.ts
+
   regression:
     name: ${{ matrix.label }}
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

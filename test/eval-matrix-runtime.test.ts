@@ -183,6 +183,30 @@ describe('eval matrix runtime adapter', () => {
     });
   });
 
+  it('does not require an OpenAI client for Anthropic-only matrix rows', async () => {
+    mockCreateOpenAiResponsesClient.mockImplementation(() => {
+      throw new Error('OPENAI_API_KEY is required for OpenAI evals.');
+    });
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'anthropic-trace',
+      trace: trace({ traceId: 'anthropic-trace' }),
+    });
+
+    const runner = createEvalMatrixRunner({}, { langSmithTracing: false });
+    const output = await runner(input('anthropic'));
+
+    expect(mockCreateOpenAiResponsesClient).not.toHaveBeenCalled();
+    expect(output).toMatchObject({
+      ok: true,
+      traceId: 'anthropic-trace',
+      failureClass: 'none',
+    });
+  });
+
   it('runs Haiku through the Anthropic matrix adapter', async () => {
     mockRunAnthropicEvalCase.mockResolvedValue({
       answer: 'Spyglass reveals the top card.',
