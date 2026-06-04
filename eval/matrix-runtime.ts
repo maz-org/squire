@@ -193,7 +193,12 @@ export function createEvalMatrixRunner(
     options.langSmithTracing === false
       ? undefined
       : withEvalTraceEnvironment(createLangSmithTraceWriterFromEnv(env), env);
-  const openAiClient = createOpenAiResponsesClient(env);
+  let openAiClient: OpenAiResponsesClient | undefined;
+
+  function getOpenAiClient(): OpenAiResponsesClient {
+    openAiClient ??= createOpenAiResponsesClient(env);
+    return openAiClient;
+  }
 
   return async (input) => {
     if (input.agentRuntime === 'deep-agents') {
@@ -205,7 +210,7 @@ export function createEvalMatrixRunner(
     }
 
     if (input.providerConfig.provider === 'openai') {
-      return runOpenAiMatrixCase(input, anthropic, traceWriter, openAiClient, env);
+      return runOpenAiMatrixCase(input, anthropic, traceWriter, getOpenAiClient(), env);
     }
 
     throw new Error(`Matrix runner does not support provider ${input.providerConfig.provider}.`);

@@ -107,11 +107,19 @@ describe('deployment configuration', () => {
 
     expect(parsed.name).toBe('LangSmith Regression');
     expect(workflow).toContain('cron:');
+    expect(workflow).toContain('pull_request:');
+    expect(workflow).toContain('.github/workflows/langsmith-regression.yml');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('suite: adversarial-boundary');
     expect(workflow).toContain('suite: cross-game-boundary');
     expect(workflow).toContain('game: frosthaven');
     expect(workflow).toContain('game: gloomhaven-2e');
+    expect(workflow).toContain('name: LangSmith eval workflow preflight');
+    expect(workflow).toContain("if: github.event_name == 'pull_request'");
+    expect(workflow).toContain(
+      'npm test -- test/eval-matrix-runtime.test.ts test/deployment-config.test.ts',
+    );
+    expect(workflow).toContain("if: github.event_name != 'pull_request'");
     expect(workflow).toContain('npm run eval --');
     expect(workflow).toContain('--matrix');
     expect(workflow).toContain('--max-estimated-cost-usd=');
