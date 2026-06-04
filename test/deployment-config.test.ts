@@ -115,9 +115,13 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('npm run eval --');
     expect(workflow).toContain('--matrix');
     expect(workflow).toContain('--max-estimated-cost-usd=');
-    expect(workflow).toContain('LANGSMITH_API_KEY');
-    expect(workflow).toContain('ANTHROPIC_API_KEY');
-    expect(workflow).toContain('OPENAI_API_KEY');
+    expect(workflow).toContain('LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}');
+    expect(workflow).toContain('ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}');
+    expect(workflow).toContain('VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}');
+    expect(workflow).toContain('OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}');
+    expect(workflow).toContain('missing+=("LANGSMITH_API_KEY")');
+    expect(workflow).toContain('missing+=("ANTHROPIC_API_KEY")');
+    expect(workflow).toContain('missing+=("VOYAGE_API_KEY")');
     expect(workflow).toContain('cat "$REPORT_MD" >> "$GITHUB_STEP_SUMMARY"');
     expect(workflow).toContain('actions/upload-artifact');
   });

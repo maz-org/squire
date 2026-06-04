@@ -103,6 +103,7 @@ jobs:
       LANGSMITH_PROJECT: ${{ vars.LANGSMITH_PROJECT || 'squire-evals' }}
       LANGSMITH_TRACING: 'true'
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       TARGET_INPUT: ${{ inputs.target || 'all' }}
       PROVIDER_INPUT: ${{ inputs.provider || 'anthropic' }}
@@ -145,6 +146,9 @@ jobs:
           [[ -n "$LANGSMITH_API_KEY" ]] || missing+=("LANGSMITH_API_KEY")
           if [[ -z "$ANTHROPIC_API_KEY" ]]; then
             missing+=("ANTHROPIC_API_KEY")
+          fi
+          if [[ -z "$VOYAGE_API_KEY" ]]; then
+            missing+=("VOYAGE_API_KEY")
           fi
           if [[ "$PROVIDER_INPUT" == "openai" && -z "$OPENAI_API_KEY" ]]; then
             missing+=("OPENAI_API_KEY")
