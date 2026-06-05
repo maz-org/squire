@@ -228,6 +228,13 @@ function bootPendingTranscript() {
   transcript.classList.add('squire-transcript');
   transcript.appendChild(answerEl);
 
+  const historyRow = new FakeElement('a');
+  historyRow.classList.add('squire-history-row');
+  historyRow.setAttribute('aria-current', 'page');
+  const drawerHistoryRow = new FakeElement('a');
+  drawerHistoryRow.classList.add('squire-history-row');
+  drawerHistoryRow.setAttribute('aria-current', 'page');
+
   // SQR-98: the footer now lives inside the answer element, not page
   // chrome. Attach it to answerEl so `answerEl.querySelector('.squire-toolcall')`
   // in squire.js resolves the same way the real render path does.
@@ -247,6 +254,9 @@ function bootPendingTranscript() {
       return null;
     },
     querySelectorAll(selector: string) {
+      if (selector === '.squire-history-row[aria-current="page"]') {
+        return [historyRow, drawerHistoryRow];
+      }
       // SQR-108: squire.js looks for `.squire-answer--pending[data-stream-url]`
       // to attach the EventSource. Match that selector directly — both the
       // class and attribute must be present, so post-error/post-done answers
@@ -294,8 +304,10 @@ function bootPendingTranscript() {
     answerEl,
     artifactsEl,
     contentEl,
+    drawerHistoryRow,
     footerEl,
     form,
+    historyRow,
     skeletonEl,
     source,
     toolsEl,
@@ -1234,5 +1246,32 @@ describe('squire.js chat form retargeting', () => {
       source.emit('error', { kind: 'transport', message: 'Trouble.' });
       expect(form.dataset.submitting).toBeUndefined();
     });
+  });
+});
+
+describe('squire.js conversation-history active row status', () => {
+  it('marks the active history row running while a pending answer stream is attached', () => {
+    const { drawerHistoryRow, historyRow } = bootPendingTranscript();
+
+    expect(historyRow.getAttribute('data-history-status')).toBe('running');
+    expect(drawerHistoryRow.getAttribute('data-history-status')).toBe('running');
+  });
+
+  it('clears the active history row running state when the stream finishes', () => {
+    const { drawerHistoryRow, historyRow, source } = bootPendingTranscript();
+
+    source.emit('done', { html: '<p>Done.</p>', consultedSources: [] });
+
+    expect(historyRow.getAttribute('data-history-status')).toBe('idle');
+    expect(drawerHistoryRow.getAttribute('data-history-status')).toBe('idle');
+  });
+
+  it('marks the active history row as error when the current stream errors', () => {
+    const { drawerHistoryRow, historyRow, source } = bootPendingTranscript();
+
+    source.emit('error', { kind: 'transport', message: 'Trouble connecting. Please try again.' });
+
+    expect(historyRow.getAttribute('data-history-status')).toBe('error');
+    expect(drawerHistoryRow.getAttribute('data-history-status')).toBe('error');
   });
 });

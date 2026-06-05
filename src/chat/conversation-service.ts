@@ -4,7 +4,12 @@ import { ask, type HistoryMessage, type EmitFn } from '../service.ts';
 import { getDb } from '../db.ts';
 import * as ConversationRepository from '../db/repositories/conversation-repository.ts';
 import * as MessageRepository from '../db/repositories/message-repository.ts';
-import type { Conversation, ConversationMessage } from '../db/repositories/types.ts';
+import type {
+  Conversation,
+  ConversationHistoryCursor,
+  ConversationMessage,
+} from '../db/repositories/types.ts';
+import { SUPPORTED_GAMES } from '../game.ts';
 import { retrievalSourceLabelToFooterLabel } from '../web-ui/consulted-footer.ts';
 
 const HISTORY_LIMIT = 20;
@@ -15,6 +20,113 @@ export const GENERIC_FAILURE_MESSAGE = "I hit an error and couldn't answer that.
 export interface PendingConversationTurn {
   conversation: Conversation;
   currentUserMessage: ConversationMessage | null;
+}
+
+export type ConversationHistoryStatus = 'idle' | 'running' | 'error';
+
+export interface ConversationHistoryViewRow {
+  id: string;
+  href: string;
+  active: boolean;
+  title: string;
+  preview: string;
+  gameScope: string | null;
+  lastActivityAt: Date;
+  lastActivityLabel: string;
+  status: ConversationHistoryStatus;
+}
+
+export interface ConversationHistoryViewModel {
+  rows: ConversationHistoryViewRow[];
+  nextCursor: string | null;
+}
+
+const DEFAULT_HISTORY_LIMIT = 30;
+const UNTITLED_CHAT_TITLE = 'Untitled chat';
+const gameLabels = new Map<string, string>([
+  ...SUPPORTED_GAMES.map((game) => [game.id, game.label] as const),
+  ['gloomhaven-2e', 'Gloomhaven 2e'],
+]);
+
+function normalizeHistoryText(value: string | null): string {
+  return (value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function gameScopeLabel(gameId: string | null): string | null {
+  if (!gameId) return null;
+  return gameLabels.get(gameId) ?? null;
+}
+
+function encodeHistoryCursor(cursor: ConversationHistoryCursor | null): string | null {
+  if (!cursor) return null;
+  return Buffer.from(
+    JSON.stringify({
+      lastMessageAt: cursor.lastMessageAt.toISOString(),
+      id: cursor.id,
+    }),
+  ).toString('base64url');
+}
+
+function decodeHistoryCursor(cursor: string | undefined): ConversationHistoryCursor | null {
+  if (!cursor) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as {
+      lastMessageAt?: unknown;
+      id?: unknown;
+    };
+    if (typeof decoded.id !== 'string' || typeof decoded.lastMessageAt !== 'string') return null;
+    const lastMessageAt = new Date(decoded.lastMessageAt);
+    if (Number.isNaN(lastMessageAt.getTime())) return null;
+    return { id: decoded.id, lastMessageAt };
+  } catch {
+    return null;
+  }
+}
+
+function formatLastActivityLabel(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}
+
+export async function loadConversationHistory(input: {
+  userId: string;
+  activeConversationId?: string | null;
+  activeStatus?: ConversationHistoryStatus;
+  limit?: number;
+  cursor?: string;
+}): Promise<ConversationHistoryViewModel> {
+  const limit = input.limit ?? DEFAULT_HISTORY_LIMIT;
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new TypeError(`loadConversationHistory: limit must be a positive integer, got ${limit}`);
+  }
+
+  const page = await ConversationRepository.listOwnedSummaries({
+    userId: input.userId,
+    limit,
+    cursor: decodeHistoryCursor(input.cursor),
+  });
+
+  return {
+    rows: page.rows.map((row) => {
+      const active = row.id === input.activeConversationId;
+      const title = normalizeHistoryText(row.firstUserMessageContent) || UNTITLED_CHAT_TITLE;
+      const preview = normalizeHistoryText(row.latestMessageContent);
+      return {
+        id: row.id,
+        href: `/chat/${row.id}`,
+        active,
+        title,
+        preview,
+        gameScope: gameScopeLabel(row.latestMessageGame),
+        lastActivityAt: row.lastMessageAt,
+        lastActivityLabel: formatLastActivityLabel(row.lastMessageAt),
+        status: active ? (input.activeStatus ?? 'idle') : 'idle',
+      };
+    }),
+    nextCursor: encodeHistoryCursor(page.nextCursor),
+  };
 }
 
 function isRetryableTransportError(err: unknown): boolean {

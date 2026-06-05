@@ -1,9 +1,15 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
 import { conversations } from '../schema/conversations.ts';
-import type { Conversation, CreateConversationInput } from './types.ts';
+import type {
+  Conversation,
+  ConversationHistoryCursor,
+  ConversationHistoryPage,
+  ConversationHistorySummary,
+  CreateConversationInput,
+} from './types.ts';
 
 type ConversationRow = typeof conversations.$inferSelect;
 
@@ -14,6 +20,41 @@ function toDomain(row: ConversationRow): Conversation {
     creationIdempotencyKey: row.creationIdempotencyKey,
     createdAt: row.createdAt,
     lastMessageAt: row.lastMessageAt,
+  };
+}
+
+interface ConversationHistorySummaryRow {
+  id: string;
+  userId: string;
+  createdAt: Date | string;
+  lastMessageAt: Date | string;
+  firstUserMessageContent: string | null;
+  latestMessageContent: string | null;
+  latestMessageRole: string | null;
+  latestMessageGame: string | null;
+  latestMessageIsError: boolean | null;
+}
+
+function coerceDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function toHistorySummary(row: ConversationHistorySummaryRow): ConversationHistorySummary {
+  const createdAt = coerceDate(row.createdAt);
+  const lastMessageAt = coerceDate(row.lastMessageAt);
+  return {
+    id: row.id,
+    userId: row.userId,
+    createdAt,
+    lastMessageAt,
+    firstUserMessageContent: row.firstUserMessageContent,
+    latestMessageContent: row.latestMessageContent,
+    latestMessageRole:
+      row.latestMessageRole === 'user' || row.latestMessageRole === 'assistant'
+        ? row.latestMessageRole
+        : null,
+    latestMessageGame: row.latestMessageGame,
+    latestMessageIsError: row.latestMessageIsError ?? false,
   };
 }
 
@@ -28,6 +69,78 @@ export async function findOwnedById(
     .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
     .limit(1);
   return rows[0] ? toDomain(rows[0]) : null;
+}
+
+export async function listOwnedSummaries(input: {
+  userId: string;
+  limit: number;
+  cursor?: ConversationHistoryCursor | null;
+}): Promise<ConversationHistoryPage> {
+  if (!Number.isInteger(input.limit) || input.limit < 1) {
+    throw new TypeError(`listOwnedSummaries: limit must be a positive integer, got ${input.limit}`);
+  }
+
+  const { db } = getDb('server');
+  const pageSize = input.limit + 1;
+  const cursorFilter = input.cursor
+    ? sql`and (c.last_message_at, c.id) < (${input.cursor.lastMessageAt}, ${input.cursor.id}::uuid)`
+    : sql``;
+
+  const result = await db.execute(sql`
+    with base as (
+      select c.id, c.user_id, c.created_at, c.last_message_at
+      from conversations c
+      where c.user_id = ${input.userId}
+      ${cursorFilter}
+      order by c.last_message_at desc, c.id desc
+      limit ${pageSize}
+    ),
+    first_user as (
+      select distinct on (m.conversation_id)
+        m.conversation_id,
+        m.content,
+        m.game
+      from messages m
+      where m.role = 'user'
+        and m.conversation_id in (select id from base)
+      order by m.conversation_id, m.created_at asc, m.id asc
+    ),
+    latest_message as (
+      select distinct on (m.conversation_id)
+        m.conversation_id,
+        m.content,
+        m.role,
+        m.game,
+        m.is_error
+      from messages m
+      where m.conversation_id in (select id from base)
+      order by m.conversation_id, m.created_at desc, m.id desc
+    )
+    select
+      base.id,
+      base.user_id as "userId",
+      base.created_at as "createdAt",
+      base.last_message_at as "lastMessageAt",
+      first_user.content as "firstUserMessageContent",
+      latest_message.content as "latestMessageContent",
+      latest_message.role as "latestMessageRole",
+      coalesce(latest_message.game, first_user.game) as "latestMessageGame",
+      latest_message.is_error as "latestMessageIsError"
+    from base
+    left join first_user on first_user.conversation_id = base.id
+    left join latest_message on latest_message.conversation_id = base.id
+    order by base.last_message_at desc, base.id desc
+  `);
+
+  const summaries = result.rows.map((row) =>
+    toHistorySummary(row as unknown as ConversationHistorySummaryRow),
+  );
+  const pageRows = summaries.slice(0, input.limit);
+  const overflow = summaries[input.limit] ?? null;
+  return {
+    rows: pageRows,
+    nextCursor: overflow ? { lastMessageAt: overflow.lastMessageAt, id: overflow.id } : null,
+  };
 }
 
 export async function create(

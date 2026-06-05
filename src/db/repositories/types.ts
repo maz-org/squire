@@ -64,6 +64,28 @@ export interface CreateConversationInput {
   creationIdempotencyKey?: string | null;
 }
 
+export interface ConversationHistoryCursor {
+  lastMessageAt: Date;
+  id: string;
+}
+
+export interface ConversationHistorySummary {
+  id: string;
+  userId: string;
+  createdAt: Date;
+  lastMessageAt: Date;
+  firstUserMessageContent: string | null;
+  latestMessageContent: string | null;
+  latestMessageRole: 'user' | 'assistant' | null;
+  latestMessageGame: string | null;
+  latestMessageIsError: boolean;
+}
+
+export interface ConversationHistoryPage {
+  rows: ConversationHistorySummary[];
+  nextCursor: ConversationHistoryCursor | null;
+}
+
 export interface ConversationMessage {
   id: string;
   conversationId: string;

@@ -87,8 +87,8 @@ import { setSignedCookie, getSignedCookie, deleteCookie } from 'hono/cookie';
 import {
   layoutShell,
   renderConversationPage,
-  renderConversationTranscript,
-  renderConversationTurnAppendFragment,
+  renderConversationTranscriptWithHistoryOob,
+  renderConversationTurnAppendFragmentWithHistoryOob,
   renderHomePage,
   renderLoginPage,
   renderMarkdownStyleguidePage,
@@ -104,6 +104,7 @@ import {
   createPendingFollowUp,
   GENERIC_FAILURE_MESSAGE,
   loadConversation,
+  loadConversationHistory,
   loadConversationMessage,
   persistAssistantFailureTurn,
   startConversation,
@@ -579,9 +580,12 @@ app.get('/', requirePageSession(), async (c) => {
   // now builds that file before deploy so this fails before runtime.
   try {
     const session = c.get('session')!;
+    const conversationHistory = await loadConversationHistory({ userId: session.userId });
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
-    return c.html(await renderHomePage(session, createCsrfToken(session.id)));
+    return c.html(
+      await renderHomePage(session, createCsrfToken(session.id), { conversationHistory }),
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     const session = c.get('session');
@@ -1084,6 +1088,11 @@ app.get('/chat/:conversationId', async (c) => {
   if (!loaded) return c.notFound();
 
   const pendingStreamUrls = computePendingStreamUrls(loaded.messages, loaded.conversation.id);
+  const conversationHistory = await loadConversationHistory({
+    userId: session.userId,
+    activeConversationId: loaded.conversation.id,
+    activeStatus: pendingStreamUrls.size > 0 ? 'running' : 'idle',
+  });
 
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
@@ -1094,6 +1103,7 @@ app.get('/chat/:conversationId', async (c) => {
       conversationId: loaded.conversation.id,
       messages: loaded.messages,
       pendingStreamUrls,
+      conversationHistory,
     }),
   );
 });
@@ -1144,8 +1154,14 @@ app.post('/chat', async (c) => {
       });
       if (!loaded) return c.notFound();
       const pendingStreamUrls = computePendingStreamUrls(loaded.messages, loaded.conversation.id);
+      const conversationHistory = await loadConversationHistory({
+        userId: session.userId,
+        activeConversationId: loaded.conversation.id,
+        activeStatus: pendingStreamUrls.size > 0 ? 'running' : 'idle',
+      });
       return c.html(
-        renderConversationTranscript({
+        renderConversationTranscriptWithHistoryOob({
+          conversationHistory,
           conversationId: loaded.conversation.id,
           messages: loaded.messages,
           pendingStreamUrls,
@@ -1153,8 +1169,14 @@ app.post('/chat', async (c) => {
       );
     }
 
+    const conversationHistory = await loadConversationHistory({
+      userId: session.userId,
+      activeConversationId: pending.conversation.id,
+      activeStatus: 'running',
+    });
     return c.html(
-      renderConversationTranscript({
+      renderConversationTranscriptWithHistoryOob({
+        conversationHistory,
         conversationId: pending.conversation.id,
         messages: [pending.currentUserMessage],
         pendingStreamUrls: new Map([
@@ -1206,12 +1228,18 @@ app.post('/chat/:conversationId/messages', async (c) => {
     c.header('Vary', 'Cookie');
     // Keep follow-up submissions pinned to the canonical conversation URL.
     c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+    const conversationHistory = await loadConversationHistory({
+      userId: session.userId,
+      activeConversationId: pending.conversation.id,
+      activeStatus: 'running',
+    });
     // ADR 0012 E-3: append-fragment swap. The client's form posts with
     // `hx-target=".squire-transcript"` `hx-swap="beforeend"`, so we return
     // ONLY the new question + pending answer skeleton — NOT the wrapping
     // transcript section.
     return c.html(
-      renderConversationTurnAppendFragment({
+      renderConversationTurnAppendFragmentWithHistoryOob({
+        conversationHistory,
         question: pending.currentUserMessage.content,
         streamUrl: buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
       }),

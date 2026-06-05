@@ -1,11 +1,10 @@
 /**
  * Squire web UI — companion-first layout shell (SQR-65 / SQR-5b).
  *
- * Ships the five mobile regions + desktop rail described in DESIGN.md
- * §Layout. Empty regions, stable selectors, sticky input dock. Visual polish
- * (monogram glyph, drop cap, rule-term highlighter, populated chips/footer)
- * is intentionally out of scope — later tickets drop content into these
- * slots without refactoring the page grid.
+ * Ships the authenticated app shell described in DESIGN.md §Layout:
+ * header, conversation history, transcript/home surface, bottom input,
+ * and footer provenance. Visual polish (drop cap, rule-term highlighter,
+ * populated footer) is intentionally layered into these stable slots.
  *
  * Hono's `html` tagged template literal is used instead of JSX/TSX so this
  * project doesn't need to take on a tsconfig `jsx` mode and a `.tsx` build
@@ -32,6 +31,11 @@ import {
 } from './markdown-styleguide.ts';
 import { DEFAULT_GAME_ID, SUPPORTED_GAME_IDS, SUPPORTED_GAMES } from '../game.ts';
 import type { ConversationMessage, Session } from '../db/repositories/types.ts';
+import type {
+  ConversationHistoryStatus,
+  ConversationHistoryViewModel,
+  ConversationHistoryViewRow,
+} from '../chat/conversation-service.ts';
 
 export interface LayoutShellOptions {
   /**
@@ -77,6 +81,7 @@ export interface LayoutShellOptions {
   chatFormHxSwap?: string;
   showRail?: boolean;
   showChatChrome?: boolean;
+  conversationHistory?: ConversationHistoryViewModel;
   headerContext?: string;
   columnClassName?: string;
   /**
@@ -88,6 +93,11 @@ export interface LayoutShellOptions {
    */
   transcriptOwnsLiveRegion?: boolean;
 }
+
+const EMPTY_CONVERSATION_HISTORY: ConversationHistoryViewModel = {
+  rows: [],
+  nextCursor: null,
+};
 
 interface DocumentOptions {
   bodyContent: HtmlEscapedString;
@@ -163,6 +173,137 @@ function renderActiveGamePicker(): HtmlEscapedString {
         </label>`,
     )}
   </fieldset>` as HtmlEscapedString;
+}
+
+function statusLabel(status: ConversationHistoryStatus): string {
+  if (status === 'running') return 'Running';
+  if (status === 'error') return 'Error';
+  return '';
+}
+
+function renderHistoryRows(rows: ConversationHistoryViewRow[]): HtmlEscapedString {
+  if (rows.length === 0) {
+    return html`<div class="squire-history-empty">
+      <p>No conversations yet.</p>
+    </div>` as HtmlEscapedString;
+  }
+
+  return html`${rows.map((row) => {
+    const rowClass = ['squire-history-row', row.active ? 'is-active' : '']
+      .filter(Boolean)
+      .join(' ');
+    const status = statusLabel(row.status);
+    return html`<a
+      class="${rowClass}"
+      href="${row.href}"
+      data-conversation-id="${row.id}"
+      data-history-status="${row.status}"
+      ${row.active ? html`aria-current="page"` : html``}
+    >
+      <span class="squire-history-row__title">${row.title}</span>
+      ${row.preview
+        ? html`<span class="squire-history-row__preview">${row.preview}</span>`
+        : html``}
+      <span class="squire-history-row__meta">
+        ${row.gameScope ? html`<span>${row.gameScope}</span>` : html``}
+        <time datetime="${row.lastActivityAt.toISOString()}">${row.lastActivityLabel}</time>
+        <span class="squire-history-row__status" ${status ? html`` : html`hidden`}>
+          ${status}
+        </span>
+      </span>
+    </a>`;
+  })}` as HtmlEscapedString;
+}
+
+function renderConversationHistoryList(history: ConversationHistoryViewModel): HtmlEscapedString {
+  return html`<div class="squire-history-list" role="list">
+    ${renderHistoryRows(history.rows)}
+  </div>` as HtmlEscapedString;
+}
+
+function renderNewChatLink(className: string): HtmlEscapedString {
+  return html`<a class="${className}" href="/">New chat</a>` as HtmlEscapedString;
+}
+
+export function renderConversationHistoryShell(
+  history: ConversationHistoryViewModel = EMPTY_CONVERSATION_HISTORY,
+  options: { oob?: boolean } = {},
+): HtmlEscapedString {
+  return html`<div
+    id="squire-history-shell"
+    class="squire-history-shell"
+    ${options.oob ? html`hx-swap-oob="true"` : html``}
+  >
+    <aside class="squire-rail" aria-label="Conversation history">
+      <div class="squire-history-head">
+        <a class="squire-history-brand" href="/" aria-label="Go to Squire home">
+          <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+          <span class="squire-wordmark">Squire</span>
+        </a>
+        ${renderNewChatLink('squire-history-new-chat')}
+      </div>
+      ${renderConversationHistoryList(history)}
+    </aside>
+    <div class="squire-history-backdrop" data-history-close hidden></div>
+    <aside
+      id="squire-history-drawer"
+      class="squire-history-drawer"
+      aria-label="Conversation history"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="squire-history-drawer__header">
+        <span class="squire-history-drawer__title">History</span>
+        <button
+          type="button"
+          class="squire-history-drawer__close"
+          data-history-close
+          aria-label="Close history"
+        >
+          Close
+        </button>
+      </div>
+      ${renderNewChatLink('squire-history-new-chat squire-history-new-chat--drawer')}
+      ${renderConversationHistoryList(history)}
+    </aside>
+  </div>` as HtmlEscapedString;
+}
+
+export function renderConversationTranscriptWithHistoryOob(options: {
+  conversationHistory: ConversationHistoryViewModel;
+  conversationId: string;
+  messages: ConversationMessage[];
+  pendingStreamUrls?: Map<string, string>;
+}): HtmlEscapedString {
+  return html`${renderConversationHistoryShell(options.conversationHistory, { oob: true })}
+  ${renderConversationTranscript({
+    conversationId: options.conversationId,
+    messages: options.messages,
+    pendingStreamUrls: options.pendingStreamUrls,
+  })}` as HtmlEscapedString;
+}
+
+export function renderConversationTurnAppendFragmentWithHistoryOob(options: {
+  conversationHistory: ConversationHistoryViewModel;
+  question: string;
+  streamUrl: string;
+}): HtmlEscapedString {
+  return html`${renderConversationHistoryShell(options.conversationHistory, { oob: true })}
+  ${renderConversationTurnAppendFragment({
+    question: options.question,
+    streamUrl: options.streamUrl,
+  })}` as HtmlEscapedString;
+}
+
+function renderHistoryToggle(): HtmlEscapedString {
+  return html`<button
+    type="button"
+    class="squire-history-toggle"
+    aria-controls="squire-history-drawer"
+    aria-expanded="false"
+  >
+    History
+  </button>` as HtmlEscapedString;
 }
 
 async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedString> {
@@ -365,6 +506,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const authenticated = options.session !== undefined;
   const showRail = options.showRail ?? authenticated;
   const showChatChrome = options.showChatChrome ?? authenticated;
+  const conversationHistory =
+    authenticated && showChatChrome
+      ? (options.conversationHistory ?? EMPTY_CONVERSATION_HISTORY)
+      : null;
   const csrfToken = options.csrfToken;
   if (authenticated && !csrfToken) {
     throw new Error('layoutShell requires a csrfToken when rendering authenticated chrome');
@@ -400,12 +545,9 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         ? html``
         : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
       <div class="squire-frame">
-        ${!authenticated || !showRail
+        ${!authenticated || !showRail || !conversationHistory
           ? html``
-          : html`<aside class="squire-rail" aria-label="Squire ledger">
-              <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
-              <span class="squire-wordmark">Squire</span>
-            </aside>`}
+          : renderConversationHistoryShell(conversationHistory)}
         <div class="${columnClassName}">
           <header class="squire-header">
             ${authenticated && options.session
@@ -413,6 +555,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     <span class="squire-monogram" aria-hidden="true">S</span>
                     <span class="squire-wordmark">Squire</span>
                   </a>
+                  ${conversationHistory ? renderHistoryToggle() : html``}
                   ${showChatChrome
                     ? renderActiveGamePicker()
                     : html`<span class="squire-context">${headerContext}</span>`}
@@ -611,9 +754,9 @@ export async function renderEmailNotVerifiedPage(): Promise<HtmlEscapedString> {
  * Authenticated home-page surface. A purpose-built landing composition —
  * "At your service." Fraunces hero, a sepia small-caps scope line, and
  * nothing else above the input dock. Chip row, verdict block, PICKED
- * badge, spoiler banner, and desktop rail are all intentionally absent:
- * SQR-107 / ADR 0012 supersede ADR 0010's current-turn ledger on the
- * home surface.
+ * badge, and spoiler banner are all intentionally absent: SQR-107 /
+ * ADR 0012 supersede ADR 0010's current-turn ledger on the home surface.
+ * Real owned conversation history lives in the shell per ADR 0020.
  *
  * The hidden `<template id="squire-banner-fixtures">` carries the error,
  * sync, verdict, and PICKED markup so CSS drift tests (and future QA)
@@ -651,14 +794,15 @@ function renderHomeLanding(): HtmlEscapedString {
 export async function renderHomePage(
   session?: Session,
   csrfToken?: string,
+  options: { conversationHistory?: ConversationHistoryViewModel } = {},
 ): Promise<HtmlEscapedString> {
   return layoutShell({
     session,
     csrfToken,
+    conversationHistory: options.conversationHistory,
     chatFormAction: '/chat',
     chatFormHiddenFields: [{ name: 'idempotencyKey', value: '' }],
     mainContent: renderHomeLanding(),
-    showRail: false,
   });
 }
 
@@ -667,6 +811,7 @@ export async function renderConversationPage(options: {
   csrfToken: string;
   conversationId: string;
   messages: ConversationMessage[];
+  conversationHistory?: ConversationHistoryViewModel;
   /**
    * Map of user-message id → SSE stream URL for any user message
    * without an assistant reply. The common case is a single entry (one
@@ -680,8 +825,8 @@ export async function renderConversationPage(options: {
   // Past turns stack oldest-to-newest, the pending answer skeleton (when
   // the latest user message has no assistant response yet) sits at the
   // bottom, and follow-up submits append a single new pending turn rather
-  // than replacing the whole surface. The desktop rail collapses entirely
-  // on this surface in Phase 1 — no `.squire-rail` aside on conversation.
+  // than replacing the whole surface. ADR 0020 keeps real conversation
+  // history in the shell without reviving placeholder campaign/thread UI.
   const transcript = renderConversationTranscript({
     conversationId: options.conversationId,
     messages: options.messages,
@@ -692,10 +837,10 @@ export async function renderConversationPage(options: {
     session: options.session,
     csrfToken: options.csrfToken,
     mainContent: transcript,
+    conversationHistory: options.conversationHistory,
     chatFormAction: `/chat/${options.conversationId}/messages`,
     chatFormHxTarget: '.squire-transcript',
     chatFormHxSwap: 'beforeend',
-    showRail: false,
     transcriptOwnsLiveRegion: true,
   });
 }

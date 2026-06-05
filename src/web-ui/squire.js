@@ -144,6 +144,24 @@ function syncActiveGameControls() {
 
 document.addEventListener('click', function (e) {
   var t = e.target;
+  var historyToggle = t && t.closest ? t.closest('.squire-history-toggle') : null;
+  if (historyToggle) {
+    e.preventDefault();
+    openHistoryDrawer(historyToggle);
+    return;
+  }
+  var historyClose = t && t.closest ? t.closest('[data-history-close]') : null;
+  if (historyClose) {
+    e.preventDefault();
+    closeHistoryDrawer();
+    return;
+  }
+  var drawerRow = t && t.closest ? t.closest('#squire-history-drawer .squire-history-row') : null;
+  if (drawerRow) {
+    closeHistoryDrawer({ restoreFocus: false });
+    return;
+  }
+
   var cite = t && t.closest ? t.closest('.squire-answer .cite') : null;
   document.querySelectorAll('.squire-answer .cite.is-active').forEach(function (el) {
     if (el !== cite) el.classList.remove('is-active');
@@ -152,6 +170,14 @@ document.addEventListener('click', function (e) {
     e.preventDefault();
     cite.classList.toggle('is-active');
   }
+});
+
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape') {
+    closeHistoryDrawer();
+    return;
+  }
+  trapHistoryDrawerFocus(event);
 });
 
 document.addEventListener('submit', function (e) {
@@ -193,6 +219,7 @@ var activeStream = null;
 var SCROLL_PIN_THRESHOLD_PX = 80;
 var pinToBottom = true;
 var pendingScrollOnNextSwap = false;
+var historyDrawerReturnFocus = null;
 
 function generateIdempotencyKey() {
   if (window.crypto && window.crypto.randomUUID) {
@@ -230,6 +257,105 @@ function setFormPendingState(form, pending) {
   // matching comment in the document-level submit handler — the
   // button's inner `<span>S</span>` renders the wax-seal monogram and
   // textContent assignment destroys it.
+}
+
+function activeConversationHistoryRows() {
+  return document.querySelectorAll
+    ? Array.prototype.slice.call(
+        document.querySelectorAll('.squire-history-row[aria-current="page"]'),
+      )
+    : [];
+}
+
+function setActiveConversationHistoryStatus(status) {
+  var rows = activeConversationHistoryRows();
+  for (var i = 0; i < rows.length; i += 1) {
+    var row = rows[i];
+    row.setAttribute('data-history-status', status);
+    var statusEl = row.querySelector ? row.querySelector('.squire-history-row__status') : null;
+    if (!statusEl) continue;
+    if (status === 'running') {
+      statusEl.textContent = 'Running';
+      statusEl.hidden = false;
+      continue;
+    }
+    if (status === 'error') {
+      statusEl.textContent = 'Error';
+      statusEl.hidden = false;
+      continue;
+    }
+    statusEl.textContent = '';
+    statusEl.hidden = true;
+  }
+}
+
+function historyDrawerElements() {
+  return {
+    drawer: document.querySelector ? document.querySelector('#squire-history-drawer') : null,
+    backdrop: document.querySelector ? document.querySelector('.squire-history-backdrop') : null,
+    toggle: document.querySelector ? document.querySelector('.squire-history-toggle') : null,
+  };
+}
+
+function focusableHistoryDrawerElements(drawer) {
+  if (!drawer || !drawer.querySelectorAll) return [];
+  return Array.prototype.slice.call(
+    drawer.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+  );
+}
+
+function openHistoryDrawer(trigger) {
+  var elements = historyDrawerElements();
+  if (!elements.drawer) return;
+  historyDrawerReturnFocus = trigger || elements.toggle || document.activeElement || null;
+  elements.drawer.hidden = false;
+  elements.drawer.setAttribute('aria-hidden', 'false');
+  if (elements.backdrop) elements.backdrop.hidden = false;
+  if (elements.toggle) elements.toggle.setAttribute('aria-expanded', 'true');
+  var focusable = focusableHistoryDrawerElements(elements.drawer);
+  if (focusable[0] && typeof focusable[0].focus === 'function') {
+    focusable[0].focus();
+  }
+}
+
+function closeHistoryDrawer(options) {
+  var elements = historyDrawerElements();
+  if (!elements.drawer || elements.drawer.hidden) return;
+  elements.drawer.hidden = true;
+  elements.drawer.setAttribute('aria-hidden', 'true');
+  if (elements.backdrop) elements.backdrop.hidden = true;
+  if (elements.toggle) elements.toggle.setAttribute('aria-expanded', 'false');
+  var shouldRestoreFocus = !options || options.restoreFocus !== false;
+  if (
+    shouldRestoreFocus &&
+    historyDrawerReturnFocus &&
+    typeof historyDrawerReturnFocus.focus === 'function'
+  ) {
+    historyDrawerReturnFocus.focus();
+  }
+  historyDrawerReturnFocus = null;
+}
+
+function trapHistoryDrawerFocus(event) {
+  if (event.key !== 'Tab') return;
+  var drawer = document.querySelector ? document.querySelector('#squire-history-drawer') : null;
+  if (!drawer || drawer.hidden) return;
+  var focusable = focusableHistoryDrawerElements(drawer);
+  if (focusable.length === 0) {
+    event.preventDefault();
+    return;
+  }
+  var first = focusable[0];
+  var last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+    return;
+  }
+  if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 // SQR-108 / ADR 0012: keep the form's HTMX swap contract aligned with
@@ -656,6 +782,7 @@ function attachPendingAnswerStream(answerEl) {
     url: streamUrl,
     source: source,
   };
+  setActiveConversationHistoryStatus('running');
 
   if (footerEl) footerEl.hidden = true;
 
@@ -816,6 +943,7 @@ function attachPendingAnswerStream(answerEl) {
       activeStream = null;
     }
     source.close();
+    setActiveConversationHistoryStatus('idle');
     // CodeRabbit (PR 274): drain the multi-pending queue. If the
     // server-rendered transcript had several unanswered user messages,
     // attach to the next pending now instead of re-enabling the dock —
@@ -915,6 +1043,7 @@ function attachPendingAnswerStream(answerEl) {
       payload.kind === 'session' ? 'SESSION ENDED' : 'TROUBLE CONNECTING',
       payload.message || 'Trouble connecting. Please try again.',
     );
+    setActiveConversationHistoryStatus('error');
     finishStream();
   });
 }
