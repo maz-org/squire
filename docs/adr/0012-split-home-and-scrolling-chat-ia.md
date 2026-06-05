@@ -2,8 +2,9 @@
 type: ADR
 id: '0012'
 title: 'Split authenticated home + scrolling-chat IA (supersedes 0010)'
-status: active
+status: superseded
 supersedes: '0010'
+superseded_by: '0020'
 date: 2026-04-22
 ---
 

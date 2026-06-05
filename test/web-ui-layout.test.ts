@@ -97,6 +97,36 @@ const testSession: Session = {
 
 const testCsrfToken = 'test-csrf-token';
 
+function testConversationHistory() {
+  return {
+    rows: [
+      {
+        id: 'conv-active',
+        href: '/chat/conv-active',
+        active: true,
+        title: 'How does poison interact with healing?',
+        preview: 'Trouble connecting. Please try again.',
+        gameScope: 'Gloomhaven 2e',
+        lastActivityAt: new Date('2026-01-02T00:00:00.000Z'),
+        lastActivityLabel: 'Jan 2',
+        status: 'running' as const,
+      },
+      {
+        id: 'conv-old',
+        href: '/chat/conv-old',
+        active: false,
+        title: 'How does looting work?',
+        preview: 'Loot tokens in your hex are picked up.',
+        gameScope: 'Frosthaven',
+        lastActivityAt: new Date('2026-01-01T00:00:00.000Z'),
+        lastActivityLabel: 'Jan 1',
+        status: 'idle' as const,
+      },
+    ],
+    nextCursor: null,
+  };
+}
+
 /** mockRenderHomePage impl that renders as logged-in. */
 function loggedInHomePage() {
   return actualLayout.renderHomePage(testSession, testCsrfToken);
@@ -258,12 +288,10 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/squire-account-menu__avatar-fallback"[^>]*>\s*T\s*<\/span>/);
   });
 
-  it('renders the authenticated home shell regions with stable selectors (SQR-107)', async () => {
-    // SQR-107 / ADR 0012: the authenticated home page is a purpose-built
-    // landing — hero + scope line + input dock. No chip row, no desktop
-    // rail, no verdict/PICKED/spoiler stubs. The conversation page keeps
-    // its chip row and rail until PR 2 (SQR-108); see test/conversation.test.ts
-    // for the conversation-page selectors.
+  it('renders the authenticated home shell regions with stable selectors', async () => {
+    // ADR 0020: the authenticated home page stays a purpose-built landing,
+    // but the app shell now has real conversation history. Fake chip rows,
+    // verdict/PICKED/spoiler stubs remain absent.
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
@@ -274,10 +302,12 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).not.toContain('class="squire-toolcall"');
     expect(body).toContain('class="squire-input-dock"');
     // SQR-107: the home page no longer renders a recent-questions chip
-    // row or a desktop rail. Those live on the conversation page only.
+    // row. Conversation history is now a real app-shell surface.
     expect(body).not.toContain('class="squire-recent"');
     expect(body).not.toContain('id="squire-recent-questions"');
-    expect(body).not.toContain('class="squire-rail"');
+    expect(body).toContain('id="squire-history-shell"');
+    expect(body).toContain('class="squire-rail"');
+    expect(body).toContain('New chat');
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('aria-atomic="false"');
     expect(body).toContain('class="sr-only-focusable"');
@@ -293,6 +323,46 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(
       /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*<span aria-hidden="true">S<\/span>\s*<\/button>/,
     );
+  });
+
+  it('renders conversation history rows in the desktop rail and mobile drawer', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(testSession, testCsrfToken, {
+        conversationHistory: testConversationHistory(),
+      }),
+    );
+
+    expect(body).toContain('id="squire-history-shell"');
+    expect(body).toContain('aria-label="Conversation history"');
+    expect(body).toContain('aria-label="Recent conversations"');
+    expect(body).toContain('aria-controls="squire-history-drawer"');
+    expect(body).toContain('id="squire-history-drawer"');
+    expect(body).toContain('role="dialog"');
+    expect(body).toContain('aria-modal="true"');
+    expect(body).toContain('aria-labelledby="squire-history-drawer-title"');
+    expect(body).toContain('tabindex="-1"');
+    expect(body).toContain('How does poison interact with healing?');
+    expect(body).toContain('Trouble connecting. Please try again.');
+    expect(body).toContain('Gloomhaven 2e');
+    expect(body).toContain('aria-current="page"');
+    expect(body).toContain('data-history-status="running"');
+    expect(body).toContain('How does looting work?');
+    expect(body).toContain('Frosthaven');
+  });
+
+  it('does not render the history toggle when the history shell is disabled', async () => {
+    const body = String(
+      await actualLayout.layoutShell({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        showRail: false,
+        conversationHistory: testConversationHistory(),
+      }),
+    );
+
+    expect(body).not.toContain('id="squire-history-shell"');
+    expect(body).not.toContain('class="squire-history-toggle"');
+    expect(body).not.toContain('aria-controls="squire-history-drawer"');
   });
 
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {
@@ -840,7 +910,7 @@ describe('conversation transcript rendering helpers', () => {
     },
   );
 
-  it('renders the conversation page as a full scrolling transcript with role=log and no recent-questions chrome (SQR-108)', async () => {
+  it('renders the conversation page as a full scrolling transcript with role=log and no recent-questions chrome', async () => {
     // ADR 0012: the conversation page is a standard scrolling chat
     // transcript — every persisted turn renders top-to-bottom inside one
     // `.squire-transcript` `role="log" aria-live="polite"` container, not
@@ -875,8 +945,10 @@ describe('conversation transcript rendering helpers', () => {
     // No recent-questions chip rail anywhere on the page (SQR-108).
     expect(body).not.toMatch(/class="squire-recent"/);
     expect(body).not.toMatch(/id="squire-recent-questions"/);
-    // No desktop rail aside on the conversation page (D-6).
-    expect(body).not.toMatch(/class="squire-rail"/);
+    // ADR 0020: the old recent-questions rail stays gone, but real
+    // conversation history is now present in the shell.
+    expect(body).toMatch(/id="squire-history-shell"/);
+    expect(body).toMatch(/class="squire-rail"/);
     // The input dock posts to /chat/:id/messages and uses the
     // append-fragment swap contract.
     expect(body).toMatch(
@@ -1059,11 +1131,9 @@ describe('GET / — signature components (SQR-66)', () => {
     expect(body).not.toMatch(/squire-dropcap/);
   });
 
-  // SQR-107 / ADR 0012: the desktop rail is not rendered on the authenticated
-  // home page any more. Its masthead monogram still lives on the conversation
-  // page (until PR 2 ships SQR-108) and on the login / not-invited pages.
-  // CSS rule coverage for `.squire-monogram--masthead` sizing is preserved in
-  // the `styles.css` block below.
+  // ADR 0020: the authenticated shell renders real conversation history in
+  // the rail/drawer. CSS rule coverage for `.squire-monogram--masthead`
+  // sizing is preserved in the `styles.css` block below.
 });
 
 describe('styles.css — SQR-66 signature component rules', () => {
