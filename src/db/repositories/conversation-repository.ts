@@ -136,10 +136,14 @@ export async function listOwnedSummaries(input: {
     toHistorySummary(row as unknown as ConversationHistorySummaryRow),
   );
   const pageRows = summaries.slice(0, input.limit);
-  const overflow = summaries[input.limit] ?? null;
+  const hasNextPage = summaries.length > input.limit;
+  const lastVisible = pageRows[pageRows.length - 1] ?? null;
   return {
     rows: pageRows,
-    nextCursor: overflow ? { lastMessageAt: overflow.lastMessageAt, id: overflow.id } : null,
+    nextCursor:
+      hasNextPage && lastVisible
+        ? { lastMessageAt: lastVisible.lastMessageAt, id: lastVisible.id }
+        : null,
   };
 }
 

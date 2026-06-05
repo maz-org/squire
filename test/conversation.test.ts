@@ -356,7 +356,7 @@ describe('conversation history summaries', () => {
     expect(history.nextCursor).toBeNull();
   });
 
-  it('falls back for untitled conversations and exposes a cursor after the page limit', async () => {
+  it('falls back for untitled conversations and paginates without skipping rows', async () => {
     const auth = await createAuthContext({ email: 'cursor-history@example.com' });
 
     const newest = await seedHistoryConversation(auth, {
@@ -364,25 +364,48 @@ describe('conversation history summaries', () => {
       latestContent: 'Latest preview',
       lastMessageAt: new Date('2026-01-03T00:00:00.000Z'),
     });
-    await seedHistoryConversation(auth, {
+    const second = await seedHistoryConversation(auth, {
       firstQuestion: 'Second row',
       latestContent: 'Second preview',
       lastMessageAt: new Date('2026-01-02T00:00:00.000Z'),
     });
+    const third = await seedHistoryConversation(auth, {
+      firstQuestion: 'Third row',
+      latestContent: 'Third preview',
+      lastMessageAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
 
-    const history = await loadConversationHistory({
+    const firstPage = await loadConversationHistory({
       userId: auth.userId,
       activeConversationId: newest.conversationId,
       limit: 1,
     });
 
-    expect(history.rows).toHaveLength(1);
-    expect(history.rows[0]).toMatchObject({
+    expect(firstPage.rows).toHaveLength(1);
+    expect(firstPage.rows[0]).toMatchObject({
       id: newest.conversationId,
       title: 'Untitled chat',
       preview: 'Latest preview',
     });
-    expect(history.nextCursor).toEqual(expect.any(String));
+    expect(firstPage.nextCursor).toEqual(expect.any(String));
+
+    const secondPage = await loadConversationHistory({
+      userId: auth.userId,
+      limit: 1,
+      cursor: firstPage.nextCursor ?? undefined,
+    });
+
+    expect(secondPage.rows.map((row) => row.id)).toEqual([second.conversationId]);
+    expect(secondPage.nextCursor).toEqual(expect.any(String));
+
+    const thirdPage = await loadConversationHistory({
+      userId: auth.userId,
+      limit: 1,
+      cursor: secondPage.nextCursor ?? undefined,
+    });
+
+    expect(thirdPage.rows.map((row) => row.id)).toEqual([third.conversationId]);
+    expect(thirdPage.nextCursor).toBeNull();
   });
 });
 

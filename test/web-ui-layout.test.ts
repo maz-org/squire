@@ -337,6 +337,10 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('aria-label="Recent conversations"');
     expect(body).toContain('aria-controls="squire-history-drawer"');
     expect(body).toContain('id="squire-history-drawer"');
+    expect(body).toContain('role="dialog"');
+    expect(body).toContain('aria-modal="true"');
+    expect(body).toContain('aria-labelledby="squire-history-drawer-title"');
+    expect(body).toContain('tabindex="-1"');
     expect(body).toContain('How does poison interact with healing?');
     expect(body).toContain('Trouble connecting. Please try again.');
     expect(body).toContain('Gloomhaven 2e');
@@ -344,6 +348,21 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('data-history-status="running"');
     expect(body).toContain('How does looting work?');
     expect(body).toContain('Frosthaven');
+  });
+
+  it('does not render the history toggle when the history shell is disabled', async () => {
+    const body = String(
+      await actualLayout.layoutShell({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        showRail: false,
+        conversationHistory: testConversationHistory(),
+      }),
+    );
+
+    expect(body).not.toContain('id="squire-history-shell"');
+    expect(body).not.toContain('class="squire-history-toggle"');
+    expect(body).not.toContain('aria-controls="squire-history-drawer"');
   });
 
   it('renders the CSRF token in both meta and inherited hx-headers for authenticated pages', async () => {

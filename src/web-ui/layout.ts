@@ -248,12 +248,15 @@ export function renderConversationHistoryShell(
     <aside
       id="squire-history-drawer"
       class="squire-history-drawer"
-      aria-label="Conversation history"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="squire-history-drawer-title"
       aria-hidden="true"
+      tabindex="-1"
       hidden
     >
       <div class="squire-history-drawer__header">
-        <span class="squire-history-drawer__title">History</span>
+        <span id="squire-history-drawer-title" class="squire-history-drawer__title"> History </span>
         <button
           type="button"
           class="squire-history-drawer__close"
@@ -506,10 +509,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const authenticated = options.session !== undefined;
   const showRail = options.showRail ?? authenticated;
   const showChatChrome = options.showChatChrome ?? authenticated;
-  const conversationHistory =
-    authenticated && showChatChrome
-      ? (options.conversationHistory ?? EMPTY_CONVERSATION_HISTORY)
-      : null;
+  const showConversationHistory = authenticated && showChatChrome && showRail;
+  const conversationHistory = showConversationHistory
+    ? (options.conversationHistory ?? EMPTY_CONVERSATION_HISTORY)
+    : null;
   const csrfToken = options.csrfToken;
   if (authenticated && !csrfToken) {
     throw new Error('layoutShell requires a csrfToken when rendering authenticated chrome');
@@ -545,9 +548,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         ? html``
         : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
       <div class="squire-frame">
-        ${!authenticated || !showRail || !conversationHistory
-          ? html``
-          : renderConversationHistoryShell(conversationHistory)}
+        ${conversationHistory ? renderConversationHistoryShell(conversationHistory) : html``}
         <div class="${columnClassName}">
           <header class="squire-header">
             ${authenticated && options.session
