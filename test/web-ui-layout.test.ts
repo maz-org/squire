@@ -334,6 +334,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
 
     expect(body).toContain('id="squire-history-shell"');
     expect(body).toContain('aria-label="Conversation history"');
+    expect(body).toContain('aria-label="Recent conversations"');
     expect(body).toContain('aria-controls="squire-history-drawer"');
     expect(body).toContain('id="squire-history-drawer"');
     expect(body).toContain('How does poison interact with healing?');

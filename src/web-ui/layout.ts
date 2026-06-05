@@ -216,9 +216,9 @@ function renderHistoryRows(rows: ConversationHistoryViewRow[]): HtmlEscapedStrin
 }
 
 function renderConversationHistoryList(history: ConversationHistoryViewModel): HtmlEscapedString {
-  return html`<div class="squire-history-list" role="list">
+  return html`<nav class="squire-history-list" aria-label="Recent conversations">
     ${renderHistoryRows(history.rows)}
-  </div>` as HtmlEscapedString;
+  </nav>` as HtmlEscapedString;
 }
 
 function renderNewChatLink(className: string): HtmlEscapedString {
