@@ -395,9 +395,11 @@ function ensureAnswerParagraph(contentEl) {
 }
 
 function renderPendingError(answerEl, label, message) {
+  var workEl = answerEl.querySelector ? answerEl.querySelector('.squire-answer-work') : null;
   answerEl.classList.remove('squire-answer--pending');
   answerEl.setAttribute('data-stream-state', 'error');
   answerEl.replaceChildren();
+  if (workEl) answerEl.appendChild(workEl);
 
   var banner = document.createElement('div');
   banner.className = 'squire-banner squire-banner--error';
@@ -569,66 +571,250 @@ function toolNameToConsultedLabel(name) {
     : null;
 }
 
-function ensureToolStatusRow(toolsEl, toolEntries, toolId) {
-  var row = toolEntries[toolId];
+function answerWorkElements(answerEl) {
+  var container = answerEl.querySelector ? answerEl.querySelector('.squire-answer-work') : null;
+  if (!container || !container.querySelector) return null;
+
+  return {
+    container: container,
+    rowsEl: container.querySelector('.squire-answer-work__rows'),
+    statusEl: container.querySelector('.squire-answer-work__status'),
+    titleEl: container.querySelector('.squire-answer-work__title'),
+  };
+}
+
+function resetAnswerWork(elements, entries) {
+  if (!elements || !elements.container) return;
+  if (elements.rowsEl) elements.rowsEl.replaceChildren();
+  if (entries) {
+    for (var id in entries) {
+      delete entries[id];
+    }
+  }
+  elements.container.hidden = false;
+  elements.container.open = true;
+  elements.container.setAttribute('data-work-state', 'running');
+  if (elements.titleEl) elements.titleEl.textContent = 'Working';
+  if (elements.statusEl) elements.statusEl.textContent = 'Working';
+}
+
+function setAnswerWorkRunning(elements) {
+  if (!elements || !elements.container) return;
+  elements.container.hidden = false;
+  elements.container.open = true;
+  elements.container.setAttribute('data-work-state', 'running');
+  if (elements.titleEl) elements.titleEl.textContent = 'Working';
+  if (elements.statusEl) elements.statusEl.textContent = 'Checking sources';
+}
+
+function baseAnswerWorkId(rowId) {
+  return typeof rowId === 'string' ? rowId.replace(/-progress-\d+$/, '') : rowId;
+}
+
+function displaySourceLabel(label) {
+  switch (label) {
+    case 'RULEBOOK':
+      return 'Rulebook';
+    case 'PUZZLE BOOK':
+      return 'Puzzle Book';
+    case 'CARD INDEX':
+      return 'Card Index';
+    case 'SCENARIO BOOK':
+      return 'Scenario Book';
+    case 'SECTION BOOK':
+      return 'Section Book';
+    case 'REFERENCE':
+      return '';
+    default:
+      return typeof label === 'string' ? label : '';
+  }
+}
+
+function answerWorkSourceEntries(labels) {
+  var entries = [];
+  for (var i = 0; i < labels.length; i += 1) {
+    var label = labels[i];
+    var display = displaySourceLabel(label);
+    if (!display) continue;
+    var exists = false;
+    for (var j = 0; j < entries.length; j += 1) {
+      if (entries[j].label === label) {
+        exists = true;
+        break;
+      }
+    }
+    if (!exists) entries.push({ label: label, display: display });
+  }
+  return entries;
+}
+
+function answerWorkSourceRowId(rowId, label, index) {
+  var suffix =
+    typeof label === 'string'
+      ? label
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+      : String(index);
+  return baseAnswerWorkId(rowId) + '-source-' + suffix;
+}
+
+function rememberAnswerWorkSourceLabels(row, labels) {
+  if (!row || !row.dataset) return;
+  var existing = row.dataset.answerWorkSourceLabels
+    ? row.dataset.answerWorkSourceLabels.split('|').filter(Boolean)
+    : [];
+  for (var i = 0; i < labels.length; i += 1) {
+    var label = labels[i];
+    if (isKnownConsultedLabel(label) && existing.indexOf(label) === -1) existing.push(label);
+  }
+  row.dataset.answerWorkSourceLabels = existing.join('|');
+}
+
+function genericProgressDetail(message) {
+  if (message === 'Searching selected sources') return 'Source index';
+  if (message === 'Searching knowledge') return 'Knowledge index';
+  return message;
+}
+
+function inferredAnswerWorkSourceCount(elements) {
+  if (!elements || !elements.rowsEl || !elements.rowsEl.children) return 0;
+  var labels = new Map();
+  for (var i = 0; i < elements.rowsEl.children.length; i += 1) {
+    var row = elements.rowsEl.children[i];
+    var rowLabels =
+      row.dataset && row.dataset.answerWorkSourceLabels
+        ? row.dataset.answerWorkSourceLabels.split('|').filter(Boolean)
+        : [];
+    for (var rowLabelIndex = 0; rowLabelIndex < rowLabels.length; rowLabelIndex += 1) {
+      var rowLabel = rowLabels[rowLabelIndex];
+      if (isKnownConsultedLabel(rowLabel) && !labels.has(rowLabel)) labels.set(rowLabel, true);
+    }
+    var detailEl = row.querySelector ? row.querySelector('.squire-answer-work__row-detail') : null;
+    var sourceEl = row.querySelector ? row.querySelector('.squire-answer-work__row-source') : null;
+    var candidates = [detailEl ? detailEl.textContent : '', sourceEl ? sourceEl.textContent : ''];
+    for (var j = 0; j < candidates.length; j += 1) {
+      var label = candidates[j];
+      if (isKnownConsultedLabel(label) && !labels.has(label)) labels.set(label, true);
+    }
+  }
+  return labels.size;
+}
+
+function completeAnswerWork(elements, sourceCount) {
+  if (!elements || !elements.container) return;
+  var rowCount = elements.rowsEl ? elements.rowsEl.children.length : 0;
+  if (rowCount === 0) {
+    elements.container.hidden = true;
+    elements.container.open = false;
+    elements.container.setAttribute('data-work-state', 'complete');
+    if (elements.statusEl) elements.statusEl.textContent = 'Answered directly';
+    return;
+  }
+
+  elements.container.hidden = false;
+  elements.container.open = false;
+  elements.container.setAttribute('data-work-state', 'complete');
+  if (elements.titleEl) elements.titleEl.textContent = 'Work log';
+  if (elements.statusEl) {
+    var effectiveSourceCount =
+      sourceCount > 0 ? sourceCount : inferredAnswerWorkSourceCount(elements);
+    if (effectiveSourceCount > 0) {
+      elements.statusEl.textContent =
+        'Checked ' +
+        effectiveSourceCount +
+        ' ' +
+        (effectiveSourceCount === 1 ? 'source' : 'sources');
+    } else {
+      elements.statusEl.textContent =
+        'Recorded ' + rowCount + ' ' + (rowCount === 1 ? 'step' : 'steps');
+    }
+  }
+}
+
+function markAnswerWorkError(elements) {
+  if (!elements || !elements.container) return;
+  elements.container.hidden = false;
+  elements.container.open = true;
+  elements.container.setAttribute('data-work-state', 'error');
+  if (elements.titleEl) elements.titleEl.textContent = 'Work log';
+  if (elements.statusEl) elements.statusEl.textContent = 'Stopped before answer';
+}
+
+function ensureAnswerWorkRow(elements, entries, rowId) {
+  var baseId = baseAnswerWorkId(rowId);
+  if (!elements || !elements.rowsEl || !baseId) return null;
+  var row = entries[baseId];
   if (row) return row;
 
   row = document.createElement('div');
-  row.className = 'squire-answer__tool';
-  row.dataset.toolId = toolId;
+  row.className = 'squire-answer-work__row';
+  row.dataset.answerWorkId = baseId;
 
   var labelEl = document.createElement('span');
-  labelEl.className = 'squire-answer__tool-label';
+  labelEl.className = 'squire-answer-work__row-label';
   row.appendChild(labelEl);
 
-  var stateEl = document.createElement('span');
-  stateEl.className = 'squire-answer__tool-state';
-  row.appendChild(stateEl);
+  var detailEl = document.createElement('span');
+  detailEl.className = 'squire-answer-work__row-detail';
+  row.appendChild(detailEl);
 
-  toolEntries[toolId] = row;
-  toolsEl.appendChild(row);
+  var sourceEl = document.createElement('span');
+  sourceEl.className = 'squire-answer-work__row-source';
+  row.appendChild(sourceEl);
+
+  entries[baseId] = row;
+  elements.rowsEl.appendChild(row);
   return row;
 }
 
-function renderToolStatusRow(row, label, state) {
+function renderAnswerWorkRow(elements, entries, rowId, label, detail, sourceLabel, state) {
+  var row = ensureAnswerWorkRow(elements, entries, rowId);
   if (!row) return;
+  rememberAnswerWorkSourceLabels(row, [sourceLabel]);
 
+  row.dataset.workState = state || 'running';
   row.classList.remove('is-error');
-  row.dataset.toolState = state;
+  if (state === 'error') row.classList.add('is-error');
 
-  var labelEl = row.querySelector('.squire-answer__tool-label');
-  var stateEl = row.querySelector('.squire-answer__tool-state');
-  if (!stateEl) return;
+  var labelEl = row.querySelector('.squire-answer-work__row-label');
+  var detailEl = row.querySelector('.squire-answer-work__row-detail');
+  var sourceEl = row.querySelector('.squire-answer-work__row-source');
 
-  if (state === 'running') {
-    if (labelEl) labelEl.textContent = 'CONSULTING';
-    stateEl.textContent = label || 'REFERENCE';
-    return;
-  }
+  if (labelEl) labelEl.textContent = label || 'CHECKING';
+  if (detailEl) detailEl.textContent = detail || 'Source index';
+  if (sourceEl) sourceEl.textContent = displaySourceLabel(sourceLabel);
 
-  if (state === 'error') {
-    row.classList.add('is-error');
-    if (labelEl) labelEl.textContent = "COULDN'T CHECK";
-    stateEl.textContent = 'ONE SOURCE';
-    return;
-  }
-
-  if (state === 'progress') {
-    if (labelEl) labelEl.textContent = 'CHECKING';
-    stateEl.textContent = label || 'REFERENCE';
-    return;
-  }
-
-  if (labelEl) labelEl.textContent = label || 'REFERENCE';
-  stateEl.textContent = '';
+  setAnswerWorkRunning(elements);
+  return row;
 }
 
-function clearToolStatusRows(toolsEl, toolEntries) {
-  if (!toolsEl) return;
-
-  toolsEl.replaceChildren();
-  for (var toolId in toolEntries) {
-    delete toolEntries[toolId];
+function renderAnswerWorkResult(elements, entries, rowId, labels, ok) {
+  var sourceEntries = answerWorkSourceEntries(labels);
+  if (sourceEntries.length === 0) {
+    renderAnswerWorkRow(
+      elements,
+      entries,
+      rowId,
+      ok === false ? "COULDN'T CHECK" : 'CHECKED',
+      'Source index',
+      '',
+      ok === false ? 'error' : 'running',
+    );
+    return;
+  }
+  for (var i = 0; i < sourceEntries.length; i += 1) {
+    var entry = sourceEntries[i];
+    var row = renderAnswerWorkRow(
+      elements,
+      entries,
+      i === 0 ? rowId : answerWorkSourceRowId(rowId, entry.label, i),
+      ok === false ? "COULDN'T CHECK" : 'CHECKED',
+      entry.display,
+      '',
+      ok === false ? 'error' : 'running',
+    );
+    rememberAnswerWorkSourceLabels(row, [entry.label]);
   }
 }
 
@@ -758,23 +944,18 @@ function attachPendingAnswerStream(answerEl) {
   setFormPendingState(formEl, true);
 
   var contentEl = answerEl.querySelector('.squire-answer__content');
-  var toolsEl = answerEl.querySelector('.squire-answer__tools');
+  var answerWork = answerWorkElements(answerEl);
+  var answerWorkEntries = {};
   var artifactsEl = answerEl.querySelector('.squire-answer__artifacts');
   var skeletonEl = answerEl.querySelector('.squire-answer__skeleton');
-  // SQR-98: the consulted footer now lives inside the answer element so
-  // each turn owns its own provenance slot. Historical turns render the
-  // footer server-side from messages.consulted_sources; this stream-side
-  // path populates the footer for the live turn only.
-  var footerEl = answerEl.querySelector('.squire-toolcall');
-  var toolEntries = {};
+  resetAnswerWork(answerWork, answerWorkEntries);
   var preToolBuffer = '';
   var seenFirstDelta = false;
   var toolPhaseStarted = false;
   var artifactEntries = {};
   // Ordered-dedup set of provenance labels collected from tool-result
   // events during this turn. `Map` preserves insertion order, which we
-  // rely on so the footer reads "CONSULTED · RULEBOOK · CARD INDEX" in
-  // the order the agent actually consulted the sources.
+  // use for the completed work-log source count and replay fallback.
   var consultedLabels = new Map();
   var source = new window.EventSource(streamUrl);
 
@@ -783,8 +964,6 @@ function attachPendingAnswerStream(answerEl) {
     source: source,
   };
   setActiveConversationHistoryStatus('running');
-
-  if (footerEl) footerEl.hidden = true;
 
   function finishStream() {
     if (activeStream && activeStream.source === source) {
@@ -812,7 +991,6 @@ function attachPendingAnswerStream(answerEl) {
       seenFirstDelta = true;
       answerEl.setAttribute('data-stream-state', 'streaming');
       if (skeletonEl) skeletonEl.hidden = true;
-      if (toolPhaseStarted) clearToolStatusRows(toolsEl, toolEntries);
     }
 
     if (!contentEl) return;
@@ -855,31 +1033,41 @@ function attachPendingAnswerStream(answerEl) {
   // asymmetry is intentional: at start time we don't yet know which books
   // search_rules will hit; at result time we do.
   source.addEventListener('tool-start', function (event) {
-    if (!toolsEl) return;
     if (seenFirstDelta) {
-      clearToolStatusRows(toolsEl, toolEntries);
       return;
     }
     var payload = JSON.parse(event.data || '{}');
     preToolBuffer = '';
     toolPhaseStarted = true;
-    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
-    renderToolStatusRow(row, payload.label, 'running');
+    if (payload.label === 'REFERENCE') return;
+    renderAnswerWorkRow(
+      answerWork,
+      answerWorkEntries,
+      payload.id,
+      'CHECKING',
+      displaySourceLabel(payload.label) || 'Source index',
+      '',
+      'running',
+    );
   });
 
   source.addEventListener('tool-progress', function (event) {
-    if (!toolsEl) return;
-    if (seenFirstDelta) {
-      clearToolStatusRows(toolsEl, toolEntries);
-      return;
-    }
     var payload = JSON.parse(event.data || '{}');
     if (!payload.message) return;
+    if (seenFirstDelta) {
+      return;
+    }
     preToolBuffer = '';
     toolPhaseStarted = true;
-    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
-    if (payload.label) row.dataset.toolLabel = payload.label;
-    renderToolStatusRow(row, payload.message, 'progress');
+    renderAnswerWorkRow(
+      answerWork,
+      answerWorkEntries,
+      payload.id,
+      'SEARCHING',
+      genericProgressDetail(payload.message),
+      payload.label,
+      'running',
+    );
   });
 
   source.addEventListener('tool-result', function (event) {
@@ -887,12 +1075,11 @@ function attachPendingAnswerStream(answerEl) {
     // SQR-98: once the answer text has started streaming, any subsequent
     // tool events are late-arriving stragglers (agent loop finishing
     // up), not actual sources for this answer. Ignore them both for the
-    // tool-indicator row AND for the consulted-footer accumulator —
-    // otherwise the footer would show stale labels that weren't really
-    // consulted for the answer the user is reading. CodeRabbit caught
-    // the accumulator leak on 2026-04-21.
+    // work-log row AND for the source-label accumulator — otherwise the
+    // answer would show stale labels that weren't really checked for the
+    // answer the user is reading. CodeRabbit caught the accumulator leak
+    // on 2026-04-21.
     if (seenFirstDelta) {
-      if (toolsEl) clearToolStatusRows(toolsEl, toolEntries);
       return;
     }
     // Accumulate provenance labels for the consulted footer. Only successful
@@ -909,16 +1096,24 @@ function attachPendingAnswerStream(answerEl) {
         }
       }
     }
-    if (!toolsEl) return;
-    var row = ensureToolStatusRow(toolsEl, toolEntries, payload.id);
-    renderToolStatusRow(row, resultLabels[0] || null, payload.ok === false ? 'error' : 'running');
+    renderAnswerWorkResult(answerWork, answerWorkEntries, payload.id, resultLabels, payload.ok);
   });
 
   source.addEventListener('answer-artifact', function (event) {
     if (!artifactsEl || seenFirstDelta) return;
     var payload = JSON.parse(event.data || '{}');
+    if (!payload.id || payload.kind !== 'section-quote' || !payload.title || !payload.body) return;
     preToolBuffer = '';
     toolPhaseStarted = true;
+    renderAnswerWorkRow(
+      answerWork,
+      answerWorkEntries,
+      payload.id,
+      'FOUND',
+      payload.title,
+      payload.sourceLabel,
+      'running',
+    );
     renderAnswerArtifact(artifactsEl, artifactEntries, payload);
     if (skeletonEl) skeletonEl.hidden = true;
     if (pinToBottom) scrollToBottom();
@@ -928,7 +1123,6 @@ function attachPendingAnswerStream(answerEl) {
     answerEl.classList.remove('squire-answer--pending');
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
-    if (toolsEl) toolsEl.replaceChildren();
     // SQR-108 QA: close the EventSource SYNCHRONOUSLY before deferring
     // the HTML swap. The server ends its handler after sending `done`,
     // which closes the TCP connection from the server side; the
@@ -974,34 +1168,32 @@ function attachPendingAnswerStream(answerEl) {
         contentEl.classList.add('squire-markdown');
         contentEl.innerHTML = payload.html;
       }
-      // SQR-98: write the accumulated provenance labels into the footer.
-      // Empty map → leave the footer hidden (AC #3: no source data, no lie).
-      //
       // Replay fallback: if the stream completed without emitting any
       // tool_result events (e.g., duplicate /stream hit that hit the
       // idempotent already-persisted path), the server now includes the
       // row's persisted consultedSources in the done payload so we can
-      // still rebuild the footer. Live-stream labels take precedence — if
+      // still rebuild the work log. Live-stream labels take precedence — if
       // consultedLabels has entries, they came from this actual turn.
-      if (footerEl) {
-        var labels = [];
-        if (consultedLabels.size > 0) {
-          consultedLabels.forEach(function (_value, label) {
-            labels.push(label);
-          });
-        } else if (Array.isArray(payload.consultedSources)) {
-          for (var i = 0; i < payload.consultedSources.length; i += 1) {
-            var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
-            if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
-          }
+      var labels = [];
+      if (consultedLabels.size > 0) {
+        consultedLabels.forEach(function (_value, label) {
+          labels.push(label);
+        });
+      } else if (Array.isArray(payload.consultedSources)) {
+        for (var i = 0; i < payload.consultedSources.length; i += 1) {
+          var mapped = toolNameToConsultedLabel(payload.consultedSources[i]);
+          if (mapped && labels.indexOf(mapped) === -1) labels.push(mapped);
         }
-        if (labels.length > 0) {
-          footerEl.textContent = ['CONSULTED'].concat(labels).join(' · ');
-          footerEl.hidden = false;
-        } else {
-          footerEl.hidden = true;
+        if (
+          labels.length > 0 &&
+          answerWork &&
+          answerWork.rowsEl &&
+          answerWork.rowsEl.children.length === 0
+        ) {
+          renderAnswerWorkResult(answerWork, answerWorkEntries, 'persisted-sources', labels, true);
         }
       }
+      completeAnswerWork(answerWork, labels.length);
       if (pinToBottom) scrollToBottom();
       var clearAriaBusy = function () {
         answerEl.setAttribute('aria-busy', 'false');
@@ -1044,6 +1236,7 @@ function attachPendingAnswerStream(answerEl) {
       payload.message || 'Trouble connecting. Please try again.',
     );
     setActiveConversationHistoryStatus('error');
+    markAnswerWorkError(answerWork);
     finishStream();
   });
 }

@@ -70,9 +70,10 @@ async function expectFinalAnswer(page: Page, expectedAnswer: RegExp): Promise<vo
     expectedAnswer,
   );
   await expect(latestAnswer.locator('[data-testid="answer-content"] a')).toBeVisible();
-  await expect(latestAnswer.locator('[data-testid="consulted-footer"]')).toContainText(
-    'CONSULTED · RULEBOOK',
+  await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText(
+    'Checked 1 source',
   );
+  await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText('Rulebook');
   await expect(page.locator('.squire-input-dock')).not.toHaveAttribute('data-submitting', 'true');
 }
 

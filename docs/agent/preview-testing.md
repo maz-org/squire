@@ -87,16 +87,17 @@ tools instead — they drive the same underlying page:
 
 Prefer `preview_eval` for assertions. A single expression can return
 exactly the state you need without a screenshot-and-diff cycle. Example
-that covers "footer text + parent element + URL + any console noise":
+that covers "work-log rows + parent element + URL + any console noise":
 
 ```js
 (() => {
-  const footer = document.querySelector('.squire-toolcall');
-  const parent = footer?.parentElement;
+  const workLog = document.querySelector('.squire-answer-work');
+  const parent = workLog?.parentElement;
   return {
     url: location.href,
-    footerText: (footer?.textContent || '').trim(),
-    footerHidden: footer?.hidden,
+    workLogText: (workLog?.textContent || '').trim(),
+    workLogHidden: workLog?.hidden,
+    workLogOpen: workLog?.open,
     parentTag: parent?.tagName,
     parentClass: parent?.className,
   };

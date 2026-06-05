@@ -20,7 +20,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { renderAssistantContent } from './assistant-content.ts';
-import { aggregateSourceLabels, formatConsultedFooter } from './consulted-footer.ts';
+import { aggregateSourceLabels, type ToolSourceLabel } from './consulted-footer.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
 import {
@@ -417,33 +417,55 @@ function renderMarkdownSpecimenCard(options: {
   </section>` as HtmlEscapedString;
 }
 
-// SQR-98: single source of truth for the hidden footer slot. The JS in
-// squire.js finds the footer via `answerEl.querySelector('.squire-toolcall')`
-// on every turn — pending, completed with no sources, completed with sources.
-// If the hidden-state markup diverges between the pending skeleton and the
-// render path, squire.js could miss the element and silently fail to
-// populate on `done`. Collapsing to one constant locks the contract.
-const HIDDEN_CONSULTED_FOOTER = html`<footer
-  class="squire-toolcall"
-  data-testid="consulted-footer"
-  aria-live="off"
-  hidden
-></footer>` as HtmlEscapedString;
+function displayToolSourceLabel(label: ToolSourceLabel): string {
+  switch (label) {
+    case 'RULEBOOK':
+      return 'Rulebook';
+    case 'PUZZLE BOOK':
+      return 'Puzzle Book';
+    case 'CARD INDEX':
+      return 'Card Index';
+    case 'SCENARIO BOOK':
+      return 'Scenario Book';
+    case 'SECTION BOOK':
+      return 'Section Book';
+  }
+}
 
-function renderConsultedFooter(message: ConversationMessage): HtmlEscapedString {
-  // SQR-98: hydrate the consulted-sources footer from persisted tool names
-  // on this message. Null, empty, or all-null-mapped sources → hidden.
-  // Error messages never show a footer (the turn didn't produce an answer).
+function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedString {
   if (message.isError || !message.consultedSources || message.consultedSources.length === 0) {
-    return HIDDEN_CONSULTED_FOOTER;
+    return html`` as HtmlEscapedString;
   }
   const labels = aggregateSourceLabels(message.consultedSources);
   if (labels.length === 0) {
-    return HIDDEN_CONSULTED_FOOTER;
+    return html`` as HtmlEscapedString;
   }
-  return html`<footer class="squire-toolcall" data-testid="consulted-footer" aria-live="off">
-    ${formatConsultedFooter(labels)}
-  </footer>` as HtmlEscapedString;
+  return html`<details
+    class="squire-answer-work"
+    data-testid="answer-progress"
+    data-work-state="complete"
+  >
+    <summary class="squire-answer-work__summary">
+      <span class="squire-answer-work__title">Work log</span>
+      <span class="squire-answer-work__status" data-answer-work-status
+        >Checked ${labels.length} ${labels.length === 1 ? 'source' : 'sources'}</span
+      >
+    </summary>
+    <div class="squire-answer-work__rows" data-answer-work-rows>
+      ${labels.map(
+        (label) =>
+          html`<div
+            class="squire-answer-work__row"
+            data-answer-work-source-labels="${label}"
+            data-work-state="complete"
+          >
+            <span class="squire-answer-work__row-label">CHECKED</span>
+            <span class="squire-answer-work__row-detail">${displayToolSourceLabel(label)}</span>
+            <span class="squire-answer-work__row-source"></span>
+          </div>`,
+      )}
+    </div>
+  </details>` as HtmlEscapedString;
 }
 
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
@@ -461,7 +483,7 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
     aria-labelledby="${labelId}"
   >
     <h2 class="sr-only" id="${labelId}">Squire answer</h2>
-    ${renderAnswerContent(content)} ${renderConsultedFooter(message)}
+    ${renderCompletedAnswerWork(message)} ${renderAnswerContent(content)}
   </article>` as HtmlEscapedString;
 }
 
@@ -484,7 +506,18 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
     aria-labelledby="${labelId}"
   >
     <h2 class="sr-only" id="${labelId}">Squire answer</h2>
-    <div class="squire-answer__tools" data-testid="answer-progress" aria-live="off"></div>
+    <details class="squire-answer-work" data-testid="answer-progress" data-work-state="idle" open>
+      <summary class="squire-answer-work__summary">
+        <span class="squire-answer-work__title">Working</span>
+        <span class="squire-answer-work__status" data-answer-work-status>Waiting</span>
+      </summary>
+      <div
+        class="squire-answer-work__rows"
+        data-answer-work-rows
+        aria-live="polite"
+        aria-atomic="false"
+      ></div>
+    </details>
     <div class="squire-answer__artifacts" data-testid="answer-artifacts" aria-live="polite"></div>
     <div class="squire-answer__content squire-markdown" data-testid="answer-content"></div>
     <div class="squire-answer__skeleton" aria-hidden="true">
@@ -493,14 +526,13 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
     </div>
-    ${HIDDEN_CONSULTED_FOOTER}
   </article>` as HtmlEscapedString;
 }
 
 /**
  * Render the full HTML document for the companion-first layout. Stable
- * selectors (`squire-header`, `squire-surface`, `squire-toolcall`,
- * `squire-input-dock`, `squire-rail`) are guaranteed by the acceptance
+ * selectors (`squire-header`, `squire-surface`, `squire-input-dock`,
+ * `squire-rail`) are guaranteed by the acceptance
  * criteria — later tickets target them by class.
  */
 export async function layoutShell(options: LayoutShellOptions = {}): Promise<HtmlEscapedString> {

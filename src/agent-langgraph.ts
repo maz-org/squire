@@ -293,8 +293,10 @@ function threadIdFor(options: AskOptions | undefined): string {
 }
 
 function progressMessageForTool(name: string, input: Record<string, unknown>): string {
-  if (name === 'search_knowledge')
-    return `Searching ${input.scope ? 'selected sources' : 'knowledge'}`;
+  if (name === 'search_knowledge') {
+    const scopeLabels = sourceLabelsForSearchScope(input.scope);
+    return `Searching ${scopeLabels.length > 0 ? scopeLabels.join(', ') : 'knowledge'}`;
+  }
   if (name === 'open_entity')
     return `Opening ${typeof input.ref === 'string' ? input.ref : 'source'}`;
   if (name === 'neighbors')
@@ -305,6 +307,23 @@ function progressMessageForTool(name: string, input: Record<string, unknown>): s
   if (name === 'schema')
     return `Checking ${typeof input.kind === 'string' ? input.kind : 'source'} schema`;
   return `Running ${name}`;
+}
+
+function sourceLabelsForSearchScope(scope: unknown): string[] {
+  if (!Array.isArray(scope)) return [];
+  const labelsByScope: Record<string, string> = {
+    rules_passage: 'Rulebook',
+    scenario: 'Scenario Book',
+    section: 'Section Book',
+    card: 'Card Index',
+  };
+  const labels: string[] = [];
+  for (const item of scope) {
+    if (typeof item !== 'string') continue;
+    const label = labelsByScope[item];
+    if (label && !labels.includes(label)) labels.push(label);
+  }
+  return labels;
 }
 
 function sectionArtifactFromToolResult(

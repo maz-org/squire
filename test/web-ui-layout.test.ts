@@ -296,9 +296,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-surface"');
     expect(body).toContain('id="squire-surface"');
-    // SQR-98: the consulted footer is no longer page chrome — it lives
-    // inside each answer element now. The home page has no answer so no
-    // footer should be rendered. See separate SQR-98 test below.
+    // Source provenance now lives in answer-owned work logs, not page chrome.
     expect(body).not.toContain('class="squire-toolcall"');
     expect(body).toContain('class="squire-input-dock"');
     // SQR-107: the home page no longer renders a recent-questions chip
@@ -308,8 +306,8 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('id="squire-history-shell"');
     expect(body).toContain('class="squire-rail"');
     expect(body).toContain('New chat');
-    expect(body).toContain('aria-live="polite"');
-    expect(body).toContain('aria-atomic="false"');
+    expect(body).not.toContain('id="squire-run-progress"');
+    expect(body).not.toContain('class="squire-run-progress"');
     expect(body).toContain('class="sr-only-focusable"');
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
     expect(body).toMatch(/<input[^>]*id="squire-input"/);
@@ -633,9 +631,12 @@ describe('renderConversationTurnAppendFragment (SQR-108 / ADR 0012 E-3)', () => 
     expect(body).toMatch(
       /<div[^>]*class="squire-answer__content squire-markdown"[^>]*data-testid="answer-content"[^>]*><\/div>/,
     );
-    expect(body).toMatch(
-      /<div[^>]*class="squire-answer__tools"[^>]*data-testid="answer-progress"[^>]*aria-live="off"><\/div>/,
-    );
+    expect(body).toContain('class="squire-answer-work"');
+    expect(body).toContain('data-testid="answer-progress"');
+    expect(body).toContain('data-work-state="idle"');
+    expect(body).toContain('<span class="squire-answer-work__title">Working</span>');
+    expect(body).toContain('data-answer-work-status');
+    expect(body).toContain('data-answer-work-rows');
     expect(body).toMatch(
       /<div[^>]*class="squire-answer__artifacts"[^>]*data-testid="answer-artifacts"[^>]*aria-live="polite"><\/div>/,
     );
@@ -716,7 +717,8 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     expect(body).toMatch(
       /<div[^>]*class="squire-answer__content squire-markdown"[^>]*data-testid="answer-content"/,
     );
-    expect(body).toMatch(/<footer[^>]*data-testid="consulted-footer"/);
+    expect(body).not.toContain('data-testid="consulted-footer"');
+    expect(body).not.toContain('class="squire-toolcall"');
   });
 
   it('renders prior turns oldest-first then a pending skeleton for any user message in pendingStreamUrls', () => {
@@ -1315,19 +1317,14 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     expect(withoutFixtures).not.toContain('SPOILER WARNING');
   });
 
-  it('no longer ships the hardcoded CONSULTED placeholder in page chrome (SQR-98)', async () => {
-    // Regression: the old footer lied — it always said "CONSULTED · RULEBOOK
-    // P.47 · SCENARIO BOOK §14" regardless of what the answer actually
-    // consulted. The new footer lives inside each answer element and is
-    // populated from real per-turn source data. The home page has no
-    // current answer, so it should not render a consulted footer at all.
+  it('does not ship the removed source footer in page chrome', async () => {
     const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
     expect(body).not.toContain('CONSULTED · RULEBOOK P.47');
     expect(body).not.toContain('SCENARIO BOOK §14');
     expect(body).not.toMatch(/<footer[^>]*class="squire-toolcall"/);
   });
 
-  describe('SQR-98: per-answer consulted footer', () => {
+  describe('SQR-98: per-answer source work log', () => {
     const userMessage = {
       id: 'user-1',
       conversationId: 'conv-sqr98',
@@ -1365,64 +1362,67 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       );
     }
 
-    it('renders the consulted footer inside the answer element for a single source', () => {
+    it('renders a collapsed checked-source work log inside the answer element for a single source', () => {
       const body = renderTranscriptAnswer(answerWith(['search_rules']));
-      // Template whitespace is nondeterministic across hono/html versions,
-      // so match the shape with \s* tolerance between tokens rather than
-      // asserting byte-for-byte equality.
       expect(body).toMatch(
-        /class="squire-turn squire-answer"[\s\S]*<footer[^>]*class="squire-toolcall"[^>]*>\s*CONSULTED · RULEBOOK\s*<\/footer>/,
+        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Work log[\s\S]*Checked 1 source[\s\S]*CHECKED[\s\S]*Rulebook[\s\S]*<\/details>/,
       );
+      expect(body).not.toContain('CONSULTED');
+      expect(body).not.toContain('class="squire-toolcall"');
     });
 
     it('aggregates multiple tool names into deduped labels, preserving insertion order', () => {
       const body = renderTranscriptAnswer(
         answerWith(['search_rules', 'search_cards', 'search_rules', 'get_card', 'get_section']),
       );
-      expect(body).toContain('CONSULTED · RULEBOOK · CARD INDEX · SECTION BOOK');
+      expect(body).toMatch(
+        /CHECKED[\s\S]*Rulebook[\s\S]*CHECKED[\s\S]*Card Index[\s\S]*CHECKED[\s\S]*Section Book/,
+      );
+      expect(body).not.toContain('CONSULTED');
       // The RULEBOOK-first ordering is the insertion-order contract — ensure
       // CARD INDEX doesn't leapfrog ahead of RULEBOOK just because more
       // card-family tools were called.
-      expect(body.indexOf('RULEBOOK')).toBeLessThan(body.indexOf('CARD INDEX'));
+      expect(body.indexOf('Rulebook')).toBeLessThan(body.indexOf('Card Index'));
     });
 
-    it('renders the footer hidden when consultedSources is null (pre-SQR-98 rows)', () => {
+    it('renders no source work log when consultedSources is null (pre-SQR-98 rows)', () => {
       const body = renderTranscriptAnswer(answerWith(null));
-      expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
+      expect(body).not.toContain('class="squire-answer-work"');
+      expect(body).not.toContain('class="squire-toolcall"');
     });
 
-    it('renders the footer hidden when the only tool used was a traversal tool', () => {
+    it('renders no source work log when the only tool used was a traversal tool', () => {
       // follow_links is a utility/traversal tool — the actual content came
       // from whatever tool resolved the link, so it never contributes a
       // provenance label on its own. An answer that "only" used follow_links
       // shouldn't show any consulted sources.
       const body = renderTranscriptAnswer(answerWith(['follow_links']));
-      expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
+      expect(body).not.toContain('class="squire-answer-work"');
+      expect(body).not.toContain('class="squire-toolcall"');
     });
 
-    it('renders the footer hidden for error messages even if sources exist', () => {
-      // An error turn didn't produce a real answer. The footer would lie
-      // about the error being the result of consulting a source.
+    it('renders no source work log for error messages even if sources exist', () => {
+      // An error turn didn't produce a real answer. A source row would imply
+      // the error was a sourced answer.
       const body = renderTranscriptAnswer(
         answerWith(['search_rules'], {
           isError: true,
           content: 'Trouble connecting. Please try again.',
         }),
       );
-      expect(body).toMatch(/<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/);
+      expect(body).not.toContain('class="squire-answer-work"');
+      expect(body).not.toContain('class="squire-toolcall"');
     });
 
     it('maps scenario-family and section-family tools to the right labels', () => {
       const body = renderTranscriptAnswer(
         answerWith(['find_scenario', 'get_scenario', 'get_section']),
       );
-      expect(body).toContain('CONSULTED · SCENARIO BOOK · SECTION BOOK');
+      expect(body).toMatch(/CHECKED[\s\S]*Scenario Book[\s\S]*CHECKED[\s\S]*Section Book/);
+      expect(body).not.toContain('CONSULTED');
     });
 
-    it('renders a hidden empty footer slot inside the pending answer skeleton', async () => {
-      // The JS relies on answerEl.querySelector('.squire-toolcall') to find
-      // and populate the footer during the live stream, so the pending
-      // skeleton must always ship one in the DOM — just hidden until `done`.
+    it('renders the pending answer work log without a footer slot', async () => {
       const body = String(
         await actualLayout.renderConversationPage({
           session: testSession,
@@ -1432,9 +1432,9 @@ describe('GET / — SQR-107 purpose-built landing', () => {
           pendingStreamUrls: new Map([['user-1', '/chat/conv-sqr98/messages/user-1/stream']]),
         }),
       );
-      expect(body).toMatch(
-        /squire-answer--pending[\s\S]*<footer[^>]*class="squire-toolcall"[^>]*hidden[^>]*><\/footer>/,
-      );
+      expect(body).toMatch(/squire-answer--pending[\s\S]*class="squire-answer-work"/);
+      expect(body).not.toContain('class="squire-toolcall"');
+      expect(body).not.toContain('data-testid="consulted-footer"');
     });
   });
 
@@ -1618,14 +1618,8 @@ describe('styles.css — SQR-67 stub-region rules', () => {
     expect(body).toContain('color: var(--parchment)');
   });
 
-  it('declares the tool-call footer with sepia small-caps ≤12px font', () => {
-    const rule = css.match(/\.squire-toolcall\s*\{[^}]*\}/);
-    expect(rule).not.toBeNull();
-    const body = rule![0];
-    expect(body).toContain('color: var(--sepia)');
-    expect(body).toContain('text-transform: uppercase');
-    expect(body).toMatch(/letter-spacing:\s*0\.1[4-9]em|letter-spacing:\s*0\.2/);
-    expect(body).toMatch(/font-size:\s*1[012]px/);
+  it('does not declare the removed tool-call footer class', () => {
+    expect(css).not.toContain('.squire-toolcall');
   });
 });
 

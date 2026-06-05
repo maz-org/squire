@@ -1,5 +1,5 @@
 /**
- * SQR-98 / SQR-105: consulted-footer provenance labels.
+ * SQR-98 / SQR-105: answer-source provenance labels.
  *
  * Two label sources feed the footer:
  *
@@ -14,7 +14,9 @@
  *    in `consulted_sources` (post-SQR-105 rows).
  *
  * `aggregateSourceLabels` handles both storage formats — tool names (old rows)
- * and label strings (new rows) — so no migration is required.
+ * and label strings (new rows) — so no migration is required. The visible
+ * source UI is now the answer-owned work log; this module remains the shared
+ * mapping layer for persisted source labels.
  *
  * Keeping `TOOL_SOURCE_LABELS` typed against `AgentToolName` means adding a
  * selectable tool without extending the map is a typecheck failure.
@@ -41,7 +43,7 @@ export const TOOL_SOURCE_LABEL_VALUES: readonly ToolSourceLabel[] = TOOL_SOURCE_
  * Wire-level label the SSE `tool-start` / `tool-result` events send for
  * tools that aren't provenance sources (traversal/utility tools like
  * `follow_links`, or unknown tools). The aggregator in the UI and in the
- * client skip this value when building the CONSULTED footer. Exporting
+ * client skip this value when building visible source rows. Exporting
  * the constant keeps server.ts's fallback emission and any downstream
  * filters in sync with one string.
  */
@@ -141,12 +143,4 @@ export function aggregateSourceLabels(stored: readonly string[]): ToolSourceLabe
     ordered.push(label);
   }
   return ordered;
-}
-
-/**
- * Format the dedup'd labels into the footer text. Empty input → '', which
- * the render path treats as "leave the footer hidden."
- */
-export function formatConsultedFooter(labels: readonly ToolSourceLabel[]): string {
-  return labels.length === 0 ? '' : ['CONSULTED', ...labels].join(' · ');
 }

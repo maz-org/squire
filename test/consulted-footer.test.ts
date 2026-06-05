@@ -1,12 +1,12 @@
 /**
- * Unit tests for src/web-ui/consulted-footer.ts (SQR-98).
+ * Unit tests for src/web-ui/consulted-footer.ts (SQR-98 source-label mapping).
  *
  * The typed-union drift guard on `TOOL_SOURCE_LABELS` is enforced at
  * compile time — adding a selectable tool without a matching label
  * entry would fail `npm run typecheck` before reaching runtime. These
  * tests cover the concrete mapping values (which TS can't assert),
- * plus the aggregation + formatting helpers used by both the SSE route
- * and the historical-answer render path.
+ * plus the aggregation helper used by both the SSE route and the
+ * historical-answer render path.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +15,6 @@ import { describe, expect, it } from 'vitest';
 import { ALL_AGENT_TOOLS } from '../src/agent.ts';
 import {
   aggregateSourceLabels,
-  formatConsultedFooter,
   retrievalSourceLabelToFooterLabel,
   TOOL_SOURCE_FALLBACK_LABEL,
   TOOL_SOURCE_LABEL_VALUES,
@@ -97,7 +96,7 @@ describe('aggregateSourceLabels', () => {
 
   it('dedupes labels that come from different tool names in the same family', () => {
     // get_card, list_cards, and search_cards all map to CARD INDEX — one
-    // agent turn can hit several of them, but the footer should show
+    // agent turn can hit several of them, but the source list should show
     // CARD INDEX exactly once.
     expect(aggregateSourceLabels(['list_card_types', 'search_cards', 'get_card'])).toEqual([
       'CARD INDEX',
@@ -106,8 +105,7 @@ describe('aggregateSourceLabels', () => {
 
   it('preserves insertion order of the first-seen label', () => {
     // RULEBOOK came first even though the card tools were called more
-    // often — the footer reads "CONSULTED · RULEBOOK · CARD INDEX", not
-    // the reverse.
+    // often; preserve that order in the visible source list.
     expect(
       aggregateSourceLabels(['search_rules', 'search_cards', 'search_cards', 'list_cards']),
     ).toEqual(['RULEBOOK', 'CARD INDEX']);
@@ -129,7 +127,7 @@ describe('JS ↔ TS label drift guard', () => {
   // safety via AgentToolName, the JS side is a plain object. This test
   // keeps the two in sync: if someone adds a new ToolSourceLabel to the
   // TS union, the JS allowlist must also learn the label, or the live
-  // stream will silently drop the new source from the footer.
+  // stream will silently drop the new source from the work log.
   it("squire.js KNOWN_CONSULTED_LABELS matches consulted-footer.ts's ToolSourceLabel", () => {
     const jsSrc = readFileSync(
       fileURLToPath(new URL('../src/web-ui/squire.js', import.meta.url)),
@@ -166,7 +164,7 @@ describe('JS ↔ TS label drift guard', () => {
     // the server. This JS map must stay in sync with TOOL_SOURCE_LABELS
     // in src/web-ui/consulted-footer.ts. If a new tool is added to
     // ALL_AGENT_TOOLS + TOOL_SOURCE_LABELS but not to TOOL_NAME_TO_LABEL,
-    // replayed turns that used the new tool render a blank footer.
+    // replayed turns that used the new tool render a blank work log.
     const jsSrc = readFileSync(
       fileURLToPath(new URL('../src/web-ui/squire.js', import.meta.url)),
       'utf8',
@@ -180,7 +178,7 @@ describe('JS ↔ TS label drift guard', () => {
 
     // Derive from ALL_AGENT_TOOLS, filtering to the tools that actually map to
     // a provenance label. Same drift guarantee as the first drift test:
-    // a new tool added to ALL_AGENT_TOOLS that should surface in the footer
+    // a new tool added to ALL_AGENT_TOOLS that should surface in the work log
     // must also be added to TOOL_NAME_TO_LABEL, or this loop fails.
     const toolNames = ALL_AGENT_TOOLS.map((tool) => tool.name).filter(
       (name) => toolSourceLabel(name) !== null,
@@ -199,18 +197,5 @@ describe('JS ↔ TS label drift guard', () => {
         ).toBe(false);
       }
     }
-  });
-});
-
-describe('formatConsultedFooter', () => {
-  it('returns an empty string for empty input (render path treats this as "hidden")', () => {
-    expect(formatConsultedFooter([])).toBe('');
-  });
-
-  it('joins labels with the CONSULTED prefix and a middle-dot separator', () => {
-    expect(formatConsultedFooter(['RULEBOOK'])).toBe('CONSULTED · RULEBOOK');
-    expect(formatConsultedFooter(['RULEBOOK', 'CARD INDEX'])).toBe(
-      'CONSULTED · RULEBOOK · CARD INDEX',
-    );
   });
 });

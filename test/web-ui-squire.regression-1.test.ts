@@ -50,6 +50,7 @@ class FakeElement {
   textContent = '';
   innerHTML = '';
   hidden = false;
+  open = false;
   dataset: Record<string, string> = {};
   parentNode: FakeElement | null = null;
   readonly children: FakeElement[] = [];
@@ -207,8 +208,23 @@ function bootPendingTranscript() {
 
   const contentEl = new FakeElement('div');
   contentEl.classList.add('squire-answer__content');
-  const toolsEl = new FakeElement('div');
-  toolsEl.classList.add('squire-answer__tools');
+  const workEl = new FakeElement('details');
+  workEl.classList.add('squire-answer-work');
+  workEl.setAttribute('data-work-state', 'idle');
+  const workSummaryEl = new FakeElement('summary');
+  workSummaryEl.classList.add('squire-answer-work__summary');
+  const workTitleEl = new FakeElement('span');
+  workTitleEl.classList.add('squire-answer-work__title');
+  const workStatusEl = new FakeElement('span');
+  workStatusEl.classList.add('squire-answer-work__status');
+  workStatusEl.setAttribute('data-answer-work-status', '');
+  const workRowsEl = new FakeElement('div');
+  workRowsEl.classList.add('squire-answer-work__rows');
+  workRowsEl.setAttribute('data-answer-work-rows', '');
+  workSummaryEl.appendChild(workTitleEl);
+  workSummaryEl.appendChild(workStatusEl);
+  workEl.appendChild(workSummaryEl);
+  workEl.appendChild(workRowsEl);
   const artifactsEl = new FakeElement('div');
   artifactsEl.classList.add('squire-answer__artifacts');
   const skeletonEl = new FakeElement('div');
@@ -219,7 +235,7 @@ function bootPendingTranscript() {
   // SQR-108 / ADR 0012: stream URL lives on the pending answer article,
   // not on the (now-deleted) `.squire-transcript--pending` wrapper.
   answerEl.setAttribute('data-stream-url', '/chat/stream');
-  answerEl.appendChild(toolsEl);
+  answerEl.appendChild(workEl);
   answerEl.appendChild(artifactsEl);
   answerEl.appendChild(contentEl);
   answerEl.appendChild(skeletonEl);
@@ -234,13 +250,6 @@ function bootPendingTranscript() {
   const drawerHistoryRow = new FakeElement('a');
   drawerHistoryRow.classList.add('squire-history-row');
   drawerHistoryRow.setAttribute('aria-current', 'page');
-
-  // SQR-98: the footer now lives inside the answer element, not page
-  // chrome. Attach it to answerEl so `answerEl.querySelector('.squire-toolcall')`
-  // in squire.js resolves the same way the real render path does.
-  const footerEl = new FakeElement('footer');
-  footerEl.classList.add('squire-toolcall');
-  answerEl.appendChild(footerEl);
 
   const document = {
     addEventListener(event: string, callback: () => void) {
@@ -283,8 +292,8 @@ function bootPendingTranscript() {
       scrollTo: () => {},
       // SQR-108: the `done` handler uses requestAnimationFrame to
       // wrap the streamed→final-HTML swap in aria-busy. Run callbacks
-      // synchronously in tests so the assertions on contentEl /
-      // footerEl don't need to wait for paint.
+      // synchronously in tests so the assertions on contentEl don't need
+      // to wait for paint.
       requestAnimationFrame: (cb: () => void) => {
         cb();
         return 0;
@@ -305,12 +314,13 @@ function bootPendingTranscript() {
     artifactsEl,
     contentEl,
     drawerHistoryRow,
-    footerEl,
     form,
     historyRow,
     skeletonEl,
     source,
-    toolsEl,
+    workEl,
+    workRowsEl,
+    workStatusEl,
   };
 }
 
@@ -475,28 +485,33 @@ describe('squire.js chat form retargeting', () => {
     expect(attributes['hx-swap']).toBe('beforeend');
   });
 
-  it('suppresses pre-tool filler, keeps lookup metadata present-tense, and clears it when the answer starts', () => {
-    const { contentEl, footerEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+  it('suppresses pre-tool filler, keeps lookup work separate, and preserves it after the answer', () => {
+    const { answerEl, contentEl, skeletonEl, source, workEl, workRowsEl, workStatusEl } =
+      bootPendingTranscript();
+
+    expect(workEl.open).toBe(true);
+    expect(workEl.getAttribute('data-work-state')).toBe('running');
+    expect(workStatusEl.textContent).toBe('Working');
 
     source.emit('text-delta', { delta: 'Let me ' });
     source.emit('text-delta', { delta: 'look that up carefully before answering.' });
     expect(contentEl.querySelector('p')).toBeNull();
-    expect(footerEl.hidden).toBe(true);
+    expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
 
     source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
 
-    const row = toolsEl.children[0];
+    const row = workRowsEl.children[0];
     expect(row).toBeTruthy();
-    expect(row.querySelector('.squire-answer__tool-label')?.textContent).toBe('CONSULTING');
-    expect(row.querySelector('.squire-answer__tool-state')?.textContent).toBe('RULEBOOK');
+    expect(row.querySelector('.squire-answer-work__row-label')?.textContent).toBe('CHECKING');
+    expect(row.querySelector('.squire-answer-work__row-detail')?.textContent).toBe('Rulebook');
 
     source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
-    expect(row.querySelector('.squire-answer__tool-label')?.textContent).toBe('CONSULTING');
-    expect(row.querySelector('.squire-answer__tool-state')?.textContent).toBe('RULEBOOK');
+    expect(row.querySelector('.squire-answer-work__row-label')?.textContent).toBe('CHECKED');
+    expect(row.querySelector('.squire-answer-work__row-detail')?.textContent).toBe('Rulebook');
 
     source.emit('text-delta', { delta: 'Loot 2 can reach up to two hexes away.' });
     expect(skeletonEl.hidden).toBe(true);
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(1);
     expect(contentEl.querySelector('p')?.textContent).toBe(
       'Loot 2 can reach up to two hexes away.',
     );
@@ -504,15 +519,17 @@ describe('squire.js chat form retargeting', () => {
     source.emit('done', {
       html: '<p>Loot 2 can reach up to two hexes away.</p>',
     });
-    // SQR-98: the single successful tool-result fed RULEBOOK into the
-    // consulted set. The done handler writes the real provenance line.
-    expect(footerEl.hidden).toBe(false);
-    expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK');
+    expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+    expect(workEl.open).toBe(false);
+    expect(workEl.getAttribute('data-work-state')).toBe('complete');
+    expect(workStatusEl.textContent).toBe('Checked 1 source');
+    expect(workRowsEl.children).toHaveLength(1);
     expect(source.closed).toBe(true);
   });
 
-  it('renders progress rows outside answer prose and keeps done/footer behavior intact', () => {
-    const { contentEl, footerEl, source, toolsEl } = bootPendingTranscript();
+  it('renders progress rows inline above the answer and keeps done behavior intact', () => {
+    const { answerEl, contentEl, source, workEl, workRowsEl, workStatusEl } =
+      bootPendingTranscript();
 
     source.emit('tool-start', { id: 'follow_links', label: 'REFERENCE' });
     source.emit('tool-progress', {
@@ -522,27 +539,104 @@ describe('squire.js chat form retargeting', () => {
     });
 
     expect(contentEl.querySelector('p')).toBeNull();
-    expect(toolsEl.children).toHaveLength(2);
-    const progressRow = toolsEl.children[1];
-    expect(progressRow.dataset.toolLabel).toBe('SECTION BOOK');
-    expect(progressRow.querySelector('.squire-answer__tool-label')?.textContent).toBe('CHECKING');
-    expect(progressRow.querySelector('.squire-answer__tool-state')?.textContent).toBe(
+    expect(workEl.open).toBe(true);
+    expect(workEl.getAttribute('data-work-state')).toBe('running');
+    expect(workRowsEl.children).toHaveLength(1);
+    const progressRow = workRowsEl.children[0];
+    expect(progressRow.querySelector('.squire-answer-work__row-label')?.textContent).toBe(
+      'SEARCHING',
+    );
+    expect(progressRow.querySelector('.squire-answer-work__row-detail')?.textContent).toBe(
       'Found Locked Down',
+    );
+    expect(progressRow.querySelector('.squire-answer-work__row-source')?.textContent).toBe(
+      'Section Book',
     );
 
     source.emit('tool-result', { id: 'follow_links', labels: ['SECTION BOOK'], ok: true });
+    expect(progressRow.querySelector('.squire-answer-work__row-label')?.textContent).toBe(
+      'CHECKED',
+    );
+    expect(progressRow.querySelector('.squire-answer-work__row-detail')?.textContent).toBe(
+      'Section Book',
+    );
+    expect(progressRow.querySelector('.squire-answer-work__row-source')?.textContent).toBe('');
+
     source.emit('done', {
       html: '<p>The section is <strong>Locked Down</strong>.</p>',
     });
 
     expect(contentEl.innerHTML).toBe('<p>The section is <strong>Locked Down</strong>.</p>');
-    expect(toolsEl.children).toHaveLength(0);
-    expect(footerEl.textContent).toBe('CONSULTED · SECTION BOOK');
-    expect(footerEl.hidden).toBe(false);
+    expect(workEl.open).toBe(false);
+    expect(workEl.getAttribute('data-work-state')).toBe('complete');
+    expect(workStatusEl.textContent).toBe('Checked 1 source');
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+  });
+
+  it('collapses inline work details on done without deleting the work log', () => {
+    const { source, workEl, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    expect(workEl.hidden).toBe(false);
+    expect(workEl.open).toBe(true);
+    expect(workEl.getAttribute('data-work-state')).toBe('running');
+    expect(workStatusEl.textContent).toBe('Working');
+
+    source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
+
+    expect(workEl.open).toBe(true);
+    expect(workEl.getAttribute('data-work-state')).toBe('running');
+    expect(workStatusEl.textContent).toBe('Checking sources');
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-label')?.textContent,
+    ).toBe('CHECKING');
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
+    ).toBe('Rulebook');
+
+    source.emit('tool-progress', {
+      id: 'search_rules-progress-1',
+      label: 'RULEBOOK',
+      message: 'Checking line of sight',
+    });
+
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-label')?.textContent,
+    ).toBe('SEARCHING');
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
+    ).toBe('Checking line of sight');
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-source')?.textContent,
+    ).toBe('Rulebook');
+
+    source.emit('done', { html: '<p>Answer.</p>' });
+
+    expect(workEl.hidden).toBe(false);
+    expect(workEl.open).toBe(false);
+    expect(workEl.getAttribute('data-work-state')).toBe('complete');
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(workStatusEl.textContent).toBe('Checked 1 source');
+  });
+
+  it('keeps inline work details open when the stream errors', () => {
+    const { answerEl, source, workEl, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
+    source.emit('error', { kind: 'transport', message: 'Trouble connecting.' });
+
+    expect(answerEl.getAttribute('data-stream-state')).toBe('error');
+    expect(workEl.hidden).toBe(false);
+    expect(workEl.open).toBe(true);
+    expect(workEl.getAttribute('data-work-state')).toBe('error');
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(workStatusEl.textContent).toBe('Stopped before answer');
   });
 
   it('renders section artifacts as text outside answer prose before final answer starts', () => {
-    const { artifactsEl, contentEl, source, toolsEl } = bootPendingTranscript();
+    const { artifactsEl, contentEl, source, workRowsEl } = bootPendingTranscript();
 
     source.emit('answer-artifact', {
       id: 'section-quote-1',
@@ -554,7 +648,16 @@ describe('squire.js chat form retargeting', () => {
     });
 
     expect(contentEl.querySelector('p')).toBeNull();
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-label')?.textContent,
+    ).toBe('FOUND');
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
+    ).toBe('Locked Down');
+    expect(
+      workRowsEl.children[0].querySelector('.squire-answer-work__row-source')?.textContent,
+    ).toBe('Section Book');
     expect(artifactsEl.children).toHaveLength(1);
     const artifact = artifactsEl.children[0];
     expect(artifact.querySelector('.squire-answer__artifact-title')?.textContent).toBe('');
@@ -580,14 +683,14 @@ describe('squire.js chat form retargeting', () => {
     expect(contentEl.innerHTML).toBe('<p>The section is <strong>Locked Down</strong>.</p>');
   });
 
-  // SQR-98: the consulted footer must reflect the actual tool calls this
+  // The completed inline work log must reflect the actual tool calls this
   // turn made — never placeholder text, never stale data from a prior
   // turn. These tests cover the ok:false exclusion, dedup + insertion
   // order, the REFERENCE fallback filter (utility tools shouldn't leak
-  // into the footer), and the empty/error paths.
-  describe('SQR-98 consulted footer', () => {
-    it('renders CONSULTED · RULEBOOK · CARD INDEX in insertion order', () => {
-      const { footerEl, source } = bootPendingTranscript();
+  // into the work log), and the empty/error paths.
+  describe('SQR-98 source work log', () => {
+    it('renders CHECKED Rulebook and CHECKED Card Index in insertion order', () => {
+      const { answerEl, source, workRowsEl } = bootPendingTranscript();
 
       source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
@@ -595,47 +698,83 @@ describe('squire.js chat form retargeting', () => {
       source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>' });
 
-      expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
-      expect(footerEl.hidden).toBe(false);
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+      expect(workRowsEl.children).toHaveLength(2);
+      expect(
+        workRowsEl.children[0].querySelector('.squire-answer-work__row-label')?.textContent,
+      ).toBe('CHECKED');
+      expect(
+        workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
+      ).toBe('Rulebook');
+      expect(
+        workRowsEl.children[1].querySelector('.squire-answer-work__row-label')?.textContent,
+      ).toBe('CHECKED');
+      expect(
+        workRowsEl.children[1].querySelector('.squire-answer-work__row-detail')?.textContent,
+      ).toBe('Card Index');
     });
 
     it('dedupes repeated labels and preserves first-seen order', () => {
-      const { footerEl, source } = bootPendingTranscript();
+      const { answerEl, source, workRowsEl } = bootPendingTranscript();
 
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>' });
 
-      expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · CARD INDEX');
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+      expect(workRowsEl.children).toHaveLength(2);
+      expect(
+        workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
+      ).toBe('Rulebook');
+      expect(
+        workRowsEl.children[1].querySelector('.squire-answer-work__row-detail')?.textContent,
+      ).toBe('Card Index');
     });
 
     it('excludes labels from failed tool calls', () => {
-      const { footerEl, source } = bootPendingTranscript();
+      const { answerEl, source, workRowsEl } = bootPendingTranscript();
 
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: false });
       source.emit('tool-result', { id: 'card-index', labels: ['CARD INDEX'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>' });
 
-      expect(footerEl.textContent).toBe('CONSULTED · CARD INDEX');
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+      expect(workRowsEl.children).toHaveLength(2);
+      expect(
+        workRowsEl.children[0].querySelector('.squire-answer-work__row-label')?.textContent,
+      ).toBe("COULDN'T CHECK");
+      expect(
+        workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
+      ).toBe('Rulebook');
+      expect(
+        workRowsEl.children[1].querySelector('.squire-answer-work__row-label')?.textContent,
+      ).toBe('CHECKED');
+      expect(
+        workRowsEl.children[1].querySelector('.squire-answer-work__row-detail')?.textContent,
+      ).toBe('Card Index');
     });
 
     it('ignores the REFERENCE fallback label (utility/traversal tools)', () => {
-      const { footerEl, source } = bootPendingTranscript();
+      const { answerEl, source } = bootPendingTranscript();
 
-      // follow_links emits label=REFERENCE on the wire — our footer
-      // aggregator should treat that as "not a real source".
+      // follow_links emits label=REFERENCE on the wire; the work log should
+      // treat that as "not a real source".
       source.emit('tool-result', { id: 'follow_links', labels: ['REFERENCE'], ok: true });
       source.emit('done', { html: '<p>Answer.</p>' });
 
-      expect(footerEl.textContent).toBe('');
-      expect(footerEl.hidden).toBe(true);
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
     });
 
     it('accumulates multiple labels from a single tool-result (post-SQR-105 search_rules)', () => {
-      const { footerEl, source } = bootPendingTranscript();
+      const { answerEl, source, workRowsEl } = bootPendingTranscript();
 
       // search_rules hit both the rulebook and section book in one call
+      source.emit('tool-progress', {
+        id: 'search_rules-progress-1',
+        label: 'REFERENCE',
+        message: 'Searching selected sources',
+      });
       source.emit('tool-result', {
         id: 'search_rules',
         labels: ['RULEBOOK', 'SECTION BOOK'],
@@ -643,54 +782,68 @@ describe('squire.js chat form retargeting', () => {
       });
       source.emit('done', { html: '<p>Answer.</p>' });
 
-      expect(footerEl.textContent).toBe('CONSULTED · RULEBOOK · SECTION BOOK');
-      expect(footerEl.hidden).toBe(false);
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+      expect(workRowsEl.children).toHaveLength(2);
+      const rulebookRow = workRowsEl.children[0];
+      const sectionBookRow = workRowsEl.children[1];
+      expect(rulebookRow.querySelector('.squire-answer-work__row-label')?.textContent).toBe(
+        'CHECKED',
+      );
+      expect(rulebookRow.querySelector('.squire-answer-work__row-detail')?.textContent).toBe(
+        'Rulebook',
+      );
+      expect(sectionBookRow.querySelector('.squire-answer-work__row-label')?.textContent).toBe(
+        'CHECKED',
+      );
+      expect(sectionBookRow.querySelector('.squire-answer-work__row-detail')?.textContent).toBe(
+        'Section Book',
+      );
     });
 
-    it('leaves the footer hidden on done when no tools fired', () => {
-      const { footerEl, source } = bootPendingTranscript();
+    it('leaves no source UI on done when no tools fired', () => {
+      const { answerEl, source, workEl } = bootPendingTranscript();
 
       source.emit('text-delta', { delta: 'Short direct answer.' });
       source.emit('done', { html: '<p>Short direct answer.</p>' });
 
-      expect(footerEl.hidden).toBe(true);
-      expect(footerEl.textContent).toBe('');
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+      expect(workEl.hidden).toBe(true);
     });
 
-    it('leaves the footer hidden when the stream errors', () => {
-      const { footerEl, source } = bootPendingTranscript();
+    it('does not render a footer when the stream errors', () => {
+      const { answerEl, source } = bootPendingTranscript();
 
       source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
       source.emit('error', { kind: 'transport', message: 'Trouble connecting.' });
 
-      expect(footerEl.hidden).toBe(true);
+      expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
     });
   });
 
   it('streams tool-free answers immediately instead of waiting for done', () => {
-    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+    const { contentEl, skeletonEl, source, workRowsEl } = bootPendingTranscript();
 
     source.emit('text-delta', { delta: 'Closed doors block line-of-sight for looting.' });
 
     expect(skeletonEl.hidden).toBe(true);
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe(
       'Closed doors block line-of-sight for looting.',
     );
   });
 
   it('does not suppress normal tool-free answers that open with a conversational phrase', () => {
-    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+    const { contentEl, skeletonEl, source, workRowsEl } = bootPendingTranscript();
 
     source.emit('text-delta', { delta: "Here's how looting works." });
 
     expect(skeletonEl.hidden).toBe(true);
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe("Here's how looting works.");
   });
 
   it('strips lookupy filler once a tool-free answer reveals itself', () => {
-    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+    const { contentEl, skeletonEl, source, workRowsEl } = bootPendingTranscript();
 
     // Question: What game is this assistant for?
     source.emit('text-delta', { delta: 'Let me check the quick version: ' });
@@ -699,40 +852,42 @@ describe('squire.js chat form retargeting', () => {
     source.emit('text-delta', { delta: 'This assistant is for Frosthaven.' });
 
     expect(skeletonEl.hidden).toBe(true);
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('This assistant is for Frosthaven.');
   });
 
   it('treats a one-sentence tool-free lookupy opening as answer text', () => {
-    const { contentEl, skeletonEl, source, toolsEl } = bootPendingTranscript();
+    const { contentEl, skeletonEl, source, workRowsEl } = bootPendingTranscript();
 
     source.emit('text-delta', { delta: "I'll confirm monsters cannot loot treasure tiles." });
 
     expect(skeletonEl.hidden).toBe(true);
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('monsters cannot loot treasure tiles.');
   });
 
   it('renders error state when tool-result reports failure', () => {
-    const { source, toolsEl } = bootPendingTranscript();
+    const { source, workRowsEl } = bootPendingTranscript();
 
     source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
     source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: false });
 
-    const row = toolsEl.children[0];
+    const row = workRowsEl.children[0];
     expect(row?.classList.contains('is-error')).toBe(true);
-    expect(row?.querySelector('.squire-answer__tool-label')?.textContent).toBe("COULDN'T CHECK");
-    expect(row?.querySelector('.squire-answer__tool-state')?.textContent).toBe('ONE SOURCE');
+    expect(row?.querySelector('.squire-answer-work__row-label')?.textContent).toBe(
+      "COULDN'T CHECK",
+    );
+    expect(row?.querySelector('.squire-answer-work__row-detail')?.textContent).toBe('Rulebook');
   });
 
   it('ignores late tool-status events once answer prose is already on screen', () => {
-    const { contentEl, source, toolsEl } = bootPendingTranscript();
+    const { contentEl, source, workRowsEl } = bootPendingTranscript();
 
     source.emit('text-delta', { delta: 'Monsters cannot loot treasure tiles.' });
     source.emit('tool-start', { id: 'rulebook', label: 'RULEBOOK' });
     source.emit('tool-result', { id: 'rulebook', labels: ['RULEBOOK'], ok: true });
 
-    expect(toolsEl.children).toHaveLength(0);
+    expect(workRowsEl.children).toHaveLength(0);
     expect(contentEl.querySelector('p')?.textContent).toBe('Monsters cannot loot treasure tiles.');
   });
 
@@ -797,15 +952,12 @@ describe('squire.js chat form retargeting', () => {
       toolsEl.classList.add('squire-answer__tools');
       const skeletonEl = new FakeElement('div');
       skeletonEl.classList.add('squire-answer__skeleton');
-      const footerEl = new FakeElement('footer');
-      footerEl.classList.add('squire-toolcall');
       const answerEl = new FakeElement('article');
       answerEl.classList.add('squire-answer--pending');
       answerEl.setAttribute('data-stream-url', '/chat/scroll/messages/m1/stream');
       answerEl.appendChild(contentEl);
       answerEl.appendChild(toolsEl);
       answerEl.appendChild(skeletonEl);
-      answerEl.appendChild(footerEl);
 
       const scrollIntoViewCalls: Array<unknown> = [];
       Object.defineProperty(answerEl, 'scrollIntoView', {
@@ -928,15 +1080,12 @@ describe('squire.js chat form retargeting', () => {
       toolsEl.classList.add('squire-answer__tools');
       const skeletonEl = new FakeElement('div');
       skeletonEl.classList.add('squire-answer__skeleton');
-      const footerEl = new FakeElement('footer');
-      footerEl.classList.add('squire-toolcall');
       const answerEl = new FakeElement('article');
       answerEl.classList.add('squire-answer--pending');
       answerEl.setAttribute('data-stream-url', '/chat/coalesce/messages/m1/stream');
       answerEl.appendChild(contentEl);
       answerEl.appendChild(toolsEl);
       answerEl.appendChild(skeletonEl);
-      answerEl.appendChild(footerEl);
 
       const form = {
         setAttribute() {},
@@ -1021,15 +1170,12 @@ describe('squire.js chat form retargeting', () => {
       toolsEl.classList.add('squire-answer__tools');
       const skeletonEl = new FakeElement('div');
       skeletonEl.classList.add('squire-answer__skeleton');
-      const footerEl = new FakeElement('footer');
-      footerEl.classList.add('squire-toolcall');
       const newPending = new FakeElement('article');
       newPending.classList.add('squire-answer--pending');
       newPending.setAttribute('data-stream-url', '/chat/scroll/messages/new/stream');
       newPending.appendChild(contentEl);
       newPending.appendChild(toolsEl);
       newPending.appendChild(skeletonEl);
-      newPending.appendChild(footerEl);
 
       const scrollIntoViewCalls: Array<unknown> = [];
       Object.defineProperty(newPending, 'scrollIntoView', {
@@ -1124,15 +1270,12 @@ describe('squire.js chat form retargeting', () => {
         toolsEl.classList.add('squire-answer__tools');
         const skeletonEl = new FakeElement('div');
         skeletonEl.classList.add('squire-answer__skeleton');
-        const footerEl = new FakeElement('footer');
-        footerEl.classList.add('squire-toolcall');
         const answerEl = new FakeElement('article');
         answerEl.classList.add('squire-answer--pending');
         answerEl.setAttribute('data-stream-url', streamUrl);
         answerEl.appendChild(contentEl);
         answerEl.appendChild(toolsEl);
         answerEl.appendChild(skeletonEl);
-        answerEl.appendChild(footerEl);
         return answerEl;
       }
 
