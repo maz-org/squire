@@ -792,6 +792,7 @@ function renderAnswerWorkRow(elements, entries, rowId, label, detail, sourceLabe
 function renderAnswerWorkResult(elements, entries, rowId, labels, ok) {
   var sourceEntries = answerWorkSourceEntries(labels);
   if (sourceEntries.length === 0) {
+    if (ok !== false) return;
     renderAnswerWorkRow(
       elements,
       entries,

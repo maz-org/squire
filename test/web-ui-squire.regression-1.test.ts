@@ -756,7 +756,7 @@ describe('squire.js chat form retargeting', () => {
     });
 
     it('ignores the REFERENCE fallback label (utility/traversal tools)', () => {
-      const { answerEl, source } = bootPendingTranscript();
+      const { answerEl, source, workEl, workRowsEl } = bootPendingTranscript();
 
       // follow_links emits label=REFERENCE on the wire; the work log should
       // treat that as "not a real source".
@@ -764,6 +764,8 @@ describe('squire.js chat form retargeting', () => {
       source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
+      expect(workRowsEl.children).toHaveLength(0);
+      expect(workEl.hidden).toBe(true);
     });
 
     it('accumulates multiple labels from a single tool-result (post-SQR-105 search_rules)', () => {

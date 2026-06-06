@@ -78,12 +78,12 @@ If you're running via `preview-serve.sh` this is handled for you. If running
 The preview pane does not expose Chromium DevTools. Use these MCP
 tools instead — they drive the same underlying page:
 
-| Goal                                                       | Tool                                                             |
-| ---------------------------------------------------------- | ---------------------------------------------------------------- |
-| Read DOM state (e.g., footer text, URL, element structure) | `preview_eval` with a `(() => { ... })()` IIFE that returns JSON |
-| Check for console errors/warnings                          | `preview_console_logs` with `level: 'warn'`                      |
-| Find and click elements by role/text                       | `preview_snapshot` followed by `preview_click`                   |
-| See the page                                               | `preview_screenshot`                                             |
+| Goal                                                         | Tool                                                             |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Read DOM state (e.g., work-log text, URL, element structure) | `preview_eval` with a `(() => { ... })()` IIFE that returns JSON |
+| Check for console errors/warnings                            | `preview_console_logs` with `level: 'warn'`                      |
+| Find and click elements by role/text                         | `preview_snapshot` followed by `preview_click`                   |
+| See the page                                                 | `preview_screenshot`                                             |
 
 Prefer `preview_eval` for assertions. A single expression can return
 exactly the state you need without a screenshot-and-diff cycle. Example

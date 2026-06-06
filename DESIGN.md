@@ -445,7 +445,8 @@ placeholder is the only place italic Geist appears in the whole system.
   cursor blink — just the text materializing. This is the magic moment of
   Phase 1.
 - **Tool-call badges:** fade in when the agent calls a tool (`opacity 0 → 1`,
-  `200ms`), fade to collapsed single-line footer when done.
+  `200ms`) and remain inside the answer-owned work log, which collapses to a
+  compact summary when done.
 - **Submit:** the input field does not collapse. Submit slides the new
   question to the top of the main surface (`transform: translateY`), `320ms`.
 - **Hover states:** 160ms color/border transitions. Nothing fancier.
