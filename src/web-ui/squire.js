@@ -678,7 +678,7 @@ function genericProgressDetail(message) {
 }
 
 function inferredAnswerWorkSourceCount(elements) {
-  if (!elements || !elements.rowsEl || !elements.rowsEl.children) return 0;
+  if (!elements.rowsEl || !elements.rowsEl.children) return 0;
   var labels = new Map();
   for (var i = 0; i < elements.rowsEl.children.length; i += 1) {
     var row = elements.rowsEl.children[i];
