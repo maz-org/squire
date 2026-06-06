@@ -440,7 +440,7 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   in SQR-98). The column stores two formats depending on when the row was
   written: pre-SQR-105 rows store agent tool names (e.g. `"search_rules"`);
   post-SQR-105 rows store `ToolSourceLabel` strings (e.g. `"RULEBOOK"`,
-  `"SECTION BOOK"`) for `search_rules` results so the footer shows the
+  `"SECTION BOOK"`) for `search_rules` results so the work log shows the
   actual book that was searched rather than always "RULEBOOK".
   `persistAssistantOutcome` captures provenance from the agent's
   `tool_result` events on every write path (SSE and the plain-form POST
@@ -448,13 +448,12 @@ _Phase 5 (with the recommendation engine). See [SPEC.md](SPEC.md). Curated URL l
   handles both storage formats transparently so no migration is required.
   The tool-name → label map is pinned to `AgentToolName` so adding a selectable
   tool without extending the map is a typecheck failure. `null`
-  means "no source tools fired" or "pre-SQR-98 row"; both render with the
-  footer hidden
+  means "no source tools fired" or "pre-SQR-98 row"; both render without
+  source rows
 - Browser streaming contract:
   - transcript markup carries stable `data-testid` hooks for headless QA:
     `conversation-transcript`, `question-turn`, `answer-turn`,
-    `answer-content`, `answer-progress`, `answer-artifacts`, and
-    `consulted-footer`
+    `answer-content`, `answer-progress`, and `answer-artifacts`
   - question and answer `<article>` elements are accessible by stable
     visually-hidden headings ("Your question", "Squire answer") so browser
     accessibility snapshots expose transcript content as named turns

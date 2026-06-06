@@ -176,7 +176,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       .mockResolvedValueOnce(
         toolUseResponse('search_knowledge', {
           query: 'loot',
-          scope: ['rules_passage'],
+          scope: ['rules_passage', 'section', 'card'],
         }),
       )
       .mockResolvedValueOnce(textResponse('Use loot abilities to pick up loot tokens.'));
@@ -208,10 +208,16 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     );
     const userVisibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(userVisibleEvents).toEqual([
-      ['tool_progress', { message: 'Searching selected sources', toolName: 'search_knowledge' }],
+      [
+        'tool_progress',
+        { message: 'Searching Rulebook, Section Book, Card Index', toolName: 'search_knowledge' },
+      ],
       [
         'tool_call',
-        { name: 'search_knowledge', input: { query: 'loot', scope: ['rules_passage'] } },
+        {
+          name: 'search_knowledge',
+          input: { query: 'loot', scope: ['rules_passage', 'section', 'card'] },
+        },
       ],
       ['tool_result', { name: 'search_knowledge', ok: true, sourceBooks: ['Rulebook'] }],
       ['text', { delta: 'Use loot abilities ' }],

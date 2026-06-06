@@ -52,10 +52,10 @@ The SSE event log is not a durable LangGraph node checkpoint.
   - Payload: `{ "html": string, "consultedSources": string[] | null }`
   - `consultedSources` carries the persisted per-answer tool names
     (from `messages.consulted_sources`) so the client can rebuild the
-    "CONSULTED · …" footer on replay paths (duplicate `/stream` hits,
+    inline checked-source work log on replay paths (duplicate `/stream` hits,
     HTMX reconnects) where no `tool-result` events fired. `null` means
     the answer used no source tools, or the row predates SQR-98; the
-    client renders the footer hidden in both cases. The mapping from
+    client renders no source rows in both cases. The mapping from
     tool names to provenance labels lives in
     [../src/web-ui/consulted-footer.ts](../src/web-ui/consulted-footer.ts)
     and is mirrored in [../src/web-ui/squire.js](../src/web-ui/squire.js);

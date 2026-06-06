@@ -658,20 +658,6 @@ html {
   width: 100%;
 }
 
-/* 3. Tool-call footer — single line, sepia small caps, separated by a
-   hairline rule. Empty in SQR-65 — SQR-5d / SQR-8 populate it. */
-.squire-toolcall {
-  border-top: 1px solid var(--rule);
-  padding: 8px 16px;
-  min-height: 28px;
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  color: var(--sepia);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  flex-shrink: 0;
-}
-
 /* 5. Input dock — sticky at the bottom of the viewport, never collapses,
    respects iOS safe-area-inset-bottom so the home indicator doesn't sit on
    top of the submit button. */
@@ -1526,42 +1512,140 @@ template#squire-banner-fixtures {
   background: var(--surface-2);
 }
 
-.squire-answer__tools {
-  display: grid;
-  gap: 6px;
-  margin: 0 0 14px;
+.squire-answer-work[hidden] {
+  display: none;
+}
+
+.squire-answer-work {
+  margin: 0 0 18px;
+  padding: 10px 0 12px 12px;
+  border-left: 2px solid var(--rule);
+  color: var(--sepia);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.squire-answer-work[data-work-state='running'] {
+  border-left-color: var(--wax);
+}
+
+.squire-answer-work[data-work-state='error'] {
+  border-left-color: var(--amber);
+}
+
+.squire-answer-work__summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 24px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.squire-answer-work__summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-answer-work__summary::before {
+  content: '+';
+  display: inline-grid;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--sepia);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.squire-answer-work[open] .squire-answer-work__summary::before {
+  content: '-';
+}
+
+.squire-answer-work__title,
+.squire-answer-work__status,
+.squire-answer-work__row-label,
+.squire-answer-work__row-source {
   font-size: 10px;
+  font-weight: 650;
+  line-height: 1.3;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.squire-answer-work__title {
+  color: var(--parchment-dim);
+}
+
+.squire-answer-work__status {
+  margin-left: auto;
+  color: var(--sepia);
+  text-align: right;
+}
+
+.squire-answer-work[data-work-state='running'] .squire-answer-work__status {
+  color: var(--wax);
+}
+
+.squire-answer-work[data-work-state='error'] .squire-answer-work__status {
+  color: var(--amber);
+}
+
+.squire-answer-work__rows {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.squire-answer-work__rows:empty {
+  display: none;
+}
+
+.squire-answer-work__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--rule);
+}
+
+.squire-answer-work__row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.squire-answer-work__row-label,
+.squire-answer-work__row-source {
   color: var(--sepia);
 }
 
-.squire-answer__tool {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  width: fit-content;
-  max-width: 100%;
-  min-height: 18px;
-}
-
-.squire-answer__tool-label {
+.squire-answer-work__row-detail {
+  flex: 1 1 auto;
   min-width: 0;
+  color: var(--parchment-dim);
+  font-size: 13px;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
-.squire-answer__tool-state {
-  color: inherit;
-  white-space: nowrap;
+.squire-answer-work__row-source {
+  flex: 0 1 auto;
 }
 
-.squire-answer__tool-state::before {
+.squire-answer-work__row-source:not(:empty)::before {
   content: '·';
-  margin-right: 6px;
+  margin-right: 8px;
   color: var(--sepia-dim);
 }
 
-.squire-answer__tool.is-error {
+.squire-answer-work__row-source:empty {
+  display: none;
+}
+
+.squire-answer-work__row.is-error .squire-answer-work__row-label,
+.squire-answer-work__row.is-error .squire-answer-work__row-detail {
   color: var(--amber);
 }
 
