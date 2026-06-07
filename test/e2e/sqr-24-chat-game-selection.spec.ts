@@ -107,7 +107,9 @@ async function expectFinalAnswer(page: Page, expectedAnswer: RegExp): Promise<vo
   await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText(
     'Checked 1 source',
   );
-  await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText('Rulebook');
+  await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText(
+    'Checked rulebook',
+  );
   await expect(page.locator('.squire-input-dock')).not.toHaveAttribute('data-submitting', 'true');
 }
 
@@ -179,7 +181,7 @@ test.describe('SQR-24 browser chat game selection', () => {
     await expectFinalAnswer(page, /Gloomhaven 2e resolves poison/);
   });
 
-  test('changes progress detail during an active run and keeps the completed work visible', async ({
+  test('keeps work log expanded while running and collapses it after completion', async ({
     page,
   }) => {
     const releaseStream = await installDelayedDeterministicStream(page, {
@@ -196,23 +198,21 @@ test.describe('SQR-24 browser chat game selection', () => {
     const workLog = latestAnswer.locator('[data-testid="answer-progress"]');
     await expect(workLog).toBeVisible();
     await expect(workLog).toHaveAttribute('data-work-state', 'running');
-
-    await workLog.getByRole('button', { name: 'Full' }).click();
-
-    await expect(page.locator('html')).toHaveAttribute('data-progress-visibility', 'expanded');
-    await expect(workLog.getByRole('button', { name: 'Full' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
     await expect(workLog).toHaveAttribute('open', '');
+    await expect(workLog.getByRole('button')).toHaveCount(0);
     await expect
       .poll(() => page.evaluate(() => window.localStorage.getItem('squire.progressVisibility')))
-      .toBe('expanded');
+      .toBeNull();
 
     releaseStream();
 
     await expectFinalAnswer(page, /Closed doors block line-of-sight/);
     await expect(workLog).toHaveAttribute('data-work-state', 'complete');
-    await expect(workLog).toHaveAttribute('open', '');
+    await expect(workLog).not.toHaveAttribute('open', '');
+    await expect(workLog).toContainText('Checked 1 source');
+    await expect(workLog.locator('.squire-answer-work__row-label')).toHaveCount(0);
+    await expect(workLog.locator('.squire-answer-work__row-detail')).toContainText(
+      'Checked rulebook',
+    );
   });
 });

@@ -330,7 +330,7 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
   ]);
 
   return html`<!doctype html>
-    <html lang="en" data-progress-visibility="normal">
+    <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -432,43 +432,8 @@ function displayToolSourceLabel(label: ToolSourceLabel): string {
   }
 }
 
-const PROGRESS_VISIBILITY_OPTIONS = [
-  {
-    value: 'compact',
-    label: 'Compact',
-    title: 'Show only the progress summary by default',
-  },
-  {
-    value: 'normal',
-    label: 'Normal',
-    title: 'Show live progress, then collapse it after the answer',
-  },
-  {
-    value: 'expanded',
-    label: 'Full',
-    title: 'Keep progress details open',
-  },
-] as const;
-
-function renderProgressVisibilityControl(): HtmlEscapedString {
-  return html`<span
-    class="squire-answer-work__visibility"
-    role="group"
-    aria-label="Progress detail"
-  >
-    ${PROGRESS_VISIBILITY_OPTIONS.map(
-      (option) =>
-        html`<button
-          type="button"
-          class="squire-answer-work__visibility-button"
-          data-progress-visibility-choice="${option.value}"
-          aria-pressed="${option.value === 'normal' ? 'true' : 'false'}"
-          title="${option.title}"
-        >
-          ${option.label}
-        </button>`,
-    )}
-  </span>` as HtmlEscapedString;
+function sentenceToolSourceLabel(label: ToolSourceLabel): string {
+  return displayToolSourceLabel(label).toLowerCase();
 }
 
 function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedString {
@@ -485,11 +450,9 @@ function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedStr
     data-work-state="complete"
   >
     <summary class="squire-answer-work__summary">
-      <span class="squire-answer-work__title">Work log</span>
       <span class="squire-answer-work__status" data-answer-work-status
         >Checked ${labels.length} ${labels.length === 1 ? 'source' : 'sources'}</span
       >
-      ${renderProgressVisibilityControl()}
     </summary>
     <div class="squire-answer-work__rows" data-answer-work-rows>
       ${labels.map(
@@ -499,9 +462,9 @@ function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedStr
             data-answer-work-source-labels="${label}"
             data-work-state="complete"
           >
-            <span class="squire-answer-work__row-label">CHECKED</span>
-            <span class="squire-answer-work__row-detail">${displayToolSourceLabel(label)}</span>
-            <span class="squire-answer-work__row-source"></span>
+            <span class="squire-answer-work__row-detail"
+              >Checked ${sentenceToolSourceLabel(label)}</span
+            >
           </div>`,
       )}
     </div>
@@ -548,9 +511,7 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
     <h2 class="sr-only" id="${labelId}">Squire answer</h2>
     <details class="squire-answer-work" data-testid="answer-progress" data-work-state="idle" open>
       <summary class="squire-answer-work__summary">
-        <span class="squire-answer-work__title">Working</span>
         <span class="squire-answer-work__status" data-answer-work-status>Waiting</span>
-        ${renderProgressVisibilityControl()}
       </summary>
       <div
         class="squire-answer-work__rows"

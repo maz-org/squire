@@ -248,19 +248,26 @@ SCEN 14` once Phase 4 character state lands. Always visible. One line,
    `answer-artifact`), and collapses to a compact source/step summary when the
    final answer is ready. Rows are compact one-line entries. Generic progress
    such as "searching selected sources" must be replaced by actual source
-   labels as soon as result labels arrive, e.g. `CHECKED · Rulebook`. If a
+   labels as soon as result labels arrive, e.g. `Checked rulebook`. If a
    single tool result checked multiple books, render one row per source:
-   `CHECKED · Rulebook`, `CHECKED · Section Book`, `CHECKED · Scenario Book`.
+   `Checked rulebook`, `Checked section book`, `Checked scenario book`.
+   Progress rows and checked-source rows are durable events: once a row appears,
+   its wording does not change. Do not rewrite a `Resolving ...` row into a
+   `Checked ...` row, and do not render duplicate checked rows for the same
+   source label in one answer. Generic source-search progress renders as
+   `Searching available sources`. Render rows as standalone messages without
+   separate `SEARCHING` / `CHECKED` prefixes; use a stable semantic order so
+   resolving appears before source search, which appears before checked-source
+   rows, even if stream events arrive out of order.
    The collapsed summary says `Checked 3 sources`; do not add a second
-   provenance footer below the answer. The user can reopen it in place and can
-   choose `Compact`, `Normal`, or `Full` progress detail from the work-log
-   summary. This is a browser-local preference: it changes whether work details
-   default closed, open only while running, or remain open after completion; it
-   never changes final answer prose and never exposes raw private reasoning.
-   This gives the user the agent-app pattern of visible work without mixing work
-   notes into the answer body. It is not raw private chain-of-thought, not
-   campaign memory, and not page chrome. Phase 5 hosts two card mockups
-   side-by-side with a
+   provenance footer below the answer. The user can reopen it in place. The
+   disclosure state is driven by the agent state only: open while Squire is
+   working, collapsed when the answer is ready, and open on errors. Do not add
+   display-density toggles, a header bar, plus/minus icons, or borders around
+   the work log. This gives the user the agent-app pattern of visible work
+   without mixing work notes into the answer body. It is not raw private
+   chain-of-thought, not campaign memory, and not page chrome. Phase 5 hosts
+   two card mockups side-by-side with a
    "Squire recommends" verdict via a side panel or modal — not as a peer
    mode of the transcript.
 3. **Input dock (bottom)** — slim rounded-rectangle input field in `--surface`
@@ -583,7 +590,7 @@ attribute on `<html>`. That's the extent of the per-game theming.
 | 2026-04-22 | **Split home + scrolling-chat IA — supersedes 2026-04-08 current-turn ledger** — `/chat/:id` is a standard scrolling-chat transcript with the drop cap on the newest answer only (position-based selector). `/` is a separate purpose-built landing. The fake recent-questions chip row is deleted.                                                                                                  | The 2026-04-08 current-turn ledger was a novel IA users had to learn; lived-use surfaced four problems (fake home chips, no first-turn history affordance, orphaned selected-message surface, scaffolding desktop rail). Position-based drop cap rarity preserves the signature without forcing one-turn-at-a-time. From SQR-101 / [ADR 0012](docs/adr/0012-split-home-and-scrolling-chat-ia.md), superseded by [ADR 0020](docs/adr/0020-conversation-history-rail.md).                                         |
 | 2026-06-04 | **Conversation-history rail and mobile History drawer** — desktop gets a real owned-conversation history rail; mobile gets a left drawer. Active row may show current browser-known running/error state only for the active stream. Progress panel, history search, generated titles, pins, and campaign/character memory UI are deferred.                                                           | Repeated use showed that Squire needs conversation recovery before deeper progress UI. This rail is not the old placeholder rail: it is backed by real conversation rows and keeps the transcript as the primary reading surface. From office-hours, `/browse` research, CEO review, design review, and [ADR 0020](docs/adr/0020-conversation-history-rail.md).                                                                                                                                                 |
 | 2026-06-05 | **Inline answer-owned work log** — no right-side current-run panel and no bottom consulted footer. Each pending answer owns an expanded `Working` disclosure above answer prose, fed only by safe stream events. It collapses after `done`, stays reopenable, and renders compact one-line rows that merge repeated progress while keeping separate checked-source rows for each source.             | The conversation list solved recovery; the next missing agent-app affordance is seeing what the current answer is checking without confusing work with the final answer. The first panel version hid too much context after completion, the first inline version was too noisy (`Searching selected sources · REFERENCE`), and the bottom `CONSULTED` footer duplicated the collapsed work-log summary. SQR-255 keeps the single conversation surface and uses the work log as the only visible source display. |
-| 2026-06-07 | **Browser-local progress visibility control** — each work-log summary includes `Compact`, `Normal`, and `Full`. `Compact` defaults work details closed, `Normal` opens the active run and collapses completed work, and `Full` keeps details open after completion.                                                                                                                                  | SQR-256 adds the missing user control without changing the answer contract or adding a server setting table. The preference is stored in `localStorage` because it is display density, not account data. The control affects only safe work-log rows, never raw hidden reasoning, prompts, or final answer prose.                                                                                                                                                                                               |
+| 2026-06-07 | **Compact state-driven work-log disclosure** — the `Compact` / `Normal` / `Full` control is removed. Each work log has only a caret summary and compact event rows. It opens while Squire is working, collapses after `done` to `Checked N sources`, stays reopenable, and stays open on errors. No plus/minus icon, header bar, or border treatment ships around the log.                           | The first SQR-255 pass spent too many pixels on mode controls and chrome. The useful information is the event list itself: `Checked rulebook`, `Checked card index`. State-driven disclosure matches how the user reads it at the table: see work while waiting, get a small provenance summary after the answer.                                                                                                                                                                                               |
 
 <!-- markdownlint-enable MD060 -->
 
