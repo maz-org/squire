@@ -78,6 +78,22 @@ class FakeElement {
 
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
+    if (name.startsWith('data-')) {
+      const key = name
+        .slice('data-'.length)
+        .replace(/-([a-z])/g, (_match, char: string) => char.toUpperCase());
+      this.dataset[key] = value;
+    }
+  }
+
+  removeAttribute(name: string) {
+    this.attributes.delete(name);
+    if (name.startsWith('data-')) {
+      const key = name
+        .slice('data-'.length)
+        .replace(/-([a-z])/g, (_match, char: string) => char.toUpperCase());
+      delete this.dataset[key];
+    }
   }
 
   getAttribute(name: string) {
@@ -100,6 +116,30 @@ class FakeElement {
     return null;
   }
 
+  querySelectorAll(selector: string): FakeElement[] {
+    const results: FakeElement[] = [];
+    this.collect(selector, results);
+    return results;
+  }
+
+  matches(selector: string): boolean {
+    if (selector.startsWith('.')) {
+      const className = selector.slice(1);
+      return this.classList.contains(className) || this.className.split(/\s+/).includes(className);
+    }
+
+    if (selector === '[data-progress-visibility-choice]') {
+      return Boolean(this.dataset.progressVisibilityChoice);
+    }
+
+    return false;
+  }
+
+  closest(selector: string): FakeElement | null {
+    if (this.matches(selector)) return this;
+    return this.parentNode ? this.parentNode.closest(selector) : null;
+  }
+
   private find(predicate: (node: FakeElement) => boolean): FakeElement | null {
     for (const child of this.children) {
       if (predicate(child)) return child;
@@ -107,6 +147,13 @@ class FakeElement {
       if (nested) return nested;
     }
     return null;
+  }
+
+  private collect(selector: string, results: FakeElement[]) {
+    for (const child of this.children) {
+      if (child.matches(selector)) results.push(child);
+      child.collect(selector, results);
+    }
   }
 }
 
@@ -184,7 +231,8 @@ function runSquireScript(pathname: string): Record<string, string> {
 }
 
 function bootPendingTranscript() {
-  const listeners = new Map<string, Array<() => void>>();
+  const listeners = new Map<string, Array<(event?: unknown) => void>>();
+  const storedValues = new Map<string, string>();
 
   // SQR-108: setFormPendingState writes to form.dataset and reads back
   // form.querySelector('input[name="question"]'/'button[type="submit"]'),
@@ -218,11 +266,21 @@ function bootPendingTranscript() {
   const workStatusEl = new FakeElement('span');
   workStatusEl.classList.add('squire-answer-work__status');
   workStatusEl.setAttribute('data-answer-work-status', '');
+  const workVisibilityEl = new FakeElement('span');
+  workVisibilityEl.classList.add('squire-answer-work__visibility');
+  const workModeButtons = ['compact', 'normal', 'expanded'].map((mode) => {
+    const button = new FakeElement('button');
+    button.classList.add('squire-answer-work__visibility-button');
+    button.setAttribute('data-progress-visibility-choice', mode);
+    workVisibilityEl.appendChild(button);
+    return button;
+  });
   const workRowsEl = new FakeElement('div');
   workRowsEl.classList.add('squire-answer-work__rows');
   workRowsEl.setAttribute('data-answer-work-rows', '');
   workSummaryEl.appendChild(workTitleEl);
   workSummaryEl.appendChild(workStatusEl);
+  workSummaryEl.appendChild(workVisibilityEl);
   workEl.appendChild(workSummaryEl);
   workEl.appendChild(workRowsEl);
   const artifactsEl = new FakeElement('div');
@@ -251,8 +309,11 @@ function bootPendingTranscript() {
   drawerHistoryRow.classList.add('squire-history-row');
   drawerHistoryRow.setAttribute('aria-current', 'page');
 
+  const documentElement = new FakeElement('html') as FakeElement & { scrollHeight: number };
+  documentElement.scrollHeight = 0;
+
   const document = {
-    addEventListener(event: string, callback: () => void) {
+    addEventListener(event: string, callback: (event?: unknown) => void) {
       listeners.set(event, [...(listeners.get(event) ?? []), callback]);
     },
     createElement(tagName: string) {
@@ -263,6 +324,12 @@ function bootPendingTranscript() {
       return null;
     },
     querySelectorAll(selector: string) {
+      if (selector === '[data-progress-visibility-choice]') {
+        return workModeButtons;
+      }
+      if (selector === '.squire-answer-work') {
+        return [workEl];
+      }
       if (selector === '.squire-history-row[aria-current="page"]') {
         return [historyRow, drawerHistoryRow];
       }
@@ -277,7 +344,7 @@ function bootPendingTranscript() {
       }
       return [];
     },
-    documentElement: { scrollHeight: 0 },
+    documentElement,
   };
 
   const context = vm.createContext({
@@ -298,6 +365,14 @@ function bootPendingTranscript() {
         cb();
         return 0;
       },
+      localStorage: {
+        getItem(key: string) {
+          return storedValues.get(key) ?? null;
+        },
+        setItem(key: string, value: string) {
+          storedValues.set(key, value);
+        },
+      },
     },
   });
 
@@ -316,11 +391,24 @@ function bootPendingTranscript() {
     drawerHistoryRow,
     form,
     historyRow,
+    documentElement,
     skeletonEl,
     source,
+    storedValues,
     workEl,
+    workModeButtons,
     workRowsEl,
     workStatusEl,
+    clickDocument(target: FakeElement) {
+      const event = {
+        target,
+        preventDefault() {},
+        stopPropagation() {},
+      };
+      for (const callback of listeners.get('click') ?? []) {
+        callback(event);
+      }
+    },
   };
 }
 
@@ -619,6 +707,45 @@ describe('squire.js chat form retargeting', () => {
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
     expect(workRowsEl.children).toHaveLength(1);
     expect(workStatusEl.textContent).toBe('Checked 1 source');
+  });
+
+  it('switches progress detail during an active run without losing the stream', () => {
+    const {
+      clickDocument,
+      contentEl,
+      documentElement,
+      source,
+      storedValues,
+      workEl,
+      workModeButtons,
+      workRowsEl,
+    } = bootPendingTranscript();
+
+    source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
+
+    expect(workEl.open).toBe(true);
+    expect(workRowsEl.children).toHaveLength(1);
+    expect(documentElement.getAttribute('data-progress-visibility')).toBe('normal');
+
+    const expandedButton = workModeButtons.find(
+      (button) => button.dataset.progressVisibilityChoice === 'expanded',
+    );
+    if (!expandedButton) throw new Error('expanded progress button missing from fixture');
+    clickDocument(expandedButton);
+
+    expect(source.closed).toBe(false);
+    expect(workEl.open).toBe(true);
+    expect(documentElement.getAttribute('data-progress-visibility')).toBe('expanded');
+    expect(expandedButton.getAttribute('aria-pressed')).toBe('true');
+    expect(storedValues.get('squire.progressVisibility')).toBe('expanded');
+
+    source.emit('done', { html: '<p>Answer.</p>' });
+
+    expect(source.closed).toBe(true);
+    expect(contentEl.innerHTML).toBe('<p>Answer.</p>');
+    expect(workEl.getAttribute('data-work-state')).toBe('complete');
+    expect(workEl.open).toBe(true);
+    expect(workRowsEl.children).toHaveLength(1);
   });
 
   it('keeps inline work details open when the stream errors', () => {

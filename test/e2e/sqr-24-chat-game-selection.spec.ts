@@ -33,6 +33,40 @@ async function installDeterministicStream(page: Page, fixture: StreamFixture): P
   });
 }
 
+async function installDelayedDeterministicStream(
+  page: Page,
+  fixture: StreamFixture,
+): Promise<() => void> {
+  let releaseStream: () => void = () => {};
+  const releasePromise = new Promise<void>((resolve) => {
+    releaseStream = resolve;
+  });
+
+  await page.route('**/chat/*/messages/*/stream', async (route) => {
+    await releasePromise;
+    const body = [
+      sseEvent('tool-start', { id: 'rulebook', label: 'RULEBOOK' }),
+      sseEvent('tool-result', { id: 'rulebook', ok: true, labels: ['RULEBOOK'] }),
+      sseEvent('text-delta', { delta: fixture.answerText }),
+      sseEvent('done', {
+        html: fixture.finalHtml,
+        consultedSources: fixture.consultedSources,
+      }),
+    ].join('');
+
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-store',
+      },
+      body,
+    });
+  });
+
+  return releaseStream;
+}
+
 async function loginAsDevUser(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.getByRole('button', { name: 'Sign in as Dev User' })).toBeVisible();
@@ -143,5 +177,42 @@ test.describe('SQR-24 browser chat game selection', () => {
     expect(followUpPayload.get('question')).toBe('Does that change healing?');
     await expect(page).toHaveURL(conversationUrl);
     await expectFinalAnswer(page, /Gloomhaven 2e resolves poison/);
+  });
+
+  test('changes progress detail during an active run and keeps the completed work visible', async ({
+    page,
+  }) => {
+    const releaseStream = await installDelayedDeterministicStream(page, {
+      answerText: 'Closed doors block line-of-sight for looting.',
+      finalHtml:
+        '<p>Closed doors block line-of-sight for looting. <a class="cite" href="https://example.test/frosthaven-rulebook">Rulebook p. 79</a></p>',
+      consultedSources: ['RULEBOOK'],
+    });
+    await loginAsDevUser(page);
+
+    await askQuestionAndCapturePayload(page, 'Can I loot through a closed door?');
+
+    const latestAnswer = page.locator('[data-testid="answer-turn"]').last();
+    const workLog = latestAnswer.locator('[data-testid="answer-progress"]');
+    await expect(workLog).toBeVisible();
+    await expect(workLog).toHaveAttribute('data-work-state', 'running');
+
+    await workLog.getByRole('button', { name: 'Full' }).click();
+
+    await expect(page.locator('html')).toHaveAttribute('data-progress-visibility', 'expanded');
+    await expect(workLog.getByRole('button', { name: 'Full' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(workLog).toHaveAttribute('open', '');
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem('squire.progressVisibility')))
+      .toBe('expanded');
+
+    releaseStream();
+
+    await expectFinalAnswer(page, /Closed doors block line-of-sight/);
+    await expect(workLog).toHaveAttribute('data-work-state', 'complete');
+    await expect(workLog).toHaveAttribute('open', '');
   });
 });

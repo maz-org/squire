@@ -1367,6 +1367,10 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       expect(body).toMatch(
         /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Work log[\s\S]*Checked 1 source[\s\S]*CHECKED[\s\S]*Rulebook[\s\S]*<\/details>/,
       );
+      expect(body).toContain('aria-label="Progress detail"');
+      expect(body).toContain('data-progress-visibility-choice="compact"');
+      expect(body).toContain('data-progress-visibility-choice="normal"');
+      expect(body).toContain('data-progress-visibility-choice="expanded"');
       expect(body).not.toContain('CONSULTED');
       expect(body).not.toContain('class="squire-toolcall"');
     });
@@ -1433,6 +1437,9 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
       expect(body).toMatch(/squire-answer--pending[\s\S]*class="squire-answer-work"/);
+      expect(body).toMatch(
+        /squire-answer--pending[\s\S]*aria-label="Progress detail"[\s\S]*data-progress-visibility-choice="compact"[\s\S]*data-progress-visibility-choice="normal"[\s\S]*data-progress-visibility-choice="expanded"/,
+      );
       expect(body).not.toContain('class="squire-toolcall"');
       expect(body).not.toContain('data-testid="consulted-footer"');
     });
