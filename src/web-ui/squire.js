@@ -730,6 +730,7 @@ function answerWorkRowMessage(label, detail, sourceLabel) {
   if (label === 'FOUND') {
     return 'Found ' + (detailText || 'source') + (source ? ' in ' + source : '');
   }
+  if (detailText === 'Searching available sources') return detailText;
   if (source && detailText && detailText.toLowerCase().indexOf(source) === -1) {
     return detailText + ' in ' + source;
   }
@@ -898,7 +899,7 @@ function renderAnswerWorkResult(elements, entries, rowId, labels, ok) {
       ok === false ? 'error' : 'running',
       ok === false ? 90 : 50,
     );
-    rememberAnswerWorkSourceLabels(row, [entry.label]);
+    if (ok !== false) rememberAnswerWorkSourceLabels(row, [entry.label]);
   }
 }
 

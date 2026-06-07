@@ -747,6 +747,18 @@ describe('squire.js chat form retargeting', () => {
     ]);
   });
 
+  it('keeps generic source-search wording exact when the progress event has a source label', () => {
+    const { source, workRowsEl } = bootPendingTranscript();
+
+    source.emit('tool-progress', {
+      id: 'search_rules-progress-1',
+      label: 'RULEBOOK',
+      message: 'Searching selected sources',
+    });
+
+    expect(workRowMessages(workRowsEl)).toEqual(['Searching available sources']);
+  });
+
   it('keeps inline work details open when the stream errors', () => {
     const { answerEl, source, workEl, workRowsEl, workStatusEl } = bootPendingTranscript();
 
@@ -849,6 +861,17 @@ describe('squire.js chat form retargeting', () => {
         'Checked card index',
         "Couldn't check rulebook",
       ]);
+    });
+
+    it('does not count failed-only source checks as checked sources', () => {
+      const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+      source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: false });
+      source.emit('done', { html: '<p>Answer.</p>' });
+
+      expect(workRowsEl.children).toHaveLength(1);
+      expect(workRowMessages(workRowsEl)).toEqual(["Couldn't check rulebook"]);
+      expect(workStatusEl.textContent).toBe('Recorded 1 step');
     });
 
     it('ignores the REFERENCE fallback label (utility/traversal tools)', () => {
