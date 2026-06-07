@@ -10,6 +10,8 @@
 // focus is already covered by the global :focus-visible ring.
 var ACTIVE_GAME_STORAGE_KEY = 'squire.activeGame';
 var FALLBACK_DEFAULT_ACTIVE_GAME = 'frosthaven';
+var PROGRESS_VISIBILITY_STORAGE_KEY = 'squire.progressVisibility';
+var DEFAULT_PROGRESS_VISIBILITY = 'normal';
 var fallbackSupportedActiveGames = {
   frosthaven: true,
   'gloomhaven-2e': true,
@@ -18,10 +20,24 @@ var defaultActiveGame = FALLBACK_DEFAULT_ACTIVE_GAME;
 var supportedActiveGames = fallbackSupportedActiveGames;
 var activeGame = defaultActiveGame;
 var activeGameInitialized = false;
+var progressVisibility = DEFAULT_PROGRESS_VISIBILITY;
+var progressVisibilityInitialized = false;
+var supportedProgressVisibility = {
+  compact: true,
+  normal: true,
+  expanded: true,
+};
 
 function isSupportedActiveGame(value) {
   return (
     typeof value === 'string' && Object.prototype.hasOwnProperty.call(supportedActiveGames, value)
+  );
+}
+
+function isSupportedProgressVisibility(value) {
+  return (
+    typeof value === 'string' &&
+    Object.prototype.hasOwnProperty.call(supportedProgressVisibility, value)
   );
 }
 
@@ -142,8 +158,93 @@ function syncActiveGameControls() {
   }
 }
 
+function readStoredProgressVisibility() {
+  try {
+    var stored =
+      window.localStorage && window.localStorage.getItem(PROGRESS_VISIBILITY_STORAGE_KEY);
+    return isSupportedProgressVisibility(stored) ? stored : DEFAULT_PROGRESS_VISIBILITY;
+  } catch {
+    return DEFAULT_PROGRESS_VISIBILITY;
+  }
+}
+
+function persistProgressVisibility(value) {
+  try {
+    if (window.localStorage) window.localStorage.setItem(PROGRESS_VISIBILITY_STORAGE_KEY, value);
+  } catch {
+    // Storage can be blocked in private browsing; keep the in-page setting.
+  }
+}
+
+function setDocumentProgressVisibility(value) {
+  if (!document.documentElement) return;
+  if (typeof document.documentElement.setAttribute === 'function') {
+    document.documentElement.setAttribute('data-progress-visibility', value);
+    return;
+  }
+  if (document.documentElement.dataset) {
+    document.documentElement.dataset.progressVisibility = value;
+  }
+}
+
+function preferredAnswerWorkOpen(container) {
+  var state = container && container.getAttribute ? container.getAttribute('data-work-state') : '';
+  if (state === 'error') return true;
+  if (progressVisibility === 'expanded') return true;
+  if (progressVisibility === 'compact') return false;
+  return state === 'running' || state === 'idle';
+}
+
+function syncAnswerWorkOpenState(container) {
+  if (!container || container.hidden) return;
+  container.open = preferredAnswerWorkOpen(container);
+}
+
+function syncAnswerWorkOpenStates() {
+  var workLogs = document.querySelectorAll ? document.querySelectorAll('.squire-answer-work') : [];
+  for (var i = 0; i < workLogs.length; i += 1) {
+    syncAnswerWorkOpenState(workLogs[i]);
+  }
+}
+
+function syncProgressVisibilityControls() {
+  if (!progressVisibilityInitialized) {
+    progressVisibility = readStoredProgressVisibility();
+    progressVisibilityInitialized = true;
+  }
+  if (!isSupportedProgressVisibility(progressVisibility)) {
+    progressVisibility = DEFAULT_PROGRESS_VISIBILITY;
+  }
+  setDocumentProgressVisibility(progressVisibility);
+
+  var controls = document.querySelectorAll
+    ? document.querySelectorAll('[data-progress-visibility-choice]')
+    : [];
+  for (var i = 0; i < controls.length; i += 1) {
+    var control = controls[i];
+    var selected =
+      control.dataset && control.dataset.progressVisibilityChoice === progressVisibility;
+    control.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  }
+  syncAnswerWorkOpenStates();
+}
+
+function setProgressVisibility(value, persist) {
+  progressVisibility = isSupportedProgressVisibility(value) ? value : DEFAULT_PROGRESS_VISIBILITY;
+  if (persist) persistProgressVisibility(progressVisibility);
+  syncProgressVisibilityControls();
+}
+
 document.addEventListener('click', function (e) {
   var t = e.target;
+  var progressChoice = t && t.closest ? t.closest('[data-progress-visibility-choice]') : null;
+  if (progressChoice && progressChoice.dataset) {
+    e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    setProgressVisibility(progressChoice.dataset.progressVisibilityChoice, true);
+    return;
+  }
+
   var historyToggle = t && t.closest ? t.closest('.squire-history-toggle') : null;
   if (historyToggle) {
     e.preventDefault();
@@ -592,8 +693,8 @@ function resetAnswerWork(elements, entries) {
     }
   }
   elements.container.hidden = false;
-  elements.container.open = true;
   elements.container.setAttribute('data-work-state', 'running');
+  syncAnswerWorkOpenState(elements.container);
   if (elements.titleEl) elements.titleEl.textContent = 'Working';
   if (elements.statusEl) elements.statusEl.textContent = 'Working';
 }
@@ -601,8 +702,10 @@ function resetAnswerWork(elements, entries) {
 function setAnswerWorkRunning(elements) {
   if (!elements || !elements.container) return;
   elements.container.hidden = false;
-  elements.container.open = true;
   elements.container.setAttribute('data-work-state', 'running');
+  if (progressVisibility !== 'compact') {
+    elements.container.open = true;
+  }
   if (elements.titleEl) elements.titleEl.textContent = 'Working';
   if (elements.statusEl) elements.statusEl.textContent = 'Checking sources';
 }
@@ -713,8 +816,8 @@ function completeAnswerWork(elements, sourceCount) {
   }
 
   elements.container.hidden = false;
-  elements.container.open = false;
   elements.container.setAttribute('data-work-state', 'complete');
+  syncAnswerWorkOpenState(elements.container);
   if (elements.titleEl) elements.titleEl.textContent = 'Work log';
   if (elements.statusEl) {
     var effectiveSourceCount =
@@ -1293,6 +1396,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
   if (questionInput) questionInput.value = '';
   syncChatFormAction();
   syncActiveGameControls();
+  syncProgressVisibilityControls();
 
   var swapTarget = event.detail && event.detail.target;
   var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
@@ -1323,6 +1427,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
 document.addEventListener('DOMContentLoaded', function () {
   syncChatFormAction();
   syncActiveGameControls();
+  syncProgressVisibilityControls();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
   // back/forward navigation and refresh, so we don't pin or auto-scroll on
   // initial load. We only flag pin on submit (above) and re-evaluate it

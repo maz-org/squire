@@ -1362,11 +1362,19 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       );
     }
 
+    function expectProgressVisibilityDefaults(markup: string): void {
+      expect(markup).toMatch(/data-progress-visibility-choice="compact"\s+aria-pressed="false"/);
+      expect(markup).toMatch(/data-progress-visibility-choice="normal"\s+aria-pressed="true"/);
+      expect(markup).toMatch(/data-progress-visibility-choice="expanded"\s+aria-pressed="false"/);
+    }
+
     it('renders a collapsed checked-source work log inside the answer element for a single source', () => {
       const body = renderTranscriptAnswer(answerWith(['search_rules']));
       expect(body).toMatch(
         /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Work log[\s\S]*Checked 1 source[\s\S]*CHECKED[\s\S]*Rulebook[\s\S]*<\/details>/,
       );
+      expect(body).toContain('aria-label="Progress detail"');
+      expectProgressVisibilityDefaults(body);
       expect(body).not.toContain('CONSULTED');
       expect(body).not.toContain('class="squire-toolcall"');
     });
@@ -1433,6 +1441,10 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
       expect(body).toMatch(/squire-answer--pending[\s\S]*class="squire-answer-work"/);
+      const pendingAnswer = body.match(/<article[\s\S]*?squire-answer--pending[\s\S]*?<\/article>/);
+      expect(pendingAnswer).not.toBeNull();
+      expect(pendingAnswer?.[0]).toContain('aria-label="Progress detail"');
+      expectProgressVisibilityDefaults(pendingAnswer?.[0] ?? '');
       expect(body).not.toContain('class="squire-toolcall"');
       expect(body).not.toContain('data-testid="consulted-footer"');
     });
