@@ -1518,24 +1518,16 @@ template#squire-banner-fixtures {
 
 .squire-answer-work {
   margin: 0 0 18px;
-  padding: 10px 0 12px 12px;
-  border-left: 2px solid var(--rule);
+  padding: 0;
   color: var(--sepia);
   font-family: 'Geist', system-ui, sans-serif;
 }
 
-.squire-answer-work[data-work-state='running'] {
-  border-left-color: var(--wax);
-}
-
-.squire-answer-work[data-work-state='error'] {
-  border-left-color: var(--amber);
-}
-
 .squire-answer-work__summary {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  max-width: 100%;
   min-height: 24px;
   cursor: pointer;
   list-style: none;
@@ -1546,84 +1538,31 @@ template#squire-banner-fixtures {
 }
 
 .squire-answer-work__summary::before {
-  content: '+';
-  display: inline-grid;
-  flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  content: '';
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid currentcolor;
   color: var(--sepia);
-  font-size: 13px;
-  line-height: 1;
+  transform: translateY(-1px);
+  transform-origin: 45% 50%;
 }
 
 .squire-answer-work[open] .squire-answer-work__summary::before {
-  content: '-';
+  transform: rotate(90deg) translateX(-1px);
 }
 
-.squire-answer-work__title,
-.squire-answer-work__status,
-.squire-answer-work__row-label,
-.squire-answer-work__row-source {
+.squire-answer-work__status {
   font-size: 10px;
   font-weight: 650;
   line-height: 1.3;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.squire-answer-work__title {
-  color: var(--parchment-dim);
-}
-
-.squire-answer-work__status {
-  margin-left: auto;
   color: var(--sepia);
-  text-align: right;
-}
-
-.squire-answer-work__visibility {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 2px;
-  min-height: 44px;
-  padding: 2px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: rgb(20 16 12 / 0.28);
-}
-
-.squire-answer-work__visibility-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 40px;
-  padding: 2px 8px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--sepia);
-  cursor: pointer;
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 10px;
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.squire-answer-work__visibility-button:hover,
-.squire-answer-work__visibility-button:focus-visible {
-  color: var(--parchment);
-}
-
-.squire-answer-work__visibility-button[aria-pressed='true'] {
-  background: var(--rule);
-  color: var(--parchment-dim);
+  text-align: left;
 }
 
 .squire-answer-work[data-work-state='running'] .squire-answer-work__status {
@@ -1636,8 +1575,9 @@ template#squire-banner-fixtures {
 
 .squire-answer-work__rows {
   display: grid;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
+  padding-left: 17px;
 }
 
 .squire-answer-work__rows:empty {
@@ -1645,26 +1585,11 @@ template#squire-banner-fixtures {
 }
 
 .squire-answer-work__row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
   min-width: 0;
-  padding-top: 6px;
-  border-top: 1px solid var(--rule);
-}
-
-.squire-answer-work__row:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.squire-answer-work__row-label,
-.squire-answer-work__row-source {
-  color: var(--sepia);
 }
 
 .squire-answer-work__row-detail {
-  flex: 1 1 auto;
+  display: block;
   min-width: 0;
   color: var(--parchment-dim);
   font-size: 13px;
@@ -1672,42 +1597,18 @@ template#squire-banner-fixtures {
   overflow-wrap: anywhere;
 }
 
-.squire-answer-work__row-source {
-  flex: 0 1 auto;
-}
-
-.squire-answer-work__row-source:not(:empty)::before {
-  content: '·';
-  margin-right: 8px;
-  color: var(--sepia-dim);
-}
-
-.squire-answer-work__row-source:empty {
-  display: none;
-}
-
-.squire-answer-work__row.is-error .squire-answer-work__row-label,
 .squire-answer-work__row.is-error .squire-answer-work__row-detail {
   color: var(--amber);
 }
 
 @media (max-width: 520px) {
   .squire-answer-work__summary {
-    flex-wrap: wrap;
     align-items: center;
   }
 
   .squire-answer-work__status {
-    flex: 1 1 auto;
-    margin-left: 0;
+    min-width: 0;
     text-align: left;
-  }
-
-  .squire-answer-work__visibility {
-    flex-basis: calc(100% - 28px);
-    margin-left: 28px;
-    width: max-content;
-    max-width: calc(100% - 28px);
   }
 }
 

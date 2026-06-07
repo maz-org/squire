@@ -634,7 +634,7 @@ describe('renderConversationTurnAppendFragment (SQR-108 / ADR 0012 E-3)', () => 
     expect(body).toContain('class="squire-answer-work"');
     expect(body).toContain('data-testid="answer-progress"');
     expect(body).toContain('data-work-state="idle"');
-    expect(body).toContain('<span class="squire-answer-work__title">Working</span>');
+    expect(body).toContain('class="squire-answer-work__status" data-answer-work-status');
     expect(body).toContain('data-answer-work-status');
     expect(body).toContain('data-answer-work-rows');
     expect(body).toMatch(
@@ -1362,19 +1362,14 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       );
     }
 
-    function expectProgressVisibilityDefaults(markup: string): void {
-      expect(markup).toMatch(/data-progress-visibility-choice="compact"\s+aria-pressed="false"/);
-      expect(markup).toMatch(/data-progress-visibility-choice="normal"\s+aria-pressed="true"/);
-      expect(markup).toMatch(/data-progress-visibility-choice="expanded"\s+aria-pressed="false"/);
-    }
-
     it('renders a collapsed checked-source work log inside the answer element for a single source', () => {
       const body = renderTranscriptAnswer(answerWith(['search_rules']));
       expect(body).toMatch(
-        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Work log[\s\S]*Checked 1 source[\s\S]*CHECKED[\s\S]*Rulebook[\s\S]*<\/details>/,
+        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Checked 1 source[\s\S]*Checked rulebook[\s\S]*<\/details>/,
       );
-      expect(body).toContain('aria-label="Progress detail"');
-      expectProgressVisibilityDefaults(body);
+      expect(body).not.toContain('Work log');
+      expect(body).not.toContain('aria-label="Progress detail"');
+      expect(body).not.toContain('data-progress-visibility-choice');
       expect(body).not.toContain('CONSULTED');
       expect(body).not.toContain('class="squire-toolcall"');
     });
@@ -1383,14 +1378,12 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       const body = renderTranscriptAnswer(
         answerWith(['search_rules', 'search_cards', 'search_rules', 'get_card', 'get_section']),
       );
-      expect(body).toMatch(
-        /CHECKED[\s\S]*Rulebook[\s\S]*CHECKED[\s\S]*Card Index[\s\S]*CHECKED[\s\S]*Section Book/,
-      );
+      expect(body).toMatch(/Checked rulebook[\s\S]*Checked card index[\s\S]*Checked section book/);
       expect(body).not.toContain('CONSULTED');
       // The RULEBOOK-first ordering is the insertion-order contract — ensure
       // CARD INDEX doesn't leapfrog ahead of RULEBOOK just because more
       // card-family tools were called.
-      expect(body.indexOf('Rulebook')).toBeLessThan(body.indexOf('Card Index'));
+      expect(body.indexOf('Checked rulebook')).toBeLessThan(body.indexOf('Checked card index'));
     });
 
     it('renders no source work log when consultedSources is null (pre-SQR-98 rows)', () => {
@@ -1426,7 +1419,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       const body = renderTranscriptAnswer(
         answerWith(['find_scenario', 'get_scenario', 'get_section']),
       );
-      expect(body).toMatch(/CHECKED[\s\S]*Scenario Book[\s\S]*CHECKED[\s\S]*Section Book/);
+      expect(body).toMatch(/Checked scenario book[\s\S]*Checked section book/);
       expect(body).not.toContain('CONSULTED');
     });
 
@@ -1443,8 +1436,9 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       expect(body).toMatch(/squire-answer--pending[\s\S]*class="squire-answer-work"/);
       const pendingAnswer = body.match(/<article[\s\S]*?squire-answer--pending[\s\S]*?<\/article>/);
       expect(pendingAnswer).not.toBeNull();
-      expect(pendingAnswer?.[0]).toContain('aria-label="Progress detail"');
-      expectProgressVisibilityDefaults(pendingAnswer?.[0] ?? '');
+      expect(pendingAnswer?.[0]).toContain('data-answer-work-status');
+      expect(pendingAnswer?.[0]).not.toContain('aria-label="Progress detail"');
+      expect(pendingAnswer?.[0]).not.toContain('data-progress-visibility-choice');
       expect(body).not.toContain('class="squire-toolcall"');
       expect(body).not.toContain('data-testid="consulted-footer"');
     });
