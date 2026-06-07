@@ -1534,7 +1534,7 @@ template#squire-banner-fixtures {
 
 .squire-answer-work__summary {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   min-height: 24px;
   cursor: pointer;
@@ -1589,7 +1589,7 @@ template#squire-banner-fixtures {
   flex: 0 0 auto;
   align-items: center;
   gap: 2px;
-  min-height: 26px;
+  min-height: 44px;
   padding: 2px;
   border: 1px solid var(--rule);
   border-radius: 6px;
@@ -1601,8 +1601,8 @@ template#squire-banner-fixtures {
   align-items: center;
   justify-content: center;
   min-width: 44px;
-  min-height: 20px;
-  padding: 2px 7px;
+  min-height: 40px;
+  padding: 2px 8px;
   border: 0;
   border-radius: 4px;
   background: transparent;
