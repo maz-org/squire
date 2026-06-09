@@ -1374,6 +1374,55 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       expect(body).not.toContain('class="squire-toolcall"');
     });
 
+    it('reloads the completed work timeline from persisted browser-safe stream events', () => {
+      const body = renderTranscriptAnswer(
+        answerWith(null, {
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-result',
+              payload: { id: 'search_cards', labels: ['CARD INDEX'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-progress',
+              payload: {
+                id: 'resolve_entity-progress-1',
+                label: 'REFERENCE',
+                message: 'Resolving bandit archer monster',
+              },
+              createdAt: new Date('2026-04-20T00:00:02.000Z'),
+            },
+            {
+              sequence: 3,
+              event: 'tool-progress',
+              payload: {
+                id: 'search_knowledge-progress-1',
+                label: 'REFERENCE',
+                message: 'Searching selected sources',
+              },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+            {
+              sequence: 4,
+              event: 'tool-result',
+              payload: { id: 'search_rules', labels: ['RULEBOOK', 'SECTION BOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:04.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Checked 3 sources');
+      expect(body).toMatch(
+        /Resolving bandit archer stats[\s\S]*Searching available sources[\s\S]*Checked card index[\s\S]*Checked rulebook[\s\S]*Checked section book/,
+      );
+      expect(body).not.toContain('SEARCHING');
+      expect(body).not.toContain('CHECKED');
+      expect(body).not.toContain('class="squire-toolcall"');
+    });
+
     it('aggregates multiple tool names into deduped labels, preserving insertion order', () => {
       const body = renderTranscriptAnswer(
         answerWith(['search_rules', 'search_cards', 'search_rules', 'get_card', 'get_section']),

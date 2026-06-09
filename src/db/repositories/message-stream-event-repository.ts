@@ -1,7 +1,11 @@
-import { and, asc, eq, gt, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import { messageStreamEvents } from '../schema/conversations.ts';
+import type {
+  ConversationMessagePublicWorkEvent,
+  ConversationMessagePublicWorkEventName,
+} from './types.ts';
 
 export type BrowserStreamEventName =
   | 'text-delta'
@@ -20,6 +24,11 @@ export interface MessageStreamEvent {
 }
 
 const TERMINAL_EVENTS = new Set<BrowserStreamEventName>(['done', 'error']);
+const PUBLIC_WORK_EVENTS: ConversationMessagePublicWorkEventName[] = [
+  'tool-progress',
+  'tool-result',
+  'answer-artifact',
+];
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -71,6 +80,41 @@ export async function findTerminal(userMessageId: string): Promise<MessageStream
     .orderBy(asc(messageStreamEvents.sequence));
   const terminal = rows.find((row) => row.event === 'done' || row.event === 'error');
   return terminal ? toDomain(terminal) : null;
+}
+
+export async function listPublicWorkEventsByUserMessageIds(
+  userMessageIds: string[],
+): Promise<Map<string, ConversationMessagePublicWorkEvent[]>> {
+  const eventsByUserMessage = new Map<string, ConversationMessagePublicWorkEvent[]>();
+  if (userMessageIds.length === 0) return eventsByUserMessage;
+
+  const { db } = getDb('server');
+  const rows = await db
+    .select()
+    .from(messageStreamEvents)
+    .where(
+      and(
+        inArray(messageStreamEvents.userMessageId, userMessageIds),
+        inArray(messageStreamEvents.event, PUBLIC_WORK_EVENTS),
+      ),
+    )
+    .orderBy(asc(messageStreamEvents.userMessageId), asc(messageStreamEvents.sequence));
+
+  for (const row of rows) {
+    const event = row.event as ConversationMessagePublicWorkEventName;
+    if (!PUBLIC_WORK_EVENTS.includes(event)) continue;
+    const entry: ConversationMessagePublicWorkEvent = {
+      sequence: row.sequence,
+      event,
+      payload: row.payload,
+      createdAt: row.createdAt,
+    };
+    const existing = eventsByUserMessage.get(row.userMessageId) ?? [];
+    existing.push(entry);
+    eventsByUserMessage.set(row.userMessageId, existing);
+  }
+
+  return eventsByUserMessage;
 }
 
 async function insertNext(input: {

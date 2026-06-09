@@ -60,7 +60,7 @@ import {
   loadConversationHistory,
 } from '../src/chat/conversation-service.ts';
 import { users } from '../src/db/schema/core.ts';
-import { conversations, messages } from '../src/db/schema/conversations.ts';
+import { conversations, messages, messageStreamEvents } from '../src/db/schema/conversations.ts';
 
 interface AuthContext {
   cookie: string;
@@ -2318,6 +2318,77 @@ describe('conversation web backend', () => {
     expect(page).not.toContain('<img');
     expect(page).not.toContain('href="javascript:');
     expect(page).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+
+  it('renders the completed work timeline from stored stream events on reload', async () => {
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'How many hit points does a level 2 bandit archer have?',
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'A level 2 Bandit Archer has 6 hit points.',
+      responseToMessageId: userMessage.id,
+      consultedSources: null,
+    });
+    await db.insert(messageStreamEvents).values([
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 1,
+        event: 'tool-result',
+        payload: { id: 'search_cards', labels: ['CARD INDEX'], ok: true },
+      },
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 2,
+        event: 'tool-progress',
+        payload: {
+          id: 'resolve_entity-progress-1',
+          label: 'REFERENCE',
+          message: 'Resolving bandit archer monster stat card',
+        },
+      },
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 3,
+        event: 'tool-result',
+        payload: { id: 'search_rules', labels: ['RULEBOOK'], ok: true },
+      },
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 4,
+        event: 'done',
+        payload: {
+          html: '<p>A level 2 Bandit Archer has 6 hit points.</p>',
+          consultedSources: null,
+        },
+      },
+    ]);
+
+    const pageRes = await requestWithAuth(auth, `http://localhost:3000/chat/${conversation.id}`);
+    const page = await pageRes.text();
+
+    expect(pageRes.status).toBe(200);
+    expect(page).toContain('Checked 2 sources');
+    expect(page).toMatch(
+      /Resolving bandit archer stats[\s\S]*Checked card index[\s\S]*Checked rulebook/,
+    );
+    expect(page).not.toContain('class="squire-toolcall"');
   });
 
   it('keeps hostile streamed content inert until the final sanitized done fragment', async () => {

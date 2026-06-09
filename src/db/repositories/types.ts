@@ -86,6 +86,18 @@ export interface ConversationHistoryPage {
   nextCursor: ConversationHistoryCursor | null;
 }
 
+export type ConversationMessagePublicWorkEventName =
+  | 'tool-progress'
+  | 'tool-result'
+  | 'answer-artifact';
+
+export interface ConversationMessagePublicWorkEvent {
+  sequence: number;
+  event: ConversationMessagePublicWorkEventName;
+  payload: Record<string, unknown>;
+  createdAt: Date;
+}
+
 export interface ConversationMessage {
   id: string;
   conversationId: string;
@@ -112,6 +124,13 @@ export interface ConversationMessage {
    * render time — no migration is needed.
    */
   consultedSources: string[] | null;
+  /**
+   * Completed browser-safe work timeline for this assistant turn, loaded from
+   * `message_stream_events` by conversation-service on page-render paths.
+   * The payloads are the same public SSE payloads the browser already saw,
+   * not raw tool payloads or hidden model reasoning.
+   */
+  publicWorkEvents?: ConversationMessagePublicWorkEvent[];
   createdAt: Date;
 }
 
