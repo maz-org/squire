@@ -339,19 +339,113 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       'open_entity',
     ]);
     const visibleEvents = emitted.filter(([event]) => event !== 'debug');
-    expect(visibleEvents.slice(0, 2)).toEqual([
+    expect(visibleEvents).not.toContainEqual([
+      'tool_plan',
+      expect.objectContaining({ toolName: 'resolve_entity' }),
+    ]);
+    expect(visibleEvents).not.toContainEqual([
+      'tool_progress',
+      expect.objectContaining({ toolName: 'resolve_entity' }),
+    ]);
+    expect(visibleEvents).not.toContainEqual([
+      'tool_result',
+      expect.objectContaining({ name: 'resolve_entity' }),
+    ]);
+    expect(
+      visibleEvents.filter(([event]) =>
+        ['tool_plan', 'tool_progress', 'tool_result'].includes(event),
+      ),
+    ).toEqual([
       [
         'tool_plan',
         {
           message: "I'll check that stat card.",
-          toolName: 'resolve_entity',
+          toolName: 'open_entity',
         },
       ],
       [
-        'tool_progress',
+        'tool_result',
         {
-          message: 'Checking Bandit Archer stat card',
-          toolName: 'resolve_entity',
+          name: 'open_entity',
+          ok: true,
+          message: 'Checked Bandit Archer stat card',
+          sourceBooks: ['Card Index'],
+        },
+      ],
+    ]);
+  });
+
+  it('keeps scenario resolution silent until the scenario book is opened', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('resolve_entity', {
+          query: 'scenario 61',
+          kinds: ['scenario'],
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', { ref: 'scenario:frosthaven/061' }, 'tool_open_scenario'),
+      );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Scenario 61 is Dangerous Grove.'), [
+        'Scenario 61 ',
+        'is Dangerous Grove.',
+      ]),
+    );
+    mockResolveEntity.mockResolvedValueOnce({
+      query: 'scenario 61',
+      candidates: [
+        {
+          entity: {
+            kind: 'scenario',
+            ref: 'scenario:frosthaven/061',
+            title: 'Scenario 61',
+            sourceLabel: 'Scenario Book',
+          },
+          confidence: 0.99,
+          matchReason: 'Exact scenario match',
+        },
+      ],
+    });
+    mockOpenEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Scenario 61',
+        data: { name: 'Dangerous Grove' },
+      },
+      citations: [{ sourceRef: 'scenario-book.json', sourceLabel: 'Scenario Book' }],
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is scenario 61?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-scenario-61',
+    });
+
+    expect(result.answer).toBe('Scenario 61 is Dangerous Grove.');
+    const workEvents = emitted.filter(([event]) =>
+      ['tool_plan', 'tool_progress', 'tool_result'].includes(event),
+    );
+    expect(workEvents).toEqual([
+      [
+        'tool_plan',
+        {
+          message: "I'll look that up in the scenario book.",
+          toolName: 'open_entity',
+        },
+      ],
+      [
+        'tool_result',
+        {
+          name: 'open_entity',
+          ok: true,
+          message: 'Looked up scenario 61 in the scenario book',
+          sourceBooks: ['Scenario Book'],
         },
       ],
     ]);

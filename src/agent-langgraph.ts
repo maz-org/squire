@@ -332,6 +332,18 @@ function progressMessageForTool(name: string, input: Record<string, unknown>): s
   return activeWorkLogProgressMessageFromCompleted(completedWorkMessageForTool(name, input));
 }
 
+function shouldEmitUserFacingPlan(name: string): boolean {
+  return name !== 'resolve_entity';
+}
+
+function shouldEmitUserFacingProgress(name: string): boolean {
+  return name !== 'resolve_entity' && name !== 'open_entity';
+}
+
+function shouldEmitUserFacingResult(name: string, ok: boolean): boolean {
+  return name !== 'resolve_entity' || !ok;
+}
+
 function sourcePlanTarget(label: string): string {
   if (label === 'Rulebook') return 'the rulebook';
   if (label === 'Scenario Book') return 'the scenario book';
@@ -623,16 +635,18 @@ async function runLangGraphAgentLoop(
 
         if (emit) {
           const planMessage = planMessageForTool(block.name, input);
-          if (planMessage) {
+          if (planMessage && shouldEmitUserFacingPlan(block.name)) {
             await emit('tool_plan', {
               message: planMessage,
               toolName: block.name,
             });
           }
-          await emit('tool_progress', {
-            message: progressMessageForTool(block.name, input),
-            toolName: block.name,
-          });
+          if (shouldEmitUserFacingProgress(block.name)) {
+            await emit('tool_progress', {
+              message: progressMessageForTool(block.name, input),
+              toolName: block.name,
+            });
+          }
           await emit('tool_call', { name: block.name, input: block.input });
         }
 
@@ -675,12 +689,14 @@ async function runLangGraphAgentLoop(
         }
 
         if (emit) {
-          await emit('tool_result', {
-            name: block.name,
-            ok: toolOk,
-            message: completedWorkMessageForTool(block.name, input),
-            sourceBooks: toolResult.sourceBooks,
-          });
+          if (shouldEmitUserFacingResult(block.name, toolOk)) {
+            await emit('tool_result', {
+              name: block.name,
+              ok: toolOk,
+              message: completedWorkMessageForTool(block.name, input),
+              sourceBooks: toolResult.sourceBooks,
+            });
+          }
           const artifact = sectionArtifactFromToolResult(block.name, toolResult);
           if (artifact) await emit('artifact', artifact);
         }
