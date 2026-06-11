@@ -348,6 +348,21 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('Frosthaven');
   });
 
+  it('renders a history search affordance in the desktop rail and mobile drawer', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(testSession, testCsrfToken, {
+        conversationHistory: { ...testConversationHistory(), query: 'poison' },
+      }),
+    );
+
+    expect(body).toContain('class="squire-history-search"');
+    expect(body).toContain('name="historyQuery"');
+    expect(body).toContain('placeholder="Search history"');
+    expect(body).toContain('value="poison"');
+    expect(body).toContain('type="hidden" name="historyQuery" value="poison"');
+    expect(body.match(/class="squire-history-search"/g)).toHaveLength(2);
+  });
+
   it('does not render the history toggle when the history shell is disabled', async () => {
     const body = String(
       await actualLayout.layoutShell({

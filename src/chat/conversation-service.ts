@@ -40,10 +40,13 @@ export interface ConversationHistoryViewRow {
 export interface ConversationHistoryViewModel {
   rows: ConversationHistoryViewRow[];
   nextCursor: string | null;
+  query?: string;
 }
 
 const DEFAULT_HISTORY_LIMIT = 30;
 const UNTITLED_CHAT_TITLE = 'Untitled chat';
+const HISTORY_QUERY_MAX_LENGTH = 120;
+const HISTORY_TITLE_MAX_LENGTH = 72;
 const gameLabels = new Map<string, string>([
   ...SUPPORTED_GAMES.map((game) => [game.id, game.label] as const),
   ['gloomhaven-2e', 'Gloomhaven 2e'],
@@ -51,6 +54,29 @@ const gameLabels = new Map<string, string>([
 
 function normalizeHistoryText(value: string | null): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function clampHistoryQuery(value: string | undefined): string {
+  return normalizeHistoryText(value ?? '')
+    .slice(0, HISTORY_QUERY_MAX_LENGTH)
+    .trim();
+}
+
+function deriveHistoryTitle(value: string | null): string {
+  const normalized = normalizeHistoryText(value);
+  if (!normalized) return UNTITLED_CHAT_TITLE;
+  if (normalized.length <= HISTORY_TITLE_MAX_LENGTH) return normalized;
+
+  // SQR-257: titles are deterministic excerpts from user-visible questions,
+  // not model-generated summaries. That keeps first-answer latency unchanged
+  // and prevents the history rail from inventing a misleading label.
+  const clipped = normalized.slice(0, HISTORY_TITLE_MAX_LENGTH + 1);
+  const lastSpace = clipped.lastIndexOf(' ');
+  const title =
+    lastSpace >= 40
+      ? clipped.slice(0, lastSpace).trim()
+      : normalized.slice(0, HISTORY_TITLE_MAX_LENGTH).trim();
+  return `${title.replace(/[,:;.!?\s]+$/, '')}...`;
 }
 
 function gameScopeLabel(gameId: string | null): string | null {
@@ -97,22 +123,33 @@ export async function loadConversationHistory(input: {
   activeStatus?: ConversationHistoryStatus;
   limit?: number;
   cursor?: string;
+  query?: string;
 }): Promise<ConversationHistoryViewModel> {
   const limit = input.limit ?? DEFAULT_HISTORY_LIMIT;
   if (!Number.isInteger(limit) || limit < 1) {
     throw new TypeError(`loadConversationHistory: limit must be a positive integer, got ${limit}`);
   }
+  const query = clampHistoryQuery(input.query);
 
-  const page = await ConversationRepository.listOwnedSummaries({
-    userId: input.userId,
-    limit,
-    cursor: decodeHistoryCursor(input.cursor),
-  });
+  const page =
+    query.length > 0
+      ? await ConversationRepository.searchOwnedSummaries({
+          userId: input.userId,
+          query,
+          limit,
+          cursor: decodeHistoryCursor(input.cursor),
+        })
+      : await ConversationRepository.listOwnedSummaries({
+          userId: input.userId,
+          limit,
+          cursor: decodeHistoryCursor(input.cursor),
+        });
 
   return {
+    query,
     rows: page.rows.map((row) => {
       const active = row.id === input.activeConversationId;
-      const title = normalizeHistoryText(row.firstUserMessageContent) || UNTITLED_CHAT_TITLE;
+      const title = deriveHistoryTitle(row.titleMessageContent);
       const preview = normalizeHistoryText(row.latestMessageContent);
       return {
         id: row.id,

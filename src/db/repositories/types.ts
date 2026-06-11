@@ -74,7 +74,7 @@ export interface ConversationHistorySummary {
   userId: string;
   createdAt: Date;
   lastMessageAt: Date;
-  firstUserMessageContent: string | null;
+  titleMessageContent: string | null;
   latestMessageContent: string | null;
   latestMessageRole: 'user' | 'assistant' | null;
   latestMessageGame: string | null;
