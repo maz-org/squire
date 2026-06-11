@@ -243,6 +243,53 @@ html {
   border-color: var(--wax);
 }
 
+.squire-history-search {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.squire-history-search__input {
+  min-width: 0;
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--parchment);
+  background: var(--surface);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.squire-history-search__input::placeholder {
+  color: var(--sepia);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-style: italic;
+}
+
+.squire-history-search__input:focus {
+  border-color: var(--wax);
+}
+
+.squire-history-search__submit {
+  min-height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--parchment);
+  background: var(--surface-2);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.squire-history-search__submit:hover,
+.squire-history-search__submit:focus-visible {
+  color: var(--wax);
+  border-color: var(--wax);
+}
+
 .squire-history-list {
   display: flex;
   flex-direction: column;

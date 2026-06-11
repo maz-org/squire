@@ -580,7 +580,10 @@ app.get('/', requirePageSession(), async (c) => {
   // now builds that file before deploy so this fails before runtime.
   try {
     const session = c.get('session')!;
-    const conversationHistory = await loadConversationHistory({ userId: session.userId });
+    const conversationHistory = await loadConversationHistory({
+      userId: session.userId,
+      query: c.req.query('historyQuery'),
+    });
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
     return c.html(
@@ -993,13 +996,19 @@ function buildToolStatusId(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+function conversationPath(conversationId: string, historyQuery?: string): string {
+  if (!historyQuery) return `/chat/${conversationId}`;
+  return `/chat/${conversationId}?${new URLSearchParams({ historyQuery }).toString()}`;
+}
+
 async function readQuestionForm(
   c: Context,
-): Promise<{ question: string; idempotencyKey?: string; game?: string }> {
+): Promise<{ question: string; idempotencyKey?: string; game?: string; historyQuery?: string }> {
   const form = await c.req.formData();
   const questionValue = form.get('question');
   const idempotencyValue = form.get('idempotencyKey');
   const gameValue = form.get('game');
+  const historyQueryValue = form.get('historyQuery');
 
   return {
     question: typeof questionValue === 'string' ? questionValue.trim() : '',
@@ -1009,6 +1018,10 @@ async function readQuestionForm(
         : undefined,
     game:
       typeof gameValue === 'string' && gameValue.trim().length > 0 ? gameValue.trim() : undefined,
+    historyQuery:
+      typeof historyQueryValue === 'string' && historyQueryValue.trim().length > 0
+        ? historyQueryValue.trim()
+        : undefined,
   };
 }
 
@@ -1092,6 +1105,7 @@ app.get('/chat/:conversationId', async (c) => {
     userId: session.userId,
     activeConversationId: loaded.conversation.id,
     activeStatus: pendingStreamUrls.size > 0 ? 'running' : 'idle',
+    query: c.req.query('historyQuery'),
   });
 
   c.header('Cache-Control', 'no-store');
@@ -1119,7 +1133,7 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
 app.post('/chat', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const { question, idempotencyKey, game: rawGame } = await readQuestionForm(c);
+  const { question, idempotencyKey, game: rawGame, historyQuery } = await readQuestionForm(c);
 
   if (!question) return badChatRequest(c, 'Question is required');
   if (!idempotencyKey) return badChatRequest(c, 'Idempotency key is required');
@@ -1141,7 +1155,7 @@ app.post('/chat', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
-    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+    c.header('HX-Push-Url', conversationPath(pending.conversation.id, historyQuery));
 
     // ADR 0012: the home form swaps `#squire-surface innerHTML` with the
     // full transcript shell (one pending turn). After the swap, squire.js
@@ -1158,6 +1172,7 @@ app.post('/chat', async (c) => {
         userId: session.userId,
         activeConversationId: loaded.conversation.id,
         activeStatus: pendingStreamUrls.size > 0 ? 'running' : 'idle',
+        query: historyQuery,
       });
       return c.html(
         renderConversationTranscriptWithHistoryOob({
@@ -1173,6 +1188,7 @@ app.post('/chat', async (c) => {
       userId: session.userId,
       activeConversationId: pending.conversation.id,
       activeStatus: 'running',
+      query: historyQuery,
     });
     return c.html(
       renderConversationTranscriptWithHistoryOob({
@@ -1205,7 +1221,7 @@ app.post('/chat', async (c) => {
 app.post('/chat/:conversationId/messages', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const { question, game: rawGame } = await readQuestionForm(c);
+  const { question, game: rawGame, historyQuery } = await readQuestionForm(c);
   if (!question) return badChatRequest(c, 'Question is required');
   let game: string | undefined;
   try {
@@ -1226,12 +1242,13 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
-    // Keep follow-up submissions pinned to the canonical conversation URL.
-    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+    // Keep follow-up submissions pinned to the current conversation URL.
+    c.header('HX-Push-Url', conversationPath(pending.conversation.id, historyQuery));
     const conversationHistory = await loadConversationHistory({
       userId: session.userId,
       activeConversationId: pending.conversation.id,
       activeStatus: 'running',
+      query: historyQuery,
     });
     // ADR 0012 E-3: append-fragment swap. The client's form posts with
     // `hx-target=".squire-transcript"` `hx-swap="beforeend"`, so we return

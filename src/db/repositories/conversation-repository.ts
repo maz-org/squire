@@ -28,7 +28,7 @@ interface ConversationHistorySummaryRow {
   userId: string;
   createdAt: Date | string;
   lastMessageAt: Date | string;
-  firstUserMessageContent: string | null;
+  titleMessageContent: string | null;
   latestMessageContent: string | null;
   latestMessageRole: string | null;
   latestMessageGame: string | null;
@@ -47,7 +47,7 @@ function toHistorySummary(row: ConversationHistorySummaryRow): ConversationHisto
     userId: row.userId,
     createdAt,
     lastMessageAt,
-    firstUserMessageContent: row.firstUserMessageContent,
+    titleMessageContent: row.titleMessageContent,
     latestMessageContent: row.latestMessageContent,
     latestMessageRole:
       row.latestMessageRole === 'user' || row.latestMessageRole === 'assistant'
@@ -55,6 +55,99 @@ function toHistorySummary(row: ConversationHistorySummaryRow): ConversationHisto
         : null,
     latestMessageGame: row.latestMessageGame,
     latestMessageIsError: row.latestMessageIsError ?? false,
+  };
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+async function loadOwnedSummaryPage(input: {
+  userId: string;
+  limit: number;
+  cursor?: ConversationHistoryCursor | null;
+  query?: string | null;
+}): Promise<ConversationHistoryPage> {
+  if (!Number.isInteger(input.limit) || input.limit < 1) {
+    throw new TypeError(`listOwnedSummaries: limit must be a positive integer, got ${input.limit}`);
+  }
+
+  const { db } = getDb('server');
+  const pageSize = input.limit + 1;
+  const cursorFilter = input.cursor
+    ? sql`and (c.last_message_at, c.id) < (${input.cursor.lastMessageAt}, ${input.cursor.id}::uuid)`
+    : sql``;
+  const searchPattern = input.query ? `%${escapeLikePattern(input.query)}%` : null;
+  const searchFilter = searchPattern
+    ? sql`and exists (
+        select 1
+        from messages search_message
+        where search_message.conversation_id = c.id
+          and regexp_replace(btrim(search_message.content), '[[:space:]]+', ' ', 'g')
+            ilike ${searchPattern} escape '\\'
+      )`
+    : sql``;
+
+  const result = await db.execute(sql`
+    with base as (
+      select c.id, c.user_id, c.created_at, c.last_message_at
+      from conversations c
+      where c.user_id = ${input.userId}
+      ${cursorFilter}
+      ${searchFilter}
+      order by c.last_message_at desc, c.id desc
+      limit ${pageSize}
+    ),
+    title_user as (
+      select distinct on (m.conversation_id)
+        m.conversation_id,
+        m.content,
+        m.game
+      from messages m
+      where m.role = 'user'
+        and length(btrim(m.content)) > 0
+        and m.conversation_id in (select id from base)
+      order by m.conversation_id, m.created_at asc, m.id asc
+    ),
+    latest_message as (
+      select distinct on (m.conversation_id)
+        m.conversation_id,
+        m.content,
+        m.role,
+        m.game,
+        m.is_error
+      from messages m
+      where m.conversation_id in (select id from base)
+      order by m.conversation_id, m.created_at desc, m.id desc
+    )
+    select
+      base.id,
+      base.user_id as "userId",
+      base.created_at as "createdAt",
+      base.last_message_at as "lastMessageAt",
+      title_user.content as "titleMessageContent",
+      latest_message.content as "latestMessageContent",
+      latest_message.role as "latestMessageRole",
+      coalesce(latest_message.game, title_user.game) as "latestMessageGame",
+      latest_message.is_error as "latestMessageIsError"
+    from base
+    left join title_user on title_user.conversation_id = base.id
+    left join latest_message on latest_message.conversation_id = base.id
+    order by base.last_message_at desc, base.id desc
+  `);
+
+  const summaries = result.rows.map((row) =>
+    toHistorySummary(row as unknown as ConversationHistorySummaryRow),
+  );
+  const pageRows = summaries.slice(0, input.limit);
+  const hasNextPage = summaries.length > input.limit;
+  const lastVisible = pageRows[pageRows.length - 1] ?? null;
+  return {
+    rows: pageRows,
+    nextCursor:
+      hasNextPage && lastVisible
+        ? { lastMessageAt: lastVisible.lastMessageAt, id: lastVisible.id }
+        : null,
   };
 }
 
@@ -76,75 +169,16 @@ export async function listOwnedSummaries(input: {
   limit: number;
   cursor?: ConversationHistoryCursor | null;
 }): Promise<ConversationHistoryPage> {
-  if (!Number.isInteger(input.limit) || input.limit < 1) {
-    throw new TypeError(`listOwnedSummaries: limit must be a positive integer, got ${input.limit}`);
-  }
+  return loadOwnedSummaryPage(input);
+}
 
-  const { db } = getDb('server');
-  const pageSize = input.limit + 1;
-  const cursorFilter = input.cursor
-    ? sql`and (c.last_message_at, c.id) < (${input.cursor.lastMessageAt}, ${input.cursor.id}::uuid)`
-    : sql``;
-
-  const result = await db.execute(sql`
-    with base as (
-      select c.id, c.user_id, c.created_at, c.last_message_at
-      from conversations c
-      where c.user_id = ${input.userId}
-      ${cursorFilter}
-      order by c.last_message_at desc, c.id desc
-      limit ${pageSize}
-    ),
-    first_user as (
-      select distinct on (m.conversation_id)
-        m.conversation_id,
-        m.content,
-        m.game
-      from messages m
-      where m.role = 'user'
-        and m.conversation_id in (select id from base)
-      order by m.conversation_id, m.created_at asc, m.id asc
-    ),
-    latest_message as (
-      select distinct on (m.conversation_id)
-        m.conversation_id,
-        m.content,
-        m.role,
-        m.game,
-        m.is_error
-      from messages m
-      where m.conversation_id in (select id from base)
-      order by m.conversation_id, m.created_at desc, m.id desc
-    )
-    select
-      base.id,
-      base.user_id as "userId",
-      base.created_at as "createdAt",
-      base.last_message_at as "lastMessageAt",
-      first_user.content as "firstUserMessageContent",
-      latest_message.content as "latestMessageContent",
-      latest_message.role as "latestMessageRole",
-      coalesce(latest_message.game, first_user.game) as "latestMessageGame",
-      latest_message.is_error as "latestMessageIsError"
-    from base
-    left join first_user on first_user.conversation_id = base.id
-    left join latest_message on latest_message.conversation_id = base.id
-    order by base.last_message_at desc, base.id desc
-  `);
-
-  const summaries = result.rows.map((row) =>
-    toHistorySummary(row as unknown as ConversationHistorySummaryRow),
-  );
-  const pageRows = summaries.slice(0, input.limit);
-  const hasNextPage = summaries.length > input.limit;
-  const lastVisible = pageRows[pageRows.length - 1] ?? null;
-  return {
-    rows: pageRows,
-    nextCursor:
-      hasNextPage && lastVisible
-        ? { lastMessageAt: lastVisible.lastMessageAt, id: lastVisible.id }
-        : null,
-  };
+export async function searchOwnedSummaries(input: {
+  userId: string;
+  query: string;
+  limit: number;
+  cursor?: ConversationHistoryCursor | null;
+}): Promise<ConversationHistoryPage> {
+  return loadOwnedSummaryPage(input);
 }
 
 export async function create(

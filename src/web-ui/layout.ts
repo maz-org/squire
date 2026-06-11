@@ -101,6 +101,7 @@ export interface LayoutShellOptions {
 const EMPTY_CONVERSATION_HISTORY: ConversationHistoryViewModel = {
   rows: [],
   nextCursor: null,
+  query: '',
 };
 
 interface DocumentOptions {
@@ -185,10 +186,13 @@ function statusLabel(status: ConversationHistoryStatus): string {
   return '';
 }
 
-function renderHistoryRows(rows: ConversationHistoryViewRow[]): HtmlEscapedString {
+function renderHistoryRows(
+  rows: ConversationHistoryViewRow[],
+  options: { query?: string } = {},
+): HtmlEscapedString {
   if (rows.length === 0) {
     return html`<div class="squire-history-empty">
-      <p>No conversations yet.</p>
+      <p>${options.query ? 'No matching conversations.' : 'No conversations yet.'}</p>
     </div>` as HtmlEscapedString;
   }
 
@@ -219,9 +223,33 @@ function renderHistoryRows(rows: ConversationHistoryViewRow[]): HtmlEscapedStrin
   })}` as HtmlEscapedString;
 }
 
+function renderConversationHistorySearch(
+  history: ConversationHistoryViewModel,
+  idSuffix: string,
+): HtmlEscapedString {
+  const query = history.query ?? '';
+  return html`<form class="squire-history-search" method="get" role="search">
+    <label class="sr-only" for="squire-history-search-${idSuffix}">Search history</label>
+    <input
+      id="squire-history-search-${idSuffix}"
+      class="squire-history-search__input"
+      type="search"
+      name="historyQuery"
+      value="${query}"
+      placeholder="Search history"
+      autocomplete="off"
+    />
+    <button class="squire-history-search__submit" type="submit">Search</button>
+  </form>` as HtmlEscapedString;
+}
+
 function renderConversationHistoryList(history: ConversationHistoryViewModel): HtmlEscapedString {
-  return html`<nav class="squire-history-list" aria-label="Recent conversations">
-    ${renderHistoryRows(history.rows)}
+  const query = history.query ?? '';
+  return html`<nav
+    class="squire-history-list"
+    aria-label="${query ? 'Matching conversations' : 'Recent conversations'}"
+  >
+    ${renderHistoryRows(history.rows, { query })}
   </nav>` as HtmlEscapedString;
 }
 
@@ -246,7 +274,7 @@ export function renderConversationHistoryShell(
         </a>
         ${renderNewChatLink('squire-history-new-chat')}
       </div>
-      ${renderConversationHistoryList(history)}
+      ${renderConversationHistorySearch(history, 'rail')} ${renderConversationHistoryList(history)}
     </aside>
     <div class="squire-history-backdrop" data-history-close hidden></div>
     <aside
@@ -271,6 +299,7 @@ export function renderConversationHistoryShell(
         </button>
       </div>
       ${renderNewChatLink('squire-history-new-chat squire-history-new-chat--drawer')}
+      ${renderConversationHistorySearch(history, 'drawer')}
       ${renderConversationHistoryList(history)}
     </aside>
   </div>` as HtmlEscapedString;
@@ -773,9 +802,11 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const chatFormHxSwap = options.chatFormHxSwap ?? 'innerHTML';
   const headerContext = options.headerContext ?? 'HAVEN · RULES';
   const columnClassName = options.columnClassName ?? 'squire-column';
+  const historyQuery = conversationHistory?.query ?? '';
   const chatFormHiddenFields = [
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
     { name: 'game', value: DEFAULT_GAME_ID },
+    ...(historyQuery ? [{ name: 'historyQuery', value: historyQuery }] : []),
     ...(options.chatFormHiddenFields ?? []),
   ];
   // SAFETY: `errorBanner.message` is interpolated via hono/html's tagged
