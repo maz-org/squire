@@ -4,6 +4,7 @@ import { ask, type HistoryMessage, type EmitFn } from '../service.ts';
 import { getDb } from '../db.ts';
 import * as ConversationRepository from '../db/repositories/conversation-repository.ts';
 import * as MessageRepository from '../db/repositories/message-repository.ts';
+import * as MessageStreamEventRepository from '../db/repositories/message-stream-event-repository.ts';
 import type {
   Conversation,
   ConversationHistoryCursor,
@@ -640,5 +641,28 @@ export async function loadConversation(input: {
     }
   }
 
-  return { conversation, messages };
+  // SQR-261: completed work logs reload from the same browser-safe SSE rows
+  // the live client saw. That keeps persisted timelines inspectable without a
+  // second storage shape for raw tool payloads or hidden reasoning.
+  const responseUserMessageIds = [
+    ...new Set(
+      messages.flatMap((message) =>
+        message.role === 'assistant' && message.responseToMessageId
+          ? [message.responseToMessageId]
+          : [],
+      ),
+    ),
+  ];
+  const publicWorkEventsByUserMessage =
+    await MessageStreamEventRepository.listPublicWorkEventsByUserMessageIds(responseUserMessageIds);
+  const messagesWithPublicWorkEvents = messages.map((message) =>
+    message.role === 'assistant' && message.responseToMessageId
+      ? {
+          ...message,
+          publicWorkEvents: publicWorkEventsByUserMessage.get(message.responseToMessageId) ?? [],
+        }
+      : message,
+  );
+
+  return { conversation, messages: messagesWithPublicWorkEvents };
 }

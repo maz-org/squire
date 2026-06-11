@@ -30,7 +30,11 @@ import {
   UNSUPPORTED_MARKDOWN_SPECIMEN,
 } from './markdown-styleguide.ts';
 import { DEFAULT_GAME_ID, SUPPORTED_GAME_IDS, SUPPORTED_GAMES } from '../game.ts';
-import type { ConversationMessage, Session } from '../db/repositories/types.ts';
+import type {
+  ConversationMessage,
+  ConversationMessagePublicWorkEvent,
+  Session,
+} from '../db/repositories/types.ts';
 import type {
   ConversationHistoryStatus,
   ConversationHistoryViewModel,
@@ -436,39 +440,251 @@ function sentenceToolSourceLabel(label: ToolSourceLabel): string {
   return displayToolSourceLabel(label).toLowerCase();
 }
 
-function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedString {
-  if (message.isError || !message.consultedSources || message.consultedSources.length === 0) {
-    return html`` as HtmlEscapedString;
+interface CompletedAnswerWorkRow {
+  id: string;
+  detail: string;
+  sourceLabels: ToolSourceLabel[];
+  state: 'complete' | 'error';
+  sort: number;
+  ordinal: number;
+}
+
+interface CompletedAnswerWorkTimeline {
+  rows: CompletedAnswerWorkRow[];
+  sourceCount: number;
+}
+
+function answerWorkSlug(value: string | undefined, fallback: string): string {
+  const slug = (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return slug || fallback;
+}
+
+function baseAnswerWorkId(rowId: string | undefined): string | undefined {
+  return rowId?.replace(/-progress-\d+$/, '');
+}
+
+function payloadString(payload: Record<string, unknown>, key: string): string | null {
+  const value = payload[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function payloadSourceLabels(value: unknown): ToolSourceLabel[] {
+  if (!Array.isArray(value)) return [];
+  return aggregateSourceLabels(value.filter((entry): entry is string => typeof entry === 'string'));
+}
+
+function payloadSourceLabel(value: unknown): ToolSourceLabel | null {
+  if (typeof value !== 'string') return null;
+  return aggregateSourceLabels([value])[0] ?? null;
+}
+
+function genericAnswerWorkProgressDetail(message: string): string {
+  const resolvingMonster = message.match(/^Resolving\s+(.+?)\s+monster(?:\s+stat(?:\s+card)?)?$/i);
+  if (resolvingMonster) return `Resolving ${resolvingMonster[1]!.trim()} stats`;
+  if (message === 'Searching selected sources') return 'Searching available sources';
+  if (message === 'Searching knowledge') return 'Searching available sources';
+  return message;
+}
+
+function answerWorkProgressRowId(rowId: string | null, detail: string): string {
+  const baseId = baseAnswerWorkId(rowId ?? undefined) ?? 'progress';
+  const normalizedDetail = detail.toLowerCase();
+  if (normalizedDetail.startsWith('resolving ')) {
+    return `progress-resolving-${answerWorkSlug(detail, 'event')}`;
   }
-  const labels = aggregateSourceLabels(message.consultedSources);
-  if (labels.length === 0) {
-    return html`` as HtmlEscapedString;
+  if (normalizedDetail === 'searching available sources') {
+    return 'progress-searching-available-sources';
   }
+  return `${baseId}-progress-${answerWorkSlug(detail, 'event')}`;
+}
+
+function answerWorkProgressSort(detail: string): number {
+  const normalizedDetail = detail.toLowerCase();
+  if (normalizedDetail.startsWith('resolving ')) return 10;
+  if (normalizedDetail === 'searching available sources') return 20;
+  return 30;
+}
+
+function answerWorkCheckedSourceRowId(label: ToolSourceLabel, ok: boolean, index: number): string {
+  return `${ok ? 'checked-source-' : 'failed-source-'}${answerWorkSlug(label, String(index))}`;
+}
+
+function answerWorkProgressMessage(detail: string, sourceLabel: ToolSourceLabel | null): string {
+  if (detail === 'Searching available sources') return detail;
+  if (!sourceLabel) return detail || 'Checking sources';
+
+  const source = sentenceToolSourceLabel(sourceLabel);
+  if (detail && !detail.toLowerCase().includes(source)) {
+    return `${detail} in ${source}`;
+  }
+  return detail || 'Checking sources';
+}
+
+function answerWorkArtifactMessage(title: string, sourceLabel: ToolSourceLabel | null): string {
+  return `Found ${title || 'source'}${sourceLabel ? ` in ${sentenceToolSourceLabel(sourceLabel)}` : ''}`;
+}
+
+function addCompletedAnswerWorkRow(
+  rows: Map<string, CompletedAnswerWorkRow>,
+  input: Omit<CompletedAnswerWorkRow, 'ordinal'>,
+): CompletedAnswerWorkRow {
+  const existing = rows.get(input.id);
+  if (existing) return existing;
+  const row = { ...input, ordinal: rows.size };
+  rows.set(input.id, row);
+  return row;
+}
+
+function countTimelineSourceLabels(rows: CompletedAnswerWorkRow[]): number {
+  const labels = new Set<ToolSourceLabel>();
+  for (const row of rows) {
+    for (const label of row.sourceLabels) labels.add(label);
+  }
+  return labels.size;
+}
+
+function buildCompletedAnswerWorkTimeline(
+  events: readonly ConversationMessagePublicWorkEvent[] | undefined,
+): CompletedAnswerWorkTimeline {
+  const rows = new Map<string, CompletedAnswerWorkRow>();
+  const successfulSources = new Set<ToolSourceLabel>();
+
+  for (const event of events ?? []) {
+    const payload = event.payload ?? {};
+    if (event.event === 'tool-progress') {
+      const rawMessage = payloadString(payload, 'message');
+      if (!rawMessage) continue;
+      const detail = genericAnswerWorkProgressDetail(rawMessage);
+      const sourceLabel = payloadSourceLabel(payload.label);
+      addCompletedAnswerWorkRow(rows, {
+        id: answerWorkProgressRowId(payloadString(payload, 'id'), detail),
+        detail: answerWorkProgressMessage(detail, sourceLabel),
+        sourceLabels: sourceLabel ? [sourceLabel] : [],
+        state: 'complete',
+        sort: answerWorkProgressSort(detail),
+      });
+      continue;
+    }
+
+    if (event.event === 'answer-artifact') {
+      const title = payloadString(payload, 'title');
+      if (!title) continue;
+      const sourceLabel = payloadSourceLabel(payload.sourceLabel);
+      addCompletedAnswerWorkRow(rows, {
+        id: payloadString(payload, 'id') ?? `answer-artifact-${event.sequence}`,
+        detail: answerWorkArtifactMessage(title, sourceLabel),
+        sourceLabels: sourceLabel ? [sourceLabel] : [],
+        state: 'complete',
+        sort: 40,
+      });
+      continue;
+    }
+
+    if (event.event === 'tool-result') {
+      const ok = payload.ok !== false;
+      const labels = payloadSourceLabels(payload.labels);
+      if (labels.length === 0) {
+        if (ok) continue;
+        addCompletedAnswerWorkRow(rows, {
+          id: payloadString(payload, 'id') ?? `failed-source-${event.sequence}`,
+          detail: "Couldn't check source index",
+          sourceLabels: [],
+          state: 'error',
+          sort: 90,
+        });
+        continue;
+      }
+
+      labels.forEach((label, index) => {
+        if (ok) successfulSources.add(label);
+        addCompletedAnswerWorkRow(rows, {
+          id: answerWorkCheckedSourceRowId(label, ok, index),
+          detail: `${ok ? 'Checked' : "Couldn't check"} ${sentenceToolSourceLabel(label)}`,
+          sourceLabels: ok ? [label] : [],
+          state: ok ? 'complete' : 'error',
+          sort: ok ? 50 : 90,
+        });
+      });
+    }
+  }
+
+  const orderedRows = [...rows.values()].sort((left, right) => {
+    if (left.sort !== right.sort) return left.sort - right.sort;
+    return left.ordinal - right.ordinal;
+  });
+
+  return {
+    rows: orderedRows,
+    sourceCount:
+      successfulSources.size > 0 ? successfulSources.size : countTimelineSourceLabels(orderedRows),
+  };
+}
+
+function timelineFromConsultedSources(
+  consultedSources: readonly string[] | null,
+): CompletedAnswerWorkTimeline {
+  const labels = aggregateSourceLabels(consultedSources ?? []);
+  return {
+    rows: labels.map((label, index) => ({
+      id: answerWorkCheckedSourceRowId(label, true, index),
+      detail: `Checked ${sentenceToolSourceLabel(label)}`,
+      sourceLabels: [label],
+      state: 'complete' as const,
+      sort: 50,
+      ordinal: index,
+    })),
+    sourceCount: labels.length,
+  };
+}
+
+function renderCompletedAnswerWorkTimeline(
+  timeline: CompletedAnswerWorkTimeline,
+): HtmlEscapedString {
+  if (timeline.rows.length === 0) return html`` as HtmlEscapedString;
+  const summary =
+    timeline.sourceCount > 0
+      ? `Checked ${timeline.sourceCount} ${timeline.sourceCount === 1 ? 'source' : 'sources'}`
+      : `Recorded ${timeline.rows.length} ${timeline.rows.length === 1 ? 'step' : 'steps'}`;
   return html`<details
     class="squire-answer-work"
     data-testid="answer-progress"
     data-work-state="complete"
   >
     <summary class="squire-answer-work__summary">
-      <span class="squire-answer-work__status" data-answer-work-status
-        >Checked ${labels.length} ${labels.length === 1 ? 'source' : 'sources'}</span
-      >
+      <span class="squire-answer-work__status" data-answer-work-status>${summary}</span>
     </summary>
     <div class="squire-answer-work__rows" data-answer-work-rows>
-      ${labels.map(
-        (label) =>
+      ${timeline.rows.map(
+        (row) =>
           html`<div
-            class="squire-answer-work__row"
-            data-answer-work-source-labels="${label}"
-            data-work-state="complete"
+            class="squire-answer-work__row${row.state === 'error' ? ' is-error' : ''}"
+            data-answer-work-id="${row.id}"
+            ${row.sourceLabels.length > 0
+              ? html`data-answer-work-source-labels="${row.sourceLabels.join('|')}"`
+              : html``}
+            data-work-state="${row.state}"
           >
-            <span class="squire-answer-work__row-detail"
-              >Checked ${sentenceToolSourceLabel(label)}</span
-            >
+            <span class="squire-answer-work__row-detail">${row.detail}</span>
           </div>`,
       )}
     </div>
   </details>` as HtmlEscapedString;
+}
+
+function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedString {
+  if (message.isError) {
+    return html`` as HtmlEscapedString;
+  }
+  const persistedTimeline = buildCompletedAnswerWorkTimeline(message.publicWorkEvents);
+  if (persistedTimeline.rows.length > 0) {
+    return renderCompletedAnswerWorkTimeline(persistedTimeline);
+  }
+  return renderCompletedAnswerWorkTimeline(timelineFromConsultedSources(message.consultedSources));
 }
 
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
