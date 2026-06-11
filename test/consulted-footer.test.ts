@@ -36,6 +36,7 @@ describe('toolSourceLabel', () => {
   });
 
   it('returns null for tools whose dynamic results carry source labels', () => {
+    expect(toolSourceLabel('lookup_entity')).toBeNull();
     expect(toolSourceLabel('open_entity')).toBeNull();
     expect(toolSourceLabel('search_knowledge')).toBeNull();
   });

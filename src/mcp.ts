@@ -12,6 +12,7 @@ import {
   inspectSources,
   getSchema,
   resolveEntity,
+  lookupEntity,
   openEntity,
   neighbors,
 } from './tools.ts';
@@ -89,6 +90,30 @@ export function createMcpServer(): McpServer {
     async ({ query, kinds, limit, game }) => {
       const result = await resolveEntity(query, { kinds, limit, ...gameOpts(game) });
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    },
+  );
+
+  server.registerTool(
+    'lookup_entity',
+    {
+      description:
+        'Resolve and open one exact natural reference in a single call. Use for direct questions about scenario, section, item, monster stat, or named card details.',
+      inputSchema: {
+        query: z.string().describe('Natural-language entity reference to open'),
+        kinds: z
+          .array(z.string())
+          .optional()
+          .describe('Optional kind filters returned by inspect_sources, plus common aliases'),
+        limit: z.number().int().min(1).max(20).default(6).describe('Maximum candidates'),
+        game: gameSchema,
+      },
+    },
+    async ({ query, kinds, limit, game }) => {
+      const result = await lookupEntity(query, { kinds, limit, ...gameOpts(game) });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        isError: !result.ok,
+      };
     },
   );
 

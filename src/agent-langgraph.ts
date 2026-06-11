@@ -64,6 +64,7 @@ const DISCOVERY_ONLY_TOOL_NAMES = new Set([
   'neighbors',
 ]);
 const DIRECT_EVIDENCE_TOOL_NAMES = new Set([
+  'lookup_entity',
   'open_entity',
   'get_card',
   'get_scenario',
@@ -313,6 +314,13 @@ function completedWorkMessageForTool(name: string, input: Record<string, unknown
     return humanizeWorkLogProgressMessage(
       `Opening ${typeof input.ref === 'string' ? input.ref : 'source'}`,
     );
+  if (name === 'lookup_entity') {
+    const query = typeof input.query === 'string' ? input.query.trim() : '';
+    if (query.length === 0) return 'Looked up source';
+    const openingMessage = humanizeWorkLogProgressMessage(`Opening ${query}`);
+    if (openingMessage !== `Opening ${query}`) return openingMessage;
+    return humanizeWorkLogProgressMessage(`Resolving ${query}`);
+  }
   if (name === 'neighbors')
     return humanizeWorkLogProgressMessage(
       `Checking links from ${typeof input.ref === 'string' ? input.ref : 'source'}`,
@@ -337,7 +345,7 @@ function shouldEmitUserFacingPlan(name: string): boolean {
 }
 
 function shouldEmitUserFacingProgress(name: string): boolean {
-  return name !== 'resolve_entity' && name !== 'open_entity';
+  return name !== 'resolve_entity' && name !== 'open_entity' && name !== 'lookup_entity';
 }
 
 function shouldEmitUserFacingResult(name: string, ok: boolean): boolean {
@@ -387,6 +395,9 @@ function planMessageForTool(name: string, input: Record<string, unknown>): strin
     if (ref.length === 0) return undefined;
     return planMessageFromCompletedAction(humanizeWorkLogProgressMessage(`Opening ${ref}`));
   }
+  if (name === 'lookup_entity') {
+    return planMessageFromCompletedAction(completedWorkMessageForTool(name, input));
+  }
   if (name === 'resolve_entity') {
     return planMessageFromCompletedAction(completedWorkMessageForTool(name, input));
   }
@@ -414,7 +425,7 @@ function sectionArtifactFromToolResult(
   toolName: string,
   result: ToolCallResult,
 ): AgentStreamEventMap['artifact'] | undefined {
-  if (toolName !== 'open_entity') return undefined;
+  if (toolName !== 'open_entity' && toolName !== 'lookup_entity') return undefined;
   try {
     const parsed = JSON.parse(result.content) as {
       ok?: unknown;

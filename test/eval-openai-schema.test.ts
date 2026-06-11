@@ -98,6 +98,7 @@ describe('OpenAI strict tool schema renderer', () => {
     expect(byName.search_cards.required).toEqual(['query', 'topK', 'game']);
     expect(byName.search_knowledge.required).toEqual(['query', 'scope', 'limit', 'game']);
     expect(byName.resolve_entity.required).toEqual(['query', 'kinds', 'limit', 'game']);
+    expect(byName.lookup_entity.required).toEqual(['query', 'kinds', 'limit', 'game']);
     expect(byName.neighbors.required).toEqual(['ref', 'relation', 'limit', 'game']);
     expect(byName.neighbors.properties.relation.enum).toContain(null);
     expect(byName.list_cards.required).toEqual(['type', 'filter', 'game']);

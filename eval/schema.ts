@@ -147,6 +147,7 @@ const TOOL_KIND_BY_NAME = new Map<string, ToolKind>([
   ['search_rules', 'search'],
   ['search_cards', 'search'],
   ['list_cards', 'search'],
+  ['lookup_entity', 'open'],
   ['open_entity', 'open'],
   ['get_card', 'open'],
   ['get_scenario', 'open'],

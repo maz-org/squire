@@ -6,18 +6,18 @@ describe('scoreTrajectory', () => {
   it('passes flexible required tools, kinds, refs, and budget checks', () => {
     const result = scoreTrajectory(
       {
-        requiredTools: ['resolve_entity', 'open_entity'],
-        requiredToolKinds: ['resolution', 'open'],
+        requiredTools: ['lookup_entity'],
+        requiredToolKinds: ['open'],
         forbiddenTools: ['search_rules'],
         forbiddenToolKinds: ['traversal'],
         requiredRefs: ['card:frosthaven/items/gloomhavensecretariat:item/1'],
         maxToolCalls: 3,
       },
       [
-        { name: 'resolve_entity', input: { query: 'item 1' } },
         {
-          name: 'open_entity',
-          input: { ref: 'card:frosthaven/items/gloomhavensecretariat:item/1' },
+          name: 'lookup_entity',
+          input: { query: 'item 1', kinds: ['item'] },
+          canonicalRefs: ['card:frosthaven/items/gloomhavensecretariat:item/1'],
         },
       ],
     );

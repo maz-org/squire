@@ -6,6 +6,7 @@ const {
   mockSearchKnowledge,
   mockListCards,
   mockResolveEntity,
+  mockLookupEntity,
   mockNeighbors,
   mockOpenEntity,
   mockStartedSpans,
@@ -16,6 +17,7 @@ const {
   mockSearchKnowledge: vi.fn(),
   mockListCards: vi.fn(),
   mockResolveEntity: vi.fn(),
+  mockLookupEntity: vi.fn(),
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
@@ -65,6 +67,7 @@ vi.mock('../src/tools.ts', () => ({
   inspectSources: vi.fn(),
   getSchema: vi.fn(),
   resolveEntity: mockResolveEntity,
+  lookupEntity: mockLookupEntity,
   openEntity: mockOpenEntity,
   searchKnowledge: mockSearchKnowledge,
   neighbors: mockNeighbors,
@@ -281,44 +284,29 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   it('emits card lookup intent before the card work row can render', async () => {
     const cardRef =
       'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';
-    mockMessagesCreate
-      .mockResolvedValueOnce(
-        toolUseResponse('resolve_entity', {
-          query: 'Bandit Archer monster stat card',
-          kinds: ['card'],
-        }),
-      )
-      .mockResolvedValueOnce(toolUseResponse('open_entity', { ref: cardRef }, 'tool_open_card'));
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Bandit Archer monster stat card',
+        kinds: ['monster-stat'],
+      }),
+    );
     mockMessagesStream.mockReturnValueOnce(
       mockStream(textResponse('An elite level 3 Bandit Archer has 10 hit points.'), [
         'An elite level 3 Bandit Archer has 10 hit points.',
       ]),
     );
-    mockResolveEntity.mockResolvedValueOnce({
-      ok: true,
-      query: 'Bandit Archer monster stat card',
-      candidates: [
-        {
-          entity: {
-            kind: 'card',
-            ref: cardRef,
-            title: 'Bandit Archer',
-            sourceLabel: 'Card Index',
-          },
-          confidence: 0.99,
-          matchReason: 'Exact card match',
-        },
-      ],
-    });
-    mockOpenEntity.mockResolvedValueOnce({
+    mockLookupEntity.mockResolvedValueOnce({
       ok: true,
       entity: {
         kind: 'card',
         ref: cardRef,
         title: 'Bandit Archer',
+        sourceLabel: 'Card Index',
         data: { normal: { hp: 6 }, elite: { hp: 10 } },
       },
-      citations: [{ sourceRef: 'cards.json', sourceLabel: 'Card Index' }],
+      citations: [{ sourceRef: 'cards.json', sourceLabel: 'Card Index', locator: cardRef }],
+      links: [],
+      related: [],
     });
     const emitted: Array<[AgentStreamEventName, unknown]> = [];
 
@@ -334,10 +322,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     );
 
     expect(result.answer).toBe('An elite level 3 Bandit Archer has 10 hit points.');
-    expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
-      'resolve_entity',
-      'open_entity',
-    ]);
+    expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual(['lookup_entity']);
     const visibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(visibleEvents).not.toContainEqual([
       'tool_plan',
@@ -360,13 +345,13 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         'tool_plan',
         {
           message: "I'll check that stat card.",
-          toolName: 'open_entity',
+          toolName: 'lookup_entity',
         },
       ],
       [
         'tool_result',
         {
-          name: 'open_entity',
+          name: 'lookup_entity',
           ok: true,
           message: 'Checked Bandit Archer stat card',
           sourceBooks: ['Card Index'],

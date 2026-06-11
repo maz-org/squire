@@ -40,6 +40,7 @@ import {
   inspectSources,
   getSchema,
   resolveEntity,
+  lookupEntity,
   findScenario,
   getScenario,
   getSection,
@@ -1751,6 +1752,52 @@ describe('knowledge discovery tools', () => {
       ok: true,
       query: '   ',
       candidates: [],
+    });
+  });
+
+  it('lookupEntity resolves and opens exact item queries in one call', async () => {
+    const result = await lookupEntity('item 1', { kinds: ['item'] });
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        data: {
+          number: '001',
+          sourceId: 'gloomhavensecretariat:item/1',
+          displayName: 'Spyglass',
+        },
+      },
+      citations: [
+        {
+          sourceRef: 'source:frosthaven/cards/items',
+          sourceLabel: 'Card Index',
+          locator: 'gloomhavensecretariat:item/1',
+        },
+      ],
+    });
+  });
+
+  it('lookupEntity asks for clarification instead of opening tied monster records', async () => {
+    const result = await lookupEntity('Living Spirit monster', {
+      kinds: ['monster'],
+      game: 'gloomhaven-2e',
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: {
+        code: 'ambiguous',
+        candidates: expect.arrayContaining([
+          expect.objectContaining({
+            ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/0-3',
+          }),
+          expect.objectContaining({
+            ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/4-7',
+          }),
+        ]),
+      },
     });
   });
 });

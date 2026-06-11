@@ -17,6 +17,7 @@ import {
   inspectSources,
   getSchema,
   resolveEntity,
+  lookupEntity,
   openEntity,
   findScenario,
   getScenario,
@@ -83,9 +84,10 @@ Grounding rules:
 - Cite FAQ or errata when you rely on it. Rulebook-only answers are allowed when no current-source clarification applies.
 - For Gloomhaven (2nd Edition) correction, errata, campaign sheet, "current section," or outdated-reference questions, search current FAQ/errata rule passages before opening a section ref. A missing section ref is not enough to answer a correction question.
 - For core rule or condition-definition questions, search rules passages directly. If FAQ/errata hits only discuss edge cases, keep searching for the rulebook definition before answering.
-- Resolve natural user language to refs when exact records are needed, then open or traverse those refs.
+- Use lookup_entity when the user asks for the content, stats, details, or source for one exact natural reference such as a scenario, section, item, monster stat card, or named card.
+- Use resolve_entity when the user asks to find candidates, compare possible records, disambiguate, or when you need only a canonical ref for traversal.
 - For scenario/section relationship questions, resolve the named scenario or section first, then open or traverse the canonical ref.
-- For named or numbered card-data records such as item 1, Spyglass, monsters, buildings, events, battle goals, personal quests, and character mats, resolve the record first and then open the exact canonical ref returned by resolve_entity.
+- For named or numbered card-data records such as item 1, Spyglass, monsters, buildings, events, battle goals, personal quests, and character mats, use lookup_entity for direct detail questions.
 - When an exact record has null or empty fields, state that the field is not available in the checked-in data. Do not recommend physical components, community knowledge, memory, or likely values as a substitute for missing tool data.
 - For building records, treat a cost object as known no-cost only when every numeric cost field is 0, including prosperity when present. If resources are 0 but prosperity is non-zero, say there is no resource cost but there is still a prosperity requirement.
 - If the user asks you to resolve something, call resolve_entity before opening or answering.
@@ -119,7 +121,8 @@ Guidelines:
 - For core rule or condition-definition questions, search rules passages directly. If FAQ/errata hits only discuss edge cases, keep searching for the rulebook definition before answering.
 - Cite FAQ or errata when you rely on it. Rulebook-only answers are allowed when no current-source clarification applies.
 - Use inspect_sources and schema when you need to discover available kinds, filters, refs, or relations
-- Use resolve_entity to turn natural references into opener-ready scenario, section, card type, or card refs
+- Use lookup_entity to resolve and open one exact natural reference in a single call
+- Use resolve_entity to turn natural references into opener-ready scenario, section, card type, or card refs when you need candidates or traversal refs
 - Prefer search_knowledge for broad discovery across rules, scenarios, sections, and cards
 - Use open_entity when you have an exact canonical ref
 - Use neighbors to traverse explicit scenario/section links from a canonical ref
@@ -198,6 +201,31 @@ export const AGENT_TOOLS = [
           minimum: 1,
           maximum: 20,
           description: 'Maximum candidates (1-20, default 6)',
+          default: 6,
+        },
+        game: GAME_INPUT_SCHEMA,
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'lookup_entity',
+    description:
+      'Resolve and open one exact natural reference in a single call. Use for direct questions about the content, stats, details, or source for a scenario, section, item, monster stat card, or named card. Do not use when the user asks to find candidates or compare possible records; use resolve_entity for those.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Natural-language entity reference to open' },
+        kinds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional kind filters returned by inspect_sources, plus common aliases',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 20,
+          description: 'Maximum candidates to consider before opening one (1-20, default 6)',
           default: 6,
         },
         game: GAME_INPUT_SCHEMA,
@@ -936,6 +964,20 @@ export async function executeToolCall(
           null,
           2,
         ),
+      };
+    }
+    case 'lookup_entity': {
+      const kinds = Array.isArray(input.kinds)
+        ? input.kinds.filter((kind): kind is string => typeof kind === 'string')
+        : undefined;
+      const result = await lookupEntity(input.query as string, {
+        kinds,
+        limit: input.limit as number | undefined,
+        ...gameOpts,
+      });
+      return {
+        content: JSON.stringify(result, null, 2),
+        sourceBooks: sourceLabelsFromResult(result),
       };
     }
     case 'search_rules': {

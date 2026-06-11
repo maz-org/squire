@@ -187,7 +187,8 @@ function graphNodeForToolRun(toolName: string): string {
   if (toolName === 'inspect_sources' || toolName === 'schema') return 'classification';
   if (toolName === 'resolve_entity') return 'retrieval_planning';
   if (toolName === 'neighbors') return 'routing';
-  if (toolName === 'open_entity' || toolName.startsWith('get_')) return 'source_verification';
+  if (toolName === 'lookup_entity' || toolName === 'open_entity' || toolName.startsWith('get_'))
+    return 'source_verification';
   return 'tool_execution';
 }
 
