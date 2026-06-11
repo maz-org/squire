@@ -3,12 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 class FakeServer extends EventEmitter {
   listenCalls: number[] = [];
+  refCalls = 0;
 
   listen(port: number, _host?: string): this {
     this.listenCalls.push(port);
     queueMicrotask(() => {
       this.emit('listening');
     });
+    return this;
+  }
+
+  ref(): this {
+    this.refCalls += 1;
     return this;
   }
 }
@@ -191,6 +197,7 @@ describe.sequential('startServer', () => {
     await configured.startServer();
 
     expect(configured.fakeServer.listenCalls).toContain(4123);
+    expect(configured.fakeServer.refCalls).toBe(1);
     expect(configured.startBootstrapLifecycle).toHaveBeenCalled();
 
     const claimed = await loadStartServer({
@@ -201,6 +208,7 @@ describe.sequential('startServer', () => {
 
     expect(claimed.claimWorktreePort).toHaveBeenCalled();
     expect(claimed.fakeServer.listenCalls).toContain(4555);
+    expect(claimed.fakeServer.refCalls).toBe(1);
     expect(claimed.startBootstrapLifecycle).toHaveBeenCalled();
   }, 30_000);
 });
