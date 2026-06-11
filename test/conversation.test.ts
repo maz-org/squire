@@ -418,7 +418,7 @@ describe('conversation history summaries', () => {
 
     const matching = await seedHistoryConversation(alice, {
       firstQuestion: 'How does short resting work?',
-      latestContent: 'Short rests recover one discarded card at random.',
+      latestContent: 'Short rests recover one discarded\ncard at random.',
       lastMessageAt: new Date('2026-01-01T00:00:00.000Z'),
     });
     await seedHistoryConversation(alice, {
@@ -440,6 +440,7 @@ describe('conversation history summaries', () => {
 
     expect(history.rows.map((row) => row.id)).toEqual([matching.conversationId]);
     expect(history.rows[0]).toMatchObject({
+      href: `/chat/${matching.conversationId}?historyQuery=DISCARDED+CARD`,
       title: 'How does short resting work?',
       preview: 'Short rests recover one discarded card at random.',
     });
@@ -922,6 +923,31 @@ describe('conversation web backend', () => {
     expect(body).toContain('class="squire-transcript"');
   });
 
+  it('preserves filtered history in the pushed URL on the first HTMX chat submit', async () => {
+    const auth = await createAuthContext();
+
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'How does long rest recovery work?',
+        idempotencyKey: 'idem-history-filtered-oob-first',
+        historyQuery: 'long rest',
+      }),
+    });
+
+    expect(createRes.status).toBe(200);
+    const pushedUrl = createRes.headers.get('HX-Push-Url');
+    expect(pushedUrl).toMatch(/^\/chat\/[0-9a-f-]+\?historyQuery=long\+rest$/);
+    const body = await createRes.text();
+    expect(body).toContain(`href="${pushedUrl}"`);
+    expect(body).toContain('value="long rest"');
+  });
+
   it('returns an out-of-band history shell on HTMX follow-up submit', async () => {
     const auth = await createAuthContext();
     const seeded = await seedConversationWithTurns(auth, [
@@ -1105,6 +1131,36 @@ describe('conversation web backend', () => {
     expect(response.headers.get('HX-Push-Url')).toBe(`/chat/${seeded.conversationId}`);
     const body = await response.text();
     expect(body).not.toMatch(/<nav[^>]*id="squire-recent-questions"/);
+  });
+
+  it('preserves filtered history in the pushed URL on HTMX follow-up submit', async () => {
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [
+      { question: 'First question', answer: 'First answer' },
+      { question: 'Second question', answer: 'Second answer' },
+    ]);
+
+    const response = await requestWithAuth(
+      auth,
+      `http://localhost:3000/chat/${seeded.conversationId}/messages`,
+      {
+        method: 'POST',
+        csrf: true,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'hx-request': 'true',
+          'hx-current-url': `http://localhost:3000/chat/${seeded.conversationId}?historyQuery=first`,
+        },
+        body: formBody({ question: 'Newest question', historyQuery: 'first' }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    const pushedUrl = response.headers.get('HX-Push-Url');
+    expect(pushedUrl).toBe(`/chat/${seeded.conversationId}?historyQuery=first`);
+    const body = await response.text();
+    expect(body).toContain(`href="${pushedUrl}"`);
+    expect(body).toContain('value="first"');
   });
 
   it('returns an append-fragment (new question + pending answer skeleton) for HTMX follow-ups (SQR-108 E-3)', async () => {

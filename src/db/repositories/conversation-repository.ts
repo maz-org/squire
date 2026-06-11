@@ -83,7 +83,8 @@ async function loadOwnedSummaryPage(input: {
         select 1
         from messages search_message
         where search_message.conversation_id = c.id
-          and search_message.content ilike ${searchPattern} escape '\\'
+          and regexp_replace(btrim(search_message.content), '[[:space:]]+', ' ', 'g')
+            ilike ${searchPattern} escape '\\'
       )`
     : sql``;
 

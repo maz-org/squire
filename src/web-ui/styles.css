@@ -257,18 +257,19 @@ html {
   border-radius: 6px;
   padding: 0 10px;
   color: var(--parchment);
-  background: var(--ink);
+  background: var(--surface);
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 13px;
 }
 
 .squire-history-search__input::placeholder {
   color: var(--sepia);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-style: italic;
 }
 
 .squire-history-search__input:focus {
   border-color: var(--wax);
-  outline: none;
 }
 
 .squire-history-search__submit {

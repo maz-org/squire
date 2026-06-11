@@ -996,6 +996,11 @@ function buildToolStatusId(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+function conversationPath(conversationId: string, historyQuery?: string): string {
+  if (!historyQuery) return `/chat/${conversationId}`;
+  return `/chat/${conversationId}?${new URLSearchParams({ historyQuery }).toString()}`;
+}
+
 async function readQuestionForm(
   c: Context,
 ): Promise<{ question: string; idempotencyKey?: string; game?: string; historyQuery?: string }> {
@@ -1150,7 +1155,7 @@ app.post('/chat', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
-    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+    c.header('HX-Push-Url', conversationPath(pending.conversation.id, historyQuery));
 
     // ADR 0012: the home form swaps `#squire-surface innerHTML` with the
     // full transcript shell (one pending turn). After the swap, squire.js
@@ -1237,8 +1242,8 @@ app.post('/chat/:conversationId/messages', async (c) => {
 
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
-    // Keep follow-up submissions pinned to the canonical conversation URL.
-    c.header('HX-Push-Url', `/chat/${pending.conversation.id}`);
+    // Keep follow-up submissions pinned to the current conversation URL.
+    c.header('HX-Push-Url', conversationPath(pending.conversation.id, historyQuery));
     const conversationHistory = await loadConversationHistory({
       userId: session.userId,
       activeConversationId: pending.conversation.id,

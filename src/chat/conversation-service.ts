@@ -79,6 +79,11 @@ function deriveHistoryTitle(value: string | null): string {
   return `${title.replace(/[,:;.!?\s]+$/, '')}...`;
 }
 
+function historyHref(conversationId: string, query: string): string {
+  if (!query) return `/chat/${conversationId}`;
+  return `/chat/${conversationId}?${new URLSearchParams({ historyQuery: query }).toString()}`;
+}
+
 function gameScopeLabel(gameId: string | null): string | null {
   if (!gameId) return null;
   return gameLabels.get(gameId) ?? null;
@@ -153,7 +158,7 @@ export async function loadConversationHistory(input: {
       const preview = normalizeHistoryText(row.latestMessageContent);
       return {
         id: row.id,
-        href: `/chat/${row.id}`,
+        href: historyHref(row.id, query),
         active,
         title,
         preview,
