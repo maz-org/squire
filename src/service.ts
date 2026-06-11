@@ -520,7 +520,14 @@ export interface AgentStreamEventMap {
   /** A tool lookup or source traversal started. */
   tool_call: { name: string; input?: unknown };
   /** A tool lookup or source traversal completed. */
-  tool_result: { name: string; ok: boolean; sourceBooks?: string[] | undefined };
+  tool_result: {
+    name: string;
+    ok: boolean;
+    message?: string | undefined;
+    sourceBooks?: string[] | undefined;
+  };
+  /** User-safe plain-language statement of the agent's next intended lookup. */
+  tool_plan: { message: string; toolName?: string | undefined };
   /** User-safe progress from a long tool. Trace-only until explicitly mapped by a route. */
   tool_progress: { message: string; toolName?: string | undefined };
   /** User-safe structured artifact content. Routes must render this outside answer prose. */

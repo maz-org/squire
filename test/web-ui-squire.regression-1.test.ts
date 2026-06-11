@@ -574,7 +574,7 @@ describe('squire.js chat form retargeting', () => {
     source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
     const row = workRowsEl.children[0];
     expect(row).toBeTruthy();
-    expect(workRowMessage(row)).toBe('Checked rulebook');
+    expect(workRowMessage(row)).toBe('Checked the rulebook');
 
     source.emit('text-delta', { delta: 'Loot 2 can reach up to two hexes away.' });
     expect(skeletonEl.hidden).toBe(true);
@@ -589,7 +589,7 @@ describe('squire.js chat form retargeting', () => {
     expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
     expect(workEl.open).toBe(false);
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
-    expect(workStatusEl.textContent).toBe('Checked 1 source');
+    expect(workStatusEl.textContent).toBe('Finished working');
     expect(workRowsEl.children).toHaveLength(1);
     expect(source.closed).toBe(true);
   });
@@ -610,13 +610,16 @@ describe('squire.js chat form retargeting', () => {
     expect(workEl.getAttribute('data-work-state')).toBe('running');
     expect(workRowsEl.children).toHaveLength(1);
     const progressRow = workRowsEl.children[0];
-    expect(workRowMessage(progressRow)).toBe('Found Locked Down in section book');
+    expect(workRowMessage(progressRow)).toBe('Found Locked Down');
 
-    source.emit('tool-result', { id: 'follow_links', labels: ['SECTION BOOK'], ok: true });
-    expect(workRowMessage(progressRow)).toBe('Found Locked Down in section book');
-    expect(workRowsEl.children).toHaveLength(2);
-    const checkedRow = workRowsEl.children[1];
-    expect(workRowMessage(checkedRow)).toBe('Checked section book');
+    source.emit('tool-result', {
+      id: 'follow_links',
+      labels: ['SECTION BOOK'],
+      message: 'Found Locked Down in the section book',
+      ok: true,
+    });
+    expect(workRowMessage(progressRow)).toBe('Found Locked Down in the section book');
+    expect(workRowsEl.children).toHaveLength(1);
 
     source.emit('done', {
       html: '<p>The section is <strong>Locked Down</strong>.</p>',
@@ -625,8 +628,8 @@ describe('squire.js chat form retargeting', () => {
     expect(contentEl.innerHTML).toBe('<p>The section is <strong>Locked Down</strong>.</p>');
     expect(workEl.open).toBe(false);
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
-    expect(workStatusEl.textContent).toBe('Checked 1 source');
-    expect(workRowsEl.children).toHaveLength(2);
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowsEl.children).toHaveLength(1);
     expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
   });
 
@@ -652,7 +655,15 @@ describe('squire.js chat form retargeting', () => {
     });
 
     expect(workRowsEl.children).toHaveLength(1);
-    expect(workRowMessage(workRowsEl.children[0])).toBe('Checking line of sight in rulebook');
+    expect(workRowMessage(workRowsEl.children[0])).toBe('Checking line of sight');
+
+    source.emit('tool-result', {
+      id: 'search_rules',
+      labels: ['RULEBOOK'],
+      message: 'Checked line of sight in the rulebook',
+      ok: true,
+    });
+    expect(workRowMessage(workRowsEl.children[0])).toBe('Checked line of sight in the rulebook');
 
     source.emit('done', { html: '<p>Answer.</p>' });
 
@@ -660,7 +671,7 @@ describe('squire.js chat form retargeting', () => {
     expect(workEl.open).toBe(false);
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
     expect(workRowsEl.children).toHaveLength(1);
-    expect(workStatusEl.textContent).toBe('Checked 1 source');
+    expect(workStatusEl.textContent).toBe('Finished working');
   });
 
   it('does not render obsolete progress detail controls during an active run', () => {
@@ -690,11 +701,28 @@ describe('squire.js chat form retargeting', () => {
       label: 'REFERENCE',
       message: 'Searching selected sources',
     });
-    source.emit('tool-result', { id: 'search_cards', labels: ['CARD INDEX'], ok: true });
-    source.emit('tool-result', { id: 'get_card', labels: ['CARD INDEX'], ok: true });
+    source.emit('tool-result', {
+      id: 'search_knowledge',
+      labels: [],
+      message: 'Searched available sources',
+      ok: true,
+    });
+    source.emit('tool-result', {
+      id: 'search_cards',
+      labels: ['CARD INDEX'],
+      message: 'Checked Bandit Archer stat card',
+      ok: true,
+    });
+    source.emit('tool-result', {
+      id: 'get_card',
+      labels: ['CARD INDEX'],
+      message: 'Checked Bandit Archer stat card',
+      ok: true,
+    });
     source.emit('tool-result', {
       id: 'search_rules',
       labels: ['RULEBOOK'],
+      message: 'Checked the rulebook',
       ok: true,
     });
     source.emit('tool-progress', {
@@ -710,25 +738,30 @@ describe('squire.js chat form retargeting', () => {
     source.emit('tool-result', {
       id: 'search_sections',
       labels: ['SECTION BOOK'],
+      message: 'Checked the section book',
       ok: true,
     });
     source.emit('done', { html: '<p>Answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Checked 3 sources');
-    expect(workRowsEl.children).toHaveLength(5);
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowsEl.children).toHaveLength(4);
     expect(workRowMessages(workRowsEl)).toEqual([
-      'Resolving bandit archer stats',
-      'Searching available sources',
-      'Checked card index',
-      'Checked rulebook',
-      'Checked section book',
+      'Checked Bandit Archer stat card',
+      'Searched available sources',
+      'Checked the rulebook',
+      'Checked the section book',
     ]);
   });
 
   it('keeps semantic work-log order when resolving and searching arrive after checked rows', () => {
     const { source, workRowsEl } = bootPendingTranscript();
 
-    source.emit('tool-result', { id: 'search_cards', labels: ['CARD INDEX'], ok: true });
+    source.emit('tool-result', {
+      id: 'search_cards',
+      labels: ['CARD INDEX'],
+      message: 'Checked Bandit Archer stat card',
+      ok: true,
+    });
     source.emit('tool-progress', {
       id: 'resolve_entity-progress-1',
       label: 'REFERENCE',
@@ -739,12 +772,49 @@ describe('squire.js chat form retargeting', () => {
       label: 'REFERENCE',
       message: 'Searching selected sources',
     });
+    source.emit('tool-result', {
+      id: 'search_knowledge',
+      labels: [],
+      message: 'Searched available sources',
+      ok: true,
+    });
 
     expect(workRowMessages(workRowsEl)).toEqual([
-      'Resolving bandit archer stats',
-      'Searching available sources',
-      'Checked card index',
+      'Checked Bandit Archer stat card',
+      'Searched available sources',
     ]);
+  });
+
+  it('collapses card lookup bookkeeping into one table-action row', () => {
+    const { contentEl, source, workRowsEl } = bootPendingTranscript();
+    const rawRef =
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';
+
+    source.emit('tool-progress', {
+      id: 'resolve_entity-progress-1',
+      label: 'REFERENCE',
+      message: 'Resolving Bandit Archer',
+    });
+    source.emit('tool-progress', {
+      id: 'open_entity-progress-2',
+      label: 'REFERENCE',
+      message: `Opening ${rawRef}`,
+    });
+    source.emit('tool-result', {
+      id: 'search_cards',
+      labels: ['CARD INDEX'],
+      message: 'Checked Bandit Archer stat card',
+      ok: true,
+    });
+    source.emit('done', {
+      html: '<p>An elite level 3 Bandit Archer has 10 hit points.</p>',
+    });
+
+    expect(workRowMessages(workRowsEl)).toEqual(['Checked Bandit Archer stat card']);
+    expect(workRowsEl.querySelector('.squire-answer-work__row-note')).toBeNull();
+    expect(workRowMessages(workRowsEl).join('\n')).not.toContain(rawRef);
+    expect(workRowMessages(workRowsEl).join('\n')).not.toContain('Looked up Bandit Archer');
+    expect(contentEl.innerHTML).toBe('<p>An elite level 3 Bandit Archer has 10 hit points.</p>');
   });
 
   it('keeps generic source-search wording exact when the progress event has a source label', () => {
@@ -757,6 +827,205 @@ describe('squire.js chat form retargeting', () => {
     });
 
     expect(workRowMessages(workRowsEl)).toEqual(['Searching available sources']);
+
+    source.emit('tool-result', {
+      id: 'search_rules',
+      labels: [],
+      message: 'Searched available sources',
+      ok: true,
+    });
+
+    expect(workRowMessages(workRowsEl)).toEqual(['Searched available sources']);
+  });
+
+  it('renders agent intent as a narrative row before source work', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-plan', {
+      id: 'search_knowledge-plan-1',
+      message: "I'll search the rulebook.",
+    });
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-1',
+      label: 'RULEBOOK',
+      message: 'Looking up loot in the rulebook',
+    });
+    source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
+    source.emit('done', { html: '<p>Loot answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual([
+      "I'll search the rulebook.",
+      'Searched the rulebook',
+    ]);
+    expect(workRowsEl.children[0].className).toContain('squire-answer-work__row--narrative');
+  });
+
+  it('keeps later source-search intent interspersed with later source work', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-plan', {
+      id: 'search_knowledge-plan-1',
+      message: "I'll search the rulebook.",
+    });
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-1',
+      label: 'RULEBOOK',
+      message: 'Looking up loot in the rulebook',
+    });
+    source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
+
+    source.emit('tool-plan', {
+      id: 'search_knowledge-plan-2',
+      message: "I'll search the scenario book.",
+    });
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-2',
+      label: 'SCENARIO BOOK',
+      message: 'Looking up loot reminders in the scenario book',
+    });
+    source.emit('tool-result', { id: 'search_knowledge', labels: ['SCENARIO BOOK'], ok: true });
+    source.emit('done', { html: '<p>Loot answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual([
+      "I'll search the rulebook.",
+      'Searched the rulebook',
+      "I'll search the scenario book.",
+      'Searched the scenario book',
+    ]);
+  });
+
+  it('uses rulebook lookup wording without adding a duplicate checked row', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-1',
+      label: 'RULEBOOK',
+      message: 'Looking up loot in the rulebook',
+    });
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-2',
+      label: 'RULEBOOK',
+      message: 'Looking up end of turn looting loot tokens monsters drop in the rulebook',
+    });
+    source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
+    source.emit('done', { html: '<p>Loot answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual(['Searched the rulebook']);
+  });
+
+  it('collapses rulebook search progress and checked result into one source row', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-1',
+      label: 'RULEBOOK',
+      message: 'Searching the rulebook',
+    });
+    source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
+    source.emit('done', { html: '<p>Loot answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual(['Searched the rulebook']);
+  });
+
+  it('collapses section resolve, open, and artifact rows into one lookup row', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-plan', {
+      id: 'open_entity-plan-1',
+      message: "I'll look that up in the section book.",
+    });
+    source.emit('tool-progress', {
+      id: 'resolve_entity-progress-1',
+      label: 'REFERENCE',
+      message: 'Resolving section 67.1',
+    });
+    source.emit('tool-progress', {
+      id: 'open_entity-progress-2',
+      label: 'REFERENCE',
+      message: 'Opening section:gloomhaven-2e/67.1',
+    });
+    source.emit('answer-artifact', {
+      id: 'section-quote-1',
+      kind: 'section-quote',
+      title: 'Section 67.1',
+      body: 'Conclusion',
+      sourceLabel: 'SECTION BOOK',
+      ref: 'section:frosthaven/67.1',
+    });
+    source.emit('tool-result', {
+      id: 'open_entity',
+      labels: ['SECTION BOOK'],
+      message: 'Looked up section 67.1 in the section book',
+      ok: true,
+    });
+    source.emit('done', { html: '<p>Book answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual([
+      "I'll look that up in the section book.",
+      'Looked up section 67.1 in the section book',
+    ]);
+  });
+
+  it('collapses bare section open progress into the section lookup row', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-progress', {
+      id: 'resolve_entity-progress-1',
+      label: 'REFERENCE',
+      message: 'Looked up section 67.1',
+    });
+    source.emit('tool-progress', {
+      id: 'open_entity-progress-2',
+      label: 'REFERENCE',
+      message: 'Opening 67.1',
+    });
+    source.emit('tool-result', {
+      id: 'open_entity',
+      labels: ['SECTION BOOK'],
+      message: 'Looked up section 67.1 in the section book',
+      ok: true,
+    });
+    source.emit('done', { html: '<p>Section answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual(['Looked up section 67.1 in the section book']);
+  });
+
+  it('collapses scenario resolve and legacy open refs into one lookup row', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-plan', {
+      id: 'open_entity-plan-1',
+      message: "I'll look that up in the scenario book.",
+    });
+    source.emit('tool-progress', {
+      id: 'resolve_entity-progress-1',
+      label: 'REFERENCE',
+      message: 'Resolving scenario 61',
+    });
+    source.emit('tool-progress', {
+      id: 'open_entity-progress-1',
+      label: 'REFERENCE',
+      message: 'Opening gloomhavensecretariat:scenario/061',
+    });
+    source.emit('tool-result', {
+      id: 'open_entity',
+      labels: ['SCENARIO BOOK'],
+      message: 'Looked up scenario 61 in the scenario book',
+      ok: true,
+    });
+    source.emit('done', { html: '<p>Scenario answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual([
+      "I'll look that up in the scenario book.",
+      'Looked up scenario 61 in the scenario book',
+    ]);
   });
 
   it('keeps inline work details open when the stream errors', () => {
@@ -789,7 +1058,7 @@ describe('squire.js chat form retargeting', () => {
     expect(workRowsEl.children).toHaveLength(1);
     expect(
       workRowsEl.children[0].querySelector('.squire-answer-work__row-detail')?.textContent,
-    ).toBe('Found Locked Down in section book');
+    ).toBe('Found Locked Down in the section book');
     expect(artifactsEl.children).toHaveLength(1);
     const artifact = artifactsEl.children[0];
     expect(artifact.querySelector('.squire-answer__artifact-title')?.textContent).toBe('');
@@ -832,7 +1101,7 @@ describe('squire.js chat form retargeting', () => {
 
       expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
       expect(workRowsEl.children).toHaveLength(2);
-      expect(workRowMessages(workRowsEl)).toEqual(['Checked rulebook', 'Checked card index']);
+      expect(workRowMessages(workRowsEl)).toEqual(['Checked the rulebook', 'Checked the cards']);
     });
 
     it('dedupes repeated labels and preserves first-seen order', () => {
@@ -845,7 +1114,7 @@ describe('squire.js chat form retargeting', () => {
 
       expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
       expect(workRowsEl.children).toHaveLength(2);
-      expect(workRowMessages(workRowsEl)).toEqual(['Checked rulebook', 'Checked card index']);
+      expect(workRowMessages(workRowsEl)).toEqual(['Checked the rulebook', 'Checked the cards']);
     });
 
     it('excludes labels from failed tool calls', () => {
@@ -858,8 +1127,8 @@ describe('squire.js chat form retargeting', () => {
       expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
       expect(workRowsEl.children).toHaveLength(2);
       expect(workRowMessages(workRowsEl)).toEqual([
-        'Checked card index',
-        "Couldn't check rulebook",
+        'Checked the cards',
+        "Couldn't check the rulebook",
       ]);
     });
 
@@ -870,8 +1139,8 @@ describe('squire.js chat form retargeting', () => {
       source.emit('done', { html: '<p>Answer.</p>' });
 
       expect(workRowsEl.children).toHaveLength(1);
-      expect(workRowMessages(workRowsEl)).toEqual(["Couldn't check rulebook"]);
-      expect(workStatusEl.textContent).toBe('Recorded 1 step');
+      expect(workRowMessages(workRowsEl)).toEqual(["Couldn't check the rulebook"]);
+      expect(workStatusEl.textContent).toBe('Finished working');
     });
 
     it('ignores the REFERENCE fallback label (utility/traversal tools)', () => {
@@ -908,9 +1177,9 @@ describe('squire.js chat form retargeting', () => {
       const searchRow = workRowsEl.children[0];
       const rulebookRow = workRowsEl.children[1];
       const sectionBookRow = workRowsEl.children[2];
-      expect(workRowMessage(searchRow)).toBe('Searching available sources');
-      expect(workRowMessage(rulebookRow)).toBe('Checked rulebook');
-      expect(workRowMessage(sectionBookRow)).toBe('Checked section book');
+      expect(workRowMessage(searchRow)).toBe('Searched available sources');
+      expect(workRowMessage(rulebookRow)).toBe('Checked the rulebook');
+      expect(workRowMessage(sectionBookRow)).toBe('Checked the section book');
     });
 
     it('leaves no source UI on done when no tools fired', () => {
@@ -987,7 +1256,7 @@ describe('squire.js chat form retargeting', () => {
 
     const row = workRowsEl.children[0];
     expect(row?.classList.contains('is-error')).toBe(true);
-    expect(row ? workRowMessage(row) : undefined).toBe("Couldn't check rulebook");
+    expect(row ? workRowMessage(row) : undefined).toBe("Couldn't check the rulebook");
   });
 
   it('ignores late tool-status events once answer prose is already on screen', () => {

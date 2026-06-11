@@ -5,6 +5,7 @@ const {
   mockMessagesStream,
   mockSearchKnowledge,
   mockListCards,
+  mockResolveEntity,
   mockNeighbors,
   mockOpenEntity,
   mockStartedSpans,
@@ -14,6 +15,7 @@ const {
   mockMessagesStream: vi.fn(),
   mockSearchKnowledge: vi.fn(),
   mockListCards: vi.fn(),
+  mockResolveEntity: vi.fn(),
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
@@ -62,7 +64,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 vi.mock('../src/tools.ts', () => ({
   inspectSources: vi.fn(),
   getSchema: vi.fn(),
-  resolveEntity: vi.fn(),
+  resolveEntity: mockResolveEntity,
   openEntity: mockOpenEntity,
   searchKnowledge: mockSearchKnowledge,
   neighbors: mockNeighbors,
@@ -209,9 +211,13 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     const userVisibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(userVisibleEvents).toEqual([
       [
-        'tool_progress',
-        { message: 'Searching Rulebook, Section Book, Card Index', toolName: 'search_knowledge' },
+        'tool_plan',
+        {
+          message: "I'll search the rulebook, the section book, and the cards.",
+          toolName: 'search_knowledge',
+        },
       ],
+      ['tool_progress', { message: 'Searching available sources', toolName: 'search_knowledge' }],
       [
         'tool_call',
         {
@@ -219,7 +225,15 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
           input: { query: 'loot', scope: ['rules_passage', 'section', 'card'] },
         },
       ],
-      ['tool_result', { name: 'search_knowledge', ok: true, sourceBooks: ['Rulebook'] }],
+      [
+        'tool_result',
+        {
+          name: 'search_knowledge',
+          ok: true,
+          message: 'Searched available sources',
+          sourceBooks: ['Rulebook'],
+        },
+      ],
       ['text', { delta: 'Use loot abilities ' }],
       ['text', { delta: 'to pick up loot tokens.' }],
       ['done', {}],
@@ -264,6 +278,85 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(mockMessagesCreate).toHaveBeenCalledTimes(3);
   });
 
+  it('emits card lookup intent before the card work row can render', async () => {
+    const cardRef =
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('resolve_entity', {
+          query: 'Bandit Archer monster stat card',
+          kinds: ['card'],
+        }),
+      )
+      .mockResolvedValueOnce(toolUseResponse('open_entity', { ref: cardRef }, 'tool_open_card'));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('An elite level 3 Bandit Archer has 10 hit points.'), [
+        'An elite level 3 Bandit Archer has 10 hit points.',
+      ]),
+    );
+    mockResolveEntity.mockResolvedValueOnce({
+      ok: true,
+      query: 'Bandit Archer monster stat card',
+      candidates: [
+        {
+          entity: {
+            kind: 'card',
+            ref: cardRef,
+            title: 'Bandit Archer',
+            sourceLabel: 'Card Index',
+          },
+          confidence: 0.99,
+          matchReason: 'Exact card match',
+        },
+      ],
+    });
+    mockOpenEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: cardRef,
+        title: 'Bandit Archer',
+        data: { normal: { hp: 6 }, elite: { hp: 10 } },
+      },
+      citations: [{ sourceRef: 'cards.json', sourceLabel: 'Card Index' }],
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory(
+      'How many hit points does an elite level 3 Bandit Archer have?',
+      {
+        emit: async (event, data) => {
+          emitted.push([event, data]);
+        },
+        toolSurface: 'redesigned',
+        userMessageId: 'message-bandit-card',
+      },
+    );
+
+    expect(result.answer).toBe('An elite level 3 Bandit Archer has 10 hit points.');
+    expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
+      'resolve_entity',
+      'open_entity',
+    ]);
+    const visibleEvents = emitted.filter(([event]) => event !== 'debug');
+    expect(visibleEvents.slice(0, 2)).toEqual([
+      [
+        'tool_plan',
+        {
+          message: "I'll check that stat card.",
+          toolName: 'resolve_entity',
+        },
+      ],
+      [
+        'tool_progress',
+        {
+          message: 'Checking Bandit Archer stat card',
+          toolName: 'resolve_entity',
+        },
+      ],
+    ]);
+  });
+
   it('continues after neighbors before finalizing answers that need target content', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))
@@ -276,11 +369,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         'Scenario 61.',
       ]),
     );
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
 
     const result = await runLangGraphAgentLoopWithTrajectory(
       'What is the text of the section that unlocks scenario 61?',
       {
-        emit: async () => undefined,
+        emit: async (event, data) => {
+          emitted.push([event, data]);
+        },
         toolSurface: 'redesigned',
         userMessageId: 'message-neighbors',
       },
@@ -292,6 +388,13 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
       'neighbors',
       'open_entity',
+    ]);
+    expect(emitted).toContainEqual([
+      'tool_plan',
+      {
+        message: "I'll look that up in the section book.",
+        toolName: 'open_entity',
+      },
     ]);
   });
 

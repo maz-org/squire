@@ -48,6 +48,7 @@ import {
   retrievalSourceLabelToFooterLabel,
   isToolSourceLabel,
 } from './web-ui/consulted-footer.ts';
+import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -1316,6 +1317,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // and persists the same sources. This handler just translates agent
   // events to wire events.
   return streamSSE(c, async (stream) => {
+    let planSequence = 0;
     let progressSequence = 0;
     let artifactSequence = 0;
     let replayCursor = lastEventSequence;
@@ -1476,6 +1478,21 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           return;
         }
 
+        if (event === 'tool_plan') {
+          const payload = data as { message?: unknown; toolName?: string };
+          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+          if (message.length === 0) {
+            return;
+          }
+          const name = payload.toolName ?? 'tool';
+          planSequence += 1;
+          await persistAndWrite('tool-plan', {
+            id: `${buildToolStatusId(name)}-plan-${planSequence}`,
+            message,
+          });
+          return;
+        }
+
         if (event === 'tool_progress') {
           const payload = data as { message?: unknown; toolName?: string };
           const message = typeof payload.message === 'string' ? payload.message.trim() : '';
@@ -1483,10 +1500,11 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             return;
           }
           const name = payload.toolName ?? 'tool';
+          const label = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
           progressSequence += 1;
           await persistAndWrite('tool-progress', {
             id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
-            label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+            label,
             message,
           });
           return;
@@ -1527,8 +1545,14 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
         }
 
         if (event === 'tool_result') {
-          const payload = data as { name?: string; ok?: boolean; sourceBooks?: string[] };
+          const payload = data as {
+            name?: string;
+            ok?: boolean;
+            message?: unknown;
+            sourceBooks?: string[];
+          };
           const name = payload.name ?? 'tool';
+          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
           // Use the actual books hit when available (search_rules always sets
           // sourceBooks, even to [] on no results); fall back to the static
           // label for tools that don't set sourceBooks at all.
@@ -1542,6 +1566,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             id: buildToolStatusId(name),
             labels: labels.length > 0 ? labels : [TOOL_SOURCE_FALLBACK_LABEL],
             ok: payload.ok ?? true,
+            message: message.length > 0 ? humanizeWorkLogProgressMessage(message) : undefined,
           });
           return;
         }

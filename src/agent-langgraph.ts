@@ -36,6 +36,10 @@ import {
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
 import { resolveSquireEnv } from './squire-env.ts';
+import {
+  activeWorkLogProgressMessageFromCompleted,
+  humanizeWorkLogProgressMessage,
+} from './work-log-display.ts';
 
 type Message = Anthropic.Message;
 type MessageParam = Anthropic.MessageParam;
@@ -292,21 +296,89 @@ function threadIdFor(options: AskOptions | undefined): string {
   );
 }
 
-function progressMessageForTool(name: string, input: Record<string, unknown>): string {
+function completedWorkMessageForTool(name: string, input: Record<string, unknown>): string {
   if (name === 'search_knowledge') {
     const scopeLabels = sourceLabelsForSearchScope(input.scope);
-    return `Searching ${scopeLabels.length > 0 ? scopeLabels.join(', ') : 'knowledge'}`;
+    const query = typeof input.query === 'string' ? input.query.trim() : '';
+    if (scopeLabels.length === 1 && query.length > 0) {
+      const target = scopeLabels[0];
+      if (target === 'Rulebook') return 'Searched the rulebook';
+      if (target === 'Scenario Book') return 'Searched the scenario book';
+      if (target === 'Section Book') return 'Searched the section book';
+      if (target === 'Card Index') return 'Searched cards';
+    }
+    return 'Searched available sources';
   }
   if (name === 'open_entity')
-    return `Opening ${typeof input.ref === 'string' ? input.ref : 'source'}`;
+    return humanizeWorkLogProgressMessage(
+      `Opening ${typeof input.ref === 'string' ? input.ref : 'source'}`,
+    );
   if (name === 'neighbors')
-    return `Checking links from ${typeof input.ref === 'string' ? input.ref : 'source'}`;
-  if (name === 'resolve_entity')
-    return `Resolving ${typeof input.query === 'string' ? input.query : 'reference'}`;
-  if (name === 'inspect_sources') return 'Inspecting available sources';
+    return humanizeWorkLogProgressMessage(
+      `Checking links from ${typeof input.ref === 'string' ? input.ref : 'source'}`,
+    );
+  if (name === 'resolve_entity') {
+    return humanizeWorkLogProgressMessage(
+      `Resolving ${typeof input.query === 'string' ? input.query : 'reference'}`,
+    );
+  }
+  if (name === 'inspect_sources') return 'Inspected available sources';
   if (name === 'schema')
-    return `Checking ${typeof input.kind === 'string' ? input.kind : 'source'} schema`;
-  return `Running ${name}`;
+    return `Checked ${typeof input.kind === 'string' ? input.kind : 'source'} schema`;
+  return `Ran ${name}`;
+}
+
+function progressMessageForTool(name: string, input: Record<string, unknown>): string {
+  return activeWorkLogProgressMessageFromCompleted(completedWorkMessageForTool(name, input));
+}
+
+function sourcePlanTarget(label: string): string {
+  if (label === 'Rulebook') return 'the rulebook';
+  if (label === 'Scenario Book') return 'the scenario book';
+  if (label === 'Section Book') return 'the section book';
+  if (label === 'Card Index') return 'the cards';
+  return label.toLowerCase();
+}
+
+function joinPlanTargets(targets: string[]): string {
+  if (targets.length <= 1) return targets[0] ?? 'available sources';
+  if (targets.length === 2) return `${targets[0]} and ${targets[1]}`;
+  return `${targets.slice(0, -1).join(', ')}, and ${targets[targets.length - 1]}`;
+}
+
+function planMessageFromCompletedAction(action: string): string | undefined {
+  const lookedUpInBook = action.match(/^Looked up\s+.+?\s+in the\s+(.+)$/i);
+  if (lookedUpInBook) return `I'll look that up in the ${lookedUpInBook[1]!.trim()}.`;
+
+  const checked = action.match(/^Checked\s+(.+)$/i);
+  if (checked) {
+    const target = checked[1]!.trim();
+    if (/stat card$/i.test(target)) return "I'll check that stat card.";
+    if (/card$/i.test(target)) return "I'll check that card.";
+    return `I'll check ${target.toLowerCase().startsWith('the ') ? target : `the ${target}`}.`;
+  }
+
+  const searched = action.match(/^Searched\s+(.+)$/i);
+  if (searched) return `I'll search ${searched[1]!.trim()}.`;
+  return undefined;
+}
+
+function planMessageForTool(name: string, input: Record<string, unknown>): string | undefined {
+  if (name === 'search_knowledge') {
+    const scopeLabels = sourceLabelsForSearchScope(input.scope);
+    if (scopeLabels.length === 0) return "I'll search available sources.";
+    if (scopeLabels.length === 1 && scopeLabels[0] === 'Card Index') return "I'll check the cards.";
+    return `I'll search ${joinPlanTargets(scopeLabels.map(sourcePlanTarget))}.`;
+  }
+  if (name === 'open_entity') {
+    const ref = typeof input.ref === 'string' ? input.ref.trim() : '';
+    if (ref.length === 0) return undefined;
+    return planMessageFromCompletedAction(humanizeWorkLogProgressMessage(`Opening ${ref}`));
+  }
+  if (name === 'resolve_entity') {
+    return planMessageFromCompletedAction(completedWorkMessageForTool(name, input));
+  }
+  return undefined;
 }
 
 function sourceLabelsForSearchScope(scope: unknown): string[] {
@@ -550,6 +622,13 @@ async function runLangGraphAgentLoop(
         }
 
         if (emit) {
+          const planMessage = planMessageForTool(block.name, input);
+          if (planMessage) {
+            await emit('tool_plan', {
+              message: planMessage,
+              toolName: block.name,
+            });
+          }
           await emit('tool_progress', {
             message: progressMessageForTool(block.name, input),
             toolName: block.name,
@@ -599,6 +678,7 @@ async function runLangGraphAgentLoop(
           await emit('tool_result', {
             name: block.name,
             ok: toolOk,
+            message: completedWorkMessageForTool(block.name, input),
             sourceBooks: toolResult.sourceBooks,
           });
           const artifact = sectionArtifactFromToolResult(block.name, toolResult);

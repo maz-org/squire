@@ -87,6 +87,7 @@ export interface ConversationHistoryPage {
 }
 
 export type ConversationMessagePublicWorkEventName =
+  | 'tool-plan'
   | 'tool-progress'
   | 'tool-result'
   | 'answer-artifact';
