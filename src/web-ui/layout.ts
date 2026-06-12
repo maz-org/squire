@@ -1010,7 +1010,9 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const historyQuery = conversationHistory?.query ?? '';
   const chatFormHiddenFields = [
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
-    { name: 'game', value: DEFAULT_GAME_ID },
+    // E8: an active campaign supplies the game dimension; the per-session
+    // selector (and its hidden field) exist only for no-campaign sessions.
+    ...(options.campaignStrip ? [] : [{ name: 'game', value: DEFAULT_GAME_ID }]),
     ...(historyQuery ? [{ name: 'historyQuery', value: historyQuery }] : []),
     ...(options.chatFormHiddenFields ?? []),
   ];
@@ -1049,7 +1051,9 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                       })
                     : html``}
                   ${showChatChrome
-                    ? renderActiveGamePicker()
+                    ? options.campaignStrip
+                      ? html``
+                      : renderActiveGamePicker()
                     : html`<span class="squire-context">${headerContext}</span>`}
                   <div class="squire-header__account">
                     ${renderAccountMenu(options.session, authenticatedCsrfToken)}

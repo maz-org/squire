@@ -64,7 +64,7 @@ import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
-import { requireGameId } from './game.ts';
+import { normalizeGameId, requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { startHttpServer } from './server-start.ts';
@@ -115,6 +115,10 @@ import {
   renderCampaignListContent,
   type CampaignStripState,
 } from './web-ui/campaign-pages.ts';
+import {
+  countActiveMembers as CampaignMemberRepositoryCount,
+  findActiveMember as CampaignMemberRepositoryFindActive,
+} from './db/repositories/campaign-member-repository.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
 import { getFaviconSvg } from './web-ui/favicon.ts';
 import {
@@ -608,7 +612,7 @@ app.get('/', requirePageSession(), async (c) => {
     return c.html(
       await renderHomePage(session, createCsrfToken(session.id), {
         conversationHistory,
-        campaignStrip: await campaignStripFor(session.userId),
+        campaignStrip: await campaignStripFor(c, session.userId),
       }),
     );
   } catch (err) {
@@ -636,31 +640,49 @@ app.get('/styleguide/markdown', requirePageSession(), async (c) => {
   return c.html(await renderMarkdownStyleguidePage(session, createCsrfToken(session.id)));
 });
 
-// ─── Campaign pages + context strip (SQR-275) ───────────────────────────────
+// ─── Campaign pages + context strip (SQR-275, SQR-11) ───────────────────────
+
+const ACTIVE_CAMPAIGN_COOKIE = 'squire_active_campaign';
 
 /**
- * The active campaign for the header strip: the most recently updated
- * membership (listCampaignsForUser orders newest first). Null = signed-in
- * user with no campaigns → the NO CAMPAIGN affordance. There is no
- * persisted per-user "active campaign" selection in v1.
+ * The active campaign for the header strip: the explicit selection (signed
+ * cookie, validated against current membership) when present, else the most
+ * recently updated membership. Null = signed-in user with no campaigns →
+ * the NO CAMPAIGN affordance.
  */
 async function campaignStripFor(
+  c: Context,
   userId: string,
   preferCampaignId?: string,
 ): Promise<CampaignStripState | null> {
   const mine = await CampaignService.listMyCampaigns(identityFromSessionUser(userId));
+  const cookieSelection = await getSignedCookie(c, getSessionSecret(), ACTIVE_CAMPAIGN_COOKIE);
   const active =
-    (preferCampaignId && mine.find((campaign) => campaign.id === preferCampaignId)) || mine[0];
+    (preferCampaignId && mine.find((campaign) => campaign.id === preferCampaignId)) ||
+    (typeof cookieSelection === 'string' &&
+      mine.find((campaign) => campaign.id === cookieSelection)) ||
+    mine[0];
   if (!active) return null;
   return { campaignId: active.id, campaignName: active.name, game: active.game };
 }
 
-app.use('/campaigns', requirePageSession());
-app.use('/campaigns/*', requirePageSession());
-
-app.get('/campaigns', async (c) => {
+async function renderCampaignListPage(c: Context, errorMessage?: string): Promise<Response> {
   const session = c.get('session')!;
-  const campaigns = await CampaignService.listMyCampaigns(identityFromSessionUser(session.userId));
+  const identity = identityFromSessionUser(session.userId);
+  const campaigns = await CampaignService.listMyCampaigns(identity);
+  const invites = await CampaignService.listMyInvites(identity);
+  const strip = await campaignStripFor(c, session.userId);
+  const { db } = getDb('server');
+  const rows = [];
+  for (const campaign of campaigns) {
+    const member = await CampaignMemberRepositoryFindActive(campaign.id, session.userId);
+    rows.push({
+      campaign,
+      memberCount: await CampaignMemberRepositoryCount(db, campaign.id),
+      role: member?.role ?? 'member',
+      active: strip?.campaignId === campaign.id,
+    });
+  }
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.html(
@@ -669,12 +691,103 @@ app.get('/campaigns', async (c) => {
       csrfToken: createCsrfToken(session.id),
       showChatChrome: false,
       showRail: false,
-      campaignStrip: campaigns[0]
-        ? { campaignId: campaigns[0].id, campaignName: campaigns[0].name, game: campaigns[0].game }
-        : null,
-      mainContent: renderCampaignListContent(campaigns),
+      campaignStrip: strip,
+      mainContent: renderCampaignListContent({
+        rows,
+        invites,
+        csrfToken: createCsrfToken(session.id),
+        errorMessage,
+      }),
     }),
+    errorMessage ? 422 : 200,
   );
+}
+
+app.use('/campaigns', requirePageSession());
+app.use('/campaigns/*', requirePageSession());
+app.use('/campaigns', requireCsrf());
+app.use('/campaigns/*', requireCsrf());
+
+app.get('/campaigns', (c) => renderCampaignListPage(c));
+
+/** Create via plain form post; errors re-render the page with a banner. */
+app.post('/campaigns', async (c) => {
+  const session = c.get('session')!;
+  const form = await c.req.formData();
+  const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
+  const game = typeof form.get('game') === 'string' ? (form.get('game') as string) : '';
+  if (!name) return renderCampaignListPage(c, 'Campaign name is required.');
+  // Modules derive from the game (advisory scenario-set selectors).
+  const modules = normalizeGameId(game) === 'gloomhaven-2e' ? ['gh2e', 'solo2e'] : ['fh'];
+  try {
+    const campaign = await CampaignService.createCampaign(identityFromSessionUser(session.userId), {
+      name,
+      game,
+      modules,
+    });
+    await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaign.id, getSessionSecret(), {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+    });
+    return c.redirect(`/campaigns/${campaign.id}`, 303);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error) {
+      return renderCampaignListPage(c, error.message);
+    }
+    throw error;
+  }
+});
+
+/** Explicit active-campaign switch: signed cookie, membership-validated. */
+app.post('/campaigns/:id/activate', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  try {
+    await CampaignService.requireActiveMember(campaignId, session.userId);
+  } catch {
+    return c.notFound();
+  }
+  await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaignId, getSessionSecret(), {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'Lax',
+  });
+  return c.redirect('/campaigns', 303);
+});
+
+app.post('/campaigns/invites/:memberId/accept', async (c) => {
+  const session = c.get('session')!;
+  const memberId = campaignRouteId(c, 'memberId');
+  if (!memberId) return c.notFound();
+  try {
+    const campaign = await CampaignService.acceptInvite(
+      identityFromSessionUser(session.userId),
+      memberId,
+    );
+    return c.redirect(`/campaigns/${campaign.id}`, 303);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error) {
+      return renderCampaignListPage(c, error.message);
+    }
+    throw error;
+  }
+});
+
+app.post('/campaigns/:id/leave-web', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  try {
+    await CampaignService.leaveCampaign(identityFromSessionUser(session.userId), campaignId);
+    return c.redirect('/campaigns', 303);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error) {
+      return renderCampaignListPage(c, error.message);
+    }
+    throw error;
+  }
 });
 
 app.get('/campaigns/:id', async (c) => {
@@ -1223,7 +1336,7 @@ app.get('/chat/:conversationId', async (c) => {
       messages: loaded.messages,
       pendingStreamUrls,
       conversationHistory,
-      campaignStrip: await campaignStripFor(session.userId),
+      campaignStrip: await campaignStripFor(c, session.userId),
     }),
   );
 });

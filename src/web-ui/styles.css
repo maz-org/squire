@@ -2055,6 +2055,84 @@ template#squire-banner-fixtures {
   letter-spacing: 0.14em;
 }
 
+.squire-campaigns__row-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  padding-bottom: var(--space-sm);
+}
+
+.squire-campaigns__action,
+.squire-campaigns__submit {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--parchment);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0 var(--space-md);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.squire-campaigns__submit {
+  background: var(--wax);
+  border-color: var(--wax);
+}
+
+.squire-campaigns__submit:hover {
+  background: var(--wax-dim);
+}
+
+.squire-campaigns__active {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--sage);
+}
+
+.squire-campaigns__section-title {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--parchment);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-xs);
+  margin: var(--space-lg) 0 var(--space-sm);
+}
+
+.squire-campaigns__create-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: end;
+}
+
+.squire-campaigns__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.squire-campaigns__field-label {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--sepia);
+}
+
+.squire-campaigns__field input,
+.squire-campaigns__field select {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--parchment);
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

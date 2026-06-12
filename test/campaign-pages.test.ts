@@ -128,6 +128,93 @@ describe('campaign routes', () => {
   });
 });
 
+describe('campaign picker (SQR-11)', () => {
+  const formPost = async (user: TestUser, url: string, fields: Record<string, string> = {}) => {
+    const form = new FormData();
+    form.set('_csrf', createCsrfToken(user.sessionId));
+    for (const [key, value] of Object.entries(fields)) form.set(key, value);
+    return app.request(url, {
+      method: 'POST',
+      headers: { Cookie: user.cookie },
+      body: form,
+    });
+  };
+
+  it('creates a campaign from the form and activates it', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const res = await formPost(owner, '/campaigns', {
+      name: 'Form Campaign',
+      game: 'gloomhaven-2e',
+    });
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toMatch(/\/campaigns\/[0-9a-f-]{36}/);
+
+    // The page now lists it as ACTIVE with derived modules + role.
+    const page = await pageRequest(owner, '/campaigns');
+    const body = await page.text();
+    expect(body).toContain('Form Campaign');
+    expect(body).toContain('GH2E + SOLO2E');
+    expect(body).toContain('OWNER');
+    expect(body).toContain('ACTIVE');
+  });
+
+  it('re-renders with a banner when creation fails (not allowlisted)', async () => {
+    process.env.SQUIRE_ALLOWED_EMAILS = 'someone-else@example.com';
+    const owner = await createTestUser(OWNER_EMAIL);
+    const res = await formPost(owner, '/campaigns', { name: 'Nope', game: 'frosthaven' });
+    expect(res.status).toBe(422);
+    expect(await res.text()).toContain('COULD NOT SAVE');
+  });
+
+  it('switches the active campaign via MAKE ACTIVE and updates the strip', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const identity = identityFromSessionUser(owner.userId);
+    const first = await CampaignService.createCampaign(identity, {
+      name: 'First Campaign',
+      game: 'frosthaven',
+    });
+    const second = await CampaignService.createCampaign(identity, {
+      name: 'Second Campaign',
+      game: 'gloomhaven-2e',
+    });
+    void first;
+
+    const activate = await formPost(owner, `/campaigns/${second.id}/activate`);
+    expect(activate.status).toBe(303);
+    const cookie = activate.headers.get('set-cookie') ?? '';
+    expect(cookie).toContain('squire_active_campaign');
+
+    // Subsequent pages carry the cookie → strip shows the selection.
+    const home = await app.request('/', {
+      headers: { Cookie: `${owner.cookie}; ${cookie.split(';')[0]}` },
+    });
+    const body = await home.text();
+    expect(body).toContain('GH2 · SECOND CAMPAIGN');
+    // E8: an active campaign hides the per-session game selector.
+    expect(body).not.toContain('squire-game-picker');
+  });
+
+  it('lists pending invites distinctly and accepts via form post', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const member = await createTestUser(OUTSIDER_EMAIL);
+    const identity = identityFromSessionUser(owner.userId);
+    const campaign = await CampaignService.createCampaign(identity, {
+      name: 'Invite Campaign',
+      game: 'frosthaven',
+    });
+    const invite = await CampaignService.inviteMember(identity, campaign.id, OUTSIDER_EMAIL);
+
+    const page = await pageRequest(member, '/campaigns');
+    const body = await page.text();
+    expect(body).toContain('Invitations');
+    expect(body).toContain('Invite Campaign');
+
+    const accept = await formPost(member, `/campaigns/invites/${invite.memberId}/accept`);
+    expect(accept.status).toBe(303);
+    expect(accept.headers.get('location')).toBe(`/campaigns/${campaign.id}`);
+  });
+});
+
 describe('chat campaign binding (E6 web channel)', () => {
   it('stores the bound campaign on the user message; foreign ids unbind', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
