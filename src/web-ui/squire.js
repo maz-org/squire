@@ -659,7 +659,7 @@ function startAnswerWorkTimer(elements) {
 }
 
 function completeAnswerWorkTimer(elements) {
-  if (!elements || !elements.container) return;
+  if (!elements.container) return;
   var endedAt = answerWorkNowMs();
   clearAnswerWorkTimer(elements);
   updateAnswerWorkElapsedStatus(elements, 'complete', endedAt);
