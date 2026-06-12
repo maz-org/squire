@@ -86,6 +86,7 @@ async function setupCampaign(): Promise<{
   const inviteRes = await request(owner, 'POST', `/api/campaigns/${campaign.id}/invites`, {
     email: MEMBER_EMAIL,
   });
+  expect(inviteRes.status).toBe(201);
   const { member: invite } = (await inviteRes.json()) as { member: { memberId: string } };
   const acceptRes = await request(member, 'POST', `/api/invites/${invite.memberId}/accept`);
   expect(acceptRes.status).toBe(200);
