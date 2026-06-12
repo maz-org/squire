@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatWorkLogDuration,
   humanizeWorkLogProgressMessage,
   workLogSourceActionFromProgressMessage,
 } from '../src/work-log-display.ts';
 
 describe('work log display wording', () => {
+  it('formats elapsed work durations like the disclosure title', () => {
+    expect(formatWorkLogDuration(0)).toBe('0s');
+    expect(formatWorkLogDuration(999)).toBe('0s');
+    expect(formatWorkLogDuration(1_000)).toBe('1s');
+    expect(formatWorkLogDuration(65_000)).toBe('1m 5s');
+    expect(formatWorkLogDuration(513_000)).toBe('8m 33s');
+  });
+
   it('turns card implementation refs into physical card checks', () => {
     const message =
       'Opening card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';

@@ -230,9 +230,55 @@ function runSquireScript(pathname: string): Record<string, string> {
   return attributes;
 }
 
-function bootPendingTranscript() {
+function createFakeClock(startMs = 0) {
+  let nowMs = startMs;
+  let nextTimerId = 1;
+  const timers = new Map<number, { callback: () => void; intervalMs: number; nextRunAt: number }>();
+
+  return {
+    Date: class extends Date {
+      constructor(...args: ConstructorParameters<typeof Date>) {
+        if (args.length > 0) {
+          super(...args);
+        } else {
+          super(nowMs);
+        }
+      }
+
+      static now() {
+        return nowMs;
+      }
+    } as DateConstructor,
+    advance(ms: number) {
+      nowMs += ms;
+      let ranTimer = true;
+      while (ranTimer) {
+        ranTimer = false;
+        for (const timer of timers.values()) {
+          if (timer.nextRunAt <= nowMs) {
+            timer.callback();
+            timer.nextRunAt += timer.intervalMs;
+            ranTimer = true;
+          }
+        }
+      }
+    },
+    clearInterval(id: number) {
+      timers.delete(id);
+    },
+    setInterval(callback: () => void, intervalMs: number) {
+      const id = nextTimerId;
+      nextTimerId += 1;
+      timers.set(id, { callback, intervalMs, nextRunAt: nowMs + intervalMs });
+      return id;
+    },
+  };
+}
+
+function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeClock> } = {}) {
   const listeners = new Map<string, Array<(event?: unknown) => void>>();
   const storedValues = new Map<string, string>();
+  const clock = options.clock ?? createFakeClock();
 
   // SQR-108: setFormPendingState writes to form.dataset and reads back
   // form.querySelector('input[name="question"]'/'button[type="submit"]'),
@@ -332,6 +378,7 @@ function bootPendingTranscript() {
   };
 
   const context = vm.createContext({
+    Date: clock.Date,
     document,
     window: {
       location: { pathname: '/chat/test' },
@@ -349,6 +396,7 @@ function bootPendingTranscript() {
         cb();
         return 0;
       },
+      clearInterval: clock.clearInterval,
       localStorage: {
         getItem(key: string) {
           return storedValues.get(key) ?? null;
@@ -357,6 +405,7 @@ function bootPendingTranscript() {
           storedValues.set(key, value);
         },
       },
+      setInterval: clock.setInterval,
     },
   });
 
@@ -560,7 +609,7 @@ describe('squire.js chat form retargeting', () => {
 
     expect(workEl.open).toBe(true);
     expect(workEl.getAttribute('data-work-state')).toBe('running');
-    expect(workStatusEl.textContent).toBe('Working');
+    expect(workStatusEl.textContent).toBe('Working for 0s');
 
     source.emit('text-delta', { delta: 'Let me ' });
     source.emit('text-delta', { delta: 'look that up carefully before answering.' });
@@ -589,7 +638,7 @@ describe('squire.js chat form retargeting', () => {
     expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
     expect(workEl.open).toBe(false);
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowsEl.children).toHaveLength(1);
     expect(source.closed).toBe(true);
   });
@@ -628,7 +677,7 @@ describe('squire.js chat form retargeting', () => {
     expect(contentEl.innerHTML).toBe('<p>The section is <strong>Locked Down</strong>.</p>');
     expect(workEl.open).toBe(false);
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowsEl.children).toHaveLength(1);
     expect(answerEl.querySelector('.squire-toolcall')).toBeNull();
   });
@@ -639,13 +688,13 @@ describe('squire.js chat form retargeting', () => {
     expect(workEl.hidden).toBe(false);
     expect(workEl.open).toBe(true);
     expect(workEl.getAttribute('data-work-state')).toBe('running');
-    expect(workStatusEl.textContent).toBe('Working');
+    expect(workStatusEl.textContent).toBe('Working for 0s');
 
     source.emit('tool-start', { id: 'search_rules', label: 'RULEBOOK' });
 
     expect(workEl.open).toBe(true);
     expect(workEl.getAttribute('data-work-state')).toBe('running');
-    expect(workStatusEl.textContent).toBe('Working');
+    expect(workStatusEl.textContent).toBe('Working for 0s');
     expect(workRowsEl.children).toHaveLength(0);
 
     source.emit('tool-progress', {
@@ -671,7 +720,27 @@ describe('squire.js chat form retargeting', () => {
     expect(workEl.open).toBe(false);
     expect(workEl.getAttribute('data-work-state')).toBe('complete');
     expect(workRowsEl.children).toHaveLength(1);
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
+  });
+
+  it('updates the work disclosure elapsed time every second and freezes it on done', () => {
+    const clock = createFakeClock();
+    const { source, workStatusEl } = bootPendingTranscript({ clock });
+
+    expect(workStatusEl.textContent).toBe('Working for 0s');
+
+    clock.advance(1_000);
+    expect(workStatusEl.textContent).toBe('Working for 1s');
+
+    clock.advance(512_000);
+    expect(workStatusEl.textContent).toBe('Working for 8m 33s');
+
+    source.emit('tool-result', { id: 'search_rules', labels: ['RULEBOOK'], ok: true });
+    source.emit('done', { html: '<p>Answer.</p>' });
+    expect(workStatusEl.textContent).toBe('Worked for 8m 33s');
+
+    clock.advance(5_000);
+    expect(workStatusEl.textContent).toBe('Worked for 8m 33s');
   });
 
   it('does not render obsolete progress detail controls during an active run', () => {
@@ -743,7 +812,7 @@ describe('squire.js chat form retargeting', () => {
     });
     source.emit('done', { html: '<p>Answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowsEl.children).toHaveLength(4);
     expect(workRowMessages(workRowsEl)).toEqual([
       'Checked Bandit Archer stat card',
@@ -853,7 +922,7 @@ describe('squire.js chat form retargeting', () => {
     source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
     source.emit('done', { html: '<p>Loot answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual([
       "I'll search the rulebook.",
       'Searched the rulebook',
@@ -887,7 +956,7 @@ describe('squire.js chat form retargeting', () => {
     source.emit('tool-result', { id: 'search_knowledge', labels: ['SCENARIO BOOK'], ok: true });
     source.emit('done', { html: '<p>Loot answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual([
       "I'll search the rulebook.",
       'Searched the rulebook',
@@ -912,7 +981,7 @@ describe('squire.js chat form retargeting', () => {
     source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
     source.emit('done', { html: '<p>Loot answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual(['Searched the rulebook']);
   });
 
@@ -927,7 +996,7 @@ describe('squire.js chat form retargeting', () => {
     source.emit('tool-result', { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true });
     source.emit('done', { html: '<p>Loot answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual(['Searched the rulebook']);
   });
 
@@ -947,7 +1016,7 @@ describe('squire.js chat form retargeting', () => {
     });
     source.emit('done', { html: '<p>Loot answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual([
       'Searched the rulebook',
       'Checked the scenario book',
@@ -987,7 +1056,7 @@ describe('squire.js chat form retargeting', () => {
     });
     source.emit('done', { html: '<p>Book answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual([
       "I'll look that up in the section book.",
       'Looked up section 67.1 in the section book',
@@ -1015,7 +1084,7 @@ describe('squire.js chat form retargeting', () => {
     });
     source.emit('done', { html: '<p>Section answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual(['Looked up section 67.1 in the section book']);
   });
 
@@ -1044,7 +1113,7 @@ describe('squire.js chat form retargeting', () => {
     });
     source.emit('done', { html: '<p>Scenario answer.</p>' });
 
-    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workStatusEl.textContent).toBe('Worked for 0s');
     expect(workRowMessages(workRowsEl)).toEqual([
       "I'll look that up in the scenario book.",
       'Looked up scenario 61 in the scenario book',
@@ -1163,7 +1232,7 @@ describe('squire.js chat form retargeting', () => {
 
       expect(workRowsEl.children).toHaveLength(1);
       expect(workRowMessages(workRowsEl)).toEqual(["Couldn't check the rulebook"]);
-      expect(workStatusEl.textContent).toBe('Finished working');
+      expect(workStatusEl.textContent).toBe('Worked for 0s');
     });
 
     it('ignores the REFERENCE fallback label (utility/traversal tools)', () => {

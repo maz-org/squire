@@ -56,7 +56,8 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain("'SEARCHING'");
     expect(squireJs).toContain("'CHECKED'");
     expect(squireJs).toContain('elements.container.open = false;');
-    expect(squireJs).toContain("elements.statusEl.textContent = 'Finished working';");
+    expect(squireJs).toContain("state === 'complete' ? 'Worked for ' : 'Working for '");
+    expect(squireJs).toContain('completeAnswerWorkTimer(elements);');
     expect(squireJs).toContain('function shouldSuppressPreToolDelta(delta) {');
     expect(squireJs).toContain('preToolBuffer += delta;');
     expect(squireJs).toContain('delta = preToolBuffer;');

@@ -1380,7 +1380,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     it('renders a collapsed checked-source work log inside the answer element for a single source', () => {
       const body = renderTranscriptAnswer(answerWith(['search_rules']));
       expect(body).toMatch(
-        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Finished working[\s\S]*Checked the rulebook[\s\S]*<\/details>/,
+        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Worked[\s\S]*Checked the rulebook[\s\S]*<\/details>/,
       );
       expect(body).not.toContain('class="squire-answer-work__summary-icon"');
       expect(body).toContain('class="squire-answer-work__row-icon" aria-hidden="true"');
@@ -1452,7 +1452,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
 
-      expect(body).toContain('Finished working');
+      expect(body).toContain('Worked for 0s');
       expect(body).toMatch(
         /Checked Bandit Archer stat card[\s\S]*Searched available sources[\s\S]*Checked the rulebook[\s\S]*Checked the section book/,
       );
@@ -1462,6 +1462,36 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       expect(body).not.toContain('class="squire-answer-work__row-note"');
       expect(body).not.toContain(rawRef);
       expect(body).not.toContain('Looked up Bandit Archer');
+    });
+
+    it('renders completed persisted work with the elapsed disclosure title', () => {
+      const body = renderTranscriptAnswer(
+        answerWith(null, {
+          createdAt: new Date('2026-04-20T00:08:34.000Z'),
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-progress',
+              payload: {
+                id: 'search_knowledge-progress-1',
+                label: 'RULEBOOK',
+                message: 'Searching the rulebook',
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-result',
+              payload: { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Worked for 8m 33s');
+      expect(body).not.toContain('Finished working');
+      expect(body).toContain('Searched the rulebook');
     });
 
     it('replays persisted agent intent rows in the completed work timeline', () => {
@@ -1522,7 +1552,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
 
-      expect(body).toContain('Finished working');
+      expect(body).toContain('Worked for 0s');
       expect(body).toMatch(
         /I&#39;ll search the rulebook\.[\s\S]*Searched the rulebook[\s\S]*I&#39;ll search the scenario book\.[\s\S]*Searched the scenario book/,
       );
@@ -1584,7 +1614,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
 
-      expect(sectionBody).toContain('Finished working');
+      expect(sectionBody).toContain('Worked for 0s');
       expect(sectionBody).toMatch(
         /I&#39;ll look that up in the section book\.[\s\S]*Looked up section 67.1 in the section book/,
       );
@@ -1633,7 +1663,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
 
-      expect(scenarioBody).toContain('Finished working');
+      expect(scenarioBody).toContain('Worked for 0s');
       expect(scenarioBody).toMatch(
         /I&#39;ll look that up in the scenario book\.[\s\S]*Looked up scenario 61 in the scenario book/,
       );
@@ -1675,7 +1705,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
         }),
       );
 
-      expect(body).toContain('Finished working');
+      expect(body).toContain('Worked for 0s');
       expect(body).toContain('Looked up section 67.1 in the section book');
       expect(body).not.toContain('Opening 67.1');
     });
