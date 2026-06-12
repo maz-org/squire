@@ -37,15 +37,20 @@ describe('seedUnlockGraphs', () => {
 
   it('seeds the checked-in extracts idempotently', async () => {
     const first = await seedUnlockGraphs(db);
-    expect(first.map((r) => `${r.module}:${r.scenarios}`)).toEqual(['gh2e:101', 'solo2e:18']);
+    expect(first.map((r) => `${r.module}:${r.scenarios}`)).toEqual([
+      'fh:162',
+      'gh2e:101',
+      'solo2e:18',
+    ]);
 
     const second = await seedUnlockGraphs(db);
-    expect(second.map((r) => r.prunedScenarios)).toEqual([0, 0]);
-    expect(second.map((r) => r.scenarios)).toEqual([101, 18]);
+    expect(second.map((r) => r.prunedScenarios)).toEqual([0, 0, 0]);
+    expect(second.map((r) => r.scenarios)).toEqual([162, 101, 18]);
   });
 
   it('prunes scenarios and threads missing from the latest extract', async () => {
-    const [gh2e] = readUnlockGraphExtracts();
+    const gh2e = readUnlockGraphExtracts().find((extract) => extract.module === 'gh2e');
+    if (!gh2e) throw new Error('gh2e extract missing');
     await seedUnlockGraphModule(db, gh2e);
 
     const shrunk = {
