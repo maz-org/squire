@@ -1,0 +1,1423 @@
+{
+  "provenance": "Exfiltrated from the Squire campaign-tracker prototype (github.com/maz-org/squire-campaign-tracker, src/GloomhavenTracker.jsx), which curated it from Lurkars/gloomhavensecretariat data plus community flowcharts. Advisory by design: trust the game when it disagrees. Scenario keys are module-local; campaigns store them qualified as \"<module>:<key>\".",
+  "game": "gloomhaven-2e",
+  "module": "gh2e",
+  "scenarios": [
+    {
+      "key": "0",
+      "name": "Training Course",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Tutorial — play before starting the campaign",
+      "hazard": false
+    },
+    {
+      "key": "1",
+      "name": "Bandit Camp",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "2",
+      "name": "Ruinous Crypt",
+      "prereqsAll": [
+        "1"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "3",
+      "name": "Frozen Hollow",
+      "prereqsAll": [
+        "2"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "4",
+      "name": "Crypt of the Damned",
+      "prereqsAll": [
+        "3"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "5",
+      "name": "Forgotten Crypt",
+      "prereqsAll": [
+        "3"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "6",
+      "name": "Decaying Crypt",
+      "prereqsAll": [
+        "4"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "7",
+      "name": "Black Barrow",
+      "prereqsAll": [],
+      "prereqsAny": [
+        "4",
+        "5"
+      ],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "8",
+      "name": "Barrow Lair",
+      "prereqsAll": [
+        "7"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "9",
+      "name": "Ruinous Rift",
+      "prereqsAll": [
+        "5"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "10",
+      "name": "Mountain Pass",
+      "prereqsAll": [
+        "5"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "11",
+      "name": "Ritual Chamber",
+      "prereqsAll": [
+        "6"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "12",
+      "name": "Inox Encampment",
+      "prereqsAll": [
+        "8"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "13",
+      "name": "Icecrag Ascent",
+      "prereqsAll": [
+        "10"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "14",
+      "name": "Echo Chamber",
+      "prereqsAll": [
+        "10"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "15",
+      "name": "Plane of Elemental Power",
+      "prereqsAll": [
+        "11"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "16",
+      "name": "Diamond Mine",
+      "prereqsAll": [
+        "8"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "17",
+      "name": "Demonic Rift",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "18",
+      "name": "Investigation",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "19",
+      "name": "Military Outpost",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "20",
+      "name": "Gloomhaven Warehouse",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "21",
+      "name": "The Ghost Fortress",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "22",
+      "name": "Doomcannon Demolition",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "23",
+      "name": "Scenario 23 (GH2e)",
+      "prereqsAll": [
+        "26"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Forced continuation of 26 — name not yet in GHS",
+      "hazard": false
+    },
+    {
+      "key": "24",
+      "name": "Gloomhaven Square B",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "25",
+      "name": "Scenario 25 (GH2e)",
+      "prereqsAll": [
+        "24"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Forced continuation of 24 — name not yet in GHS",
+      "hazard": false
+    },
+    {
+      "key": "26",
+      "name": "Gloomhaven Battlements B",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "27",
+      "name": "Infernal Throne",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "28",
+      "name": "Temple of the Seer",
+      "prereqsAll": [
+        "5"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "29",
+      "name": "Scorched Summit",
+      "prereqsAll": [
+        "13"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "30",
+      "name": "Shrine of the Depths",
+      "prereqsAll": [
+        "14"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "31",
+      "name": "Decrepit Wood",
+      "prereqsAll": [
+        "14"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "32",
+      "name": "Savvas Armory",
+      "prereqsAll": [
+        "13"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "33",
+      "name": "Ancient Defense Network",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "34",
+      "name": "Timeworn Tomb",
+      "prereqsAll": [
+        "33"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Forced continuation of 33",
+      "hazard": false
+    },
+    {
+      "key": "35",
+      "name": "Realm of the Voice",
+      "prereqsAll": [
+        "30"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "36",
+      "name": "Abandoned Sewers",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via city or road event card",
+      "hazard": false
+    },
+    {
+      "key": "37",
+      "name": "Deep Ruins",
+      "prereqsAll": [
+        "36"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "38",
+      "name": "Drake Nest",
+      "prereqsAll": [],
+      "prereqsAny": [
+        "36",
+        "45"
+      ],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "39",
+      "name": "Vibrant Grotto",
+      "prereqsAll": [
+        "28"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "40",
+      "name": "Wetlands Ambush",
+      "prereqsAll": [
+        "39"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "41",
+      "name": "Ancient Cistern",
+      "prereqsAll": [
+        "37"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "42",
+      "name": "Secluded Valley",
+      "prereqsAll": [
+        "28"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "43",
+      "name": "Chasing Secrets",
+      "prereqsAll": [
+        "42"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "44",
+      "name": "Temple of the Elements",
+      "prereqsAll": [
+        "40"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "45",
+      "name": "Plane of Night",
+      "prereqsAll": [
+        "44"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "46",
+      "name": "Doom Trench",
+      "prereqsAll": [
+        "45"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "47",
+      "name": "Slave Pens",
+      "prereqsAll": [
+        "45"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "48",
+      "name": "Treacherous Divide",
+      "prereqsAll": [
+        "45"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "49",
+      "name": "Tribal Assault",
+      "prereqsAll": [
+        "47"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "50",
+      "name": "Nightmare Peak",
+      "prereqsAll": [
+        "48"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "51",
+      "name": "Lair of the Unseeing Eye",
+      "prereqsAll": [
+        "46"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "52",
+      "name": "Shadow Weald",
+      "prereqsAll": [
+        "49"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "53",
+      "name": "Shrine of Strength",
+      "prereqsAll": [
+        "48"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "54",
+      "name": "The Void",
+      "prereqsAll": [
+        "41"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "55",
+      "name": "The Last Stand",
+      "prereqsAll": [
+        "54"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "56",
+      "name": "The Gloom",
+      "prereqsAll": [
+        "55"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "57",
+      "name": "Crypt Basement",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "58",
+      "name": "Palace of Ice",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "59",
+      "name": "Foggy Thicket",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "60",
+      "name": "Bandit's Wood",
+      "prereqsAll": [
+        "59"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Forced continuation of 59 (Foggy Thicket)",
+      "hazard": false
+    },
+    {
+      "key": "61",
+      "name": "Dangerous Grove",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "62",
+      "name": "Alchemy Lab",
+      "prereqsAll": [
+        "61"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Forced continuation of 61 (Dangerous Grove)",
+      "hazard": false
+    },
+    {
+      "key": "63",
+      "name": "Fading Lighthouse",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "64",
+      "name": "Roots of Chaos",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "65",
+      "name": "Hero's Mausoleum",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "66",
+      "name": "A Friend in Need",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Personal quest unlock — retire a character to complete",
+      "hazard": false
+    },
+    {
+      "key": "67",
+      "name": "Temple of the Eclipse",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "68",
+      "name": "Sunken Vessel",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "69",
+      "name": "Corrupted Cove",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "70",
+      "name": "Underwater Lagoon",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "71",
+      "name": "Clockwork Factory",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "72",
+      "name": "Well of the Unfortunate",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "73",
+      "name": "Chained Isle",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "74",
+      "name": "Windswept Highlands",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Random side scenario — drawn from the random scenario deck",
+      "hazard": false
+    },
+    {
+      "key": "75",
+      "name": "Rockslide Ridge",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Puzzle scenario — revealed by solving an in-game puzzle",
+      "hazard": false
+    },
+    {
+      "key": "76",
+      "name": "Oozing Grove",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Puzzle scenario — revealed by solving an in-game puzzle",
+      "hazard": false
+    },
+    {
+      "key": "77",
+      "name": "Harrower Hive",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Puzzle scenario — revealed by solving an in-game puzzle",
+      "hazard": false
+    },
+    {
+      "key": "78",
+      "name": "Vault of Secrets",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Puzzle scenario — revealed by solving an in-game puzzle",
+      "hazard": false
+    },
+    {
+      "key": "79",
+      "name": "Lurker Assault",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock trigger not documented in GHS — check your scenario book",
+      "hazard": false
+    },
+    {
+      "key": "80",
+      "name": "Lost Temple",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock trigger not documented in GHS — check your scenario book",
+      "hazard": false
+    },
+    {
+      "key": "81",
+      "name": "Overgrown Graveyard",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "82",
+      "name": "Syndicate Hideout",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "83",
+      "name": "Lost Island",
+      "prereqsAll": [
+        "70"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Unlocked by completing 70 (Underwater Lagoon)",
+      "hazard": false
+    },
+    {
+      "key": "84",
+      "name": "Wild Melee",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "85",
+      "name": "Crossroads Station",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "86",
+      "name": "Magma Pit",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "87",
+      "name": "Sulfur Mine",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "88",
+      "name": "Arcane Library",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "89",
+      "name": "Community Service",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "90",
+      "name": "Burning Mountain",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "91",
+      "name": "Shadows Within",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "92",
+      "name": "Chronal Anchor",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "93",
+      "name": "Harried Village",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "94",
+      "name": "A Watery Rescue",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "95",
+      "name": "Cargo Ship",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "96",
+      "name": "Back Alley Brawl",
+      "prereqsAll": [
+        "95"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": "Forced continuation of 95 (Cargo Ship)",
+      "hazard": false
+    },
+    {
+      "key": "97",
+      "name": "Vermling Camp",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "98",
+      "name": "Metamorphic Fault",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "99",
+      "name": "Sintering Forge",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    },
+    {
+      "key": "100",
+      "name": "Silence Falls",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Unlock via event card or retirement",
+      "hazard": false
+    }
+  ],
+  "threads": [
+    {
+      "id": "gh2e_intro",
+      "label": "Opening",
+      "note": "0 is the standalone tutorial; 1 & 2 begin the main flowchart",
+      "position": 0,
+      "keys": [
+        "0",
+        "1",
+        "2"
+      ]
+    },
+    {
+      "id": "gh2e_demons",
+      "label": "Demonic Corruption",
+      "note": "Flowchart from 3; ⚠ 19, 20, 26 unlock via event card",
+      "position": 1,
+      "keys": [
+        "4",
+        "6",
+        "7",
+        "11",
+        "15",
+        "19",
+        "20",
+        "26"
+      ]
+    },
+    {
+      "id": "gh2e_merchant",
+      "label": "Merchant Guild",
+      "note": "Flows from 7→8; ⚠ 21, 22, 24 unlock via event card; 23 & 25 are forced continuations",
+      "position": 2,
+      "keys": [
+        "8",
+        "12",
+        "16",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25"
+      ]
+    },
+    {
+      "id": "gh2e_guards",
+      "label": "City Guards",
+      "note": "Flows from 5→10; ⚠ 17 & 18 unlock via event card",
+      "position": 3,
+      "keys": [
+        "10",
+        "17",
+        "18"
+      ]
+    },
+    {
+      "id": "gh2e_hail",
+      "label": "Hail the Gloom",
+      "note": "Flows from 2→3→5; ⚠ 27 unlocks via event card",
+      "position": 4,
+      "keys": [
+        "3",
+        "5",
+        "9",
+        "13",
+        "27",
+        "28",
+        "39",
+        "40",
+        "42",
+        "43",
+        "44"
+      ]
+    },
+    {
+      "id": "gh2e_voice",
+      "label": "The Voice",
+      "note": "Flows from 10→13/14; ⚠ 33 unlocks via event card; 34 is its forced continuation",
+      "position": 5,
+      "keys": [
+        "14",
+        "29",
+        "30",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35"
+      ]
+    },
+    {
+      "id": "gh2e_sewers",
+      "label": "The Sewers",
+      "note": "⚠ 36 unlocks via event card, then flows 36→37→41; 38 also unlocks via 45",
+      "position": 6,
+      "keys": [
+        "36",
+        "37",
+        "38",
+        "41"
+      ]
+    },
+    {
+      "id": "gh2e_gloom",
+      "label": "Into the Gloom",
+      "note": "Endgame arc — flows from 40→44→45 through multiple branches to The Gloom",
+      "position": 7,
+      "keys": [
+        "45",
+        "46",
+        "47",
+        "48",
+        "49",
+        "50",
+        "51",
+        "52",
+        "53",
+        "54",
+        "55",
+        "56"
+      ]
+    },
+    {
+      "id": "gh2e_pq",
+      "label": "Personal Quest Scenarios",
+      "note": "Retire a character to trigger; 59→60 and 61→62 are forced two-part missions",
+      "position": 8,
+      "keys": [
+        "57",
+        "58",
+        "59",
+        "60",
+        "61",
+        "62",
+        "63",
+        "64",
+        "65",
+        "66"
+      ]
+    },
+    {
+      "id": "gh2e_random",
+      "label": "Random Side Scenarios",
+      "note": "Drawn from the random scenario deck; completing 70 unlocks 83",
+      "position": 9,
+      "keys": [
+        "67",
+        "68",
+        "69",
+        "70",
+        "71",
+        "72",
+        "73",
+        "74",
+        "83"
+      ]
+    },
+    {
+      "id": "gh2e_puzzle",
+      "label": "Puzzle Scenarios",
+      "note": "Revealed by solving in-game puzzles found during other scenarios",
+      "position": 10,
+      "keys": [
+        "75",
+        "76",
+        "77",
+        "78"
+      ]
+    },
+    {
+      "id": "gh2e_misc",
+      "label": "Other Side Scenarios",
+      "note": "Unlock triggers not documented in GHS — check your scenario book",
+      "position": 11,
+      "keys": [
+        "79",
+        "80"
+      ]
+    },
+    {
+      "id": "gh2e_events",
+      "label": "Event Side Scenarios",
+      "note": "Unlock via road/city event cards or retirements; 95→96 is a forced two-part",
+      "position": 12,
+      "keys": [
+        "81",
+        "82",
+        "84",
+        "85",
+        "86",
+        "87",
+        "88",
+        "89",
+        "90",
+        "91",
+        "92",
+        "93",
+        "94",
+        "95",
+        "96",
+        "97",
+        "98",
+        "99",
+        "100"
+      ]
+    }
+  ]
+}

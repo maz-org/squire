@@ -1,0 +1,233 @@
+{
+  "provenance": "Exfiltrated from the Squire campaign-tracker prototype (github.com/maz-org/squire-campaign-tracker, src/GloomhavenTracker.jsx), which curated it from Lurkars/gloomhavensecretariat data plus community flowcharts. Advisory by design: trust the game when it disagrees. Scenario keys are module-local; campaigns store them qualified as \"<module>:<key>\".",
+  "game": "gloomhaven-2e",
+  "module": "solo2e",
+  "scenarios": [
+    {
+      "key": "bruiser",
+      "name": "Bruiser Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Bruiser reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "spellweaver",
+      "name": "Spellweaver Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Spellweaver reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "tinkerer",
+      "name": "Tinkerer Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Tinkerer reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "mindthief",
+      "name": "Mindthief Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Mindthief reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "cragheart",
+      "name": "Cragheart Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Cragheart reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "diviner",
+      "name": "Diviner Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Diviner reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "eclipse",
+      "name": "Eclipse Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Eclipse reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "silent-knife",
+      "name": "Silent Knife Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Silent Knife reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "saw",
+      "name": "Saw Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Saw reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "lightning-bolt",
+      "name": "Lightning Bolt Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Lightning Bolt reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "music-note",
+      "name": "Music Note Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Music Note reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "three-spears",
+      "name": "Three Spears Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Three Spears reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "angry-face",
+      "name": "Angry Face Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Angry Face reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "cthulhu",
+      "name": "Cthulhu Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Cthulhu reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "sun",
+      "name": "Sun Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Sun reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "two-minis",
+      "name": "Two Minis Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Two Minis reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "triangles",
+      "name": "Triangles Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Triangles reaches level 5",
+      "hazard": false
+    },
+    {
+      "key": "crossed-swords",
+      "name": "Crossed Swords Solo Scenario",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Play when your Crossed Swords reaches level 5",
+      "hazard": false
+    }
+  ],
+  "threads": [
+    {
+      "id": "solo2e",
+      "label": "Solo Scenarios (2nd Ed)",
+      "note": "One per class — available when that character reaches level 5",
+      "position": 0,
+      "keys": [
+        "bruiser",
+        "spellweaver",
+        "tinkerer",
+        "mindthief",
+        "cragheart",
+        "diviner",
+        "eclipse",
+        "silent-knife",
+        "saw",
+        "lightning-bolt",
+        "music-note",
+        "three-spears",
+        "angry-face",
+        "cthulhu",
+        "sun",
+        "two-minis",
+        "triangles",
+        "crossed-swords"
+      ]
+    }
+  ]
+}

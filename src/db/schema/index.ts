@@ -13,4 +13,5 @@ export * from './budget.ts';
 export * from './cards.ts';
 export * from './conversations.ts';
 export * from './scenario-section-books.ts';
+export * from './unlock-graphs.ts';
 export * from './relations.ts';
