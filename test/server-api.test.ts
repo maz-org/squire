@@ -711,6 +711,48 @@ describe('POST /api/ask', () => {
     );
   });
 
+  // SQR-20 / ADR 0021: identity comes from the verified bearer token, never
+  // the request body, and client-credentials tokens get no user identity.
+  it('derives ask identity from a user-bound token and ignores body userId', async () => {
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'token-user-1' },
+    });
+
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({
+        question: 'What items can I afford?',
+        userId: '00000000-0000-4000-8000-00000000dead',
+      }),
+    });
+
+    expect(mockAsk).toHaveBeenCalledWith(
+      'What items can I afford?',
+      expect.objectContaining({ userId: 'token-user-1' }),
+    );
+    expect(mockEnsureAskBudgetAvailable).toHaveBeenCalledWith('token-user-1');
+  });
+
+  it('passes no user identity for client-credentials tokens', async () => {
+    await app.request('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      body: JSON.stringify({
+        question: 'What is the loot action?',
+        userId: '00000000-0000-4000-8000-00000000beef',
+      }),
+    });
+
+    const options = mockAsk.mock.calls[0][1] as Record<string, unknown>;
+    expect(options.userId).toBeUndefined();
+    expect(mockEnsureAskBudgetAvailable).toHaveBeenCalledWith(null);
+  });
+
   it('rate limits authenticated ask requests before budget and model work', async () => {
     const limiter = installOneRequestLimiter();
 
