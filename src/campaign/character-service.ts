@@ -29,8 +29,10 @@ import { auditedMutation } from './audit.ts';
 import {
   CampaignForbiddenError,
   CampaignNotFoundError,
+  ProposalRequiredError,
   requireActiveMember,
   requireUser,
+  type ConfirmedExecution,
 } from './campaign-service.ts';
 import type { CallerIdentity } from './identity.ts';
 
@@ -194,6 +196,7 @@ export async function updateCharacter(
   identity: CallerIdentity,
   characterId: string,
   input: UpdateCharacterInput,
+  confirmed: ConfirmedExecution = {},
 ): Promise<Character> {
   // The visibility gate runs once outside the audit wrapper to resolve the
   // campaign id for rejected-row attribution; the wrapper re-runs the
@@ -215,6 +218,15 @@ export async function updateCharacter(
       if (!before) throw new CampaignNotFoundError();
       if (before.placeholderForEmail !== null && hasPrivateFields(input)) {
         throw new PlaceholderPrivateFieldsError();
+      }
+      // Retirement reverses an active character — destructive per the
+      // matrix (the guided flow itself stays deferred, SQR-289).
+      if (
+        !confirmed.confirmedProposalId &&
+        input.status === 'retired' &&
+        before.status === 'active'
+      ) {
+        throw new ProposalRequiredError('character.retire');
       }
       const updated = await CharacterRepository.update(tx, characterId, input);
 
@@ -238,6 +250,7 @@ export async function updateCharacter(
 export async function deleteCharacter(
   identity: CallerIdentity,
   characterId: string,
+  confirmed: ConfirmedExecution = {},
 ): Promise<void> {
   const visible = await requireVisibleCharacter(identity, characterId);
   await auditedMutation(
@@ -250,6 +263,11 @@ export async function deleteCharacter(
     },
     async (tx) => {
       const character = await requireOwnedCharacter(identity, characterId);
+      // Unclaimed placeholders are scratch data; real characters are
+      // destructive and need a confirmed proposal (ADR 0021).
+      if (!confirmed.confirmedProposalId && character.placeholderForEmail === null) {
+        throw new ProposalRequiredError('character.delete');
+      }
       await CharacterRepository.remove(tx, characterId);
       return {
         result: undefined,

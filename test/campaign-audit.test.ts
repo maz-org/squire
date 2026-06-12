@@ -191,15 +191,21 @@ describe('audit rows for confirmed mutations', () => {
     expect(body.campaign.version).toBe(1);
   });
 
-  it('audit rows survive campaign deletion', async () => {
+  it('audit rows survive campaign deletion and record the proposal lifecycle', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const campaign = await createCampaign(owner);
-    const del = await request(owner, 'DELETE', `/api/campaigns/${campaign.id}`);
-    expect(del.status).toBe(204);
+
+    const proposeRes = await request(owner, 'POST', `/api/campaigns/${campaign.id}/proposals`, {
+      mutation: { type: 'campaign.delete' },
+    });
+    expect(proposeRes.status).toBe(201);
+    const { proposal } = (await proposeRes.json()) as { proposal: { id: string } };
+    const confirmRes = await request(owner, 'POST', `/api/proposals/${proposal.id}/confirm`);
+    expect(confirmRes.status).toBe(200);
 
     const entries = await CampaignAuditRepository.listByCampaign(campaign.id);
     expect(entries.map((e) => e.mutationType)).toEqual(
-      expect.arrayContaining(['campaign.create', 'campaign.delete']),
+      expect.arrayContaining(['campaign.create', 'proposal.proposed', 'campaign.delete']),
     );
   });
 
