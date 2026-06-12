@@ -45,6 +45,8 @@ export async function resetTestDb(): Promise<void> {
   if (!db) throw new Error('resetTestDb called before setupTestDb');
   await db.execute(sql`
     TRUNCATE llm_budget_warnings, llm_budget_ledger, messages, conversations, rule_source_embeddings, embeddings,
+             mutation_idempotency_keys, pending_mutations, campaign_audit_log,
+             character_cards, character_items, characters, campaign_members, campaigns,
              oauth_audit_log, oauth_tokens, oauth_authorization_codes, oauth_clients, sessions, users
              RESTART IDENTITY CASCADE
   `);
