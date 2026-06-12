@@ -467,6 +467,11 @@ function toolFailureResult(code: string, message: string): ToolCallResult {
 export interface ToolExecutionContext {
   /** Active game from runtime context. Explicit tool input overrides this. */
   game?: string;
+  /**
+   * Resolved caller user id (SQR-19/269). NEVER taken from model-controlled
+   * tool input — only the runtime context can scope campaign-state reads.
+   */
+  userId?: string;
 }
 
 export interface TokenUsage {
@@ -920,10 +925,14 @@ export function isNonRuleSearchTool(toolName: string, input: Record<string, unkn
 function gameOptsForToolInput(
   input: Record<string, unknown>,
   context?: ToolExecutionContext,
-): { game: string } | undefined {
+): { game?: string; userId?: string } | undefined {
   const explicit = typeof input.game === 'string' ? input.game : undefined;
   const game = explicit ?? context?.game;
-  return game === undefined ? undefined : { game };
+  // userId comes from the runtime context ONLY — a model-supplied input.userId
+  // is ignored (prompt content cannot widen identity scope, ADR 0021).
+  const userId = context?.userId;
+  if (game === undefined && userId === undefined) return undefined;
+  return { ...(game !== undefined ? { game } : {}), ...(userId !== undefined ? { userId } : {}) };
 }
 
 /**

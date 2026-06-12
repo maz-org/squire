@@ -195,6 +195,22 @@ function isRetryableTransportError(err: unknown): boolean {
   return errObj.name === 'AbortError' || /network|socket|timed out/i.test(message);
 }
 
+/**
+ * Per-message campaign scoping for agent history (SQR-19, eng E6).
+ * Campaign-bound turns enter context only under the same campaign;
+ * unbound (legacy/no-campaign) turns always pass — they carry no other
+ * campaign's facts because those turns would themselves be bound. A
+ * mid-session campaign switch therefore cannot bleed prior campaign facts.
+ */
+export function campaignScopedHistory(
+  messages: ConversationMessage[],
+  campaignId: string | null,
+): ConversationMessage[] {
+  return messages.filter(
+    (message) => (message.campaignId ?? null) === null || message.campaignId === campaignId,
+  );
+}
+
 function toHistory(messages: ConversationMessage[]): HistoryMessage[] {
   return messages.map((message) => ({
     role: message.role,
@@ -207,6 +223,7 @@ function agentOptions(input: {
   userId: string;
   correlation: { conversationId: string; userMessageId: string; requestId?: string };
   game?: string;
+  campaignId?: string | null;
   emit: EmitFn;
 }) {
   return {
@@ -216,6 +233,7 @@ function agentOptions(input: {
     conversationId: input.correlation.conversationId,
     userMessageId: input.correlation.userMessageId,
     ...(input.game ? { game: input.game } : {}),
+    ...(input.campaignId ? { campaignId: input.campaignId } : {}),
     emit: input.emit,
   };
 }
@@ -226,7 +244,12 @@ async function generateAssistantReply(
   userId: string,
   correlation: { conversationId: string; userMessageId: string; requestId?: string },
   emit: EmitFn,
-  options: { retryOnTransportError: boolean; game?: string; onRetry?: () => void } = {
+  options: {
+    retryOnTransportError: boolean;
+    game?: string;
+    campaignId?: string | null;
+    onRetry?: () => void;
+  } = {
     retryOnTransportError: true,
   },
 ) {
@@ -236,6 +259,7 @@ async function generateAssistantReply(
       userId,
       correlation,
       game: options.game,
+      campaignId: options.campaignId,
       emit,
     });
   try {
@@ -261,6 +285,8 @@ async function persistAssistantOutcome(input: {
   userId: string;
   currentUserMessageId: string;
   game?: string;
+  /** Campaign binding for this turn (E6); defaults to the user message's. */
+  campaignId?: string | null;
   requestId?: string;
   onEvent?: EmitFn;
   failureMessage?: string;
@@ -269,8 +295,13 @@ async function persistAssistantOutcome(input: {
     includeErrors: false,
     limit: HISTORY_LIMIT + 1,
   });
+  const currentMessage = priorMessages.find((message) => message.id === input.currentUserMessageId);
+  const activeCampaignId = input.campaignId ?? currentMessage?.campaignId ?? null;
   const history = toHistory(
-    priorMessages.filter((message) => message.id !== input.currentUserMessageId),
+    campaignScopedHistory(
+      priorMessages.filter((message) => message.id !== input.currentUserMessageId),
+      activeCampaignId,
+    ),
   );
 
   // SQR-98: capture consulted tool names for every write path, not just the
@@ -338,6 +369,7 @@ async function persistAssistantOutcome(input: {
           // restarting would mix two runs into one DOM update.
           retryOnTransportError: input.onEvent === undefined,
           game: input.game,
+          campaignId: activeCampaignId,
           // Failed attempt may have pushed tool names before throwing — reset
           // so the persisted sources match the successful attempt only.
           onRetry: () => {
@@ -453,6 +485,7 @@ export async function createPendingFollowUp(input: {
   userId: string;
   question: string;
   game?: string;
+  campaignId?: string | null;
 }): Promise<PendingConversationTurn | null> {
   const existingConversation = await ConversationRepository.findOwnedById(
     input.userId,
@@ -466,6 +499,7 @@ export async function createPendingFollowUp(input: {
       role: 'user',
       content: input.question,
       game: input.game ?? null,
+      campaignId: input.campaignId ?? null,
     });
     await ConversationRepository.touchLastMessageAt(
       tx,
@@ -487,6 +521,7 @@ export async function streamAssistantTurn(input: {
   userId: string;
   currentUserMessageId: string;
   game?: string;
+  campaignId?: string | null;
   requestId?: string;
   onEvent: EmitFn;
   failureMessage?: string;
@@ -497,6 +532,7 @@ export async function streamAssistantTurn(input: {
     userId: input.userId,
     currentUserMessageId: input.currentUserMessageId,
     game: input.game,
+    campaignId: input.campaignId,
     requestId: input.requestId,
     onEvent: input.onEvent,
     failureMessage: input.failureMessage,
