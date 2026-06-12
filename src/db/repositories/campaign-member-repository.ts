@@ -178,6 +178,24 @@ export async function markDeparted(handle: DbOrTx, memberId: string): Promise<bo
   return updated.length > 0;
 }
 
+/**
+ * Re-invite a departed member: the row flips back to 'invited' (keeping its
+ * user binding) so the rejoin rides the normal accept path — including the
+ * join-time allowlist re-check (ADR 0021 §Invites).
+ */
+export async function reinviteDeparted(
+  handle: DbOrTx,
+  memberId: string,
+  invitedByUserId: string,
+): Promise<CampaignMember | null> {
+  const [row] = await handle
+    .update(campaignMembers)
+    .set({ status: 'invited', invitedByUserId, joinedAt: null })
+    .where(and(eq(campaignMembers.id, memberId), eq(campaignMembers.status, 'departed')))
+    .returning();
+  return row ? toDomain(row) : null;
+}
+
 /** Rejoin: reactivate a departed membership (ownership of characters is user-bound). */
 export async function reactivateDeparted(
   handle: DbOrTx,
