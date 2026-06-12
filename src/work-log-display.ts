@@ -271,7 +271,7 @@ export function workLogSourceActionFromProgressMessage(
         detail: `Checked ${removeLeadingArticle(lookedUpCard[1]!.trim())}`,
       };
     }
-    return { label: 'CARD INDEX', detail: `${detail} in the card index` };
+    return { label: 'CARD INDEX', detail };
   }
   if (sourceLabel === 'SCENARIO BOOK' && detail !== 'Searched available sources') {
     return { label: 'SCENARIO BOOK', detail: `${detail} in the scenario book` };

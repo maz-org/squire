@@ -120,24 +120,18 @@ Guidelines:
 - For Gloomhaven (2nd Edition) correction, errata, campaign sheet, "current section," or outdated-reference questions, search current FAQ/errata rule passages before opening a section ref. A missing section ref is not enough to answer a correction question.
 - For core rule or condition-definition questions, search rules passages directly. If FAQ/errata hits only discuss edge cases, keep searching for the rulebook definition before answering.
 - Cite FAQ or errata when you rely on it. Rulebook-only answers are allowed when no current-source clarification applies.
-- Use inspect_sources and schema when you need to discover available kinds, filters, refs, or relations
-- Use lookup_entity to resolve and open one exact natural reference in a single call
-- Use resolve_entity to turn natural references into opener-ready scenario, section, card type, or card refs when you need candidates or traversal refs
-- Prefer search_knowledge for broad discovery across rules, scenarios, sections, and cards
-- Use open_entity when you have an exact canonical ref
-- Use neighbors to traverse explicit scenario/section links from a canonical ref
-- Use find_scenario when the user names a scenario number or scenario title
-- Use get_scenario once you know the exact canonical scenario ref
-- Use get_section for exact section refs or when a traversal link points to a section
-- Use follow_links to inspect explicit scenario/section reference chains
-- For chained scenario/section questions, keep following explicit references until you reach the exact grounded text you need
-- Prefer explicit scenario/section references over search_rules when the question already names a scenario number, scenario title, or section ref
-- Use search_rules for fuzzy book-corpus questions (rules, mechanics, open-ended discovery, or when traversal runs out)
-- Use search_cards for questions about specific cards, monsters, items, or abilities
-- Use get_card for precise lookups only when you know the card type and canonical sourceId
-- If you only know a natural card reference such as a name or number, use resolve_entity, search_cards, or list_cards first to find the canonical sourceId
-- Use list_card_types to discover what data is available
-- Use list_cards to browse or filter cards of a specific type
+- Use find_scenario when the user names a scenario number or scenario title.
+- Use get_scenario once you know the exact canonical scenario ref.
+- Use get_section for exact section refs or when a traversal link points to a section.
+- Use follow_links to inspect explicit scenario/section reference chains.
+- For chained scenario/section questions, keep following explicit references until you reach the exact grounded text you need.
+- Prefer explicit scenario/section references over search_rules when the question already names a scenario number, scenario title, or section ref.
+- Use search_rules for fuzzy book-corpus questions (rules, mechanics, open-ended discovery, or when traversal runs out).
+- Use search_cards for questions about specific cards, monsters, items, or abilities.
+- Use get_card for precise lookups only when you know the card type and canonical sourceId.
+- If you only know a natural card reference such as a name or number, use search_cards or list_cards first to find the canonical sourceId.
+- Use list_card_types to discover what data is available.
+- Use list_cards to browse or filter cards of a specific type.
 - You may call multiple tools or call the same tool multiple times to gather enough context
 - Answer accurately based on the retrieved data. If the data doesn't contain enough information, say so.
 - Do not invent rules, stats, or item numbers.
@@ -888,9 +882,11 @@ function sourceLabelsFromResult(value: unknown): string[] {
   if (!value || typeof value !== 'object') return labels;
   const result = value as {
     citations?: Array<{ sourceLabel?: unknown }>;
+    entity?: { sourceLabel?: unknown };
     results?: Array<{ citations?: Array<{ sourceLabel?: unknown }> }>;
   };
 
+  add(result.entity?.sourceLabel);
   for (const citation of result.citations ?? []) add(citation.sourceLabel);
   for (const hit of result.results ?? []) {
     for (const citation of hit.citations ?? []) add(citation.sourceLabel);

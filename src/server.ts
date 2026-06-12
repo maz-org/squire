@@ -1556,15 +1556,17 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           // Use the actual books hit when available (search_rules always sets
           // sourceBooks, even to [] on no results); fall back to the static
           // label for tools that don't set sourceBooks at all.
-          const labels: string[] =
-            payload.sourceBooks !== undefined
-              ? payload.sourceBooks
+          const staticLabel = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
+          const mappedLabels =
+            payload.sourceBooks === undefined
+              ? null
+              : payload.sourceBooks
                   .map(retrievalSourceLabelToFooterLabel)
-                  .filter((l): l is NonNullable<typeof l> => l !== null)
-              : [toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL];
+                  .filter((l): l is NonNullable<typeof l> => l !== null);
+          const labels = mappedLabels && mappedLabels.length > 0 ? mappedLabels : [staticLabel];
           await persistAndWrite('tool-result', {
             id: buildToolStatusId(name),
-            labels: labels.length > 0 ? labels : [TOOL_SOURCE_FALLBACK_LABEL],
+            labels,
             ok: payload.ok ?? true,
             message: message.length > 0 ? humanizeWorkLogProgressMessage(message) : undefined,
           });
