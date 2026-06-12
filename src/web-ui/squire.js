@@ -1344,7 +1344,6 @@ function renderAnswerWorkResult(elements, entries, context, rowId, labels, ok, d
       resultAction.detail,
       'complete',
     );
-    return;
   }
   if (ok !== false && entries && entries['progress-searched-available-sources']) {
     var genericSearchRow = entries['progress-searched-available-sources'];

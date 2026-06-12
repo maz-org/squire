@@ -931,6 +931,29 @@ describe('squire.js chat form retargeting', () => {
     expect(workRowMessages(workRowsEl)).toEqual(['Searched the rulebook']);
   });
 
+  it('keeps additional result sources visible when a rulebook search hits another book', () => {
+    const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
+
+    source.emit('tool-progress', {
+      id: 'search_knowledge-progress-1',
+      label: 'RULEBOOK',
+      message: 'Searching the rulebook',
+    });
+    source.emit('tool-result', {
+      id: 'search_knowledge',
+      labels: ['RULEBOOK', 'SCENARIO BOOK'],
+      message: 'Searched the rulebook',
+      ok: true,
+    });
+    source.emit('done', { html: '<p>Loot answer.</p>' });
+
+    expect(workStatusEl.textContent).toBe('Finished working');
+    expect(workRowMessages(workRowsEl)).toEqual([
+      'Searched the rulebook',
+      'Checked the scenario book',
+    ]);
+  });
+
   it('collapses section resolve, open, and artifact rows into one lookup row', () => {
     const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
 
