@@ -133,6 +133,14 @@ function assertAllowlisted(email: string): void {
   }
 }
 
+/** Drizzle wraps PG errors as DrizzleQueryError with the original in `cause`. */
+function isUniqueViolation(error: unknown): boolean {
+  const cause = (error as { cause?: unknown })?.cause ?? error;
+  return (
+    typeof cause === 'object' && cause !== null && (cause as { code?: string }).code === '23505'
+  );
+}
+
 /**
  * The membership gate on every campaign-scoped operation. Shared with the
  * character service (SQR-22) so both enforce the same contract.
@@ -330,11 +338,19 @@ export async function inviteMember(
 
       let row: CampaignMember;
       if (!existing) {
-        row = await CampaignMemberRepository.createInvite(tx, {
-          campaignId,
-          inviteEmail: email,
-          invitedByUserId: identity.userId,
-        });
+        try {
+          row = await CampaignMemberRepository.createInvite(tx, {
+            campaignId,
+            inviteEmail: email,
+            invitedByUserId: identity.userId,
+          });
+        } catch (error) {
+          // Read-then-write race: a concurrent invite for the same email won
+          // the (campaign_id, invite_email) unique index. Same outcome as
+          // having seen the row up front.
+          if (isUniqueViolation(error)) throw new AlreadyInvitedError('invited');
+          throw error;
+        }
       } else if (existing.status === 'departed') {
         // Rejoin keeps the user binding so character ownership survives; the
         // accept path still runs (consent + join-time allowlist re-check).

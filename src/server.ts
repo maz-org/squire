@@ -2089,6 +2089,10 @@ function requireCampaignUser(route: string): MiddlewareHandler {
       return apiRateLimitedResponse(c, { decision, identityKind: 'user' }, route);
     }
 
+    // Per-user JSON must never be cacheable — these routes also serve
+    // cookie-authenticated browser reads, where a shared cache would happily
+    // reuse one member's roster for another without this.
+    c.header('Cache-Control', 'no-store');
     c.set('callerIdentity', auth.identity);
     await next();
   };
@@ -2198,16 +2202,22 @@ app.patch('/api/campaigns/:id', async (c) => {
   } catch (error) {
     if (error instanceof VersionConflictError) {
       // E3: 409 + the current state so the client can re-read and retry.
-      const detail = await CampaignService.getCampaignDetail(identity, campaignId);
-      return c.json(
-        {
-          error: 'version_conflict',
-          currentVersion: detail.campaign.version,
-          campaign: detail.campaign,
-          status: 409,
-        },
-        409,
-      );
+      // The follow-up read can itself lose a race (campaign deleted, caller
+      // removed) — map that outcome instead of letting it become a 500.
+      try {
+        const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+        return c.json(
+          {
+            error: 'version_conflict',
+            currentVersion: detail.campaign.version,
+            campaign: detail.campaign,
+            status: 409,
+          },
+          409,
+        );
+      } catch (readError) {
+        return campaignErrorResponse(c, readError);
+      }
     }
     return campaignErrorResponse(c, error);
   }
@@ -2395,16 +2405,22 @@ app.patch('/api/characters/:id', async (c) => {
     return c.json({ character });
   } catch (error) {
     if (error instanceof VersionConflictError) {
-      const detail = await CharacterService.getCharacterDetail(identity, characterId);
-      return c.json(
-        {
-          error: 'version_conflict',
-          currentVersion: detail.character.version,
-          character: detail.character,
-          status: 409,
-        },
-        409,
-      );
+      // Same guard as the campaign PATCH: the follow-up read can lose a
+      // concurrent delete/removal race — map it, don't 500.
+      try {
+        const detail = await CharacterService.getCharacterDetail(identity, characterId);
+        return c.json(
+          {
+            error: 'version_conflict',
+            currentVersion: detail.character.version,
+            character: detail.character,
+            status: 409,
+          },
+          409,
+        );
+      } catch (readError) {
+        return characterErrorResponse(c, readError);
+      }
     }
     return characterErrorResponse(c, error);
   }
