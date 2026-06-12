@@ -542,7 +542,7 @@ function answerWorkProgressSort(detail: string): number {
 }
 
 function answerWorkPlanRowId(rowId: string | null, detail: string): string {
-  return `plan-${answerWorkSlug(detail.length > 0 ? detail : (rowId ?? undefined), 'event')}`;
+  return `plan-${answerWorkSlug(rowId ?? (detail.length > 0 ? detail : undefined), 'event')}`;
 }
 
 function answerWorkPlanSort(detail: string): number {
@@ -789,9 +789,14 @@ function buildCompletedAnswerWorkTimeline(
 
       labels.forEach((label, index) => {
         if (ok) successfulSources.add(label);
-        if (ok && sourceActionRowIdsByLabel.has(label)) return;
         const id = answerWorkCheckedSourceRowId(label, ok, index);
-        if (ok) checkedRowIdsByLabel.set(label, id);
+        const previousCheckedRowId = checkedRowIdsByLabel.get(label);
+        if (previousCheckedRowId && previousCheckedRowId !== id) rows.delete(previousCheckedRowId);
+        if (ok && sourceActionRowIdsByLabel.has(label)) {
+          checkedRowIdsByLabel.delete(label);
+          return;
+        }
+        checkedRowIdsByLabel.set(label, id);
         addCompletedAnswerWorkRow(rows, {
           id,
           detail: `${ok ? 'Checked' : "Couldn't check"} ${physicalToolSourceLabel(label)}`,

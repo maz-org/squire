@@ -33,7 +33,11 @@ The SSE event log is not a durable LangGraph node checkpoint.
   - Payload: `{ "id": string, "label": string }`
 - `tool-result`
   - Marks a tool row complete or failed.
-  - Payload: `{ "id": string, "labels": string[], "ok": boolean }`
+  - Payload:
+    `{ "id": string, "labels": string[], "ok": boolean, "message"?: string }`
+  - `message`, when present, is a user-safe completed-work description already
+    translated away from raw refs. It is rendered in the work log, never
+    appended as answer prose.
 - `tool-plan`
   - Adds a plain-language statement of the agent's next intended lookup.
   - Payload: `{ "id": string, "message": string }`

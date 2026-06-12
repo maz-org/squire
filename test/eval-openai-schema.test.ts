@@ -21,6 +21,7 @@ vi.mock('../src/tools.ts', () => ({
   inspectSources: vi.fn(),
   getSchema: vi.fn(),
   resolveEntity: vi.fn(),
+  lookupEntity: vi.fn(),
   openEntity: vi.fn(),
   findScenario: vi.fn(),
   getScenario: vi.fn(),

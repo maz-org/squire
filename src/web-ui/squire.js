@@ -1020,7 +1020,7 @@ function answerWorkProgressSort(detail) {
 }
 
 function answerWorkPlanRowId(rowId, detail) {
-  return 'plan-' + answerWorkSlug(detail || rowId, 'event');
+  return 'plan-' + answerWorkSlug(rowId || detail, 'event');
 }
 
 function answerWorkPlanSort(detail) {
@@ -1369,6 +1369,15 @@ function renderAnswerWorkResult(elements, entries, context, rowId, labels, ok, d
   }
   for (var i = 0; i < sourceEntries.length; i += 1) {
     var entry = sourceEntries[i];
+    var checkedRowId = answerWorkCheckedSourceRowId(entry.label, ok, i);
+    if (
+      context &&
+      context.checkedRowsByLabel[entry.label] &&
+      context.checkedRowsByLabel[entry.label] !== checkedRowId
+    ) {
+      removeAnswerWorkRow(elements, entries, context.checkedRowsByLabel[entry.label]);
+      delete context.checkedRowsByLabel[entry.label];
+    }
     if (ok !== false && context && context.sourceActionRowsByLabel[entry.label]) {
       var actionRow = entries[baseAnswerWorkId(context.sourceActionRowsByLabel[entry.label])];
       if (actionRow) {
@@ -1388,9 +1397,9 @@ function renderAnswerWorkResult(elements, entries, context, rowId, labels, ok, d
         }
         rememberAnswerWorkSourceLabels(actionRow, [entry.label]);
       }
+      if (context) delete context.checkedRowsByLabel[entry.label];
       continue;
     }
-    var checkedRowId = answerWorkCheckedSourceRowId(entry.label, ok, i);
     var row = renderAnswerWorkRow(
       elements,
       entries,
@@ -1401,7 +1410,7 @@ function renderAnswerWorkResult(elements, entries, context, rowId, labels, ok, d
       ok === false ? 'error' : 'running',
       ok === false ? 90 : 50,
     );
-    if (context && ok !== false) context.checkedRowsByLabel[entry.label] = checkedRowId;
+    if (context) context.checkedRowsByLabel[entry.label] = checkedRowId;
     if (ok !== false) rememberAnswerWorkSourceLabels(row, [entry.label]);
   }
 }

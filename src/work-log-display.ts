@@ -263,6 +263,16 @@ export function workLogSourceActionFromProgressMessage(
   if (sourceLabel === 'PUZZLE BOOK' && detail !== 'Searched available sources') {
     return { label: 'PUZZLE BOOK', detail: `${detail} in the puzzle book` };
   }
+  if (sourceLabel === 'CARD INDEX' && detail !== 'Searched available sources') {
+    const lookedUpCard = detail.match(/^Looked up\s+(.+\s+card)$/i);
+    if (lookedUpCard) {
+      return {
+        label: 'CARD INDEX',
+        detail: `Checked ${removeLeadingArticle(lookedUpCard[1]!.trim())}`,
+      };
+    }
+    return { label: 'CARD INDEX', detail: `${detail} in the card index` };
+  }
   if (sourceLabel === 'SCENARIO BOOK' && detail !== 'Searched available sources') {
     return { label: 'SCENARIO BOOK', detail: `${detail} in the scenario book` };
   }

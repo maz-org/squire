@@ -297,7 +297,54 @@ function threadIdFor(options: AskOptions | undefined): string {
   );
 }
 
-function completedWorkMessageForTool(name: string, input: Record<string, unknown>): string {
+function parsedToolResultContent(result: ToolCallResult | undefined): {
+  ok?: unknown;
+  entity?: { ref?: unknown };
+} | null {
+  if (!result) return null;
+  try {
+    return JSON.parse(result.content) as {
+      ok?: unknown;
+      entity?: { ref?: unknown };
+    };
+  } catch {
+    return null;
+  }
+}
+
+function openedEntityRefFromToolResult(result: ToolCallResult | undefined): string | undefined {
+  const ref = parsedToolResultContent(result)?.entity?.ref;
+  return typeof ref === 'string' && ref.trim().length > 0 ? ref.trim() : undefined;
+}
+
+function failedWorkMessageForTool(name: string, input: Record<string, unknown>): string {
+  if (name === 'search_knowledge') return "Couldn't search available sources";
+  if (name === 'open_entity') {
+    const ref =
+      typeof input.ref === 'string' && input.ref.trim().length > 0 ? input.ref.trim() : 'source';
+    return `Couldn't look up ${ref}`;
+  }
+  if (name === 'lookup_entity' || name === 'resolve_entity') {
+    const query =
+      typeof input.query === 'string' && input.query.trim().length > 0
+        ? input.query.trim()
+        : 'source';
+    return `Couldn't look up ${query}`;
+  }
+  if (name === 'neighbors') return "Couldn't follow links";
+  if (name === 'inspect_sources') return "Couldn't inspect available sources";
+  if (name === 'schema') return "Couldn't check source schema";
+  return `Couldn't run ${name}`;
+}
+
+function completedWorkMessageForTool(
+  name: string,
+  input: Record<string, unknown>,
+  toolResult?: ToolCallResult,
+  toolOk = true,
+): string {
+  if (!toolOk) return failedWorkMessageForTool(name, input);
+
   if (name === 'search_knowledge') {
     const scopeLabels = sourceLabelsForSearchScope(input.scope);
     const query = typeof input.query === 'string' ? input.query.trim() : '';
@@ -310,11 +357,15 @@ function completedWorkMessageForTool(name: string, input: Record<string, unknown
     }
     return 'Searched available sources';
   }
-  if (name === 'open_entity')
+  if (name === 'open_entity') {
+    const openedRef = openedEntityRefFromToolResult(toolResult);
     return humanizeWorkLogProgressMessage(
-      `Opening ${typeof input.ref === 'string' ? input.ref : 'source'}`,
+      `Opening ${openedRef ?? (typeof input.ref === 'string' ? input.ref : 'source')}`,
     );
+  }
   if (name === 'lookup_entity') {
+    const openedRef = openedEntityRefFromToolResult(toolResult);
+    if (openedRef) return humanizeWorkLogProgressMessage(`Opening ${openedRef}`);
     const query = typeof input.query === 'string' ? input.query.trim() : '';
     if (query.length === 0) return 'Looked up source';
     const openingMessage = humanizeWorkLogProgressMessage(`Opening ${query}`);
@@ -704,7 +755,7 @@ async function runLangGraphAgentLoop(
             await emit('tool_result', {
               name: block.name,
               ok: toolOk,
-              message: completedWorkMessageForTool(block.name, input),
+              message: completedWorkMessageForTool(block.name, input, toolResult, toolOk),
               sourceBooks: toolResult.sourceBooks,
             });
           }

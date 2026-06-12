@@ -1950,7 +1950,7 @@ describe('conversation web backend', () => {
       await options?.emit?.('tool_result', {
         name: 'search_cards',
         ok: true,
-        message: 'Checked Bandit Archer stat card',
+        message: `Opening ${rawRef}`,
         sourceBooks: ['Card Index'],
       });
       await options?.emit?.('text', {
