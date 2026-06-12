@@ -12,6 +12,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/campaign-audit.test.ts',
   'test/campaign-character-api.test.ts',
   'test/campaign-context.test.ts',
+  'test/campaign-eval-fixture.test.ts',
   'test/campaign-knowledge-kinds.test.ts',
   'test/campaign-live-migration.test.ts',
   'test/campaign-repositories.test.ts',

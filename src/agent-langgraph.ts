@@ -35,7 +35,10 @@ import {
 } from './agent.ts';
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
-import { renderCampaignContextBlock } from './campaign/context.ts';
+import {
+  applyCampaignContextToAskOptions,
+  renderCampaignContextBlock,
+} from './campaign/context.ts';
 import { resolveSquireEnv } from './squire-env.ts';
 import {
   activeWorkLogProgressMessageFromCompleted,
@@ -604,21 +607,23 @@ export async function runLangGraphAgentLoopWithEvalConfig(
   question: string,
   options: EvalAgentLoopOptions,
 ): Promise<AgentRunResult> {
-  return runLangGraphAgentLoop(
-    question,
-    {
-      toolSurface: 'redesigned',
-      game: options.game,
-      requestId: options.requestId,
-    },
-    {
-      model: options.anthropicModel,
-      maxOutputTokens: options.maxOutputTokens,
-      timeoutMs: options.timeoutMs,
-      toolLoopLimit: options.toolLoopLimit,
-      broadSearchSynthesisThreshold: options.broadSearchSynthesisThreshold,
-    },
-  );
+  // Campaign-bound eval cases get the same context loading as production
+  // ask() — identical projection, game fallback, and tool identity.
+  const askOptions = await applyCampaignContextToAskOptions({
+    toolSurface: 'redesigned' as const,
+    game: options.game,
+    requestId: options.requestId,
+    userId: options.userId,
+    campaignId: options.campaignId,
+    activeCharacterId: options.activeCharacterId,
+  });
+  return runLangGraphAgentLoop(question, askOptions, {
+    model: options.anthropicModel,
+    maxOutputTokens: options.maxOutputTokens,
+    timeoutMs: options.timeoutMs,
+    toolLoopLimit: options.toolLoopLimit,
+    broadSearchSynthesisThreshold: options.broadSearchSynthesisThreshold,
+  });
 }
 
 async function runLangGraphAgentLoop(

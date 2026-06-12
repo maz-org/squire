@@ -14,6 +14,7 @@ export const EvalSuiteSchema = z.enum([
   'trajectory',
   'cross-game-boundary',
   'adversarial-boundary',
+  'campaign-personalization',
 ]);
 const EvalGameSchema = z.preprocess(
   (value) => (typeof value === 'string' ? (normalizeGameId(value) ?? value) : value),
@@ -73,6 +74,12 @@ export const EvalCaseSchema = z
     category: z.string().min(1),
     question: z.string().min(1),
     source: z.string().min(1),
+    /**
+     * Named campaign fixture seeded before the run (SQR-272). The runner
+     * resolves it to a deterministic campaign + caller identity so the
+     * agent answers from real state.
+     */
+    campaignFixture: z.string().min(1).optional(),
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
     safety: AnswerSafetyExpectationSchema.optional(),

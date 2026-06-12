@@ -537,6 +537,9 @@ export interface EvalAgentLoopOptions {
   broadSearchSynthesisThreshold?: number;
   game?: string;
   requestId?: string;
+  userId?: string;
+  campaignId?: string;
+  activeCharacterId?: string;
   evalCaseId?: string;
   evalSuite?: string;
   evalCaseCategory?: string;

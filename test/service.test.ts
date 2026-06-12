@@ -39,6 +39,16 @@ vi.mock('../src/campaign/context.ts', () => ({
     campaign: { game: 'gloomhaven-2e' },
   }),
   renderCampaignContextBlock: vi.fn().mockReturnValue('<campaign_data/>'),
+  applyCampaignContextToAskOptions: vi.fn(
+    async (options: { campaignId?: string; userId?: string; game?: string }) =>
+      options.campaignId && options.userId
+        ? {
+            ...options,
+            campaignContext: { campaign: { game: 'gloomhaven-2e' } },
+            game: options.game ?? 'gloomhaven-2e',
+          }
+        : options,
+  ),
 }));
 
 vi.mock('../src/llm-budget.ts', () => ({

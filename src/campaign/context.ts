@@ -169,3 +169,27 @@ export function renderCampaignContextBlock(view: CampaignContextView): string {
 
   return `${instructions}\n<campaign_data>\n${JSON.stringify(view, null, 2)}\n</campaign_data>`;
 }
+
+/**
+ * Apply campaign binding to agent ask-options: load the single projection
+ * and let the campaign supply the game when none was passed (E8). Shared
+ * by the production ask() path and the eval runner so both channels get
+ * identical context semantics. No identity → no campaign state.
+ */
+export async function applyCampaignContextToAskOptions<
+  T extends {
+    userId?: string;
+    campaignId?: string;
+    activeCharacterId?: string;
+    game?: string;
+    campaignContext?: CampaignContextView;
+  },
+>(options: T): Promise<T> {
+  if (!options.campaignId || !options.userId) return options;
+  const view = await loadCampaignContext(
+    { userId: options.userId, channel: 'system' },
+    options.campaignId,
+    options.activeCharacterId,
+  );
+  return { ...options, campaignContext: view, game: options.game ?? view.campaign.game };
+}
