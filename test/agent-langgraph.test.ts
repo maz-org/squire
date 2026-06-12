@@ -436,6 +436,42 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     ]);
   });
 
+  it('humanizes failed open_entity work rows', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', { ref: 'scenario:frosthaven/061' }, 'tool_open_scenario'),
+      )
+      .mockResolvedValueOnce(textResponse("I couldn't find scenario 61."));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse("I couldn't find scenario 61."), ["I couldn't find scenario 61."]),
+    );
+    mockOpenEntity.mockResolvedValueOnce({ ok: false, error: 'Not found' });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is scenario 61?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-scenario-61-failed-open',
+    });
+
+    expect(result.answer).toBe("I couldn't find scenario 61.");
+    const displayedWorkRows = emitted.filter(([event]) =>
+      ['tool_plan', 'tool_progress', 'tool_result'].includes(event),
+    );
+    expect(JSON.stringify(displayedWorkRows)).not.toContain('scenario:frosthaven/061');
+    expect(emitted).toContainEqual([
+      'tool_result',
+      {
+        name: 'open_entity',
+        ok: false,
+        message: "Couldn't look up scenario 61 in the scenario book",
+        sourceBooks: [],
+      },
+    ]);
+  });
+
   it('continues after neighbors before finalizing answers that need target content', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))

@@ -322,6 +322,11 @@ function failedWorkMessageForTool(name: string, input: Record<string, unknown>):
   if (name === 'open_entity') {
     const ref =
       typeof input.ref === 'string' && input.ref.trim().length > 0 ? input.ref.trim() : 'source';
+    const humanized = humanizeWorkLogProgressMessage(`Opening ${ref}`);
+    const checked = humanized.match(/^Checked\s+(.+)$/i);
+    if (checked) return `Couldn't check ${checked[1]!.trim()}`;
+    const lookedUp = humanized.match(/^Looked up\s+(.+)$/i);
+    if (lookedUp) return `Couldn't look up ${lookedUp[1]!.trim()}`;
     return `Couldn't look up ${ref}`;
   }
   if (name === 'lookup_entity' || name === 'resolve_entity') {

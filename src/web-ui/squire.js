@@ -1179,9 +1179,9 @@ function removeAnswerWorkRow(elements, entries, rowId) {
 function answerWorkSourceActionRowId(action) {
   return (
     'source-action-' +
-    answerWorkSlug(action && action.label, 'source') +
+    answerWorkSlug(action.label, 'source') +
     '-' +
-    answerWorkSlug(action && action.detail, 'event')
+    answerWorkSlug(action.detail, 'event')
   );
 }
 
@@ -1397,7 +1397,7 @@ function renderAnswerWorkResult(elements, entries, context, rowId, labels, ok, d
         }
         rememberAnswerWorkSourceLabels(actionRow, [entry.label]);
       }
-      if (context) delete context.checkedRowsByLabel[entry.label];
+      delete context.checkedRowsByLabel[entry.label];
       continue;
     }
     var row = renderAnswerWorkRow(
