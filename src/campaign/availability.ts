@@ -29,6 +29,13 @@ export interface ModuleGraph {
   threads: UnlockGraphThread[];
 }
 
+/**
+ * Edge-derived: a warning is emitted for ANY unplayed scenario that appears
+ * in another scenario's mutex/lockedIf list, independent of the scenario's
+ * `hazard` flag. The flag marks closures the edges cannot see (a hidden
+ * in-scenario choice, e.g. FH scenario 4 picking which Algox path opens) and
+ * is consumed directly by the confirm-before-apply UX alongside `cond`.
+ */
 export interface HazardWarning {
   /** Qualified key of the scenario whose play closes content. */
   key: string;

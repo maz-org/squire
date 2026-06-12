@@ -135,6 +135,20 @@ describe('deriveAvailability', () => {
     expect(after.hazardWarnings).toEqual([{ key: 'test:27', closes: ['test:21'] }]);
   });
 
+  it('warns on edge-derived closures even when the culprit has no hazard flag', () => {
+    // The FH 2↔3 permanent-lockout shape: a plain mutex pair, neither side
+    // flagged. The flag marks closures edges cannot see; warnings come from
+    // the edges themselves, so this pair must still warn.
+    const g = graph({
+      scenarios: [scenario('2', { mutex: ['3'] }), scenario('3', { mutex: ['2'] })],
+    });
+    const { hazardWarnings } = deriveAvailability([g], new Set(), new Set());
+    expect(hazardWarnings).toEqual([
+      { key: 'test:2', closes: ['test:3'] },
+      { key: 'test:3', closes: ['test:2'] },
+    ]);
+  });
+
   it('GOLDEN: reproduces the live prototype campaign exactly', () => {
     const fixture = JSON.parse(
       readFileSync(

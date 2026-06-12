@@ -25,12 +25,40 @@ export interface UnlockGraphSeedResult {
 }
 
 export function readUnlockGraphExtracts(dir: string = EXTRACT_DIR): UnlockGraphModule[] {
-  return readdirSync(dir)
+  const extracts = readdirSync(dir)
     .filter((file) => file.endsWith('.json'))
     .sort()
     .map((file) =>
       UnlockGraphModuleSchema.parse(JSON.parse(readFileSync(join(dir, file), 'utf8'))),
     );
+
+  // Fail fast on duplicate natural identities: prune-then-upsert would let a
+  // second file with the same (game, module) silently prune the first's rows,
+  // and a repeated scenario key / thread id would silently last-write-win.
+  const seenModules = new Set<string>();
+  for (const extract of extracts) {
+    const moduleIdentity = `${extract.game}/${extract.module}`;
+    if (seenModules.has(moduleIdentity)) {
+      throw new Error(`Duplicate unlock-graph module identity: ${moduleIdentity}`);
+    }
+    seenModules.add(moduleIdentity);
+    const scenarioKeys = new Set<string>();
+    for (const scenario of extract.scenarios) {
+      if (scenarioKeys.has(scenario.key)) {
+        throw new Error(`Duplicate scenario key in ${moduleIdentity}: ${scenario.key}`);
+      }
+      scenarioKeys.add(scenario.key);
+    }
+    const threadIds = new Set<string>();
+    for (const thread of extract.threads) {
+      if (threadIds.has(thread.id)) {
+        throw new Error(`Duplicate thread id in ${moduleIdentity}: ${thread.id}`);
+      }
+      threadIds.add(thread.id);
+    }
+  }
+
+  return extracts;
 }
 
 export async function seedUnlockGraphModule(
