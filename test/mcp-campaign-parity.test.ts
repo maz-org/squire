@@ -68,8 +68,8 @@ const CLIENT_ONLY_TOKEN: AuthInfo = {
   scopes: [],
 };
 
-function firstText(result: { content?: unknown }): string {
-  const content = result.content as Array<{ type: string; text: string }>;
+function firstText(result: unknown): string {
+  const content = (result as { content: Array<{ type: string; text: string }> }).content;
   return content[0].text;
 }
 
