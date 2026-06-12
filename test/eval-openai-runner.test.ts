@@ -95,6 +95,11 @@ describe('OpenAI Responses eval runner', () => {
       'open_entity',
       'search_knowledge',
       'neighbors',
+      'write_campaign_state',
+      'write_character_state',
+      'propose_state_change',
+      'confirm_state_change',
+      'cancel_state_change',
     ]);
     expect(toolNames).not.toEqual(
       expect.arrayContaining(['search_cards', 'list_cards', 'get_card']),

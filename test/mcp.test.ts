@@ -99,7 +99,7 @@ describe('MCP redesigned tool registration', () => {
     });
   });
 
-  it('registers redesigned knowledge tools only', async () => {
+  it('registers redesigned knowledge and campaign write tools only', async () => {
     const client = await connectClient();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -112,6 +112,11 @@ describe('MCP redesigned tool registration', () => {
       'open_entity',
       'search_knowledge',
       'neighbors',
+      'write_campaign_state',
+      'write_character_state',
+      'propose_state_change',
+      'confirm_state_change',
+      'cancel_state_change',
     ]);
     expect(names).not.toContain('search_rules');
     expect(names).not.toContain('search_cards');

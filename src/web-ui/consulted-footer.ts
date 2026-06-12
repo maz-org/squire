@@ -60,6 +60,12 @@ const TOOL_SOURCE_LABELS: Record<AgentToolName, ToolSourceLabel | null> = {
   open_entity: null,
   search_knowledge: null,
   neighbors: null,
+  // Write tools mutate state rather than source answers — never provenance.
+  write_campaign_state: null,
+  write_character_state: null,
+  propose_state_change: null,
+  confirm_state_change: null,
+  cancel_state_change: null,
   search_rules: 'RULEBOOK',
   search_cards: 'CARD INDEX',
   list_card_types: 'CARD INDEX',

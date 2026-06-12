@@ -19,6 +19,7 @@ import {
 import { BOOK_REFERENCE_TYPES } from './scenario-section-schemas.ts';
 import { CAMPAIGN_RELATIONS } from './campaign/knowledge.ts';
 import { userIdFromAuthInfo } from './campaign/identity.ts';
+import * as WriteTools from './campaign/write-tools.ts';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 
 /**
@@ -206,6 +207,122 @@ export function createMcpServer(): McpServer {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
       };
+    },
+  );
+
+  // ─── Campaign write tools (SQR-280) ───────────────────────────────────────
+  // Identity comes from the verified token only; the shared write-tools layer
+  // validates input shape, consumes the write budget, and returns structured
+  // errors, so every channel behaves identically. Patch/mutation shapes are
+  // passed through loosely here — the boundary schema lives in write-tools.
+
+  const writeToolResult = (result: { ok: boolean }) => ({
+    content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+    isError: !result.ok,
+  });
+
+  server.registerTool(
+    'write_campaign_state',
+    {
+      description:
+        'Apply a non-destructive shared campaign-state update for the signed-in member: mark scenarios played or drawn, raise prosperity, record unlocks, rename. Arrays replace the whole list. Destructive changes return proposal_required; stage those with propose_state_change.',
+      inputSchema: {
+        campaignId: z.string().describe('Campaign UUID'),
+        patch: z
+          .record(z.string(), z.unknown())
+          .describe(
+            'Fields to set: name, prosperity, activeScenario, playedScenarios, drawnScenarios, unlockedClasses, unlockedItems, unlockedBuildings',
+          ),
+      },
+    },
+    async ({ campaignId, patch }, extra) => {
+      const result = await WriteTools.writeCampaignState(identityOpts(extra)?.userId, {
+        campaignId,
+        patch,
+      });
+      return writeToolResult(result);
+    },
+  );
+
+  server.registerTool(
+    'write_character_state',
+    {
+      description:
+        "Update the signed-in member's OWN character: level, XP, gold, perks, name, personal quest, battle goals, private notes. Retirement and deletion return proposal_required; stage those with propose_state_change.",
+      inputSchema: {
+        characterId: z.string().describe('Character UUID'),
+        patch: z
+          .record(z.string(), z.unknown())
+          .describe(
+            'Fields to set: name, className, level, xp, gold, perks, personalQuest, battleGoals, privateNotes',
+          ),
+      },
+    },
+    async ({ characterId, patch }, extra) => {
+      const result = await WriteTools.writeCharacterState(identityOpts(extra)?.userId, {
+        characterId,
+        patch,
+      });
+      return writeToolResult(result);
+    },
+  );
+
+  server.registerTool(
+    'propose_state_change',
+    {
+      description:
+        'Stage a DESTRUCTIVE campaign mutation as a pending proposal: campaign.delete, member.remove {memberId}, campaign.update {patch} (un-play or prosperity decrease), character.delete {characterId}, or character.retire {characterId}. Show the user exactly what changes and call confirm_state_change ONLY after they explicitly agree.',
+      inputSchema: {
+        campaignId: z.string().describe('Campaign UUID'),
+        mutation: z
+          .record(z.string(), z.unknown())
+          .describe('Discriminated by "type", e.g. {"type":"campaign.update","patch":{...}}'),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe('Optional replay guard; reuse the same key when retrying the same staging'),
+      },
+    },
+    async ({ campaignId, mutation, idempotencyKey }, extra) => {
+      const result = await WriteTools.proposeStateChange(identityOpts(extra)?.userId, {
+        campaignId,
+        mutation,
+        idempotencyKey,
+      });
+      return writeToolResult(result);
+    },
+  );
+
+  server.registerTool(
+    'confirm_state_change',
+    {
+      description:
+        'Execute a pending proposal after the user explicitly agreed to the previewed change. Fails if the underlying state changed since the proposal was staged.',
+      inputSchema: {
+        proposalId: z.string().describe('Proposal id from propose_state_change'),
+      },
+    },
+    async ({ proposalId }, extra) => {
+      const result = await WriteTools.confirmStateChange(identityOpts(extra)?.userId, {
+        proposalId,
+      });
+      return writeToolResult(result);
+    },
+  );
+
+  server.registerTool(
+    'cancel_state_change',
+    {
+      description: 'Cancel a pending proposal the user declined or no longer wants.',
+      inputSchema: {
+        proposalId: z.string().describe('Proposal id from propose_state_change'),
+      },
+    },
+    async ({ proposalId }, extra) => {
+      const result = await WriteTools.cancelStateChange(identityOpts(extra)?.userId, {
+        proposalId,
+      });
+      return writeToolResult(result);
     },
   );
 

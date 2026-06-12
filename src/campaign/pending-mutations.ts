@@ -20,10 +20,12 @@
  */
 import { createHash } from 'node:crypto';
 
-import { and, eq, lt } from 'drizzle-orm';
+import { z } from 'zod';
+
+import { and, desc, eq, lt } from 'drizzle-orm';
 
 import { getDb } from '../db.ts';
-import { pendingMutations } from '../db/schema/campaigns.ts';
+import { mutationIdempotencyKeys, pendingMutations } from '../db/schema/campaigns.ts';
 import * as CampaignRepository from '../db/repositories/campaign-repository.ts';
 import * as CharacterRepository from '../db/repositories/character-repository.ts';
 import { auditedMutation } from './audit.ts';
@@ -40,19 +42,29 @@ export const PROPOSAL_TTL_MS = 15 * 60 * 1000;
 
 // ─── Staged mutation descriptors (the enumerated destructive set) ───────────
 
-export type StagedMutation =
-  | { type: 'campaign.delete' }
-  | { type: 'member.remove'; memberId: string }
-  | {
-      type: 'campaign.update';
-      patch: {
-        prosperity?: number;
-        playedScenarios?: string[];
-        drawnScenarios?: string[];
-      };
-    }
-  | { type: 'character.delete'; characterId: string }
-  | { type: 'character.retire'; characterId: string; successorId?: string | null };
+/** Boundary validation for proposals from REST bodies and tool input. */
+export const StagedMutationSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('campaign.delete') }),
+  z.object({ type: z.literal('member.remove'), memberId: z.string().uuid() }),
+  z.object({
+    type: z.literal('campaign.update'),
+    patch: z
+      .object({
+        prosperity: z.number().int().min(0).max(100).optional(),
+        playedScenarios: z.array(z.string().trim().min(1).max(200)).max(1000).optional(),
+        drawnScenarios: z.array(z.string().trim().min(1).max(200)).max(1000).optional(),
+      })
+      .refine((patch) => Object.keys(patch).length > 0, { message: 'Empty patch' }),
+  }),
+  z.object({ type: z.literal('character.delete'), characterId: z.string().uuid() }),
+  z.object({
+    type: z.literal('character.retire'),
+    characterId: z.string().uuid(),
+    successorId: z.string().uuid().nullable().optional(),
+  }),
+]);
+
+export type StagedMutation = z.infer<typeof StagedMutationSchema>;
 
 export interface PendingProposal {
   id: string;
@@ -67,6 +79,16 @@ export interface PendingProposal {
 }
 
 // ─── Typed errors ────────────────────────────────────────────────────────────
+
+/** A reused idempotency key with a different payload is an error, never a dedupe. */
+export class IdempotencyConflictError extends Error {
+  readonly code = 'idempotency_conflict';
+
+  constructor() {
+    super('Idempotency key was already used with a different payload');
+    this.name = 'IdempotencyConflictError';
+  }
+}
 
 export class ProposalStateError extends Error {
   readonly code: 'stale_proposal' | 'proposal_expired' | 'proposal_resolved';
@@ -151,24 +173,79 @@ async function validateAndSnapshot(
 
 // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
+export interface ProposeOptions {
+  /**
+   * Scoped idempotency key (constraint 8): actor + campaign + tool family,
+   * payload-hash bound, checked inside the propose transaction. A replayed
+   * propose with the same key and payload returns the existing proposal —
+   * a replayed session-end batch cannot double-apply because confirm is
+   * terminal. A reused key with a DIFFERENT payload is rejected.
+   */
+  idempotencyKey?: string;
+  toolFamily?: string;
+}
+
 export async function propose(
   identity: CallerIdentity,
   campaignId: string,
   mutation: StagedMutation,
+  options: ProposeOptions = {},
 ): Promise<PendingProposal> {
   const expectedVersions = await validateAndSnapshot(identity, campaignId, mutation);
+  const payloadHash = payloadHashFor(mutation);
+  const toolFamily = options.toolFamily ?? 'proposal';
 
   return auditedMutation(
     identity,
     { campaignId, mutationType: 'proposal.proposed', entityType: 'proposal' },
     async (tx) => {
+      if (options.idempotencyKey) {
+        const existing = await tx
+          .select()
+          .from(mutationIdempotencyKeys)
+          .where(
+            and(
+              eq(mutationIdempotencyKeys.actorUserId, identity.userId),
+              eq(mutationIdempotencyKeys.campaignId, campaignId),
+              eq(mutationIdempotencyKeys.toolFamily, toolFamily),
+              eq(mutationIdempotencyKeys.key, options.idempotencyKey),
+            ),
+          )
+          .limit(1);
+        if (existing[0]) {
+          if (existing[0].payloadHash !== payloadHash) throw new IdempotencyConflictError();
+          // Replay: hand back the proposal this key already created.
+          const prior = await tx
+            .select()
+            .from(pendingMutations)
+            .where(
+              and(
+                eq(pendingMutations.campaignId, campaignId),
+                eq(pendingMutations.proposerUserId, identity.userId),
+                eq(pendingMutations.payloadHash, payloadHash),
+              ),
+            )
+            .orderBy(desc(pendingMutations.createdAt))
+            .limit(1);
+          if (prior[0]) return { result: toProposal(prior[0]), entityId: prior[0].id };
+        } else {
+          await tx.insert(mutationIdempotencyKeys).values({
+            key: options.idempotencyKey,
+            actorUserId: identity.userId,
+            campaignId,
+            toolFamily,
+            payloadHash,
+          });
+        }
+      }
+
       const [row] = await tx
         .insert(pendingMutations)
         .values({
           campaignId,
           proposerUserId: identity.userId,
           payload: { mutation },
-          payloadHash: payloadHashFor(mutation),
+          payloadHash,
           expectedVersions,
           expiresAt: new Date(Date.now() + PROPOSAL_TTL_MS),
         })

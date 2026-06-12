@@ -2519,26 +2519,7 @@ const InviteRequestSchema = z.object({
 
 /** The enumerated destructive set (ADR 0021) — closed by construction. */
 const ProposalRequestSchema = z.object({
-  mutation: z.discriminatedUnion('type', [
-    z.object({ type: z.literal('campaign.delete') }),
-    z.object({ type: z.literal('member.remove'), memberId: z.string().uuid() }),
-    z.object({
-      type: z.literal('campaign.update'),
-      patch: z
-        .object({
-          prosperity: z.number().int().min(0).max(100).optional(),
-          playedScenarios: z.array(z.string().trim().min(1).max(200)).max(1000).optional(),
-          drawnScenarios: z.array(z.string().trim().min(1).max(200)).max(1000).optional(),
-        })
-        .refine((patch) => Object.keys(patch).length > 0, { message: 'Empty patch' }),
-    }),
-    z.object({ type: z.literal('character.delete'), characterId: z.string().uuid() }),
-    z.object({
-      type: z.literal('character.retire'),
-      characterId: z.string().uuid(),
-      successorId: z.string().uuid().nullable().optional(),
-    }),
-  ]),
+  mutation: PendingMutations.StagedMutationSchema,
 });
 
 const StateKeyArraySchema = z.array(z.string().trim().min(1).max(200)).max(1000);
