@@ -6,7 +6,7 @@
  * transaction handle; rejected rows on the outer connection after the
  * denial/rollback (ADR 0021 §Audit requirements).
  */
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
@@ -60,16 +60,27 @@ export async function insert(
   return toDomain(row);
 }
 
-/** Newest first; the journal read-model and tests both read through this. */
+/**
+ * Newest first; the journal read-model and tests both read through this.
+ * Pass `outcome` to filter in SQL so `limit` counts matching rows — the
+ * journal must not under-return when recent rows include rejections.
+ */
 export async function listByCampaign(
   campaignId: string,
-  options: { limit?: number } = {},
+  options: { limit?: number; outcome?: CampaignAuditOutcome } = {},
 ): Promise<CampaignAuditEntry[]> {
   const { db } = getDb('server');
   const rows = await db
     .select()
     .from(campaignAuditLog)
-    .where(eq(campaignAuditLog.campaignId, campaignId))
+    .where(
+      options.outcome === undefined
+        ? eq(campaignAuditLog.campaignId, campaignId)
+        : and(
+            eq(campaignAuditLog.campaignId, campaignId),
+            eq(campaignAuditLog.outcome, options.outcome),
+          ),
+    )
     .orderBy(desc(campaignAuditLog.createdAt), desc(campaignAuditLog.id))
     .limit(options.limit ?? 200);
   return rows.map(toDomain);
