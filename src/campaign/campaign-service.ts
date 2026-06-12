@@ -139,14 +139,20 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
-/** The membership gate on every campaign-scoped operation. */
-async function requireActiveMember(campaignId: string, userId: string): Promise<CampaignMember> {
+/**
+ * The membership gate on every campaign-scoped operation. Shared with the
+ * character service (SQR-22) so both enforce the same contract.
+ */
+export async function requireActiveMember(
+  campaignId: string,
+  userId: string,
+): Promise<CampaignMember> {
   const member = await CampaignMemberRepository.findActiveMember(campaignId, userId);
   if (!member) throw new CampaignNotFoundError();
   return member;
 }
 
-async function requireUser(userId: string) {
+export async function requireUser(userId: string) {
   const user = await UserRepository.findById(userId);
   // Identities come from verified sessions/tokens, so a missing user row
   // means a deleted account still holding credentials — treat as not found.
