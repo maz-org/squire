@@ -162,6 +162,7 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
 export function renderCampaignDashboardContent(
   detail: CampaignDetail,
   threadsFragment?: HtmlEscapedString,
+  journalFragment?: HtmlEscapedString,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -197,5 +198,6 @@ export function renderCampaignDashboardContent(
         No scenario data for this campaign's modules yet.
       </p>
     </section>`}
+    ${journalFragment ?? html``}
   </section>` as HtmlEscapedString;
 }

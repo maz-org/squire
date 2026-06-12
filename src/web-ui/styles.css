@@ -2328,6 +2328,40 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
+.squire-campaign-journal__empty {
+  color: var(--sepia);
+}
+
+.squire-campaign-journal__date {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--parchment-dim);
+  margin: var(--space-md) 0 var(--space-xs);
+}
+
+.squire-campaign-journal__entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.squire-campaign-journal__entry {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--parchment-dim);
+}
+
+.squire-campaign-journal__actor {
+  color: var(--sepia-dim);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
