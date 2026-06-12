@@ -323,6 +323,8 @@ function failedWorkMessageForTool(name: string, input: Record<string, unknown>):
     const ref =
       typeof input.ref === 'string' && input.ref.trim().length > 0 ? input.ref.trim() : 'source';
     const humanized = humanizeWorkLogProgressMessage(`Opening ${ref}`);
+    const searched = humanized.match(/^Searched\s+(.+)$/i);
+    if (searched) return `Couldn't search ${searched[1]!.trim()}`;
     const checked = humanized.match(/^Checked\s+(.+)$/i);
     if (checked) return `Couldn't check ${checked[1]!.trim()}`;
     const lookedUp = humanized.match(/^Looked up\s+(.+)$/i);
@@ -425,6 +427,9 @@ function joinPlanTargets(targets: string[]): string {
 function planMessageFromCompletedAction(action: string): string | undefined {
   const lookedUpInBook = action.match(/^Looked up\s+.+?\s+in the\s+(.+)$/i);
   if (lookedUpInBook) return `I'll look that up in the ${lookedUpInBook[1]!.trim()}.`;
+
+  const lookedUp = action.match(/^Looked up\s+(.+)$/i);
+  if (lookedUp) return `I'll look up ${lookedUp[1]!.trim()}.`;
 
   const checked = action.match(/^Checked\s+(.+)$/i);
   if (checked) {

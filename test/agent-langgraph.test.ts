@@ -360,6 +360,63 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     ]);
   });
 
+  it('emits generic lookup intent before exact lookup results are known', async () => {
+    const cardRef = 'card:gloomhaven-2e/items/gloomhavensecretariat:item/001';
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Spyglass',
+        kinds: ['item'],
+      }),
+    );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Spyglass is item 1.'), ['Spyglass is item 1.']),
+    );
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: cardRef,
+        title: 'Spyglass',
+        sourceLabel: 'Card Index',
+        data: { name: 'Spyglass' },
+      },
+      citations: [{ sourceRef: 'cards.json', sourceLabel: 'Card Index', locator: cardRef }],
+      links: [],
+      related: [],
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is Spyglass?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-spyglass-card',
+    });
+
+    expect(result.answer).toBe('Spyglass is item 1.');
+    expect(
+      emitted.filter(([event]) => ['tool_plan', 'tool_progress', 'tool_result'].includes(event)),
+    ).toEqual([
+      [
+        'tool_plan',
+        {
+          message: "I'll look up Spyglass.",
+          toolName: 'lookup_entity',
+        },
+      ],
+      [
+        'tool_result',
+        {
+          name: 'lookup_entity',
+          ok: true,
+          message: 'Checked item 001 card',
+          sourceBooks: ['Card Index'],
+        },
+      ],
+    ]);
+  });
+
   it('keeps scenario resolution silent until the scenario book is opened', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(
