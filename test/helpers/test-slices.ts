@@ -9,6 +9,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/auth-provider.test.ts',
   'test/auth-restart.test.ts',
   'test/campaign-api.test.ts',
+  'test/campaign-character-api.test.ts',
   'test/campaign-repositories.test.ts',
   'test/conversation.test.ts',
   'test/cross-game-isolation.test.ts',

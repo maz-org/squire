@@ -19,6 +19,7 @@ import {
   type CallerIdentity,
 } from './campaign/identity.ts';
 import * as CampaignService from './campaign/campaign-service.ts';
+import * as CharacterService from './campaign/character-service.ts';
 import { VersionConflictError } from './db/repositories/types.ts';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
@@ -2280,6 +2281,227 @@ app.post('/api/invites/:memberId/accept', async (c) => {
     return c.json({ campaign });
   } catch (error) {
     return campaignErrorResponse(c, error);
+  }
+});
+
+// ─── Character API (SQR-22, ADR 0021) ────────────────────────────────────────
+
+app.use('/api/characters/*', requireCampaignUser('/api/characters'));
+
+const PrivateFieldSchema = z.string().trim().min(1).max(5000).nullable();
+
+const CreateCharacterRequestSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  className: z.string().trim().min(1).max(100),
+  level: z.number().int().min(1).max(20).optional(),
+  xp: z.number().int().min(0).optional(),
+  gold: z.number().int().min(0).optional(),
+  perks: z.array(z.number().int().min(0)).max(100).optional(),
+  personalQuest: PrivateFieldSchema.optional(),
+  battleGoals: PrivateFieldSchema.optional(),
+  privateNotes: PrivateFieldSchema.optional(),
+  placeholderForEmail: z.string().trim().email().max(320).optional(),
+});
+
+const UpdateCharacterRequestSchema = z
+  .object({
+    expectedVersion: z.number().int().min(0),
+    name: z.string().trim().min(1).max(100).optional(),
+    className: z.string().trim().min(1).max(100).optional(),
+    level: z.number().int().min(1).max(20).optional(),
+    xp: z.number().int().min(0).optional(),
+    gold: z.number().int().min(0).optional(),
+    perks: z.array(z.number().int().min(0)).max(100).optional(),
+    personalQuest: PrivateFieldSchema.optional(),
+    battleGoals: PrivateFieldSchema.optional(),
+    privateNotes: PrivateFieldSchema.optional(),
+    status: z.enum(['active', 'retired']).optional(),
+    successorId: z.string().uuid().nullable().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 1, {
+    message: 'At least one field to update is required',
+  });
+
+const AddItemRequestSchema = z.object({
+  sourceId: z.string().trim().min(1).max(200),
+});
+
+const AddCardRequestSchema = z.object({
+  sourceId: z.string().trim().min(1).max(200),
+  role: z.enum(['owned', 'active']).optional(),
+});
+
+const SetCardRoleRequestSchema = z.object({
+  role: z.enum(['owned', 'active']),
+});
+
+/** Character routes share the campaign error mapping plus one more shape. */
+function characterErrorResponse(c: Context, error: unknown): Response {
+  if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    return c.json({ error: error.code, message: error.message, status: 422 }, 422);
+  }
+  return campaignErrorResponse(c, error);
+}
+
+app.post('/api/campaigns/:id/characters', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  const body = CreateCharacterRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    const character = await CharacterService.createCharacter(
+      c.get('callerIdentity')!,
+      campaignId,
+      body.data,
+    );
+    return c.json({ character }, 201);
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.get('/api/campaigns/:id/characters', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    const characters = await CharacterService.listCampaignCharacters(
+      c.get('callerIdentity')!,
+      campaignId,
+    );
+    return c.json({ characters });
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.get('/api/characters/:id', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    return c.json(await CharacterService.getCharacterDetail(c.get('callerIdentity')!, characterId));
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.patch('/api/characters/:id', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.json(jsonError('Not found', 404), 404);
+  const body = UpdateCharacterRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  const identity = c.get('callerIdentity')!;
+  try {
+    const character = await CharacterService.updateCharacter(identity, characterId, body.data);
+    return c.json({ character });
+  } catch (error) {
+    if (error instanceof VersionConflictError) {
+      const detail = await CharacterService.getCharacterDetail(identity, characterId);
+      return c.json(
+        {
+          error: 'version_conflict',
+          currentVersion: detail.character.version,
+          character: detail.character,
+          status: 409,
+        },
+        409,
+      );
+    }
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.delete('/api/characters/:id', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await CharacterService.deleteCharacter(c.get('callerIdentity')!, characterId);
+    return c.body(null, 204);
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.post('/api/characters/:id/claim', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    const character = await CharacterService.claimCharacter(c.get('callerIdentity')!, characterId);
+    return c.json({ character });
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.post('/api/characters/:id/items', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.json(jsonError('Not found', 404), 404);
+  const body = AddItemRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    const item = await CharacterService.addItem(
+      c.get('callerIdentity')!,
+      characterId,
+      body.data.sourceId,
+    );
+    return c.json({ item }, 201);
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.delete('/api/characters/:id/items/:itemId', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  const itemId = campaignRouteId(c, 'itemId');
+  if (!characterId || !itemId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await CharacterService.removeItem(c.get('callerIdentity')!, characterId, itemId);
+    return c.body(null, 204);
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.post('/api/characters/:id/cards', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.json(jsonError('Not found', 404), 404);
+  const body = AddCardRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    const card = await CharacterService.addCard(c.get('callerIdentity')!, characterId, body.data);
+    return c.json({ card }, 201);
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.patch('/api/characters/:id/cards/:cardId', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  const cardId = campaignRouteId(c, 'cardId');
+  if (!characterId || !cardId) return c.json(jsonError('Not found', 404), 404);
+  const body = SetCardRoleRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    await CharacterService.setCardRole(
+      c.get('callerIdentity')!,
+      characterId,
+      cardId,
+      body.data.role,
+    );
+    return c.body(null, 204);
+  } catch (error) {
+    return characterErrorResponse(c, error);
+  }
+});
+
+app.delete('/api/characters/:id/cards/:cardId', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  const cardId = campaignRouteId(c, 'cardId');
+  if (!characterId || !cardId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await CharacterService.removeCard(c.get('callerIdentity')!, characterId, cardId);
+    return c.body(null, 204);
+  } catch (error) {
+    return characterErrorResponse(c, error);
   }
 });
 
