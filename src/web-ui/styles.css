@@ -1766,6 +1766,100 @@ template#squire-banner-fixtures {
   white-space: pre-wrap;
 }
 
+/* ─── Confirmation block (SQR-286, DESIGN.md §Confirmation block) ────────────
+   Consent chrome for a staged destructive mutation: a --surface panel of
+   ledger-voiced work-log rows plus a wax primary confirm action. Explicitly
+   distinct from the Phase 5 "Squire recommends" verdict block — NO wax
+   left-border rail. Applied rows turn sage; failed rows hazard; expired and
+   cancelled blocks mute in place rather than disappearing. */
+
+.squire-proposal {
+  margin: 14px 0 18px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.squire-proposal__title {
+  margin: 0 0 8px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--sepia);
+}
+
+.squire-proposal__rows {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 12px;
+}
+
+.squire-proposal__row {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+}
+
+.squire-proposal__row.is-applied {
+  color: var(--sage);
+}
+
+.squire-proposal__row.is-failed {
+  color: var(--wax);
+}
+
+.squire-proposal__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.squire-proposal__actions .squire-button {
+  min-height: 44px;
+}
+
+.squire-proposal__status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--sepia);
+}
+
+.squire-proposal__status:empty {
+  display: none;
+}
+
+.squire-proposal__link {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--wax);
+  text-decoration: none;
+}
+
+.squire-proposal__link:hover {
+  text-decoration: underline;
+}
+
+.squire-proposal[data-proposal-state='applied'] .squire-proposal__actions,
+.squire-proposal[data-proposal-state='expired'] .squire-proposal__actions,
+.squire-proposal[data-proposal-state='cancelled'] .squire-proposal__actions,
+.squire-proposal[data-proposal-state='failed'] .squire-proposal__actions {
+  display: none;
+}
+
+.squire-proposal[data-proposal-state='applied'] {
+  border-color: var(--sage);
+}
+
+.squire-proposal[data-proposal-state='expired'],
+.squire-proposal[data-proposal-state='cancelled'] {
+  opacity: 0.72;
+}
+
 .squire-answer--pending .squire-answer__content {
   min-height: 0;
 }

@@ -539,6 +539,17 @@ export interface AgentStreamEventMap {
     sourceLabel?: string | undefined;
     ref?: string | undefined;
   };
+  /**
+   * A destructive mutation was staged for explicit user confirmation
+   * (SQR-286). Routes render this as the chat confirmation block; the
+   * mutation payload is the staged descriptor for preview rendering.
+   */
+  proposal: {
+    proposalId: string;
+    campaignId: string;
+    mutation: unknown;
+    expiresAt: string;
+  };
   /** Diagnostic data for traces/logs. Never browser-visible. */
   debug: { message: string; data?: unknown };
   /** Internal completion signal. Browser `done` is emitted by the HTTP route after persistence. */

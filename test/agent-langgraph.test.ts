@@ -9,6 +9,7 @@ const {
   mockLookupEntity,
   mockNeighbors,
   mockOpenEntity,
+  mockProposeStateChange,
   mockStartedSpans,
   mockStartActiveSpan,
 } = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ const {
   mockLookupEntity: vi.fn(),
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
+  mockProposeStateChange: vi.fn(),
   mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
   mockStartActiveSpan: vi.fn((name: string, ...args: unknown[]) => {
     const callback = args.find((arg) => typeof arg === 'function') as
@@ -80,6 +82,14 @@ vi.mock('../src/tools.ts', () => ({
   getScenario: vi.fn(),
   getSection: vi.fn(),
   followLinks: vi.fn(),
+}));
+
+vi.mock('../src/campaign/write-tools.ts', () => ({
+  writeCampaignState: vi.fn(),
+  writeCharacterState: vi.fn(),
+  proposeStateChange: mockProposeStateChange,
+  confirmStateChange: vi.fn(),
+  cancelStateChange: vi.fn(),
 }));
 
 import { runLangGraphAgentLoopWithTrajectory } from '../src/agent-langgraph.ts';
@@ -526,6 +536,68 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         message: "Couldn't look up scenario 61 in the scenario book",
         sourceBooks: [],
       },
+    ]);
+  });
+
+  it('emits a proposal event and write work-log rows for staged mutations', async () => {
+    const mutation = { type: 'campaign.update', patch: { playedScenarios: ['fh:1'] } };
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('propose_state_change', { campaignId: 'campaign-1', mutation }),
+      )
+      .mockResolvedValueOnce(textResponse('Staged — confirm to apply.'));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Staged — confirm to apply.'), ['Staged — confirm to apply.']),
+    );
+    mockProposeStateChange.mockResolvedValueOnce({
+      ok: true,
+      proposal: {
+        id: 'proposal-1',
+        mutation,
+        status: 'proposed',
+        expiresAt: '2026-06-12T20:00:00.000Z',
+      },
+      hint: 'confirm only after they explicitly agree',
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    await runLangGraphAgentLoopWithTrajectory('Un-play scenario 1', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-propose-unplay',
+      userId: 'user-1',
+    });
+
+    // Mutation visibility rule (SQR-286): the write appears in the work log.
+    expect(emitted).toContainEqual([
+      'tool_plan',
+      {
+        message: "I'll stage that change for your confirmation.",
+        toolName: 'propose_state_change',
+      },
+    ]);
+    expect(emitted).toContainEqual([
+      'tool_result',
+      {
+        name: 'propose_state_change',
+        ok: true,
+        message: 'Staged a change for confirmation',
+        sourceBooks: undefined,
+      },
+    ]);
+    // The staged proposal becomes a confirmation-block event.
+    expect(emitted.filter(([event]) => event === 'proposal')).toEqual([
+      [
+        'proposal',
+        {
+          proposalId: 'proposal-1',
+          campaignId: 'campaign-1',
+          mutation,
+          expiresAt: '2026-06-12T20:00:00.000Z',
+        },
+      ],
     ]);
   });
 

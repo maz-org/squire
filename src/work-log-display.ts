@@ -210,6 +210,18 @@ export function activeWorkLogProgressMessageFromCompleted(message: string): stri
   const inspected = message.match(/^Inspected\s+(.+)$/i);
   if (inspected) return `Inspecting ${inspected[1]!.trim()}`;
 
+  const updated = message.match(/^Updated\s+(.+)$/i);
+  if (updated) return `Updating ${updated[1]!.trim()}`;
+
+  const staged = message.match(/^Staged\s+(.+)$/i);
+  if (staged) return `Staging ${staged[1]!.trim()}`;
+
+  const applied = message.match(/^Applied\s+(.+)$/i);
+  if (applied) return `Applying ${applied[1]!.trim()}`;
+
+  const cancelled = message.match(/^Cancelled\s+(.+)$/i);
+  if (cancelled) return `Cancelling ${cancelled[1]!.trim()}`;
+
   const ran = message.match(/^Ran\s+(.+)$/i);
   if (ran) return `Running ${ran[1]!.trim()}`;
 

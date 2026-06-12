@@ -58,6 +58,21 @@ The SSE event log is not a durable LangGraph node checkpoint.
   - The browser renders artifact fields with DOM text APIs, not `innerHTML`.
     Artifact bodies are metadata/content blocks outside
     `.squire-answer__content`; they are never appended as answer prose.
+- `proposal-staged`
+  - Renders the chat confirmation block (SQR-286) for a staged destructive
+    mutation awaiting explicit user confirmation.
+  - Payload:
+    `{ "id": string, "proposalId": string, "campaignId": string, "lines": string[], "expiresAt": string }`
+  - `lines` are server-derived, ledger-voiced preview lines (the
+    [proposal-block vocabulary](../src/web-ui/proposal-block.ts)); the browser
+    renders them with DOM text APIs, never `innerHTML`. The block's confirm
+    and cancel actions call `POST /api/proposals/:id/confirm` and
+    `DELETE /api/proposals/:id` with the page CSRF token; `expiresAt` drives
+    client-side expiry rendering. The block is consent chrome — it renders
+    even after answer text has started streaming (the SQR-98 straggler rule
+    does not apply, since dropping a consent surface is worse than a late
+    row), and it is intentionally NOT a public work event: completed
+    transcripts must not resurrect stale confirm buttons.
 - `done`
   - Marks the stream complete and clears the pending answer UI.
   - Payload: `{ "html": string, "consultedSources": string[] | null }`
@@ -173,6 +188,9 @@ The conversation service emits Squire-owned internal events. These are typed in
 - `artifact`: optional user-safe structured content. Routes that expose it must
   map it to browser `answer-artifact`, not `text-delta`, and the browser must
   render fields as text rather than trusted HTML.
+- `proposal`: a destructive mutation was staged for explicit confirmation
+  (SQR-286). Routes that expose it must map it to browser `proposal-staged`
+  with server-derived preview lines, not `text-delta`.
 - `debug`: diagnostic data for traces/logs. This is never browser-visible.
 - `done`: internal completion signal only. The route emits browser `done` after
   persistence so it can include sanitized HTML and persisted consulted sources.
@@ -190,6 +208,7 @@ The route, not the provider, owns the final browser ordering guarantees:
 - internal `tool_plan` -> browser `tool-plan`
 - internal `tool_progress` -> browser `tool-progress`
 - internal `artifact` -> browser `answer-artifact`
+- internal `proposal` -> browser `proposal-staged`
 - internal `debug` -> no browser event
 - provider/internal `done` is only a completion signal
 - browser `done` is emitted by the route with the final sanitized HTML derived

@@ -350,7 +350,26 @@ function failedWorkMessageForTool(name: string, input: Record<string, unknown>):
   if (name === 'neighbors') return "Couldn't follow links";
   if (name === 'inspect_sources') return "Couldn't inspect available sources";
   if (name === 'schema') return "Couldn't check source schema";
+  if (name === 'write_campaign_state') return "Couldn't update campaign state";
+  if (name === 'write_character_state') return "Couldn't update character state";
+  if (name === 'propose_state_change') return "Couldn't stage the change";
+  if (name === 'confirm_state_change') return "Couldn't apply the confirmed change";
+  if (name === 'cancel_state_change') return "Couldn't cancel the staged change";
   return `Couldn't run ${name}`;
+}
+
+/**
+ * Mutation visibility rule (SQR-286): every write the agent makes appears
+ * in the work log — no silent writes. These are the ledger-voiced completed
+ * messages for the SQR-280 write tool family.
+ */
+function writeWorkMessageForTool(name: string): string | undefined {
+  if (name === 'write_campaign_state') return 'Updated campaign state';
+  if (name === 'write_character_state') return 'Updated character state';
+  if (name === 'propose_state_change') return 'Staged a change for confirmation';
+  if (name === 'confirm_state_change') return 'Applied the confirmed change';
+  if (name === 'cancel_state_change') return 'Cancelled the staged change';
+  return undefined;
 }
 
 function completedWorkMessageForTool(
@@ -360,6 +379,9 @@ function completedWorkMessageForTool(
   toolOk = true,
 ): string {
   if (!toolOk) return failedWorkMessageForTool(name, input);
+
+  const writeMessage = writeWorkMessageForTool(name);
+  if (writeMessage) return writeMessage;
 
   if (name === 'search_knowledge') {
     const scopeLabels = sourceLabelsForSearchScope(input.scope);
@@ -471,6 +493,11 @@ function planMessageForTool(name: string, input: Record<string, unknown>): strin
   if (name === 'resolve_entity') {
     return planMessageFromCompletedAction(completedWorkMessageForTool(name, input));
   }
+  if (name === 'write_campaign_state') return "I'll update the campaign ledger.";
+  if (name === 'write_character_state') return "I'll update the character sheet.";
+  if (name === 'propose_state_change') return "I'll stage that change for your confirmation.";
+  if (name === 'confirm_state_change') return "I'll apply the confirmed change.";
+  if (name === 'cancel_state_change') return "I'll cancel the staged change.";
   return undefined;
 }
 
@@ -537,6 +564,35 @@ function sectionArtifactFromToolResult(
       sourceLabel,
       ref: typeof entity.ref === 'string' ? entity.ref : undefined,
     };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * A successful propose_state_change result becomes a `proposal` stream event
+ * (SQR-286) so routes can render the chat confirmation block. The proposal id
+ * and expiry come from the tool result; the campaign id from the tool input
+ * (the tool validated it against the caller's membership).
+ */
+function proposalEventFromToolResult(
+  toolName: string,
+  input: Record<string, unknown>,
+  result: ToolCallResult,
+): AgentStreamEventMap['proposal'] | undefined {
+  if (toolName !== 'propose_state_change') return undefined;
+  try {
+    const parsed = JSON.parse(result.content) as {
+      ok?: unknown;
+      proposal?: { id?: unknown; mutation?: unknown; expiresAt?: unknown };
+    };
+    if (parsed.ok !== true || !parsed.proposal) return undefined;
+    const { id, mutation, expiresAt } = parsed.proposal;
+    const campaignId = typeof input.campaignId === 'string' ? input.campaignId : '';
+    if (typeof id !== 'string' || typeof expiresAt !== 'string' || campaignId.length === 0) {
+      return undefined;
+    }
+    return { proposalId: id, campaignId, mutation, expiresAt };
   } catch {
     return undefined;
   }
@@ -785,6 +841,8 @@ async function runLangGraphAgentLoop(
           }
           const artifact = sectionArtifactFromToolResult(block.name, toolResult);
           if (artifact) await emit('artifact', artifact);
+          const stagedProposal = proposalEventFromToolResult(block.name, input, toolResult);
+          if (stagedProposal) await emit('proposal', stagedProposal);
         }
 
         toolResults.push({
