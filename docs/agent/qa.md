@@ -37,6 +37,48 @@ Also make sure:
 - local commands use Node 24 if your shell defaults to another version
 - the dev server is running on the current worktree's port
 
+## Manual app process lifecycle
+
+When the user asks for a manual test, the agent owns the local app process.
+Do not hand the user a setup recipe unless a missing secret or dependency
+blocks startup.
+
+Use one boring server lifecycle:
+
+1. Check the intended port before starting:
+
+   ```bash
+   lsof -nP -iTCP:<port> -sTCP:LISTEN || true
+   ```
+
+2. If an old server for the same worktree is already listening and the code has
+   changed, stop it first. If another process owns the port, choose a different
+   port and tell the user the new URL.
+3. Start the server in the managed agent terminal with the real app command:
+
+   ```bash
+   PORT=<port> npm run serve
+   ```
+
+   Keep this terminal session attached while the user tests. Do not use
+   `screen`, `tmux`, `nohup`, shell-backgrounded jobs, or detached wrappers for
+   ordinary manual testing; they hide logs and make shutdown unreliable in
+   agent-run sessions.
+
+4. Wait for the server log to show the final listening port and bootstrap
+   readiness.
+5. Verify the live endpoint before giving the URL to the user:
+
+   ```bash
+   curl -fsS http://localhost:<port>/api/live
+   ```
+
+6. Report the exact URL and keep the process alive until the user asks to shut
+   it down. Stop it with Ctrl-C in the same terminal session.
+
+Do not claim the app was restarted unless the currently running server was
+started after the current code change and `/api/live` returned `{"status":"ok"}`.
+
 ## Mandatory regression sweep
 
 Run these in addition to issue-specific QA unless the branch is purely

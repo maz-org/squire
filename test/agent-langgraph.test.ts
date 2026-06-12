@@ -5,6 +5,8 @@ const {
   mockMessagesStream,
   mockSearchKnowledge,
   mockListCards,
+  mockResolveEntity,
+  mockLookupEntity,
   mockNeighbors,
   mockOpenEntity,
   mockStartedSpans,
@@ -14,6 +16,8 @@ const {
   mockMessagesStream: vi.fn(),
   mockSearchKnowledge: vi.fn(),
   mockListCards: vi.fn(),
+  mockResolveEntity: vi.fn(),
+  mockLookupEntity: vi.fn(),
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
@@ -62,7 +66,8 @@ vi.mock('@anthropic-ai/sdk', () => ({
 vi.mock('../src/tools.ts', () => ({
   inspectSources: vi.fn(),
   getSchema: vi.fn(),
-  resolveEntity: vi.fn(),
+  resolveEntity: mockResolveEntity,
+  lookupEntity: mockLookupEntity,
   openEntity: mockOpenEntity,
   searchKnowledge: mockSearchKnowledge,
   neighbors: mockNeighbors,
@@ -209,9 +214,13 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     const userVisibleEvents = emitted.filter(([event]) => event !== 'debug');
     expect(userVisibleEvents).toEqual([
       [
-        'tool_progress',
-        { message: 'Searching Rulebook, Section Book, Card Index', toolName: 'search_knowledge' },
+        'tool_plan',
+        {
+          message: "I'll search the rulebook, the section book, and the cards.",
+          toolName: 'search_knowledge',
+        },
       ],
+      ['tool_progress', { message: 'Searching available sources', toolName: 'search_knowledge' }],
       [
         'tool_call',
         {
@@ -219,7 +228,15 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
           input: { query: 'loot', scope: ['rules_passage', 'section', 'card'] },
         },
       ],
-      ['tool_result', { name: 'search_knowledge', ok: true, sourceBooks: ['Rulebook'] }],
+      [
+        'tool_result',
+        {
+          name: 'search_knowledge',
+          ok: true,
+          message: 'Searched available sources',
+          sourceBooks: ['Rulebook'],
+        },
+      ],
       ['text', { delta: 'Use loot abilities ' }],
       ['text', { delta: 'to pick up loot tokens.' }],
       ['done', {}],
@@ -264,6 +281,254 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(mockMessagesCreate).toHaveBeenCalledTimes(3);
   });
 
+  it('emits card lookup intent before the card work row can render', async () => {
+    const cardRef =
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Bandit Archer monster stat card',
+        kinds: ['monster-stat'],
+      }),
+    );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('An elite level 3 Bandit Archer has 10 hit points.'), [
+        'An elite level 3 Bandit Archer has 10 hit points.',
+      ]),
+    );
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: cardRef,
+        title: 'Bandit Archer',
+        sourceLabel: 'Card Index',
+        data: { normal: { hp: 6 }, elite: { hp: 10 } },
+      },
+      citations: [{ sourceRef: 'cards.json', sourceLabel: 'Card Index', locator: cardRef }],
+      links: [],
+      related: [],
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory(
+      'How many hit points does an elite level 3 Bandit Archer have?',
+      {
+        emit: async (event, data) => {
+          emitted.push([event, data]);
+        },
+        toolSurface: 'redesigned',
+        userMessageId: 'message-bandit-card',
+      },
+    );
+
+    expect(result.answer).toBe('An elite level 3 Bandit Archer has 10 hit points.');
+    expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual(['lookup_entity']);
+    const visibleEvents = emitted.filter(([event]) => event !== 'debug');
+    expect(visibleEvents).not.toContainEqual([
+      'tool_plan',
+      expect.objectContaining({ toolName: 'resolve_entity' }),
+    ]);
+    expect(visibleEvents).not.toContainEqual([
+      'tool_progress',
+      expect.objectContaining({ toolName: 'resolve_entity' }),
+    ]);
+    expect(visibleEvents).not.toContainEqual([
+      'tool_result',
+      expect.objectContaining({ name: 'resolve_entity' }),
+    ]);
+    expect(
+      visibleEvents.filter(([event]) =>
+        ['tool_plan', 'tool_progress', 'tool_result'].includes(event),
+      ),
+    ).toEqual([
+      [
+        'tool_plan',
+        {
+          message: "I'll check that stat card.",
+          toolName: 'lookup_entity',
+        },
+      ],
+      [
+        'tool_result',
+        {
+          name: 'lookup_entity',
+          ok: true,
+          message: 'Checked Bandit Archer stat card',
+          sourceBooks: ['Card Index'],
+        },
+      ],
+    ]);
+  });
+
+  it('emits generic lookup intent before exact lookup results are known', async () => {
+    const cardRef = 'card:gloomhaven-2e/items/gloomhavensecretariat:item/001';
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Spyglass',
+        kinds: ['item'],
+      }),
+    );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Spyglass is item 1.'), ['Spyglass is item 1.']),
+    );
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: cardRef,
+        title: 'Spyglass',
+        sourceLabel: 'Card Index',
+        data: { name: 'Spyglass' },
+      },
+      citations: [{ sourceRef: 'cards.json', sourceLabel: 'Card Index', locator: cardRef }],
+      links: [],
+      related: [],
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is Spyglass?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-spyglass-card',
+    });
+
+    expect(result.answer).toBe('Spyglass is item 1.');
+    expect(
+      emitted.filter(([event]) => ['tool_plan', 'tool_progress', 'tool_result'].includes(event)),
+    ).toEqual([
+      [
+        'tool_plan',
+        {
+          message: "I'll look up Spyglass.",
+          toolName: 'lookup_entity',
+        },
+      ],
+      [
+        'tool_result',
+        {
+          name: 'lookup_entity',
+          ok: true,
+          message: 'Checked item 001 card',
+          sourceBooks: ['Card Index'],
+        },
+      ],
+    ]);
+  });
+
+  it('keeps scenario resolution silent until the scenario book is opened', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('resolve_entity', {
+          query: 'scenario 61',
+          kinds: ['scenario'],
+        }),
+      )
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', { ref: 'scenario:frosthaven/061' }, 'tool_open_scenario'),
+      );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Scenario 61 is Dangerous Grove.'), [
+        'Scenario 61 ',
+        'is Dangerous Grove.',
+      ]),
+    );
+    mockResolveEntity.mockResolvedValueOnce({
+      query: 'scenario 61',
+      candidates: [
+        {
+          entity: {
+            kind: 'scenario',
+            ref: 'scenario:frosthaven/061',
+            title: 'Scenario 61',
+            sourceLabel: 'Scenario Book',
+          },
+          confidence: 0.99,
+          matchReason: 'Exact scenario match',
+        },
+      ],
+    });
+    mockOpenEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: 'scenario:frosthaven/061',
+        title: 'Scenario 61',
+        data: { name: 'Dangerous Grove' },
+      },
+      citations: [{ sourceRef: 'scenario-book.json', sourceLabel: 'Scenario Book' }],
+    });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is scenario 61?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-scenario-61',
+    });
+
+    expect(result.answer).toBe('Scenario 61 is Dangerous Grove.');
+    const workEvents = emitted.filter(([event]) =>
+      ['tool_plan', 'tool_progress', 'tool_result'].includes(event),
+    );
+    expect(workEvents).toEqual([
+      [
+        'tool_plan',
+        {
+          message: "I'll look that up in the scenario book.",
+          toolName: 'open_entity',
+        },
+      ],
+      [
+        'tool_result',
+        {
+          name: 'open_entity',
+          ok: true,
+          message: 'Looked up scenario 61 in the scenario book',
+          sourceBooks: ['Scenario Book'],
+        },
+      ],
+    ]);
+  });
+
+  it('humanizes failed open_entity work rows', async () => {
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', { ref: 'scenario:frosthaven/061' }, 'tool_open_scenario'),
+      )
+      .mockResolvedValueOnce(textResponse("I couldn't find scenario 61."));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse("I couldn't find scenario 61."), ["I couldn't find scenario 61."]),
+    );
+    mockOpenEntity.mockResolvedValueOnce({ ok: false, error: 'Not found' });
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is scenario 61?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-scenario-61-failed-open',
+    });
+
+    expect(result.answer).toBe("I couldn't find scenario 61.");
+    const displayedWorkRows = emitted.filter(([event]) =>
+      ['tool_plan', 'tool_progress', 'tool_result'].includes(event),
+    );
+    expect(JSON.stringify(displayedWorkRows)).not.toContain('scenario:frosthaven/061');
+    expect(emitted).toContainEqual([
+      'tool_result',
+      {
+        name: 'open_entity',
+        ok: false,
+        message: "Couldn't look up scenario 61 in the scenario book",
+        sourceBooks: [],
+      },
+    ]);
+  });
+
   it('continues after neighbors before finalizing answers that need target content', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))
@@ -276,11 +541,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         'Scenario 61.',
       ]),
     );
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
 
     const result = await runLangGraphAgentLoopWithTrajectory(
       'What is the text of the section that unlocks scenario 61?',
       {
-        emit: async () => undefined,
+        emit: async (event, data) => {
+          emitted.push([event, data]);
+        },
         toolSurface: 'redesigned',
         userMessageId: 'message-neighbors',
       },
@@ -292,6 +560,13 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
       'neighbors',
       'open_entity',
+    ]);
+    expect(emitted).toContainEqual([
+      'tool_plan',
+      {
+        message: "I'll look that up in the section book.",
+        toolName: 'open_entity',
+      },
     ]);
   });
 

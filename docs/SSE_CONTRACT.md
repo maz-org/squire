@@ -33,13 +33,24 @@ The SSE event log is not a durable LangGraph node checkpoint.
   - Payload: `{ "id": string, "label": string }`
 - `tool-result`
   - Marks a tool row complete or failed.
-  - Payload: `{ "id": string, "labels": string[], "ok": boolean }`
+  - Payload:
+    `{ "id": string, "labels": string[], "ok": boolean, "message"?: string }`
+  - `message`, when present, is a user-safe completed-work description already
+    translated away from raw refs. It is rendered in the work log, never
+    appended as answer prose.
+- `tool-plan`
+  - Adds a plain-language statement of the agent's next intended lookup.
+  - Payload: `{ "id": string, "message": string }`
+  - `message` is user-safe intent text. It is rendered in the work log, never
+    appended as answer prose.
 - `tool-progress`
   - Adds a compact, user-safe progress row for long tool work.
   - Payload: `{ "id": string, "label": string, "message": string }`
   - `label` is safe tool/source metadata such as `SECTION BOOK` or the
     `REFERENCE` fallback. `message` is already filtered by the service as
-    user-safe progress text; it is rendered as metadata, never answer prose.
+    user-safe, display-ready progress text; it is rendered as metadata, never
+    answer prose. Raw canonical refs should be translated into human labels
+    before they become browser-visible.
 - `answer-artifact`
   - Adds a structured, user-safe artifact such as a quoted section block.
   - Payload:
@@ -155,6 +166,8 @@ The conversation service emits Squire-owned internal events. These are typed in
   or raw retrieved fragments must not be emitted as `text`.
 - `tool_call`: a tool lookup or source traversal started.
 - `tool_result`: a tool lookup or source traversal completed.
+- `tool_plan`: optional user-safe statement of the next intended lookup. Routes
+  that expose it must map it to browser `tool-plan`, not `text-delta`.
 - `tool_progress`: optional user-safe progress from inside a long tool. Routes
   that expose it must map it to browser `tool-progress`, not `text-delta`.
 - `artifact`: optional user-safe structured content. Routes that expose it must
@@ -174,6 +187,7 @@ The route, not the provider, owns the final browser ordering guarantees:
 - provider/internal `text` -> browser `text-delta`
 - provider/internal `tool_call` -> browser `tool-start`
 - provider/internal `tool_result` -> browser `tool-result`
+- internal `tool_plan` -> browser `tool-plan`
 - internal `tool_progress` -> browser `tool-progress`
 - internal `artifact` -> browser `answer-artifact`
 - internal `debug` -> no browser event
@@ -190,6 +204,8 @@ Regression tests should assert browser-visible behavior, not only persistence:
   `done.html` fragment
 - tool-planning text and raw tool output from intermediate model turns never
   appear in `text-delta`
+- `tool_plan` appears only as browser `tool-plan`; it is rendered in the work
+  log when present
 - `tool_progress` appears only as browser `tool-progress`; `debug` never appears
   in browser SSE
 - structured artifacts appear only as browser `answer-artifact`, not

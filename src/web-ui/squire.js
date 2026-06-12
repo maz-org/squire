@@ -693,44 +693,369 @@ function rememberAnswerWorkSourceLabels(row, labels) {
   row.dataset.answerWorkSourceLabels = existing.join('|');
 }
 
+function titleizeWorkLogSlug(value) {
+  return String(value || '')
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map(function (part) {
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+function displayWorkLogScenarioNumber(value) {
+  return String(value || '').replace(/^0+(\d)/, '$1');
+}
+
+function removeLeadingWorkLogArticle(value) {
+  return String(value || '').replace(/^the\s+/i, '');
+}
+
+function humanizeWorkLogCardRef(ref) {
+  var match = String(ref || '').match(/^card:[^/]+\/([^/]+)\/gloomhavensecretariat:([^/]+)\/(.+)$/);
+  if (!match) return null;
+  var type = match[1];
+  var sourceKind = match[2];
+  var path = match[3];
+  var pathParts = path.split('/').filter(Boolean);
+  if (pathParts.length === 0) return null;
+
+  if (type === 'monster-stats' && sourceKind === 'monster-stat') {
+    var nameParts = pathParts.slice(0, -1);
+    var name = titleizeWorkLogSlug((nameParts.length > 0 ? nameParts : pathParts).join('-'));
+    return 'the ' + name + ' stat card';
+  }
+
+  var lastPathPart = pathParts[pathParts.length - 1];
+  var fallbackName = titleizeWorkLogSlug(lastPathPart || pathParts.join('-'));
+  if (type === 'items') {
+    return /^\d+$/.test(fallbackName)
+      ? 'the item ' + fallbackName + ' card'
+      : 'the ' + fallbackName + ' item card';
+  }
+  if (type === 'monster-abilities') return 'the ' + fallbackName + ' monster ability card';
+  if (type === 'character-abilities') return 'the ' + fallbackName + ' ability card';
+  if (type === 'buildings') return 'the ' + fallbackName + ' building card';
+  return 'the ' + fallbackName + ' card';
+}
+
+function workLogSourceActionFromRef(ref) {
+  var bareSection = String(ref || '').match(/^(?:section\s+)?(\d+(?:\.\d+)+)$/i);
+  if (bareSection) {
+    return {
+      label: 'SECTION BOOK',
+      detail: 'Looked up section ' + bareSection[1].trim() + ' in the section book',
+    };
+  }
+
+  var bareScenario = String(ref || '').match(/^(?:scenario\s+)?(\d+)$/i);
+  if (bareScenario) {
+    return {
+      label: 'SCENARIO BOOK',
+      detail:
+        'Looked up scenario ' +
+        displayWorkLogScenarioNumber(bareScenario[1].trim()) +
+        ' in the scenario book',
+    };
+  }
+
+  var card = humanizeWorkLogCardRef(ref);
+  if (card) return { label: 'CARD INDEX', detail: 'Checked ' + removeLeadingWorkLogArticle(card) };
+
+  var scenario = String(ref || '').match(/^scenario:[^/]+\/(.+)$/);
+  if (scenario) {
+    return {
+      label: 'SCENARIO BOOK',
+      detail:
+        'Looked up scenario ' +
+        displayWorkLogScenarioNumber(scenario[1].trim()) +
+        ' in the scenario book',
+    };
+  }
+
+  var legacyScenario = String(ref || '').match(/^gloomhavensecretariat:scenario\/(.+)$/);
+  if (legacyScenario) {
+    return {
+      label: 'SCENARIO BOOK',
+      detail:
+        'Looked up scenario ' +
+        displayWorkLogScenarioNumber(legacyScenario[1].trim()) +
+        ' in the scenario book',
+    };
+  }
+
+  var section = String(ref || '').match(/^section:[^/]+\/(.+)$/);
+  if (section) {
+    return {
+      label: 'SECTION BOOK',
+      detail: 'Looked up section ' + section[1].trim() + ' in the section book',
+    };
+  }
+
+  var rules = String(ref || '').match(/^rules:[^/]+\/(.+)#chunk=\d+$/);
+  if (rules) {
+    var source = rules[1].toLowerCase();
+    if (source.indexOf('puzzle') !== -1) {
+      return { label: 'PUZZLE BOOK', detail: 'Checked the puzzle book' };
+    }
+    if (source.indexOf('section') !== -1) {
+      return { label: 'SECTION BOOK', detail: 'Checked the section book' };
+    }
+    if (source.indexOf('scenario') !== -1) {
+      return { label: 'SCENARIO BOOK', detail: 'Checked the scenario book' };
+    }
+    return { label: 'RULEBOOK', detail: 'Checked the rulebook' };
+  }
+
+  return null;
+}
+
+function workLogSearchActionFromBookLabel(label) {
+  var normalized = removeLeadingWorkLogArticle(
+    String(label || '')
+      .trim()
+      .toLowerCase(),
+  );
+  if (normalized === 'rulebook') {
+    return { label: 'RULEBOOK', detail: 'Searched the rulebook' };
+  }
+  if (normalized === 'puzzle book') {
+    return { label: 'PUZZLE BOOK', detail: 'Searched the puzzle book' };
+  }
+  if (normalized === 'scenario book') {
+    return { label: 'SCENARIO BOOK', detail: 'Searched the scenario book' };
+  }
+  if (normalized === 'section book') {
+    return { label: 'SECTION BOOK', detail: 'Searched the section book' };
+  }
+  if (normalized === 'card index' || normalized === 'cards') {
+    return { label: 'CARD INDEX', detail: 'Searched cards' };
+  }
+  return null;
+}
+
 function genericProgressDetail(message) {
+  var checkingCard = message.match(/^Checking\s+the\s+(.+\s+card)$/i);
+  if (checkingCard) return 'Checked ' + checkingCard[1].trim();
+
+  var lookingUpSectionInBook = message.match(
+    /^Looking up\s+section\s+(.+?)\s+in the section book$/i,
+  );
+  if (lookingUpSectionInBook) {
+    return 'Looked up section ' + lookingUpSectionInBook[1].trim() + ' in the section book';
+  }
+  var lookingUpScenarioInBook = message.match(
+    /^Looking up\s+scenario\s+(.+?)\s+in the scenario book$/i,
+  );
+  if (lookingUpScenarioInBook) {
+    return (
+      'Looked up scenario ' +
+      displayWorkLogScenarioNumber(lookingUpScenarioInBook[1].trim()) +
+      ' in the scenario book'
+    );
+  }
+  if (/^Looking up\s+.+\s+in the rulebook$/i.test(message)) return 'Searched the rulebook';
+  if (/^Looking up\s+.+\s+in the puzzle book$/i.test(message)) return 'Searched the puzzle book';
+  if (/^Looking up\s+.+\s+in the scenario book$/i.test(message)) {
+    return 'Searched the scenario book';
+  }
+  if (/^Looking up\s+.+\s+in the section book$/i.test(message)) {
+    return 'Searched the section book';
+  }
+
+  var opening = message.match(/^Opening\s+(.+)$/i);
+  if (opening) {
+    var openedSource = workLogSourceActionFromRef(opening[1].trim());
+    if (openedSource) return openedSource.detail;
+  }
+  var checkingLinks = message.match(/^Checking links from\s+(.+)$/i);
+  if (checkingLinks) {
+    var linkedSource = workLogSourceActionFromRef(checkingLinks[1].trim());
+    if (linkedSource)
+      return 'Followed links from ' + linkedSource.detail.replace(/^Checked\s+/, '');
+  }
+  var checking = message.match(/^Checking\s+(.+)$/i);
+  if (checking) return 'Checked ' + checking[1].trim();
   var resolvingMonster = message.match(/^Resolving\s+(.+?)\s+monster(?:\s+stat(?:\s+card)?)?$/i);
-  if (resolvingMonster) return 'Resolving ' + resolvingMonster[1].trim() + ' stats';
-  if (message === 'Searching selected sources') return 'Searching available sources';
-  if (message === 'Searching knowledge') return 'Searching available sources';
+  if (resolvingMonster) {
+    return 'Checked ' + titleizeWorkLogSlug(resolvingMonster[1].trim()) + ' stat card';
+  }
+  var resolvingStats = message.match(/^Resolving\s+(.+?)\s+stats$/i);
+  if (resolvingStats) {
+    return 'Checked ' + titleizeWorkLogSlug(resolvingStats[1].trim()) + ' stat card';
+  }
+  var resolving = message.match(/^Resolving\s+(.+)$/i);
+  if (resolving) return 'Looked up ' + resolving[1].trim();
+  var searchingBook = message.match(/^Searching\s+(.+)$/i);
+  if (searchingBook) {
+    var searchAction = workLogSearchActionFromBookLabel(searchingBook[1]);
+    if (searchAction) return searchAction.detail;
+    if (searchingBook[1].indexOf(',') !== -1) return 'Searched available sources';
+  }
+  if (message === 'Searching selected sources') return 'Searched available sources';
+  if (message === 'Searching knowledge') return 'Searched available sources';
   return message;
+}
+
+function activeProgressDetail(message) {
+  var checked = String(message || '').match(/^Checked\s+(.+)$/i);
+  if (checked) return 'Checking ' + checked[1].trim();
+  var searched = String(message || '').match(/^Searched\s+(.+)$/i);
+  if (searched) return 'Searching ' + searched[1].trim();
+  var lookedUp = String(message || '').match(/^Looked up\s+(.+)$/i);
+  if (lookedUp) return 'Looking up ' + lookedUp[1].trim();
+  var followedLinks = String(message || '').match(/^Followed links from\s+(.+)$/i);
+  if (followedLinks) return 'Following links from ' + followedLinks[1].trim();
+  return message;
+}
+
+function answerWorkSourceActionFromProgress(detail, sourceLabel) {
+  if (/^Checked .+ card$/i.test(detail) || detail === 'Searched cards') {
+    return { label: 'CARD INDEX', detail: detail };
+  }
+  if (
+    detail === 'Searched the rulebook' ||
+    detail === 'Checked the rulebook' ||
+    / in the rulebook$/i.test(detail)
+  ) {
+    return { label: 'RULEBOOK', detail: detail };
+  }
+  if (
+    detail === 'Searched the puzzle book' ||
+    detail === 'Checked the puzzle book' ||
+    / in the puzzle book$/i.test(detail)
+  ) {
+    return { label: 'PUZZLE BOOK', detail: detail };
+  }
+  if (
+    detail === 'Searched the scenario book' ||
+    detail === 'Checked the scenario book' ||
+    / in the scenario book$/i.test(detail)
+  ) {
+    return { label: 'SCENARIO BOOK', detail: detail };
+  }
+  if (
+    detail === 'Searched the section book' ||
+    detail === 'Checked the section book' ||
+    / in the section book$/i.test(detail)
+  ) {
+    return { label: 'SECTION BOOK', detail: detail };
+  }
+  var sectionLookup = detail.match(/^Looked up\s+section\s+(.+)$/i);
+  if (sectionLookup) {
+    return {
+      label: 'SECTION BOOK',
+      detail: 'Looked up section ' + sectionLookup[1].trim() + ' in the section book',
+    };
+  }
+  var scenarioLookup = detail.match(/^Looked up\s+scenario\s+(.+)$/i);
+  if (scenarioLookup) {
+    return {
+      label: 'SCENARIO BOOK',
+      detail:
+        'Looked up scenario ' +
+        displayWorkLogScenarioNumber(scenarioLookup[1].trim()) +
+        ' in the scenario book',
+    };
+  }
+  if (sourceLabel === 'RULEBOOK' && detail !== 'Searched available sources') {
+    return { label: 'RULEBOOK', detail: detail + ' in the rulebook' };
+  }
+  if (sourceLabel === 'PUZZLE BOOK' && detail !== 'Searched available sources') {
+    return { label: 'PUZZLE BOOK', detail: detail + ' in the puzzle book' };
+  }
+  if (sourceLabel === 'SCENARIO BOOK' && detail !== 'Searched available sources') {
+    return { label: 'SCENARIO BOOK', detail: detail + ' in the scenario book' };
+  }
+  if (sourceLabel === 'SECTION BOOK' && detail !== 'Searched available sources') {
+    return { label: 'SECTION BOOK', detail: detail + ' in the section book' };
+  }
+  return null;
+}
+
+function answerWorkPhysicalSourceLabel(label) {
+  switch (label) {
+    case 'RULEBOOK':
+      return 'the rulebook';
+    case 'PUZZLE BOOK':
+      return 'the puzzle book';
+    case 'CARD INDEX':
+      return 'the cards';
+    case 'SCENARIO BOOK':
+      return 'the scenario book';
+    case 'SECTION BOOK':
+      return 'the section book';
+    default:
+      return sentenceSourceLabel(label);
+  }
 }
 
 function answerWorkProgressRowId(rowId, detail) {
   var baseId = baseAnswerWorkId(rowId) || 'progress';
   var normalizedDetail = typeof detail === 'string' ? detail.toLowerCase() : '';
-  if (normalizedDetail.indexOf('resolving ') === 0) {
+  if (
+    normalizedDetail.indexOf('resolving ') === 0 ||
+    normalizedDetail.indexOf('looked up ') === 0
+  ) {
     return 'progress-resolving-' + answerWorkSlug(detail, 'event');
   }
-  if (normalizedDetail === 'searching available sources') {
-    return 'progress-searching-available-sources';
+  if (
+    normalizedDetail === 'searching available sources' ||
+    normalizedDetail === 'searched available sources'
+  ) {
+    return 'progress-searched-available-sources';
   }
   return baseId + '-progress-' + answerWorkSlug(detail, 'event');
 }
 
 function answerWorkProgressSort(detail) {
   var normalizedDetail = typeof detail === 'string' ? detail.toLowerCase() : '';
+  if (normalizedDetail.indexOf('looked up ') === 0) return 10;
+  if (normalizedDetail.indexOf('checked ') === 0 && normalizedDetail.indexOf(' card') !== -1) {
+    return 10;
+  }
   if (normalizedDetail.indexOf('resolving ') === 0) return 10;
-  if (normalizedDetail === 'searching available sources') return 20;
+  if (normalizedDetail === 'searched available sources') return 20;
+  return 30;
+}
+
+function answerWorkPlanRowId(rowId, detail) {
+  return 'plan-' + answerWorkSlug(rowId || detail, 'event');
+}
+
+function answerWorkPlanSort(detail) {
+  var normalizedDetail = typeof detail === 'string' ? detail.toLowerCase() : '';
+  if (
+    normalizedDetail.indexOf("i'll look that up ") === 0 ||
+    normalizedDetail.indexOf("i'll look up ") === 0 ||
+    normalizedDetail.indexOf("i'm looking up ") === 0 ||
+    normalizedDetail.indexOf("i'm checking ") === 0 ||
+    normalizedDetail.indexOf(' stat card') !== -1
+  ) {
+    return 9;
+  }
+  if (
+    normalizedDetail.indexOf('available sources') !== -1 ||
+    normalizedDetail.indexOf(',') !== -1 ||
+    normalizedDetail.indexOf(' and ') !== -1
+  ) {
+    return 20;
+  }
   return 30;
 }
 
 function answerWorkRowMessage(label, detail, sourceLabel) {
-  var source = sentenceSourceLabel(sourceLabel);
+  var source = answerWorkPhysicalSourceLabel(sourceLabel);
   var detailText = typeof detail === 'string' ? detail : '';
-  if (label === 'CHECKED') return 'Checked ' + (detailText || source || 'source').toLowerCase();
+  if (label === 'CHECKED') return 'Checked ' + (detailText || source || 'source');
   if (label === "COULDN'T CHECK") {
-    return "Couldn't check " + (detailText || source || 'source').toLowerCase();
+    return "Couldn't check " + (detailText || source || 'source');
   }
   if (label === 'FOUND') {
     return 'Found ' + (detailText || 'source') + (source ? ' in ' + source : '');
   }
-  if (detailText === 'Searching available sources') return detailText;
+  if (detailText === 'Searched available sources' || detailText === 'Searching available sources')
+    return detailText;
   if (source && detailText && detailText.toLowerCase().indexOf(source) === -1) {
     return detailText + ' in ' + source;
   }
@@ -766,31 +1091,7 @@ function setAnswerWorkRowOrder(elements, row, sort) {
   if (elements && elements.rowsEl) sortAnswerWorkRows(elements.rowsEl);
 }
 
-function inferredAnswerWorkSourceCount(elements) {
-  if (!elements.rowsEl || !elements.rowsEl.children) return 0;
-  var labels = new Map();
-  for (var i = 0; i < elements.rowsEl.children.length; i += 1) {
-    var row = elements.rowsEl.children[i];
-    var rowLabels =
-      row.dataset && row.dataset.answerWorkSourceLabels
-        ? row.dataset.answerWorkSourceLabels.split('|').filter(Boolean)
-        : [];
-    for (var rowLabelIndex = 0; rowLabelIndex < rowLabels.length; rowLabelIndex += 1) {
-      var rowLabel = rowLabels[rowLabelIndex];
-      if (isKnownConsultedLabel(rowLabel) && !labels.has(rowLabel)) labels.set(rowLabel, true);
-    }
-    var detailEl = row.querySelector ? row.querySelector('.squire-answer-work__row-detail') : null;
-    var sourceEl = row.querySelector ? row.querySelector('.squire-answer-work__row-source') : null;
-    var candidates = [detailEl ? detailEl.textContent : '', sourceEl ? sourceEl.textContent : ''];
-    for (var j = 0; j < candidates.length; j += 1) {
-      var label = candidates[j];
-      if (isKnownConsultedLabel(label) && !labels.has(label)) labels.set(label, true);
-    }
-  }
-  return labels.size;
-}
-
-function completeAnswerWork(elements, sourceCount) {
+function completeAnswerWork(elements) {
   if (!elements || !elements.container) return;
   var rowCount = elements.rowsEl ? elements.rowsEl.children.length : 0;
   if (rowCount === 0) {
@@ -805,18 +1106,7 @@ function completeAnswerWork(elements, sourceCount) {
   elements.container.setAttribute('data-work-state', 'complete');
   syncAnswerWorkOpenState(elements.container);
   if (elements.statusEl) {
-    var effectiveSourceCount =
-      sourceCount > 0 ? sourceCount : inferredAnswerWorkSourceCount(elements);
-    if (effectiveSourceCount > 0) {
-      elements.statusEl.textContent =
-        'Checked ' +
-        effectiveSourceCount +
-        ' ' +
-        (effectiveSourceCount === 1 ? 'source' : 'sources');
-    } else {
-      elements.statusEl.textContent =
-        'Recorded ' + rowCount + ' ' + (rowCount === 1 ? 'step' : 'steps');
-    }
+    elements.statusEl.textContent = 'Finished working';
   }
 }
 
@@ -847,10 +1137,122 @@ function ensureAnswerWorkRow(elements, entries, rowId) {
   return row;
 }
 
+function ensureAnswerWorkRowIcon(row) {
+  if (!row || !row.querySelector) return;
+  if (row.querySelector('.squire-answer-work__row-icon')) return;
+  var detailEl = row.querySelector('.squire-answer-work__row-detail');
+  var iconEl = document.createElement('span');
+  iconEl.className = 'squire-answer-work__row-icon';
+  iconEl.setAttribute('aria-hidden', 'true');
+  if (detailEl && typeof row.insertBefore === 'function') {
+    row.insertBefore(iconEl, detailEl);
+  } else {
+    row.appendChild(iconEl);
+  }
+}
+
+function removeAnswerWorkRowIcon(row) {
+  if (!row || !row.querySelector) return;
+  var iconEl = row.querySelector('.squire-answer-work__row-icon');
+  if (iconEl && iconEl.parentNode && typeof iconEl.parentNode.removeChild === 'function') {
+    iconEl.parentNode.removeChild(iconEl);
+  }
+}
+
+function removeAnswerWorkRow(elements, entries, rowId) {
+  var baseId = baseAnswerWorkId(rowId);
+  if (!baseId || !entries || !entries[baseId]) return;
+  var row = entries[baseId];
+  if (row.parentNode && typeof row.parentNode.removeChild === 'function') {
+    row.parentNode.removeChild(row);
+  } else if (row.parentNode && row.parentNode.children) {
+    var index = row.parentNode.children.indexOf(row);
+    if (index !== -1) row.parentNode.children.splice(index, 1);
+    row.parentNode = null;
+  } else if (elements && elements.rowsEl && elements.rowsEl.children) {
+    var fallbackIndex = elements.rowsEl.children.indexOf(row);
+    if (fallbackIndex !== -1) elements.rowsEl.children.splice(fallbackIndex, 1);
+  }
+  delete entries[baseId];
+}
+
+function answerWorkSourceActionRowId(action) {
+  return (
+    'source-action-' +
+    answerWorkSlug(action.label, 'source') +
+    '-' +
+    answerWorkSlug(action.detail, 'event')
+  );
+}
+
+function answerWorkGenericLookupSubject(detail) {
+  var match = String(detail || '').match(/^Look(?:ed|ing) up\s+(.+)$/i);
+  if (!match || /\s+in the\s+/i.test(detail)) return '';
+  return match[1].trim().toLowerCase();
+}
+
+function sourceActionSupersedesGenericLookup(action, lookup) {
+  var subject = answerWorkGenericLookupSubject(lookup && lookup.detail);
+  if (!subject) return false;
+  return (
+    String(action && action.detail)
+      .toLowerCase()
+      .indexOf(subject) !== -1
+  );
+}
+
+function rememberGenericLookupRow(context, rowId, detail) {
+  if (!context) return;
+  if (!answerWorkGenericLookupSubject(detail)) return;
+  context.genericLookupRows.push({ rowId: rowId, detail: detail });
+}
+
+function removeSupersededGenericLookupRows(elements, entries, context, action) {
+  if (!context || !context.genericLookupRows.length) return;
+  var remaining = [];
+  for (var i = 0; i < context.genericLookupRows.length; i += 1) {
+    var lookup = context.genericLookupRows[i];
+    if (sourceActionSupersedesGenericLookup(action, lookup)) {
+      removeAnswerWorkRow(elements, entries, lookup.rowId);
+    } else {
+      remaining.push(lookup);
+    }
+  }
+  context.genericLookupRows = remaining;
+}
+
+function rememberArtifactRow(context, rowId, sourceLabel) {
+  if (!context || !isKnownConsultedLabel(sourceLabel)) return;
+  if (!context.artifactRowsByLabel[sourceLabel]) context.artifactRowsByLabel[sourceLabel] = [];
+  context.artifactRowsByLabel[sourceLabel].push(rowId);
+}
+
+function removeArtifactRowsForSourceAction(elements, entries, context, action) {
+  if (!context || !action || !context.artifactRowsByLabel[action.label]) return;
+  var rows = context.artifactRowsByLabel[action.label];
+  for (var i = 0; i < rows.length; i += 1) {
+    removeAnswerWorkRow(elements, entries, rows[i]);
+  }
+  delete context.artifactRowsByLabel[action.label];
+}
+
 function renderAnswerWorkRow(elements, entries, rowId, label, detail, sourceLabel, state, sort) {
   var row = ensureAnswerWorkRow(elements, entries, rowId);
   if (!row) return;
   if (row.dataset && row.dataset.answerWorkFrozen === 'true') {
+    if (state === 'complete' || state === 'error') {
+      var frozenDetailEl = row.querySelector('.squire-answer-work__row-detail');
+      row.dataset.workState = state;
+      if (row.classList && typeof row.classList.remove === 'function') {
+        row.classList.remove('squire-answer-work__row--narrative');
+        row.classList.add('squire-answer-work__row--event');
+        row.classList.remove('is-error');
+        if (state === 'error') row.classList.add('is-error');
+      }
+      ensureAnswerWorkRowIcon(row);
+      if (frozenDetailEl)
+        frozenDetailEl.textContent = answerWorkRowMessage(label, detail, sourceLabel);
+    }
     setAnswerWorkRowOrder(elements, row, sort);
     setAnswerWorkRunning(elements);
     return row;
@@ -859,6 +1261,16 @@ function renderAnswerWorkRow(elements, entries, rowId, label, detail, sourceLabe
 
   row.dataset.workState = state || 'running';
   row.dataset.answerWorkFrozen = 'true';
+  if (row.classList && typeof row.classList.remove === 'function') {
+    row.classList.remove('squire-answer-work__row--narrative');
+    row.classList.add('squire-answer-work__row--event');
+  } else {
+    row.className = row.className.replace(/\bsquire-answer-work__row--narrative\b/g, '').trim();
+    if (row.className.indexOf('squire-answer-work__row--event') === -1) {
+      row.className += ' squire-answer-work__row--event';
+    }
+  }
+  ensureAnswerWorkRowIcon(row);
   row.classList.remove('is-error');
   if (state === 'error') row.classList.add('is-error');
 
@@ -871,8 +1283,76 @@ function renderAnswerWorkRow(elements, entries, rowId, label, detail, sourceLabe
   return row;
 }
 
-function renderAnswerWorkResult(elements, entries, rowId, labels, ok) {
+function renderAnswerWorkNarrative(elements, entries, rowId, detail, sort) {
+  var row = ensureAnswerWorkRow(elements, entries, rowId);
+  if (!row) return null;
+  if (row.classList && typeof row.classList.add === 'function') {
+    row.classList.remove('squire-answer-work__row--event');
+    row.classList.add('squire-answer-work__row--narrative');
+  } else {
+    row.className = row.className.replace(/\bsquire-answer-work__row--event\b/g, '').trim();
+    if (row.className.indexOf('squire-answer-work__row--narrative') === -1) {
+      row.className += ' squire-answer-work__row--narrative';
+    }
+  }
+  row.dataset.workState = 'running';
+  row.dataset.answerWorkFrozen = 'true';
+  removeAnswerWorkRowIcon(row);
+  var detailEl = row.querySelector('.squire-answer-work__row-detail');
+  if (detailEl) detailEl.textContent = detail;
+  setAnswerWorkRowOrder(elements, row, sort);
+  setAnswerWorkRunning(elements);
+  return row;
+}
+
+function rememberAnswerWorkSourceAction(elements, entries, context, action, sort, detail, state) {
+  if (!action || !isKnownConsultedLabel(action.label)) return null;
+  removeSupersededGenericLookupRows(elements, entries, context, action);
+  removeArtifactRowsForSourceAction(elements, entries, context, action);
+  if (context && context.checkedRowsByLabel[action.label]) {
+    removeAnswerWorkRow(elements, entries, context.checkedRowsByLabel[action.label]);
+    delete context.checkedRowsByLabel[action.label];
+  }
+  var rowId = answerWorkSourceActionRowId(action);
+  var row = renderAnswerWorkRow(
+    elements,
+    entries,
+    rowId,
+    'SEARCHING',
+    detail || action.detail,
+    '',
+    state || 'running',
+    sort,
+  );
+  if (row) rememberAnswerWorkSourceLabels(row, [action.label]);
+  if (context) context.sourceActionRowsByLabel[action.label] = rowId;
+  return row;
+}
+
+function renderAnswerWorkResult(elements, entries, context, rowId, labels, ok, detail) {
   var sourceEntries = answerWorkSourceEntries(labels);
+  var resultAction = detail
+    ? answerWorkSourceActionFromProgress(genericProgressDetail(detail))
+    : null;
+  if (ok !== false && resultAction) {
+    rememberAnswerWorkSourceAction(
+      elements,
+      entries,
+      context,
+      resultAction,
+      answerWorkProgressSort(resultAction.detail),
+      resultAction.detail,
+      'complete',
+    );
+  }
+  if (ok !== false && entries && entries['progress-searched-available-sources']) {
+    var genericSearchRow = entries['progress-searched-available-sources'];
+    var genericSearchDetailEl = genericSearchRow.querySelector
+      ? genericSearchRow.querySelector('.squire-answer-work__row-detail')
+      : null;
+    if (genericSearchDetailEl) genericSearchDetailEl.textContent = 'Searched available sources';
+    genericSearchRow.dataset.workState = 'complete';
+  }
   if (sourceEntries.length === 0) {
     if (ok !== false) return;
     renderAnswerWorkRow(
@@ -889,16 +1369,48 @@ function renderAnswerWorkResult(elements, entries, rowId, labels, ok) {
   }
   for (var i = 0; i < sourceEntries.length; i += 1) {
     var entry = sourceEntries[i];
+    var checkedRowId = answerWorkCheckedSourceRowId(entry.label, ok, i);
+    if (
+      context &&
+      context.checkedRowsByLabel[entry.label] &&
+      context.checkedRowsByLabel[entry.label] !== checkedRowId
+    ) {
+      removeAnswerWorkRow(elements, entries, context.checkedRowsByLabel[entry.label]);
+      delete context.checkedRowsByLabel[entry.label];
+    }
+    if (ok !== false && context && context.sourceActionRowsByLabel[entry.label]) {
+      var actionRow = entries[baseAnswerWorkId(context.sourceActionRowsByLabel[entry.label])];
+      if (actionRow) {
+        var actionDetailEl = actionRow.querySelector
+          ? actionRow.querySelector('.squire-answer-work__row-detail')
+          : null;
+        var completedDetail = actionDetailEl
+          ? genericProgressDetail(actionDetailEl.textContent || '')
+          : '';
+        var completedAction = completedDetail
+          ? answerWorkSourceActionFromProgress(completedDetail, entry.label)
+          : null;
+        if (completedAction) completedDetail = completedAction.detail;
+        if (completedDetail && actionDetailEl) {
+          actionDetailEl.textContent = completedDetail;
+          actionRow.dataset.workState = 'complete';
+        }
+        rememberAnswerWorkSourceLabels(actionRow, [entry.label]);
+      }
+      delete context.checkedRowsByLabel[entry.label];
+      continue;
+    }
     var row = renderAnswerWorkRow(
       elements,
       entries,
-      answerWorkCheckedSourceRowId(entry.label, ok, i),
+      checkedRowId,
       ok === false ? "COULDN'T CHECK" : 'CHECKED',
-      entry.display,
+      answerWorkPhysicalSourceLabel(entry.label),
       '',
       ok === false ? 'error' : 'running',
       ok === false ? 90 : 50,
     );
+    if (context) context.checkedRowsByLabel[entry.label] = checkedRowId;
     if (ok !== false) rememberAnswerWorkSourceLabels(row, [entry.label]);
   }
 }
@@ -1038,6 +1550,12 @@ function attachPendingAnswerStream(answerEl) {
   var seenFirstDelta = false;
   var toolPhaseStarted = false;
   var artifactEntries = {};
+  var answerWorkContext = {
+    sourceActionRowsByLabel: {},
+    checkedRowsByLabel: {},
+    artifactRowsByLabel: {},
+    genericLookupRows: [],
+  };
   // Ordered-dedup set of provenance labels collected from tool-result
   // events during this turn. `Map` preserves insertion order, which we
   // use for the completed work-log source count and replay fallback.
@@ -1126,6 +1644,23 @@ function attachPendingAnswerStream(answerEl) {
     setAnswerWorkRunning(answerWork);
   });
 
+  source.addEventListener('tool-plan', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    if (!payload.message) return;
+    if (seenFirstDelta) {
+      return;
+    }
+    preToolBuffer = '';
+    toolPhaseStarted = true;
+    renderAnswerWorkNarrative(
+      answerWork,
+      answerWorkEntries,
+      answerWorkPlanRowId(payload.id, payload.message),
+      payload.message,
+      answerWorkPlanSort(payload.message),
+    );
+  });
+
   source.addEventListener('tool-progress', function (event) {
     var payload = JSON.parse(event.data || '{}');
     if (!payload.message) return;
@@ -1135,16 +1670,35 @@ function attachPendingAnswerStream(answerEl) {
     preToolBuffer = '';
     toolPhaseStarted = true;
     var detail = genericProgressDetail(payload.message);
-    renderAnswerWorkRow(
-      answerWork,
-      answerWorkEntries,
-      answerWorkProgressRowId(payload.id, detail),
-      'SEARCHING',
-      detail,
-      payload.label,
-      'running',
-      answerWorkProgressSort(detail),
-    );
+    var activeDetail = activeProgressDetail(detail);
+    var sourceAction = answerWorkSourceActionFromProgress(detail, payload.label);
+    if (sourceAction) {
+      rememberAnswerWorkSourceAction(
+        answerWork,
+        answerWorkEntries,
+        answerWorkContext,
+        sourceAction,
+        answerWorkProgressSort(detail),
+        activeDetail,
+        'running',
+      );
+    } else {
+      renderAnswerWorkRow(
+        answerWork,
+        answerWorkEntries,
+        answerWorkProgressRowId(payload.id, detail),
+        'SEARCHING',
+        activeDetail,
+        payload.label,
+        'running',
+        answerWorkProgressSort(detail),
+      );
+      rememberGenericLookupRow(
+        answerWorkContext,
+        answerWorkProgressRowId(payload.id, detail),
+        activeDetail,
+      );
+    }
   });
 
   source.addEventListener('tool-result', function (event) {
@@ -1173,7 +1727,15 @@ function attachPendingAnswerStream(answerEl) {
         }
       }
     }
-    renderAnswerWorkResult(answerWork, answerWorkEntries, payload.id, resultLabels, payload.ok);
+    renderAnswerWorkResult(
+      answerWork,
+      answerWorkEntries,
+      answerWorkContext,
+      payload.id,
+      resultLabels,
+      payload.ok,
+      payload.message,
+    );
   });
 
   source.addEventListener('answer-artifact', function (event) {
@@ -1182,16 +1744,19 @@ function attachPendingAnswerStream(answerEl) {
     if (!payload.id || payload.kind !== 'section-quote' || !payload.title || !payload.body) return;
     preToolBuffer = '';
     toolPhaseStarted = true;
-    renderAnswerWorkRow(
-      answerWork,
-      answerWorkEntries,
-      payload.id,
-      'FOUND',
-      payload.title,
-      payload.sourceLabel,
-      'running',
-      40,
-    );
+    if (!answerWorkContext.sourceActionRowsByLabel[payload.sourceLabel]) {
+      renderAnswerWorkRow(
+        answerWork,
+        answerWorkEntries,
+        payload.id,
+        'FOUND',
+        payload.title,
+        payload.sourceLabel,
+        'running',
+        40,
+      );
+      rememberArtifactRow(answerWorkContext, payload.id, payload.sourceLabel);
+    }
     renderAnswerArtifact(artifactsEl, artifactEntries, payload);
     if (skeletonEl) skeletonEl.hidden = true;
     if (pinToBottom) scrollToBottom();
@@ -1268,10 +1833,17 @@ function attachPendingAnswerStream(answerEl) {
           answerWork.rowsEl &&
           answerWork.rowsEl.children.length === 0
         ) {
-          renderAnswerWorkResult(answerWork, answerWorkEntries, 'persisted-sources', labels, true);
+          renderAnswerWorkResult(
+            answerWork,
+            answerWorkEntries,
+            answerWorkContext,
+            'persisted-sources',
+            labels,
+            true,
+          );
         }
       }
-      completeAnswerWork(answerWork, labels.length);
+      completeAnswerWork(answerWork);
       if (pinToBottom) scrollToBottom();
       var clearAriaBusy = function () {
         answerEl.setAttribute('aria-busy', 'false');

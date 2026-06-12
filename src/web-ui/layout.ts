@@ -30,6 +30,10 @@ import {
   UNSUPPORTED_MARKDOWN_SPECIMEN,
 } from './markdown-styleguide.ts';
 import { DEFAULT_GAME_ID, SUPPORTED_GAME_IDS, SUPPORTED_GAMES } from '../game.ts';
+import {
+  humanizeWorkLogProgressMessage,
+  workLogSourceActionFromProgressMessage,
+} from '../work-log-display.ts';
 import type {
   ConversationMessage,
   ConversationMessagePublicWorkEvent,
@@ -450,23 +454,19 @@ function renderMarkdownSpecimenCard(options: {
   </section>` as HtmlEscapedString;
 }
 
-function displayToolSourceLabel(label: ToolSourceLabel): string {
+function physicalToolSourceLabel(label: ToolSourceLabel): string {
   switch (label) {
     case 'RULEBOOK':
-      return 'Rulebook';
+      return 'the rulebook';
     case 'PUZZLE BOOK':
-      return 'Puzzle Book';
+      return 'the puzzle book';
     case 'CARD INDEX':
-      return 'Card Index';
+      return 'the cards';
     case 'SCENARIO BOOK':
-      return 'Scenario Book';
+      return 'the scenario book';
     case 'SECTION BOOK':
-      return 'Section Book';
+      return 'the section book';
   }
-}
-
-function sentenceToolSourceLabel(label: ToolSourceLabel): string {
-  return displayToolSourceLabel(label).toLowerCase();
 }
 
 interface CompletedAnswerWorkRow {
@@ -474,6 +474,7 @@ interface CompletedAnswerWorkRow {
   detail: string;
   sourceLabels: ToolSourceLabel[];
   state: 'complete' | 'error';
+  variant?: 'narrative';
   sort: number;
   ordinal: number;
 }
@@ -513,29 +514,55 @@ function payloadSourceLabel(value: unknown): ToolSourceLabel | null {
 }
 
 function genericAnswerWorkProgressDetail(message: string): string {
-  const resolvingMonster = message.match(/^Resolving\s+(.+?)\s+monster(?:\s+stat(?:\s+card)?)?$/i);
-  if (resolvingMonster) return `Resolving ${resolvingMonster[1]!.trim()} stats`;
-  if (message === 'Searching selected sources') return 'Searching available sources';
-  if (message === 'Searching knowledge') return 'Searching available sources';
-  return message;
+  return humanizeWorkLogProgressMessage(message);
 }
 
 function answerWorkProgressRowId(rowId: string | null, detail: string): string {
   const baseId = baseAnswerWorkId(rowId ?? undefined) ?? 'progress';
   const normalizedDetail = detail.toLowerCase();
-  if (normalizedDetail.startsWith('resolving ')) {
+  if (normalizedDetail.startsWith('resolving ') || normalizedDetail.startsWith('looked up ')) {
     return `progress-resolving-${answerWorkSlug(detail, 'event')}`;
   }
-  if (normalizedDetail === 'searching available sources') {
-    return 'progress-searching-available-sources';
+  if (
+    normalizedDetail === 'searching available sources' ||
+    normalizedDetail === 'searched available sources'
+  ) {
+    return 'progress-searched-available-sources';
   }
   return `${baseId}-progress-${answerWorkSlug(detail, 'event')}`;
 }
 
 function answerWorkProgressSort(detail: string): number {
   const normalizedDetail = detail.toLowerCase();
+  if (normalizedDetail.startsWith('looked up ')) return 10;
+  if (normalizedDetail.startsWith('checked ') && normalizedDetail.includes(' card')) return 10;
   if (normalizedDetail.startsWith('resolving ')) return 10;
-  if (normalizedDetail === 'searching available sources') return 20;
+  if (normalizedDetail === 'searched available sources') return 20;
+  return 30;
+}
+
+function answerWorkPlanRowId(rowId: string | null, detail: string): string {
+  return `plan-${answerWorkSlug(rowId ?? (detail.length > 0 ? detail : undefined), 'event')}`;
+}
+
+function answerWorkPlanSort(detail: string): number {
+  const normalizedDetail = detail.toLowerCase();
+  if (
+    normalizedDetail.startsWith("i'll look that up ") ||
+    normalizedDetail.startsWith("i'll look up ") ||
+    normalizedDetail.startsWith("i'm looking up ") ||
+    normalizedDetail.startsWith("i'm checking ") ||
+    normalizedDetail.includes(' stat card')
+  ) {
+    return 9;
+  }
+  if (
+    normalizedDetail.includes('available sources') ||
+    normalizedDetail.includes(',') ||
+    normalizedDetail.includes(' and ')
+  ) {
+    return 20;
+  }
   return 30;
 }
 
@@ -544,10 +571,11 @@ function answerWorkCheckedSourceRowId(label: ToolSourceLabel, ok: boolean, index
 }
 
 function answerWorkProgressMessage(detail: string, sourceLabel: ToolSourceLabel | null): string {
-  if (detail === 'Searching available sources') return detail;
+  if (detail === 'Searched available sources' || detail === 'Searching available sources')
+    return detail;
   if (!sourceLabel) return detail || 'Checking sources';
 
-  const source = sentenceToolSourceLabel(sourceLabel);
+  const source = physicalToolSourceLabel(sourceLabel);
   if (detail && !detail.toLowerCase().includes(source)) {
     return `${detail} in ${source}`;
   }
@@ -555,7 +583,7 @@ function answerWorkProgressMessage(detail: string, sourceLabel: ToolSourceLabel 
 }
 
 function answerWorkArtifactMessage(title: string, sourceLabel: ToolSourceLabel | null): string {
-  return `Found ${title || 'source'}${sourceLabel ? ` in ${sentenceToolSourceLabel(sourceLabel)}` : ''}`;
+  return `Found ${title || 'source'}${sourceLabel ? ` in ${physicalToolSourceLabel(sourceLabel)}` : ''}`;
 }
 
 function addCompletedAnswerWorkRow(
@@ -567,6 +595,49 @@ function addCompletedAnswerWorkRow(
   const row = { ...input, ordinal: rows.size };
   rows.set(input.id, row);
   return row;
+}
+
+function genericLookupSubject(detail: string): string | null {
+  const match = detail.match(/^Look(?:ed|ing) up\s+(.+)$/i);
+  if (!match || /\s+in the\s+/i.test(detail)) return null;
+  const subject = match[1]!.trim().toLowerCase();
+  return subject.length > 0 ? subject : null;
+}
+
+function sourceActionSupersedesGenericLookup(
+  action: { detail: string },
+  lookup: { id: string; detail: string },
+): boolean {
+  const subject = genericLookupSubject(lookup.detail);
+  if (!subject) return false;
+  return action.detail.toLowerCase().includes(subject);
+}
+
+function removeSupersededGenericLookupRows(
+  rows: Map<string, CompletedAnswerWorkRow>,
+  genericLookupRows: Array<{ id: string; detail: string }>,
+  action: { detail: string },
+): Array<{ id: string; detail: string }> {
+  const remaining: Array<{ id: string; detail: string }> = [];
+  for (const lookup of genericLookupRows) {
+    if (sourceActionSupersedesGenericLookup(action, lookup)) {
+      rows.delete(lookup.id);
+    } else {
+      remaining.push(lookup);
+    }
+  }
+  return remaining;
+}
+
+function removeArtifactRowsForSourceAction(
+  rows: Map<string, CompletedAnswerWorkRow>,
+  artifactRowIdsByLabel: Map<ToolSourceLabel, string[]>,
+  label: ToolSourceLabel,
+): void {
+  const artifactRows = artifactRowIdsByLabel.get(label);
+  if (!artifactRows) return;
+  for (const rowId of artifactRows) rows.delete(rowId);
+  artifactRowIdsByLabel.delete(label);
 }
 
 function countTimelineSourceLabels(rows: CompletedAnswerWorkRow[]): number {
@@ -582,21 +653,69 @@ function buildCompletedAnswerWorkTimeline(
 ): CompletedAnswerWorkTimeline {
   const rows = new Map<string, CompletedAnswerWorkRow>();
   const successfulSources = new Set<ToolSourceLabel>();
+  const sourceActionRowIdsByLabel = new Map<ToolSourceLabel, string>();
+  const checkedRowIdsByLabel = new Map<ToolSourceLabel, string>();
+  const artifactRowIdsByLabel = new Map<ToolSourceLabel, string[]>();
+  let genericLookupRows: Array<{ id: string; detail: string }> = [];
 
   for (const event of events ?? []) {
     const payload = event.payload ?? {};
+    if (event.event === 'tool-plan') {
+      const detail = payloadString(payload, 'message');
+      if (!detail) continue;
+      addCompletedAnswerWorkRow(rows, {
+        id: answerWorkPlanRowId(payloadString(payload, 'id'), detail),
+        detail,
+        sourceLabels: [],
+        state: 'complete',
+        variant: 'narrative',
+        sort: answerWorkPlanSort(detail),
+      });
+      continue;
+    }
+
     if (event.event === 'tool-progress') {
       const rawMessage = payloadString(payload, 'message');
       if (!rawMessage) continue;
       const detail = genericAnswerWorkProgressDetail(rawMessage);
       const sourceLabel = payloadSourceLabel(payload.label);
+      const sourceAction = workLogSourceActionFromProgressMessage(detail, sourceLabel);
+      if (sourceAction) {
+        const label = sourceAction.label as ToolSourceLabel;
+        genericLookupRows = removeSupersededGenericLookupRows(
+          rows,
+          genericLookupRows,
+          sourceAction,
+        );
+        removeArtifactRowsForSourceAction(rows, artifactRowIdsByLabel, label);
+        const checkedRowId = checkedRowIdsByLabel.get(label);
+        if (checkedRowId) {
+          rows.delete(checkedRowId);
+          checkedRowIdsByLabel.delete(label);
+        }
+        const id = `source-action-${answerWorkSlug(label, 'source')}-${answerWorkSlug(
+          sourceAction.detail,
+          'event',
+        )}`;
+        sourceActionRowIdsByLabel.set(label, id);
+        addCompletedAnswerWorkRow(rows, {
+          id,
+          detail: sourceAction.detail,
+          sourceLabels: [label],
+          state: 'complete',
+          sort: answerWorkProgressSort(detail),
+        });
+        continue;
+      }
+      const id = answerWorkProgressRowId(payloadString(payload, 'id'), detail);
       addCompletedAnswerWorkRow(rows, {
-        id: answerWorkProgressRowId(payloadString(payload, 'id'), detail),
+        id,
         detail: answerWorkProgressMessage(detail, sourceLabel),
         sourceLabels: sourceLabel ? [sourceLabel] : [],
         state: 'complete',
         sort: answerWorkProgressSort(detail),
       });
+      if (genericLookupSubject(detail)) genericLookupRows.push({ id, detail });
       continue;
     }
 
@@ -604,19 +723,58 @@ function buildCompletedAnswerWorkTimeline(
       const title = payloadString(payload, 'title');
       if (!title) continue;
       const sourceLabel = payloadSourceLabel(payload.sourceLabel);
+      if (sourceLabel && sourceActionRowIdsByLabel.has(sourceLabel)) continue;
+      const id = payloadString(payload, 'id') ?? `answer-artifact-${event.sequence}`;
       addCompletedAnswerWorkRow(rows, {
-        id: payloadString(payload, 'id') ?? `answer-artifact-${event.sequence}`,
+        id,
         detail: answerWorkArtifactMessage(title, sourceLabel),
         sourceLabels: sourceLabel ? [sourceLabel] : [],
         state: 'complete',
         sort: 40,
       });
+      if (sourceLabel) {
+        artifactRowIdsByLabel.set(sourceLabel, [
+          ...(artifactRowIdsByLabel.get(sourceLabel) ?? []),
+          id,
+        ]);
+      }
       continue;
     }
 
     if (event.event === 'tool-result') {
       const ok = payload.ok !== false;
       const labels = payloadSourceLabels(payload.labels);
+      const resultDetail = payloadString(payload, 'message');
+      const resultSourceAction = resultDetail
+        ? workLogSourceActionFromProgressMessage(resultDetail, labels[0])
+        : null;
+      if (ok && resultSourceAction) {
+        const label = resultSourceAction.label as ToolSourceLabel;
+        successfulSources.add(label);
+        genericLookupRows = removeSupersededGenericLookupRows(
+          rows,
+          genericLookupRows,
+          resultSourceAction,
+        );
+        removeArtifactRowsForSourceAction(rows, artifactRowIdsByLabel, label);
+        const checkedRowId = checkedRowIdsByLabel.get(label);
+        if (checkedRowId) {
+          rows.delete(checkedRowId);
+          checkedRowIdsByLabel.delete(label);
+        }
+        const id = `source-action-${answerWorkSlug(label, 'source')}-${answerWorkSlug(
+          resultSourceAction.detail,
+          'event',
+        )}`;
+        sourceActionRowIdsByLabel.set(label, id);
+        addCompletedAnswerWorkRow(rows, {
+          id,
+          detail: resultSourceAction.detail,
+          sourceLabels: [label],
+          state: 'complete',
+          sort: answerWorkProgressSort(resultSourceAction.detail),
+        });
+      }
       if (labels.length === 0) {
         if (ok) continue;
         addCompletedAnswerWorkRow(rows, {
@@ -631,9 +789,17 @@ function buildCompletedAnswerWorkTimeline(
 
       labels.forEach((label, index) => {
         if (ok) successfulSources.add(label);
+        const id = answerWorkCheckedSourceRowId(label, ok, index);
+        const previousCheckedRowId = checkedRowIdsByLabel.get(label);
+        if (previousCheckedRowId && previousCheckedRowId !== id) rows.delete(previousCheckedRowId);
+        if (ok && sourceActionRowIdsByLabel.has(label)) {
+          checkedRowIdsByLabel.delete(label);
+          return;
+        }
+        checkedRowIdsByLabel.set(label, id);
         addCompletedAnswerWorkRow(rows, {
-          id: answerWorkCheckedSourceRowId(label, ok, index),
-          detail: `${ok ? 'Checked' : "Couldn't check"} ${sentenceToolSourceLabel(label)}`,
+          id,
+          detail: `${ok ? 'Checked' : "Couldn't check"} ${physicalToolSourceLabel(label)}`,
           sourceLabels: ok ? [label] : [],
           state: ok ? 'complete' : 'error',
           sort: ok ? 50 : 90,
@@ -661,7 +827,7 @@ function timelineFromConsultedSources(
   return {
     rows: labels.map((label, index) => ({
       id: answerWorkCheckedSourceRowId(label, true, index),
-      detail: `Checked ${sentenceToolSourceLabel(label)}`,
+      detail: `Checked ${physicalToolSourceLabel(label)}`,
       sourceLabels: [label],
       state: 'complete' as const,
       sort: 50,
@@ -675,29 +841,33 @@ function renderCompletedAnswerWorkTimeline(
   timeline: CompletedAnswerWorkTimeline,
 ): HtmlEscapedString {
   if (timeline.rows.length === 0) return html`` as HtmlEscapedString;
-  const summary =
-    timeline.sourceCount > 0
-      ? `Checked ${timeline.sourceCount} ${timeline.sourceCount === 1 ? 'source' : 'sources'}`
-      : `Recorded ${timeline.rows.length} ${timeline.rows.length === 1 ? 'step' : 'steps'}`;
   return html`<details
     class="squire-answer-work"
     data-testid="answer-progress"
     data-work-state="complete"
   >
     <summary class="squire-answer-work__summary">
-      <span class="squire-answer-work__status" data-answer-work-status>${summary}</span>
+      <span class="squire-answer-work__status" data-answer-work-status>Finished working</span>
+      <span class="squire-answer-work__summary-caret" aria-hidden="true"></span>
     </summary>
     <div class="squire-answer-work__rows" data-answer-work-rows>
       ${timeline.rows.map(
         (row) =>
           html`<div
-            class="squire-answer-work__row${row.state === 'error' ? ' is-error' : ''}"
+            class="${row.variant === 'narrative'
+              ? 'squire-answer-work__row squire-answer-work__row--narrative'
+              : `squire-answer-work__row squire-answer-work__row--event${
+                  row.state === 'error' ? ' is-error' : ''
+                }`}"
             data-answer-work-id="${row.id}"
             ${row.sourceLabels.length > 0
               ? html`data-answer-work-source-labels="${row.sourceLabels.join('|')}"`
               : html``}
             data-work-state="${row.state}"
           >
+            ${row.variant === 'narrative'
+              ? html``
+              : html`<span class="squire-answer-work__row-icon" aria-hidden="true"></span>`}
             <span class="squire-answer-work__row-detail">${row.detail}</span>
           </div>`,
       )}
@@ -756,7 +926,8 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
     <h2 class="sr-only" id="${labelId}">Squire answer</h2>
     <details class="squire-answer-work" data-testid="answer-progress" data-work-state="idle" open>
       <summary class="squire-answer-work__summary">
-        <span class="squire-answer-work__status" data-answer-work-status>Waiting</span>
+        <span class="squire-answer-work__status" data-answer-work-status>Working</span>
+        <span class="squire-answer-work__summary-caret" aria-hidden="true"></span>
       </summary>
       <div
         class="squire-answer-work__rows"

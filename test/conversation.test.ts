@@ -1935,6 +1935,86 @@ describe('conversation web backend', () => {
     ]);
   });
 
+  it('streams richer browser-safe work events without narration payloads', async () => {
+    const rawRef =
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('tool_plan', {
+        toolName: 'open_entity',
+        message: "I'll check the Bandit Archer stat card.",
+      });
+      await options?.emit?.('tool_progress', {
+        toolName: 'open_entity',
+        message: 'Checking Bandit Archer stat card',
+      });
+      await options?.emit?.('tool_result', {
+        name: 'search_cards',
+        ok: true,
+        message: `Opening ${rawRef}`,
+        sourceBooks: ['Card Index'],
+      });
+      await options?.emit?.('text', {
+        delta: 'A level 3 elite Bandit Archer has 10 hit points.',
+      });
+      await options?.emit?.('done', {});
+      return 'A level 3 elite Bandit Archer has 10 hit points.';
+    });
+
+    const auth = await createAuthContext();
+    const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
+      method: 'POST',
+      csrf: true,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'hx-request': 'true',
+      },
+      body: formBody({
+        question: 'How many hit points does an elite level 3 Bandit Archer have?',
+        idempotencyKey: 'idem-stream-work-event-text',
+      }),
+    });
+
+    const body = await createRes.text();
+    const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
+    expect(streamUrl).toBeTruthy();
+
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const events = parseSse(await streamRes.text());
+    expect(events).toContainEqual({
+      event: 'tool-plan',
+      data: {
+        id: 'open_entity-plan-1',
+        message: "I'll check the Bandit Archer stat card.",
+      },
+    });
+    expect(events).toContainEqual({
+      event: 'tool-progress',
+      data: {
+        id: 'open_entity-progress-1',
+        label: 'REFERENCE',
+        message: 'Checking Bandit Archer stat card',
+      },
+    });
+    expect(events).toContainEqual({
+      event: 'tool-result',
+      data: {
+        id: 'card-index',
+        labels: ['CARD INDEX'],
+        message: 'Checked Bandit Archer stat card',
+        ok: true,
+      },
+    });
+    expect(JSON.stringify(events)).not.toContain(rawRef);
+    expect(JSON.stringify(events)).not.toContain('"note"');
+    expect(JSON.stringify(events)).not.toContain('"notes"');
+    const doneEvent = events.find((event) => event.event === 'done');
+    expect(doneEvent?.data).toEqual(
+      expect.objectContaining({
+        html: '<p>A level 3 elite Bandit Archer has 10 hit points.</p>\n',
+      }),
+    );
+  });
+
   it('replays stored stream events after Last-Event-ID without re-running the agent', async () => {
     mockAsk.mockImplementationOnce(async (_question, options) => {
       await options?.emit?.('tool_call', { name: 'search_rules' });
@@ -2497,10 +2577,8 @@ describe('conversation web backend', () => {
     const page = await pageRes.text();
 
     expect(pageRes.status).toBe(200);
-    expect(page).toContain('Checked 2 sources');
-    expect(page).toMatch(
-      /Resolving bandit archer stats[\s\S]*Checked card index[\s\S]*Checked rulebook/,
-    );
+    expect(page).toContain('Finished working');
+    expect(page).toMatch(/Checked Bandit Archer stat card[\s\S]*Checked the rulebook/);
     expect(page).not.toContain('class="squire-toolcall"');
   });
 

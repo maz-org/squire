@@ -10,6 +10,7 @@ import type {
 export type BrowserStreamEventName =
   | 'text-delta'
   | 'tool-start'
+  | 'tool-plan'
   | 'tool-result'
   | 'tool-progress'
   | 'answer-artifact'
@@ -25,6 +26,7 @@ export interface MessageStreamEvent {
 
 const TERMINAL_EVENTS = new Set<BrowserStreamEventName>(['done', 'error']);
 const PUBLIC_WORK_EVENTS: ConversationMessagePublicWorkEventName[] = [
+  'tool-plan',
   'tool-progress',
   'tool-result',
   'answer-artifact',

@@ -91,6 +91,7 @@ describe('OpenAI Responses eval runner', () => {
       'inspect_sources',
       'schema',
       'resolve_entity',
+      'lookup_entity',
       'open_entity',
       'search_knowledge',
       'neighbors',

@@ -56,6 +56,7 @@ const TOOL_SOURCE_LABELS: Record<AgentToolName, ToolSourceLabel | null> = {
   inspect_sources: null,
   schema: null,
   resolve_entity: null,
+  lookup_entity: null,
   open_entity: null,
   search_knowledge: null,
   neighbors: null,

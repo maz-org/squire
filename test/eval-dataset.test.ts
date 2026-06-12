@@ -268,6 +268,16 @@ describe('eval dataset', () => {
     expect(evalCase?.trajectory?.requiredTools).not.toContain('open_entity');
   });
 
+  it('uses the combined lookup tool for exact item-open trajectory checks', () => {
+    const exactItemCase = cases.find((candidate) => candidate.id === 'traj-exact-item-open');
+    const gh2ExactItemCase = cases.find((candidate) => candidate.id === 'gh2-traj-exact-item-open');
+
+    for (const evalCase of [exactItemCase, gh2ExactItemCase]) {
+      expect(evalCase?.trajectory?.requiredTools).toEqual(['lookup_entity']);
+      expect(evalCase?.trajectory?.requiredToolKinds).toEqual(['open']);
+    }
+  });
+
   it('keeps SQR-137 final-answer expectations aligned with checked-in data', () => {
     const byId = new Map(cases.map((evalCase) => [evalCase.id, evalCase]));
 

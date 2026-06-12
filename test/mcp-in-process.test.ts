@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const {
   mockSearchKnowledge,
   mockOpenEntity,
+  mockLookupEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -10,6 +11,7 @@ const {
 } = vi.hoisted(() => ({
   mockSearchKnowledge: vi.fn(),
   mockOpenEntity: vi.fn(),
+  mockLookupEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
@@ -19,6 +21,7 @@ const {
 vi.mock('../src/tools.ts', () => ({
   searchKnowledge: mockSearchKnowledge,
   openEntity: mockOpenEntity,
+  lookupEntity: mockLookupEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -38,6 +41,19 @@ describe('in-process MCP client', () => {
     });
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
+    mockLookupEntity.mockResolvedValue({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        title: 'Spyglass',
+        sourceLabel: 'Card Index',
+        data: {},
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
     mockSearchKnowledge.mockResolvedValue({ ok: true, query: 'loot', results: [] });
     mockOpenEntity.mockResolvedValue({
       ok: true,
@@ -77,6 +93,7 @@ describe('in-process MCP client', () => {
       'inspect_sources',
       'schema',
       'resolve_entity',
+      'lookup_entity',
       'open_entity',
       'search_knowledge',
       'neighbors',

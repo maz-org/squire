@@ -310,12 +310,12 @@
     "category": "trajectory",
     "question": "What does Gloomhaven 2e item 1 do, and what source ID did you use to open it?",
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["lookup_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["card:gloomhaven-2e/items/gloomhavensecretariat:item/1"],
-      "maxToolCalls": 6,
-      "notes": "LangGraph node coverage: retrieval planning should resolve the exact item before final_answer."
+      "maxToolCalls": 4,
+      "notes": "LangGraph node coverage: retrieval planning should use the combined exact lookup for direct item questions."
     },
     "source": "data/extracted/gh2/items.json",
     "game": "gloomhaven-2e",

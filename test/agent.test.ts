@@ -10,6 +10,7 @@ const {
   mockSearchKnowledge,
   mockListCardTypes,
   mockOpenEntity,
+  mockLookupEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -62,6 +63,7 @@ const {
     mockSearchKnowledge: vi.fn(),
     mockListCardTypes: vi.fn(),
     mockOpenEntity: vi.fn(),
+    mockLookupEntity: vi.fn(),
     mockInspectSources: vi.fn(),
     mockGetSchema: vi.fn(),
     mockResolveEntity: vi.fn(),
@@ -97,6 +99,7 @@ vi.mock('../src/tools.ts', () => ({
   searchKnowledge: mockSearchKnowledge,
   listCardTypes: mockListCardTypes,
   openEntity: mockOpenEntity,
+  lookupEntity: mockLookupEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -435,6 +438,7 @@ describe('runAgentLoop', () => {
       'inspect_sources',
       'schema',
       'resolve_entity',
+      'lookup_entity',
       'open_entity',
       'search_knowledge',
       'neighbors',
@@ -1398,6 +1402,43 @@ describe('executeToolCall', () => {
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1', { game: 'gh2' });
     expect(JSON.parse(result.content).entity.ref).toBe('section:frosthaven/67.1');
     expect(result.sourceBooks).toEqual(['Section Book 62-81']);
+  });
+
+  it('dispatches lookup_entity and collects citation source labels', async () => {
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        title: 'Spyglass',
+        sourceLabel: 'Card Index',
+        data: {},
+      },
+      citations: [
+        {
+          sourceRef: 'source:frosthaven/cards/items',
+          sourceLabel: 'Card Index',
+          locator: 'gloomhavensecretariat:item/1',
+        },
+      ],
+      links: [],
+      related: [],
+    });
+    const result = await executeToolCall(
+      'lookup_entity',
+      { query: 'item 1', kinds: ['item'], limit: 2 },
+      { game: 'gh2' },
+    );
+
+    expect(mockLookupEntity).toHaveBeenCalledWith('item 1', {
+      kinds: ['item'],
+      limit: 2,
+      game: 'gh2',
+    });
+    expect(JSON.parse(result.content).entity.ref).toBe(
+      'card:frosthaven/items/gloomhavensecretariat:item/1',
+    );
+    expect(result.sourceBooks).toEqual(['Card Index']);
   });
 
   it('dispatches list_card_types', async () => {

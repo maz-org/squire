@@ -1380,8 +1380,11 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     it('renders a collapsed checked-source work log inside the answer element for a single source', () => {
       const body = renderTranscriptAnswer(answerWith(['search_rules']));
       expect(body).toMatch(
-        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Checked 1 source[\s\S]*Checked rulebook[\s\S]*<\/details>/,
+        /class="squire-turn squire-answer"[\s\S]*<details[^>]*class="squire-answer-work"[^>]*data-work-state="complete"[\s\S]*Finished working[\s\S]*Checked the rulebook[\s\S]*<\/details>/,
       );
+      expect(body).not.toContain('class="squire-answer-work__summary-icon"');
+      expect(body).toContain('class="squire-answer-work__row-icon" aria-hidden="true"');
+      expect(body).toContain('class="squire-answer-work__summary-caret" aria-hidden="true"');
       expect(body).not.toContain('Work log');
       expect(body).not.toContain('aria-label="Progress detail"');
       expect(body).not.toContain('data-progress-visibility-choice');
@@ -1390,13 +1393,19 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     });
 
     it('reloads the completed work timeline from persisted browser-safe stream events', () => {
+      const rawRef =
+        'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/bandit-archer/0-3';
       const body = renderTranscriptAnswer(
         answerWith(null, {
           publicWorkEvents: [
             {
               sequence: 1,
               event: 'tool-result',
-              payload: { id: 'search_cards', labels: ['CARD INDEX'], ok: true },
+              payload: {
+                id: 'search_cards',
+                labels: ['CARD INDEX'],
+                ok: true,
+              },
               createdAt: new Date('2026-04-20T00:00:01.000Z'),
             },
             {
@@ -1405,7 +1414,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
               payload: {
                 id: 'resolve_entity-progress-1',
                 label: 'REFERENCE',
-                message: 'Resolving bandit archer monster',
+                message: 'Resolving Bandit Archer',
               },
               createdAt: new Date('2026-04-20T00:00:02.000Z'),
             },
@@ -1421,33 +1430,268 @@ describe('GET / — SQR-107 purpose-built landing', () => {
             },
             {
               sequence: 4,
+              event: 'tool-progress',
+              payload: {
+                id: 'open_entity-progress-1',
+                label: 'REFERENCE',
+                message: `Opening ${rawRef}`,
+              },
+              createdAt: new Date('2026-04-20T00:00:04.000Z'),
+            },
+            {
+              sequence: 5,
               event: 'tool-result',
-              payload: { id: 'search_rules', labels: ['RULEBOOK', 'SECTION BOOK'], ok: true },
+              payload: {
+                id: 'search_rules',
+                labels: ['RULEBOOK', 'SECTION BOOK'],
+                ok: true,
+              },
+              createdAt: new Date('2026-04-20T00:00:05.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Finished working');
+      expect(body).toMatch(
+        /Checked Bandit Archer stat card[\s\S]*Searched available sources[\s\S]*Checked the rulebook[\s\S]*Checked the section book/,
+      );
+      expect(body).not.toContain('SEARCHING');
+      expect(body).not.toContain('CHECKED');
+      expect(body).not.toContain('class="squire-toolcall"');
+      expect(body).not.toContain('class="squire-answer-work__row-note"');
+      expect(body).not.toContain(rawRef);
+      expect(body).not.toContain('Looked up Bandit Archer');
+    });
+
+    it('replays persisted agent intent rows in the completed work timeline', () => {
+      const body = renderTranscriptAnswer(
+        answerWith(null, {
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-plan',
+              payload: {
+                id: 'search_knowledge-plan-1',
+                message: "I'll search the rulebook.",
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-progress',
+              payload: {
+                id: 'search_knowledge-progress-1',
+                label: 'RULEBOOK',
+                message: 'Looking up loot in the rulebook',
+              },
+              createdAt: new Date('2026-04-20T00:00:02.000Z'),
+            },
+            {
+              sequence: 3,
+              event: 'tool-result',
+              payload: { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+            {
+              sequence: 4,
+              event: 'tool-plan',
+              payload: {
+                id: 'search_knowledge-plan-2',
+                message: "I'll search the scenario book.",
+              },
+              createdAt: new Date('2026-04-20T00:00:04.000Z'),
+            },
+            {
+              sequence: 5,
+              event: 'tool-progress',
+              payload: {
+                id: 'search_knowledge-progress-2',
+                label: 'SCENARIO BOOK',
+                message: 'Looking up loot reminders in the scenario book',
+              },
+              createdAt: new Date('2026-04-20T00:00:05.000Z'),
+            },
+            {
+              sequence: 6,
+              event: 'tool-result',
+              payload: { id: 'search_knowledge', labels: ['SCENARIO BOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:06.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Finished working');
+      expect(body).toMatch(
+        /I&#39;ll search the rulebook\.[\s\S]*Searched the rulebook[\s\S]*I&#39;ll search the scenario book\.[\s\S]*Searched the scenario book/,
+      );
+      expect(body).toContain('squire-answer-work__row--narrative');
+    });
+
+    it('reloads section and scenario lookups as one source-action row', () => {
+      const sectionBody = renderTranscriptAnswer(
+        answerWith(null, {
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-progress',
+              payload: {
+                id: 'resolve_entity-progress-1',
+                label: 'REFERENCE',
+                message: 'Resolving section 67.1',
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-plan',
+              payload: {
+                id: 'open_entity-plan-1',
+                message: "I'll look that up in the section book.",
+              },
+              createdAt: new Date('2026-04-20T00:00:02.000Z'),
+            },
+            {
+              sequence: 3,
+              event: 'tool-progress',
+              payload: {
+                id: 'open_entity-progress-1',
+                label: 'REFERENCE',
+                message: 'Opening section:gloomhaven-2e/67.1',
+              },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+            {
+              sequence: 4,
+              event: 'answer-artifact',
+              payload: {
+                id: 'section-quote-1',
+                kind: 'section-quote',
+                title: 'Section 67.1',
+                body: 'Conclusion',
+                sourceLabel: 'SECTION BOOK',
+              },
+              createdAt: new Date('2026-04-20T00:00:04.000Z'),
+            },
+            {
+              sequence: 5,
+              event: 'tool-result',
+              payload: { id: 'open_entity', labels: ['SECTION BOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:05.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(sectionBody).toContain('Finished working');
+      expect(sectionBody).toMatch(
+        /I&#39;ll look that up in the section book\.[\s\S]*Looked up section 67.1 in the section book/,
+      );
+      expect(sectionBody).not.toContain('Found Section 67.1');
+      expect(sectionBody).not.toContain('Checked the section book');
+
+      const scenarioBody = renderTranscriptAnswer(
+        answerWith(null, {
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-progress',
+              payload: {
+                id: 'resolve_entity-progress-1',
+                label: 'REFERENCE',
+                message: 'Resolving scenario 61',
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-plan',
+              payload: {
+                id: 'open_entity-plan-1',
+                message: "I'll look that up in the scenario book.",
+              },
+              createdAt: new Date('2026-04-20T00:00:02.000Z'),
+            },
+            {
+              sequence: 3,
+              event: 'tool-progress',
+              payload: {
+                id: 'open_entity-progress-1',
+                label: 'REFERENCE',
+                message: 'Opening gloomhavensecretariat:scenario/061',
+              },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+            {
+              sequence: 4,
+              event: 'tool-result',
+              payload: { id: 'open_entity', labels: ['SCENARIO BOOK'], ok: true },
               createdAt: new Date('2026-04-20T00:00:04.000Z'),
             },
           ],
         }),
       );
 
-      expect(body).toContain('Checked 3 sources');
-      expect(body).toMatch(
-        /Resolving bandit archer stats[\s\S]*Searching available sources[\s\S]*Checked card index[\s\S]*Checked rulebook[\s\S]*Checked section book/,
+      expect(scenarioBody).toContain('Finished working');
+      expect(scenarioBody).toMatch(
+        /I&#39;ll look that up in the scenario book\.[\s\S]*Looked up scenario 61 in the scenario book/,
       );
-      expect(body).not.toContain('SEARCHING');
-      expect(body).not.toContain('CHECKED');
-      expect(body).not.toContain('class="squire-toolcall"');
+      expect(scenarioBody).not.toContain('Checked the scenario book');
+      expect(scenarioBody).not.toContain('gloomhavensecretariat:scenario/061');
+    });
+
+    it('replays bare section open progress as the same section lookup row', () => {
+      const body = renderTranscriptAnswer(
+        answerWith(null, {
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-progress',
+              payload: {
+                id: 'resolve_entity-progress-1',
+                label: 'REFERENCE',
+                message: 'Looked up section 67.1',
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-progress',
+              payload: {
+                id: 'open_entity-progress-2',
+                label: 'REFERENCE',
+                message: 'Opening 67.1',
+              },
+              createdAt: new Date('2026-04-20T00:00:02.000Z'),
+            },
+            {
+              sequence: 3,
+              event: 'tool-result',
+              payload: { id: 'open_entity', labels: ['SECTION BOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Finished working');
+      expect(body).toContain('Looked up section 67.1 in the section book');
+      expect(body).not.toContain('Opening 67.1');
     });
 
     it('aggregates multiple tool names into deduped labels, preserving insertion order', () => {
       const body = renderTranscriptAnswer(
         answerWith(['search_rules', 'search_cards', 'search_rules', 'get_card', 'get_section']),
       );
-      expect(body).toMatch(/Checked rulebook[\s\S]*Checked card index[\s\S]*Checked section book/);
+      expect(body).toMatch(
+        /Checked the rulebook[\s\S]*Checked the cards[\s\S]*Checked the section book/,
+      );
       expect(body).not.toContain('CONSULTED');
       // The RULEBOOK-first ordering is the insertion-order contract — ensure
-      // CARD INDEX doesn't leapfrog ahead of RULEBOOK just because more
+      // card-source labels don't leapfrog ahead of RULEBOOK just because more
       // card-family tools were called.
-      expect(body.indexOf('Checked rulebook')).toBeLessThan(body.indexOf('Checked card index'));
+      expect(body.indexOf('Checked the rulebook')).toBeLessThan(body.indexOf('Checked the cards'));
     });
 
     it('renders no source work log when consultedSources is null (pre-SQR-98 rows)', () => {
@@ -1483,7 +1727,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       const body = renderTranscriptAnswer(
         answerWith(['find_scenario', 'get_scenario', 'get_section']),
       );
-      expect(body).toMatch(/Checked scenario book[\s\S]*Checked section book/);
+      expect(body).toMatch(/Checked the scenario book[\s\S]*Checked the section book/);
       expect(body).not.toContain('CONSULTED');
     });
 

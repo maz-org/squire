@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const {
   mockSearchKnowledge,
   mockOpenEntity,
+  mockLookupEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -10,6 +11,7 @@ const {
 } = vi.hoisted(() => ({
   mockSearchKnowledge: vi.fn(),
   mockOpenEntity: vi.fn(),
+  mockLookupEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
@@ -19,6 +21,7 @@ const {
 vi.mock('../src/tools.ts', () => ({
   searchKnowledge: mockSearchKnowledge,
   openEntity: mockOpenEntity,
+  lookupEntity: mockLookupEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -57,6 +60,19 @@ describe('MCP redesigned tool registration', () => {
     });
     mockGetSchema.mockReturnValue({ ok: true, kind: 'card', fields: [] });
     mockResolveEntity.mockResolvedValue({ ok: true, query: 'Spyglass', candidates: [] });
+    mockLookupEntity.mockResolvedValue({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/items/gloomhavensecretariat:item/1',
+        title: 'Spyglass',
+        sourceLabel: 'Card Index',
+        data: {},
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
     mockOpenEntity.mockResolvedValue({
       ok: true,
       entity: {
@@ -92,6 +108,7 @@ describe('MCP redesigned tool registration', () => {
       'inspect_sources',
       'schema',
       'resolve_entity',
+      'lookup_entity',
       'open_entity',
       'search_knowledge',
       'neighbors',
@@ -134,6 +151,18 @@ describe('MCP redesigned tool registration', () => {
     expect(mockResolveEntity).toHaveBeenCalledWith('Spyglass', {
       kinds: ['card'],
       limit: 3,
+      game: 'gh2',
+    });
+
+    await expect(
+      client.callTool({
+        name: 'lookup_entity',
+        arguments: { query: 'item 1', kinds: ['item'], limit: 2, game: 'gh2' },
+      }),
+    ).resolves.toBeDefined();
+    expect(mockLookupEntity).toHaveBeenCalledWith('item 1', {
+      kinds: ['item'],
+      limit: 2,
       game: 'gh2',
     });
   });

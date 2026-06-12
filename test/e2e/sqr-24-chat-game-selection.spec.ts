@@ -105,10 +105,10 @@ async function expectFinalAnswer(page: Page, expectedAnswer: RegExp): Promise<vo
   );
   await expect(latestAnswer.locator('[data-testid="answer-content"] a')).toBeVisible();
   await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText(
-    'Checked 1 source',
+    'Finished working',
   );
   await expect(latestAnswer.locator('[data-testid="answer-progress"]')).toContainText(
-    'Checked rulebook',
+    'Checked the rulebook',
   );
   await expect(page.locator('.squire-input-dock')).not.toHaveAttribute('data-submitting', 'true');
 }
@@ -209,10 +209,10 @@ test.describe('SQR-24 browser chat game selection', () => {
     await expectFinalAnswer(page, /Closed doors block line-of-sight/);
     await expect(workLog).toHaveAttribute('data-work-state', 'complete');
     await expect(workLog).not.toHaveAttribute('open', '');
-    await expect(workLog).toContainText('Checked 1 source');
+    await expect(workLog).toContainText('Finished working');
     await expect(workLog.locator('.squire-answer-work__row-label')).toHaveCount(0);
     await expect(workLog.locator('.squire-answer-work__row-detail')).toContainText(
-      'Checked rulebook',
+      'Checked the rulebook',
     );
   });
 });

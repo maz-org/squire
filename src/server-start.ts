@@ -43,6 +43,7 @@ export async function startHttpServer({
       const server = createAdaptorServer({ fetch: appFetch });
       try {
         await listen(server, claim.port, config.host);
+        server.ref();
         server.once('close', () => {
           void claim.release();
         });
@@ -59,6 +60,7 @@ export async function startHttpServer({
 
   const server = createAdaptorServer({ fetch: appFetch });
   await listen(server, configuredPort, config.host);
+  server.ref();
   startBootstrapLifecycle();
   log(`Squire server listening on port ${configuredPort}`);
 }

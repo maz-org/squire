@@ -294,11 +294,11 @@
     "category": "trajectory",
     "question": "What does item 1 do, and what source ID did you use to open it?",
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["lookup_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["card:frosthaven/items/gloomhavensecretariat:item/1"],
-      "maxToolCalls": 6
+      "maxToolCalls": 4
     },
     "source": "data/extracted/items.json",
     "game": "frosthaven",

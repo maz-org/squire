@@ -185,6 +185,10 @@ export type EntityResolutionResult =
       candidates: [];
     };
 
+const LOOKUP_LOW_CONFIDENCE_THRESHOLD = 0.8;
+const LOOKUP_TIE_MARGIN = 0.02;
+const LOOKUP_LOW_CONFIDENCE_MARGIN = 0.08;
+
 export type KnowledgeEntityKind = 'rules_passage' | 'scenario' | 'section' | 'card';
 
 export interface KnowledgeEntitySummary {
@@ -1419,6 +1423,92 @@ export async function resolveEntity(
       .sort((a, b) => b.confidence - a.confidence || a.entity.title.localeCompare(b.entity.title))
       .slice(0, limit),
   };
+}
+
+function summaryFromResolutionCandidate(candidate: EntityCandidate): KnowledgeEntitySummary | null {
+  if (candidate.entity.kind === 'card_type') return null;
+  return {
+    kind: candidate.entity.kind,
+    ref: candidate.entity.ref,
+    title: candidate.entity.title,
+    sourceLabel: candidate.entity.sourceLabel,
+  };
+}
+
+function ambiguousLookupCandidates(candidates: EntityCandidate[]): KnowledgeEntitySummary[] {
+  return candidates
+    .map(summaryFromResolutionCandidate)
+    .filter((candidate): candidate is KnowledgeEntitySummary => candidate !== null);
+}
+
+function lookupNeedsClarification(candidates: EntityCandidate[]): boolean {
+  const [top, second] = candidates;
+  if (!top) return false;
+  if (top.confidence < LOOKUP_LOW_CONFIDENCE_THRESHOLD) return true;
+  if (!second) return false;
+
+  const confidenceGap = top.confidence - second.confidence;
+  return (
+    confidenceGap <= LOOKUP_TIE_MARGIN ||
+    (top.confidence < 0.9 && confidenceGap <= LOOKUP_LOW_CONFIDENCE_MARGIN)
+  );
+}
+
+export async function lookupEntity(
+  query: string,
+  options: EntityResolutionOptions = {},
+): Promise<KnowledgeOpenResult> {
+  const resolution = await resolveEntity(query, options);
+  if (!resolution.ok) {
+    return {
+      ok: false,
+      error: {
+        code: 'invalid_filter',
+        message: resolution.hint,
+        hint: resolution.hint,
+        candidates: [],
+      },
+    };
+  }
+
+  const candidates = resolution.candidates;
+  if (candidates.length === 0) {
+    return {
+      ok: false,
+      error: {
+        code: 'not_found',
+        message: `No entity found for: ${query}`,
+        hint: 'Try a more specific scenario, section, item, monster, or card name.',
+      },
+    };
+  }
+
+  if (lookupNeedsClarification(candidates)) {
+    return {
+      ok: false,
+      error: {
+        code: 'ambiguous',
+        message: `Multiple possible matches for: ${query}`,
+        hint: 'Ask again with the exact scenario, section, item number, card name, monster level, or source type.',
+        candidates: ambiguousLookupCandidates(candidates),
+      },
+    };
+  }
+
+  const top = candidates[0];
+  if (!top || top.entity.kind === 'card_type') {
+    return {
+      ok: false,
+      error: {
+        code: 'invalid_ref',
+        message: `The resolved entity is not directly openable: ${query}`,
+        hint: 'Ask for a specific scenario, section, item, monster stat card, or other card record.',
+        candidates: ambiguousLookupCandidates(candidates),
+      },
+    };
+  }
+
+  return openEntity(top.entity.ref, { game: normalizeToolGame(options.game) });
 }
 
 /**

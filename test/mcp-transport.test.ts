@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const {
   mockSearchKnowledge,
   mockOpenEntity,
+  mockLookupEntity,
   mockInspectSources,
   mockGetSchema,
   mockResolveEntity,
@@ -11,6 +12,7 @@ const {
 } = vi.hoisted(() => ({
   mockSearchKnowledge: vi.fn(),
   mockOpenEntity: vi.fn(),
+  mockLookupEntity: vi.fn(),
   mockInspectSources: vi.fn(),
   mockGetSchema: vi.fn(),
   mockResolveEntity: vi.fn(),
@@ -21,6 +23,7 @@ const {
 vi.mock('../src/tools.ts', () => ({
   searchKnowledge: mockSearchKnowledge,
   openEntity: mockOpenEntity,
+  lookupEntity: mockLookupEntity,
   inspectSources: mockInspectSources,
   getSchema: mockGetSchema,
   resolveEntity: mockResolveEntity,
@@ -183,6 +186,7 @@ describe('MCP over Streamable HTTP', () => {
       'inspect_sources',
       'schema',
       'resolve_entity',
+      'lookup_entity',
       'open_entity',
       'search_knowledge',
       'neighbors',
