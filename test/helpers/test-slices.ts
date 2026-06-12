@@ -22,6 +22,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/server-oauth.test.ts',
   'test/session-repository.test.ts',
   'test/tools.test.ts',
+  'test/unlock-graph-seed.test.ts',
   'test/vector-store.test.ts',
 ];
 
