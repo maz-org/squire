@@ -111,12 +111,14 @@ export async function listJournal(
 ): Promise<JournalDay[]> {
   await requireActiveMember(campaignId, identity.userId);
 
-  const rows = await CampaignAuditRepository.listByCampaign(campaignId, options);
+  const rows = await CampaignAuditRepository.listByCampaign(campaignId, {
+    ...options,
+    outcome: 'success',
+  });
   const actorNames = new Map<string, string | null>();
   const days = new Map<string, JournalEntry[]>();
 
   for (const row of rows) {
-    if (row.outcome !== 'success') continue;
     const entry = await toJournalEntry(row, actorNames);
     const date = entry.occurredAt.toISOString().slice(0, 10);
     const bucket = days.get(date) ?? [];
