@@ -593,6 +593,78 @@ function answerWorkElements(answerEl) {
   };
 }
 
+function formatWorkLogDuration(durationMs) {
+  var totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+  var seconds = totalSeconds % 60;
+  var totalMinutes = Math.floor(totalSeconds / 60);
+  var minutes = totalMinutes % 60;
+  var hours = Math.floor(totalMinutes / 60);
+
+  if (hours > 0) return hours + 'h ' + minutes + 'm ' + seconds + 's';
+  if (totalMinutes > 0) return totalMinutes + 'm ' + seconds + 's';
+  return seconds + 's';
+}
+
+function answerWorkNowMs() {
+  return Date.now();
+}
+
+function updateAnswerWorkElapsedStatus(elements, state, endMs) {
+  if (!elements || !elements.container || !elements.statusEl) return;
+  var startedAt = Number.parseInt(
+    (elements.container.dataset && elements.container.dataset.answerWorkStartedAtMs) || '',
+    10,
+  );
+  if (!Number.isFinite(startedAt)) {
+    startedAt = answerWorkNowMs();
+    if (elements.container.dataset) {
+      elements.container.dataset.answerWorkStartedAtMs = String(startedAt);
+    }
+  }
+  var elapsed = (endMs == null ? answerWorkNowMs() : endMs) - startedAt;
+  elements.statusEl.textContent =
+    (state === 'complete' ? 'Worked for ' : 'Working for ') + formatWorkLogDuration(elapsed);
+}
+
+function clearAnswerWorkTimer(elements) {
+  if (!elements || !elements.container || !elements.container.dataset) return;
+  var timerId = elements.container.dataset.answerWorkTimerId;
+  if (!timerId) return;
+  if (
+    typeof window !== 'undefined' &&
+    window.clearInterval &&
+    Number.isFinite(Number.parseInt(timerId, 10))
+  ) {
+    window.clearInterval(Number.parseInt(timerId, 10));
+  }
+  delete elements.container.dataset.answerWorkTimerId;
+}
+
+function startAnswerWorkTimer(elements) {
+  if (!elements || !elements.container || !elements.container.dataset) return;
+  if (!elements.container.dataset.answerWorkStartedAtMs) {
+    elements.container.dataset.answerWorkStartedAtMs = String(answerWorkNowMs());
+  }
+  updateAnswerWorkElapsedStatus(elements, 'running');
+  if (elements.container.dataset.answerWorkTimerId) return;
+  if (typeof window === 'undefined' || typeof window.setInterval !== 'function') return;
+  var timerId = window.setInterval(function () {
+    if (elements.container.getAttribute('data-work-state') !== 'running') {
+      clearAnswerWorkTimer(elements);
+      return;
+    }
+    updateAnswerWorkElapsedStatus(elements, 'running');
+  }, 1000);
+  elements.container.dataset.answerWorkTimerId = String(timerId);
+}
+
+function completeAnswerWorkTimer(elements) {
+  if (!elements.container) return;
+  var endedAt = answerWorkNowMs();
+  clearAnswerWorkTimer(elements);
+  updateAnswerWorkElapsedStatus(elements, 'complete', endedAt);
+}
+
 function resetAnswerWork(elements, entries) {
   if (!elements || !elements.container) return;
   if (elements.rowsEl) {
@@ -607,7 +679,11 @@ function resetAnswerWork(elements, entries) {
   elements.container.hidden = false;
   elements.container.setAttribute('data-work-state', 'running');
   syncAnswerWorkOpenState(elements.container);
-  if (elements.statusEl) elements.statusEl.textContent = 'Working';
+  if (elements.container.dataset) {
+    delete elements.container.dataset.answerWorkStartedAtMs;
+  }
+  clearAnswerWorkTimer(elements);
+  startAnswerWorkTimer(elements);
 }
 
 function setAnswerWorkRunning(elements) {
@@ -615,7 +691,7 @@ function setAnswerWorkRunning(elements) {
   elements.container.hidden = false;
   elements.container.setAttribute('data-work-state', 'running');
   elements.container.open = true;
-  if (elements.statusEl) elements.statusEl.textContent = 'Working';
+  startAnswerWorkTimer(elements);
 }
 
 function baseAnswerWorkId(rowId) {
@@ -1098,6 +1174,7 @@ function completeAnswerWork(elements) {
     elements.container.hidden = true;
     elements.container.open = false;
     elements.container.setAttribute('data-work-state', 'complete');
+    clearAnswerWorkTimer(elements);
     if (elements.statusEl) elements.statusEl.textContent = 'Answered directly';
     return;
   }
@@ -1105,9 +1182,7 @@ function completeAnswerWork(elements) {
   elements.container.hidden = false;
   elements.container.setAttribute('data-work-state', 'complete');
   syncAnswerWorkOpenState(elements.container);
-  if (elements.statusEl) {
-    elements.statusEl.textContent = 'Finished working';
-  }
+  completeAnswerWorkTimer(elements);
 }
 
 function markAnswerWorkError(elements) {
@@ -1115,6 +1190,7 @@ function markAnswerWorkError(elements) {
   elements.container.hidden = false;
   elements.container.open = true;
   elements.container.setAttribute('data-work-state', 'error');
+  clearAnswerWorkTimer(elements);
   if (elements.statusEl) elements.statusEl.textContent = 'Stopped before answer';
 }
 

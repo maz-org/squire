@@ -31,6 +31,7 @@ import {
 } from './markdown-styleguide.ts';
 import { DEFAULT_GAME_ID, SUPPORTED_GAME_IDS, SUPPORTED_GAMES } from '../game.ts';
 import {
+  formatWorkLogDuration,
   humanizeWorkLogProgressMessage,
   workLogSourceActionFromProgressMessage,
 } from '../work-log-display.ts';
@@ -482,6 +483,7 @@ interface CompletedAnswerWorkRow {
 interface CompletedAnswerWorkTimeline {
   rows: CompletedAnswerWorkRow[];
   sourceCount: number;
+  durationMs: number | null;
 }
 
 function answerWorkSlug(value: string | undefined, fallback: string): string {
@@ -650,6 +652,7 @@ function countTimelineSourceLabels(rows: CompletedAnswerWorkRow[]): number {
 
 function buildCompletedAnswerWorkTimeline(
   events: readonly ConversationMessagePublicWorkEvent[] | undefined,
+  completedAt: Date,
 ): CompletedAnswerWorkTimeline {
   const rows = new Map<string, CompletedAnswerWorkRow>();
   const successfulSources = new Set<ToolSourceLabel>();
@@ -817,6 +820,7 @@ function buildCompletedAnswerWorkTimeline(
     rows: orderedRows,
     sourceCount:
       successfulSources.size > 0 ? successfulSources.size : countTimelineSourceLabels(orderedRows),
+    durationMs: completedAnswerWorkDurationMs(events, completedAt),
   };
 }
 
@@ -834,7 +838,22 @@ function timelineFromConsultedSources(
       ordinal: index,
     })),
     sourceCount: labels.length,
+    durationMs: null,
   };
+}
+
+function completedAnswerWorkDurationMs(
+  events: readonly ConversationMessagePublicWorkEvent[] | undefined,
+  completedAt: Date,
+): number | null {
+  const firstEvent = (events ?? []).find((event) => event.createdAt instanceof Date);
+  if (!firstEvent) return null;
+  return Math.max(0, completedAt.getTime() - firstEvent.createdAt.getTime());
+}
+
+function completedAnswerWorkStatus(timeline: CompletedAnswerWorkTimeline): string {
+  if (timeline.durationMs === null) return 'Worked';
+  return `Worked for ${formatWorkLogDuration(timeline.durationMs)}`;
 }
 
 function renderCompletedAnswerWorkTimeline(
@@ -847,7 +866,9 @@ function renderCompletedAnswerWorkTimeline(
     data-work-state="complete"
   >
     <summary class="squire-answer-work__summary">
-      <span class="squire-answer-work__status" data-answer-work-status>Finished working</span>
+      <span class="squire-answer-work__status" data-answer-work-status>
+        ${completedAnswerWorkStatus(timeline)}
+      </span>
       <span class="squire-answer-work__summary-caret" aria-hidden="true"></span>
     </summary>
     <div class="squire-answer-work__rows" data-answer-work-rows>
@@ -879,7 +900,10 @@ function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedStr
   if (message.isError) {
     return html`` as HtmlEscapedString;
   }
-  const persistedTimeline = buildCompletedAnswerWorkTimeline(message.publicWorkEvents);
+  const persistedTimeline = buildCompletedAnswerWorkTimeline(
+    message.publicWorkEvents,
+    message.createdAt,
+  );
   if (persistedTimeline.rows.length > 0) {
     return renderCompletedAnswerWorkTimeline(persistedTimeline);
   }

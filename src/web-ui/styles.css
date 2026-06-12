@@ -1616,8 +1616,9 @@ template#squire-banner-fixtures {
   font-size: 10px;
   font-weight: 650;
   line-height: 1.3;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
   color: var(--sepia);
   text-align: left;
 }

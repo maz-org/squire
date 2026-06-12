@@ -2577,7 +2577,7 @@ describe('conversation web backend', () => {
     const page = await pageRes.text();
 
     expect(pageRes.status).toBe(200);
-    expect(page).toContain('Finished working');
+    expect(page).toContain('Worked for');
     expect(page).toMatch(/Checked Bandit Archer stat card[\s\S]*Checked the rulebook/);
     expect(page).not.toContain('class="squire-toolcall"');
   });

@@ -242,7 +242,7 @@ SCEN 14` once Phase 4 character state lands. Always visible. One line,
    and a hairline `--rule` between turns. The drop cap appears
    only on the NEWEST `.squire-answer` (position-based selector
    `.squire-answer:not(:has(~ .squire-answer))::first-letter`); past answers
-   render plain. Each answer owns an inline "Working" disclosure above the
+   render plain. Each answer owns an inline work disclosure above the
    answer prose. It is expanded while Squire is working, renders only
    browser-safe events (`tool-start`, `tool-progress`, `tool-result`, or
    `answer-artifact`), and collapses to a compact source/step summary when the
@@ -259,14 +259,16 @@ SCEN 14` once Phase 4 character state lands. Always visible. One line,
    separate `SEARCHING` / `CHECKED` prefixes; use a stable semantic order so
    resolving appears before source search, which appears before checked-source
    rows, even if stream events arrive out of order.
-   The collapsed summary says `Checked 3 sources`; do not add a second
-   provenance footer below the answer. The user can reopen it in place. The
-   disclosure state is driven by the agent state only: open while Squire is
-   working, collapsed when the answer is ready, and open on errors. Do not add
-   display-density toggles, a header bar, plus/minus icons, or borders around
-   the work log. This gives the user the agent-app pattern of visible work
-   without mixing work notes into the answer body. It is not raw private
-   chain-of-thought, not campaign memory, and not page chrome. Phase 5 hosts
+   The disclosure title shows elapsed work time: `Working for 12s` while Squire
+   is active, updating once per second, and `Worked for 8m 33s` after the answer
+   is ready. Do not add a second provenance footer below the answer. The user
+   can reopen it in place. The disclosure state is driven by the agent state
+   only: open while Squire is working, collapsed when the answer is ready, and
+   open on errors. Do not add display-density toggles, a header bar, plus/minus
+   icons, or borders around the work log. This gives the user the agent-app
+   pattern of visible work without mixing work notes into the answer body. It
+   is not raw private chain-of-thought, not campaign memory, and not page
+   chrome. Phase 5 hosts
    two card mockups side-by-side with a
    "Squire recommends" verdict via a side panel or modal — not as a peer
    mode of the transcript.
