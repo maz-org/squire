@@ -596,7 +596,10 @@ state: no campaign means the set-up affordance, not placeholder content.
 ### Scenario status vocabulary
 
 Sepia small-caps labels on scenario rows — **no italics, no icon chips, no
-badges** (the louder variant-A treatments were rejected as crowded):
+badges** (the louder variant-A treatments were rejected as crowded). One
+deliberate exception: PLAYED carries a trailing `✓` glyph, as in the approved
+mockup — it reads as printed-index notation, not an icon, and no other status
+gets a glyph:
 
 | Status    | Treatment                                                       |
 | --------- | --------------------------------------------------------------- |
