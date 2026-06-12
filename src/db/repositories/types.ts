@@ -49,6 +49,163 @@ export interface CreateSessionInput {
   userAgent?: string | null;
 }
 
+// ─── Campaign (Phase 4, ADR 0021) ───────────────────────────────────────────
+
+export type CampaignRole = 'owner' | 'member';
+export type CampaignMemberStatus = 'invited' | 'active' | 'departed';
+export type CharacterStatus = 'active' | 'retired';
+export type CharacterCardRole = 'owned' | 'active';
+
+export interface Campaign {
+  id: string;
+  name: string;
+  game: string;
+  modules: string[];
+  prosperity: number;
+  activeScenario: string | null;
+  playedScenarios: string[];
+  drawnScenarios: string[];
+  unlockedClasses: string[];
+  unlockedItems: string[];
+  unlockedBuildings: string[];
+  version: number;
+  lastSyncedAt: Date | null;
+  syncMethod: string | null;
+  externalRef: string | null;
+  sourceAuthority: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateCampaignInput {
+  name: string;
+  game: string;
+  modules?: string[];
+  /** The creating user becomes the campaign owner (ADR 0021 §Roles). */
+  ownerUserId: string;
+  ownerEmail: string;
+}
+
+/**
+ * Shared-state patch applied with optimistic CAS (E3): the write succeeds
+ * only when `expectedVersion` matches the row, and bumps `version` by one.
+ */
+export interface UpdateCampaignSharedStateInput {
+  expectedVersion: number;
+  name?: string;
+  prosperity?: number;
+  activeScenario?: string | null;
+  playedScenarios?: string[];
+  drawnScenarios?: string[];
+  unlockedClasses?: string[];
+  unlockedItems?: string[];
+  unlockedBuildings?: string[];
+}
+
+export interface CampaignMember {
+  id: string;
+  campaignId: string;
+  userId: string | null;
+  inviteEmail: string;
+  invitedByUserId: string | null;
+  role: CampaignRole;
+  status: CampaignMemberStatus;
+  joinedAt: Date | null;
+  createdAt: Date;
+}
+
+export interface Character {
+  id: string;
+  campaignId: string;
+  ownerUserId: string;
+  placeholderForEmail: string | null;
+  name: string;
+  className: string;
+  level: number;
+  xp: number;
+  gold: number;
+  perks: number[];
+  /** Private tier — only populated on owner-facing reads (ADR 0021). */
+  personalQuest: string | null;
+  battleGoals: string | null;
+  privateNotes: string | null;
+  status: CharacterStatus;
+  successorId: string | null;
+  version: number;
+  externalRef: string | null;
+  sourceAuthority: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * The member-visible projection of another member's character: the private
+ * tier is ABSENT at the type level, not nulled — there is no code path that
+ * loads it for non-owners (ADR 0021 §LLM context scoping).
+ */
+export type MemberVisibleCharacter = Omit<
+  Character,
+  'personalQuest' | 'battleGoals' | 'privateNotes'
+>;
+
+export interface CreateCharacterInput {
+  campaignId: string;
+  ownerUserId: string;
+  placeholderForEmail?: string | null;
+  name: string;
+  className: string;
+  level?: number;
+  xp?: number;
+  gold?: number;
+  perks?: number[];
+  personalQuest?: string | null;
+  battleGoals?: string | null;
+  privateNotes?: string | null;
+}
+
+export interface UpdateCharacterInput {
+  expectedVersion: number;
+  name?: string;
+  className?: string;
+  level?: number;
+  xp?: number;
+  gold?: number;
+  perks?: number[];
+  personalQuest?: string | null;
+  battleGoals?: string | null;
+  privateNotes?: string | null;
+  status?: CharacterStatus;
+  successorId?: string | null;
+}
+
+export interface CharacterItem {
+  id: string;
+  characterId: string;
+  game: string;
+  sourceId: string;
+  createdAt: Date;
+}
+
+export interface CharacterCard {
+  id: string;
+  characterId: string;
+  game: string;
+  sourceId: string;
+  role: CharacterCardRole;
+  createdAt: Date;
+}
+
+/** Thrown by CAS writes when `expectedVersion` no longer matches (E3). */
+export class VersionConflictError extends Error {
+  readonly entityId: string;
+
+  constructor(entityId: string) {
+    super(`Version conflict on ${entityId}: re-read and retry`);
+    this.name = 'VersionConflictError';
+    this.entityId = entityId;
+  }
+}
+
 // ─── Conversation ───────────────────────────────────────────────────────────
 
 export interface Conversation {
