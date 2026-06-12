@@ -11,6 +11,7 @@ import './instrumentation.ts';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
+import { userIdFromAuthInfo } from './campaign/identity.ts';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
 import {
@@ -1692,11 +1693,15 @@ app.use('/mcp', requireMcpAuthAndRateLimit());
 
 app.all('/mcp', async (c) => {
   const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // Stateless mode — auth added later
+    sessionIdGenerator: undefined, // Stateless mode
   });
   const server = createMcpServer();
   await server.connect(transport);
-  return transport.handleRequest(c.req.raw);
+  // Thread the verified bearer token into tool handlers as `extra.authInfo`
+  // so identity-requiring tools (campaign state, SQR-20/269) can resolve the
+  // caller. Knowledge tools ignore it.
+  const authInfo = c.get('authInfo');
+  return transport.handleRequest(c.req.raw, authInfo ? { authInfo } : undefined);
 });
 
 // ─── Error handling ──────────────────────────────────────────────────────────
@@ -1942,9 +1947,15 @@ app.post('/api/ask', async (c) => {
     const message = error instanceof Error ? error.message : String(error);
     return c.json(jsonError(message, 400), 400);
   }
+  // Identity comes from the verified bearer token, never the request body
+  // (SQR-20 / ADR 0021): a body-supplied userId is discarded, and client-
+  // credentials tokens (no userId) simply get no personalization or
+  // per-user budget attribution on this read path.
   delete options.userId;
+  const tokenUserId = userIdFromAuthInfo(c.get('authInfo'));
+  if (tokenUserId) options.userId = tokenUserId;
   try {
-    await ensureAskBudgetAvailable(null);
+    await ensureAskBudgetAvailable(tokenUserId);
   } catch (error) {
     if (error instanceof LlmBudgetExceededError) return budgetExceededResponse(c, error);
     throw error;
