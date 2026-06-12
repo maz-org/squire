@@ -12,6 +12,7 @@
 
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 
+import type { CallerIdentity } from '../campaign/identity.ts';
 import type { Session } from '../db/repositories/types.ts';
 
 export {};
@@ -20,5 +21,7 @@ declare module 'hono' {
   interface ContextVariableMap {
     authInfo: AuthInfo | undefined;
     session: Session | undefined;
+    /** Set by requireCampaignUser() on campaign-state routes (SQR-21). */
+    callerIdentity: CallerIdentity | undefined;
   }
 }

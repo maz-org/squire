@@ -8,10 +8,18 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach LangSmith in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
-import { userIdFromAuthInfo } from './campaign/identity.ts';
+import {
+  identityFromSessionUser,
+  requireIdentityFromAuthInfo,
+  userIdFromAuthInfo,
+  UserIdentityRequiredError,
+  type CallerIdentity,
+} from './campaign/identity.ts';
+import * as CampaignService from './campaign/campaign-service.ts';
+import { VersionConflictError } from './db/repositories/types.ts';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
 import {
@@ -33,6 +41,8 @@ import {
   API_ASK_RATE_LIMIT_POLICY,
   API_CARD_SEARCH_RATE_LIMIT_POLICY,
   API_RULE_SEARCH_RATE_LIMIT_POLICY,
+  CAMPAIGN_READ_RATE_LIMIT_POLICY,
+  CAMPAIGN_WRITE_RATE_LIMIT_POLICY,
   GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY,
   GOOGLE_OAUTH_START_RATE_LIMIT_POLICY,
   getDefaultRateLimiter,
@@ -74,7 +84,8 @@ import {
   GoogleAuthError,
   resolveGoogleRedirectUri,
 } from './auth/google.ts';
-import { getSessionSecret } from './auth/session-middleware.ts';
+import { getSessionSecret, SESSION_COOKIE_NAME } from './auth/session-middleware.ts';
+import { CSRF_HEADER_NAME } from './web-ui/csrf.ts';
 import * as SessionRepository from './db/repositories/session-repository.ts';
 import { writeAuditEvent } from './auth/audit.ts';
 import {
@@ -1978,6 +1989,308 @@ app.post('/api/ask', async (c) => {
       });
     }
   });
+});
+
+// ─── Campaign state API (SQR-21, ADR 0021) ──────────────────────────────────
+//
+// Dual-channel auth: a user-bound OAuth bearer token (API/MCP clients) or the
+// web session cookie (browser fetch/HTMX, with a CSRF header on writes).
+// Client-credentials tokens are structurally rejected — campaign state always
+// needs a real user (SQR-20). Authorization itself (membership, roles, the
+// permission matrix) lives in campaign-service, not here.
+
+type CampaignAuthResult =
+  | { ok: true; identity: CallerIdentity }
+  | { ok: false; response: Response };
+
+function timingSafeEqualStrings(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+async function authenticateCampaignRequest(c: Context): Promise<CampaignAuthResult> {
+  if (c.req.header('authorization')) {
+    const authResult = await authenticateBearer(c);
+    if (!authResult.ok) return { ok: false, response: bearerAuthFailureResponse(c, authResult) };
+    c.set('authInfo', authResult.authInfo);
+    try {
+      return { ok: true, identity: requireIdentityFromAuthInfo(authResult.authInfo, 'rest') };
+    } catch (error) {
+      if (error instanceof UserIdentityRequiredError) {
+        writeSecurityLog({
+          event: 'campaign_client_token_rejected',
+          fields: {
+            route: c.req.path,
+            method: c.req.method,
+            client_id: authResult.authInfo.clientId,
+          },
+        });
+        return {
+          ok: false,
+          response: c.json({ error: error.code, message: error.message, status: 403 }, 403),
+        };
+      }
+      throw error;
+    }
+  }
+
+  const sessionId = await getSignedCookie(c, getSessionSecret(), SESSION_COOKIE_NAME);
+  if (!sessionId) {
+    if (sessionId === false) deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+    return { ok: false, response: c.json(jsonError('Authentication required', 401), 401) };
+  }
+  const session = await SessionRepository.findById(sessionId);
+  if (!session) {
+    deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
+    return { ok: false, response: c.json(jsonError('Session expired', 401), 401) };
+  }
+  c.set('session', session);
+
+  // Cookie-authenticated writes need the CSRF header (JSON API: header only,
+  // no form-field fallback — HTMX/fetch callers set `x-csrf-token`).
+  if (!['GET', 'HEAD'].includes(c.req.method)) {
+    const provided = c.req.header(CSRF_HEADER_NAME);
+    if (!provided || !timingSafeEqualStrings(provided, createCsrfToken(session.id))) {
+      return {
+        ok: false,
+        response: c.json(
+          jsonError('Security check failed. Refresh the page and try again.', 403),
+          403,
+        ),
+      };
+    }
+  }
+
+  return { ok: true, identity: identityFromSessionUser(session.userId) };
+}
+
+function requireCampaignUser(route: string): MiddlewareHandler {
+  return async (c, next) => {
+    const auth = await authenticateCampaignRequest(c);
+    if (!auth.ok) return auth.response;
+
+    const policy =
+      c.req.method === 'GET' || c.req.method === 'HEAD'
+        ? CAMPAIGN_READ_RATE_LIMIT_POLICY
+        : CAMPAIGN_WRITE_RATE_LIMIT_POLICY;
+    let decision: RateLimitDecision;
+    try {
+      decision = await getDefaultRateLimiter().consume({
+        policy,
+        identity: `user:${auth.identity.userId}`,
+      });
+    } catch (error) {
+      return apiRateLimitUnavailableResponse(c, error, route, policy);
+    }
+    if (!decision.allowed) {
+      return apiRateLimitedResponse(c, { decision, identityKind: 'user' }, route);
+    }
+
+    // Per-user JSON must never be cacheable — these routes also serve
+    // cookie-authenticated browser reads, where a shared cache would happily
+    // reuse one member's roster for another without this.
+    c.header('Cache-Control', 'no-store');
+    c.set('callerIdentity', auth.identity);
+    await next();
+  };
+}
+
+// `/*` also matches the bare path in Hono 4 — one registration per prefix,
+// or the rate limiter would consume twice per request.
+app.use('/api/campaigns/*', requireCampaignUser('/api/campaigns'));
+app.use('/api/invites/*', requireCampaignUser('/api/invites'));
+
+/** Map campaign-service errors to HTTP; rethrow anything unrecognized. */
+function campaignErrorResponse(c: Context, error: unknown): Response {
+  if (error instanceof CampaignService.CampaignNotFoundError) {
+    return c.json(jsonError('Not found', 404), 404);
+  }
+  if (error instanceof CampaignService.CampaignForbiddenError) {
+    return c.json({ error: error.code, message: error.message, status: 403 }, 403);
+  }
+  if (error instanceof CampaignService.NotAllowlistedError) {
+    return c.json({ error: error.code, message: error.message, status: 403 }, 403);
+  }
+  if (error instanceof CampaignService.OwnerCannotLeaveError) {
+    return c.json({ error: error.code, message: error.message, status: 409 }, 409);
+  }
+  if (error instanceof CampaignService.AlreadyInvitedError) {
+    return c.json({ error: error.code, message: error.message, status: 409 }, 409);
+  }
+  if (error instanceof CampaignService.UnsupportedGameError) {
+    return c.json({ error: error.code, message: error.message, status: 400 }, 400);
+  }
+  throw error;
+}
+
+/**
+ * Malformed ids return the same not-found as absent ids: a 400 on a
+ * non-UUID would distinguish "bad id" from "real id you cannot see"
+ * (ADR 0021 §Non-member access).
+ */
+function campaignRouteId(c: Context, param: string): string | null {
+  const value = c.req.param(param);
+  return value !== undefined && z.string().uuid().safeParse(value).success ? value : null;
+}
+
+const CreateCampaignRequestSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  game: z.string().trim().min(1).max(100),
+  modules: z.array(z.string().trim().min(1).max(100)).max(20).optional(),
+});
+
+const InviteRequestSchema = z.object({
+  email: z.string().trim().email().max(320),
+});
+
+const StateKeyArraySchema = z.array(z.string().trim().min(1).max(200)).max(1000);
+
+const UpdateCampaignRequestSchema = z
+  .object({
+    expectedVersion: z.number().int().min(0),
+    name: z.string().trim().min(1).max(200).optional(),
+    prosperity: z.number().int().min(0).max(100).optional(),
+    activeScenario: z.string().trim().min(1).max(200).nullable().optional(),
+    playedScenarios: StateKeyArraySchema.optional(),
+    drawnScenarios: StateKeyArraySchema.optional(),
+    unlockedClasses: StateKeyArraySchema.optional(),
+    unlockedItems: StateKeyArraySchema.optional(),
+    unlockedBuildings: StateKeyArraySchema.optional(),
+  })
+  .refine((body) => Object.keys(body).length > 1, {
+    message: 'At least one field to update is required',
+  });
+
+app.post('/api/campaigns', async (c) => {
+  const body = CreateCampaignRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    const campaign = await CampaignService.createCampaign(c.get('callerIdentity')!, body.data);
+    return c.json({ campaign }, 201);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.get('/api/campaigns', async (c) => {
+  const campaigns = await CampaignService.listMyCampaigns(c.get('callerIdentity')!);
+  return c.json({ campaigns });
+});
+
+app.get('/api/campaigns/:id', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    return c.json(await CampaignService.getCampaignDetail(c.get('callerIdentity')!, campaignId));
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.patch('/api/campaigns/:id', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  const body = UpdateCampaignRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  const identity = c.get('callerIdentity')!;
+  try {
+    const campaign = await CampaignService.updateSharedState(identity, campaignId, body.data);
+    return c.json({ campaign });
+  } catch (error) {
+    if (error instanceof VersionConflictError) {
+      // E3: 409 + the current state so the client can re-read and retry.
+      // The follow-up read can itself lose a race (campaign deleted, caller
+      // removed) — map that outcome instead of letting it become a 500.
+      try {
+        const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+        return c.json(
+          {
+            error: 'version_conflict',
+            currentVersion: detail.campaign.version,
+            campaign: detail.campaign,
+            status: 409,
+          },
+          409,
+        );
+      } catch (readError) {
+        return campaignErrorResponse(c, readError);
+      }
+    }
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.delete('/api/campaigns/:id', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await CampaignService.deleteCampaign(c.get('callerIdentity')!, campaignId);
+    return c.body(null, 204);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.post('/api/campaigns/:id/invites', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  const body = InviteRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    const member = await CampaignService.inviteMember(
+      c.get('callerIdentity')!,
+      campaignId,
+      body.data.email,
+    );
+    return c.json({ member }, 201);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.post('/api/campaigns/:id/leave', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await CampaignService.leaveCampaign(c.get('callerIdentity')!, campaignId);
+    return c.body(null, 204);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.delete('/api/campaigns/:id/members/:memberId', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  const memberId = campaignRouteId(c, 'memberId');
+  if (!campaignId || !memberId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await CampaignService.removeMember(c.get('callerIdentity')!, campaignId, memberId);
+    return c.body(null, 204);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.get('/api/invites', async (c) => {
+  try {
+    const invites = await CampaignService.listMyInvites(c.get('callerIdentity')!);
+    return c.json({ invites });
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.post('/api/invites/:memberId/accept', async (c) => {
+  const memberId = campaignRouteId(c, 'memberId');
+  if (!memberId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    const campaign = await CampaignService.acceptInvite(c.get('callerIdentity')!, memberId);
+    return c.json({ campaign });
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
 });
 
 // ─── Server startup ──────────────────────────────────────────────────────────

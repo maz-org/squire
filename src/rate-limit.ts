@@ -89,6 +89,20 @@ export const API_ASK_RATE_LIMIT_POLICY: RateLimitPolicy = {
   windowMs: 60 * 1000,
 };
 
+/** Campaign-state reads, per user (ADR 0018 inventory, eng decision E7). */
+export const CAMPAIGN_READ_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'campaign_read',
+  limit: 120,
+  windowMs: 60 * 1000,
+};
+
+/** Campaign-state writes, per user (ADR 0018 inventory, eng decision E7). */
+export const CAMPAIGN_WRITE_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'campaign_write',
+  limit: 60,
+  windowMs: 60 * 1000,
+};
+
 export const API_RULE_SEARCH_RATE_LIMIT_POLICY: RateLimitPolicy = {
   name: 'api_search_rules',
   limit: 60,
