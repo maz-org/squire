@@ -137,10 +137,13 @@ Mitigations, layered:
 
 ### Audit requirements
 
-Every mutation writes an audit row in the same transaction: actor, campaign,
-mutation type, before/after payload, channel, and a derived-availability
-snapshot when scenario state changed. Append-only; immutable; retained past
-entity deletion. The journal is a redacted projection that selects from audit
+Successful mutations write an audit row in the same transaction as the
+state change: actor, campaign, mutation type, before/after payload, channel,
+and a derived-availability snapshot when scenario state changed. **Failed and
+rejected attempts write their audit row outside the transaction** (on the
+outer connection, after rollback) so the evidence survives — mirroring the
+existing failure-audit pattern in `src/auth/provider.ts`. Append-only;
+immutable; retained past entity deletion. The journal is a redacted projection that selects from audit
 (one-directional coupling); private-tier values, failed writes, and
 operational metadata never appear in it.
 
