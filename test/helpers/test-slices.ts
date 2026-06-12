@@ -8,6 +8,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/auth-google.test.ts',
   'test/auth-provider.test.ts',
   'test/auth-restart.test.ts',
+  'test/campaign-repositories.test.ts',
   'test/conversation.test.ts',
   'test/cross-game-isolation.test.ts',
   'test/dev-login.test.ts',
@@ -22,6 +23,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/server-oauth.test.ts',
   'test/session-repository.test.ts',
   'test/tools.test.ts',
+  'test/unlock-graph-seed.test.ts',
   'test/vector-store.test.ts',
 ];
 
