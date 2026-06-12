@@ -206,6 +206,40 @@ export class VersionConflictError extends Error {
   }
 }
 
+// ─── Campaign audit log (ADR 0021 §Audit requirements) ──────────────────────
+
+export type CampaignAuditOutcome = 'success' | 'rejected';
+
+export interface CampaignAuditEntry {
+  id: string;
+  campaignId: string;
+  actorUserId: string;
+  mutationType: string;
+  channel: string;
+  entityType: string;
+  entityId: string | null;
+  payloadBefore: Record<string, unknown> | null;
+  payloadAfter: Record<string, unknown> | null;
+  availabilitySnapshot: Record<string, unknown> | null;
+  outcome: CampaignAuditOutcome;
+  failureReason: string | null;
+  createdAt: Date;
+}
+
+export interface CreateCampaignAuditInput {
+  campaignId: string;
+  actorUserId: string;
+  mutationType: string;
+  channel: string;
+  entityType: string;
+  entityId?: string | null;
+  payloadBefore?: Record<string, unknown> | null;
+  payloadAfter?: Record<string, unknown> | null;
+  availabilitySnapshot?: Record<string, unknown> | null;
+  outcome?: CampaignAuditOutcome;
+  failureReason?: string | null;
+}
+
 // ─── Conversation ───────────────────────────────────────────────────────────
 
 export interface Conversation {

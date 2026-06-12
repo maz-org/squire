@@ -18,7 +18,6 @@
  * the invite row still exists.
  */
 import { getAllowedEmails } from '../auth/google.ts';
-import { getDb } from '../db.ts';
 import * as CampaignRepository from '../db/repositories/campaign-repository.ts';
 import * as CampaignMemberRepository from '../db/repositories/campaign-member-repository.ts';
 import * as UserRepository from '../db/repositories/user-repository.ts';
@@ -30,7 +29,10 @@ import type {
   UpdateCampaignSharedStateInput,
 } from '../db/repositories/types.ts';
 import { normalizeGameId } from '../game.ts';
+import { auditedMutation } from './audit.ts';
+import { deriveAvailability } from './availability.ts';
 import type { CallerIdentity } from './identity.ts';
+import { loadModuleGraphs } from './unlock-graph-loader.ts';
 
 // ─── Typed errors (routes map these to HTTP shapes) ─────────────────────────
 
@@ -184,26 +186,36 @@ export async function createCampaign(
   identity: CallerIdentity,
   input: { name: string; game: string; modules?: string[] },
 ): Promise<Campaign> {
+  // Pre-campaign rejections (allowlist, bad game) have no campaign to audit
+  // against; they surface through the security log on the route layer.
   const user = await requireUser(identity.userId);
   assertAllowlisted(user.email);
 
   const game = normalizeGameId(input.game);
   if (!game) throw new UnsupportedGameError(input.game);
 
-  const { db } = getDb('server');
-  return db.transaction(async (tx) => {
-    const campaign = await CampaignRepository.create(tx, {
-      name: input.name,
-      game,
-      modules: input.modules,
-    });
-    await CampaignMemberRepository.createOwner(tx, {
-      campaignId: campaign.id,
-      userId: user.id,
-      email: user.email,
-    });
-    return campaign;
-  });
+  return auditedMutation(
+    identity,
+    { mutationType: 'campaign.create', entityType: 'campaign' },
+    async (tx) => {
+      const campaign = await CampaignRepository.create(tx, {
+        name: input.name,
+        game,
+        modules: input.modules,
+      });
+      await CampaignMemberRepository.createOwner(tx, {
+        campaignId: campaign.id,
+        userId: user.id,
+        email: user.email,
+      });
+      return {
+        result: campaign,
+        campaignId: campaign.id,
+        entityId: campaign.id,
+        payloadAfter: { name: campaign.name, game: campaign.game, modules: campaign.modules },
+      };
+    },
+  );
 }
 
 export async function listMyCampaigns(identity: CallerIdentity): Promise<Campaign[]> {
@@ -235,21 +247,71 @@ export async function updateSharedState(
   campaignId: string,
   input: UpdateCampaignSharedStateInput,
 ): Promise<Campaign> {
-  await requireActiveMember(campaignId, identity.userId);
-  const { db } = getDb('server');
-  return CampaignRepository.updateSharedState(db, campaignId, input);
+  return auditedMutation(
+    identity,
+    { campaignId, mutationType: 'campaign.update', entityType: 'campaign', entityId: campaignId },
+    async (tx) => {
+      await requireActiveMember(campaignId, identity.userId);
+      const before = await CampaignRepository.findById(campaignId);
+      if (!before) throw new CampaignNotFoundError();
+      const updated = await CampaignRepository.updateSharedState(tx, campaignId, input);
+
+      // Audit payloads carry only the touched fields, before and after.
+      const changedKeys = Object.keys(input).filter((key) => key !== 'expectedVersion');
+      const pick = (campaign: Campaign) =>
+        Object.fromEntries(
+          changedKeys.map((key) => [key, (campaign as unknown as Record<string, unknown>)[key]]),
+        );
+
+      // Scenario-state changes snapshot derived availability so journal
+      // entries stay true even after the unlock-graph seed evolves
+      // (constraint 10).
+      let availabilitySnapshot: Record<string, unknown> | null = null;
+      if (input.playedScenarios !== undefined || input.drawnScenarios !== undefined) {
+        const graphs = await loadModuleGraphs(updated.game, updated.modules);
+        const availability = deriveAvailability(
+          graphs,
+          new Set(updated.playedScenarios),
+          new Set(updated.drawnScenarios),
+        );
+        availabilitySnapshot = {
+          statuses: Object.fromEntries(availability.statuses),
+          unknownKeys: availability.unknownKeys,
+          hazardWarnings: availability.hazardWarnings,
+        };
+      }
+
+      return {
+        result: updated,
+        payloadBefore: pick(before),
+        payloadAfter: pick(updated),
+        availabilitySnapshot,
+      };
+    },
+  );
 }
 
 /** Owner-only; cascades domain rows while audit rows survive (ADR 0021). */
 export async function deleteCampaign(identity: CallerIdentity, campaignId: string): Promise<void> {
-  const member = await requireActiveMember(campaignId, identity.userId);
-  if (member.role !== 'owner') {
-    throw new CampaignForbiddenError('Only the owner can delete a campaign');
-  }
-  // TODO(SQR-279): destructive — route through propose→confirm once the
-  // pending-mutations mechanism exists.
-  const { db } = getDb('server');
-  await CampaignRepository.remove(db, campaignId);
+  await auditedMutation(
+    identity,
+    { campaignId, mutationType: 'campaign.delete', entityType: 'campaign', entityId: campaignId },
+    async (tx) => {
+      const member = await requireActiveMember(campaignId, identity.userId);
+      if (member.role !== 'owner') {
+        throw new CampaignForbiddenError('Only the owner can delete a campaign');
+      }
+      const before = await CampaignRepository.findById(campaignId);
+      if (!before) throw new CampaignNotFoundError();
+      // TODO(SQR-279): destructive — route through propose→confirm once the
+      // pending-mutations mechanism exists.
+      await CampaignRepository.remove(tx, campaignId);
+      return {
+        result: undefined,
+        payloadBefore: { name: before.name, game: before.game, modules: before.modules },
+      };
+    },
+  );
 }
 
 // ─── Membership ──────────────────────────────────────────────────────────────
@@ -259,46 +321,57 @@ export async function inviteMember(
   campaignId: string,
   rawEmail: string,
 ): Promise<RosterMember> {
-  const actor = await requireActiveMember(campaignId, identity.userId);
-  if (actor.role !== 'owner') {
-    throw new CampaignForbiddenError('Only the owner can invite members');
-  }
+  const invite = await auditedMutation(
+    identity,
+    { campaignId, mutationType: 'member.invite', entityType: 'member' },
+    async (tx) => {
+      const actor = await requireActiveMember(campaignId, identity.userId);
+      if (actor.role !== 'owner') {
+        throw new CampaignForbiddenError('Only the owner can invite members');
+      }
 
-  const email = rawEmail.trim().toLowerCase();
-  assertAllowlisted(email);
+      const email = rawEmail.trim().toLowerCase();
+      assertAllowlisted(email);
 
-  const members = await CampaignMemberRepository.listMembers(campaignId);
-  const existing = members.find((m) => m.inviteEmail.toLowerCase() === email);
-  const { db } = getDb('server');
+      const members = await CampaignMemberRepository.listMembers(campaignId);
+      const existing = members.find((m) => m.inviteEmail.toLowerCase() === email);
 
-  let invite: CampaignMember;
-  if (!existing) {
-    try {
-      invite = await CampaignMemberRepository.createInvite(db, {
-        campaignId,
-        inviteEmail: email,
-        invitedByUserId: identity.userId,
-      });
-    } catch (error) {
-      // Read-then-write race: a concurrent invite for the same email won
-      // the (campaign_id, invite_email) unique index. Same outcome as
-      // having seen the row up front.
-      if (isUniqueViolation(error)) throw new AlreadyInvitedError('invited');
-      throw error;
-    }
-  } else if (existing.status === 'departed') {
-    // Rejoin keeps the user binding so character ownership survives; the
-    // accept path still runs (consent + join-time allowlist re-check).
-    const revived = await CampaignMemberRepository.reinviteDeparted(
-      db,
-      existing.id,
-      identity.userId,
-    );
-    if (!revived) throw new AlreadyInvitedError(existing.status);
-    invite = revived;
-  } else {
-    throw new AlreadyInvitedError(existing.status);
-  }
+      let row: CampaignMember;
+      if (!existing) {
+        try {
+          row = await CampaignMemberRepository.createInvite(tx, {
+            campaignId,
+            inviteEmail: email,
+            invitedByUserId: identity.userId,
+          });
+        } catch (error) {
+          // Read-then-write race: a concurrent invite for the same email won
+          // the (campaign_id, invite_email) unique index. Same outcome as
+          // having seen the row up front.
+          if (isUniqueViolation(error)) throw new AlreadyInvitedError('invited');
+          throw error;
+        }
+      } else if (existing.status === 'departed') {
+        // Rejoin keeps the user binding so character ownership survives; the
+        // accept path still runs (consent + join-time allowlist re-check).
+        const revived = await CampaignMemberRepository.reinviteDeparted(
+          tx,
+          existing.id,
+          identity.userId,
+        );
+        if (!revived) throw new AlreadyInvitedError(existing.status);
+        row = revived;
+      } else {
+        throw new AlreadyInvitedError(existing.status);
+      }
+
+      return {
+        result: row,
+        entityId: row.id,
+        payloadAfter: { email: row.inviteEmail, status: row.status },
+      };
+    },
+  );
 
   const user = invite.userId ? await UserRepository.findById(invite.userId) : null;
   return {
@@ -338,28 +411,49 @@ export async function listMyInvites(identity: CallerIdentity): Promise<PendingIn
 export async function acceptInvite(identity: CallerIdentity, memberId: string): Promise<Campaign> {
   const user = await requireUser(identity.userId);
   // Join-time allowlist re-check: a lapsed entry blocks the join even though
-  // the invite row exists (ADR 0021 §Invites).
+  // the invite row exists (ADR 0021 §Invites). Rejections before the invite
+  // resolves have no campaign to audit against (see audit.ts header).
   assertAllowlisted(user.email);
 
-  const { db } = getDb('server');
-  const activated = await CampaignMemberRepository.activateInvite(db, memberId, {
-    userId: user.id,
-    email: user.email.toLowerCase(),
-  });
-  // Wrong member id, someone else's invite, or already accepted — all the
-  // same indistinguishable not-found.
-  if (!activated) throw new CampaignNotFoundError();
+  return auditedMutation(
+    identity,
+    { mutationType: 'member.join', entityType: 'member', entityId: memberId },
+    async (tx) => {
+      const activated = await CampaignMemberRepository.activateInvite(tx, memberId, {
+        userId: user.id,
+        email: user.email.toLowerCase(),
+      });
+      // Wrong member id, someone else's invite, or already accepted — all the
+      // same indistinguishable not-found.
+      if (!activated) throw new CampaignNotFoundError();
 
-  const campaign = await CampaignRepository.findById(activated.campaignId);
-  if (!campaign) throw new CampaignNotFoundError();
-  return campaign;
+      const campaign = await CampaignRepository.findById(activated.campaignId);
+      if (!campaign) throw new CampaignNotFoundError();
+      return {
+        result: campaign,
+        campaignId: campaign.id,
+        payloadAfter: { email: activated.inviteEmail, status: activated.status },
+      };
+    },
+  );
 }
 
 export async function leaveCampaign(identity: CallerIdentity, campaignId: string): Promise<void> {
-  const member = await requireActiveMember(campaignId, identity.userId);
-  if (member.role === 'owner') throw new OwnerCannotLeaveError();
-  const { db } = getDb('server');
-  await CampaignMemberRepository.markDeparted(db, member.id);
+  await auditedMutation(
+    identity,
+    { campaignId, mutationType: 'member.leave', entityType: 'member' },
+    async (tx) => {
+      const member = await requireActiveMember(campaignId, identity.userId);
+      if (member.role === 'owner') throw new OwnerCannotLeaveError();
+      await CampaignMemberRepository.markDeparted(tx, member.id);
+      return {
+        result: undefined,
+        entityId: member.id,
+        payloadBefore: { email: member.inviteEmail, status: member.status },
+        payloadAfter: { email: member.inviteEmail, status: 'departed' },
+      };
+    },
+  );
 }
 
 export async function removeMember(
@@ -367,22 +461,39 @@ export async function removeMember(
   campaignId: string,
   targetMemberId: string,
 ): Promise<void> {
-  const actor = await requireActiveMember(campaignId, identity.userId);
-  if (actor.role !== 'owner') {
-    throw new CampaignForbiddenError('Only the owner can remove members');
-  }
-  if (actor.id === targetMemberId) {
-    throw new CampaignForbiddenError('Owners cannot remove themselves; delete the campaign');
-  }
+  await auditedMutation(
+    identity,
+    {
+      campaignId,
+      mutationType: 'member.remove',
+      entityType: 'member',
+      entityId: targetMemberId,
+    },
+    async (tx) => {
+      const actor = await requireActiveMember(campaignId, identity.userId);
+      if (actor.role !== 'owner') {
+        throw new CampaignForbiddenError('Only the owner can remove members');
+      }
+      if (actor.id === targetMemberId) {
+        throw new CampaignForbiddenError('Owners cannot remove themselves; delete the campaign');
+      }
 
-  const members = await CampaignMemberRepository.listMembers(campaignId);
-  const target = members.find((m) => m.id === targetMemberId);
-  // A member id from another campaign is indistinguishable from absent.
-  if (!target) throw new CampaignNotFoundError();
-  if (target.status === 'departed') return; // idempotent
+      const members = await CampaignMemberRepository.listMembers(campaignId);
+      const target = members.find((m) => m.id === targetMemberId);
+      // A member id from another campaign is indistinguishable from absent.
+      if (!target) throw new CampaignNotFoundError();
+      if (target.status === 'departed') {
+        return { result: undefined, payloadBefore: { status: 'departed' } }; // idempotent
+      }
 
-  // TODO(SQR-279): destructive — route through propose→confirm once the
-  // pending-mutations mechanism exists.
-  const { db } = getDb('server');
-  await CampaignMemberRepository.markDeparted(db, target.id);
+      // TODO(SQR-279): destructive — route through propose→confirm once the
+      // pending-mutations mechanism exists.
+      await CampaignMemberRepository.markDeparted(tx, target.id);
+      return {
+        result: undefined,
+        payloadBefore: { email: target.inviteEmail, status: target.status },
+        payloadAfter: { email: target.inviteEmail, status: 'departed' },
+      };
+    },
+  );
 }

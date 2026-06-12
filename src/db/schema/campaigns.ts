@@ -237,6 +237,13 @@ export const campaignAuditLog = pgTable(
     availabilitySnapshot: jsonb('availability_snapshot')
       .$type<Record<string, unknown> | null>()
       .default(null),
+    /**
+     * 'success' rows commit inside the mutation's transaction; 'rejected'
+     * rows are written on the outer connection after the denial/rollback so
+     * the evidence survives (ADR 0021 §Audit requirements).
+     */
+    outcome: text('outcome').notNull().default('success'),
+    failureReason: text('failure_reason'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('campaign_audit_log_campaign_created_idx').on(t.campaignId, t.createdAt)],
