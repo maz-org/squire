@@ -110,6 +110,11 @@ import {
   renderNotInvitedPage,
 } from './web-ui/layout.ts';
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
+import {
+  renderCampaignDashboardContent,
+  renderCampaignListContent,
+  type CampaignStripState,
+} from './web-ui/campaign-pages.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
 import { getFaviconSvg } from './web-ui/favicon.ts';
 import {
@@ -601,7 +606,10 @@ app.get('/', requirePageSession(), async (c) => {
     c.header('Cache-Control', 'no-store');
     c.header('Vary', 'Cookie');
     return c.html(
-      await renderHomePage(session, createCsrfToken(session.id), { conversationHistory }),
+      await renderHomePage(session, createCsrfToken(session.id), {
+        conversationHistory,
+        campaignStrip: await campaignStripFor(session.userId),
+      }),
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -626,6 +634,80 @@ app.get('/styleguide/markdown', requirePageSession(), async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.html(await renderMarkdownStyleguidePage(session, createCsrfToken(session.id)));
+});
+
+// ─── Campaign pages + context strip (SQR-275) ───────────────────────────────
+
+/**
+ * The active campaign for the header strip: the most recently updated
+ * membership (listCampaignsForUser orders newest first). Null = signed-in
+ * user with no campaigns → the NO CAMPAIGN affordance. There is no
+ * persisted per-user "active campaign" selection in v1.
+ */
+async function campaignStripFor(
+  userId: string,
+  preferCampaignId?: string,
+): Promise<CampaignStripState | null> {
+  const mine = await CampaignService.listMyCampaigns(identityFromSessionUser(userId));
+  const active =
+    (preferCampaignId && mine.find((campaign) => campaign.id === preferCampaignId)) || mine[0];
+  if (!active) return null;
+  return { campaignId: active.id, campaignName: active.name, game: active.game };
+}
+
+app.use('/campaigns', requirePageSession());
+app.use('/campaigns/*', requirePageSession());
+
+app.get('/campaigns', async (c) => {
+  const session = c.get('session')!;
+  const campaigns = await CampaignService.listMyCampaigns(identityFromSessionUser(session.userId));
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.html(
+    await layoutShell({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      showChatChrome: false,
+      showRail: false,
+      campaignStrip: campaigns[0]
+        ? { campaignId: campaigns[0].id, campaignName: campaigns[0].name, game: campaigns[0].game }
+        : null,
+      mainContent: renderCampaignListContent(campaigns),
+    }),
+  );
+});
+
+app.get('/campaigns/:id', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  if (!campaignId) return c.notFound();
+  try {
+    const detail = await CampaignService.getCampaignDetail(
+      identityFromSessionUser(session.userId),
+      campaignId,
+    );
+    return c.html(
+      await layoutShell({
+        session,
+        csrfToken: createCsrfToken(session.id),
+        showChatChrome: false,
+        showRail: false,
+        campaignStrip: {
+          campaignId: detail.campaign.id,
+          campaignName: detail.campaign.name,
+          game: detail.campaign.game,
+        },
+        campaignStripProminent: true,
+        mainContent: renderCampaignDashboardContent(detail),
+      }),
+    );
+  } catch (error) {
+    // Non-member and absent are the same 404 page (ADR 0021).
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
 });
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────
@@ -1015,13 +1097,18 @@ function conversationPath(conversationId: string, historyQuery?: string): string
   return `/chat/${conversationId}?${new URLSearchParams({ historyQuery }).toString()}`;
 }
 
-async function readQuestionForm(
-  c: Context,
-): Promise<{ question: string; idempotencyKey?: string; game?: string; historyQuery?: string }> {
+async function readQuestionForm(c: Context): Promise<{
+  question: string;
+  idempotencyKey?: string;
+  game?: string;
+  campaignId?: string;
+  historyQuery?: string;
+}> {
   const form = await c.req.formData();
   const questionValue = form.get('question');
   const idempotencyValue = form.get('idempotencyKey');
   const gameValue = form.get('game');
+  const campaignIdValue = form.get('campaignId');
   const historyQueryValue = form.get('historyQuery');
 
   return {
@@ -1032,6 +1119,10 @@ async function readQuestionForm(
         : undefined,
     game:
       typeof gameValue === 'string' && gameValue.trim().length > 0 ? gameValue.trim() : undefined,
+    campaignId:
+      typeof campaignIdValue === 'string' && z.string().uuid().safeParse(campaignIdValue).success
+        ? campaignIdValue
+        : undefined,
     historyQuery:
       typeof historyQueryValue === 'string' && historyQueryValue.trim().length > 0
         ? historyQueryValue.trim()
@@ -1132,6 +1223,7 @@ app.get('/chat/:conversationId', async (c) => {
       messages: loaded.messages,
       pendingStreamUrls,
       conversationHistory,
+      campaignStrip: await campaignStripFor(session.userId),
     }),
   );
 });
@@ -1144,10 +1236,34 @@ app.get('/chat/:conversationId/messages/:messageId', async (c) => {
   return c.redirect(`/chat/${conversationId}`, 301);
 });
 
+/**
+ * Per-message campaign binding (E6/SQR-275): the hidden campaignId from the
+ * strip binds the turn only when the sender is an active member — anything
+ * else silently unbinds (same no-identity-no-state posture as /api/ask).
+ */
+async function chatCampaignBinding(
+  userId: string,
+  campaignId: string | undefined,
+): Promise<string | null> {
+  if (!campaignId) return null;
+  try {
+    await CampaignService.requireActiveMember(campaignId, userId);
+    return campaignId;
+  } catch {
+    return null;
+  }
+}
+
 app.post('/chat', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const { question, idempotencyKey, game: rawGame, historyQuery } = await readQuestionForm(c);
+  const {
+    question,
+    idempotencyKey,
+    game: rawGame,
+    campaignId: rawCampaignId,
+    historyQuery,
+  } = await readQuestionForm(c);
 
   if (!question) return badChatRequest(c, 'Question is required');
   if (!idempotencyKey) return badChatRequest(c, 'Idempotency key is required');
@@ -1160,7 +1276,9 @@ app.post('/chat', async (c) => {
   }
 
   if (isHtmxRequest(c)) {
+    const boundCampaignId = await chatCampaignBinding(session.userId, rawCampaignId);
     const pending = await createPendingConversation({
+      campaignId: boundCampaignId,
       userId: session.userId,
       question,
       idempotencyKey,
@@ -1224,6 +1342,7 @@ app.post('/chat', async (c) => {
     question,
     idempotencyKey,
     game,
+    campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
   });
 
@@ -1235,7 +1354,12 @@ app.post('/chat', async (c) => {
 app.post('/chat/:conversationId/messages', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const { question, game: rawGame, historyQuery } = await readQuestionForm(c);
+  const {
+    question,
+    game: rawGame,
+    campaignId: rawCampaignId,
+    historyQuery,
+  } = await readQuestionForm(c);
   if (!question) return badChatRequest(c, 'Question is required');
   let game: string | undefined;
   try {
@@ -1251,6 +1375,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
       userId: session.userId,
       question,
       game,
+      campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     });
     if (!pending?.currentUserMessage) return c.notFound();
 
@@ -1282,6 +1407,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
     userId: session.userId,
     question,
     game,
+    campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
   });
   if (!conversation) return c.notFound();

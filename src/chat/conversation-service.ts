@@ -430,6 +430,7 @@ async function createConversationTurn(input: {
   question: string;
   idempotencyKey: string;
   game?: string;
+  campaignId?: string | null;
 }): Promise<PendingConversationTurn> {
   const result = await getDb('server').db.transaction(async (tx) => {
     const existingOrCreated = await ConversationRepository.getOrCreateByIdempotencyKey(tx, {
@@ -449,6 +450,7 @@ async function createConversationTurn(input: {
       role: 'user',
       content: input.question,
       game: input.game ?? null,
+      campaignId: input.campaignId ?? null,
     });
     await ConversationRepository.touchLastMessageAt(
       tx,
@@ -476,6 +478,7 @@ export async function createPendingConversation(input: {
   question: string;
   idempotencyKey: string;
   game?: string;
+  campaignId?: string | null;
 }): Promise<PendingConversationTurn> {
   return createConversationTurn(input);
 }
@@ -581,6 +584,7 @@ export async function startConversation(input: {
   question: string;
   idempotencyKey: string;
   game?: string;
+  campaignId?: string | null;
   requestId?: string;
 }): Promise<Conversation> {
   const result = await createConversationTurn(input);
@@ -606,6 +610,7 @@ export async function appendMessage(input: {
   userId: string;
   question: string;
   game?: string;
+  campaignId?: string | null;
   requestId?: string;
 }): Promise<Conversation | null> {
   const result = await createPendingFollowUp(input);
