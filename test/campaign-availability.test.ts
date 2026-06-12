@@ -12,7 +12,11 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { deriveAvailability, type ModuleGraph } from '../src/campaign/availability.ts';
+import {
+  availabilityShiftLines,
+  deriveAvailability,
+  type ModuleGraph,
+} from '../src/campaign/availability.ts';
 import { readUnlockGraphExtracts } from '../src/seed/seed-unlock-graphs.ts';
 
 function graph(
@@ -173,5 +177,58 @@ describe('deriveAvailability', () => {
     );
     expect(unknownKeys).toEqual([]);
     expect(Object.fromEntries([...statuses.entries()].sort())).toEqual(fixture.expectedStatuses);
+  });
+});
+
+describe('availabilityShiftLines (SQR-283 preview narration)', () => {
+  const g = graph({
+    scenarios: [
+      scenario('1'),
+      scenario('19', { prereqsAll: ['14'] }),
+      scenario('43', { prereqsAll: ['14'] }),
+      scenario('14'),
+      scenario('27'),
+      scenario('10', { mutex: ['27'] }),
+      scenario('21', { lockedIf: ['27'] }),
+    ],
+  });
+
+  it('narrates opens and permanent closes for a play', () => {
+    const lines = availabilityShiftLines(
+      [g],
+      { playedScenarios: ['test:1'], drawnScenarios: [] },
+      { playedScenarios: ['test:1', 'test:14', 'test:27'] },
+    );
+    expect(lines).toEqual(['OPENS → 19, 43', 'CLOSES PERMANENTLY → 10, 21']);
+  });
+
+  it('narrates reopens and re-locks for an un-play', () => {
+    const lines = availabilityShiftLines(
+      [g],
+      { playedScenarios: ['test:14', 'test:27'], drawnScenarios: [] },
+      { playedScenarios: ['test:14'] },
+    );
+    expect(lines).toEqual(['REOPENS → 10, 21']);
+    const relock = availabilityShiftLines(
+      [g],
+      { playedScenarios: ['test:14'], drawnScenarios: [] },
+      { playedScenarios: [] },
+    );
+    expect(relock).toEqual(['LOCKS AGAIN → 19, 43']);
+  });
+
+  it('stays silent without graphs or scenario-state changes', () => {
+    expect(
+      availabilityShiftLines(
+        [],
+        { playedScenarios: ['test:1'], drawnScenarios: [] },
+        {
+          playedScenarios: [],
+        },
+      ),
+    ).toEqual([]);
+    expect(
+      availabilityShiftLines([g], { playedScenarios: ['test:1'], drawnScenarios: [] }, {}),
+    ).toEqual([]);
   });
 });

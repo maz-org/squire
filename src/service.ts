@@ -549,6 +549,8 @@ export interface AgentStreamEventMap {
     campaignId: string;
     mutation: unknown;
     expiresAt: string;
+    /** Resolved ledger preview lines (names + derived consequences). */
+    lines?: string[];
   };
   /** Diagnostic data for traces/logs. Never browser-visible. */
   debug: { message: string; data?: unknown };

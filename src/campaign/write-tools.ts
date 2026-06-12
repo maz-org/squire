@@ -18,10 +18,14 @@ import { z } from 'zod';
 import { writeSecurityLog } from '../security-log.ts';
 import { CAMPAIGN_WRITE_RATE_LIMIT_POLICY, getDefaultRateLimiter } from '../rate-limit.ts';
 import { VersionConflictError } from '../db/repositories/types.ts';
+import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
+import { availabilityShiftLines } from './availability.ts';
 import * as CampaignService from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from './identity.ts';
 import * as PendingMutations from './pending-mutations.ts';
+import type { StagedMutation } from './pending-mutations.ts';
+import { loadModuleGraphs } from './unlock-graph-loader.ts';
 
 export interface WriteToolError {
   ok: false;
@@ -225,10 +229,67 @@ function proposalView(proposal: PendingMutations.PendingProposal) {
   };
 }
 
+/**
+ * Ledger preview lines for a staged mutation (SQR-283): one line per batch
+ * member with character names resolved, plus derived availability
+ * consequences ("OPENS → 19, 43; CLOSES PERMANENTLY → ...") for scenario
+ * state changes. Best-effort — a preview failure must never block staging,
+ * so resolution errors fall back to the generic vocabulary.
+ */
+export async function proposalPreviewLines(
+  identity: CallerIdentity,
+  campaignId: string,
+  mutation: StagedMutation,
+): Promise<string[]> {
+  const members = mutation.type === 'batch' ? mutation.mutations : [mutation];
+  const lines: string[] = [];
+  for (const member of members) {
+    if (
+      member.type === 'character.update' ||
+      member.type === 'character.retire' ||
+      member.type === 'character.delete'
+    ) {
+      try {
+        const detail = await CharacterService.getCharacterDetail(identity, member.characterId);
+        const name = detail.character.name.toUpperCase();
+        if (member.type === 'character.update') {
+          lines.push(`${name} → ${characterPatchSummary(member.patch)}`);
+        } else if (member.type === 'character.retire') {
+          lines.push(`${name} · RETIRE`);
+        } else {
+          lines.push(`${name} · DELETE`);
+        }
+        continue;
+      } catch {
+        // Name resolution is preview garnish — generic line below.
+      }
+    }
+    lines.push(...stagedMutationLines(member));
+  }
+
+  const update = members.find(
+    (member): member is Extract<typeof member, { type: 'campaign.update' }> =>
+      member.type === 'campaign.update',
+  );
+  if (
+    update &&
+    (update.patch.playedScenarios !== undefined || update.patch.drawnScenarios !== undefined)
+  ) {
+    try {
+      const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+      const graphs = await loadModuleGraphs(detail.campaign.game, detail.campaign.modules);
+      lines.push(...availabilityShiftLines(graphs, detail.campaign, update.patch));
+    } catch {
+      // The graph is advisory (E9) — staging proceeds without consequences.
+    }
+  }
+  return lines;
+}
+
 export async function proposeStateChange(
   userId: string | undefined,
   rawInput: unknown,
-): Promise<WriteToolResult<{ proposal: unknown; hint: string }>> {
+): Promise<WriteToolResult<{ proposal: unknown; preview: string[]; hint: string }>> {
   const identity = await guard(userId);
   if ('ok' in identity) return identity;
   const parsed = ProposeStateChangeInputSchema.safeParse(rawInput);
@@ -242,6 +303,7 @@ export async function proposeStateChange(
     return {
       ok: true,
       proposal: proposalView(proposal),
+      preview: await proposalPreviewLines(identity, input.campaignId, proposal.mutation),
       hint: 'Show the user exactly what this changes; call confirm_state_change ONLY after they explicitly agree.',
     };
   } catch (error) {

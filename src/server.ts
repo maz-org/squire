@@ -120,6 +120,7 @@ import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
 import { renderCampaignJournal } from './web-ui/campaign-journal.ts';
 import { listJournal } from './campaign/journal.ts';
 import * as PendingMutations from './campaign/pending-mutations.ts';
+import * as WriteTools from './campaign/write-tools.ts';
 import { ProposalStateError } from './campaign/pending-mutations.ts';
 import { deriveAvailability } from './campaign/availability.ts';
 import { loadModuleGraphs } from './campaign/unlock-graph-loader.ts';
@@ -1904,6 +1905,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             campaignId?: unknown;
             mutation?: unknown;
             expiresAt?: unknown;
+            lines?: unknown;
           };
           if (
             typeof payload.proposalId !== 'string' ||
@@ -1912,11 +1914,16 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           ) {
             return;
           }
+          // Prefer the propose-time resolved lines (character names, derived
+          // availability consequences); fall back to the generic vocabulary.
+          const resolvedLines = Array.isArray(payload.lines)
+            ? payload.lines.filter((line): line is string => typeof line === 'string')
+            : [];
           await persistAndWrite('proposal-staged', {
             id: `proposal-${payload.proposalId}`,
             proposalId: payload.proposalId,
             campaignId: payload.campaignId,
-            lines: stagedMutationLines(payload.mutation),
+            lines: resolvedLines.length > 0 ? resolvedLines : stagedMutationLines(payload.mutation),
             expiresAt: payload.expiresAt,
           });
           return;
@@ -2695,12 +2702,12 @@ app.post('/api/campaigns/:id/proposals', async (c) => {
   const body = ProposalRequestSchema.safeParse(await c.req.json().catch(() => null));
   if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
   try {
-    const proposal = await PendingMutations.propose(
-      c.get('callerIdentity')!,
-      campaignId,
-      body.data.mutation,
-    );
-    return c.json({ proposal }, 201);
+    const identity = c.get('callerIdentity')!;
+    const proposal = await PendingMutations.propose(identity, campaignId, body.data.mutation);
+    // Headless parity (SQR-283): REST clients get the same resolved preview
+    // lines the chat confirmation block shows.
+    const preview = await WriteTools.proposalPreviewLines(identity, campaignId, proposal.mutation);
+    return c.json({ proposal, preview }, 201);
   } catch (error) {
     return campaignErrorResponse(c, error);
   }

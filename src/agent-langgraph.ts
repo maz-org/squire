@@ -585,6 +585,7 @@ function proposalEventFromToolResult(
     const parsed = JSON.parse(result.content) as {
       ok?: unknown;
       proposal?: { id?: unknown; mutation?: unknown; expiresAt?: unknown };
+      preview?: unknown;
     };
     if (parsed.ok !== true || !parsed.proposal) return undefined;
     const { id, mutation, expiresAt } = parsed.proposal;
@@ -592,7 +593,16 @@ function proposalEventFromToolResult(
     if (typeof id !== 'string' || typeof expiresAt !== 'string' || campaignId.length === 0) {
       return undefined;
     }
-    return { proposalId: id, campaignId, mutation, expiresAt };
+    const lines = Array.isArray(parsed.preview)
+      ? parsed.preview.filter((line): line is string => typeof line === 'string')
+      : undefined;
+    return {
+      proposalId: id,
+      campaignId,
+      mutation,
+      expiresAt,
+      ...(lines && lines.length > 0 ? { lines } : {}),
+    };
   } catch {
     return undefined;
   }

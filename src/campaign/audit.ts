@@ -13,6 +13,7 @@
  * rows by campaign — and stay visible through the security log instead.
  */
 import { getDb } from '../db.ts';
+import type { Db } from '../db.ts';
 import type { DbOrTx } from '../auth/audit.ts';
 import * as CampaignAuditRepository from '../db/repositories/campaign-audit-repository.ts';
 import type { CallerIdentity } from './identity.ts';
@@ -75,10 +76,18 @@ export async function auditedMutation<T>(
   identity: CallerIdentity,
   meta: AuditedMutationMeta,
   fn: (tx: DbOrTx) => Promise<AuditedMutationOutcome<T>>,
+  /**
+   * Batch execution (SQR-283): when a confirmed batch supplies its outer
+   * transaction, the mutation+audit pair runs as a SAVEPOINT inside it, so
+   * the whole batch commits or unwinds together. Failure evidence still
+   * lands via `recordRejected` on the outer connection.
+   */
+  runIn?: DbOrTx,
 ): Promise<T> {
   const { db } = getDb('server');
+  const runner = (runIn ?? db) as Db;
   try {
-    return await db.transaction(async (tx) => {
+    return await runner.transaction(async (tx) => {
       const outcome = await fn(tx);
       const campaignId = outcome.campaignId ?? meta.campaignId;
       if (!campaignId) {

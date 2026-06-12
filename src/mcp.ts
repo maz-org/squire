@@ -271,7 +271,7 @@ export function createMcpServer(): McpServer {
     'propose_state_change',
     {
       description:
-        'Stage a DESTRUCTIVE campaign mutation as a pending proposal: campaign.delete, member.remove {memberId}, campaign.update {patch} (un-play or prosperity decrease), character.delete {characterId}, or character.retire {characterId}. Show the user exactly what changes and call confirm_state_change ONLY after they explicitly agree.',
+        'Stage a campaign mutation as a pending proposal: campaign.delete, member.remove {memberId}, campaign.update {patch} (un-play or prosperity decrease), character.delete {characterId}, character.retire {characterId}, character.update {characterId, patch}, or a session-end batch {type:"batch", mutations:[...]} applied atomically. Show the user the preview and call confirm_state_change ONLY after they explicitly agree.',
       inputSchema: {
         campaignId: z.string().describe('Campaign UUID'),
         mutation: z

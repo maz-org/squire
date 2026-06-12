@@ -29,6 +29,7 @@ import type {
   UpdateCampaignSharedStateInput,
 } from '../db/repositories/types.ts';
 import { normalizeGameId } from '../game.ts';
+import type { DbOrTx } from '../auth/audit.ts';
 import { auditedMutation } from './audit.ts';
 import { deriveAvailability } from './availability.ts';
 import type { CallerIdentity } from './identity.ts';
@@ -203,6 +204,13 @@ async function rosterFor(campaignId: string): Promise<RosterMember[]> {
  */
 export interface ConfirmedExecution {
   confirmedProposalId?: string;
+  /**
+   * Outer batch transaction (SQR-283). Present only while a confirmed batch
+   * executes its members atomically — the service's audited mutation runs
+   * as a savepoint inside it. Like the confirmed flag, this never crosses a
+   * request boundary.
+   */
+  tx?: DbOrTx;
 }
 
 // ─── Campaign lifecycle ──────────────────────────────────────────────────────
@@ -327,6 +335,7 @@ export async function updateSharedState(
         availabilitySnapshot,
       };
     },
+    confirmed.tx,
   );
 }
 
@@ -353,6 +362,7 @@ export async function deleteCampaign(
         payloadBefore: { name: before.name, game: before.game, modules: before.modules },
       };
     },
+    confirmed.tx,
   );
 }
 
@@ -537,5 +547,6 @@ export async function removeMember(
         payloadAfter: { email: target.inviteEmail, status: 'departed' },
       };
     },
+    confirmed.tx,
   );
 }
