@@ -70,7 +70,9 @@ function hasPrivateFields(input: {
   battleGoals?: string | null;
   privateNotes?: string | null;
 }): boolean {
-  return input.personalQuest != null || input.battleGoals != null || input.privateNotes != null;
+  // Key presence, not value: even an explicit null is an attempt to record
+  // a private-tier field on a placeholder (ADR 0021).
+  return 'personalQuest' in input || 'battleGoals' in input || 'privateNotes' in input;
 }
 
 /**
@@ -151,10 +153,17 @@ export async function getCharacterDetail(
   characterId: string,
 ): Promise<CharacterDetail> {
   const visible = await requireVisibleCharacter(identity, characterId);
-  const own = visible.ownerUserId === identity.userId;
-  const character = own
+  let own = visible.ownerUserId === identity.userId;
+  let character: Character | MemberVisibleCharacter | null = own
     ? await CharacterRepository.findOwnedById(characterId, identity.userId)
     : visible;
+  if (!character) {
+    // Ownership moved between the two reads (a placeholder claim won the
+    // race). The character is still visible — downgrade to the shared
+    // projection instead of a false 404.
+    character = await CharacterRepository.findMemberVisibleById(characterId);
+    own = false;
+  }
   if (!character) throw new CampaignNotFoundError();
   return {
     character,
