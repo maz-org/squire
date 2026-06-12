@@ -8,7 +8,7 @@
  * joining binds the user and flips status to 'active'. Leaving flips to
  * 'departed' so audit/journal attribution survives (ADR 0021 §Leave).
  */
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
@@ -73,7 +73,7 @@ export async function listCampaignsForUser(userId: string): Promise<Campaign[]> 
     .from(campaignMembers)
     .innerJoin(campaigns, eq(campaignMembers.campaignId, campaigns.id))
     .where(and(eq(campaignMembers.userId, userId), eq(campaignMembers.status, 'active')))
-    .orderBy(campaigns.updatedAt);
+    .orderBy(desc(campaigns.updatedAt));
   return rows.map((r) => ({
     id: r.campaign.id,
     name: r.campaign.name,
@@ -143,16 +143,27 @@ export async function createInvite(
   return toDomain(row);
 }
 
-/** Bind the joining user to their invite row and activate it. */
+/**
+ * Bind the joining user to their invite row and activate it. Activation is
+ * bound to the invitee identity at the write: the row must still be
+ * 'invited' AND its inviteEmail must match the claimant's account email, so
+ * a leaked memberId cannot be claimed by another account (ADR 0021).
+ */
 export async function activateInvite(
   handle: DbOrTx,
   memberId: string,
-  userId: string,
+  claimant: { userId: string; email: string },
 ): Promise<CampaignMember | null> {
   const [row] = await handle
     .update(campaignMembers)
-    .set({ userId, status: 'active', joinedAt: new Date() })
-    .where(and(eq(campaignMembers.id, memberId), eq(campaignMembers.status, 'invited')))
+    .set({ userId: claimant.userId, status: 'active', joinedAt: new Date() })
+    .where(
+      and(
+        eq(campaignMembers.id, memberId),
+        eq(campaignMembers.status, 'invited'),
+        eq(campaignMembers.inviteEmail, claimant.email),
+      ),
+    )
     .returning();
   return row ? toDomain(row) : null;
 }

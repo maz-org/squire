@@ -168,12 +168,20 @@ describe('CampaignMemberRepository', () => {
     expect(await MemberRepository.findActiveMember(campaign.id, stranger.id)).toBeNull();
     expect(await MemberRepository.findActiveMember(campaign.id, owner.id)).not.toBeNull();
 
-    const activated = await MemberRepository.activateInvite(db, invite.id, invitee.id);
+    const activated = await MemberRepository.activateInvite(db, invite.id, {
+      userId: invitee.id,
+      email: invitee.email,
+    });
     expect(activated?.status).toBe('active');
     expect(await MemberRepository.findActiveMember(campaign.id, invitee.id)).not.toBeNull();
 
     // Activating twice is a no-op (row is no longer 'invited').
-    expect(await MemberRepository.activateInvite(db, invite.id, invitee.id)).toBeNull();
+    expect(
+      await MemberRepository.activateInvite(db, invite.id, {
+        userId: invitee.id,
+        email: invitee.email,
+      }),
+    ).toBeNull();
   });
 
   it('lists pending invites by email and campaigns by active membership', async () => {
@@ -211,6 +219,40 @@ describe('CampaignMemberRepository', () => {
     ).rejects.toThrow();
   });
 
+  it('refuses invite activation by an account whose email does not match', async () => {
+    const owner = await createUser('owner');
+    const invitee = await createUser('invitee');
+    const impostor = await createUser('impostor');
+    const { campaign } = await createCampaignWithOwner(owner);
+    const invite = await MemberRepository.createInvite(db, {
+      campaignId: campaign.id,
+      inviteEmail: invitee.email,
+      invitedByUserId: owner.id,
+    });
+
+    // A leaked memberId is not enough — activation binds to the invite email.
+    const stolen = await MemberRepository.activateInvite(db, invite.id, {
+      userId: impostor.id,
+      email: impostor.email,
+    });
+    expect(stolen).toBeNull();
+    expect(await MemberRepository.findActiveMember(campaign.id, impostor.id)).toBeNull();
+  });
+
+  it('enforces exactly one owner per campaign at the DB level', async () => {
+    const owner = await createUser('owner');
+    const second = await createUser('second-owner');
+    const { campaign } = await createCampaignWithOwner(owner);
+
+    await expect(
+      MemberRepository.createOwner(db, {
+        campaignId: campaign.id,
+        userId: second.id,
+        email: second.email,
+      }),
+    ).rejects.toThrow();
+  });
+
   it('supports depart and rejoin, preserving the membership row', async () => {
     const owner = await createUser('owner');
     const member = await createUser('member');
@@ -220,7 +262,10 @@ describe('CampaignMemberRepository', () => {
       inviteEmail: member.email,
       invitedByUserId: owner.id,
     });
-    await MemberRepository.activateInvite(db, invite.id, member.id);
+    await MemberRepository.activateInvite(db, invite.id, {
+      userId: member.id,
+      email: member.email,
+    });
 
     expect(await MemberRepository.countActiveMembers(db, campaign.id)).toBe(2);
     await MemberRepository.markDeparted(db, invite.id);

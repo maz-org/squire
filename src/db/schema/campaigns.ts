@@ -25,6 +25,7 @@
  *   Conflict/merge semantics are deliberately NOT modeled — Phase 6 scope.
  */
 
+import { sql } from 'drizzle-orm';
 import {
   index,
   integer,
@@ -108,6 +109,10 @@ export const campaignMembers = pgTable(
     index('campaign_members_user_idx').on(t.userId),
     uniqueIndex('campaign_members_campaign_email_idx').on(t.campaignId, t.inviteEmail),
     uniqueIndex('campaign_members_campaign_user_idx').on(t.campaignId, t.userId),
+    // Exactly one owner per campaign (ADR 0021 §Roles), DB-enforced.
+    uniqueIndex('campaign_members_single_owner_idx')
+      .on(t.campaignId)
+      .where(sql`${t.role} = 'owner'`),
   ],
 );
 

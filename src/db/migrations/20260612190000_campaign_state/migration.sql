@@ -43,6 +43,7 @@ CREATE INDEX IF NOT EXISTS "campaign_members_campaign_idx" ON "campaign_members"
 CREATE INDEX IF NOT EXISTS "campaign_members_user_idx" ON "campaign_members" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "campaign_members_campaign_email_idx" ON "campaign_members" USING btree ("campaign_id","invite_email");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "campaign_members_campaign_user_idx" ON "campaign_members" USING btree ("campaign_id","user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "campaign_members_single_owner_idx" ON "campaign_members" USING btree ("campaign_id") WHERE "role" = 'owner';--> statement-breakpoint
 
 CREATE TABLE IF NOT EXISTS "characters" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
