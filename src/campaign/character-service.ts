@@ -13,7 +13,7 @@
  * indistinguishable `CampaignNotFoundError`; a visible character the caller
  * cannot mutate is `CampaignForbiddenError`.
  */
-import { getDb } from '../db.ts';
+import type { DbOrTx } from '../auth/audit.ts';
 import * as CampaignRepository from '../db/repositories/campaign-repository.ts';
 import * as CampaignMemberRepository from '../db/repositories/campaign-member-repository.ts';
 import * as CharacterRepository from '../db/repositories/character-repository.ts';
@@ -25,6 +25,7 @@ import type {
   MemberVisibleCharacter,
   UpdateCharacterInput,
 } from '../db/repositories/types.ts';
+import { auditedMutation } from './audit.ts';
 import {
   CampaignForbiddenError,
   CampaignNotFoundError,
@@ -105,36 +106,46 @@ export async function createCharacter(
   campaignId: string,
   input: CreateCharacterRequest,
 ): Promise<Character> {
-  const member = await requireActiveMember(campaignId, identity.userId);
-  const { db } = getDb('server');
+  return auditedMutation(
+    identity,
+    { campaignId, mutationType: 'character.create', entityType: 'character' },
+    async (tx) => {
+      const member = await requireActiveMember(campaignId, identity.userId);
 
-  if (input.placeholderForEmail !== undefined) {
-    if (member.role !== 'owner') {
-      throw new CampaignForbiddenError('Only the owner can create placeholder characters');
-    }
-    if (hasPrivateFields(input)) throw new PlaceholderPrivateFieldsError();
-    const email = input.placeholderForEmail.trim().toLowerCase();
-    const members = await CampaignMemberRepository.listMembers(campaignId);
-    const invitee = members.find(
-      (m) => m.inviteEmail.toLowerCase() === email && m.status === 'invited',
-    );
-    if (!invitee) {
-      throw new CampaignForbiddenError('Placeholders need a pending invite for that email');
-    }
-    return CharacterRepository.create(db, {
-      ...input,
-      campaignId,
-      ownerUserId: identity.userId,
-      placeholderForEmail: email,
-    });
-  }
+      let placeholderForEmail: string | null = null;
+      if (input.placeholderForEmail !== undefined) {
+        if (member.role !== 'owner') {
+          throw new CampaignForbiddenError('Only the owner can create placeholder characters');
+        }
+        if (hasPrivateFields(input)) throw new PlaceholderPrivateFieldsError();
+        placeholderForEmail = input.placeholderForEmail.trim().toLowerCase();
+        const members = await CampaignMemberRepository.listMembers(campaignId);
+        const invitee = members.find(
+          (m) => m.inviteEmail.toLowerCase() === placeholderForEmail && m.status === 'invited',
+        );
+        if (!invitee) {
+          throw new CampaignForbiddenError('Placeholders need a pending invite for that email');
+        }
+      }
 
-  return CharacterRepository.create(db, {
-    ...input,
-    campaignId,
-    ownerUserId: identity.userId,
-    placeholderForEmail: null,
-  });
+      const character = await CharacterRepository.create(tx, {
+        ...input,
+        campaignId,
+        ownerUserId: identity.userId,
+        placeholderForEmail,
+      });
+      return {
+        result: character,
+        entityId: character.id,
+        payloadAfter: {
+          name: character.name,
+          className: character.className,
+          level: character.level,
+          placeholderForEmail: character.placeholderForEmail,
+        },
+      };
+    },
+  );
 }
 
 /** Uniform roster surface: member-visible projections for everyone. */
@@ -175,12 +186,39 @@ export async function updateCharacter(
   characterId: string,
   input: UpdateCharacterInput,
 ): Promise<Character> {
-  const character = await requireOwnedCharacter(identity, characterId);
-  if (character.placeholderForEmail !== null && hasPrivateFields(input)) {
-    throw new PlaceholderPrivateFieldsError();
-  }
-  const { db } = getDb('server');
-  return CharacterRepository.update(db, characterId, input);
+  // The visibility gate runs once outside the audit wrapper to resolve the
+  // campaign id for rejected-row attribution; the wrapper re-runs the
+  // ownership check inside the transaction.
+  const visible = await requireVisibleCharacter(identity, characterId);
+  return auditedMutation(
+    identity,
+    {
+      campaignId: visible.campaignId,
+      mutationType: 'character.update',
+      entityType: 'character',
+      entityId: characterId,
+    },
+    async (tx) => {
+      await requireOwnedCharacter(identity, characterId);
+      // Owner-facing read for the before payload: private-field changes
+      // need their previous values in the audit row (journal redacts).
+      const before = await CharacterRepository.findOwnedById(characterId, identity.userId);
+      if (!before) throw new CampaignNotFoundError();
+      if (before.placeholderForEmail !== null && hasPrivateFields(input)) {
+        throw new PlaceholderPrivateFieldsError();
+      }
+      const updated = await CharacterRepository.update(tx, characterId, input);
+
+      const changedKeys = Object.keys(input).filter((key) => key !== 'expectedVersion');
+      const pick = (source: Record<string, unknown>) =>
+        Object.fromEntries(changedKeys.map((key) => [key, source[key]]));
+      return {
+        result: updated,
+        payloadBefore: pick(before as unknown as Record<string, unknown>),
+        payloadAfter: pick(updated as unknown as Record<string, unknown>),
+      };
+    },
+  );
 }
 
 /**
@@ -192,9 +230,29 @@ export async function deleteCharacter(
   identity: CallerIdentity,
   characterId: string,
 ): Promise<void> {
-  await requireOwnedCharacter(identity, characterId);
-  const { db } = getDb('server');
-  await CharacterRepository.remove(db, characterId);
+  const visible = await requireVisibleCharacter(identity, characterId);
+  await auditedMutation(
+    identity,
+    {
+      campaignId: visible.campaignId,
+      mutationType: 'character.delete',
+      entityType: 'character',
+      entityId: characterId,
+    },
+    async (tx) => {
+      const character = await requireOwnedCharacter(identity, characterId);
+      await CharacterRepository.remove(tx, characterId);
+      return {
+        result: undefined,
+        payloadBefore: {
+          name: character.name,
+          className: character.className,
+          level: character.level,
+          placeholderForEmail: character.placeholderForEmail,
+        },
+      };
+    },
+  );
 }
 
 /**
@@ -207,15 +265,32 @@ export async function claimCharacter(
   identity: CallerIdentity,
   characterId: string,
 ): Promise<Character> {
-  await requireVisibleCharacter(identity, characterId);
+  const visible = await requireVisibleCharacter(identity, characterId);
   const user = await requireUser(identity.userId);
-  const { db } = getDb('server');
-  const claimed = await CharacterRepository.claimPlaceholder(db, characterId, {
-    claimantUserId: user.id,
-    claimantEmail: user.email.toLowerCase(),
-  });
-  if (!claimed) throw new CampaignNotFoundError();
-  return claimed;
+  return auditedMutation(
+    identity,
+    {
+      campaignId: visible.campaignId,
+      mutationType: 'character.claim',
+      entityType: 'character',
+      entityId: characterId,
+    },
+    async (tx) => {
+      const claimed = await CharacterRepository.claimPlaceholder(tx, characterId, {
+        claimantUserId: user.id,
+        claimantEmail: user.email.toLowerCase(),
+      });
+      if (!claimed) throw new CampaignNotFoundError();
+      return {
+        result: claimed,
+        payloadBefore: {
+          ownerUserId: visible.ownerUserId,
+          placeholderForEmail: visible.placeholderForEmail,
+        },
+        payloadAfter: { ownerUserId: claimed.ownerUserId, placeholderForEmail: null },
+      };
+    },
+  );
 }
 
 // ─── Items / cards (owner-scoped writes; reads ride the detail view) ────────
@@ -227,18 +302,46 @@ async function campaignGameFor(campaignId: string): Promise<string> {
   return campaign.game;
 }
 
+/** Shared shape for the small owner-scoped item/card mutations. */
+async function auditedChildMutation<T>(
+  identity: CallerIdentity,
+  characterId: string,
+  meta: { mutationType: string; entityType: string },
+  fn: (
+    tx: DbOrTx,
+    character: MemberVisibleCharacter,
+  ) => Promise<{ result: T; payload: Record<string, unknown> }>,
+): Promise<T> {
+  const visible = await requireVisibleCharacter(identity, characterId);
+  return auditedMutation(
+    identity,
+    { campaignId: visible.campaignId, ...meta, entityId: characterId },
+    async (tx) => {
+      const character = await requireOwnedCharacter(identity, characterId);
+      const { result, payload } = await fn(tx, character);
+      return { result, payloadAfter: payload };
+    },
+  );
+}
+
 export async function addItem(
   identity: CallerIdentity,
   characterId: string,
   sourceId: string,
 ): Promise<CharacterItem> {
-  const character = await requireOwnedCharacter(identity, characterId);
-  const { db } = getDb('server');
-  return CharacterRepository.addItem(db, {
+  return auditedChildMutation(
+    identity,
     characterId,
-    game: await campaignGameFor(character.campaignId),
-    sourceId,
-  });
+    { mutationType: 'character.add_item', entityType: 'character_item' },
+    async (tx, character) => {
+      const item = await CharacterRepository.addItem(tx, {
+        characterId,
+        game: await campaignGameFor(character.campaignId),
+        sourceId,
+      });
+      return { result: item, payload: { sourceId: item.sourceId, game: item.game } };
+    },
+  );
 }
 
 export async function removeItem(
@@ -246,10 +349,16 @@ export async function removeItem(
   characterId: string,
   itemId: string,
 ): Promise<void> {
-  await requireOwnedCharacter(identity, characterId);
-  const { db } = getDb('server');
-  const removed = await CharacterRepository.removeItem(db, characterId, itemId);
-  if (!removed) throw new CampaignNotFoundError();
+  await auditedChildMutation(
+    identity,
+    characterId,
+    { mutationType: 'character.remove_item', entityType: 'character_item' },
+    async (tx) => {
+      const removed = await CharacterRepository.removeItem(tx, characterId, itemId);
+      if (!removed) throw new CampaignNotFoundError();
+      return { result: undefined, payload: { itemId } };
+    },
+  );
 }
 
 export async function addCard(
@@ -257,14 +366,23 @@ export async function addCard(
   characterId: string,
   input: { sourceId: string; role?: CharacterCardRole },
 ): Promise<CharacterCard> {
-  const character = await requireOwnedCharacter(identity, characterId);
-  const { db } = getDb('server');
-  return CharacterRepository.addCard(db, {
+  return auditedChildMutation(
+    identity,
     characterId,
-    game: await campaignGameFor(character.campaignId),
-    sourceId: input.sourceId,
-    role: input.role,
-  });
+    { mutationType: 'character.add_card', entityType: 'character_card' },
+    async (tx, character) => {
+      const card = await CharacterRepository.addCard(tx, {
+        characterId,
+        game: await campaignGameFor(character.campaignId),
+        sourceId: input.sourceId,
+        role: input.role,
+      });
+      return {
+        result: card,
+        payload: { sourceId: card.sourceId, game: card.game, role: card.role },
+      };
+    },
+  );
 }
 
 export async function setCardRole(
@@ -273,10 +391,16 @@ export async function setCardRole(
   cardId: string,
   role: CharacterCardRole,
 ): Promise<void> {
-  await requireOwnedCharacter(identity, characterId);
-  const { db } = getDb('server');
-  const updated = await CharacterRepository.setCardRole(db, characterId, cardId, role);
-  if (!updated) throw new CampaignNotFoundError();
+  await auditedChildMutation(
+    identity,
+    characterId,
+    { mutationType: 'character.set_card_role', entityType: 'character_card' },
+    async (tx) => {
+      const updated = await CharacterRepository.setCardRole(tx, characterId, cardId, role);
+      if (!updated) throw new CampaignNotFoundError();
+      return { result: undefined, payload: { cardId, role } };
+    },
+  );
 }
 
 export async function removeCard(
@@ -284,8 +408,14 @@ export async function removeCard(
   characterId: string,
   cardId: string,
 ): Promise<void> {
-  await requireOwnedCharacter(identity, characterId);
-  const { db } = getDb('server');
-  const removed = await CharacterRepository.removeCard(db, characterId, cardId);
-  if (!removed) throw new CampaignNotFoundError();
+  await auditedChildMutation(
+    identity,
+    characterId,
+    { mutationType: 'character.remove_card', entityType: 'character_card' },
+    async (tx) => {
+      const removed = await CharacterRepository.removeCard(tx, characterId, cardId);
+      if (!removed) throw new CampaignNotFoundError();
+      return { result: undefined, payload: { cardId } };
+    },
+  );
 }
