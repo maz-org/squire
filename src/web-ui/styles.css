@@ -2133,6 +2133,201 @@ template#squire-banner-fixtures {
   font-family: 'Geist', system-ui, sans-serif;
 }
 
+/* ─── Phase 4: scenario-progression dashboard (SQR-276) ────────────────── */
+
+.squire-dashboard-announce {
+  margin: 0;
+  min-height: 1em;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--sage);
+}
+
+.squire-dashboard-stats {
+  display: flex;
+  gap: var(--space-xl);
+  margin: var(--space-md) 0 var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-dashboard-stats__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.squire-dashboard-stats__value {
+  margin: 0;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  color: var(--parchment);
+}
+
+.squire-dashboard-stats__label {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--sepia);
+}
+
+.squire-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+
+/* Desktop: data surfaces escape the prose column (DESIGN.md §Phase 4). */
+@media (min-width: 900px) {
+  .squire-dashboard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+}
+
+.squire-dashboard-thread__title {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: var(--parchment);
+  margin: 0;
+}
+
+.squire-dashboard-thread__note {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin: var(--space-2xs) 0 var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--rule);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--sepia);
+  text-transform: uppercase;
+}
+
+.squire-dashboard-thread__progress {
+  font-variant-numeric: tabular-nums;
+  color: var(--sepia-dim);
+}
+
+.squire-dashboard-thread__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.squire-scenario-row {
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-scenario-row__tap {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.squire-scenario-row__tap:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.squire-scenario-row,
+.squire-scenario-row__tap {
+  min-height: 44px;
+}
+
+.squire-scenario-row > form {
+  margin: 0;
+}
+
+.squire-scenario-row__number,
+.squire-scenario-row__name,
+.squire-scenario-row__status {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.squire-scenario-row,
+.squire-scenario-row__tap > * {
+  color: var(--parchment-dim);
+}
+
+.squire-scenario-row__tap,
+.squire-scenario-row:not(:has(form)) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.squire-scenario-row__number {
+  min-width: 2.5em;
+  font-variant-numeric: tabular-nums;
+  color: var(--sepia);
+}
+
+.squire-scenario-row__name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.squire-scenario-row__cond {
+  font-size: 11px;
+  color: var(--sepia-dim);
+}
+
+.squire-scenario-row__status {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.squire-scenario-row__status--played {
+  color: var(--sage);
+}
+
+.squire-scenario-row__status--open {
+  color: var(--parchment);
+}
+
+.squire-scenario-row__status--locked,
+.squire-scenario-row--locked .squire-scenario-row__name,
+.squire-scenario-row--locked .squire-scenario-row__number {
+  color: var(--sepia-dim);
+}
+
+.squire-scenario-row__status--blocked,
+.squire-scenario-row__status--drew-it {
+  color: var(--amber);
+}
+
+.squire-scenario-row__status--via-event {
+  color: var(--sepia);
+}
+
+.squire-banner--amber {
+  border-color: var(--amber);
+}
+
+.squire-banner--amber .squire-banner__label {
+  color: var(--amber);
+}
+
+.squire-dashboard-footnote {
+  margin-top: var(--space-lg);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--sepia-dim);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

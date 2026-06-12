@@ -115,6 +115,11 @@ import {
   renderCampaignListContent,
   type CampaignStripState,
 } from './web-ui/campaign-pages.ts';
+import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
+import { deriveAvailability } from './campaign/availability.ts';
+import { loadModuleGraphs } from './campaign/unlock-graph-loader.ts';
+import type { Campaign } from './db/repositories/types.ts';
+import type { HtmlEscapedString } from 'hono/utils/html';
 import {
   countActiveMembers as CampaignMemberRepositoryCount,
   findActiveMember as CampaignMemberRepositoryFindActive,
@@ -813,7 +818,10 @@ app.get('/campaigns/:id', async (c) => {
           game: detail.campaign.game,
         },
         campaignStripProminent: true,
-        mainContent: renderCampaignDashboardContent(detail),
+        mainContent: renderCampaignDashboardContent(
+          detail,
+          await dashboardThreadsFragment(detail.campaign, createCsrfToken(session.id)),
+        ),
       }),
     );
   } catch (error) {
@@ -821,6 +829,89 @@ app.get('/campaigns/:id', async (c) => {
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
     throw error;
   }
+});
+
+/** Load graphs + derive availability for the dashboard fragment (SQR-276). */
+async function dashboardThreadsFragment(
+  campaign: Campaign,
+  csrfToken: string,
+  announcement?: string,
+): Promise<HtmlEscapedString | undefined> {
+  const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
+  if (graphs.length === 0) return undefined;
+  const availability = deriveAvailability(
+    graphs,
+    new Set(campaign.playedScenarios),
+    new Set(campaign.drawnScenarios),
+  );
+  return renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement });
+}
+
+/**
+ * Tap-to-advance a scenario (SQR-276): open→played, via-event→drew-it,
+ * drew-it→played. Marking played is one-way in v1 — un-play is destructive.
+ * TODO(SQR-279): allow un-play through a confirmed proposal.
+ */
+app.post('/campaigns/:id/scenarios/toggle', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const form = await c.req.formData();
+  const key = typeof form.get('key') === 'string' ? (form.get('key') as string).trim() : '';
+  if (!key || key.length > 200) return c.notFound();
+
+  const identity = identityFromSessionUser(session.userId);
+  let announcement: string;
+  let detail: Awaited<ReturnType<typeof CampaignService.getCampaignDetail>>;
+  try {
+    detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    const graphs = await loadModuleGraphs(detail.campaign.game, detail.campaign.modules);
+    const availability = deriveAvailability(
+      graphs,
+      new Set(detail.campaign.playedScenarios),
+      new Set(detail.campaign.drawnScenarios),
+    );
+    const status = availability.statuses.get(key);
+    const shortKey = key.split(':')[1] ?? key;
+
+    if (status === 'open' || status === 'drew-it') {
+      await CampaignService.updateSharedState(identity, campaignId, {
+        expectedVersion: detail.campaign.version,
+        playedScenarios: [...detail.campaign.playedScenarios, key],
+        drawnScenarios: detail.campaign.drawnScenarios.filter((drawn) => drawn !== key),
+      });
+      announcement = `Scenario ${shortKey} marked played.`;
+    } else if (status === 'via-event') {
+      await CampaignService.updateSharedState(identity, campaignId, {
+        expectedVersion: detail.campaign.version,
+        drawnScenarios: [...detail.campaign.drawnScenarios, key],
+      });
+      announcement = `Scenario ${shortKey} marked drawn.`;
+    } else {
+      announcement = `Scenario ${shortKey} is not actionable.`;
+    }
+    // Re-read after the write so the fragment reflects the new state.
+    detail = await CampaignService.getCampaignDetail(identity, campaignId);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof VersionConflictError) {
+      // A concurrent edit won — re-render current state with a notice.
+      detail = await CampaignService.getCampaignDetail(identity, campaignId);
+      announcement = 'Updated elsewhere — showing the latest state.';
+    } else {
+      throw error;
+    }
+  }
+
+  const fragment = await dashboardThreadsFragment(
+    detail.campaign,
+    createCsrfToken(session.id),
+    announcement,
+  );
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  if (isHtmxRequest(c) && fragment) return c.html(fragment);
+  return c.redirect(`/campaigns/${campaignId}`, 303);
 });
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────
