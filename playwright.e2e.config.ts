@@ -40,6 +40,8 @@ export default defineConfig({
       GOOGLE_OAUTH_CLIENT_SECRET:
         process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? 'squire-e2e-google-client-secret',
       LANGSMITH_TRACING: process.env.LANGSMITH_TRACING ?? 'false',
+      // Campaign-create E2E (SQR-11): the dev user must pass the allowlist.
+      SQUIRE_ALLOWED_EMAILS: process.env.SQUIRE_ALLOWED_EMAILS ?? 'dev@squire.local',
     },
   },
   projects: [
