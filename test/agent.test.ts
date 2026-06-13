@@ -442,6 +442,11 @@ describe('runAgentLoop', () => {
       'open_entity',
       'search_knowledge',
       'neighbors',
+      'write_campaign_state',
+      'write_character_state',
+      'propose_state_change',
+      'confirm_state_change',
+      'cancel_state_change',
     ]);
     expect(AGENT_SYSTEM_PROMPT).toContain(
       'known no-cost only when every numeric cost field is 0, including prosperity when present',

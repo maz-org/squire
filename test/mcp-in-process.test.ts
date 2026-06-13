@@ -97,6 +97,11 @@ describe('in-process MCP client', () => {
       'open_entity',
       'search_knowledge',
       'neighbors',
+      'write_campaign_state',
+      'write_character_state',
+      'propose_state_change',
+      'confirm_state_change',
+      'cancel_state_change',
     ]);
     await client.close();
   });
