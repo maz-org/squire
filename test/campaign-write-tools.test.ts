@@ -574,11 +574,85 @@ describe('MCP write parity', () => {
       clientId: 'test-client',
       scopes: [],
     });
+    // Every write surface, including onboarding creates, rejects
+    // structurally — headless clients need a user-bound token (SQR-287).
+    for (const call of [
+      {
+        name: 'write_campaign_state',
+        arguments: { campaignId: campaign.id, patch: { prosperity: 4 } },
+      },
+      {
+        name: 'propose_state_change',
+        arguments: { campaignId: campaign.id, mutation: { type: 'campaign.delete' } },
+      },
+      { name: 'create_campaign', arguments: { name: 'Headless Campaign', game: 'frosthaven' } },
+    ]) {
+      const result = await client.callTool(call);
+      expect(result.isError).toBe(true);
+      expect(JSON.parse(firstText(result)).error.code).toBe('user_identity_required');
+    }
+  });
+
+  it('destructive one-shot writes are impossible over /mcp too (SQR-287)', async () => {
+    const { owner, campaign } = await setupCampaign();
+    const client = await connectWithAuth(userBoundToken(owner.userId));
     const result = await client.callTool({
       name: 'write_campaign_state',
-      arguments: { campaignId: campaign.id, patch: { prosperity: 4 } },
+      arguments: { campaignId: campaign.id, patch: { playedScenarios: ['fh:1'] } }, // un-play
     });
     expect(result.isError).toBe(true);
-    expect(JSON.parse(firstText(result)).error.code).toBe('user_identity_required');
+    const body = JSON.parse(firstText(result));
+    expect(body.error.code).toBe('proposal_required');
+    expect(body.error.hint).toContain('propose_state_change');
+  });
+
+  it('replayed headless confirms resolve idempotently, never double-apply (SQR-287)', async () => {
+    const { owner, campaign } = await setupCampaign();
+    const client = await connectWithAuth(userBoundToken(owner.userId));
+
+    const proposed = await client.callTool({
+      name: 'propose_state_change',
+      arguments: {
+        campaignId: campaign.id,
+        mutation: { type: 'campaign.update', patch: { prosperity: 2 } },
+      },
+    });
+    const proposalId = JSON.parse(firstText(proposed)).proposal.id;
+
+    const first = await client.callTool({
+      name: 'confirm_state_change',
+      arguments: { proposalId },
+    });
+    expect(JSON.parse(firstText(first)).proposal.status).toBe('confirmed');
+
+    const replay = await client.callTool({
+      name: 'confirm_state_change',
+      arguments: { proposalId },
+    });
+    expect(replay.isError).toBe(true);
+    expect(JSON.parse(firstText(replay)).error.code).toBe('proposal_resolved');
+
+    // Exactly one application: prosperity is 2, not double-touched.
+    const detail = await CampaignService.getCampaignDetail(owner, campaign.id);
+    expect(detail.campaign.prosperity).toBe(2);
+  });
+
+  it('runs headless onboarding over /mcp with a user-bound token (SQR-287)', async () => {
+    const owner = await createUser(OWNER_EMAIL);
+    const client = await connectWithAuth(userBoundToken(owner.userId));
+
+    const created = await client.callTool({
+      name: 'create_campaign',
+      arguments: { name: 'Headless Onboarded', game: 'frosthaven' },
+    });
+    expect(created.isError ?? false).toBe(false);
+    const campaignId = JSON.parse(firstText(created)).campaign.id;
+
+    const character = await client.callTool({
+      name: 'create_character',
+      arguments: { campaignId, name: 'Headless Hero', className: 'Drifter' },
+    });
+    expect(character.isError ?? false).toBe(false);
+    expect(JSON.parse(firstText(character)).character.name).toBe('Headless Hero');
   });
 });
