@@ -25,7 +25,7 @@ import { createHash } from 'node:crypto';
 
 import { z } from 'zod';
 
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, eq, lt } from 'drizzle-orm';
 
 import { getDb } from '../db.ts';
 import { mutationIdempotencyKeys, pendingMutations } from '../db/schema/campaigns.ts';
@@ -273,58 +273,23 @@ export async function propose(
     identity,
     { campaignId, mutationType: 'proposal.proposed', entityType: 'proposal' },
     async (tx) => {
-      if (options.idempotencyKey) {
-        const existing = await tx
-          .select()
-          .from(mutationIdempotencyKeys)
-          .where(
-            and(
-              eq(mutationIdempotencyKeys.actorUserId, identity.userId),
-              eq(mutationIdempotencyKeys.campaignId, campaignId),
-              eq(mutationIdempotencyKeys.toolFamily, toolFamily),
-              eq(mutationIdempotencyKeys.key, options.idempotencyKey),
-            ),
-          )
-          .limit(1);
-        if (existing[0]) {
-          if (existing[0].payloadHash !== payloadHash) throw new IdempotencyConflictError();
-          // Replay: hand back the proposal this key already created.
-          const prior = await tx
-            .select()
-            .from(pendingMutations)
-            .where(
-              and(
-                eq(pendingMutations.campaignId, campaignId),
-                eq(pendingMutations.proposerUserId, identity.userId),
-                eq(pendingMutations.payloadHash, payloadHash),
-              ),
-            )
-            .orderBy(desc(pendingMutations.createdAt))
-            .limit(1);
-          if (prior[0]) return { result: toProposal(prior[0]), entityId: prior[0].id };
-        } else {
-          await tx.insert(mutationIdempotencyKeys).values({
-            key: options.idempotencyKey,
-            actorUserId: identity.userId,
+      // Shared insert for the no-key and won-claim paths.
+      const createProposal = async () => {
+        const [row] = await tx
+          .insert(pendingMutations)
+          .values({
             campaignId,
-            toolFamily,
+            proposerUserId: identity.userId,
+            payload: { mutation },
             payloadHash,
-          });
-        }
-      }
+            expectedVersions,
+            expiresAt: new Date(Date.now() + PROPOSAL_TTL_MS),
+          })
+          .returning();
+        return row;
+      };
 
-      const [row] = await tx
-        .insert(pendingMutations)
-        .values({
-          campaignId,
-          proposerUserId: identity.userId,
-          payload: { mutation },
-          payloadHash,
-          expectedVersions,
-          expiresAt: new Date(Date.now() + PROPOSAL_TTL_MS),
-        })
-        .returning();
-      return {
+      const proposalOutcome = (row: typeof pendingMutations.$inferSelect) => ({
         result: toProposal(row),
         entityId: row.id,
         payloadAfter: {
@@ -334,7 +299,75 @@ export async function propose(
             : {}),
           expiresAt: row.expiresAt.toISOString(),
         },
-      };
+      });
+
+      if (options.idempotencyKey) {
+        // Atomic claim (CodeRabbit #533): ON CONFLICT DO NOTHING serializes
+        // concurrent retries on the (actor, campaign, toolFamily, key) unique
+        // index. The loser blocks until the winner commits, then reads the
+        // committed key row — instead of both missing a prior SELECT and one
+        // tripping the index with an unexpected DB error.
+        const claimed = await tx
+          .insert(mutationIdempotencyKeys)
+          .values({
+            key: options.idempotencyKey,
+            actorUserId: identity.userId,
+            campaignId,
+            toolFamily,
+            payloadHash,
+          })
+          .onConflictDoNothing({
+            target: [
+              mutationIdempotencyKeys.actorUserId,
+              mutationIdempotencyKeys.campaignId,
+              mutationIdempotencyKeys.toolFamily,
+              mutationIdempotencyKeys.key,
+            ],
+          })
+          .returning({ id: mutationIdempotencyKeys.id });
+
+        if (claimed.length === 0) {
+          // The key was already claimed by a committed transaction. Replay the
+          // EXACT proposal it created, scoped by the key's own proposalId —
+          // never a fuzzy payload-hash match that could resolve to a different
+          // key's proposal, a different tool family, or a since-resolved one.
+          const [keyRow] = await tx
+            .select()
+            .from(mutationIdempotencyKeys)
+            .where(
+              and(
+                eq(mutationIdempotencyKeys.actorUserId, identity.userId),
+                eq(mutationIdempotencyKeys.campaignId, campaignId),
+                eq(mutationIdempotencyKeys.toolFamily, toolFamily),
+                eq(mutationIdempotencyKeys.key, options.idempotencyKey),
+              ),
+            )
+            .limit(1);
+          if (!keyRow || keyRow.payloadHash !== payloadHash) {
+            throw new IdempotencyConflictError();
+          }
+          if (keyRow.proposalId) {
+            const [prior] = await tx
+              .select()
+              .from(pendingMutations)
+              .where(eq(pendingMutations.id, keyRow.proposalId))
+              .limit(1);
+            if (prior) return { result: toProposal(prior), entityId: prior.id };
+          }
+          // proposalId unlinked (legacy row) — fall through and create one.
+        } else {
+          // Won the claim: create the proposal and link it to the key row in
+          // the same transaction so every later replay resolves exactly.
+          const row = await createProposal();
+          await tx
+            .update(mutationIdempotencyKeys)
+            .set({ proposalId: row.id })
+            .where(eq(mutationIdempotencyKeys.id, claimed[0].id));
+          return proposalOutcome(row);
+        }
+      }
+
+      return proposalOutcome(await createProposal());
     },
   );
 }
