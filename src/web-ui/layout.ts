@@ -20,6 +20,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { renderAssistantContent } from './assistant-content.ts';
+import { renderCampaignStrip, type CampaignStripState } from './campaign-pages.ts';
 import { aggregateSourceLabels, type ToolSourceLabel } from './consulted-footer.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
@@ -47,6 +48,15 @@ import type {
 } from '../chat/conversation-service.ts';
 
 export interface LayoutShellOptions {
+  /**
+   * Header context strip (SQR-275): the persistent campaign bridge.
+   * Pass the active campaign (or null for the NO CAMPAIGN affordance);
+   * leave undefined to omit the strip entirely (unauthenticated chrome).
+   * `campaignStripProminent` marks campaign surfaces, where the campaign
+   * name outranks the brand.
+   */
+  campaignStrip?: CampaignStripState | null;
+  campaignStripProminent?: boolean;
   /**
    * Slot content rendered inside `main.squire-surface`. Must be an
    * already-escaped `HtmlEscapedString` produced by hono/html's `html`
@@ -1033,6 +1043,11 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     <span class="squire-wordmark">Squire</span>
                   </a>
                   ${conversationHistory ? renderHistoryToggle() : html``}
+                  ${options.campaignStrip !== undefined
+                    ? renderCampaignStrip(options.campaignStrip, {
+                        prominent: options.campaignStripProminent,
+                      })
+                    : html``}
                   ${showChatChrome
                     ? renderActiveGamePicker()
                     : html`<span class="squire-context">${headerContext}</span>`}
@@ -1271,14 +1286,25 @@ function renderHomeLanding(): HtmlEscapedString {
 export async function renderHomePage(
   session?: Session,
   csrfToken?: string,
-  options: { conversationHistory?: ConversationHistoryViewModel } = {},
+  options: {
+    conversationHistory?: ConversationHistoryViewModel;
+    campaignStrip?: CampaignStripState | null;
+  } = {},
 ): Promise<HtmlEscapedString> {
   return layoutShell({
     session,
     csrfToken,
     conversationHistory: options.conversationHistory,
+    campaignStrip: options.campaignStrip,
     chatFormAction: '/chat',
-    chatFormHiddenFields: [{ name: 'idempotencyKey', value: '' }],
+    chatFormHiddenFields: [
+      { name: 'idempotencyKey', value: '' },
+      // Per-message campaign binding (E6/SQR-19): chat turns bind to the
+      // active campaign shown in the strip.
+      ...(options.campaignStrip
+        ? [{ name: 'campaignId', value: options.campaignStrip.campaignId }]
+        : []),
+    ],
     mainContent: renderHomeLanding(),
   });
 }
@@ -1289,6 +1315,7 @@ export async function renderConversationPage(options: {
   conversationId: string;
   messages: ConversationMessage[];
   conversationHistory?: ConversationHistoryViewModel;
+  campaignStrip?: CampaignStripState | null;
   /**
    * Map of user-message id → SSE stream URL for any user message
    * without an assistant reply. The common case is a single entry (one
@@ -1315,9 +1342,13 @@ export async function renderConversationPage(options: {
     csrfToken: options.csrfToken,
     mainContent: transcript,
     conversationHistory: options.conversationHistory,
+    campaignStrip: options.campaignStrip,
     chatFormAction: `/chat/${options.conversationId}/messages`,
     chatFormHxTarget: '.squire-transcript',
     chatFormHxSwap: 'beforeend',
+    chatFormHiddenFields: options.campaignStrip
+      ? [{ name: 'campaignId', value: options.campaignStrip.campaignId }]
+      : [],
     transcriptOwnsLiveRegion: true,
   });
 }

@@ -1942,6 +1942,119 @@ template#squire-banner-fixtures {
    bundle — SQR-65 ships the structural piece; SQR-66 extends it to the
    cite hover transition and any future streaming-indicator / submit-slide
    animation that SQR-8 / SQR-65 gate under this query.) */
+
+/* ─── Phase 4: campaign context strip + surfaces (SQR-275) ─────────────── */
+
+.squire-campaign-strip {
+  justify-self: center;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.squire-campaign-strip:hover,
+.squire-campaign-strip:focus-visible {
+  color: var(--parchment);
+}
+
+/* On campaign surfaces the campaign name outranks the brand. */
+.squire-campaign-strip--prominent {
+  color: var(--parchment);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+
+.squire-campaign-strip--empty {
+  color: var(--sepia-dim);
+}
+
+.squire-campaigns,
+.squire-campaign-dashboard {
+  padding: var(--space-lg) 0;
+}
+
+.squire-campaigns__title,
+.squire-campaign-dashboard__name {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--parchment);
+  margin: 0 0 var(--space-sm);
+}
+
+.squire-campaigns__empty,
+.squire-campaign-dashboard__placeholder {
+  color: var(--sepia);
+}
+
+.squire-campaigns__list,
+.squire-campaign-dashboard__members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.squire-campaigns__row {
+  border-top: 1px solid var(--rule);
+}
+
+.squire-campaigns__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding: var(--space-md) 0;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.squire-campaigns__name {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 18px;
+  color: var(--parchment);
+}
+
+.squire-campaigns__meta,
+.squire-campaign-dashboard__stats {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.squire-campaign-dashboard__section-title {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--parchment);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-xs);
+  margin: var(--space-lg) 0 var(--space-sm);
+}
+
+.squire-campaign-dashboard__member {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  color: var(--parchment-dim);
+  min-height: 44px;
+  align-items: center;
+}
+
+.squire-campaign-dashboard__member-role {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia-dim);
+  letter-spacing: 0.14em;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
