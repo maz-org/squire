@@ -151,6 +151,11 @@ describe('production data lifecycle workflows', () => {
     expect(() => parseProductionDataOptions(['cards', '--game', 'jotl'])).toThrow(
       /Unsupported game id/,
     );
+    // The unknown-command help text must list every accepted command, including
+    // unlock-graphs and smoke (CodeRabbit on #543).
+    expect(() => parseProductionDataOptions(['bogus'])).toThrow(
+      /cards, scenario-section-books, unlock-graphs, embeddings, all, smoke, verify-url, or truncate-embeddings/,
+    );
   });
 
   it('seeds production card data only through the protected production environment', async () => {

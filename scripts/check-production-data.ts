@@ -323,7 +323,7 @@ function parseCommand(rawCommand: string | undefined): ProductionDataCommand {
     return command;
   }
   throw new Error(
-    `Unknown production data command "${command}". Expected cards, scenario-section-books, unlock-graphs, embeddings, all, verify-url, or truncate-embeddings.`,
+    `Unknown production data command "${command}". Expected cards, scenario-section-books, unlock-graphs, embeddings, all, smoke, verify-url, or truncate-embeddings.`,
   );
 }
 
