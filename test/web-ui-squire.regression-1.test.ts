@@ -907,6 +907,26 @@ describe('squire.js chat form retargeting', () => {
     expect(workRowMessages(workRowsEl)).toEqual(['Searched available sources']);
   });
 
+  it('renders the per-answer state row with a fix-it-here link (SQR-258)', () => {
+    const { source, workRowsEl } = bootPendingTranscript();
+
+    source.emit('state-used', {
+      id: 'state-used',
+      message: 'Using campaign state: Travel Campaign · Drifter L4 · 23 gold · prosperity 2',
+      href: '/characters/character-1',
+    });
+    source.emit('done', { html: '<p>Answer.</p>' });
+
+    const row = workRowsEl.children[0];
+    expect(workRowMessage(row)).toBe(
+      'Using campaign state: Travel Campaign · Drifter L4 · 23 gold · prosperity 2',
+    );
+    const link = row.querySelector('.squire-answer-work__state-link');
+    expect(link).not.toBeNull();
+    expect(link!.getAttribute('href')).toBe('/characters/character-1');
+    expect(link!.textContent).toBe('FIX IT HERE');
+  });
+
   it('renders agent intent as a narrative row before source work', () => {
     const { source, workRowsEl, workStatusEl } = bootPendingTranscript();
 

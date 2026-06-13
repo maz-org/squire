@@ -2261,6 +2261,28 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           return;
         }
 
+        if (event === 'state_context') {
+          // SQR-258: name the state snapshot this personalized answer ran
+          // against, with a fix-it-here link to the edit surface.
+          const payload = data as {
+            summary?: unknown;
+            campaignId?: unknown;
+            characterId?: unknown;
+          };
+          if (typeof payload.summary !== 'string' || typeof payload.campaignId !== 'string') {
+            return;
+          }
+          await persistAndWrite('state-used', {
+            id: 'state-used',
+            message: `Using campaign state: ${payload.summary}`,
+            href:
+              typeof payload.characterId === 'string'
+                ? `/characters/${payload.characterId}`
+                : `/campaigns/${payload.campaignId}`,
+          });
+          return;
+        }
+
         if (event === 'proposal') {
           // SQR-286: a staged destructive mutation renders as the chat
           // confirmation block. Lines are server-derived so the preview

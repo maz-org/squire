@@ -58,6 +58,15 @@ The SSE event log is not a durable LangGraph node checkpoint.
   - The browser renders artifact fields with DOM text APIs, not `innerHTML`.
     Artifact bodies are metadata/content blocks outside
     `.squire-answer__content`; they are never appended as answer prose.
+- `state-used`
+  - Names the campaign-state snapshot a personalized answer ran against
+    (SQR-258 transparency) as a work-log row with a fix-it-here deep link.
+  - Payload: `{ "id": string, "message": string, "href": string }`
+  - `message` is the server-derived snapshot summary ("Using campaign
+    state: Travel Campaign · Drifter L4 · 23 gold · prosperity 2");
+    `href` deep-links to the character sheet (or campaign dashboard) so
+    the user can correct the state in one tap. Turns without campaign
+    context never send this event — nothing pretends state exists.
 - `proposal-staged`
   - Renders the chat confirmation block (SQR-286) for a staged destructive
     mutation awaiting explicit user confirmation.
@@ -188,6 +197,9 @@ The conversation service emits Squire-owned internal events. These are typed in
 - `artifact`: optional user-safe structured content. Routes that expose it must
   map it to browser `answer-artifact`, not `text-delta`, and the browser must
   render fields as text rather than trusted HTML.
+- `state_context`: the campaign-state snapshot a personalized turn ran
+  against (SQR-258). Routes that expose it must map it to browser
+  `state-used`, not `text-delta`.
 - `proposal`: a destructive mutation was staged for explicit confirmation
   (SQR-286). Routes that expose it must map it to browser `proposal-staged`
   with server-derived preview lines, not `text-delta`.
@@ -208,6 +220,7 @@ The route, not the provider, owns the final browser ordering guarantees:
 - internal `tool_plan` -> browser `tool-plan`
 - internal `tool_progress` -> browser `tool-progress`
 - internal `artifact` -> browser `answer-artifact`
+- internal `state_context` -> browser `state-used`
 - internal `proposal` -> browser `proposal-staged`
 - internal `debug` -> no browser event
 - provider/internal `done` is only a completion signal
