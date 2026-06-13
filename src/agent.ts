@@ -1758,7 +1758,7 @@ async function runAgentLoopInternal(
                 const result = await executeToolCall(
                   block.name,
                   block.input as Record<string, unknown>,
-                  { game: activeGame },
+                  { game: activeGame, userId: options?.userId },
                 );
                 const { summary, canonicalRefs } = summarizeToolOutput(result.content);
                 const toolOk = isToolResultOk(result);
