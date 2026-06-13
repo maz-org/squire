@@ -1676,7 +1676,10 @@ async function runAgentLoopInternal(
                 const result = await executeToolCall(
                   block.name,
                   block.input as Record<string, unknown>,
-                  { game: activeGame },
+                  // Forward the runtime user id so the write tool family runs
+                  // under the caller's identity (CodeRabbit on #533); without
+                  // it every write returns user_identity_required.
+                  { game: activeGame, userId: options?.userId },
                 );
                 const { summary, canonicalRefs } = summarizeToolOutput(result.content);
                 const toolOk = isToolResultOk(result);

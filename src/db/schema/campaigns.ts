@@ -295,6 +295,16 @@ export const mutationIdempotencyKeys = pgTable(
     toolFamily: text('tool_family').notNull(),
     /** A reused key with a different payload hash is rejected, not deduped. */
     payloadHash: text('payload_hash').notNull(),
+    /**
+     * The proposal this key claimed, set in the same transaction that creates
+     * it. Replay returns exactly this proposal (SQR-280 / CodeRabbit #533) —
+     * never a fuzzy payload-hash match that could resolve to a different key's
+     * proposal or a since-resolved one. Nullable only for the brief
+     * in-transaction window before the proposal row exists.
+     */
+    proposalId: uuid('proposal_id').references(() => pendingMutations.id, {
+      onDelete: 'cascade',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
