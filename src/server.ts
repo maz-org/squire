@@ -62,6 +62,7 @@ import {
 } from './web-ui/consulted-footer.ts';
 import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
 import { stagedMutationLines } from './web-ui/proposal-block.ts';
+import { itemCostWarnings, levelXpWarnings } from './campaign/write-validation.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -2863,7 +2864,10 @@ app.patch('/api/characters/:id', async (c) => {
   const identity = c.get('callerIdentity')!;
   try {
     const character = await CharacterService.updateCharacter(identity, characterId, body.data);
-    return c.json({ character });
+    // Soft rules-legality warnings (SQR-285): the write already applied;
+    // forms surface these inline, house rules always win.
+    const warnings = levelXpWarnings(body.data, character);
+    return c.json({ character, ...(warnings.length > 0 ? { warnings } : {}) });
   } catch (error) {
     if (error instanceof VersionConflictError) {
       // Same guard as the campaign PATCH: the follow-up read can lose a
@@ -2915,12 +2919,18 @@ app.post('/api/characters/:id/items', async (c) => {
   const body = AddItemRequestSchema.safeParse(await c.req.json().catch(() => null));
   if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
   try {
-    const item = await CharacterService.addItem(
-      c.get('callerIdentity')!,
-      characterId,
+    const identity = c.get('callerIdentity')!;
+    const item = await CharacterService.addItem(identity, characterId, body.data.sourceId);
+    // Soft rules-legality warning (SQR-285): gold vs item cost, computed
+    // against the post-add sheet. Items without cost data stay silent.
+    const detail = await CharacterService.getCharacterDetail(identity, characterId);
+    const campaign = await CampaignService.getCampaignDetail(identity, detail.character.campaignId);
+    const warnings = await itemCostWarnings(
+      campaign.campaign.game,
       body.data.sourceId,
+      detail.character.gold,
     );
-    return c.json({ item }, 201);
+    return c.json({ item, ...(warnings.length > 0 ? { warnings } : {}) }, 201);
   } catch (error) {
     return characterErrorResponse(c, error);
   }

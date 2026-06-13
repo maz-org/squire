@@ -30,7 +30,8 @@ import * as CampaignService from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from '../src/campaign/identity.ts';
 import { createMcpServer } from '../src/mcp.ts';
-import { cardCharacterMats } from '../src/db/schema/cards.ts';
+import { itemCostWarnings } from '../src/campaign/write-validation.ts';
+import { cardCharacterMats, cardItems } from '../src/db/schema/cards.ts';
 import { users } from '../src/db/schema/core.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -504,6 +505,99 @@ describe('idempotency keys', () => {
     );
     expect(conflicting.ok).toBe(false);
     expect(conflicting.error.code).toBe('idempotency_conflict');
+  });
+});
+
+describe('rules-legality warnings (SQR-285)', () => {
+  it('warns on an illegal level/XP write but applies it anyway', async () => {
+    const { owner, character } = await setupCampaign();
+    const body = await callWriteTool(
+      'write_character_state',
+      { characterId: character.id, patch: { level: 5, xp: 100 } },
+      owner.userId,
+    );
+    expect(body.ok).toBe(true);
+    // The write applied — soft warning, never a block (house rules win).
+    expect(body.character.level).toBe(5);
+    expect(body.warnings).toHaveLength(1);
+    expect(body.warnings[0]).toContain('210 XP');
+    expect(body.warnings[0]).toContain('only checks');
+  });
+
+  it('stays silent on clean writes', async () => {
+    const { owner, character } = await setupCampaign();
+    const body = await callWriteTool(
+      'write_character_state',
+      { characterId: character.id, patch: { level: 2, xp: 50 } },
+      owner.userId,
+    );
+    expect(body.ok).toBe(true);
+    expect(body.warnings).toBeUndefined();
+  });
+
+  it('surfaces the warning in staged batch previews', async () => {
+    const { owner, campaign, character } = await setupCampaign();
+    const body = await callWriteTool(
+      'propose_state_change',
+      {
+        campaignId: campaign.id,
+        mutation: {
+          type: 'batch',
+          mutations: [
+            { type: 'character.update', characterId: character.id, patch: { level: 5, xp: 100 } },
+          ],
+        },
+      },
+      owner.userId,
+    );
+    expect(body.ok).toBe(true);
+    expect(body.preview).toContain('WARN · L5 NEEDS 210 XP (RECORDED 100)');
+  });
+
+  it('warns on item cost vs gold only when the cost data exists', async () => {
+    const { db } = getDb('server');
+    const sourceIds = ['test-warn-item-priced', 'test-warn-item-unpriced'];
+    await db
+      .insert(cardItems)
+      .values([
+        {
+          game: 'frosthaven',
+          sourceId: sourceIds[0],
+          number: '042',
+          name: 'Gilded Testblade',
+          slot: 'one hand',
+          cost: 30,
+          effect: 'Test effect',
+          spent: false,
+          lost: false,
+        },
+        {
+          game: 'frosthaven',
+          sourceId: sourceIds[1],
+          number: '043',
+          name: 'Unpriced Trinket',
+          slot: 'small item',
+          cost: null,
+          effect: 'Test effect',
+          spent: false,
+          lost: false,
+        },
+      ])
+      .onConflictDoNothing();
+    try {
+      const broke = await itemCostWarnings('frosthaven', sourceIds[0], 10);
+      expect(broke).toHaveLength(1);
+      expect(broke[0]).toContain('costs 30 gold');
+      expect(broke[0]).toContain('has 10');
+
+      // Enough gold, missing cost data, and unknown items all stay silent
+      // (constraint 12: never guess where the data is absent).
+      expect(await itemCostWarnings('frosthaven', sourceIds[0], 30)).toEqual([]);
+      expect(await itemCostWarnings('frosthaven', sourceIds[1], 0)).toEqual([]);
+      expect(await itemCostWarnings('frosthaven', 'no-such-item', 0)).toEqual([]);
+    } finally {
+      await db.delete(cardItems).where(inArray(cardItems.sourceId, sourceIds));
+    }
   });
 });
 

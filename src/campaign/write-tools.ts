@@ -21,6 +21,7 @@ import { VersionConflictError } from '../db/repositories/types.ts';
 import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
 import { availabilityShiftLines } from './availability.ts';
 import { checkClassName, knownClassNames } from './class-validation.ts';
+import { levelXpLedgerLine, levelXpWarnings } from './write-validation.ts';
 import * as CampaignService from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from './identity.ts';
@@ -210,7 +211,7 @@ export async function writeCampaignState(
 export async function writeCharacterState(
   userId: string | undefined,
   rawInput: unknown,
-): Promise<WriteToolResult<{ character: unknown }>> {
+): Promise<WriteToolResult<{ character: unknown; warnings?: string[] }>> {
   const identity = await guard(userId);
   if ('ok' in identity) return identity;
   const parsed = WriteCharacterStateInputSchema.safeParse(rawInput);
@@ -222,7 +223,10 @@ export async function writeCharacterState(
       expectedVersion: detail.character.version,
       ...input.patch,
     });
-    return { ok: true, character };
+    // Soft rules-legality warnings (SQR-285): the write already applied —
+    // relay the warning to the user, house rules always win.
+    const warnings = levelXpWarnings(input.patch, character);
+    return { ok: true, character, ...(warnings.length > 0 ? { warnings } : {}) };
   } catch (error) {
     return mapError(error);
   }
@@ -361,6 +365,14 @@ export async function proposalPreviewLines(
         const name = detail.character.name.toUpperCase();
         if (member.type === 'character.update') {
           lines.push(`${name} → ${characterPatchSummary(member.patch)}`);
+          // Soft rules-legality preview (SQR-285): warn on the staged
+          // resolved sheet; confirm still applies it — house rules win.
+          const resolved = {
+            level: member.patch.level ?? detail.character.level,
+            xp: member.patch.xp ?? detail.character.xp,
+          };
+          const warning = levelXpLedgerLine(member.patch, resolved);
+          if (warning) lines.push(warning);
         } else if (member.type === 'character.retire') {
           lines.push(`${name} · RETIRE`);
         } else {
