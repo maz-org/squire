@@ -12,8 +12,7 @@ import {
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
 import { runLangGraphAgentLoopWithTrajectory } from './agent-langgraph.ts';
-import { loadCampaignContext, type CampaignContextView } from './campaign/context.ts';
-import { identityFromSessionUser } from './campaign/identity.ts';
+import { applyCampaignContextToAskOptions, type CampaignContextView } from './campaign/context.ts';
 import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
 import {
@@ -626,17 +625,9 @@ export async function ask(question: string, options?: AskOptions): Promise<strin
   // supply the game dimension when no explicit game was passed (E8). Without
   // a resolved user there is no campaign state — campaignId is ignored, the
   // same posture as the contract kinds (SQR-269).
-  if (agentOptions.campaignId && userId) {
-    const view = await loadCampaignContext(
-      identityFromSessionUser(userId),
-      agentOptions.campaignId,
-      agentOptions.activeCharacterId,
-    );
-    agentOptions.campaignContext = view;
-    agentOptions.game = agentOptions.game ?? view.campaign.game;
-  }
+  const boundOptions = await applyCampaignContextToAskOptions(agentOptions);
 
-  const runnerOptions = Object.keys(agentOptions).length > 0 ? agentOptions : undefined;
+  const runnerOptions = Object.keys(boundOptions).length > 0 ? boundOptions : undefined;
   const result = await runLangGraphAgentLoopWithTrajectory(question, runnerOptions);
   try {
     await recordLlmUsage({

@@ -59,16 +59,22 @@ describe('eval dataset', () => {
       new Set(['frosthaven', 'gloomhaven-2e']),
     );
     expect(new Set(cases.map((evalCase) => evalCase.suite))).toEqual(
-      new Set(['table-qa', 'trajectory', 'cross-game-boundary', 'adversarial-boundary']),
+      new Set([
+        'table-qa',
+        'trajectory',
+        'cross-game-boundary',
+        'adversarial-boundary',
+        'campaign-personalization',
+      ]),
     );
     expect(new Set(cases.map((evalCase) => evalCase.runtime))).toEqual(new Set(['langgraph']));
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(68);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(44);
+    expect(cases).toHaveLength(73);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(49);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
-    expect(cases.filter(evalCaseHasSafety)).toHaveLength(8);
+    expect(cases.filter(evalCaseHasSafety)).toHaveLength(13);
   });
 
   it('requires explicit eval metadata on cases', () => {

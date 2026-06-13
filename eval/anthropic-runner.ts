@@ -8,6 +8,7 @@ import {
   type AnthropicEvalModel,
 } from '../src/agent.ts';
 import { runLangGraphAgentLoopWithEvalConfig } from '../src/agent-langgraph.ts';
+import { ensureCampaignFixture } from './campaign-fixture.ts';
 import type { EvalAgentRuntime, EvalProviderConfig, EvalToolSurface } from './cli.ts';
 import { gamePairForCase, langSmithDatasetNameForCase, sourceAuthorityForCase } from './dataset.ts';
 import { assertRuleSourceRetrievalReady } from './retrieval-preflight.ts';
@@ -346,7 +347,19 @@ export async function runAnthropicEvalCase(
 
   try {
     await assertRuleSourceRetrievalReady(options.case);
+    // Campaign-bound cases seed their fixture and run with the owner's
+    // identity, mirroring a real personalized request (SQR-272).
+    const fixture = options.case.campaignFixture
+      ? await ensureCampaignFixture(options.case.campaignFixture)
+      : undefined;
     const result = await runLangGraphAgentLoopWithEvalConfig(options.case.question, {
+      ...(fixture
+        ? {
+            userId: fixture.userId,
+            campaignId: fixture.campaignId,
+            activeCharacterId: fixture.activeCharacterId,
+          }
+        : {}),
       toolSurface: options.toolSurface,
       anthropicModel: options.providerConfig.model,
       maxOutputTokens: options.providerConfig.maxOutputTokens,
