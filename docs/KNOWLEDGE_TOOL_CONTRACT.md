@@ -150,8 +150,8 @@ The three campaign-state kinds are identity-scoped on every surface:
 - Reads join the contract; **writes stay a separate tool family** (eng
   decision E5) with propose→confirm gating for the destructive set.
 - Campaign relations: `campaign --has_character--> character`,
-  `campaign --has_party--> party`, and `character/party --in_campaign-->
-campaign`.
+  `campaign --has_party--> party`, and
+  `character/party --in_campaign--> campaign`.
 
 Refs are URL-safe strings with this formal shape:
 
