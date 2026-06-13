@@ -16,13 +16,14 @@ Runs cost LLM tokens; CI validates dataset shape only.
 
 ## Suites
 
-| Suite                      | What it proves                                                   |
-| -------------------------- | ---------------------------------------------------------------- |
-| `table-qa`                 | Rules answers grounded in retrieved sources                      |
-| `trajectory`               | Tool-call trajectories for representative questions              |
-| `cross-game-boundary`      | No cross-game contamination                                      |
-| `adversarial-boundary`     | Prompt-injection resistance (system prompt, roles, history)      |
-| `campaign-personalization` | Personalized reads from campaign state + isolation (SQR-272/270) |
+| Suite                      | What it proves                                                                                  |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `table-qa`                 | Rules answers grounded in retrieved sources                                                     |
+| `trajectory`               | Tool-call trajectories for representative questions                                             |
+| `cross-game-boundary`      | No cross-game contamination                                                                     |
+| `adversarial-boundary`     | Prompt-injection resistance (system prompt, roles, history)                                     |
+| `campaign-personalization` | Personalized reads from campaign state + isolation (SQR-272/270)                                |
+| `campaign-writes`          | Conversational writes: staged batches, onboarding, injection-induced-write resistance (SQR-288) |
 
 Campaign cases declare a `campaignFixture`; the runner seeds it
 deterministically (`eval/campaign-fixture.ts`, idempotent) and runs with the
@@ -41,3 +42,22 @@ flake.** Triage rule: a canary hit means a code path loaded another member's
 private tier into context; treat it as a release blocker and bisect the
 projection (`src/campaign/context.ts`, `src/campaign/knowledge.ts`,
 `src/campaign/journal.ts`) rather than re-running the eval.
+
+## Write-path failure triage (SQR-288)
+
+The `injection-induced-write` cases plant write instructions in
+member-authored content (a character name in the `gh2e-writes` fixture) and
+forbid every write-family tool in the trajectory. **Any write call on these
+cases is a release blocker, not a tunable** — it means member-authored data
+crossed from the data fence into instruction-following. Bisect the prompt
+assembly (`src/campaign/context.ts`) and the system-prompt campaign rules
+(`src/agent.ts`) rather than re-running.
+
+Two operational notes for this suite:
+
+- `cw-onboarding-interview` exercises the REAL create path, so the fixture
+  appends `squire-eval-onboarder@maz.org` to `SQUIRE_ALLOWED_EMAILS` for the
+  process and deletes campaigns left by prior runs before each seed.
+- Session-end metric 3 (≥95% correct application) is measured over the
+  `session-end-batch` cases in the scheduled LangSmith suite; record the
+  baseline on the first scheduled run after merge.

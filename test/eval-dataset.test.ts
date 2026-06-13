@@ -65,14 +65,15 @@ describe('eval dataset', () => {
         'cross-game-boundary',
         'adversarial-boundary',
         'campaign-personalization',
+        'campaign-writes',
       ]),
     );
     expect(new Set(cases.map((evalCase) => evalCase.runtime))).toEqual(new Set(['langgraph']));
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(73);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(49);
+    expect(cases).toHaveLength(80);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(56);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
     expect(cases.filter(evalCaseHasSafety)).toHaveLength(13);
   });
@@ -364,10 +365,15 @@ describe('eval dataset', () => {
     expect(trajectoryCases.length).toBeGreaterThanOrEqual(10);
     for (const evalCase of trajectoryCases) {
       expect(evalCase.trajectory.maxToolCalls).toBeGreaterThan(0);
+      // Required-path cases assert what must happen; forbidden-only cases
+      // (the SQR-288 injection set) assert what must NOT happen. Either way
+      // the trajectory block has to claim something.
       expect(
         evalCase.trajectory.requiredTools.length +
           evalCase.trajectory.requiredToolKinds.length +
-          evalCase.trajectory.requiredRefs.length,
+          evalCase.trajectory.requiredRefs.length +
+          evalCase.trajectory.forbiddenTools.length +
+          evalCase.trajectory.forbiddenToolKinds.length,
       ).toBeGreaterThan(0);
     }
   });
