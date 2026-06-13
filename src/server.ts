@@ -61,6 +61,7 @@ import {
   isToolSourceLabel,
 } from './web-ui/consulted-footer.ts';
 import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
+import { stagedMutationLines } from './web-ui/proposal-block.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -1890,6 +1891,33 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             body,
             sourceLabel,
             ref: ref.length > 0 ? ref : null,
+          });
+          return;
+        }
+
+        if (event === 'proposal') {
+          // SQR-286: a staged destructive mutation renders as the chat
+          // confirmation block. Lines are server-derived so the preview
+          // vocabulary stays in one tested place.
+          const payload = data as {
+            proposalId?: unknown;
+            campaignId?: unknown;
+            mutation?: unknown;
+            expiresAt?: unknown;
+          };
+          if (
+            typeof payload.proposalId !== 'string' ||
+            typeof payload.campaignId !== 'string' ||
+            typeof payload.expiresAt !== 'string'
+          ) {
+            return;
+          }
+          await persistAndWrite('proposal-staged', {
+            id: `proposal-${payload.proposalId}`,
+            proposalId: payload.proposalId,
+            campaignId: payload.campaignId,
+            lines: stagedMutationLines(payload.mutation),
+            expiresAt: payload.expiresAt,
           });
           return;
         }

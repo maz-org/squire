@@ -1,12 +1,28 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  activeWorkLogProgressMessageFromCompleted,
   formatWorkLogDuration,
   humanizeWorkLogProgressMessage,
   workLogSourceActionFromProgressMessage,
 } from '../src/work-log-display.ts';
 
 describe('work log display wording', () => {
+  it('turns completed write-tool messages into active progress voice (SQR-286)', () => {
+    expect(activeWorkLogProgressMessageFromCompleted('Updated campaign state')).toBe(
+      'Updating campaign state',
+    );
+    expect(activeWorkLogProgressMessageFromCompleted('Staged a change for confirmation')).toBe(
+      'Staging a change for confirmation',
+    );
+    expect(activeWorkLogProgressMessageFromCompleted('Applied the confirmed change')).toBe(
+      'Applying the confirmed change',
+    );
+    expect(activeWorkLogProgressMessageFromCompleted('Cancelled the staged change')).toBe(
+      'Cancelling the staged change',
+    );
+  });
+
   it('formats elapsed work durations like the disclosure title', () => {
     expect(formatWorkLogDuration(0)).toBe('0s');
     expect(formatWorkLogDuration(999)).toBe('0s');

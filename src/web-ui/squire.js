@@ -1572,6 +1572,223 @@ function scrollPendingAnswerIntoView(answerEl) {
   answerEl.scrollIntoView({ block: 'start', behavior: 'auto' });
 }
 
+// ─── Confirmation block (SQR-286) ────────────────────────────────────────────
+// Consent chrome for a staged destructive mutation (DESIGN.md §Confirmation
+// block): a --surface panel of server-derived ledger lines plus a wax primary
+// confirm action. Explicitly NOT the Phase 5 verdict treatment — no wax rail.
+// All payload fields render via DOM text APIs, never innerHTML.
+
+function proposalCsrfToken() {
+  var meta = document.querySelector ? document.querySelector('meta[name="csrf-token"]') : null;
+  return meta && typeof meta.getAttribute === 'function' ? meta.getAttribute('content') || '' : '';
+}
+
+function markProposalRows(block, state) {
+  if (!block || typeof block.querySelectorAll !== 'function') return;
+  var rows = block.querySelectorAll('.squire-proposal__row');
+  for (var i = 0; i < rows.length; i += 1) {
+    rows[i].classList.remove('is-applied', 'is-failed');
+    if (state === 'applied') rows[i].classList.add('is-applied');
+    if (state === 'failed') rows[i].classList.add('is-failed');
+  }
+}
+
+// States: staged (actionable) → working (in flight) → applied | failed |
+// expired | cancelled (terminal). A network failure returns to staged so the
+// user can retry. The status line is the aria-live announcement surface.
+function setProposalBlockState(block, state, message, linkLabel) {
+  if (!block) return;
+  block.dataset.proposalState = state;
+  var confirmBtn = block.querySelector('.squire-proposal__confirm');
+  var cancelBtn = block.querySelector('.squire-proposal__cancel');
+  var actionable = state === 'staged';
+  if (confirmBtn) confirmBtn.disabled = !actionable;
+  if (cancelBtn) cancelBtn.disabled = !actionable;
+  var status = block.querySelector('.squire-proposal__status');
+  if (!status) return;
+  status.textContent = message || '';
+  if (linkLabel && block.dataset.campaignId) {
+    var link = document.createElement('a');
+    link.className = 'squire-proposal__link';
+    link.setAttribute('href', '/campaigns/' + block.dataset.campaignId);
+    link.textContent = linkLabel;
+    if (typeof status.appendChild === 'function') {
+      if (typeof document.createTextNode === 'function') {
+        status.appendChild(document.createTextNode(' '));
+      }
+      status.appendChild(link);
+    }
+  }
+}
+
+function expireProposalBlockIfStaged(block) {
+  if (!block || block.dataset.proposalState !== 'staged') return;
+  setProposalBlockState(
+    block,
+    'expired',
+    'This staged change expired without being applied — ask Squire to stage it again.',
+  );
+}
+
+function proposalFailureState(block, body) {
+  var code = body && body.error;
+  if (code === 'proposal_expired') {
+    expireProposalBlockIfStaged(block);
+    block.dataset.proposalState = 'expired';
+    return;
+  }
+  var message =
+    code === 'stale_proposal' || code === 'version_conflict'
+      ? 'Campaign state changed since this was staged — nothing was applied.'
+      : code === 'proposal_resolved'
+        ? 'This staged change was already resolved — nothing further was applied.'
+        : (body && body.message) || 'Could not apply the change — nothing was applied.';
+  setProposalBlockState(block, 'failed', message, 'REVIEW ON DASHBOARD');
+  markProposalRows(block, 'failed');
+}
+
+function sendProposalAction(block, method, url, onOk) {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') return;
+  setProposalBlockState(block, 'working', 'Working…');
+  window
+    .fetch(url, {
+      method: method,
+      headers: { 'x-csrf-token': proposalCsrfToken() },
+    })
+    .then(function (res) {
+      if (res.ok) {
+        onOk();
+        return null;
+      }
+      return res
+        .json()
+        .catch(function () {
+          return {};
+        })
+        .then(function (body) {
+          proposalFailureState(block, body);
+        });
+    })
+    .catch(function () {
+      // Transport failure is recoverable: back to actionable with a notice.
+      setProposalBlockState(block, 'staged', 'Could not reach Squire — try again.');
+    });
+}
+
+function wireProposalBlock(block, payload) {
+  var proposalId = payload.proposalId;
+  var confirmBtn = block.querySelector('.squire-proposal__confirm');
+  var cancelBtn = block.querySelector('.squire-proposal__cancel');
+
+  if (confirmBtn && typeof confirmBtn.addEventListener === 'function') {
+    confirmBtn.addEventListener('click', function () {
+      if (block.dataset.proposalState !== 'staged') return;
+      sendProposalAction(
+        block,
+        'POST',
+        '/api/proposals/' + encodeURIComponent(proposalId) + '/confirm',
+        function () {
+          setProposalBlockState(
+            block,
+            'applied',
+            'Applied — recorded in the campaign journal.',
+            'VIEW JOURNAL',
+          );
+          markProposalRows(block, 'applied');
+        },
+      );
+    });
+  }
+
+  if (cancelBtn && typeof cancelBtn.addEventListener === 'function') {
+    cancelBtn.addEventListener('click', function () {
+      if (block.dataset.proposalState !== 'staged') return;
+      sendProposalAction(
+        block,
+        'DELETE',
+        '/api/proposals/' + encodeURIComponent(proposalId),
+        function () {
+          setProposalBlockState(block, 'cancelled', 'Cancelled — nothing was applied.');
+        },
+      );
+    });
+  }
+
+  // Expired proposals render as expired, never as silent disappearance:
+  // flip the block in place when the TTL passes (or immediately, when the
+  // event replays after the proposal already lapsed).
+  var expiresAtMs = Date.parse(payload.expiresAt || '');
+  if (!isNaN(expiresAtMs)) {
+    var remainingMs = expiresAtMs - Date.now();
+    if (remainingMs <= 0) {
+      expireProposalBlockIfStaged(block);
+    } else if (typeof setTimeout === 'function') {
+      setTimeout(function () {
+        expireProposalBlockIfStaged(block);
+      }, remainingMs);
+    }
+  }
+}
+
+function renderProposalBlock(answerEl, payload) {
+  if (!answerEl || !payload || !payload.proposalId) return null;
+  // Idempotent per proposal id: replayed streams re-send the event.
+  if (typeof answerEl.querySelector === 'function') {
+    var existing = answerEl.querySelector(
+      '.squire-proposal[data-proposal-id="' + payload.proposalId + '"]',
+    );
+    if (existing) return existing;
+  }
+
+  var block = document.createElement('section');
+  block.className = 'squire-proposal';
+  block.dataset.proposalId = payload.proposalId;
+  block.dataset.campaignId = payload.campaignId || '';
+  block.dataset.proposalState = 'staged';
+  block.setAttribute('data-proposal-id', payload.proposalId);
+  block.setAttribute('aria-label', 'Staged change awaiting your confirmation');
+
+  var title = document.createElement('h3');
+  title.className = 'squire-proposal__title';
+  title.textContent = 'STAGED CHANGE';
+  block.appendChild(title);
+
+  var rows = document.createElement('div');
+  rows.className = 'squire-proposal__rows';
+  var lines = Array.isArray(payload.lines) && payload.lines.length > 0 ? payload.lines : [];
+  for (var i = 0; i < lines.length; i += 1) {
+    var row = document.createElement('div');
+    row.className = 'squire-proposal__row';
+    row.textContent = String(lines[i]);
+    rows.appendChild(row);
+  }
+  block.appendChild(rows);
+
+  var actions = document.createElement('div');
+  actions.className = 'squire-proposal__actions';
+  var confirmBtn = document.createElement('button');
+  confirmBtn.className = 'squire-button squire-button--primary squire-proposal__confirm';
+  confirmBtn.setAttribute('type', 'button');
+  confirmBtn.textContent = 'Confirm';
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'squire-button squire-button--ghost squire-proposal__cancel';
+  cancelBtn.setAttribute('type', 'button');
+  cancelBtn.textContent = 'Not now';
+  actions.appendChild(confirmBtn);
+  actions.appendChild(cancelBtn);
+  block.appendChild(actions);
+
+  var status = document.createElement('p');
+  status.className = 'squire-proposal__status';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  block.appendChild(status);
+
+  answerEl.appendChild(block);
+  wireProposalBlock(block, payload);
+  return block;
+}
+
 // User-driven scrolls (touchmove, wheel, scrollbar) update `pinToBottom`
 // based on distance from bottom. Programmatic auto-scrolls also fire
 // scroll events, but they leave us at the bottom — `isNearBottom`
@@ -1812,6 +2029,16 @@ function attachPendingAnswerStream(answerEl) {
       payload.ok,
       payload.message,
     );
+  });
+
+  source.addEventListener('proposal-staged', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    if (!payload || !payload.proposalId) return;
+    // Consent chrome renders even after answer text starts streaming — the
+    // SQR-98 straggler rule does not apply here, because dropping a consent
+    // surface is worse than a late row. Rendering is idempotent by id.
+    renderProposalBlock(answerEl, payload);
+    if (pinToBottom) scrollToBottom();
   });
 
   source.addEventListener('answer-artifact', function (event) {
