@@ -104,6 +104,20 @@ async function createCampaign(
   return campaign;
 }
 
+/** Destructive mutations need the SQR-279 propose→confirm dance. */
+async function proposeAndConfirm(
+  user: TestUser,
+  campaignId: string,
+  mutation: Record<string, unknown>,
+): Promise<Response> {
+  const proposeRes = await request(user, 'POST', `/api/campaigns/${campaignId}/proposals`, {
+    mutation,
+  });
+  expect(proposeRes.status).toBe(201);
+  const { proposal } = (await proposeRes.json()) as { proposal: { id: string } };
+  return request(user, 'POST', `/api/proposals/${proposal.id}/confirm`);
+}
+
 /** Invite + accept in one step: returns the activated member id. */
 async function addMember(owner: TestUser, campaignId: string, member: TestUser): Promise<string> {
   const inviteRes = await request(owner, 'POST', `/api/campaigns/${campaignId}/invites`, {
@@ -280,8 +294,14 @@ describe('campaign lifecycle', () => {
     const memberDelete = await request(member, 'DELETE', `/api/campaigns/${campaign.id}`);
     expect(memberDelete.status).toBe(403);
 
-    const ownerDelete = await request(owner, 'DELETE', `/api/campaigns/${campaign.id}`);
-    expect(ownerDelete.status).toBe(204);
+    // One-shot delete is impossible at the service layer (SQR-279) — even
+    // for the owner — and the proposal dance succeeds.
+    const oneShot = await request(owner, 'DELETE', `/api/campaigns/${campaign.id}`);
+    expect(oneShot.status).toBe(409);
+    expect(((await oneShot.json()) as { error: string }).error).toBe('proposal_required');
+
+    const confirmed = await proposeAndConfirm(owner, campaign.id, { type: 'campaign.delete' });
+    expect(confirmed.status).toBe(200);
 
     const after = await request(owner, 'GET', `/api/campaigns/${campaign.id}`);
     expect(after.status).toBe(404);
@@ -504,12 +524,18 @@ describe('leave, remove, rejoin', () => {
     );
     expect(memberRemove.status).toBe(403);
 
-    const ownerRemove = await request(
+    const oneShotRemove = await request(
       owner,
       'DELETE',
       `/api/campaigns/${campaign.id}/members/${memberId}`,
     );
-    expect(ownerRemove.status).toBe(204);
+    expect(oneShotRemove.status).toBe(409);
+
+    const ownerRemove = await proposeAndConfirm(owner, campaign.id, {
+      type: 'member.remove',
+      memberId,
+    });
+    expect(ownerRemove.status).toBe(200);
 
     const after = await request(member, 'GET', `/api/campaigns/${campaign.id}`);
     expect(after.status).toBe(404);

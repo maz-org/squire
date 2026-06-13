@@ -89,6 +89,22 @@ export class AlreadyInvitedError extends Error {
   }
 }
 
+/**
+ * Destructive mutations (ADR 0021 enumerated set) cannot run in one shot on
+ * any channel: the caller must create a proposal and confirm it by id
+ * (SQR-279). The service layer itself enforces this — not just UI.
+ */
+export class ProposalRequiredError extends Error {
+  readonly code = 'proposal_required';
+  readonly mutationType: string;
+
+  constructor(mutationType: string) {
+    super(`${mutationType} is destructive and requires a confirmed proposal`);
+    this.name = 'ProposalRequiredError';
+    this.mutationType = mutationType;
+  }
+}
+
 export class UnsupportedGameError extends Error {
   readonly code = 'unsupported_game';
 
@@ -180,6 +196,15 @@ async function rosterFor(campaignId: string): Promise<RosterMember[]> {
   return roster;
 }
 
+/**
+ * Internal flag threaded by the propose→confirm executor (SQR-279). Never
+ * exposed through REST/tool input — only src/campaign/pending-mutations.ts
+ * passes it, after confirm-time revalidation.
+ */
+export interface ConfirmedExecution {
+  confirmedProposalId?: string;
+}
+
 // ─── Campaign lifecycle ──────────────────────────────────────────────────────
 
 export async function createCampaign(
@@ -238,14 +263,14 @@ export async function getCampaignDetail(
 
 /**
  * Shared-state CAS write (E3). Any member may edit shared state; the
- * destructive subset (scenario un-play, prosperity decrease) joins the
- * propose→confirm gate when the pending-mutations mechanism lands.
- * TODO(SQR-279): route un-play / prosperity-decrease through proposals.
+ * destructive subset (scenario un-play, prosperity decrease) only executes
+ * through a confirmed proposal (SQR-279).
  */
 export async function updateSharedState(
   identity: CallerIdentity,
   campaignId: string,
   input: UpdateCampaignSharedStateInput,
+  confirmed: ConfirmedExecution = {},
 ): Promise<Campaign> {
   return auditedMutation(
     identity,
@@ -254,6 +279,20 @@ export async function updateSharedState(
       await requireActiveMember(campaignId, identity.userId);
       const before = await CampaignRepository.findById(campaignId);
       if (!before) throw new CampaignNotFoundError();
+
+      // Destructive subset of shared-state edits (ADR 0021): un-playing a
+      // scenario or decreasing prosperity reverses derived state and needs
+      // a confirmed proposal.
+      if (!confirmed.confirmedProposalId) {
+        const unplayed =
+          input.playedScenarios !== undefined &&
+          before.playedScenarios.some((key) => !input.playedScenarios!.includes(key));
+        const prosperityDecrease =
+          input.prosperity !== undefined && input.prosperity < before.prosperity;
+        if (unplayed) throw new ProposalRequiredError('scenario.unplay');
+        if (prosperityDecrease) throw new ProposalRequiredError('prosperity.decrease');
+      }
+
       const updated = await CampaignRepository.updateSharedState(tx, campaignId, input);
 
       // Audit payloads carry only the touched fields, before and after.
@@ -292,7 +331,11 @@ export async function updateSharedState(
 }
 
 /** Owner-only; cascades domain rows while audit rows survive (ADR 0021). */
-export async function deleteCampaign(identity: CallerIdentity, campaignId: string): Promise<void> {
+export async function deleteCampaign(
+  identity: CallerIdentity,
+  campaignId: string,
+  confirmed: ConfirmedExecution = {},
+): Promise<void> {
   await auditedMutation(
     identity,
     { campaignId, mutationType: 'campaign.delete', entityType: 'campaign', entityId: campaignId },
@@ -303,8 +346,7 @@ export async function deleteCampaign(identity: CallerIdentity, campaignId: strin
       }
       const before = await CampaignRepository.findById(campaignId);
       if (!before) throw new CampaignNotFoundError();
-      // TODO(SQR-279): destructive — route through propose→confirm once the
-      // pending-mutations mechanism exists.
+      if (!confirmed.confirmedProposalId) throw new ProposalRequiredError('campaign.delete');
       await CampaignRepository.remove(tx, campaignId);
       return {
         result: undefined,
@@ -460,6 +502,7 @@ export async function removeMember(
   identity: CallerIdentity,
   campaignId: string,
   targetMemberId: string,
+  confirmed: ConfirmedExecution = {},
 ): Promise<void> {
   await auditedMutation(
     identity,
@@ -486,8 +529,7 @@ export async function removeMember(
         return { result: undefined, payloadBefore: { status: 'departed' } }; // idempotent
       }
 
-      // TODO(SQR-279): destructive — route through propose→confirm once the
-      // pending-mutations mechanism exists.
+      if (!confirmed.confirmedProposalId) throw new ProposalRequiredError('member.remove');
       await CampaignMemberRepository.markDeparted(tx, target.id);
       return {
         result: undefined,

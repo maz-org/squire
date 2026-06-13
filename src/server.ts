@@ -118,6 +118,8 @@ import {
 import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
 import { renderCampaignJournal } from './web-ui/campaign-journal.ts';
 import { listJournal } from './campaign/journal.ts';
+import * as PendingMutations from './campaign/pending-mutations.ts';
+import { ProposalStateError } from './campaign/pending-mutations.ts';
 import { deriveAvailability } from './campaign/availability.ts';
 import { loadModuleGraphs } from './campaign/unlock-graph-loader.ts';
 import type { Campaign } from './db/repositories/types.ts';
@@ -2456,6 +2458,7 @@ function requireCampaignUser(route: string): MiddlewareHandler {
 // or the rate limiter would consume twice per request.
 app.use('/api/campaigns/*', requireCampaignUser('/api/campaigns'));
 app.use('/api/invites/*', requireCampaignUser('/api/invites'));
+app.use('/api/proposals/*', requireCampaignUser('/api/proposals'));
 
 /** Map campaign-service errors to HTTP; rethrow anything unrecognized. */
 function campaignErrorResponse(c: Context, error: unknown): Response {
@@ -2476,6 +2479,20 @@ function campaignErrorResponse(c: Context, error: unknown): Response {
   }
   if (error instanceof CampaignService.UnsupportedGameError) {
     return c.json({ error: error.code, message: error.message, status: 400 }, 400);
+  }
+  if (error instanceof CampaignService.ProposalRequiredError) {
+    return c.json(
+      {
+        error: error.code,
+        message: error.message,
+        mutationType: error.mutationType,
+        status: 409,
+      },
+      409,
+    );
+  }
+  if (error instanceof ProposalStateError) {
+    return c.json({ error: error.code, message: error.message, status: 409 }, 409);
   }
   throw error;
 }
@@ -2498,6 +2515,30 @@ const CreateCampaignRequestSchema = z.object({
 
 const InviteRequestSchema = z.object({
   email: z.string().trim().email().max(320),
+});
+
+/** The enumerated destructive set (ADR 0021) — closed by construction. */
+const ProposalRequestSchema = z.object({
+  mutation: z.discriminatedUnion('type', [
+    z.object({ type: z.literal('campaign.delete') }),
+    z.object({ type: z.literal('member.remove'), memberId: z.string().uuid() }),
+    z.object({
+      type: z.literal('campaign.update'),
+      patch: z
+        .object({
+          prosperity: z.number().int().min(0).max(100).optional(),
+          playedScenarios: z.array(z.string().trim().min(1).max(200)).max(1000).optional(),
+          drawnScenarios: z.array(z.string().trim().min(1).max(200)).max(1000).optional(),
+        })
+        .refine((patch) => Object.keys(patch).length > 0, { message: 'Empty patch' }),
+    }),
+    z.object({ type: z.literal('character.delete'), characterId: z.string().uuid() }),
+    z.object({
+      type: z.literal('character.retire'),
+      characterId: z.string().uuid(),
+      successorId: z.string().uuid().nullable().optional(),
+    }),
+  ]),
 });
 
 const StateKeyArraySchema = z.array(z.string().trim().min(1).max(200)).max(1000);
@@ -2634,6 +2675,45 @@ app.get('/api/campaigns/:id/journal', async (c) => {
   try {
     const journal = await listJournal(c.get('callerIdentity')!, campaignId);
     return c.json({ journal });
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.post('/api/campaigns/:id/proposals', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  const body = ProposalRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!body.success) return c.json(jsonError('Invalid request body', 400), 400);
+  try {
+    const proposal = await PendingMutations.propose(
+      c.get('callerIdentity')!,
+      campaignId,
+      body.data.mutation,
+    );
+    return c.json({ proposal }, 201);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.post('/api/proposals/:id/confirm', async (c) => {
+  const proposalId = campaignRouteId(c, 'id');
+  if (!proposalId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    const proposal = await PendingMutations.confirm(c.get('callerIdentity')!, proposalId);
+    return c.json({ proposal });
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.delete('/api/proposals/:id', async (c) => {
+  const proposalId = campaignRouteId(c, 'id');
+  if (!proposalId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    await PendingMutations.cancel(c.get('callerIdentity')!, proposalId);
+    return c.body(null, 204);
   } catch (error) {
     return campaignErrorResponse(c, error);
   }

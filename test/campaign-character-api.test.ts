@@ -68,6 +68,20 @@ async function request(
   });
 }
 
+/** Destructive mutations need the SQR-279 propose→confirm dance. */
+async function proposeAndConfirm(
+  user: TestUser,
+  campaignId: string,
+  mutation: Record<string, unknown>,
+): Promise<Response> {
+  const proposeRes = await request(user, 'POST', `/api/campaigns/${campaignId}/proposals`, {
+    mutation,
+  });
+  expect(proposeRes.status).toBe(201);
+  const { proposal } = (await proposeRes.json()) as { proposal: { id: string } };
+  return request(user, 'POST', `/api/proposals/${proposal.id}/confirm`);
+}
+
 /** Owner + member in one campaign; the third user stays an outsider. */
 async function setupCampaign(): Promise<{
   owner: TestUser;
@@ -164,8 +178,15 @@ describe('owner character CRUD', () => {
     expect(conflict.error).toBe('version_conflict');
     expect(conflict.currentVersion).toBe(updated.version);
 
-    const deleteRes = await request(owner, 'DELETE', `/api/characters/${character.id}`);
-    expect(deleteRes.status).toBe(204);
+    // One-shot character delete is impossible (SQR-279); the proposal
+    // dance executes it.
+    const oneShot = await request(owner, 'DELETE', `/api/characters/${character.id}`);
+    expect(oneShot.status).toBe(409);
+    const deleteRes = await proposeAndConfirm(owner, campaignId, {
+      type: 'character.delete',
+      characterId: character.id,
+    });
+    expect(deleteRes.status).toBe(200);
     const goneRes = await request(owner, 'GET', `/api/characters/${character.id}`);
     expect(goneRes.status).toBe(404);
   });
