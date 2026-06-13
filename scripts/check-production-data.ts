@@ -28,7 +28,7 @@ const SCENARIO_SECTION_TABLES = [
   'book_references',
 ] as const;
 
-type CheckCommand = 'cards' | 'scenario-section-books' | 'embeddings' | 'all';
+type CheckCommand = 'cards' | 'scenario-section-books' | 'unlock-graphs' | 'embeddings' | 'all';
 type ProductionDataCommand = CheckCommand | 'smoke' | 'verify-url' | 'truncate-embeddings';
 
 export interface ProductionDataOptions {
@@ -176,6 +176,31 @@ async function checkScenarioSectionBooks(db: Db, games: readonly GameId[]): Prom
   );
 }
 
+async function checkUnlockGraphs(db: Db, games: readonly GameId[]): Promise<void> {
+  // The dashboard's loadModuleGraphs() reads unlock_graph_scenarios; an empty
+  // table for a campaign's game silently renders "No scenario data" rather than
+  // erroring, so the seed gap is invisible without this check. Every supported
+  // game has a curated graph (frosthaven=fh, gloomhaven-2e=gh2e+solo2e), so a
+  // zero count is always a missing seed, never expected-empty coverage.
+  const counts = new Map<GameId, number>();
+  for (const game of games) {
+    counts.set(game, await countTableForGame(db, 'unlock_graph_scenarios', game));
+  }
+
+  const emptyGames = [...counts.entries()].filter(([, count]) => count <= 0).map(([game]) => game);
+  if (emptyGames.length > 0) {
+    throw new Error(
+      `Unlock-graph seed sanity check failed. No unlock_graph_scenarios rows for: ${emptyGames.join(', ')}`,
+    );
+  }
+
+  console.log(
+    `OK unlock-graph data sanity check passed: ${[...counts.entries()]
+      .map(([game, count]) => `${game}=${count}`)
+      .join(', ')}.`,
+  );
+}
+
 async function checkEmbeddingsForGames(db: Db, games: readonly GameId[]): Promise<void> {
   for (const game of games) {
     await checkEmbeddingsForGame(db, game);
@@ -279,6 +304,7 @@ async function runCheck(db: Db, command: CheckCommand, games: readonly GameId[])
   if (command === 'scenario-section-books' || command === 'all') {
     await checkScenarioSectionBooks(db, games);
   }
+  if (command === 'unlock-graphs' || command === 'all') await checkUnlockGraphs(db, games);
   if (command === 'embeddings' || command === 'all') await checkEmbeddingsForGames(db, games);
 }
 
@@ -287,6 +313,7 @@ function parseCommand(rawCommand: string | undefined): ProductionDataCommand {
   if (
     command === 'cards' ||
     command === 'scenario-section-books' ||
+    command === 'unlock-graphs' ||
     command === 'embeddings' ||
     command === 'all' ||
     command === 'smoke' ||
@@ -296,7 +323,7 @@ function parseCommand(rawCommand: string | undefined): ProductionDataCommand {
     return command;
   }
   throw new Error(
-    `Unknown production data command "${command}". Expected cards, scenario-section-books, embeddings, all, verify-url, or truncate-embeddings.`,
+    `Unknown production data command "${command}". Expected cards, scenario-section-books, unlock-graphs, embeddings, all, verify-url, or truncate-embeddings.`,
   );
 }
 
