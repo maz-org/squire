@@ -116,6 +116,8 @@ import {
   type CampaignStripState,
 } from './web-ui/campaign-pages.ts';
 import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
+import { renderCampaignJournal } from './web-ui/campaign-journal.ts';
+import { listJournal } from './campaign/journal.ts';
 import { deriveAvailability } from './campaign/availability.ts';
 import { loadModuleGraphs } from './campaign/unlock-graph-loader.ts';
 import type { Campaign } from './db/repositories/types.ts';
@@ -821,6 +823,9 @@ app.get('/campaigns/:id', async (c) => {
         mainContent: renderCampaignDashboardContent(
           detail,
           await dashboardThreadsFragment(detail.campaign, createCsrfToken(session.id)),
+          renderCampaignJournal(
+            await listJournal(identityFromSessionUser(session.userId), campaignId),
+          ),
         ),
       }),
     );
@@ -2618,6 +2623,17 @@ app.delete('/api/campaigns/:id/members/:memberId', async (c) => {
   try {
     await CampaignService.removeMember(c.get('callerIdentity')!, campaignId, memberId);
     return c.body(null, 204);
+  } catch (error) {
+    return campaignErrorResponse(c, error);
+  }
+});
+
+app.get('/api/campaigns/:id/journal', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.json(jsonError('Not found', 404), 404);
+  try {
+    const journal = await listJournal(c.get('callerIdentity')!, campaignId);
+    return c.json({ journal });
   } catch (error) {
     return campaignErrorResponse(c, error);
   }
