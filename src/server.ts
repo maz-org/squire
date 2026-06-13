@@ -63,6 +63,15 @@ import {
 import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
 import { stagedMutationLines } from './web-ui/proposal-block.ts';
 import { itemCostWarnings, levelXpWarnings } from './campaign/write-validation.ts';
+import { renderCharacterSheetContent } from './web-ui/character-sheet.ts';
+import * as CharacterRepository from './db/repositories/character-repository.ts';
+import {
+  findCardByName,
+  findItemByNumber,
+  listCardOptionsForClass,
+  listItemOptions,
+  resolveCardDisplayNames,
+} from './campaign/character-sheet-data.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -831,6 +840,14 @@ app.get('/campaigns/:id', async (c) => {
           renderCampaignJournal(
             await listJournal(identityFromSessionUser(session.userId), campaignId),
           ),
+          // Sheet links (SQR-277): member-visible projection only.
+          (await CharacterRepository.listMemberVisibleByCampaign(campaignId)).map((character) => ({
+            id: character.id,
+            name: character.name,
+            className: character.className,
+            level: character.level,
+            placeholder: character.placeholderForEmail !== null,
+          })),
         ),
       }),
     );
@@ -922,6 +939,353 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   c.header('Vary', 'Cookie');
   if (isHtmxRequest(c) && fragment) return c.html(fragment);
   return c.redirect(`/campaigns/${campaignId}`, 303);
+});
+
+// ─── Accordion character sheet (SQR-277, design G3) ─────────────────────────
+
+app.use('/characters/*', requirePageSession());
+app.use('/characters/*', requireCsrf());
+
+const SHEET_CONFLICT_MESSAGE =
+  'Someone else saved this sheet first — your edit was not applied. Review the current values and try again.';
+
+/** Render `/characters/:id` with optional banner/warning state. */
+async function renderCharacterSheetPage(
+  c: Context,
+  characterId: string,
+  state: { errorMessage?: string; warningMessage?: string; openSection?: string } = {},
+  status: 200 | 400 | 404 | 409 | 422 = 200,
+): Promise<Response> {
+  const session = c.get('session')!;
+  const identity = identityFromSessionUser(session.userId);
+  const detail = await CharacterService.getCharacterDetail(identity, characterId);
+  const campaignDetail = await CampaignService.getCampaignDetail(
+    identity,
+    detail.character.campaignId,
+  );
+  const game = campaignDetail.campaign.game;
+  const user = await CampaignService.requireUser(identity.userId);
+  const canClaim =
+    detail.character.placeholderForEmail !== null &&
+    detail.character.placeholderForEmail.toLowerCase() === user.email.toLowerCase();
+  const names = await resolveCardDisplayNames({
+    game,
+    itemSourceIds: detail.items.map((item) => item.sourceId),
+    cardSourceIds: detail.cards.map((card) => card.sourceId),
+  });
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.html(
+    await layoutShell({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      showChatChrome: false,
+      showRail: false,
+      campaignStrip: {
+        campaignId: campaignDetail.campaign.id,
+        campaignName: campaignDetail.campaign.name,
+        game,
+      },
+      campaignStripProminent: true,
+      mainContent: renderCharacterSheetContent({
+        detail,
+        campaign: {
+          id: campaignDetail.campaign.id,
+          name: campaignDetail.campaign.name,
+          game,
+        },
+        csrfToken: createCsrfToken(session.id),
+        canClaim,
+        itemOptions: detail.own ? await listItemOptions(game) : [],
+        cardOptions: detail.own
+          ? await listCardOptionsForClass(game, detail.character.className)
+          : [],
+        itemNames: names.items,
+        cardNames: names.cards,
+        ...state,
+      }),
+    }),
+    status,
+  );
+}
+
+/** Shared error mapping for sheet form posts: banner, never a lost edit. */
+async function sheetActionErrorResponse(
+  c: Context,
+  characterId: string,
+  section: string,
+  error: unknown,
+): Promise<Response> {
+  if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+  if (error instanceof VersionConflictError) {
+    return renderCharacterSheetPage(
+      c,
+      characterId,
+      { errorMessage: SHEET_CONFLICT_MESSAGE, openSection: section },
+      409,
+    );
+  }
+  if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    return renderCharacterSheetPage(
+      c,
+      characterId,
+      { errorMessage: error.message, openSection: section },
+      422,
+    );
+  }
+  throw error;
+}
+
+app.get('/characters/:id', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.notFound();
+  try {
+    return await renderCharacterSheetPage(c, characterId);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
+});
+
+function formString(form: FormData, key: string): string {
+  const value = form.get(key);
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function formInt(form: FormData, key: string): number | null {
+  const raw = formString(form, key);
+  if (!/^\d+$/.test(raw)) return null;
+  return Number.parseInt(raw, 10);
+}
+
+/** Per-section single-field saves; an empty private field clears to null. */
+app.post('/characters/:id/update', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.notFound();
+  const form = await c.req.formData();
+  const section = formString(form, 'section');
+  const expectedVersion = formInt(form, 'expectedVersion');
+  if (expectedVersion === null) return c.notFound();
+
+  let patch: Record<string, unknown>;
+  switch (section) {
+    case 'identity': {
+      const name = formString(form, 'name');
+      if (!name || name.length > 100) {
+        return renderCharacterSheetPage(
+          c,
+          characterId,
+          { errorMessage: 'Character name is required.', openSection: section },
+          400,
+        );
+      }
+      patch = { name };
+      break;
+    }
+    case 'level': {
+      const level = formInt(form, 'level');
+      const xp = formInt(form, 'xp');
+      if (level === null || level < 1 || level > 20 || xp === null) {
+        return renderCharacterSheetPage(
+          c,
+          characterId,
+          { errorMessage: 'Level (1-20) and XP must be whole numbers.', openSection: section },
+          400,
+        );
+      }
+      patch = { level, xp };
+      break;
+    }
+    case 'gold': {
+      const gold = formInt(form, 'gold');
+      if (gold === null) {
+        return renderCharacterSheetPage(
+          c,
+          characterId,
+          { errorMessage: 'Gold must be a whole number.', openSection: section },
+          400,
+        );
+      }
+      patch = { gold };
+      break;
+    }
+    case 'perks': {
+      const raw = formString(form, 'perks');
+      const parts = raw.length === 0 ? [] : raw.split(/[\s,]+/).filter(Boolean);
+      if (parts.some((part) => !/^\d+$/.test(part)) || parts.length > 100) {
+        return renderCharacterSheetPage(
+          c,
+          characterId,
+          {
+            errorMessage: 'Perks must be a comma-separated list of numbers.',
+            openSection: section,
+          },
+          400,
+        );
+      }
+      patch = { perks: parts.map((part) => Number.parseInt(part, 10)) };
+      break;
+    }
+    case 'quest':
+    case 'goals':
+    case 'notes': {
+      const field =
+        section === 'quest'
+          ? 'personalQuest'
+          : section === 'goals'
+            ? 'battleGoals'
+            : 'privateNotes';
+      const value = formString(form, field);
+      patch = { [field]: value.length > 0 ? value.slice(0, 5000) : null };
+      break;
+    }
+    default:
+      return c.notFound();
+  }
+
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    const updated = await CharacterService.updateCharacter(identity, characterId, {
+      expectedVersion,
+      ...patch,
+    });
+    // Soft rules-legality warning (SQR-285) shows inline instead of a
+    // silent redirect; the save itself already applied.
+    const warnings = levelXpWarnings(patch, updated);
+    if (warnings.length > 0) {
+      return renderCharacterSheetPage(c, characterId, {
+        warningMessage: warnings[0],
+        openSection: section,
+      });
+    }
+    return c.redirect(`/characters/${characterId}#${section}`, 303);
+  } catch (error) {
+    return sheetActionErrorResponse(c, characterId, section, error);
+  }
+});
+
+app.post('/characters/:id/claim', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.notFound();
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    await CharacterService.claimCharacter(identity, characterId);
+    return c.redirect(`/characters/${characterId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
+});
+
+app.post('/characters/:id/items/add', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.notFound();
+  const form = await c.req.formData();
+  const number = formString(form, 'number');
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    const detail = await CharacterService.getCharacterDetail(identity, characterId);
+    const campaign = await CampaignService.getCampaignDetail(identity, detail.character.campaignId);
+    const item = number ? await findItemByNumber(campaign.campaign.game, number) : null;
+    if (!item) {
+      return renderCharacterSheetPage(
+        c,
+        characterId,
+        {
+          errorMessage: `No ${campaign.campaign.game} item numbered "${number}" — pick one from the list.`,
+          openSection: 'items',
+        },
+        400,
+      );
+    }
+    await CharacterService.addItem(identity, characterId, item.sourceId);
+    const warnings = await itemCostWarnings(
+      campaign.campaign.game,
+      item.sourceId,
+      detail.character.gold,
+    );
+    if (warnings.length > 0) {
+      return renderCharacterSheetPage(c, characterId, {
+        warningMessage: warnings[0],
+        openSection: 'items',
+      });
+    }
+    return c.redirect(`/characters/${characterId}#items`, 303);
+  } catch (error) {
+    return sheetActionErrorResponse(c, characterId, 'items', error);
+  }
+});
+
+app.post('/characters/:id/items/:itemId/remove', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  const itemId = campaignRouteId(c, 'itemId');
+  if (!characterId || !itemId) return c.notFound();
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    await CharacterService.removeItem(identity, characterId, itemId);
+    return c.redirect(`/characters/${characterId}#items`, 303);
+  } catch (error) {
+    return sheetActionErrorResponse(c, characterId, 'items', error);
+  }
+});
+
+app.post('/characters/:id/cards/add', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  if (!characterId) return c.notFound();
+  const form = await c.req.formData();
+  const name = formString(form, 'name');
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    const detail = await CharacterService.getCharacterDetail(identity, characterId);
+    const campaign = await CampaignService.getCampaignDetail(identity, detail.character.campaignId);
+    const card = name
+      ? await findCardByName(campaign.campaign.game, detail.character.className, name)
+      : null;
+    if (!card) {
+      return renderCharacterSheetPage(
+        c,
+        characterId,
+        {
+          errorMessage: `No ${detail.character.className} card named "${name}" — pick one from the list.`,
+          openSection: 'cards',
+        },
+        400,
+      );
+    }
+    await CharacterService.addCard(identity, characterId, { sourceId: card.sourceId });
+    return c.redirect(`/characters/${characterId}#cards`, 303);
+  } catch (error) {
+    return sheetActionErrorResponse(c, characterId, 'cards', error);
+  }
+});
+
+app.post('/characters/:id/cards/:cardId/role', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  const cardId = campaignRouteId(c, 'cardId');
+  if (!characterId || !cardId) return c.notFound();
+  const form = await c.req.formData();
+  const role = formString(form, 'role');
+  if (role !== 'owned' && role !== 'active') return c.notFound();
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    await CharacterService.setCardRole(identity, characterId, cardId, role);
+    return c.redirect(`/characters/${characterId}#cards`, 303);
+  } catch (error) {
+    return sheetActionErrorResponse(c, characterId, 'cards', error);
+  }
+});
+
+app.post('/characters/:id/cards/:cardId/remove', async (c) => {
+  const characterId = campaignRouteId(c, 'id');
+  const cardId = campaignRouteId(c, 'cardId');
+  if (!characterId || !cardId) return c.notFound();
+  const identity = identityFromSessionUser(c.get('session')!.userId);
+  try {
+    await CharacterService.removeCard(identity, characterId, cardId);
+    return c.redirect(`/characters/${characterId}#cards`, 303);
+  } catch (error) {
+    return sheetActionErrorResponse(c, characterId, 'cards', error);
+  }
 });
 
 // ─── OAuth metadata ──────────────────────────────────────────────────────────

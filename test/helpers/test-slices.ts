@@ -21,6 +21,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/campaign-pages.test.ts',
   'test/campaign-proposals.test.ts',
   'test/campaign-write-tools.test.ts',
+  'test/character-sheet.test.ts',
   'test/campaign-repositories.test.ts',
   'test/conversation.test.ts',
   'test/cross-game-isolation.test.ts',

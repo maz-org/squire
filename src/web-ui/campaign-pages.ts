@@ -159,11 +159,21 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
   </section>` as HtmlEscapedString;
 }
 
+/** Sheet links on the dashboard (SQR-277): name · class · level rows. */
+export interface DashboardCharacterRow {
+  id: string;
+  name: string;
+  className: string;
+  level: number;
+  placeholder: boolean;
+}
+
 /** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
 export function renderCampaignDashboardContent(
   detail: CampaignDetail,
   threadsFragment?: HtmlEscapedString,
   journalFragment?: HtmlEscapedString,
+  characters?: DashboardCharacterRow[],
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -189,6 +199,27 @@ export function renderCampaignDashboardContent(
         )}
       </ul>
     </section>
+    ${characters && characters.length > 0
+      ? html`<section class="squire-campaign-dashboard__characters" aria-label="Characters">
+          <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
+          <ul class="squire-campaign-dashboard__members">
+            ${characters.map(
+              (character) =>
+                html`<li class="squire-campaign-dashboard__member">
+                  <a
+                    class="squire-campaign-dashboard__character-link"
+                    href="/characters/${character.id}"
+                    >${character.name}</a
+                  >
+                  <span class="squire-campaign-dashboard__member-role"
+                    >${character.className.toUpperCase()} ·
+                    L${character.level}${character.placeholder ? ' · UNCLAIMED' : ''}</span
+                  >
+                </li>`,
+            )}
+          </ul>
+        </section>`
+      : html``}
     ${threadsFragment ??
     html`<section
       class="squire-campaign-dashboard__threads"
