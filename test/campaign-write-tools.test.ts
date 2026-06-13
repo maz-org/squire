@@ -86,6 +86,11 @@ async function callWriteTool(
   return JSON.parse(result.content);
 }
 
+// Track every connected client so afterEach can close them — an unclosed
+// in-memory transport leaks across cases and can flake the suite (CodeRabbit
+// on #533).
+const openClients: Client[] = [];
+
 async function connectWithAuth(authInfo?: AuthInfo): Promise<Client> {
   const server = createMcpServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -95,6 +100,7 @@ async function connectWithAuth(authInfo?: AuthInfo): Promise<Client> {
   }
   const client = new Client({ name: 'write-parity-test', version: '1.0' });
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+  openClients.push(client);
   return client;
 }
 
@@ -116,8 +122,9 @@ beforeEach(async () => {
   process.env.SQUIRE_ALLOWED_EMAILS = [OWNER_EMAIL, OUTSIDER_EMAIL].join(',');
 });
 
-afterEach(() => {
+afterEach(async () => {
   resetRateLimiterForTesting();
+  await Promise.all(openClients.splice(0).map((client) => client.close().catch(() => {})));
 });
 
 afterAll(async () => {
@@ -431,7 +438,6 @@ describe('onboarding tools (SQR-284)', () => {
     expect(badGame.error.code).toBe('unsupported_game');
   });
 });
-
 describe('session-end batch staging (SQR-283)', () => {
   it('stages a batch through the tool with a named, consequence-aware preview', async () => {
     const { owner, campaign, character } = await setupCampaign();
