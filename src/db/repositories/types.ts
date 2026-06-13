@@ -300,6 +300,8 @@ export interface ConversationMessage {
    * historical rows written before the active-game selector existed.
    */
   game?: string | null;
+  /** Campaign binding for this turn (E6). Null = no-campaign/legacy. */
+  campaignId?: string | null;
   isError: boolean;
   responseToMessageId: string | null;
   /**
@@ -331,6 +333,7 @@ export interface CreateConversationMessageInput {
   role: 'user' | 'assistant';
   content: string;
   game?: string | null;
+  campaignId?: string | null;
   isError?: boolean;
   responseToMessageId?: string | null;
   /**

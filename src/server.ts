@@ -1929,6 +1929,7 @@ const AskRequestSchema = z.object({
     .max(ASK_HISTORY_MAX_ITEMS)
     .optional(),
   campaignId: z.string().uuid().optional(),
+  activeCharacterId: z.string().uuid().optional(),
   userId: z.string().uuid().optional(),
   toolSurface: z.enum(['redesigned', 'legacy']).optional(),
   game: z.string().optional(),
@@ -1971,6 +1972,24 @@ app.post('/api/ask', async (c) => {
   } catch (error) {
     if (error instanceof LlmBudgetExceededError) return budgetExceededResponse(c, error);
     throw error;
+  }
+  // Campaign binding fails BEFORE the SSE stream opens: non-members get the
+  // indistinguishable 404, and client-only tokens get no campaign context at
+  // all (the same posture as the contract kinds, SQR-19/269).
+  if (options.campaignId) {
+    if (!tokenUserId) {
+      delete options.campaignId;
+      delete options.activeCharacterId;
+    } else {
+      try {
+        await CampaignService.requireActiveMember(options.campaignId, tokenUserId);
+      } catch (error) {
+        if (error instanceof CampaignService.CampaignNotFoundError) {
+          return c.json(jsonError('Not found', 404), 404);
+        }
+        throw error;
+      }
+    }
   }
 
   return streamSSE(c, async (stream) => {

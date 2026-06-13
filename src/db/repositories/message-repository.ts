@@ -14,6 +14,7 @@ function toDomain(row: MessageRow): ConversationMessage {
     role: row.role as 'user' | 'assistant',
     content: row.content,
     game: row.game,
+    campaignId: row.campaignId,
     isError: row.isError,
     responseToMessageId: row.responseToMessageId,
     // Narrow jsonb string[] to string[] at the domain boundary.
@@ -35,6 +36,7 @@ export async function create(
       role: input.role,
       content: input.content,
       game: input.game ?? null,
+      campaignId: input.campaignId ?? null,
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId ?? null,
       consultedSources: input.consultedSources ?? null,
@@ -54,6 +56,7 @@ export async function createResponse(
       role: input.role,
       content: input.content,
       game: input.game ?? null,
+      campaignId: input.campaignId ?? null,
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId,
       consultedSources: input.consultedSources ?? null,

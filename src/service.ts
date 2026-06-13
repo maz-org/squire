@@ -12,6 +12,8 @@ import {
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
 import { runLangGraphAgentLoopWithTrajectory } from './agent-langgraph.ts';
+import { loadCampaignContext, type CampaignContextView } from './campaign/context.ts';
+import { identityFromSessionUser } from './campaign/identity.ts';
 import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
 import { errorLogFields, writeSecurityLog } from './security-log.ts';
 import {
@@ -560,10 +562,21 @@ export interface AskOptions {
   toolSurface?: 'redesigned' | 'legacy';
   /** Active game id or alias for knowledge-tool routing. Defaults to Frosthaven when omitted. */
   game?: string;
-  /** Campaign UUID — reserved for future campaign context loading. */
+  /** Campaign UUID — loads campaign context for members (SQR-19). */
   campaignId?: string;
   /** User UUID — reserved for future player context loading. */
   userId?: string;
+  /**
+   * Explicit active-character selection. Must be one of the requester's own
+   * characters in the bound campaign; with multiple active characters and no
+   * selection the agent asks instead of guessing (SQR-19).
+   */
+  activeCharacterId?: string;
+  /**
+   * Internal: the loaded campaign context. ask() populates this from
+   * campaignId + userId; callers never pass it directly.
+   */
+  campaignContext?: CampaignContextView;
   /** HTTP request ID for REST callers that do not have a persisted conversation. */
   requestId?: string;
   /** Persisted web conversation UUID for trace/log correlation. */
@@ -607,6 +620,22 @@ export async function ask(question: string, options?: AskOptions): Promise<strin
   if (!budgetPrechecked) {
     await ensureAskBudgetAvailable(userId);
   }
+
+  // Campaign-bound request: load the single context projection (member-gated;
+  // CampaignNotFoundError propagates to the channel) and let the campaign
+  // supply the game dimension when no explicit game was passed (E8). Without
+  // a resolved user there is no campaign state — campaignId is ignored, the
+  // same posture as the contract kinds (SQR-269).
+  if (agentOptions.campaignId && userId) {
+    const view = await loadCampaignContext(
+      identityFromSessionUser(userId),
+      agentOptions.campaignId,
+      agentOptions.activeCharacterId,
+    );
+    agentOptions.campaignContext = view;
+    agentOptions.game = agentOptions.game ?? view.campaign.game;
+  }
+
   const runnerOptions = Object.keys(agentOptions).length > 0 ? agentOptions : undefined;
   const result = await runLangGraphAgentLoopWithTrajectory(question, runnerOptions);
   try {

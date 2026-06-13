@@ -934,11 +934,12 @@ describe('POST /api/ask', () => {
       body: JSON.stringify({ question: 'What items do I have?', campaignId, userId }),
     });
     expect(mockEnsureAskBudgetAvailable).toHaveBeenCalledWith(null);
-    expect(mockAsk).toHaveBeenCalledWith(
-      'What items do I have?',
-      expect.objectContaining({ campaignId }),
-    );
+    // Client-only tokens carry no user identity: the body userId is
+    // discarded AND the campaign binding is dropped (SQR-19) — no
+    // personalization on this path.
+    expect(mockAsk).toHaveBeenCalledWith('What items do I have?', expect.anything());
     expect(mockAsk.mock.calls[0]?.[1]).not.toHaveProperty('userId');
+    expect(mockAsk.mock.calls[0]?.[1]).not.toHaveProperty('campaignId');
   });
 
   it('correlates REST ask traces with an HTTP request ID', async () => {

@@ -47,6 +47,10 @@ export const messages = pgTable(
     // historical rows do not have their own selected game, and messages are
     // fetched by conversation rather than filtered by game.
     game: text('game'),
+    // Per-message campaign binding (SQR-19, eng E6). Plain uuid, no FK:
+    // history must keep rendering after a campaign is deleted. Null =
+    // legacy/no-campaign message (selector behavior).
+    campaignId: uuid('campaign_id'),
     isError: boolean('is_error').notNull().default(false),
     responseToMessageId: uuid('response_to_message_id').references((): AnyPgColumn => messages.id, {
       onDelete: 'cascade',

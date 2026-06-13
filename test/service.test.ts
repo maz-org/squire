@@ -34,6 +34,13 @@ vi.mock('../src/agent-langgraph.ts', () => ({
   runLangGraphAgentLoopWithTrajectory: mockRunLangGraphAgentLoopWithTrajectory,
 }));
 
+vi.mock('../src/campaign/context.ts', () => ({
+  loadCampaignContext: vi.fn().mockResolvedValue({
+    campaign: { game: 'gloomhaven-2e' },
+  }),
+  renderCampaignContextBlock: vi.fn().mockReturnValue('<campaign_data/>'),
+}));
+
 vi.mock('../src/llm-budget.ts', () => ({
   assertLlmBudgetAvailable: mockAssertLlmBudgetAvailable,
   recordLlmUsage: mockRecordLlmUsage,
@@ -434,7 +441,25 @@ describe('ask', () => {
       game: 'gh2',
     };
     await ask('Follow-up', options);
-    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', options);
+    // Campaign-bound asks load the context projection (mocked here) and
+    // attach it; the explicit game wins over the campaign's (E8 fallback
+    // only fills a missing game).
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith('Follow-up', {
+      ...options,
+      campaignContext: { campaign: { game: 'gloomhaven-2e' } },
+    });
+  });
+
+  it('falls back to the campaign game when none is given (E8)', async () => {
+    await initialize();
+    await ask('Follow-up', {
+      campaignId: '550e8400-e29b-41d4-a716-446655440000',
+      userId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+    });
+    expect(mockRunLangGraphAgentLoopWithTrajectory).toHaveBeenCalledWith(
+      'Follow-up',
+      expect.objectContaining({ game: 'gloomhaven-2e' }),
+    );
   });
 
   it('uses LangGraph as the production runner and strips deprecated selectors', async () => {

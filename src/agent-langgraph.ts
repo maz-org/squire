@@ -35,6 +35,7 @@ import {
 } from './agent.ts';
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
+import { renderCampaignContextBlock } from './campaign/context.ts';
 import { resolveSquireEnv } from './squire-env.ts';
 import {
   activeWorkLogProgressMessageFromCompleted,
@@ -279,12 +280,17 @@ function appendModelCall(
 
 function initialMessages(question: string, options: AskOptions | undefined): MessageParam[] {
   const history = options?.history?.slice(-MAX_HISTORY_TURNS) ?? [];
+  // Campaign context rides the current question (SQR-19): persisted history
+  // stays raw, and every turn carries fresh state instead of a stale block.
+  const content = options?.campaignContext
+    ? `${renderCampaignContextBlock(options.campaignContext)}\n\n${question}`
+    : question;
   return [
     ...history.map((m) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     })),
-    { role: 'user' as const, content: question },
+    { role: 'user' as const, content },
   ];
 }
 
@@ -728,7 +734,10 @@ async function runLangGraphAgentLoop(
         let isError = false;
         let errorMessage: string | undefined;
         try {
-          toolResult = await executeToolCall(block.name, input, { game: activeGame });
+          toolResult = await executeToolCall(block.name, input, {
+            game: activeGame,
+            userId: options?.userId,
+          });
         } catch (error) {
           errorMessage = error instanceof Error ? error.message : String(error);
           toolResult = { content: `Tool error: ${errorMessage}` };
