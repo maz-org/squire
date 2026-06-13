@@ -20,6 +20,7 @@ import { seedUnlockGraphModule } from '../src/seed/seed-unlock-graphs.ts';
 import {
   getSchema,
   inspectSources,
+  lookupEntity,
   neighbors,
   openEntity,
   resolveEntity,
@@ -286,6 +287,48 @@ describe('open_entity', () => {
     expect(data.characters).toHaveLength(1);
     expect(data.members).toHaveLength(2);
     expect(JSON.stringify(opened)).not.toContain('SECRET-PQ-TOKEN');
+  });
+});
+
+describe('lookup_entity', () => {
+  // Regression: lookup_entity resolves a ref and then reopens it. The reopen
+  // must carry the SAME identity that resolved it, or a membership-scoped
+  // campaign/character/party ref reopens anonymously and 404s (CodeRabbit
+  // caught the dropped userId on PR #522).
+  it('resolves and opens a campaign ref under the membership scope', async () => {
+    const fixture = await setupFixture();
+    const opened = await lookupEntity('Thursday Night Frosthaven', {
+      kinds: ['campaign'],
+      game: 'frosthaven',
+      userId: fixture.member.userId,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) return;
+    expect(opened.entity.kind).toBe('campaign');
+    expect(opened.entity.ref).toBe(`campaign:frosthaven/${fixture.campaignId}`);
+  });
+
+  it('opens a member-visible character ref without leaking the private tier', async () => {
+    const fixture = await setupFixture();
+    const opened = await lookupEntity('Snowdancer', {
+      kinds: ['character'],
+      game: 'frosthaven',
+      userId: fixture.member.userId,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) return;
+    expect(opened.entity.kind).toBe('character');
+    expect(JSON.stringify(opened)).not.toContain('SECRET-PQ-TOKEN');
+  });
+
+  it('stays not_found for an anonymous caller — identity is never widened', async () => {
+    const fixture = await setupFixture();
+    void fixture;
+    const anonymous = await lookupEntity('Thursday Night Frosthaven', {
+      kinds: ['campaign'],
+      game: 'frosthaven',
+    });
+    expect(anonymous.ok).toBe(false);
   });
 });
 
