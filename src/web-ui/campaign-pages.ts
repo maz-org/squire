@@ -158,8 +158,11 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
   </section>` as HtmlEscapedString;
 }
 
-/** `/campaigns/:id` — dashboard shell: header, stats line, roster. */
-export function renderCampaignDashboardContent(detail: CampaignDetail): HtmlEscapedString {
+/** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
+export function renderCampaignDashboardContent(
+  detail: CampaignDetail,
+  threadsFragment?: HtmlEscapedString,
+): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
   return html`<section class="squire-campaign-dashboard" data-campaign-id="${campaign.id}">
@@ -184,15 +187,15 @@ export function renderCampaignDashboardContent(detail: CampaignDetail): HtmlEsca
         )}
       </ul>
     </section>
-    <section
+    ${threadsFragment ??
+    html`<section
       class="squire-campaign-dashboard__threads"
       id="squire-dashboard-threads"
       aria-label="Scenario progression"
     >
-      <!-- SQR-276 renders thread sections + derived statuses here. -->
       <p class="squire-campaign-dashboard__placeholder">
-        Scenario progression arrives with the dashboard build-out.
+        No scenario data for this campaign's modules yet.
       </p>
-    </section>
+    </section>`}
   </section>` as HtmlEscapedString;
 }
