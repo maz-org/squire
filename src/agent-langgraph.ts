@@ -355,6 +355,9 @@ function failedWorkMessageForTool(name: string, input: Record<string, unknown>):
   if (name === 'propose_state_change') return "Couldn't stage the change";
   if (name === 'confirm_state_change') return "Couldn't apply the confirmed change";
   if (name === 'cancel_state_change') return "Couldn't cancel the staged change";
+  if (name === 'create_campaign') return "Couldn't create the campaign";
+  if (name === 'create_character') return "Couldn't add the character";
+  if (name === 'invite_member') return "Couldn't send the invite";
   return `Couldn't run ${name}`;
 }
 
@@ -369,6 +372,9 @@ function writeWorkMessageForTool(name: string): string | undefined {
   if (name === 'propose_state_change') return 'Staged a change for confirmation';
   if (name === 'confirm_state_change') return 'Applied the confirmed change';
   if (name === 'cancel_state_change') return 'Cancelled the staged change';
+  if (name === 'create_campaign') return 'Created the campaign';
+  if (name === 'create_character') return 'Added a character to the roster';
+  if (name === 'invite_member') return 'Sent a campaign invite';
   return undefined;
 }
 
@@ -498,6 +504,9 @@ function planMessageForTool(name: string, input: Record<string, unknown>): strin
   if (name === 'propose_state_change') return "I'll stage that change for your confirmation.";
   if (name === 'confirm_state_change') return "I'll apply the confirmed change.";
   if (name === 'cancel_state_change') return "I'll cancel the staged change.";
+  if (name === 'create_campaign') return "I'll set up the campaign.";
+  if (name === 'create_character') return "I'll add that character to the roster.";
+  if (name === 'invite_member') return "I'll send the invite.";
   return undefined;
 }
 

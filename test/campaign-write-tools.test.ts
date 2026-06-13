@@ -11,6 +11,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+import { inArray } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
@@ -29,6 +30,7 @@ import * as CampaignService from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from '../src/campaign/identity.ts';
 import { createMcpServer } from '../src/mcp.ts';
+import { cardCharacterMats } from '../src/db/schema/cards.ts';
 import { users } from '../src/db/schema/core.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -291,6 +293,151 @@ describe('propose → confirm → cancel through the tools', () => {
   });
 });
 
+describe('onboarding tools (SQR-284)', () => {
+  it('goes zero → populated campaign: create, invite, placeholder, claim', async () => {
+    const owner = await createUser(OWNER_EMAIL);
+
+    const created = await callWriteTool(
+      'create_campaign',
+      { name: 'Onboarded Campaign', game: 'frosthaven' },
+      owner.userId,
+    );
+    expect(created.ok).toBe(true);
+    const campaignId = created.campaign.id;
+
+    const invited = await callWriteTool(
+      'invite_member',
+      { campaignId, email: OUTSIDER_EMAIL },
+      owner.userId,
+    );
+    expect(invited.ok).toBe(true);
+
+    const own = await callWriteTool(
+      'create_character',
+      { campaignId, name: 'My Hero', className: 'Drifter', level: 2 },
+      owner.userId,
+    );
+    expect(own.ok).toBe(true);
+
+    const placeholder = await callWriteTool(
+      'create_character',
+      {
+        campaignId,
+        name: 'Banner Friend',
+        className: 'Banner Spear',
+        placeholderForEmail: OUTSIDER_EMAIL,
+      },
+      owner.userId,
+    );
+    expect(placeholder.ok).toBe(true);
+    expect(placeholder.character.placeholderForEmail).toBe(OUTSIDER_EMAIL);
+
+    // The second member joins and claims their placeholder (SQR-22 rule).
+    const member = await createUser(OUTSIDER_EMAIL);
+    await CampaignService.acceptInvite(member, invited.member.memberId);
+    const claimed = await CharacterService.claimCharacter(member, placeholder.character.id);
+    expect(claimed.ownerUserId).toBe(member.userId);
+    expect(claimed.placeholderForEmail).toBeNull();
+  });
+
+  it('soft-corrects unknown class names against the game card index', async () => {
+    const owner = await createUser(OWNER_EMAIL);
+    const campaign = await CampaignService.createCampaign(owner, {
+      name: 'Class Check Campaign',
+      game: 'frosthaven',
+      modules: [],
+    });
+    const { db } = getDb('server');
+    // Card tables are NOT reset between tests (resetTestDb only truncates
+    // campaign/auth/conversation state) — clean these rows up in finally so
+    // extracted-data parity tests in the same DB never see them.
+    const testSourceIds = ['test-class-drifter', 'test-class-banner-spear'];
+    await db
+      .insert(cardCharacterMats)
+      .values([
+        {
+          game: 'frosthaven',
+          sourceId: testSourceIds[0],
+          name: 'Drifter',
+          characterClass: 'Inox',
+          handSize: 9,
+          traits: [],
+          hp: {},
+          perks: [],
+          masteries: [],
+        },
+        {
+          game: 'frosthaven',
+          sourceId: testSourceIds[1],
+          name: 'Banner Spear',
+          characterClass: 'Human',
+          handSize: 10,
+          traits: [],
+          hp: {},
+          perks: [],
+          masteries: [],
+        },
+      ])
+      .onConflictDoNothing();
+
+    try {
+      const misspelled = await callWriteTool(
+        'create_character',
+        { campaignId: campaign.id, name: 'Typo Hero', className: 'Driftr' },
+        owner.userId,
+      );
+      expect(misspelled.ok).toBe(false);
+      expect(misspelled.error.code).toBe('unknown_class');
+      expect(misspelled.error.hint).toContain('did you mean Drifter?');
+
+      // Case-insensitive matches normalize to canonical casing.
+      const lowercase = await callWriteTool(
+        'create_character',
+        { campaignId: campaign.id, name: 'Casing Hero', className: 'banner spear' },
+        owner.userId,
+      );
+      expect(lowercase.ok).toBe(true);
+      expect(lowercase.character.className).toBe('Banner Spear');
+
+      // The user insisted: force admits the homebrew class.
+      const forced = await callWriteTool(
+        'create_character',
+        { campaignId: campaign.id, name: 'Homebrew Hero', className: 'Moonwalker', force: true },
+        owner.userId,
+      );
+      expect(forced.ok).toBe(true);
+      expect(forced.character.className).toBe('Moonwalker');
+    } finally {
+      await db.delete(cardCharacterMats).where(inArray(cardCharacterMats.sourceId, testSourceIds));
+    }
+  });
+
+  it('keeps onboarding inside the contract: allowlist and ownership still gate', async () => {
+    const owner = await createUser(OWNER_EMAIL);
+    const created = await callWriteTool(
+      'create_campaign',
+      { name: 'Gated Campaign', game: 'frosthaven' },
+      owner.userId,
+    );
+    const campaignId = created.campaign.id;
+
+    const offList = await callWriteTool(
+      'invite_member',
+      { campaignId, email: 'stranger@example.com' },
+      owner.userId,
+    );
+    expect(offList.ok).toBe(false);
+    expect(offList.error.code).toBe('not_allowlisted');
+
+    const badGame = await callWriteTool(
+      'create_campaign',
+      { name: 'Wrong Game', game: 'catan' },
+      owner.userId,
+    );
+    expect(badGame.ok).toBe(false);
+    expect(badGame.error.code).toBe('unsupported_game');
+  });
+});
 describe('session-end batch staging (SQR-283)', () => {
   it('stages a batch through the tool with a named, consequence-aware preview', async () => {
     const { owner, campaign, character } = await setupCampaign();

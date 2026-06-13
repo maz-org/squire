@@ -102,6 +102,9 @@ describe('in-process MCP client', () => {
       'propose_state_change',
       'confirm_state_change',
       'cancel_state_change',
+      'create_campaign',
+      'create_character',
+      'invite_member',
     ]);
     await client.close();
   });

@@ -105,7 +105,8 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
       : html``}
     ${data.rows.length === 0
       ? html`<p class="squire-campaigns__empty">
-          No campaigns yet — create one below, or just tell Squire about your table in chat.
+          No campaigns yet — create one below, or just
+          <a href="/">tell Squire about your table in chat</a>.
         </p>`
       : html`<ul class="squire-campaigns__list">
           ${data.rows.map(
