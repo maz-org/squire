@@ -114,17 +114,44 @@ the same shared contract definitions.
 
 ## Entity Kinds
 
-| Kind            | Meaning                                                                                                          | Current source                              | Ref examples                                                                                                                                           |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `source`        | A knowledge source such as a rulebook, FAQ, errata, section book, card database, or future campaign record store | Source metadata                             | `source:frosthaven/rulebook`, `source:gloomhaven-2e/rulebook`, `source:gloomhaven-2e/faq`, `source:gloomhaven-2e/errata`, `source:gloomhaven-2e/cards` |
-| `rules_passage` | A semantic rule-source passage from indexed PDFs or HTML/text snapshots                                          | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`, `rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42`                                                        |
-| `scenario`      | A scenario-book scenario record                                                                                  | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`, `scenario:gloomhaven-2e/061`                                                                                                |
-| `section`       | A section-book section record                                                                                    | `getSection()`                              | `section:frosthaven/67.1`, `section:gloomhaven-2e/67.1`                                                                                                |
-| `card_type`     | A category of structured GHS card data                                                                           | `listCardTypes()`                           | `card_type:frosthaven/items`, `card_type:gloomhaven-2e/items`                                                                                          |
-| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest             | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`, `card:gloomhaven-2e/items/gloomhavensecretariat:item/1`                                          |
-| `campaign`      | Future campaign state                                                                                            | Future Phase 4 data                         | `campaign:frosthaven/<campaign-id>`                                                                                                                    |
-| `character`     | Future character state                                                                                           | Future Phase 4 data                         | `character:frosthaven/<character-id>`                                                                                                                  |
-| `party`         | Future party state                                                                                               | Future Phase 4 data                         | `party:frosthaven/<party-id>`                                                                                                                          |
+| Kind            | Meaning                                                                                                                | Current source                              | Ref examples                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `source`        | A knowledge source such as a rulebook, FAQ, errata, section book, card database, or future campaign record store       | Source metadata                             | `source:frosthaven/rulebook`, `source:gloomhaven-2e/rulebook`, `source:gloomhaven-2e/faq`, `source:gloomhaven-2e/errata`, `source:gloomhaven-2e/cards` |
+| `rules_passage` | A semantic rule-source passage from indexed PDFs or HTML/text snapshots                                                | `searchRules()`                             | `rules:frosthaven/fh-rule-book.pdf#chunk=123`, `rules:gloomhaven-2e/gh2-rule-book.pdf#chunk=42`                                                        |
+| `scenario`      | A scenario-book scenario record                                                                                        | `findScenario()`, `getScenario()`           | `scenario:frosthaven/061`, `scenario:gloomhaven-2e/061`                                                                                                |
+| `section`       | A section-book section record                                                                                          | `getSection()`                              | `section:frosthaven/67.1`, `section:gloomhaven-2e/67.1`                                                                                                |
+| `card_type`     | A category of structured GHS card data                                                                                 | `listCardTypes()`                           | `card_type:frosthaven/items`, `card_type:gloomhaven-2e/items`                                                                                          |
+| `card`          | A structured card, item, monster, event, building, scenario, ability, battle goal, or personal quest                   | `searchCards()`, `listCards()`, `getCard()` | `card:frosthaven/items/gloomhavensecretariat:item/1`, `card:gloomhaven-2e/items/gloomhavensecretariat:item/1`                                          |
+| `campaign`      | A campaign the caller is an active member of: shared state, roster, derived availability, redacted journal             | Campaign state (SQR-269)                    | `campaign:frosthaven/<campaign-id>`                                                                                                                    |
+| `character`     | A character in one of the caller's campaigns; private tier present only for the owner                                  | Campaign state (SQR-269)                    | `character:frosthaven/<character-id>`                                                                                                                  |
+| `party`         | A campaign's party view (roster + member-visible characters); one party per campaign in v1, ref reuses the campaign id | Campaign state (SQR-269)                    | `party:frosthaven/<campaign-id>`                                                                                                                       |
+
+### Campaign-state kinds and isolation (ADR 0021)
+
+The three campaign-state kinds are identity-scoped on every surface:
+
+- They appear in `inspect_sources` (as `source:<game>/campaign-state`),
+  resolve in `resolve_entity`, open in `open_entity`, and traverse in
+  `neighbors` **only when the channel carries a resolved user id** (web
+  session, user-bound OAuth token, or in-process identity per SQR-20).
+  Client-only tokens and anonymous calls see no campaign state at all —
+  the kinds behave as if the data did not exist.
+- A ref the caller cannot see (non-member campaign, another campaign's
+  character, malformed id) returns the same `not_found` as an absent ref —
+  there is no existence oracle.
+- Character payloads use the member-visible projection unless the caller
+  owns the character; the private tier (personal quest, battle goals,
+  private notes) is structurally absent, never nulled. Campaign payloads
+  include the redacted journal projection, which can never contain
+  private-tier values.
+- Campaign state is **not searchable** via `search_knowledge` (use
+  `resolve_entity` for name lookup, `open_entity` for state); passing a
+  campaign kind as a search scope returns `invalid_filter` with a hint.
+- Reads join the contract; **writes stay a separate tool family** (eng
+  decision E5) with propose→confirm gating for the destructive set.
+- Campaign relations: `campaign --has_character--> character`,
+  `campaign --has_party--> party`, and
+  `character/party --in_campaign--> campaign`.
 
 Refs are URL-safe strings with this formal shape:
 

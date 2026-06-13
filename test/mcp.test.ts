@@ -130,7 +130,9 @@ describe('MCP redesigned tool registration', () => {
     await expect(
       client.callTool({ name: 'inspect_sources', arguments: {} }),
     ).resolves.toBeDefined();
-    expect(mockInspectSources).toHaveBeenCalledWith();
+    // No game and no identity still passes one options object (SQR-269
+    // threads userId through the same bag).
+    expect(mockInspectSources).toHaveBeenCalledWith({});
 
     await expect(
       client.callTool({ name: 'inspect_sources', arguments: { game: 'gh2' } }),

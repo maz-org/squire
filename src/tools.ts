@@ -45,6 +45,12 @@ import {
   requireGameId,
 } from './game.ts';
 import type { GameId } from './game.ts';
+import {
+  campaignNeighbors,
+  campaignSourceInfo,
+  openCampaignEntity,
+  resolveCampaignEntities,
+} from './campaign/knowledge.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -127,7 +133,15 @@ export interface SourceInfo {
   freshness?: RuleSourceFreshness;
 }
 
-export type KnowledgeKind = 'rules_passage' | 'scenario' | 'section' | 'card_type' | 'card';
+export type KnowledgeKind =
+  | 'rules_passage'
+  | 'scenario'
+  | 'section'
+  | 'card_type'
+  | 'card'
+  | 'campaign'
+  | 'character'
+  | 'party';
 
 export interface SchemaField {
   name: string;
@@ -189,7 +203,14 @@ const LOOKUP_LOW_CONFIDENCE_THRESHOLD = 0.8;
 const LOOKUP_TIE_MARGIN = 0.02;
 const LOOKUP_LOW_CONFIDENCE_MARGIN = 0.08;
 
-export type KnowledgeEntityKind = 'rules_passage' | 'scenario' | 'section' | 'card';
+export type KnowledgeEntityKind =
+  | 'rules_passage'
+  | 'scenario'
+  | 'section'
+  | 'card'
+  | 'campaign'
+  | 'character'
+  | 'party';
 
 export interface KnowledgeEntitySummary {
   kind: KnowledgeEntityKind;
@@ -276,13 +297,20 @@ export interface SearchKnowledgeOptions extends ToolOpts {
 }
 
 export interface NeighborsOptions extends ToolOpts {
-  relation?: BookReferenceType;
+  relation?: string;
   limit?: number;
 }
 
 interface ToolOpts {
   /** Campaign variant. Defaults to 'frosthaven'. Reserved for Phase 2. */
   game?: string;
+  /**
+   * Resolved caller user id (SQR-20/269). When present, the campaign-state
+   * kinds light up, scoped to this user's memberships. When absent, those
+   * kinds behave as if the data did not exist; knowledge kinds are
+   * unaffected either way.
+   */
+  userId?: string;
 }
 
 interface NormalizedToolOpts extends ToolOpts {
@@ -557,10 +585,26 @@ const KIND_ALIASES: Record<string, KnowledgeKind> = {
   type: 'card_type',
   card: 'card',
   cards: 'card',
+  campaign: 'campaign',
+  campaigns: 'campaign',
+  character: 'character',
+  characters: 'character',
+  party: 'party',
+  parties: 'party',
+  roster: 'party',
   ...Object.fromEntries(Object.keys(CARD_KIND_ALIASES).map((alias) => [alias, 'card'])),
 };
 
-const ACTIVE_KINDS: KnowledgeKind[] = ['rules_passage', 'scenario', 'section', 'card_type', 'card'];
+const ACTIVE_KINDS: KnowledgeKind[] = [
+  'rules_passage',
+  'scenario',
+  'section',
+  'card_type',
+  'card',
+  'campaign',
+  'character',
+  'party',
+];
 
 const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
   rules_passage: {
@@ -644,6 +688,89 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
       },
     ],
     aliases: Object.keys(CARD_KIND_ALIASES),
+  },
+  campaign: {
+    ok: true,
+    kind: 'campaign',
+    refPattern: 'campaign:<game>/<campaign-id>',
+    fields: [
+      { name: 'name', type: 'string', description: 'Campaign name' },
+      { name: 'game', type: 'string', description: 'Game id the campaign plays' },
+      { name: 'modules', type: 'string[]', description: 'Active scenario-set modules' },
+      { name: 'prosperity', type: 'number', description: 'Current prosperity level' },
+      { name: 'activeScenario', type: 'string|null', description: 'Current focus scenario key' },
+      { name: 'playedScenarios', type: 'string[]', description: 'Module-qualified played keys' },
+      { name: 'drawnScenarios', type: 'string[]', description: 'Module-qualified drawn keys' },
+      { name: 'members', type: 'object[]', description: 'Roster (name, email, role, status)' },
+      {
+        name: 'availability',
+        type: 'object',
+        description: 'Derived scenario availability: status counts, open/drew-it keys, hazards',
+      },
+      {
+        name: 'recentJournal',
+        type: 'object[]',
+        description: 'Redacted journal days (private fields never appear)',
+      },
+    ],
+    filterFields: ['name', 'game'],
+    relations: ['has_character', 'has_party'],
+    examples: [
+      { label: 'Open a campaign', ref: 'campaign:frosthaven/00000000-0000-4000-8000-000000000000' },
+    ],
+    aliases: ['campaigns'],
+  },
+  character: {
+    ok: true,
+    kind: 'character',
+    refPattern: 'character:<game>/<character-id>',
+    fields: [
+      { name: 'name', type: 'string', description: 'Character name' },
+      { name: 'className', type: 'string', description: 'GHS class identity' },
+      { name: 'level', type: 'number', description: 'Current level' },
+      { name: 'xp', type: 'number', description: 'Experience points' },
+      { name: 'gold', type: 'number', description: 'Gold on hand' },
+      { name: 'perks', type: 'number[]', description: 'Perk sheet indices' },
+      { name: 'items', type: 'object[]', description: 'Owned items as (game, sourceId) refs' },
+      { name: 'cards', type: 'object[]', description: 'Ability cards with owned/active role' },
+      {
+        name: 'personalQuest',
+        type: 'string|null',
+        description: 'Private tier — present only when the caller owns the character',
+      },
+    ],
+    filterFields: ['name'],
+    relations: ['in_campaign'],
+    examples: [
+      {
+        label: 'Open a character',
+        ref: 'character:frosthaven/00000000-0000-4000-8000-000000000000',
+      },
+    ],
+    aliases: ['characters'],
+  },
+  party: {
+    ok: true,
+    kind: 'party',
+    refPattern: 'party:<game>/<campaign-id>',
+    fields: [
+      { name: 'campaignName', type: 'string', description: 'Owning campaign name' },
+      { name: 'members', type: 'object[]', description: 'Roster (name, email, role, status)' },
+      {
+        name: 'characters',
+        type: 'object[]',
+        description: 'Member-visible character projections (no private tier)',
+      },
+    ],
+    filterFields: [],
+    relations: ['in_campaign', 'has_character'],
+    examples: [
+      {
+        label: 'Open the party (one per campaign in v1; ref reuses the campaign id)',
+        ref: 'party:frosthaven/00000000-0000-4000-8000-000000000000',
+      },
+    ],
+    aliases: ['parties', 'roster'],
   },
 };
 
@@ -1306,6 +1433,11 @@ export async function inspectSources(opts?: ToolOpts): Promise<InspectSourcesRes
     },
   );
 
+  // Campaign state appears only for an identified caller, scoped to their
+  // memberships (SQR-269, ADR 0021).
+  const campaignSource = await campaignSourceInfo(opts?.userId, game);
+  if (campaignSource) sources.push(campaignSource);
+
   return {
     ok: true,
     games: GAME_INFO,
@@ -1416,6 +1548,10 @@ export async function resolveEntity(
     );
   }
 
+  // Campaign-state kinds resolve only within the caller's memberships; with
+  // no identity they contribute nothing (SQR-269, ADR 0021).
+  candidates.push(...(await resolveCampaignEntities(options.userId, game, query, kinds, limit)));
+
   return {
     ok: true,
     query,
@@ -1508,7 +1644,11 @@ export async function lookupEntity(
     };
   }
 
-  return openEntity(top.entity.ref, { game: normalizeToolGame(options.game) });
+  // Preserve the full resolution options — crucially `userId` — so a
+  // membership-scoped campaign/character/party ref reopens under the same
+  // identity that resolved it. Rebuilding with only `game` would reopen
+  // anonymously and fall into the indistinguishable not_found path (SQR-269).
+  return openEntity(top.entity.ref, normalizeToolOpts(options));
 }
 
 /**
@@ -1598,6 +1738,12 @@ async function adjacentRulePassageContext(hit: ScoredEntry): Promise<RulePassage
 
 export async function openEntity(ref: string, opts?: ToolOpts): Promise<KnowledgeOpenResult> {
   const game = normalizeToolGame(opts?.game);
+
+  // Campaign-shaped refs short-circuit to the membership-scoped campaign
+  // branch (SQR-269); absent identity and non-membership are the same
+  // not_found as an absent id.
+  const campaignResult = await openCampaignEntity(opts?.userId, ref);
+  if (campaignResult) return campaignResult;
 
   if (/^\d+$/.test(ref.trim())) {
     return {
@@ -1765,7 +1911,13 @@ export async function searchKnowledge(
   if (invalid) {
     return {
       ok: false,
-      error: { code: 'invalid_filter', message: `Unsupported search scope: ${invalid}` },
+      error: {
+        code: 'invalid_filter',
+        message: `Unsupported search scope: ${invalid}`,
+        ...(['campaign', 'character', 'party'].includes(invalid)
+          ? { hint: 'Campaign state is not searchable; use resolve_entity or open_entity.' }
+          : {}),
+      },
     };
   }
 
@@ -1877,12 +2029,18 @@ export async function neighbors(
 ): Promise<KnowledgeNeighborsResult> {
   const game = normalizeToolGame(options.game);
   const relation = options.relation;
-  if (relation && !BOOK_REFERENCE_TYPES.includes(relation)) {
+
+  const campaignResult = await campaignNeighbors(options.userId, ref, relation);
+  if (campaignResult) return campaignResult;
+
+  if (relation && !BOOK_REFERENCE_TYPES.includes(relation as BookReferenceType)) {
     return {
       ok: false,
       error: { code: 'unsupported_relation', message: `Unsupported relation: ${relation}` },
     };
   }
+  // Validated against BOOK_REFERENCE_TYPES just above.
+  const bookRelation = relation as BookReferenceType | undefined;
 
   let kind: BookRecordKind;
   let storageRef: string;
@@ -1904,9 +2062,9 @@ export async function neighbors(
     return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
   }
 
-  let links = await followLinks(kind, storageRef, relation, { game });
+  let links = await followLinks(kind, storageRef, bookRelation, { game });
   if (kind === 'scenario') {
-    const incoming = await incomingLinks(kind, storageRef, relation, { game });
+    const incoming = await incomingLinks(kind, storageRef, bookRelation, { game });
     const seen = new Set(
       links.map(
         (link) => `${link.linkType}:${link.fromKind}:${link.fromRef}:${link.toKind}:${link.toRef}`,

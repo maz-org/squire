@@ -17,6 +17,19 @@ import {
   neighbors,
 } from './tools.ts';
 import { BOOK_REFERENCE_TYPES } from './scenario-section-schemas.ts';
+import { CAMPAIGN_RELATIONS } from './campaign/knowledge.ts';
+import { userIdFromAuthInfo } from './campaign/identity.ts';
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+
+/**
+ * Campaign-state kinds need the verified token's user id (SQR-269). The
+ * transport threads `authInfo` into handlers as `extra.authInfo`; client-only
+ * tokens (no userId) simply see no campaign state.
+ */
+function identityOpts(extra: { authInfo?: AuthInfo }): { userId: string } | undefined {
+  const userId = userIdFromAuthInfo(extra.authInfo);
+  return userId ? { userId } : undefined;
+}
 
 const gameSchema = z
   .string()
@@ -44,9 +57,8 @@ export function createMcpServer(): McpServer {
         game: gameSchema,
       },
     },
-    async ({ game }) => {
-      const opts = gameOpts(game);
-      const result = opts ? await inspectSources(opts) : await inspectSources();
+    async ({ game }, extra) => {
+      const result = await inspectSources({ ...gameOpts(game), ...identityOpts(extra) });
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     },
   );
@@ -87,8 +99,13 @@ export function createMcpServer(): McpServer {
         game: gameSchema,
       },
     },
-    async ({ query, kinds, limit, game }) => {
-      const result = await resolveEntity(query, { kinds, limit, ...gameOpts(game) });
+    async ({ query, kinds, limit, game }, extra) => {
+      const result = await resolveEntity(query, {
+        kinds,
+        limit,
+        ...gameOpts(game),
+        ...identityOpts(extra),
+      });
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     },
   );
@@ -108,8 +125,13 @@ export function createMcpServer(): McpServer {
         game: gameSchema,
       },
     },
-    async ({ query, kinds, limit, game }) => {
-      const result = await lookupEntity(query, { kinds, limit, ...gameOpts(game) });
+    async ({ query, kinds, limit, game }, extra) => {
+      const result = await lookupEntity(query, {
+        kinds,
+        limit,
+        ...gameOpts(game),
+        ...identityOpts(extra),
+      });
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
@@ -127,9 +149,8 @@ export function createMcpServer(): McpServer {
         game: gameSchema,
       },
     },
-    async ({ ref, game }) => {
-      const opts = gameOpts(game);
-      const result = opts ? await openEntity(ref, opts) : await openEntity(ref);
+    async ({ ref, game }, extra) => {
+      const result = await openEntity(ref, { ...gameOpts(game), ...identityOpts(extra) });
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
@@ -166,13 +187,21 @@ export function createMcpServer(): McpServer {
       description: 'Traverse known outgoing relationships from a scenario or section ref.',
       inputSchema: {
         ref: z.string().describe('Canonical traversable ref'),
-        relation: z.enum(BOOK_REFERENCE_TYPES).optional().describe('Optional relation filter'),
+        relation: z
+          .enum([...BOOK_REFERENCE_TYPES, ...CAMPAIGN_RELATIONS])
+          .optional()
+          .describe('Optional relation filter'),
         limit: z.number().int().min(1).max(50).default(20).describe('Maximum neighbors'),
         game: gameSchema,
       },
     },
-    async ({ ref, relation, limit, game }) => {
-      const result = await neighbors(ref, { relation, limit, ...gameOpts(game) });
+    async ({ ref, relation, limit, game }, extra) => {
+      const result = await neighbors(ref, {
+        relation,
+        limit,
+        ...gameOpts(game),
+        ...identityOpts(extra),
+      });
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         isError: !result.ok,
