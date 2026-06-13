@@ -1644,7 +1644,11 @@ export async function lookupEntity(
     };
   }
 
-  return openEntity(top.entity.ref, { game: normalizeToolGame(options.game) });
+  // Preserve the full resolution options — crucially `userId` — so a
+  // membership-scoped campaign/character/party ref reopens under the same
+  // identity that resolved it. Rebuilding with only `game` would reopen
+  // anonymously and fall into the indistinguishable not_found path (SQR-269).
+  return openEntity(top.entity.ref, normalizeToolOpts(options));
 }
 
 /**
