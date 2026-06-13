@@ -19,6 +19,7 @@
     "seed:cards": "node scripts/seed-cards.ts",
     "seed:scenario-section-books": "node scripts/seed-scenario-section-books.ts",
     "seed:unlock-graphs": "node scripts/seed-unlock-graphs.ts",
+    "migrate:live-gh2e": "node scripts/migrate-live-gh2e.ts",
     "seed:dev-user": "node scripts/seed-dev-user.ts",
     "seed:dev": "npm run seed:cards && npm run seed:scenario-section-books && npm run seed:unlock-graphs && npm run seed:dev-user",
     "sessions:sweep-expired": "node scripts/sweep-expired-sessions.ts",

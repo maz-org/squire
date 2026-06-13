@@ -49,6 +49,14 @@ export async function findById(userId: string): Promise<User | null> {
   return toDomain(rows[0]);
 }
 
+/** Operational lookups (live-migration script, SQR-273). Email is unique. */
+export async function findByEmail(email: string): Promise<User | null> {
+  const { db } = getDb('server');
+  const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (rows.length === 0) return null;
+  return toDomain(rows[0]);
+}
+
 /**
  * Upsert a user by Google sub (stable identifier). On conflict with
  * google_sub, updates email and name (they can change on the Google side).

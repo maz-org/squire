@@ -494,3 +494,23 @@ short maintenance window:
 
 See [deploy-rollback.md](deploy-rollback.md) for the lower-level deploy token,
 origin-lock, and migration notes.
+
+## One-time live GH2e campaign import (SQR-273)
+
+Imports Brian's prototype campaign (played/drawn scenario state) into Squire.
+One-time operational step — recurring sync is Phase 6 scope.
+
+1. Capture the prototype state: `GET https://squire-campaign-tracker.replit.app/api/campaign/<id>`
+   and save the JSON (`{name, modules, played, drawn}`).
+2. Ensure the owner has logged into Squire at least once (the script binds
+   the campaign to the user row matching the owner email, default
+   `bcm@maz.org`).
+3. Run against the target database:
+
+```sh
+npm run migrate:live-gh2e -- <capture.json> [owner-email]
+```
+
+Idempotent on campaign identity (name + owner): re-running against a fresh
+export updates played/drawn state in place. The script exits non-zero if any
+imported key is unknown to the seeded unlock graphs.
