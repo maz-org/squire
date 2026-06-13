@@ -1572,6 +1572,24 @@ function scrollPendingAnswerIntoView(answerEl) {
   answerEl.scrollIntoView({ block: 'start', behavior: 'auto' });
 }
 
+// ─── Accordion character sheet (SQR-277) ─────────────────────────────────────
+// Deep-link anchors: /characters/:id#gold opens the matching section so a
+// work-log row or validation warning lands the user directly on the field.
+
+function openSheetSectionFromHash() {
+  if (!window.location || !window.location.hash) return;
+  var sectionId = window.location.hash.slice(1);
+  if (!sectionId || !document.querySelector) return;
+  var section = document.querySelector(
+    '.squire-sheet__section[data-sheet-section="' + sectionId + '"]',
+  );
+  if (!section) return;
+  section.open = true;
+  if (typeof section.scrollIntoView === 'function') {
+    section.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }
+}
+
 // ─── Confirmation block (SQR-286) ────────────────────────────────────────────
 // Consent chrome for a staged destructive mutation (DESIGN.md §Confirmation
 // block): a --surface panel of server-derived ledger lines plus a wax primary
@@ -2275,6 +2293,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
 document.addEventListener('DOMContentLoaded', function () {
   syncChatFormAction();
   syncActiveGameControls();
+  openSheetSectionFromHash();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
   // back/forward navigation and refresh, so we don't pin or auto-scroll on
   // initial load. We only flag pin on submit (above) and re-evaluate it

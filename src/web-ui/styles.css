@@ -2456,6 +2456,204 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
+/* ─── Accordion character sheet (SQR-277, DESIGN.md §Accordion sheet) ────────
+   Collapsible ledger sections built for the everyday single-field edit:
+   44px summary targets, small-caps section vocabulary, deep-linkable ids.
+   Banner variants: --warning (amber rules check), --claim (sage placeholder
+   claim) extend the shared .squire-banner shell. */
+
+.squire-banner--claim {
+  border-left-color: var(--sage);
+  background: rgb(122 140 92 / 0.08);
+}
+
+.squire-banner--claim .squire-banner__label {
+  color: var(--sage);
+}
+
+.squire-sheet {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.squire-sheet__breadcrumb {
+  margin: 0 0 4px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.squire-sheet__breadcrumb a {
+  color: var(--sepia);
+  text-decoration: none;
+}
+
+.squire-sheet__breadcrumb a:hover {
+  color: var(--wax);
+}
+
+.squire-sheet__name {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem;
+}
+
+.squire-sheet__stats {
+  margin: 4px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--sepia);
+}
+
+.squire-sheet__sections {
+  display: grid;
+  gap: 8px;
+}
+
+.squire-sheet__section {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.squire-sheet__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.squire-sheet__summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-sheet__summary-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--sepia);
+}
+
+.squire-sheet__summary-value {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--cream);
+  text-align: right;
+}
+
+.squire-sheet__section[open] .squire-sheet__summary {
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-sheet__body {
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.squire-sheet__form {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.squire-sheet__field {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+
+.squire-sheet__field > span {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-sheet__field input,
+.squire-sheet__field textarea {
+  width: 100%;
+  max-width: 320px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 16px; /* prevents iOS zoom-on-focus */
+  color: var(--cream);
+  background: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+.squire-sheet__field textarea {
+  max-width: 100%;
+}
+
+.squire-sheet__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.squire-sheet__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 13px;
+}
+
+.squire-sheet__row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.squire-sheet__row-action {
+  min-height: 44px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--sepia);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.squire-sheet__row-action:hover {
+  color: var(--wax);
+  border-color: var(--wax);
+}
+
+.squire-sheet__badge {
+  margin-left: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--sepia);
+}
+
+.squire-sheet__badge.is-active {
+  color: var(--sage);
+}
+
+.squire-sheet__empty,
+.squire-sheet__readonly {
+  margin: 0;
+  font-size: 13px;
+  color: var(--sepia);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
