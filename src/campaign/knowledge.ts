@@ -36,6 +36,14 @@ export type CampaignRelation = (typeof CAMPAIGN_RELATIONS)[number];
 const CAMPAIGN_SOURCE_LABEL = 'Campaign State';
 
 /**
+ * Pre-filter window for character name matching: we scan more roster rows
+ * than the final `limit` because `nameMatchConfidence` drops non-matches,
+ * so a small multiple keeps enough high-confidence hits in reach before the
+ * caller's limit applies. Parties are tiny, so 4× is generous, not costly.
+ */
+const CHARACTER_PRESEARCH_MULTIPLIER = 4;
+
+/**
  * Tool-layer reads construct identity from the channel's resolved userId.
  * The channel tag only matters for audit writes, which never happen on the
  * read-only contract surface.
@@ -163,7 +171,7 @@ export async function resolveCampaignEntities(
     }
     if (wanted.has('character')) {
       const characters = await CharacterService.listCampaignCharacters(identity, campaign.id);
-      for (const character of characters.slice(0, limit * 4)) {
+      for (const character of characters.slice(0, limit * CHARACTER_PRESEARCH_MULTIPLIER)) {
         const characterConfidence = nameMatchConfidence(query, character.name);
         if (characterConfidence === null) continue;
         candidates.push({
