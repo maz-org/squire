@@ -20,6 +20,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/extracted-data.test.ts',
   'test/gh2-imported-data.test.ts',
   'test/llm-budget.test.ts',
+  'test/mcp-campaign-parity.test.ts',
   'test/pdf-extraction-retrieval-scoring.test.ts',
   'test/scenario-section-data.test.ts',
   'test/seed/seed-cards.test.ts',
