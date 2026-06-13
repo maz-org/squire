@@ -117,6 +117,9 @@ describe('MCP redesigned tool registration', () => {
       'propose_state_change',
       'confirm_state_change',
       'cancel_state_change',
+      'create_campaign',
+      'create_character',
+      'invite_member',
     ]);
     expect(names).not.toContain('search_rules');
     expect(names).not.toContain('search_cards');

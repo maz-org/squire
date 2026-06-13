@@ -20,6 +20,7 @@ import { CAMPAIGN_WRITE_RATE_LIMIT_POLICY, getDefaultRateLimiter } from '../rate
 import { VersionConflictError } from '../db/repositories/types.ts';
 import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
 import { availabilityShiftLines } from './availability.ts';
+import { checkClassName, knownClassNames } from './class-validation.ts';
 import * as CampaignService from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from './identity.ts';
@@ -62,6 +63,15 @@ function mapError(error: unknown): WriteToolError {
     return failure(error.code, error.message);
   }
   if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    return failure(error.code, error.message);
+  }
+  if (error instanceof CampaignService.UnsupportedGameError) {
+    return failure(error.code, error.message, 'Squire supports frosthaven and gloomhaven-2e');
+  }
+  if (error instanceof CampaignService.NotAllowlistedError) {
+    return failure(error.code, error.message);
+  }
+  if (error instanceof CampaignService.AlreadyInvitedError) {
     return failure(error.code, error.message);
   }
   throw error;
@@ -213,6 +223,103 @@ export async function writeCharacterState(
       ...input.patch,
     });
     return { ok: true, character };
+  } catch (error) {
+    return mapError(error);
+  }
+}
+
+// ─── Onboarding creates (SQR-284) ────────────────────────────────────────────
+// Creation is NOT in the destructive set: a campaign or character the user
+// just asked for is reversible (deletion flows through propose→confirm), so
+// the interview applies creates directly. Every create still shows in the
+// work log — no silent writes.
+
+const CreateCampaignInputSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  game: z.string().trim().min(1).max(100),
+  modules: z.array(z.string().trim().min(1).max(100)).max(20).optional(),
+});
+
+export async function createCampaign(
+  userId: string | undefined,
+  rawInput: unknown,
+): Promise<WriteToolResult<{ campaign: unknown }>> {
+  const identity = await guard(userId);
+  if ('ok' in identity) return identity;
+  const parsed = CreateCampaignInputSchema.safeParse(rawInput);
+  if (!parsed.success) return invalidInput(parsed.error);
+  try {
+    const campaign = await CampaignService.createCampaign(identity, parsed.data);
+    return { ok: true, campaign };
+  } catch (error) {
+    return mapError(error);
+  }
+}
+
+const CreateCharacterInputSchema = z.object({
+  campaignId: z.string().uuid(),
+  name: z.string().trim().min(1).max(100),
+  className: z.string().trim().min(1).max(100),
+  level: z.number().int().min(1).max(20).optional(),
+  xp: z.number().int().min(0).optional(),
+  gold: z.number().int().min(0).optional(),
+  placeholderForEmail: z.string().trim().email().max(320).optional(),
+  force: z.boolean().optional(),
+});
+
+export async function createCharacter(
+  userId: string | undefined,
+  rawInput: unknown,
+): Promise<WriteToolResult<{ character: unknown }>> {
+  const identity = await guard(userId);
+  if ('ok' in identity) return identity;
+  const parsed = CreateCharacterInputSchema.safeParse(rawInput);
+  if (!parsed.success) return invalidInput(parsed.error);
+  const { campaignId, force, ...input } = parsed.data;
+  try {
+    // GHS-validated class names, soft correction (SQR-284): a near-miss
+    // earns a clarifying question, not a guess; force admits homebrew.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    if (!force) {
+      const check = checkClassName(input.className, await knownClassNames(detail.campaign.game));
+      if (!check.ok) {
+        return failure(
+          'unknown_class',
+          `"${input.className}" is not a known ${detail.campaign.game} class`,
+          check.suggestion
+            ? `Ask the user: did you mean ${check.suggestion}? Retry with force:true only if they insist on a custom class.`
+            : `Known classes: ${check.known.join(', ')}. Retry with force:true only if the user insists on a custom class.`,
+        );
+      }
+      input.className = check.canonical;
+    }
+    const character = await CharacterService.createCharacter(identity, campaignId, input);
+    return { ok: true, character };
+  } catch (error) {
+    return mapError(error);
+  }
+}
+
+const InviteMemberInputSchema = z.object({
+  campaignId: z.string().uuid(),
+  email: z.string().trim().email().max(320),
+});
+
+export async function inviteMember(
+  userId: string | undefined,
+  rawInput: unknown,
+): Promise<WriteToolResult<{ member: unknown }>> {
+  const identity = await guard(userId);
+  if ('ok' in identity) return identity;
+  const parsed = InviteMemberInputSchema.safeParse(rawInput);
+  if (!parsed.success) return invalidInput(parsed.error);
+  try {
+    const member = await CampaignService.inviteMember(
+      identity,
+      parsed.data.campaignId,
+      parsed.data.email,
+    );
+    return { ok: true, member };
   } catch (error) {
     return mapError(error);
   }

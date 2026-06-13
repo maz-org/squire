@@ -326,6 +326,63 @@ export function createMcpServer(): McpServer {
     },
   );
 
+  server.registerTool(
+    'create_campaign',
+    {
+      description:
+        'Create a new campaign for the signed-in user (game: frosthaven or gloomhaven-2e).',
+      inputSchema: {
+        name: z.string().describe('Campaign name'),
+        game: z.string().describe('frosthaven or gloomhaven-2e'),
+        modules: z.array(z.string()).optional().describe('Optional content modules'),
+      },
+    },
+    async (input, extra) => {
+      const result = await WriteTools.createCampaign(identityOpts(extra)?.userId, input);
+      return writeToolResult(result);
+    },
+  );
+
+  server.registerTool(
+    'create_character',
+    {
+      description:
+        "Add a character to a campaign. Set placeholderForEmail for another player's character — a claimable placeholder. Class names are validated; relay suggested corrections instead of guessing, and pass force only when the user insists on a custom class.",
+      inputSchema: {
+        campaignId: z.string().describe('Campaign UUID'),
+        name: z.string().describe('Character name'),
+        className: z.string().describe('Class, e.g. Drifter'),
+        level: z.number().int().optional(),
+        xp: z.number().int().optional(),
+        gold: z.number().int().optional(),
+        placeholderForEmail: z
+          .string()
+          .optional()
+          .describe("Another player's invite email — makes this a claimable placeholder"),
+        force: z.boolean().optional().describe('Accept an unrecognized class name'),
+      },
+    },
+    async (input, extra) => {
+      const result = await WriteTools.createCharacter(identityOpts(extra)?.userId, input);
+      return writeToolResult(result);
+    },
+  );
+
+  server.registerTool(
+    'invite_member',
+    {
+      description: 'Invite another player to a campaign by email (owner only, allowlisted).',
+      inputSchema: {
+        campaignId: z.string().describe('Campaign UUID'),
+        email: z.string().describe("The player's email"),
+      },
+    },
+    async (input, extra) => {
+      const result = await WriteTools.inviteMember(identityOpts(extra)?.userId, input);
+      return writeToolResult(result);
+    },
+  );
+
   return server;
 }
 

@@ -222,6 +222,15 @@ export function activeWorkLogProgressMessageFromCompleted(message: string): stri
   const cancelled = message.match(/^Cancelled\s+(.+)$/i);
   if (cancelled) return `Cancelling ${cancelled[1]!.trim()}`;
 
+  const created = message.match(/^Created\s+(.+)$/i);
+  if (created) return `Creating ${created[1]!.trim()}`;
+
+  const added = message.match(/^Added\s+(.+)$/i);
+  if (added) return `Adding ${added[1]!.trim()}`;
+
+  const sent = message.match(/^Sent\s+(.+)$/i);
+  if (sent) return `Sending ${sent[1]!.trim()}`;
+
   const ran = message.match(/^Ran\s+(.+)$/i);
   if (ran) return `Running ${ran[1]!.trim()}`;
 
