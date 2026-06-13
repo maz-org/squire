@@ -20,6 +20,29 @@ function listLine(label: string, keys: string[]): string {
 }
 
 /**
+ * Compact field summary for a staged character patch ("L5 · XP 150 ·
+ * GOLD 24"). Shared with the write tools, which prefix the resolved
+ * character name when they have one.
+ */
+export function characterPatchSummary(patch: {
+  name?: string;
+  className?: string;
+  level?: number;
+  xp?: number;
+  gold?: number;
+  perks?: number[];
+}): string {
+  const parts: string[] = [];
+  if (patch.name !== undefined) parts.push(`RENAME → ${patch.name.toUpperCase()}`);
+  if (patch.className !== undefined) parts.push(patch.className.toUpperCase());
+  if (patch.level !== undefined) parts.push(`L${patch.level}`);
+  if (patch.xp !== undefined) parts.push(`XP ${patch.xp}`);
+  if (patch.gold !== undefined) parts.push(`GOLD ${patch.gold}`);
+  if (patch.perks !== undefined) parts.push(`PERKS ${patch.perks.length}`);
+  return parts.join(' · ') || 'UPDATED';
+}
+
+/**
  * One small-caps line per staged change. Unknown shapes fall back to the
  * ledger-cased mutation type rather than throwing — the block is consent
  * chrome and must render something honest for anything the store accepted.
@@ -44,6 +67,11 @@ export function stagedMutationLines(mutation: unknown): string[] {
       return ['CHARACTER · DELETE'];
     case 'character.retire':
       return ['CHARACTER · RETIRE'];
+    case 'character.update':
+      return [`CHARACTER → ${characterPatchSummary(staged.patch)}`];
+    case 'batch':
+      // One line per member, in staged order — the whole session at a glance.
+      return staged.mutations.flatMap((member) => stagedMutationLines(member));
     case 'campaign.update': {
       // The staged patch schema only admits the destructive-capable fields
       // (prosperity decrease, scenario list shrink) — mirror it exactly.

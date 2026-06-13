@@ -215,3 +215,122 @@ describe('proposal lifecycle', () => {
     });
   });
 });
+
+describe('session-end batches (SQR-283)', () => {
+  it('applies a full session-end batch atomically on confirm', async () => {
+    const { owner, campaign } = await setupCampaign();
+    const drifter = await CharacterService.createCharacter(owner, campaign.id, {
+      name: 'Drifter',
+      className: 'Drifter',
+    });
+    const banner = await CharacterService.createCharacter(owner, campaign.id, {
+      name: 'Banner Spear',
+      className: 'Banner Spear',
+    });
+
+    const proposal = await PendingMutations.propose(owner, campaign.id, {
+      type: 'batch',
+      mutations: [
+        {
+          type: 'campaign.update',
+          patch: { playedScenarios: ['fh:1', 'fh:2', 'fh:14'], prosperity: 4 },
+        },
+        { type: 'character.update', characterId: drifter.id, patch: { level: 5, gold: 12 } },
+        { type: 'character.update', characterId: banner.id, patch: { xp: 45, gold: 12 } },
+      ],
+    });
+    expect(proposal.expectedVersions).toEqual({
+      [campaign.id]: campaign.version,
+      [drifter.id]: drifter.version,
+      [banner.id]: banner.version,
+    });
+
+    const confirmed = await PendingMutations.confirm(owner, proposal.id);
+    expect(confirmed.status).toBe('confirmed');
+
+    const campaignAfter = await CampaignService.getCampaignDetail(owner, campaign.id);
+    expect(campaignAfter.campaign.playedScenarios).toContain('fh:14');
+    expect(campaignAfter.campaign.prosperity).toBe(4);
+    const drifterAfter = await CharacterService.getCharacterDetail(owner, drifter.id);
+    expect(drifterAfter.character.level).toBe(5);
+    expect(drifterAfter.character.gold).toBe(12);
+    const bannerAfter = await CharacterService.getCharacterDetail(owner, banner.id);
+    expect(bannerAfter.character.xp).toBe(45);
+  });
+
+  it('ATOMICITY: an induced mid-batch failure applies nothing', async () => {
+    const { owner, campaign } = await setupCampaign();
+    const character = await CharacterService.createCharacter(owner, campaign.id, {
+      name: 'Survivor',
+      className: 'Drifter',
+    });
+    const detail = await CampaignService.getCampaignDetail(owner, campaign.id);
+
+    // Member 2 passes propose-time validation (the proposer IS the owner)
+    // but fails at execution: owners cannot remove themselves. Member 1
+    // would have already applied — the transaction must unwind it.
+    const proposal = await PendingMutations.propose(owner, campaign.id, {
+      type: 'batch',
+      mutations: [
+        { type: 'character.update', characterId: character.id, patch: { level: 9, gold: 99 } },
+        { type: 'member.remove', memberId: detail.self.memberId },
+      ],
+    });
+
+    await expect(PendingMutations.confirm(owner, proposal.id)).rejects.toMatchObject({
+      code: 'forbidden',
+    });
+
+    const after = await CharacterService.getCharacterDetail(owner, character.id);
+    expect(after.character.level).toBe(character.level);
+    expect(after.character.gold).toBe(character.gold);
+    expect(after.character.version).toBe(character.version);
+  });
+
+  it('enforces one mutation per entity per batch at the schema boundary', () => {
+    const characterId = '00000000-0000-4000-8000-000000000001';
+    expect(
+      PendingMutations.StagedMutationSchema.safeParse({
+        type: 'batch',
+        mutations: [
+          { type: 'campaign.update', patch: { prosperity: 4 } },
+          { type: 'campaign.delete' },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      PendingMutations.StagedMutationSchema.safeParse({
+        type: 'batch',
+        mutations: [
+          { type: 'character.update', characterId, patch: { level: 2 } },
+          { type: 'character.retire', characterId },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      PendingMutations.StagedMutationSchema.safeParse({
+        type: 'batch',
+        mutations: [
+          { type: 'campaign.update', patch: { prosperity: 4 } },
+          { type: 'character.update', characterId, patch: { level: 2 } },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('supports standalone character.update proposals', async () => {
+    const { owner, campaign } = await setupCampaign();
+    const character = await CharacterService.createCharacter(owner, campaign.id, {
+      name: 'Solo',
+      className: 'Drifter',
+    });
+    const proposal = await PendingMutations.propose(owner, campaign.id, {
+      type: 'character.update',
+      characterId: character.id,
+      patch: { level: 3 },
+    });
+    await PendingMutations.confirm(owner, proposal.id);
+    const after = await CharacterService.getCharacterDetail(owner, character.id);
+    expect(after.character.level).toBe(3);
+  });
+});

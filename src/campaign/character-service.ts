@@ -239,13 +239,14 @@ export async function updateCharacter(
         payloadAfter: pick(updated as unknown as Record<string, unknown>),
       };
     },
+    confirmed.tx,
   );
 }
 
 /**
  * Owner-scoped delete. Unclaimed placeholders are scratch data; deleting a
- * real character is destructive per the matrix.
- * TODO(SQR-279): route non-placeholder deletes through propose→confirm.
+ * real character is destructive per the matrix and only executes through a
+ * confirmed proposal (SQR-279).
  */
 export async function deleteCharacter(
   identity: CallerIdentity,
@@ -279,6 +280,7 @@ export async function deleteCharacter(
         },
       };
     },
+    confirmed.tx,
   );
 }
 

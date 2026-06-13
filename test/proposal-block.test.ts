@@ -47,4 +47,24 @@ describe('stagedMutationLines', () => {
     expect(stagedMutationLines(null)).toEqual(['UNKNOWN CHANGE']);
     expect(stagedMutationLines('garbage')).toEqual(['UNKNOWN CHANGE']);
   });
+
+  it('summarizes character.update patches and flattens batches (SQR-283)', () => {
+    const characterId = '00000000-0000-4000-8000-000000000001';
+    expect(
+      stagedMutationLines({
+        type: 'character.update',
+        characterId,
+        patch: { level: 5, xp: 150, gold: 24 },
+      }),
+    ).toEqual(['CHARACTER → L5 · XP 150 · GOLD 24']);
+    expect(
+      stagedMutationLines({
+        type: 'batch',
+        mutations: [
+          { type: 'campaign.update', patch: { playedScenarios: ['fh:1', 'fh:14'] } },
+          { type: 'character.update', characterId, patch: { level: 5 } },
+        ],
+      }),
+    ).toEqual(['SCENARIOS PLAYED → 1, 14', 'CHARACTER → L5']);
+  });
 });

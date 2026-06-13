@@ -14,9 +14,12 @@
  * the same service functions that execute the mutation. Transactions never
  * span LLM calls — propose and confirm are separate requests by design.
  *
- * v1 keeps one mutation per proposal (SQR-283 lifts this to atomic
- * session-end batches) and confirm is proposer-only (any-member confirm is
- * a deliberate future loosening, not an accident).
+ * Batches (SQR-283): a `batch` mutation stages several member mutations as
+ * ONE proposal and confirm applies them in ONE transaction — shared state
+ * is never half-wrong. Each member touches a distinct entity (at most one
+ * campaign-target member, distinct character ids) so per-entity CAS
+ * snapshots stay coherent across the batch. Confirm remains proposer-only
+ * (any-member confirm is a deliberate future loosening, not an accident).
  */
 import { createHash } from 'node:crypto';
 
@@ -42,8 +45,7 @@ export const PROPOSAL_TTL_MS = 15 * 60 * 1000;
 
 // ─── Staged mutation descriptors (the enumerated destructive set) ───────────
 
-/** Boundary validation for proposals from REST bodies and tool input. */
-export const StagedMutationSchema = z.discriminatedUnion('type', [
+const memberMutationSchemas = [
   z.object({ type: z.literal('campaign.delete') }),
   z.object({ type: z.literal('member.remove'), memberId: z.string().uuid() }),
   z.object({
@@ -62,6 +64,66 @@ export const StagedMutationSchema = z.discriminatedUnion('type', [
     characterId: z.string().uuid(),
     successorId: z.string().uuid().nullable().optional(),
   }),
+  // Session-end batches carry routine character bookkeeping alongside the
+  // destructive set (SQR-283). Private-tier fields are deliberately absent —
+  // staged payloads persist in pending_mutations and must stay preview-safe.
+  z.object({
+    type: z.literal('character.update'),
+    characterId: z.string().uuid(),
+    patch: z
+      .object({
+        name: z.string().trim().min(1).max(100).optional(),
+        className: z.string().trim().min(1).max(100).optional(),
+        level: z.number().int().min(1).max(20).optional(),
+        xp: z.number().int().min(0).optional(),
+        gold: z.number().int().min(0).optional(),
+        perks: z.array(z.number().int().min(0)).max(100).optional(),
+      })
+      .refine((patch) => Object.keys(patch).length > 0, { message: 'Empty patch' }),
+  }),
+] as const;
+
+const StagedMemberMutationSchema = z.discriminatedUnion('type', [...memberMutationSchemas]);
+
+export type StagedMemberMutation = z.infer<typeof StagedMemberMutationSchema>;
+
+const CAMPAIGN_TARGET_TYPES = new Set(['campaign.delete', 'member.remove', 'campaign.update']);
+
+/**
+ * One mutation per entity per batch: every member gets its own pre-batch CAS
+ * snapshot, so a second mutation against the same row would always lose to
+ * the first one's version bump mid-transaction.
+ */
+const StagedBatchSchema = z
+  .object({
+    type: z.literal('batch'),
+    mutations: z.array(StagedMemberMutationSchema).min(1).max(20),
+  })
+  .superRefine((batch, ctx) => {
+    const campaignTargets = batch.mutations.filter((m) => CAMPAIGN_TARGET_TYPES.has(m.type));
+    if (campaignTargets.length > 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['mutations'],
+        message: 'A batch may contain at most one campaign-level mutation',
+      });
+    }
+    const characterIds = batch.mutations
+      .map((m) => ('characterId' in m ? m.characterId : null))
+      .filter((id): id is string => id !== null);
+    if (new Set(characterIds).size !== characterIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['mutations'],
+        message: 'A batch may contain at most one mutation per character',
+      });
+    }
+  });
+
+/** Boundary validation for proposals from REST bodies and tool input. */
+export const StagedMutationSchema = z.discriminatedUnion('type', [
+  ...memberMutationSchemas,
+  StagedBatchSchema,
 ]);
 
 export type StagedMutation = z.infer<typeof StagedMutationSchema>;
@@ -149,26 +211,38 @@ async function validateAndSnapshot(
   const campaign = await CampaignRepository.findById(campaignId);
   if (!campaign) throw new CampaignNotFoundError();
 
-  switch (mutation.type) {
-    case 'campaign.delete':
-    case 'member.remove':
-      if (member.role !== 'owner') {
-        throw new CampaignForbiddenError('Only the owner can propose this mutation');
+  async function snapshotMember(staged: StagedMemberMutation): Promise<Record<string, number>> {
+    switch (staged.type) {
+      case 'campaign.delete':
+      case 'member.remove':
+        if (member.role !== 'owner') {
+          throw new CampaignForbiddenError('Only the owner can propose this mutation');
+        }
+        return { [campaignId]: campaign!.version };
+      case 'campaign.update':
+        return { [campaignId]: campaign!.version };
+      case 'character.delete':
+      case 'character.retire':
+      case 'character.update': {
+        const character = await CharacterRepository.findOwnedById(
+          staged.characterId,
+          identity.userId,
+        );
+        // Not yours (or absent) — indistinguishable.
+        if (!character || character.campaignId !== campaignId) throw new CampaignNotFoundError();
+        return { [staged.characterId]: character.version };
       }
-      return { [campaignId]: campaign.version };
-    case 'campaign.update':
-      return { [campaignId]: campaign.version };
-    case 'character.delete':
-    case 'character.retire': {
-      const character = await CharacterRepository.findOwnedById(
-        mutation.characterId,
-        identity.userId,
-      );
-      // Not yours (or absent) — indistinguishable.
-      if (!character || character.campaignId !== campaignId) throw new CampaignNotFoundError();
-      return { [mutation.characterId]: character.version };
     }
   }
+
+  if (mutation.type !== 'batch') return snapshotMember(mutation);
+
+  // Distinct entities per batch is schema-enforced, so plain merge is safe.
+  const merged: Record<string, number> = {};
+  for (const staged of mutation.mutations) {
+    Object.assign(merged, await snapshotMember(staged));
+  }
+  return merged;
 }
 
 // ─── Lifecycle ───────────────────────────────────────────────────────────────
@@ -218,7 +292,13 @@ export async function propose(
       const proposalOutcome = (row: typeof pendingMutations.$inferSelect) => ({
         result: toProposal(row),
         entityId: row.id,
-        payloadAfter: { mutation: mutation.type, expiresAt: row.expiresAt.toISOString() },
+        payloadAfter: {
+          mutation: mutation.type,
+          ...(mutation.type === 'batch'
+            ? { members: mutation.mutations.map((member) => member.type) }
+            : {}),
+          expiresAt: row.expiresAt.toISOString(),
+        },
       });
 
       if (options.idempotencyKey) {
@@ -323,9 +403,12 @@ async function markResolved(proposalId: string, status: string): Promise<void> {
  * call would use — the confirmed flag is the only thing that lets them
  * past their destructive gate, and it never crosses a request boundary.
  */
-async function execute(identity: CallerIdentity, proposal: PendingProposal): Promise<void> {
-  const confirmed = { confirmedProposalId: proposal.id };
-  const mutation = proposal.mutation;
+async function executeMember(
+  identity: CallerIdentity,
+  proposal: PendingProposal,
+  mutation: StagedMemberMutation,
+  confirmed: CampaignService.ConfirmedExecution,
+): Promise<void> {
   switch (mutation.type) {
     case 'campaign.delete':
       return CampaignService.deleteCampaign(identity, proposal.campaignId, confirmed);
@@ -363,7 +446,38 @@ async function execute(identity: CallerIdentity, proposal: PendingProposal): Pro
       );
       return;
     }
+    case 'character.update': {
+      await CharacterService.updateCharacter(
+        identity,
+        mutation.characterId,
+        {
+          expectedVersion: proposal.expectedVersions[mutation.characterId],
+          ...mutation.patch,
+        },
+        confirmed,
+      );
+      return;
+    }
   }
+}
+
+async function execute(identity: CallerIdentity, proposal: PendingProposal): Promise<void> {
+  const confirmed: CampaignService.ConfirmedExecution = { confirmedProposalId: proposal.id };
+  const mutation = proposal.mutation;
+  if (mutation.type !== 'batch') {
+    return executeMember(identity, proposal, mutation, confirmed);
+  }
+
+  // D11 batch semantics: ONE transaction for the whole batch. Every member
+  // runs its audited mutation as a savepoint inside this transaction, so an
+  // induced failure anywhere unwinds everything — zero applied mutations,
+  // never half a session.
+  const { db } = getDb('server');
+  await db.transaction(async (tx) => {
+    for (const staged of mutation.mutations) {
+      await executeMember(identity, proposal, staged, { ...confirmed, tx });
+    }
+  });
 }
 
 export async function confirm(

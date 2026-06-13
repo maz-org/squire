@@ -291,6 +291,41 @@ describe('propose → confirm → cancel through the tools', () => {
   });
 });
 
+describe('session-end batch staging (SQR-283)', () => {
+  it('stages a batch through the tool with a named, consequence-aware preview', async () => {
+    const { owner, campaign, character } = await setupCampaign();
+    const body = await callWriteTool(
+      'propose_state_change',
+      {
+        campaignId: campaign.id,
+        mutation: {
+          type: 'batch',
+          mutations: [
+            { type: 'campaign.update', patch: { playedScenarios: ['fh:1', 'fh:2', 'fh:14'] } },
+            { type: 'character.update', characterId: character.id, patch: { level: 5, gold: 12 } },
+          ],
+        },
+      },
+      owner.userId,
+    );
+    expect(body.ok).toBe(true);
+    expect(body.preview).toContain('SCENARIOS PLAYED → 1, 2, 14');
+    expect(body.preview).toContain('TOOL SUBJECT → L5 · GOLD 12');
+
+    const confirmed = await callWriteTool(
+      'confirm_state_change',
+      { proposalId: body.proposal.id },
+      owner.userId,
+    );
+    expect(confirmed.ok).toBe(true);
+
+    const detail = await CampaignService.getCampaignDetail(owner, campaign.id);
+    expect(detail.campaign.playedScenarios).toContain('fh:14');
+    const characterAfter = await CharacterService.getCharacterDetail(owner, character.id);
+    expect(characterAfter.character.level).toBe(5);
+  });
+});
+
 describe('idempotency keys', () => {
   it('replays the same key+payload to the same proposal; conflicting payloads are rejected', async () => {
     const { owner, campaign } = await setupCampaign();

@@ -130,3 +130,55 @@ export function deriveAvailability(
   hazardWarnings.sort((a, b) => a.key.localeCompare(b.key));
   return { statuses, unknownKeys, hazardWarnings };
 }
+
+const PLAYABLE: ReadonlySet<ScenarioStatus> = new Set(['open', 'via-event', 'drew-it']);
+
+function shortKeys(keys: string[]): string {
+  return keys.map((key) => (key.split(':')[1] ?? key).toUpperCase()).join(', ');
+}
+
+/**
+ * Ledger-voiced derived consequences of a scenario-state change (SQR-283
+ * preview narration): diff availability before vs after a staged
+ * played/drawn change and name what opens, permanently closes, reopens, or
+ * locks again. Pure — callers load the graphs.
+ */
+export function availabilityShiftLines(
+  graphs: ModuleGraph[],
+  current: { playedScenarios: string[]; drawnScenarios: string[] },
+  next: { playedScenarios?: string[]; drawnScenarios?: string[] },
+): string[] {
+  if (graphs.length === 0) return [];
+  if (next.playedScenarios === undefined && next.drawnScenarios === undefined) return [];
+
+  const before = deriveAvailability(
+    graphs,
+    new Set(current.playedScenarios),
+    new Set(current.drawnScenarios),
+  );
+  const after = deriveAvailability(
+    graphs,
+    new Set(next.playedScenarios ?? current.playedScenarios),
+    new Set(next.drawnScenarios ?? current.drawnScenarios),
+  );
+
+  const opens: string[] = [];
+  const closes: string[] = [];
+  const reopens: string[] = [];
+  const locksAgain: string[] = [];
+  for (const [key, afterStatus] of after.statuses) {
+    const beforeStatus = before.statuses.get(key);
+    if (beforeStatus === undefined || beforeStatus === afterStatus) continue;
+    if (beforeStatus === 'locked' && PLAYABLE.has(afterStatus)) opens.push(key);
+    else if (beforeStatus !== 'blocked' && afterStatus === 'blocked') closes.push(key);
+    else if (beforeStatus === 'blocked' && PLAYABLE.has(afterStatus)) reopens.push(key);
+    else if (PLAYABLE.has(beforeStatus) && afterStatus === 'locked') locksAgain.push(key);
+  }
+
+  const lines: string[] = [];
+  if (opens.length > 0) lines.push(`OPENS → ${shortKeys(opens.sort())}`);
+  if (closes.length > 0) lines.push(`CLOSES PERMANENTLY → ${shortKeys(closes.sort())}`);
+  if (reopens.length > 0) lines.push(`REOPENS → ${shortKeys(reopens.sort())}`);
+  if (locksAgain.length > 0) lines.push(`LOCKS AGAIN → ${shortKeys(locksAgain.sort())}`);
+  return lines;
+}
