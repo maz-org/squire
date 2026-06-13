@@ -159,6 +159,7 @@ function renderAccountMenu(session: Session, csrfToken: string): HtmlEscapedStri
       </section>
       <section class="squire-account-menu__group" aria-label="Account">
         <span class="squire-account-menu__group-label">Account</span>
+        <a class="squire-account-menu__item" href="/profile">Profile</a>
         <form method="post" action="/auth/logout" class="squire-account-menu__form">
           <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
           <button type="submit" class="squire-account-menu__item squire-account-menu__item--button">

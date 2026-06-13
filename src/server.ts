@@ -64,6 +64,7 @@ import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
 import { stagedMutationLines } from './web-ui/proposal-block.ts';
 import { itemCostWarnings, levelXpWarnings } from './campaign/write-validation.ts';
 import { renderCharacterSheetContent } from './web-ui/character-sheet.ts';
+import { renderProfileContent } from './web-ui/profile-page.ts';
 import * as CharacterRepository from './db/repositories/character-repository.ts';
 import {
   findCardByName,
@@ -659,6 +660,41 @@ app.get('/styleguide/markdown', requirePageSession(), async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.html(await renderMarkdownStyleguidePage(session, createCsrfToken(session.id)));
+});
+
+// ─── User profile (SQR-40) ───────────────────────────────────────────────────
+
+app.get('/profile', requirePageSession(), async (c) => {
+  const session = c.get('session')!;
+  const identity = identityFromSessionUser(session.userId);
+  const user = await CampaignService.requireUser(session.userId);
+  const campaigns = await CampaignService.listMyCampaigns(identity);
+  const memberships = [];
+  for (const campaign of campaigns) {
+    const member = await CampaignMemberRepositoryFindActive(campaign.id, session.userId);
+    memberships.push({
+      campaignId: campaign.id,
+      campaignName: campaign.name,
+      game: campaign.game,
+      role: member?.role ?? 'member',
+    });
+  }
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  return c.html(
+    await layoutShell({
+      session,
+      csrfToken: createCsrfToken(session.id),
+      showChatChrome: false,
+      showRail: false,
+      campaignStrip: await campaignStripFor(c, session.userId),
+      mainContent: renderProfileContent({
+        name: user.name,
+        email: user.email,
+        memberships,
+      }),
+    }),
+  );
 });
 
 // ─── Campaign pages + context strip (SQR-275, SQR-11) ───────────────────────

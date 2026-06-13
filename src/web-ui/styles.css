@@ -2470,6 +2470,94 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
+/* ─── Profile (SQR-40) ─────────────────────────────────────────────────────── */
+
+.squire-profile {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 20px;
+}
+
+.squire-profile__title {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 1.6rem;
+}
+
+.squire-profile__section-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-profile__facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 6px 12px;
+}
+
+.squire-profile__facts dt {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--sepia);
+  align-self: center;
+}
+
+.squire-profile__facts dd {
+  margin: 0;
+  font-size: 14px;
+}
+
+.squire-profile__note,
+.squire-profile__empty {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--sepia);
+}
+
+.squire-profile__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.squire-profile__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.squire-profile__link {
+  color: var(--cream);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.squire-profile__link:hover {
+  color: var(--wax);
+}
+
+.squire-profile__meta {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--sepia);
+}
+
 /* ─── Accordion character sheet (SQR-277, DESIGN.md §Accordion sheet) ────────
    Collapsible ledger sections built for the everyday single-field edit:
    44px summary targets, small-caps section vocabulary, deep-linkable ids.
