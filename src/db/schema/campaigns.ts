@@ -62,6 +62,9 @@ export const campaigns = pgTable(
      */
     playedScenarios: text('played_scenarios').array().notNull().default([]),
     drawnScenarios: text('drawn_scenarios').array().notNull().default([]),
+    /** Skippable scenarios the party chose to skip (GH2e scenario 0). Counts
+     * as done for downstream prereqs but is never itself playable. */
+    skippedScenarios: text('skipped_scenarios').array().notNull().default([]),
     unlockedClasses: text('unlocked_classes').array().notNull().default([]),
     unlockedItems: text('unlocked_items').array().notNull().default([]),
     unlockedBuildings: text('unlocked_buildings').array().notNull().default([]),

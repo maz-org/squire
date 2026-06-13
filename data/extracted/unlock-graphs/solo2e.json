@@ -10,9 +10,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Bruiser reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Bruiser",
+      "unlockMinLevel": 5
     },
     {
       "key": "spellweaver",
@@ -21,9 +23,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Spellweaver reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Spellweaver",
+      "unlockMinLevel": 5
     },
     {
       "key": "tinkerer",
@@ -32,9 +36,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Tinkerer reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Tinkerer",
+      "unlockMinLevel": 5
     },
     {
       "key": "mindthief",
@@ -43,9 +49,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Mindthief reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Mindthief",
+      "unlockMinLevel": 5
     },
     {
       "key": "cragheart",
@@ -54,9 +62,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Cragheart reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Cragheart",
+      "unlockMinLevel": 5
     },
     {
       "key": "diviner",
@@ -65,9 +75,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Diviner reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Circles",
+      "unlockMinLevel": 5
     },
     {
       "key": "eclipse",
@@ -76,9 +88,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Eclipse reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Eclipse",
+      "unlockMinLevel": 5
     },
     {
       "key": "silent-knife",
@@ -87,9 +101,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Silent Knife reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Silent Knife",
+      "unlockMinLevel": 5
     },
     {
       "key": "saw",
@@ -98,9 +114,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Saw reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Saw",
+      "unlockMinLevel": 5
     },
     {
       "key": "lightning-bolt",
@@ -109,9 +127,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Lightning Bolt reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Lightning",
+      "unlockMinLevel": 5
     },
     {
       "key": "music-note",
@@ -120,9 +140,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Music Note reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Music Note",
+      "unlockMinLevel": 5
     },
     {
       "key": "three-spears",
@@ -131,9 +153,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Three Spears reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Three Spears",
+      "unlockMinLevel": 5
     },
     {
       "key": "angry-face",
@@ -142,9 +166,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Angry Face reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Angry Face",
+      "unlockMinLevel": 5
     },
     {
       "key": "cthulhu",
@@ -153,9 +179,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Cthulhu reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Squidface",
+      "unlockMinLevel": 5
     },
     {
       "key": "sun",
@@ -164,9 +192,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Sun reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Sun",
+      "unlockMinLevel": 5
     },
     {
       "key": "two-minis",
@@ -175,9 +205,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Two Minis reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Two Mini",
+      "unlockMinLevel": 5
     },
     {
       "key": "triangles",
@@ -186,9 +218,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Triangles reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Triangles",
+      "unlockMinLevel": 5
     },
     {
       "key": "crossed-swords",
@@ -197,9 +231,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Crossed Swords reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Crossed Swords",
+      "unlockMinLevel": 5
     }
   ],
   "threads": [

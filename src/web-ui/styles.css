@@ -2420,6 +2420,13 @@ template#squire-banner-fixtures {
   color: var(--sepia);
 }
 
+/* Skipped (GH2e intro): done but never played — read it as inactive/dimmed. */
+.squire-scenario-row__status--skipped,
+.squire-scenario-row--skipped .squire-scenario-row__name,
+.squire-scenario-row--skipped .squire-scenario-row__number {
+  color: var(--sepia-dim);
+}
+
 .squire-banner--amber {
   border-color: var(--amber);
 }

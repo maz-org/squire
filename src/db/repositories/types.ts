@@ -65,6 +65,8 @@ export interface Campaign {
   activeScenario: string | null;
   playedScenarios: string[];
   drawnScenarios: string[];
+  /** Skippable scenarios the party chose to skip (GH2e scenario 0). */
+  skippedScenarios: string[];
   unlockedClasses: string[];
   unlockedItems: string[];
   unlockedBuildings: string[];
@@ -97,6 +99,7 @@ export interface UpdateCampaignSharedStateInput {
   activeScenario?: string | null;
   playedScenarios?: string[];
   drawnScenarios?: string[];
+  skippedScenarios?: string[];
   unlockedClasses?: string[];
   unlockedItems?: string[];
   unlockedBuildings?: string[];

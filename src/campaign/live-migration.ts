@@ -100,10 +100,14 @@ export async function migrateLiveCampaign(
   }
 
   const graphs = await loadModuleGraphs(GH2E_GAME, campaign.modules);
+  // Only unknownKeys matters here (validating the import against the seeded
+  // graphs); skipped state and roster don't affect it, so pass them empty.
   const { unknownKeys } = deriveAvailability(
     graphs,
     new Set(playedScenarios),
     new Set(drawnScenarios),
+    new Set(),
+    [],
   );
 
   return {

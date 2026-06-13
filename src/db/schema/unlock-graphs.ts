@@ -32,6 +32,14 @@ export const unlockGraphScenarios = pgTable(
     manual: boolean('manual').notNull().default(false),
     cond: text('cond'),
     hazard: boolean('hazard').notNull().default(false),
+    /** Skippable intro (GH2e scenario 0): may be marked skipped, which counts
+     * as done for downstream prereqs but is never itself playable. */
+    skippable: boolean('skippable').notNull().default(false),
+    /** Character-gated unlock (GH2e solo scenarios): open only when an active
+     * character of this class is at level >= unlockMinLevel. Null = not
+     * character-gated (the play-prereq / manual model applies). */
+    unlockClass: text('unlock_class'),
+    unlockMinLevel: integer('unlock_min_level'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

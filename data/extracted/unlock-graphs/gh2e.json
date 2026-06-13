@@ -12,7 +12,8 @@
       "lockedIf": [],
       "manual": false,
       "cond": "Tutorial — play before starting the campaign",
-      "hazard": false
+      "hazard": false,
+      "skippable": true
     },
     {
       "key": "1",

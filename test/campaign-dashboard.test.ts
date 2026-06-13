@@ -60,6 +60,9 @@ const scenario = (key: string, overrides: Record<string, unknown> = {}) => ({
   manual: false,
   cond: null as string | null,
   hazard: false,
+  skippable: false,
+  unlockClass: null as string | null,
+  unlockMinLevel: null as number | null,
   ...overrides,
 });
 

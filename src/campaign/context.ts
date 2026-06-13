@@ -24,7 +24,7 @@ import {
 } from './campaign-service.ts';
 import type { CallerIdentity } from './identity.ts';
 import { listJournal, type JournalDay } from './journal.ts';
-import { deriveAvailability, type ScenarioStatus } from './availability.ts';
+import { deriveAvailability, type ScenarioStatus, type RosterCharacter } from './availability.ts';
 import { loadModuleGraphs } from './unlock-graph-loader.ts';
 
 export interface CampaignAvailabilityContext {
@@ -45,6 +45,7 @@ export interface CampaignContextView {
     activeScenario: string | null;
     playedScenarios: string[];
     drawnScenarios: string[];
+    skippedScenarios: string[];
     unlockedClasses: string[];
     unlockedItems: string[];
     unlockedBuildings: string[];
@@ -64,17 +65,23 @@ export interface CampaignContextView {
   recentJournal: JournalDay[];
 }
 
-async function availabilityContext(view: {
-  game: string;
-  modules: string[];
-  playedScenarios: string[];
-  drawnScenarios: string[];
-}): Promise<CampaignAvailabilityContext> {
+async function availabilityContext(
+  view: {
+    game: string;
+    modules: string[];
+    playedScenarios: string[];
+    drawnScenarios: string[];
+    skippedScenarios: string[];
+  },
+  characters: readonly RosterCharacter[],
+): Promise<CampaignAvailabilityContext> {
   const graphs = await loadModuleGraphs(view.game, view.modules);
   const availability = deriveAvailability(
     graphs,
     new Set(view.playedScenarios),
     new Set(view.drawnScenarios),
+    new Set(view.skippedScenarios),
+    characters,
   );
   const counts: Partial<Record<ScenarioStatus, number>> = {};
   const openKeys: string[] = [];
@@ -123,6 +130,12 @@ export async function loadCampaignContext(
   }
 
   const { campaign } = detail;
+  // Active roster drives character-gated (solo) scenarios. The whole party
+  // counts — own and others — but only active characters; a retired/departed
+  // character re-locks its solo (live gating).
+  const activeRoster: RosterCharacter[] = [...ownCharacters, ...otherCharacters]
+    .filter((character) => character.status === 'active')
+    .map((character) => ({ className: character.className, level: character.level }));
   return {
     campaign: {
       id: campaign.id,
@@ -133,6 +146,7 @@ export async function loadCampaignContext(
       activeScenario: campaign.activeScenario,
       playedScenarios: campaign.playedScenarios,
       drawnScenarios: campaign.drawnScenarios,
+      skippedScenarios: campaign.skippedScenarios,
       unlockedClasses: campaign.unlockedClasses,
       unlockedItems: campaign.unlockedItems,
       unlockedBuildings: campaign.unlockedBuildings,
@@ -145,7 +159,7 @@ export async function loadCampaignContext(
     ownCharacters,
     otherCharacters,
     activeCharacterId: resolvedActiveCharacterId,
-    availability: await availabilityContext(campaign),
+    availability: await availabilityContext(campaign, activeRoster),
     recentJournal: await listJournal(identity, campaignId, { limit: 30 }),
   };
 }

@@ -39,6 +39,9 @@ function scenario(
     manual: false,
     cond: null,
     hazard: false,
+    skippable: false,
+    unlockClass: null,
+    unlockMinLevel: null,
     ...overrides,
   };
 }
@@ -151,6 +154,43 @@ describe('deriveAvailability', () => {
       { key: 'test:2', closes: ['test:3'] },
       { key: 'test:3', closes: ['test:2'] },
     ]);
+  });
+
+  it('marks a skipped scenario SKIPPED and counts it as done for prereqs', () => {
+    const g = graph({
+      scenarios: [scenario('0', { skippable: true }), scenario('1', { prereqsAll: ['0'] })],
+    });
+    const { statuses } = deriveAvailability([g], new Set(), new Set(), new Set(['test:0']));
+    expect(statuses.get('test:0')).toBe('skipped');
+    // Skipping the intro opens scenario 1 immediately, exactly like playing it.
+    expect(statuses.get('test:1')).toBe('open');
+  });
+
+  describe('character-gated (solo) scenarios', () => {
+    const g = graph({
+      module: 'solo2e',
+      scenarios: [scenario('bruiser', { unlockClass: 'Bruiser', unlockMinLevel: 5 })],
+    });
+    const statusFor = (characters: { className: string; level: number }[]) =>
+      deriveAvailability([g], new Set(), new Set(), new Set(), characters).statuses.get(
+        'solo2e:bruiser',
+      );
+
+    it('locks without a qualifying active character — never via-event/drew-it', () => {
+      // Empty roster (or a retired/departed character) re-locks it live.
+      expect(statusFor([])).toBe('locked');
+      expect(statusFor([{ className: 'Bruiser', level: 4 }])).toBe('locked');
+    });
+
+    it('opens when an active character of the class is at the threshold level', () => {
+      expect(statusFor([{ className: 'Bruiser', level: 5 }])).toBe('open');
+      expect(statusFor([{ className: 'Bruiser', level: 9 }])).toBe('open');
+    });
+
+    it('matches the class case-insensitively and ignores other classes', () => {
+      expect(statusFor([{ className: 'bruiser', level: 6 }])).toBe('open');
+      expect(statusFor([{ className: 'Spellweaver', level: 9 }])).toBe('locked');
+    });
   });
 
   it('GOLDEN: reproduces the live prototype campaign exactly', () => {

@@ -22,6 +22,7 @@ import type { Campaign } from '../db/repositories/types.ts';
 
 const STATUS_LABEL: Record<ScenarioStatus, string> = {
   played: 'PLAYED ✓',
+  skipped: 'SKIPPED',
   open: 'OPEN',
   locked: 'LOCKED',
   blocked: 'BLOCKED',
@@ -52,6 +53,8 @@ function statsLine(availability: AvailabilityResult): HtmlEscapedString {
     ['LOCKED', counts.locked ?? 0],
     ['BLOCKED', counts.blocked ?? 0],
   ];
+  // Only surface SKIPPED once the party has skipped something (GH2e intro).
+  if (counts.skipped) stats.splice(1, 0, ['SKIPPED', counts.skipped]);
   return html`<dl class="squire-dashboard-stats">
     ${stats.map(
       ([label, value]) =>
@@ -71,13 +74,18 @@ function scenarioRow(input: {
   name: string;
   status: ScenarioStatus;
   cond: string | null;
+  /** Character-gate requirement ("NEEDS BRUISER L5") for a locked solo. */
+  requirement?: string;
   confirmText?: string;
 }): HtmlEscapedString {
   const label = STATUS_LABEL[input.status];
+  // A manual scenario explains itself via its event cond; a character-gated
+  // solo via its class requirement. Never event language for the latter.
+  const subLabel = input.status === 'via-event' && input.cond ? input.cond : input.requirement;
   const rowBody = html`<span class="squire-scenario-row__number">${input.scenarioKey}</span>
     <span class="squire-scenario-row__name"
-      >${input.name}${input.status === 'via-event' && input.cond
-        ? html`<span class="squire-scenario-row__cond">${input.cond}</span>`
+      >${input.name}${subLabel
+        ? html`<span class="squire-scenario-row__cond">${subLabel}</span>`
         : html``}</span
     >
     <span class="squire-scenario-row__status squire-scenario-row__status--${input.status}"
@@ -143,9 +151,11 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
     ${statsLine(availability)}
     <div class="squire-dashboard-grid">
       ${threads.map(({ thread, qualifiedKeys }) => {
-        const playedCount = qualifiedKeys.filter(
-          (key) => availability.statuses.get(key) === 'played',
-        ).length;
+        // Skipped scenarios are done too — count them toward thread progress.
+        const playedCount = qualifiedKeys.filter((key) => {
+          const status = availability.statuses.get(key);
+          return status === 'played' || status === 'skipped';
+        }).length;
         const threadWarnings = qualifiedKeys
           .map((key) => warningByQualified.get(key))
           .filter((warning): warning is NonNullable<typeof warning> => warning !== undefined);
@@ -173,6 +183,10 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
                 name: scenario.name,
                 status,
                 cond: scenario.cond,
+                requirement:
+                  status === 'locked' && scenario.unlockClass
+                    ? `NEEDS ${scenario.unlockClass.toUpperCase()} L${scenario.unlockMinLevel ?? 1}`
+                    : undefined,
                 confirmText:
                   warning || scenario.hazard
                     ? warning

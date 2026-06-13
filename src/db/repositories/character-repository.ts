@@ -132,6 +132,20 @@ export async function listMemberVisibleByCampaign(
   return rows.map(toMemberVisible);
 }
 
+/**
+ * The active roster (class + level) for character-gated scenario availability
+ * (GH2e solo). Only active characters count — a retired/departed character
+ * re-locks its solo on the next recompute (live gating).
+ */
+export async function listActiveRosterByCampaign(
+  campaignId: string,
+): Promise<{ className: string; level: number }[]> {
+  const visible = await listMemberVisibleByCampaign(campaignId);
+  return visible
+    .filter((character) => character.status === 'active')
+    .map((character) => ({ className: character.className, level: character.level }));
+}
+
 export async function listOwnedByCampaign(
   campaignId: string,
   ownerUserId: string,

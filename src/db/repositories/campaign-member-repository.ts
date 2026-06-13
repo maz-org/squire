@@ -83,6 +83,7 @@ export async function listCampaignsForUser(userId: string): Promise<Campaign[]> 
     activeScenario: r.campaign.activeScenario,
     playedScenarios: r.campaign.playedScenarios,
     drawnScenarios: r.campaign.drawnScenarios,
+    skippedScenarios: r.campaign.skippedScenarios,
     unlockedClasses: r.campaign.unlockedClasses,
     unlockedItems: r.campaign.unlockedItems,
     unlockedBuildings: r.campaign.unlockedBuildings,

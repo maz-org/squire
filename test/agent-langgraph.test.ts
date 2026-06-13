@@ -561,6 +561,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
           activeScenario: null,
           playedScenarios: [],
           drawnScenarios: [],
+          skippedScenarios: [],
           unlockedClasses: [],
           unlockedItems: [],
           unlockedBuildings: [],
