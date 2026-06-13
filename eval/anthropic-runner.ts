@@ -356,8 +356,10 @@ export async function runAnthropicEvalCase(
       ...(fixture
         ? {
             userId: fixture.userId,
-            campaignId: fixture.campaignId,
-            activeCharacterId: fixture.activeCharacterId,
+            // Onboarding fixtures supply no campaign: the run starts from
+            // zero and the interview creates one.
+            ...(fixture.campaignId ? { campaignId: fixture.campaignId } : {}),
+            ...(fixture.activeCharacterId ? { activeCharacterId: fixture.activeCharacterId } : {}),
           }
         : {}),
       toolSurface: options.toolSurface,

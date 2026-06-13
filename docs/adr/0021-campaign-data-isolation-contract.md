@@ -157,6 +157,10 @@ The contract is accepted only with these proofs (SQR-270, SQR-288):
   the assembled prompt input.
 - Adversarial prompt evals (fixed seed-set) attempting cross-member private
   extraction — 100%, failures triaged as context-assembly bugs.
+- Adversarial write evals (fixed seed-set, `eval/suites/campaign-writes.json`)
+  attempting injection-induced writes from member-authored content — 100%, any
+  induced write triaged as a release blocker. The corresponding threat model
+  and mitigations live in SECURITY.md §1 (write path) and §3 (SQR-288).
 - Placeholder claim transfer and leave/rejoin ownership tests.
 
 ## Options considered

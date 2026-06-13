@@ -26,10 +26,25 @@ to Claude. Every input path is a prompt injection surface.
 - Search result steering — crafted queries that surface specific
   passages to manipulate the LLM's context window
 
+**Write-path attack scenarios (Phase 4 — the agent can now mutate
+campaign state):**
+
+- Injection-induced writes: member-authored content the agent can see
+  (character names, shared notes, journal-derived text) embeds an
+  instruction to write, delete, or confirm on the requesting user's
+  behalf
+- Confirm-by-reference: a message (or embedded content) claims a
+  pending proposal "was already approved" and asks the agent to confirm
+  it sight-unseen
+- Identity widening via tool input: prompt content supplies a `userId`
+  or campaign id the caller does not own, hoping the tool layer trusts
+  model-controlled arguments
+
 **Mitigations:**
 
 - Clearly delimit user input vs system context in prompts (XML tags,
-  not just prose boundaries)
+  not just prose boundaries); campaign state enters as a fenced
+  `<campaign_data>` block explicitly declared data, never instructions
 - Persist generic assistant-visible failure turns instead of raw error
   text, and exclude those error turns from future history passed back
   into the model
@@ -38,6 +53,31 @@ to Claude. Every input path is a prompt injection surface.
 - Anomaly detection via LangSmith traces (e.g., responses that contain
   code, URLs, or instructions)
 - Rate limit per-user to bound abuse
+
+**Write-path mitigations (implemented with SQR-279/280/283/284):**
+
+- Caller identity reaches write tools from RUNTIME context only
+  (verified session or token); a model-supplied `userId` in tool input
+  is ignored, so prompt content cannot widen identity scope
+- The destructive set is enumerated and gated in the SERVICE layer:
+  campaign delete, member removal, character delete/retire, scenario
+  un-play, prosperity decrease only execute through a persisted
+  propose→confirm proposal — one-shot execution is impossible on every
+  channel, agent included
+- Confirm revalidates status, expiry (15-minute TTL), canonical payload
+  hash, entity versions, and membership before executing; the
+  `ConfirmedExecution` flag never crosses a request boundary, so no
+  prompt can mint it
+- The system prompt instructs the agent to confirm only after the user
+  explicitly agrees to the staged preview in the CURRENT conversation —
+  claimed prior approval (the confirm-by-reference shape) is refused
+- Every write is rate-budgeted per user in the service layer and shows
+  in the user-visible work log (no silent writes); every mutation
+  commits with its audit row in the same transaction
+- The scheduled `campaign-writes` eval suite (`eval/suites/`) seeds
+  member-authored injection content and forbids all write-family tools
+  on those cases; any induced write is triaged as a release blocker,
+  not a tunable (see `eval/README.md`)
 
 ### 2. OAuth Implementation
 
@@ -117,16 +157,36 @@ User B's data.
 - A player mutates shared campaign state (prosperity, unlocked items)
   without authorization from the party
 
-**Mitigations:**
+**Mitigations (implemented; the contract of record is
+[ADR 0021](adr/0021-campaign-data-isolation-contract.md)):**
 
-- Verify campaign membership on every request via the player entity
-- Scope the knowledge agent's context to only the requesting player's
-  data + shared campaign state — never load other players' private
-  fields
-- Player-level permissions on campaign mutations (or require consensus)
-- Audit logging for all campaign state changes
-- Integration tests that verify data isolation (User A cannot see User
-  B's personal quest)
+- Campaign membership is verified on every campaign-scoped request in
+  the service layer; non-members get a 404 indistinguishable from an
+  absent id (no existence oracle), and malformed ids return the same
+  not-found
+- LLM context scoping is STRUCTURAL: `CampaignContextView`
+  (`src/campaign/context.ts`) is the single projection allowed into the
+  context window — other members' private-tier fields (personal quest,
+  battle goals, private notes) are absent at the type level, so no code
+  path loads them and filters later
+- Mutations are permission-checked per the ADR 0021 matrix; the
+  enumerated destructive set additionally requires propose→confirm
+  (§1 write-path mitigations), and shared-state writes use per-entity
+  CAS versions so concurrent edits surface as conflicts instead of
+  lost updates
+- Audit logging: every campaign mutation commits its audit row in the
+  SAME transaction (a mutation without evidence cannot exist); denials
+  and rollbacks write failure evidence on the outer connection so it
+  survives the rollback. The member-facing journal renders only
+  whitelisted, redacted payload fields
+- Membership joins re-check the invite allowlist at create, invite, AND
+  join time; placeholder characters expose public fields only until the
+  named member joins and claims them
+- Isolation is test-enforced: API denial tests cover every "no" cell in
+  the permission matrix, context-assembly tests assert private-field
+  absence from assembled prompts, and the scheduled
+  `campaign-personalization` + `campaign-writes` eval suites plant
+  private-tier and injection canaries whose hits are release blockers
 
 ### 4. Secrets Management
 
@@ -412,6 +472,12 @@ development-scoped dependencies`. The repository is public, so GitHub enables
 
 ## Changelog
 
+- **2026-06-12:** Updated §1 with the Phase 4 write-path threat model
+  (injection-induced writes, confirm-by-reference, identity widening) and its
+  implemented mitigations, and rewrote §3 to the implemented ADR 0021 reality:
+  structural context scoping, propose→confirm destructive gating, same-transaction
+  audit evidence, and the scheduled `campaign-writes` injection eval suite
+  (SQR-288).
 - **2026-06-01:** Audited security gate triggers, owners, blocking behavior,
   alert routing, and the Semgrep decision; no new Semgrep gate was added because the
   default scan did not find a meaningful gap (SQR-26).

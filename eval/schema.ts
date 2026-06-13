@@ -15,6 +15,7 @@ export const EvalSuiteSchema = z.enum([
   'cross-game-boundary',
   'adversarial-boundary',
   'campaign-personalization',
+  'campaign-writes',
 ]);
 const EvalGameSchema = z.preprocess(
   (value) => (typeof value === 'string' ? (normalizeGameId(value) ?? value) : value),
