@@ -701,6 +701,29 @@ export async function runLangGraphAgentLoopWithEvalConfig(
   });
 }
 
+/**
+ * Per-answer transparency (SQR-258): the state snapshot a personalized
+ * turn runs against, named up front in the work log. No campaign context →
+ * no event — nothing ever pretends state exists.
+ */
+function stateContextEventFor(
+  options: AskOptions | undefined,
+): AgentStreamEventMap['state_context'] | undefined {
+  const view = options?.campaignContext;
+  if (!view) return undefined;
+  const active = view.activeCharacterId
+    ? view.ownCharacters.find((character) => character.id === view.activeCharacterId)
+    : undefined;
+  const parts = [view.campaign.name];
+  if (active) parts.push(`${active.name} L${active.level}`, `${active.gold} gold`);
+  parts.push(`prosperity ${view.campaign.prosperity}`);
+  return {
+    summary: parts.join(' · '),
+    campaignId: view.campaign.id,
+    ...(active ? { characterId: active.id } : {}),
+  };
+}
+
 async function runLangGraphAgentLoop(
   question: string,
   options: AskOptions | undefined,
@@ -984,6 +1007,8 @@ async function runLangGraphAgentLoop(
           options,
         }),
       );
+      const stateContext = stateContextEventFor(options);
+      if (emit && stateContext) await emit('state_context', stateContext);
       const finalState = await graph.invoke(createInitialState(question, options), {
         configurable: { thread_id: threadIdFor(options) },
         metadata: langgraphCorrelationMetadata(options),

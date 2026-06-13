@@ -540,6 +540,16 @@ export interface AgentStreamEventMap {
     ref?: string | undefined;
   };
   /**
+   * The campaign-state snapshot a personalized turn ran against (SQR-258
+   * transparency). Routes render this as a work-log state row with a
+   * fix-it-here link; turns without campaign context never emit it.
+   */
+  state_context: {
+    summary: string;
+    campaignId: string;
+    characterId?: string;
+  };
+  /**
    * A destructive mutation was staged for explicit user confirmation
    * (SQR-286). Routes render this as the chat confirmation block; the
    * mutation payload is the staged descriptor for preview rendering.

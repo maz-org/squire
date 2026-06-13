@@ -1766,6 +1766,20 @@ template#squire-banner-fixtures {
   white-space: pre-wrap;
 }
 
+/* SQR-258: the per-answer state row's fix-it-here deep link. */
+.squire-answer-work__state-link {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--wax);
+  text-decoration: none;
+}
+
+.squire-answer-work__state-link:hover {
+  text-decoration: underline;
+}
+
 /* ─── Confirmation block (SQR-286, DESIGN.md §Confirmation block) ────────────
    Consent chrome for a staged destructive mutation: a --surface panel of
    ledger-voiced work-log rows plus a wax primary confirm action. Explicitly

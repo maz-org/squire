@@ -539,6 +539,96 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     ]);
   });
 
+  it('emits the state snapshot row for campaign-bound turns only (SQR-258)', async () => {
+    mockMessagesCreate.mockResolvedValueOnce(textResponse('Personalized answer.'));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Personalized answer.'), ['Personalized answer.']),
+    );
+    const emitted: Array<[AgentStreamEventName, unknown]> = [];
+    await runLangGraphAgentLoopWithTrajectory('What can I afford?', {
+      emit: async (event, data) => {
+        emitted.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-state-context',
+      campaignContext: {
+        campaign: {
+          id: 'campaign-1',
+          name: 'Travel Campaign',
+          game: 'gloomhaven-2e',
+          modules: [],
+          prosperity: 2,
+          activeScenario: null,
+          playedScenarios: [],
+          drawnScenarios: [],
+          unlockedClasses: [],
+          unlockedItems: [],
+          unlockedBuildings: [],
+        },
+        members: [],
+        ownCharacters: [
+          {
+            id: 'character-1',
+            campaignId: 'campaign-1',
+            ownerUserId: 'user-1',
+            placeholderForEmail: null,
+            name: 'Drifter',
+            className: 'Drifter',
+            level: 4,
+            xp: 150,
+            gold: 23,
+            perks: [],
+            personalQuest: null,
+            battleGoals: null,
+            privateNotes: null,
+            status: 'active',
+            successorId: null,
+            version: 1,
+            externalRef: null,
+            sourceAuthority: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        otherCharacters: [],
+        activeCharacterId: 'character-1',
+        availability: {
+          counts: {},
+          openKeys: [],
+          drewItKeys: [],
+          unknownKeys: [],
+          hazardWarnings: [],
+        },
+        recentJournal: [],
+      },
+    });
+    expect(emitted.filter(([event]) => event === 'state_context')).toEqual([
+      [
+        'state_context',
+        {
+          summary: 'Travel Campaign · Drifter L4 · 23 gold · prosperity 2',
+          campaignId: 'campaign-1',
+          characterId: 'character-1',
+        },
+      ],
+    ]);
+
+    // Empty state: a turn without campaign context never pretends.
+    mockMessagesCreate.mockResolvedValueOnce(textResponse('Rules answer.'));
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('Rules answer.'), ['Rules answer.']),
+    );
+    const bare: Array<[AgentStreamEventName, unknown]> = [];
+    await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
+      emit: async (event, data) => {
+        bare.push([event, data]);
+      },
+      toolSurface: 'redesigned',
+      userMessageId: 'message-no-state-context',
+    });
+    expect(bare.some(([event]) => event === 'state_context')).toBe(false);
+  });
+
   it('emits a proposal event and write work-log rows for staged mutations', async () => {
     const mutation = { type: 'campaign.update', patch: { playedScenarios: ['fh:1'] } };
     mockMessagesCreate

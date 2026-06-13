@@ -2049,6 +2049,30 @@ function attachPendingAnswerStream(answerEl) {
     );
   });
 
+  source.addEventListener('state-used', function (event) {
+    var payload = JSON.parse(event.data || '{}');
+    if (!payload.message) return;
+    if (seenFirstDelta) return;
+    preToolBuffer = '';
+    toolPhaseStarted = true;
+    // SQR-258: the state snapshot row sorts first and carries the
+    // fix-it-here deep link to the accordion edit surface.
+    var row = renderAnswerWorkNarrative(
+      answerWork,
+      answerWorkEntries,
+      payload.id || 'state-used',
+      payload.message,
+      1,
+    );
+    if (row && payload.href) {
+      var link = document.createElement('a');
+      link.className = 'squire-answer-work__state-link';
+      link.setAttribute('href', payload.href);
+      link.textContent = 'FIX IT HERE';
+      row.appendChild(link);
+    }
+  });
+
   source.addEventListener('proposal-staged', function (event) {
     var payload = JSON.parse(event.data || '{}');
     if (!payload || !payload.proposalId) return;

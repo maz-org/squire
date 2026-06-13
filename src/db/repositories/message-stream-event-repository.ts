@@ -14,6 +14,7 @@ export type BrowserStreamEventName =
   | 'tool-result'
   | 'tool-progress'
   | 'answer-artifact'
+  | 'state-used'
   | 'proposal-staged'
   | 'done'
   | 'error';
