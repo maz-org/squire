@@ -285,6 +285,31 @@ npm run production-data:check -- scenario-section-books --game "$SQUIRE_DATA_GAM
 non-empty `scenario_book_scenarios`, `section_book_sections`, and
 `book_references` tables.
 
+### Unlock graphs
+
+`Production seed unlock graphs` runs on merges to `main` that change
+`data/extracted/unlock-graphs/` or the unlock-graph seed code. It can also be run
+manually with `workflow_dispatch`. Unlike the card and scenario/section-book
+workflows it has no `game` input — the seed always imports every module.
+
+The workflow runs:
+
+```bash
+npm run production-data:verify-db-url
+npm run db:migrate
+npm run seed:unlock-graphs
+npm run production-data:check -- unlock-graphs
+```
+
+`npm run seed:unlock-graphs` is idempotent: it upserts the curated scenario and
+thread rows for every module in `data/extracted/unlock-graphs/` (frosthaven `fh`,
+gloomhaven-2e `gh2e` + `solo2e`) into `unlock_graph_scenarios` and
+`unlock_graph_threads`. `loadModuleGraphs()` reads those tables to render the
+campaign scenario-progression dashboard. The migration that creates the tables is
+DDL-only, so without this workflow they stay empty and every campaign shows "No
+scenario data for this campaign's modules yet." The sanity check requires a
+non-empty `unlock_graph_scenarios` row count for every supported game.
+
 ### Rule-source embeddings
 
 `Production reindex rule sources` runs on merges to `main` that change

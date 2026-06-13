@@ -128,6 +128,10 @@ describe('production data lifecycle workflows', () => {
       command: 'cards',
       games: ['frosthaven', 'gloomhaven-2e'],
     });
+    expect(parseProductionDataOptions(['unlock-graphs'])).toEqual({
+      command: 'unlock-graphs',
+      games: ['frosthaven', 'gloomhaven-2e'],
+    });
     expect(parseProductionDataOptions(['embeddings', '--game', 'gh2'])).toEqual({
       command: 'embeddings',
       games: ['gloomhaven-2e'],
@@ -146,6 +150,11 @@ describe('production data lifecycle workflows', () => {
     });
     expect(() => parseProductionDataOptions(['cards', '--game', 'jotl'])).toThrow(
       /Unsupported game id/,
+    );
+    // The unknown-command help text must list every accepted command, including
+    // unlock-graphs and smoke (CodeRabbit on #543).
+    expect(() => parseProductionDataOptions(['bogus'])).toThrow(
+      /cards, scenario-section-books, unlock-graphs, embeddings, all, smoke, verify-url, or truncate-embeddings/,
     );
   });
 
@@ -210,6 +219,31 @@ describe('production data lifecycle workflows', () => {
     );
   });
 
+  it('seeds production unlock graphs through the protected production environment', async () => {
+    const workflow = await readProjectFile('.github/workflows/production-seed-unlock-graphs.yml');
+
+    expect(workflow).toContain('name: Production seed unlock graphs');
+    expect(workflow).toContain('branches: [main]');
+    expect(workflow).toContain('data/extracted/unlock-graphs/**');
+    expect(workflow).toContain('scripts/seed-unlock-graphs.ts');
+    expect(workflow).toContain('src/seed/seed-unlock-graphs.ts');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('name: production');
+    expect(workflow).toContain('FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}');
+    expect(workflow).toContain('PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}');
+    expect(workflow).toContain('NODE_ENV: production');
+    expect(workflow).toContain('SQUIRE_ENV: production');
+    expect(workflow).toContain('superfly/flyctl-actions/setup-flyctl');
+    expect(workflow).toContain('flyctl proxy 15432:5432 "$remote_host" --app maz-squire');
+    expect(workflow).toContain('echo "::add-mask::$proxied_url"');
+    expect(workflow).toContain('run: npm run production-data:verify-db-url');
+    expect(workflow).toContain('run: npm run db:migrate');
+    expect(workflow).toContain('run: npm run seed:unlock-graphs');
+    expect(workflow).toContain('npm run production-data:check -- unlock-graphs');
+    // The seed is all-modules: no game input, unlike the card/scenario workflows.
+    expect(workflow).not.toContain('inputs.game');
+  });
+
   it('indexes production rule sources with normal and protected rebuild modes', async () => {
     const workflow = await readProjectFile('.github/workflows/production-reindex-pdfs.yml');
 
@@ -265,14 +299,18 @@ describe('production data lifecycle workflows', () => {
       '## Production data lifecycle',
       'Production seed card data',
       'Production seed scenario and section books',
+      'Production seed unlock graphs',
       'Production reindex rule sources',
       'PRODUCTION_DATABASE_URL',
       'data/extracted/',
       'data/extracted/scenario-section-books.json',
+      'data/extracted/unlock-graphs/',
       'data/pdfs/',
       'data/rule-sources/',
       'npm run seed:cards',
       'npm run seed:scenario-section-books',
+      'npm run seed:unlock-graphs',
+      'unlock_graph_scenarios',
       'npm run index',
       'npm run production-data:smoke',
       'rules search',
