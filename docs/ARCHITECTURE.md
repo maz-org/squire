@@ -71,6 +71,8 @@ The active baseline is:
 - Sentry is the app observability, browser diagnostics, release-health,
   alerting, and error-tracking path, provisioned through Fly and correlated to
   LangSmith by safe IDs and links.
+  The operator workflow is documented in
+  [docs/runbooks/observability.md](runbooks/observability.md).
 
 Existing regression coverage protects the current path:
 
@@ -749,6 +751,10 @@ instead of duplicating prompt, model-output, or retrieved-context payloads.
 Operators start in Sentry for app/runtime errors and release regressions, then
 jump to LangSmith when the question is whether the agent reasoned correctly,
 retrieved the right sources, or passed eval expectations.
+The production handoff path is
+[docs/runbooks/observability.md](runbooks/observability.md): user report ->
+Sentry event/replay/log context -> LangSmith trace/thread/run -> Linear Evidence
+section, with unavailable fields explicitly marked.
 
 ---
 
@@ -895,6 +901,13 @@ For developer setup, running the server, working on import scripts locally, and 
 ---
 
 ## Changelog
+
+- **2026-06-14:** SQR-312 closed the APM/RUM decision in the architecture:
+  Sentry owns app observability, alerting, replay, and release health, while
+  LangSmith remains the LLM trace/eval surface. Added the production
+  observability runbook for moving from user report to Sentry, LangSmith, and
+  Linear evidence without copying raw prompts, answers, provider payloads,
+  cookies, tokens, or retrieved passages into tickets.
 
 - **2026-05-27:** SQR-216 through SQR-219 refreshed the GH2 production data
   architecture. Production card seeding, scenario/section-book seeding, and
