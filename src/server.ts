@@ -20,6 +20,7 @@ import {
 } from './campaign/identity.ts';
 import * as CampaignService from './campaign/campaign-service.ts';
 import * as CharacterService from './campaign/character-service.ts';
+import { checkClassName, knownClassNames } from './campaign/class-validation.ts';
 import { VersionConflictError } from './db/repositories/types.ts';
 import { html } from 'hono/html';
 import { streamSSE } from 'hono/streaming';
@@ -847,49 +848,134 @@ app.post('/campaigns/:id/leave-web', async (c) => {
   }
 });
 
-app.get('/campaigns/:id', async (c) => {
+/**
+ * Render the `/campaigns/:id` dashboard page. Shared by the GET route and the
+ * create-character POST error path so a failed create re-renders in place with
+ * an inline banner (SQR-318). Throws `CampaignNotFoundError` for non-members —
+ * callers map it to the indistinguishable 404 (ADR 0021).
+ */
+async function renderCampaignDashboardPage(
+  c: Context,
+  campaignId: string,
+  opts: { characterError?: string } = {},
+  status: 200 | 422 = 200,
+): Promise<Response> {
   const session = c.get('session')!;
-  const campaignId = campaignRouteId(c, 'id');
+  const identity = identityFromSessionUser(session.userId);
+  const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+  const csrfToken = createCsrfToken(session.id);
+  // Per-user, never-cached: set on every path through the shared renderer
+  // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
+  const body = await layoutShell({
+    session,
+    csrfToken,
+    showChatChrome: false,
+    showRail: false,
+    campaignStrip: {
+      campaignId: detail.campaign.id,
+      campaignName: detail.campaign.name,
+      game: detail.campaign.game,
+    },
+    campaignStripProminent: true,
+    mainContent: renderCampaignDashboardContent(
+      detail,
+      await dashboardThreadsFragment(detail.campaign, csrfToken),
+      renderCampaignJournal(await listJournal(identity, campaignId)),
+      // Sheet links (SQR-277): member-visible projection only.
+      (await CharacterRepository.listMemberVisibleByCampaign(campaignId)).map((character) => ({
+        id: character.id,
+        name: character.name,
+        className: character.className,
+        level: character.level,
+        placeholder: character.placeholderForEmail !== null,
+      })),
+      // Create-character form (SQR-318): a select of the game's real class
+      // names structurally prevents an invalid class.
+      {
+        csrfToken,
+        classOptions: await knownClassNames(detail.campaign.game),
+        errorMessage: opts.characterError,
+      },
+    ),
+  });
+  return c.html(body, status);
+}
+
+app.get('/campaigns/:id', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
   if (!campaignId) return c.notFound();
   try {
-    const detail = await CampaignService.getCampaignDetail(
-      identityFromSessionUser(session.userId),
-      campaignId,
-    );
-    return c.html(
-      await layoutShell({
-        session,
-        csrfToken: createCsrfToken(session.id),
-        showChatChrome: false,
-        showRail: false,
-        campaignStrip: {
-          campaignId: detail.campaign.id,
-          campaignName: detail.campaign.name,
-          game: detail.campaign.game,
-        },
-        campaignStripProminent: true,
-        mainContent: renderCampaignDashboardContent(
-          detail,
-          await dashboardThreadsFragment(detail.campaign, createCsrfToken(session.id)),
-          renderCampaignJournal(
-            await listJournal(identityFromSessionUser(session.userId), campaignId),
-          ),
-          // Sheet links (SQR-277): member-visible projection only.
-          (await CharacterRepository.listMemberVisibleByCampaign(campaignId)).map((character) => ({
-            id: character.id,
-            name: character.name,
-            className: character.className,
-            level: character.level,
-            placeholder: character.placeholderForEmail !== null,
-          })),
-        ),
-      }),
-    );
+    return await renderCampaignDashboardPage(c, campaignId);
   } catch (error) {
     // Non-member and absent are the same 404 page (ADR 0021).
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
+});
+
+/** Create a character from the dashboard form (SQR-318). */
+app.post('/campaigns/:id/characters', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
+  const classNameInput =
+    typeof form.get('className') === 'string' ? (form.get('className') as string).trim() : '';
+  const levelRaw = form.get('level');
+  const levelNum = typeof levelRaw === 'string' ? Number.parseInt(levelRaw, 10) : Number.NaN;
+  const level = Number.isFinite(levelNum) ? Math.min(20, Math.max(1, levelNum)) : 1;
+
+  try {
+    // getCampaignDetail gates membership: a non-member gets the 404 below.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    if (!name) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: 'Character name is required.' },
+        422,
+      );
+    }
+    // An explicit non-empty check: in no-materials mode `knownClassNames` is
+    // empty and `checkClassName` accepts anything, so a blank/tampered class
+    // would otherwise slip through.
+    if (!classNameInput) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: 'Class is required.' },
+        422,
+      );
+    }
+    // Validate against the game's class list (real names only). The select
+    // already constrains this; the check covers no-JS / tampered posts.
+    const check = checkClassName(classNameInput, await knownClassNames(detail.campaign.game));
+    if (!check.ok) {
+      const message = check.suggestion
+        ? `Unknown class "${classNameInput}". Did you mean ${check.suggestion}?`
+        : `"${classNameInput}" is not a class in this game.`;
+      return await renderCampaignDashboardPage(c, campaignId, { characterError: message }, 422);
+    }
+    await CharacterService.createCharacter(identity, campaignId, {
+      name,
+      className: check.canonical,
+      level,
+    });
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof CampaignService.CampaignForbiddenError) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: error.message },
+        422,
+      );
+    }
     throw error;
   }
 });

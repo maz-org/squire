@@ -168,12 +168,70 @@ export interface DashboardCharacterRow {
   placeholder: boolean;
 }
 
+/** The "New character" create form on the dashboard (SQR-318). */
+export interface CharacterCreateForm {
+  csrfToken: string;
+  /**
+   * Valid class names for the campaign's game (real names only, never
+   * codenames). A populated list renders a select — structurally preventing
+   * an invalid class. Empty (no imported mats) degrades to a free-text input.
+   */
+  classOptions: string[];
+  /** Inline error rendered above the form after a failed create attempt. */
+  errorMessage?: string;
+}
+
+/** The dashboard Characters section: existing sheet links + the create form. */
+function renderCharacterCreateForm(
+  campaignId: string,
+  data: CharacterCreateForm,
+): HtmlEscapedString {
+  return html`${data.errorMessage
+      ? html`<div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">COULD NOT SAVE</span>
+          <p class="squire-banner__body">${data.errorMessage}</p>
+        </div>`
+      : html``}
+    <form
+      method="post"
+      action="/campaigns/${campaignId}/characters"
+      class="squire-character-create"
+      aria-label="Add a character"
+    >
+      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+      <label class="squire-character-create__field">
+        <span class="squire-character-create__field-label">NAME</span>
+        <input name="name" type="text" required maxlength="100" autocomplete="off" />
+      </label>
+      <label class="squire-character-create__field">
+        <span class="squire-character-create__field-label">CLASS</span>
+        ${data.classOptions.length > 0
+          ? html`<select name="className" required>
+              ${data.classOptions.map((cls) => html`<option value="${cls}">${cls}</option>`)}
+            </select>`
+          : html`<input
+              name="className"
+              type="text"
+              required
+              maxlength="100"
+              autocomplete="off"
+            />`}
+      </label>
+      <label class="squire-character-create__field">
+        <span class="squire-character-create__field-label">LEVEL</span>
+        <input name="level" type="number" min="1" max="20" value="1" />
+      </label>
+      <button type="submit" class="squire-character-create__submit">ADD CHARACTER</button>
+    </form>` as HtmlEscapedString;
+}
+
 /** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
 export function renderCampaignDashboardContent(
   detail: CampaignDetail,
   threadsFragment?: HtmlEscapedString,
   journalFragment?: HtmlEscapedString,
   characters?: DashboardCharacterRow[],
+  characterCreate?: CharacterCreateForm,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -199,10 +257,10 @@ export function renderCampaignDashboardContent(
         )}
       </ul>
     </section>
-    ${characters && characters.length > 0
-      ? html`<section class="squire-campaign-dashboard__characters" aria-label="Characters">
-          <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
-          <ul class="squire-campaign-dashboard__members">
+    <section class="squire-campaign-dashboard__characters" aria-label="Characters">
+      <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
+      ${characters && characters.length > 0
+        ? html`<ul class="squire-campaign-dashboard__members">
             ${characters.map(
               (character) =>
                 html`<li class="squire-campaign-dashboard__member">
@@ -217,9 +275,12 @@ export function renderCampaignDashboardContent(
                   >
                 </li>`,
             )}
-          </ul>
-        </section>`
-      : html``}
+          </ul>`
+        : html`<p class="squire-campaign-dashboard__empty">
+            No characters yet — add your first below.
+          </p>`}
+      ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
+    </section>
     ${threadsFragment ??
     html`<section
       class="squire-campaign-dashboard__threads"
