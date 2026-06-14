@@ -2163,6 +2163,64 @@ template#squire-banner-fixtures {
   letter-spacing: 0.14em;
 }
 
+.squire-campaign-dashboard__empty {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--sepia-dim);
+  padding: var(--space-sm) 0;
+}
+
+/* New-character create form (SQR-318): mirrors the campaign create form —
+   small-caps field labels, wax primary action, 44px controls. */
+.squire-character-create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: end;
+  margin-top: var(--space-sm);
+}
+
+.squire-character-create__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.squire-character-create__field-label {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--sepia);
+}
+
+.squire-character-create__field input,
+.squire-character-create__field select {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--parchment);
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  font-family: 'Geist', system-ui, sans-serif;
+}
+
+.squire-character-create__submit {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--parchment);
+  background: var(--wax);
+  border: 1px solid var(--wax);
+  border-radius: 4px;
+  padding: 0 var(--space-md);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.squire-character-create__submit:hover {
+  background: var(--wax-dim);
+}
+
 .squire-campaigns__row-actions {
   display: flex;
   gap: var(--space-sm);
