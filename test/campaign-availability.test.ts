@@ -180,6 +180,13 @@ describe('deriveAvailability', () => {
       // Empty roster (or a retired/departed character) re-locks it live.
       expect(statusFor([])).toBe('locked');
       expect(statusFor([{ className: 'Bruiser', level: 4 }])).toBe('locked');
+      // Even marked drawn, a character-gated solo never becomes via-event/drew-it
+      // — the roster gate fully replaces the manual/event branch.
+      expect(
+        deriveAvailability([g], new Set(), new Set(['solo2e:bruiser']), new Set(), []).statuses.get(
+          'solo2e:bruiser',
+        ),
+      ).toBe('locked');
     });
 
     it('opens when an active character of the class is at the threshold level', () => {
