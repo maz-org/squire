@@ -42,5 +42,7 @@ Use `buildDiagnosticBundle()` when the caller already has safe evidence, such as
 a Sentry URL or LangSmith URL supplied by an agent workflow. Missing fields are
 not omitted; they are marked unavailable.
 
-SQR-310's Linear Evidence template should render from this bundle rather than
+SQR-310's Linear Evidence template renders this bundle with
+`createLinearBugReportBody()` in `src/linear-bug-report-template.ts`. New
+in-chat or agent-created bug report paths should call that helper rather than
 inventing ad hoc field names.
