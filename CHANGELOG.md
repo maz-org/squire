@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.19] - 2026-06-14
+
+### Added
+
+- Added the Squire telemetry boundary for Sentry initialization, capture, breadcrumbs, flushing, diagnostic metadata, safe tags, and recursive redaction.
+- Added telemetry unit tests for local no-DSN no-ops, stable diagnostic fields, safe tag allowlisting, and protected-field redaction.
+
 ## [0.1.18] - 2026-06-14
 
 ### Added
