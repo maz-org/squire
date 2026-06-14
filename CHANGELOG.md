@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.24] - 2026-06-14
+
+### Added
+
+- Added same-origin browser telemetry for frontend exceptions, unhandled rejections, HTMX transport failures, and EventSource stream failures without adding a bundler or exposing a browser Sentry DSN.
+- Added browser telemetry tests covering CSP-compatible config, strict server-side payload allowlisting, safe route/source stripping, viewport/user-agent context, and transcript/prompt exclusion.
+
 ## [0.1.23] - 2026-06-14
 
 ### Added
