@@ -76,9 +76,14 @@ function scenarioRow(input: {
   cond: string | null;
   /** Character-gate requirement ("NEEDS BRUISER L5") for a locked solo. */
   requirement?: string;
+  /** True for a skippable intro (GH2e scenario 0): offers a Skip action. */
+  skippable?: boolean;
   confirmText?: string;
 }): HtmlEscapedString {
   const label = STATUS_LABEL[input.status];
+  // Skip is offered only for a skippable intro that is currently open — the
+  // single moment the party can decline to play it. Never on other rows.
+  const showSkip = Boolean(input.skippable) && input.status === 'open';
   // A manual scenario explains itself via its event cond; a character-gated
   // solo via its class requirement. Never event language for the latter.
   const subLabel = input.status === 'via-event' && input.cond ? input.cond : input.requirement;
@@ -98,8 +103,35 @@ function scenarioRow(input: {
     </li>` as HtmlEscapedString;
   }
 
+  // Skippable intros carry a quiet secondary Skip control beside the play tap.
+  const skipForm = showSkip
+    ? html`<form
+        method="post"
+        action="/campaigns/${input.campaignId}/scenarios/toggle"
+        hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
+        hx-target="#squire-dashboard-threads"
+        hx-swap="outerHTML"
+        class="squire-scenario-row__skip-form"
+      >
+        <input type="hidden" name="_csrf" value="${input.csrfToken}" />
+        <input type="hidden" name="key" value="${input.qualified}" />
+        <input type="hidden" name="mode" value="skip" />
+        <button
+          type="submit"
+          class="squire-scenario-row__skip"
+          aria-label="Skip scenario ${input.scenarioKey} ${input.name}"
+        >
+          Skip
+        </button>
+      </form>`
+    : html``;
+
   // Actionable rows are real forms: plain-POST safe, HTMX-enhanced swap.
-  return html`<li class="squire-scenario-row squire-scenario-row--${input.status}">
+  return html`<li
+    class="squire-scenario-row squire-scenario-row--${input.status}${showSkip
+      ? ' squire-scenario-row--skippable'
+      : ''}"
+  >
     <form
       method="post"
       action="/campaigns/${input.campaignId}/scenarios/toggle"
@@ -112,6 +144,7 @@ function scenarioRow(input: {
       <input type="hidden" name="key" value="${input.qualified}" />
       <button type="submit" class="squire-scenario-row__tap">${rowBody}</button>
     </form>
+    ${skipForm}
   </li>` as HtmlEscapedString;
 }
 
@@ -183,6 +216,7 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
                 name: scenario.name,
                 status,
                 cond: scenario.cond,
+                skippable: scenario.skippable,
                 requirement:
                   status === 'locked' && scenario.unlockClass
                     ? `NEEDS ${scenario.unlockClass.toUpperCase()} L${scenario.unlockMinLevel ?? 1}`

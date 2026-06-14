@@ -2427,6 +2427,44 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
+/* Skippable intro: the play tap keeps the row width; a quiet Skip control
+   sits beside it, visually subordinate to the primary tap. */
+.squire-scenario-row--skippable {
+  display: flex;
+  align-items: center;
+}
+
+.squire-scenario-row--skippable > form:first-of-type {
+  flex: 1;
+}
+
+.squire-scenario-row__skip-form {
+  margin: 0;
+}
+
+.squire-scenario-row__skip {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia-dim);
+}
+
+.squire-scenario-row__skip:hover {
+  color: var(--sepia);
+}
+
+.squire-scenario-row__skip:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 .squire-banner--amber {
   border-color: var(--amber);
 }
