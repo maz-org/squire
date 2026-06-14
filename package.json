@@ -87,7 +87,7 @@
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/instrumentation": "^0.218.0",
     "@opentelemetry/instrumentation-pg": "^0.71.0",
-    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/sdk-node": "^0.219.0",
     "@redis/client": "^6.0.0",
     "@tailwindcss/node": "^4.3.0",
     "@tailwindcss/oxide": "^4.3.0",
