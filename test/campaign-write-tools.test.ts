@@ -210,6 +210,17 @@ describe('direct non-destructive writes', () => {
     expect(body.error.message).toContain('patch.prosperity');
   });
 
+  it('marks a scenario skipped via write_campaign_state (SQR-313)', async () => {
+    const { owner, campaign } = await setupCampaign();
+    const body = await callWriteTool(
+      'write_campaign_state',
+      { campaignId: campaign.id, patch: { skippedScenarios: ['fh:0'] } },
+      owner.userId,
+    );
+    expect(body.ok).toBe(true);
+    expect(body.campaign.skippedScenarios).toContain('fh:0');
+  });
+
   it('surfaces destructive direct writes as proposal_required', async () => {
     const { owner, campaign } = await setupCampaign();
     const body = await callWriteTool(

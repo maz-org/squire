@@ -225,13 +225,13 @@ export function createMcpServer(): McpServer {
     'write_campaign_state',
     {
       description:
-        'Apply a non-destructive shared campaign-state update for the signed-in member: mark scenarios played or drawn, raise prosperity, record unlocks, rename. Arrays replace the whole list. Destructive changes return proposal_required; stage those with propose_state_change.',
+        'Apply a non-destructive shared campaign-state update for the signed-in member: mark scenarios played, drawn, or skipped, raise prosperity, record unlocks, rename. "Skipped" is for a skippable intro the party chose not to play (e.g. GH2e scenario 0): it shows as SKIPPED, is no longer playable, and opens whatever playing it would have. Arrays replace the whole list. Destructive changes return proposal_required; stage those with propose_state_change.',
       inputSchema: {
         campaignId: z.string().describe('Campaign UUID'),
         patch: z
           .record(z.string(), z.unknown())
           .describe(
-            'Fields to set: name, prosperity, activeScenario, playedScenarios, drawnScenarios, unlockedClasses, unlockedItems, unlockedBuildings',
+            'Fields to set: name, prosperity, activeScenario, playedScenarios, drawnScenarios, skippedScenarios (qualified keys like gh2e:0), unlockedClasses, unlockedItems, unlockedBuildings',
           ),
       },
     },
