@@ -187,6 +187,37 @@ describe('telemetry boundary', () => {
     });
   });
 
+  it('adds safe low-cardinality context tags for alert filters only', () => {
+    process.env.SQUIRE_ENV = 'production';
+    process.env.SENTRY_RELEASE = 'abc123';
+
+    expect(
+      buildSafeTelemetryTags({
+        route: '/chat/conv-1/messages/msg-1/stream',
+        context: {
+          surface: 'chat_sse',
+          failureKind: 'assistant_turn',
+          eventType: 'browser_error',
+          scriptName: 'sweep-expired-sessions',
+          scriptKind: 'cron',
+          event: 'rate_limit_rejected',
+          unsafe: 'Bearer secret-token',
+          rawPrompt: 'What is my hidden prompt?',
+        },
+      }),
+    ).toEqual({
+      environment: 'production',
+      release: 'abc123',
+      route: '/chat/conv-1/messages/msg-1/stream',
+      surface: 'chat_sse',
+      failure_kind: 'assistant_turn',
+      event_type: 'browser_error',
+      job_name: 'sweep-expired-sessions',
+      job_kind: 'cron',
+      security_event: 'rate_limit_rejected',
+    });
+  });
+
   it('redacts protected fields recursively while preserving safe diagnostics', () => {
     const redacted = redactTelemetryValue({
       requestId: 'req-1',
@@ -346,6 +377,7 @@ describe('telemetry boundary', () => {
       conversation_id: 'conv-1',
       user_message_id: 'msg-user-1',
       user_id: 'user-1',
+      surface: 'browser',
       feedback_kind: 'stream_failed',
     });
     expect(sentry.scope.setContext).toHaveBeenCalledWith(
@@ -375,6 +407,7 @@ describe('telemetry boundary', () => {
           conversation_id: 'conv-1',
           user_message_id: 'msg-user-1',
           user_id: 'user-1',
+          surface: 'browser',
           feedback_kind: 'stream_failed',
         },
       },
