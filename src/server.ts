@@ -850,20 +850,23 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 
 /**
  * Render the `/campaigns/:id` dashboard page. Shared by the GET route and the
- * create-character POST error path so a failed create re-renders in place with
- * an inline banner (SQR-318). Throws `CampaignNotFoundError` for non-members —
- * callers map it to the indistinguishable 404 (ADR 0021).
+ * create-character / invite POST error paths so a failed write re-renders in
+ * place with an inline banner (SQR-318, SQR-319). Throws `CampaignNotFoundError`
+ * for non-members — callers map it to the indistinguishable 404 (ADR 0021).
  */
 async function renderCampaignDashboardPage(
   c: Context,
   campaignId: string,
-  opts: { characterError?: string } = {},
+  opts: { characterError?: string; inviteError?: string } = {},
   status: 200 | 422 = 200,
 ): Promise<Response> {
   const session = c.get('session')!;
   const identity = identityFromSessionUser(session.userId);
   const detail = await CampaignService.getCampaignDetail(identity, campaignId);
   const csrfToken = createCsrfToken(session.id);
+  // Invite is owner-only: the affordance is hidden (not just disabled) for
+  // everyone else, matching the service-layer role gate.
+  const isOwner = detail.self.role === 'owner';
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -898,6 +901,9 @@ async function renderCampaignDashboardPage(
         classOptions: await knownClassNames(detail.campaign.game),
         errorMessage: opts.characterError,
       },
+      // Invite-member affordance (SQR-319): form is owner-only; the error
+      // banner still renders for a non-owner who tampers the route.
+      { csrfToken, canInvite: isOwner, errorMessage: opts.inviteError },
     ),
   });
   return c.html(body, status);
@@ -975,6 +981,52 @@ app.post('/campaigns/:id/characters', async (c) => {
         { characterError: error.message },
         422,
       );
+    }
+    throw error;
+  }
+});
+
+/** Invite a member from the dashboard Party section (owner-only, SQR-319). */
+app.post('/campaigns/:id/invites', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const email = typeof form.get('email') === 'string' ? (form.get('email') as string).trim() : '';
+
+  try {
+    // getCampaignDetail gates membership: a non-member gets the 404 below.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    // Authorize before validating the email so a non-owner always gets the
+    // consistent owner-only rejection, never invite-field feedback.
+    if (detail.self.role !== 'owner') {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { inviteError: 'Only the owner can invite members' },
+        422,
+      );
+    }
+    if (!z.string().email().max(320).safeParse(email).success) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { inviteError: 'Enter a valid email address.' },
+        422,
+      );
+    }
+    // inviteMember re-checks the owner gate and enforces the allowlist + dedupe.
+    await CampaignService.inviteMember(identity, campaignId, email);
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (
+      error instanceof CampaignService.CampaignForbiddenError ||
+      error instanceof CampaignService.NotAllowlistedError ||
+      error instanceof CampaignService.AlreadyInvitedError
+    ) {
+      return await renderCampaignDashboardPage(c, campaignId, { inviteError: error.message }, 422);
     }
     throw error;
   }
