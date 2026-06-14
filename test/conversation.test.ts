@@ -4,14 +4,21 @@ import { generateSignedCookie } from 'hono/cookie';
 
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
-const { mockAsk, mockInitTelemetry, mockCaptureTelemetryError, mockFlushTelemetry } = vi.hoisted(
-  () => ({
-    mockAsk: vi.fn(),
-    mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
-    mockCaptureTelemetryError: vi.fn(),
-    mockFlushTelemetry: vi.fn().mockResolvedValue(true),
-  }),
-);
+const {
+  mockAsk,
+  mockInitTelemetry,
+  mockCaptureTelemetryError,
+  mockCaptureTelemetryMessage,
+  mockAddTelemetryBreadcrumb,
+  mockFlushTelemetry,
+} = vi.hoisted(() => ({
+  mockAsk: vi.fn(),
+  mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
+  mockCaptureTelemetryError: vi.fn(),
+  mockCaptureTelemetryMessage: vi.fn(),
+  mockAddTelemetryBreadcrumb: vi.fn(),
+  mockFlushTelemetry: vi.fn().mockResolvedValue(true),
+}));
 
 vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
@@ -54,6 +61,8 @@ vi.mock('../src/tools.ts', () => ({
 vi.mock('../src/telemetry.ts', () => ({
   initTelemetry: mockInitTelemetry,
   captureTelemetryError: mockCaptureTelemetryError,
+  captureTelemetryMessage: mockCaptureTelemetryMessage,
+  addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
 }));
 

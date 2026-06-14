@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.22] - 2026-06-14
+
+### Added
+
+- Mirrored important structured security and app logs into Sentry as safe breadcrumbs or messages while preserving existing JSON stdout output.
+- Added security-log telemetry tests covering event allowlisting, field allowlisting, route stripping, and sanitized error type/code diagnostics.
+
 ## [0.1.21] - 2026-06-14
 
 ### Added
