@@ -1215,10 +1215,21 @@ describe('POST /api/ask', () => {
   });
 
   it('emits error event when ask() throws', async () => {
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'api-user-1' },
+    });
     mockAsk.mockRejectedValue(new Error('Claude API error'));
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-api-ask-failure-1',
+        ...(await auth()),
+      },
       body: JSON.stringify({ question: 'test' }),
     });
     expect(res.status).toBe(200); // SSE streams always return 200
@@ -1227,6 +1238,28 @@ describe('POST /api/ask', () => {
     const errorEvent = events.find((e) => e.event === 'error');
     expect(errorEvent).toBeDefined();
     expect(JSON.parse(errorEvent!.data)).toHaveProperty('message', 'Internal server error');
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    const [capturedError, telemetryInput] = mockCaptureTelemetryError.mock.calls[0]!;
+    expect(capturedError).toEqual(
+      expect.objectContaining({
+        name: 'ChatFailure:Error',
+        message: 'Squire chat failure',
+      }),
+    );
+    expect(telemetryInput).toEqual(
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-failure-1',
+        user: { id: 'api-user-1' },
+        context: expect.objectContaining({
+          surface: 'api_ask',
+          failureKind: 'api_ask',
+          game: null,
+          originalErrorName: 'Error',
+        }),
+      }),
+    );
+    expect(JSON.stringify(telemetryInput)).not.toContain('test');
   });
 });
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21] - 2026-06-14
+
+### Added
+
+- Captured web-chat, SSE, and `/api/ask` failures in Sentry with safe request, route, user, conversation, message, game, and LangSmith thread-id metadata.
+- Added chat telemetry tests proving generic assistant failure rows and SSE error events are unchanged while raw prompts, partial answers, and provider error text stay out of Sentry inputs.
+
 ## [0.1.20] - 2026-06-14
 
 ### Added
