@@ -156,6 +156,7 @@ import {
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
+import { captureChatFailureTelemetry } from './chat/chat-telemetry.ts';
 import * as MessageStreamEventRepository from './db/repositories/message-stream-event-repository.ts';
 import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
 import {
@@ -2176,6 +2177,7 @@ app.post('/chat', async (c) => {
     game,
     campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
+    telemetry: { route: '/chat', surface: 'web_chat' },
   });
 
   c.header('Cache-Control', 'no-store');
@@ -2241,6 +2243,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
     game,
     campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
+    telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
   });
   if (!conversation) return c.notFound();
 
@@ -2430,6 +2433,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       currentUserMessageId: loaded.message.id,
       game: loaded.message.game ?? undefined,
       requestId,
+      telemetry: { route: '/chat/:conversationId/messages/:messageId/stream', surface: 'chat_sse' },
       onEvent: async (event, data) => {
         if (event === 'text') {
           await persistAndWrite('text-delta', data);
@@ -3017,7 +3021,18 @@ app.post('/api/ask', async (c) => {
           await stream.writeSSE({ event, data: JSON.stringify(data) });
         },
       });
-    } catch {
+    } catch (error) {
+      captureChatFailureTelemetry(error, {
+        route: '/api/ask',
+        surface: 'api_ask',
+        failureKind: 'api_ask',
+        requestId,
+        user: safeUserFromContext(c),
+        game: options.game ?? null,
+        context: {
+          method: 'POST',
+        },
+      });
       await stream.writeSSE({
         event: 'error',
         data: JSON.stringify({ message: 'Internal server error' }),
