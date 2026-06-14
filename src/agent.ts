@@ -289,7 +289,7 @@ export const AGENT_TOOLS = [
   {
     name: 'write_campaign_state',
     description:
-      'Apply a non-destructive shared campaign-state update for the signed-in member: mark scenarios played or drawn, raise prosperity, record unlocks, rename. Arrays replace the whole list, so include existing values plus additions. Destructive changes (un-playing a scenario, lowering prosperity) return proposal_required; stage those with propose_state_change instead.',
+      'Apply a non-destructive shared campaign-state update for the signed-in member: mark scenarios played, drawn, or skipped, raise prosperity, record unlocks, rename. "Skipped" is for a skippable intro the party chose not to play (e.g. GH2e scenario 0): it shows as SKIPPED, is no longer playable, and opens whatever playing it would have. Arrays replace the whole list, so include existing values plus additions. Destructive changes (un-playing a scenario, lowering prosperity) return proposal_required; stage those with propose_state_change instead.',
     input_schema: {
       type: 'object',
       properties: {
@@ -303,6 +303,11 @@ export const AGENT_TOOLS = [
             activeScenario: { type: ['string', 'null'] },
             playedScenarios: { type: 'array', items: { type: 'string' } },
             drawnScenarios: { type: 'array', items: { type: 'string' } },
+            skippedScenarios: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Qualified keys of skippable scenarios the party skipped (e.g. gh2e:0)',
+            },
             unlockedClasses: { type: 'array', items: { type: 'string' } },
             unlockedItems: { type: 'array', items: { type: 'string' } },
             unlockedBuildings: { type: 'array', items: { type: 'string' } },

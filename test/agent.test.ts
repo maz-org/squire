@@ -459,6 +459,23 @@ describe('runAgentLoop', () => {
     expect(AGENT_SYSTEM_PROMPT).not.toContain('follow_links');
   });
 
+  it('exposes skippedScenarios on write_campaign_state (agent schema must not drift from the writer)', () => {
+    const tool = AGENT_TOOLS.find((t) => t.name === 'write_campaign_state');
+    const patch = (
+      tool?.input_schema as {
+        properties?: { patch?: { properties?: Record<string, unknown> } };
+      }
+    )?.properties?.patch?.properties;
+    // The Zod writer accepts skippedScenarios; the hand-written agent schema and
+    // description must advertise it too, or the model can't mark a scenario
+    // skipped (it has no field to set / no awareness it's allowed).
+    expect(patch).toBeDefined();
+    expect(patch).toHaveProperty('skippedScenarios');
+    expect(patch).toHaveProperty('playedScenarios');
+    expect(patch).toHaveProperty('drawnScenarios');
+    expect(tool?.description).toContain('skipped');
+  });
+
   it('keeps the legacy tool list stable', async () => {
     mockMessagesCreate.mockResolvedValue(textResponse('Answer'));
     await runAgentLoop('test', { toolSurface: 'legacy' });
