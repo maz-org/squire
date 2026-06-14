@@ -12,6 +12,7 @@ import type {
 } from '../db/repositories/types.ts';
 import { SUPPORTED_GAMES } from '../game.ts';
 import { retrievalSourceLabelToFooterLabel } from '../web-ui/consulted-footer.ts';
+import { captureChatFailureTelemetry, type ChatTelemetrySurface } from './chat-telemetry.ts';
 
 const HISTORY_LIMIT = 20;
 const RETRY_DELAY_MS = 200;
@@ -41,6 +42,11 @@ export interface ConversationHistoryViewModel {
   rows: ConversationHistoryViewRow[];
   nextCursor: string | null;
   query?: string;
+}
+
+interface ConversationTelemetryOptions {
+  route?: string;
+  surface?: ChatTelemetrySurface;
 }
 
 const DEFAULT_HISTORY_LIMIT = 30;
@@ -290,6 +296,7 @@ async function persistAssistantOutcome(input: {
   requestId?: string;
   onEvent?: EmitFn;
   failureMessage?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<ConversationMessage> {
   const priorMessages = await MessageRepository.listByConversationId(input.conversationId, {
     includeErrors: false,
@@ -408,6 +415,20 @@ async function persistAssistantOutcome(input: {
         input.conversationId,
         failureMessage.createdAt,
       );
+      captureChatFailureTelemetry(err, {
+        route: input.telemetry?.route,
+        surface: input.telemetry?.surface ?? (input.onEvent ? 'chat_sse' : 'web_chat'),
+        failureKind: 'assistant_turn',
+        requestId: input.requestId,
+        conversationId: input.conversationId,
+        userMessageId: input.currentUserMessageId,
+        assistantMessageId: failureMessage.id,
+        user: { id: input.userId },
+        game: input.game ?? currentMessage?.game ?? null,
+        context: {
+          persistedAssistantFailure: true,
+        },
+      });
       return failureMessage;
     }
   });
@@ -528,6 +549,7 @@ export async function streamAssistantTurn(input: {
   requestId?: string;
   onEvent: EmitFn;
   failureMessage?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<ConversationMessage> {
   return persistAssistantOutcome({
     conversationId: input.conversationId,
@@ -539,6 +561,7 @@ export async function streamAssistantTurn(input: {
     requestId: input.requestId,
     onEvent: input.onEvent,
     failureMessage: input.failureMessage,
+    telemetry: input.telemetry,
   });
 }
 
@@ -586,6 +609,7 @@ export async function startConversation(input: {
   game?: string;
   campaignId?: string | null;
   requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<Conversation> {
   const result = await createConversationTurn(input);
   if (result.currentUserMessage) {
@@ -596,6 +620,7 @@ export async function startConversation(input: {
       currentUserMessageId: result.currentUserMessage.id,
       game: result.currentUserMessage.game ?? input.game,
       requestId: input.requestId,
+      telemetry: input.telemetry,
     });
   }
 
@@ -612,6 +637,7 @@ export async function appendMessage(input: {
   game?: string;
   campaignId?: string | null;
   requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<Conversation | null> {
   const result = await createPendingFollowUp(input);
   if (!result?.currentUserMessage) return null;
@@ -623,6 +649,7 @@ export async function appendMessage(input: {
     currentUserMessageId: result.currentUserMessage.id,
     game: result.currentUserMessage.game ?? input.game,
     requestId: input.requestId,
+    telemetry: input.telemetry,
   });
 
   return ConversationRepository.findOwnedById(input.userId, input.conversationId);

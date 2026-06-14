@@ -1,6 +1,6 @@
 {
   "name": "squire",
-  "version": "0.1.18",
+  "version": "0.1.24",
   "description": "Frosthaven AI assistant with RAG over rulebooks",
   "type": "module",
   "engines": {
@@ -47,6 +47,7 @@
     "e2e:browser:prepare": "npm run db:migrate:test && NODE_ENV=test npm run seed:dev-user",
     "e2e:browser": "npm run e2e:browser:prepare && playwright test --config=playwright.e2e.config.ts",
     "agent:check": "node scripts/check-agent-parity.ts",
+    "sentry:test-event": "node scripts/send-sentry-safe-test-event.ts",
     "security:alerts:dry-run": "SECURITY_ALERT_DRY_RUN=1 node scripts/sync-security-alerts-to-linear.ts",
     "security:alerts:validate-config": "node scripts/sync-security-alerts-to-linear.ts --validate-config",
     "lint": "eslint src/ test/ scripts/",
@@ -89,6 +90,7 @@
     "@opentelemetry/instrumentation-pg": "^0.71.0",
     "@opentelemetry/sdk-node": "^0.219.0",
     "@redis/client": "^6.0.0",
+    "@sentry/node": "^10.57.0",
     "@tailwindcss/node": "^4.3.0",
     "@tailwindcss/oxide": "^4.3.0",
     "deepagents": "^1.10.2",

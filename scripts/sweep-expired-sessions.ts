@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 import { shutdownServerPool } from '../src/db.ts';
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
+import { runScriptWithTelemetry } from '../src/script-telemetry.ts';
 
 export async function main(): Promise<number> {
   const deleted = await SessionRepository.deleteExpired();
@@ -14,13 +15,20 @@ export async function main(): Promise<number> {
   return deleted;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main()
-    .catch((err) => {
-      console.error('[session-gc] failed to delete expired sessions:', err);
-      process.exitCode = 1;
-    })
-    .finally(async () => {
-      await shutdownServerPool();
+export async function runExpiredSessionSweepCli(): Promise<void> {
+  try {
+    await runScriptWithTelemetry(main, {
+      scriptName: 'sweep-expired-sessions',
+      scriptKind: 'cron',
     });
+  } catch (err) {
+    console.error('[session-gc] failed to delete expired sessions:', err);
+    process.exitCode = 1;
+  } finally {
+    await shutdownServerPool();
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void runExpiredSessionSweepCli();
 }

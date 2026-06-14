@@ -4,8 +4,20 @@ import { generateSignedCookie } from 'hono/cookie';
 
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
-const { mockAsk } = vi.hoisted(() => ({
+const {
+  mockAsk,
+  mockInitTelemetry,
+  mockCaptureTelemetryError,
+  mockCaptureTelemetryMessage,
+  mockAddTelemetryBreadcrumb,
+  mockFlushTelemetry,
+} = vi.hoisted(() => ({
   mockAsk: vi.fn(),
+  mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
+  mockCaptureTelemetryError: vi.fn(),
+  mockCaptureTelemetryMessage: vi.fn(),
+  mockAddTelemetryBreadcrumb: vi.fn(),
+  mockFlushTelemetry: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -44,6 +56,14 @@ vi.mock('../src/tools.ts', () => ({
   listCardTypes: vi.fn(),
   listCards: vi.fn(),
   getCard: vi.fn(),
+}));
+
+vi.mock('../src/telemetry.ts', () => ({
+  initTelemetry: mockInitTelemetry,
+  captureTelemetryError: mockCaptureTelemetryError,
+  captureTelemetryMessage: mockCaptureTelemetryMessage,
+  addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
+  flushTelemetry: mockFlushTelemetry,
 }));
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
@@ -1344,7 +1364,10 @@ describe('conversation web backend', () => {
     const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
       method: 'POST',
       csrf: true,
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-request-id': 'req-chat-failure-1',
+      },
       body: formBody({
         question: 'Will this fail?',
         idempotencyKey: 'idem-failure',
@@ -1362,17 +1385,47 @@ describe('conversation web backend', () => {
 
     const { db } = getDb('server');
     const messages = await db.execute(sql`
-      select role, content
+      select id, role, content, response_to_message_id as "responseToMessageId"
       from messages
       order by created_at asc, id asc
     `);
-    expect(messages.rows).toEqual([
+    expect(messages.rows.map(({ role, content }) => ({ role, content }))).toEqual([
       { role: 'user', content: 'Will this fail?' },
       {
         role: 'assistant',
         content: "I hit an error and couldn't answer that. Please try again.",
       },
     ]);
+
+    const userMessage = messages.rows.find((row) => row.role === 'user')!;
+    const assistantMessage = messages.rows.find((row) => row.role === 'assistant')!;
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    const [capturedError, telemetryInput] = mockCaptureTelemetryError.mock.calls[0]!;
+    expect(capturedError).toEqual(
+      expect.objectContaining({
+        name: 'ChatFailure:Error',
+        message: 'Squire chat failure',
+      }),
+    );
+    expect(JSON.stringify(capturedError)).not.toContain('upstream exploded');
+    expect(telemetryInput).toEqual(
+      expect.objectContaining({
+        route: '/chat',
+        requestId: 'req-chat-failure-1',
+        conversationId: location.split('/').at(-1),
+        userMessageId: userMessage.id,
+        assistantMessageId: assistantMessage.id,
+        user: { id: auth.userId },
+        context: expect.objectContaining({
+          surface: 'web_chat',
+          failureKind: 'assistant_turn',
+          game: null,
+          originalErrorName: 'Error',
+          persistedAssistantFailure: true,
+        }),
+      }),
+    );
+    expect(JSON.stringify(telemetryInput)).not.toContain('Will this fail?');
   });
 
   it('forwards prior stored history unchanged on follow-up messages', async () => {
@@ -2862,7 +2915,9 @@ describe('conversation web backend', () => {
     const streamUrl = body.match(/data-stream-url="([^"]+)"/)?.[1];
     expect(streamUrl).toBeTruthy();
 
-    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`);
+    const streamRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`, {
+      headers: { 'x-request-id': 'req-chat-sse-1' },
+    });
     const events = parseSse(await streamRes.text());
     expect(events).toEqual([
       {
@@ -2879,6 +2934,46 @@ describe('conversation web backend', () => {
       },
     ]);
     expect(mockAsk).toHaveBeenCalledTimes(1);
+
+    const streamMatch = streamUrl!.match(/^\/chat\/([^/]+)\/messages\/([^/]+)\/stream$/);
+    expect(streamMatch).toBeTruthy();
+    const [, conversationId, userMessageId] = streamMatch!;
+    const { db } = getDb('server');
+    const assistantMessages = await db.execute(sql`
+      select id, response_to_message_id as "responseToMessageId"
+      from messages
+      where role = 'assistant'
+      order by created_at asc, id asc
+    `);
+    expect(assistantMessages.rows).toHaveLength(1);
+
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    const [capturedError, telemetryInput] = mockCaptureTelemetryError.mock.calls[0]!;
+    expect(capturedError).toEqual(
+      expect.objectContaining({
+        name: 'ChatFailure:Error',
+        message: 'Squire chat failure',
+      }),
+    );
+    expect(telemetryInput).toEqual(
+      expect.objectContaining({
+        route: '/chat/:conversationId/messages/:messageId/stream',
+        requestId: 'req-chat-sse-1',
+        conversationId,
+        userMessageId,
+        assistantMessageId: assistantMessages.rows[0].id,
+        user: { id: auth.userId },
+        context: expect.objectContaining({
+          surface: 'chat_sse',
+          failureKind: 'assistant_turn',
+          game: null,
+          originalErrorName: 'Error',
+          originalErrorCode: 'ETIMEDOUT',
+          persistedAssistantFailure: true,
+        }),
+      }),
+    );
+    expect(JSON.stringify(telemetryInput)).not.toContain('Partial answer.');
   });
 });
 

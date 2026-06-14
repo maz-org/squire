@@ -266,16 +266,24 @@ describe('deployment configuration', () => {
     const development = await readProjectFile('docs/DEVELOPMENT.md');
     const architecture = await readProjectFile('docs/ARCHITECTURE.md');
     const runbook = await readProjectFile('docs/runbooks/production-operations.md');
+    const observability = await readProjectFile('docs/runbooks/observability.md');
 
     expect(development).toContain('SENTRY_DSN');
     expect(development).toContain('Missing `SENTRY_DSN` is a local no-op');
+    expect(development).toContain('SQUIRE_ENV=staging');
+    expect(development).toContain('npm run sentry:test-event -- --kind chat --dry-run');
     expect(runbook).toContain('fly ext sentry create -a maz-squire');
     expect(runbook).toContain('fly ext sentry dashboard -a maz-squire');
     expect(runbook).toMatch(/sets\s+`SENTRY_DSN` as a Fly secret/);
     expect(runbook).toContain('Do not add `SENTRY_DSN` to `fly.toml`');
     expect(runbook).toContain('SENTRY_RELEASE');
+    expect(runbook).toContain('[observability.md](observability.md)');
     expect(architecture).toContain('Sentry owns app observability');
     expect(architecture).toContain('LangSmith remains the owner for LLM traces and evals');
+    expect(architecture).toContain('[docs/runbooks/observability.md](runbooks/observability.md)');
+    expect(architecture).not.toContain('APM / RUM stack is open');
+    expect(observability).toContain('Sentry owns app observability');
+    expect(observability).toContain('LangSmith owns LLM traces and eval debugging');
   });
 
   it('runs actionlint in CI for GitHub workflow changes', async () => {

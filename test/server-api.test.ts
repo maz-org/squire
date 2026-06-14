@@ -71,6 +71,12 @@ const {
   mockListCards,
   mockGetCard,
   mockRunReadinessChecks,
+  mockInitTelemetry,
+  mockCaptureTelemetryError,
+  mockCaptureTelemetryFeedback,
+  mockCaptureTelemetryMessage,
+  mockAddTelemetryBreadcrumb,
+  mockFlushTelemetry,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockEnsureBootstrapStatus: vi.fn(),
@@ -85,6 +91,12 @@ const {
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
   mockRunReadinessChecks: vi.fn(),
+  mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
+  mockCaptureTelemetryError: vi.fn(),
+  mockCaptureTelemetryFeedback: vi.fn(),
+  mockCaptureTelemetryMessage: vi.fn(),
+  mockAddTelemetryBreadcrumb: vi.fn(),
+  mockFlushTelemetry: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -111,6 +123,15 @@ vi.mock('../src/tools.ts', () => ({
 
 vi.mock('../src/health.ts', () => ({
   runReadinessChecks: mockRunReadinessChecks,
+}));
+
+vi.mock('../src/telemetry.ts', () => ({
+  initTelemetry: mockInitTelemetry,
+  captureTelemetryError: mockCaptureTelemetryError,
+  captureTelemetryFeedback: mockCaptureTelemetryFeedback,
+  captureTelemetryMessage: mockCaptureTelemetryMessage,
+  addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
+  flushTelemetry: mockFlushTelemetry,
 }));
 
 // Bypass the Drizzle-backed auth provider — these tests don't exercise OAuth
@@ -209,10 +230,219 @@ function resetRouteMocks() {
   mockListCards.mockReset();
   mockGetCard.mockReset();
   mockRunReadinessChecks.mockReset();
+  mockCaptureTelemetryFeedback.mockReset();
 }
 
 afterEach(() => {
   resetRateLimiterForTesting();
+});
+
+describe('POST /api/browser-telemetry', () => {
+  beforeEach(() => {
+    resetRouteMocks();
+  });
+
+  it('captures browser diagnostics through Sentry with same-origin-safe metadata', async () => {
+    mockCaptureTelemetryMessage.mockReturnValueOnce('0123456789abcdef0123456789abcdef');
+
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1?token=secret',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        errorName: 'TypeError',
+        source: 'https://squire.maz.org/squire.abc123.js?token=secret',
+        line: 12,
+        column: 4,
+        viewport: { width: 390, height: 844 },
+        userAgent: 'SquireTest/1.0',
+      }),
+    });
+
+    expect(res.status).toBe(202);
+    await expect(res.json()).resolves.toEqual({
+      eventId: '0123456789abcdef0123456789abcdef',
+    });
+    expect(mockCaptureTelemetryMessage).toHaveBeenCalledTimes(1);
+    expect(mockCaptureTelemetryMessage).toHaveBeenCalledWith(
+      'browser.browser_error',
+      'error',
+      expect.objectContaining({
+        route: '/chat/conv-1',
+        requestId: 'req-browser-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        context: expect.objectContaining({
+          surface: 'browser',
+          eventType: 'browser_error',
+          telemetryEndpoint: '/api/browser-telemetry',
+          errorName: 'TypeError',
+          source: '/squire.abc123.js',
+          line: 12,
+          column: 4,
+          viewport: { width: 390, height: 844 },
+          userAgent: 'SquireTest/1.0',
+          maskedReplay: null,
+        }),
+      }),
+    );
+    const telemetryInput = JSON.stringify(mockCaptureTelemetryMessage.mock.calls[0][2]);
+    expect(telemetryInput).not.toContain('token=secret');
+    expect(telemetryInput).not.toContain('public@example.sentry.io');
+  });
+
+  it('drops malformed browser telemetry instead of capturing protected fields', async () => {
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-bad-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        rawPrompt: 'What is the secret rule?',
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+    expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
+  });
+
+  it('drops browser telemetry with prompt-like diagnostic identifiers', async () => {
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-bad-id-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        conversationId: 'What is the secret rule?',
+        userMessageId: 'msg-user-1',
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+    expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
+  });
+
+  it('captures masked replay feedback without accepting raw user prose', async () => {
+    mockCaptureTelemetryFeedback.mockReturnValueOnce('fedcba9876543210fedcba9876543210');
+
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-feedback-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_feedback',
+        route: '/chat/conv-1?token=secret',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        feedbackKind: 'stream_failed',
+        associatedEventId: '0123456789abcdef0123456789abcdef',
+        maskedReplay: {
+          version: 1,
+          textMasked: true,
+          attributesMasked: true,
+          maskSelectors: ['.squire-transcript', '.squire-input-dock'],
+          blockSelectors: ['.squire-account-menu'],
+          turns: {
+            userTurnCount: 1,
+            assistantTurnCount: 1,
+            pendingTurnCount: 0,
+            workLogCount: 1,
+            errorBannerCount: 1,
+          },
+          input: {
+            present: true,
+            valueLengthBucket: '81-240',
+          },
+          history: {
+            rowCount: 3,
+            activeStatus: 'error',
+          },
+        },
+      }),
+    });
+
+    expect(res.status).toBe(202);
+    await expect(res.json()).resolves.toEqual({
+      eventId: 'fedcba9876543210fedcba9876543210',
+    });
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+    expect(mockCaptureTelemetryFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        feedbackKind: 'stream_failed',
+        associatedEventId: '0123456789abcdef0123456789abcdef',
+        route: '/chat/conv-1',
+        requestId: 'req-browser-feedback-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        context: expect.objectContaining({
+          surface: 'browser',
+          eventType: 'browser_feedback',
+          telemetryEndpoint: '/api/browser-telemetry',
+          maskedReplay: expect.objectContaining({
+            textMasked: true,
+            maskSelectors: ['.squire-transcript', '.squire-input-dock'],
+          }),
+        }),
+      }),
+    );
+    const telemetryInput = JSON.stringify(mockCaptureTelemetryFeedback.mock.calls[0][0]);
+    expect(telemetryInput).not.toContain('token=secret');
+  });
+
+  it('drops browser feedback that tries to include prose or unapproved replay selectors', async () => {
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-feedback-bad-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_feedback',
+        route: '/chat/conv-1',
+        feedbackKind: 'stream_failed',
+        associatedEventId: '0123456789abcdef0123456789abcdef',
+        comment: 'the raw prompt and answer',
+        maskedReplay: {
+          version: 1,
+          textMasked: true,
+          attributesMasked: true,
+          maskSelectors: ['body'],
+          blockSelectors: ['.squire-account-menu'],
+          turns: {
+            userTurnCount: 1,
+            assistantTurnCount: 1,
+            pendingTurnCount: 0,
+            workLogCount: 1,
+            errorBannerCount: 1,
+          },
+          input: {
+            present: true,
+            valueLengthBucket: '81-240',
+          },
+        },
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+    expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
+  });
 });
 
 describe('GET /api/health', () => {
@@ -376,6 +606,53 @@ describe('GET /api/search/rules', () => {
   it('defaults topK to 6', async () => {
     await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
+  });
+
+  it('captures unhandled server errors once while keeping the generic 500 response', async () => {
+    const error = new Error('database unavailable');
+    mockSearchRules.mockRejectedValueOnce(error);
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'user-123' },
+    });
+
+    const res = await app.request('/api/search/rules?q=loot', {
+      headers: {
+        Authorization: 'Bearer stub-token',
+        Cookie: 'session=secret',
+        'X-Request-ID': 'req-server-error-1',
+      },
+    });
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get('X-Request-ID')).toBe('req-server-error-1');
+    await expect(res.json()).resolves.toEqual({
+      error: 'Internal server error',
+      status: 500,
+    });
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    expect(mockCaptureTelemetryError).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        route: '/api/search/rules',
+        requestId: 'req-server-error-1',
+        user: { id: 'user-123' },
+        context: {
+          surface: 'server',
+          method: 'GET',
+          path: '/api/search/rules',
+          route: '/api/search/rules',
+          status: 500,
+        },
+      }),
+    );
+    const telemetryInput = JSON.stringify(mockCaptureTelemetryError.mock.calls[0][1]);
+    expect(telemetryInput).not.toContain('Bearer stub-token');
+    expect(telemetryInput).not.toContain('session=secret');
+    expect(telemetryInput).not.toContain('loot');
   });
 
   it('returns 400 for unsupported game ids before searching rules', async () => {
@@ -1156,10 +1433,21 @@ describe('POST /api/ask', () => {
   });
 
   it('emits error event when ask() throws', async () => {
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'api-user-1' },
+    });
     mockAsk.mockRejectedValue(new Error('Claude API error'));
     const res = await app.request('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await auth()) },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-api-ask-failure-1',
+        ...(await auth()),
+      },
       body: JSON.stringify({ question: 'test' }),
     });
     expect(res.status).toBe(200); // SSE streams always return 200
@@ -1168,6 +1456,28 @@ describe('POST /api/ask', () => {
     const errorEvent = events.find((e) => e.event === 'error');
     expect(errorEvent).toBeDefined();
     expect(JSON.parse(errorEvent!.data)).toHaveProperty('message', 'Internal server error');
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    const [capturedError, telemetryInput] = mockCaptureTelemetryError.mock.calls[0]!;
+    expect(capturedError).toEqual(
+      expect.objectContaining({
+        name: 'ChatFailure:Error',
+        message: 'Squire chat failure',
+      }),
+    );
+    expect(telemetryInput).toEqual(
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-failure-1',
+        user: { id: 'api-user-1' },
+        context: expect.objectContaining({
+          surface: 'api_ask',
+          failureKind: 'api_ask',
+          game: null,
+          originalErrorName: 'Error',
+        }),
+      }),
+    );
+    expect(JSON.stringify(telemetryInput)).not.toContain('test');
   });
 });
 

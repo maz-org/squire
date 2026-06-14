@@ -156,8 +156,21 @@ import {
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
+import { captureChatFailureTelemetry } from './chat/chat-telemetry.ts';
 import * as MessageStreamEventRepository from './db/repositories/message-stream-event-repository.ts';
 import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
+import {
+  captureTelemetryError,
+  captureTelemetryFeedback,
+  captureTelemetryMessage,
+  flushTelemetry,
+  initTelemetry,
+  type TelemetryCaptureInput,
+  type TelemetryFeedbackInput,
+  type TelemetryUserIdentity,
+} from './telemetry.ts';
+
+initTelemetry(process.env);
 
 export const app = new Hono();
 
@@ -218,13 +231,229 @@ function auditContext(c: Context): { ipAddress: string | null; userAgent: string
 }
 
 function correlateRequest(c: Context): string {
+  const existingRequestId = c.get('requestId');
+  if (typeof existingRequestId === 'string' && existingRequestId.trim().length > 0) {
+    c.header('X-Request-ID', existingRequestId);
+    return existingRequestId;
+  }
+
   const incomingRequestId = c.req.header('x-request-id');
   const requestId =
     incomingRequestId && /^[A-Za-z0-9._:-]{1,128}$/.test(incomingRequestId)
       ? incomingRequestId
       : randomUUID();
+  c.set('requestId', requestId);
   c.header('X-Request-ID', requestId);
   return requestId;
+}
+
+function safeRequestRoute(c: Context): string {
+  try {
+    return c.req.routePath || c.req.path;
+  } catch {
+    return c.req.path;
+  }
+}
+
+function safeUserFromContext(c: Context): TelemetryUserIdentity | undefined {
+  const callerIdentity = c.get('callerIdentity') as CallerIdentity | undefined;
+  if (callerIdentity?.userId) return { id: callerIdentity.userId };
+
+  const authInfo = c.get('authInfo') as AuthInfo | undefined;
+  const tokenUserId = userIdFromAuthInfo(authInfo);
+  if (tokenUserId) return { id: tokenUserId };
+
+  const session = c.get('session') as { userId?: unknown } | undefined;
+  return typeof session?.userId === 'string' && session.userId.trim().length > 0
+    ? { id: session.userId }
+    : undefined;
+}
+
+function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCaptureInput {
+  const route = safeRequestRoute(c);
+  return {
+    route,
+    requestId,
+    user: safeUserFromContext(c),
+    context: {
+      surface: 'server',
+      method: c.req.method,
+      path: c.req.path,
+      route,
+      status: 500,
+    },
+  };
+}
+
+const BrowserTelemetryTokenSchema = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9._:-]+$/);
+
+const BrowserTelemetryEventIdSchema = z
+  .string()
+  .length(32)
+  .regex(/^[a-f0-9]+$/i);
+
+const BrowserFeedbackKindSchema = z.enum([
+  'wrong_answer',
+  'stream_failed',
+  'ui_broken',
+  'source_problem',
+  'other',
+]);
+
+const BrowserMaskedReplayMaskSelectorSchema = z.enum([
+  '.squire-transcript',
+  '.squire-question',
+  '.squire-answer',
+  '.squire-answer__content',
+  '.squire-answer__artifacts',
+  '.squire-answer-work',
+  '.squire-input-dock',
+  '.squire-input-dock textarea',
+  '.squire-history-row',
+  '.squire-campaign-strip',
+  '.squire-campaign-dashboard',
+  '.squire-character-sheet',
+]);
+
+const BrowserMaskedReplayBlockSelectorSchema = z.enum([
+  '.squire-account-menu',
+  '.squire-account-menu__panel',
+  '.squire-account-menu__avatar',
+]);
+
+const BrowserMaskedReplaySchema = z
+  .object({
+    version: z.literal(1),
+    textMasked: z.literal(true),
+    attributesMasked: z.literal(true),
+    snapshotId: BrowserTelemetryTokenSchema.optional(),
+    maskSelectors: z.array(BrowserMaskedReplayMaskSelectorSchema).min(1).max(24),
+    blockSelectors: z.array(BrowserMaskedReplayBlockSelectorSchema).min(1).max(12),
+    turns: z
+      .object({
+        userTurnCount: z.number().int().nonnegative().max(1_000),
+        assistantTurnCount: z.number().int().nonnegative().max(1_000),
+        pendingTurnCount: z.number().int().nonnegative().max(1_000),
+        workLogCount: z.number().int().nonnegative().max(1_000),
+        errorBannerCount: z.number().int().nonnegative().max(1_000),
+      })
+      .strict(),
+    input: z
+      .object({
+        present: z.boolean(),
+        valueLengthBucket: z.enum(['0', '1-80', '81-240', '241+']),
+      })
+      .strict(),
+    history: z
+      .object({
+        rowCount: z.number().int().nonnegative().max(1_000),
+        activeStatus: z.enum(['idle', 'running', 'error', 'unknown']),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+const BrowserTelemetrySchema = z
+  .object({
+    type: z.enum([
+      'browser_error',
+      'browser_unhandledrejection',
+      'browser_stream_error',
+      'browser_htmx_error',
+      'browser_feedback',
+    ]),
+    route: z.string().min(1).max(2048).optional(),
+    conversationId: BrowserTelemetryTokenSchema.optional(),
+    userMessageId: BrowserTelemetryTokenSchema.optional(),
+    errorName: BrowserTelemetryTokenSchema.optional(),
+    reasonType: BrowserTelemetryTokenSchema.optional(),
+    source: z.string().min(1).max(2048).optional(),
+    line: z.number().int().nonnegative().max(1_000_000).optional(),
+    column: z.number().int().nonnegative().max(1_000_000).optional(),
+    viewport: z
+      .object({
+        width: z.number().int().positive().max(20_000),
+        height: z.number().int().positive().max(20_000),
+      })
+      .strict()
+      .optional(),
+    userAgent: z.string().min(1).max(512).optional(),
+    streamErrorKind: z.enum(['transport', 'session']).optional(),
+    streamReadyState: z.number().int().min(0).max(2).optional(),
+    htmxEvent: BrowserTelemetryTokenSchema.optional(),
+    htmxStatus: z.number().int().min(0).max(999).optional(),
+    feedbackKind: BrowserFeedbackKindSchema.optional(),
+    associatedEventId: BrowserTelemetryEventIdSchema.optional(),
+    maskedReplay: BrowserMaskedReplaySchema.optional(),
+  })
+  .strict();
+
+type BrowserTelemetryEvent = z.infer<typeof BrowserTelemetrySchema>;
+
+function browserPathOnly(raw: string | undefined): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+
+  try {
+    if (/^https?:\/\//i.test(value)) return new URL(value).pathname || '/';
+  } catch {
+    return undefined;
+  }
+
+  if (!value.startsWith('/')) return undefined;
+  return value.split('?')[0]?.split('#')[0] || '/';
+}
+
+function buildBrowserTelemetryInput(
+  c: Context,
+  requestId: string,
+  event: BrowserTelemetryEvent,
+): TelemetryCaptureInput {
+  const route = browserPathOnly(event.route) ?? '/browser';
+  const source = browserPathOnly(event.source);
+  return {
+    route,
+    requestId,
+    conversationId: event.conversationId,
+    userMessageId: event.userMessageId,
+    user: safeUserFromContext(c),
+    context: {
+      surface: 'browser',
+      eventType: event.type,
+      telemetryEndpoint: '/api/browser-telemetry',
+      errorName: event.errorName ?? null,
+      reasonType: event.reasonType ?? null,
+      source: source ?? null,
+      line: event.line ?? null,
+      column: event.column ?? null,
+      viewport: event.viewport ?? null,
+      userAgent: event.userAgent ?? null,
+      streamErrorKind: event.streamErrorKind ?? null,
+      streamReadyState: event.streamReadyState ?? null,
+      htmxEvent: event.htmxEvent ?? null,
+      htmxStatus: event.htmxStatus ?? null,
+      maskedReplay: event.maskedReplay ?? null,
+    },
+  };
+}
+
+function buildBrowserFeedbackInput(
+  c: Context,
+  requestId: string,
+  event: BrowserTelemetryEvent,
+): TelemetryFeedbackInput | null {
+  if (event.type !== 'browser_feedback' || !event.feedbackKind) return null;
+  const input = buildBrowserTelemetryInput(c, requestId, event);
+  return {
+    ...input,
+    feedbackKind: event.feedbackKind,
+    associatedEventId: event.associatedEventId,
+  };
 }
 
 async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
@@ -2186,6 +2415,7 @@ app.post('/chat', async (c) => {
     game,
     campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
+    telemetry: { route: '/chat', surface: 'web_chat' },
   });
 
   c.header('Cache-Control', 'no-store');
@@ -2251,6 +2481,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
     game,
     campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
+    telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
   });
   if (!conversation) return c.notFound();
 
@@ -2440,6 +2671,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
       currentUserMessageId: loaded.message.id,
       game: loaded.message.game ?? undefined,
       requestId,
+      telemetry: { route: '/chat/:conversationId/messages/:messageId/stream', surface: 'chat_sse' },
       onEvent: async (event, data) => {
         if (event === 'text') {
           await persistAndWrite('text-delta', data);
@@ -2780,6 +3012,8 @@ app.notFound((c) => {
 
 app.onError((err, c) => {
   console.error('Unhandled error:', err instanceof Error ? err.message : err);
+  const requestId = correlateRequest(c);
+  captureTelemetryError(err, buildServerErrorTelemetry(c, requestId));
   return c.json(jsonError('Internal server error', 500), 500);
 });
 
@@ -2792,6 +3026,36 @@ app.get('/api/health', async (c) => {
 
 app.get('/api/live', (c) => {
   return c.json({ status: 'ok' });
+});
+
+// Browser observability endpoint. It deliberately accepts only a strict,
+// operational allowlist; invalid telemetry is ignored because diagnostics must
+// never change the page behavior or mirror unknown browser data into Sentry.
+app.post('/api/browser-telemetry', optionalSession(), async (c) => {
+  const requestId = correlateRequest(c);
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.body(null, 204);
+  }
+
+  const result = BrowserTelemetrySchema.safeParse(body);
+  if (!result.success) return c.body(null, 204);
+
+  if (result.data.type === 'browser_feedback') {
+    const feedbackInput = buildBrowserFeedbackInput(c, requestId, result.data);
+    if (!feedbackInput) return c.body(null, 204);
+    const eventId = captureTelemetryFeedback(feedbackInput);
+    return c.json({ eventId }, 202);
+  }
+
+  const eventId = captureTelemetryMessage(
+    `browser.${result.data.type}`,
+    'error',
+    buildBrowserTelemetryInput(c, requestId, result.data),
+  );
+  return c.json({ eventId }, 202);
 });
 
 // ─── Search endpoints ────────────────────────────────────────────────────────
@@ -3025,7 +3289,18 @@ app.post('/api/ask', async (c) => {
           await stream.writeSSE({ event, data: JSON.stringify(data) });
         },
       });
-    } catch {
+    } catch (error) {
+      captureChatFailureTelemetry(error, {
+        route: '/api/ask',
+        surface: 'api_ask',
+        failureKind: 'api_ask',
+        requestId,
+        user: safeUserFromContext(c),
+        game: options.game ?? null,
+        context: {
+          method: 'POST',
+        },
+      });
       await stream.writeSSE({
         event: 'error',
         data: JSON.stringify({ message: 'Internal server error' }),
@@ -3646,14 +3921,26 @@ app.delete('/api/characters/:id/cards/:cardId', async (c) => {
 
 export async function startServer(): Promise<void> {
   const { createAdaptorServer } = await import('@hono/node-server');
-  await startHttpServer({
-    appFetch: app.fetch,
-    createAdaptorServer,
-    loadServerConfig,
-    getWorktreeRuntime,
-    claimWorktreePort,
-    startBootstrapLifecycle,
-  });
+  try {
+    await startHttpServer({
+      appFetch: app.fetch,
+      createAdaptorServer,
+      loadServerConfig,
+      getWorktreeRuntime,
+      claimWorktreePort,
+      startBootstrapLifecycle,
+    });
+  } catch (error) {
+    captureTelemetryError(error, {
+      route: 'server.startup',
+      context: {
+        surface: 'server',
+        phase: 'startup',
+      },
+    });
+    await flushTelemetry(2_000);
+    throw error;
+  }
 }
 
 // CLI entrypoint

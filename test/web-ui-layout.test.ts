@@ -158,6 +158,26 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
   });
 
+  it('renders same-origin browser telemetry config without leaking a Sentry DSN', async () => {
+    const originalDsn = process.env.SENTRY_DSN;
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    try {
+      const body = String(await actualLayout.renderLoginPage());
+
+      expect(body).toContain('name="squire-browser-telemetry"');
+      expect(body).toContain('/api/browser-telemetry');
+      expect(body).toContain('&quot;enabled&quot;:true');
+      expect(body).not.toContain('public@example.sentry.io');
+      expect(body).not.toContain('sentry.io/123');
+    } finally {
+      if (originalDsn === undefined) {
+        delete process.env.SENTRY_DSN;
+      } else {
+        process.env.SENTRY_DSN = originalDsn;
+      }
+    }
+  });
+
   it('serves the favicon svg asset', async () => {
     const res = await app.request('/favicon.svg');
     expect(res.status).toBe(200);
