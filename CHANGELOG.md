@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.23] - 2026-06-14
+
+### Added
+
+- Added telemetry capture and flush handling for Supercronic cleanup jobs, Fly release migrations, and the live GH2e migration script.
+- Added cron script tests proving successful runs stay quiet while failed expired-session sweeps capture, flush, preserve stderr, set exit code 1, and close the DB pool.
+
 ## [0.1.22] - 2026-06-14
 
 ### Added
