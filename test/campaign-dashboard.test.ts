@@ -98,15 +98,45 @@ async function setupFixture() {
   return { owner, campaign };
 }
 
-async function toggle(user: TestUser, campaignId: string, key: string): Promise<Response> {
+async function toggle(
+  user: TestUser,
+  campaignId: string,
+  key: string,
+  mode?: 'skip',
+): Promise<Response> {
   const form = new FormData();
   form.set('_csrf', createCsrfToken(user.sessionId));
   form.set('key', key);
+  if (mode) form.set('mode', mode);
   return app.request(`/campaigns/${campaignId}/scenarios/toggle`, {
     method: 'POST',
     headers: { Cookie: user.cookie, 'HX-Request': 'true' },
     body: form,
   });
+}
+
+/** A module with a skippable intro (scenario 0) gating scenario 1 (SQR-317). */
+async function setupSkipFixture() {
+  const { db } = getDb('server');
+  await seedUnlockGraphModule(db, {
+    provenance: 'test',
+    game: 'frosthaven',
+    module: 'fh',
+    scenarios: [
+      scenario('0', { name: 'Training Course', skippable: true }),
+      scenario('1', { prereqsAll: ['0'] }),
+    ],
+    threads: [
+      { id: 'fh_intro', label: 'Prologue', note: 'The opening', position: 0, keys: ['0', '1'] },
+    ],
+  });
+  const owner = await createTestUser(OWNER_EMAIL);
+  const campaign = await CampaignService.createCampaign(identityFromSessionUser(owner.userId), {
+    name: 'Skip Campaign',
+    game: 'frosthaven',
+    modules: ['fh'],
+  });
+  return { owner, campaign };
 }
 
 beforeAll(async () => {
@@ -189,5 +219,42 @@ describe('toggle route', () => {
     const outsider = await createTestUser(OUTSIDER_EMAIL);
     const denied = await toggle(outsider, campaign.id, 'fh:2');
     expect(denied.status).toBe(404);
+  });
+});
+
+describe('skippable intro (SQR-317)', () => {
+  it('offers a Skip control only on a skippable open scenario', async () => {
+    const { owner, campaign } = await setupSkipFixture();
+    const res = await app.request(`/campaigns/${campaign.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    const body = await res.text();
+    // Scenario 0 is skippable + open → carries the quiet Skip control.
+    expect(body).toContain('squire-scenario-row__skip');
+    expect(body).toContain('squire-scenario-row--skippable');
+    expect(body).toContain('name="mode" value="skip"');
+    // Scenario 1 is locked (gated on 0) → only scenario 0 offers skip.
+    expect(body.match(/name="mode" value="skip"/g)?.length).toBe(1);
+  });
+
+  it('marks a skippable scenario skipped and opens what it gated', async () => {
+    const { owner, campaign } = await setupSkipFixture();
+    const skipped = await toggle(owner, campaign.id, 'fh:0', 'skip');
+    expect(skipped.status).toBe(200);
+    const body = await skipped.text();
+    expect(body).toContain('Scenario 0 marked skipped.');
+    expect(body).toContain('SKIPPED');
+    // Scenario 1 (gated on 0) opens now that 0 is done.
+    expect(body).toContain('--open');
+    // Skip is terminal — scenario 0 no longer offers a skip control.
+    expect(body).not.toContain('name="mode" value="skip"');
+  });
+
+  it('refuses to skip a non-skippable scenario', async () => {
+    const { owner, campaign } = await setupSkipFixture();
+    await toggle(owner, campaign.id, 'fh:0', 'skip'); // 1 becomes open
+    const denied = await toggle(owner, campaign.id, 'fh:1', 'skip');
+    expect(denied.status).toBe(200);
+    expect(await denied.text()).toContain('Scenario 1 cannot be skipped.');
   });
 });

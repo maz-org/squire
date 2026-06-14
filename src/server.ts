@@ -133,7 +133,7 @@ import { listJournal } from './campaign/journal.ts';
 import * as PendingMutations from './campaign/pending-mutations.ts';
 import * as WriteTools from './campaign/write-tools.ts';
 import { ProposalStateError } from './campaign/pending-mutations.ts';
-import { deriveAvailability } from './campaign/availability.ts';
+import { deriveAvailability, qualifiedKey } from './campaign/availability.ts';
 import { loadModuleGraphs } from './campaign/unlock-graph-loader.ts';
 import type { Campaign } from './db/repositories/types.ts';
 import type { HtmlEscapedString } from 'hono/utils/html';
@@ -925,6 +925,9 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   const form = await c.req.formData();
   const key = typeof form.get('key') === 'string' ? (form.get('key') as string).trim() : '';
   if (!key || key.length > 200) return c.notFound();
+  // `mode=skip` is the skippable-intro path (GH2e scenario 0); default is the
+  // play/draw advance cycle.
+  const mode = form.get('mode') === 'skip' ? 'skip' : 'advance';
 
   const identity = identityFromSessionUser(session.userId);
   let announcement: string;
@@ -942,8 +945,25 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
     );
     const status = availability.statuses.get(key);
     const shortKey = key.split(':')[1] ?? key;
+    const isSkippable = graphs.some((graph) =>
+      graph.scenarios.some(
+        (scenario) => qualifiedKey(graph.module, scenario.key) === key && scenario.skippable,
+      ),
+    );
 
-    if (status === 'open' || status === 'drew-it') {
+    if (mode === 'skip') {
+      // Skip is only valid for a skippable intro that is currently open. Adding
+      // it to skippedScenarios is non-destructive — it opens what playing would.
+      if (isSkippable && status === 'open') {
+        await CampaignService.updateSharedState(identity, campaignId, {
+          expectedVersion: detail.campaign.version,
+          skippedScenarios: [...detail.campaign.skippedScenarios, key],
+        });
+        announcement = `Scenario ${shortKey} marked skipped.`;
+      } else {
+        announcement = `Scenario ${shortKey} cannot be skipped.`;
+      }
+    } else if (status === 'open' || status === 'drew-it') {
       await CampaignService.updateSharedState(identity, campaignId, {
         expectedVersion: detail.campaign.version,
         playedScenarios: [...detail.campaign.playedScenarios, key],
