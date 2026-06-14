@@ -97,6 +97,7 @@ export function validateServerEnv(env: Env = process.env): ServerConfigResult {
   validateUrl('DATABASE_URL', env.DATABASE_URL, invalid);
   validateUrl('LANGSMITH_ENDPOINT', env.LANGSMITH_ENDPOINT, invalid);
   validateUrl('REDIS_URL', env.REDIS_URL, invalid);
+  validateUrl('SENTRY_DSN', env.SENTRY_DSN, invalid);
   if (
     nodeEnv === 'production' &&
     hasLangSmithCredentials(env) &&

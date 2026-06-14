@@ -39,6 +39,10 @@ LANGSMITH_TRACING=true
 # LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 # LANGSMITH_WORKSPACE_ID=...
 
+# Optional Sentry app observability. Leave unset for normal local dev/tests.
+# SENTRY_DSN=...
+# SENTRY_RELEASE=local-dev
+
 # Trace environment label for LangSmith; defaults to NODE_ENV.
 SQUIRE_ENV=development
 
@@ -66,6 +70,14 @@ openssl rand -base64 48
 ```
 
 `SQUIRE_ENV=development` is the local environment label that feeds LangSmith tracing.
+
+Missing `SENTRY_DSN` is a local no-op: dev servers and tests should still boot
+without sending Sentry events. When `SENTRY_DSN` is set locally for a focused
+observability test, use a non-production project or environment and do not put
+raw prompts, model output, cookies, bearer tokens, OAuth tokens, provider
+payloads, retrieved passages, or full user answers into Sentry. LangSmith stays
+the trace and eval surface for LLM behavior; Sentry is only for app errors,
+browser/runtime diagnostics, release health, and links back to LangSmith.
 
 `GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for
 production and non-local hosts. In local development, `/auth/google/start` and

@@ -66,8 +66,11 @@ The active baseline is:
   and presentation, then delegates domain reasoning to the knowledge agent.
 - `/api/ask`, the in-process service entry, the CLI wrapper, and the eval
   runner all route through the same service boundary.
-- LangSmith remains the authoritative LLM trace/eval path for now;
-  OpenTelemetry provides the trace export/transport feeding it.
+- LangSmith remains the authoritative LLM trace/eval path; OpenTelemetry
+  provides the trace export/transport feeding it.
+- Sentry is the app observability, browser diagnostics, release-health,
+  alerting, and error-tracking path, provisioned through Fly and correlated to
+  LangSmith by safe IDs and links.
 
 Existing regression coverage protects the current path:
 
@@ -236,6 +239,9 @@ _Rationale: avoid SaaS vendor dependency in the auth path, no per-MAU pricing. S
 
 - `@opentelemetry/sdk-node` for OTel traces from the agent loop, tool calls, and HTTP handlers (initialized in `src/instrumentation.ts`)
 - `langsmith` for LLM trace export and eval pipeline
+- Sentry for app errors, browser/runtime diagnostics, release health, and
+  alerting. Fly owns the production `SENTRY_DSN` secret; deploys set
+  `SENTRY_RELEASE` from the tested Git SHA.
 
 See [Observability](#observability) below.
 
@@ -725,7 +731,19 @@ traces include request ID and any caller-provided user/campaign IDs. The
 browser response includes `X-Request-ID`; the web chat URL and stream URL expose
 the conversation and user-message IDs needed to find the persisted turn.
 
-**APM and RUM: open.** General application metrics (request latency, error rates, DB query performance) and real-user monitoring on the web channel are not yet wired up. **Datadog** is a candidate one-stop shop for both, but a previous evaluation found that Datadog's LLM observability API has limitations that make LangSmith a better fit for evals — so even if Datadog is adopted for APM / RUM, LangSmith stays for LLM-specific observability. See [Open Tech Questions](#open-tech-questions).
+**App observability: Sentry.** Sentry owns app observability for backend
+errors, swallowed chat failures, SSE failures, browser errors, cron/script
+failures, uptime checks, release health, and alerts. Events must use safe tags
+and context: environment, release SHA, request ID, route, conversation ID, user
+message ID, and LangSmith thread/run links when available. Sentry must not store
+raw prompts, full model answers, provider payloads, cookies, bearer tokens,
+OAuth tokens, secrets, or retrieved source passages.
+
+LangSmith remains the owner for LLM traces and evals. Sentry links to LangSmith
+instead of duplicating prompt, model-output, or retrieved-context payloads.
+Operators start in Sentry for app/runtime errors and release regressions, then
+jump to LangSmith when the question is whether the agent reasoned correctly,
+retrieved the right sources, or passed eval expectations.
 
 ---
 
@@ -866,7 +884,6 @@ For developer setup, running the server, working on import scripts locally, and 
 
 ## Open Tech Questions
 
-- **APM / RUM stack.** Datadog as a one-stop shop for application metrics and real-user monitoring (with LangSmith staying for LLM-specific observability), or stay LangSmith-only and skip APM until volume demands it?
 - **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
 - **Storyline GH2 support (Phase 6 input).** Confirm whether frosthaven-storyline.com supports Gloomhaven (2nd Edition) before automated character/campaign ingestion begins. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
 
