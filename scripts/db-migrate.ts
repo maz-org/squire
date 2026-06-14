@@ -16,6 +16,7 @@ import {
   isManagedLocalDatabaseUrl,
   resolveDatabaseUrl,
 } from '../src/db.ts';
+import { runScriptWithTelemetry } from '../src/script-telemetry.ts';
 
 const { Pool } = pg;
 
@@ -100,7 +101,10 @@ function redact(url: string): string {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((err) => {
+  runScriptWithTelemetry(main, {
+    scriptName: 'db-migrate',
+    scriptKind: 'release_command',
+  }).catch((err) => {
     console.error(err);
     process.exit(1);
   });

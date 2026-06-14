@@ -10,6 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 import { shutdownServerPool } from '../src/db.ts';
 import { sweepExpiredProposals } from '../src/campaign/pending-mutations.ts';
+import { runScriptWithTelemetry } from '../src/script-telemetry.ts';
 
 export async function main(): Promise<number> {
   const swept = await sweepExpiredProposals();
@@ -17,13 +18,20 @@ export async function main(): Promise<number> {
   return swept;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main()
-    .catch((err) => {
-      console.error('[proposal-gc] failed to sweep proposals:', err);
-      process.exitCode = 1;
-    })
-    .finally(async () => {
-      await shutdownServerPool();
+export async function runExpiredProposalSweepCli(): Promise<void> {
+  try {
+    await runScriptWithTelemetry(main, {
+      scriptName: 'sweep-expired-proposals',
+      scriptKind: 'cron',
     });
+  } catch (err) {
+    console.error('[proposal-gc] failed to sweep proposals:', err);
+    process.exitCode = 1;
+  } finally {
+    await shutdownServerPool();
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  void runExpiredProposalSweepCli();
 }
