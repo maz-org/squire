@@ -164,6 +164,10 @@ Fly's Sentry extension documentation describes the sponsored Team-plan quota as
 per month. If that sponsored period ends, Sentry keeps accepting events on the
 Developer plan with lower quotas; events over quota are dropped.
 
+Production alert rules and safe test events live in
+[sentry-alerts.md](sentry-alerts.md). Those alerts use Sentry tags and uptime
+monitors, not Fly log retention.
+
 #### Safe browser replay and feedback smoke
 
 Use a non-production Sentry environment first. Open a safe page with no real

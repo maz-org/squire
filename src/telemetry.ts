@@ -169,6 +169,31 @@ function truncateTag(value: string): string {
   return value.length > 200 ? `${value.slice(0, 197)}...` : value;
 }
 
+const TAG_TOKEN_PATTERN = /^[A-Za-z0-9._:/-]{1,128}$/;
+
+function safeContextTag(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!TAG_TOKEN_PATTERN.test(trimmed)) return undefined;
+  return truncateTag(trimmed);
+}
+
+function contextTagPairs(input: { context?: Record<string, unknown> }): Array<[string, string]> {
+  const context = input.context;
+  if (!context) return [];
+
+  const pairs: Array<[string, string | undefined]> = [
+    ['surface', safeContextTag(context.surface)],
+    ['failure_kind', safeContextTag(context.failureKind)],
+    ['event_type', safeContextTag(context.eventType)],
+    ['job_name', safeContextTag(context.scriptName)],
+    ['job_kind', safeContextTag(context.scriptKind)],
+    ['security_event', safeContextTag(context.event)],
+  ];
+
+  return pairs.filter((pair): pair is [string, string] => pair[1] !== undefined);
+}
+
 function redactSensitiveString(value: string): string {
   if (/\bBearer\s+[A-Za-z0-9._~+/=-]+/i.test(value)) return TELEMETRY_REDACTED;
   if (/\b(?:sk|rk|pk|xox[baprs]|gh[pousr])_[A-Za-z0-9_=-]{12,}\b/.test(value)) {
@@ -246,7 +271,7 @@ export function buildDiagnosticMetadata(
  * extend this function intentionally when a new diagnostic tag is approved.
  */
 export function buildSafeTelemetryTags(
-  input: TelemetryDiagnosticInput = {},
+  input: TelemetryDiagnosticInput & { context?: Record<string, unknown> } = {},
   env: Env = process.env,
 ): Record<string, string> {
   const metadata = buildDiagnosticMetadata(input, env);
@@ -260,6 +285,7 @@ export function buildSafeTelemetryTags(
     ['assistant_message_id', metadata.assistantMessageId],
     ['user_id', metadata.userId],
     ['user_hash', metadata.userHash],
+    ...contextTagPairs(input),
   ];
 
   return Object.fromEntries(
