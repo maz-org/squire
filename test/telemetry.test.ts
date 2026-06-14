@@ -50,12 +50,14 @@ import {
   redactTelemetryValue,
   resetTelemetryForTests,
   sanitizeTelemetryPayload,
+  sentryTraceSampleRateFromEnv,
 } from '../src/telemetry.ts';
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
   SENTRY_DSN: process.env.SENTRY_DSN,
   SENTRY_RELEASE: process.env.SENTRY_RELEASE,
+  SENTRY_TRACES_SAMPLE_RATE: process.env.SENTRY_TRACES_SAMPLE_RATE,
   SQUIRE_ENV: process.env.SQUIRE_ENV,
 };
 
@@ -109,6 +111,7 @@ describe('telemetry boundary', () => {
     process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
     process.env.SENTRY_RELEASE = 'abc123';
     process.env.SQUIRE_ENV = 'production';
+    process.env.SENTRY_TRACES_SAMPLE_RATE = '0.25';
 
     expect(initTelemetry(process.env)).toEqual({ enabled: true, reason: 'initialized' });
     expect(initTelemetry(process.env)).toEqual({ enabled: true, reason: 'already_initialized' });
@@ -121,13 +124,38 @@ describe('telemetry boundary', () => {
         release: 'abc123',
         defaultIntegrations: false,
         sendDefaultPii: false,
-        tracesSampleRate: 0,
+        tracesSampleRate: 0.25,
+        skipOpenTelemetrySetup: true,
         enableLogs: true,
+        dataCollection: {
+          userInfo: false,
+          cookies: false,
+          httpHeaders: { request: false, response: false },
+          httpBodies: [],
+          queryParams: false,
+          genAI: { inputs: false, outputs: false },
+          stackFrameVariables: false,
+          frameContextLines: 0,
+        },
         beforeSend: expect.any(Function),
         beforeBreadcrumb: expect.any(Function),
         beforeSendLog: expect.any(Function),
+        beforeSendTransaction: expect.any(Function),
+        beforeSendSpan: expect.any(Function),
       }),
     );
+  });
+
+  it('parses Sentry trace sampling from environment only when valid', () => {
+    expect(sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: undefined })).toBeUndefined();
+    expect(sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: '0' })).toBe(0);
+    expect(sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: '0.5' })).toBe(0.5);
+    expect(sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: '1' })).toBe(1);
+    expect(sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: '-0.1' })).toBeUndefined();
+    expect(sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: '1.1' })).toBeUndefined();
+    expect(
+      sentryTraceSampleRateFromEnv({ SENTRY_TRACES_SAMPLE_RATE: 'not-a-number' }),
+    ).toBeUndefined();
   });
 
   it('keeps the diagnostic field contract stable and explicit about unavailable fields', () => {
@@ -428,6 +456,90 @@ describe('telemetry boundary', () => {
         },
       },
     });
+  });
+
+  it('redacts Sentry app trace payloads before transactions and spans are sent', () => {
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    process.env.SENTRY_TRACES_SAMPLE_RATE = '1';
+    process.env.SQUIRE_ENV = 'production';
+    initTelemetry(process.env);
+
+    const initOptions = sentry.init.mock.calls[0]?.[0];
+    const sanitizedSpan = initOptions.beforeSendSpan({
+      trace_id: '0123456789abcdef0123456789abcdef',
+      span_id: '0123456789abcdef',
+      start_timestamp: 1,
+      data: {
+        'squire.request_id': 'req-1',
+        'squire.conversation_id': 'conv-1',
+        'langsmith.metadata.thread_id': 'conv-1',
+        'gen_ai.prompt': 'raw prompt',
+        'gen_ai.completion': 'full model answer',
+        providerPayload: { body: 'raw provider payload' },
+        retrievedPassages: ['source passage'],
+        transcript: 'raw transcript',
+      },
+      description: 'squire.agent.run',
+    });
+    const sanitizedTransaction = initOptions.beforeSendTransaction(
+      {
+        type: 'transaction',
+        transaction: '/chat/conv-1',
+        contexts: {
+          trace: {
+            trace_id: '0123456789abcdef0123456789abcdef',
+            span_id: '0123456789abcdef',
+          },
+        },
+        request: {
+          data: { prompt: 'hidden prompt' },
+          headers: { authorization: 'Bearer secret-token' },
+        },
+        spans: [
+          {
+            data: {
+              'squire.request_id': 'req-1',
+              'gen_ai.prompt': 'raw prompt',
+              modelOutput: 'raw model output',
+            },
+          },
+        ],
+      },
+      {},
+    );
+
+    expect(sanitizedSpan).toEqual(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          'squire.request_id': 'req-1',
+          'squire.conversation_id': 'conv-1',
+          'langsmith.metadata.thread_id': 'conv-1',
+          'gen_ai.prompt': TELEMETRY_REDACTED,
+          'gen_ai.completion': TELEMETRY_REDACTED,
+          providerPayload: TELEMETRY_REDACTED,
+          retrievedPassages: TELEMETRY_REDACTED,
+          transcript: TELEMETRY_REDACTED,
+        }),
+      }),
+    );
+    expect(sanitizedTransaction).toEqual(
+      expect.objectContaining({
+        transaction: '/chat/conv-1',
+        request: {
+          data: TELEMETRY_REDACTED,
+          headers: { authorization: TELEMETRY_REDACTED },
+        },
+        spans: [
+          {
+            data: {
+              'squire.request_id': 'req-1',
+              'gen_ai.prompt': TELEMETRY_REDACTED,
+              modelOutput: TELEMETRY_REDACTED,
+            },
+          },
+        ],
+      }),
+    );
   });
 
   it('captures Sentry logs with stable safe attributes and arbitrary sanitized attributes', () => {
