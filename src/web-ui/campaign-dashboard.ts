@@ -116,7 +116,13 @@ function scenarioRow(input: {
         <input type="hidden" name="_csrf" value="${input.csrfToken}" />
         <input type="hidden" name="key" value="${input.qualified}" />
         <input type="hidden" name="mode" value="skip" />
-        <button type="submit" class="squire-scenario-row__skip">Skip</button>
+        <button
+          type="submit"
+          class="squire-scenario-row__skip"
+          aria-label="Skip scenario ${input.scenarioKey} ${input.name}"
+        >
+          Skip
+        </button>
       </form>`
     : html``;
 

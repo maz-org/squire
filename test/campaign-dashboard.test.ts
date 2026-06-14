@@ -233,6 +233,9 @@ describe('skippable intro (SQR-317)', () => {
     expect(body).toContain('squire-scenario-row__skip');
     expect(body).toContain('squire-scenario-row--skippable');
     expect(body).toContain('name="mode" value="skip"');
+    // The Skip button has a scenario-specific accessible name so assistive
+    // control lists never expose indistinguishable "Skip" actions.
+    expect(body).toContain('aria-label="Skip scenario 0 Training Course"');
     // Scenario 1 is locked (gated on 0) → only scenario 0 offers skip.
     expect(body.match(/name="mode" value="skip"/g)?.length).toBe(1);
   });
