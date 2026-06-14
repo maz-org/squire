@@ -1,0 +1,646 @@
+import { z } from 'zod';
+
+import * as ConversationRepository from './db/repositories/conversation-repository.ts';
+import * as MessageRepository from './db/repositories/message-repository.ts';
+import * as MessageStreamEventRepository from './db/repositories/message-stream-event-repository.ts';
+import type {
+  Conversation,
+  ConversationMessage,
+  ConversationMessagePublicWorkEventName,
+} from './db/repositories/types.ts';
+import {
+  buildDiagnosticMetadata,
+  redactTelemetryValue,
+  TELEMETRY_UNAVAILABLE,
+  type TelemetryUserIdentity,
+} from './telemetry.ts';
+import { EMBEDDING_VERSION } from './vector-store.ts';
+
+type DiagnosticPrimitive = string | number | boolean | null;
+type DiagnosticJson = DiagnosticPrimitive | DiagnosticJson[] | { [key: string]: DiagnosticJson };
+
+export type DiagnosticField<T> =
+  | { status: 'available'; value: T }
+  | { status: 'unavailable'; reason: string };
+
+export interface DiagnosticBrowserMetadata {
+  url?: string;
+  userAgent?: string;
+  viewport?: { width: number; height: number };
+  replaySnapshotId?: string;
+}
+
+export interface DiagnosticBundleLinkInput {
+  sentryIssueUrl?: string;
+  sentryEventUrl?: string;
+  sentryReplayUrl?: string;
+  langsmithTraceUrl?: string;
+  langsmithThreadUrl?: string;
+  langsmithThreadId?: string;
+  langsmithRunUrl?: string;
+  langsmithRunId?: string;
+}
+
+export interface DiagnosticBundleInput extends DiagnosticBundleLinkInput {
+  now?: Date;
+  env?: NodeJS.ProcessEnv | Record<string, string | undefined>;
+  route?: string;
+  browserUrl?: string;
+  conversationUrl?: string;
+  requestId?: string;
+  conversationId?: string;
+  userMessageId?: string;
+  assistantMessageId?: string;
+  user?: TelemetryUserIdentity;
+  browser?: DiagnosticBrowserMetadata;
+  conversation?: Conversation | null;
+  messages?: ConversationMessage[] | null;
+  streamEvents?: MessageStreamEventRepository.MessageStreamEvent[] | null;
+}
+
+export interface CollectDiagnosticBundleInput extends DiagnosticBundleInput {
+  dataSource?: DiagnosticBundleDataSource;
+}
+
+export interface DiagnosticBundleDataSource {
+  findOwnedConversation(userId: string, conversationId: string): Promise<Conversation | null>;
+  findMessageById(messageId: string): Promise<ConversationMessage | null>;
+  listMessagesByConversationId(conversationId: string): Promise<ConversationMessage[]>;
+  listStreamEventsByUserMessageId(
+    userMessageId: string,
+  ): Promise<MessageStreamEventRepository.MessageStreamEvent[]>;
+}
+
+export interface DiagnosticWorkLogRow {
+  sequence: number;
+  event: ConversationMessagePublicWorkEventName;
+  createdAt: string;
+  sourceLabels: string[];
+  ok?: boolean;
+  ref?: string;
+}
+
+export interface DiagnosticUnavailableField {
+  path: string;
+  reason: string;
+}
+
+const DiagnosticJsonSchema: z.ZodType<DiagnosticJson> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(DiagnosticJsonSchema),
+    z.record(z.string(), DiagnosticJsonSchema),
+  ]),
+);
+
+export const DiagnosticFieldSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('available'), value: DiagnosticJsonSchema }).strict(),
+  z.object({ status: z.literal('unavailable'), reason: z.string().min(1) }).strict(),
+]);
+
+export const DiagnosticWorkLogRowSchema = z
+  .object({
+    sequence: z.number().int().nonnegative(),
+    event: z.enum(['tool-plan', 'tool-progress', 'tool-result', 'answer-artifact']),
+    createdAt: z.string().datetime(),
+    sourceLabels: z.array(z.string().min(1)).max(12),
+    ok: z.boolean().optional(),
+    ref: z.string().min(1).optional(),
+  })
+  .strict();
+
+export const DiagnosticBundleSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    report: z
+      .object({
+        generatedAt: DiagnosticFieldSchema,
+        environment: DiagnosticFieldSchema,
+        release: DiagnosticFieldSchema,
+      })
+      .strict(),
+    request: z
+      .object({
+        requestId: DiagnosticFieldSchema,
+        route: DiagnosticFieldSchema,
+      })
+      .strict(),
+    conversation: z
+      .object({
+        url: DiagnosticFieldSchema,
+        id: DiagnosticFieldSchema,
+        userId: DiagnosticFieldSchema,
+        userHash: DiagnosticFieldSchema,
+        userMessageId: DiagnosticFieldSchema,
+        assistantMessageId: DiagnosticFieldSchema,
+        game: DiagnosticFieldSchema,
+        campaignId: DiagnosticFieldSchema,
+        userMessageCreatedAt: DiagnosticFieldSchema,
+        assistantMessageCreatedAt: DiagnosticFieldSchema,
+        assistantIsError: DiagnosticFieldSchema,
+      })
+      .strict(),
+    sentry: z
+      .object({
+        issueUrl: DiagnosticFieldSchema,
+        eventUrl: DiagnosticFieldSchema,
+        replayUrl: DiagnosticFieldSchema,
+      })
+      .strict(),
+    langsmith: z
+      .object({
+        traceUrl: DiagnosticFieldSchema,
+        threadUrl: DiagnosticFieldSchema,
+        threadId: DiagnosticFieldSchema,
+        runUrl: DiagnosticFieldSchema,
+        runId: DiagnosticFieldSchema,
+      })
+      .strict(),
+    browser: z
+      .object({
+        url: DiagnosticFieldSchema,
+        userAgent: DiagnosticFieldSchema,
+        viewport: DiagnosticFieldSchema,
+        replaySnapshotId: DiagnosticFieldSchema,
+      })
+      .strict(),
+    stream: z
+      .object({
+        status: DiagnosticFieldSchema,
+        terminalEvent: DiagnosticFieldSchema,
+        eventCount: DiagnosticFieldSchema,
+        workLogRows: z.union([
+          z
+            .object({ status: z.literal('available'), value: z.array(DiagnosticWorkLogRowSchema) })
+            .strict(),
+          z.object({ status: z.literal('unavailable'), reason: z.string().min(1) }).strict(),
+        ]),
+      })
+      .strict(),
+    sourceIndex: z
+      .object({
+        embeddingVersion: DiagnosticFieldSchema,
+        consultedSourceLabels: DiagnosticFieldSchema,
+        workLogSourceLabels: DiagnosticFieldSchema,
+      })
+      .strict(),
+    unavailable: z.array(z.object({ path: z.string().min(1), reason: z.string().min(1) }).strict()),
+  })
+  .strict();
+
+export type DiagnosticBundle = z.infer<typeof DiagnosticBundleSchema>;
+
+const DEFAULT_DATA_SOURCE: DiagnosticBundleDataSource = {
+  findOwnedConversation: ConversationRepository.findOwnedById,
+  findMessageById: MessageRepository.findById,
+  listMessagesByConversationId: (conversationId) =>
+    MessageRepository.listByConversationId(conversationId, { includeErrors: true }),
+  listStreamEventsByUserMessageId: (userMessageId) =>
+    MessageStreamEventRepository.listAfter({ userMessageId }),
+};
+
+const TOKEN_PATTERN = /^[A-Za-z0-9._:-]{1,256}$/;
+const SAFE_REF_PATTERN =
+  /^(?:rules|scenario|section|card|source):[A-Za-z0-9._:-]+(?:\/[A-Za-z0-9._:-]+)+(?:#chunk=\d+)?$/;
+const PUBLIC_WORK_EVENTS = new Set<string>([
+  'tool-plan',
+  'tool-progress',
+  'tool-result',
+  'answer-artifact',
+]);
+
+function available<T>(value: T): DiagnosticField<T> {
+  return { status: 'available', value: redactTelemetryValue(value) as T };
+}
+
+function unavailable<T>(reason: string): DiagnosticField<T> {
+  return { status: 'unavailable', reason };
+}
+
+function hasText(value: string | undefined): value is string {
+  return value !== undefined && value.trim().length > 0;
+}
+
+function safeToken(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || !TOKEN_PATTERN.test(trimmed)) return undefined;
+  return trimmed;
+}
+
+function safeSourceLabel(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 64) return null;
+  return /^[A-Z][A-Z0-9 _-]*$/.test(trimmed) ? trimmed : null;
+}
+
+function safeRef(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return SAFE_REF_PATTERN.test(trimmed) ? trimmed : undefined;
+}
+
+function safePathOrUrl(value: string | undefined): string | undefined {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      const url = new URL(raw);
+      return `${url.origin}${url.pathname || '/'}`;
+    }
+  } catch {
+    return undefined;
+  }
+
+  if (!raw.startsWith('/')) return undefined;
+  return raw.split('?')[0]?.split('#')[0] || '/';
+}
+
+function safeExternalUrl(value: string | undefined): string | undefined {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return undefined;
+    return `${url.origin}${url.pathname || '/'}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function isoDate(value: Date | undefined): string | undefined {
+  if (!value || Number.isNaN(value.getTime())) return undefined;
+  return value.toISOString();
+}
+
+function field<T>(value: T | undefined | null, unavailableReason: string): DiagnosticField<T> {
+  if (value === undefined || value === null) return unavailable(unavailableReason);
+  if (typeof value === 'string' && value.trim().length === 0) return unavailable(unavailableReason);
+  return available(value);
+}
+
+function parseLocator(input: DiagnosticBundleInput): {
+  conversationId?: string;
+  userMessageId?: string;
+  conversationUrl?: string;
+  route?: string;
+  browserUrl?: string;
+} {
+  const conversationUrl = safePathOrUrl(input.conversationUrl);
+  const browserUrl = safePathOrUrl(input.browserUrl ?? input.browser?.url);
+  const route = safePathOrUrl(input.route ?? conversationUrl ?? browserUrl);
+  const path = route ? safePathOrUrl(route) : undefined;
+  const chatMatch = path?.match(/^\/chat\/([^/]+)$/);
+  const streamMatch = path?.match(/^\/chat\/([^/]+)\/messages\/([^/]+)\/stream$/);
+
+  return {
+    conversationId:
+      safeToken(input.conversationId) ?? safeToken(streamMatch?.[1]) ?? safeToken(chatMatch?.[1]),
+    userMessageId: safeToken(input.userMessageId) ?? safeToken(streamMatch?.[2]),
+    conversationUrl,
+    route,
+    browserUrl,
+  };
+}
+
+function findUserMessage(
+  messages: ConversationMessage[],
+  userMessageId: string | undefined,
+  assistantMessage: ConversationMessage | undefined,
+): ConversationMessage | undefined {
+  if (userMessageId) return messages.find((message) => message.id === userMessageId);
+  if (assistantMessage?.responseToMessageId) {
+    return messages.find((message) => message.id === assistantMessage.responseToMessageId);
+  }
+  return [...messages].reverse().find((message) => message.role === 'user');
+}
+
+function findAssistantMessage(
+  messages: ConversationMessage[],
+  assistantMessageId: string | undefined,
+  userMessage: ConversationMessage | undefined,
+): ConversationMessage | undefined {
+  if (assistantMessageId) return messages.find((message) => message.id === assistantMessageId);
+  if (userMessage) {
+    const response = messages.find(
+      (message) => message.role === 'assistant' && message.responseToMessageId === userMessage.id,
+    );
+    if (response) return response;
+  }
+  return [...messages].reverse().find((message) => message.role === 'assistant');
+}
+
+function sourceLabelsFromPayload(payload: Record<string, unknown>): string[] {
+  const labels = new Set<string>();
+  const add = (value: unknown) => {
+    const label = safeSourceLabel(value);
+    if (label) labels.add(label);
+  };
+
+  add(payload.label);
+  add(payload.sourceLabel);
+  if (Array.isArray(payload.labels)) {
+    for (const label of payload.labels) add(label);
+  }
+  return [...labels].slice(0, 12);
+}
+
+function buildWorkLogRows(
+  streamEvents: MessageStreamEventRepository.MessageStreamEvent[] | undefined,
+): DiagnosticField<DiagnosticWorkLogRow[]> {
+  if (!streamEvents) return unavailable('stream events were not loaded');
+
+  const rows: DiagnosticWorkLogRow[] = [];
+  for (const event of streamEvents) {
+    if (!PUBLIC_WORK_EVENTS.has(event.event)) continue;
+    const publicEvent = event.event as ConversationMessagePublicWorkEventName;
+    const payload = event.payload ?? {};
+    const row: DiagnosticWorkLogRow = {
+      sequence: event.sequence,
+      event: publicEvent,
+      createdAt: event.createdAt.toISOString(),
+      sourceLabels: sourceLabelsFromPayload(payload),
+    };
+    if (typeof payload.ok === 'boolean') row.ok = payload.ok;
+    const ref = safeRef(payload.ref);
+    if (ref) row.ref = ref;
+    rows.push(row);
+  }
+  return available(rows);
+}
+
+function streamStatus(
+  streamEvents: MessageStreamEventRepository.MessageStreamEvent[] | undefined,
+): {
+  status: DiagnosticField<string>;
+  terminalEvent: DiagnosticField<string>;
+  eventCount: DiagnosticField<number>;
+} {
+  if (!streamEvents) {
+    return {
+      status: unavailable('stream events were not loaded'),
+      terminalEvent: unavailable('stream events were not loaded'),
+      eventCount: unavailable('stream events were not loaded'),
+    };
+  }
+
+  const terminal = streamEvents.findLast(
+    (event) => event.event === 'done' || event.event === 'error',
+  );
+  return {
+    status: available(
+      terminal?.event === 'done'
+        ? 'complete'
+        : terminal?.event === 'error'
+          ? 'error'
+          : 'incomplete',
+    ),
+    terminalEvent: terminal
+      ? available(terminal.event)
+      : unavailable('no terminal stream event recorded'),
+    eventCount: available(streamEvents.length),
+  };
+}
+
+function collectSourceLabels(
+  assistantMessage: ConversationMessage | undefined,
+  workLogRows: DiagnosticField<DiagnosticWorkLogRow[]>,
+): {
+  consultedSourceLabels: DiagnosticField<string[]>;
+  workLogSourceLabels: DiagnosticField<string[]>;
+} {
+  const consulted = (assistantMessage?.consultedSources ?? [])
+    .map((label) => safeSourceLabel(label) ?? safeToken(label))
+    .filter((label): label is string => Boolean(label));
+
+  const workLogLabels =
+    workLogRows.status === 'available'
+      ? [...new Set(workLogRows.value.flatMap((row) => row.sourceLabels))]
+      : undefined;
+
+  return {
+    consultedSourceLabels:
+      consulted.length > 0
+        ? available([...new Set(consulted)].slice(0, 24))
+        : unavailable('assistant message has no consulted source labels'),
+    workLogSourceLabels:
+      workLogLabels && workLogLabels.length > 0
+        ? available(workLogLabels.slice(0, 24))
+        : unavailable('work log has no source labels'),
+  };
+}
+
+function unavailableFields(value: unknown, path: string[] = []): DiagnosticUnavailableField[] {
+  if (typeof value !== 'object' || value === null) return [];
+  if ('status' in value && (value as { status?: unknown }).status === 'unavailable') {
+    return [
+      {
+        path: path.join('.'),
+        reason: String((value as { reason?: unknown }).reason ?? 'unavailable'),
+      },
+    ];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => unavailableFields(item, [...path, String(index)]));
+  }
+  return Object.entries(value)
+    .filter(([key]) => key !== 'unavailable')
+    .flatMap(([key, child]) => unavailableFields(child, [...path, key]));
+}
+
+export function buildDiagnosticBundle(input: DiagnosticBundleInput = {}): DiagnosticBundle {
+  const locator = parseLocator(input);
+  const metadata = buildDiagnosticMetadata(
+    {
+      route: locator.route ?? input.route,
+      requestId: input.requestId,
+      conversationId: locator.conversationId,
+      userMessageId: locator.userMessageId,
+      assistantMessageId: input.assistantMessageId,
+      user: input.user,
+      langsmithThreadUrl: input.langsmithThreadUrl,
+      langsmithRunUrl: input.langsmithRunUrl,
+    },
+    input.env,
+  );
+  const messages = input.messages ?? [];
+  const explicitAssistantId = safeToken(input.assistantMessageId);
+  const preliminaryAssistant = explicitAssistantId
+    ? messages.find((message) => message.id === explicitAssistantId)
+    : undefined;
+  const userMessage = findUserMessage(messages, locator.userMessageId, preliminaryAssistant);
+  const assistantMessage = findAssistantMessage(messages, explicitAssistantId, userMessage);
+  const workLogRows = buildWorkLogRows(input.streamEvents ?? undefined);
+  const status = streamStatus(input.streamEvents ?? undefined);
+  const sourceLabels = collectSourceLabels(assistantMessage, workLogRows);
+  const conversationId =
+    locator.conversationId ??
+    input.conversation?.id ??
+    userMessage?.conversationId ??
+    assistantMessage?.conversationId;
+
+  const bundleWithoutUnavailable = {
+    schemaVersion: 1 as const,
+    report: {
+      generatedAt: available((input.now ?? new Date()).toISOString()),
+      environment:
+        metadata.environment === TELEMETRY_UNAVAILABLE
+          ? unavailable('environment is not configured')
+          : available(metadata.environment),
+      release:
+        metadata.release === TELEMETRY_UNAVAILABLE
+          ? unavailable('SENTRY_RELEASE is not configured')
+          : available(metadata.release),
+    },
+    request: {
+      requestId:
+        metadata.requestId === TELEMETRY_UNAVAILABLE
+          ? unavailable('request id was not provided')
+          : available(metadata.requestId),
+      route:
+        metadata.route === TELEMETRY_UNAVAILABLE
+          ? unavailable('route could not be derived')
+          : available(metadata.route),
+    },
+    conversation: {
+      url: field(locator.conversationUrl, 'conversation URL was not provided'),
+      id: field(safeToken(conversationId), 'conversation id was not provided or loaded'),
+      userId:
+        metadata.userId === TELEMETRY_UNAVAILABLE
+          ? unavailable('safe user id was not provided')
+          : available(metadata.userId),
+      userHash:
+        metadata.userHash === TELEMETRY_UNAVAILABLE
+          ? unavailable('safe user hash was not provided')
+          : available(metadata.userHash),
+      userMessageId: field(
+        userMessage?.id ?? locator.userMessageId,
+        'user message id was not provided or loaded',
+      ),
+      assistantMessageId: field(
+        assistantMessage?.id ?? explicitAssistantId,
+        'assistant message id was not provided or loaded',
+      ),
+      game: field(userMessage?.game ?? undefined, 'user message game was not loaded'),
+      campaignId: field(userMessage?.campaignId ?? undefined, 'message has no campaign binding'),
+      userMessageCreatedAt: field(isoDate(userMessage?.createdAt), 'user message was not loaded'),
+      assistantMessageCreatedAt: field(
+        isoDate(assistantMessage?.createdAt),
+        'assistant message was not loaded',
+      ),
+      assistantIsError:
+        assistantMessage === undefined
+          ? unavailable('assistant message was not loaded')
+          : available(assistantMessage.isError),
+    },
+    sentry: {
+      issueUrl: field(safeExternalUrl(input.sentryIssueUrl), 'Sentry issue URL was not provided'),
+      eventUrl: field(safeExternalUrl(input.sentryEventUrl), 'Sentry event URL was not provided'),
+      replayUrl: field(
+        safeExternalUrl(input.sentryReplayUrl),
+        'Sentry replay URL was not provided',
+      ),
+    },
+    langsmith: {
+      traceUrl: field(
+        safeExternalUrl(input.langsmithTraceUrl),
+        'LangSmith trace URL was not provided',
+      ),
+      threadUrl: field(
+        safeExternalUrl(input.langsmithThreadUrl),
+        'LangSmith thread URL was not provided',
+      ),
+      threadId: field(
+        safeToken(input.langsmithThreadId) ?? safeToken(conversationId),
+        'LangSmith thread id was not provided or derivable',
+      ),
+      runUrl: field(safeExternalUrl(input.langsmithRunUrl), 'LangSmith run URL was not provided'),
+      runId: field(safeToken(input.langsmithRunId), 'LangSmith run id was not provided'),
+    },
+    browser: {
+      url: field(locator.browserUrl, 'browser URL was not provided'),
+      userAgent: field(
+        hasText(input.browser?.userAgent) ? input.browser.userAgent.slice(0, 512) : undefined,
+        'browser user agent was not provided',
+      ),
+      viewport: field(
+        input.browser?.viewport
+          ? {
+              width: input.browser.viewport.width,
+              height: input.browser.viewport.height,
+            }
+          : undefined,
+        'browser viewport was not provided',
+      ),
+      replaySnapshotId: field(
+        safeToken(input.browser?.replaySnapshotId),
+        'browser replay snapshot id was not provided',
+      ),
+    },
+    stream: {
+      status: status.status,
+      terminalEvent: status.terminalEvent,
+      eventCount: status.eventCount,
+      workLogRows,
+    },
+    sourceIndex: {
+      embeddingVersion: available(EMBEDDING_VERSION),
+      consultedSourceLabels: sourceLabels.consultedSourceLabels,
+      workLogSourceLabels: sourceLabels.workLogSourceLabels,
+    },
+  };
+
+  const bundle = {
+    ...bundleWithoutUnavailable,
+    unavailable: unavailableFields(bundleWithoutUnavailable),
+  };
+  return DiagnosticBundleSchema.parse(bundle);
+}
+
+export async function collectDiagnosticBundle(
+  input: CollectDiagnosticBundleInput = {},
+): Promise<DiagnosticBundle> {
+  const dataSource = input.dataSource ?? DEFAULT_DATA_SOURCE;
+  const locator = parseLocator(input);
+  const userId = safeToken(input.user?.id);
+  let conversation = input.conversation ?? null;
+  let messages = input.messages ?? null;
+  let streamEvents = input.streamEvents ?? null;
+  let conversationId = locator.conversationId;
+  let userMessageId = locator.userMessageId;
+
+  if (!conversationId && userMessageId && userId) {
+    const message = await dataSource.findMessageById(userMessageId);
+    if (message) conversationId = message.conversationId;
+  }
+
+  if (!conversation && conversationId && userId) {
+    conversation = await dataSource.findOwnedConversation(userId, conversationId);
+  }
+
+  if (!messages && conversation) {
+    messages = await dataSource.listMessagesByConversationId(conversation.id);
+  }
+
+  if (!userMessageId && messages) {
+    userMessageId = findUserMessage(messages, undefined, undefined)?.id;
+  }
+
+  if (!streamEvents && userMessageId && conversation) {
+    streamEvents = await dataSource.listStreamEventsByUserMessageId(userMessageId);
+  }
+
+  return buildDiagnosticBundle({
+    ...input,
+    conversationId: conversationId ?? input.conversationId,
+    userMessageId: userMessageId ?? input.userMessageId,
+    conversation,
+    messages,
+    streamEvents,
+  });
+}
