@@ -1,6 +1,8 @@
 import * as Sentry from '@sentry/node';
 import type {
   Breadcrumb,
+  Event,
+  EventHint,
   ErrorEvent,
   Log,
   LogSeverityLevel,
@@ -104,6 +106,23 @@ export interface TelemetryInitResult {
   enabled: boolean;
   reason: 'initialized' | 'already_initialized' | 'missing_dsn' | 'init_failed';
 }
+
+type SentryTransactionEvent = Event & { type: 'transaction' };
+type SentrySpanPayload = {
+  data: Record<string, unknown>;
+  description?: string;
+};
+
+const SENTRY_SAFE_DATA_COLLECTION = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: { request: false, response: false },
+  httpBodies: [],
+  queryParams: false,
+  genAI: { inputs: false, outputs: false },
+  stackFrameVariables: false,
+  frameContextLines: 0,
+};
 
 const PROTECTED_KEY_PARTS = [
   'authorization',
@@ -232,6 +251,15 @@ function safeSquireEnv(env: Env = process.env): string {
 function safeString(value: string | undefined): string | undefined {
   if (!hasText(value)) return undefined;
   return value.trim();
+}
+
+export function sentryTraceSampleRateFromEnv(env: Env = process.env): number | undefined {
+  const raw = safeString(env.SENTRY_TRACES_SAMPLE_RATE);
+  if (!raw) return undefined;
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0 || value > 1) return undefined;
+  return value;
 }
 
 function markerOr(value: string | undefined): string {
@@ -434,6 +462,17 @@ function sanitizeSentryLog(log: Log): Log {
   return sanitizeTelemetryPayload('log', log) as unknown as Log;
 }
 
+function sanitizeSentryTransaction<T extends SentryTransactionEvent>(
+  event: T,
+  _hint: EventHint,
+): T {
+  return sanitizeTelemetryPayload('transaction', event) as unknown as T;
+}
+
+function sanitizeSentrySpan<T extends SentrySpanPayload>(span: T): T {
+  return sanitizeTelemetryPayload('span', span) as unknown as T;
+}
+
 function safeJsonRecord(value: SafeJson): Record<string, SafeJson> {
   if (value && typeof value === 'object' && !Array.isArray(value)) return value;
   return {};
@@ -487,17 +526,22 @@ export function initTelemetry(env: Env = process.env): TelemetryInitResult {
   if (initializedDsn === dsn) return { enabled: true, reason: 'already_initialized' };
 
   try {
+    const tracesSampleRate = sentryTraceSampleRateFromEnv(env);
     Sentry.init({
       dsn,
       environment: safeSquireEnv(env),
       release: safeString(env.SENTRY_RELEASE),
       defaultIntegrations: false,
       sendDefaultPii: false,
-      tracesSampleRate: 0,
+      dataCollection: SENTRY_SAFE_DATA_COLLECTION,
+      tracesSampleRate,
+      skipOpenTelemetrySetup: true,
       enableLogs: true,
       beforeSend: sanitizeSentryEvent,
       beforeBreadcrumb: sanitizeSentryBreadcrumb,
       beforeSendLog: sanitizeSentryLog,
+      beforeSendTransaction: sanitizeSentryTransaction,
+      beforeSendSpan: sanitizeSentrySpan,
     });
     initializedDsn = dsn;
     return { enabled: true, reason: 'initialized' };
@@ -512,6 +556,10 @@ export function initTelemetry(env: Env = process.env): TelemetryInitResult {
  */
 export function isTelemetryEnabled(): boolean {
   return initializedDsn !== null;
+}
+
+export function getTelemetryClient(): ReturnType<typeof Sentry.getClient> | undefined {
+  return isTelemetryEnabled() ? Sentry.getClient() : undefined;
 }
 
 /**

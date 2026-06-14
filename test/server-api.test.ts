@@ -77,6 +77,8 @@ const {
   mockCaptureTelemetryMessage,
   mockAddTelemetryBreadcrumb,
   mockFlushTelemetry,
+  mockGetTelemetryClient,
+  mockSentryTraceSampleRateFromEnv,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockEnsureBootstrapStatus: vi.fn(),
@@ -97,6 +99,8 @@ const {
   mockCaptureTelemetryMessage: vi.fn(),
   mockAddTelemetryBreadcrumb: vi.fn(),
   mockFlushTelemetry: vi.fn().mockResolvedValue(true),
+  mockGetTelemetryClient: vi.fn(() => undefined),
+  mockSentryTraceSampleRateFromEnv: vi.fn(() => undefined),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -127,6 +131,8 @@ vi.mock('../src/health.ts', () => ({
 
 vi.mock('../src/telemetry.ts', () => ({
   initTelemetry: mockInitTelemetry,
+  getTelemetryClient: mockGetTelemetryClient,
+  sentryTraceSampleRateFromEnv: mockSentryTraceSampleRateFromEnv,
   captureTelemetryError: mockCaptureTelemetryError,
   captureTelemetryFeedback: mockCaptureTelemetryFeedback,
   captureTelemetryMessage: mockCaptureTelemetryMessage,
