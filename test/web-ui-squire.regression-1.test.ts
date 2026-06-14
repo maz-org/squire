@@ -275,10 +275,23 @@ function createFakeClock(startMs = 0) {
   };
 }
 
-function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeClock> } = {}) {
+function bootPendingTranscript(
+  options: {
+    browserTelemetry?: boolean;
+    clock?: ReturnType<typeof createFakeClock>;
+    streamUrl?: string;
+  } = {},
+) {
   const listeners = new Map<string, Array<(event?: unknown) => void>>();
   const storedValues = new Map<string, string>();
+  const telemetryPayloads: Array<{ url: string; body: unknown }> = [];
   const clock = options.clock ?? createFakeClock();
+  const telemetryMeta = {
+    getAttribute(name: string) {
+      if (name !== 'content') return null;
+      return JSON.stringify({ enabled: true, endpoint: '/api/browser-telemetry' });
+    },
+  };
 
   // SQR-108: setFormPendingState writes to form.dataset and reads back
   // form.querySelector('input[name="question"]'/'button[type="submit"]'),
@@ -325,7 +338,7 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
   answerEl.classList.add('squire-answer--pending');
   // SQR-108 / ADR 0012: stream URL lives on the pending answer article,
   // not on the (now-deleted) `.squire-transcript--pending` wrapper.
-  answerEl.setAttribute('data-stream-url', '/chat/stream');
+  answerEl.setAttribute('data-stream-url', options.streamUrl ?? '/chat/stream');
   answerEl.appendChild(workEl);
   answerEl.appendChild(artifactsEl);
   answerEl.appendChild(contentEl);
@@ -353,6 +366,9 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
       return new FakeElement(tagName);
     },
     querySelector(selector: string) {
+      if (selector === 'meta[name="squire-browser-telemetry"]' && options.browserTelemetry) {
+        return telemetryMeta;
+      }
       if (selector === '.squire-input-dock') return form;
       return null;
     },
@@ -406,6 +422,13 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
         },
       },
       setInterval: clock.setInterval,
+      fetch(url: string, init?: { body?: unknown }) {
+        telemetryPayloads.push({
+          url,
+          body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
+        });
+        return Promise.resolve({ ok: true });
+      },
     },
   });
 
@@ -428,9 +451,64 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
     skeletonEl,
     source,
     storedValues,
+    telemetryPayloads,
     workEl,
     workRowsEl,
     workStatusEl,
+  };
+}
+
+function bootBrowserTelemetryHarness(pathname = '/chat/conv-1') {
+  const docListeners = new Map<string, Array<(event?: unknown) => void>>();
+  const windowListeners = new Map<string, Array<(event?: unknown) => void>>();
+  const telemetryPayloads: Array<{ url: string; body: unknown }> = [];
+  const telemetryMeta = {
+    getAttribute(name: string) {
+      if (name !== 'content') return null;
+      return JSON.stringify({ enabled: true, endpoint: '/api/browser-telemetry' });
+    },
+  };
+  const document = {
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      docListeners.set(event, [...(docListeners.get(event) ?? []), callback]);
+    },
+    querySelector(selector: string) {
+      return selector === 'meta[name="squire-browser-telemetry"]' ? telemetryMeta : null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+    documentElement: { scrollHeight: 0 },
+  };
+  const window = {
+    location: { pathname },
+    crypto: {},
+    EventSource: function () {},
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      windowListeners.set(event, [...(windowListeners.get(event) ?? []), callback]);
+    },
+    scrollY: 0,
+    innerHeight: 844,
+    innerWidth: 390,
+    navigator: { userAgent: 'SquireTest/1.0' },
+    scrollTo: () => {},
+    fetch(url: string, init?: { body?: unknown }) {
+      telemetryPayloads.push({
+        url,
+        body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
+      });
+      return Promise.resolve({ ok: true });
+    },
+  };
+  const context = vm.createContext({ document, window });
+
+  vm.runInContext(scriptSource, context);
+
+  return {
+    emitWindow(event: string, payload: unknown) {
+      for (const callback of windowListeners.get(event) ?? []) callback(payload);
+    },
+    telemetryPayloads,
   };
 }
 
@@ -441,6 +519,83 @@ function workRowMessage(row: FakeElement): string | undefined {
 function workRowMessages(rowsEl: FakeElement): Array<string | undefined> {
   return rowsEl.children.map((row) => workRowMessage(row));
 }
+
+describe('squire.js browser telemetry', () => {
+  it('reports window errors without sending the thrown message body', () => {
+    const { emitWindow, telemetryPayloads } = bootBrowserTelemetryHarness('/chat/conv-1');
+
+    emitWindow('error', {
+      error: { name: 'TypeError', message: 'raw prompt should stay out' },
+      filename: 'https://squire.maz.org/squire.abc123.js?token=secret',
+      lineno: 12,
+      colno: 4,
+      message: 'raw prompt should stay out',
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        errorName: 'TypeError',
+        source: '/squire.abc123.js',
+        line: 12,
+        column: 4,
+        viewport: { width: 390, height: 844 },
+        userAgent: 'SquireTest/1.0',
+      }),
+    });
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('raw prompt');
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('token=secret');
+  });
+
+  it('reports unhandled rejections without sending the rejected text', () => {
+    const { emitWindow, telemetryPayloads } = bootBrowserTelemetryHarness('/chat/conv-1');
+
+    emitWindow('unhandledrejection', {
+      reason: new Error('model answer should stay out'),
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0].body).toEqual(
+      expect.objectContaining({
+        type: 'browser_unhandledrejection',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        errorName: 'Error',
+        reasonType: 'Error',
+      }),
+    );
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('model answer');
+  });
+
+  it('reports stream transport errors with conversation and message ids only', () => {
+    const { source, telemetryPayloads } = bootPendingTranscript({
+      browserTelemetry: true,
+      streamUrl: '/chat/conv-1/messages/msg-user-1/stream',
+    });
+
+    source.emit('error', {
+      kind: 'transport',
+      message: 'raw transcript should stay out',
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_stream_error',
+        route: '/chat/test',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        streamErrorKind: 'transport',
+      }),
+    });
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('raw transcript');
+  });
+});
 
 describe('squire.js chat form retargeting', () => {
   it('SQR-203: initializes the active game from localStorage, falls back safely, and syncs hidden chat fields', () => {

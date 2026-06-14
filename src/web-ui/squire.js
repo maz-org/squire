@@ -18,6 +18,218 @@ var defaultActiveGame = FALLBACK_DEFAULT_ACTIVE_GAME;
 var supportedActiveGames = fallbackSupportedActiveGames;
 var activeGame = defaultActiveGame;
 var activeGameInitialized = false;
+var browserTelemetryConfig = null;
+
+function safePathOnly(raw) {
+  if (typeof raw !== 'string') return null;
+  var value = raw.trim();
+  if (!value) return null;
+  var withoutHash = value.split('#')[0];
+  var withoutQuery = withoutHash.split('?')[0];
+  if (withoutQuery.charAt(0) === '/') return withoutQuery || '/';
+
+  var absoluteMatch = withoutQuery.match(/^https?:\/\/[^/]+(\/.*)?$/i);
+  if (absoluteMatch) return absoluteMatch[1] || '/';
+  return null;
+}
+
+function readBrowserTelemetryConfig() {
+  if (browserTelemetryConfig) return browserTelemetryConfig;
+
+  browserTelemetryConfig = { enabled: false, endpoint: null };
+  if (!document.querySelector) return browserTelemetryConfig;
+
+  var meta = document.querySelector('meta[name="squire-browser-telemetry"]');
+  var content = meta && meta.getAttribute ? meta.getAttribute('content') : null;
+  if (!content) return browserTelemetryConfig;
+
+  try {
+    var parsed = JSON.parse(content);
+    if (
+      parsed &&
+      parsed.enabled === true &&
+      typeof parsed.endpoint === 'string' &&
+      parsed.endpoint.charAt(0) === '/'
+    ) {
+      browserTelemetryConfig = { enabled: true, endpoint: parsed.endpoint };
+    }
+  } catch {
+    browserTelemetryConfig = { enabled: false, endpoint: null };
+  }
+
+  return browserTelemetryConfig;
+}
+
+function currentRoutePath() {
+  var pathname =
+    window.location && typeof window.location.pathname === 'string'
+      ? window.location.pathname
+      : '/';
+  return safePathOnly(pathname) || '/';
+}
+
+function conversationIdFromPath(path) {
+  var match = path && path.match(/^\/chat\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
+function streamIdsFromUrl(streamUrl) {
+  var path = safePathOnly(streamUrl);
+  var match = path && path.match(/^\/chat\/([^/]+)\/messages\/([^/]+)\/stream$/);
+  return match ? { conversationId: match[1], userMessageId: match[2] } : {};
+}
+
+function telemetryToken(value, fallback) {
+  if (typeof value !== 'string') return fallback;
+  var trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return trimmed.replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 128) || fallback;
+}
+
+function errorNameFromValue(value, fallback) {
+  if (value && typeof value === 'object' && typeof value.name === 'string') {
+    return telemetryToken(value.name, fallback);
+  }
+  return fallback;
+}
+
+function reasonTypeFromValue(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'Array';
+  if (value && typeof value === 'object' && typeof value.name === 'string') {
+    return telemetryToken(value.name, 'object');
+  }
+  return typeof value;
+}
+
+function positiveTelemetryNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : null;
+}
+
+function viewportTelemetry() {
+  var width = positiveTelemetryNumber(window.innerWidth);
+  var height = positiveTelemetryNumber(window.innerHeight);
+  return width && height ? { width: width, height: height } : null;
+}
+
+function userAgentTelemetry() {
+  var navigatorLike = window.navigator;
+  if (!navigatorLike || typeof navigatorLike.userAgent !== 'string') return null;
+  return navigatorLike.userAgent.slice(0, 512);
+}
+
+function assignTelemetryValue(target, key, value) {
+  if (typeof value === 'string') {
+    var trimmed = value.trim();
+    if (trimmed) target[key] = trimmed;
+    return;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    target[key] = value;
+    return;
+  }
+  if (value && typeof value === 'object') {
+    target[key] = value;
+  }
+}
+
+function sendBrowserTelemetry(type, details) {
+  var config = readBrowserTelemetryConfig();
+  if (!config.enabled || !config.endpoint) return;
+
+  var route = currentRoutePath();
+  var payload = {
+    type: type,
+    route: route,
+  };
+  var routeConversationId = conversationIdFromPath(route);
+  if (routeConversationId) payload.conversationId = routeConversationId;
+
+  if (details && details.streamUrl) {
+    var streamIds = streamIdsFromUrl(details.streamUrl);
+    if (streamIds.conversationId) payload.conversationId = streamIds.conversationId;
+    if (streamIds.userMessageId) payload.userMessageId = streamIds.userMessageId;
+  }
+
+  var viewport = viewportTelemetry();
+  if (viewport) payload.viewport = viewport;
+  var userAgent = userAgentTelemetry();
+  if (userAgent) payload.userAgent = userAgent;
+
+  if (details) {
+    assignTelemetryValue(payload, 'errorName', details.errorName);
+    assignTelemetryValue(payload, 'reasonType', details.reasonType);
+    assignTelemetryValue(payload, 'source', details.source);
+    assignTelemetryValue(payload, 'line', details.line);
+    assignTelemetryValue(payload, 'column', details.column);
+    assignTelemetryValue(payload, 'streamErrorKind', details.streamErrorKind);
+    assignTelemetryValue(payload, 'streamReadyState', details.streamReadyState);
+    assignTelemetryValue(payload, 'htmxEvent', details.htmxEvent);
+    assignTelemetryValue(payload, 'htmxStatus', details.htmxStatus);
+  }
+
+  var fetchFn = window.fetch;
+  if (typeof fetchFn !== 'function') return;
+
+  try {
+    var result = fetchFn.call(window, config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+    if (result && typeof result.catch === 'function') result.catch(function () {});
+  } catch {
+    // Browser telemetry must never affect the app UI.
+  }
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('error', function (event) {
+    var line = positiveTelemetryNumber(event && event.lineno);
+    var column = positiveTelemetryNumber(event && event.colno);
+    sendBrowserTelemetry('browser_error', {
+      errorName: errorNameFromValue(event && event.error, 'ErrorEvent'),
+      source: safePathOnly(event && event.filename),
+      line: line,
+      column: column,
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function (event) {
+    var reason = event && event.reason;
+    sendBrowserTelemetry('browser_unhandledrejection', {
+      errorName: errorNameFromValue(reason, 'UnhandledRejection'),
+      reasonType: reasonTypeFromValue(reason),
+    });
+  });
+}
+
+function reportHtmxTransportError(eventName, event) {
+  var detail = (event && event.detail) || {};
+  var xhr = detail.xhr || {};
+  var pathInfo = detail.pathInfo || {};
+  var status = positiveTelemetryNumber(xhr.status);
+  sendBrowserTelemetry('browser_htmx_error', {
+    htmxEvent: eventName,
+    htmxStatus: status,
+    source: safePathOnly(xhr.responseURL || pathInfo.requestPath),
+  });
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('htmx:sendError', function (event) {
+    reportHtmxTransportError('htmx:sendError', event);
+  });
+  document.addEventListener('htmx:responseError', function (event) {
+    reportHtmxTransportError('htmx:responseError', event);
+  });
+  document.addEventListener('htmx:timeout', function (event) {
+    reportHtmxTransportError('htmx:timeout', event);
+  });
+}
 
 function isSupportedActiveGame(value) {
   return (
@@ -2225,6 +2437,11 @@ function attachPendingAnswerStream(answerEl) {
     if (event.data) {
       payload = JSON.parse(event.data);
     }
+    sendBrowserTelemetry('browser_stream_error', {
+      streamUrl: streamUrl,
+      streamErrorKind: payload.kind === 'session' ? 'session' : 'transport',
+      streamReadyState: positiveTelemetryNumber(source.readyState),
+    });
     renderPendingError(
       answerEl,
       payload.kind === 'session' ? 'SESSION ENDED' : 'TROUBLE CONNECTING',

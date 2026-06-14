@@ -161,6 +161,7 @@ import * as MessageStreamEventRepository from './db/repositories/message-stream-
 import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
 import {
   captureTelemetryError,
+  captureTelemetryMessage,
   flushTelemetry,
   initTelemetry,
   type TelemetryCaptureInput,
@@ -278,6 +279,91 @@ function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCapt
       path: c.req.path,
       route,
       status: 500,
+    },
+  };
+}
+
+const BrowserTelemetryTokenSchema = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9._:-]+$/);
+
+const BrowserTelemetrySchema = z
+  .object({
+    type: z.enum([
+      'browser_error',
+      'browser_unhandledrejection',
+      'browser_stream_error',
+      'browser_htmx_error',
+    ]),
+    route: z.string().min(1).max(2048).optional(),
+    conversationId: BrowserTelemetryTokenSchema.optional(),
+    userMessageId: BrowserTelemetryTokenSchema.optional(),
+    errorName: BrowserTelemetryTokenSchema.optional(),
+    reasonType: BrowserTelemetryTokenSchema.optional(),
+    source: z.string().min(1).max(2048).optional(),
+    line: z.number().int().nonnegative().max(1_000_000).optional(),
+    column: z.number().int().nonnegative().max(1_000_000).optional(),
+    viewport: z
+      .object({
+        width: z.number().int().positive().max(20_000),
+        height: z.number().int().positive().max(20_000),
+      })
+      .strict()
+      .optional(),
+    userAgent: z.string().min(1).max(512).optional(),
+    streamErrorKind: z.enum(['transport', 'session']).optional(),
+    streamReadyState: z.number().int().min(0).max(2).optional(),
+    htmxEvent: BrowserTelemetryTokenSchema.optional(),
+    htmxStatus: z.number().int().min(0).max(999).optional(),
+  })
+  .strict();
+
+type BrowserTelemetryEvent = z.infer<typeof BrowserTelemetrySchema>;
+
+function browserPathOnly(raw: string | undefined): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+
+  try {
+    if (/^https?:\/\//i.test(value)) return new URL(value).pathname || '/';
+  } catch {
+    return undefined;
+  }
+
+  if (!value.startsWith('/')) return undefined;
+  return value.split('?')[0]?.split('#')[0] || '/';
+}
+
+function buildBrowserTelemetryInput(
+  c: Context,
+  requestId: string,
+  event: BrowserTelemetryEvent,
+): TelemetryCaptureInput {
+  const route = browserPathOnly(event.route) ?? '/browser';
+  const source = browserPathOnly(event.source);
+  return {
+    route,
+    requestId,
+    conversationId: event.conversationId,
+    userMessageId: event.userMessageId,
+    user: safeUserFromContext(c),
+    context: {
+      surface: 'browser',
+      eventType: event.type,
+      telemetryEndpoint: '/api/browser-telemetry',
+      errorName: event.errorName ?? null,
+      reasonType: event.reasonType ?? null,
+      source: source ?? null,
+      line: event.line ?? null,
+      column: event.column ?? null,
+      viewport: event.viewport ?? null,
+      userAgent: event.userAgent ?? null,
+      streamErrorKind: event.streamErrorKind ?? null,
+      streamReadyState: event.streamReadyState ?? null,
+      htmxEvent: event.htmxEvent ?? null,
+      htmxStatus: event.htmxStatus ?? null,
     },
   };
 }
@@ -2788,6 +2874,29 @@ app.get('/api/health', async (c) => {
 
 app.get('/api/live', (c) => {
   return c.json({ status: 'ok' });
+});
+
+// Browser observability endpoint. It deliberately accepts only a strict,
+// operational allowlist; invalid telemetry is ignored because diagnostics must
+// never change the page behavior or mirror unknown browser data into Sentry.
+app.post('/api/browser-telemetry', optionalSession(), async (c) => {
+  const requestId = correlateRequest(c);
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.body(null, 204);
+  }
+
+  const result = BrowserTelemetrySchema.safeParse(body);
+  if (!result.success) return c.body(null, 204);
+
+  captureTelemetryMessage(
+    `browser.${result.data.type}`,
+    'error',
+    buildBrowserTelemetryInput(c, requestId, result.data),
+  );
+  return c.body(null, 204);
 });
 
 // ─── Search endpoints ────────────────────────────────────────────────────────

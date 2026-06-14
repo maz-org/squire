@@ -233,6 +233,98 @@ afterEach(() => {
   resetRateLimiterForTesting();
 });
 
+describe('POST /api/browser-telemetry', () => {
+  beforeEach(() => {
+    resetRouteMocks();
+  });
+
+  it('captures browser diagnostics through Sentry with same-origin-safe metadata', async () => {
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1?token=secret',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        errorName: 'TypeError',
+        source: 'https://squire.maz.org/squire.abc123.js?token=secret',
+        line: 12,
+        column: 4,
+        viewport: { width: 390, height: 844 },
+        userAgent: 'SquireTest/1.0',
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(mockCaptureTelemetryMessage).toHaveBeenCalledTimes(1);
+    expect(mockCaptureTelemetryMessage).toHaveBeenCalledWith(
+      'browser.browser_error',
+      'error',
+      expect.objectContaining({
+        route: '/chat/conv-1',
+        requestId: 'req-browser-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        context: expect.objectContaining({
+          surface: 'browser',
+          eventType: 'browser_error',
+          telemetryEndpoint: '/api/browser-telemetry',
+          errorName: 'TypeError',
+          source: '/squire.abc123.js',
+          line: 12,
+          column: 4,
+          viewport: { width: 390, height: 844 },
+          userAgent: 'SquireTest/1.0',
+        }),
+      }),
+    );
+    const telemetryInput = JSON.stringify(mockCaptureTelemetryMessage.mock.calls[0][2]);
+    expect(telemetryInput).not.toContain('token=secret');
+    expect(telemetryInput).not.toContain('public@example.sentry.io');
+  });
+
+  it('drops malformed browser telemetry instead of capturing protected fields', async () => {
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-bad-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        rawPrompt: 'What is the secret rule?',
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+  });
+
+  it('drops browser telemetry with prompt-like diagnostic identifiers', async () => {
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-bad-id-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        conversationId: 'What is the secret rule?',
+        userMessageId: 'msg-user-1',
+      }),
+    });
+
+    expect(res.status).toBe(204);
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+  });
+});
+
 describe('GET /api/health', () => {
   beforeEach(() => {
     resetRouteMocks();
