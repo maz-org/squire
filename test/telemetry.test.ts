@@ -40,6 +40,7 @@ import {
   initTelemetry,
   redactTelemetryValue,
   resetTelemetryForTests,
+  sanitizeTelemetryPayload,
 } from '../src/telemetry.ts';
 
 const ORIGINAL_ENV = {
@@ -128,6 +129,7 @@ describe('telemetry boundary', () => {
       'conversationId',
       'userMessageId',
       'assistantMessageId',
+      'sentryTraceId',
       'langsmithThreadUrl',
       'langsmithRunUrl',
       'userId',
@@ -150,6 +152,7 @@ describe('telemetry boundary', () => {
       conversationId: 'conv-1',
       userMessageId: TELEMETRY_UNAVAILABLE,
       assistantMessageId: TELEMETRY_UNAVAILABLE,
+      sentryTraceId: TELEMETRY_UNAVAILABLE,
       langsmithThreadUrl: TELEMETRY_UNAVAILABLE,
       langsmithRunUrl: TELEMETRY_UNAVAILABLE,
       userId: 'user-1',
@@ -168,6 +171,7 @@ describe('telemetry boundary', () => {
         conversationId: 'conv-1',
         userMessageId: 'msg-user-1',
         assistantMessageId: 'msg-assistant-1',
+        sentryTraceId: '0123456789abcdef0123456789abcdef',
         langsmithThreadUrl: 'https://smith.langchain.com/o/org/projects/p/threads/t',
         langsmithRunUrl: 'https://smith.langchain.com/o/org/projects/p/r/r1',
         user: {
@@ -183,6 +187,7 @@ describe('telemetry boundary', () => {
       conversation_id: 'conv-1',
       user_message_id: 'msg-user-1',
       assistant_message_id: 'msg-assistant-1',
+      sentry_trace_id: '0123456789abcdef0123456789abcdef',
       user_id: 'user-1',
     });
   });
@@ -258,6 +263,110 @@ describe('telemetry boundary', () => {
       nested: {
         safeFlag: true,
         embedding: TELEMETRY_REDACTED,
+      },
+    });
+  });
+
+  it('redacts structured PII keys and sensitive value patterns without dropping safe ids', () => {
+    const redacted = redactTelemetryValue({
+      request_id: 'req-1',
+      sentry_trace_id: '0123456789abcdef0123456789abcdef',
+      conversation_id: 'conv-1',
+      conversationUuid: '11111111-1111-4111-8111-111111111111',
+      customerName: 'Alice Example',
+      first_name: 'Alice',
+      lastName: 'Example',
+      display_name: 'Alice E.',
+      user_email: 'alice@example.com',
+      phoneNumber: '+1 415 555 1212',
+      mailingAddress: '1 Market St, San Francisco, CA',
+      ipAddress: '203.0.113.10',
+      card: '4111 1111 1111 1111',
+      ssn: '123-45-6789',
+      callbackUrl: 'https://alice:secret@example.com/callback',
+      pem: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+      safeCount: 3,
+    });
+
+    expect(redacted).toEqual({
+      request_id: 'req-1',
+      sentry_trace_id: '0123456789abcdef0123456789abcdef',
+      conversation_id: 'conv-1',
+      conversationUuid: '11111111-1111-4111-8111-111111111111',
+      customerName: TELEMETRY_REDACTED,
+      first_name: TELEMETRY_REDACTED,
+      lastName: TELEMETRY_REDACTED,
+      display_name: TELEMETRY_REDACTED,
+      user_email: TELEMETRY_REDACTED,
+      phoneNumber: TELEMETRY_REDACTED,
+      mailingAddress: TELEMETRY_REDACTED,
+      ipAddress: TELEMETRY_REDACTED,
+      card: TELEMETRY_REDACTED,
+      ssn: TELEMETRY_REDACTED,
+      callbackUrl: TELEMETRY_REDACTED,
+      pem: TELEMETRY_REDACTED,
+      safeCount: 3,
+    });
+  });
+
+  it('handles circular telemetry structures without throwing', () => {
+    const payload: Record<string, unknown> = { requestId: 'req-1' };
+    payload.self = payload;
+
+    expect(redactTelemetryValue(payload)).toEqual({
+      requestId: 'req-1',
+      self: TELEMETRY_UNAVAILABLE,
+    });
+  });
+
+  it('sanitizes future log, transaction, and span payloads with the same boundary', () => {
+    expect(
+      sanitizeTelemetryPayload('log', {
+        message: 'user alice@example.com submitted feedback',
+        attributes: {
+          request_id: 'req-1',
+          userMessageId: 'msg-user-1',
+          rawFeedback: 'my transcript should stay out',
+        },
+      }),
+    ).toEqual({
+      message: TELEMETRY_REDACTED,
+      attributes: {
+        request_id: 'req-1',
+        userMessageId: 'msg-user-1',
+        rawFeedback: TELEMETRY_REDACTED,
+      },
+    });
+
+    expect(
+      sanitizeTelemetryPayload('transaction', {
+        transaction: '/chat/conv-1?token=secret',
+        request: {
+          headers: { cookie: 'session=value' },
+          data: { prompt: 'raw prompt' },
+        },
+      }),
+    ).toEqual({
+      transaction: TELEMETRY_REDACTED,
+      request: {
+        headers: { cookie: TELEMETRY_REDACTED },
+        data: TELEMETRY_REDACTED,
+      },
+    });
+
+    expect(
+      sanitizeTelemetryPayload('span', {
+        description: "select * from users where email = 'alice@example.com'",
+        data: {
+          request_id: 'req-1',
+          retrieved_passages: ['rule text'],
+        },
+      }),
+    ).toEqual({
+      description: TELEMETRY_REDACTED,
+      data: {
+        request_id: 'req-1',
+        retrieved_passages: TELEMETRY_REDACTED,
       },
     });
   });
