@@ -739,6 +739,11 @@ message ID, and LangSmith thread/run links when available. Sentry must not store
 raw prompts, full model answers, provider payloads, cookies, bearer tokens,
 OAuth tokens, secrets, or retrieved source passages.
 
+Browser feedback is categorical and tied to Sentry event ids when available.
+Browser replay data is masked structural context only: approved selectors,
+turn/input/history counts, viewport, and route ids. Raw transcript text and
+free-form feedback prose stay out of Sentry.
+
 LangSmith remains the owner for LLM traces and evals. Sentry links to LangSmith
 instead of duplicating prompt, model-output, or retrieved-context payloads.
 Operators start in Sentry for app/runtime errors and release regressions, then

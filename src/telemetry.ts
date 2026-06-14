@@ -69,6 +69,18 @@ export interface TelemetryBreadcrumbInput extends TelemetryCaptureInput {
   level?: SeverityLevel;
 }
 
+export type TelemetryFeedbackKind =
+  | 'wrong_answer'
+  | 'stream_failed'
+  | 'ui_broken'
+  | 'source_problem'
+  | 'other';
+
+export interface TelemetryFeedbackInput extends TelemetryCaptureInput {
+  feedbackKind: TelemetryFeedbackKind;
+  associatedEventId?: string;
+}
+
 export interface TelemetryInitResult {
   enabled: boolean;
   reason: 'initialized' | 'already_initialized' | 'missing_dsn' | 'init_failed';
@@ -96,6 +108,8 @@ const PROTECTED_KEY_PARTS = [
   'providerresponse',
   'requestbody',
   'responsebody',
+  'rawfeedback',
+  'comment',
   'retrievedpassage',
   'retrievedsource',
   'sourcepassage',
@@ -263,6 +277,16 @@ function buildSafeUser(input: TelemetryDiagnosticInput): User | undefined {
   return hash ? { id: hash } : undefined;
 }
 
+function buildSafeFeedbackTags(
+  input: TelemetryFeedbackInput,
+  env: Env = process.env,
+): Record<string, string> {
+  return {
+    ...buildSafeTelemetryTags(input, env),
+    feedback_kind: input.feedbackKind,
+  };
+}
+
 function buildSentryContext(input: TelemetryCaptureInput, env: Env): Record<string, SafeJson> {
   return {
     diagnostic: buildDiagnosticMetadata(input, env),
@@ -318,19 +342,25 @@ export function isTelemetryEnabled(): boolean {
  * context. Raw prompts, model output, provider payloads, and retrieved text must
  * stay in LangSmith or source systems, never in this input.
  */
-export function captureTelemetryError(error: unknown, input: TelemetryCaptureInput = {}): void {
-  if (!isTelemetryEnabled()) return;
+export function captureTelemetryError(
+  error: unknown,
+  input: TelemetryCaptureInput = {},
+): string | null {
+  if (!isTelemetryEnabled()) return null;
 
   try {
+    let eventId: string | null = null;
     Sentry.withScope((scope) => {
       scope.setTags(buildSafeTelemetryTags(input));
       scope.setContext('squire', buildSentryContext(input, process.env));
       const user = buildSafeUser(input);
       if (user) scope.setUser(user);
-      Sentry.captureException(error);
+      eventId = Sentry.captureException(error);
     });
+    return eventId;
   } catch {
     // Telemetry must never change app behavior.
+    return null;
   }
 }
 
@@ -342,19 +372,56 @@ export function captureTelemetryMessage(
   message: string,
   level: SeverityLevel = 'error',
   input: TelemetryCaptureInput = {},
-): void {
-  if (!isTelemetryEnabled()) return;
+): string | null {
+  if (!isTelemetryEnabled()) return null;
 
   try {
+    let eventId: string | null = null;
     Sentry.withScope((scope) => {
       scope.setTags(buildSafeTelemetryTags(input));
       scope.setContext('squire', buildSentryContext(input, process.env));
       const user = buildSafeUser(input);
       if (user) scope.setUser(user);
-      Sentry.captureMessage(redactSensitiveString(message), level);
+      eventId = Sentry.captureMessage(redactSensitiveString(message), level);
     });
+    return eventId;
   } catch {
     // Telemetry must never change app behavior.
+    return null;
+  }
+}
+
+/**
+ * Capture categorical browser feedback without accepting free-form prose.
+ * If an associated event id exists, Sentry links the feedback to that event.
+ */
+export function captureTelemetryFeedback(input: TelemetryFeedbackInput): string | null {
+  if (!isTelemetryEnabled()) return null;
+
+  try {
+    let eventId: string | null = null;
+    const route = buildDiagnosticMetadata(input).route;
+    const tags = buildSafeFeedbackTags(input);
+    Sentry.withScope((scope) => {
+      scope.setTags(tags);
+      scope.setContext('squire', buildSentryContext(input, process.env));
+      const user = buildSafeUser(input);
+      if (user) scope.setUser(user);
+      eventId = Sentry.captureFeedback(
+        {
+          message: `Squire browser feedback: ${input.feedbackKind}`,
+          source: 'squire-browser',
+          associatedEventId: safeString(input.associatedEventId),
+          url: route === TELEMETRY_UNAVAILABLE ? undefined : route,
+          tags,
+        },
+        { includeReplay: true },
+      );
+    });
+    return eventId;
+  } catch {
+    // Telemetry must never change app behavior.
+    return null;
   }
 }
 

@@ -161,10 +161,12 @@ import * as MessageStreamEventRepository from './db/repositories/message-stream-
 import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
 import {
   captureTelemetryError,
+  captureTelemetryFeedback,
   captureTelemetryMessage,
   flushTelemetry,
   initTelemetry,
   type TelemetryCaptureInput,
+  type TelemetryFeedbackInput,
   type TelemetryUserIdentity,
 } from './telemetry.ts';
 
@@ -289,6 +291,73 @@ const BrowserTelemetryTokenSchema = z
   .max(128)
   .regex(/^[A-Za-z0-9._:-]+$/);
 
+const BrowserTelemetryEventIdSchema = z
+  .string()
+  .length(32)
+  .regex(/^[a-f0-9]+$/i);
+
+const BrowserFeedbackKindSchema = z.enum([
+  'wrong_answer',
+  'stream_failed',
+  'ui_broken',
+  'source_problem',
+  'other',
+]);
+
+const BrowserMaskedReplayMaskSelectorSchema = z.enum([
+  '.squire-transcript',
+  '.squire-question',
+  '.squire-answer',
+  '.squire-answer__content',
+  '.squire-answer__artifacts',
+  '.squire-answer-work',
+  '.squire-input-dock',
+  '.squire-input-dock textarea',
+  '.squire-history-row',
+  '.squire-campaign-strip',
+  '.squire-campaign-dashboard',
+  '.squire-character-sheet',
+]);
+
+const BrowserMaskedReplayBlockSelectorSchema = z.enum([
+  '.squire-account-menu',
+  '.squire-account-menu__panel',
+  '.squire-account-menu__avatar',
+]);
+
+const BrowserMaskedReplaySchema = z
+  .object({
+    version: z.literal(1),
+    textMasked: z.literal(true),
+    attributesMasked: z.literal(true),
+    snapshotId: BrowserTelemetryTokenSchema.optional(),
+    maskSelectors: z.array(BrowserMaskedReplayMaskSelectorSchema).min(1).max(24),
+    blockSelectors: z.array(BrowserMaskedReplayBlockSelectorSchema).min(1).max(12),
+    turns: z
+      .object({
+        userTurnCount: z.number().int().nonnegative().max(1_000),
+        assistantTurnCount: z.number().int().nonnegative().max(1_000),
+        pendingTurnCount: z.number().int().nonnegative().max(1_000),
+        workLogCount: z.number().int().nonnegative().max(1_000),
+        errorBannerCount: z.number().int().nonnegative().max(1_000),
+      })
+      .strict(),
+    input: z
+      .object({
+        present: z.boolean(),
+        valueLengthBucket: z.enum(['0', '1-80', '81-240', '241+']),
+      })
+      .strict(),
+    history: z
+      .object({
+        rowCount: z.number().int().nonnegative().max(1_000),
+        activeStatus: z.enum(['idle', 'running', 'error', 'unknown']),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
 const BrowserTelemetrySchema = z
   .object({
     type: z.enum([
@@ -296,6 +365,7 @@ const BrowserTelemetrySchema = z
       'browser_unhandledrejection',
       'browser_stream_error',
       'browser_htmx_error',
+      'browser_feedback',
     ]),
     route: z.string().min(1).max(2048).optional(),
     conversationId: BrowserTelemetryTokenSchema.optional(),
@@ -317,6 +387,9 @@ const BrowserTelemetrySchema = z
     streamReadyState: z.number().int().min(0).max(2).optional(),
     htmxEvent: BrowserTelemetryTokenSchema.optional(),
     htmxStatus: z.number().int().min(0).max(999).optional(),
+    feedbackKind: BrowserFeedbackKindSchema.optional(),
+    associatedEventId: BrowserTelemetryEventIdSchema.optional(),
+    maskedReplay: BrowserMaskedReplaySchema.optional(),
   })
   .strict();
 
@@ -364,7 +437,22 @@ function buildBrowserTelemetryInput(
       streamReadyState: event.streamReadyState ?? null,
       htmxEvent: event.htmxEvent ?? null,
       htmxStatus: event.htmxStatus ?? null,
+      maskedReplay: event.maskedReplay ?? null,
     },
+  };
+}
+
+function buildBrowserFeedbackInput(
+  c: Context,
+  requestId: string,
+  event: BrowserTelemetryEvent,
+): TelemetryFeedbackInput | null {
+  if (event.type !== 'browser_feedback' || !event.feedbackKind) return null;
+  const input = buildBrowserTelemetryInput(c, requestId, event);
+  return {
+    ...input,
+    feedbackKind: event.feedbackKind,
+    associatedEventId: event.associatedEventId,
   };
 }
 
@@ -2891,12 +2979,19 @@ app.post('/api/browser-telemetry', optionalSession(), async (c) => {
   const result = BrowserTelemetrySchema.safeParse(body);
   if (!result.success) return c.body(null, 204);
 
-  captureTelemetryMessage(
+  if (result.data.type === 'browser_feedback') {
+    const feedbackInput = buildBrowserFeedbackInput(c, requestId, result.data);
+    if (!feedbackInput) return c.body(null, 204);
+    const eventId = captureTelemetryFeedback(feedbackInput);
+    return c.json({ eventId }, 202);
+  }
+
+  const eventId = captureTelemetryMessage(
     `browser.${result.data.type}`,
     'error',
     buildBrowserTelemetryInput(c, requestId, result.data),
   );
-  return c.body(null, 204);
+  return c.json({ eventId }, 202);
 });
 
 // ─── Search endpoints ────────────────────────────────────────────────────────

@@ -164,6 +164,39 @@ Fly's Sentry extension documentation describes the sponsored Team-plan quota as
 per month. If that sponsored period ends, Sentry keeps accepting events on the
 Developer plan with lower quotas; events over quota are dropped.
 
+#### Safe browser replay and feedback smoke
+
+Use a non-production Sentry environment first. Open a safe page with no real
+conversation text, then run this browser-console smoke:
+
+```js
+window.dispatchEvent(
+  new ErrorEvent('error', {
+    error: new Error('SquireSafeBrowserSmoke'),
+    filename: '/squire.js',
+    lineno: 1,
+    colno: 1,
+  }),
+);
+
+document.dispatchEvent(
+  new CustomEvent('squire:browser-feedback', {
+    detail: { feedbackKind: 'ui_broken' },
+  }),
+);
+```
+
+Expected result in Sentry: one `browser.browser_error` event and one feedback
+event. The browser event should include the Squire context fields
+`maskedReplay.textMasked=true`, `maskedReplay.attributesMasked=true`, masked
+selectors including `.squire-transcript` and `.squire-input-dock`, and structural
+turn/input/history counts only. The feedback event should have
+`associatedEventId` when the browser received the previous event id. Neither
+event may contain transcript text, input text, prompt text, model output, source
+passages, cookies, auth headers, or URL query strings. If `SENTRY_DSN` is
+missing, the page should still work and no browser telemetry request should be
+sent.
+
 GitHub repository secrets:
 
 - `FLY_API_TOKEN`

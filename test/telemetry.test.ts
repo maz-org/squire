@@ -17,6 +17,7 @@ const sentry = vi.hoisted(() => {
     init: vi.fn(),
     withScope: vi.fn((callback: (scopeArg: Scope) => void) => callback(scope)),
     captureException: vi.fn(),
+    captureFeedback: vi.fn(),
     captureMessage: vi.fn(),
     addBreadcrumb: vi.fn(),
     flush: vi.fn(),
@@ -33,6 +34,7 @@ import {
   buildDiagnosticMetadata,
   buildSafeTelemetryTags,
   captureTelemetryError,
+  captureTelemetryFeedback,
   captureTelemetryMessage,
   flushTelemetry,
   initTelemetry,
@@ -84,6 +86,7 @@ describe('telemetry boundary', () => {
     expect(sentry.init).not.toHaveBeenCalled();
     expect(sentry.withScope).not.toHaveBeenCalled();
     expect(sentry.captureException).not.toHaveBeenCalled();
+    expect(sentry.captureFeedback).not.toHaveBeenCalled();
     expect(sentry.captureMessage).not.toHaveBeenCalled();
     expect(sentry.addBreadcrumb).not.toHaveBeenCalled();
     expect(sentry.flush).not.toHaveBeenCalled();
@@ -306,5 +309,77 @@ describe('telemetry boundary', () => {
     });
     await expect(flushTelemetry(100)).resolves.toBe(true);
     expect(sentry.flush).toHaveBeenCalledWith(100);
+  });
+
+  it('captures categorical user feedback linked to the browser event without free text', () => {
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    process.env.SENTRY_RELEASE = 'abc123';
+    process.env.SQUIRE_ENV = 'production';
+    sentry.captureFeedback.mockReturnValue('feedback-event-1');
+    initTelemetry(process.env);
+
+    const eventId = captureTelemetryFeedback({
+      feedbackKind: 'stream_failed',
+      associatedEventId: '0123456789abcdef0123456789abcdef',
+      route: '/chat/conv-1?token=secret',
+      requestId: 'req-1',
+      conversationId: 'conv-1',
+      userMessageId: 'msg-user-1',
+      user: { id: 'user-1', email: 'person@example.com' },
+      context: {
+        surface: 'browser',
+        rawFeedback: 'my prompt and answer should stay out',
+        maskedReplay: {
+          textMasked: true,
+          turns: { assistantTurnCount: 1 },
+        },
+      },
+    });
+
+    expect(eventId).toBe('feedback-event-1');
+    expect(sentry.scope.setTags).toHaveBeenCalledWith({
+      environment: 'production',
+      release: 'abc123',
+      route: '/chat/conv-1',
+      request_id: 'req-1',
+      conversation_id: 'conv-1',
+      user_message_id: 'msg-user-1',
+      user_id: 'user-1',
+      feedback_kind: 'stream_failed',
+    });
+    expect(sentry.scope.setContext).toHaveBeenCalledWith(
+      'squire',
+      expect.objectContaining({
+        context: {
+          surface: 'browser',
+          rawFeedback: TELEMETRY_REDACTED,
+          maskedReplay: {
+            textMasked: true,
+            turns: { assistantTurnCount: 1 },
+          },
+        },
+      }),
+    );
+    expect(sentry.captureFeedback).toHaveBeenCalledWith(
+      {
+        message: 'Squire browser feedback: stream_failed',
+        source: 'squire-browser',
+        associatedEventId: '0123456789abcdef0123456789abcdef',
+        url: '/chat/conv-1',
+        tags: {
+          environment: 'production',
+          release: 'abc123',
+          route: '/chat/conv-1',
+          request_id: 'req-1',
+          conversation_id: 'conv-1',
+          user_message_id: 'msg-user-1',
+          user_id: 'user-1',
+          feedback_kind: 'stream_failed',
+        },
+      },
+      { includeReplay: true },
+    );
+    expect(JSON.stringify(sentry.captureFeedback.mock.calls[0])).not.toContain('my prompt');
+    expect(JSON.stringify(sentry.captureFeedback.mock.calls[0])).not.toContain('token=secret');
   });
 });
