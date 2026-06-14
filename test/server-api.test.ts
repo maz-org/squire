@@ -73,6 +73,8 @@ const {
   mockRunReadinessChecks,
   mockInitTelemetry,
   mockCaptureTelemetryError,
+  mockCaptureTelemetryMessage,
+  mockAddTelemetryBreadcrumb,
   mockFlushTelemetry,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
@@ -90,6 +92,8 @@ const {
   mockRunReadinessChecks: vi.fn(),
   mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
   mockCaptureTelemetryError: vi.fn(),
+  mockCaptureTelemetryMessage: vi.fn(),
+  mockAddTelemetryBreadcrumb: vi.fn(),
   mockFlushTelemetry: vi.fn().mockResolvedValue(true),
 }));
 
@@ -122,6 +126,8 @@ vi.mock('../src/health.ts', () => ({
 vi.mock('../src/telemetry.ts', () => ({
   initTelemetry: mockInitTelemetry,
   captureTelemetryError: mockCaptureTelemetryError,
+  captureTelemetryMessage: mockCaptureTelemetryMessage,
+  addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
 }));
 
