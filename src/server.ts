@@ -864,6 +864,10 @@ async function renderCampaignDashboardPage(
   const identity = identityFromSessionUser(session.userId);
   const detail = await CampaignService.getCampaignDetail(identity, campaignId);
   const csrfToken = createCsrfToken(session.id);
+  // Per-user, never-cached: set on every path through the shared renderer
+  // (GET and the create-error re-render) so neither leaks across sessions.
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
   const body = await layoutShell({
     session,
     csrfToken,
@@ -901,8 +905,6 @@ async function renderCampaignDashboardPage(
 
 app.get('/campaigns/:id', async (c) => {
   const campaignId = campaignRouteId(c, 'id');
-  c.header('Cache-Control', 'no-store');
-  c.header('Vary', 'Cookie');
   if (!campaignId) return c.notFound();
   try {
     return await renderCampaignDashboardPage(c, campaignId);
@@ -935,6 +937,17 @@ app.post('/campaigns/:id/characters', async (c) => {
         c,
         campaignId,
         { characterError: 'Character name is required.' },
+        422,
+      );
+    }
+    // An explicit non-empty check: in no-materials mode `knownClassNames` is
+    // empty and `checkClassName` accepts anything, so a blank/tampered class
+    // would otherwise slip through.
+    if (!classNameInput) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: 'Class is required.' },
         422,
       );
     }

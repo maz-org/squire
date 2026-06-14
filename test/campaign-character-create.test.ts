@@ -208,6 +208,15 @@ describe('create-character UI (SQR-318)', () => {
     expect(await res.text()).toContain('Character name is required.');
   });
 
+  it('requires a class (the guard runs before class-name canonicalization)', async () => {
+    const { owner, campaign } = await setupFixture();
+    // A blank/whitespace class is rejected before checkClassName — which in
+    // no-materials mode would otherwise accept anything.
+    const res = await createCharacter(owner, campaign.id, { name: 'No Class', className: '   ' });
+    expect(res.status).toBe(422);
+    expect(await res.text()).toContain('Class is required.');
+  });
+
   it('404s a non-member who tries to create on a campaign they cannot see', async () => {
     const { campaign } = await setupFixture();
     const outsider = await createTestUser(OUTSIDER_EMAIL);

@@ -2166,7 +2166,10 @@ template#squire-banner-fixtures {
 .squire-campaign-dashboard__empty {
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 13px;
-  color: var(--sepia-dim);
+
+  /* Match the AA-compliant empty-state tone used elsewhere (not sepia-dim,
+     which fails normal-text contrast at this size). */
+  color: var(--sepia);
   padding: var(--space-sm) 0;
 }
 
