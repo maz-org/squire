@@ -997,7 +997,17 @@ app.post('/campaigns/:id/invites', async (c) => {
 
   try {
     // getCampaignDetail gates membership: a non-member gets the 404 below.
-    await CampaignService.getCampaignDetail(identity, campaignId);
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    // Authorize before validating the email so a non-owner always gets the
+    // consistent owner-only rejection, never invite-field feedback.
+    if (detail.self.role !== 'owner') {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { inviteError: 'Only the owner can invite members' },
+        422,
+      );
+    }
     if (!z.string().email().max(320).safeParse(email).success) {
       return await renderCampaignDashboardPage(
         c,
@@ -1006,7 +1016,7 @@ app.post('/campaigns/:id/invites', async (c) => {
         422,
       );
     }
-    // inviteMember enforces the owner gate, the allowlist, and dedupe.
+    // inviteMember re-checks the owner gate and enforces the allowlist + dedupe.
     await CampaignService.inviteMember(identity, campaignId, email);
     return c.redirect(`/campaigns/${campaignId}`, 303);
   } catch (error) {

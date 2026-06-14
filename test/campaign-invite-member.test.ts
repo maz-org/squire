@@ -165,6 +165,16 @@ describe('invite-member UI (SQR-319)', () => {
     expect(await res.text()).toContain('Only the owner can invite members');
   });
 
+  it('authorizes before validating: a non-owner with a bad email still gets the owner rejection', async () => {
+    const { owner, campaign } = await setupFixture();
+    const member = await addActiveMember(owner, campaign.id, MEMBER_EMAIL);
+    const res = await invite(member, campaign.id, 'not-an-email');
+    expect(res.status).toBe(422);
+    const body = await res.text();
+    expect(body).toContain('Only the owner can invite members');
+    expect(body).not.toContain('Enter a valid email address.');
+  });
+
   it('404s a non-member who posts the invite route', async () => {
     const { campaign } = await setupFixture();
     const outsider = await createTestUser(OUTSIDER_EMAIL);
