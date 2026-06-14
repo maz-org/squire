@@ -1272,9 +1272,9 @@ app.post('/campaigns/:id/rename', async (c) => {
   const identity = identityFromSessionUser(session.userId);
   const form = await c.req.formData();
   const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
-  const versionRaw = form.get('expectedVersion');
-  const expectedVersion =
-    typeof versionRaw === 'string' ? Number.parseInt(versionRaw, 10) : Number.NaN;
+  // Strict parse via formInt (`/^\d+$/` → null) so a malformed token like
+  // "7abc" can't slip past Number.parseInt's leniency into the version guard.
+  const expectedVersion = formInt(form, 'expectedVersion');
 
   try {
     // getCampaignDetail gates membership: a non-member gets the 404 below.
@@ -1297,7 +1297,7 @@ app.post('/campaigns/:id/rename', async (c) => {
         422,
       );
     }
-    if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
+    if (expectedVersion === null) {
       return await renderCampaignDashboardPage(
         c,
         campaignId,

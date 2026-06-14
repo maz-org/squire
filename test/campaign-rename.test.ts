@@ -172,6 +172,14 @@ describe('rename-campaign UI (SQR-320)', () => {
     expect(await conflict.text()).toContain('Updated elsewhere');
   });
 
+  it('rejects a malformed version token instead of parsing it leniently', async () => {
+    const { owner, campaign } = await setupFixture();
+    // "7abc" must not parse to 7 (Number.parseInt would); strict /^\d+$/ rejects.
+    const res = await rename(owner, campaign.id, 'New Name', '7abc');
+    expect(res.status).toBe(422);
+    expect(await res.text()).toContain('Could not save');
+  });
+
   it('404s a non-member who posts the rename route', async () => {
     const { campaign } = await setupFixture();
     const outsider = await createTestUser(OUTSIDER_EMAIL);
