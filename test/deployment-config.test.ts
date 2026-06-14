@@ -206,6 +206,7 @@ describe('deployment configuration', () => {
     expect(flyConfig).toContain('app = "maz-squire"');
     expect(flyConfig).toContain('SQUIRE_ENV = "production"');
     expect(flyConfig).toContain('LANGSMITH_TRACING = "true"');
+    expect(flyConfig).not.toContain('SENTRY_DSN');
     expect(flyConfig).toContain('release_command = "node scripts/db-migrate.ts"');
     expect(flyConfig).toContain('internal_port = 8080');
     expect(flyConfig).toContain('auto_stop_machines = "off"');
@@ -253,9 +254,28 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}');
     expect(workflow).toMatch(/superfly\/flyctl-actions\/setup-flyctl@[a-f0-9]{40}/);
     expect(workflow).not.toContain('setup-flyctl@master');
-    expect(workflow).toContain('flyctl deploy -a maz-squire --remote-only');
+    expect(workflow).toContain(
+      'flyctl deploy -a maz-squire --remote-only --env SENTRY_RELEASE="$SENTRY_RELEASE"',
+    );
+    expect(workflow).toContain('SENTRY_RELEASE: ${{ github.event.workflow_run.head_sha }}');
     expect(workflow).not.toContain('npm run db:migrate');
     expect(workflow).not.toContain('scripts/db-migrate.ts');
+  });
+
+  it('documents Fly Sentry provisioning without committing the DSN', async () => {
+    const development = await readProjectFile('docs/DEVELOPMENT.md');
+    const architecture = await readProjectFile('docs/ARCHITECTURE.md');
+    const runbook = await readProjectFile('docs/runbooks/production-operations.md');
+
+    expect(development).toContain('SENTRY_DSN');
+    expect(development).toContain('Missing `SENTRY_DSN` is a local no-op');
+    expect(runbook).toContain('fly ext sentry create -a maz-squire');
+    expect(runbook).toContain('fly ext sentry dashboard -a maz-squire');
+    expect(runbook).toMatch(/sets\s+`SENTRY_DSN` as a Fly secret/);
+    expect(runbook).toContain('Do not add `SENTRY_DSN` to `fly.toml`');
+    expect(runbook).toContain('SENTRY_RELEASE');
+    expect(architecture).toContain('Sentry owns app observability');
+    expect(architecture).toContain('LangSmith remains the owner for LLM traces and evals');
   });
 
   it('runs actionlint in CI for GitHub workflow changes', async () => {
