@@ -33,6 +33,7 @@ Read these on demand:
 | Write a tech spec or plan-review checkpoint                                | [planning-artifacts.md](./planning-artifacts.md) |
 | Record a design/eng decision, or implement a feature that might touch one  | [adrs.md](./adrs.md)                             |
 | Search prior agent learnings, plans, transcripts, and gbrain memory        | [learnings.md](./learnings.md)                   |
+| File a production/user-reported bug in Linear                              | [bug-reporting.md](./bug-reporting.md)           |
 
 ## Always-on rules
 
