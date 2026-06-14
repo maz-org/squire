@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.20] - 2026-06-14
+
+### Added
+
+- Initialized server-side Sentry through the Squire telemetry boundary after existing LangSmith/OpenTelemetry instrumentation.
+- Captured unhandled Hono server errors and startup failures with safe request, route, status, user-id, and release metadata while preserving generic user-facing failures.
+
 ## [0.1.19] - 2026-06-14
 
 ### Added

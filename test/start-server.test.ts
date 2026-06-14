@@ -4,11 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 class FakeServer extends EventEmitter {
   listenCalls: number[] = [];
   refCalls = 0;
+  listenError: Error | null = null;
 
   listen(port: number, _host?: string): this {
     this.listenCalls.push(port);
     queueMicrotask(() => {
-      this.emit('listening');
+      if (this.listenError) {
+        this.emit('error', this.listenError);
+      } else {
+        this.emit('listening');
+      }
     });
     return this;
   }
@@ -24,6 +29,7 @@ async function loadStartServer(options: {
   configuredHost?: string;
   claimedPort?: number;
   bootstrapImpl?: () => unknown;
+  listenError?: Error;
 }) {
   vi.resetModules();
 
@@ -42,6 +48,7 @@ async function loadStartServer(options: {
   vi.stubEnv('VITEST', 'true');
 
   const fakeServer = new FakeServer();
+  fakeServer.listenError = options.listenError ?? null;
   const createAdaptorServer = vi.fn(() => fakeServer);
   const claimRelease = vi.fn().mockResolvedValue(undefined);
   const claimWorktreePort = vi.fn().mockResolvedValue({
@@ -49,11 +56,19 @@ async function loadStartServer(options: {
     release: claimRelease,
   });
   const startBootstrapLifecycle = vi.fn(options.bootstrapImpl ?? (() => undefined));
+  const initTelemetry = vi.fn(() => ({ enabled: false, reason: 'missing_dsn' }));
+  const captureTelemetryError = vi.fn();
+  const flushTelemetry = vi.fn().mockResolvedValue(true);
 
   vi.doMock('@hono/node-server', () => ({
     createAdaptorServer,
   }));
   vi.doMock('../src/instrumentation.ts', () => ({}));
+  vi.doMock('../src/telemetry.ts', () => ({
+    initTelemetry,
+    captureTelemetryError,
+    flushTelemetry,
+  }));
   vi.doMock('../src/service.ts', () => ({
     ask: vi.fn(),
     ensureBootstrapStatus: vi.fn().mockResolvedValue({
@@ -177,6 +192,9 @@ async function loadStartServer(options: {
     createAdaptorServer,
     claimWorktreePort,
     startBootstrapLifecycle,
+    initTelemetry,
+    captureTelemetryError,
+    flushTelemetry,
   };
 }
 
@@ -210,5 +228,27 @@ describe.sequential('startServer', () => {
     expect(claimed.fakeServer.listenCalls).toContain(4555);
     expect(claimed.fakeServer.refCalls).toBe(1);
     expect(claimed.startBootstrapLifecycle).toHaveBeenCalled();
+  }, 30_000);
+
+  it('captures and flushes startup failures before rethrowing', async () => {
+    const listenError = Object.assign(new Error('address already in use'), { code: 'EADDRINUSE' });
+    const configured = await loadStartServer({
+      configuredPort: '4123',
+      listenError,
+    });
+
+    await expect(configured.startServer()).rejects.toBe(listenError);
+
+    expect(configured.captureTelemetryError).toHaveBeenCalledWith(
+      listenError,
+      expect.objectContaining({
+        route: 'server.startup',
+        context: {
+          surface: 'server',
+          phase: 'startup',
+        },
+      }),
+    );
+    expect(configured.flushTelemetry).toHaveBeenCalledWith(2_000);
   }, 30_000);
 });

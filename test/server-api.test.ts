@@ -71,6 +71,9 @@ const {
   mockListCards,
   mockGetCard,
   mockRunReadinessChecks,
+  mockInitTelemetry,
+  mockCaptureTelemetryError,
+  mockFlushTelemetry,
 } = vi.hoisted(() => ({
   mockInitialize: vi.fn(),
   mockEnsureBootstrapStatus: vi.fn(),
@@ -85,6 +88,9 @@ const {
   mockListCards: vi.fn(),
   mockGetCard: vi.fn(),
   mockRunReadinessChecks: vi.fn(),
+  mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
+  mockCaptureTelemetryError: vi.fn(),
+  mockFlushTelemetry: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -111,6 +117,12 @@ vi.mock('../src/tools.ts', () => ({
 
 vi.mock('../src/health.ts', () => ({
   runReadinessChecks: mockRunReadinessChecks,
+}));
+
+vi.mock('../src/telemetry.ts', () => ({
+  initTelemetry: mockInitTelemetry,
+  captureTelemetryError: mockCaptureTelemetryError,
+  flushTelemetry: mockFlushTelemetry,
 }));
 
 // Bypass the Drizzle-backed auth provider — these tests don't exercise OAuth
@@ -376,6 +388,53 @@ describe('GET /api/search/rules', () => {
   it('defaults topK to 6', async () => {
     await app.request('/api/search/rules?q=loot', { headers: await auth() });
     expect(mockSearchRules).toHaveBeenCalledWith('loot', 6);
+  });
+
+  it('captures unhandled server errors once while keeping the generic 500 response', async () => {
+    const error = new Error('database unavailable');
+    mockSearchRules.mockRejectedValueOnce(error);
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'user-123' },
+    });
+
+    const res = await app.request('/api/search/rules?q=loot', {
+      headers: {
+        Authorization: 'Bearer stub-token',
+        Cookie: 'session=secret',
+        'X-Request-ID': 'req-server-error-1',
+      },
+    });
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get('X-Request-ID')).toBe('req-server-error-1');
+    await expect(res.json()).resolves.toEqual({
+      error: 'Internal server error',
+      status: 500,
+    });
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    expect(mockCaptureTelemetryError).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        route: '/api/search/rules',
+        requestId: 'req-server-error-1',
+        user: { id: 'user-123' },
+        context: {
+          surface: 'server',
+          method: 'GET',
+          path: '/api/search/rules',
+          route: '/api/search/rules',
+          status: 500,
+        },
+      }),
+    );
+    const telemetryInput = JSON.stringify(mockCaptureTelemetryError.mock.calls[0][1]);
+    expect(telemetryInput).not.toContain('Bearer stub-token');
+    expect(telemetryInput).not.toContain('session=secret');
+    expect(telemetryInput).not.toContain('loot');
   });
 
   it('returns 400 for unsupported game ids before searching rules', async () => {
