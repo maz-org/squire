@@ -60,6 +60,26 @@ describe('validateServerEnv', () => {
     expect(result.success).toBe(true);
   });
 
+  it('does not make Sentry boot-critical in production', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      SENTRY_DSN: undefined,
+      SENTRY_RELEASE: undefined,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts a Sentry DSN when configured', () => {
+    const result = validateServerEnv({
+      ...validProductionEnv,
+      SENTRY_DSN: 'https://public@example.sentry.io/123',
+      SENTRY_RELEASE: 'abc123',
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it('rejects production LangSmith credentials without tracing enabled', () => {
     const result = validateServerEnv({
       ...validProductionEnv,
@@ -115,6 +135,7 @@ describe('validateServerEnv', () => {
       SESSION_SECRET: 'short',
       ORIGIN_SHARED_SECRET: 'short',
       REDIS_URL: 'not a url',
+      SENTRY_DSN: 'not a sentry url',
     });
 
     expect(result.success).toBe(false);
@@ -125,6 +146,7 @@ describe('validateServerEnv', () => {
         { name: 'SESSION_SECRET', message: 'must be at least 32 characters' },
         { name: 'ORIGIN_SHARED_SECRET', message: 'must be at least 32 characters' },
         { name: 'REDIS_URL', message: 'must be a valid URL' },
+        { name: 'SENTRY_DSN', message: 'must be a valid URL' },
       ]),
     );
   });

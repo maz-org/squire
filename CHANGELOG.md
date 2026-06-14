@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.18] - 2026-06-14
+
+### Added
+
+- Added the Fly Sentry provisioning runbook, local no-DSN behavior, and the Sentry/LangSmith ownership boundary for app observability.
+- Added config and deployment tests that keep `SENTRY_DSN` optional locally, validate malformed DSNs when present, and prevent DSNs from being committed to `fly.toml`.
+
+### Changed
+
+- Stamped production Fly deploys with `SENTRY_RELEASE` from the tested Git SHA so later Sentry events can correlate to the exact release.
+
 ## [0.1.17] - 2026-06-02
 
 ### Added

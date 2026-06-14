@@ -19,6 +19,8 @@ Actions after CI passes on `main`.
 - Origin lock: CloudFront sends `X-Origin-Secret`; Fly stores the matching value
   in `ORIGIN_SHARED_SECRET`
 - Runtime environment label: `SQUIRE_ENV=production`
+- App observability: Sentry via Fly extension, with `SENTRY_DSN` stored as a
+  Fly secret and `SENTRY_RELEASE` stamped from the deployed Git SHA
 - Background cleanup: Fly `cron` process group runs Supercronic with
   `/app/crontab` and prunes expired sessions hourly
 
@@ -105,6 +107,8 @@ app-runtime secrets and settings belong in Fly:
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `SQUIRE_ALLOWED_EMAILS`
 - `SQUIRE_ENV=production`
+- `SENTRY_DSN` (created as a Fly secret by the Fly Sentry extension)
+- `SENTRY_RELEASE` (set by the GitHub deploy workflow with `flyctl deploy --env`)
 - `LANGSMITH_API_KEY` (optional tracing; absence must not block startup)
 - `LANGSMITH_PROJECT` (optional tracing; defaults to `squire-production`)
 - `LANGSMITH_TRACING=true` (required when LangSmith credentials are set)
@@ -122,6 +126,43 @@ app-runtime secrets and settings belong in Fly:
 The LLM budget circuit breaker uses Postgres as the durable ledger and resets
 at UTC midnight. LangSmith remains the trace/debug surface; do not rely on it
 for budget admission.
+
+### Sentry app observability
+
+Provision Sentry through Fly from an operator shell authenticated to the
+`maz-org` Fly organization:
+
+```bash
+fly ext sentry create -a maz-squire
+```
+
+The Fly extension creates or links the Sentry organization/project. It sets
+`SENTRY_DSN` as a Fly secret for the app. Do not add `SENTRY_DSN` to `fly.toml`.
+Do not put the DSN value in `.env.example`, GitHub workflow YAML, or checked-in
+docs. The DSN value is secret material.
+
+Open the linked Sentry project with:
+
+```bash
+fly ext sentry dashboard -a maz-squire
+```
+
+The GitHub deploy workflow sets `SENTRY_RELEASE` to the exact
+`github.event.workflow_run.head_sha` that passed CI and is deployed with
+`flyctl deploy --env`. `SQUIRE_ENV=production` remains the environment label
+that the app maps into both LangSmith metadata and Sentry event environment.
+
+Missing `SENTRY_DSN` must remain a no-op for local dev and tests. Production
+should have the Fly secret present once the Sentry SDK work lands; until then,
+the secret can exist without changing runtime behavior. LangSmith remains the
+LLM trace/eval owner. Sentry app events should carry correlation IDs and links
+to LangSmith, not raw prompts, model outputs, cookies, bearer tokens, OAuth
+tokens, provider payloads, retrieved passages, or full answers.
+
+Fly's Sentry extension documentation describes the sponsored Team-plan quota as
+50k errors, 100k performance units, 500 session replays, and 1GB of attachments
+per month. If that sponsored period ends, Sentry keeps accepting events on the
+Developer plan with lower quotas; events over quota are dropped.
 
 GitHub repository secrets:
 
