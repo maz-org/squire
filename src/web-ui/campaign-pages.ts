@@ -225,6 +225,44 @@ function renderCharacterCreateForm(
     </form>` as HtmlEscapedString;
 }
 
+/** The dashboard "Invite member" affordance state (SQR-319). */
+export interface InviteMemberForm {
+  csrfToken: string;
+  /** Owner sees the form inputs; non-owners only ever see an error (if any). */
+  canInvite: boolean;
+  /** Inline error rendered after a failed invite attempt. */
+  errorMessage?: string;
+}
+
+/**
+ * The Party-section invite affordance. The error banner renders independently
+ * of the form so a non-owner who tampers the route still sees the rejection,
+ * while only the owner ever sees the form inputs.
+ */
+function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): HtmlEscapedString {
+  return html`${data.errorMessage
+    ? html`<div class="squire-banner squire-banner--error" role="alert">
+        <span class="squire-banner__label">COULD NOT SAVE</span>
+        <p class="squire-banner__body">${data.errorMessage}</p>
+      </div>`
+    : html``}
+  ${data.canInvite
+    ? html`<form
+        method="post"
+        action="/campaigns/${campaignId}/invites"
+        class="squire-invite-member"
+        aria-label="Invite a member"
+      >
+        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+        <label class="squire-invite-member__field">
+          <span class="squire-invite-member__field-label">INVITE BY EMAIL</span>
+          <input name="email" type="email" required maxlength="320" autocomplete="off" />
+        </label>
+        <button type="submit" class="squire-invite-member__submit">INVITE</button>
+      </form>`
+    : html``}` as HtmlEscapedString;
+}
+
 /** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
 export function renderCampaignDashboardContent(
   detail: CampaignDetail,
@@ -232,9 +270,12 @@ export function renderCampaignDashboardContent(
   journalFragment?: HtmlEscapedString,
   characters?: DashboardCharacterRow[],
   characterCreate?: CharacterCreateForm,
+  inviteForm?: InviteMemberForm,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
+  // Pending invites are real state — shown distinctly, never as fake rows.
+  const pendingInvites = detail.members.filter((member) => member.status === 'invited');
   return html`<section class="squire-campaign-dashboard" data-campaign-id="${campaign.id}">
     <header class="squire-campaign-dashboard__header">
       <h1 class="squire-campaign-dashboard__name">${campaign.name}</h1>
@@ -255,7 +296,17 @@ export function renderCampaignDashboardContent(
               >
             </li>`,
         )}
+        ${pendingInvites.map(
+          (member) =>
+            html`<li
+              class="squire-campaign-dashboard__member squire-campaign-dashboard__member--invited"
+            >
+              ${member.email}
+              <span class="squire-campaign-dashboard__member-role">INVITED</span>
+            </li>`,
+        )}
       </ul>
+      ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
     </section>
     <section class="squire-campaign-dashboard__characters" aria-label="Characters">
       <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
