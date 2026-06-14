@@ -1016,7 +1016,7 @@
   },
   {
     "cardName": "Spirit of the Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 35,
     "top": {
@@ -1034,7 +1034,7 @@
   },
   {
     "cardName": "Slice Through",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 15,
     "top": {
@@ -1054,7 +1054,7 @@
   },
   {
     "cardName": "Eyes of the Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 93,
     "top": {
@@ -1072,7 +1072,7 @@
   },
   {
     "cardName": "Armor of the Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 10,
     "top": {
@@ -1090,7 +1090,7 @@
   },
   {
     "cardName": "Swallowed by Fear",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 44,
     "top": {
@@ -1109,7 +1109,7 @@
   },
   {
     "cardName": "Dancing Shadows",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 5,
     "top": {
@@ -1129,7 +1129,7 @@
   },
   {
     "cardName": "Silent Force",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 8,
     "top": {
@@ -1147,7 +1147,7 @@
   },
   {
     "cardName": "Black Knives",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 77,
     "top": {
@@ -1165,7 +1165,7 @@
   },
   {
     "cardName": "Enervating Wound",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 1,
     "initiative": 14,
     "top": {
@@ -1185,7 +1185,7 @@
   },
   {
     "cardName": "Nightfall",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": "X",
     "initiative": 28,
     "top": {
@@ -1203,7 +1203,7 @@
   },
   {
     "cardName": "Empowering Void",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": "X",
     "initiative": 11,
     "top": {
@@ -1221,7 +1221,7 @@
   },
   {
     "cardName": "Marked for Death",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": "X",
     "initiative": 84,
     "top": {
@@ -1237,7 +1237,7 @@
   },
   {
     "cardName": "Unseen Dread",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 2,
     "initiative": 12,
     "top": {
@@ -1256,7 +1256,7 @@
   },
   {
     "cardName": "Shroud in Shade",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 2,
     "initiative": 6,
     "top": {
@@ -1277,7 +1277,7 @@
   },
   {
     "cardName": "Terror Blade",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 3,
     "initiative": 32,
     "top": {
@@ -1295,7 +1295,7 @@
   },
   {
     "cardName": "Prepare for the Kill",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 3,
     "initiative": 85,
     "top": {
@@ -1313,7 +1313,7 @@
   },
   {
     "cardName": "Lurking Ruin",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 4,
     "initiative": 4,
     "top": {
@@ -1333,7 +1333,7 @@
   },
   {
     "cardName": "Cursed Blades",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 4,
     "initiative": 18,
     "top": {
@@ -1351,7 +1351,7 @@
   },
   {
     "cardName": "Into the Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 5,
     "initiative": 17,
     "top": {
@@ -1369,7 +1369,7 @@
   },
   {
     "cardName": "Seeping Tendrils",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 5,
     "initiative": 23,
     "top": {
@@ -1387,7 +1387,7 @@
   },
   {
     "cardName": "Claws of the Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 6,
     "initiative": 56,
     "top": {
@@ -1407,7 +1407,7 @@
   },
   {
     "cardName": "Dark Cloud",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 6,
     "initiative": 2,
     "top": {
@@ -1429,7 +1429,7 @@
   },
   {
     "cardName": "Quiet Frenzy",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 7,
     "initiative": 26,
     "top": {
@@ -1447,7 +1447,7 @@
   },
   {
     "cardName": "Messenger of Death",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 7,
     "initiative": 63,
     "top": {
@@ -1468,7 +1468,7 @@
   },
   {
     "cardName": "Prey on the Weak",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 8,
     "initiative": 38,
     "top": {
@@ -1488,7 +1488,7 @@
   },
   {
     "cardName": "Shadowstrike",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 8,
     "initiative": 90,
     "top": {
@@ -1504,7 +1504,7 @@
   },
   {
     "cardName": "Swallowed by Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 9,
     "initiative": 73,
     "top": {
@@ -1520,7 +1520,7 @@
   },
   {
     "cardName": "Voice of the Night",
-    "characterClass": "Eclipse",
+    "characterClass": "Nightshroud",
     "level": 9,
     "initiative": 19,
     "top": {
@@ -2059,7 +2059,7 @@
   },
   {
     "cardName": "Mobilizing Measure",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 8,
     "top": {
@@ -2077,7 +2077,7 @@
   },
   {
     "cardName": "Bewildering Instrumental",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 11,
     "top": {
@@ -2095,7 +2095,7 @@
   },
   {
     "cardName": "Wearying Chant",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 19,
     "top": {
@@ -2113,7 +2113,7 @@
   },
   {
     "cardName": "Power Ballad",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 12,
     "top": {
@@ -2129,7 +2129,7 @@
   },
   {
     "cardName": "Dissonant Rhythm",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 14,
     "top": {
@@ -2147,7 +2147,7 @@
   },
   {
     "cardName": "Increase Cadence",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 32,
     "top": {
@@ -2163,7 +2163,7 @@
   },
   {
     "cardName": "Intensifying Amplitude",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 56,
     "top": {
@@ -2181,7 +2181,7 @@
   },
   {
     "cardName": "Marching Beat",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 21,
     "top": {
@@ -2201,7 +2201,7 @@
   },
   {
     "cardName": "Tuning the Outcome",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 44,
     "top": {
@@ -2221,7 +2221,7 @@
   },
   {
     "cardName": "Call to Action",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 27,
     "top": {
@@ -2239,7 +2239,7 @@
   },
   {
     "cardName": "Singing Arrow",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 1,
     "initiative": 85,
     "top": {
@@ -2259,7 +2259,7 @@
   },
   {
     "cardName": "Defensive Ditty",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": "X",
     "initiative": 9,
     "top": {
@@ -2275,7 +2275,7 @@
   },
   {
     "cardName": "Echoing Aria",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": "X",
     "initiative": 5,
     "top": {
@@ -2294,7 +2294,7 @@
   },
   {
     "cardName": "Provoke Terror",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": "X",
     "initiative": 89,
     "top": {
@@ -2312,7 +2312,7 @@
   },
   {
     "cardName": "Onward to Battle",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 2,
     "initiative": 91,
     "top": {
@@ -2330,7 +2330,7 @@
   },
   {
     "cardName": "Soothing Lullaby",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 2,
     "initiative": 20,
     "top": {
@@ -2350,7 +2350,7 @@
   },
   {
     "cardName": "Symphonic Medley",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 3,
     "initiative": 62,
     "top": {
@@ -2371,7 +2371,7 @@
   },
   {
     "cardName": "Ode to the Gambler",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 3,
     "initiative": 15,
     "top": {
@@ -2387,7 +2387,7 @@
   },
   {
     "cardName": "Hymn to the Oak",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 4,
     "initiative": 10,
     "top": {
@@ -2407,7 +2407,7 @@
   },
   {
     "cardName": "Alluring Serenade",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 4,
     "initiative": 24,
     "top": {
@@ -2427,7 +2427,7 @@
   },
   {
     "cardName": "Change Tempo",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 5,
     "initiative": 25,
     "top": {
@@ -2446,7 +2446,7 @@
   },
   {
     "cardName": "Thrilling Solo",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 5,
     "initiative": 60,
     "top": {
@@ -2466,7 +2466,7 @@
   },
   {
     "cardName": "Pull the Strings",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 6,
     "initiative": 34,
     "top": {
@@ -2485,7 +2485,7 @@
   },
   {
     "cardName": "Disorienting Dirge",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 6,
     "initiative": 13,
     "top": {
@@ -2505,7 +2505,7 @@
   },
   {
     "cardName": "Inspiring Anthem",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 7,
     "initiative": 50,
     "top": {
@@ -2521,7 +2521,7 @@
   },
   {
     "cardName": "Wistful Wounding",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 7,
     "initiative": 6,
     "top": {
@@ -2541,7 +2541,7 @@
   },
   {
     "cardName": "Commanding Presence",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 8,
     "initiative": 65,
     "top": {
@@ -2557,7 +2557,7 @@
   },
   {
     "cardName": "Toughening Trill",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 8,
     "initiative": 78,
     "top": {
@@ -2577,7 +2577,7 @@
   },
   {
     "cardName": "Grand Finale",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 9,
     "initiative": 46,
     "top": {
@@ -2598,7 +2598,7 @@
   },
   {
     "cardName": "Captivating Performance",
-    "characterClass": "Music Note",
+    "characterClass": "Soothsinger",
     "level": 9,
     "initiative": 71,
     "top": {
@@ -2618,7 +2618,7 @@
   },
   {
     "cardName": "Battlefield Medicine",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 83,
     "top": {
@@ -2636,7 +2636,7 @@
   },
   {
     "cardName": "First Aid",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 19,
     "top": {
@@ -2652,7 +2652,7 @@
   },
   {
     "cardName": "Curative Mixture",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 8,
     "top": {
@@ -2670,7 +2670,7 @@
   },
   {
     "cardName": "Bloody Saw",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 25,
     "top": {
@@ -2688,7 +2688,7 @@
   },
   {
     "cardName": "Prevention Is Key",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 13,
     "top": {
@@ -2706,7 +2706,7 @@
   },
   {
     "cardName": "Hand of the Surgeon",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 62,
     "top": {
@@ -2724,7 +2724,7 @@
   },
   {
     "cardName": "Booster Shot",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 42,
     "top": {
@@ -2744,7 +2744,7 @@
   },
   {
     "cardName": "Syringe",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 57,
     "top": {
@@ -2764,7 +2764,7 @@
   },
   {
     "cardName": "Needle Gun",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 44,
     "top": {
@@ -2783,7 +2783,7 @@
   },
   {
     "cardName": "Vital Strikes",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 1,
     "initiative": 53,
     "top": {
@@ -2799,7 +2799,7 @@
   },
   {
     "cardName": "Vaccine",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "X",
     "initiative": 15,
     "top": {
@@ -2815,7 +2815,7 @@
   },
   {
     "cardName": "Teamwork",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "X",
     "initiative": 89,
     "top": {
@@ -2835,7 +2835,7 @@
   },
   {
     "cardName": "Prep for Surgery",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "X",
     "initiative": 22,
     "top": {
@@ -2851,7 +2851,7 @@
   },
   {
     "cardName": "Hamstring",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 2,
     "initiative": 72,
     "top": {
@@ -2867,7 +2867,7 @@
   },
   {
     "cardName": "Precaution",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 2,
     "initiative": 9,
     "top": {
@@ -2885,7 +2885,7 @@
   },
   {
     "cardName": "Regenerative Tissue",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 3,
     "initiative": 52,
     "top": {
@@ -2901,7 +2901,7 @@
   },
   {
     "cardName": "Blood Transfusion",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 3,
     "initiative": 79,
     "top": {
@@ -2917,7 +2917,7 @@
   },
   {
     "cardName": "Experimental Stimulants",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 4,
     "initiative": 12,
     "top": {
@@ -2937,7 +2937,7 @@
   },
   {
     "cardName": "Do No Harm",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 4,
     "initiative": 18,
     "top": {
@@ -2953,7 +2953,7 @@
   },
   {
     "cardName": "Hack to Bits",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 5,
     "initiative": 38,
     "top": {
@@ -2972,7 +2972,7 @@
   },
   {
     "cardName": "Fortifying Injection",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 5,
     "initiative": 5,
     "top": {
@@ -2990,7 +2990,7 @@
   },
   {
     "cardName": "Amputate",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 6,
     "initiative": 86,
     "top": {
@@ -3006,7 +3006,7 @@
   },
   {
     "cardName": "Return the Favor",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 6,
     "initiative": 40,
     "top": {
@@ -3026,7 +3026,7 @@
   },
   {
     "cardName": "Surgeon's Satchel",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 7,
     "initiative": 14,
     "top": {
@@ -3046,7 +3046,7 @@
   },
   {
     "cardName": "Exacting Anger",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 7,
     "initiative": 49,
     "top": {
@@ -3062,7 +3062,7 @@
   },
   {
     "cardName": "Take Your Medicine",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 8,
     "initiative": 6,
     "top": {
@@ -3082,7 +3082,7 @@
   },
   {
     "cardName": "Euthanize",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 8,
     "initiative": 27,
     "top": {
@@ -3098,7 +3098,7 @@
   },
   {
     "cardName": "Secret of the Oak",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 9,
     "initiative": 10,
     "top": {
@@ -3114,7 +3114,7 @@
   },
   {
     "cardName": "Grisly Trauma",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": 9,
     "initiative": 81,
     "top": {
@@ -3132,7 +3132,7 @@
   },
   {
     "cardName": "Medical Pack",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "M",
     "initiative": 50,
     "top": {
@@ -3148,7 +3148,7 @@
   },
   {
     "cardName": "Medical Pack",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "M",
     "initiative": 50,
     "top": {
@@ -3164,7 +3164,7 @@
   },
   {
     "cardName": "Medical Pack",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "M",
     "initiative": 50,
     "top": {
@@ -3180,7 +3180,7 @@
   },
   {
     "cardName": "Medical Pack",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "M",
     "initiative": 50,
     "top": {
@@ -3196,7 +3196,7 @@
   },
   {
     "cardName": "Medical Pack",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "M",
     "initiative": 50,
     "top": {
@@ -3212,7 +3212,7 @@
   },
   {
     "cardName": "Medical Pack",
-    "characterClass": "Saw",
+    "characterClass": "Sawbones",
     "level": "M",
     "initiative": 50,
     "top": {
@@ -4707,7 +4707,7 @@
   },
   {
     "cardName": "Ice Spikes",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 48,
     "top": {
@@ -4723,7 +4723,7 @@
   },
   {
     "cardName": "Malleable Evocation",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 26,
     "top": {
@@ -4741,7 +4741,7 @@
   },
   {
     "cardName": "Formless Power",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 45,
     "top": {
@@ -4757,7 +4757,7 @@
   },
   {
     "cardName": "Shaping the Ether",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 54,
     "top": {
@@ -4773,7 +4773,7 @@
   },
   {
     "cardName": "Stoking Hail",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 29,
     "top": {
@@ -4791,7 +4791,7 @@
   },
   {
     "cardName": "Magma Scales",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 14,
     "top": {
@@ -4807,7 +4807,7 @@
   },
   {
     "cardName": "Infernal Vortex",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 35,
     "top": {
@@ -4823,7 +4823,7 @@
   },
   {
     "cardName": "Frigid Torrent",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 39,
     "top": {
@@ -4839,7 +4839,7 @@
   },
   {
     "cardName": "Pulsing Cores",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 40,
     "top": {
@@ -4855,7 +4855,7 @@
   },
   {
     "cardName": "Dual Nature",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 1,
     "initiative": 27,
     "top": {
@@ -4873,7 +4873,7 @@
   },
   {
     "cardName": "Lingering Essence",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": "X",
     "initiative": 50,
     "top": {
@@ -4889,7 +4889,7 @@
   },
   {
     "cardName": "Flash of Brilliance",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": "X",
     "initiative": 67,
     "top": {
@@ -4907,7 +4907,7 @@
   },
   {
     "cardName": "Encompassing Shadow",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": "X",
     "initiative": 12,
     "top": {
@@ -4925,7 +4925,7 @@
   },
   {
     "cardName": "Gravel Guard",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 2,
     "initiative": 10,
     "top": {
@@ -4943,7 +4943,7 @@
   },
   {
     "cardName": "Wave of Frost",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 2,
     "initiative": 47,
     "top": {
@@ -4959,7 +4959,7 @@
   },
   {
     "cardName": "Arresting Gale",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 3,
     "initiative": 65,
     "top": {
@@ -4975,7 +4975,7 @@
   },
   {
     "cardName": "Empowering Flame",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 3,
     "initiative": 15,
     "top": {
@@ -4995,7 +4995,7 @@
   },
   {
     "cardName": "Burial",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 4,
     "initiative": 77,
     "top": {
@@ -5011,7 +5011,7 @@
   },
   {
     "cardName": "Chain Lightning",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 4,
     "initiative": 23,
     "top": {
@@ -5027,7 +5027,7 @@
   },
   {
     "cardName": "Obsidian Shards",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 5,
     "initiative": 19,
     "top": {
@@ -5045,7 +5045,7 @@
   },
   {
     "cardName": "Winter's Edge",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 5,
     "initiative": 43,
     "top": {
@@ -5063,7 +5063,7 @@
   },
   {
     "cardName": "Pragmatic Reinforcement",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 6,
     "initiative": 13,
     "top": {
@@ -5079,7 +5079,7 @@
   },
   {
     "cardName": "Duskstorm",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 6,
     "initiative": 17,
     "top": {
@@ -5095,7 +5095,7 @@
   },
   {
     "cardName": "Elemental Juggernaut",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 7,
     "initiative": 94,
     "top": {
@@ -5111,7 +5111,7 @@
   },
   {
     "cardName": "Confluence of Elements",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 7,
     "initiative": 64,
     "top": {
@@ -5127,7 +5127,7 @@
   },
   {
     "cardName": "Prismatic Barrage",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 8,
     "initiative": 33,
     "top": {
@@ -5146,7 +5146,7 @@
   },
   {
     "cardName": "Eye of the Hurricane",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 8,
     "initiative": 25,
     "top": {
@@ -5162,7 +5162,7 @@
   },
   {
     "cardName": "Ethereal Manifestation",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 9,
     "initiative": 98,
     "top": {
@@ -5178,7 +5178,7 @@
   },
   {
     "cardName": "Primal Duality",
-    "characterClass": "Triangles",
+    "characterClass": "Elementalist",
     "level": 9,
     "initiative": 11,
     "top": {

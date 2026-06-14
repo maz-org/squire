@@ -25,6 +25,7 @@ import * as CharacterService from './character-service.ts';
 import type { CallerIdentity } from './identity.ts';
 import { listJournal } from './journal.ts';
 import { loadModuleGraphs } from './unlock-graph-loader.ts';
+import * as CharacterRepository from '../db/repositories/character-repository.ts';
 import type { Campaign } from '../db/repositories/types.ts';
 
 export const CAMPAIGN_ENTITY_KINDS = ['campaign', 'character', 'party'] as const;
@@ -195,10 +196,13 @@ export async function resolveCampaignEntities(
 
 async function availabilitySummary(campaign: Campaign): Promise<Record<string, unknown>> {
   const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
+  const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
   const availability = deriveAvailability(
     graphs,
     new Set(campaign.playedScenarios),
     new Set(campaign.drawnScenarios),
+    new Set(campaign.skippedScenarios),
+    roster,
   );
   const counts: Partial<Record<ScenarioStatus, number>> = {};
   const openKeys: string[] = [];

@@ -5,8 +5,10 @@
  * service (SQR-268) loads these per campaign module set and derives
  * scenario statuses in process; statuses are never stored.
  */
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -32,11 +34,25 @@ export const unlockGraphScenarios = pgTable(
     manual: boolean('manual').notNull().default(false),
     cond: text('cond'),
     hazard: boolean('hazard').notNull().default(false),
+    /** Skippable intro (GH2e scenario 0): may be marked skipped, which counts
+     * as done for downstream prereqs but is never itself playable. */
+    skippable: boolean('skippable').notNull().default(false),
+    /** Character-gated unlock (GH2e solo scenarios): open only when an active
+     * character of this class is at level >= unlockMinLevel. Null = not
+     * character-gated (the play-prereq / manual model applies). */
+    unlockClass: text('unlock_class'),
+    unlockMinLevel: integer('unlock_min_level'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex('unlock_graph_scenarios_game_module_key_idx').on(t.game, t.module, t.key),
     index('unlock_graph_scenarios_game_module_idx').on(t.game, t.module),
+    // Character-gated columns are all-or-nothing: a class with no threshold (or
+    // vice versa) is an ambiguous gate that would silently mis-derive status.
+    check(
+      'unlock_graph_scenarios_character_gate_ck',
+      sql`(${t.unlockClass} IS NULL AND ${t.unlockMinLevel} IS NULL) OR (${t.unlockClass} IS NOT NULL AND ${t.unlockMinLevel} IS NOT NULL AND ${t.unlockMinLevel} > 0)`,
+    ),
   ],
 );
 

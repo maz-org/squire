@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { writeSecurityLog } from '../security-log.ts';
 import { CAMPAIGN_WRITE_RATE_LIMIT_POLICY, getDefaultRateLimiter } from '../rate-limit.ts';
 import { VersionConflictError } from '../db/repositories/types.ts';
+import * as CharacterRepository from '../db/repositories/character-repository.ts';
 import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
 import { availabilityShiftLines } from './availability.ts';
 import { checkClassName, knownClassNames } from './class-validation.ts';
@@ -139,6 +140,7 @@ const WriteCampaignStateInputSchema = z.object({
       activeScenario: z.string().trim().min(1).max(200).nullable().optional(),
       playedScenarios: stateKeyArraySchema.optional(),
       drawnScenarios: stateKeyArraySchema.optional(),
+      skippedScenarios: stateKeyArraySchema.optional(),
       unlockedClasses: stateKeyArraySchema.optional(),
       unlockedItems: stateKeyArraySchema.optional(),
       unlockedBuildings: stateKeyArraySchema.optional(),
@@ -397,7 +399,8 @@ export async function proposalPreviewLines(
     try {
       const detail = await CampaignService.getCampaignDetail(identity, campaignId);
       const graphs = await loadModuleGraphs(detail.campaign.game, detail.campaign.modules);
-      lines.push(...availabilityShiftLines(graphs, detail.campaign, update.patch));
+      const roster = await CharacterRepository.listActiveRosterByCampaign(campaignId);
+      lines.push(...availabilityShiftLines(graphs, detail.campaign, update.patch, roster));
     } catch {
       // The graph is advisory (E9) — staging proceeds without consequences.
     }

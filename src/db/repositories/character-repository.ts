@@ -12,7 +12,12 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
-import { characterCards, characterItems, characters } from '../schema/campaigns.ts';
+import {
+  campaignMembers,
+  characterCards,
+  characterItems,
+  characters,
+} from '../schema/campaigns.ts';
 import {
   VersionConflictError,
   type Character,
@@ -130,6 +135,38 @@ export async function listMemberVisibleByCampaign(
     .where(eq(characters.campaignId, campaignId))
     .orderBy(characters.createdAt);
   return rows.map(toMemberVisible);
+}
+
+/**
+ * The active roster (class + level) for character-gated scenario availability
+ * (GH2e solo). Only active characters count — a retired/departed character
+ * re-locks its solo on the next recompute (live gating). "Drops out" covers
+ * both retiring the character AND the owning member departing — a departed
+ * member's still-`active` character row must not keep a solo unlocked, so we
+ * join through `campaign_members` and require the owner to be active too.
+ */
+export async function listActiveRosterByCampaign(
+  campaignId: string,
+): Promise<{ className: string; level: number }[]> {
+  const { db } = getDb('server');
+  const rows = await db
+    .select({ className: characters.className, level: characters.level })
+    .from(characters)
+    .innerJoin(
+      campaignMembers,
+      and(
+        eq(campaignMembers.campaignId, characters.campaignId),
+        eq(campaignMembers.userId, characters.ownerUserId),
+      ),
+    )
+    .where(
+      and(
+        eq(characters.campaignId, campaignId),
+        eq(characters.status, 'active'),
+        eq(campaignMembers.status, 'active'),
+      ),
+    );
+  return rows.map((row) => ({ className: row.className, level: row.level }));
 }
 
 export async function listOwnedByCampaign(

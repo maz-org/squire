@@ -20,6 +20,7 @@
 import { getAllowedEmails } from '../auth/google.ts';
 import * as CampaignRepository from '../db/repositories/campaign-repository.ts';
 import * as CampaignMemberRepository from '../db/repositories/campaign-member-repository.ts';
+import * as CharacterRepository from '../db/repositories/character-repository.ts';
 import * as UserRepository from '../db/repositories/user-repository.ts';
 import type {
   Campaign,
@@ -314,12 +315,19 @@ export async function updateSharedState(
       // entries stay true even after the unlock-graph seed evolves
       // (constraint 10).
       let availabilitySnapshot: Record<string, unknown> | null = null;
-      if (input.playedScenarios !== undefined || input.drawnScenarios !== undefined) {
+      if (
+        input.playedScenarios !== undefined ||
+        input.drawnScenarios !== undefined ||
+        input.skippedScenarios !== undefined
+      ) {
         const graphs = await loadModuleGraphs(updated.game, updated.modules);
+        const roster = await CharacterRepository.listActiveRosterByCampaign(campaignId);
         const availability = deriveAvailability(
           graphs,
           new Set(updated.playedScenarios),
           new Set(updated.drawnScenarios),
+          new Set(updated.skippedScenarios),
+          roster,
         );
         availabilitySnapshot = {
           statuses: Object.fromEntries(availability.statuses),

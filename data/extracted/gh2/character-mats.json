@@ -1,6 +1,6 @@
 [
   {
-    "name": "Angry Face",
+    "name": "Doomstalker",
     "characterClass": "Orchid",
     "handSize": 11,
     "traits": [
@@ -78,7 +78,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/bruiser"
   },
   {
-    "name": "Circles",
+    "name": "Soultether",
     "characterClass": "Aesther",
     "handSize": 12,
     "traits": [
@@ -157,7 +157,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/cragheart"
   },
   {
-    "name": "Crossed Swords",
+    "name": "Bladewarm",
     "characterClass": "Harrower",
     "handSize": 11,
     "traits": [
@@ -195,7 +195,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/crossed-swords"
   },
   {
-    "name": "Eclipse",
+    "name": "Nightshroud",
     "characterClass": "Aesther",
     "handSize": 9,
     "traits": [
@@ -234,7 +234,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/eclipse"
   },
   {
-    "name": "Lightning",
+    "name": "Berserker",
     "characterClass": "Inox",
     "handSize": 9,
     "traits": [
@@ -311,7 +311,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/mindthief"
   },
   {
-    "name": "Music Note",
+    "name": "Soothsinger",
     "characterClass": "Quatryl",
     "handSize": 11,
     "traits": [
@@ -349,7 +349,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/music-note"
   },
   {
-    "name": "Saw",
+    "name": "Sawbones",
     "characterClass": "Human",
     "handSize": 10,
     "traits": [
@@ -462,7 +462,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/spellweaver"
   },
   {
-    "name": "Squidface",
+    "name": "Plagueherald",
     "characterClass": "Harrower",
     "handSize": 10,
     "traits": [
@@ -502,7 +502,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/squidface"
   },
   {
-    "name": "Sun",
+    "name": "Sunkeeper",
     "characterClass": "Valrath",
     "handSize": 11,
     "traits": [
@@ -541,7 +541,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/sun"
   },
   {
-    "name": "Three Spears",
+    "name": "Quartermaster",
     "characterClass": "Valrath",
     "handSize": 11,
     "traits": [
@@ -618,7 +618,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/tinkerer"
   },
   {
-    "name": "Triangles",
+    "name": "Elementalist",
     "characterClass": "Savvas",
     "handSize": 10,
     "traits": [
@@ -658,7 +658,7 @@
     "sourceId": "gloomhavensecretariat:character-mat/triangles"
   },
   {
-    "name": "Two Mini",
+    "name": "Wildfury",
     "characterClass": "Vermling",
     "handSize": 10,
     "traits": [

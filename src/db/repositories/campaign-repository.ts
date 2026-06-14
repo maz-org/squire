@@ -30,6 +30,7 @@ function toDomain(row: CampaignRow): Campaign {
     activeScenario: row.activeScenario,
     playedScenarios: row.playedScenarios,
     drawnScenarios: row.drawnScenarios,
+    skippedScenarios: row.skippedScenarios,
     unlockedClasses: row.unlockedClasses,
     unlockedItems: row.unlockedItems,
     unlockedBuildings: row.unlockedBuildings,

@@ -40,6 +40,9 @@ export async function loadModuleGraphs(game: string, modules: string[]): Promise
           manual: row.manual,
           cond: row.cond,
           hazard: row.hazard,
+          skippable: row.skippable,
+          unlockClass: row.unlockClass,
+          unlockMinLevel: row.unlockMinLevel,
         })),
       threads: threadRows
         .filter((row) => row.module === module)

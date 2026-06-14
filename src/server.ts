@@ -902,10 +902,13 @@ async function dashboardThreadsFragment(
 ): Promise<HtmlEscapedString | undefined> {
   const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
   if (graphs.length === 0) return undefined;
+  const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
   const availability = deriveAvailability(
     graphs,
     new Set(campaign.playedScenarios),
     new Set(campaign.drawnScenarios),
+    new Set(campaign.skippedScenarios),
+    roster,
   );
   return renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement });
 }
@@ -929,10 +932,13 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   try {
     detail = await CampaignService.getCampaignDetail(identity, campaignId);
     const graphs = await loadModuleGraphs(detail.campaign.game, detail.campaign.modules);
+    const roster = await CharacterRepository.listActiveRosterByCampaign(campaignId);
     const availability = deriveAvailability(
       graphs,
       new Set(detail.campaign.playedScenarios),
       new Set(detail.campaign.drawnScenarios),
+      new Set(detail.campaign.skippedScenarios),
+      roster,
     );
     const status = availability.statuses.get(key);
     const shortKey = key.split(':')[1] ?? key;

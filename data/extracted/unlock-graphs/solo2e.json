@@ -10,9 +10,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Bruiser reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Bruiser",
+      "unlockMinLevel": 5
     },
     {
       "key": "spellweaver",
@@ -21,9 +23,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Spellweaver reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Spellweaver",
+      "unlockMinLevel": 5
     },
     {
       "key": "tinkerer",
@@ -32,9 +36,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Tinkerer reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Tinkerer",
+      "unlockMinLevel": 5
     },
     {
       "key": "mindthief",
@@ -43,9 +49,11 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Mindthief reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Mindthief",
+      "unlockMinLevel": 5
     },
     {
       "key": "cragheart",
@@ -54,31 +62,37 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Cragheart reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Cragheart",
+      "unlockMinLevel": 5
     },
     {
-      "key": "diviner",
-      "name": "Diviner Solo Scenario",
+      "key": "soultether",
+      "name": "Soultether Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Diviner reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Soultether reaches level 5",
+      "hazard": false,
+      "unlockClass": "Soultether",
+      "unlockMinLevel": 5
     },
     {
-      "key": "eclipse",
-      "name": "Eclipse Solo Scenario",
+      "key": "nightshroud",
+      "name": "Nightshroud Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Eclipse reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Nightshroud reaches level 5",
+      "hazard": false,
+      "unlockClass": "Nightshroud",
+      "unlockMinLevel": 5
     },
     {
       "key": "silent-knife",
@@ -87,119 +101,141 @@
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
+      "manual": false,
       "cond": "Play when your Silent Knife reaches level 5",
-      "hazard": false
+      "hazard": false,
+      "unlockClass": "Silent Knife",
+      "unlockMinLevel": 5
     },
     {
-      "key": "saw",
-      "name": "Saw Solo Scenario",
+      "key": "sawbones",
+      "name": "Sawbones Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Saw reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Sawbones reaches level 5",
+      "hazard": false,
+      "unlockClass": "Sawbones",
+      "unlockMinLevel": 5
     },
     {
-      "key": "lightning-bolt",
-      "name": "Lightning Bolt Solo Scenario",
+      "key": "berserker",
+      "name": "Berserker Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Lightning Bolt reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Berserker reaches level 5",
+      "hazard": false,
+      "unlockClass": "Berserker",
+      "unlockMinLevel": 5
     },
     {
-      "key": "music-note",
-      "name": "Music Note Solo Scenario",
+      "key": "soothsinger",
+      "name": "Soothsinger Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Music Note reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Soothsinger reaches level 5",
+      "hazard": false,
+      "unlockClass": "Soothsinger",
+      "unlockMinLevel": 5
     },
     {
-      "key": "three-spears",
-      "name": "Three Spears Solo Scenario",
+      "key": "quartermaster",
+      "name": "Quartermaster Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Three Spears reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Quartermaster reaches level 5",
+      "hazard": false,
+      "unlockClass": "Quartermaster",
+      "unlockMinLevel": 5
     },
     {
-      "key": "angry-face",
-      "name": "Angry Face Solo Scenario",
+      "key": "doomstalker",
+      "name": "Doomstalker Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Angry Face reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Doomstalker reaches level 5",
+      "hazard": false,
+      "unlockClass": "Doomstalker",
+      "unlockMinLevel": 5
     },
     {
-      "key": "cthulhu",
-      "name": "Cthulhu Solo Scenario",
+      "key": "plagueherald",
+      "name": "Plagueherald Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Cthulhu reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Plagueherald reaches level 5",
+      "hazard": false,
+      "unlockClass": "Plagueherald",
+      "unlockMinLevel": 5
     },
     {
-      "key": "sun",
-      "name": "Sun Solo Scenario",
+      "key": "sunkeeper",
+      "name": "Sunkeeper Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Sun reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Sunkeeper reaches level 5",
+      "hazard": false,
+      "unlockClass": "Sunkeeper",
+      "unlockMinLevel": 5
     },
     {
-      "key": "two-minis",
-      "name": "Two Minis Solo Scenario",
+      "key": "wildfury",
+      "name": "Wildfury Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Two Minis reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Wildfury reaches level 5",
+      "hazard": false,
+      "unlockClass": "Wildfury",
+      "unlockMinLevel": 5
     },
     {
-      "key": "triangles",
-      "name": "Triangles Solo Scenario",
+      "key": "elementalist",
+      "name": "Elementalist Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Triangles reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Elementalist reaches level 5",
+      "hazard": false,
+      "unlockClass": "Elementalist",
+      "unlockMinLevel": 5
     },
     {
-      "key": "crossed-swords",
-      "name": "Crossed Swords Solo Scenario",
+      "key": "bladewarm",
+      "name": "Bladewarm Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
-      "manual": true,
-      "cond": "Play when your Crossed Swords reaches level 5",
-      "hazard": false
+      "manual": false,
+      "cond": "Play when your Bladewarm reaches level 5",
+      "hazard": false,
+      "unlockClass": "Bladewarm",
+      "unlockMinLevel": 5
     }
   ],
   "threads": [
@@ -214,19 +250,19 @@
         "tinkerer",
         "mindthief",
         "cragheart",
-        "diviner",
-        "eclipse",
+        "soultether",
+        "nightshroud",
         "silent-knife",
-        "saw",
-        "lightning-bolt",
-        "music-note",
-        "three-spears",
-        "angry-face",
-        "cthulhu",
-        "sun",
-        "two-minis",
-        "triangles",
-        "crossed-swords"
+        "sawbones",
+        "berserker",
+        "soothsinger",
+        "quartermaster",
+        "doomstalker",
+        "plagueherald",
+        "sunkeeper",
+        "wildfury",
+        "elementalist",
+        "bladewarm"
       ]
     }
   ]

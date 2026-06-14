@@ -107,6 +107,9 @@ export async function seedUnlockGraphModule(
           manual: scenario.manual,
           cond: scenario.cond,
           hazard: scenario.hazard,
+          skippable: scenario.skippable,
+          unlockClass: scenario.unlockClass,
+          unlockMinLevel: scenario.unlockMinLevel,
         })
         .onConflictDoUpdate({
           target: [
@@ -123,6 +126,9 @@ export async function seedUnlockGraphModule(
             manual: scenario.manual,
             cond: scenario.cond,
             hazard: scenario.hazard,
+            skippable: scenario.skippable,
+            unlockClass: scenario.unlockClass,
+            unlockMinLevel: scenario.unlockMinLevel,
           },
         });
     }
