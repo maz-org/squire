@@ -22,6 +22,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/campaign-live-migration.test.ts',
   'test/campaign-pages.test.ts',
   'test/campaign-proposals.test.ts',
+  'test/campaign-rename.test.ts',
   'test/campaign-write-tools.test.ts',
   'test/character-sheet.test.ts',
   'test/profile-page.test.ts',

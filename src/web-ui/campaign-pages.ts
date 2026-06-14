@@ -263,6 +263,54 @@ function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): Htm
     : html``}` as HtmlEscapedString;
 }
 
+/** The dashboard "Rename campaign" affordance (SQR-320). */
+export interface CampaignRenameForm {
+  csrfToken: string;
+  /** Optimistic-concurrency token; submitted as expectedVersion. */
+  version: number;
+  /** Inline error/notice after a failed rename (validation or version race). */
+  errorMessage?: string;
+}
+
+/**
+ * A quiet rename disclosure under the campaign title. Any active member may
+ * rename (campaign name is shared state, like the scenario toggles), so the
+ * affordance is not owner-gated. The disclosure opens automatically when a
+ * prior attempt failed so the error and form are visible.
+ */
+function renderCampaignRenameForm(campaign: Campaign, data: CampaignRenameForm): HtmlEscapedString {
+  return html`<details class="squire-campaign-rename" ${data.errorMessage ? 'open' : ''}>
+    <summary class="squire-campaign-rename__toggle">Rename</summary>
+    ${data.errorMessage
+      ? html`<div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">COULD NOT SAVE</span>
+          <p class="squire-banner__body">${data.errorMessage}</p>
+        </div>`
+      : html``}
+    <form
+      method="post"
+      action="/campaigns/${campaign.id}/rename"
+      class="squire-campaign-rename__form"
+      aria-label="Rename campaign"
+    >
+      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+      <input type="hidden" name="expectedVersion" value="${data.version}" />
+      <label class="squire-campaign-rename__field">
+        <span class="squire-campaign-rename__field-label">CAMPAIGN NAME</span>
+        <input
+          name="name"
+          type="text"
+          required
+          maxlength="200"
+          autocomplete="off"
+          value="${campaign.name}"
+        />
+      </label>
+      <button type="submit" class="squire-campaign-rename__submit">SAVE</button>
+    </form>
+  </details>` as HtmlEscapedString;
+}
+
 /** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
 export function renderCampaignDashboardContent(
   detail: CampaignDetail,
@@ -271,6 +319,7 @@ export function renderCampaignDashboardContent(
   characters?: DashboardCharacterRow[],
   characterCreate?: CharacterCreateForm,
   inviteForm?: InviteMemberForm,
+  renameForm?: CampaignRenameForm,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -283,6 +332,7 @@ export function renderCampaignDashboardContent(
         ${gameLabel(campaign.game)} · PROSPERITY ${campaign.prosperity} · PLAYED
         ${campaign.playedScenarios.length} · DRAWN ${campaign.drawnScenarios.length}
       </p>
+      ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
     </header>
     <section class="squire-campaign-dashboard__roster" aria-label="Party roster">
       <h2 class="squire-campaign-dashboard__section-title">Party</h2>
