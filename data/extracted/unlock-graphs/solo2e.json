@@ -69,14 +69,14 @@
       "unlockMinLevel": 5
     },
     {
-      "key": "diviner",
-      "name": "Diviner Solo Scenario",
+      "key": "circles",
+      "name": "Circles Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
       "manual": false,
-      "cond": "Play when your Diviner reaches level 5",
+      "cond": "Play when your Circles reaches level 5",
       "hazard": false,
       "unlockClass": "Circles",
       "unlockMinLevel": 5
@@ -121,14 +121,14 @@
       "unlockMinLevel": 5
     },
     {
-      "key": "lightning-bolt",
-      "name": "Lightning Bolt Solo Scenario",
+      "key": "lightning",
+      "name": "Lightning Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
       "manual": false,
-      "cond": "Play when your Lightning Bolt reaches level 5",
+      "cond": "Play when your Lightning reaches level 5",
       "hazard": false,
       "unlockClass": "Lightning",
       "unlockMinLevel": 5
@@ -173,14 +173,14 @@
       "unlockMinLevel": 5
     },
     {
-      "key": "cthulhu",
-      "name": "Cthulhu Solo Scenario",
+      "key": "squidface",
+      "name": "Squidface Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
       "manual": false,
-      "cond": "Play when your Cthulhu reaches level 5",
+      "cond": "Play when your Squidface reaches level 5",
       "hazard": false,
       "unlockClass": "Squidface",
       "unlockMinLevel": 5
@@ -199,14 +199,14 @@
       "unlockMinLevel": 5
     },
     {
-      "key": "two-minis",
-      "name": "Two Minis Solo Scenario",
+      "key": "two-mini",
+      "name": "Two Mini Solo Scenario",
       "prereqsAll": [],
       "prereqsAny": [],
       "mutex": [],
       "lockedIf": [],
       "manual": false,
-      "cond": "Play when your Two Minis reaches level 5",
+      "cond": "Play when your Two Mini reaches level 5",
       "hazard": false,
       "unlockClass": "Two Mini",
       "unlockMinLevel": 5
@@ -250,17 +250,17 @@
         "tinkerer",
         "mindthief",
         "cragheart",
-        "diviner",
+        "circles",
         "eclipse",
         "silent-knife",
         "saw",
-        "lightning-bolt",
+        "lightning",
         "music-note",
         "three-spears",
         "angry-face",
-        "cthulhu",
+        "squidface",
         "sun",
-        "two-minis",
+        "two-mini",
         "triangles",
         "crossed-swords"
       ]
