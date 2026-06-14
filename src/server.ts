@@ -158,6 +158,15 @@ import {
 } from './chat/conversation-service.ts';
 import * as MessageStreamEventRepository from './db/repositories/message-stream-event-repository.ts';
 import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
+import {
+  captureTelemetryError,
+  flushTelemetry,
+  initTelemetry,
+  type TelemetryCaptureInput,
+  type TelemetryUserIdentity,
+} from './telemetry.ts';
+
+initTelemetry(process.env);
 
 export const app = new Hono();
 
@@ -218,13 +227,58 @@ function auditContext(c: Context): { ipAddress: string | null; userAgent: string
 }
 
 function correlateRequest(c: Context): string {
+  const existingRequestId = c.get('requestId');
+  if (typeof existingRequestId === 'string' && existingRequestId.trim().length > 0) {
+    c.header('X-Request-ID', existingRequestId);
+    return existingRequestId;
+  }
+
   const incomingRequestId = c.req.header('x-request-id');
   const requestId =
     incomingRequestId && /^[A-Za-z0-9._:-]{1,128}$/.test(incomingRequestId)
       ? incomingRequestId
       : randomUUID();
+  c.set('requestId', requestId);
   c.header('X-Request-ID', requestId);
   return requestId;
+}
+
+function safeRequestRoute(c: Context): string {
+  try {
+    return c.req.routePath || c.req.path;
+  } catch {
+    return c.req.path;
+  }
+}
+
+function safeUserFromContext(c: Context): TelemetryUserIdentity | undefined {
+  const callerIdentity = c.get('callerIdentity') as CallerIdentity | undefined;
+  if (callerIdentity?.userId) return { id: callerIdentity.userId };
+
+  const authInfo = c.get('authInfo') as AuthInfo | undefined;
+  const tokenUserId = userIdFromAuthInfo(authInfo);
+  if (tokenUserId) return { id: tokenUserId };
+
+  const session = c.get('session') as { userId?: unknown } | undefined;
+  return typeof session?.userId === 'string' && session.userId.trim().length > 0
+    ? { id: session.userId }
+    : undefined;
+}
+
+function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCaptureInput {
+  const route = safeRequestRoute(c);
+  return {
+    route,
+    requestId,
+    user: safeUserFromContext(c),
+    context: {
+      surface: 'server',
+      method: c.req.method,
+      path: c.req.path,
+      route,
+      status: 500,
+    },
+  };
 }
 
 async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
@@ -2716,6 +2770,8 @@ app.notFound((c) => {
 
 app.onError((err, c) => {
   console.error('Unhandled error:', err instanceof Error ? err.message : err);
+  const requestId = correlateRequest(c);
+  captureTelemetryError(err, buildServerErrorTelemetry(c, requestId));
   return c.json(jsonError('Internal server error', 500), 500);
 });
 
@@ -3582,14 +3638,26 @@ app.delete('/api/characters/:id/cards/:cardId', async (c) => {
 
 export async function startServer(): Promise<void> {
   const { createAdaptorServer } = await import('@hono/node-server');
-  await startHttpServer({
-    appFetch: app.fetch,
-    createAdaptorServer,
-    loadServerConfig,
-    getWorktreeRuntime,
-    claimWorktreePort,
-    startBootstrapLifecycle,
-  });
+  try {
+    await startHttpServer({
+      appFetch: app.fetch,
+      createAdaptorServer,
+      loadServerConfig,
+      getWorktreeRuntime,
+      claimWorktreePort,
+      startBootstrapLifecycle,
+    });
+  } catch (error) {
+    captureTelemetryError(error, {
+      route: 'server.startup',
+      context: {
+        surface: 'server',
+        phase: 'startup',
+      },
+    });
+    await flushTelemetry(2_000);
+    throw error;
+  }
 }
 
 // CLI entrypoint
