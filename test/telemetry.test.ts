@@ -197,6 +197,8 @@ describe('telemetry boundary', () => {
       providerResponse: { body: 'provider payload' },
       retrievedPassages: ['copyrighted passage'],
       sourceDocument: 'full document text',
+      createdAt: new Date('2026-06-14T14:00:00.000Z'),
+      invalidDate: new Date(Number.NaN),
       nested: {
         safeFlag: true,
         embedding: [0.1, 0.2],
@@ -216,6 +218,8 @@ describe('telemetry boundary', () => {
       providerResponse: TELEMETRY_REDACTED,
       retrievedPassages: TELEMETRY_REDACTED,
       sourceDocument: TELEMETRY_REDACTED,
+      createdAt: '2026-06-14T14:00:00.000Z',
+      invalidDate: TELEMETRY_UNAVAILABLE,
       nested: {
         safeFlag: true,
         embedding: TELEMETRY_REDACTED,

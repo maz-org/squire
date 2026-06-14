@@ -170,7 +170,9 @@ function redactInternal(value: unknown, seen: WeakSet<object>): SafeJson {
   if (typeof value === 'number' || typeof value === 'boolean') return value;
   if (typeof value === 'bigint') return value.toString();
   if (typeof value === 'symbol' || typeof value === 'function') return TELEMETRY_UNAVAILABLE;
-  if (value instanceof Date) return value.toISOString();
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? TELEMETRY_UNAVAILABLE : value.toISOString();
+  }
   if (value instanceof Error) {
     return {
       name: value.name || 'Error',
