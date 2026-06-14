@@ -35,7 +35,7 @@ describe('deployment operations documentation', () => {
       'one real rules question',
       'LangSmith',
       'env:production',
-      'Troubleshoot one production chat',
+      'Troubleshoot a production report',
       'metadata.conversationId',
       'metadata.thread_id',
       'metadata.userMessageId',
@@ -47,6 +47,60 @@ describe('deployment operations documentation', () => {
     }
 
     expect(guide).not.toContain('Cloudflare WAF');
+  });
+
+  it('documents the Sentry and LangSmith production debugging workflow', async () => {
+    const guide = await readProjectFile('docs/runbooks/production-operations.md');
+    const observability = await readProjectFile('docs/runbooks/observability.md');
+    const bugReporting = await readProjectFile('docs/agent/bug-reporting.md');
+
+    expect(guide).toContain('[observability.md](observability.md)');
+
+    for (const expected of [
+      '# Squire Observability Runbook',
+      'Sentry owns app observability',
+      'LangSmith owns LLM traces and eval debugging',
+      'Start in Sentry',
+      'Start in LangSmith',
+      'User Report To Linear',
+      'Bad Answer',
+      'Stream Or Chat Failure',
+      'Browser Or UI Report',
+      'Backend, Cron, And Uptime',
+      'Safe Test Cases',
+      'collectDiagnosticBundle()',
+      'createLinearBugReportBody()',
+      'environment:production failure_kind:assistant_turn level:error',
+      'environment:production surface:browser event_type:stream_error',
+      'environment:production job_kind:cron level:error',
+      'https://squire.maz.org/api/__sentry-uptime-test-404',
+      'fly ssh console -a maz-squire -C',
+      'npm run sentry:test-event -- --kind chat --dry-run',
+      'unavailable',
+    ]) {
+      expect(observability).toContain(expected);
+    }
+
+    for (const requiredEvidenceField of [
+      'Conversation',
+      'Turn',
+      'Request',
+      'Sentry Issue/Event/Replay',
+      'Release',
+      'Environment',
+      'LangSmith Trace/Thread/Run',
+      'Observed',
+      'Expected',
+      'Likely failing area',
+      'First files to inspect',
+      'Repro',
+      'Acceptance',
+    ]) {
+      expect(observability).toContain(requiredEvidenceField);
+    }
+
+    expect(bugReporting).toContain('SQR-298');
+    expect(bugReporting).toContain('SQR-299');
   });
 
   it('keeps current architecture docs on AWS WAF and GitHub-driven Fly deploys', async () => {
