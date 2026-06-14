@@ -2279,6 +2279,76 @@ template#squire-banner-fixtures {
   background: var(--wax-dim);
 }
 
+/* Rename campaign (SQR-320): a quiet disclosure under the title. */
+.squire-campaign-rename {
+  margin-top: var(--space-sm);
+}
+
+.squire-campaign-rename__toggle {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia-dim);
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.squire-campaign-rename__toggle:hover {
+  color: var(--sepia);
+}
+
+.squire-campaign-rename__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: end;
+  margin-top: var(--space-sm);
+}
+
+.squire-campaign-rename__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.squire-campaign-rename__field-label {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--sepia);
+}
+
+.squire-campaign-rename__field input {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--parchment);
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  font-family: 'Geist', system-ui, sans-serif;
+  min-width: 16rem;
+}
+
+.squire-campaign-rename__submit {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--parchment);
+  background: var(--wax);
+  border: 1px solid var(--wax);
+  border-radius: 4px;
+  padding: 0 var(--space-md);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.squire-campaign-rename__submit:hover {
+  background: var(--wax-dim);
+}
+
 .squire-campaigns__row-actions {
   display: flex;
   gap: var(--space-sm);

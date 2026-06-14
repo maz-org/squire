@@ -857,7 +857,7 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 async function renderCampaignDashboardPage(
   c: Context,
   campaignId: string,
-  opts: { characterError?: string; inviteError?: string } = {},
+  opts: { characterError?: string; inviteError?: string; renameError?: string } = {},
   status: 200 | 422 = 200,
 ): Promise<Response> {
   const session = c.get('session')!;
@@ -904,6 +904,9 @@ async function renderCampaignDashboardPage(
       // Invite-member affordance (SQR-319): form is owner-only; the error
       // banner still renders for a non-owner who tampers the route.
       { csrfToken, canInvite: isOwner, errorMessage: opts.inviteError },
+      // Rename affordance (SQR-320): any active member; the name is shared
+      // state. expectedVersion drives optimistic concurrency.
+      { csrfToken, version: detail.campaign.version, errorMessage: opts.renameError },
     ),
   });
   return c.html(body, status);
@@ -1027,6 +1030,67 @@ app.post('/campaigns/:id/invites', async (c) => {
       error instanceof CampaignService.AlreadyInvitedError
     ) {
       return await renderCampaignDashboardPage(c, campaignId, { inviteError: error.message }, 422);
+    }
+    throw error;
+  }
+});
+
+/** Rename a campaign from the dashboard header (SQR-320). */
+app.post('/campaigns/:id/rename', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
+  const versionRaw = form.get('expectedVersion');
+  const expectedVersion =
+    typeof versionRaw === 'string' ? Number.parseInt(versionRaw, 10) : Number.NaN;
+
+  try {
+    // getCampaignDetail gates membership: a non-member gets the 404 below.
+    // The name is shared state, so any active member may rename (no owner gate),
+    // matching updateSharedState's authorization and the scenario-toggle control.
+    await CampaignService.getCampaignDetail(identity, campaignId);
+    if (!name) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Campaign name is required.' },
+        422,
+      );
+    }
+    if (name.length > 200) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Campaign name must be 200 characters or fewer.' },
+        422,
+      );
+    }
+    if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Could not save — please refresh and try again.' },
+        422,
+      );
+    }
+    await CampaignService.updateSharedState(identity, campaignId, { name, expectedVersion });
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof VersionConflictError) {
+      // A concurrent edit won — re-render with the latest state + a notice.
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Updated elsewhere — showing the latest. Try the rename again.' },
+        422,
+      );
+    }
+    if (error instanceof CampaignService.CampaignForbiddenError) {
+      return await renderCampaignDashboardPage(c, campaignId, { renameError: error.message }, 422);
     }
     throw error;
   }
