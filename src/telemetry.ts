@@ -1,5 +1,12 @@
 import * as Sentry from '@sentry/node';
-import type { Breadcrumb, ErrorEvent, SeverityLevel, User } from '@sentry/node';
+import type {
+  Breadcrumb,
+  ErrorEvent,
+  Log,
+  LogSeverityLevel,
+  SeverityLevel,
+  User,
+} from '@sentry/node';
 
 import { resolveSquireEnv } from './squire-env.ts';
 
@@ -69,6 +76,16 @@ export interface TelemetryBreadcrumbInput extends TelemetryCaptureInput {
   category: string;
   message: string;
   level?: SeverityLevel;
+}
+
+export type TelemetryLogLevel = LogSeverityLevel;
+
+export interface TelemetryLogInput extends TelemetryCaptureInput {
+  /**
+   * Structured operational attributes for Sentry Logs. Unknown keys are allowed
+   * after sanitization; stable diagnostic keys are added in snake_case below.
+   */
+  attributes?: Record<string, unknown>;
 }
 
 export type TelemetryFeedbackKind =
@@ -413,6 +430,53 @@ function sanitizeSentryBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
   return sanitizeTelemetryPayload('breadcrumb', breadcrumb) as unknown as Breadcrumb;
 }
 
+function sanitizeSentryLog(log: Log): Log {
+  return sanitizeTelemetryPayload('log', log) as unknown as Log;
+}
+
+function safeJsonRecord(value: SafeJson): Record<string, SafeJson> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  return {};
+}
+
+function buildAvailableLogAttributes(
+  input: TelemetryDiagnosticInput,
+  env: Env,
+): Record<string, SafeJson> {
+  const metadata = buildDiagnosticMetadata(input, env);
+  const pairs: Array<[string, string]> = [
+    ['environment', metadata.environment],
+    ['release', metadata.release],
+    ['route', metadata.route],
+    ['request_id', metadata.requestId],
+    ['conversation_id', metadata.conversationId],
+    ['user_message_id', metadata.userMessageId],
+    ['assistant_message_id', metadata.assistantMessageId],
+    ['sentry_trace_id', metadata.sentryTraceId],
+    ['langsmith_thread_url', metadata.langsmithThreadUrl],
+    ['langsmith_run_url', metadata.langsmithRunUrl],
+    ['user_id', metadata.userId],
+    ['user_hash', metadata.userHash],
+  ];
+
+  return Object.fromEntries(pairs.filter(([, value]) => value !== TELEMETRY_UNAVAILABLE));
+}
+
+function buildSentryLogAttributes(input: TelemetryLogInput, env: Env): Record<string, SafeJson> {
+  const attributes = safeJsonRecord(sanitizeTelemetryPayload('log', input.attributes ?? {}));
+  const context = safeJsonRecord(redactTelemetryValue(input.context ?? {}));
+  const contextAttributes: Record<string, SafeJson> =
+    Object.keys(context).length > 0 ? { context } : {};
+  const contextTagAttributes = Object.fromEntries(contextTagPairs(input));
+
+  return {
+    ...attributes,
+    ...contextAttributes,
+    ...contextTagAttributes,
+    ...buildAvailableLogAttributes(input, env),
+  };
+}
+
 /**
  * Initialize Sentry once. Missing or invalid Sentry configuration is never
  * boot-critical; callers get a disabled result instead of an exception.
@@ -430,8 +494,10 @@ export function initTelemetry(env: Env = process.env): TelemetryInitResult {
       defaultIntegrations: false,
       sendDefaultPii: false,
       tracesSampleRate: 0,
+      enableLogs: true,
       beforeSend: sanitizeSentryEvent,
       beforeBreadcrumb: sanitizeSentryBreadcrumb,
+      beforeSendLog: sanitizeSentryLog,
     });
     initializedDsn = dsn;
     return { enabled: true, reason: 'initialized' };
@@ -499,6 +565,35 @@ export function captureTelemetryMessage(
   } catch {
     // Telemetry must never change app behavior.
     return null;
+  }
+}
+
+/**
+ * Capture a structured operational Sentry log through the Squire boundary.
+ * Messages are stable labels; caller attributes can be broad but are redacted.
+ */
+export function captureTelemetryLog(
+  level: TelemetryLogLevel,
+  message: string,
+  input: TelemetryLogInput = {},
+): boolean {
+  if (!isTelemetryEnabled()) return false;
+
+  try {
+    Sentry.withScope((scope) => {
+      scope.setTags(buildSafeTelemetryTags(input));
+      scope.setContext('squire', buildSentryContext(input, process.env));
+      const user = buildSafeUser(input);
+      if (user) scope.setUser(user);
+      Sentry.logger[level](
+        redactSensitiveString(message) as Log['message'],
+        buildSentryLogAttributes(input, process.env),
+      );
+    });
+    return true;
+  } catch {
+    // Telemetry must never change app behavior.
+    return false;
   }
 }
 

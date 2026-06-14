@@ -19,6 +19,14 @@ const sentry = vi.hoisted(() => {
     captureException: vi.fn(),
     captureFeedback: vi.fn(),
     captureMessage: vi.fn(),
+    logger: {
+      trace: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      fatal: vi.fn(),
+    },
     addBreadcrumb: vi.fn(),
     flush: vi.fn(),
   };
@@ -35,6 +43,7 @@ import {
   buildSafeTelemetryTags,
   captureTelemetryError,
   captureTelemetryFeedback,
+  captureTelemetryLog,
   captureTelemetryMessage,
   flushTelemetry,
   initTelemetry,
@@ -80,6 +89,7 @@ describe('telemetry boundary', () => {
 
     captureTelemetryError(new Error('boom'), { requestId: 'req-1' });
     captureTelemetryMessage('job failed');
+    captureTelemetryLog('info', 'job completed', { requestId: 'req-1' });
     addTelemetryBreadcrumb({ category: 'auth', message: 'rate limit rejected' });
     captureTelemetryFeedback({ feedbackKind: 'ui_broken' });
 
@@ -90,6 +100,7 @@ describe('telemetry boundary', () => {
     expect(sentry.captureException).not.toHaveBeenCalled();
     expect(sentry.captureFeedback).not.toHaveBeenCalled();
     expect(sentry.captureMessage).not.toHaveBeenCalled();
+    expect(sentry.logger.info).not.toHaveBeenCalled();
     expect(sentry.addBreadcrumb).not.toHaveBeenCalled();
     expect(sentry.flush).not.toHaveBeenCalled();
   });
@@ -111,8 +122,10 @@ describe('telemetry boundary', () => {
         defaultIntegrations: false,
         sendDefaultPii: false,
         tracesSampleRate: 0,
+        enableLogs: true,
         beforeSend: expect.any(Function),
         beforeBreadcrumb: expect.any(Function),
+        beforeSendLog: expect.any(Function),
       }),
     );
   });
@@ -369,6 +382,154 @@ describe('telemetry boundary', () => {
         retrieved_passages: TELEMETRY_REDACTED,
       },
     });
+  });
+
+  it('redacts Sentry logs with the shared beforeSendLog boundary', () => {
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    process.env.SENTRY_RELEASE = 'abc123';
+    process.env.SQUIRE_ENV = 'production';
+    initTelemetry(process.env);
+
+    const initOptions = sentry.init.mock.calls[0]?.[0];
+    const sanitized = initOptions.beforeSendLog({
+      level: 'info',
+      message: 'browser error from alice@example.com',
+      attributes: {
+        request_id: 'req-1',
+        route: '/chat/conv-1',
+        rawPrompt: 'raw prompt',
+        modelOutput: 'full answer',
+        retrievedPassages: ['source passage'],
+        request: {
+          body: { prompt: 'hidden prompt' },
+        },
+        user: {
+          id: 'user-1',
+          email: 'alice@example.com',
+        },
+      },
+    });
+
+    expect(sanitized).toEqual({
+      level: 'info',
+      message: TELEMETRY_REDACTED,
+      attributes: {
+        request_id: 'req-1',
+        route: '/chat/conv-1',
+        rawPrompt: TELEMETRY_REDACTED,
+        modelOutput: TELEMETRY_REDACTED,
+        retrievedPassages: TELEMETRY_REDACTED,
+        request: {
+          body: TELEMETRY_REDACTED,
+        },
+        user: {
+          id: 'user-1',
+          email: TELEMETRY_REDACTED,
+        },
+      },
+    });
+  });
+
+  it('captures Sentry logs with stable safe attributes and arbitrary sanitized attributes', () => {
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    process.env.SENTRY_RELEASE = 'abc123';
+    process.env.SQUIRE_ENV = 'production';
+    initTelemetry(process.env);
+
+    expect(
+      captureTelemetryLog('info', 'chat stream completed', {
+        route: '/chat/conv-1/messages/msg-1/stream?token=secret',
+        requestId: 'req-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        assistantMessageId: 'msg-assistant-1',
+        sentryTraceId: '0123456789abcdef0123456789abcdef',
+        langsmithThreadUrl: 'https://smith.langchain.com/o/org/projects/p/threads/thread-1',
+        langsmithRunUrl: 'https://smith.langchain.com/o/org/projects/p/r/run-1',
+        user: { hash: 'user-hash-1', email: 'person@example.com' },
+        context: {
+          surface: 'chat_sse',
+          failureKind: 'assistant_turn',
+          providerPayload: { body: 'raw provider payload' },
+        },
+        attributes: {
+          duration_ms: 123,
+          retry_count: 2,
+          nested: { safe_flag: true },
+          emailAddress: 'alice@example.com',
+          rawPrompt: 'raw prompt',
+          request: {
+            body: { prompt: 'hidden prompt' },
+          },
+        },
+      }),
+    ).toBe(true);
+
+    expect(sentry.scope.setTags).toHaveBeenCalledWith({
+      environment: 'production',
+      release: 'abc123',
+      route: '/chat/conv-1/messages/msg-1/stream',
+      request_id: 'req-1',
+      conversation_id: 'conv-1',
+      user_message_id: 'msg-user-1',
+      assistant_message_id: 'msg-assistant-1',
+      sentry_trace_id: '0123456789abcdef0123456789abcdef',
+      user_hash: 'user-hash-1',
+      surface: 'chat_sse',
+      failure_kind: 'assistant_turn',
+    });
+    expect(sentry.scope.setContext).toHaveBeenCalledWith(
+      'squire',
+      expect.objectContaining({
+        context: {
+          surface: 'chat_sse',
+          failureKind: 'assistant_turn',
+          providerPayload: TELEMETRY_REDACTED,
+        },
+      }),
+    );
+    expect(sentry.scope.setUser).toHaveBeenCalledWith({ id: 'user-hash-1' });
+    expect(sentry.logger.info).toHaveBeenCalledWith('chat stream completed', {
+      duration_ms: 123,
+      retry_count: 2,
+      nested: { safe_flag: true },
+      emailAddress: TELEMETRY_REDACTED,
+      rawPrompt: TELEMETRY_REDACTED,
+      request: {
+        body: TELEMETRY_REDACTED,
+      },
+      context: {
+        surface: 'chat_sse',
+        failureKind: 'assistant_turn',
+        providerPayload: TELEMETRY_REDACTED,
+      },
+      surface: 'chat_sse',
+      failure_kind: 'assistant_turn',
+      environment: 'production',
+      release: 'abc123',
+      route: '/chat/conv-1/messages/msg-1/stream',
+      request_id: 'req-1',
+      conversation_id: 'conv-1',
+      user_message_id: 'msg-user-1',
+      assistant_message_id: 'msg-assistant-1',
+      sentry_trace_id: '0123456789abcdef0123456789abcdef',
+      langsmith_thread_url: 'https://smith.langchain.com/o/org/projects/p/threads/thread-1',
+      langsmith_run_url: 'https://smith.langchain.com/o/org/projects/p/r/run-1',
+      user_hash: 'user-hash-1',
+    });
+  });
+
+  it('supports every Sentry log level through the telemetry boundary', () => {
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    process.env.SQUIRE_ENV = 'production';
+    initTelemetry(process.env);
+
+    for (const level of ['trace', 'debug', 'info', 'warn', 'error', 'fatal'] as const) {
+      expect(captureTelemetryLog(level, `${level} operational event`)).toBe(true);
+      expect(sentry.logger[level]).toHaveBeenCalledWith(`${level} operational event`, {
+        environment: 'production',
+      });
+    }
   });
 
   it('captures errors with safe tags, redacted context, and no email identity', () => {
