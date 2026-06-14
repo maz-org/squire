@@ -80,6 +80,7 @@ describe('telemetry boundary', () => {
     captureTelemetryError(new Error('boom'), { requestId: 'req-1' });
     captureTelemetryMessage('job failed');
     addTelemetryBreadcrumb({ category: 'auth', message: 'rate limit rejected' });
+    captureTelemetryFeedback({ feedbackKind: 'ui_broken' });
 
     await expect(flushTelemetry()).resolves.toBe(false);
 
