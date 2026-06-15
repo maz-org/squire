@@ -21,6 +21,10 @@ interface SentryRecord {
   title?: unknown;
 }
 
+interface SentryListClient {
+  list(path: string): Promise<unknown[]>;
+}
+
 interface SyncResult {
   dashboard?: {
     action: 'created' | 'updated' | 'verified' | 'would_create' | 'would_update';
@@ -53,6 +57,7 @@ function parseMode(argv: string[]): Mode {
   const modes = argv.filter(
     (arg) => arg === '--dry-run' || arg === '--apply' || arg === '--verify',
   );
+  // Keep CLI input strict so automation fails loudly when a flag is mistyped.
   if (modes.length !== 1 || argv.length !== 1) throw new Error(usage());
   if (modes[0] === '--apply') return 'apply';
   if (modes[0] === '--verify') return 'verify';
@@ -73,6 +78,12 @@ function stringField(value: unknown, field: 'id' | 'name' | 'title'): string | u
 
 function named(records: unknown[], name: string): SentryRecord | undefined {
   return records.find((record) => stringField(record, 'name') === name) as SentryRecord | undefined;
+}
+
+function namedOrTitled(records: unknown[], name: string): SentryRecord | undefined {
+  return records.find(
+    (record) => stringField(record, 'name') === name || stringField(record, 'title') === name,
+  ) as SentryRecord | undefined;
 }
 
 function titled(records: unknown[], title: string): SentryRecord | undefined {
@@ -167,15 +178,16 @@ function normalizeDashboardWidget(widget: unknown): Record<string, unknown> {
 }
 
 function normalizeDetectorDataSource(dataSource: unknown): Record<string, unknown> {
+  const queryObject = recordField(recordField(dataSource, 'queryObj'), 'snubaQuery');
+  const source = Object.keys(queryObject).length > 0 ? queryObject : dataSource;
   return {
-    queryType: numberField(dataSource, 'queryType'),
-    dataset: optionalStringField(dataSource, 'dataset'),
-    query: optionalStringField(dataSource, 'query'),
-    aggregate: optionalStringField(dataSource, 'aggregate'),
-    timeWindow: numberField(dataSource, 'timeWindow'),
-    environment: optionalStringField(dataSource, 'environment'),
-    eventTypes: stringArrayField(dataSource, 'eventTypes'),
-    extrapolationMode: optionalStringField(dataSource, 'extrapolationMode'),
+    dataset: optionalStringField(source, 'dataset'),
+    query: optionalStringField(source, 'query'),
+    aggregate: optionalStringField(source, 'aggregate'),
+    timeWindow: numberField(source, 'timeWindow'),
+    environment: optionalStringField(source, 'environment'),
+    eventTypes: stringArrayField(source, 'eventTypes'),
+    extrapolationMode: optionalStringField(source, 'extrapolationMode'),
   };
 }
 
@@ -187,12 +199,20 @@ function normalizeDetectorCondition(condition: unknown): Record<string, unknown>
   };
 }
 
+function normalizeOwner(owner: unknown): string | undefined {
+  if (typeof owner === 'string') return owner;
+  const ownerType = optionalStringField(owner, 'type');
+  const ownerId = optionalStringField(owner, 'id');
+  if (ownerType && ownerId) return `${ownerType}:${ownerId}`;
+  return undefined;
+}
+
 function normalizeDetectorPayload(detector: unknown): Record<string, unknown> {
   const conditionGroup = recordField(detector, 'condition_group', 'conditionGroup');
   return {
     name: optionalStringField(detector, 'name'),
     type: optionalStringField(detector, 'type'),
-    owner: optionalStringField(detector, 'owner'),
+    owner: normalizeOwner(recordField(detector, 'owner')) ?? optionalStringField(detector, 'owner'),
     description: optionalStringField(detector, 'description'),
     enabled: booleanField(detector, 'enabled'),
     data_sources: arrayField(detector, 'data_sources', 'dataSources').map(
@@ -292,6 +312,34 @@ function findRoutingWorkflowId(workflows: unknown[]): string {
   return workflowId;
 }
 
+function pathWithListPageSize(path: string): string {
+  const url = new URL(path, API_BASE);
+  if (!url.searchParams.has('per_page')) url.searchParams.set('per_page', '100');
+  return `${url.pathname}${url.search}`;
+}
+
+export function parseSentryNextPath(linkHeader: string | null): string | undefined {
+  if (!linkHeader) return undefined;
+
+  for (const part of linkHeader.split(/,\s*(?=<)/)) {
+    if (!/\brel="next"/.test(part) || !/\bresults="true"/.test(part)) continue;
+    const urlMatch = part.match(/<([^>]+)>/);
+    if (!urlMatch) continue;
+    try {
+      const url = new URL(urlMatch[1] ?? '');
+      const apiBasePath = new URL(API_BASE).pathname;
+      const relativePath = url.pathname.startsWith(`${apiBasePath}/`)
+        ? url.pathname.slice(apiBasePath.length)
+        : url.pathname;
+      return `${relativePath}${url.search}`;
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
+}
+
 class SentryApi {
   private readonly token: string;
 
@@ -299,7 +347,10 @@ class SentryApi {
     this.token = token;
   }
 
-  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async requestWithResponse<T>(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<{ body: T; headers: Headers }> {
     const headers = new Headers(options.headers);
     headers.set('Authorization', `Bearer ${this.token}`);
     headers.set('Accept', 'application/json');
@@ -315,14 +366,37 @@ class SentryApi {
         `${options.method ?? 'GET'} ${path} failed with ${response.status}: ${text.slice(0, 800)}`,
       );
     }
-    return (text.length > 0 ? JSON.parse(text) : null) as T;
+    return {
+      body: (text.length > 0 ? JSON.parse(text) : null) as T,
+      headers: response.headers,
+    };
+  }
+
+  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    return (await this.requestWithResponse<T>(path, options)).body;
   }
 
   async list(path: string): Promise<unknown[]> {
-    const body = await this.request<unknown>(path);
-    if (Array.isArray(body)) return body;
-    if (isRecord(body) && Array.isArray(body.results)) return body.results;
-    throw new Error(`Expected Sentry list response for ${path}`);
+    const records: unknown[] = [];
+    const seenPaths = new Set<string>();
+    let nextPath: string | undefined = pathWithListPageSize(path);
+
+    while (nextPath) {
+      if (seenPaths.has(nextPath)) throw new Error(`Sentry pagination loop for ${path}`);
+      seenPaths.add(nextPath);
+
+      const { body, headers } = await this.requestWithResponse<unknown>(nextPath);
+      if (Array.isArray(body)) {
+        records.push(...body);
+      } else if (isRecord(body) && Array.isArray(body.results)) {
+        records.push(...body.results);
+      } else {
+        throw new Error(`Expected Sentry list response for ${path}`);
+      }
+      nextPath = parseSentryNextPath(headers.get('link'));
+    }
+
+    return records;
   }
 }
 
@@ -467,13 +541,18 @@ async function syncDetectors(api: SentryApi, mode: Mode): Promise<SyncResult['de
   return results;
 }
 
-async function verifyExistingAlerts(api: SentryApi): Promise<SyncResult['existingAlerts']> {
+export async function verifyExistingAlerts(
+  api: SentryListClient,
+): Promise<SyncResult['existingAlerts']> {
   const detectors = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/detectors/`);
   const workflows = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/workflows/`);
+  const alertRules = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/alert-rules/`);
+  const uptimeAlerts = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/uptime/`);
+  const searchableAlerts = [...detectors, ...workflows, ...alertRules, ...uptimeAlerts];
+
   return SENTRY_EXISTING_APP_HEALTH_ALERTS.map((alert) => {
-    const detector = named(detectors, alert.name);
-    const workflow = named(workflows, alert.name);
-    const id = stringField(detector, 'id') ?? stringField(workflow, 'id');
+    const match = namedOrTitled(searchableAlerts, alert.name);
+    const id = stringField(match, 'id');
     return {
       found: id !== undefined,
       ...(id ? { id } : {}),

@@ -1,3 +1,4 @@
+// Fly's Sentry extension provisioned maz-squire in this Sentry organization.
 export const SENTRY_APP_HEALTH_ORG = 'brian-moseley';
 export const SENTRY_APP_HEALTH_PROJECT_SLUG = 'maz-squire';
 export const SENTRY_APP_HEALTH_PROJECT_ID = '4511564194643969';

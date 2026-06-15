@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 import {
+  SENTRY_EXISTING_APP_HEALTH_ALERTS,
   SENTRY_APP_HEALTH_MONITORS,
   appHealthDashboardPayload,
   appHealthDetectorPayload,
@@ -12,6 +13,8 @@ import {
 import {
   assertDashboardMatchesExpected,
   assertDetectorMatchesExpected,
+  parseSentryNextPath,
+  verifyExistingAlerts,
 } from '../scripts/sync-sentry-app-health.ts';
 
 const execFileAsync = promisify(execFile);
@@ -132,11 +135,88 @@ describe('Sentry alert catalog', () => {
     const detector = appHealthDetectorPayload(monitor, ['workflow-1']);
     expect(() => assertDetectorMatchesExpected(detector, detector, monitor.name)).not.toThrow();
 
+    expect(() =>
+      assertDetectorMatchesExpected(
+        {
+          ...detector,
+          owner: { type: 'team', id: '4511564194512896', name: 'brian-moseley-team' },
+          dataSources: [
+            {
+              queryObj: {
+                snubaQuery: {
+                  dataset: monitor.dataset,
+                  query: monitor.query,
+                  aggregate: monitor.aggregate,
+                  timeWindow: monitor.timeWindowSeconds,
+                  environment: 'production',
+                  eventTypes: monitor.eventTypes,
+                  extrapolationMode: 'unknown',
+                },
+              },
+            },
+          ],
+          conditionGroup: detector.condition_group,
+        },
+        detector,
+        monitor.name,
+      ),
+    ).not.toThrow();
+
     const staleDetector = structuredClone(detector);
     const dataSources = staleDetector.data_sources as Array<Record<string, unknown>>;
     dataSources[0]!.query = 'environment:production stale:true';
     expect(() => assertDetectorMatchesExpected(staleDetector, detector, monitor.name)).toThrow(
       '$.data_sources.0.query',
     );
+  });
+
+  it('finds existing event and uptime alerts through legacy Sentry endpoints', async () => {
+    const paths: string[] = [];
+    const uptimeAlert = SENTRY_EXISTING_APP_HEALTH_ALERTS.find((alert) =>
+      alert.areas.includes('uptime'),
+    );
+    expect(uptimeAlert).toBeDefined();
+    const eventAlerts = SENTRY_EXISTING_APP_HEALTH_ALERTS.filter(
+      (alert) => !alert.areas.includes('uptime'),
+    );
+
+    const result = await verifyExistingAlerts({
+      async list(path: string): Promise<unknown[]> {
+        paths.push(path);
+        if (path.endsWith('/detectors/') || path.endsWith('/workflows/')) return [];
+        if (path.endsWith('/alert-rules/')) {
+          return eventAlerts.map((alert, index) => ({ id: `event-${index}`, name: alert.name }));
+        }
+        if (path.endsWith('/uptime/')) {
+          return [{ id: 'uptime-1', name: uptimeAlert!.name }];
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    });
+
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('/detectors/'),
+        expect.stringContaining('/workflows/'),
+        expect.stringContaining('/alert-rules/'),
+        expect.stringContaining('/uptime/'),
+      ]),
+    );
+    expect(result).toHaveLength(SENTRY_EXISTING_APP_HEALTH_ALERTS.length);
+    expect(result.every((alert) => alert.found)).toBe(true);
+  });
+
+  it('parses Sentry pagination links only when another page has results', () => {
+    expect(
+      parseSentryNextPath(
+        '<https://sentry.io/api/0/organizations/brian-moseley/detectors/?cursor=abc&per_page=100>; rel="next"; results="true"; cursor="abc"',
+      ),
+    ).toBe('/organizations/brian-moseley/detectors/?cursor=abc&per_page=100');
+
+    expect(
+      parseSentryNextPath(
+        '<https://sentry.io/api/0/organizations/brian-moseley/detectors/?cursor=abc&per_page=100>; rel="next"; results="false"; cursor="abc"',
+      ),
+    ).toBeUndefined();
   });
 });
