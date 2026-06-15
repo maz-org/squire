@@ -1,5 +1,14 @@
 import * as Sentry from '@sentry/node';
-import type { Breadcrumb, ErrorEvent, SeverityLevel, User } from '@sentry/node';
+import type {
+  Breadcrumb,
+  Event,
+  EventHint,
+  ErrorEvent,
+  Log,
+  LogSeverityLevel,
+  SeverityLevel,
+  User,
+} from '@sentry/node';
 
 import { resolveSquireEnv } from './squire-env.ts';
 
@@ -23,6 +32,7 @@ export const TELEMETRY_DIAGNOSTIC_FIELDS = [
   'conversationId',
   'userMessageId',
   'assistantMessageId',
+  'sentryTraceId',
   'langsmithThreadUrl',
   'langsmithRunUrl',
   'userId',
@@ -49,6 +59,7 @@ export interface TelemetryDiagnosticInput {
   conversationId?: string;
   userMessageId?: string;
   assistantMessageId?: string;
+  sentryTraceId?: string;
   langsmithThreadUrl?: string;
   langsmithRunUrl?: string;
   user?: TelemetryUserIdentity;
@@ -69,6 +80,16 @@ export interface TelemetryBreadcrumbInput extends TelemetryCaptureInput {
   level?: SeverityLevel;
 }
 
+export type TelemetryLogLevel = LogSeverityLevel;
+
+export interface TelemetryLogInput extends TelemetryCaptureInput {
+  /**
+   * Structured operational attributes for Sentry Logs. Unknown keys are allowed
+   * after sanitization; stable diagnostic keys are added in snake_case below.
+   */
+  attributes?: Record<string, unknown>;
+}
+
 export type TelemetryFeedbackKind =
   | 'wrong_answer'
   | 'stream_failed'
@@ -86,6 +107,23 @@ export interface TelemetryInitResult {
   reason: 'initialized' | 'already_initialized' | 'missing_dsn' | 'init_failed';
 }
 
+type SentryTransactionEvent = Event & { type: 'transaction' };
+type SentrySpanPayload = {
+  data: Record<string, unknown>;
+  description?: string;
+};
+
+const SENTRY_SAFE_DATA_COLLECTION = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: { request: false, response: false },
+  httpBodies: [],
+  queryParams: false,
+  genAI: { inputs: false, outputs: false },
+  stackFrameVariables: false,
+  frameContextLines: 0,
+};
+
 const PROTECTED_KEY_PARTS = [
   'authorization',
   'proxyauthorization',
@@ -98,6 +136,16 @@ const PROTECTED_KEY_PARTS = [
   'secret',
   'password',
   'dsn',
+  'email',
+  'phone',
+  'address',
+  'ipaddress',
+  'creditcard',
+  'cardnumber',
+  'ssn',
+  'socialsecurity',
+  'privatekey',
+  'pem',
   'prompt',
   'fullanswer',
   'answer',
@@ -122,12 +170,69 @@ const PROTECTED_KEY_PARTS = [
 
 let initializedDsn: string | null = null;
 
+const PROTECTED_EXACT_KEYS = new Set([
+  'name',
+  'username',
+  'firstname',
+  'lastname',
+  'fullname',
+  'displayname',
+  'customername',
+  'clientname',
+  'card',
+  'mailingaddress',
+  'streetaddress',
+  'postaladdress',
+  'phonenumber',
+  'mobilenumber',
+  'emailaddress',
+  'useremail',
+]);
+
+const REQUEST_OR_RESPONSE_PATH_PARTS = new Set([
+  'request',
+  'response',
+  'http',
+  'httpcontext',
+  'requestcontext',
+  'responsecontext',
+]);
+
+const SENSITIVE_VALUE_PATTERNS = [
+  /\bBearer\s+[A-Za-z0-9._~+/=-]+/i,
+  /\b(?:sk|rk|pk|xox[baprs]|gh[pousr])_[A-Za-z0-9_=-]{12,}\b/,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /\bAIza[0-9A-Za-z_-]{35}\b/,
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i,
+  /\b\d{3}-\d{2}-\d{4}\b/,
+  /(?:^|[^A-Fa-f0-9-])(?:\d{13,19}|\d{4}[ -]\d{4}[ -]\d{4}(?:[ -]\d{1,7})?)(?![A-Fa-f0-9-])/,
+  /\b(?:\d{1,3}\.){3}\d{1,3}\b/,
+  /\b[a-z][a-z0-9+.-]*:\/\/[^/\s:@]+:[^/\s@]+@/i,
+  /[?&](?:access_token|auth|authorization|code|cookie|email|key|password|secret|session|state|token)=/i,
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /(?:\+\d{1,3}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4})/,
+];
+
 function normalizeKey(key: string): string {
   return key.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function isProtectedKey(key: string): boolean {
+function normalizedPathHasRequestOrResponse(path: string[]): boolean {
+  return path
+    .slice(0, -1)
+    .map(normalizeKey)
+    .some((part) => REQUEST_OR_RESPONSE_PATH_PARTS.has(part));
+}
+
+function isProtectedKey(key: string, path: string[]): boolean {
   const normalized = normalizeKey(key);
+  if (PROTECTED_EXACT_KEYS.has(normalized)) return true;
+  if (
+    (normalized === 'data' || normalized === 'body') &&
+    normalizedPathHasRequestOrResponse(path)
+  ) {
+    return true;
+  }
   return PROTECTED_KEY_PARTS.some((part) => normalized.includes(part));
 }
 
@@ -146,6 +251,15 @@ function safeSquireEnv(env: Env = process.env): string {
 function safeString(value: string | undefined): string | undefined {
   if (!hasText(value)) return undefined;
   return value.trim();
+}
+
+export function sentryTraceSampleRateFromEnv(env: Env = process.env): number | undefined {
+  const raw = safeString(env.SENTRY_TRACES_SAMPLE_RATE);
+  if (!raw) return undefined;
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0 || value > 1) return undefined;
+  return value;
 }
 
 function markerOr(value: string | undefined): string {
@@ -195,14 +309,12 @@ function contextTagPairs(input: { context?: Record<string, unknown> }): Array<[s
 }
 
 function redactSensitiveString(value: string): string {
-  if (/\bBearer\s+[A-Za-z0-9._~+/=-]+/i.test(value)) return TELEMETRY_REDACTED;
-  if (/\b(?:sk|rk|pk|xox[baprs]|gh[pousr])_[A-Za-z0-9_=-]{12,}\b/.test(value)) {
-    return TELEMETRY_REDACTED;
-  }
-  return value;
+  return SENSITIVE_VALUE_PATTERNS.some((pattern) => pattern.test(value))
+    ? TELEMETRY_REDACTED
+    : value;
 }
 
-function redactInternal(value: unknown, seen: WeakSet<object>): SafeJson {
+function redactInternal(value: unknown, seen: WeakSet<object>, path: string[]): SafeJson {
   if (value === null) return null;
   if (value === undefined) return TELEMETRY_UNAVAILABLE;
   if (typeof value === 'string') return redactSensitiveString(value);
@@ -218,7 +330,9 @@ function redactInternal(value: unknown, seen: WeakSet<object>): SafeJson {
       message: redactSensitiveString(value.message),
     };
   }
-  if (Array.isArray(value)) return value.map((item) => redactInternal(item, seen));
+  if (Array.isArray(value)) {
+    return value.map((item, index) => redactInternal(item, seen, [...path, String(index)]));
+  }
 
   if (typeof value === 'object') {
     if (seen.has(value)) return TELEMETRY_UNAVAILABLE;
@@ -226,7 +340,10 @@ function redactInternal(value: unknown, seen: WeakSet<object>): SafeJson {
 
     const output: { [key: string]: SafeJson } = {};
     for (const [key, child] of Object.entries(value)) {
-      output[key] = isProtectedKey(key) ? TELEMETRY_REDACTED : redactInternal(child, seen);
+      const childPath = [...path, key];
+      output[key] = isProtectedKey(key, childPath)
+        ? TELEMETRY_REDACTED
+        : redactInternal(child, seen, childPath);
     }
     return output;
   }
@@ -239,7 +356,18 @@ function redactInternal(value: unknown, seen: WeakSet<object>): SafeJson {
  * Safe inputs are low-cardinality ids, route patterns, and operational flags.
  */
 export function redactTelemetryValue(value: unknown): SafeJson {
-  return redactInternal(value, new WeakSet());
+  return redactInternal(value, new WeakSet(), []);
+}
+
+export type TelemetryPayloadKind = 'event' | 'breadcrumb' | 'log' | 'transaction' | 'span';
+
+/**
+ * Single Sentry privacy boundary for every payload family. New Sentry logs,
+ * transactions, and spans should route through this function before leaving
+ * the process.
+ */
+export function sanitizeTelemetryPayload(_kind: TelemetryPayloadKind, value: unknown): SafeJson {
+  return redactTelemetryValue(value);
 }
 
 /**
@@ -259,6 +387,7 @@ export function buildDiagnosticMetadata(
     conversationId: markerOr(input.conversationId),
     userMessageId: markerOr(input.userMessageId),
     assistantMessageId: markerOr(input.assistantMessageId),
+    sentryTraceId: markerOr(input.sentryTraceId),
     langsmithThreadUrl: markerOr(input.langsmithThreadUrl),
     langsmithRunUrl: markerOr(input.langsmithRunUrl),
     userId: markerOr(input.user?.id),
@@ -283,6 +412,7 @@ export function buildSafeTelemetryTags(
     ['conversation_id', metadata.conversationId],
     ['user_message_id', metadata.userMessageId],
     ['assistant_message_id', metadata.assistantMessageId],
+    ['sentry_trace_id', metadata.sentryTraceId],
     ['user_id', metadata.userId],
     ['user_hash', metadata.userHash],
     ...contextTagPairs(input),
@@ -321,11 +451,69 @@ function buildSentryContext(input: TelemetryCaptureInput, env: Env): Record<stri
 }
 
 function sanitizeSentryEvent(event: ErrorEvent): ErrorEvent {
-  return redactTelemetryValue(event) as unknown as ErrorEvent;
+  return sanitizeTelemetryPayload('event', event) as unknown as ErrorEvent;
 }
 
 function sanitizeSentryBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
-  return redactTelemetryValue(breadcrumb) as unknown as Breadcrumb;
+  return sanitizeTelemetryPayload('breadcrumb', breadcrumb) as unknown as Breadcrumb;
+}
+
+function sanitizeSentryLog(log: Log): Log {
+  return sanitizeTelemetryPayload('log', log) as unknown as Log;
+}
+
+function sanitizeSentryTransaction<T extends SentryTransactionEvent>(
+  event: T,
+  _hint: EventHint,
+): T {
+  return sanitizeTelemetryPayload('transaction', event) as unknown as T;
+}
+
+function sanitizeSentrySpan<T extends SentrySpanPayload>(span: T): T {
+  return sanitizeTelemetryPayload('span', span) as unknown as T;
+}
+
+function safeJsonRecord(value: SafeJson): Record<string, SafeJson> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  return {};
+}
+
+function buildAvailableLogAttributes(
+  input: TelemetryDiagnosticInput,
+  env: Env,
+): Record<string, SafeJson> {
+  const metadata = buildDiagnosticMetadata(input, env);
+  const pairs: Array<[string, string]> = [
+    ['environment', metadata.environment],
+    ['release', metadata.release],
+    ['route', metadata.route],
+    ['request_id', metadata.requestId],
+    ['conversation_id', metadata.conversationId],
+    ['user_message_id', metadata.userMessageId],
+    ['assistant_message_id', metadata.assistantMessageId],
+    ['sentry_trace_id', metadata.sentryTraceId],
+    ['langsmith_thread_url', metadata.langsmithThreadUrl],
+    ['langsmith_run_url', metadata.langsmithRunUrl],
+    ['user_id', metadata.userId],
+    ['user_hash', metadata.userHash],
+  ];
+
+  return Object.fromEntries(pairs.filter(([, value]) => value !== TELEMETRY_UNAVAILABLE));
+}
+
+function buildSentryLogAttributes(input: TelemetryLogInput, env: Env): Record<string, SafeJson> {
+  const attributes = safeJsonRecord(sanitizeTelemetryPayload('log', input.attributes ?? {}));
+  const context = safeJsonRecord(redactTelemetryValue(input.context ?? {}));
+  const contextAttributes: Record<string, SafeJson> =
+    Object.keys(context).length > 0 ? { context } : {};
+  const contextTagAttributes = Object.fromEntries(contextTagPairs(input));
+
+  return {
+    ...attributes,
+    ...contextAttributes,
+    ...contextTagAttributes,
+    ...buildAvailableLogAttributes(input, env),
+  };
 }
 
 /**
@@ -338,15 +526,22 @@ export function initTelemetry(env: Env = process.env): TelemetryInitResult {
   if (initializedDsn === dsn) return { enabled: true, reason: 'already_initialized' };
 
   try {
+    const tracesSampleRate = sentryTraceSampleRateFromEnv(env);
     Sentry.init({
       dsn,
       environment: safeSquireEnv(env),
       release: safeString(env.SENTRY_RELEASE),
       defaultIntegrations: false,
       sendDefaultPii: false,
-      tracesSampleRate: 0,
+      dataCollection: SENTRY_SAFE_DATA_COLLECTION,
+      tracesSampleRate,
+      skipOpenTelemetrySetup: true,
+      enableLogs: true,
       beforeSend: sanitizeSentryEvent,
       beforeBreadcrumb: sanitizeSentryBreadcrumb,
+      beforeSendLog: sanitizeSentryLog,
+      beforeSendTransaction: sanitizeSentryTransaction,
+      beforeSendSpan: sanitizeSentrySpan,
     });
     initializedDsn = dsn;
     return { enabled: true, reason: 'initialized' };
@@ -361,6 +556,10 @@ export function initTelemetry(env: Env = process.env): TelemetryInitResult {
  */
 export function isTelemetryEnabled(): boolean {
   return initializedDsn !== null;
+}
+
+export function getTelemetryClient(): ReturnType<typeof Sentry.getClient> | undefined {
+  return isTelemetryEnabled() ? Sentry.getClient() : undefined;
 }
 
 /**
@@ -414,6 +613,35 @@ export function captureTelemetryMessage(
   } catch {
     // Telemetry must never change app behavior.
     return null;
+  }
+}
+
+/**
+ * Capture a structured operational Sentry log through the Squire boundary.
+ * Messages are stable labels; caller attributes can be broad but are redacted.
+ */
+export function captureTelemetryLog(
+  level: TelemetryLogLevel,
+  message: string,
+  input: TelemetryLogInput = {},
+): boolean {
+  if (!isTelemetryEnabled()) return false;
+
+  try {
+    Sentry.withScope((scope) => {
+      scope.setTags(buildSafeTelemetryTags(input));
+      scope.setContext('squire', buildSentryContext(input, process.env));
+      const user = buildSafeUser(input);
+      if (user) scope.setUser(user);
+      Sentry.logger[level](
+        redactSensitiveString(message) as Log['message'],
+        buildSentryLogAttributes(input, process.env),
+      );
+    });
+    return true;
+  } catch {
+    // Telemetry must never change app behavior.
+    return false;
   }
 }
 

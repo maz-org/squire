@@ -8,16 +8,22 @@ const {
   mockAsk,
   mockInitTelemetry,
   mockCaptureTelemetryError,
+  mockCaptureTelemetryLog,
   mockCaptureTelemetryMessage,
   mockAddTelemetryBreadcrumb,
   mockFlushTelemetry,
+  mockGetTelemetryClient,
+  mockSentryTraceSampleRateFromEnv,
 } = vi.hoisted(() => ({
   mockAsk: vi.fn(),
   mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
   mockCaptureTelemetryError: vi.fn(),
+  mockCaptureTelemetryLog: vi.fn(),
   mockCaptureTelemetryMessage: vi.fn(),
   mockAddTelemetryBreadcrumb: vi.fn(),
   mockFlushTelemetry: vi.fn().mockResolvedValue(true),
+  mockGetTelemetryClient: vi.fn(() => undefined),
+  mockSentryTraceSampleRateFromEnv: vi.fn(() => undefined),
 }));
 
 vi.mock('../src/service.ts', () => ({
@@ -60,7 +66,10 @@ vi.mock('../src/tools.ts', () => ({
 
 vi.mock('../src/telemetry.ts', () => ({
   initTelemetry: mockInitTelemetry,
+  getTelemetryClient: mockGetTelemetryClient,
+  sentryTraceSampleRateFromEnv: mockSentryTraceSampleRateFromEnv,
   captureTelemetryError: mockCaptureTelemetryError,
+  captureTelemetryLog: mockCaptureTelemetryLog,
   captureTelemetryMessage: mockCaptureTelemetryMessage,
   addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
