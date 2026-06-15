@@ -4,6 +4,15 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import {
+  SENTRY_APP_HEALTH_MONITORS,
+  appHealthDashboardPayload,
+  appHealthDetectorPayload,
+} from '../scripts/sentry-app-health-config.ts';
+import {
+  assertDashboardMatchesExpected,
+  assertDetectorMatchesExpected,
+} from '../scripts/sync-sentry-app-health.ts';
 
 const execFileAsync = promisify(execFile);
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -106,6 +115,28 @@ describe('Sentry alert catalog', () => {
     expect(payload.dashboard?.savedQueries).toContain('squire.browser.stream_transport');
     expect(payload.monitors?.map((monitor) => monitor.name)).toContain(
       'Squire production backend request p95 latency',
+    );
+  });
+
+  it('fails verification when a live dashboard or detector drifts from checked-in config', () => {
+    const dashboard = appHealthDashboardPayload();
+    expect(() => assertDashboardMatchesExpected(dashboard, dashboard)).not.toThrow();
+
+    const staleDashboard = structuredClone(dashboard);
+    staleDashboard.widgets[1]!.queries[0]!.conditions = 'environment:production stale:true';
+    expect(() => assertDashboardMatchesExpected(staleDashboard, dashboard)).toThrow(
+      '$.widgets.1.queries.0.conditions',
+    );
+
+    const monitor = SENTRY_APP_HEALTH_MONITORS[0]!;
+    const detector = appHealthDetectorPayload(monitor, ['workflow-1']);
+    expect(() => assertDetectorMatchesExpected(detector, detector, monitor.name)).not.toThrow();
+
+    const staleDetector = structuredClone(detector);
+    const dataSources = staleDetector.data_sources as Array<Record<string, unknown>>;
+    dataSources[0]!.query = 'environment:production stale:true';
+    expect(() => assertDetectorMatchesExpected(staleDetector, detector, monitor.name)).toThrow(
+      '$.data_sources.0.query',
     );
   });
 });

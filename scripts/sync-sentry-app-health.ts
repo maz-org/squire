@@ -11,6 +11,7 @@ import {
   sentryDashboardUrl,
   sentryDetectorUrl,
 } from './sentry-app-health-config.ts';
+import { pathToFileURL } from 'node:url';
 
 type Mode = 'apply' | 'dry-run' | 'verify';
 
@@ -92,6 +93,196 @@ function stringArrayField(value: unknown, field: string): string[] {
     : [];
 }
 
+function arrayField(value: unknown, ...fields: string[]): unknown[] {
+  if (!isRecord(value)) return [];
+  for (const field of fields) {
+    const candidate = value[field];
+    if (Array.isArray(candidate)) return candidate;
+  }
+  return [];
+}
+
+function recordField(value: unknown, ...fields: string[]): Record<string, unknown> {
+  if (!isRecord(value)) return {};
+  for (const field of fields) {
+    const candidate = value[field];
+    if (isRecord(candidate)) return candidate;
+  }
+  return {};
+}
+
+function numberField(value: unknown, field: string): number | undefined {
+  if (!isRecord(value)) return undefined;
+  const candidate = value[field];
+  if (typeof candidate === 'number' && Number.isFinite(candidate)) return candidate;
+  if (typeof candidate === 'string' && candidate.trim() !== '') {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
+function booleanField(value: unknown, field: string): boolean | undefined {
+  if (!isRecord(value)) return undefined;
+  const candidate = value[field];
+  return typeof candidate === 'boolean' ? candidate : undefined;
+}
+
+function optionalStringField(value: unknown, field: string): string | undefined {
+  if (!isRecord(value)) return undefined;
+  const candidate = value[field];
+  return typeof candidate === 'string' ? candidate : undefined;
+}
+
+function normalizeDashboardQuery(query: unknown): Record<string, unknown> {
+  return {
+    name: optionalStringField(query, 'name'),
+    conditions: optionalStringField(query, 'conditions'),
+    fields: stringArrayField(query, 'fields'),
+    aggregates: stringArrayField(query, 'aggregates'),
+    columns: stringArrayField(query, 'columns'),
+    orderby: optionalStringField(query, 'orderby'),
+    fieldAliases: stringArrayField(query, 'fieldAliases'),
+  };
+}
+
+function normalizeDashboardWidget(widget: unknown): Record<string, unknown> {
+  const limit = numberField(widget, 'limit');
+  return {
+    title: optionalStringField(widget, 'title'),
+    description: optionalStringField(widget, 'description'),
+    displayType: optionalStringField(widget, 'displayType'),
+    interval: optionalStringField(widget, 'interval'),
+    widgetType: optionalStringField(widget, 'widgetType'),
+    ...(limit === undefined ? {} : { limit }),
+    layout: {
+      h: numberField(recordField(widget, 'layout'), 'h'),
+      minH: numberField(recordField(widget, 'layout'), 'minH'),
+      w: numberField(recordField(widget, 'layout'), 'w'),
+      x: numberField(recordField(widget, 'layout'), 'x'),
+      y: numberField(recordField(widget, 'layout'), 'y'),
+    },
+    queries: arrayField(widget, 'queries').map(normalizeDashboardQuery),
+  };
+}
+
+function normalizeDetectorDataSource(dataSource: unknown): Record<string, unknown> {
+  return {
+    queryType: numberField(dataSource, 'queryType'),
+    dataset: optionalStringField(dataSource, 'dataset'),
+    query: optionalStringField(dataSource, 'query'),
+    aggregate: optionalStringField(dataSource, 'aggregate'),
+    timeWindow: numberField(dataSource, 'timeWindow'),
+    environment: optionalStringField(dataSource, 'environment'),
+    eventTypes: stringArrayField(dataSource, 'eventTypes'),
+    extrapolationMode: optionalStringField(dataSource, 'extrapolationMode'),
+  };
+}
+
+function normalizeDetectorCondition(condition: unknown): Record<string, unknown> {
+  return {
+    type: optionalStringField(condition, 'type'),
+    comparison: numberField(condition, 'comparison'),
+    conditionResult: numberField(condition, 'conditionResult'),
+  };
+}
+
+function normalizeDetectorPayload(detector: unknown): Record<string, unknown> {
+  const conditionGroup = recordField(detector, 'condition_group', 'conditionGroup');
+  return {
+    name: optionalStringField(detector, 'name'),
+    type: optionalStringField(detector, 'type'),
+    owner: optionalStringField(detector, 'owner'),
+    description: optionalStringField(detector, 'description'),
+    enabled: booleanField(detector, 'enabled'),
+    data_sources: arrayField(detector, 'data_sources', 'dataSources').map(
+      normalizeDetectorDataSource,
+    ),
+    config: {
+      detectionType: optionalStringField(recordField(detector, 'config'), 'detectionType'),
+      comparisonDelta: recordField(detector, 'config').comparisonDelta ?? null,
+    },
+    condition_group: {
+      logicType: optionalStringField(conditionGroup, 'logicType'),
+      conditions: arrayField(conditionGroup, 'conditions').map(normalizeDetectorCondition),
+    },
+  };
+}
+
+function formatMismatchValue(value: unknown): string {
+  return JSON.stringify(value);
+}
+
+function firstMismatch(actual: unknown, expected: unknown, path: string): string | undefined {
+  if (Array.isArray(expected)) {
+    if (!Array.isArray(actual)) {
+      return `${path}: expected array, got ${formatMismatchValue(actual)}`;
+    }
+    if (actual.length !== expected.length) {
+      return `${path}: expected ${expected.length} entries, got ${actual.length}`;
+    }
+    for (let index = 0; index < expected.length; index += 1) {
+      const mismatch = firstMismatch(actual[index], expected[index], `${path}.${index}`);
+      if (mismatch) return mismatch;
+    }
+    return undefined;
+  }
+
+  if (isRecord(expected)) {
+    if (!isRecord(actual)) {
+      return `${path}: expected object, got ${formatMismatchValue(actual)}`;
+    }
+    for (const key of Object.keys(expected).sort()) {
+      const mismatch = firstMismatch(actual[key], expected[key], `${path}.${key}`);
+      if (mismatch) return mismatch;
+    }
+    return undefined;
+  }
+
+  if (!Object.is(actual, expected)) {
+    return `${path}: expected ${formatMismatchValue(expected)}, got ${formatMismatchValue(actual)}`;
+  }
+  return undefined;
+}
+
+export function assertDashboardMatchesExpected(
+  actual: unknown,
+  expected: ReturnType<typeof appHealthDashboardPayload>,
+  dashboardTitle = SENTRY_APP_HEALTH_DASHBOARD_TITLE,
+): void {
+  const actualShape = {
+    title: optionalStringField(actual, 'title'),
+    widgets: arrayField(actual, 'widgets').map(normalizeDashboardWidget),
+  };
+  const expectedShape = {
+    title: expected.title,
+    widgets: expected.widgets.map(normalizeDashboardWidget),
+  };
+  const mismatch = firstMismatch(actualShape, expectedShape, '$');
+  if (mismatch) {
+    throw new Error(
+      `Sentry dashboard does not match checked-in config (${dashboardTitle}): ${mismatch}`,
+    );
+  }
+}
+
+export function assertDetectorMatchesExpected(
+  actual: unknown,
+  expected: Record<string, unknown>,
+  detectorName: string,
+): void {
+  const mismatch = firstMismatch(
+    normalizeDetectorPayload(actual),
+    normalizeDetectorPayload(expected),
+    '$',
+  );
+  if (mismatch) {
+    throw new Error(
+      `Sentry detector does not match checked-in config (${detectorName}): ${mismatch}`,
+    );
+  }
+}
+
 function findRoutingWorkflowId(workflows: unknown[]): string {
   const workflow = named(workflows, SENTRY_APP_HEALTH_ROUTING_WORKFLOW_NAME);
   const workflowId = stringField(workflow, 'id');
@@ -144,6 +335,10 @@ async function syncDashboard(api: SentryApi, mode: Mode): Promise<SyncResult['da
   if (mode === 'verify') {
     if (!existingId)
       throw new Error(`Missing Sentry dashboard: ${SENTRY_APP_HEALTH_DASHBOARD_TITLE}`);
+    const detail = await api.request<unknown>(
+      `/organizations/${SENTRY_APP_HEALTH_ORG}/dashboards/${existingId}/`,
+    );
+    assertDashboardMatchesExpected(detail, payload);
     return {
       action: 'verified',
       id: existingId,
@@ -201,11 +396,25 @@ async function syncDetectors(api: SentryApi, mode: Mode): Promise<SyncResult['de
     const existingId = stringField(existing, 'id');
     if (mode === 'verify') {
       if (!existingId) throw new Error(`Missing Sentry detector: ${monitor.name}`);
-      if (!stringArrayField(existing, 'workflowIds').includes(routingWorkflowId)) {
+      const detectorDetail = await api.request<unknown>(
+        `/organizations/${SENTRY_APP_HEALTH_ORG}/detectors/${existingId}/`,
+      );
+      const workflowIds = [
+        ...stringArrayField(existing, 'workflowIds'),
+        ...stringArrayField(existing, 'workflow_ids'),
+        ...stringArrayField(detectorDetail, 'workflowIds'),
+        ...stringArrayField(detectorDetail, 'workflow_ids'),
+      ];
+      if (!workflowIds.includes(routingWorkflowId)) {
         throw new Error(
           `Sentry detector is not routed to ${SENTRY_APP_HEALTH_ROUTING_WORKFLOW_NAME}: ${monitor.name}`,
         );
       }
+      assertDetectorMatchesExpected(
+        detectorDetail,
+        appHealthDetectorPayload(monitor, [routingWorkflowId]),
+        monitor.name,
+      );
       results.push({
         action: 'verified',
         id: existingId,
@@ -331,7 +540,10 @@ async function main(): Promise<void> {
   console.log(JSON.stringify({ mode, ...result }, null, 2));
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+const entrypoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : undefined;
+if (import.meta.url === entrypoint) {
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}
