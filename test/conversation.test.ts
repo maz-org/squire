@@ -9,6 +9,7 @@ const {
   mockInitTelemetry,
   mockCaptureTelemetryError,
   mockCaptureTelemetryMessage,
+  mockCaptureTelemetryLog,
   mockAddTelemetryBreadcrumb,
   mockFlushTelemetry,
   mockGetTelemetryClient,
@@ -18,6 +19,7 @@ const {
   mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
   mockCaptureTelemetryError: vi.fn(),
   mockCaptureTelemetryMessage: vi.fn(),
+  mockCaptureTelemetryLog: vi.fn(),
   mockAddTelemetryBreadcrumb: vi.fn(),
   mockFlushTelemetry: vi.fn().mockResolvedValue(true),
   mockGetTelemetryClient: vi.fn(() => undefined),
@@ -68,6 +70,7 @@ vi.mock('../src/telemetry.ts', () => ({
   sentryTraceSampleRateFromEnv: mockSentryTraceSampleRateFromEnv,
   captureTelemetryError: mockCaptureTelemetryError,
   captureTelemetryMessage: mockCaptureTelemetryMessage,
+  captureTelemetryLog: mockCaptureTelemetryLog,
   addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
 }));
@@ -1992,6 +1995,63 @@ describe('conversation web backend', () => {
         isError: false,
       },
     ]);
+
+    const streamMatch = streamUrl!.match(/^\/chat\/([^/]+)\/messages\/([^/]+)\/stream$/);
+    expect(streamMatch).toBeTruthy();
+    const [, conversationId, userMessageId] = streamMatch!;
+    const logMessages = mockCaptureTelemetryLog.mock.calls.map((call) => call[1]);
+    expect(logMessages).toEqual(
+      expect.arrayContaining([
+        'chat.turn.accepted',
+        'chat.stream.started',
+        'chat.generation.started',
+        'chat.stream.first_event',
+        'chat.assistant.persisted',
+        'chat.stream.completed',
+      ]),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.turn.accepted',
+      expect.objectContaining({
+        route: '/chat',
+        conversationId,
+        userMessageId,
+        context: expect.objectContaining({
+          eventType: 'turn.accepted',
+          surface: 'web_chat',
+          status: 'accepted',
+        }),
+      }),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.stream.completed',
+      expect.objectContaining({
+        route: '/chat/:conversationId/messages/:messageId/stream',
+        conversationId,
+        userMessageId,
+        assistantMessageId: expect.any(String),
+        context: expect.objectContaining({
+          eventType: 'stream.completed',
+          surface: 'chat_sse',
+          status: 'ok',
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'stream.completed',
+          surface: 'chat_sse',
+          status: 'ok',
+          stream_event: 'done',
+          duration_ms: expect.any(Number),
+        }),
+      }),
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain(
+      'How does looting work',
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain(
+      'Loot tokens in your hex',
+    );
   });
 
   it('streams richer browser-safe work events without narration payloads', async () => {
@@ -2115,6 +2175,7 @@ describe('conversation web backend', () => {
     expect(firstEvents.map((event) => event.id)).toEqual(['1', '2', '3', '4', '5']);
 
     mockAsk.mockClear();
+    mockCaptureTelemetryLog.mockClear();
     const replayRes = await requestWithAuth(auth, `http://localhost:3000${streamUrl}`, {
       headers: {
         'Last-Event-ID': '2',
@@ -2125,6 +2186,25 @@ describe('conversation web backend', () => {
     expect(mockAsk).not.toHaveBeenCalled();
     expect(replayEvents.map((event) => event.id)).toEqual(['3', '4', '5']);
     expect(replayEvents.map((event) => event.event)).toEqual(['text-delta', 'tool-result', 'done']);
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.stream.replayed',
+      expect.objectContaining({
+        route: '/chat/:conversationId/messages/:messageId/stream',
+        context: expect.objectContaining({
+          eventType: 'stream.replayed',
+          surface: 'chat_sse',
+          status: 'already_done',
+          replay: true,
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'stream.replayed',
+          surface: 'chat_sse',
+          status: 'already_done',
+          replay: true,
+        }),
+      }),
+    );
   });
 
   it('waits for an active stream and replays the terminal event on reconnect', async () => {
@@ -2980,6 +3060,47 @@ describe('conversation web backend', () => {
       }),
     );
     expect(JSON.stringify(telemetryInput)).not.toContain('Partial answer.');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'error',
+      'chat.assistant.persisted',
+      expect.objectContaining({
+        route: '/chat/:conversationId/messages/:messageId/stream',
+        requestId: 'req-chat-sse-1',
+        conversationId,
+        userMessageId,
+        assistantMessageId: assistantMessages.rows[0].id,
+        context: expect.objectContaining({
+          eventType: 'assistant.persisted',
+          surface: 'chat_sse',
+          status: 'error',
+          failureKind: 'assistant_turn',
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'assistant.persisted',
+          surface: 'chat_sse',
+          status: 'error',
+          failure_kind: 'assistant_turn',
+          persisted_assistant_failure: true,
+        }),
+      }),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'error',
+      'chat.stream.completed',
+      expect.objectContaining({
+        route: '/chat/:conversationId/messages/:messageId/stream',
+        requestId: 'req-chat-sse-1',
+        conversationId,
+        userMessageId,
+        assistantMessageId: assistantMessages.rows[0].id,
+        attributes: expect.objectContaining({
+          event_type: 'stream.completed',
+          stream_event: 'error',
+          status: 'error',
+        }),
+      }),
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('Partial answer.');
   });
 });
 

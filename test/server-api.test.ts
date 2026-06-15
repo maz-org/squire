@@ -75,6 +75,7 @@ const {
   mockCaptureTelemetryError,
   mockCaptureTelemetryFeedback,
   mockCaptureTelemetryMessage,
+  mockCaptureTelemetryLog,
   mockAddTelemetryBreadcrumb,
   mockFlushTelemetry,
   mockGetTelemetryClient,
@@ -97,6 +98,7 @@ const {
   mockCaptureTelemetryError: vi.fn(),
   mockCaptureTelemetryFeedback: vi.fn(),
   mockCaptureTelemetryMessage: vi.fn(),
+  mockCaptureTelemetryLog: vi.fn(),
   mockAddTelemetryBreadcrumb: vi.fn(),
   mockFlushTelemetry: vi.fn().mockResolvedValue(true),
   mockGetTelemetryClient: vi.fn(() => undefined),
@@ -136,6 +138,7 @@ vi.mock('../src/telemetry.ts', () => ({
   captureTelemetryError: mockCaptureTelemetryError,
   captureTelemetryFeedback: mockCaptureTelemetryFeedback,
   captureTelemetryMessage: mockCaptureTelemetryMessage,
+  captureTelemetryLog: mockCaptureTelemetryLog,
   addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
 }));
@@ -994,6 +997,69 @@ describe('POST /api/ask', () => {
     );
   });
 
+  it('logs sanitized REST ask lifecycle events', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: 'Loot answer with alice@example.com hidden.' });
+      return 'Loot answer with alice@example.com hidden.';
+    });
+
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Request-ID': 'req-api-ask-success-1',
+        ...(await auth()),
+      },
+      body: JSON.stringify({ question: 'What is loot for alice@example.com?' }),
+    });
+    expect(res.status).toBe(200);
+    await res.text();
+
+    const messages = mockCaptureTelemetryLog.mock.calls.map((call) => call[1]);
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        'chat.api_ask.accepted',
+        'chat.generation.started',
+        'chat.stream.first_event',
+        'chat.api_ask.completed',
+      ]),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.api_ask.completed',
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-success-1',
+        context: expect.objectContaining({
+          eventType: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'ok',
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'ok',
+          duration_ms: expect.any(Number),
+        }),
+      }),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.stream.first_event',
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-success-1',
+        attributes: expect.objectContaining({
+          event_type: 'stream.first_event',
+          stream_event: 'text',
+        }),
+      }),
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('alice@example.com');
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('What is loot');
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('Loot answer');
+  });
+
   // SQR-20 / ADR 0021: identity comes from the verified bearer token, never
   // the request body, and client-credentials tokens get no user identity.
   it('derives ask identity from a user-bound token and ignores body userId', async () => {
@@ -1484,6 +1550,28 @@ describe('POST /api/ask', () => {
       }),
     );
     expect(JSON.stringify(telemetryInput)).not.toContain('test');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'error',
+      'chat.api_ask.completed',
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-failure-1',
+        context: expect.objectContaining({
+          eventType: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'error',
+          failureKind: 'api_ask',
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'error',
+          failure_kind: 'api_ask',
+          duration_ms: expect.any(Number),
+        }),
+      }),
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('Claude API error');
   });
 });
 
