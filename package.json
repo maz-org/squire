@@ -49,6 +49,7 @@
     "agent:check": "node scripts/check-agent-parity.ts",
     "sentry:test-event": "node scripts/send-sentry-safe-test-event.ts",
     "sentry:app-health": "node scripts/sync-sentry-app-health.ts",
+    "sentry:usage-guardrails": "node scripts/print-sentry-usage-guardrails.ts",
     "security:alerts:dry-run": "SECURITY_ALERT_DRY_RUN=1 node scripts/sync-security-alerts-to-linear.ts",
     "security:alerts:validate-config": "node scripts/sync-security-alerts-to-linear.ts --validate-config",
     "lint": "eslint src/ test/ scripts/",

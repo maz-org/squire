@@ -12,6 +12,11 @@ flyctl extensions sentry dashboard -a maz-squire
 
 Use the checked-in app-health inventory for dashboards and log/trace monitors:
 
+Usage and spend checks for broad Sentry Logs and app traces live in
+[sentry-usage-guardrails.md](sentry-usage-guardrails.md). This alert catalog
+tracks app health and alert routing; the usage runbook tracks quotas, PAYG
+budget, billed log GB, accepted spans, and trace sampling.
+
 ```bash
 npm run sentry:app-health -- --dry-run
 npm run sentry:app-health -- --apply
