@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.1.24] - 2026-06-14
+
+### Added
+
+- Added same-origin browser telemetry for frontend exceptions, unhandled rejections, HTMX transport failures, and EventSource stream failures without adding a bundler or exposing a browser Sentry DSN.
+- Added browser telemetry tests covering CSP-compatible config, strict server-side payload allowlisting, safe route/source stripping, viewport/user-agent context, and transcript/prompt exclusion.
+
+## [0.1.23] - 2026-06-14
+
+### Added
+
+- Added telemetry capture and flush handling for Supercronic cleanup jobs, Fly release migrations, and the live GH2e migration script.
+- Added cron script tests proving successful runs stay quiet while failed expired-session sweeps capture, flush, preserve stderr, set exit code 1, and close the DB pool.
+
+## [0.1.22] - 2026-06-14
+
+### Added
+
+- Mirrored important structured security and app logs into Sentry as safe breadcrumbs or messages while preserving existing JSON stdout output.
+- Added security-log telemetry tests covering event allowlisting, field allowlisting, route stripping, and sanitized error type/code diagnostics.
+
+## [0.1.21] - 2026-06-14
+
+### Added
+
+- Captured web-chat, SSE, and `/api/ask` failures in Sentry with safe request, route, user, conversation, message, game, and LangSmith thread-id metadata.
+- Added chat telemetry tests proving generic assistant failure rows and SSE error events are unchanged while raw prompts, partial answers, and provider error text stay out of Sentry inputs.
+
+## [0.1.20] - 2026-06-14
+
+### Added
+
+- Initialized server-side Sentry through the Squire telemetry boundary after existing LangSmith/OpenTelemetry instrumentation.
+- Captured unhandled Hono server errors and startup failures with safe request, route, status, user-id, and release metadata while preserving generic user-facing failures.
+
+## [0.1.19] - 2026-06-14
+
+### Added
+
+- Added the Squire telemetry boundary for Sentry initialization, capture, breadcrumbs, flushing, diagnostic metadata, safe tags, and recursive redaction.
+- Added telemetry unit tests for local no-DSN no-ops, stable diagnostic fields, safe tag allowlisting, and protected-field redaction.
+
 ## [0.1.18] - 2026-06-14
 
 ### Added

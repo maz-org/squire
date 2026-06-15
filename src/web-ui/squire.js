@@ -18,6 +18,377 @@ var defaultActiveGame = FALLBACK_DEFAULT_ACTIVE_GAME;
 var supportedActiveGames = fallbackSupportedActiveGames;
 var activeGame = defaultActiveGame;
 var activeGameInitialized = false;
+var browserTelemetryConfig = null;
+var lastBrowserTelemetryEventId = null;
+
+var MASKED_REPLAY_MASK_SELECTORS = [
+  '.squire-transcript',
+  '.squire-question',
+  '.squire-answer',
+  '.squire-answer__content',
+  '.squire-answer__artifacts',
+  '.squire-answer-work',
+  '.squire-input-dock',
+  '.squire-input-dock textarea',
+  '.squire-history-row',
+  '.squire-campaign-strip',
+  '.squire-campaign-dashboard',
+  '.squire-character-sheet',
+];
+var MASKED_REPLAY_BLOCK_SELECTORS = [
+  '.squire-account-menu',
+  '.squire-account-menu__panel',
+  '.squire-account-menu__avatar',
+];
+var ALLOWED_BROWSER_FEEDBACK_KINDS = {
+  wrong_answer: true,
+  stream_failed: true,
+  ui_broken: true,
+  source_problem: true,
+  other: true,
+};
+
+function safePathOnly(raw) {
+  if (typeof raw !== 'string') return null;
+  var value = raw.trim();
+  if (!value) return null;
+  var withoutHash = value.split('#')[0];
+  var withoutQuery = withoutHash.split('?')[0];
+  if (withoutQuery.charAt(0) === '/') return withoutQuery || '/';
+
+  var absoluteMatch = withoutQuery.match(/^https?:\/\/[^/]+(\/.*)?$/i);
+  if (absoluteMatch) return absoluteMatch[1] || '/';
+  return null;
+}
+
+function readBrowserTelemetryConfig() {
+  if (browserTelemetryConfig) return browserTelemetryConfig;
+
+  browserTelemetryConfig = { enabled: false, endpoint: null };
+  if (!document.querySelector) return browserTelemetryConfig;
+
+  var meta = document.querySelector('meta[name="squire-browser-telemetry"]');
+  var content = meta && meta.getAttribute ? meta.getAttribute('content') : null;
+  if (!content) return browserTelemetryConfig;
+
+  try {
+    var parsed = JSON.parse(content);
+    if (
+      parsed &&
+      parsed.enabled === true &&
+      typeof parsed.endpoint === 'string' &&
+      parsed.endpoint.charAt(0) === '/'
+    ) {
+      browserTelemetryConfig = { enabled: true, endpoint: parsed.endpoint };
+    }
+  } catch {
+    browserTelemetryConfig = { enabled: false, endpoint: null };
+  }
+
+  return browserTelemetryConfig;
+}
+
+function currentRoutePath() {
+  var pathname =
+    window.location && typeof window.location.pathname === 'string'
+      ? window.location.pathname
+      : '/';
+  return safePathOnly(pathname) || '/';
+}
+
+function conversationIdFromPath(path) {
+  var match = path && path.match(/^\/chat\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
+function streamIdsFromUrl(streamUrl) {
+  var path = safePathOnly(streamUrl);
+  var match = path && path.match(/^\/chat\/([^/]+)\/messages\/([^/]+)\/stream$/);
+  return match ? { conversationId: match[1], userMessageId: match[2] } : {};
+}
+
+function telemetryToken(value, fallback) {
+  if (typeof value !== 'string') return fallback;
+  var trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return trimmed.replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 128) || fallback;
+}
+
+function errorNameFromValue(value, fallback) {
+  if (value && typeof value === 'object' && typeof value.name === 'string') {
+    return telemetryToken(value.name, fallback);
+  }
+  return fallback;
+}
+
+function reasonTypeFromValue(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'Array';
+  if (value && typeof value === 'object' && typeof value.name === 'string') {
+    return telemetryToken(value.name, 'object');
+  }
+  return typeof value;
+}
+
+function positiveTelemetryNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : null;
+}
+
+function viewportTelemetry() {
+  var width = positiveTelemetryNumber(window.innerWidth);
+  var height = positiveTelemetryNumber(window.innerHeight);
+  return width && height ? { width: width, height: height } : null;
+}
+
+function userAgentTelemetry() {
+  var navigatorLike = window.navigator;
+  if (!navigatorLike || typeof navigatorLike.userAgent !== 'string') return null;
+  return navigatorLike.userAgent.slice(0, 512);
+}
+
+function boundedSelectorCount(selector) {
+  if (!document.querySelectorAll) return 0;
+  try {
+    var nodes = document.querySelectorAll(selector);
+    return Math.min(1000, positiveTelemetryNumber(nodes.length) || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function inputValueLengthBucket() {
+  var input = document.querySelector ? document.querySelector('.squire-input-dock textarea') : null;
+  var value = input && typeof input.value === 'string' ? input.value : '';
+  var length = value.length;
+  if (length === 0) return '0';
+  if (length <= 80) return '1-80';
+  if (length <= 240) return '81-240';
+  return '241+';
+}
+
+function activeHistoryStatus() {
+  var row = document.querySelector ? document.querySelector('.squire-history-row.is-active') : null;
+  var value = row && row.getAttribute ? row.getAttribute('data-history-status') : null;
+  if (value === 'idle' || value === 'running' || value === 'error') return value;
+  return 'unknown';
+}
+
+function maskedReplaySnapshotId() {
+  var cryptoLike = window.crypto;
+  if (cryptoLike && typeof cryptoLike.randomUUID === 'function') {
+    return telemetryToken(cryptoLike.randomUUID(), 'masked-replay-snapshot');
+  }
+  return 'masked-replay-snapshot';
+}
+
+function buildMaskedReplaySnapshot() {
+  // This is intentionally structural, not DOM/text capture. Sentry gets enough
+  // shape to debug layout and stream state without transcript, prompt, or input text.
+  return {
+    version: 1,
+    textMasked: true,
+    attributesMasked: true,
+    snapshotId: maskedReplaySnapshotId(),
+    maskSelectors: MASKED_REPLAY_MASK_SELECTORS.slice(),
+    blockSelectors: MASKED_REPLAY_BLOCK_SELECTORS.slice(),
+    turns: {
+      userTurnCount: boundedSelectorCount('.squire-question'),
+      assistantTurnCount: boundedSelectorCount('.squire-answer'),
+      pendingTurnCount: boundedSelectorCount('.squire-answer--pending'),
+      workLogCount: boundedSelectorCount('.squire-answer-work'),
+      errorBannerCount: boundedSelectorCount('.squire-banner--error'),
+    },
+    input: {
+      present: Boolean(
+        document.querySelector && document.querySelector('.squire-input-dock textarea'),
+      ),
+      valueLengthBucket: inputValueLengthBucket(),
+    },
+    history: {
+      rowCount: boundedSelectorCount('.squire-history-row'),
+      activeStatus: activeHistoryStatus(),
+    },
+  };
+}
+
+function sentryEventId(value) {
+  if (typeof value !== 'string') return null;
+  var trimmed = value.trim();
+  return /^[a-f0-9]{32}$/i.test(trimmed) ? trimmed : null;
+}
+
+function browserFeedbackKind(value) {
+  if (
+    typeof value === 'string' &&
+    Object.prototype.hasOwnProperty.call(ALLOWED_BROWSER_FEEDBACK_KINDS, value)
+  ) {
+    return value;
+  }
+  return 'other';
+}
+
+function rememberBrowserTelemetryEventId(response, rememberEventId) {
+  if (!response || typeof response.json !== 'function') return null;
+  try {
+    var parsed = response.json();
+    if (!parsed || typeof parsed.then !== 'function') return null;
+    return parsed
+      .then(function (body) {
+        var eventId = sentryEventId(body && body.eventId);
+        if (eventId && rememberEventId) lastBrowserTelemetryEventId = eventId;
+        return eventId;
+      })
+      .catch(function () {
+        return null;
+      });
+  } catch {
+    return null;
+  }
+}
+
+function assignTelemetryValue(target, key, value) {
+  if (typeof value === 'string') {
+    var trimmed = value.trim();
+    if (trimmed) target[key] = trimmed;
+    return;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    target[key] = value;
+    return;
+  }
+  if (value && typeof value === 'object') {
+    target[key] = value;
+  }
+}
+
+function sendBrowserTelemetry(type, details) {
+  var config = readBrowserTelemetryConfig();
+  if (!config.enabled || !config.endpoint) return;
+
+  var route = currentRoutePath();
+  var payload = {
+    type: type,
+    route: route,
+  };
+  var routeConversationId = conversationIdFromPath(route);
+  if (routeConversationId) payload.conversationId = routeConversationId;
+
+  if (details && details.streamUrl) {
+    var streamIds = streamIdsFromUrl(details.streamUrl);
+    if (streamIds.conversationId) payload.conversationId = streamIds.conversationId;
+    if (streamIds.userMessageId) payload.userMessageId = streamIds.userMessageId;
+  }
+
+  var viewport = viewportTelemetry();
+  if (viewport) payload.viewport = viewport;
+  var userAgent = userAgentTelemetry();
+  if (userAgent) payload.userAgent = userAgent;
+
+  if (details) {
+    assignTelemetryValue(payload, 'errorName', details.errorName);
+    assignTelemetryValue(payload, 'reasonType', details.reasonType);
+    assignTelemetryValue(payload, 'source', details.source);
+    assignTelemetryValue(payload, 'line', details.line);
+    assignTelemetryValue(payload, 'column', details.column);
+    assignTelemetryValue(payload, 'streamErrorKind', details.streamErrorKind);
+    assignTelemetryValue(payload, 'streamReadyState', details.streamReadyState);
+    assignTelemetryValue(payload, 'htmxEvent', details.htmxEvent);
+    assignTelemetryValue(payload, 'htmxStatus', details.htmxStatus);
+    assignTelemetryValue(payload, 'feedbackKind', details.feedbackKind);
+    assignTelemetryValue(payload, 'associatedEventId', details.associatedEventId);
+  }
+  if (!details || details.includeMaskedReplay !== false) {
+    payload.maskedReplay = buildMaskedReplaySnapshot();
+  }
+
+  var fetchFn = window.fetch;
+  if (typeof fetchFn !== 'function') return;
+
+  try {
+    var rememberEventId = !details || details.rememberEventId !== false;
+    var result = fetchFn.call(window, config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+    if (result && typeof result.then === 'function') {
+      var handled = result.then(function (response) {
+        return rememberBrowserTelemetryEventId(response, rememberEventId);
+      });
+      if (handled && typeof handled.catch === 'function') handled.catch(function () {});
+      return handled;
+    }
+    if (result && typeof result.catch === 'function') result.catch(function () {});
+    return result;
+  } catch {
+    // Browser telemetry must never affect the app UI.
+  }
+}
+
+function reportBrowserFeedback(details) {
+  var eventId =
+    sentryEventId(details && details.eventId) ||
+    sentryEventId(details && details.associatedEventId) ||
+    lastBrowserTelemetryEventId;
+  var payload = {
+    feedbackKind: browserFeedbackKind(details && details.feedbackKind),
+    rememberEventId: false,
+  };
+  if (eventId) payload.associatedEventId = eventId;
+  if (details && details.streamUrl) payload.streamUrl = details.streamUrl;
+  sendBrowserTelemetry('browser_feedback', payload);
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('error', function (event) {
+    var line = positiveTelemetryNumber(event && event.lineno);
+    var column = positiveTelemetryNumber(event && event.colno);
+    sendBrowserTelemetry('browser_error', {
+      errorName: errorNameFromValue(event && event.error, 'ErrorEvent'),
+      source: safePathOnly(event && event.filename),
+      line: line,
+      column: column,
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function (event) {
+    var reason = event && event.reason;
+    sendBrowserTelemetry('browser_unhandledrejection', {
+      errorName: errorNameFromValue(reason, 'UnhandledRejection'),
+      reasonType: reasonTypeFromValue(reason),
+    });
+  });
+}
+
+function reportHtmxTransportError(eventName, event) {
+  var detail = (event && event.detail) || {};
+  var xhr = detail.xhr || {};
+  var pathInfo = detail.pathInfo || {};
+  var status = positiveTelemetryNumber(xhr.status);
+  sendBrowserTelemetry('browser_htmx_error', {
+    htmxEvent: eventName,
+    htmxStatus: status,
+    source: safePathOnly(xhr.responseURL || pathInfo.requestPath),
+  });
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('htmx:sendError', function (event) {
+    reportHtmxTransportError('htmx:sendError', event);
+  });
+  document.addEventListener('htmx:responseError', function (event) {
+    reportHtmxTransportError('htmx:responseError', event);
+  });
+  document.addEventListener('htmx:timeout', function (event) {
+    reportHtmxTransportError('htmx:timeout', event);
+  });
+  document.addEventListener('squire:browser-feedback', function (event) {
+    reportBrowserFeedback(event && event.detail);
+  });
+}
 
 function isSupportedActiveGame(value) {
   return (
@@ -2225,6 +2596,11 @@ function attachPendingAnswerStream(answerEl) {
     if (event.data) {
       payload = JSON.parse(event.data);
     }
+    sendBrowserTelemetry('browser_stream_error', {
+      streamUrl: streamUrl,
+      streamErrorKind: payload.kind === 'session' ? 'session' : 'transport',
+      streamReadyState: positiveTelemetryNumber(source.readyState),
+    });
     renderPendingError(
       answerEl,
       payload.kind === 'session' ? 'SESSION ENDED' : 'TROUBLE CONNECTING',

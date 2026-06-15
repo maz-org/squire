@@ -126,6 +126,18 @@ interface DocumentOptions {
   csrfToken?: string;
 }
 
+const BROWSER_TELEMETRY_ENDPOINT = '/api/browser-telemetry';
+
+function renderBrowserTelemetryConfig(): HtmlEscapedString {
+  const enabled = Boolean(process.env.SENTRY_DSN?.trim());
+  const config = JSON.stringify({
+    enabled,
+    endpoint: BROWSER_TELEMETRY_ENDPOINT,
+  });
+
+  return html`<meta name="squire-browser-telemetry" content="${config}" />` as HtmlEscapedString;
+}
+
 function getDisplayName(session: Session): string {
   return session.user.name?.trim() || session.user.email;
 }
@@ -384,6 +396,7 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="htmx-config" content='{"includeIndicatorStyles":false}' />
+        ${renderBrowserTelemetryConfig()}
         <title>Squire</title>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         ${options.csrfToken

@@ -8,9 +8,11 @@
 import 'dotenv/config';
 
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 import { getDb } from '../src/db.ts';
 import { LiveCaptureSchema, migrateLiveCampaign } from '../src/campaign/live-migration.ts';
+import { runScriptWithTelemetry } from '../src/script-telemetry.ts';
 
 const DEFAULT_OWNER_EMAIL = 'bcm@maz.org';
 
@@ -40,7 +42,16 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+export async function runLiveGh2eMigrationCli(): Promise<void> {
+  await runScriptWithTelemetry(main, {
+    scriptName: 'migrate-live-gh2e',
+    scriptKind: 'manual_migration',
+  });
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runLiveGh2eMigrationCli().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

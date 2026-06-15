@@ -12,6 +12,13 @@ import type {
 } from '../db/repositories/types.ts';
 import { SUPPORTED_GAMES } from '../game.ts';
 import { retrievalSourceLabelToFooterLabel } from '../web-ui/consulted-footer.ts';
+import { captureChatFailureTelemetry, type ChatTelemetrySurface } from './chat-telemetry.ts';
+import {
+  recordChatLifecycleEvent,
+  setChatSpanAttributes,
+  withChatLifecycleSpan,
+  type ChatLifecycleInput,
+} from './chat-observability.ts';
 
 const HISTORY_LIMIT = 20;
 const RETRY_DELAY_MS = 200;
@@ -41,6 +48,11 @@ export interface ConversationHistoryViewModel {
   rows: ConversationHistoryViewRow[];
   nextCursor: string | null;
   query?: string;
+}
+
+interface ConversationTelemetryOptions {
+  route?: string;
+  surface?: ChatTelemetrySurface;
 }
 
 const DEFAULT_HISTORY_LIMIT = 30;
@@ -290,6 +302,7 @@ async function persistAssistantOutcome(input: {
   requestId?: string;
   onEvent?: EmitFn;
   failureMessage?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<ConversationMessage> {
   const priorMessages = await MessageRepository.listByConversationId(input.conversationId, {
     includeErrors: false,
@@ -303,6 +316,14 @@ async function persistAssistantOutcome(input: {
       activeCampaignId,
     ),
   );
+  const telemetryBase: ChatLifecycleInput = {
+    route: input.telemetry?.route,
+    surface: input.telemetry?.surface ?? (input.onEvent ? 'chat_sse' : 'web_chat'),
+    requestId: input.requestId,
+    conversationId: input.conversationId,
+    userMessageId: input.currentUserMessageId,
+    game: input.game ?? currentMessage?.game ?? null,
+  };
 
   // SQR-98: capture consulted tool names for every write path, not just the
   // SSE one. The plain-form POST fallback (no HTMX / no live stream) still
@@ -336,81 +357,128 @@ async function persistAssistantOutcome(input: {
     if (input.onEvent) await input.onEvent(event, data);
   };
 
-  return getDb('server').db.transaction(async (tx) => {
-    await tx.execute(sql`
-      select pg_advisory_xact_lock(
-        hashtext(${input.conversationId}),
-        hashtext(${input.currentUserMessageId})
-      )
-    `);
+  return withChatLifecycleSpan('squire.chat.assistant_turn', telemetryBase, async (span) =>
+    getDb('server').db.transaction(async (tx) => {
+      await tx.execute(sql`
+        select pg_advisory_xact_lock(
+          hashtext(${input.conversationId}),
+          hashtext(${input.currentUserMessageId})
+        )
+      `);
 
-    const existingAssistantMessage = await MessageRepository.findAssistantResponse({
-      conversationId: input.conversationId,
-      responseToMessageId: input.currentUserMessageId,
-    });
-    if (existingAssistantMessage) {
-      return existingAssistantMessage;
-    }
+      const existingAssistantMessage = await MessageRepository.findAssistantResponse({
+        conversationId: input.conversationId,
+        responseToMessageId: input.currentUserMessageId,
+      });
+      if (existingAssistantMessage) {
+        const existingTelemetry = {
+          ...telemetryBase,
+          assistantMessageId: existingAssistantMessage.id,
+          status: 'already_done' as const,
+          replay: true,
+        };
+        setChatSpanAttributes(span, existingTelemetry);
+        recordChatLifecycleEvent('assistant.persisted', existingTelemetry);
+        return existingAssistantMessage;
+      }
 
-    try {
-      const answer = await generateAssistantReply(
-        input.question,
-        history,
-        input.userId,
-        {
+      try {
+        recordChatLifecycleEvent('generation.started', {
+          ...telemetryBase,
+          status: 'started',
+          retry: input.onEvent === undefined,
+        });
+        const answer = await generateAssistantReply(
+          input.question,
+          history,
+          input.userId,
+          {
+            requestId: input.requestId,
+            conversationId: input.conversationId,
+            userMessageId: input.currentUserMessageId,
+          },
+          captureOnEvent,
+          {
+            // Retry transient transport errors ONLY on the non-streaming path.
+            // On SSE the client has already seen a partial stream; silently
+            // restarting would mix two runs into one DOM update.
+            retryOnTransportError: input.onEvent === undefined,
+            game: input.game,
+            campaignId: activeCampaignId,
+            // Failed attempt may have pushed tool names before throwing — reset
+            // so the persisted sources match the successful attempt only.
+            onRetry: () => {
+              capturedSources.length = 0;
+            },
+          },
+        );
+        const assistantMessage = await MessageRepository.createResponse(tx, {
+          conversationId: input.conversationId,
+          role: 'assistant',
+          content: answer,
+          responseToMessageId: input.currentUserMessageId,
+          // Null when the agent used no source tools. Pre-SQR-98 rows and
+          // tool-free answers both render with footer hidden — indistinguishable
+          // at the render layer, which is correct: both states mean "no
+          // provenance to show."
+          consultedSources: capturedSources.length > 0 ? capturedSources : null,
+        });
+        await ConversationRepository.touchLastMessageAt(
+          tx,
+          input.conversationId,
+          assistantMessage.createdAt,
+        );
+        const persistedTelemetry = {
+          ...telemetryBase,
+          assistantMessageId: assistantMessage.id,
+          status: 'ok' as const,
+        };
+        setChatSpanAttributes(span, persistedTelemetry);
+        recordChatLifecycleEvent('assistant.persisted', persistedTelemetry);
+        return assistantMessage;
+      } catch (err) {
+        console.error('[conversation] ask failed:', err instanceof Error ? err.message : err);
+        const failureMessage = await MessageRepository.createResponse(tx, {
+          conversationId: input.conversationId,
+          role: 'assistant',
+          content: input.failureMessage ?? GENERIC_FAILURE_MESSAGE,
+          isError: true,
+          responseToMessageId: input.currentUserMessageId,
+        });
+        await ConversationRepository.touchLastMessageAt(
+          tx,
+          input.conversationId,
+          failureMessage.createdAt,
+        );
+        const failureTelemetry = {
+          ...telemetryBase,
+          assistantMessageId: failureMessage.id,
+          status: 'error' as const,
+          failureKind: 'assistant_turn',
+          attributes: {
+            persisted_assistant_failure: true,
+          },
+        };
+        setChatSpanAttributes(span, failureTelemetry);
+        recordChatLifecycleEvent('assistant.persisted', failureTelemetry, 'error');
+        captureChatFailureTelemetry(err, {
+          route: input.telemetry?.route,
+          surface: input.telemetry?.surface ?? (input.onEvent ? 'chat_sse' : 'web_chat'),
+          failureKind: 'assistant_turn',
           requestId: input.requestId,
           conversationId: input.conversationId,
           userMessageId: input.currentUserMessageId,
-        },
-        captureOnEvent,
-        {
-          // Retry transient transport errors ONLY on the non-streaming path.
-          // On SSE the client has already seen a partial stream; silently
-          // restarting would mix two runs into one DOM update.
-          retryOnTransportError: input.onEvent === undefined,
-          game: input.game,
-          campaignId: activeCampaignId,
-          // Failed attempt may have pushed tool names before throwing — reset
-          // so the persisted sources match the successful attempt only.
-          onRetry: () => {
-            capturedSources.length = 0;
+          assistantMessageId: failureMessage.id,
+          user: { id: input.userId },
+          game: input.game ?? currentMessage?.game ?? null,
+          context: {
+            persistedAssistantFailure: true,
           },
-        },
-      );
-      const assistantMessage = await MessageRepository.createResponse(tx, {
-        conversationId: input.conversationId,
-        role: 'assistant',
-        content: answer,
-        responseToMessageId: input.currentUserMessageId,
-        // Null when the agent used no source tools. Pre-SQR-98 rows and
-        // tool-free answers both render with footer hidden — indistinguishable
-        // at the render layer, which is correct: both states mean "no
-        // provenance to show."
-        consultedSources: capturedSources.length > 0 ? capturedSources : null,
-      });
-      await ConversationRepository.touchLastMessageAt(
-        tx,
-        input.conversationId,
-        assistantMessage.createdAt,
-      );
-      return assistantMessage;
-    } catch (err) {
-      console.error('[conversation] ask failed:', err instanceof Error ? err.message : err);
-      const failureMessage = await MessageRepository.createResponse(tx, {
-        conversationId: input.conversationId,
-        role: 'assistant',
-        content: input.failureMessage ?? GENERIC_FAILURE_MESSAGE,
-        isError: true,
-        responseToMessageId: input.currentUserMessageId,
-      });
-      await ConversationRepository.touchLastMessageAt(
-        tx,
-        input.conversationId,
-        failureMessage.createdAt,
-      );
-      return failureMessage;
-    }
-  });
+        });
+        return failureMessage;
+      }
+    }),
+  );
 }
 
 async function findRepairableInitialUserMessage(
@@ -431,6 +499,8 @@ async function createConversationTurn(input: {
   idempotencyKey: string;
   game?: string;
   campaignId?: string | null;
+  requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<PendingConversationTurn> {
   const result = await getDb('server').db.transaction(async (tx) => {
     const existingOrCreated = await ConversationRepository.getOrCreateByIdempotencyKey(tx, {
@@ -464,12 +534,36 @@ async function createConversationTurn(input: {
   });
 
   if (result.currentUserMessage) {
+    recordChatLifecycleEvent('turn.accepted', {
+      route: input.telemetry?.route,
+      surface: input.telemetry?.surface ?? 'web_chat',
+      requestId: input.requestId,
+      conversationId: result.conversation.id,
+      userMessageId: result.currentUserMessage.id,
+      game: result.currentUserMessage.game ?? input.game ?? null,
+      status: 'accepted',
+      retry: false,
+    });
     return result;
+  }
+
+  const repairedMessage = await findRepairableInitialUserMessage(result.conversation.id);
+  if (repairedMessage) {
+    recordChatLifecycleEvent('turn.accepted', {
+      route: input.telemetry?.route,
+      surface: input.telemetry?.surface ?? 'web_chat',
+      requestId: input.requestId,
+      conversationId: result.conversation.id,
+      userMessageId: repairedMessage.id,
+      game: repairedMessage.game ?? input.game ?? null,
+      status: 'replayed',
+      replay: true,
+    });
   }
 
   return {
     conversation: result.conversation,
-    currentUserMessage: await findRepairableInitialUserMessage(result.conversation.id),
+    currentUserMessage: repairedMessage,
   };
 }
 
@@ -479,6 +573,8 @@ export async function createPendingConversation(input: {
   idempotencyKey: string;
   game?: string;
   campaignId?: string | null;
+  requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<PendingConversationTurn> {
   return createConversationTurn(input);
 }
@@ -489,6 +585,8 @@ export async function createPendingFollowUp(input: {
   question: string;
   game?: string;
   campaignId?: string | null;
+  requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<PendingConversationTurn | null> {
   const existingConversation = await ConversationRepository.findOwnedById(
     input.userId,
@@ -512,6 +610,17 @@ export async function createPendingFollowUp(input: {
     return userMessage;
   });
 
+  recordChatLifecycleEvent('turn.accepted', {
+    route: input.telemetry?.route,
+    surface: input.telemetry?.surface ?? 'web_chat',
+    requestId: input.requestId,
+    conversationId: input.conversationId,
+    userMessageId: currentUserMessage.id,
+    game: currentUserMessage.game ?? input.game ?? null,
+    status: 'accepted',
+    retry: false,
+  });
+
   return {
     conversation: existingConversation,
     currentUserMessage,
@@ -528,6 +637,7 @@ export async function streamAssistantTurn(input: {
   requestId?: string;
   onEvent: EmitFn;
   failureMessage?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<ConversationMessage> {
   return persistAssistantOutcome({
     conversationId: input.conversationId,
@@ -539,6 +649,7 @@ export async function streamAssistantTurn(input: {
     requestId: input.requestId,
     onEvent: input.onEvent,
     failureMessage: input.failureMessage,
+    telemetry: input.telemetry,
   });
 }
 
@@ -586,6 +697,7 @@ export async function startConversation(input: {
   game?: string;
   campaignId?: string | null;
   requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<Conversation> {
   const result = await createConversationTurn(input);
   if (result.currentUserMessage) {
@@ -596,6 +708,7 @@ export async function startConversation(input: {
       currentUserMessageId: result.currentUserMessage.id,
       game: result.currentUserMessage.game ?? input.game,
       requestId: input.requestId,
+      telemetry: input.telemetry,
     });
   }
 
@@ -612,6 +725,7 @@ export async function appendMessage(input: {
   game?: string;
   campaignId?: string | null;
   requestId?: string;
+  telemetry?: ConversationTelemetryOptions;
 }): Promise<Conversation | null> {
   const result = await createPendingFollowUp(input);
   if (!result?.currentUserMessage) return null;
@@ -623,6 +737,7 @@ export async function appendMessage(input: {
     currentUserMessageId: result.currentUserMessage.id,
     game: result.currentUserMessage.game ?? input.game,
     requestId: input.requestId,
+    telemetry: input.telemetry,
   });
 
   return ConversationRepository.findOwnedById(input.userId, input.conversationId);

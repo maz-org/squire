@@ -275,10 +275,23 @@ function createFakeClock(startMs = 0) {
   };
 }
 
-function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeClock> } = {}) {
+function bootPendingTranscript(
+  options: {
+    browserTelemetry?: boolean;
+    clock?: ReturnType<typeof createFakeClock>;
+    streamUrl?: string;
+  } = {},
+) {
   const listeners = new Map<string, Array<(event?: unknown) => void>>();
   const storedValues = new Map<string, string>();
+  const telemetryPayloads: Array<{ url: string; body: unknown }> = [];
   const clock = options.clock ?? createFakeClock();
+  const telemetryMeta = {
+    getAttribute(name: string) {
+      if (name !== 'content') return null;
+      return JSON.stringify({ enabled: true, endpoint: '/api/browser-telemetry' });
+    },
+  };
 
   // SQR-108: setFormPendingState writes to form.dataset and reads back
   // form.querySelector('input[name="question"]'/'button[type="submit"]'),
@@ -325,7 +338,7 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
   answerEl.classList.add('squire-answer--pending');
   // SQR-108 / ADR 0012: stream URL lives on the pending answer article,
   // not on the (now-deleted) `.squire-transcript--pending` wrapper.
-  answerEl.setAttribute('data-stream-url', '/chat/stream');
+  answerEl.setAttribute('data-stream-url', options.streamUrl ?? '/chat/stream');
   answerEl.appendChild(workEl);
   answerEl.appendChild(artifactsEl);
   answerEl.appendChild(contentEl);
@@ -353,6 +366,9 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
       return new FakeElement(tagName);
     },
     querySelector(selector: string) {
+      if (selector === 'meta[name="squire-browser-telemetry"]' && options.browserTelemetry) {
+        return telemetryMeta;
+      }
       if (selector === '.squire-input-dock') return form;
       return null;
     },
@@ -406,6 +422,13 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
         },
       },
       setInterval: clock.setInterval,
+      fetch(url: string, init?: { body?: unknown }) {
+        telemetryPayloads.push({
+          url,
+          body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
+        });
+        return Promise.resolve({ ok: true });
+      },
     },
   });
 
@@ -428,9 +451,97 @@ function bootPendingTranscript(options: { clock?: ReturnType<typeof createFakeCl
     skeletonEl,
     source,
     storedValues,
+    telemetryPayloads,
     workEl,
     workRowsEl,
     workStatusEl,
+  };
+}
+
+function fakeNodeList(count: number) {
+  return Array.from({ length: count }, () => ({}));
+}
+
+function bootBrowserTelemetryHarness(
+  pathname = '/chat/conv-1',
+  options: {
+    responseEventIds?: string[];
+    selectorCounts?: Record<string, number>;
+    inputValue?: string;
+    activeHistoryStatus?: string;
+  } = {},
+) {
+  const docListeners = new Map<string, Array<(event?: unknown) => void>>();
+  const windowListeners = new Map<string, Array<(event?: unknown) => void>>();
+  const telemetryPayloads: Array<{ url: string; body: unknown }> = [];
+  const responseEventIds = [...(options.responseEventIds ?? [])];
+  const telemetryMeta = {
+    getAttribute(name: string) {
+      if (name !== 'content') return null;
+      return JSON.stringify({ enabled: true, endpoint: '/api/browser-telemetry' });
+    },
+  };
+  const input = {
+    value: options.inputValue ?? '',
+  };
+  const activeHistory = {
+    getAttribute(name: string) {
+      return name === 'data-history-status' ? (options.activeHistoryStatus ?? 'idle') : null;
+    },
+  };
+  const document = {
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      docListeners.set(event, [...(docListeners.get(event) ?? []), callback]);
+    },
+    querySelector(selector: string) {
+      if (selector === 'meta[name="squire-browser-telemetry"]') return telemetryMeta;
+      if (selector === '.squire-input-dock textarea') return input;
+      if (selector === '.squire-history-row.is-active') return activeHistory;
+      return null;
+    },
+    querySelectorAll(selector: string) {
+      return fakeNodeList(options.selectorCounts?.[selector] ?? 0);
+    },
+    documentElement: { scrollHeight: 0 },
+  };
+  const window = {
+    location: { pathname },
+    crypto: {
+      randomUUID: () => 'masked-replay-snapshot-1',
+    },
+    EventSource: function () {},
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      windowListeners.set(event, [...(windowListeners.get(event) ?? []), callback]);
+    },
+    scrollY: 0,
+    innerHeight: 844,
+    innerWidth: 390,
+    navigator: { userAgent: 'SquireTest/1.0' },
+    scrollTo: () => {},
+    fetch(url: string, init?: { body?: unknown }) {
+      telemetryPayloads.push({
+        url,
+        body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
+      });
+      const eventId = responseEventIds.shift() ?? null;
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ eventId }),
+      });
+    },
+  };
+  const context = vm.createContext({ document, window });
+
+  vm.runInContext(scriptSource, context);
+
+  return {
+    emitWindow(event: string, payload: unknown) {
+      for (const callback of windowListeners.get(event) ?? []) callback(payload);
+    },
+    emitDocument(event: string, payload: unknown) {
+      for (const callback of docListeners.get(event) ?? []) callback(payload);
+    },
+    telemetryPayloads,
   };
 }
 
@@ -441,6 +552,202 @@ function workRowMessage(row: FakeElement): string | undefined {
 function workRowMessages(rowsEl: FakeElement): Array<string | undefined> {
   return rowsEl.children.map((row) => workRowMessage(row));
 }
+
+describe('squire.js browser telemetry', () => {
+  it('reports window errors without sending the thrown message body', () => {
+    const { emitWindow, telemetryPayloads } = bootBrowserTelemetryHarness('/chat/conv-1', {
+      inputValue: 'raw prompt should stay masked',
+      selectorCounts: {
+        '.squire-question': 1,
+        '.squire-answer': 1,
+        '.squire-answer--pending': 0,
+        '.squire-answer-work': 1,
+        '.squire-banner--error': 0,
+        '.squire-history-row': 3,
+      },
+    });
+
+    emitWindow('error', {
+      error: { name: 'TypeError', message: 'raw prompt should stay out' },
+      filename: 'https://squire.maz.org/squire.abc123.js?token=secret',
+      lineno: 12,
+      colno: 4,
+      message: 'raw prompt should stay out',
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        errorName: 'TypeError',
+        source: '/squire.abc123.js',
+        line: 12,
+        column: 4,
+        viewport: { width: 390, height: 844 },
+        userAgent: 'SquireTest/1.0',
+        maskedReplay: expect.objectContaining({
+          version: 1,
+          textMasked: true,
+          attributesMasked: true,
+          snapshotId: 'masked-replay-snapshot-1',
+          maskSelectors: expect.arrayContaining(['.squire-transcript', '.squire-input-dock']),
+          blockSelectors: expect.arrayContaining(['.squire-account-menu']),
+          turns: {
+            userTurnCount: 1,
+            assistantTurnCount: 1,
+            pendingTurnCount: 0,
+            workLogCount: 1,
+            errorBannerCount: 0,
+          },
+          input: {
+            present: true,
+            valueLengthBucket: '1-80',
+          },
+          history: {
+            rowCount: 3,
+            activeStatus: 'idle',
+          },
+        }),
+      }),
+    });
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('raw prompt');
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('token=secret');
+  });
+
+  it('reports unhandled rejections without sending the rejected text', () => {
+    const { emitWindow, telemetryPayloads } = bootBrowserTelemetryHarness('/chat/conv-1');
+
+    emitWindow('unhandledrejection', {
+      reason: new Error('model answer should stay out'),
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0].body).toEqual(
+      expect.objectContaining({
+        type: 'browser_unhandledrejection',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        errorName: 'Error',
+        reasonType: 'Error',
+      }),
+    );
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('model answer');
+  });
+
+  it('submits categorical feedback linked to the last captured browser event', async () => {
+    const eventId = '0123456789abcdef0123456789abcdef';
+    const { emitWindow, emitDocument, telemetryPayloads } = bootBrowserTelemetryHarness(
+      '/chat/conv-1',
+      {
+        responseEventIds: [eventId, 'fedcba9876543210fedcba9876543210'],
+        inputValue: 'this prompt text must not be sent',
+        selectorCounts: {
+          '.squire-question': 1,
+          '.squire-answer': 1,
+          '.squire-answer--pending': 0,
+          '.squire-answer-work': 1,
+          '.squire-banner--error': 1,
+          '.squire-history-row': 2,
+        },
+        activeHistoryStatus: 'error',
+      },
+    );
+
+    emitWindow('error', {
+      error: { name: 'TypeError', message: 'raw answer should stay out' },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    emitDocument('squire:browser-feedback', {
+      detail: {
+        feedbackKind: 'stream_failed',
+        comment: 'the raw user feedback should stay out',
+      },
+    });
+
+    expect(telemetryPayloads).toHaveLength(2);
+    expect(telemetryPayloads[1]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_feedback',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        feedbackKind: 'stream_failed',
+        associatedEventId: eventId,
+        maskedReplay: expect.objectContaining({
+          textMasked: true,
+          turns: {
+            userTurnCount: 1,
+            assistantTurnCount: 1,
+            pendingTurnCount: 0,
+            workLogCount: 1,
+            errorBannerCount: 1,
+          },
+          input: {
+            present: true,
+            valueLengthBucket: '1-80',
+          },
+          history: {
+            rowCount: 2,
+            activeStatus: 'error',
+          },
+        }),
+      }),
+    });
+    expect(JSON.stringify(telemetryPayloads[1].body)).not.toContain('raw user feedback');
+    expect(JSON.stringify(telemetryPayloads[1].body)).not.toContain('this prompt text');
+  });
+
+  it('submits categorical feedback without an event link when no event id is available', () => {
+    const { emitDocument, telemetryPayloads } = bootBrowserTelemetryHarness('/chat/conv-1');
+
+    emitDocument('squire:browser-feedback', {
+      detail: {
+        feedbackKind: 'wrong_answer',
+      },
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0].body).toEqual(
+      expect.objectContaining({
+        type: 'browser_feedback',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        feedbackKind: 'wrong_answer',
+      }),
+    );
+    expect(telemetryPayloads[0].body).not.toHaveProperty('associatedEventId');
+  });
+
+  it('reports stream transport errors with conversation and message ids only', () => {
+    const { source, telemetryPayloads } = bootPendingTranscript({
+      browserTelemetry: true,
+      streamUrl: '/chat/conv-1/messages/msg-user-1/stream',
+    });
+
+    source.emit('error', {
+      kind: 'transport',
+      message: 'raw transcript should stay out',
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_stream_error',
+        route: '/chat/test',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        streamErrorKind: 'transport',
+      }),
+    });
+    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('raw transcript');
+  });
+});
 
 describe('squire.js chat form retargeting', () => {
   it('SQR-203: initializes the active game from localStorage, falls back safely, and syncs hidden chat fields', () => {

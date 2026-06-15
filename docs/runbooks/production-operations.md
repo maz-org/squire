@@ -20,7 +20,8 @@ Actions after CI passes on `main`.
   in `ORIGIN_SHARED_SECRET`
 - Runtime environment label: `SQUIRE_ENV=production`
 - App observability: Sentry via Fly extension, with `SENTRY_DSN` stored as a
-  Fly secret and `SENTRY_RELEASE` stamped from the deployed Git SHA
+  Fly secret and `SENTRY_RELEASE` stamped from the deployed Git SHA. The
+  operator workflow lives in [observability.md](observability.md).
 - Background cleanup: Fly `cron` process group runs Supercronic with
   `/app/crontab` and prunes expired sessions hourly
 
@@ -153,16 +154,53 @@ The GitHub deploy workflow sets `SENTRY_RELEASE` to the exact
 that the app maps into both LangSmith metadata and Sentry event environment.
 
 Missing `SENTRY_DSN` must remain a no-op for local dev and tests. Production
-should have the Fly secret present once the Sentry SDK work lands; until then,
-the secret can exist without changing runtime behavior. LangSmith remains the
-LLM trace/eval owner. Sentry app events should carry correlation IDs and links
-to LangSmith, not raw prompts, model outputs, cookies, bearer tokens, OAuth
-tokens, provider payloads, retrieved passages, or full answers.
+should have the Fly secret present. LangSmith remains the LLM trace/eval owner.
+Sentry app events should carry correlation IDs and links to LangSmith, not raw
+prompts, model outputs, cookies, bearer tokens, OAuth tokens, provider payloads,
+retrieved passages, or full answers.
 
 Fly's Sentry extension documentation describes the sponsored Team-plan quota as
 50k errors, 100k performance units, 500 session replays, and 1GB of attachments
 per month. If that sponsored period ends, Sentry keeps accepting events on the
 Developer plan with lower quotas; events over quota are dropped.
+
+Production alert rules and safe test events live in
+[sentry-alerts.md](sentry-alerts.md). The production debugging path lives in
+[observability.md](observability.md). Those alerts use Sentry tags and uptime
+monitors, not Fly log retention.
+
+#### Safe browser replay and feedback smoke
+
+Use a non-production Sentry environment first. Open a safe page with no real
+conversation text, then run this browser-console smoke:
+
+```js
+window.dispatchEvent(
+  new ErrorEvent('error', {
+    error: new Error('SquireSafeBrowserSmoke'),
+    filename: '/squire.js',
+    lineno: 1,
+    colno: 1,
+  }),
+);
+
+document.dispatchEvent(
+  new CustomEvent('squire:browser-feedback', {
+    detail: { feedbackKind: 'ui_broken' },
+  }),
+);
+```
+
+Expected result in Sentry: one `browser.browser_error` event and one feedback
+event. The browser event should include the Squire context fields
+`maskedReplay.textMasked=true`, `maskedReplay.attributesMasked=true`, masked
+selectors including `.squire-transcript` and `.squire-input-dock`, and structural
+turn/input/history counts only. The feedback event should have
+`associatedEventId` when the browser received the previous event id. Neither
+event may contain transcript text, input text, prompt text, model output, source
+passages, cookies, auth headers, or URL query strings. If `SENTRY_DSN` is
+missing, the page should still work and no browser telemetry request should be
+sent.
 
 GitHub repository secrets:
 
@@ -443,67 +481,26 @@ Check LangSmith after the question:
   tool names, compact tool inputs, tool summaries, canonical refs, and errors
   without raw email addresses or session cookies.
 
-## Troubleshoot one production chat
+## Troubleshoot a production report
 
-Use this path when a user reports a bad answer, failed stream, or suspicious
-chat behavior.
+Use [observability.md](observability.md) for the full Sentry + LangSmith +
+Linear workflow. Start with the browser URL or `X-Request-ID`, then choose the
+right lane:
 
-1. Start with the browser URL. `/chat/<conversationId>` gives the persisted
-   conversation UUID. The pending answer stream URL
-   `/chat/<conversationId>/messages/<userMessageId>/stream` gives the user
-   message UUID for the exact turn.
-2. Search LangSmith in `env:production` for a `squire.agent.run` trace whose
-   metadata has that `conversationId` and `userMessageId`. If the report came
-   from REST `/api/ask`, search by the `X-Request-ID` response header or caller
-   log value instead.
-3. In the root trace, inspect:
-   - input question and final answer or error output
-   - `metadata.userId`, `metadata.conversationId`, `metadata.thread_id`,
-     `metadata.userMessageId`, `metadata.requestId`, `metadata.squireEnv`
-   - `metadata.model`, `metadata.toolSurface`, iterations, tool-call count, and
-     stop reason
-   - tags: `runtime`, provider (`anthropic`), SDK (`claude-sdk`), model, tool
-     surface, and `env:production`
-4. Open child observations in order. Generation observations show compact model
-   input/output, stop reason, and token usage. Tool observations show tool name,
-   compact input, output summary, source labels, canonical refs, and tool
-   errors.
-5. If the user saw a reconnect, duplicate text, or a stream that ended early,
-   inspect the durable SSE log for that user message. Event `sequence` values
-   are the browser `id` / `Last-Event-ID` values.
+- Bad answer with a successful stream: start in LangSmith
+  (`metadata.conversationId`, `metadata.thread_id`, `metadata.userMessageId`,
+  `metadata.requestId`).
+- Generic assistant failure, failed stream, browser error, backend error, cron
+  failure, uptime alert, or release regression: start in Sentry and use safe
+  tags such as `request_id`, `conversation_id`, `user_message_id`, `route`,
+  `surface`, `failure_kind`, `event_type`, `job_name`, and `release`.
+- Bug ticket: gather a diagnostic bundle and render the required Linear
+  Evidence section. Every unavailable field needs an explicit reason.
 
-   ```sql
-   select sequence, event, payload, created_at
-   from message_stream_events
-   where user_message_id = '<userMessageId>'
-   order by sequence;
-   ```
-
-   A stored `done` or `error` means reconnects should replay and close without
-   another agent run. Partial non-terminal rows with no active generation lock
-   are expected to end in one persisted assistant failure rather than a silent
-   graph restart.
-
-6. If LangSmith has no trace for the turn, check Fly logs around the same time
-   and request ID:
-
-   ```bash
-   fly logs -a maz-squire --no-tail | grep '<requestId>'
-   fly logs -a maz-squire --no-tail | grep '<conversationId>'
-   ```
-
-7. If the failure follows a deploy, check the GitHub deploy run before changing
-   app code:
-
-   ```bash
-   gh run list --workflow "Deploy to Fly" --branch main --limit 5
-   gh run view <run-id> --log
-   gh api 'repos/maz-org/squire/deployments?environment=production'
-   ```
-
-Do not paste raw user questions, email addresses, cookies, bearer tokens, or
-full trace payloads into issues. Use UUIDs, request IDs, model/tool metadata,
-stop reasons, and short redacted excerpts.
+Do not paste raw user questions, email addresses, cookies, bearer tokens, full
+model answers, provider payloads, retrieved passages, or full trace payloads
+into issues. Use UUIDs, request IDs, model/tool metadata, stop reasons, Sentry
+links, LangSmith links, and short redacted excerpts.
 
 Probe the edge:
 

@@ -79,6 +79,45 @@ payloads, retrieved passages, or full user answers into Sentry. LangSmith stays
 the trace and eval surface for LLM behavior; Sentry is only for app errors,
 browser/runtime diagnostics, release health, and links back to LangSmith.
 
+Production and staging Sentry values are environment-managed, not committed.
+Production stores `SENTRY_DSN` as a Fly secret through the Fly Sentry extension,
+sets `SQUIRE_ENV=production`, and stamps `SENTRY_RELEASE` from the deployed Git
+SHA. A future staging app should use its own Sentry project or environment,
+`SQUIRE_ENV=staging`, and its own DSN secret so test events cannot mix with
+production alerts.
+
+`SENTRY_TRACES_SAMPLE_RATE` controls Sentry app-span export only. Leave it unset
+or set it to `0` to disable Sentry app spans; set a decimal from `0` to `1` to
+sample app spans. In production, set it as a Fly secret so it can be tuned
+without a code deploy:
+
+```bash
+fly secrets set SENTRY_TRACES_SAMPLE_RATE=0.10 -a maz-squire
+```
+
+Keep broad logs and traces governed by sanitization, not cost-based log
+allowlists. Usage checks and spend controls live in
+[docs/runbooks/sentry-usage-guardrails.md](runbooks/sentry-usage-guardrails.md).
+
+Safe Sentry test events are documented in
+[docs/runbooks/observability.md](runbooks/observability.md) and
+[docs/runbooks/sentry-alerts.md](runbooks/sentry-alerts.md). Local dry runs
+must not send events:
+
+```bash
+npm run sentry:test-event -- --kind chat --dry-run
+```
+
+Production checks should run inside the Fly app so they use the deployed
+`SENTRY_DSN`, `SQUIRE_ENV`, and `SENTRY_RELEASE`:
+
+```bash
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind backend'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind chat'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind browser'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind cron'
+```
+
 `GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for
 production and non-local hosts. In local development, `/auth/google/start` and
 `/auth/google/callback` reuse the current `localhost` origin so linked

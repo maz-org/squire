@@ -14,6 +14,14 @@ export interface GameDefinition {
   default: boolean;
   sourcePrefix: string;
   aliases: string[];
+  /** The always-present scenario module (cannot be removed). */
+  baseModule: string;
+  /**
+   * Optional scenario modules the table can toggle (e.g. the solo missions).
+   * Empty when the game has none curated yet. Each must be a seeded module —
+   * `test/game-modules.test.ts` asserts these match the seeded unlock graphs.
+   */
+  optionalModules: readonly string[];
 }
 
 export const SUPPORTED_GAMES: readonly GameDefinition[] = [
@@ -23,12 +31,18 @@ export const SUPPORTED_GAMES: readonly GameDefinition[] = [
     default: true,
     sourcePrefix: 'fh',
     aliases: ['fh', 'frost haven'],
+    baseModule: 'fh',
+    // Frosthaven solo scenarios are not curated as a module yet (see SQR-321
+    // notes); add them here once a `fhsolo`-style module is seeded.
+    optionalModules: [],
   },
   {
     id: GLOOMHAVEN_2E_GAME_ID,
     label: 'Gloomhaven (2nd Edition)',
     default: false,
     sourcePrefix: 'gh2',
+    baseModule: 'gh2e',
+    optionalModules: ['solo2e'],
     aliases: [
       'gloomhaven-2',
       'gloomhaven2',
@@ -99,6 +113,58 @@ export function gameDefinitionFor(game: GameId): GameDefinition {
     );
   }
   return definition;
+}
+
+const MODULE_LABELS: Record<string, string> = {
+  fh: 'Main campaign',
+  gh2e: 'Main campaign',
+  solo2e: 'Solo scenarios',
+};
+
+/** Human label for a module id (falls back to the id itself). */
+export function moduleLabel(module: string): string {
+  return MODULE_LABELS[module] ?? module;
+}
+
+/** Every optional module across all games, for the create-form selector. */
+export function allOptionalModuleOptions(): { module: string; gameLabel: string }[] {
+  return SUPPORTED_GAMES.flatMap((game) =>
+    game.optionalModules.map((module) => ({ module, gameLabel: game.label })),
+  );
+}
+
+/** All modules a game can use (base first, then optional), in display order. */
+export function availableModulesFor(game: GameId): string[] {
+  const def = gameDefinitionFor(game);
+  return [def.baseModule, ...def.optionalModules];
+}
+
+/** The default module set for a new campaign: base + every optional module. */
+export function defaultModulesFor(game: GameId): string[] {
+  return availableModulesFor(game);
+}
+
+/**
+ * Validate a requested module set for a game: every module must be one the
+ * game offers, and the base module must be present. Returns the deduped,
+ * canonically-ordered set, or an error reason.
+ */
+export function validateModules(
+  game: GameId,
+  requested: readonly string[],
+): { ok: true; modules: string[] } | { ok: false; reason: string } {
+  const def = gameDefinitionFor(game);
+  const available = new Set(availableModulesFor(game));
+  const unknown = requested.find((module) => !available.has(module));
+  if (unknown !== undefined) {
+    return { ok: false, reason: `"${unknown}" is not a module of ${def.label}.` };
+  }
+  if (!requested.includes(def.baseModule)) {
+    return { ok: false, reason: `The ${def.label} base module is required.` };
+  }
+  // Canonical order (base then optional), deduped, dropping anything not offered.
+  const chosen = new Set(requested);
+  return { ok: true, modules: availableModulesFor(game).filter((module) => chosen.has(module)) };
 }
 
 export function gameIdFromSourceFilename(source: string): GameId {

@@ -13,7 +13,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
 import type { Campaign } from '../db/repositories/types.ts';
-import { gameDefinitionFor, isGameId } from '../game.ts';
+import { allOptionalModuleOptions, gameDefinitionFor, isGameId, moduleLabel } from '../game.ts';
 
 /** Header context-strip state. Null = signed-in user with no campaigns. */
 export interface CampaignStripState {
@@ -153,6 +153,19 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
             <option value="gloomhaven-2e">Gloomhaven (2nd Edition)</option>
           </select>
         </label>
+        ${allOptionalModuleOptions().length > 0
+          ? html`<fieldset class="squire-campaigns__field squire-campaigns__modules">
+              <legend class="squire-campaigns__field-label">OPTIONAL CONTENT</legend>
+              ${allOptionalModuleOptions().map(
+                (option) =>
+                  html`<label class="squire-campaigns__module">
+                    <input type="checkbox" name="module" value="${option.module}" checked />
+                    ${moduleLabel(option.module)}
+                    <span class="squire-campaigns__module-game">${option.gameLabel}</span>
+                  </label>`,
+              )}
+            </fieldset>`
+          : html``}
         <button type="submit" class="squire-campaigns__submit">CREATE</button>
       </form>
     </section>
@@ -225,6 +238,154 @@ function renderCharacterCreateForm(
     </form>` as HtmlEscapedString;
 }
 
+/** The dashboard "Invite member" affordance state (SQR-319). */
+export interface InviteMemberForm {
+  csrfToken: string;
+  /** Owner sees the form inputs; non-owners only ever see an error (if any). */
+  canInvite: boolean;
+  /** Inline error rendered after a failed invite attempt. */
+  errorMessage?: string;
+}
+
+/**
+ * The Party-section invite affordance. The error banner renders independently
+ * of the form so a non-owner who tampers the route still sees the rejection,
+ * while only the owner ever sees the form inputs.
+ */
+function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): HtmlEscapedString {
+  return html`${data.errorMessage
+    ? html`<div class="squire-banner squire-banner--error" role="alert">
+        <span class="squire-banner__label">COULD NOT SAVE</span>
+        <p class="squire-banner__body">${data.errorMessage}</p>
+      </div>`
+    : html``}
+  ${data.canInvite
+    ? html`<form
+        method="post"
+        action="/campaigns/${campaignId}/invites"
+        class="squire-invite-member"
+        aria-label="Invite a member"
+      >
+        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+        <label class="squire-invite-member__field">
+          <span class="squire-invite-member__field-label">INVITE BY EMAIL</span>
+          <input name="email" type="email" required maxlength="320" autocomplete="off" />
+        </label>
+        <button type="submit" class="squire-invite-member__submit">INVITE</button>
+      </form>`
+    : html``}` as HtmlEscapedString;
+}
+
+/** The dashboard "Rename campaign" affordance (SQR-320). */
+export interface CampaignRenameForm {
+  csrfToken: string;
+  /** Optimistic-concurrency token; submitted as expectedVersion. */
+  version: number;
+  /** Inline error/notice after a failed rename (validation or version race). */
+  errorMessage?: string;
+}
+
+/** The dashboard "Modules" editor affordance (SQR-321). */
+export interface CampaignModulesForm {
+  csrfToken: string;
+  version: number;
+  /** The game's base module — always on, never removable. */
+  baseModule: string;
+  /** Optional module ids the game offers (e.g. solo scenarios). */
+  optionalModules: readonly string[];
+  /** The campaign's current module set (to seed the checkboxes). */
+  current: readonly string[];
+  errorMessage?: string;
+}
+
+/**
+ * A quiet modules disclosure. Toggling changes which scenario set the dashboard
+ * shows; removal is non-destructive (a removed module's played/skipped keys
+ * persist and return if it is re-added). Any active member may edit — modules
+ * are shared state. Only rendered for games that have optional modules.
+ */
+function renderCampaignModulesForm(
+  campaign: Campaign,
+  data: CampaignModulesForm,
+): HtmlEscapedString {
+  const checked = new Set(data.current);
+  return html`<details class="squire-campaign-modules" ${data.errorMessage ? 'open' : ''}>
+    <summary class="squire-campaign-modules__toggle">Modules</summary>
+    ${data.errorMessage
+      ? html`<div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">COULD NOT SAVE</span>
+          <p class="squire-banner__body">${data.errorMessage}</p>
+        </div>`
+      : html``}
+    <form
+      method="post"
+      action="/campaigns/${campaign.id}/modules"
+      class="squire-campaign-modules__form"
+      aria-label="Edit campaign modules"
+    >
+      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+      <input type="hidden" name="expectedVersion" value="${data.version}" />
+      <label class="squire-campaign-modules__option">
+        <input type="checkbox" checked disabled />
+        ${moduleLabel(data.baseModule)}
+        <span class="squire-campaign-modules__required">required</span>
+      </label>
+      ${data.optionalModules.map(
+        (module) =>
+          html`<label class="squire-campaign-modules__option">
+            <input
+              type="checkbox"
+              name="module"
+              value="${module}"
+              ${checked.has(module) ? 'checked' : ''}
+            />
+            ${moduleLabel(module)}
+          </label>`,
+      )}
+      <button type="submit" class="squire-campaign-modules__submit">SAVE MODULES</button>
+    </form>
+  </details>` as HtmlEscapedString;
+}
+
+/**
+ * A quiet rename disclosure under the campaign title. Any active member may
+ * rename (campaign name is shared state, like the scenario toggles), so the
+ * affordance is not owner-gated. The disclosure opens automatically when a
+ * prior attempt failed so the error and form are visible.
+ */
+function renderCampaignRenameForm(campaign: Campaign, data: CampaignRenameForm): HtmlEscapedString {
+  return html`<details class="squire-campaign-rename" ${data.errorMessage ? 'open' : ''}>
+    <summary class="squire-campaign-rename__toggle">Rename</summary>
+    ${data.errorMessage
+      ? html`<div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">COULD NOT SAVE</span>
+          <p class="squire-banner__body">${data.errorMessage}</p>
+        </div>`
+      : html``}
+    <form
+      method="post"
+      action="/campaigns/${campaign.id}/rename"
+      class="squire-campaign-rename__form"
+      aria-label="Rename campaign"
+    >
+      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+      <input type="hidden" name="expectedVersion" value="${data.version}" />
+      <label class="squire-campaign-rename__field">
+        <span class="squire-campaign-rename__field-label">CAMPAIGN NAME</span>
+        <input
+          name="name"
+          type="text"
+          required
+          maxlength="200"
+          autocomplete="off"
+          value="${campaign.name}"
+        />
+      </label>
+      <button type="submit" class="squire-campaign-rename__submit">SAVE</button>
+    </form>
+  </details>` as HtmlEscapedString;
+}
+
 /** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
 export function renderCampaignDashboardContent(
   detail: CampaignDetail,
@@ -232,9 +393,14 @@ export function renderCampaignDashboardContent(
   journalFragment?: HtmlEscapedString,
   characters?: DashboardCharacterRow[],
   characterCreate?: CharacterCreateForm,
+  inviteForm?: InviteMemberForm,
+  renameForm?: CampaignRenameForm,
+  modulesForm?: CampaignModulesForm,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
+  // Pending invites are real state — shown distinctly, never as fake rows.
+  const pendingInvites = detail.members.filter((member) => member.status === 'invited');
   return html`<section class="squire-campaign-dashboard" data-campaign-id="${campaign.id}">
     <header class="squire-campaign-dashboard__header">
       <h1 class="squire-campaign-dashboard__name">${campaign.name}</h1>
@@ -242,6 +408,8 @@ export function renderCampaignDashboardContent(
         ${gameLabel(campaign.game)} · PROSPERITY ${campaign.prosperity} · PLAYED
         ${campaign.playedScenarios.length} · DRAWN ${campaign.drawnScenarios.length}
       </p>
+      ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
+      ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
     </header>
     <section class="squire-campaign-dashboard__roster" aria-label="Party roster">
       <h2 class="squire-campaign-dashboard__section-title">Party</h2>
@@ -255,7 +423,17 @@ export function renderCampaignDashboardContent(
               >
             </li>`,
         )}
+        ${pendingInvites.map(
+          (member) =>
+            html`<li
+              class="squire-campaign-dashboard__member squire-campaign-dashboard__member--invited"
+            >
+              ${member.email}
+              <span class="squire-campaign-dashboard__member-role">INVITED</span>
+            </li>`,
+        )}
       </ul>
+      ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
     </section>
     <section class="squire-campaign-dashboard__characters" aria-label="Characters">
       <h2 class="squire-campaign-dashboard__section-title">Characters</h2>

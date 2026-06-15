@@ -8,8 +8,9 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach LangSmith in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { SpanStatusCode, trace, type Span } from '@opentelemetry/api';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import {
   identityFromSessionUser,
@@ -77,7 +78,7 @@ import {
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
-import { normalizeGameId, requireGameId } from './game.ts';
+import { availableModulesFor, gameDefinitionFor, normalizeGameId, requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { startHttpServer } from './server-start.ts';
@@ -156,11 +157,40 @@ import {
   startConversation,
   streamAssistantTurn,
 } from './chat/conversation-service.ts';
+import { captureChatFailureTelemetry } from './chat/chat-telemetry.ts';
 import * as MessageStreamEventRepository from './db/repositories/message-stream-event-repository.ts';
 import type { BrowserStreamEventName } from './db/repositories/message-stream-event-repository.ts';
+import {
+  captureTelemetryError,
+  captureTelemetryFeedback,
+  captureTelemetryLog,
+  captureTelemetryMessage,
+  flushTelemetry,
+  initTelemetry,
+  type TelemetryCaptureInput,
+  type TelemetryFeedbackInput,
+  type TelemetryLogInput,
+  type TelemetryLogLevel,
+  type TelemetryUserIdentity,
+} from './telemetry.ts';
+import {
+  recordChatLifecycleEvent,
+  setChatSpanAttributes,
+  withChatLifecycleSpan,
+  type ChatLifecycleInput,
+} from './chat/chat-observability.ts';
+import { resolveSquireEnv } from './squire-env.ts';
+
+initTelemetry(process.env);
 
 export const app = new Hono();
 
+const UNRESOLVED_REQUEST_ROUTE = 'unresolved';
+const UNMATCHED_REQUEST_ROUTE = 'unmatched';
+const TEST_TELEMETRY_HASH_SECRET = 'squire-test-telemetry-hash-secret';
+const DEV_TELEMETRY_HASH_SECRET = 'squire-development-telemetry-hash-secret';
+
+app.use('*', requestLifecycleMiddleware);
 app.use('*', originSharedSecretMiddleware());
 
 const HTML_CSP =
@@ -218,13 +248,436 @@ function auditContext(c: Context): { ipAddress: string | null; userAgent: string
 }
 
 function correlateRequest(c: Context): string {
+  const existingRequestId = c.get('requestId');
+  if (typeof existingRequestId === 'string' && existingRequestId.trim().length > 0) {
+    c.header('X-Request-ID', existingRequestId);
+    return existingRequestId;
+  }
+
   const incomingRequestId = c.req.header('x-request-id');
   const requestId =
     incomingRequestId && /^[A-Za-z0-9._:-]{1,128}$/.test(incomingRequestId)
       ? incomingRequestId
       : randomUUID();
+  c.set('requestId', requestId);
   c.header('X-Request-ID', requestId);
   return requestId;
+}
+
+function safeRequestRoute(c: Context): string {
+  try {
+    const route = c.req.routePath;
+    return route && route !== '*' && route !== '/*' ? route : UNMATCHED_REQUEST_ROUTE;
+  } catch {
+    return UNMATCHED_REQUEST_ROUTE;
+  }
+}
+
+function safeRequestStartRoute(c: Context): string {
+  try {
+    const route = c.req.routePath;
+    return route && route !== '*' && route !== '/*' ? route : UNRESOLVED_REQUEST_ROUTE;
+  } catch {
+    return UNRESOLVED_REQUEST_ROUTE;
+  }
+}
+
+function safeUserFromContext(c: Context): TelemetryUserIdentity | undefined {
+  const callerIdentity = c.get('callerIdentity') as CallerIdentity | undefined;
+  if (callerIdentity?.userId) return { id: callerIdentity.userId };
+
+  const authInfo = c.get('authInfo') as AuthInfo | undefined;
+  const tokenUserId = userIdFromAuthInfo(authInfo);
+  if (tokenUserId) return { id: tokenUserId };
+
+  const session = c.get('session') as { userId?: unknown } | undefined;
+  return typeof session?.userId === 'string' && session.userId.trim().length > 0
+    ? { id: session.userId }
+    : undefined;
+}
+
+function telemetryHashSecret(): string {
+  const secret = process.env.SESSION_SECRET?.trim();
+  if (secret) return secret;
+  return process.env.VITEST ? TEST_TELEMETRY_HASH_SECRET : DEV_TELEMETRY_HASH_SECRET;
+}
+
+function hashTelemetryIdentifier(kind: string, value: string): string {
+  return createHmac('sha256', telemetryHashSecret())
+    .update(`${kind}:${value}`)
+    .digest('base64url')
+    .slice(0, 32);
+}
+
+function hashedTelemetryUser(
+  user: TelemetryUserIdentity | undefined,
+): TelemetryUserIdentity | undefined {
+  if (user?.hash) return { hash: user.hash };
+  if (user?.id) return { hash: hashTelemetryIdentifier('user', user.id) };
+  return undefined;
+}
+
+function safeLifecycleUserFromContext(c: Context): TelemetryUserIdentity | undefined {
+  return hashedTelemetryUser(safeUserFromContext(c));
+}
+
+function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCaptureInput {
+  const route = safeRequestRoute(c);
+  return {
+    route,
+    requestId,
+    user: safeUserFromContext(c),
+    context: {
+      surface: 'server',
+      method: c.req.method,
+      path: c.req.path,
+      route,
+      status: 500,
+    },
+  };
+}
+
+function safeTelemetryEnvironment(): string {
+  try {
+    return resolveSquireEnv(process.env);
+  } catch {
+    return 'unknown';
+  }
+}
+
+function safeTelemetryRelease(): string {
+  return process.env.SENTRY_RELEASE?.trim() || 'unavailable';
+}
+
+function requestLifecycleLevel(status: number): TelemetryLogLevel {
+  if (status >= 500) return 'error';
+  if (status >= 400) return 'warn';
+  return 'info';
+}
+
+function requestDurationMs(startedAt: number): number {
+  return Math.max(0, Date.now() - startedAt);
+}
+
+function responseStatus(c: Context, error: unknown): number {
+  if (error) return 500;
+  const status = c.res.status;
+  return typeof status === 'number' && status > 0 ? status : 200;
+}
+
+function requestLifecycleAttributes(input: {
+  method: string;
+  route: string;
+  requestId: string;
+  environment: string;
+  release: string;
+  status?: number;
+  durationMs?: number;
+  user?: TelemetryUserIdentity;
+}): Record<string, string | number> {
+  return {
+    environment: input.environment,
+    release: input.release,
+    method: input.method,
+    route: input.route,
+    request_id: input.requestId,
+    ...(input.status === undefined ? {} : { status: input.status }),
+    ...(input.durationMs === undefined ? {} : { duration_ms: input.durationMs }),
+    ...(input.user?.hash ? { user_hash: input.user.hash } : {}),
+  };
+}
+
+function buildRequestLifecycleLogInput(input: {
+  c: Context;
+  requestId: string;
+  route: string;
+  environment: string;
+  release: string;
+  status?: number;
+  durationMs?: number;
+}): TelemetryLogInput {
+  const user = safeLifecycleUserFromContext(input.c);
+  return {
+    route: input.route,
+    requestId: input.requestId,
+    user,
+    context: {
+      surface: 'server',
+      eventType: 'request_lifecycle',
+      method: input.c.req.method,
+      route: input.route,
+      ...(input.status === undefined ? {} : { status: input.status }),
+    },
+    attributes: requestLifecycleAttributes({
+      method: input.c.req.method,
+      route: input.route,
+      requestId: input.requestId,
+      environment: input.environment,
+      release: input.release,
+      status: input.status,
+      durationMs: input.durationMs,
+      user,
+    }),
+  };
+}
+
+function annotateRequestSpan(
+  span: Span,
+  input: {
+    method: string;
+    route: string;
+    status: number;
+    durationMs: number;
+    requestId: string;
+    environment: string;
+    release: string;
+    user?: TelemetryUserIdentity;
+  },
+): void {
+  span.setAttributes({
+    'http.request.method': input.method,
+    'http.route': input.route,
+    'http.response.status_code': input.status,
+    'squire.duration_ms': input.durationMs,
+    'squire.environment': input.environment,
+    'squire.release': input.release,
+    'squire.request_id': input.requestId,
+    ...(input.user?.hash ? { 'squire.user_hash': input.user.hash } : {}),
+  });
+  if (input.status >= 500) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${input.status}` });
+  }
+}
+
+async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>): Promise<void> {
+  await trace.getTracer('squire.server').startActiveSpan('http.server.request', async (span) => {
+    const startedAt = Date.now();
+    const requestId = correlateRequest(c);
+    const environment = safeTelemetryEnvironment();
+    const release = safeTelemetryRelease();
+    const startRoute = safeRequestStartRoute(c);
+
+    captureTelemetryLog(
+      'info',
+      'server.request.started',
+      buildRequestLifecycleLogInput({
+        c,
+        requestId,
+        route: startRoute,
+        environment,
+        release,
+      }),
+    );
+
+    let caughtError: unknown;
+    try {
+      await next();
+    } catch (error) {
+      caughtError = error;
+      throw error;
+    } finally {
+      const status = responseStatus(c, caughtError);
+      const durationMs = requestDurationMs(startedAt);
+      const route = safeRequestRoute(c);
+      const user = safeLifecycleUserFromContext(c);
+
+      captureTelemetryLog(
+        requestLifecycleLevel(status),
+        'server.request.completed',
+        buildRequestLifecycleLogInput({
+          c,
+          requestId,
+          route,
+          environment,
+          release,
+          status,
+          durationMs,
+        }),
+      );
+      annotateRequestSpan(span, {
+        method: c.req.method,
+        route,
+        status,
+        durationMs,
+        requestId,
+        environment,
+        release,
+        user,
+      });
+      span.end();
+    }
+  });
+}
+
+const BrowserTelemetryTokenSchema = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9._:-]+$/);
+
+const BrowserTelemetryEventIdSchema = z
+  .string()
+  .length(32)
+  .regex(/^[a-f0-9]+$/i);
+
+const BrowserFeedbackKindSchema = z.enum([
+  'wrong_answer',
+  'stream_failed',
+  'ui_broken',
+  'source_problem',
+  'other',
+]);
+
+const BrowserMaskedReplayMaskSelectorSchema = z.enum([
+  '.squire-transcript',
+  '.squire-question',
+  '.squire-answer',
+  '.squire-answer__content',
+  '.squire-answer__artifacts',
+  '.squire-answer-work',
+  '.squire-input-dock',
+  '.squire-input-dock textarea',
+  '.squire-history-row',
+  '.squire-campaign-strip',
+  '.squire-campaign-dashboard',
+  '.squire-character-sheet',
+]);
+
+const BrowserMaskedReplayBlockSelectorSchema = z.enum([
+  '.squire-account-menu',
+  '.squire-account-menu__panel',
+  '.squire-account-menu__avatar',
+]);
+
+const BrowserMaskedReplaySchema = z
+  .object({
+    version: z.literal(1),
+    textMasked: z.literal(true),
+    attributesMasked: z.literal(true),
+    snapshotId: BrowserTelemetryTokenSchema.optional(),
+    maskSelectors: z.array(BrowserMaskedReplayMaskSelectorSchema).min(1).max(24),
+    blockSelectors: z.array(BrowserMaskedReplayBlockSelectorSchema).min(1).max(12),
+    turns: z
+      .object({
+        userTurnCount: z.number().int().nonnegative().max(1_000),
+        assistantTurnCount: z.number().int().nonnegative().max(1_000),
+        pendingTurnCount: z.number().int().nonnegative().max(1_000),
+        workLogCount: z.number().int().nonnegative().max(1_000),
+        errorBannerCount: z.number().int().nonnegative().max(1_000),
+      })
+      .strict(),
+    input: z
+      .object({
+        present: z.boolean(),
+        valueLengthBucket: z.enum(['0', '1-80', '81-240', '241+']),
+      })
+      .strict(),
+    history: z
+      .object({
+        rowCount: z.number().int().nonnegative().max(1_000),
+        activeStatus: z.enum(['idle', 'running', 'error', 'unknown']),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+const BrowserTelemetrySchema = z
+  .object({
+    type: z.enum([
+      'browser_error',
+      'browser_unhandledrejection',
+      'browser_stream_error',
+      'browser_htmx_error',
+      'browser_feedback',
+    ]),
+    route: z.string().min(1).max(2048).optional(),
+    conversationId: BrowserTelemetryTokenSchema.optional(),
+    userMessageId: BrowserTelemetryTokenSchema.optional(),
+    errorName: BrowserTelemetryTokenSchema.optional(),
+    reasonType: BrowserTelemetryTokenSchema.optional(),
+    source: z.string().min(1).max(2048).optional(),
+    line: z.number().int().nonnegative().max(1_000_000).optional(),
+    column: z.number().int().nonnegative().max(1_000_000).optional(),
+    viewport: z
+      .object({
+        width: z.number().int().positive().max(20_000),
+        height: z.number().int().positive().max(20_000),
+      })
+      .strict()
+      .optional(),
+    userAgent: z.string().min(1).max(512).optional(),
+    streamErrorKind: z.enum(['transport', 'session']).optional(),
+    streamReadyState: z.number().int().min(0).max(2).optional(),
+    htmxEvent: BrowserTelemetryTokenSchema.optional(),
+    htmxStatus: z.number().int().min(0).max(999).optional(),
+    feedbackKind: BrowserFeedbackKindSchema.optional(),
+    associatedEventId: BrowserTelemetryEventIdSchema.optional(),
+    maskedReplay: BrowserMaskedReplaySchema.optional(),
+  })
+  .strict();
+
+type BrowserTelemetryEvent = z.infer<typeof BrowserTelemetrySchema>;
+
+function browserPathOnly(raw: string | undefined): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+
+  try {
+    if (/^https?:\/\//i.test(value)) return new URL(value).pathname || '/';
+  } catch {
+    return undefined;
+  }
+
+  if (!value.startsWith('/')) return undefined;
+  return value.split('?')[0]?.split('#')[0] || '/';
+}
+
+function buildBrowserTelemetryInput(
+  c: Context,
+  requestId: string,
+  event: BrowserTelemetryEvent,
+): TelemetryCaptureInput {
+  const route = browserPathOnly(event.route) ?? '/browser';
+  const source = browserPathOnly(event.source);
+  return {
+    route,
+    requestId,
+    conversationId: event.conversationId,
+    userMessageId: event.userMessageId,
+    user: safeUserFromContext(c),
+    context: {
+      surface: 'browser',
+      eventType: event.type,
+      telemetryEndpoint: '/api/browser-telemetry',
+      errorName: event.errorName ?? null,
+      reasonType: event.reasonType ?? null,
+      source: source ?? null,
+      line: event.line ?? null,
+      column: event.column ?? null,
+      viewport: event.viewport ?? null,
+      userAgent: event.userAgent ?? null,
+      streamErrorKind: event.streamErrorKind ?? null,
+      streamReadyState: event.streamReadyState ?? null,
+      htmxEvent: event.htmxEvent ?? null,
+      htmxStatus: event.htmxStatus ?? null,
+      maskedReplay: event.maskedReplay ?? null,
+    },
+  };
+}
+
+function buildBrowserFeedbackInput(
+  c: Context,
+  requestId: string,
+  event: BrowserTelemetryEvent,
+): TelemetryFeedbackInput | null {
+  if (event.type !== 'browser_feedback' || !event.feedbackKind) return null;
+  const input = buildBrowserTelemetryInput(c, requestId, event);
+  return {
+    ...input,
+    feedbackKind: event.feedbackKind,
+    associatedEventId: event.associatedEventId,
+  };
 }
 
 async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
@@ -775,8 +1228,17 @@ app.post('/campaigns', async (c) => {
   const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
   const game = typeof form.get('game') === 'string' ? (form.get('game') as string) : '';
   if (!name) return renderCampaignListPage(c, 'Campaign name is required.');
-  // Modules derive from the game (advisory scenario-set selectors).
-  const modules = normalizeGameId(game) === 'gloomhaven-2e' ? ['gh2e', 'solo2e'] : ['fh'];
+  // Base module always; optional modules are opt-in via the form checkboxes.
+  // A checked module for a different game is filtered out by availableModulesFor.
+  const gameId = normalizeGameId(game);
+  const checked = new Set(
+    form.getAll('module').filter((value): value is string => typeof value === 'string'),
+  );
+  const modules = gameId
+    ? availableModulesFor(gameId).filter(
+        (module) => module === gameDefinitionFor(gameId).baseModule || checked.has(module),
+      )
+    : undefined;
   try {
     const campaign = await CampaignService.createCampaign(identityFromSessionUser(session.userId), {
       name,
@@ -850,20 +1312,31 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 
 /**
  * Render the `/campaigns/:id` dashboard page. Shared by the GET route and the
- * create-character POST error path so a failed create re-renders in place with
- * an inline banner (SQR-318). Throws `CampaignNotFoundError` for non-members —
- * callers map it to the indistinguishable 404 (ADR 0021).
+ * create-character / invite POST error paths so a failed write re-renders in
+ * place with an inline banner (SQR-318, SQR-319). Throws `CampaignNotFoundError`
+ * for non-members — callers map it to the indistinguishable 404 (ADR 0021).
  */
 async function renderCampaignDashboardPage(
   c: Context,
   campaignId: string,
-  opts: { characterError?: string } = {},
+  opts: {
+    characterError?: string;
+    inviteError?: string;
+    renameError?: string;
+    modulesError?: string;
+  } = {},
   status: 200 | 422 = 200,
 ): Promise<Response> {
   const session = c.get('session')!;
   const identity = identityFromSessionUser(session.userId);
   const detail = await CampaignService.getCampaignDetail(identity, campaignId);
   const csrfToken = createCsrfToken(session.id);
+  // Invite is owner-only: the affordance is hidden (not just disabled) for
+  // everyone else, matching the service-layer role gate.
+  const isOwner = detail.self.role === 'owner';
+  // Modules editor only for games that have optional modules to toggle.
+  const gameId = normalizeGameId(detail.campaign.game);
+  const gameDef = gameId ? gameDefinitionFor(gameId) : null;
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -898,6 +1371,23 @@ async function renderCampaignDashboardPage(
         classOptions: await knownClassNames(detail.campaign.game),
         errorMessage: opts.characterError,
       },
+      // Invite-member affordance (SQR-319): form is owner-only; the error
+      // banner still renders for a non-owner who tampers the route.
+      { csrfToken, canInvite: isOwner, errorMessage: opts.inviteError },
+      // Rename affordance (SQR-320): any active member; the name is shared
+      // state. expectedVersion drives optimistic concurrency.
+      { csrfToken, version: detail.campaign.version, errorMessage: opts.renameError },
+      // Modules editor (SQR-321): only when the game has optional modules.
+      gameDef && gameDef.optionalModules.length > 0
+        ? {
+            csrfToken,
+            version: detail.campaign.version,
+            baseModule: gameDef.baseModule,
+            optionalModules: gameDef.optionalModules,
+            current: detail.campaign.modules,
+            errorMessage: opts.modulesError,
+          }
+        : undefined,
     ),
   });
   return c.html(body, status);
@@ -975,6 +1465,167 @@ app.post('/campaigns/:id/characters', async (c) => {
         { characterError: error.message },
         422,
       );
+    }
+    throw error;
+  }
+});
+
+/** Invite a member from the dashboard Party section (owner-only, SQR-319). */
+app.post('/campaigns/:id/invites', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const email = typeof form.get('email') === 'string' ? (form.get('email') as string).trim() : '';
+
+  try {
+    // getCampaignDetail gates membership: a non-member gets the 404 below.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    // Authorize before validating the email so a non-owner always gets the
+    // consistent owner-only rejection, never invite-field feedback.
+    if (detail.self.role !== 'owner') {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { inviteError: 'Only the owner can invite members' },
+        422,
+      );
+    }
+    if (!z.string().email().max(320).safeParse(email).success) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { inviteError: 'Enter a valid email address.' },
+        422,
+      );
+    }
+    // inviteMember re-checks the owner gate and enforces the allowlist + dedupe.
+    await CampaignService.inviteMember(identity, campaignId, email);
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (
+      error instanceof CampaignService.CampaignForbiddenError ||
+      error instanceof CampaignService.NotAllowlistedError ||
+      error instanceof CampaignService.AlreadyInvitedError
+    ) {
+      return await renderCampaignDashboardPage(c, campaignId, { inviteError: error.message }, 422);
+    }
+    throw error;
+  }
+});
+
+/** Rename a campaign from the dashboard header (SQR-320). */
+app.post('/campaigns/:id/rename', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
+  // Strict parse via formInt (`/^\d+$/` → null) so a malformed token like
+  // "7abc" can't slip past Number.parseInt's leniency into the version guard.
+  const expectedVersion = formInt(form, 'expectedVersion');
+
+  try {
+    // getCampaignDetail gates membership: a non-member gets the 404 below.
+    // The name is shared state, so any active member may rename (no owner gate),
+    // matching updateSharedState's authorization and the scenario-toggle control.
+    await CampaignService.getCampaignDetail(identity, campaignId);
+    if (!name) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Campaign name is required.' },
+        422,
+      );
+    }
+    if (name.length > 200) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Campaign name must be 200 characters or fewer.' },
+        422,
+      );
+    }
+    if (expectedVersion === null) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Could not save — please refresh and try again.' },
+        422,
+      );
+    }
+    await CampaignService.updateSharedState(identity, campaignId, { name, expectedVersion });
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof VersionConflictError) {
+      // A concurrent edit won — re-render with the latest state + a notice.
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: 'Updated elsewhere — showing the latest. Try the rename again.' },
+        422,
+      );
+    }
+    if (error instanceof CampaignService.CampaignForbiddenError) {
+      return await renderCampaignDashboardPage(c, campaignId, { renameError: error.message }, 422);
+    }
+    throw error;
+  }
+});
+
+/** Edit a campaign's modules from the dashboard (SQR-321). */
+app.post('/campaigns/:id/modules', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const expectedVersion = formInt(form, 'expectedVersion');
+  const checked = new Set(
+    form.getAll('module').filter((value): value is string => typeof value === 'string'),
+  );
+
+  try {
+    // getCampaignDetail gates membership; modules are shared state, so any
+    // active member may edit (no owner gate), like rename/scenario toggles.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    if (expectedVersion === null) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: 'Could not save — please refresh and try again.' },
+        422,
+      );
+    }
+    const gameId = normalizeGameId(detail.campaign.game);
+    if (!gameId) return c.notFound();
+    // Base is always on; add the checked optional modules. The computed set is
+    // valid by construction; updateSharedState re-validates as defense-in-depth.
+    const baseModule = gameDefinitionFor(gameId).baseModule;
+    const modules = availableModulesFor(gameId).filter(
+      (module) => module === baseModule || checked.has(module),
+    );
+    await CampaignService.updateSharedState(identity, campaignId, { modules, expectedVersion });
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof VersionConflictError) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: 'Updated elsewhere — showing the latest. Try again.' },
+        422,
+      );
+    }
+    if (
+      error instanceof CampaignService.InvalidModulesError ||
+      error instanceof CampaignService.CampaignForbiddenError
+    ) {
+      return await renderCampaignDashboardPage(c, campaignId, { modulesError: error.message }, 422);
     }
     throw error;
   }
@@ -2009,6 +2660,8 @@ app.post('/chat', async (c) => {
       question,
       idempotencyKey,
       game,
+      requestId,
+      telemetry: { route: '/chat', surface: 'web_chat' },
     });
 
     c.header('Cache-Control', 'no-store');
@@ -2070,6 +2723,7 @@ app.post('/chat', async (c) => {
     game,
     campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
+    telemetry: { route: '/chat', surface: 'web_chat' },
   });
 
   c.header('Cache-Control', 'no-store');
@@ -2102,6 +2756,8 @@ app.post('/chat/:conversationId/messages', async (c) => {
       question,
       game,
       campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
+      requestId,
+      telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
     });
     if (!pending?.currentUserMessage) return c.notFound();
 
@@ -2135,6 +2791,7 @@ app.post('/chat/:conversationId/messages', async (c) => {
     game,
     campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
+    telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
   });
   if (!conversation) return c.notFound();
 
@@ -2156,11 +2813,24 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   });
   if (!loaded) return c.notFound();
   if (loaded.message.role !== 'user') return c.notFound();
+  const streamTelemetryBase: ChatLifecycleInput = {
+    route: '/chat/:conversationId/messages/:messageId/stream',
+    surface: 'chat_sse',
+    requestId,
+    conversationId: loaded.conversation.id,
+    userMessageId: loaded.message.id,
+    game: loaded.message.game ?? null,
+    replay: lastEventSequence > 0,
+  };
 
   const bootstrapStatus = await ensureBootstrapStatus();
   const askCapability = bootstrapStatus.capabilities.ask;
   if (!askCapability.allowed) {
     return streamSSE(c, async (stream) => {
+      recordChatLifecycleEvent('stream.started', {
+        ...streamTelemetryBase,
+        status: 'started',
+      });
       await stream.writeSSE({
         event: 'error',
         data: JSON.stringify({
@@ -2168,6 +2838,12 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           message: askCapability.message ?? 'Service unavailable.',
           recoverable: bootstrapStatus.lifecycle === 'warming_up',
         }),
+      });
+      recordChatLifecycleEvent('stream.completed', {
+        ...streamTelemetryBase,
+        status: 'error',
+        failureKind: 'bootstrap',
+        durationMs: 0,
       });
     });
   }
@@ -2182,108 +2858,216 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // and persists the same sources. This handler just translates agent
   // events to wire events.
   return streamSSE(c, async (stream) => {
-    let planSequence = 0;
-    let progressSequence = 0;
-    let artifactSequence = 0;
-    let replayCursor = lastEventSequence;
-
-    const writeStoredEvent = async (
-      storedEvent: MessageStreamEventRepository.MessageStreamEvent,
-    ) => {
-      await stream.writeSSE({
-        id: String(storedEvent.sequence),
-        event: storedEvent.event,
-        data: JSON.stringify(storedEvent.payload),
-      });
-      replayCursor = storedEvent.sequence;
-    };
-
-    const persistAndWrite = async (
-      event: BrowserStreamEventName,
-      payload: Record<string, unknown>,
-    ) => {
-      const storedEvent = await MessageStreamEventRepository.append({
-        conversationId: loaded.conversation.id,
-        userMessageId: loaded.message.id,
-        event,
-        payload,
-      });
-      if (storedEvent.sequence > replayCursor) {
-        await writeStoredEvent(storedEvent);
-      }
-      return storedEvent;
-    };
-
-    const replayStoredEvents = async (): Promise<{
-      wroteAny: boolean;
-      reachedTerminal: boolean;
-    }> => {
-      const storedEvents = await MessageStreamEventRepository.listAfter({
-        userMessageId: loaded.message.id,
-        afterSequence: replayCursor,
-      });
-      let wroteAny = false;
-      let reachedTerminal = false;
-      for (const storedEvent of storedEvents) {
-        await writeStoredEvent(storedEvent);
-        wroteAny = true;
-        if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
-          reachedTerminal = true;
-          break;
-        }
-      }
-      return { wroteAny, reachedTerminal };
-    };
-
-    const appendTerminalForAssistantMessage = async (
-      assistantMessage: Awaited<ReturnType<typeof streamAssistantTurn>>,
-    ) => {
-      if (assistantMessage.isError) {
-        await persistAndWrite('error', {
-          kind: 'transport',
-          message:
-            assistantMessage.content === GENERIC_FAILURE_MESSAGE
-              ? 'Trouble connecting. Please try again.'
-              : assistantMessage.content,
-          recoverable: true,
+    await withChatLifecycleSpan('squire.chat.sse_stream', streamTelemetryBase, async (span) => {
+      const streamStartedAt = Date.now();
+      let firstEventLogged = false;
+      let cancellationLogged = false;
+      const signal = c.req.raw.signal;
+      const logCancellation = () => {
+        if (cancellationLogged) return;
+        cancellationLogged = true;
+        recordChatLifecycleEvent('stream.cancelled', {
+          ...streamTelemetryBase,
+          status: 'cancelled',
+          durationMs: Date.now() - streamStartedAt,
         });
-        return;
-      }
-
-      await persistAndWrite('done', {
-        html: renderAssistantContentHtml(assistantMessage.content),
-        // SQR-98: send the persisted consulted_sources along with `done` so
-        // the client can rebuild the footer on replay — duplicate /stream
-        // hits, HTMX reconnects, or any path where persistAssistantOutcome
-        // returns an already-persisted row return here with no tool_result
-        // events fired. Without this, the footer would stay hidden on the
-        // reconnected turn until a full page reload.
-        // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
-        // dropped — the conversation page is a scrolling transcript with
-        // no recent-questions chip rail to refresh.
-        consultedSources: assistantMessage.consultedSources,
+        setChatSpanAttributes(span, {
+          ...streamTelemetryBase,
+          status: 'cancelled',
+        });
+      };
+      signal.addEventListener('abort', logCancellation, { once: true });
+      recordChatLifecycleEvent('stream.started', {
+        ...streamTelemetryBase,
+        status: 'started',
       });
-    };
+      try {
+        let planSequence = 0;
+        let progressSequence = 0;
+        let artifactSequence = 0;
+        let replayCursor = lastEventSequence;
 
-    const existingTerminal = await MessageStreamEventRepository.findTerminal(loaded.message.id);
-    if (existingTerminal && existingTerminal.sequence <= replayCursor) {
-      return;
-    }
+        const writeStoredEvent = async (
+          storedEvent: MessageStreamEventRepository.MessageStreamEvent,
+          options: { assistantMessageId?: string; replay?: boolean } = {},
+        ) => {
+          await stream.writeSSE({
+            id: String(storedEvent.sequence),
+            event: storedEvent.event,
+            data: JSON.stringify(storedEvent.payload),
+          });
+          replayCursor = storedEvent.sequence;
+          const eventTelemetryBase = {
+            ...streamTelemetryBase,
+            assistantMessageId: options.assistantMessageId,
+            replay: options.replay ?? streamTelemetryBase.replay,
+            streamEvent: storedEvent.event,
+            sequence: storedEvent.sequence,
+          };
+          if (!firstEventLogged) {
+            firstEventLogged = true;
+            recordChatLifecycleEvent('stream.first_event', {
+              ...eventTelemetryBase,
+              status: 'ok',
+            });
+          }
+          if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
+            const failed = storedEvent.event === 'error';
+            recordChatLifecycleEvent('stream.completed', {
+              ...eventTelemetryBase,
+              status: failed ? 'error' : 'ok',
+              failureKind: failed ? 'stream_terminal_error' : undefined,
+              durationMs: Date.now() - streamStartedAt,
+            });
+            setChatSpanAttributes(span, {
+              ...eventTelemetryBase,
+              status: failed ? 'error' : 'ok',
+              failureKind: failed ? 'stream_terminal_error' : undefined,
+            });
+          }
+        };
 
-    const initialReplay = await replayStoredEvents();
-    if (initialReplay.reachedTerminal) {
-      return;
-    }
-
-    const hasPriorStreamEvents = replayCursor > 0 || initialReplay.wroteAny;
-    if (hasPriorStreamEvents) {
-      for (let polls = 0; polls < STREAM_REPLAY_MAX_POLLS; polls += 1) {
-        if (
-          !(await MessageStreamEventRepository.isTurnGenerationLocked({
+        const persistAndWrite = async (
+          event: BrowserStreamEventName,
+          payload: Record<string, unknown>,
+          options: { assistantMessageId?: string; replay?: boolean } = {},
+        ) => {
+          const storedEvent = await MessageStreamEventRepository.append({
             conversationId: loaded.conversation.id,
             userMessageId: loaded.message.id,
-          }))
-        ) {
+            event,
+            payload,
+          });
+          if (storedEvent.sequence > replayCursor) {
+            await writeStoredEvent(storedEvent, options);
+          }
+          return storedEvent;
+        };
+
+        const replayStoredEvents = async (): Promise<{
+          wroteAny: boolean;
+          reachedTerminal: boolean;
+        }> => {
+          const storedEvents = await MessageStreamEventRepository.listAfter({
+            userMessageId: loaded.message.id,
+            afterSequence: replayCursor,
+          });
+          let wroteAny = false;
+          let reachedTerminal = false;
+          for (const storedEvent of storedEvents) {
+            await writeStoredEvent(storedEvent, { replay: true });
+            wroteAny = true;
+            if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
+              reachedTerminal = true;
+              break;
+            }
+          }
+          return { wroteAny, reachedTerminal };
+        };
+
+        const appendTerminalForAssistantMessage = async (
+          assistantMessage: Awaited<ReturnType<typeof streamAssistantTurn>>,
+        ) => {
+          if (assistantMessage.isError) {
+            await persistAndWrite(
+              'error',
+              {
+                kind: 'transport',
+                message:
+                  assistantMessage.content === GENERIC_FAILURE_MESSAGE
+                    ? 'Trouble connecting. Please try again.'
+                    : assistantMessage.content,
+                recoverable: true,
+              },
+              {
+                assistantMessageId: assistantMessage.id,
+              },
+            );
+            return;
+          }
+
+          await persistAndWrite(
+            'done',
+            {
+              html: renderAssistantContentHtml(assistantMessage.content),
+              // SQR-98: send the persisted consulted_sources along with `done` so
+              // the client can rebuild the footer on replay — duplicate /stream
+              // hits, HTMX reconnects, or any path where persistAssistantOutcome
+              // returns an already-persisted row return here with no tool_result
+              // events fired. Without this, the footer would stay hidden on the
+              // reconnected turn until a full page reload.
+              // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
+              // dropped — the conversation page is a scrolling transcript with
+              // no recent-questions chip rail to refresh.
+              consultedSources: assistantMessage.consultedSources,
+            },
+            {
+              assistantMessageId: assistantMessage.id,
+            },
+          );
+        };
+
+        const existingTerminal = await MessageStreamEventRepository.findTerminal(loaded.message.id);
+        if (existingTerminal && existingTerminal.sequence <= replayCursor) {
+          recordChatLifecycleEvent('stream.completed', {
+            ...streamTelemetryBase,
+            status: 'already_done',
+            streamEvent: existingTerminal.event,
+            sequence: existingTerminal.sequence,
+            replay: true,
+            durationMs: Date.now() - streamStartedAt,
+          });
+          setChatSpanAttributes(span, {
+            ...streamTelemetryBase,
+            status: 'already_done',
+            streamEvent: existingTerminal.event,
+            sequence: existingTerminal.sequence,
+            replay: true,
+          });
+          return;
+        }
+
+        const initialReplay = await replayStoredEvents();
+        if (initialReplay.wroteAny) {
+          recordChatLifecycleEvent('stream.replayed', {
+            ...streamTelemetryBase,
+            status: initialReplay.reachedTerminal ? 'already_done' : 'replayed',
+            replay: true,
+          });
+        }
+        if (initialReplay.reachedTerminal) {
+          return;
+        }
+
+        const hasPriorStreamEvents = replayCursor > 0 || initialReplay.wroteAny;
+        if (hasPriorStreamEvents) {
+          for (let polls = 0; polls < STREAM_REPLAY_MAX_POLLS; polls += 1) {
+            if (
+              !(await MessageStreamEventRepository.isTurnGenerationLocked({
+                conversationId: loaded.conversation.id,
+                userMessageId: loaded.message.id,
+              }))
+            ) {
+              const replay = await replayStoredEvents();
+              if (replay.reachedTerminal) {
+                return;
+              }
+
+              const assistantMessage = await persistAssistantFailureTurn({
+                conversationId: loaded.conversation.id,
+                userMessageId: loaded.message.id,
+              });
+              await appendTerminalForAssistantMessage(assistantMessage);
+              return;
+            }
+
+            await delay(STREAM_REPLAY_POLL_MS);
+            const replay = await replayStoredEvents();
+            if (replay.reachedTerminal) {
+              return;
+            }
+          }
+
           const replay = await replayStoredEvents();
           if (replay.reachedTerminal) {
             return;
@@ -2297,205 +3081,195 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           return;
         }
 
-        await delay(STREAM_REPLAY_POLL_MS);
-        const replay = await replayStoredEvents();
-        if (replay.reachedTerminal) {
-          return;
-        }
+        const assistantMessage = await streamAssistantTurn({
+          conversationId: loaded.conversation.id,
+          question: loaded.message.content,
+          userId: session.userId,
+          currentUserMessageId: loaded.message.id,
+          game: loaded.message.game ?? undefined,
+          requestId,
+          telemetry: {
+            route: '/chat/:conversationId/messages/:messageId/stream',
+            surface: 'chat_sse',
+          },
+          onEvent: async (event, data) => {
+            if (event === 'text') {
+              await persistAndWrite('text-delta', data);
+              return;
+            }
+
+            if (event === 'tool_call') {
+              const payload = data as { name?: string };
+              const name = payload.name ?? 'tool';
+              await persistAndWrite('tool-start', {
+                id: buildToolStatusId(name),
+                // Keep the SSE wire contract: always send a string label
+                // (REFERENCE fallback for utility/traversal tools) so the
+                // tool-indicator UI doesn't need to know about nulls.
+                label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+              });
+              return;
+            }
+
+            if (event === 'tool_plan') {
+              const payload = data as { message?: unknown; toolName?: string };
+              const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+              if (message.length === 0) {
+                return;
+              }
+              const name = payload.toolName ?? 'tool';
+              planSequence += 1;
+              await persistAndWrite('tool-plan', {
+                id: `${buildToolStatusId(name)}-plan-${planSequence}`,
+                message,
+              });
+              return;
+            }
+
+            if (event === 'tool_progress') {
+              const payload = data as { message?: unknown; toolName?: string };
+              const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+              if (message.length === 0) {
+                return;
+              }
+              const name = payload.toolName ?? 'tool';
+              const label = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
+              progressSequence += 1;
+              await persistAndWrite('tool-progress', {
+                id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
+                label,
+                message,
+              });
+              return;
+            }
+
+            if (event === 'artifact') {
+              const payload = data as {
+                kind?: unknown;
+                title?: unknown;
+                body?: unknown;
+                sourceLabel?: unknown;
+                ref?: unknown;
+              };
+              const title = typeof payload.title === 'string' ? payload.title.trim() : '';
+              const body = typeof payload.body === 'string' ? payload.body.trim() : '';
+              if (payload.kind !== 'section_quote' || title.length === 0 || body.length === 0) {
+                return;
+              }
+              const rawSourceLabel =
+                typeof payload.sourceLabel === 'string' ? payload.sourceLabel.trim() : '';
+              const sourceLabel =
+                rawSourceLabel.length === 0
+                  ? null
+                  : isToolSourceLabel(rawSourceLabel)
+                    ? rawSourceLabel
+                    : retrievalSourceLabelToFooterLabel(rawSourceLabel);
+              const ref = typeof payload.ref === 'string' ? payload.ref.trim() : '';
+              artifactSequence += 1;
+              await persistAndWrite('answer-artifact', {
+                id: `section-quote-${artifactSequence}`,
+                kind: 'section-quote',
+                title,
+                body,
+                sourceLabel,
+                ref: ref.length > 0 ? ref : null,
+              });
+              return;
+            }
+
+            if (event === 'state_context') {
+              // SQR-258: name the state snapshot this personalized answer ran
+              // against, with a fix-it-here link to the edit surface.
+              const payload = data as {
+                summary?: unknown;
+                campaignId?: unknown;
+                characterId?: unknown;
+              };
+              if (typeof payload.summary !== 'string' || typeof payload.campaignId !== 'string') {
+                return;
+              }
+              await persistAndWrite('state-used', {
+                id: 'state-used',
+                message: `Using campaign state: ${payload.summary}`,
+                href:
+                  typeof payload.characterId === 'string'
+                    ? `/characters/${payload.characterId}`
+                    : `/campaigns/${payload.campaignId}`,
+              });
+              return;
+            }
+
+            if (event === 'proposal') {
+              // SQR-286: a staged destructive mutation renders as the chat
+              // confirmation block. Lines are server-derived so the preview
+              // vocabulary stays in one tested place.
+              const payload = data as {
+                proposalId?: unknown;
+                campaignId?: unknown;
+                mutation?: unknown;
+                expiresAt?: unknown;
+                lines?: unknown;
+              };
+              if (
+                typeof payload.proposalId !== 'string' ||
+                typeof payload.campaignId !== 'string' ||
+                typeof payload.expiresAt !== 'string'
+              ) {
+                return;
+              }
+              // Prefer the propose-time resolved lines (character names, derived
+              // availability consequences); fall back to the generic vocabulary.
+              const resolvedLines = Array.isArray(payload.lines)
+                ? payload.lines.filter((line): line is string => typeof line === 'string')
+                : [];
+              await persistAndWrite('proposal-staged', {
+                id: `proposal-${payload.proposalId}`,
+                proposalId: payload.proposalId,
+                campaignId: payload.campaignId,
+                lines:
+                  resolvedLines.length > 0 ? resolvedLines : stagedMutationLines(payload.mutation),
+                expiresAt: payload.expiresAt,
+              });
+              return;
+            }
+
+            if (event === 'tool_result') {
+              const payload = data as {
+                name?: string;
+                ok?: boolean;
+                message?: unknown;
+                sourceBooks?: string[];
+              };
+              const name = payload.name ?? 'tool';
+              const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+              // Use the actual books hit when available (search_rules always sets
+              // sourceBooks, even to [] on no results); fall back to the static
+              // label for tools that don't set sourceBooks at all.
+              const staticLabel = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
+              const mappedLabels =
+                payload.sourceBooks === undefined
+                  ? null
+                  : payload.sourceBooks
+                      .map(retrievalSourceLabelToFooterLabel)
+                      .filter((l): l is NonNullable<typeof l> => l !== null);
+              const labels = mappedLabels && mappedLabels.length > 0 ? mappedLabels : [staticLabel];
+              await persistAndWrite('tool-result', {
+                id: buildToolStatusId(name),
+                labels,
+                ok: payload.ok ?? true,
+                message: message.length > 0 ? humanizeWorkLogProgressMessage(message) : undefined,
+              });
+              return;
+            }
+          },
+        });
+
+        await appendTerminalForAssistantMessage(assistantMessage);
+      } finally {
+        signal.removeEventListener('abort', logCancellation);
+        if (signal.aborted) logCancellation();
       }
-
-      const replay = await replayStoredEvents();
-      if (replay.reachedTerminal) {
-        return;
-      }
-
-      const assistantMessage = await persistAssistantFailureTurn({
-        conversationId: loaded.conversation.id,
-        userMessageId: loaded.message.id,
-      });
-      await appendTerminalForAssistantMessage(assistantMessage);
-      return;
-    }
-
-    const assistantMessage = await streamAssistantTurn({
-      conversationId: loaded.conversation.id,
-      question: loaded.message.content,
-      userId: session.userId,
-      currentUserMessageId: loaded.message.id,
-      game: loaded.message.game ?? undefined,
-      requestId,
-      onEvent: async (event, data) => {
-        if (event === 'text') {
-          await persistAndWrite('text-delta', data);
-          return;
-        }
-
-        if (event === 'tool_call') {
-          const payload = data as { name?: string };
-          const name = payload.name ?? 'tool';
-          await persistAndWrite('tool-start', {
-            id: buildToolStatusId(name),
-            // Keep the SSE wire contract: always send a string label
-            // (REFERENCE fallback for utility/traversal tools) so the
-            // tool-indicator UI doesn't need to know about nulls.
-            label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
-          });
-          return;
-        }
-
-        if (event === 'tool_plan') {
-          const payload = data as { message?: unknown; toolName?: string };
-          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
-          if (message.length === 0) {
-            return;
-          }
-          const name = payload.toolName ?? 'tool';
-          planSequence += 1;
-          await persistAndWrite('tool-plan', {
-            id: `${buildToolStatusId(name)}-plan-${planSequence}`,
-            message,
-          });
-          return;
-        }
-
-        if (event === 'tool_progress') {
-          const payload = data as { message?: unknown; toolName?: string };
-          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
-          if (message.length === 0) {
-            return;
-          }
-          const name = payload.toolName ?? 'tool';
-          const label = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
-          progressSequence += 1;
-          await persistAndWrite('tool-progress', {
-            id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
-            label,
-            message,
-          });
-          return;
-        }
-
-        if (event === 'artifact') {
-          const payload = data as {
-            kind?: unknown;
-            title?: unknown;
-            body?: unknown;
-            sourceLabel?: unknown;
-            ref?: unknown;
-          };
-          const title = typeof payload.title === 'string' ? payload.title.trim() : '';
-          const body = typeof payload.body === 'string' ? payload.body.trim() : '';
-          if (payload.kind !== 'section_quote' || title.length === 0 || body.length === 0) {
-            return;
-          }
-          const rawSourceLabel =
-            typeof payload.sourceLabel === 'string' ? payload.sourceLabel.trim() : '';
-          const sourceLabel =
-            rawSourceLabel.length === 0
-              ? null
-              : isToolSourceLabel(rawSourceLabel)
-                ? rawSourceLabel
-                : retrievalSourceLabelToFooterLabel(rawSourceLabel);
-          const ref = typeof payload.ref === 'string' ? payload.ref.trim() : '';
-          artifactSequence += 1;
-          await persistAndWrite('answer-artifact', {
-            id: `section-quote-${artifactSequence}`,
-            kind: 'section-quote',
-            title,
-            body,
-            sourceLabel,
-            ref: ref.length > 0 ? ref : null,
-          });
-          return;
-        }
-
-        if (event === 'state_context') {
-          // SQR-258: name the state snapshot this personalized answer ran
-          // against, with a fix-it-here link to the edit surface.
-          const payload = data as {
-            summary?: unknown;
-            campaignId?: unknown;
-            characterId?: unknown;
-          };
-          if (typeof payload.summary !== 'string' || typeof payload.campaignId !== 'string') {
-            return;
-          }
-          await persistAndWrite('state-used', {
-            id: 'state-used',
-            message: `Using campaign state: ${payload.summary}`,
-            href:
-              typeof payload.characterId === 'string'
-                ? `/characters/${payload.characterId}`
-                : `/campaigns/${payload.campaignId}`,
-          });
-          return;
-        }
-
-        if (event === 'proposal') {
-          // SQR-286: a staged destructive mutation renders as the chat
-          // confirmation block. Lines are server-derived so the preview
-          // vocabulary stays in one tested place.
-          const payload = data as {
-            proposalId?: unknown;
-            campaignId?: unknown;
-            mutation?: unknown;
-            expiresAt?: unknown;
-            lines?: unknown;
-          };
-          if (
-            typeof payload.proposalId !== 'string' ||
-            typeof payload.campaignId !== 'string' ||
-            typeof payload.expiresAt !== 'string'
-          ) {
-            return;
-          }
-          // Prefer the propose-time resolved lines (character names, derived
-          // availability consequences); fall back to the generic vocabulary.
-          const resolvedLines = Array.isArray(payload.lines)
-            ? payload.lines.filter((line): line is string => typeof line === 'string')
-            : [];
-          await persistAndWrite('proposal-staged', {
-            id: `proposal-${payload.proposalId}`,
-            proposalId: payload.proposalId,
-            campaignId: payload.campaignId,
-            lines: resolvedLines.length > 0 ? resolvedLines : stagedMutationLines(payload.mutation),
-            expiresAt: payload.expiresAt,
-          });
-          return;
-        }
-
-        if (event === 'tool_result') {
-          const payload = data as {
-            name?: string;
-            ok?: boolean;
-            message?: unknown;
-            sourceBooks?: string[];
-          };
-          const name = payload.name ?? 'tool';
-          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
-          // Use the actual books hit when available (search_rules always sets
-          // sourceBooks, even to [] on no results); fall back to the static
-          // label for tools that don't set sourceBooks at all.
-          const staticLabel = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
-          const mappedLabels =
-            payload.sourceBooks === undefined
-              ? null
-              : payload.sourceBooks
-                  .map(retrievalSourceLabelToFooterLabel)
-                  .filter((l): l is NonNullable<typeof l> => l !== null);
-          const labels = mappedLabels && mappedLabels.length > 0 ? mappedLabels : [staticLabel];
-          await persistAndWrite('tool-result', {
-            id: buildToolStatusId(name),
-            labels,
-            ok: payload.ok ?? true,
-            message: message.length > 0 ? humanizeWorkLogProgressMessage(message) : undefined,
-          });
-          return;
-        }
-      },
     });
-
-    await appendTerminalForAssistantMessage(assistantMessage);
   });
 });
 
@@ -2664,6 +3438,8 @@ app.notFound((c) => {
 
 app.onError((err, c) => {
   console.error('Unhandled error:', err instanceof Error ? err.message : err);
+  const requestId = correlateRequest(c);
+  captureTelemetryError(err, buildServerErrorTelemetry(c, requestId));
   return c.json(jsonError('Internal server error', 500), 500);
 });
 
@@ -2676,6 +3452,36 @@ app.get('/api/health', async (c) => {
 
 app.get('/api/live', (c) => {
   return c.json({ status: 'ok' });
+});
+
+// Browser observability endpoint. It deliberately accepts only a strict,
+// operational allowlist; invalid telemetry is ignored because diagnostics must
+// never change the page behavior or mirror unknown browser data into Sentry.
+app.post('/api/browser-telemetry', optionalSession(), async (c) => {
+  const requestId = correlateRequest(c);
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.body(null, 204);
+  }
+
+  const result = BrowserTelemetrySchema.safeParse(body);
+  if (!result.success) return c.body(null, 204);
+
+  if (result.data.type === 'browser_feedback') {
+    const feedbackInput = buildBrowserFeedbackInput(c, requestId, result.data);
+    if (!feedbackInput) return c.body(null, 204);
+    const eventId = captureTelemetryFeedback(feedbackInput);
+    return c.json({ eventId }, 202);
+  }
+
+  const eventId = captureTelemetryMessage(
+    `browser.${result.data.type}`,
+    'error',
+    buildBrowserTelemetryInput(c, requestId, result.data),
+  );
+  return c.json({ eventId }, 202);
 });
 
 // ─── Search endpoints ────────────────────────────────────────────────────────
@@ -2899,22 +3705,80 @@ app.post('/api/ask', async (c) => {
     }
   }
 
+  const askTelemetryBase: ChatLifecycleInput = {
+    route: '/api/ask',
+    surface: 'api_ask',
+    requestId,
+    game: options.game ?? null,
+  };
+  recordChatLifecycleEvent('api_ask.accepted', {
+    ...askTelemetryBase,
+    status: 'accepted',
+  });
+
   return streamSSE(c, async (stream) => {
-    try {
-      await ask(question, {
-        ...options,
-        budgetPrechecked: true,
-        requestId,
-        emit: async (event, data) => {
-          await stream.writeSSE({ event, data: JSON.stringify(data) });
-        },
+    await withChatLifecycleSpan('squire.chat.api_ask', askTelemetryBase, async (span) => {
+      const startedAt = Date.now();
+      let firstEventLogged = false;
+      recordChatLifecycleEvent('generation.started', {
+        ...askTelemetryBase,
+        status: 'started',
       });
-    } catch {
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({ message: 'Internal server error' }),
-      });
-    }
+      try {
+        await ask(question, {
+          ...options,
+          budgetPrechecked: true,
+          requestId,
+          emit: async (event, data) => {
+            await stream.writeSSE({ event, data: JSON.stringify(data) });
+            if (!firstEventLogged) {
+              firstEventLogged = true;
+              recordChatLifecycleEvent('stream.first_event', {
+                ...askTelemetryBase,
+                status: 'ok',
+                streamEvent: event,
+              });
+            }
+          },
+        });
+        recordChatLifecycleEvent('api_ask.completed', {
+          ...askTelemetryBase,
+          status: 'ok',
+          durationMs: Date.now() - startedAt,
+        });
+        setChatSpanAttributes(span, {
+          ...askTelemetryBase,
+          status: 'ok',
+        });
+      } catch (error) {
+        captureChatFailureTelemetry(error, {
+          route: '/api/ask',
+          surface: 'api_ask',
+          failureKind: 'api_ask',
+          requestId,
+          user: safeUserFromContext(c),
+          game: options.game ?? null,
+          context: {
+            method: 'POST',
+          },
+        });
+        recordChatLifecycleEvent('api_ask.completed', {
+          ...askTelemetryBase,
+          status: 'error',
+          failureKind: 'api_ask',
+          durationMs: Date.now() - startedAt,
+        });
+        setChatSpanAttributes(span, {
+          ...askTelemetryBase,
+          status: 'error',
+          failureKind: 'api_ask',
+        });
+        await stream.writeSSE({
+          event: 'error',
+          data: JSON.stringify({ message: 'Internal server error' }),
+        });
+      }
+    });
   });
 });
 
@@ -3530,14 +4394,26 @@ app.delete('/api/characters/:id/cards/:cardId', async (c) => {
 
 export async function startServer(): Promise<void> {
   const { createAdaptorServer } = await import('@hono/node-server');
-  await startHttpServer({
-    appFetch: app.fetch,
-    createAdaptorServer,
-    loadServerConfig,
-    getWorktreeRuntime,
-    claimWorktreePort,
-    startBootstrapLifecycle,
-  });
+  try {
+    await startHttpServer({
+      appFetch: app.fetch,
+      createAdaptorServer,
+      loadServerConfig,
+      getWorktreeRuntime,
+      claimWorktreePort,
+      startBootstrapLifecycle,
+    });
+  } catch (error) {
+    captureTelemetryError(error, {
+      route: 'server.startup',
+      context: {
+        surface: 'server',
+        phase: 'startup',
+      },
+    });
+    await flushTelemetry(2_000);
+    throw error;
+  }
 }
 
 // CLI entrypoint
