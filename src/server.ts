@@ -78,7 +78,7 @@ import {
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
-import { normalizeGameId, requireGameId } from './game.ts';
+import { availableModulesFor, gameDefinitionFor, normalizeGameId, requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { startHttpServer } from './server-start.ts';
@@ -1222,8 +1222,17 @@ app.post('/campaigns', async (c) => {
   const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
   const game = typeof form.get('game') === 'string' ? (form.get('game') as string) : '';
   if (!name) return renderCampaignListPage(c, 'Campaign name is required.');
-  // Modules derive from the game (advisory scenario-set selectors).
-  const modules = normalizeGameId(game) === 'gloomhaven-2e' ? ['gh2e', 'solo2e'] : ['fh'];
+  // Base module always; optional modules are opt-in via the form checkboxes.
+  // A checked module for a different game is filtered out by availableModulesFor.
+  const gameId = normalizeGameId(game);
+  const checked = new Set(
+    form.getAll('module').filter((value): value is string => typeof value === 'string'),
+  );
+  const modules = gameId
+    ? availableModulesFor(gameId).filter(
+        (module) => module === gameDefinitionFor(gameId).baseModule || checked.has(module),
+      )
+    : undefined;
   try {
     const campaign = await CampaignService.createCampaign(identityFromSessionUser(session.userId), {
       name,
@@ -1304,7 +1313,12 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 async function renderCampaignDashboardPage(
   c: Context,
   campaignId: string,
-  opts: { characterError?: string; inviteError?: string; renameError?: string } = {},
+  opts: {
+    characterError?: string;
+    inviteError?: string;
+    renameError?: string;
+    modulesError?: string;
+  } = {},
   status: 200 | 422 = 200,
 ): Promise<Response> {
   const session = c.get('session')!;
@@ -1314,6 +1328,9 @@ async function renderCampaignDashboardPage(
   // Invite is owner-only: the affordance is hidden (not just disabled) for
   // everyone else, matching the service-layer role gate.
   const isOwner = detail.self.role === 'owner';
+  // Modules editor only for games that have optional modules to toggle.
+  const gameId = normalizeGameId(detail.campaign.game);
+  const gameDef = gameId ? gameDefinitionFor(gameId) : null;
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -1354,6 +1371,17 @@ async function renderCampaignDashboardPage(
       // Rename affordance (SQR-320): any active member; the name is shared
       // state. expectedVersion drives optimistic concurrency.
       { csrfToken, version: detail.campaign.version, errorMessage: opts.renameError },
+      // Modules editor (SQR-321): only when the game has optional modules.
+      gameDef && gameDef.optionalModules.length > 0
+        ? {
+            csrfToken,
+            version: detail.campaign.version,
+            baseModule: gameDef.baseModule,
+            optionalModules: gameDef.optionalModules,
+            current: detail.campaign.modules,
+            errorMessage: opts.modulesError,
+          }
+        : undefined,
     ),
   });
   return c.html(body, status);
@@ -1538,6 +1566,60 @@ app.post('/campaigns/:id/rename', async (c) => {
     }
     if (error instanceof CampaignService.CampaignForbiddenError) {
       return await renderCampaignDashboardPage(c, campaignId, { renameError: error.message }, 422);
+    }
+    throw error;
+  }
+});
+
+/** Edit a campaign's modules from the dashboard (SQR-321). */
+app.post('/campaigns/:id/modules', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const expectedVersion = formInt(form, 'expectedVersion');
+  const checked = new Set(
+    form.getAll('module').filter((value): value is string => typeof value === 'string'),
+  );
+
+  try {
+    // getCampaignDetail gates membership; modules are shared state, so any
+    // active member may edit (no owner gate), like rename/scenario toggles.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    if (expectedVersion === null) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: 'Could not save — please refresh and try again.' },
+        422,
+      );
+    }
+    const gameId = normalizeGameId(detail.campaign.game);
+    if (!gameId) return c.notFound();
+    // Base is always on; add the checked optional modules. The computed set is
+    // valid by construction; updateSharedState re-validates as defense-in-depth.
+    const baseModule = gameDefinitionFor(gameId).baseModule;
+    const modules = availableModulesFor(gameId).filter(
+      (module) => module === baseModule || checked.has(module),
+    );
+    await CampaignService.updateSharedState(identity, campaignId, { modules, expectedVersion });
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof VersionConflictError) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: 'Updated elsewhere — showing the latest. Try again.' },
+        422,
+      );
+    }
+    if (
+      error instanceof CampaignService.InvalidModulesError ||
+      error instanceof CampaignService.CampaignForbiddenError
+    ) {
+      return await renderCampaignDashboardPage(c, campaignId, { modulesError: error.message }, 422);
     }
     throw error;
   }
