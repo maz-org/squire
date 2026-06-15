@@ -141,6 +141,8 @@ function telemetryNowMs() {
 }
 
 function elapsedTelemetryMs(startedAt) {
+  // Preserve zero for immediate events; dashboards can distinguish it from an
+  // omitted field, which means timing was not captured.
   return positiveTelemetryNumber(telemetryNowMs() - startedAt) || 0;
 }
 
@@ -2269,6 +2271,9 @@ function attachPendingAnswerStream(answerEl) {
   setActiveConversationHistoryStatus('running');
 
   function markStreamEvent(kind) {
+    // Count protocol terminal/error events too; this is a stream lifecycle
+    // count, while streamTextEventCount and streamToolEventCount remain
+    // content-specific.
     streamEventCount += 1;
     if (kind === 'text') streamTextEventCount += 1;
     if (kind === 'tool') streamToolEventCount += 1;
@@ -2663,6 +2668,7 @@ function attachPendingAnswerStream(answerEl) {
     sendBrowserTelemetry(
       'browser_stream_error',
       streamTelemetryDetails({
+        includeMaskedReplay: false,
         streamErrorKind: payload.kind === 'session' ? 'session' : 'transport',
         streamReadyState: positiveTelemetryNumber(source.readyState),
       }),

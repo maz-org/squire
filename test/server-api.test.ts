@@ -2231,3 +2231,65 @@ describe('error handling', () => {
     expect(body400).toHaveProperty('status', 400);
   });
 });
+
+describe('browser telemetry span safety', () => {
+  beforeEach(() => {
+    resetRouteMocks();
+  });
+
+  it('ends the browser telemetry span when telemetry capture throws', async () => {
+    const spans: Array<{
+      name: string;
+      span: {
+        setAttributes: ReturnType<typeof vi.fn>;
+        setStatus: ReturnType<typeof vi.fn>;
+        end: ReturnType<typeof vi.fn>;
+      };
+    }> = [];
+
+    mockStartActiveSpan.mockImplementation((name: string, ...args: unknown[]) => {
+      const callback = args.findLast(
+        (arg): arg is (span: (typeof spans)[number]['span']) => unknown =>
+          typeof arg === 'function',
+      );
+      if (!callback) throw new TypeError('startActiveSpan callback missing');
+      const span = {
+        setAttributes: vi.fn(),
+        setStatus: vi.fn(),
+        end: vi.fn(),
+      };
+      spans.push({ name, span });
+      return callback(span);
+    });
+    mockCaptureTelemetryLog.mockImplementation((_level, message) => {
+      if (message === 'browser.browser_error') {
+        throw new Error('telemetry log failed');
+      }
+      return undefined;
+    });
+
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-throw-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        errorName: 'TypeError',
+      }),
+    });
+
+    expect(res.status).toBe(500);
+    const browserSpan = spans.find((span) => span.name === 'squire.browser_telemetry')?.span;
+    expect(browserSpan).toBeDefined();
+    expect(browserSpan?.setStatus).toHaveBeenCalledWith({
+      code: 2,
+      message: 'browser_error',
+    });
+    expect(browserSpan?.end).toHaveBeenCalledTimes(1);
+  });
+});

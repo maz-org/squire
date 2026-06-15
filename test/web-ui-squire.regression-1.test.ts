@@ -807,6 +807,7 @@ describe('squire.js browser telemetry', () => {
         streamEventCount: 1,
       }),
     });
+    expect(telemetryPayloads[1].body).not.toHaveProperty('maskedReplay');
     expect(JSON.stringify(telemetryPayloads)).not.toContain('raw transcript');
   });
 });

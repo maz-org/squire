@@ -3562,34 +3562,34 @@ app.post('/api/browser-telemetry', optionalSession(), async (c) => {
     'squire.browser_telemetry',
     { attributes: browserTelemetrySpanAttributes(telemetryInput, event) },
     (span) => {
-      if (event.type === 'browser_feedback') {
-        const feedbackInput = buildBrowserFeedbackInput(c, requestId, event);
-        if (!feedbackInput) {
-          finishBrowserTelemetrySpan(span, logLevel);
-          return c.body(null, 204);
+      try {
+        if (event.type === 'browser_feedback') {
+          const feedbackInput = buildBrowserFeedbackInput(c, requestId, event);
+          if (!feedbackInput) {
+            return c.body(null, 204);
+          }
+          captureTelemetryLog(logLevel, `browser.${event.type}`, {
+            ...telemetryInput,
+            attributes: browserTelemetryAttributes(event),
+          });
+          const eventId = captureTelemetryFeedback(feedbackInput);
+          return c.json({ eventId }, 202);
         }
+
         captureTelemetryLog(logLevel, `browser.${event.type}`, {
           ...telemetryInput,
           attributes: browserTelemetryAttributes(event),
         });
-        const eventId = captureTelemetryFeedback(feedbackInput);
-        finishBrowserTelemetrySpan(span, logLevel);
+
+        if (logLevel === 'info') {
+          return c.json({ eventId: null }, 202);
+        }
+
+        const eventId = captureTelemetryMessage(`browser.${event.type}`, 'error', telemetryInput);
         return c.json({ eventId }, 202);
-      }
-
-      captureTelemetryLog(logLevel, `browser.${event.type}`, {
-        ...telemetryInput,
-        attributes: browserTelemetryAttributes(event),
-      });
-
-      if (logLevel === 'info') {
+      } finally {
         finishBrowserTelemetrySpan(span, logLevel);
-        return c.json({ eventId: null }, 202);
       }
-
-      const eventId = captureTelemetryMessage(`browser.${event.type}`, 'error', telemetryInput);
-      finishBrowserTelemetrySpan(span, logLevel);
-      return c.json({ eventId }, 202);
     },
   );
 });
