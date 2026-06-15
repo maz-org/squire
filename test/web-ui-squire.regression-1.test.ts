@@ -443,6 +443,7 @@ function bootPendingTranscript(
   return {
     answerEl,
     artifactsEl,
+    clock,
     contentEl,
     drawerHistoryRow,
     form,
@@ -723,19 +724,77 @@ describe('squire.js browser telemetry', () => {
     expect(telemetryPayloads[0].body).not.toHaveProperty('associatedEventId');
   });
 
+  it('reports stream start and completion timing without sending transcript text', () => {
+    const { clock, source, telemetryPayloads } = bootPendingTranscript({
+      browserTelemetry: true,
+      streamUrl: '/chat/conv-1/messages/msg-user-1/stream',
+    });
+
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_stream_started',
+        route: '/chat/test',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        streamDurationMs: 0,
+        streamEventCount: 0,
+        streamTextEventCount: 0,
+        streamToolEventCount: 0,
+      }),
+    });
+    expect(telemetryPayloads[0].body).not.toHaveProperty('maskedReplay');
+
+    clock.advance(37);
+    source.emit('text-delta', { delta: 'raw transcript answer should stay out' });
+    clock.advance(100);
+    source.emit('done', {
+      html: '<p>raw transcript answer should stay out</p>',
+      consultedSources: [],
+    });
+
+    expect(telemetryPayloads).toHaveLength(2);
+    expect(telemetryPayloads[1]).toEqual({
+      url: '/api/browser-telemetry',
+      body: expect.objectContaining({
+        type: 'browser_stream_completed',
+        route: '/chat/test',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        streamDurationMs: 137,
+        streamFirstEventMs: 37,
+        streamEventCount: 2,
+        streamTextEventCount: 1,
+        streamToolEventCount: 0,
+      }),
+    });
+    expect(telemetryPayloads[1].body).not.toHaveProperty('maskedReplay');
+    expect(JSON.stringify(telemetryPayloads)).not.toContain('raw transcript answer');
+  });
+
   it('reports stream transport errors with conversation and message ids only', () => {
     const { source, telemetryPayloads } = bootPendingTranscript({
       browserTelemetry: true,
       streamUrl: '/chat/conv-1/messages/msg-user-1/stream',
     });
 
+    expect(telemetryPayloads).toHaveLength(1);
+    expect(telemetryPayloads[0].body).toEqual(
+      expect.objectContaining({
+        type: 'browser_stream_started',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+      }),
+    );
+
     source.emit('error', {
       kind: 'transport',
       message: 'raw transcript should stay out',
     });
 
-    expect(telemetryPayloads).toHaveLength(1);
-    expect(telemetryPayloads[0]).toEqual({
+    expect(telemetryPayloads).toHaveLength(2);
+    expect(telemetryPayloads[1]).toEqual({
       url: '/api/browser-telemetry',
       body: expect.objectContaining({
         type: 'browser_stream_error',
@@ -743,9 +802,12 @@ describe('squire.js browser telemetry', () => {
         conversationId: 'conv-1',
         userMessageId: 'msg-user-1',
         streamErrorKind: 'transport',
+        streamDurationMs: 0,
+        streamFirstEventMs: 0,
+        streamEventCount: 1,
       }),
     });
-    expect(JSON.stringify(telemetryPayloads[0].body)).not.toContain('raw transcript');
+    expect(JSON.stringify(telemetryPayloads)).not.toContain('raw transcript');
   });
 });
 
