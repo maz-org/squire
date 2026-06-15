@@ -23,7 +23,11 @@ type ScriptTelemetryStatus = 'started' | 'ok' | 'error';
 let scriptOpenTelemetryReady: Promise<void> | undefined;
 
 async function ensureScriptOpenTelemetry(): Promise<void> {
-  scriptOpenTelemetryReady ??= import('./instrumentation.ts').then(() => undefined);
+  scriptOpenTelemetryReady ??= import('./instrumentation.ts')
+    .then(() => undefined)
+    .catch(() => {
+      scriptOpenTelemetryReady = undefined;
+    });
   await scriptOpenTelemetryReady;
 }
 

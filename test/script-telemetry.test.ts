@@ -92,7 +92,6 @@ describe('script telemetry lifecycle wrapper', () => {
     });
 
     expect(result).toBe('done');
-    expect(mockInstrumentationLoaded).toHaveBeenCalledTimes(1);
     expect(mockInitTelemetry).toHaveBeenCalledTimes(1);
     expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
       'info',

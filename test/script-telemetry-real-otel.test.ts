@@ -6,6 +6,8 @@ const execFileAsync = promisify(execFile);
 
 describe('script telemetry direct-process OpenTelemetry setup', () => {
   it('starts recording script spans in a direct node script process', async () => {
+    // package.json requires Node 26 and production scripts run `.ts` files
+    // directly with `node`, so this intentionally mirrors the Fly entrypoints.
     const script = `
       import { trace } from '@opentelemetry/api';
       import { runScriptWithTelemetry } from './src/script-telemetry.ts';
