@@ -7,7 +7,7 @@ stream, browser problem, backend error, cron failure, or uptime alert.
 
 - Sentry owns app observability: backend errors, swallowed chat failures, SSE
   failures, browser errors, cron/script failures, uptime checks, release health,
-  replay, feedback, and alerting.
+  replay, feedback, alerting, app logs, app traces, and usage guardrails.
 - LangSmith owns LLM traces and eval debugging: model input/output, tool calls,
   retrieval behavior, answer quality, eval regressions, and trace comparison.
 - Linear owns the bug record. Tickets must use the diagnostic bundle and
@@ -21,6 +21,12 @@ in Sentry or Linear.
 Sentry-side scrubbing rules are documented in
 [sentry-scrubbing.md](sentry-scrubbing.md). They are a backstop for app-side
 sanitization and cover events, logs, and span payloads.
+
+Usage and spend checks for Sentry Logs and app traces live in
+[sentry-usage-guardrails.md](sentry-usage-guardrails.md). Cost controls must not
+replace privacy sanitization: keep safe operational logs broad, tune
+`SENTRY_TRACES_SAMPLE_RATE` for span volume, and use explicit emergency
+throttles only with an owner and rollback condition.
 
 ## Correlation Fields
 
@@ -275,3 +281,6 @@ After observability changes deploy:
    deploy-regression, scrub-canary, and uptime paths.
 5. Create or update a Linear bug with the required Evidence template, using
    unavailable reasons for anything not present.
+6. Check Sentry `Stats & Usage` for log accepted GB, accepted spans, dropped
+   data, and the PAYG budget path in
+   [sentry-usage-guardrails.md](sentry-usage-guardrails.md).
