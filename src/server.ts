@@ -10,7 +10,7 @@ import 'dotenv/config';
 import './instrumentation.ts';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { SpanStatusCode, trace, type Span } from '@opentelemetry/api';
+import { SpanStatusCode, trace, type Attributes, type Span } from '@opentelemetry/api';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import {
   identityFromSessionUser,
@@ -587,6 +587,8 @@ const BrowserTelemetrySchema = z
     type: z.enum([
       'browser_error',
       'browser_unhandledrejection',
+      'browser_stream_started',
+      'browser_stream_completed',
       'browser_stream_error',
       'browser_htmx_error',
       'browser_feedback',
@@ -609,6 +611,11 @@ const BrowserTelemetrySchema = z
     userAgent: z.string().min(1).max(512).optional(),
     streamErrorKind: z.enum(['transport', 'session']).optional(),
     streamReadyState: z.number().int().min(0).max(2).optional(),
+    streamDurationMs: z.number().int().nonnegative().max(3_600_000).optional(),
+    streamFirstEventMs: z.number().int().nonnegative().max(3_600_000).optional(),
+    streamEventCount: z.number().int().nonnegative().max(100_000).optional(),
+    streamTextEventCount: z.number().int().nonnegative().max(100_000).optional(),
+    streamToolEventCount: z.number().int().nonnegative().max(100_000).optional(),
     htmxEvent: BrowserTelemetryTokenSchema.optional(),
     htmxStatus: z.number().int().min(0).max(999).optional(),
     feedbackKind: BrowserFeedbackKindSchema.optional(),
@@ -618,6 +625,79 @@ const BrowserTelemetrySchema = z
   .strict();
 
 type BrowserTelemetryEvent = z.infer<typeof BrowserTelemetrySchema>;
+
+const browserTelemetryTracer = trace.getTracer('squire.browser-telemetry');
+
+function browserTelemetryLevel(event: BrowserTelemetryEvent): 'info' | 'error' {
+  if (
+    event.type === 'browser_error' ||
+    event.type === 'browser_unhandledrejection' ||
+    event.type === 'browser_stream_error' ||
+    event.type === 'browser_htmx_error'
+  ) {
+    return 'error';
+  }
+  return 'info';
+}
+
+function browserTelemetryAttributes(event: BrowserTelemetryEvent): Record<string, string | number> {
+  return {
+    surface: 'browser',
+    event_type: event.type,
+    ...(event.errorName ? { error_name: event.errorName } : {}),
+    ...(event.reasonType ? { reason_type: event.reasonType } : {}),
+    ...(event.streamErrorKind ? { stream_error_kind: event.streamErrorKind } : {}),
+    ...(event.streamReadyState === undefined ? {} : { stream_ready_state: event.streamReadyState }),
+    ...(event.streamDurationMs === undefined ? {} : { stream_duration_ms: event.streamDurationMs }),
+    ...(event.streamFirstEventMs === undefined
+      ? {}
+      : { stream_first_event_ms: event.streamFirstEventMs }),
+    ...(event.streamEventCount === undefined ? {} : { stream_event_count: event.streamEventCount }),
+    ...(event.streamTextEventCount === undefined
+      ? {}
+      : { stream_text_event_count: event.streamTextEventCount }),
+    ...(event.streamToolEventCount === undefined
+      ? {}
+      : { stream_tool_event_count: event.streamToolEventCount }),
+    ...(event.htmxEvent ? { htmx_event: event.htmxEvent } : {}),
+    ...(event.htmxStatus === undefined ? {} : { htmx_status: event.htmxStatus }),
+    ...(event.feedbackKind ? { feedback_kind: event.feedbackKind } : {}),
+  };
+}
+
+function browserTelemetrySpanAttributes(
+  input: TelemetryCaptureInput,
+  event: BrowserTelemetryEvent,
+): Attributes {
+  return {
+    'squire.surface': 'browser',
+    'squire.route': input.route ?? '/browser',
+    'squire.browser.event_type': event.type,
+    ...(input.requestId ? { 'squire.request_id': input.requestId } : {}),
+    ...(input.conversationId ? { 'squire.conversation_id': input.conversationId } : {}),
+    ...(input.userMessageId ? { 'squire.user_message_id': input.userMessageId } : {}),
+    ...(event.streamDurationMs === undefined
+      ? {}
+      : { 'squire.browser.stream_duration_ms': event.streamDurationMs }),
+    ...(event.streamFirstEventMs === undefined
+      ? {}
+      : { 'squire.browser.stream_first_event_ms': event.streamFirstEventMs }),
+    ...(event.streamEventCount === undefined
+      ? {}
+      : { 'squire.browser.stream_event_count': event.streamEventCount }),
+    ...(event.streamTextEventCount === undefined
+      ? {}
+      : { 'squire.browser.stream_text_event_count': event.streamTextEventCount }),
+    ...(event.streamToolEventCount === undefined
+      ? {}
+      : { 'squire.browser.stream_tool_event_count': event.streamToolEventCount }),
+  };
+}
+
+function finishBrowserTelemetrySpan(span: Span, level: 'info' | 'error'): void {
+  if (level === 'error') span.setStatus({ code: SpanStatusCode.ERROR, message: 'browser_error' });
+  span.end();
+}
 
 function browserPathOnly(raw: string | undefined): string | undefined {
   const value = raw?.trim();
@@ -659,6 +739,11 @@ function buildBrowserTelemetryInput(
       userAgent: event.userAgent ?? null,
       streamErrorKind: event.streamErrorKind ?? null,
       streamReadyState: event.streamReadyState ?? null,
+      streamDurationMs: event.streamDurationMs ?? null,
+      streamFirstEventMs: event.streamFirstEventMs ?? null,
+      streamEventCount: event.streamEventCount ?? null,
+      streamTextEventCount: event.streamTextEventCount ?? null,
+      streamToolEventCount: event.streamToolEventCount ?? null,
       htmxEvent: event.htmxEvent ?? null,
       htmxStatus: event.htmxStatus ?? null,
       maskedReplay: event.maskedReplay ?? null,
@@ -3469,19 +3554,44 @@ app.post('/api/browser-telemetry', optionalSession(), async (c) => {
   const result = BrowserTelemetrySchema.safeParse(body);
   if (!result.success) return c.body(null, 204);
 
-  if (result.data.type === 'browser_feedback') {
-    const feedbackInput = buildBrowserFeedbackInput(c, requestId, result.data);
-    if (!feedbackInput) return c.body(null, 204);
-    const eventId = captureTelemetryFeedback(feedbackInput);
-    return c.json({ eventId }, 202);
-  }
+  const event = result.data;
+  const telemetryInput = buildBrowserTelemetryInput(c, requestId, event);
+  const logLevel = browserTelemetryLevel(event);
 
-  const eventId = captureTelemetryMessage(
-    `browser.${result.data.type}`,
-    'error',
-    buildBrowserTelemetryInput(c, requestId, result.data),
+  return browserTelemetryTracer.startActiveSpan(
+    'squire.browser_telemetry',
+    { attributes: browserTelemetrySpanAttributes(telemetryInput, event) },
+    (span) => {
+      try {
+        if (event.type === 'browser_feedback') {
+          const feedbackInput = buildBrowserFeedbackInput(c, requestId, event);
+          if (!feedbackInput) {
+            return c.body(null, 204);
+          }
+          captureTelemetryLog(logLevel, `browser.${event.type}`, {
+            ...telemetryInput,
+            attributes: browserTelemetryAttributes(event),
+          });
+          const eventId = captureTelemetryFeedback(feedbackInput);
+          return c.json({ eventId }, 202);
+        }
+
+        captureTelemetryLog(logLevel, `browser.${event.type}`, {
+          ...telemetryInput,
+          attributes: browserTelemetryAttributes(event),
+        });
+
+        if (logLevel === 'info') {
+          return c.json({ eventId: null }, 202);
+        }
+
+        const eventId = captureTelemetryMessage(`browser.${event.type}`, 'error', telemetryInput);
+        return c.json({ eventId }, 202);
+      } finally {
+        finishBrowserTelemetrySpan(span, logLevel);
+      }
+    },
   );
-  return c.json({ eventId }, 202);
 });
 
 // ─── Search endpoints ────────────────────────────────────────────────────────

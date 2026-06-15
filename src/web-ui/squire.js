@@ -136,6 +136,16 @@ function positiveTelemetryNumber(value) {
     : null;
 }
 
+function telemetryNowMs() {
+  return Date.now();
+}
+
+function elapsedTelemetryMs(startedAt) {
+  // Preserve zero for immediate events; dashboards can distinguish it from an
+  // omitted field, which means timing was not captured.
+  return positiveTelemetryNumber(telemetryNowMs() - startedAt) || 0;
+}
+
 function viewportTelemetry() {
   var width = positiveTelemetryNumber(window.innerWidth);
   var height = positiveTelemetryNumber(window.innerHeight);
@@ -294,6 +304,11 @@ function sendBrowserTelemetry(type, details) {
     assignTelemetryValue(payload, 'column', details.column);
     assignTelemetryValue(payload, 'streamErrorKind', details.streamErrorKind);
     assignTelemetryValue(payload, 'streamReadyState', details.streamReadyState);
+    assignTelemetryValue(payload, 'streamDurationMs', details.streamDurationMs);
+    assignTelemetryValue(payload, 'streamFirstEventMs', details.streamFirstEventMs);
+    assignTelemetryValue(payload, 'streamEventCount', details.streamEventCount);
+    assignTelemetryValue(payload, 'streamTextEventCount', details.streamTextEventCount);
+    assignTelemetryValue(payload, 'streamToolEventCount', details.streamToolEventCount);
     assignTelemetryValue(payload, 'htmxEvent', details.htmxEvent);
     assignTelemetryValue(payload, 'htmxStatus', details.htmxStatus);
     assignTelemetryValue(payload, 'feedbackKind', details.feedbackKind);
@@ -2243,12 +2258,52 @@ function attachPendingAnswerStream(answerEl) {
   // use for the completed work-log source count and replay fallback.
   var consultedLabels = new Map();
   var source = new window.EventSource(streamUrl);
+  var streamStartedAt = telemetryNowMs();
+  var streamFirstEventMs = null;
+  var streamEventCount = 0;
+  var streamTextEventCount = 0;
+  var streamToolEventCount = 0;
 
   activeStream = {
     url: streamUrl,
     source: source,
   };
   setActiveConversationHistoryStatus('running');
+
+  function markStreamEvent(kind) {
+    // Count protocol terminal/error events too; this is a stream lifecycle
+    // count, while streamTextEventCount and streamToolEventCount remain
+    // content-specific.
+    streamEventCount += 1;
+    if (kind === 'text') streamTextEventCount += 1;
+    if (kind === 'tool') streamToolEventCount += 1;
+    if (streamFirstEventMs === null) {
+      streamFirstEventMs = elapsedTelemetryMs(streamStartedAt);
+    }
+  }
+
+  function streamTelemetryDetails(extra) {
+    var details = {
+      streamUrl: streamUrl,
+      streamDurationMs: elapsedTelemetryMs(streamStartedAt),
+      streamEventCount: streamEventCount,
+      streamTextEventCount: streamTextEventCount,
+      streamToolEventCount: streamToolEventCount,
+      rememberEventId: false,
+    };
+    if (streamFirstEventMs !== null) details.streamFirstEventMs = streamFirstEventMs;
+    if (extra) {
+      for (var key in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, key)) details[key] = extra[key];
+      }
+    }
+    return details;
+  }
+
+  sendBrowserTelemetry(
+    'browser_stream_started',
+    streamTelemetryDetails({ includeMaskedReplay: false }),
+  );
 
   function finishStream() {
     if (activeStream && activeStream.source === source) {
@@ -2286,6 +2341,7 @@ function attachPendingAnswerStream(answerEl) {
   }
 
   source.addEventListener('text-delta', function (event) {
+    markStreamEvent('text');
     var payload = JSON.parse(event.data || '{}');
     var delta = payload.delta || '';
     if (!delta) return;
@@ -2318,6 +2374,7 @@ function attachPendingAnswerStream(answerEl) {
   // asymmetry is intentional: at start time we don't yet know which books
   // search_rules will hit; at result time we do.
   source.addEventListener('tool-start', function () {
+    markStreamEvent('tool');
     if (seenFirstDelta) {
       return;
     }
@@ -2327,6 +2384,7 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('tool-plan', function (event) {
+    markStreamEvent('tool');
     var payload = JSON.parse(event.data || '{}');
     if (!payload.message) return;
     if (seenFirstDelta) {
@@ -2344,6 +2402,7 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('tool-progress', function (event) {
+    markStreamEvent('tool');
     var payload = JSON.parse(event.data || '{}');
     if (!payload.message) return;
     if (seenFirstDelta) {
@@ -2384,6 +2443,7 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('tool-result', function (event) {
+    markStreamEvent('tool');
     var payload = JSON.parse(event.data || '{}');
     // SQR-98: once the answer text has started streaming, any subsequent
     // tool events are late-arriving stragglers (agent loop finishing
@@ -2421,6 +2481,7 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('state-used', function (event) {
+    markStreamEvent('tool');
     var payload = JSON.parse(event.data || '{}');
     if (!payload.message) return;
     if (seenFirstDelta) return;
@@ -2445,6 +2506,7 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('proposal-staged', function (event) {
+    markStreamEvent('tool');
     var payload = JSON.parse(event.data || '{}');
     if (!payload || !payload.proposalId) return;
     // Consent chrome renders even after answer text starts streaming — the
@@ -2455,6 +2517,7 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('answer-artifact', function (event) {
+    markStreamEvent('tool');
     if (!artifactsEl || seenFirstDelta) return;
     var payload = JSON.parse(event.data || '{}');
     if (!payload.id || payload.kind !== 'section-quote' || !payload.title || !payload.body) return;
@@ -2479,9 +2542,14 @@ function attachPendingAnswerStream(answerEl) {
   });
 
   source.addEventListener('done', function (event) {
+    markStreamEvent('done');
     answerEl.classList.remove('squire-answer--pending');
     answerEl.setAttribute('data-stream-state', 'done');
     if (skeletonEl) skeletonEl.hidden = true;
+    sendBrowserTelemetry(
+      'browser_stream_completed',
+      streamTelemetryDetails({ includeMaskedReplay: false }),
+    );
     // SQR-108 QA: close the EventSource SYNCHRONOUSLY before deferring
     // the HTML swap. The server ends its handler after sending `done`,
     // which closes the TCP connection from the server side; the
@@ -2592,15 +2660,19 @@ function attachPendingAnswerStream(answerEl) {
     if (source.readyState === 2) {
       return;
     }
+    markStreamEvent('error');
     var payload = { kind: 'transport', message: 'Trouble connecting. Please try again.' };
     if (event.data) {
       payload = JSON.parse(event.data);
     }
-    sendBrowserTelemetry('browser_stream_error', {
-      streamUrl: streamUrl,
-      streamErrorKind: payload.kind === 'session' ? 'session' : 'transport',
-      streamReadyState: positiveTelemetryNumber(source.readyState),
-    });
+    sendBrowserTelemetry(
+      'browser_stream_error',
+      streamTelemetryDetails({
+        includeMaskedReplay: false,
+        streamErrorKind: payload.kind === 'session' ? 'session' : 'transport',
+        streamReadyState: positiveTelemetryNumber(source.readyState),
+      }),
+    );
     renderPendingError(
       answerEl,
       payload.kind === 'session' ? 'SESSION ENDED' : 'TROUBLE CONNECTING',
