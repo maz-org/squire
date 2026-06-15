@@ -44,6 +44,18 @@ export interface ChatLifecycleInput {
 
 const chatTracer = trace.getTracer('squire.chat');
 
+function safeOriginalErrorName(error: unknown): string {
+  if (!(error instanceof Error)) return 'NonError';
+  if (!/^[A-Za-z0-9_.:-]{1,80}$/.test(error.name)) return 'Error';
+  return error.name || 'Error';
+}
+
+function safeChatSpanError(error: unknown): Error {
+  const safe = new Error('Squire chat span failure');
+  safe.name = `ChatSpanFailure:${safeOriginalErrorName(error)}`;
+  return safe;
+}
+
 function compactRecord<T extends Record<string, unknown>>(input: T): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(input).filter(([, value]) => value !== undefined && value !== null),
@@ -150,9 +162,7 @@ export async function withChatLifecycleSpan<T>(
         if (input.status) setChatSpanAttributes(span, input);
         return result;
       } catch (error) {
-        if (error instanceof Error) {
-          span.recordException(error);
-        }
+        span.recordException(safeChatSpanError(error));
         span.setStatus({
           code: SpanStatusCode.ERROR,
           message: input.failureKind ?? 'chat_lifecycle_error',

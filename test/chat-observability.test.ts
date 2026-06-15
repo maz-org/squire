@@ -176,8 +176,9 @@ describe('chat observability lifecycle wrapper', () => {
     });
   });
 
-  it('marks spans as failed without swallowing the original error', async () => {
-    const error = new Error('upstream failed');
+  it('marks spans as failed without recording the original error payload', async () => {
+    const error = new Error('upstream failed for alice@example.com with provider payload');
+    error.name = 'ProviderError';
 
     await expect(
       withChatLifecycleSpan(
@@ -195,7 +196,13 @@ describe('chat observability lifecycle wrapper', () => {
     ).rejects.toThrow(error);
 
     const span = startedSpans[0]!.span;
-    expect(span.recordException).toHaveBeenCalledWith(error);
+    expect(span.recordException).toHaveBeenCalledTimes(1);
+    const recordedError = span.recordException.mock.calls[0]![0] as Error;
+    expect(recordedError).not.toBe(error);
+    expect(recordedError.name).toBe('ChatSpanFailure:ProviderError');
+    expect(recordedError.message).toBe('Squire chat span failure');
+    expect(recordedError.message).not.toContain('alice@example.com');
+    expect(recordedError.stack ?? '').not.toContain('provider payload');
     expect(span.setStatus).toHaveBeenCalledWith({
       code: 2,
       message: 'assistant_turn',
