@@ -29,7 +29,7 @@ import type {
   CampaignRole,
   UpdateCampaignSharedStateInput,
 } from '../db/repositories/types.ts';
-import { normalizeGameId } from '../game.ts';
+import { normalizeGameId, validateModules } from '../game.ts';
 import type { DbOrTx } from '../auth/audit.ts';
 import { auditedMutation } from './audit.ts';
 import { deriveAvailability } from './availability.ts';
@@ -113,6 +113,15 @@ export class UnsupportedGameError extends Error {
   constructor(game: string) {
     super(`Unsupported game: ${game}`);
     this.name = 'UnsupportedGameError';
+  }
+}
+
+export class InvalidModulesError extends Error {
+  readonly code = 'invalid_modules';
+
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'InvalidModulesError';
   }
 }
 
@@ -302,7 +311,20 @@ export async function updateSharedState(
         if (prosperityDecrease) throw new ProposalRequiredError('prosperity.decrease');
       }
 
-      const updated = await CampaignRepository.updateSharedState(tx, campaignId, input);
+      // Module edits (SQR-321): validate against the campaign's game — every
+      // module must be one the game offers and the base must be present.
+      // Removing a module is non-destructive (its scenario keys persist as
+      // advisory unknowns and return if it is re-added), so no proposal gate.
+      let normalizedInput = input;
+      if (input.modules !== undefined) {
+        const game = normalizeGameId(before.game);
+        if (!game) throw new UnsupportedGameError(before.game);
+        const check = validateModules(game, input.modules);
+        if (!check.ok) throw new InvalidModulesError(check.reason);
+        normalizedInput = { ...input, modules: check.modules };
+      }
+
+      const updated = await CampaignRepository.updateSharedState(tx, campaignId, normalizedInput);
 
       // Audit payloads carry only the touched fields, before and after.
       const changedKeys = Object.keys(input).filter((key) => key !== 'expectedVersion');

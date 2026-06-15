@@ -53,6 +53,9 @@ function renderSentryEvidence(bundle: DiagnosticBundle): string {
     `- Issue: ${fieldText(bundle.sentry.issueUrl)}`,
     `- Event: ${fieldText(bundle.sentry.eventUrl)}`,
     `- Replay: ${fieldText(bundle.sentry.replayUrl)}`,
+    `- Trace: ${fieldText(bundle.sentry.traceUrl)}`,
+    `- Logs: ${fieldText(bundle.sentry.logsUrl)}`,
+    `- Trace ID: ${fieldText(bundle.sentry.traceId)}`,
     `- Release: ${fieldText(bundle.report.release)}`,
     `- Environment: ${fieldText(bundle.report.environment)}`,
   ].join('\n');

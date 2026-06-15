@@ -95,6 +95,7 @@ export interface CreateCampaignInput {
 export interface UpdateCampaignSharedStateInput {
   expectedVersion: number;
   name?: string;
+  modules?: string[];
   prosperity?: number;
   activeScenario?: string | null;
   playedScenarios?: string[];
