@@ -45,7 +45,8 @@ Build the evidence bundle with:
 - `collectDiagnosticBundle()` when the caller has an authenticated user and a
   conversation URL, conversation ID, or user-message ID.
 - `buildDiagnosticBundle()` when the agent already gathered safe links and IDs,
-  such as Sentry event/replay URLs or LangSmith trace/run URLs.
+  such as Sentry issue/event/replay/trace/logs URLs, Sentry trace IDs, or
+  LangSmith trace/run URLs.
 
 Do not paste raw prompts, full model output, provider payloads, retrieved
 passages, cookies, auth headers, OAuth tokens, or secrets into Linear. If a

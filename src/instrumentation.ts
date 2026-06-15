@@ -11,7 +11,13 @@ import { SentryPropagator, SentrySampler, SentrySpanProcessor } from '@sentry/op
 import { SentryContextManager } from '@sentry/node';
 import { applySquireEnv } from './squire-env.ts';
 import { langsmithOtelHeaders } from './langsmith-otel.ts';
-import { getTelemetryClient, initTelemetry, sentryTraceSampleRateFromEnv } from './telemetry.ts';
+import {
+  createSentrySanitizingSpanProcessor,
+  getTelemetryClient,
+  initTelemetry,
+  safeDatabaseSpanAttributes,
+  sentryTraceSampleRateFromEnv,
+} from './telemetry.ts';
 
 const squireEnv = applySquireEnv();
 const langsmithProject = process.env.LANGSMITH_PROJECT ?? 'squire-production';
@@ -40,7 +46,7 @@ function buildSentryOpenTelemetryConfig() {
   }
 
   return {
-    spanProcessors: [new SentrySpanProcessor()],
+    spanProcessors: [createSentrySanitizingSpanProcessor(new SentrySpanProcessor())],
     sampler: new SentrySampler(client),
     textMapPropagator: new SentryPropagator(),
     contextManager: new SentryContextManager(),
@@ -60,7 +66,15 @@ const sdk = new NodeSDK({
     : {}),
   // Auto-instrument node-postgres so every Drizzle query gets a span. Drizzle
   // uses `pg` under the hood, so this captures all DB activity from day 1.
-  instrumentations: [new PgInstrumentation()],
+  instrumentations: [
+    new PgInstrumentation({
+      enhancedDatabaseReporting: false,
+      requestHook: (span, queryInfo) => {
+        const attributes = safeDatabaseSpanAttributes(queryInfo.query.text);
+        if (Object.keys(attributes).length > 0) span.setAttributes(attributes);
+      },
+    }),
+  ],
 });
 
 sdk.start();
