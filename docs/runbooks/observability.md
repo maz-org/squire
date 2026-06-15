@@ -54,6 +54,13 @@ stream, duplicate/early-ended stream, browser UI break, masked replay, cron/job
 failure, uptime alert, release regression, auth/rate-limit failure, or budget
 failure.
 
+Use Sentry issues first when a grouped exception or uptime monitor fired. Use
+Sentry logs first when the symptom is a swallowed chat failure, EventSource
+transport failure, auth/rate-limit anomaly, budget warning, or script lifecycle
+failure. Use Sentry traces first when the symptom is latency without a clear
+exception. The dashboard `Squire - Production App Health` keeps these entry
+points together.
+
 Start in LangSmith when the app behaved normally but the answer was wrong,
 missed a rule, cited the wrong source, chose the wrong tool path, ignored a
 perk/effect, failed an eval, or otherwise looks like agent reasoning/retrieval
@@ -284,3 +291,17 @@ After observability changes deploy:
 6. Check Sentry `Stats & Usage` for log accepted GB, accepted spans, dropped
    data, and the PAYG budget path in
    [sentry-usage-guardrails.md](sentry-usage-guardrails.md).
+
+## App Health Resources
+
+Dashboard and log/trace monitor definitions live in
+`scripts/sentry-app-health-config.ts`. Agents should preview or verify them
+with:
+
+```bash
+npm run sentry:app-health -- --dry-run
+npm run sentry:app-health -- --verify
+```
+
+Use `--apply` only when intentionally changing Sentry resources. The command
+requires `SENTRY_TOKEN` and must not print it.
