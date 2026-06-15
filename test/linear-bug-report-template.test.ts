@@ -71,6 +71,10 @@ function fullBundle() {
     sentryIssueUrl: 'https://sentry.io/organizations/maz/issues/123/?query=secret',
     sentryEventUrl: 'https://sentry.io/organizations/maz/issues/123/events/abc/?project=1',
     sentryReplayUrl: 'https://sentry.io/replays/xyz/?query=secret',
+    sentryTraceUrl: 'https://sentry.io/organizations/maz/traces/trace-1/?token=secret',
+    sentryLogsUrl:
+      'https://sentry.io/organizations/maz/logs/?query=conversation_id:11111111-1111-4111-8111-111111111111 request_id:req-safe-1&field=message&cookie=session',
+    sentryTraceId: '0123456789abcdef0123456789abcdef',
     langsmithTraceUrl: 'https://smith.langchain.com/o/org/projects/p/project/r/run-1?secret=1',
     langsmithThreadUrl: 'https://smith.langchain.com/o/org/projects/p/project/threads/thread-1',
     langsmithRunId: 'run-1',
@@ -105,6 +109,11 @@ describe('linear bug report template', () => {
     expect(body).toContain('- Issue: https://sentry.io/organizations/maz/issues/123/');
     expect(body).toContain('- Event: https://sentry.io/organizations/maz/issues/123/events/abc/');
     expect(body).toContain('- Replay: https://sentry.io/replays/xyz/');
+    expect(body).toContain('- Trace: https://sentry.io/organizations/maz/traces/trace-1/');
+    expect(body).toContain(
+      '- Logs: https://sentry.io/organizations/maz/logs/?query=conversation_id%3A11111111-1111-4111-8111-111111111111+request_id%3Areq-safe-1&field=message',
+    );
+    expect(body).toContain('- Trace ID: 0123456789abcdef0123456789abcdef');
     expect(body).toContain('- Release: dde5caa6dac615cf6523778944e9a6ba34690f8b');
     expect(body).toContain('- Environment: production');
     expect(body).toContain('LangSmith:');
@@ -155,6 +164,9 @@ describe('linear bug report template', () => {
     expect(body).toContain('- Issue: Unavailable: Sentry issue URL was not provided');
     expect(body).toContain('- Event: Unavailable: Sentry event URL was not provided');
     expect(body).toContain('- Replay: Unavailable: Sentry replay URL was not provided');
+    expect(body).toContain('- Trace: Unavailable: Sentry trace URL was not provided');
+    expect(body).toContain('- Logs: Unavailable: Sentry logs query URL was not provided');
+    expect(body).toContain('- Trace ID: Unavailable: Sentry trace id was not provided');
     expect(body).toContain('- Release: Unavailable: SENTRY_RELEASE is not configured');
     expect(body).toContain('- Trace: Unavailable: LangSmith trace URL was not provided');
     expect(body).toContain('Unavailable: observed behavior was not provided');
@@ -176,6 +188,8 @@ describe('linear bug report template', () => {
     });
 
     expect(body).not.toContain('secret=1');
+    expect(body).not.toContain('token=secret');
+    expect(body).not.toContain('cookie=session');
     expect(body).not.toContain('person@example.com');
     expect(body).not.toContain('raw prompt');
     expect(body).not.toContain('full model answer');

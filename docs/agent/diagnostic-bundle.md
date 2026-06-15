@@ -20,7 +20,7 @@ Top-level fields:
 - `request`: request ID and route
 - `conversation`: conversation URL, conversation ID, turn IDs, safe user ID/hash,
   game/campaign IDs, message timestamps, assistant error flag
-- `sentry`: issue, event, and replay URLs
+- `sentry`: issue, event, replay, trace, logs-query URLs, and trace ID
 - `langsmith`: trace/thread/run URLs and IDs
 - `browser`: safe browser URL, user agent, viewport, replay snapshot ID
 - `stream`: terminal status, event count, and safe work-log rows
@@ -39,8 +39,8 @@ ID, or user-message ID. The collector verifies conversation ownership before it
 loads messages or stream events.
 
 Use `buildDiagnosticBundle()` when the caller already has safe evidence, such as
-a Sentry URL or LangSmith URL supplied by an agent workflow. Missing fields are
-not omitted; they are marked unavailable.
+a Sentry issue/event/replay/trace/logs URL or LangSmith URL supplied by an
+agent workflow. Missing fields are not omitted; they are marked unavailable.
 
 SQR-310's Linear Evidence template renders this bundle with
 `createLinearBugReportBody()` in `src/linear-bug-report-template.ts`. New

@@ -89,6 +89,10 @@ describe('diagnostic bundle', () => {
       sentryIssueUrl: 'https://sentry.io/organizations/maz/issues/123/?query=secret',
       sentryEventUrl: 'https://sentry.io/organizations/maz/issues/123/events/abc/?project=1',
       sentryReplayUrl: 'https://sentry.io/replays/xyz/?query=secret',
+      sentryTraceUrl: 'https://sentry.io/organizations/maz/traces/trace-1/?token=secret',
+      sentryLogsUrl:
+        'https://sentry.io/organizations/maz/logs/?query=conversation_id:11111111-1111-4111-8111-111111111111 request_id:req-safe-1&field=message&token=secret',
+      sentryTraceId: '0123456789abcdef0123456789abcdef',
       langsmithTraceUrl: 'https://smith.langchain.com/o/org/projects/p/project/r/run-1?secret=1',
       langsmithThreadUrl: 'https://smith.langchain.com/o/org/projects/p/project/threads/thread-1',
       langsmithRunId: 'run-1',
@@ -124,6 +128,19 @@ describe('diagnostic bundle', () => {
       status: 'available',
       value: 'https://sentry.io/organizations/maz/issues/123/events/abc/',
     });
+    expect(bundle.sentry.traceUrl).toEqual({
+      status: 'available',
+      value: 'https://sentry.io/organizations/maz/traces/trace-1/',
+    });
+    expect(bundle.sentry.logsUrl).toEqual({
+      status: 'available',
+      value:
+        'https://sentry.io/organizations/maz/logs/?query=conversation_id%3A11111111-1111-4111-8111-111111111111+request_id%3Areq-safe-1&field=message',
+    });
+    expect(bundle.sentry.traceId).toEqual({
+      status: 'available',
+      value: '0123456789abcdef0123456789abcdef',
+    });
     expect(bundle.langsmith.traceUrl).toEqual({
       status: 'available',
       value: 'https://smith.langchain.com/o/org/projects/p/project/r/run-1',
@@ -152,6 +169,7 @@ describe('diagnostic bundle', () => {
       value: EMBEDDING_VERSION,
     });
     expect(JSON.stringify(bundle)).not.toContain('token=secret');
+    expect(JSON.stringify(bundle)).not.toContain('query=secret');
     expect(JSON.stringify(bundle)).not.toContain('historyQuery=secret');
     expect(JSON.stringify(bundle)).not.toContain('raw prompt');
     expect(JSON.stringify(bundle)).not.toContain('full model answer');
@@ -169,12 +187,17 @@ describe('diagnostic bundle', () => {
     expect(bundle.sentry.issueUrl.status).toBe('unavailable');
     expect(bundle.sentry.eventUrl.status).toBe('unavailable');
     expect(bundle.sentry.replayUrl.status).toBe('unavailable');
+    expect(bundle.sentry.traceUrl.status).toBe('unavailable');
+    expect(bundle.sentry.logsUrl.status).toBe('unavailable');
+    expect(bundle.sentry.traceId.status).toBe('unavailable');
     expect(bundle.langsmith.traceUrl.status).toBe('unavailable');
     expect(bundle.browser.replaySnapshotId.status).toBe('unavailable');
     expect(bundle.stream.workLogRows.status).toBe('unavailable');
     expect(bundle.unavailable).toEqual(
       expect.arrayContaining([
         { path: 'sentry.issueUrl', reason: 'Sentry issue URL was not provided' },
+        { path: 'sentry.logsUrl', reason: 'Sentry logs query URL was not provided' },
+        { path: 'sentry.traceId', reason: 'Sentry trace id was not provided' },
         { path: 'langsmith.traceUrl', reason: 'LangSmith trace URL was not provided' },
         { path: 'stream.workLogRows', reason: 'stream events were not loaded' },
       ]),
