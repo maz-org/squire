@@ -209,6 +209,7 @@ import {
 const mockVerifyAccessToken = vi.mocked(verifyAccessToken);
 const ORIGINAL_SQUIRE_ENV = process.env.SQUIRE_ENV;
 const ORIGINAL_SENTRY_RELEASE = process.env.SENTRY_RELEASE;
+const USER_HASH_PATTERN = /^[A-Za-z0-9_-]{32}$/;
 
 /** Stub bearer header — the mocked `verifyAccessToken` accepts anything. */
 async function auth(): Promise<Record<string, string>> {
@@ -275,6 +276,12 @@ function findTelemetryLog(message: string) {
   const call = mockCaptureTelemetryLog.mock.calls.find((candidate) => candidate[1] === message);
   expect(call).toBeDefined();
   return call as [string, string, Record<string, unknown>];
+}
+
+function latestRequestSpanAttributes(): Record<string, unknown> {
+  const call = mockRequestSpan.setAttributes.mock.calls.at(-1);
+  expect(call).toBeDefined();
+  return call?.[0] as Record<string, unknown>;
 }
 
 afterEach(() => {
@@ -586,11 +593,12 @@ describe('request lifecycle telemetry', () => {
     expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-ok-1');
     await expect(res.json()).resolves.toEqual({ status: 'ok' });
 
+    const [, , startedInput] = findTelemetryLog('server.request.started');
     expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
       'info',
       'server.request.started',
       expect.objectContaining({
-        route: '/api/live',
+        route: 'unresolved',
         requestId: 'req-lifecycle-ok-1',
         context: expect.objectContaining({
           surface: 'server',
@@ -600,11 +608,12 @@ describe('request lifecycle telemetry', () => {
           environment: 'test',
           release: 'test-release-sha',
           method: 'GET',
-          route: '/api/live',
+          route: 'unresolved',
           request_id: 'req-lifecycle-ok-1',
         }),
       }),
     );
+    expect(JSON.stringify(startedInput)).not.toContain('alice@example.com');
 
     const [, completedMessage, completedInput] = findTelemetryLog('server.request.completed');
     expect(completedMessage).toBe('server.request.completed');
@@ -674,7 +683,7 @@ describe('request lifecycle telemetry', () => {
       expect.objectContaining({
         route: '/api/search/rules',
         requestId: 'req-lifecycle-4xx-1',
-        user: { id: 'user-4xx' },
+        user: { hash: expect.stringMatching(USER_HASH_PATTERN) },
         attributes: expect.objectContaining({
           environment: 'test',
           release: 'test-release-sha',
@@ -683,13 +692,15 @@ describe('request lifecycle telemetry', () => {
           status: 400,
           duration_ms: expect.any(Number),
           request_id: 'req-lifecycle-4xx-1',
-          user_id: 'user-4xx',
+          user_hash: expect.stringMatching(USER_HASH_PATTERN),
         }),
       }),
     );
     expect(JSON.stringify(completedInput)).not.toContain('alice@example.com');
     expect(JSON.stringify(completedInput)).not.toContain('Bearer stub-token');
     expect(JSON.stringify(completedInput)).not.toContain('session=secret');
+    expect(JSON.stringify(completedInput)).not.toContain('user-4xx');
+    expect(completedInput.attributes).not.toHaveProperty('user_id');
     expect(mockStartActiveSpan).toHaveBeenCalledWith('http.server.request', expect.any(Function));
     expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -697,10 +708,52 @@ describe('request lifecycle telemetry', () => {
         'http.route': '/api/search/rules',
         'http.response.status_code': 400,
         'squire.request_id': 'req-lifecycle-4xx-1',
-        'squire.user_id': 'user-4xx',
+        'squire.user_hash': expect.stringMatching(USER_HASH_PATTERN),
       }),
     );
+    const spanAttributes = latestRequestSpanAttributes();
+    expect(JSON.stringify(spanAttributes)).not.toContain('user-4xx');
+    expect(spanAttributes).not.toHaveProperty('squire.user_id');
     expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a placeholder route for unmatched requests instead of raw paths', async () => {
+    const res = await app.request('/missing/alice@example.com?token=secret', {
+      headers: {
+        Cookie: 'session=secret',
+        'X-Request-ID': 'req-lifecycle-404-1',
+      },
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-404-1');
+    await expect(res.json()).resolves.toEqual({ error: 'Not found', status: 404 });
+
+    const [level, , completedInput] = findTelemetryLog('server.request.completed');
+    expect(level).toBe('warn');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'warn',
+      'server.request.completed',
+      expect.objectContaining({
+        route: 'unmatched',
+        requestId: 'req-lifecycle-404-1',
+        attributes: expect.objectContaining({
+          route: 'unmatched',
+          status: 404,
+          request_id: 'req-lifecycle-404-1',
+        }),
+      }),
+    );
+    expect(JSON.stringify(completedInput)).not.toContain('alice@example.com');
+    expect(JSON.stringify(completedInput)).not.toContain('token=secret');
+    expect(JSON.stringify(completedInput)).not.toContain('session=secret');
+    expect(latestRequestSpanAttributes()).toEqual(
+      expect.objectContaining({
+        'http.route': 'unmatched',
+        'http.response.status_code': 404,
+        'squire.request_id': 'req-lifecycle-404-1',
+      }),
+    );
   });
 });
 
@@ -858,20 +911,22 @@ describe('GET /api/search/rules', () => {
       expect.objectContaining({
         route: '/api/search/rules',
         requestId: 'req-server-error-1',
-        user: { id: 'user-123' },
+        user: { hash: expect.stringMatching(USER_HASH_PATTERN) },
         attributes: expect.objectContaining({
           method: 'GET',
           route: '/api/search/rules',
           status: 500,
           duration_ms: expect.any(Number),
           request_id: 'req-server-error-1',
-          user_id: 'user-123',
+          user_hash: expect.stringMatching(USER_HASH_PATTERN),
         }),
       }),
     );
     expect(JSON.stringify(lifecycleInput)).not.toContain('Bearer stub-token');
     expect(JSON.stringify(lifecycleInput)).not.toContain('session=secret');
     expect(JSON.stringify(lifecycleInput)).not.toContain('loot');
+    expect(JSON.stringify(lifecycleInput)).not.toContain('user-123');
+    expect(lifecycleInput.attributes).not.toHaveProperty('user_id');
     expect(mockStartActiveSpan).toHaveBeenCalledWith('http.server.request', expect.any(Function));
     expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -879,9 +934,12 @@ describe('GET /api/search/rules', () => {
         'http.route': '/api/search/rules',
         'http.response.status_code': 500,
         'squire.request_id': 'req-server-error-1',
-        'squire.user_id': 'user-123',
+        'squire.user_hash': expect.stringMatching(USER_HASH_PATTERN),
       }),
     );
+    const spanAttributes = latestRequestSpanAttributes();
+    expect(JSON.stringify(spanAttributes)).not.toContain('user-123');
+    expect(spanAttributes).not.toHaveProperty('squire.user_id');
     expect(mockRequestSpan.setStatus).toHaveBeenCalledWith(expect.objectContaining({ code: 2 }));
     expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
   });

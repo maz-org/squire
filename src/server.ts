@@ -8,7 +8,7 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach LangSmith in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { SpanStatusCode, trace, type Span } from '@opentelemetry/api';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
@@ -179,6 +179,11 @@ initTelemetry(process.env);
 
 export const app = new Hono();
 
+const UNRESOLVED_REQUEST_ROUTE = 'unresolved';
+const UNMATCHED_REQUEST_ROUTE = 'unmatched';
+const TEST_TELEMETRY_HASH_SECRET = 'squire-test-telemetry-hash-secret';
+const DEV_TELEMETRY_HASH_SECRET = 'squire-development-telemetry-hash-secret';
+
 app.use('*', originSharedSecretMiddleware());
 app.use('*', requestLifecycleMiddleware);
 
@@ -255,9 +260,19 @@ function correlateRequest(c: Context): string {
 
 function safeRequestRoute(c: Context): string {
   try {
-    return c.req.routePath || c.req.path;
+    const route = c.req.routePath;
+    return route && route !== '*' && route !== '/*' ? route : UNMATCHED_REQUEST_ROUTE;
   } catch {
-    return c.req.path;
+    return UNMATCHED_REQUEST_ROUTE;
+  }
+}
+
+function safeRequestStartRoute(c: Context): string {
+  try {
+    const route = c.req.routePath;
+    return route && route !== '*' && route !== '/*' ? route : UNRESOLVED_REQUEST_ROUTE;
+  } catch {
+    return UNRESOLVED_REQUEST_ROUTE;
   }
 }
 
@@ -273,6 +288,31 @@ function safeUserFromContext(c: Context): TelemetryUserIdentity | undefined {
   return typeof session?.userId === 'string' && session.userId.trim().length > 0
     ? { id: session.userId }
     : undefined;
+}
+
+function telemetryHashSecret(): string {
+  const secret = process.env.SESSION_SECRET?.trim();
+  if (secret) return secret;
+  return process.env.VITEST ? TEST_TELEMETRY_HASH_SECRET : DEV_TELEMETRY_HASH_SECRET;
+}
+
+function hashTelemetryIdentifier(kind: string, value: string): string {
+  return createHmac('sha256', telemetryHashSecret())
+    .update(`${kind}:${value}`)
+    .digest('base64url')
+    .slice(0, 32);
+}
+
+function hashedTelemetryUser(
+  user: TelemetryUserIdentity | undefined,
+): TelemetryUserIdentity | undefined {
+  if (user?.hash) return { hash: user.hash };
+  if (user?.id) return { hash: hashTelemetryIdentifier('user', user.id) };
+  return undefined;
+}
+
+function safeLifecycleUserFromContext(c: Context): TelemetryUserIdentity | undefined {
+  return hashedTelemetryUser(safeUserFromContext(c));
 }
 
 function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCaptureInput {
@@ -337,7 +377,6 @@ function requestLifecycleAttributes(input: {
     request_id: input.requestId,
     ...(input.status === undefined ? {} : { status: input.status }),
     ...(input.durationMs === undefined ? {} : { duration_ms: input.durationMs }),
-    ...(input.user?.id ? { user_id: input.user.id } : {}),
     ...(input.user?.hash ? { user_hash: input.user.hash } : {}),
   };
 }
@@ -351,7 +390,7 @@ function buildRequestLifecycleLogInput(input: {
   status?: number;
   durationMs?: number;
 }): TelemetryLogInput {
-  const user = safeUserFromContext(input.c);
+  const user = safeLifecycleUserFromContext(input.c);
   return {
     route: input.route,
     requestId: input.requestId,
@@ -397,7 +436,6 @@ function annotateRequestSpan(
     'squire.environment': input.environment,
     'squire.release': input.release,
     'squire.request_id': input.requestId,
-    ...(input.user?.id ? { 'squire.user_id': input.user.id } : {}),
     ...(input.user?.hash ? { 'squire.user_hash': input.user.hash } : {}),
   });
   if (input.status >= 500) {
@@ -411,7 +449,7 @@ async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>)
     const requestId = correlateRequest(c);
     const environment = safeTelemetryEnvironment();
     const release = safeTelemetryRelease();
-    const startRoute = c.req.path;
+    const startRoute = safeRequestStartRoute(c);
 
     captureTelemetryLog(
       'info',
@@ -435,7 +473,7 @@ async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>)
       const status = responseStatus(c, caughtError);
       const durationMs = requestDurationMs(startedAt);
       const route = safeRequestRoute(c);
-      const user = safeUserFromContext(c);
+      const user = safeLifecycleUserFromContext(c);
 
       captureTelemetryLog(
         requestLifecycleLevel(status),
