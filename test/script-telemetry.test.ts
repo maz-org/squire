@@ -211,6 +211,42 @@ describe('script telemetry lifecycle wrapper', () => {
     expect(telemetryCalls).not.toContain('database url');
   });
 
+  it('does not fail successful scripts when telemetry flush rejects', async () => {
+    mockFlushTelemetry.mockRejectedValueOnce(new Error('flush failed'));
+
+    await expect(
+      runScriptWithTelemetry(async () => 'ok', {
+        scriptName: 'successful-script',
+        scriptKind: 'script',
+      }),
+    ).resolves.toBe('ok');
+
+    expect(mockCaptureTelemetryError).not.toHaveBeenCalled();
+    expect(mockFlushTelemetry).toHaveBeenCalledWith(2_000);
+    expect(startedSpans[0]!.span.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves the original script error when telemetry flush rejects', async () => {
+    const originalFailure = new Error('database unavailable');
+    mockFlushTelemetry.mockRejectedValueOnce(new Error('flush failed'));
+
+    await expect(
+      runScriptWithTelemetry(
+        async () => {
+          throw originalFailure;
+        },
+        {
+          scriptName: 'failing-script',
+          scriptKind: 'cron',
+        },
+      ),
+    ).rejects.toThrow(originalFailure);
+
+    expect(mockCaptureTelemetryError).toHaveBeenCalledTimes(1);
+    expect(mockFlushTelemetry).toHaveBeenCalledWith(2_000);
+    expect(startedSpans[0]!.span.end).toHaveBeenCalledTimes(1);
+  });
+
   it('stays non-fatal when Sentry is not configured', async () => {
     mockInitTelemetry.mockReturnValueOnce({ enabled: false, reason: 'missing_dsn' });
 

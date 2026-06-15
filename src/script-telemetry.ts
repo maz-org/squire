@@ -126,6 +126,14 @@ function finishScriptSpan(
   span.end();
 }
 
+async function flushScriptTelemetry(timeoutMs: number): Promise<void> {
+  try {
+    await flushTelemetry(timeoutMs);
+  } catch {
+    // Telemetry delivery must not change script success/failure semantics.
+  }
+}
+
 /**
  * Initialize Sentry for non-Hono entrypoints, log lifecycle records, capture
  * failures only, and flush before short-lived processes exit.
@@ -147,7 +155,7 @@ export async function runScriptWithTelemetry<T>(
         const durationMs = Date.now() - startedAt;
         recordScriptLifecycle('completed', { options, status: 'ok', durationMs });
         finishScriptSpan(span, { options, status: 'ok', durationMs });
-        await flushTelemetry(options.flushTimeoutMs ?? 2_000);
+        await flushScriptTelemetry(options.flushTimeoutMs ?? 2_000);
         return result;
       } catch (error) {
         const durationMs = Date.now() - startedAt;
@@ -169,7 +177,7 @@ export async function runScriptWithTelemetry<T>(
             ...(options.correlationId ? { correlationId: options.correlationId } : {}),
           },
         });
-        await flushTelemetry(options.flushTimeoutMs ?? 2_000);
+        await flushScriptTelemetry(options.flushTimeoutMs ?? 2_000);
         throw error;
       }
     },
