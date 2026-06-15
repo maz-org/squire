@@ -666,7 +666,15 @@ describe('telemetry boundary', () => {
     ).toBe('GET /api/live');
   });
 
-  it('wraps the Sentry span processor with a stable sanitized clone', () => {
+  it('wraps the Sentry span processor with a temporary sanitized overlay', () => {
+    const snapshots: Array<{
+      phase: 'start' | 'ending' | 'end';
+      span: object;
+      name: unknown;
+      attributes: unknown;
+      json: string;
+      scope?: unknown;
+    }> = [];
     const delegate = {
       forceFlush: vi.fn(async () => undefined),
       shutdown: vi.fn(async () => undefined),
@@ -675,9 +683,37 @@ describe('telemetry boundary', () => {
           configurable: true,
           value: { scopeId: 'scope-1' },
         });
+        snapshots.push({
+          phase: 'start',
+          span,
+          name: (span as { name?: unknown }).name,
+          attributes: (span as { attributes?: unknown }).attributes,
+          json: JSON.stringify(span),
+          scope: (span as { _sentryScope?: unknown })._sentryScope,
+        });
+      }),
+      onEnding: vi.fn((span: object) => {
+        snapshots.push({
+          phase: 'ending',
+          span,
+          name: (span as { name?: unknown }).name,
+          attributes: (span as { attributes?: unknown }).attributes,
+          json: JSON.stringify(span),
+          scope: (span as { _sentryScope?: unknown })._sentryScope,
+        });
       }),
       onEnd: vi.fn(),
     };
+    delegate.onEnd.mockImplementation((span: object) => {
+      snapshots.push({
+        phase: 'end',
+        span,
+        name: (span as { name?: unknown }).name,
+        attributes: (span as { attributes?: unknown }).attributes,
+        json: JSON.stringify(span),
+        scope: (span as { _sentryScope?: unknown })._sentryScope,
+      });
+    });
     const parentContext = { parent: true };
     const originalSpan = {
       name: "UPDATE conversations SET title = 'Alice Example' WHERE id = 'conv-1'",
@@ -691,32 +727,35 @@ describe('telemetry boundary', () => {
     const processor = createSentrySanitizingSpanProcessor(delegate);
 
     processor.onStart(originalSpan as never, parentContext as never);
+    processor.onEnding?.(originalSpan as never);
     processor.onEnd(originalSpan as never);
 
-    expect(delegate.onStart).toHaveBeenCalledWith(expect.any(Object), parentContext);
+    expect(delegate.onStart).toHaveBeenCalledWith(originalSpan, parentContext);
+    expect(delegate.onEnding).toHaveBeenCalledWith(originalSpan);
+    expect(delegate.onEnd).toHaveBeenCalledWith(originalSpan);
     expect(delegate.onEnd).toHaveBeenCalledTimes(1);
-    const startedSpan = delegate.onStart.mock.calls[0]![0] as typeof originalSpan & {
-      _sentryScope?: unknown;
-    };
-    const sentrySpan = delegate.onEnd.mock.calls[0]![0] as typeof originalSpan;
-    expect(startedSpan).not.toBe(originalSpan);
-    expect(sentrySpan).toBe(startedSpan);
-    expect(sentrySpan).not.toBe(originalSpan);
-    expect(sentrySpan).toEqual(
-      expect.objectContaining({
-        name: 'db.query.update conversations',
-        attributes: expect.objectContaining({
+
+    expect(snapshots).toHaveLength(3);
+    for (const snapshot of snapshots) {
+      expect(snapshot.span).toBe(originalSpan);
+      expect(snapshot.name).toBe('db.query.update conversations');
+      expect(snapshot.attributes).toEqual(
+        expect.objectContaining({
           'db.statement': 'UPDATE conversations',
           'db.collection.name': 'conversations',
           'squire.request_id': 'req-1',
         }),
-      }),
+      );
+      expect(snapshot.json).not.toContain('Alice Example');
+      expect(snapshot.scope).toEqual({ scopeId: 'scope-1' });
+    }
+
+    expect(Object.prototype.propertyIsEnumerable.call(originalSpan, '_sentryScope')).toBe(false);
+    expect((originalSpan as typeof originalSpan & { _sentryScope?: unknown })._sentryScope).toEqual(
+      {
+        scopeId: 'scope-1',
+      },
     );
-    expect(Object.prototype.propertyIsEnumerable.call(sentrySpan, '_sentryScope')).toBe(false);
-    expect((sentrySpan as typeof originalSpan & { _sentryScope?: unknown })._sentryScope).toEqual({
-      scopeId: 'scope-1',
-    });
-    expect(JSON.stringify(sentrySpan)).not.toContain('Alice Example');
     expect(originalSpan.name).toContain('Alice Example');
     expect(originalSpan.attributes['db.statement']).toContain('Alice Example');
   });

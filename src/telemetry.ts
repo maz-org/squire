@@ -547,6 +547,39 @@ function cloneSpanForSentry(
   return clone;
 }
 
+const SENTRY_SPAN_OVERLAY_FIELDS = ['name', 'attributes', 'status', 'events'] as const;
+
+function withSanitizedSentrySpan<T>(span: unknown, useSpan: (span: TelemetryReadableSpan) => T): T {
+  if (!span || typeof span !== 'object') {
+    return useSpan(cloneSpanForSentry(span as TelemetryReadableSpan));
+  }
+
+  const target = span as TelemetryReadableSpan;
+  const sanitized = cloneSpanForSentry(target);
+  const originals = new Map<string, PropertyDescriptor | undefined>();
+  const overlay: PropertyDescriptorMap = {};
+
+  for (const key of SENTRY_SPAN_OVERLAY_FIELDS) {
+    originals.set(key, Object.getOwnPropertyDescriptor(target, key));
+    const descriptor = Object.getOwnPropertyDescriptor(sanitized, key);
+    if (descriptor) overlay[key] = descriptor;
+  }
+
+  try {
+    Object.defineProperties(target, overlay);
+    return useSpan(target);
+  } finally {
+    for (const key of SENTRY_SPAN_OVERLAY_FIELDS) {
+      const original = originals.get(key);
+      if (original) {
+        Object.defineProperty(target, key, original);
+      } else {
+        delete (target as unknown as Record<string, unknown>)[key];
+      }
+    }
+  }
+}
+
 /**
  * Produce stable low-cardinality span names for non-AI app work. User prompts,
  * URLs, and free-form prose collapse to a generic operation name.
@@ -578,39 +611,25 @@ export function safeDatabaseSpanAttributes(sql: string | undefined): SpanAttribu
 export function createSentrySanitizingSpanProcessor(
   delegate: TelemetrySpanProcessor,
 ): TelemetrySpanProcessor {
-  const sentrySpansByOriginal = new WeakMap<object, TelemetryReadableSpan>();
-
-  function spanForSentry(span: unknown): TelemetryReadableSpan {
-    if (span && typeof span === 'object') {
-      const existing = sentrySpansByOriginal.get(span);
-      if (existing) return cloneSpanForSentry(span as TelemetryReadableSpan, existing);
-
-      const clone = cloneSpanForSentry(span as TelemetryReadableSpan);
-      sentrySpansByOriginal.set(span, clone);
-      return clone;
-    }
-    return cloneSpanForSentry(span as TelemetryReadableSpan);
-  }
-
   return {
     forceFlush: () => delegate.forceFlush(),
     shutdown: () => delegate.shutdown(),
     onStart: (span, parentContext) =>
-      delegate.onStart(
-        spanForSentry(span) as Parameters<TelemetrySpanProcessor['onStart']>[0],
-        parentContext,
+      withSanitizedSentrySpan(span, (sentrySpan) =>
+        delegate.onStart(
+          sentrySpan as Parameters<TelemetrySpanProcessor['onStart']>[0],
+          parentContext,
+        ),
       ),
     onEnding: delegate.onEnding
       ? (span) =>
-          delegate.onEnding?.(
-            spanForSentry(span) as Parameters<NonNullable<TelemetrySpanProcessor['onEnding']>>[0],
+          withSanitizedSentrySpan(span, (sentrySpan) =>
+            delegate.onEnding?.(
+              sentrySpan as Parameters<NonNullable<TelemetrySpanProcessor['onEnding']>>[0],
+            ),
           )
       : undefined,
-    onEnd: (span) => {
-      const sentrySpan = spanForSentry(span);
-      delegate.onEnd(sentrySpan);
-      if (span && typeof span === 'object') sentrySpansByOriginal.delete(span);
-    },
+    onEnd: (span) => withSanitizedSentrySpan(span, (sentrySpan) => delegate.onEnd(sentrySpan)),
   };
 }
 
