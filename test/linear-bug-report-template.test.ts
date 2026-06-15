@@ -166,7 +166,7 @@ describe('linear bug report template', () => {
     expect(body).toContain('- Replay: Unavailable: Sentry replay URL was not provided');
     expect(body).toContain('- Trace: Unavailable: Sentry trace URL was not provided');
     expect(body).toContain('- Logs: Unavailable: Sentry logs query URL was not provided');
-    expect(body).toContain('- Trace ID: Unavailable: Sentry trace id was not provided');
+    expect(body).toContain('- Trace ID: Unavailable: Sentry trace ID was not provided');
     expect(body).toContain('- Release: Unavailable: SENTRY_RELEASE is not configured');
     expect(body).toContain('- Trace: Unavailable: LangSmith trace URL was not provided');
     expect(body).toContain('Unavailable: observed behavior was not provided');

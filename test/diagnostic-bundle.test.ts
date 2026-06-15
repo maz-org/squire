@@ -191,6 +191,18 @@ describe('diagnostic bundle', () => {
     expect(JSON.stringify(bundle)).not.toContain('Alice');
   });
 
+  it('drops malformed quoted Sentry log filter values', () => {
+    const bundle = buildDiagnosticBundle({
+      sentryLogsUrl:
+        'https://sentry.io/organizations/maz/logs/?query=request_id:"req-safe-1&field=message',
+    });
+
+    expect(bundle.sentry.logsUrl).toEqual({
+      status: 'available',
+      value: 'https://sentry.io/organizations/maz/logs/?field=message',
+    });
+  });
+
   it('marks missing Sentry, LangSmith, replay, and message data with unavailable reasons', () => {
     const bundle = buildDiagnosticBundle({
       now,
@@ -210,8 +222,9 @@ describe('diagnostic bundle', () => {
     expect(bundle.unavailable).toEqual(
       expect.arrayContaining([
         { path: 'sentry.issueUrl', reason: 'Sentry issue URL was not provided' },
+        { path: 'sentry.traceUrl', reason: 'Sentry trace URL was not provided' },
         { path: 'sentry.logsUrl', reason: 'Sentry logs query URL was not provided' },
-        { path: 'sentry.traceId', reason: 'Sentry trace id was not provided' },
+        { path: 'sentry.traceId', reason: 'Sentry trace ID was not provided' },
         { path: 'langsmith.traceUrl', reason: 'LangSmith trace URL was not provided' },
         { path: 'stream.workLogRows', reason: 'stream events were not loaded' },
       ]),

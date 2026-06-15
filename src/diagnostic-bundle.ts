@@ -240,7 +240,8 @@ const SAFE_SENTRY_LOG_FILTER_KEYS = new Set([
   'user_message_id',
 ]);
 const SAFE_SENTRY_LOG_QUERY_VALUE_PATTERN = /^[A-Za-z0-9_ .:/="'%+-]{1,512}$/;
-const SAFE_SENTRY_LOG_FILTER_VALUE_PATTERN = /^"?[A-Za-z0-9._:/-]{1,256}"?$/;
+const SAFE_SENTRY_LOG_FILTER_VALUE_PATTERN =
+  /^(?:"[A-Za-z0-9._:/-]{1,254}"|[A-Za-z0-9._:/-]{1,256})$/;
 const UNSAFE_QUERY_VALUE_PARTS = [
   'authorization',
   'cookie',
@@ -340,7 +341,7 @@ function safeSentryLogsUrl(value: string | undefined): string | undefined {
       safeParams.append(key, paramValue);
     }
     const query = safeParams.toString();
-    return `${url.origin}${url.pathname || '/'}${query ? `?${query}` : ''}`;
+    return `${url.origin}${url.pathname}${query ? `?${query}` : ''}`;
   } catch {
     return undefined;
   }
@@ -643,7 +644,7 @@ export function buildDiagnosticBundle(input: DiagnosticBundleInput = {}): Diagno
         safeSentryLogsUrl(input.sentryLogsUrl),
         'Sentry logs query URL was not provided',
       ),
-      traceId: field(safeToken(input.sentryTraceId), 'Sentry trace id was not provided'),
+      traceId: field(safeToken(input.sentryTraceId), 'Sentry trace ID was not provided'),
     },
     langsmith: {
       traceUrl: field(
