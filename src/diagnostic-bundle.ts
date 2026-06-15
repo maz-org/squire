@@ -34,6 +34,9 @@ export interface DiagnosticBundleLinkInput {
   sentryIssueUrl?: string;
   sentryEventUrl?: string;
   sentryReplayUrl?: string;
+  sentryTraceUrl?: string;
+  sentryLogsUrl?: string;
+  sentryTraceId?: string;
   langsmithTraceUrl?: string;
   langsmithThreadUrl?: string;
   langsmithThreadId?: string;
@@ -148,6 +151,9 @@ export const DiagnosticBundleSchema = z
         issueUrl: DiagnosticFieldSchema,
         eventUrl: DiagnosticFieldSchema,
         replayUrl: DiagnosticFieldSchema,
+        traceUrl: DiagnosticFieldSchema,
+        logsUrl: DiagnosticFieldSchema,
+        traceId: DiagnosticFieldSchema,
       })
       .strict(),
     langsmith: z
@@ -205,6 +211,47 @@ const DEFAULT_DATA_SOURCE: DiagnosticBundleDataSource = {
 const TOKEN_PATTERN = /^[A-Za-z0-9._:-]{1,256}$/;
 const SAFE_REF_PATTERN =
   /^(?:rules|scenario|section|card|source):[A-Za-z0-9._:-]+(?:\/[A-Za-z0-9._:-]+)+(?:#chunk=\d+)?$/;
+const SAFE_SENTRY_LOG_QUERY_KEYS = new Set([
+  'environment',
+  'field',
+  'query',
+  'sort',
+  'statsPeriod',
+]);
+const SAFE_SENTRY_LOG_FILTER_KEYS = new Set([
+  'assistant_message_id',
+  'conversation_id',
+  'environment',
+  'event_type',
+  'failure_kind',
+  'level',
+  'release',
+  'request_id',
+  'route',
+  'span_id',
+  'squire.assistant_message_id',
+  'squire.conversation_id',
+  'squire.request_id',
+  'squire.user_message_id',
+  'status',
+  'surface',
+  'trace',
+  'trace_id',
+  'user_message_id',
+]);
+const SAFE_SENTRY_LOG_QUERY_VALUE_PATTERN = /^[A-Za-z0-9_ .:/="'%+-]{1,512}$/;
+const SAFE_SENTRY_LOG_FILTER_VALUE_PATTERN =
+  /^(?:"[A-Za-z0-9._:/-]{1,254}"|[A-Za-z0-9._:/-]{1,256})$/;
+const UNSAFE_QUERY_VALUE_PARTS = [
+  'authorization',
+  'cookie',
+  'email',
+  'oauth',
+  'password',
+  'secret',
+  'session',
+  'token',
+];
 const PUBLIC_WORK_EVENTS = new Set<string>([
   'tool-plan',
   'tool-progress',
@@ -271,6 +318,53 @@ function safeExternalUrl(value: string | undefined): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function safeSentryLogsUrl(value: string | undefined): string | undefined {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return undefined;
+    const safeParams = new URLSearchParams();
+    for (const [key, paramValue] of url.searchParams.entries()) {
+      if (!SAFE_SENTRY_LOG_QUERY_KEYS.has(key)) continue;
+      if (key === 'query') {
+        const safeQuery = safeSentryLogsQuery(paramValue);
+        if (safeQuery) safeParams.append(key, safeQuery);
+        continue;
+      }
+      const valueLower = paramValue.toLowerCase();
+      if (UNSAFE_QUERY_VALUE_PARTS.some((part) => valueLower.includes(part))) continue;
+      if (!SAFE_SENTRY_LOG_QUERY_VALUE_PATTERN.test(paramValue)) continue;
+      safeParams.append(key, paramValue);
+    }
+    const query = safeParams.toString();
+    return `${url.origin}${url.pathname}${query ? `?${query}` : ''}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function safeSentryLogsQuery(value: string): string | undefined {
+  const query = value.trim();
+  if (!query) return undefined;
+  const queryLower = query.toLowerCase();
+  if (UNSAFE_QUERY_VALUE_PARTS.some((part) => queryLower.includes(part))) return undefined;
+  if (!SAFE_SENTRY_LOG_QUERY_VALUE_PATTERN.test(query)) return undefined;
+
+  const terms = query.split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return undefined;
+  for (const term of terms) {
+    const separator = term.indexOf(':');
+    if (separator <= 0 || separator === term.length - 1) return undefined;
+    const key = term.slice(0, separator);
+    const filterValue = term.slice(separator + 1);
+    if (!SAFE_SENTRY_LOG_FILTER_KEYS.has(key)) return undefined;
+    if (!SAFE_SENTRY_LOG_FILTER_VALUE_PATTERN.test(filterValue)) return undefined;
+  }
+  return terms.join(' ');
 }
 
 function isoDate(value: Date | undefined): string | undefined {
@@ -545,6 +639,12 @@ export function buildDiagnosticBundle(input: DiagnosticBundleInput = {}): Diagno
         safeExternalUrl(input.sentryReplayUrl),
         'Sentry replay URL was not provided',
       ),
+      traceUrl: field(safeExternalUrl(input.sentryTraceUrl), 'Sentry trace URL was not provided'),
+      logsUrl: field(
+        safeSentryLogsUrl(input.sentryLogsUrl),
+        'Sentry logs query URL was not provided',
+      ),
+      traceId: field(safeToken(input.sentryTraceId), 'Sentry trace ID was not provided'),
     },
     langsmith: {
       traceUrl: field(
