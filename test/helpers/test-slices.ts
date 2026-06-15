@@ -20,6 +20,7 @@ export const DB_BACKED_TEST_FILES = [
   'test/campaign-journal-surface.test.ts',
   'test/campaign-knowledge-kinds.test.ts',
   'test/campaign-live-migration.test.ts',
+  'test/campaign-modules.test.ts',
   'test/campaign-pages.test.ts',
   'test/campaign-proposals.test.ts',
   'test/campaign-rename.test.ts',
