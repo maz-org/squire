@@ -18,6 +18,10 @@ model output, provider payload, retrieved passage, cookie, bearer token, OAuth
 token, secret, full source document, email address, or full transcript content
 in Sentry or Linear.
 
+Sentry-side scrubbing rules are documented in
+[sentry-scrubbing.md](sentry-scrubbing.md). They are a backstop for app-side
+sanitization and cover events, logs, and span payloads.
+
 Usage and spend checks for Sentry Logs and app traces live in
 [sentry-usage-guardrails.md](sentry-usage-guardrails.md). Cost controls must not
 replace privacy sanitization: keep safe operational logs broad, tune
@@ -228,6 +232,7 @@ fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind browser'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind cron'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind deploy-regression'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind scrub-canary'
 ```
 
 Local dry runs must not send to Sentry:
@@ -244,6 +249,16 @@ Browser replay and feedback smoke:
    [production-operations.md](production-operations.md#safe-browser-replay-and-feedback-smoke).
 4. Confirm Sentry receives a browser error and feedback event with masked replay
    metadata only.
+
+Scrubbing smoke:
+
+1. Run `npm run sentry:scrubbing -- --verify` from an environment with
+   `SENTRY_TOKEN`.
+2. Send `--kind scrub-canary`.
+3. Search Sentry for `request_id:sentry-test-scrub-canary`.
+4. Confirm fake email, phone, token, prompt, model output, provider payload,
+   and retrieved passage values are masked, removed, or replaced in the event,
+   log, and span when tracing is sampled.
 
 Uptime smoke:
 
@@ -263,7 +278,7 @@ After observability changes deploy:
 3. Verify LangSmith traces for one real chat show `metadata.conversationId`,
    `metadata.thread_id`, `metadata.userMessageId`, and `metadata.requestId`.
 4. Generate or preview safe Sentry test events for backend, chat, browser, cron,
-   deploy-regression, and uptime paths.
+   deploy-regression, scrub-canary, and uptime paths.
 5. Create or update a Linear bug with the required Evidence template, using
    unavailable reasons for anything not present.
 6. Check Sentry `Stats & Usage` for log accepted GB, accepted spans, dropped
