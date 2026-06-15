@@ -633,11 +633,16 @@ describe('telemetry boundary', () => {
     ).toBe('GET /api/live');
   });
 
-  it('wraps the Sentry span processor without mutating the original span for LangSmith', () => {
+  it('wraps the Sentry span processor with a stable sanitized clone', () => {
     const delegate = {
       forceFlush: vi.fn(async () => undefined),
       shutdown: vi.fn(async () => undefined),
-      onStart: vi.fn(),
+      onStart: vi.fn((span: object) => {
+        Object.defineProperty(span, '_sentryScope', {
+          configurable: true,
+          value: { scopeId: 'scope-1' },
+        });
+      }),
       onEnd: vi.fn(),
     };
     const parentContext = { parent: true };
@@ -655,9 +660,14 @@ describe('telemetry boundary', () => {
     processor.onStart(originalSpan as never, parentContext as never);
     processor.onEnd(originalSpan as never);
 
-    expect(delegate.onStart).toHaveBeenCalledWith(originalSpan, parentContext);
+    expect(delegate.onStart).toHaveBeenCalledWith(expect.any(Object), parentContext);
     expect(delegate.onEnd).toHaveBeenCalledTimes(1);
+    const startedSpan = delegate.onStart.mock.calls[0]![0] as typeof originalSpan & {
+      _sentryScope?: unknown;
+    };
     const sentrySpan = delegate.onEnd.mock.calls[0]![0] as typeof originalSpan;
+    expect(startedSpan).not.toBe(originalSpan);
+    expect(sentrySpan).toBe(startedSpan);
     expect(sentrySpan).not.toBe(originalSpan);
     expect(sentrySpan).toEqual(
       expect.objectContaining({
@@ -669,6 +679,10 @@ describe('telemetry boundary', () => {
         }),
       }),
     );
+    expect(Object.prototype.propertyIsEnumerable.call(sentrySpan, '_sentryScope')).toBe(false);
+    expect((sentrySpan as typeof originalSpan & { _sentryScope?: unknown })._sentryScope).toEqual({
+      scopeId: 'scope-1',
+    });
     expect(JSON.stringify(sentrySpan)).not.toContain('Alice Example');
     expect(originalSpan.name).toContain('Alice Example');
     expect(originalSpan.attributes['db.statement']).toContain('Alice Example');

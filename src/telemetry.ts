@@ -467,8 +467,12 @@ function sanitizeSpanEvent(event: unknown): unknown {
   };
 }
 
-function cloneSpanForSentry(span: TelemetryReadableSpan): TelemetryReadableSpan {
-  const clone = Object.create(Object.getPrototypeOf(span)) as TelemetryReadableSpan;
+function cloneSpanForSentry(
+  span: TelemetryReadableSpan,
+  clone: TelemetryReadableSpan = Object.create(
+    Object.getPrototypeOf(span),
+  ) as TelemetryReadableSpan,
+): TelemetryReadableSpan {
   Object.defineProperties(clone, Object.getOwnPropertyDescriptors(span));
   Object.defineProperties(clone, {
     name: {
@@ -528,12 +532,39 @@ export function safeDatabaseSpanAttributes(sql: string | undefined): SpanAttribu
 export function createSentrySanitizingSpanProcessor(
   delegate: TelemetrySpanProcessor,
 ): TelemetrySpanProcessor {
+  const sentrySpansByOriginal = new WeakMap<object, TelemetryReadableSpan>();
+
+  function spanForSentry(span: unknown): TelemetryReadableSpan {
+    if (span && typeof span === 'object') {
+      const existing = sentrySpansByOriginal.get(span);
+      if (existing) return cloneSpanForSentry(span as TelemetryReadableSpan, existing);
+
+      const clone = cloneSpanForSentry(span as TelemetryReadableSpan);
+      sentrySpansByOriginal.set(span, clone);
+      return clone;
+    }
+    return cloneSpanForSentry(span as TelemetryReadableSpan);
+  }
+
   return {
     forceFlush: () => delegate.forceFlush(),
     shutdown: () => delegate.shutdown(),
-    onStart: (span, parentContext) => delegate.onStart(span, parentContext),
-    onEnding: delegate.onEnding ? (span) => delegate.onEnding?.(span) : undefined,
-    onEnd: (span) => delegate.onEnd(cloneSpanForSentry(span)),
+    onStart: (span, parentContext) =>
+      delegate.onStart(
+        spanForSentry(span) as Parameters<TelemetrySpanProcessor['onStart']>[0],
+        parentContext,
+      ),
+    onEnding: delegate.onEnding
+      ? (span) =>
+          delegate.onEnding?.(
+            spanForSentry(span) as Parameters<NonNullable<TelemetrySpanProcessor['onEnding']>>[0],
+          )
+      : undefined,
+    onEnd: (span) => {
+      const sentrySpan = spanForSentry(span);
+      delegate.onEnd(sentrySpan);
+      if (span && typeof span === 'object') sentrySpansByOriginal.delete(span);
+    },
   };
 }
 
