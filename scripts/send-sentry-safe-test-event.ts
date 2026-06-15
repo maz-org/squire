@@ -146,6 +146,11 @@ function safeTestInput(kind: SafeTestKind) {
               prompt: 'Synthetic request body prompt for scrubbing verification',
             },
           },
+          response: {
+            body: {
+              answer: 'Synthetic response body answer for scrubbing verification',
+            },
+          },
         },
       };
   }
@@ -163,6 +168,9 @@ function scrubCanaryAttributes(): Record<string, unknown> {
     retrievedPassages: ['Synthetic retrieved source passage for log scrubbing verification'],
     request_body: {
       prompt: 'Synthetic request body prompt for log scrubbing verification',
+    },
+    response_body: {
+      answer: 'Synthetic response body answer for log scrubbing verification',
     },
   };
 }
@@ -186,7 +194,11 @@ function emitScrubCanaryTrace(): boolean {
       () => undefined,
     );
     return true;
-  } catch {
+  } catch (error: unknown) {
+    console.error(
+      'scrub-canary trace skipped:',
+      error instanceof Error ? error.message : String(error),
+    );
     return false;
   }
 }

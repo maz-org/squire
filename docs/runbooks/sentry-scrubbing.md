@@ -41,7 +41,9 @@ npm run sentry:scrubbing -- --verify
 
 `--apply` overwrites the project's Advanced Data Scrubbing config with the
 checked-in Squire config. Run `--dry-run` first and review the JSON when making
-manual Sentry UI changes.
+manual Sentry UI changes. `--apply` verifies the project settings immediately
+after saving them; if Sentry returns a temporary mismatch, wait a few seconds
+and rerun `--verify`.
 
 ## Rule Coverage
 
@@ -58,9 +60,10 @@ Events, transactions, and attachments:
 - Custom replacements on those selectors: bearer tokens, common API-token
   prefixes, sensitive URL query params, and phone-number-shaped strings
 - HTTP/user fields removed outright: `$http.headers.authorization`,
-  `$http.headers.cookie`, `$http.headers.set-cookie`, `$http.cookies`,
-  `$http.query_string`, `$http.data`, `$user.email`, `$user.ip_address`,
-  `$user.name`, `$user.username`, and `$user.geo.**`
+  `$http.headers.proxy-authorization`, `$http.headers.cookie`,
+  `$http.headers.set-cookie`, `$http.cookies`, `$http.query_string`,
+  `$http.data`, `$user.email`, `$user.ip_address`, `$user.name`,
+  `$user.username`, and `$user.geo.**`
 - Known unsafe app fields removed outright in `extra.*` and
   `contexts.squire.context.*`: email/name/phone/address fields, raw prompts,
   full answers, model output, provider payloads, retrieved passages, source
@@ -117,7 +120,9 @@ Expected results:
 - The event `SquireSafeScrubCanary` is present.
 - The Sentry log body and attributes are present, but fake email, phone, token,
   prompt, model output, provider payload, and retrieved passage values are
-  masked, removed, or replaced.
+  masked, removed, or replaced. Confirm structured log attributes such as
+  `providerPayload`, `retrievedPassages`, `request_body`, and `response_body`
+  are removed or scrubbed, not merely nested under another serialized value.
 - If `SENTRY_TRACES_SAMPLE_RATE` is greater than `0`, the
   `squire.safe_scrub_canary` span is present and the same fake values are
   masked, removed, or replaced.

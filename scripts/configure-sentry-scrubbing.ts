@@ -72,6 +72,7 @@ function readSentryToken(): string {
 }
 
 function canonicalJson(value: unknown): string {
+  if (value === undefined) return 'null';
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   if (value && typeof value === 'object') {
     return `{${Object.entries(value)
@@ -79,7 +80,7 @@ function canonicalJson(value: unknown): string {
       .map(([key, child]) => `${JSON.stringify(key)}:${canonicalJson(child)}`)
       .join(',')}}`;
   }
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? 'null';
 }
 
 function parseRelayPiiConfig(value: string | null | undefined): unknown {

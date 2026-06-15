@@ -49,6 +49,8 @@ describe('Sentry scrubbing config', () => {
       '$http.data',
       '$user.email',
       '$user.geo.**',
+      'contexts.squire.context.request.body',
+      'contexts.squire.context.response.body',
     ]) {
       const ruleIds = config.applications[selector] ?? [];
       expect(ruleIds).toHaveLength(1);

@@ -129,6 +129,8 @@ const FIELD_REMOVE_SOURCES = [
   'contexts.squire.context.retrieved_passages',
   'contexts.squire.context.sourceDocument',
   'contexts.squire.context.transcript',
+  'contexts.squire.context.request.body',
+  'contexts.squire.context.response.body',
   "$span.data.'gen_ai.prompt'",
   "$span.data.'gen_ai.completion'",
   '$span.data.rawPrompt',
