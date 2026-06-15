@@ -274,6 +274,8 @@ describe('deployment configuration', () => {
     expect(development).toContain('npm run sentry:test-event -- --kind chat --dry-run');
     expect(runbook).toContain('fly ext sentry create -a maz-squire');
     expect(runbook).toContain('fly ext sentry dashboard -a maz-squire');
+    expect(runbook).toContain('npm run sentry:scrubbing -- --dry-run');
+    expect(runbook).toContain('[sentry-scrubbing.md](sentry-scrubbing.md)');
     expect(runbook).toMatch(/sets\s+`SENTRY_DSN` as a Fly secret/);
     expect(runbook).toContain('Do not add `SENTRY_DSN` to `fly.toml`');
     expect(runbook).toContain('SENTRY_RELEASE');

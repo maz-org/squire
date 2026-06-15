@@ -1,11 +1,21 @@
+import * as Sentry from '@sentry/node';
+
 import {
   captureTelemetryError,
+  captureTelemetryLog,
   captureTelemetryMessage,
   flushTelemetry,
   initTelemetry,
 } from '../src/telemetry.ts';
 
-const SAFE_TEST_KINDS = ['backend', 'chat', 'browser', 'cron', 'deploy-regression'] as const;
+const SAFE_TEST_KINDS = [
+  'backend',
+  'chat',
+  'browser',
+  'cron',
+  'deploy-regression',
+  'scrub-canary',
+] as const;
 
 type SafeTestKind = (typeof SAFE_TEST_KINDS)[number];
 
@@ -14,6 +24,7 @@ const SAFE_TEST_ERROR_NAMES: Record<Exclude<SafeTestKind, 'browser'>, string> = 
   chat: 'SquireSafeChatAlertTest',
   cron: 'SquireSafeCronAlertTest',
   'deploy-regression': 'SquireSafeDeployRegressionAlertTest',
+  'scrub-canary': 'SquireSafeScrubCanary',
 };
 
 interface ParsedArgs {
@@ -113,6 +124,70 @@ function safeTestInput(kind: SafeTestKind) {
           eventType: 'deploy_regression_test',
         },
       };
+    case 'scrub-canary':
+      return {
+        route: '/__sentry-test/scrub-canary',
+        requestId,
+        conversationId,
+        userMessageId,
+        context: {
+          surface: 'server',
+          eventType: 'scrub_canary',
+          emailAddress: 'sentry-scrub-canary@example.invalid',
+          phoneNumber: '+1 415 555 0100',
+          customerName: 'Sentry Scrub Canary',
+          authorization: 'Bearer sentry_scrub_canary_token_1234567890',
+          rawPrompt: 'Synthetic prompt text for scrubbing verification',
+          modelOutput: 'Synthetic model output for scrubbing verification',
+          providerPayload: { body: 'Synthetic provider payload for scrubbing verification' },
+          retrievedPassages: ['Synthetic retrieved source passage for scrubbing verification'],
+          request: {
+            body: {
+              prompt: 'Synthetic request body prompt for scrubbing verification',
+            },
+          },
+        },
+      };
+  }
+}
+
+function scrubCanaryAttributes(): Record<string, unknown> {
+  return {
+    emailAddress: 'sentry-scrub-canary@example.invalid',
+    phoneNumber: '+1 415 555 0100',
+    customerName: 'Sentry Scrub Canary',
+    authorization: 'Bearer sentry_scrub_canary_token_1234567890',
+    rawPrompt: 'Synthetic prompt text for log scrubbing verification',
+    modelOutput: 'Synthetic model output for log scrubbing verification',
+    providerPayload: { body: 'Synthetic provider payload for log scrubbing verification' },
+    retrievedPassages: ['Synthetic retrieved source passage for log scrubbing verification'],
+    request_body: {
+      prompt: 'Synthetic request body prompt for log scrubbing verification',
+    },
+  };
+}
+
+function emitScrubCanaryTrace(): boolean {
+  try {
+    Sentry.startSpan(
+      {
+        name: 'squire.safe_scrub_canary',
+        op: 'squire.scrub_canary',
+        attributes: {
+          'gen_ai.prompt': 'Synthetic prompt text for span scrubbing verification',
+          'gen_ai.completion': 'Synthetic model output for span scrubbing verification',
+          providerPayload: 'Synthetic provider payload for span scrubbing verification',
+          retrievedPassages: 'Synthetic retrieved source passage for span scrubbing verification',
+          emailAddress: 'sentry-scrub-canary@example.invalid',
+          phoneNumber: '+1 415 555 0100',
+          authorization: 'Bearer sentry_scrub_canary_token_1234567890',
+        },
+      },
+      () => undefined,
+    );
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -134,8 +209,16 @@ async function main(): Promise<void> {
     args.kind === 'browser'
       ? captureTelemetryMessage('browser.browser_error', 'error', input)
       : captureTelemetryError(new Error(SAFE_TEST_ERROR_NAMES[args.kind]), input);
+  const logSent =
+    args.kind === 'scrub-canary'
+      ? captureTelemetryLog('warn', 'sentry scrub canary synthetic alice@example.invalid', {
+          ...input,
+          attributes: scrubCanaryAttributes(),
+        })
+      : false;
+  const traceAttempted = args.kind === 'scrub-canary' ? emitScrubCanaryTrace() : false;
   await flushTelemetry(2_000);
-  console.log(JSON.stringify({ kind: args.kind, eventId }, null, 2));
+  console.log(JSON.stringify({ kind: args.kind, eventId, logSent, traceAttempted }, null, 2));
 }
 
 main().catch((error: unknown) => {

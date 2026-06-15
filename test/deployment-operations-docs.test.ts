@@ -68,6 +68,9 @@ describe('deployment operations documentation', () => {
       'Browser Or UI Report',
       'Backend, Cron, And Uptime',
       'Safe Test Cases',
+      'sentry-scrubbing.md',
+      'request_id:sentry-test-scrub-canary',
+      'npm run sentry:scrubbing -- --verify',
       'collectDiagnosticBundle()',
       'createLinearBugReportBody()',
       'environment:production failure_kind:assistant_turn level:error',
@@ -76,6 +79,7 @@ describe('deployment operations documentation', () => {
       'https://squire.maz.org/api/__sentry-uptime-test-404',
       'fly ssh console -a maz-squire -C',
       'npm run sentry:test-event -- --kind chat --dry-run',
+      'node scripts/send-sentry-safe-test-event.ts --kind scrub-canary',
       'unavailable',
     ]) {
       expect(observability).toContain(expected);
@@ -101,6 +105,40 @@ describe('deployment operations documentation', () => {
 
     expect(bugReporting).toContain('SQR-298');
     expect(bugReporting).toContain('SQR-299');
+  });
+
+  it('documents Sentry-side scrubbing rules for events, logs, and spans', async () => {
+    const runbook = await readProjectFile('docs/runbooks/sentry-scrubbing.md');
+    const production = await readProjectFile('docs/runbooks/production-operations.md');
+    const packageJson = JSON.parse(await readProjectFile('package.json')) as {
+      scripts?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.['sentry:scrubbing']).toBe(
+      'node scripts/configure-sentry-scrubbing.ts',
+    );
+
+    for (const expected of [
+      '# Sentry scrubbing setup',
+      'scripts/sentry-scrubbing-config.ts',
+      'npm run sentry:scrubbing -- --dry-run',
+      'npm run sentry:scrubbing -- --apply',
+      'npm run sentry:scrubbing -- --verify',
+      'Prevent storing IP addresses',
+      '$log.body',
+      "$log.attributes.'rawPrompt'.value",
+      '$span.description',
+      "$span.data.'gen_ai.prompt'",
+      '$http.headers.authorization',
+      '$user.geo.**',
+      'request_id:sentry-test-scrub-canary',
+      'false positives and false negatives',
+      'app-side sanitization',
+    ]) {
+      expect(runbook).toContain(expected);
+    }
+
+    expect(production).toContain('[sentry-scrubbing.md](sentry-scrubbing.md)');
   });
 
   it('keeps current architecture docs on AWS WAF and GitHub-driven Fly deploys', async () => {
