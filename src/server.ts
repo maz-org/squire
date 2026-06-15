@@ -78,7 +78,7 @@ import {
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
-import { normalizeGameId, requireGameId } from './game.ts';
+import { availableModulesFor, gameDefinitionFor, normalizeGameId, requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { startHttpServer } from './server-start.ts';
@@ -173,6 +173,12 @@ import {
   type TelemetryLogLevel,
   type TelemetryUserIdentity,
 } from './telemetry.ts';
+import {
+  recordChatLifecycleEvent,
+  setChatSpanAttributes,
+  withChatLifecycleSpan,
+  type ChatLifecycleInput,
+} from './chat/chat-observability.ts';
 import { resolveSquireEnv } from './squire-env.ts';
 
 initTelemetry(process.env);
@@ -1222,8 +1228,17 @@ app.post('/campaigns', async (c) => {
   const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
   const game = typeof form.get('game') === 'string' ? (form.get('game') as string) : '';
   if (!name) return renderCampaignListPage(c, 'Campaign name is required.');
-  // Modules derive from the game (advisory scenario-set selectors).
-  const modules = normalizeGameId(game) === 'gloomhaven-2e' ? ['gh2e', 'solo2e'] : ['fh'];
+  // Base module always; optional modules are opt-in via the form checkboxes.
+  // A checked module for a different game is filtered out by availableModulesFor.
+  const gameId = normalizeGameId(game);
+  const checked = new Set(
+    form.getAll('module').filter((value): value is string => typeof value === 'string'),
+  );
+  const modules = gameId
+    ? availableModulesFor(gameId).filter(
+        (module) => module === gameDefinitionFor(gameId).baseModule || checked.has(module),
+      )
+    : undefined;
   try {
     const campaign = await CampaignService.createCampaign(identityFromSessionUser(session.userId), {
       name,
@@ -1304,7 +1319,12 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 async function renderCampaignDashboardPage(
   c: Context,
   campaignId: string,
-  opts: { characterError?: string; inviteError?: string; renameError?: string } = {},
+  opts: {
+    characterError?: string;
+    inviteError?: string;
+    renameError?: string;
+    modulesError?: string;
+  } = {},
   status: 200 | 422 = 200,
 ): Promise<Response> {
   const session = c.get('session')!;
@@ -1314,6 +1334,9 @@ async function renderCampaignDashboardPage(
   // Invite is owner-only: the affordance is hidden (not just disabled) for
   // everyone else, matching the service-layer role gate.
   const isOwner = detail.self.role === 'owner';
+  // Modules editor only for games that have optional modules to toggle.
+  const gameId = normalizeGameId(detail.campaign.game);
+  const gameDef = gameId ? gameDefinitionFor(gameId) : null;
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -1354,6 +1377,17 @@ async function renderCampaignDashboardPage(
       // Rename affordance (SQR-320): any active member; the name is shared
       // state. expectedVersion drives optimistic concurrency.
       { csrfToken, version: detail.campaign.version, errorMessage: opts.renameError },
+      // Modules editor (SQR-321): only when the game has optional modules.
+      gameDef && gameDef.optionalModules.length > 0
+        ? {
+            csrfToken,
+            version: detail.campaign.version,
+            baseModule: gameDef.baseModule,
+            optionalModules: gameDef.optionalModules,
+            current: detail.campaign.modules,
+            errorMessage: opts.modulesError,
+          }
+        : undefined,
     ),
   });
   return c.html(body, status);
@@ -1538,6 +1572,60 @@ app.post('/campaigns/:id/rename', async (c) => {
     }
     if (error instanceof CampaignService.CampaignForbiddenError) {
       return await renderCampaignDashboardPage(c, campaignId, { renameError: error.message }, 422);
+    }
+    throw error;
+  }
+});
+
+/** Edit a campaign's modules from the dashboard (SQR-321). */
+app.post('/campaigns/:id/modules', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const expectedVersion = formInt(form, 'expectedVersion');
+  const checked = new Set(
+    form.getAll('module').filter((value): value is string => typeof value === 'string'),
+  );
+
+  try {
+    // getCampaignDetail gates membership; modules are shared state, so any
+    // active member may edit (no owner gate), like rename/scenario toggles.
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    if (expectedVersion === null) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: 'Could not save — please refresh and try again.' },
+        422,
+      );
+    }
+    const gameId = normalizeGameId(detail.campaign.game);
+    if (!gameId) return c.notFound();
+    // Base is always on; add the checked optional modules. The computed set is
+    // valid by construction; updateSharedState re-validates as defense-in-depth.
+    const baseModule = gameDefinitionFor(gameId).baseModule;
+    const modules = availableModulesFor(gameId).filter(
+      (module) => module === baseModule || checked.has(module),
+    );
+    await CampaignService.updateSharedState(identity, campaignId, { modules, expectedVersion });
+    return c.redirect(`/campaigns/${campaignId}`, 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof VersionConflictError) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: 'Updated elsewhere — showing the latest. Try again.' },
+        422,
+      );
+    }
+    if (
+      error instanceof CampaignService.InvalidModulesError ||
+      error instanceof CampaignService.CampaignForbiddenError
+    ) {
+      return await renderCampaignDashboardPage(c, campaignId, { modulesError: error.message }, 422);
     }
     throw error;
   }
@@ -2572,6 +2660,8 @@ app.post('/chat', async (c) => {
       question,
       idempotencyKey,
       game,
+      requestId,
+      telemetry: { route: '/chat', surface: 'web_chat' },
     });
 
     c.header('Cache-Control', 'no-store');
@@ -2666,6 +2756,8 @@ app.post('/chat/:conversationId/messages', async (c) => {
       question,
       game,
       campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
+      requestId,
+      telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
     });
     if (!pending?.currentUserMessage) return c.notFound();
 
@@ -2721,11 +2813,24 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   });
   if (!loaded) return c.notFound();
   if (loaded.message.role !== 'user') return c.notFound();
+  const streamTelemetryBase: ChatLifecycleInput = {
+    route: '/chat/:conversationId/messages/:messageId/stream',
+    surface: 'chat_sse',
+    requestId,
+    conversationId: loaded.conversation.id,
+    userMessageId: loaded.message.id,
+    game: loaded.message.game ?? null,
+    replay: lastEventSequence > 0,
+  };
 
   const bootstrapStatus = await ensureBootstrapStatus();
   const askCapability = bootstrapStatus.capabilities.ask;
   if (!askCapability.allowed) {
     return streamSSE(c, async (stream) => {
+      recordChatLifecycleEvent('stream.started', {
+        ...streamTelemetryBase,
+        status: 'started',
+      });
       await stream.writeSSE({
         event: 'error',
         data: JSON.stringify({
@@ -2733,6 +2838,12 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           message: askCapability.message ?? 'Service unavailable.',
           recoverable: bootstrapStatus.lifecycle === 'warming_up',
         }),
+      });
+      recordChatLifecycleEvent('stream.completed', {
+        ...streamTelemetryBase,
+        status: 'error',
+        failureKind: 'bootstrap',
+        durationMs: 0,
       });
     });
   }
@@ -2747,108 +2858,216 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
   // and persists the same sources. This handler just translates agent
   // events to wire events.
   return streamSSE(c, async (stream) => {
-    let planSequence = 0;
-    let progressSequence = 0;
-    let artifactSequence = 0;
-    let replayCursor = lastEventSequence;
-
-    const writeStoredEvent = async (
-      storedEvent: MessageStreamEventRepository.MessageStreamEvent,
-    ) => {
-      await stream.writeSSE({
-        id: String(storedEvent.sequence),
-        event: storedEvent.event,
-        data: JSON.stringify(storedEvent.payload),
-      });
-      replayCursor = storedEvent.sequence;
-    };
-
-    const persistAndWrite = async (
-      event: BrowserStreamEventName,
-      payload: Record<string, unknown>,
-    ) => {
-      const storedEvent = await MessageStreamEventRepository.append({
-        conversationId: loaded.conversation.id,
-        userMessageId: loaded.message.id,
-        event,
-        payload,
-      });
-      if (storedEvent.sequence > replayCursor) {
-        await writeStoredEvent(storedEvent);
-      }
-      return storedEvent;
-    };
-
-    const replayStoredEvents = async (): Promise<{
-      wroteAny: boolean;
-      reachedTerminal: boolean;
-    }> => {
-      const storedEvents = await MessageStreamEventRepository.listAfter({
-        userMessageId: loaded.message.id,
-        afterSequence: replayCursor,
-      });
-      let wroteAny = false;
-      let reachedTerminal = false;
-      for (const storedEvent of storedEvents) {
-        await writeStoredEvent(storedEvent);
-        wroteAny = true;
-        if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
-          reachedTerminal = true;
-          break;
-        }
-      }
-      return { wroteAny, reachedTerminal };
-    };
-
-    const appendTerminalForAssistantMessage = async (
-      assistantMessage: Awaited<ReturnType<typeof streamAssistantTurn>>,
-    ) => {
-      if (assistantMessage.isError) {
-        await persistAndWrite('error', {
-          kind: 'transport',
-          message:
-            assistantMessage.content === GENERIC_FAILURE_MESSAGE
-              ? 'Trouble connecting. Please try again.'
-              : assistantMessage.content,
-          recoverable: true,
+    await withChatLifecycleSpan('squire.chat.sse_stream', streamTelemetryBase, async (span) => {
+      const streamStartedAt = Date.now();
+      let firstEventLogged = false;
+      let cancellationLogged = false;
+      const signal = c.req.raw.signal;
+      const logCancellation = () => {
+        if (cancellationLogged) return;
+        cancellationLogged = true;
+        recordChatLifecycleEvent('stream.cancelled', {
+          ...streamTelemetryBase,
+          status: 'cancelled',
+          durationMs: Date.now() - streamStartedAt,
         });
-        return;
-      }
-
-      await persistAndWrite('done', {
-        html: renderAssistantContentHtml(assistantMessage.content),
-        // SQR-98: send the persisted consulted_sources along with `done` so
-        // the client can rebuild the footer on replay — duplicate /stream
-        // hits, HTMX reconnects, or any path where persistAssistantOutcome
-        // returns an already-persisted row return here with no tool_result
-        // events fired. Without this, the footer would stay hidden on the
-        // reconnected turn until a full page reload.
-        // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
-        // dropped — the conversation page is a scrolling transcript with
-        // no recent-questions chip rail to refresh.
-        consultedSources: assistantMessage.consultedSources,
+        setChatSpanAttributes(span, {
+          ...streamTelemetryBase,
+          status: 'cancelled',
+        });
+      };
+      signal.addEventListener('abort', logCancellation, { once: true });
+      recordChatLifecycleEvent('stream.started', {
+        ...streamTelemetryBase,
+        status: 'started',
       });
-    };
+      try {
+        let planSequence = 0;
+        let progressSequence = 0;
+        let artifactSequence = 0;
+        let replayCursor = lastEventSequence;
 
-    const existingTerminal = await MessageStreamEventRepository.findTerminal(loaded.message.id);
-    if (existingTerminal && existingTerminal.sequence <= replayCursor) {
-      return;
-    }
+        const writeStoredEvent = async (
+          storedEvent: MessageStreamEventRepository.MessageStreamEvent,
+          options: { assistantMessageId?: string; replay?: boolean } = {},
+        ) => {
+          await stream.writeSSE({
+            id: String(storedEvent.sequence),
+            event: storedEvent.event,
+            data: JSON.stringify(storedEvent.payload),
+          });
+          replayCursor = storedEvent.sequence;
+          const eventTelemetryBase = {
+            ...streamTelemetryBase,
+            assistantMessageId: options.assistantMessageId,
+            replay: options.replay ?? streamTelemetryBase.replay,
+            streamEvent: storedEvent.event,
+            sequence: storedEvent.sequence,
+          };
+          if (!firstEventLogged) {
+            firstEventLogged = true;
+            recordChatLifecycleEvent('stream.first_event', {
+              ...eventTelemetryBase,
+              status: 'ok',
+            });
+          }
+          if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
+            const failed = storedEvent.event === 'error';
+            recordChatLifecycleEvent('stream.completed', {
+              ...eventTelemetryBase,
+              status: failed ? 'error' : 'ok',
+              failureKind: failed ? 'stream_terminal_error' : undefined,
+              durationMs: Date.now() - streamStartedAt,
+            });
+            setChatSpanAttributes(span, {
+              ...eventTelemetryBase,
+              status: failed ? 'error' : 'ok',
+              failureKind: failed ? 'stream_terminal_error' : undefined,
+            });
+          }
+        };
 
-    const initialReplay = await replayStoredEvents();
-    if (initialReplay.reachedTerminal) {
-      return;
-    }
-
-    const hasPriorStreamEvents = replayCursor > 0 || initialReplay.wroteAny;
-    if (hasPriorStreamEvents) {
-      for (let polls = 0; polls < STREAM_REPLAY_MAX_POLLS; polls += 1) {
-        if (
-          !(await MessageStreamEventRepository.isTurnGenerationLocked({
+        const persistAndWrite = async (
+          event: BrowserStreamEventName,
+          payload: Record<string, unknown>,
+          options: { assistantMessageId?: string; replay?: boolean } = {},
+        ) => {
+          const storedEvent = await MessageStreamEventRepository.append({
             conversationId: loaded.conversation.id,
             userMessageId: loaded.message.id,
-          }))
-        ) {
+            event,
+            payload,
+          });
+          if (storedEvent.sequence > replayCursor) {
+            await writeStoredEvent(storedEvent, options);
+          }
+          return storedEvent;
+        };
+
+        const replayStoredEvents = async (): Promise<{
+          wroteAny: boolean;
+          reachedTerminal: boolean;
+        }> => {
+          const storedEvents = await MessageStreamEventRepository.listAfter({
+            userMessageId: loaded.message.id,
+            afterSequence: replayCursor,
+          });
+          let wroteAny = false;
+          let reachedTerminal = false;
+          for (const storedEvent of storedEvents) {
+            await writeStoredEvent(storedEvent, { replay: true });
+            wroteAny = true;
+            if (MessageStreamEventRepository.isTerminalEvent(storedEvent)) {
+              reachedTerminal = true;
+              break;
+            }
+          }
+          return { wroteAny, reachedTerminal };
+        };
+
+        const appendTerminalForAssistantMessage = async (
+          assistantMessage: Awaited<ReturnType<typeof streamAssistantTurn>>,
+        ) => {
+          if (assistantMessage.isError) {
+            await persistAndWrite(
+              'error',
+              {
+                kind: 'transport',
+                message:
+                  assistantMessage.content === GENERIC_FAILURE_MESSAGE
+                    ? 'Trouble connecting. Please try again.'
+                    : assistantMessage.content,
+                recoverable: true,
+              },
+              {
+                assistantMessageId: assistantMessage.id,
+              },
+            );
+            return;
+          }
+
+          await persistAndWrite(
+            'done',
+            {
+              html: renderAssistantContentHtml(assistantMessage.content),
+              // SQR-98: send the persisted consulted_sources along with `done` so
+              // the client can rebuild the footer on replay — duplicate /stream
+              // hits, HTMX reconnects, or any path where persistAssistantOutcome
+              // returns an already-persisted row return here with no tool_result
+              // events fired. Without this, the footer would stay hidden on the
+              // reconnected turn until a full page reload.
+              // SQR-108 / ADR 0012 E-3: the `recentQuestionsNavHtml` field was
+              // dropped — the conversation page is a scrolling transcript with
+              // no recent-questions chip rail to refresh.
+              consultedSources: assistantMessage.consultedSources,
+            },
+            {
+              assistantMessageId: assistantMessage.id,
+            },
+          );
+        };
+
+        const existingTerminal = await MessageStreamEventRepository.findTerminal(loaded.message.id);
+        if (existingTerminal && existingTerminal.sequence <= replayCursor) {
+          recordChatLifecycleEvent('stream.completed', {
+            ...streamTelemetryBase,
+            status: 'already_done',
+            streamEvent: existingTerminal.event,
+            sequence: existingTerminal.sequence,
+            replay: true,
+            durationMs: Date.now() - streamStartedAt,
+          });
+          setChatSpanAttributes(span, {
+            ...streamTelemetryBase,
+            status: 'already_done',
+            streamEvent: existingTerminal.event,
+            sequence: existingTerminal.sequence,
+            replay: true,
+          });
+          return;
+        }
+
+        const initialReplay = await replayStoredEvents();
+        if (initialReplay.wroteAny) {
+          recordChatLifecycleEvent('stream.replayed', {
+            ...streamTelemetryBase,
+            status: initialReplay.reachedTerminal ? 'already_done' : 'replayed',
+            replay: true,
+          });
+        }
+        if (initialReplay.reachedTerminal) {
+          return;
+        }
+
+        const hasPriorStreamEvents = replayCursor > 0 || initialReplay.wroteAny;
+        if (hasPriorStreamEvents) {
+          for (let polls = 0; polls < STREAM_REPLAY_MAX_POLLS; polls += 1) {
+            if (
+              !(await MessageStreamEventRepository.isTurnGenerationLocked({
+                conversationId: loaded.conversation.id,
+                userMessageId: loaded.message.id,
+              }))
+            ) {
+              const replay = await replayStoredEvents();
+              if (replay.reachedTerminal) {
+                return;
+              }
+
+              const assistantMessage = await persistAssistantFailureTurn({
+                conversationId: loaded.conversation.id,
+                userMessageId: loaded.message.id,
+              });
+              await appendTerminalForAssistantMessage(assistantMessage);
+              return;
+            }
+
+            await delay(STREAM_REPLAY_POLL_MS);
+            const replay = await replayStoredEvents();
+            if (replay.reachedTerminal) {
+              return;
+            }
+          }
+
           const replay = await replayStoredEvents();
           if (replay.reachedTerminal) {
             return;
@@ -2862,206 +3081,195 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           return;
         }
 
-        await delay(STREAM_REPLAY_POLL_MS);
-        const replay = await replayStoredEvents();
-        if (replay.reachedTerminal) {
-          return;
-        }
+        const assistantMessage = await streamAssistantTurn({
+          conversationId: loaded.conversation.id,
+          question: loaded.message.content,
+          userId: session.userId,
+          currentUserMessageId: loaded.message.id,
+          game: loaded.message.game ?? undefined,
+          requestId,
+          telemetry: {
+            route: '/chat/:conversationId/messages/:messageId/stream',
+            surface: 'chat_sse',
+          },
+          onEvent: async (event, data) => {
+            if (event === 'text') {
+              await persistAndWrite('text-delta', data);
+              return;
+            }
+
+            if (event === 'tool_call') {
+              const payload = data as { name?: string };
+              const name = payload.name ?? 'tool';
+              await persistAndWrite('tool-start', {
+                id: buildToolStatusId(name),
+                // Keep the SSE wire contract: always send a string label
+                // (REFERENCE fallback for utility/traversal tools) so the
+                // tool-indicator UI doesn't need to know about nulls.
+                label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
+              });
+              return;
+            }
+
+            if (event === 'tool_plan') {
+              const payload = data as { message?: unknown; toolName?: string };
+              const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+              if (message.length === 0) {
+                return;
+              }
+              const name = payload.toolName ?? 'tool';
+              planSequence += 1;
+              await persistAndWrite('tool-plan', {
+                id: `${buildToolStatusId(name)}-plan-${planSequence}`,
+                message,
+              });
+              return;
+            }
+
+            if (event === 'tool_progress') {
+              const payload = data as { message?: unknown; toolName?: string };
+              const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+              if (message.length === 0) {
+                return;
+              }
+              const name = payload.toolName ?? 'tool';
+              const label = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
+              progressSequence += 1;
+              await persistAndWrite('tool-progress', {
+                id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
+                label,
+                message,
+              });
+              return;
+            }
+
+            if (event === 'artifact') {
+              const payload = data as {
+                kind?: unknown;
+                title?: unknown;
+                body?: unknown;
+                sourceLabel?: unknown;
+                ref?: unknown;
+              };
+              const title = typeof payload.title === 'string' ? payload.title.trim() : '';
+              const body = typeof payload.body === 'string' ? payload.body.trim() : '';
+              if (payload.kind !== 'section_quote' || title.length === 0 || body.length === 0) {
+                return;
+              }
+              const rawSourceLabel =
+                typeof payload.sourceLabel === 'string' ? payload.sourceLabel.trim() : '';
+              const sourceLabel =
+                rawSourceLabel.length === 0
+                  ? null
+                  : isToolSourceLabel(rawSourceLabel)
+                    ? rawSourceLabel
+                    : retrievalSourceLabelToFooterLabel(rawSourceLabel);
+              const ref = typeof payload.ref === 'string' ? payload.ref.trim() : '';
+              artifactSequence += 1;
+              await persistAndWrite('answer-artifact', {
+                id: `section-quote-${artifactSequence}`,
+                kind: 'section-quote',
+                title,
+                body,
+                sourceLabel,
+                ref: ref.length > 0 ? ref : null,
+              });
+              return;
+            }
+
+            if (event === 'state_context') {
+              // SQR-258: name the state snapshot this personalized answer ran
+              // against, with a fix-it-here link to the edit surface.
+              const payload = data as {
+                summary?: unknown;
+                campaignId?: unknown;
+                characterId?: unknown;
+              };
+              if (typeof payload.summary !== 'string' || typeof payload.campaignId !== 'string') {
+                return;
+              }
+              await persistAndWrite('state-used', {
+                id: 'state-used',
+                message: `Using campaign state: ${payload.summary}`,
+                href:
+                  typeof payload.characterId === 'string'
+                    ? `/characters/${payload.characterId}`
+                    : `/campaigns/${payload.campaignId}`,
+              });
+              return;
+            }
+
+            if (event === 'proposal') {
+              // SQR-286: a staged destructive mutation renders as the chat
+              // confirmation block. Lines are server-derived so the preview
+              // vocabulary stays in one tested place.
+              const payload = data as {
+                proposalId?: unknown;
+                campaignId?: unknown;
+                mutation?: unknown;
+                expiresAt?: unknown;
+                lines?: unknown;
+              };
+              if (
+                typeof payload.proposalId !== 'string' ||
+                typeof payload.campaignId !== 'string' ||
+                typeof payload.expiresAt !== 'string'
+              ) {
+                return;
+              }
+              // Prefer the propose-time resolved lines (character names, derived
+              // availability consequences); fall back to the generic vocabulary.
+              const resolvedLines = Array.isArray(payload.lines)
+                ? payload.lines.filter((line): line is string => typeof line === 'string')
+                : [];
+              await persistAndWrite('proposal-staged', {
+                id: `proposal-${payload.proposalId}`,
+                proposalId: payload.proposalId,
+                campaignId: payload.campaignId,
+                lines:
+                  resolvedLines.length > 0 ? resolvedLines : stagedMutationLines(payload.mutation),
+                expiresAt: payload.expiresAt,
+              });
+              return;
+            }
+
+            if (event === 'tool_result') {
+              const payload = data as {
+                name?: string;
+                ok?: boolean;
+                message?: unknown;
+                sourceBooks?: string[];
+              };
+              const name = payload.name ?? 'tool';
+              const message = typeof payload.message === 'string' ? payload.message.trim() : '';
+              // Use the actual books hit when available (search_rules always sets
+              // sourceBooks, even to [] on no results); fall back to the static
+              // label for tools that don't set sourceBooks at all.
+              const staticLabel = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
+              const mappedLabels =
+                payload.sourceBooks === undefined
+                  ? null
+                  : payload.sourceBooks
+                      .map(retrievalSourceLabelToFooterLabel)
+                      .filter((l): l is NonNullable<typeof l> => l !== null);
+              const labels = mappedLabels && mappedLabels.length > 0 ? mappedLabels : [staticLabel];
+              await persistAndWrite('tool-result', {
+                id: buildToolStatusId(name),
+                labels,
+                ok: payload.ok ?? true,
+                message: message.length > 0 ? humanizeWorkLogProgressMessage(message) : undefined,
+              });
+              return;
+            }
+          },
+        });
+
+        await appendTerminalForAssistantMessage(assistantMessage);
+      } finally {
+        signal.removeEventListener('abort', logCancellation);
+        if (signal.aborted) logCancellation();
       }
-
-      const replay = await replayStoredEvents();
-      if (replay.reachedTerminal) {
-        return;
-      }
-
-      const assistantMessage = await persistAssistantFailureTurn({
-        conversationId: loaded.conversation.id,
-        userMessageId: loaded.message.id,
-      });
-      await appendTerminalForAssistantMessage(assistantMessage);
-      return;
-    }
-
-    const assistantMessage = await streamAssistantTurn({
-      conversationId: loaded.conversation.id,
-      question: loaded.message.content,
-      userId: session.userId,
-      currentUserMessageId: loaded.message.id,
-      game: loaded.message.game ?? undefined,
-      requestId,
-      telemetry: { route: '/chat/:conversationId/messages/:messageId/stream', surface: 'chat_sse' },
-      onEvent: async (event, data) => {
-        if (event === 'text') {
-          await persistAndWrite('text-delta', data);
-          return;
-        }
-
-        if (event === 'tool_call') {
-          const payload = data as { name?: string };
-          const name = payload.name ?? 'tool';
-          await persistAndWrite('tool-start', {
-            id: buildToolStatusId(name),
-            // Keep the SSE wire contract: always send a string label
-            // (REFERENCE fallback for utility/traversal tools) so the
-            // tool-indicator UI doesn't need to know about nulls.
-            label: toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL,
-          });
-          return;
-        }
-
-        if (event === 'tool_plan') {
-          const payload = data as { message?: unknown; toolName?: string };
-          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
-          if (message.length === 0) {
-            return;
-          }
-          const name = payload.toolName ?? 'tool';
-          planSequence += 1;
-          await persistAndWrite('tool-plan', {
-            id: `${buildToolStatusId(name)}-plan-${planSequence}`,
-            message,
-          });
-          return;
-        }
-
-        if (event === 'tool_progress') {
-          const payload = data as { message?: unknown; toolName?: string };
-          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
-          if (message.length === 0) {
-            return;
-          }
-          const name = payload.toolName ?? 'tool';
-          const label = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
-          progressSequence += 1;
-          await persistAndWrite('tool-progress', {
-            id: `${buildToolStatusId(name)}-progress-${progressSequence}`,
-            label,
-            message,
-          });
-          return;
-        }
-
-        if (event === 'artifact') {
-          const payload = data as {
-            kind?: unknown;
-            title?: unknown;
-            body?: unknown;
-            sourceLabel?: unknown;
-            ref?: unknown;
-          };
-          const title = typeof payload.title === 'string' ? payload.title.trim() : '';
-          const body = typeof payload.body === 'string' ? payload.body.trim() : '';
-          if (payload.kind !== 'section_quote' || title.length === 0 || body.length === 0) {
-            return;
-          }
-          const rawSourceLabel =
-            typeof payload.sourceLabel === 'string' ? payload.sourceLabel.trim() : '';
-          const sourceLabel =
-            rawSourceLabel.length === 0
-              ? null
-              : isToolSourceLabel(rawSourceLabel)
-                ? rawSourceLabel
-                : retrievalSourceLabelToFooterLabel(rawSourceLabel);
-          const ref = typeof payload.ref === 'string' ? payload.ref.trim() : '';
-          artifactSequence += 1;
-          await persistAndWrite('answer-artifact', {
-            id: `section-quote-${artifactSequence}`,
-            kind: 'section-quote',
-            title,
-            body,
-            sourceLabel,
-            ref: ref.length > 0 ? ref : null,
-          });
-          return;
-        }
-
-        if (event === 'state_context') {
-          // SQR-258: name the state snapshot this personalized answer ran
-          // against, with a fix-it-here link to the edit surface.
-          const payload = data as {
-            summary?: unknown;
-            campaignId?: unknown;
-            characterId?: unknown;
-          };
-          if (typeof payload.summary !== 'string' || typeof payload.campaignId !== 'string') {
-            return;
-          }
-          await persistAndWrite('state-used', {
-            id: 'state-used',
-            message: `Using campaign state: ${payload.summary}`,
-            href:
-              typeof payload.characterId === 'string'
-                ? `/characters/${payload.characterId}`
-                : `/campaigns/${payload.campaignId}`,
-          });
-          return;
-        }
-
-        if (event === 'proposal') {
-          // SQR-286: a staged destructive mutation renders as the chat
-          // confirmation block. Lines are server-derived so the preview
-          // vocabulary stays in one tested place.
-          const payload = data as {
-            proposalId?: unknown;
-            campaignId?: unknown;
-            mutation?: unknown;
-            expiresAt?: unknown;
-            lines?: unknown;
-          };
-          if (
-            typeof payload.proposalId !== 'string' ||
-            typeof payload.campaignId !== 'string' ||
-            typeof payload.expiresAt !== 'string'
-          ) {
-            return;
-          }
-          // Prefer the propose-time resolved lines (character names, derived
-          // availability consequences); fall back to the generic vocabulary.
-          const resolvedLines = Array.isArray(payload.lines)
-            ? payload.lines.filter((line): line is string => typeof line === 'string')
-            : [];
-          await persistAndWrite('proposal-staged', {
-            id: `proposal-${payload.proposalId}`,
-            proposalId: payload.proposalId,
-            campaignId: payload.campaignId,
-            lines: resolvedLines.length > 0 ? resolvedLines : stagedMutationLines(payload.mutation),
-            expiresAt: payload.expiresAt,
-          });
-          return;
-        }
-
-        if (event === 'tool_result') {
-          const payload = data as {
-            name?: string;
-            ok?: boolean;
-            message?: unknown;
-            sourceBooks?: string[];
-          };
-          const name = payload.name ?? 'tool';
-          const message = typeof payload.message === 'string' ? payload.message.trim() : '';
-          // Use the actual books hit when available (search_rules always sets
-          // sourceBooks, even to [] on no results); fall back to the static
-          // label for tools that don't set sourceBooks at all.
-          const staticLabel = toolSourceLabel(name) ?? TOOL_SOURCE_FALLBACK_LABEL;
-          const mappedLabels =
-            payload.sourceBooks === undefined
-              ? null
-              : payload.sourceBooks
-                  .map(retrievalSourceLabelToFooterLabel)
-                  .filter((l): l is NonNullable<typeof l> => l !== null);
-          const labels = mappedLabels && mappedLabels.length > 0 ? mappedLabels : [staticLabel];
-          await persistAndWrite('tool-result', {
-            id: buildToolStatusId(name),
-            labels,
-            ok: payload.ok ?? true,
-            message: message.length > 0 ? humanizeWorkLogProgressMessage(message) : undefined,
-          });
-          return;
-        }
-      },
     });
-
-    await appendTerminalForAssistantMessage(assistantMessage);
   });
 });
 
@@ -3497,33 +3705,80 @@ app.post('/api/ask', async (c) => {
     }
   }
 
+  const askTelemetryBase: ChatLifecycleInput = {
+    route: '/api/ask',
+    surface: 'api_ask',
+    requestId,
+    game: options.game ?? null,
+  };
+  recordChatLifecycleEvent('api_ask.accepted', {
+    ...askTelemetryBase,
+    status: 'accepted',
+  });
+
   return streamSSE(c, async (stream) => {
-    try {
-      await ask(question, {
-        ...options,
-        budgetPrechecked: true,
-        requestId,
-        emit: async (event, data) => {
-          await stream.writeSSE({ event, data: JSON.stringify(data) });
-        },
+    await withChatLifecycleSpan('squire.chat.api_ask', askTelemetryBase, async (span) => {
+      const startedAt = Date.now();
+      let firstEventLogged = false;
+      recordChatLifecycleEvent('generation.started', {
+        ...askTelemetryBase,
+        status: 'started',
       });
-    } catch (error) {
-      captureChatFailureTelemetry(error, {
-        route: '/api/ask',
-        surface: 'api_ask',
-        failureKind: 'api_ask',
-        requestId,
-        user: safeUserFromContext(c),
-        game: options.game ?? null,
-        context: {
-          method: 'POST',
-        },
-      });
-      await stream.writeSSE({
-        event: 'error',
-        data: JSON.stringify({ message: 'Internal server error' }),
-      });
-    }
+      try {
+        await ask(question, {
+          ...options,
+          budgetPrechecked: true,
+          requestId,
+          emit: async (event, data) => {
+            await stream.writeSSE({ event, data: JSON.stringify(data) });
+            if (!firstEventLogged) {
+              firstEventLogged = true;
+              recordChatLifecycleEvent('stream.first_event', {
+                ...askTelemetryBase,
+                status: 'ok',
+                streamEvent: event,
+              });
+            }
+          },
+        });
+        recordChatLifecycleEvent('api_ask.completed', {
+          ...askTelemetryBase,
+          status: 'ok',
+          durationMs: Date.now() - startedAt,
+        });
+        setChatSpanAttributes(span, {
+          ...askTelemetryBase,
+          status: 'ok',
+        });
+      } catch (error) {
+        captureChatFailureTelemetry(error, {
+          route: '/api/ask',
+          surface: 'api_ask',
+          failureKind: 'api_ask',
+          requestId,
+          user: safeUserFromContext(c),
+          game: options.game ?? null,
+          context: {
+            method: 'POST',
+          },
+        });
+        recordChatLifecycleEvent('api_ask.completed', {
+          ...askTelemetryBase,
+          status: 'error',
+          failureKind: 'api_ask',
+          durationMs: Date.now() - startedAt,
+        });
+        setChatSpanAttributes(span, {
+          ...askTelemetryBase,
+          status: 'error',
+          failureKind: 'api_ask',
+        });
+        await stream.writeSSE({
+          event: 'error',
+          data: JSON.stringify({ message: 'Internal server error' }),
+        });
+      }
+    });
   });
 });
 

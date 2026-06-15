@@ -28,8 +28,21 @@ const mocks = vi.hoisted(() => {
     }
   }
 
-  class MockPgInstrumentation {}
+  class MockPgInstrumentation {
+    config: Record<string, unknown>;
+
+    constructor(config: Record<string, unknown> = {}) {
+      this.config = config;
+    }
+  }
   class MockSentrySpanProcessor {}
+  class MockSentrySanitizingSpanProcessor {
+    delegate: unknown;
+
+    constructor(delegate: unknown) {
+      this.delegate = delegate;
+    }
+  }
   class MockSentrySampler {
     client: unknown;
 
@@ -46,12 +59,20 @@ const mocks = vi.hoisted(() => {
     MockLangSmithOTLPTraceExporter,
     MockPgInstrumentation,
     MockSentrySpanProcessor,
+    MockSentrySanitizingSpanProcessor,
     MockSentrySampler,
     MockSentryPropagator,
     MockSentryContextManager,
     initTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
     getTelemetryClient: vi.fn(() => undefined as unknown),
     sentryTraceSampleRateFromEnv: vi.fn(() => undefined as number | undefined),
+    createSentrySanitizingSpanProcessor: vi.fn(
+      (processor: unknown) => new MockSentrySanitizingSpanProcessor(processor),
+    ),
+    safeDatabaseSpanAttributes: vi.fn(() => ({
+      'db.operation.name': 'SELECT',
+      'db.collection.name': 'messages',
+    })),
     langsmithOtelHeaders: vi.fn(() => ({ 'x-api-key': 'langsmith-key' })),
   };
 });
@@ -75,8 +96,10 @@ vi.mock('@sentry/node', () => ({
   SentryContextManager: mocks.MockSentryContextManager,
 }));
 vi.mock('../src/telemetry.ts', () => ({
+  createSentrySanitizingSpanProcessor: mocks.createSentrySanitizingSpanProcessor,
   getTelemetryClient: mocks.getTelemetryClient,
   initTelemetry: mocks.initTelemetry,
+  safeDatabaseSpanAttributes: mocks.safeDatabaseSpanAttributes,
   sentryTraceSampleRateFromEnv: mocks.sentryTraceSampleRateFromEnv,
 }));
 vi.mock('../src/langsmith-otel.ts', () => ({
@@ -116,6 +139,13 @@ describe('OpenTelemetry instrumentation setup', () => {
     mocks.initTelemetry.mockReturnValue({ enabled: false, reason: 'missing_dsn' });
     mocks.getTelemetryClient.mockReturnValue(undefined);
     mocks.sentryTraceSampleRateFromEnv.mockReturnValue(undefined);
+    mocks.createSentrySanitizingSpanProcessor.mockImplementation(
+      (processor: unknown) => new mocks.MockSentrySanitizingSpanProcessor(processor),
+    );
+    mocks.safeDatabaseSpanAttributes.mockReturnValue({
+      'db.operation.name': 'SELECT',
+      'db.collection.name': 'messages',
+    });
     mocks.langsmithOtelHeaders.mockReturnValue({ 'x-api-key': 'langsmith-key' });
   });
 
@@ -166,13 +196,20 @@ describe('OpenTelemetry instrumentation setup', () => {
     expect(sdk.config).toMatchObject({
       spanProcessors: [
         expect.any(mocks.MockLangSmithOTLPSpanProcessor),
-        expect.any(mocks.MockSentrySpanProcessor),
+        expect.any(mocks.MockSentrySanitizingSpanProcessor),
       ],
       sampler: expect.any(mocks.MockSentrySampler),
       textMapPropagator: expect.any(mocks.MockSentryPropagator),
       contextManager: expect.any(mocks.MockSentryContextManager),
       instrumentations: [expect.any(mocks.MockPgInstrumentation)],
     });
+    const sentryProcessor = (sdk.config.spanProcessors as unknown[])[1] as {
+      delegate: unknown;
+    };
+    expect(sentryProcessor.delegate).toBeInstanceOf(mocks.MockSentrySpanProcessor);
+    expect(mocks.createSentrySanitizingSpanProcessor).toHaveBeenCalledWith(
+      sentryProcessor.delegate,
+    );
     expect((sdk.config.sampler as { client: unknown }).client).toBe(sentryClient);
   });
 
@@ -189,5 +226,31 @@ describe('OpenTelemetry instrumentation setup', () => {
     expect(sdk.config).not.toHaveProperty('sampler');
     expect(sdk.config).not.toHaveProperty('textMapPropagator');
     expect(sdk.config).not.toHaveProperty('contextManager');
+
+    const pgInstrumentation = (sdk.config.instrumentations as unknown[])[0] as {
+      config: {
+        enhancedDatabaseReporting?: boolean;
+        requestHook?: (
+          span: { setAttributes: ReturnType<typeof vi.fn> },
+          queryInfo: unknown,
+        ) => void;
+      };
+    };
+    expect(pgInstrumentation.config.enhancedDatabaseReporting).not.toBe(true);
+    expect(pgInstrumentation.config.requestHook).toEqual(expect.any(Function));
+    const span = { setAttributes: vi.fn() };
+    const queryInfo = {
+      query: {
+        text: "SELECT * FROM messages WHERE email = 'alice@example.com'",
+        values: ['alice@example.com'],
+      },
+      connection: { database: 'squire' },
+    };
+    pgInstrumentation.config.requestHook?.(span, queryInfo);
+    expect(mocks.safeDatabaseSpanAttributes).toHaveBeenCalledWith(queryInfo.query.text);
+    expect(span.setAttributes).toHaveBeenCalledWith({
+      'db.operation.name': 'SELECT',
+      'db.collection.name': 'messages',
+    });
   });
 });
