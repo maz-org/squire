@@ -177,6 +177,20 @@ describe('diagnostic bundle', () => {
     expect(JSON.stringify(bundle)).not.toContain('person@example.com');
   });
 
+  it('drops free-text Sentry log queries that could contain private conversation text', () => {
+    const bundle = buildDiagnosticBundle({
+      sentryLogsUrl:
+        'https://sentry.io/organizations/maz/logs/?query=message:"raw prompt from Alice"&field=message&project=4511564194643969',
+    });
+
+    expect(bundle.sentry.logsUrl).toEqual({
+      status: 'available',
+      value: 'https://sentry.io/organizations/maz/logs/?field=message',
+    });
+    expect(JSON.stringify(bundle)).not.toContain('raw prompt');
+    expect(JSON.stringify(bundle)).not.toContain('Alice');
+  });
+
   it('marks missing Sentry, LangSmith, replay, and message data with unavailable reasons', () => {
     const bundle = buildDiagnosticBundle({
       now,
