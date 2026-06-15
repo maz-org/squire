@@ -31,6 +31,10 @@ vi.mock('../src/telemetry.ts', () => ({
   flushTelemetry: mockFlushTelemetry,
 }));
 
+vi.mock('../src/instrumentation.ts', () => ({
+  sdk: { shutdown: vi.fn() },
+}));
+
 import { runExpiredSessionSweepCli } from '../scripts/sweep-expired-sessions.ts';
 
 const ORIGINAL_EXIT_CODE = process.exitCode;

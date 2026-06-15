@@ -5,6 +5,7 @@ const {
   mockCaptureTelemetryLog,
   mockFlushTelemetry,
   mockInitTelemetry,
+  mockInstrumentationLoaded,
   mockStartActiveSpan,
   startedSpans,
 } = vi.hoisted(() => {
@@ -24,6 +25,7 @@ const {
     mockCaptureTelemetryLog: vi.fn(),
     mockFlushTelemetry: vi.fn().mockResolvedValue(true),
     mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
+    mockInstrumentationLoaded: vi.fn(),
     startedSpans,
     mockStartActiveSpan: vi.fn(
       async (
@@ -60,6 +62,11 @@ vi.mock('../src/telemetry.ts', () => ({
   initTelemetry: mockInitTelemetry,
 }));
 
+vi.mock('../src/instrumentation.ts', () => {
+  mockInstrumentationLoaded();
+  return { sdk: { shutdown: vi.fn() } };
+});
+
 import { runScriptWithTelemetry } from '../src/script-telemetry.ts';
 
 describe('script telemetry lifecycle wrapper', () => {
@@ -70,6 +77,7 @@ describe('script telemetry lifecycle wrapper', () => {
     mockFlushTelemetry.mockResolvedValue(true);
     mockInitTelemetry.mockReset();
     mockInitTelemetry.mockReturnValue({ enabled: false, reason: 'missing_dsn' });
+    mockInstrumentationLoaded.mockClear();
     mockStartActiveSpan.mockClear();
     startedSpans.length = 0;
   });
@@ -84,6 +92,7 @@ describe('script telemetry lifecycle wrapper', () => {
     });
 
     expect(result).toBe('done');
+    expect(mockInstrumentationLoaded).toHaveBeenCalledTimes(1);
     expect(mockInitTelemetry).toHaveBeenCalledTimes(1);
     expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
       'info',

@@ -20,7 +20,16 @@ interface ScriptTelemetryOptions {
 
 type ScriptTelemetryStatus = 'started' | 'ok' | 'error';
 
-const scriptTracer = trace.getTracer('squire.script');
+let scriptOpenTelemetryReady: Promise<void> | undefined;
+
+async function ensureScriptOpenTelemetry(): Promise<void> {
+  scriptOpenTelemetryReady ??= import('./instrumentation.ts').then(() => undefined);
+  await scriptOpenTelemetryReady;
+}
+
+function scriptTracer() {
+  return trace.getTracer('squire.script');
+}
 
 function scriptRoute(options: ScriptTelemetryOptions): string {
   return options.route ?? `/scripts/${options.scriptName}`;
@@ -142,9 +151,10 @@ export async function runScriptWithTelemetry<T>(
   operation: () => Promise<T>,
   options: ScriptTelemetryOptions,
 ): Promise<T> {
+  await ensureScriptOpenTelemetry();
   initTelemetry();
 
-  return scriptTracer.startActiveSpan(
+  return scriptTracer().startActiveSpan(
     'squire.script.run',
     { attributes: spanAttributes({ options, status: 'started' }) },
     async (span) => {
