@@ -186,6 +186,8 @@ function emitScrubCanaryTrace(): boolean {
           'gen_ai.completion': 'Synthetic model output for span scrubbing verification',
           providerPayload: 'Synthetic provider payload for span scrubbing verification',
           retrievedPassages: 'Synthetic retrieved source passage for span scrubbing verification',
+          'request.body': 'Synthetic request body for span scrubbing verification',
+          'response.body': 'Synthetic response body for span scrubbing verification',
           emailAddress: 'sentry-scrub-canary@example.invalid',
           phoneNumber: '+1 415 555 0100',
           authorization: 'Bearer sentry_scrub_canary_token_1234567890',
