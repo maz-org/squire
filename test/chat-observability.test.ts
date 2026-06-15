@@ -141,6 +141,41 @@ describe('chat observability lifecycle wrapper', () => {
     expect(JSON.stringify(startedSpans)).not.toMatch(/prompt|answer|passage|email/i);
   });
 
+  it('marks spans as failed when callers record swallowed chat errors', () => {
+    const span = {
+      setAttributes: vi.fn(),
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+      end: vi.fn(),
+    };
+
+    setChatSpanAttributes(span as never, {
+      route: '/chat/:conversationId/messages/:messageId/stream',
+      surface: 'chat_sse',
+      requestId: 'req-4',
+      conversationId: 'conv-4',
+      userMessageId: 'msg-user-4',
+      status: 'error',
+      failureKind: 'stream_terminal_error',
+    });
+
+    expect(span.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'squire.route': '/chat/:conversationId/messages/:messageId/stream',
+        'squire.request_id': 'req-4',
+        'squire.conversation_id': 'conv-4',
+        'squire.user_message_id': 'msg-user-4',
+        'squire.surface': 'chat_sse',
+        'squire.status': 'error',
+        'squire.failure_kind': 'stream_terminal_error',
+      }),
+    );
+    expect(span.setStatus).toHaveBeenCalledWith({
+      code: 2,
+      message: 'stream_terminal_error',
+    });
+  });
+
   it('marks spans as failed without swallowing the original error', async () => {
     const error = new Error('upstream failed');
 

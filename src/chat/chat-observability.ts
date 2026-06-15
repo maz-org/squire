@@ -128,6 +128,12 @@ function spanAttributes(input: ChatLifecycleInput): Attributes {
 
 export function setChatSpanAttributes(span: Span, input: ChatLifecycleInput): void {
   span.setAttributes(spanAttributes(input));
+  if (input.status === 'error') {
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: input.failureKind ?? 'chat_lifecycle_error',
+    });
+  }
 }
 
 export async function withChatLifecycleSpan<T>(
