@@ -571,6 +571,21 @@ describe('telemetry boundary', () => {
         userName: 'Alice Example',
         authorization: 'Bearer secret-token',
       },
+      status: {
+        code: 2,
+        message: 'Claude API error for Alice: raw provider payload contained secret answer',
+      },
+      events: [
+        {
+          name: 'exception',
+          attributes: {
+            'exception.type': 'ProviderError',
+            'exception.message': 'Claude API error for Alice raw prompt text',
+            'exception.stacktrace': 'ProviderError: raw provider payload\n    at secret.ts:1',
+            'exception.escaped': true,
+          },
+        },
+      ],
     };
 
     const sanitized = sanitizeSentrySpanExportForTests(originalSpan as never);
@@ -598,9 +613,27 @@ describe('telemetry boundary', () => {
       userName: TELEMETRY_REDACTED,
       authorization: TELEMETRY_REDACTED,
     });
+    expect(sanitized.status).toEqual({
+      code: 2,
+      message: TELEMETRY_REDACTED,
+    });
+    expect(sanitized.events).toEqual([
+      {
+        name: 'exception',
+        attributes: {
+          'exception.type': 'ProviderError',
+          'exception.message': TELEMETRY_REDACTED,
+          'exception.stacktrace': TELEMETRY_REDACTED,
+          'exception.escaped': true,
+        },
+      },
+    ]);
     expect(originalSpan.attributes['db.statement']).toContain('alice@example.com');
+    expect(originalSpan.status.message).toContain('Alice');
     expect(JSON.stringify(sanitized)).not.toContain('alice@example.com');
     expect(JSON.stringify(sanitized)).not.toContain('raw prompt');
+    expect(JSON.stringify(sanitized)).not.toContain('Claude API error');
+    expect(JSON.stringify(sanitized)).not.toContain('raw provider payload');
     expect(JSON.stringify(sanitized)).not.toContain('request body prompt text');
     expect(JSON.stringify(sanitized)).not.toContain('response body model output');
     expect(JSON.stringify(sanitized)).not.toContain('source passage text');

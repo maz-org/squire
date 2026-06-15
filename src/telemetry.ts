@@ -119,6 +119,7 @@ type TelemetryReadableSpan = ReadableSpan & {
   readonly name: string;
   readonly attributes?: SpanAttributes;
   readonly events?: unknown[];
+  readonly status?: unknown;
 };
 
 export type TelemetrySpanProcessor = SpanProcessor;
@@ -261,6 +262,10 @@ function safeSquireEnv(env: Env = process.env): string {
 function safeString(value: string | undefined): string | undefined {
   if (!hasText(value)) return undefined;
   return value.trim();
+}
+
+function isTelemetryRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function sentryTraceSampleRateFromEnv(env: Env = process.env): number | undefined {
@@ -424,6 +429,27 @@ function sanitizeSentrySpanAttributes(attributes: SpanAttributes | undefined): S
   );
 }
 
+function sanitizeSentryExceptionSpanAttributes(
+  attributes: SpanAttributes | undefined,
+): SpanAttributes {
+  if (!attributes) return {};
+  return Object.fromEntries(
+    Object.entries(attributes).map(([key, value]) => {
+      const normalized = normalizeKey(key);
+      if (
+        normalized === 'exceptionmessage' ||
+        normalized === 'exceptionstacktrace' ||
+        normalized === 'exceptionstack' ||
+        normalized === 'errormessage' ||
+        normalized === 'errorstack'
+      ) {
+        return [key, TELEMETRY_REDACTED];
+      }
+      return [key, sanitizeSentrySpanAttribute(key, value)];
+    }),
+  );
+}
+
 function safeHttpRouteName(value: string): string | undefined {
   const match = /^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(\/[A-Za-z0-9_./:-]*)$/i.exec(value);
   if (!match) return undefined;
@@ -455,15 +481,25 @@ function sanitizeSentrySpanName(name: unknown): string {
   return safeHttpRouteName(value) ?? TELEMETRY_REDACTED;
 }
 
+function sanitizeSpanStatus(status: unknown): unknown {
+  if (!isTelemetryRecord(status)) return status;
+  return {
+    ...status,
+    ...(typeof status.message === 'string' ? { message: TELEMETRY_REDACTED } : {}),
+  };
+}
+
 function sanitizeSpanEvent(event: unknown): unknown {
   if (!event || typeof event !== 'object') return redactTelemetryValue(event);
   const record = event as Record<string, unknown>;
+  const eventName = typeof record.name === 'string' ? record.name : TELEMETRY_UNAVAILABLE;
+  const isExceptionEvent = normalizeKey(eventName).includes('exception');
   return {
     ...record,
-    ...(typeof record.name === 'string'
-      ? { name: redactSensitiveString(record.name) }
-      : { name: TELEMETRY_UNAVAILABLE }),
-    attributes: sanitizeSentrySpanAttributes(record.attributes as SpanAttributes | undefined),
+    name: redactSensitiveString(eventName),
+    attributes: isExceptionEvent
+      ? sanitizeSentryExceptionSpanAttributes(record.attributes as SpanAttributes | undefined)
+      : sanitizeSentrySpanAttributes(record.attributes as SpanAttributes | undefined),
   };
 }
 
@@ -487,6 +523,16 @@ function cloneSpanForSentry(
       value: sanitizeSentrySpanAttributes(span.attributes),
       writable: false,
     },
+    ...(span.status !== undefined
+      ? {
+          status: {
+            configurable: true,
+            enumerable: true,
+            value: sanitizeSpanStatus(span.status),
+            writable: false,
+          },
+        }
+      : {}),
     ...(Array.isArray(span.events)
       ? {
           events: {
