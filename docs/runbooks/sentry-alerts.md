@@ -10,6 +10,11 @@ The Sentry project is the Fly-provisioned `maz-squire` project
 flyctl extensions sentry dashboard -a maz-squire
 ```
 
+Usage and spend checks for broad Sentry Logs and app traces live in
+[sentry-usage-guardrails.md](sentry-usage-guardrails.md). This alert catalog
+tracks app health and alert routing; the usage runbook tracks quotas, PAYG
+budget, billed log GB, accepted spans, and trace sampling.
+
 Use the Sentry alert builder to create the production rules below. Route each
 rule to the default owner notification channel until Sentry has a dedicated
 Slack/PagerDuty integration. Thresholds are intentionally written here, not in
