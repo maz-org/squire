@@ -113,9 +113,13 @@ const {
     mockGetTelemetryClient: vi.fn(() => undefined),
     mockSentryTraceSampleRateFromEnv: vi.fn(() => undefined),
     mockRequestSpan: requestSpan,
-    mockStartActiveSpan: vi.fn((_: string, callback: (span: typeof requestSpan) => unknown) =>
-      callback(requestSpan),
-    ),
+    mockStartActiveSpan: vi.fn((_: string, ...args: unknown[]) => {
+      const callback = args.findLast(
+        (arg): arg is (span: typeof requestSpan) => unknown => typeof arg === 'function',
+      );
+      if (!callback) throw new TypeError('startActiveSpan callback missing');
+      return callback(requestSpan);
+    }),
   };
 });
 
@@ -271,12 +275,20 @@ function resetRouteMocks() {
   mockGetCard.mockReset();
   mockRunReadinessChecks.mockReset();
   mockCaptureTelemetryFeedback.mockReset();
+  mockCaptureTelemetryLog.mockReset();
+  mockCaptureTelemetryMessage.mockReset();
 }
 
 function findTelemetryLog(message: string) {
   const call = mockCaptureTelemetryLog.mock.calls.find((candidate) => candidate[1] === message);
   expect(call).toBeDefined();
   return call as [string, string, Record<string, unknown>];
+}
+
+function browserTelemetryLogCalls(): Array<[string, string, Record<string, unknown>]> {
+  return mockCaptureTelemetryLog.mock.calls.filter((call) =>
+    String(call[1]).startsWith('browser.'),
+  ) as Array<[string, string, Record<string, unknown>]>;
 }
 
 function latestRequestSpanAttributes(): Record<string, unknown> {
@@ -344,6 +356,25 @@ describe('POST /api/browser-telemetry', () => {
         }),
       }),
     );
+    expect(browserTelemetryLogCalls()).toHaveLength(1);
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'error',
+      'browser.browser_error',
+      expect.objectContaining({
+        route: '/chat/conv-1',
+        requestId: 'req-browser-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        attributes: expect.objectContaining({
+          surface: 'browser',
+          event_type: 'browser_error',
+          error_name: 'TypeError',
+        }),
+        context: expect.objectContaining({
+          source: '/squire.abc123.js',
+        }),
+      }),
+    );
     const telemetryInput = JSON.stringify(mockCaptureTelemetryMessage.mock.calls[0][2]);
     expect(telemetryInput).not.toContain('token=secret');
     expect(telemetryInput).not.toContain('public@example.sentry.io');
@@ -364,8 +395,123 @@ describe('POST /api/browser-telemetry', () => {
     });
 
     expect(res.status).toBe(204);
+    expect(browserTelemetryLogCalls()).toEqual([]);
     expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
     expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
+  });
+
+  it('logs stream lifecycle timings without creating browser error events', async () => {
+    const startedRes = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-stream-start-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_stream_started',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        viewport: { width: 390, height: 844 },
+        userAgent: 'SquireTest/1.0',
+        streamDurationMs: 0,
+        streamEventCount: 0,
+        streamTextEventCount: 0,
+        streamToolEventCount: 0,
+      }),
+    });
+
+    const completedRes = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-stream-done-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_stream_completed',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        streamDurationMs: 1234,
+        streamFirstEventMs: 25,
+        streamEventCount: 4,
+        streamTextEventCount: 2,
+        streamToolEventCount: 1,
+        maskedReplay: {
+          version: 1,
+          textMasked: true,
+          attributesMasked: true,
+          maskSelectors: ['.squire-transcript', '.squire-input-dock'],
+          blockSelectors: ['.squire-account-menu'],
+          turns: {
+            userTurnCount: 1,
+            assistantTurnCount: 1,
+            pendingTurnCount: 0,
+            workLogCount: 1,
+            errorBannerCount: 0,
+          },
+          input: {
+            present: true,
+            valueLengthBucket: '0',
+          },
+        },
+      }),
+    });
+
+    expect(startedRes.status).toBe(202);
+    await expect(startedRes.json()).resolves.toEqual({ eventId: null });
+    expect(completedRes.status).toBe(202);
+    await expect(completedRes.json()).resolves.toEqual({ eventId: null });
+    expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+    expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
+    const browserLogCalls = browserTelemetryLogCalls();
+    expect(browserLogCalls).toHaveLength(2);
+    expect(browserLogCalls[0]).toEqual([
+      'info',
+      'browser.browser_stream_started',
+      expect.objectContaining({
+        route: '/chat/conv-1',
+        requestId: 'req-browser-stream-start-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        attributes: expect.objectContaining({
+          surface: 'browser',
+          event_type: 'browser_stream_started',
+          stream_duration_ms: 0,
+          stream_event_count: 0,
+          stream_text_event_count: 0,
+          stream_tool_event_count: 0,
+        }),
+      }),
+    ]);
+    expect(browserLogCalls[1]).toEqual([
+      'info',
+      'browser.browser_stream_completed',
+      expect.objectContaining({
+        route: '/chat/conv-1',
+        requestId: 'req-browser-stream-done-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        attributes: expect.objectContaining({
+          surface: 'browser',
+          event_type: 'browser_stream_completed',
+          stream_duration_ms: 1234,
+          stream_first_event_ms: 25,
+          stream_event_count: 4,
+          stream_text_event_count: 2,
+          stream_tool_event_count: 1,
+        }),
+        context: expect.objectContaining({
+          maskedReplay: expect.objectContaining({
+            textMasked: true,
+          }),
+        }),
+      }),
+    ]);
+    const telemetryInput = JSON.stringify(mockCaptureTelemetryLog.mock.calls);
+    expect(telemetryInput).not.toContain('raw prompt');
+    expect(telemetryInput).not.toContain('assistant text');
+    expect(telemetryInput).not.toContain('token=');
   });
 
   it('drops browser telemetry with prompt-like diagnostic identifiers', async () => {
@@ -384,6 +530,7 @@ describe('POST /api/browser-telemetry', () => {
     });
 
     expect(res.status).toBe(204);
+    expect(browserTelemetryLogCalls()).toEqual([]);
     expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
     expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
   });
@@ -434,6 +581,21 @@ describe('POST /api/browser-telemetry', () => {
       eventId: 'fedcba9876543210fedcba9876543210',
     });
     expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'browser.browser_feedback',
+      expect.objectContaining({
+        route: '/chat/conv-1',
+        requestId: 'req-browser-feedback-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        attributes: expect.objectContaining({
+          surface: 'browser',
+          event_type: 'browser_feedback',
+          feedback_kind: 'stream_failed',
+        }),
+      }),
+    );
     expect(mockCaptureTelemetryFeedback).toHaveBeenCalledWith(
       expect.objectContaining({
         feedbackKind: 'stream_failed',
@@ -492,6 +654,7 @@ describe('POST /api/browser-telemetry', () => {
     });
 
     expect(res.status).toBe(204);
+    expect(browserTelemetryLogCalls()).toEqual([]);
     expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
     expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
   });
@@ -1332,6 +1495,69 @@ describe('POST /api/ask', () => {
     );
   });
 
+  it('logs sanitized REST ask lifecycle events', async () => {
+    mockAsk.mockImplementationOnce(async (_question, options) => {
+      await options?.emit?.('text', { delta: 'Loot answer with alice@example.com hidden.' });
+      return 'Loot answer with alice@example.com hidden.';
+    });
+
+    const res = await app.request('/api/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Request-ID': 'req-api-ask-success-1',
+        ...(await auth()),
+      },
+      body: JSON.stringify({ question: 'What is loot for alice@example.com?' }),
+    });
+    expect(res.status).toBe(200);
+    await res.text();
+
+    const messages = mockCaptureTelemetryLog.mock.calls.map((call) => call[1]);
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        'chat.api_ask.accepted',
+        'chat.generation.started',
+        'chat.stream.first_event',
+        'chat.api_ask.completed',
+      ]),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.api_ask.completed',
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-success-1',
+        context: expect.objectContaining({
+          eventType: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'ok',
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'ok',
+          duration_ms: expect.any(Number),
+        }),
+      }),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'chat.stream.first_event',
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-success-1',
+        attributes: expect.objectContaining({
+          event_type: 'stream.first_event',
+          stream_event: 'text',
+        }),
+      }),
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('alice@example.com');
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('What is loot');
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('Loot answer');
+  });
+
   // SQR-20 / ADR 0021: identity comes from the verified bearer token, never
   // the request body, and client-credentials tokens get no user identity.
   it('derives ask identity from a user-bound token and ignores body userId', async () => {
@@ -1822,6 +2048,28 @@ describe('POST /api/ask', () => {
       }),
     );
     expect(JSON.stringify(telemetryInput)).not.toContain('test');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'error',
+      'chat.api_ask.completed',
+      expect.objectContaining({
+        route: '/api/ask',
+        requestId: 'req-api-ask-failure-1',
+        context: expect.objectContaining({
+          eventType: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'error',
+          failureKind: 'api_ask',
+        }),
+        attributes: expect.objectContaining({
+          event_type: 'api_ask.completed',
+          surface: 'api_ask',
+          status: 'error',
+          failure_kind: 'api_ask',
+          duration_ms: expect.any(Number),
+        }),
+      }),
+    );
+    expect(JSON.stringify(mockCaptureTelemetryLog.mock.calls)).not.toContain('Claude API error');
   });
 });
 
@@ -1981,5 +2229,67 @@ describe('error handling', () => {
     const body400 = await res400.json();
     expect(body400).toHaveProperty('error');
     expect(body400).toHaveProperty('status', 400);
+  });
+});
+
+describe('browser telemetry span safety', () => {
+  beforeEach(() => {
+    resetRouteMocks();
+  });
+
+  it('ends the browser telemetry span when telemetry capture throws', async () => {
+    const spans: Array<{
+      name: string;
+      span: {
+        setAttributes: ReturnType<typeof vi.fn>;
+        setStatus: ReturnType<typeof vi.fn>;
+        end: ReturnType<typeof vi.fn>;
+      };
+    }> = [];
+
+    mockStartActiveSpan.mockImplementation((name: string, ...args: unknown[]) => {
+      const callback = args.findLast(
+        (arg): arg is (span: (typeof spans)[number]['span']) => unknown =>
+          typeof arg === 'function',
+      );
+      if (!callback) throw new TypeError('startActiveSpan callback missing');
+      const span = {
+        setAttributes: vi.fn(),
+        setStatus: vi.fn(),
+        end: vi.fn(),
+      };
+      spans.push({ name, span });
+      return callback(span);
+    });
+    mockCaptureTelemetryLog.mockImplementation((_level, message) => {
+      if (message === 'browser.browser_error') {
+        throw new Error('telemetry log failed');
+      }
+      return undefined;
+    });
+
+    const res = await app.request('/api/browser-telemetry', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-browser-throw-1',
+      },
+      body: JSON.stringify({
+        type: 'browser_error',
+        route: '/chat/conv-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        errorName: 'TypeError',
+      }),
+    });
+
+    expect(res.status).toBe(500);
+    const browserSpan = spans.find((span) => span.name === 'squire.browser_telemetry')?.span;
+    expect(browserSpan).toBeDefined();
+    expect(browserSpan?.setStatus).toHaveBeenCalledWith({
+      code: 2,
+      message: 'browser_error',
+    });
+    expect(browserSpan?.end).toHaveBeenCalledTimes(1);
   });
 });

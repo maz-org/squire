@@ -13,7 +13,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
 import type { Campaign } from '../db/repositories/types.ts';
-import { gameDefinitionFor, isGameId } from '../game.ts';
+import { allOptionalModuleOptions, gameDefinitionFor, isGameId, moduleLabel } from '../game.ts';
 
 /** Header context-strip state. Null = signed-in user with no campaigns. */
 export interface CampaignStripState {
@@ -153,6 +153,19 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
             <option value="gloomhaven-2e">Gloomhaven (2nd Edition)</option>
           </select>
         </label>
+        ${allOptionalModuleOptions().length > 0
+          ? html`<fieldset class="squire-campaigns__field squire-campaigns__modules">
+              <legend class="squire-campaigns__field-label">OPTIONAL CONTENT</legend>
+              ${allOptionalModuleOptions().map(
+                (option) =>
+                  html`<label class="squire-campaigns__module">
+                    <input type="checkbox" name="module" value="${option.module}" checked />
+                    ${moduleLabel(option.module)}
+                    <span class="squire-campaigns__module-game">${option.gameLabel}</span>
+                  </label>`,
+              )}
+            </fieldset>`
+          : html``}
         <button type="submit" class="squire-campaigns__submit">CREATE</button>
       </form>
     </section>
@@ -272,6 +285,68 @@ export interface CampaignRenameForm {
   errorMessage?: string;
 }
 
+/** The dashboard "Modules" editor affordance (SQR-321). */
+export interface CampaignModulesForm {
+  csrfToken: string;
+  version: number;
+  /** The game's base module — always on, never removable. */
+  baseModule: string;
+  /** Optional module ids the game offers (e.g. solo scenarios). */
+  optionalModules: readonly string[];
+  /** The campaign's current module set (to seed the checkboxes). */
+  current: readonly string[];
+  errorMessage?: string;
+}
+
+/**
+ * A quiet modules disclosure. Toggling changes which scenario set the dashboard
+ * shows; removal is non-destructive (a removed module's played/skipped keys
+ * persist and return if it is re-added). Any active member may edit — modules
+ * are shared state. Only rendered for games that have optional modules.
+ */
+function renderCampaignModulesForm(
+  campaign: Campaign,
+  data: CampaignModulesForm,
+): HtmlEscapedString {
+  const checked = new Set(data.current);
+  return html`<details class="squire-campaign-modules" ${data.errorMessage ? 'open' : ''}>
+    <summary class="squire-campaign-modules__toggle">Modules</summary>
+    ${data.errorMessage
+      ? html`<div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">COULD NOT SAVE</span>
+          <p class="squire-banner__body">${data.errorMessage}</p>
+        </div>`
+      : html``}
+    <form
+      method="post"
+      action="/campaigns/${campaign.id}/modules"
+      class="squire-campaign-modules__form"
+      aria-label="Edit campaign modules"
+    >
+      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+      <input type="hidden" name="expectedVersion" value="${data.version}" />
+      <label class="squire-campaign-modules__option">
+        <input type="checkbox" checked disabled />
+        ${moduleLabel(data.baseModule)}
+        <span class="squire-campaign-modules__required">required</span>
+      </label>
+      ${data.optionalModules.map(
+        (module) =>
+          html`<label class="squire-campaign-modules__option">
+            <input
+              type="checkbox"
+              name="module"
+              value="${module}"
+              ${checked.has(module) ? 'checked' : ''}
+            />
+            ${moduleLabel(module)}
+          </label>`,
+      )}
+      <button type="submit" class="squire-campaign-modules__submit">SAVE MODULES</button>
+    </form>
+  </details>` as HtmlEscapedString;
+}
+
 /**
  * A quiet rename disclosure under the campaign title. Any active member may
  * rename (campaign name is shared state, like the scenario toggles), so the
@@ -320,6 +395,7 @@ export function renderCampaignDashboardContent(
   characterCreate?: CharacterCreateForm,
   inviteForm?: InviteMemberForm,
   renameForm?: CampaignRenameForm,
+  modulesForm?: CampaignModulesForm,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -333,6 +409,7 @@ export function renderCampaignDashboardContent(
         ${campaign.playedScenarios.length} · DRAWN ${campaign.drawnScenarios.length}
       </p>
       ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
+      ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
     </header>
     <section class="squire-campaign-dashboard__roster" aria-label="Party roster">
       <h2 class="squire-campaign-dashboard__section-title">Party</h2>

@@ -2349,6 +2349,97 @@ template#squire-banner-fixtures {
   background: var(--wax-dim);
 }
 
+/* Modules editor (SQR-321): a quiet disclosure mirroring rename. */
+.squire-campaign-modules {
+  margin-top: var(--space-xs);
+}
+
+.squire-campaign-modules__toggle {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia-dim);
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.squire-campaign-modules__toggle:hover {
+  color: var(--sepia);
+}
+
+.squire-campaign-modules__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  align-items: start;
+}
+
+.squire-campaign-modules__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--parchment-dim);
+}
+
+.squire-campaign-modules__required {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia-dim);
+}
+
+.squire-campaign-modules__submit {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--parchment);
+  background: var(--wax);
+  border: 1px solid var(--wax);
+  border-radius: 4px;
+  padding: 0 var(--space-md);
+  min-height: 44px;
+  cursor: pointer;
+  margin-top: var(--space-xs);
+}
+
+.squire-campaign-modules__submit:hover {
+  background: var(--wax-dim);
+}
+
+/* Create-form optional-content checkboxes (SQR-321). */
+.squire-campaigns__modules {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.squire-campaigns__module {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--parchment-dim);
+  min-height: 44px;
+}
+
+.squire-campaigns__module-game {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sepia-dim);
+}
+
 .squire-campaigns__row-actions {
   display: flex;
   gap: var(--space-sm);

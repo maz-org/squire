@@ -145,11 +145,13 @@ describe('campaign picker (SQR-11)', () => {
     const res = await formPost(owner, '/campaigns', {
       name: 'Form Campaign',
       game: 'gloomhaven-2e',
+      // The "Include solo scenarios" checkbox is checked by default (SQR-321).
+      module: 'solo2e',
     });
     expect(res.status).toBe(303);
     expect(res.headers.get('location')).toMatch(/\/campaigns\/[0-9a-f-]{36}/);
 
-    // The page now lists it as ACTIVE with derived modules + role.
+    // The page now lists it as ACTIVE with the chosen modules + role.
     const page = await pageRequest(owner, '/campaigns');
     const body = await page.text();
     expect(body).toContain('Form Campaign');
