@@ -74,34 +74,50 @@ const {
   mockInitTelemetry,
   mockCaptureTelemetryError,
   mockCaptureTelemetryFeedback,
+  mockCaptureTelemetryLog,
   mockCaptureTelemetryMessage,
   mockAddTelemetryBreadcrumb,
   mockFlushTelemetry,
   mockGetTelemetryClient,
   mockSentryTraceSampleRateFromEnv,
-} = vi.hoisted(() => ({
-  mockInitialize: vi.fn(),
-  mockEnsureBootstrapStatus: vi.fn(),
-  mockGetBootstrapStatus: vi.fn(),
-  mockIsReady: vi.fn(),
-  mockRefreshInitializationIfReady: vi.fn(),
-  mockAsk: vi.fn(),
-  mockEnsureAskBudgetAvailable: vi.fn(),
-  mockSearchRules: vi.fn(),
-  mockSearchCards: vi.fn(),
-  mockListCardTypes: vi.fn(),
-  mockListCards: vi.fn(),
-  mockGetCard: vi.fn(),
-  mockRunReadinessChecks: vi.fn(),
-  mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
-  mockCaptureTelemetryError: vi.fn(),
-  mockCaptureTelemetryFeedback: vi.fn(),
-  mockCaptureTelemetryMessage: vi.fn(),
-  mockAddTelemetryBreadcrumb: vi.fn(),
-  mockFlushTelemetry: vi.fn().mockResolvedValue(true),
-  mockGetTelemetryClient: vi.fn(() => undefined),
-  mockSentryTraceSampleRateFromEnv: vi.fn(() => undefined),
-}));
+  mockRequestSpan,
+  mockStartActiveSpan,
+} = vi.hoisted(() => {
+  const requestSpan = {
+    setAttributes: vi.fn(),
+    setStatus: vi.fn(),
+    end: vi.fn(),
+  };
+
+  return {
+    mockInitialize: vi.fn(),
+    mockEnsureBootstrapStatus: vi.fn(),
+    mockGetBootstrapStatus: vi.fn(),
+    mockIsReady: vi.fn(),
+    mockRefreshInitializationIfReady: vi.fn(),
+    mockAsk: vi.fn(),
+    mockEnsureAskBudgetAvailable: vi.fn(),
+    mockSearchRules: vi.fn(),
+    mockSearchCards: vi.fn(),
+    mockListCardTypes: vi.fn(),
+    mockListCards: vi.fn(),
+    mockGetCard: vi.fn(),
+    mockRunReadinessChecks: vi.fn(),
+    mockInitTelemetry: vi.fn(() => ({ enabled: false, reason: 'missing_dsn' })),
+    mockCaptureTelemetryError: vi.fn(),
+    mockCaptureTelemetryFeedback: vi.fn(),
+    mockCaptureTelemetryLog: vi.fn(),
+    mockCaptureTelemetryMessage: vi.fn(),
+    mockAddTelemetryBreadcrumb: vi.fn(),
+    mockFlushTelemetry: vi.fn().mockResolvedValue(true),
+    mockGetTelemetryClient: vi.fn(() => undefined),
+    mockSentryTraceSampleRateFromEnv: vi.fn(() => undefined),
+    mockRequestSpan: requestSpan,
+    mockStartActiveSpan: vi.fn((_: string, callback: (span: typeof requestSpan) => unknown) =>
+      callback(requestSpan),
+    ),
+  };
+});
 
 vi.mock('../src/service.ts', () => ({
   initialize: mockInitialize,
@@ -135,10 +151,24 @@ vi.mock('../src/telemetry.ts', () => ({
   sentryTraceSampleRateFromEnv: mockSentryTraceSampleRateFromEnv,
   captureTelemetryError: mockCaptureTelemetryError,
   captureTelemetryFeedback: mockCaptureTelemetryFeedback,
+  captureTelemetryLog: mockCaptureTelemetryLog,
   captureTelemetryMessage: mockCaptureTelemetryMessage,
   addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
 }));
+
+vi.mock('@opentelemetry/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@opentelemetry/api')>();
+  return {
+    ...actual,
+    trace: {
+      ...actual.trace,
+      getTracer: vi.fn(() => ({
+        startActiveSpan: mockStartActiveSpan,
+      })),
+    },
+  };
+});
 
 // Bypass the Drizzle-backed auth provider — these tests don't exercise OAuth
 // semantics, so we stub `verifyAccessToken` to accept any bearer header. The
@@ -177,6 +207,8 @@ import {
 } from '../src/rate-limit.ts';
 
 const mockVerifyAccessToken = vi.mocked(verifyAccessToken);
+const ORIGINAL_SQUIRE_ENV = process.env.SQUIRE_ENV;
+const ORIGINAL_SENTRY_RELEASE = process.env.SENTRY_RELEASE;
 
 /** Stub bearer header — the mocked `verifyAccessToken` accepts anything. */
 async function auth(): Promise<Record<string, string>> {
@@ -237,6 +269,12 @@ function resetRouteMocks() {
   mockGetCard.mockReset();
   mockRunReadinessChecks.mockReset();
   mockCaptureTelemetryFeedback.mockReset();
+}
+
+function findTelemetryLog(message: string) {
+  const call = mockCaptureTelemetryLog.mock.calls.find((candidate) => candidate[1] === message);
+  expect(call).toBeDefined();
+  return call as [string, string, Record<string, unknown>];
 }
 
 afterEach(() => {
@@ -514,6 +552,158 @@ describe('GET /api/health', () => {
   });
 });
 
+// ─── Request lifecycle telemetry ─────────────────────────────────────────────
+
+describe('request lifecycle telemetry', () => {
+  beforeEach(() => {
+    resetRouteMocks();
+    process.env.SQUIRE_ENV = 'test';
+    process.env.SENTRY_RELEASE = 'test-release-sha';
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_SQUIRE_ENV === undefined) {
+      delete process.env.SQUIRE_ENV;
+    } else {
+      process.env.SQUIRE_ENV = ORIGINAL_SQUIRE_ENV;
+    }
+    if (ORIGINAL_SENTRY_RELEASE === undefined) {
+      delete process.env.SENTRY_RELEASE;
+    } else {
+      process.env.SENTRY_RELEASE = ORIGINAL_SENTRY_RELEASE;
+    }
+  });
+
+  it('logs and traces successful requests with safe route metadata', async () => {
+    const res = await app.request('/api/live?email=alice@example.com', {
+      headers: {
+        Cookie: 'session=secret',
+        'X-Request-ID': 'req-lifecycle-ok-1',
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-ok-1');
+    await expect(res.json()).resolves.toEqual({ status: 'ok' });
+
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'server.request.started',
+      expect.objectContaining({
+        route: '/api/live',
+        requestId: 'req-lifecycle-ok-1',
+        context: expect.objectContaining({
+          surface: 'server',
+          eventType: 'request_lifecycle',
+        }),
+        attributes: expect.objectContaining({
+          environment: 'test',
+          release: 'test-release-sha',
+          method: 'GET',
+          route: '/api/live',
+          request_id: 'req-lifecycle-ok-1',
+        }),
+      }),
+    );
+
+    const [, completedMessage, completedInput] = findTelemetryLog('server.request.completed');
+    expect(completedMessage).toBe('server.request.completed');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'server.request.completed',
+      expect.objectContaining({
+        route: '/api/live',
+        requestId: 'req-lifecycle-ok-1',
+        attributes: expect.objectContaining({
+          environment: 'test',
+          release: 'test-release-sha',
+          method: 'GET',
+          route: '/api/live',
+          status: 200,
+          duration_ms: expect.any(Number),
+          request_id: 'req-lifecycle-ok-1',
+        }),
+      }),
+    );
+    expect(JSON.stringify(completedInput)).not.toContain('alice@example.com');
+    expect(JSON.stringify(completedInput)).not.toContain('session=secret');
+    expect(mockStartActiveSpan).toHaveBeenCalledWith('http.server.request', expect.any(Function));
+    expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'http.request.method': 'GET',
+        'http.route': '/api/live',
+        'http.response.status_code': 200,
+        'squire.duration_ms': expect.any(Number),
+        'squire.environment': 'test',
+        'squire.release': 'test-release-sha',
+        'squire.request_id': 'req-lifecycle-ok-1',
+      }),
+    );
+    expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs and traces 4xx requests as warnings without query strings or auth material', async () => {
+    mockVerifyAccessToken.mockResolvedValueOnce({
+      token: 'stub',
+      clientId: 'stub-client',
+      scopes: [],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      extra: { userId: 'user-4xx' },
+    });
+
+    const res = await app.request('/api/search/rules?email=alice@example.com', {
+      headers: {
+        ...(await auth()),
+        Cookie: 'session=secret',
+        'X-Request-ID': 'req-lifecycle-4xx-1',
+      },
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-4xx-1');
+    await expect(res.json()).resolves.toEqual({
+      error: 'Missing required query parameter: q',
+      status: 400,
+    });
+
+    const [level, , completedInput] = findTelemetryLog('server.request.completed');
+    expect(level).toBe('warn');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'warn',
+      'server.request.completed',
+      expect.objectContaining({
+        route: '/api/search/rules',
+        requestId: 'req-lifecycle-4xx-1',
+        user: { id: 'user-4xx' },
+        attributes: expect.objectContaining({
+          environment: 'test',
+          release: 'test-release-sha',
+          method: 'GET',
+          route: '/api/search/rules',
+          status: 400,
+          duration_ms: expect.any(Number),
+          request_id: 'req-lifecycle-4xx-1',
+          user_id: 'user-4xx',
+        }),
+      }),
+    );
+    expect(JSON.stringify(completedInput)).not.toContain('alice@example.com');
+    expect(JSON.stringify(completedInput)).not.toContain('Bearer stub-token');
+    expect(JSON.stringify(completedInput)).not.toContain('session=secret');
+    expect(mockStartActiveSpan).toHaveBeenCalledWith('http.server.request', expect.any(Function));
+    expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'http.request.method': 'GET',
+        'http.route': '/api/search/rules',
+        'http.response.status_code': 400,
+        'squire.request_id': 'req-lifecycle-4xx-1',
+        'squire.user_id': 'user-4xx',
+      }),
+    );
+    expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
+  });
+});
+
 // ─── GET /api/search/rules ───────────────────────────────────────────────────
 
 describe('GET /api/search/rules', () => {
@@ -659,6 +849,41 @@ describe('GET /api/search/rules', () => {
     expect(telemetryInput).not.toContain('Bearer stub-token');
     expect(telemetryInput).not.toContain('session=secret');
     expect(telemetryInput).not.toContain('loot');
+
+    const [level, , lifecycleInput] = findTelemetryLog('server.request.completed');
+    expect(level).toBe('error');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'error',
+      'server.request.completed',
+      expect.objectContaining({
+        route: '/api/search/rules',
+        requestId: 'req-server-error-1',
+        user: { id: 'user-123' },
+        attributes: expect.objectContaining({
+          method: 'GET',
+          route: '/api/search/rules',
+          status: 500,
+          duration_ms: expect.any(Number),
+          request_id: 'req-server-error-1',
+          user_id: 'user-123',
+        }),
+      }),
+    );
+    expect(JSON.stringify(lifecycleInput)).not.toContain('Bearer stub-token');
+    expect(JSON.stringify(lifecycleInput)).not.toContain('session=secret');
+    expect(JSON.stringify(lifecycleInput)).not.toContain('loot');
+    expect(mockStartActiveSpan).toHaveBeenCalledWith('http.server.request', expect.any(Function));
+    expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'http.request.method': 'GET',
+        'http.route': '/api/search/rules',
+        'http.response.status_code': 500,
+        'squire.request_id': 'req-server-error-1',
+        'squire.user_id': 'user-123',
+      }),
+    );
+    expect(mockRequestSpan.setStatus).toHaveBeenCalledWith(expect.objectContaining({ code: 2 }));
+    expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
   });
 
   it('returns 400 for unsupported game ids before searching rules', async () => {
