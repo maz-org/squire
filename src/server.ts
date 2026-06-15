@@ -8,8 +8,9 @@ import 'dotenv/config';
 // before service.ts transitively loads db.ts, otherwise Postgres spans never
 // reach LangSmith in production. Same pattern as query.ts and eval/run.ts.
 import './instrumentation.ts';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { SpanStatusCode, trace, type Span } from '@opentelemetry/api';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import {
   identityFromSessionUser,
@@ -162,18 +163,28 @@ import type { BrowserStreamEventName } from './db/repositories/message-stream-ev
 import {
   captureTelemetryError,
   captureTelemetryFeedback,
+  captureTelemetryLog,
   captureTelemetryMessage,
   flushTelemetry,
   initTelemetry,
   type TelemetryCaptureInput,
   type TelemetryFeedbackInput,
+  type TelemetryLogInput,
+  type TelemetryLogLevel,
   type TelemetryUserIdentity,
 } from './telemetry.ts';
+import { resolveSquireEnv } from './squire-env.ts';
 
 initTelemetry(process.env);
 
 export const app = new Hono();
 
+const UNRESOLVED_REQUEST_ROUTE = 'unresolved';
+const UNMATCHED_REQUEST_ROUTE = 'unmatched';
+const TEST_TELEMETRY_HASH_SECRET = 'squire-test-telemetry-hash-secret';
+const DEV_TELEMETRY_HASH_SECRET = 'squire-development-telemetry-hash-secret';
+
+app.use('*', requestLifecycleMiddleware);
 app.use('*', originSharedSecretMiddleware());
 
 const HTML_CSP =
@@ -249,9 +260,19 @@ function correlateRequest(c: Context): string {
 
 function safeRequestRoute(c: Context): string {
   try {
-    return c.req.routePath || c.req.path;
+    const route = c.req.routePath;
+    return route && route !== '*' && route !== '/*' ? route : UNMATCHED_REQUEST_ROUTE;
   } catch {
-    return c.req.path;
+    return UNMATCHED_REQUEST_ROUTE;
+  }
+}
+
+function safeRequestStartRoute(c: Context): string {
+  try {
+    const route = c.req.routePath;
+    return route && route !== '*' && route !== '/*' ? route : UNRESOLVED_REQUEST_ROUTE;
+  } catch {
+    return UNRESOLVED_REQUEST_ROUTE;
   }
 }
 
@@ -269,6 +290,31 @@ function safeUserFromContext(c: Context): TelemetryUserIdentity | undefined {
     : undefined;
 }
 
+function telemetryHashSecret(): string {
+  const secret = process.env.SESSION_SECRET?.trim();
+  if (secret) return secret;
+  return process.env.VITEST ? TEST_TELEMETRY_HASH_SECRET : DEV_TELEMETRY_HASH_SECRET;
+}
+
+function hashTelemetryIdentifier(kind: string, value: string): string {
+  return createHmac('sha256', telemetryHashSecret())
+    .update(`${kind}:${value}`)
+    .digest('base64url')
+    .slice(0, 32);
+}
+
+function hashedTelemetryUser(
+  user: TelemetryUserIdentity | undefined,
+): TelemetryUserIdentity | undefined {
+  if (user?.hash) return { hash: user.hash };
+  if (user?.id) return { hash: hashTelemetryIdentifier('user', user.id) };
+  return undefined;
+}
+
+function safeLifecycleUserFromContext(c: Context): TelemetryUserIdentity | undefined {
+  return hashedTelemetryUser(safeUserFromContext(c));
+}
+
 function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCaptureInput {
   const route = safeRequestRoute(c);
   return {
@@ -283,6 +329,178 @@ function buildServerErrorTelemetry(c: Context, requestId: string): TelemetryCapt
       status: 500,
     },
   };
+}
+
+function safeTelemetryEnvironment(): string {
+  try {
+    return resolveSquireEnv(process.env);
+  } catch {
+    return 'unknown';
+  }
+}
+
+function safeTelemetryRelease(): string {
+  return process.env.SENTRY_RELEASE?.trim() || 'unavailable';
+}
+
+function requestLifecycleLevel(status: number): TelemetryLogLevel {
+  if (status >= 500) return 'error';
+  if (status >= 400) return 'warn';
+  return 'info';
+}
+
+function requestDurationMs(startedAt: number): number {
+  return Math.max(0, Date.now() - startedAt);
+}
+
+function responseStatus(c: Context, error: unknown): number {
+  if (error) return 500;
+  const status = c.res.status;
+  return typeof status === 'number' && status > 0 ? status : 200;
+}
+
+function requestLifecycleAttributes(input: {
+  method: string;
+  route: string;
+  requestId: string;
+  environment: string;
+  release: string;
+  status?: number;
+  durationMs?: number;
+  user?: TelemetryUserIdentity;
+}): Record<string, string | number> {
+  return {
+    environment: input.environment,
+    release: input.release,
+    method: input.method,
+    route: input.route,
+    request_id: input.requestId,
+    ...(input.status === undefined ? {} : { status: input.status }),
+    ...(input.durationMs === undefined ? {} : { duration_ms: input.durationMs }),
+    ...(input.user?.hash ? { user_hash: input.user.hash } : {}),
+  };
+}
+
+function buildRequestLifecycleLogInput(input: {
+  c: Context;
+  requestId: string;
+  route: string;
+  environment: string;
+  release: string;
+  status?: number;
+  durationMs?: number;
+}): TelemetryLogInput {
+  const user = safeLifecycleUserFromContext(input.c);
+  return {
+    route: input.route,
+    requestId: input.requestId,
+    user,
+    context: {
+      surface: 'server',
+      eventType: 'request_lifecycle',
+      method: input.c.req.method,
+      route: input.route,
+      ...(input.status === undefined ? {} : { status: input.status }),
+    },
+    attributes: requestLifecycleAttributes({
+      method: input.c.req.method,
+      route: input.route,
+      requestId: input.requestId,
+      environment: input.environment,
+      release: input.release,
+      status: input.status,
+      durationMs: input.durationMs,
+      user,
+    }),
+  };
+}
+
+function annotateRequestSpan(
+  span: Span,
+  input: {
+    method: string;
+    route: string;
+    status: number;
+    durationMs: number;
+    requestId: string;
+    environment: string;
+    release: string;
+    user?: TelemetryUserIdentity;
+  },
+): void {
+  span.setAttributes({
+    'http.request.method': input.method,
+    'http.route': input.route,
+    'http.response.status_code': input.status,
+    'squire.duration_ms': input.durationMs,
+    'squire.environment': input.environment,
+    'squire.release': input.release,
+    'squire.request_id': input.requestId,
+    ...(input.user?.hash ? { 'squire.user_hash': input.user.hash } : {}),
+  });
+  if (input.status >= 500) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${input.status}` });
+  }
+}
+
+async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>): Promise<void> {
+  await trace.getTracer('squire.server').startActiveSpan('http.server.request', async (span) => {
+    const startedAt = Date.now();
+    const requestId = correlateRequest(c);
+    const environment = safeTelemetryEnvironment();
+    const release = safeTelemetryRelease();
+    const startRoute = safeRequestStartRoute(c);
+
+    captureTelemetryLog(
+      'info',
+      'server.request.started',
+      buildRequestLifecycleLogInput({
+        c,
+        requestId,
+        route: startRoute,
+        environment,
+        release,
+      }),
+    );
+
+    let caughtError: unknown;
+    try {
+      await next();
+    } catch (error) {
+      caughtError = error;
+      throw error;
+    } finally {
+      const status = responseStatus(c, caughtError);
+      const durationMs = requestDurationMs(startedAt);
+      const route = safeRequestRoute(c);
+      const user = safeLifecycleUserFromContext(c);
+
+      captureTelemetryLog(
+        requestLifecycleLevel(status),
+        'server.request.completed',
+        buildRequestLifecycleLogInput({
+          c,
+          requestId,
+          route,
+          environment,
+          release,
+          status,
+          durationMs,
+        }),
+      );
+      annotateRequestSpan(span, {
+        method: c.req.method,
+        route,
+        status,
+        durationMs,
+        requestId,
+        environment,
+        release,
+        user,
+      });
+      span.end();
+    }
+  });
 }
 
 const BrowserTelemetryTokenSchema = z
