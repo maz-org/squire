@@ -45,10 +45,14 @@ import {
   captureTelemetryFeedback,
   captureTelemetryLog,
   captureTelemetryMessage,
+  createSentrySanitizingSpanProcessor,
   flushTelemetry,
   initTelemetry,
   redactTelemetryValue,
   resetTelemetryForTests,
+  safeAppOperationSpanName,
+  safeDatabaseSpanAttributes,
+  sanitizeSentrySpanExportForTests,
   sanitizeTelemetryPayload,
   sentryTraceSampleRateFromEnv,
 } from '../src/telemetry.ts';
@@ -540,6 +544,159 @@ describe('telemetry boundary', () => {
         ],
       }),
     );
+  });
+
+  it('sanitizes Sentry span export names and attributes while preserving safe diagnostics', () => {
+    const originalSpan = {
+      name: "SELECT * FROM messages WHERE content = 'raw prompt' AND email = 'alice@example.com'",
+      attributes: {
+        'db.system': 'postgresql',
+        'db.statement':
+          "SELECT * FROM messages WHERE content = 'raw prompt' AND email = 'alice@example.com'",
+        'db.collection.name': 'messages',
+        'db.operation.name': 'SELECT',
+        'http.route': '/chat/:conversationId/messages/:messageId/stream?token=secret',
+        'squire.duration_ms': 42,
+        'squire.request_id': 'req-1',
+        'squire.conversation_id': 'conv-1',
+        'squire.release': 'abc123',
+        'squire.environment': 'production',
+        'gen_ai.prompt': JSON.stringify({ question: 'Can I loot this chest?' }),
+        'gen_ai.completion': JSON.stringify({ answer: 'Full model output' }),
+        requestBody: { prompt: 'request body prompt text' },
+        responseBody: { answer: 'response body model output' },
+        retrievedPassages: 'source passage text',
+        transcript: 'raw transcript text',
+        userEmail: 'alice@example.com',
+        userName: 'Alice Example',
+        authorization: 'Bearer secret-token',
+      },
+    };
+
+    const sanitized = sanitizeSentrySpanExportForTests(originalSpan as never);
+
+    expect(sanitized).not.toBe(originalSpan);
+    expect(sanitized.name).toBe('db.query.select messages');
+    expect(sanitized.attributes).toEqual({
+      'db.system': 'postgresql',
+      'db.statement': 'SELECT messages',
+      'db.collection.name': 'messages',
+      'db.operation.name': 'SELECT',
+      'http.route': '/chat/:conversationId/messages/:messageId/stream',
+      'squire.duration_ms': 42,
+      'squire.request_id': 'req-1',
+      'squire.conversation_id': 'conv-1',
+      'squire.release': 'abc123',
+      'squire.environment': 'production',
+      'gen_ai.prompt': TELEMETRY_REDACTED,
+      'gen_ai.completion': TELEMETRY_REDACTED,
+      requestBody: TELEMETRY_REDACTED,
+      responseBody: TELEMETRY_REDACTED,
+      retrievedPassages: TELEMETRY_REDACTED,
+      transcript: TELEMETRY_REDACTED,
+      userEmail: TELEMETRY_REDACTED,
+      userName: TELEMETRY_REDACTED,
+      authorization: TELEMETRY_REDACTED,
+    });
+    expect(originalSpan.attributes['db.statement']).toContain('alice@example.com');
+    expect(JSON.stringify(sanitized)).not.toContain('alice@example.com');
+    expect(JSON.stringify(sanitized)).not.toContain('raw prompt');
+    expect(JSON.stringify(sanitized)).not.toContain('request body prompt text');
+    expect(JSON.stringify(sanitized)).not.toContain('response body model output');
+    expect(JSON.stringify(sanitized)).not.toContain('source passage text');
+    expect(JSON.stringify(sanitized)).not.toContain('raw transcript text');
+    expect(JSON.stringify(sanitized)).not.toContain('secret-token');
+
+    expect(
+      sanitizeSentrySpanExportForTests({
+        name: 'Full model output says the player can loot every coin',
+        attributes: { 'squire.request_id': 'req-1' },
+      } as never).name,
+    ).toBe(TELEMETRY_REDACTED);
+    expect(
+      sanitizeSentrySpanExportForTests({
+        name: 'GET /chat/conv-1/messages/msg-1/stream',
+        attributes: { 'squire.request_id': 'req-1' },
+      } as never).name,
+    ).toBe(TELEMETRY_REDACTED);
+    expect(
+      sanitizeSentrySpanExportForTests({
+        name: 'GET /chat/:conversationId/messages/:messageId/stream',
+        attributes: { 'squire.request_id': 'req-1' },
+      } as never).name,
+    ).toBe('GET /chat/:conversationId/messages/:messageId/stream');
+    expect(
+      sanitizeSentrySpanExportForTests({
+        name: 'GET /api/live',
+        attributes: { 'squire.request_id': 'req-1' },
+      } as never).name,
+    ).toBe('GET /api/live');
+  });
+
+  it('wraps the Sentry span processor without mutating the original span for LangSmith', () => {
+    const delegate = {
+      forceFlush: vi.fn(async () => undefined),
+      shutdown: vi.fn(async () => undefined),
+      onStart: vi.fn(),
+      onEnd: vi.fn(),
+    };
+    const parentContext = { parent: true };
+    const originalSpan = {
+      name: "UPDATE conversations SET title = 'Alice Example' WHERE id = 'conv-1'",
+      attributes: {
+        'db.system': 'postgresql',
+        'db.statement': "UPDATE conversations SET title = 'Alice Example' WHERE id = 'conv-1'",
+        'db.collection.name': 'conversations',
+        'squire.request_id': 'req-1',
+      },
+    };
+    const processor = createSentrySanitizingSpanProcessor(delegate);
+
+    processor.onStart(originalSpan as never, parentContext as never);
+    processor.onEnd(originalSpan as never);
+
+    expect(delegate.onStart).toHaveBeenCalledWith(originalSpan, parentContext);
+    expect(delegate.onEnd).toHaveBeenCalledTimes(1);
+    const sentrySpan = delegate.onEnd.mock.calls[0]![0] as typeof originalSpan;
+    expect(sentrySpan).not.toBe(originalSpan);
+    expect(sentrySpan).toEqual(
+      expect.objectContaining({
+        name: 'db.query.update conversations',
+        attributes: expect.objectContaining({
+          'db.statement': 'UPDATE conversations',
+          'db.collection.name': 'conversations',
+          'squire.request_id': 'req-1',
+        }),
+      }),
+    );
+    expect(JSON.stringify(sentrySpan)).not.toContain('Alice Example');
+    expect(originalSpan.name).toContain('Alice Example');
+    expect(originalSpan.attributes['db.statement']).toContain('Alice Example');
+  });
+
+  it('defines safe app-operation span names for non-AI work', () => {
+    expect(safeAppOperationSpanName('campaign.load')).toBe('app.campaign.load');
+    expect(safeAppOperationSpanName('squire.search.rules')).toBe('app.squire.search.rules');
+    expect(safeAppOperationSpanName('Can I loot this chest?')).toBe('app.operation');
+    expect(safeAppOperationSpanName('/chat/conv-1/messages/msg-1?token=secret')).toBe(
+      'app.operation',
+    );
+  });
+
+  it('derives safe database span attributes without SQL values', () => {
+    expect(
+      safeDatabaseSpanAttributes(
+        "SELECT * FROM messages WHERE content = 'raw prompt' AND email = 'alice@example.com'",
+      ),
+    ).toEqual({
+      'db.operation.name': 'SELECT',
+      'db.collection.name': 'messages',
+    });
+    expect(safeDatabaseSpanAttributes("UPDATE public.conversations SET title = 'Alice'")).toEqual({
+      'db.operation.name': 'UPDATE',
+      'db.collection.name': 'public.conversations',
+    });
+    expect(JSON.stringify(safeDatabaseSpanAttributes('VACUUM (VERBOSE)'))).not.toContain('VACUUM');
   });
 
   it('captures Sentry logs with stable safe attributes and arbitrary sanitized attributes', () => {

@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/node';
+import type { SpanAttributeValue, SpanAttributes } from '@opentelemetry/api';
+import type { ReadableSpan, SpanProcessor } from '@opentelemetry/sdk-trace-base';
 import type {
   Breadcrumb,
   Event,
@@ -112,6 +114,14 @@ type SentrySpanPayload = {
   data: Record<string, unknown>;
   description?: string;
 };
+
+type TelemetryReadableSpan = ReadableSpan & {
+  readonly name: string;
+  readonly attributes?: SpanAttributes;
+  readonly events?: unknown[];
+};
+
+export type TelemetrySpanProcessor = SpanProcessor;
 
 const SENTRY_SAFE_DATA_COLLECTION = {
   userInfo: false,
@@ -284,6 +294,17 @@ function truncateTag(value: string): string {
 }
 
 const TAG_TOKEN_PATTERN = /^[A-Za-z0-9._:/-]{1,128}$/;
+const SAFE_APP_OPERATION_PATTERN = /^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$/;
+const SAFE_DB_IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_$]*$/;
+const SQL_TEXT_ATTRIBUTE_KEYS = new Set([
+  'dbstatement',
+  'dbquerytext',
+  'dbsqltext',
+  'sqlstatement',
+  'sqltext',
+  'querytext',
+]);
+const ROUTE_ATTRIBUTE_KEYS = new Set(['httproute', 'route', 'squireroute']);
 
 function safeContextTag(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
@@ -312,6 +333,214 @@ function redactSensitiveString(value: string): string {
   return SENSITIVE_VALUE_PATTERNS.some((pattern) => pattern.test(value))
     ? TELEMETRY_REDACTED
     : value;
+}
+
+function sanitizedDbIdentifier(value: string | undefined): string | undefined {
+  const raw = safeString(value);
+  if (!raw) return undefined;
+
+  const parts = raw
+    .split('.')
+    .map((part) => part.trim().replace(/^"(.+)"$/, '$1'))
+    .filter(Boolean);
+  if (parts.length === 0 || parts.some((part) => !SAFE_DB_IDENTIFIER_PATTERN.test(part))) {
+    return undefined;
+  }
+  return parts.join('.');
+}
+
+function firstSqlTable(sql: string, operation: string): string | undefined {
+  const patterns: Record<string, RegExp> = {
+    SELECT: /\bfrom\s+("?[\w$]+"?(?:\."?[\w$]+"?)?)/i,
+    INSERT: /\binsert\s+into\s+("?[\w$]+"?(?:\."?[\w$]+"?)?)/i,
+    UPDATE: /\bupdate\s+("?[\w$]+"?(?:\."?[\w$]+"?)?)/i,
+    DELETE: /\bdelete\s+from\s+("?[\w$]+"?(?:\."?[\w$]+"?)?)/i,
+    TRUNCATE: /\btruncate(?:\s+table)?\s+("?[\w$]+"?(?:\."?[\w$]+"?)?)/i,
+  };
+  return sanitizedDbIdentifier(patterns[operation]?.exec(sql)?.[1]);
+}
+
+function normalizeSqlStatement(value: unknown): string {
+  if (typeof value !== 'string') return TELEMETRY_REDACTED;
+  const sql = safeString(value)
+    ?.replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--.*$/gm, ' ');
+  if (!sql) return TELEMETRY_UNAVAILABLE;
+
+  const collapsed = sql.replace(/\s+/g, ' ').trim();
+  const operation = /^(select|insert|update|delete|truncate|begin|commit|rollback)\b/i
+    .exec(collapsed)?.[1]
+    ?.toUpperCase();
+  if (!operation) return TELEMETRY_REDACTED;
+
+  const table = firstSqlTable(collapsed, operation);
+  return table ? `${operation} ${table}` : operation;
+}
+
+function isSqlTextAttributeKey(key: string): boolean {
+  const normalized = normalizeKey(key);
+  return SQL_TEXT_ATTRIBUTE_KEYS.has(normalized);
+}
+
+function isRouteAttributeKey(key: string): boolean {
+  return ROUTE_ATTRIBUTE_KEYS.has(normalizeKey(key));
+}
+
+function safeSpanRoute(value: unknown): string {
+  return typeof value === 'string' ? markerOr(normalizeRoute(value)) : TELEMETRY_REDACTED;
+}
+
+function toSpanAttributeValue(value: SafeJson): SpanAttributeValue {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  if (value === null) return TELEMETRY_UNAVAILABLE;
+  if (Array.isArray(value)) {
+    if (value.every((item): item is string => typeof item === 'string')) return value;
+    if (value.every((item): item is number => typeof item === 'number')) return value;
+    if (value.every((item): item is boolean => typeof item === 'boolean')) return value;
+    return JSON.stringify(value);
+  }
+  return JSON.stringify(value);
+}
+
+function sanitizeSentrySpanAttribute(key: string, value: unknown): SpanAttributeValue {
+  if (isSqlTextAttributeKey(key)) return normalizeSqlStatement(value);
+  if (isRouteAttributeKey(key)) return safeSpanRoute(value);
+  const redacted = redactTelemetryValue({ [key]: value });
+  if (redacted && typeof redacted === 'object' && !Array.isArray(redacted)) {
+    return toSpanAttributeValue(redacted[key] ?? TELEMETRY_UNAVAILABLE);
+  }
+  return TELEMETRY_UNAVAILABLE;
+}
+
+function sanitizeSentrySpanAttributes(attributes: SpanAttributes | undefined): SpanAttributes {
+  if (!attributes) return {};
+  return Object.fromEntries(
+    Object.entries(attributes).map(([key, value]) => [
+      key,
+      sanitizeSentrySpanAttribute(key, value),
+    ]),
+  );
+}
+
+function safeHttpRouteName(value: string): string | undefined {
+  const match = /^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(\/[A-Za-z0-9_./:-]*)$/i.exec(value);
+  if (!match) return undefined;
+  const route = match[2];
+  if (!route || route.includes('?') || route.includes('#')) return undefined;
+  if (redactSensitiveString(route) === TELEMETRY_REDACTED) return undefined;
+  const safeSegments = route
+    .split('/')
+    .filter(Boolean)
+    .every((segment) => /^:[A-Za-z][A-Za-z0-9_]*$/.test(segment) || /^[a-z][a-z-]*$/.test(segment));
+  if (!safeSegments) return undefined;
+  return `${match[1]!.toUpperCase()} ${route}`;
+}
+
+function sanitizeSentrySpanName(name: unknown): string {
+  if (typeof name !== 'string') return TELEMETRY_UNAVAILABLE;
+  const value = safeString(name);
+  if (!value) return TELEMETRY_UNAVAILABLE;
+
+  const normalizedSql = normalizeSqlStatement(value);
+  if (normalizedSql !== TELEMETRY_REDACTED && normalizedSql !== TELEMETRY_UNAVAILABLE) {
+    return `db.query.${normalizedSql.toLowerCase()}`;
+  }
+
+  if (redactSensitiveString(value) === TELEMETRY_REDACTED) return TELEMETRY_REDACTED;
+  if (value.includes('?') || value.includes('#') || value.includes('=')) return TELEMETRY_REDACTED;
+  if (SAFE_APP_OPERATION_PATTERN.test(value.toLowerCase())) return value;
+
+  return safeHttpRouteName(value) ?? TELEMETRY_REDACTED;
+}
+
+function sanitizeSpanEvent(event: unknown): unknown {
+  if (!event || typeof event !== 'object') return redactTelemetryValue(event);
+  const record = event as Record<string, unknown>;
+  return {
+    ...record,
+    ...(typeof record.name === 'string'
+      ? { name: redactSensitiveString(record.name) }
+      : { name: TELEMETRY_UNAVAILABLE }),
+    attributes: sanitizeSentrySpanAttributes(record.attributes as SpanAttributes | undefined),
+  };
+}
+
+function cloneSpanForSentry(span: TelemetryReadableSpan): TelemetryReadableSpan {
+  const clone = Object.create(Object.getPrototypeOf(span)) as TelemetryReadableSpan;
+  Object.defineProperties(clone, Object.getOwnPropertyDescriptors(span));
+  Object.defineProperties(clone, {
+    name: {
+      configurable: true,
+      enumerable: true,
+      value: sanitizeSentrySpanName(span.name),
+      writable: false,
+    },
+    attributes: {
+      configurable: true,
+      enumerable: true,
+      value: sanitizeSentrySpanAttributes(span.attributes),
+      writable: false,
+    },
+    ...(Array.isArray(span.events)
+      ? {
+          events: {
+            configurable: true,
+            enumerable: true,
+            value: span.events.map(sanitizeSpanEvent),
+            writable: false,
+          },
+        }
+      : {}),
+  });
+  return clone;
+}
+
+/**
+ * Produce stable low-cardinality span names for non-AI app work. User prompts,
+ * URLs, and free-form prose collapse to a generic operation name.
+ */
+export function safeAppOperationSpanName(operation: string): string {
+  const normalized = operation.trim().toLowerCase();
+  if (
+    normalized.length > 0 &&
+    normalized.length <= 80 &&
+    SAFE_APP_OPERATION_PATTERN.test(normalized) &&
+    redactSensitiveString(normalized) !== TELEMETRY_REDACTED
+  ) {
+    return `app.${normalized}`;
+  }
+  return 'app.operation';
+}
+
+export function safeDatabaseSpanAttributes(sql: string | undefined): SpanAttributes {
+  const normalized = normalizeSqlStatement(sql);
+  if (normalized === TELEMETRY_REDACTED || normalized === TELEMETRY_UNAVAILABLE) return {};
+
+  const [operation, table] = normalized.split(' ');
+  return {
+    'db.operation.name': operation,
+    ...(table ? { 'db.collection.name': table } : {}),
+  };
+}
+
+export function createSentrySanitizingSpanProcessor(
+  delegate: TelemetrySpanProcessor,
+): TelemetrySpanProcessor {
+  return {
+    forceFlush: () => delegate.forceFlush(),
+    shutdown: () => delegate.shutdown(),
+    onStart: (span, parentContext) => delegate.onStart(span, parentContext),
+    onEnding: delegate.onEnding ? (span) => delegate.onEnding?.(span) : undefined,
+    onEnd: (span) => delegate.onEnd(cloneSpanForSentry(span)),
+  };
+}
+
+export function sanitizeSentrySpanExportForTests(
+  span: TelemetryReadableSpan,
+): TelemetryReadableSpan {
+  return cloneSpanForSentry(span);
 }
 
 function redactInternal(value: unknown, seen: WeakSet<object>, path: string[]): SafeJson {
