@@ -17,6 +17,13 @@ describe('Sentry alert catalog', () => {
     const runbook = await readProjectFile('docs/runbooks/sentry-alerts.md');
 
     for (const alertName of [
+      'Squire production backend request p95 latency',
+      'Squire production chat/SSE p95 latency',
+      'Squire production chat/SSE log failure spike',
+      'Squire production browser stream transport failures',
+      'Squire production script failure log spike',
+      'Squire production auth/rate-limit anomaly spike',
+      'Squire production budget/accounting failure',
       'Squire production backend error spike',
       'Squire production chat/SSE failure spike',
       'Squire production frontend error spike',
@@ -28,6 +35,13 @@ describe('Sentry alert catalog', () => {
     }
 
     for (const filter of [
+      'environment:production http.route:* squire.request_id:*',
+      'environment:production squire.surface:[chat_sse,api_ask]',
+      'environment:production surface:[chat_sse,api_ask] status:error',
+      'environment:production surface:browser event_type:browser_stream_error stream_error_kind:transport',
+      'environment:production event_type:script.lifecycle job_kind:[cron,release_command,manual_migration] status:error',
+      'environment:production surface:security_log security_event:[rate_limit_rejected,rate_limit_unavailable,google_login_denied]',
+      'environment:production surface:security_log security_event:[llm_budget_accounting_failed,llm_budget_warning]',
       'environment:production surface:server level:error',
       'environment:production failure_kind:assistant_turn level:error',
       'environment:production surface:browser event_type:browser_error level:error',
@@ -51,6 +65,9 @@ describe('Sentry alert catalog', () => {
     expect(packageJson.scripts?.['sentry:test-event']).toBe(
       'node scripts/send-sentry-safe-test-event.ts',
     );
+    expect(packageJson.scripts?.['sentry:app-health']).toBe(
+      'node scripts/sync-sentry-app-health.ts',
+    );
 
     const { stdout } = await execFileAsync(
       process.execPath,
@@ -72,5 +89,23 @@ describe('Sentry alert catalog', () => {
     expect(stdout).not.toContain('Bearer');
     expect(stdout).not.toContain('prompt');
     expect(stdout).not.toContain('answer');
+  });
+
+  it('exposes the app-health dashboard and alert sync dry run', async () => {
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      ['scripts/sync-sentry-app-health.ts', '--dry-run'],
+      { cwd: repoRoot },
+    );
+    const payload = JSON.parse(stdout) as {
+      dashboard?: { savedQueries?: string[]; widgetCount?: number };
+      monitors?: Array<{ name?: string }>;
+    };
+
+    expect(payload.dashboard?.savedQueries).toContain('squire.backend.latency.p95');
+    expect(payload.dashboard?.savedQueries).toContain('squire.browser.stream_transport');
+    expect(payload.monitors?.map((monitor) => monitor.name)).toContain(
+      'Squire production backend request p95 latency',
+    );
   });
 });
