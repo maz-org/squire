@@ -1,12 +1,9 @@
-import type { SeverityLevel } from '@sentry/node';
-
 import { resolveSquireEnv } from './squire-env.ts';
-import { addTelemetryBreadcrumb, captureTelemetryMessage } from './telemetry.ts';
+import { captureTelemetryLog } from './telemetry.ts';
 
 type SecurityLogLevel = 'info' | 'warn' | 'error';
 type SecurityLogFieldValue = string | number | boolean | null;
 type SecurityLogFields = Record<string, SecurityLogFieldValue>;
-type SecurityTelemetryMode = 'breadcrumb' | 'message';
 
 interface SecurityLogBase {
   event: string;
@@ -14,38 +11,9 @@ interface SecurityLogBase {
   fields?: SecurityLogFields;
 }
 
-const SECURITY_TELEMETRY_EVENTS = {
-  campaign_client_token_rejected: 'breadcrumb',
-  llm_budget_warning: 'breadcrumb',
-  rate_limit_rejected: 'breadcrumb',
-  llm_budget_accounting_failed: 'message',
-  rate_limit_redis_error: 'message',
-  rate_limit_unavailable: 'message',
-} as const satisfies Record<string, SecurityTelemetryMode>;
-
-const SECURITY_TELEMETRY_FIELD_KEYS = new Set<string>([
-  'budget_day',
-  'budget_usd_micros',
-  'client_id',
-  'error_code',
-  'error_type',
-  'has_user_id',
-  'identity_hash',
-  'identity_kind',
-  'limit',
-  'method',
-  'model',
-  'policy',
-  'reset_after_seconds',
-  'retry_after_seconds',
-  'route',
-  'spent_usd_micros',
-  'threshold_percent',
-  'window_ms',
-]);
-
 const SAFE_ERROR_TYPE_PATTERN = /^[A-Za-z][A-Za-z0-9_.:-]{0,63}$/;
 const SAFE_ERROR_CODE_PATTERN = /^[A-Za-z0-9_.:-]{1,64}$/;
+const SAFE_DIAGNOSTIC_TOKEN_PATTERN = /^[A-Za-z0-9._:/-]{1,128}$/;
 
 function safeSquireEnv(): string {
   try {
@@ -70,6 +38,26 @@ function safeRouteField(value: SecurityLogFieldValue): string | null {
   return route.split('?')[0]?.split('#')[0] || '/';
 }
 
+function safeDiagnosticToken(value: SecurityLogFieldValue): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return SAFE_DIAGNOSTIC_TOKEN_PATTERN.test(trimmed) ? trimmed : undefined;
+}
+
+function safeLangSmithUrl(value: SecurityLogFieldValue): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== 'https:' || url.hostname !== 'smith.langchain.com') return undefined;
+    return `${url.origin}${url.pathname}`;
+  } catch {
+    return undefined;
+  }
+}
+
 function safeErrorType(value: unknown): string {
   if (typeof value !== 'string') return 'unknown';
   const trimmed = value.trim();
@@ -82,75 +70,73 @@ function safeErrorCode(value: unknown): string | null {
   return SAFE_ERROR_CODE_PATTERN.test(trimmed) ? trimmed : null;
 }
 
-function toTelemetryLevel(level: SecurityLogLevel): SeverityLevel {
-  return level === 'warn' ? 'warning' : level;
-}
+function buildSecurityLogAttributes(input: {
+  event: string;
+  level: SecurityLogLevel;
+  squireEnv: string;
+  fields: SecurityLogFields;
+}): SecurityLogFields {
+  const attributes: SecurityLogFields = {};
 
-function safeSecurityTelemetryFields(fields: SecurityLogFields): SecurityLogFields {
-  const safeFields: SecurityLogFields = {};
-
-  for (const [key, value] of Object.entries(fields)) {
-    if (!SECURITY_TELEMETRY_FIELD_KEYS.has(key)) continue;
-
+  for (const [key, value] of Object.entries(input.fields)) {
     if (key === 'route') {
       const route = safeRouteField(value);
-      if (route !== null) safeFields.route = route;
+      if (route !== null) attributes.route = route;
       continue;
     }
 
     if (key === 'error_type') {
-      safeFields.error_type = safeErrorType(value);
+      attributes.error_type = safeErrorType(value);
       continue;
     }
 
     if (key === 'error_code') {
-      safeFields.error_code = safeErrorCode(value);
+      attributes.error_code = safeErrorCode(value);
       continue;
     }
 
-    safeFields[key] = value;
+    attributes[key] = value;
   }
 
-  return safeFields;
+  return {
+    ...attributes,
+    event: input.event,
+    level: input.level,
+    squire_env: input.squireEnv,
+    log_kind: 'security',
+  };
 }
 
-function emitSecurityTelemetry(input: {
+function emitSecurityTelemetryLog(input: {
   event: string;
   level: SecurityLogLevel;
   squireEnv: string;
   fields: SecurityLogFields;
 }): void {
-  const mode = SECURITY_TELEMETRY_EVENTS[input.event as keyof typeof SECURITY_TELEMETRY_EVENTS];
-  if (!mode) return;
-
-  const fields = safeSecurityTelemetryFields(input.fields);
-  const route = typeof fields.route === 'string' ? fields.route : undefined;
-  const telemetryInput = {
-    route,
-    context: {
-      event: input.event,
-      level: input.level,
-      squire_env: input.squireEnv,
-      fields,
-    },
-  };
+  const route = safeRouteField(input.fields.route);
+  const requestId = safeDiagnosticToken(input.fields.request_id);
+  const userId = safeDiagnosticToken(input.fields.user_id);
+  const userHash = safeDiagnosticToken(input.fields.user_hash);
 
   try {
-    if (mode === 'breadcrumb') {
-      addTelemetryBreadcrumb({
-        category: 'security_log',
-        message: input.event,
-        level: toTelemetryLevel(input.level),
-        ...telemetryInput,
-      });
-      return;
-    }
-
-    captureTelemetryMessage(
-      `security_log.${input.event}`,
-      toTelemetryLevel(input.level),
-      telemetryInput,
-    );
+    captureTelemetryLog(input.level, `security_log.${input.event}`, {
+      route: route ?? undefined,
+      requestId,
+      conversationId: safeDiagnosticToken(input.fields.conversation_id),
+      userMessageId: safeDiagnosticToken(input.fields.user_message_id),
+      assistantMessageId: safeDiagnosticToken(input.fields.assistant_message_id),
+      sentryTraceId: safeDiagnosticToken(input.fields.sentry_trace_id),
+      langsmithThreadUrl: safeLangSmithUrl(input.fields.langsmith_thread_url),
+      langsmithRunUrl: safeLangSmithUrl(input.fields.langsmith_run_url),
+      user: userId || userHash ? { id: userId, hash: userHash } : undefined,
+      context: {
+        event: input.event,
+        level: input.level,
+        squire_env: input.squireEnv,
+        surface: 'security_log',
+      },
+      attributes: buildSecurityLogAttributes(input),
+    });
   } catch {
     // Logging must never fail because telemetry did.
   }
@@ -168,7 +154,7 @@ export function writeSecurityLog({ event, level = 'warn', fields = {} }: Securit
     }),
   );
 
-  emitSecurityTelemetry({ event, level, squireEnv, fields });
+  emitSecurityTelemetryLog({ event, level, squireEnv, fields });
 }
 
 export function errorLogFields(error: unknown): Record<string, string | null> {
