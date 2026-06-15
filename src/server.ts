@@ -184,8 +184,8 @@ const UNMATCHED_REQUEST_ROUTE = 'unmatched';
 const TEST_TELEMETRY_HASH_SECRET = 'squire-test-telemetry-hash-secret';
 const DEV_TELEMETRY_HASH_SECRET = 'squire-development-telemetry-hash-secret';
 
-app.use('*', originSharedSecretMiddleware());
 app.use('*', requestLifecycleMiddleware);
+app.use('*', originSharedSecretMiddleware());
 
 const HTML_CSP =
   "default-src 'self'; " +

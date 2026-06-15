@@ -207,6 +207,7 @@ import {
 } from '../src/rate-limit.ts';
 
 const mockVerifyAccessToken = vi.mocked(verifyAccessToken);
+const ORIGINAL_ORIGIN_SHARED_SECRET = process.env.ORIGIN_SHARED_SECRET;
 const ORIGINAL_SQUIRE_ENV = process.env.SQUIRE_ENV;
 const ORIGINAL_SENTRY_RELEASE = process.env.SENTRY_RELEASE;
 const USER_HASH_PATTERN = /^[A-Za-z0-9_-]{32}$/;
@@ -569,6 +570,11 @@ describe('request lifecycle telemetry', () => {
   });
 
   afterEach(() => {
+    if (ORIGINAL_ORIGIN_SHARED_SECRET === undefined) {
+      delete process.env.ORIGIN_SHARED_SECRET;
+    } else {
+      process.env.ORIGIN_SHARED_SECRET = ORIGINAL_ORIGIN_SHARED_SECRET;
+    }
     if (ORIGINAL_SQUIRE_ENV === undefined) {
       delete process.env.SQUIRE_ENV;
     } else {
@@ -646,6 +652,55 @@ describe('request lifecycle telemetry', () => {
         'squire.environment': 'test',
         'squire.release': 'test-release-sha',
         'squire.request_id': 'req-lifecycle-ok-1',
+      }),
+    );
+    expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs and traces origin-lock rejections before route handlers run', async () => {
+    process.env.ORIGIN_SHARED_SECRET = 'cloudfront-secret';
+
+    const res = await app.request('/chat/alice@example.com?token=secret', {
+      headers: {
+        Cookie: 'session=secret',
+        'X-Origin-Secret': 'wrong-secret',
+        'X-Request-ID': 'req-lifecycle-origin-403',
+      },
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-origin-403');
+    await expect(res.json()).resolves.toEqual({ error: 'Forbidden' });
+
+    const [level, , completedInput] = findTelemetryLog('server.request.completed');
+    expect(level).toBe('warn');
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'warn',
+      'server.request.completed',
+      expect.objectContaining({
+        route: 'unmatched',
+        requestId: 'req-lifecycle-origin-403',
+        attributes: expect.objectContaining({
+          environment: 'test',
+          release: 'test-release-sha',
+          method: 'GET',
+          route: 'unmatched',
+          status: 403,
+          duration_ms: expect.any(Number),
+          request_id: 'req-lifecycle-origin-403',
+        }),
+      }),
+    );
+    expect(JSON.stringify(completedInput)).not.toContain('alice@example.com');
+    expect(JSON.stringify(completedInput)).not.toContain('token=secret');
+    expect(JSON.stringify(completedInput)).not.toContain('session=secret');
+    expect(JSON.stringify(completedInput)).not.toContain('wrong-secret');
+    expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({
+        'http.request.method': 'GET',
+        'http.route': 'unmatched',
+        'http.response.status_code': 403,
+        'squire.request_id': 'req-lifecycle-origin-403',
       }),
     );
     expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
