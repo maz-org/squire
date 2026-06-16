@@ -31,6 +31,39 @@ Thresholds are still documented here so they can be reviewed without opening
 Sentry. If Sentry thresholds are tuned in the UI, update
 `scripts/sentry-app-health-config.ts` and this runbook in the same PR.
 
+## Adding A New Alert Or Monitor
+
+Start with the symptom and the dataset:
+
+- Use error events for grouped exceptions, deploy regressions, browser
+  exceptions, and uptime alerts.
+- Use logs for lifecycle failures, swallowed chat failures, browser transport
+  failures, auth/rate-limit events, budget/accounting events, and other
+  countable operational states.
+- Use spans for latency and dependency timing.
+
+Then update the checked-in config before changing Sentry by hand:
+
+1. Add the area to `SENTRY_APP_HEALTH_AREAS` in
+   `scripts/sentry-app-health-config.ts` if this is a new app-health area.
+2. Add or update a dashboard widget in `SENTRY_APP_HEALTH_DASHBOARD_WIDGETS`
+   when the signal should be visible during triage.
+3. Add the monitor to `SENTRY_APP_HEALTH_MONITORS` for log or span alerts that
+   should notify.
+4. For existing event or uptime alerts that cannot be managed through the
+   detector endpoint yet, update `SENTRY_EXISTING_APP_HEALTH_ALERTS`.
+5. Add a safe test event or a written safe-test path in the same change.
+6. Run `npm run sentry:app-health -- --dry-run`, then use `--apply` only when
+   you intend to change Sentry resources.
+7. Update this runbook with the alert name, dataset, filter, trigger, first
+   action, and safe test event.
+
+Do not add alert filters that match raw prompt, answer, transcript, source
+passage, email, name, token, cookie, or request-body fields. Filters should use
+stable tags and attributes such as `environment`, `release`, `route`,
+`request_id`, `conversation_id`, `user_message_id`, `surface`, `event_type`,
+`status`, `job_kind`, `security_event`, and `squire.*` span fields.
+
 ## Dashboard
 
 Create or update the dashboard named `Squire - Production App Health`.
