@@ -349,9 +349,16 @@ function emitSafeVerificationTrace(
   input: ReturnType<typeof safeTestInput>,
   operation: () => void,
 ): boolean {
+  let operationRan = false;
+  const runOperationOnce = () => {
+    if (operationRan) return;
+    operationRan = true;
+    operation();
+  };
+
   try {
     Sentry.startSpan(safeVerificationTrace(kind, input), () => {
-      operation();
+      runOperationOnce();
     });
     return true;
   } catch (error: unknown) {
@@ -359,7 +366,7 @@ function emitSafeVerificationTrace(
       'safe verification trace skipped:',
       error instanceof Error ? error.message : String(error),
     );
-    operation();
+    runOperationOnce();
     return false;
   }
 }
