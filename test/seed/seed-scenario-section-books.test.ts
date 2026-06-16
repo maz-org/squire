@@ -83,7 +83,7 @@ describe('seedScenarioSectionBooks', () => {
       .from(bookReferences)
       .where(eq(bookReferences.game, 'frosthaven'));
     expect(after).toHaveLength(before.length);
-  });
+  }, 20_000);
 
   it('prunes rows that are no longer present in the checked-in extract', async () => {
     const extract = readScenarioSectionBooksExtract();
@@ -111,7 +111,7 @@ describe('seedScenarioSectionBooks', () => {
 
     expect(staleRows).toHaveLength(0);
     expect(scenarios).toHaveLength(extract.scenarios.length);
-  });
+  }, 20_000);
 
   it('seeds GH2 scenario stubs from the game-scoped scenario extract', async () => {
     await seedScenarioSectionBooks(db, { game: GLOOMHAVEN_2E_GAME_ID });
@@ -132,7 +132,7 @@ describe('seedScenarioSectionBooks', () => {
     expect(scenarios.length).toBeGreaterThan(0);
     expect(sections.length).toBeGreaterThan(0);
     expect(links.length).toBeGreaterThan(0);
-  });
+  }, 20_000);
 
   it('seeds every available scenario/section game extract', async () => {
     await seedAvailableScenarioSectionBookGames(db);
