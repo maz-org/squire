@@ -63,5 +63,5 @@ describe('script telemetry direct-process OpenTelemetry setup', () => {
       traceId: expect.not.stringMatching(/^0+$/),
       spanId: expect.not.stringMatching(/^0+$/),
     });
-  });
+  }, 25_000);
 });

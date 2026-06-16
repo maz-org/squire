@@ -82,14 +82,14 @@ Verified production monitor ids:
 These alerts remain valid and `npm run sentry:app-health -- --verify` checks
 that they still exist.
 
-| Alert name                                      | Sentry view     | Filter/query                                                                                           | Trigger                                   | First action                                                    | Safe test event                                                                                      |
-| ----------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `Squire production backend error spike`         | Issues/Discover | `environment:production surface:server level:error`                                                    | 5 events in 10 minutes                    | Open the issue, copy `request_id`, inspect route/context        | `npm run sentry:test-event -- --kind backend`                                                        |
-| `Squire production chat/SSE failure spike`      | Issues/Discover | `environment:production failure_kind:assistant_turn level:error`                                       | 3 events in 10 minutes                    | Open Sentry event, then jump to LangSmith by turn IDs           | `npm run sentry:test-event -- --kind chat`                                                           |
-| `Squire production frontend error spike`        | Issues/Discover | `environment:production surface:browser event_type:browser_error level:error`                          | 5 events in 10 minutes                    | Open event/replay; verify masked replay has no text             | `npm run sentry:test-event -- --kind browser`                                                        |
-| `Squire production cron/job failure`            | Issues/Discover | `environment:production job_kind:cron level:error`                                                     | 1 event in 30 minutes                     | Check `job_name`, then inspect the cron machine logs            | `npm run sentry:test-event -- --kind cron`                                                           |
-| `Squire production deploy regression new issue` | Issues/Releases | `environment:production release:* level:error` plus Sentry condition `new issue created after release` | 1 new issue in the current release window | Compare release SHA with GitHub/Fly deploy; roll back if needed | `npm run sentry:test-event -- --kind deploy-regression`                                              |
-| `Squire production uptime failure`              | Uptime monitor  | URL `https://squire.maz.org/api/health`; expect HTTP 200 and JSON status `ok`                          | 2 failed checks in 5 minutes              | Check Sentry uptime details, then `/api/live` and Fly status    | Use Sentry monitor test, or a temporary duplicate monitor pointed at `/api/__sentry-uptime-test-404` |
+| Alert name                                      | Sentry view     | Filter/query                                                                                           | Trigger                                   | First action                                                    | Safe test event                                                             |
+| ----------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `Squire production backend error spike`         | Issues/Discover | `environment:production surface:server level:error`                                                    | 5 events in 10 minutes                    | Open the issue, copy `request_id`, inspect route/context        | `npm run sentry:test-event -- --kind backend`                               |
+| `Squire production chat/SSE failure spike`      | Issues/Discover | `environment:production failure_kind:assistant_turn level:error`                                       | 3 events in 10 minutes                    | Open Sentry event, then jump to LangSmith by turn IDs           | `npm run sentry:test-event -- --kind chat`                                  |
+| `Squire production frontend error spike`        | Issues/Discover | `environment:production surface:browser event_type:browser_error level:error`                          | 5 events in 10 minutes                    | Open event/replay; verify masked replay has no text             | `npm run sentry:test-event -- --kind browser`                               |
+| `Squire production cron/job failure`            | Issues/Discover | `environment:production job_kind:cron level:error`                                                     | 1 event in 30 minutes                     | Check `job_name`, then inspect the cron machine logs            | `npm run sentry:test-event -- --kind cron`                                  |
+| `Squire production deploy regression new issue` | Issues/Releases | `environment:production release:* level:error` plus Sentry condition `new issue created after release` | 1 new issue in the current release window | Compare release SHA with GitHub/Fly deploy; roll back if needed | `npm run sentry:test-event -- --kind deploy-regression`                     |
+| `Squire production uptime failure`              | Uptime monitor  | URL `https://squire.maz.org/api/health`; expect HTTP 200 and JSON status `ok`                          | 2 failed checks in 5 minutes              | Check Sentry uptime details, then `/api/live` and Fly status    | `npm run sentry:test-event -- --kind uptime`; use monitor test for alerting |
 
 ## Safe Test Events
 
@@ -102,13 +102,16 @@ fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind chat'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind browser'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind cron'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind uptime'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind deploy-regression'
 ```
 
-Local dry runs print the safe tags/context without sending to Sentry:
+Local dry runs print the safe event, log, trace, and Linear evidence payloads
+without sending to Sentry:
 
 ```bash
 npm run sentry:test-event -- --kind chat --dry-run
+npm run sentry:test-event -- --kind uptime --dry-run
 npm run sentry:app-health -- --dry-run
 ```
 
@@ -119,12 +122,14 @@ The safe test events use synthetic IDs only:
 - `user_message_id=sentry-test-user-message` for chat/browser tests
 - no cookies, auth headers, raw prompts, model output, provider payloads, or
   retrieved passages
+- dry-run and production output include Sentry event, log, and trace search URLs
+  that can be copied into Linear Evidence fields
 
-For the uptime rule, prefer Sentry's monitor test control if it is available in
-the project. If it is not, create a temporary duplicate uptime monitor against
-`https://squire.maz.org/api/__sentry-uptime-test-404`, verify the rule matches,
-then delete the duplicate monitor. Do not break the real `/api/health` endpoint
-to test alerting.
+The uptime safe command proves app telemetry for the health-check path without
+breaking `/api/health`. For the uptime alert itself, prefer Sentry's monitor test
+control if it is available in the project. If it is not, create a temporary
+duplicate uptime monitor against `https://squire.maz.org/api/__sentry-uptime-test-404`,
+verify the rule matches, then delete the duplicate monitor.
 
 ## Required Tags
 
@@ -164,7 +169,7 @@ After deploying log/trace telemetry:
 1. Run `npm run sentry:app-health -- --apply` once with `SENTRY_TOKEN`.
 2. Run `npm run sentry:app-health -- --verify` and record dashboard/monitor ids
    in the PR or deploy note.
-3. Send safe backend, chat, browser, cron, and deploy-regression events.
+3. Send safe backend, chat, browser, cron, uptime, and deploy-regression events.
 4. Confirm the dashboard queries match on `environment`, `release`,
    `request_id`, `route`, `conversation_id`, `user_message_id`, `job_kind`,
    `security_event`, and the relevant `squire.*` span fields.

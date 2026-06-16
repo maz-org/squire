@@ -489,7 +489,7 @@ export const SENTRY_EXISTING_APP_HEALTH_ALERTS: SentryExistingAppHealthAlert[] =
     firstAction:
       'Open the uptime monitor, compare /api/health and /api/live, then check Fly status.',
     safeTest:
-      'Use Sentry monitor test or a temporary duplicate monitor pointed at /api/__sentry-uptime-test-404.',
+      'npm run sentry:test-event -- --kind uptime, then use Sentry monitor test or a temporary duplicate monitor pointed at /api/__sentry-uptime-test-404.',
   },
 ];
 

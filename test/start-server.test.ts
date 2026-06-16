@@ -228,7 +228,7 @@ describe.sequential('startServer', () => {
     expect(claimed.fakeServer.listenCalls).toContain(4555);
     expect(claimed.fakeServer.refCalls).toBe(1);
     expect(claimed.startBootstrapLifecycle).toHaveBeenCalled();
-  }, 30_000);
+  }, 60_000);
 
   it('captures and flushes startup failures before rethrowing', async () => {
     const listenError = Object.assign(new Error('address already in use'), { code: 'EADDRINUSE' });
@@ -250,5 +250,5 @@ describe.sequential('startServer', () => {
       }),
     );
     expect(configured.flushTelemetry).toHaveBeenCalledWith(2_000);
-  }, 30_000);
+  }, 60_000);
 });

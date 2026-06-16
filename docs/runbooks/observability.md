@@ -238,6 +238,7 @@ fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind chat'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind browser'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind cron'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind uptime'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind deploy-regression'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind scrub-canary'
 ```
@@ -246,7 +247,12 @@ Local dry runs must not send to Sentry:
 
 ```bash
 npm run sentry:test-event -- --kind chat --dry-run
+npm run sentry:test-event -- --kind uptime --dry-run
 ```
+
+The safe verification commands print sanitized Sentry event, log, and trace
+search URLs. Copy those URLs into the Linear Evidence section when proving a
+bug-report or alert path.
 
 Browser replay and feedback smoke:
 
@@ -273,7 +279,9 @@ Uptime smoke:
 2. If unavailable, create a temporary duplicate uptime monitor pointed at
    `https://squire.maz.org/api/__sentry-uptime-test-404`.
 3. Verify the alert matches, then delete the duplicate monitor.
-4. Do not break the real `/api/health` endpoint to test alerting.
+4. Run `--kind uptime` to create searchable app telemetry for the health-check
+   path without disrupting production.
+5. Do not break the real `/api/health` endpoint to test alerting.
 
 ## Release Checklist
 
