@@ -1792,15 +1792,15 @@ describe('knowledge discovery tools', () => {
           sourceId: 'gloomhavensecretariat:character-mat/drifter',
           displayName: 'Drifter',
           perks: expect.arrayContaining([
-            'Blessed: You may ignore negative item effects and the appearance of a cursed item',
+            'You may ignore negative item effects and the appearance of a cursed item',
           ]),
         },
       },
     });
   });
 
-  it('lookupEntity resolves Drifter Blessed perk text to the character mat', async () => {
-    const result = await lookupEntity('Drifter Blessed perk ignore negative item effects', {
+  it('lookupEntity resolves Drifter ignore-negative-item-effects perk text to the character mat', async () => {
+    const result = await lookupEntity('Drifter perk ignore negative item effects', {
       kinds: ['character'],
     });
 
@@ -1811,7 +1811,7 @@ describe('knowledge discovery tools', () => {
         ref: 'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
         data: {
           perks: expect.arrayContaining([
-            'Blessed: You may ignore negative item effects and the appearance of a cursed item',
+            'You may ignore negative item effects and the appearance of a cursed item',
           ]),
         },
       },

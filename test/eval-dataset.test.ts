@@ -359,12 +359,14 @@ describe('eval dataset', () => {
     expect(spyglassCase?.finalAnswer?.expected).not.toMatch(/40 gold|small item slot|2 uses/i);
   });
 
-  it('guards the Drifter Blessed user-correction regression', () => {
-    const evalCase = cases.find((candidate) => candidate.id === 'drifter-blessed-correction');
+  it('guards the Drifter ignore-negative-item-effects user-correction regression', () => {
+    const evalCase = cases.find(
+      (candidate) => candidate.id === 'drifter-ignore-negative-item-effects-correction',
+    );
 
     expect(evalCase?.question).toMatch(/Drifter/i);
-    expect(evalCase?.question).toMatch(/Blessed/i);
-    expect(evalCase?.finalAnswer?.expected).toMatch(/Blessed/i);
+    expect(evalCase?.question).not.toMatch(/Blessed/i);
+    expect(evalCase?.finalAnswer?.expected).not.toMatch(/Blessed/i);
     expect(evalCase?.finalAnswer?.expected).toMatch(/ignore negative item effects/i);
     expect(evalCase?.finalAnswer?.grading).toMatch(/must not deny/i);
     expect(evalCase?.trajectory?.requiredTools).toEqual(['lookup_entity']);
@@ -372,7 +374,10 @@ describe('eval dataset', () => {
       'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
     );
     expect(evalCase?.safety?.forbiddenAnswerPatterns).toEqual(
-      expect.arrayContaining(['drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}blessed']),
+      expect.arrayContaining([
+        'drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}(?:ignore negative item effects|negative item)',
+        '\\bBlessed\\b',
+      ]),
     );
   });
 
