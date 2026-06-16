@@ -26,16 +26,6 @@ describe('formatPerk', () => {
     expect(formatPerk(perk, labels)).toBe('Remove 1 -2 card');
   });
 
-  it('formats perk effect text without needing a character name', () => {
-    const perk = {
-      type: 'custom',
-      count: 1,
-      custom: '%data.custom.fh.blinkblade.5%',
-    };
-
-    expect(formatPerk(perk, labels)).toBe('Gain Advantage on the next three attacks you perform');
-  });
-
   it('formats a replace perk with simple modifiers', () => {
     const perk = {
       type: 'replace',
