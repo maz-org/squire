@@ -3105,6 +3105,70 @@ describe('conversation web backend', () => {
 });
 
 describe('conversation loading', () => {
+  it('loads terminal stream event timestamps for persisted work duration after reload', async () => {
+    const auth = await createAuthContext();
+    const { db } = getDb('server');
+    const [conversation] = await db
+      .insert(conversations)
+      .values({ userId: auth.userId })
+      .returning();
+    const [userMessage] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'How long did the agent work?',
+        createdAt: new Date('2026-04-20T00:00:00.000Z'),
+      })
+      .returning();
+    await db.insert(messages).values({
+      conversationId: conversation.id,
+      role: 'assistant',
+      content: 'It worked for a while.',
+      responseToMessageId: userMessage.id,
+      createdAt: new Date('2026-04-20T00:00:01.000Z'),
+    });
+    await db.insert(messageStreamEvents).values([
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 1,
+        event: 'tool-progress',
+        payload: { id: 'search_knowledge-progress-1', message: 'Searching the rulebook' },
+        createdAt: new Date('2026-04-20T00:00:01.000Z'),
+      },
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 2,
+        event: 'tool-result',
+        payload: { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true },
+        createdAt: new Date('2026-04-20T00:00:03.000Z'),
+      },
+      {
+        conversationId: conversation.id,
+        userMessageId: userMessage.id,
+        sequence: 3,
+        event: 'done',
+        payload: {},
+        createdAt: new Date('2026-04-20T00:00:09.000Z'),
+      },
+    ]);
+
+    const loaded = await loadConversation({
+      conversationId: conversation.id,
+      userId: auth.userId,
+    });
+
+    expect(loaded).not.toBeNull();
+    const assistant = loaded!.messages.find((message) => message.role === 'assistant');
+    expect(assistant?.publicWorkEvents?.map((event) => event.event)).toEqual([
+      'tool-progress',
+      'tool-result',
+    ]);
+    expect(assistant?.workCompletedAt).toEqual(new Date('2026-04-20T00:00:09.000Z'));
+  });
+
   it('pads the load window when the limit cuts between a user message and its assistant reply (CR PR #274)', async () => {
     // Without padding, a window that starts at an assistant message whose
     // paired user is older than the cap would silently drop the assistant

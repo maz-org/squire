@@ -1514,6 +1514,36 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       expect(body).toContain('Searched the rulebook');
     });
 
+    it('uses the persisted terminal event time for completed work duration after reload', () => {
+      const body = renderTranscriptAnswer(
+        answerWith(null, {
+          createdAt: new Date('2026-04-20T00:00:01.000Z'),
+          workCompletedAt: new Date('2026-04-20T00:00:09.000Z'),
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-progress',
+              payload: {
+                id: 'search_knowledge-progress-1',
+                label: 'RULEBOOK',
+                message: 'Searching the rulebook',
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-result',
+              payload: { id: 'search_knowledge', labels: ['RULEBOOK'], ok: true },
+              createdAt: new Date('2026-04-20T00:00:03.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Worked for 8s');
+      expect(body).not.toContain('Worked for 0s');
+    });
+
     it('replays persisted agent intent rows in the completed work timeline', () => {
       const body = renderTranscriptAnswer(
         answerWith(null, {

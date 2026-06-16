@@ -121,6 +121,31 @@ export async function listPublicWorkEventsByUserMessageIds(
   return eventsByUserMessage;
 }
 
+export async function listTerminalEventsByUserMessageIds(
+  userMessageIds: string[],
+): Promise<Map<string, MessageStreamEvent>> {
+  const terminalEventsByUserMessage = new Map<string, MessageStreamEvent>();
+  if (userMessageIds.length === 0) return terminalEventsByUserMessage;
+
+  const { db } = getDb('server');
+  const rows = await db
+    .select()
+    .from(messageStreamEvents)
+    .where(
+      and(
+        inArray(messageStreamEvents.userMessageId, userMessageIds),
+        inArray(messageStreamEvents.event, ['done', 'error']),
+      ),
+    )
+    .orderBy(asc(messageStreamEvents.userMessageId), asc(messageStreamEvents.sequence));
+
+  for (const row of rows) {
+    terminalEventsByUserMessage.set(row.userMessageId, toDomain(row));
+  }
+
+  return terminalEventsByUserMessage;
+}
+
 async function insertNext(input: {
   conversationId: string;
   userMessageId: string;
