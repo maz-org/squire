@@ -23,7 +23,7 @@ describe('formatPerk', () => {
       count: 1,
       cards: [{ count: 1, attackModifier: { type: 'minus2' } }],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe('Remove 1 -2 card');
+    expect(formatPerk(perk, labels)).toBe('Remove 1 -2 card');
   });
 
   it('formats a replace perk with simple modifiers', () => {
@@ -35,7 +35,7 @@ describe('formatPerk', () => {
         { count: 1, attackModifier: { type: 'plus1' } },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe('Replace 3 -1 cards with +1 cards');
+    expect(formatPerk(perk, labels)).toBe('Replace 3 -1 cards with +1 cards');
   });
 
   it('formats an add perk', () => {
@@ -59,7 +59,7 @@ describe('formatPerk', () => {
         },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe('Add 2 Rolling +2 Regenerate Self cards');
+    expect(formatPerk(perk, labels)).toBe('Add 2 Rolling +2 Regenerate Self cards');
   });
 
   it('formats a perk with wound condition effect', () => {
@@ -77,7 +77,7 @@ describe('formatPerk', () => {
         },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe('Replace 2 -1 cards with +0 Wound cards');
+    expect(formatPerk(perk, labels)).toBe('Replace 2 -1 cards with +0 Wound cards');
   });
 
   it('formats a custom perk by resolving label', () => {
@@ -86,9 +86,7 @@ describe('formatPerk', () => {
       count: 1,
       custom: '%data.custom.fh.blinkblade.5%',
     };
-    expect(formatPerk(perk, 'blinkblade', labels)).toBe(
-      'Gain Advantage on the next three attacks you perform',
-    );
+    expect(formatPerk(perk, labels)).toBe('Gain Advantage on the next three attacks you perform');
   });
 
   it('formats a perk with custom effect on card (label reference)', () => {
@@ -106,7 +104,7 @@ describe('formatPerk', () => {
         },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe(
+    expect(formatPerk(perk, labels)).toBe(
       'Replace 2 +1 cards with two +0 Move one of your character tokens backward one slot cards',
     );
   });
@@ -118,9 +116,7 @@ describe('formatPerk', () => {
       immunity: 'immobilize',
       custom: '%data.custom.fh.blinkblade.5%',
     };
-    expect(formatPerk(perk, 'blinkblade', labels)).toBe(
-      'Gain Advantage on the next three attacks you perform',
-    );
+    expect(formatPerk(perk, labels)).toBe('Gain Advantage on the next three attacks you perform');
   });
 
   it('formats replace perk with multiple-count cards', () => {
@@ -132,7 +128,7 @@ describe('formatPerk', () => {
         { count: 2, attackModifier: { type: 'plus2' } },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe('Replace 1 two +1 cards with two +2 cards');
+    expect(formatPerk(perk, labels)).toBe('Replace 1 two +1 cards with two +2 cards');
   });
 
   it('formats add perk with multiple card groups', () => {
@@ -158,7 +154,7 @@ describe('formatPerk', () => {
         },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe(
+    expect(formatPerk(perk, labels)).toBe(
       'Add 2 Rolling +0 Disarm cards and Rolling +0 Muddle cards',
     );
   });
@@ -187,7 +183,7 @@ describe('formatPerk', () => {
         },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe(
+    expect(formatPerk(perk, labels)).toBe(
       'Replace 2 two +0 cards with Rolling +0 Pierce 3 cards and Rolling +0 Retaliate 2 cards',
     );
   });
@@ -201,7 +197,7 @@ describe('formatPerk', () => {
         { count: 1, attackModifier: { type: 'plus1' } },
       ],
     };
-    expect(formatPerk(perk, 'drifter', labels)).toBe('Remove 1 -2 card and +1 card');
+    expect(formatPerk(perk, labels)).toBe('Remove 1 -2 card and +1 card');
   });
 });
 

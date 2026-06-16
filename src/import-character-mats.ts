@@ -199,7 +199,7 @@ function pluralizeCard(count: number): string {
   return count === 1 ? 'card' : 'cards';
 }
 
-export function formatPerk(perk: GhsPerk, characterName: string, labels: LabelData): string {
+export function formatPerk(perk: GhsPerk, labels: LabelData): string {
   if (perk.type === 'custom' && perk.custom) {
     return resolvePerkText(perk.custom, labels);
   }
@@ -236,7 +236,7 @@ const DRIFTER_IGNORE_NEGATIVE_ITEM_EFFECTS_PERK =
 
 const CURATED_CHARACTER_MAT_PERKS: Record<string, readonly string[]> = {
   // GHS omits this Drifter perk text. Keep the curation local to the import
-  // boundary and avoid unsupported printed perk names.
+  // boundary and keep character-mat perks as effect text only.
   'gloomhavensecretariat:character-mat/drifter': [DRIFTER_IGNORE_NEGATIVE_ITEM_EFFECTS_PERK],
 };
 
@@ -280,7 +280,7 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
   const sourceId = `gloomhavensecretariat:character-mat/${ghs.name}`;
   const perks = applyCharacterMatCurations(
     sourceId,
-    ghs.perks.map((p) => formatPerk(p, ghs.name, labels)),
+    ghs.perks.map((p) => formatPerk(p, labels)),
   );
 
   const masteries = ghs.masteries.map((m) => resolvePerkText(m, labels));
