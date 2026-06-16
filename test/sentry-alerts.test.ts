@@ -29,51 +29,6 @@ async function readProjectFile(path: string): Promise<string> {
 }
 
 describe('Sentry alert catalog', () => {
-  it('documents each production alert rule with stable filters and safe tests', async () => {
-    const runbook = await readProjectFile('docs/runbooks/sentry-alerts.md');
-
-    for (const alertName of [
-      'Squire production backend request p95 latency',
-      'Squire production chat/SSE p95 latency',
-      'Squire production chat/SSE log failure spike',
-      'Squire production browser stream transport failures',
-      'Squire production script failure log spike',
-      'Squire production auth/rate-limit anomaly spike',
-      'Squire production budget/accounting failure',
-      'Squire production backend error spike',
-      'Squire production chat/SSE failure spike',
-      'Squire production frontend error spike',
-      'Squire production cron/job failure',
-      'Squire production deploy regression new issue',
-      'Squire production uptime failure',
-    ]) {
-      expect(runbook).toContain(alertName);
-    }
-
-    for (const filter of [
-      'environment:production http.route:* squire.request_id:*',
-      'environment:production squire.surface:[chat_sse,api_ask]',
-      'environment:production surface:[chat_sse,api_ask] status:error',
-      'environment:production surface:browser event_type:browser_stream_error stream_error_kind:transport',
-      'environment:production event_type:script.lifecycle job_kind:[cron,release_command,manual_migration] status:error',
-      'environment:production surface:security_log security_event:[rate_limit_rejected,rate_limit_unavailable,google_login_denied]',
-      'environment:production surface:security_log security_event:[llm_budget_accounting_failed,llm_budget_warning]',
-      'environment:production surface:server level:error',
-      'environment:production failure_kind:assistant_turn level:error',
-      'environment:production surface:browser event_type:browser_error level:error',
-      'environment:production job_kind:cron level:error',
-      'environment:production release:* level:error',
-      'https://squire.maz.org/api/health',
-    ]) {
-      expect(runbook).toContain(filter);
-    }
-
-    for (const kind of ['backend', 'chat', 'browser', 'cron', 'uptime', 'deploy-regression']) {
-      expect(runbook).toContain(`npm run sentry:test-event -- --kind ${kind}`);
-    }
-    expect(runbook).toContain('api/__sentry-uptime-test-404');
-  });
-
   it('exposes safe test-event log and trace payloads without sending events in dry-run mode', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;

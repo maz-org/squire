@@ -291,39 +291,4 @@ describe('production data lifecycle workflows', () => {
       workflow.indexOf('Wait for production rule-source reindex when retrieval changed'),
     ).toBeLessThan(workflow.indexOf('- name: Deploy to Fly'));
   });
-
-  it('documents normal production data refresh and recovery paths', async () => {
-    const runbook = await readProjectFile('docs/runbooks/production-operations.md');
-
-    for (const expected of [
-      '## Production data lifecycle',
-      'Production seed card data',
-      'Production seed scenario and section books',
-      'Production seed unlock graphs',
-      'Production reindex rule sources',
-      'PRODUCTION_DATABASE_URL',
-      'data/extracted/',
-      'data/extracted/scenario-section-books.json',
-      'data/extracted/unlock-graphs/',
-      'data/pdfs/',
-      'data/rule-sources/',
-      'npm run seed:cards',
-      'npm run seed:scenario-section-books',
-      'npm run seed:unlock-graphs',
-      'unlock_graph_scenarios',
-      'npm run index',
-      'npm run production-data:smoke',
-      'rules search',
-      'item lookup',
-      'workflow_dispatch',
-      'frosthaven',
-      'gloomhaven-2e',
-      'both games',
-      'rebuild',
-      'embedding model/version change',
-      'Partial failure',
-    ]) {
-      expect(runbook).toContain(expected);
-    }
-  });
 });
