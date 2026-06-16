@@ -231,6 +231,23 @@ export function formatPerk(perk: GhsPerk, characterName: string, labels: LabelDa
   return `${capitalize(perk.type)} ${perk.count} cards`;
 }
 
+const DRIFTER_BLESSED_PERK =
+  'Blessed: You may ignore negative item effects and the appearance of a cursed item';
+
+const CURATED_CHARACTER_MAT_PERKS: Record<string, readonly string[]> = {
+  // GHS omits the printed Drifter Blessed perk, which caused Squire to deny a
+  // real table correction. Keep this curation local to the import boundary.
+  'gloomhavensecretariat:character-mat/drifter': [DRIFTER_BLESSED_PERK],
+};
+
+function applyCharacterMatCurations(sourceId: string, perks: string[]): string[] {
+  const curated = CURATED_CHARACTER_MAT_PERKS[sourceId] ?? [];
+  if (curated.length === 0 || perks.length === 0) return perks;
+
+  const existing = new Set(perks.map((perk) => perk.toLowerCase()));
+  return [...perks, ...curated.filter((perk) => !existing.has(perk.toLowerCase()))];
+}
+
 // ─── Conversion ──────────────────────────────────────────────────────────────
 
 /**
@@ -260,7 +277,11 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
     hp[String(stat.level)] = stat.health;
   }
 
-  const perks = ghs.perks.map((p) => formatPerk(p, ghs.name, labels));
+  const sourceId = `gloomhavensecretariat:character-mat/${ghs.name}`;
+  const perks = applyCharacterMatCurations(
+    sourceId,
+    ghs.perks.map((p) => formatPerk(p, ghs.name, labels)),
+  );
 
   const masteries = ghs.masteries.map((m) => resolvePerkText(m, labels));
 
@@ -272,7 +293,7 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
     hp,
     perks,
     masteries,
-    sourceId: `gloomhavensecretariat:character-mat/${ghs.name}`,
+    sourceId,
   };
 }
 

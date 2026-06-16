@@ -1779,6 +1779,45 @@ describe('knowledge discovery tools', () => {
     });
   });
 
+  it('lookupEntity opens character-mat card records when character kind is used with mat phrasing', async () => {
+    const result = await lookupEntity('Drifter character mat', { kinds: ['character'] });
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
+        data: {
+          name: 'Drifter',
+          sourceId: 'gloomhavensecretariat:character-mat/drifter',
+          displayName: 'Drifter',
+          perks: expect.arrayContaining([
+            'Blessed: You may ignore negative item effects and the appearance of a cursed item',
+          ]),
+        },
+      },
+    });
+  });
+
+  it('lookupEntity resolves Drifter Blessed perk text to the character mat', async () => {
+    const result = await lookupEntity('Drifter Blessed perk ignore negative item effects', {
+      kinds: ['character'],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
+        data: {
+          perks: expect.arrayContaining([
+            'Blessed: You may ignore negative item effects and the appearance of a cursed item',
+          ]),
+        },
+      },
+    });
+  });
+
   it('lookupEntity asks for clarification instead of opening tied monster records', async () => {
     const result = await lookupEntity('Living Spirit monster', {
       kinds: ['monster'],

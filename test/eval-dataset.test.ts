@@ -72,10 +72,10 @@ describe('eval dataset', () => {
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(80);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(56);
+    expect(cases).toHaveLength(81);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(57);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
-    expect(cases.filter(evalCaseHasSafety)).toHaveLength(13);
+    expect(cases.filter(evalCaseHasSafety)).toHaveLength(14);
   });
 
   it('requires explicit eval metadata on cases', () => {
@@ -129,8 +129,8 @@ describe('eval dataset', () => {
   it('derives the Frosthaven parity baseline from fixture metadata', () => {
     expect(baselineCountsFor(cases, 'frosthaven')).toEqual({
       game: 'frosthaven',
-      finalAnswerCases: 17,
-      trajectoryCases: 11,
+      finalAnswerCases: 18,
+      trajectoryCases: 12,
       boundaryCases: 1,
     });
     expect(baselineCountsFor(cases, 'gloomhaven-2e')).toEqual({
@@ -357,6 +357,23 @@ describe('eval dataset', () => {
     expect(spyglassCase?.finalAnswer?.expected).toMatch(/head slot/i);
     expect(spyglassCase?.finalAnswer?.expected).toMatch(/craft cost 1 metal/i);
     expect(spyglassCase?.finalAnswer?.expected).not.toMatch(/40 gold|small item slot|2 uses/i);
+  });
+
+  it('guards the Drifter Blessed user-correction regression', () => {
+    const evalCase = cases.find((candidate) => candidate.id === 'drifter-blessed-correction');
+
+    expect(evalCase?.question).toMatch(/Drifter/i);
+    expect(evalCase?.question).toMatch(/Blessed/i);
+    expect(evalCase?.finalAnswer?.expected).toMatch(/Blessed/i);
+    expect(evalCase?.finalAnswer?.expected).toMatch(/ignore negative item effects/i);
+    expect(evalCase?.finalAnswer?.grading).toMatch(/must not deny/i);
+    expect(evalCase?.trajectory?.requiredTools).toEqual(['lookup_entity']);
+    expect(evalCase?.trajectory?.requiredRefs).toContain(
+      'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
+    );
+    expect(evalCase?.safety?.forbiddenAnswerPatterns).toEqual(
+      expect.arrayContaining(['drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}blessed']),
+    );
   });
 
   it('defines flexible tool-path expectations for trajectory cases', () => {

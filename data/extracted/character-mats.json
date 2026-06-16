@@ -263,7 +263,8 @@
       "Add 1 +1 card",
       "Whenever you long rest, you may move one of your characters token backward one slot",
       "You may bring one additional One Hand item into each scenario",
-      "At the end of each scenario you may discard up to two loot cards, except Random Item, to draw that many new loot cards"
+      "At the end of each scenario you may discard up to two loot cards, except Random Item, to draw that many new loot cards",
+      "Blessed: You may ignore negative item effects and the appearance of a cursed item"
     ],
     "masteries": [
       "End a scenario with your character tokens on the last slots of four persistent abilities",

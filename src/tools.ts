@@ -792,6 +792,14 @@ function cardTypesForKinds(kinds?: string[]): CardType[] {
   return [...out];
 }
 
+type CharacterMatFallbackReason = 'explicit-mat' | 'class-data';
+
+function characterMatFallbackReason(query: string): CharacterMatFallbackReason | null {
+  if (/\b(?:character\s+mat|mat)\b/i.test(query)) return 'explicit-mat';
+  if (/\b(?:perks?|blessed|negative item effects?)\b/i.test(query)) return 'class-data';
+  return null;
+}
+
 function displayTitleForCard(record: Record<string, unknown>, type: CardType): string {
   if (typeof record.name === 'string') return record.name;
   if (typeof record.cardName === 'string') return record.cardName;
@@ -1550,7 +1558,34 @@ export async function resolveEntity(
 
   // Campaign-state kinds resolve only within the caller's memberships; with
   // no identity they contribute nothing (SQR-269, ADR 0021).
-  candidates.push(...(await resolveCampaignEntities(options.userId, game, query, kinds, limit)));
+  const campaignCandidates = await resolveCampaignEntities(
+    options.userId,
+    game,
+    query,
+    kinds,
+    limit,
+  );
+  candidates.push(...campaignCandidates);
+
+  const matFallbackReason = kinds.includes('character') ? characterMatFallbackReason(query) : null;
+  if (
+    matFallbackReason &&
+    !kinds.includes('card') &&
+    (matFallbackReason === 'explicit-mat' || campaignCandidates.length === 0)
+  ) {
+    const matCandidates = await resolveCards(query, ['character-mats'], limit, normalizedOptions);
+    candidates.push(
+      ...matCandidates.map((candidate) => ({
+        ...candidate,
+        confidence:
+          matFallbackReason === 'explicit-mat'
+            ? Math.max(candidate.confidence, 0.94)
+            : candidate.confidence,
+        matchReason:
+          matFallbackReason === 'explicit-mat' ? 'Character mat match' : candidate.matchReason,
+      })),
+    );
+  }
 
   return {
     ok: true,
