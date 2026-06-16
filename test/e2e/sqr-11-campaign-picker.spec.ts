@@ -8,6 +8,8 @@
  */
 import { expect, type Page, test } from '@playwright/test';
 
+import { resetE2eDb, teardownE2eDb } from './helpers/db.ts';
+
 async function loginAsDevUser(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.getByRole('button', { name: 'Sign in as Dev User' })).toBeVisible();
@@ -16,6 +18,16 @@ async function loginAsDevUser(page: Page): Promise<void> {
 }
 
 test.describe('campaign picker and context strip', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetE2eDb();
+    await page.context().clearCookies();
+    await page.addInitScript(() => window.localStorage.clear());
+  });
+
+  test.afterAll(async () => {
+    await teardownE2eDb();
+  });
+
   test('creates a campaign, switches activation, and bridges via the strip', async ({ page }) => {
     await loginAsDevUser(page);
 

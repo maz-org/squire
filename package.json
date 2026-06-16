@@ -37,6 +37,7 @@
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:db": "vitest run --config vitest.db.config.ts",
     "test:split": "vitest run --config vitest.split.config.ts",
+    "test:timing": "mkdir -p .gstack/test-timings && npm run test:unit -- --reporter=json --outputFile=.gstack/test-timings/unit.json && npm run test:db -- --reporter=json --outputFile=.gstack/test-timings/db.json && node scripts/summarize-test-timings.ts --fail-over-threshold unit=.gstack/test-timings/unit.json db=.gstack/test-timings/db.json",
     "test:coverage": "vitest run --coverage --config vitest.split.config.ts",
     "test:coverage:serial": "vitest run --coverage --exclude test/import-scenario-section-books.test.ts",
     "test:slow:pdf": "vitest run test/import-scenario-section-books.test.ts",

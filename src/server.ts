@@ -81,7 +81,7 @@ import type { CardType } from './schemas.ts';
 import { availableModulesFor, gameDefinitionFor, normalizeGameId, requireGameId } from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
-import { startHttpServer } from './server-start.ts';
+import { startHttpServerWithTelemetry } from './server-start.ts';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import {
   registerClient,
@@ -165,7 +165,6 @@ import {
   captureTelemetryFeedback,
   captureTelemetryLog,
   captureTelemetryMessage,
-  flushTelemetry,
   initTelemetry,
   type TelemetryCaptureInput,
   type TelemetryFeedbackInput,
@@ -4504,26 +4503,14 @@ app.delete('/api/characters/:id/cards/:cardId', async (c) => {
 
 export async function startServer(): Promise<void> {
   const { createAdaptorServer } = await import('@hono/node-server');
-  try {
-    await startHttpServer({
-      appFetch: app.fetch,
-      createAdaptorServer,
-      loadServerConfig,
-      getWorktreeRuntime,
-      claimWorktreePort,
-      startBootstrapLifecycle,
-    });
-  } catch (error) {
-    captureTelemetryError(error, {
-      route: 'server.startup',
-      context: {
-        surface: 'server',
-        phase: 'startup',
-      },
-    });
-    await flushTelemetry(2_000);
-    throw error;
-  }
+  await startHttpServerWithTelemetry({
+    appFetch: app.fetch,
+    createAdaptorServer,
+    loadServerConfig,
+    getWorktreeRuntime,
+    claimWorktreePort,
+    startBootstrapLifecycle,
+  });
 }
 
 // CLI entrypoint

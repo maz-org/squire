@@ -38,19 +38,46 @@ export async function setupTestDb(): Promise<ReturnType<typeof createStandaloneD
 }
 
 /**
- * Fast reset: truncate in reverse-dependency order. Slower-but-safer
- * transaction-per-test is tracked in the tech spec as a future option.
+ * Fast reset for mutable tables. Most DB tests create only a few rows, so
+ * ordered DELETEs are far cheaper than TRUNCATE's lock-heavy FK/identity work.
+ * Globally seeded card and scenario-section fixture tables are intentionally
+ * left alone here. Most tests read them only; tests that mutate fixture rows
+ * own local cleanup so the common reset path stays cheap.
  */
 export async function resetTestDb(): Promise<void> {
   if (!db) throw new Error('resetTestDb called before setupTestDb');
-  await db.execute(sql`
-    TRUNCATE unlock_graph_threads, unlock_graph_scenarios, llm_budget_warnings, llm_budget_ledger, messages, conversations, rule_source_embeddings, embeddings,
-             mutation_idempotency_keys, pending_mutations, campaign_audit_log,
-             character_cards, character_items, characters, campaign_members, campaigns,
-             oauth_audit_log, oauth_tokens, oauth_authorization_codes, oauth_clients, sessions, users
-             RESTART IDENTITY CASCADE
-  `);
+  await db.transaction(async (tx) => {
+    for (const statement of RESET_TABLE_DELETES) {
+      await tx.execute(statement);
+    }
+  });
 }
+
+const RESET_TABLE_DELETES = [
+  sql`DELETE FROM message_stream_events`,
+  sql`DELETE FROM unlock_graph_threads`,
+  sql`DELETE FROM unlock_graph_scenarios`,
+  sql`DELETE FROM llm_budget_warnings`,
+  sql`DELETE FROM llm_budget_ledger`,
+  sql`DELETE FROM messages`,
+  sql`DELETE FROM conversations`,
+  sql`DELETE FROM rule_source_embeddings`,
+  sql`DELETE FROM embeddings`,
+  sql`DELETE FROM mutation_idempotency_keys`,
+  sql`DELETE FROM pending_mutations`,
+  sql`DELETE FROM campaign_audit_log`,
+  sql`DELETE FROM character_cards`,
+  sql`DELETE FROM character_items`,
+  sql`DELETE FROM characters`,
+  sql`DELETE FROM campaign_members`,
+  sql`DELETE FROM campaigns`,
+  sql`DELETE FROM oauth_audit_log`,
+  sql`DELETE FROM oauth_tokens`,
+  sql`DELETE FROM oauth_authorization_codes`,
+  sql`DELETE FROM oauth_clients`,
+  sql`DELETE FROM sessions`,
+  sql`DELETE FROM users`,
+];
 
 export async function teardownTestDb(): Promise<void> {
   if (closeDb) {
