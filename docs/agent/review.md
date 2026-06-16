@@ -43,6 +43,20 @@ branch/PR.
    equivalent) for any local-only follow-up commits, then delete the local
    feature branch
 
+If the CodeRabbit check says review completed but GitHub still reports
+`reviewDecision: REVIEW_REQUIRED` or `reviews: []`, ask CodeRabbit directly
+before treating the review as stuck:
+
+```text
+@coderabbitai did you complete the review? i don't see an approval
+```
+
+CodeRabbit can acknowledge that analysis finished but no GitHub review object
+was submitted, then submit the missing approval. If it says the review is
+complete but the approval still does not appear after a short poll, comment
+`@coderabbitai approve`. If CodeRabbit says incremental review skipped already
+reviewed commits, use `@coderabbitai full review` before escalating.
+
 Use `/loop` to watch for new comments and check status. Do not stop watching early.
 
 **Polling cadence** — when actively waiting on CodeRabbit re-review or CI on
