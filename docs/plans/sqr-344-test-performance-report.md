@@ -66,10 +66,9 @@ belong in the browser-e2e suite, not the normal Vitest gate.
 
 The browser-e2e job existed in `.github/workflows/ci.yml`, but it was limited to
 scheduled and manual runs. PR CI ran Vitest coverage only, so it could not catch
-the SQR-11-to-SQR-24 browser-state leak. The job now runs on PRs and main
-pushes, and the duplicate daily CI schedule has been removed. The LLM-backed
-API-agent e2e and slow PDF extraction jobs remain manual-only because they are
-heavier and cover external or intentionally slow paths.
+the SQR-11-to-SQR-24 browser-state leak. The CI workflow now runs all current
+CI/e2e jobs on PRs and main pushes, and the duplicate daily CI schedule has
+been removed.
 
 ## Remaining Over-1s Test
 
