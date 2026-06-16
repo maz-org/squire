@@ -261,6 +261,14 @@ function installUnavailableLimiter(error = new Error('redis unavailable')) {
 
 function resetRouteMocks() {
   vi.clearAllMocks();
+  mockStartActiveSpan.mockReset();
+  mockStartActiveSpan.mockImplementation((_: string, ...args: unknown[]) => {
+    const callback = args.findLast(
+      (arg): arg is (span: typeof mockRequestSpan) => unknown => typeof arg === 'function',
+    );
+    if (!callback) throw new TypeError('startActiveSpan callback missing');
+    return callback(mockRequestSpan);
+  });
   mockInitialize.mockReset();
   mockEnsureBootstrapStatus.mockReset();
   mockGetBootstrapStatus.mockReset();

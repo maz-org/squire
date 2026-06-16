@@ -88,12 +88,15 @@ describe('deployment configuration', () => {
     );
     expect(packageJson.scripts?.['test:full']).toBe('vitest run');
     expect(packageJson.scripts?.['test:coverage:full']).toBe('vitest run --coverage');
-    expect(workflow).toContain('cron:');
+    expect(workflow).not.toContain('cron:');
+    expect(workflow).not.toContain("github.event_name == 'schedule'");
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('run: npm run test:coverage');
     expect(workflow).toContain('name: Slow PDF extraction test');
-    expect(workflow).toContain("github.event_name == 'schedule'");
+    expect(workflow).toContain("if: github.event_name == 'workflow_dispatch'");
     expect(workflow).toContain('run: npm run test:slow:pdf');
+    expect(workflow).toContain('name: Browser E2E smoke');
+    expect(workflow).toContain('run: npm run e2e:browser');
     expect(workflow).not.toContain('run: npx vitest run --coverage');
   });
 
@@ -134,7 +137,7 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('actions/upload-artifact');
   });
 
-  it('defines the scheduled authenticated API and agent smoke command', async () => {
+  it('defines the manual authenticated API and agent smoke command', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;
     };
@@ -142,8 +145,8 @@ describe('deployment configuration', () => {
 
     expect(packageJson.scripts?.['e2e:api-agent']).toBe('node scripts/e2e-api-agent-smoke.ts');
     expect(workflow).toContain('name: Authenticated API and agent E2E smoke');
-    expect(workflow).toContain("github.event_name == 'schedule'");
-    expect(workflow).toContain("github.event_name == 'workflow_dispatch'");
+    expect(workflow).not.toContain("github.event_name == 'schedule'");
+    expect(workflow).toContain("if: github.event_name == 'workflow_dispatch'");
     expect(workflow).toContain('ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}');
     expect(workflow).toContain('VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}');
     expect(workflow).toContain("SQUIRE_LLM_DAILY_BUDGET_USD: '0.25'");

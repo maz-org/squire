@@ -1,5 +1,7 @@
 import { expect, type Page, type Request, test } from '@playwright/test';
 
+import { resetE2eDb, teardownE2eDb } from './helpers/db.ts';
+
 interface StreamFixture {
   answerText: string;
   finalHtml: string;
@@ -122,8 +124,13 @@ async function expectChatControlsUsable(page: Page): Promise<void> {
 
 test.describe('SQR-24 browser chat game selection', () => {
   test.beforeEach(async ({ page }) => {
+    await resetE2eDb();
     await page.context().clearCookies();
     await page.addInitScript(() => window.localStorage.clear());
+  });
+
+  test.afterAll(async () => {
+    await teardownE2eDb();
   });
 
   test('blocks logged-out chat actions and redirects protected chat pages', async ({ page }) => {

@@ -1,6 +1,7 @@
 import type { Server } from 'node:net';
 
 import type { ServerConfig } from './config.ts';
+import { captureTelemetryError, flushTelemetry } from './telemetry.ts';
 import type { PortClaim, WorktreeRuntime } from './worktree-runtime.ts';
 
 type FetchHandler = (request: Request) => Response | Promise<Response>;
@@ -63,6 +64,22 @@ export async function startHttpServer({
   server.ref();
   startBootstrapLifecycle();
   log(`Squire server listening on port ${configuredPort}`);
+}
+
+export async function startHttpServerWithTelemetry(deps: StartHttpServerDeps): Promise<void> {
+  try {
+    await startHttpServer(deps);
+  } catch (error) {
+    captureTelemetryError(error, {
+      route: 'server.startup',
+      context: {
+        surface: 'server',
+        phase: 'startup',
+      },
+    });
+    await flushTelemetry(2_000);
+    throw error;
+  }
 }
 
 async function listen(server: Server, port: number, host?: string): Promise<void> {
