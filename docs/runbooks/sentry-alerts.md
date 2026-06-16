@@ -159,7 +159,6 @@ The safe test events use synthetic IDs only:
   search URL, and `traceProof`
 - the trace search URL is not proof by itself; copy confirmed trace rows or
   `traceSearchableReason` into the Linear Evidence section
-  that can be copied into Linear Evidence fields
 
 The uptime safe command proves app telemetry for the health-check path without
 breaking `/api/health`. For the uptime alert itself, prefer Sentry's monitor test
