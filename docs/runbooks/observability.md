@@ -332,9 +332,11 @@ npm run sentry:test-event -- --kind chat --dry-run
 npm run sentry:test-event -- --kind uptime --dry-run
 ```
 
-The safe verification commands print sanitized Sentry event, log, and trace
-search URLs. Copy those URLs into the Linear Evidence section when proving a
-bug-report or alert path.
+The safe verification commands print sanitized Sentry event/log search URLs and
+a trace search URL. The trace URL is a search aid, not proof by itself. Copy the
+`traceProof` fields into the Linear Evidence section: use confirmed Sentry trace
+rows when available, or copy `traceSearchableReason` when the script reports
+trace searchability as unavailable or unverified.
 
 Browser replay and feedback smoke:
 
@@ -361,8 +363,9 @@ Uptime smoke:
 2. If unavailable, create a temporary duplicate uptime monitor pointed at
    `https://squire.maz.org/api/__sentry-uptime-test-404`.
 3. Verify the alert matches, then delete the duplicate monitor.
-4. Run `--kind uptime` to create searchable app telemetry for the health-check
-   path without disrupting production.
+4. Run `--kind uptime` to create safe app telemetry for the health-check path
+   without disrupting production. Treat the printed trace URL as searchable only
+   after Sentry returns matching rows or the command reports trace proof.
 5. Do not break the real `/api/health` endpoint to test alerting.
 
 ## Release Checklist

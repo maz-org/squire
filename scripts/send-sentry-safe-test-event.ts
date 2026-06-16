@@ -1,15 +1,16 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import * as Sentry from '@sentry/node';
+import { trace, type Attributes } from '@opentelemetry/api';
 
 import {
   captureTelemetryError,
   captureTelemetryLog,
   captureTelemetryMessage,
-  flushTelemetry,
   initTelemetry,
+  sentryTraceSampleRateFromEnv,
 } from '../src/telemetry.ts';
+import { runScriptWithTelemetry } from '../src/script-telemetry.ts';
 import {
   SENTRY_APP_HEALTH_ENVIRONMENT,
   SENTRY_APP_HEALTH_ORG,
@@ -28,6 +29,16 @@ export const SAFE_TEST_KINDS = [
 
 type SafeTestKind = (typeof SAFE_TEST_KINDS)[number];
 type SafeVerificationKind = Exclude<SafeTestKind, 'scrub-canary'>;
+type TraceSearchable = true | false | null;
+
+interface SafeTraceProof {
+  traceAttempted: boolean;
+  traceSpanStarted: boolean;
+  traceSearchable: TraceSearchable;
+  traceSearchableReason: string;
+  traceId: string | null;
+  spanId: string | null;
+}
 
 export const SAFE_VERIFICATION_KINDS = [
   'backend',
@@ -245,11 +256,13 @@ function sentryEvidence(kind: SafeVerificationKind, input: ReturnType<typeof saf
       'LangSmith Trace/Thread/Run':
         'unavailable: safe synthetic verification does not create an AI run',
       Observed: `${kind} synthetic app telemetry emitted`,
-      Expected: 'Sentry event, log, and trace are searchable by request_id',
+      Expected:
+        'Sentry event and log are searchable by request_id; trace rows require traceProof or manual Sentry confirmation',
       'Likely failing area': `sentry-${kind}`,
       'First files to inspect': 'scripts/send-sentry-safe-test-event.ts; src/telemetry.ts',
       Repro: `fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind ${kind}'`,
-      Acceptance: 'Copy the event, log, and trace search URLs into Linear evidence',
+      Acceptance:
+        'Copy the event and log search URLs plus either confirmed trace rows or traceProof unavailable reason into Linear evidence',
     },
   };
 }
@@ -316,6 +329,89 @@ function safeVerificationTrace(
   } as const;
 }
 
+function safeVerificationTraceAttributes(
+  kind: SafeVerificationKind,
+  input: ReturnType<typeof safeTestInput>,
+): Attributes {
+  return safeVerificationTrace(kind, input).attributes;
+}
+
+function sentryTraceDisabledReason(): string | undefined {
+  const tracesSampleRate = sentryTraceSampleRateFromEnv(process.env);
+  if (tracesSampleRate === undefined) {
+    return 'SENTRY_TRACES_SAMPLE_RATE is unset or invalid, so Sentry app-span export is disabled';
+  }
+  if (tracesSampleRate <= 0) {
+    return 'SENTRY_TRACES_SAMPLE_RATE is 0, so Sentry app-span export is disabled';
+  }
+  return undefined;
+}
+
+function dryRunTraceProof(): SafeTraceProof {
+  return {
+    traceAttempted: false,
+    traceSpanStarted: false,
+    traceSearchable: null,
+    traceSearchableReason:
+      'dry-run: telemetry is not sent, so Sentry span searchability is not checked',
+    traceId: null,
+    spanId: null,
+  };
+}
+
+function traceProof(input: {
+  spanStarted: boolean;
+  traceId: string | null;
+  spanId: string | null;
+  startError?: unknown;
+}): SafeTraceProof {
+  const disabledReason = sentryTraceDisabledReason();
+  if (disabledReason) {
+    return {
+      traceAttempted: false,
+      traceSpanStarted: input.spanStarted,
+      traceSearchable: false,
+      traceSearchableReason: `unavailable: ${disabledReason}`,
+      traceId: input.traceId,
+      spanId: input.spanId,
+    };
+  }
+
+  if (input.startError) {
+    return {
+      traceAttempted: true,
+      traceSpanStarted: input.spanStarted,
+      traceSearchable: false,
+      traceSearchableReason: `unavailable: OpenTelemetry span start failed: ${
+        input.startError instanceof Error ? input.startError.message : String(input.startError)
+      }`,
+      traceId: input.traceId,
+      spanId: input.spanId,
+    };
+  }
+
+  if (!input.spanStarted) {
+    return {
+      traceAttempted: true,
+      traceSpanStarted: false,
+      traceSearchable: false,
+      traceSearchableReason: 'unavailable: OpenTelemetry did not start a local span',
+      traceId: input.traceId,
+      spanId: input.spanId,
+    };
+  }
+
+  return {
+    traceAttempted: true,
+    traceSpanStarted: true,
+    traceSearchable: null,
+    traceSearchableReason:
+      'unavailable: OpenTelemetry span was emitted, but this script does not query Sentry after ingestion; confirm rows with sentryTraceSearchUrl',
+    traceId: input.traceId,
+    spanId: input.spanId,
+  };
+}
+
 function safeVerificationDryRun(
   kind: SafeVerificationKind,
   input: ReturnType<typeof safeTestInput>,
@@ -326,6 +422,7 @@ function safeVerificationDryRun(
     event: safeVerificationEvent(kind),
     log: safeVerificationLog(kind, input),
     trace: safeVerificationTrace(kind, input),
+    traceProof: dryRunTraceProof(),
     evidence: sentryEvidence(kind, input),
   };
 }
@@ -348,8 +445,11 @@ function emitSafeVerificationTrace(
   kind: SafeVerificationKind,
   input: ReturnType<typeof safeTestInput>,
   operation: () => void,
-): boolean {
+): SafeTraceProof {
   let operationRan = false;
+  let spanStarted = false;
+  let traceId: string | null = null;
+  let spanId: string | null = null;
   const runOperationOnce = () => {
     if (operationRan) return;
     operationRan = true;
@@ -357,17 +457,31 @@ function emitSafeVerificationTrace(
   };
 
   try {
-    Sentry.startSpan(safeVerificationTrace(kind, input), () => {
-      runOperationOnce();
-    });
-    return true;
+    trace
+      .getTracer('squire.safe-test')
+      .startActiveSpan(
+        safeVerificationTrace(kind, input).name,
+        { attributes: safeVerificationTraceAttributes(kind, input) },
+        (span) => {
+          spanStarted = true;
+          const context = span.spanContext();
+          traceId = context.traceId;
+          spanId = context.spanId;
+          try {
+            runOperationOnce();
+          } finally {
+            span.end();
+          }
+        },
+      );
+    return traceProof({ spanStarted, traceId, spanId });
   } catch (error: unknown) {
     console.error(
       'safe verification trace skipped:',
       error instanceof Error ? error.message : String(error),
     );
     runOperationOnce();
-    return false;
+    return traceProof({ spanStarted, traceId, spanId, startError: error });
   }
 }
 
@@ -390,12 +504,14 @@ function scrubCanaryAttributes(): Record<string, unknown> {
   };
 }
 
-function emitScrubCanaryTrace(): boolean {
+function emitScrubCanaryTrace(): SafeTraceProof {
+  let spanStarted = false;
+  let traceId: string | null = null;
+  let spanId: string | null = null;
   try {
-    Sentry.startSpan(
+    trace.getTracer('squire.safe-test').startActiveSpan(
+      'squire.safe_scrub_canary',
       {
-        name: 'squire.safe_scrub_canary',
-        op: 'squire.scrub_canary',
         attributes: {
           'gen_ai.prompt': 'Synthetic prompt text for span scrubbing verification',
           'gen_ai.completion': 'Synthetic model output for span scrubbing verification',
@@ -408,16 +524,114 @@ function emitScrubCanaryTrace(): boolean {
           authorization: 'Bearer sentry_scrub_canary_token_1234567890',
         },
       },
-      () => undefined,
+      (span) => {
+        spanStarted = true;
+        const context = span.spanContext();
+        traceId = context.traceId;
+        spanId = context.spanId;
+        span.end();
+      },
     );
-    return true;
+    return traceProof({ spanStarted, traceId, spanId });
   } catch (error: unknown) {
     console.error(
       'scrub-canary trace skipped:',
       error instanceof Error ? error.message : String(error),
     );
-    return false;
+    return traceProof({ spanStarted, traceId, spanId, startError: error });
   }
+}
+
+function scriptTelemetryOptions(kind: SafeTestKind, input: ReturnType<typeof safeTestInput>) {
+  return {
+    scriptName: 'send-sentry-safe-test-event',
+    scriptKind: kind === 'cron' ? ('cron' as const) : ('script' as const),
+    route: routeFromInput(input),
+    requestId: requestIdFromInput(input),
+    flushTimeoutMs: 2_000,
+  };
+}
+
+function serializeTraceProof(proof: SafeTraceProof) {
+  return {
+    traceAttempted: proof.traceAttempted,
+    traceSpanStarted: proof.traceSpanStarted,
+    traceSearchable: proof.traceSearchable,
+    traceSearchableReason: proof.traceSearchableReason,
+    traceId: proof.traceId,
+    spanId: proof.spanId,
+  };
+}
+
+function scrubCanaryDryRun(kind: SafeTestKind, input: ReturnType<typeof safeTestInput>) {
+  return {
+    kind,
+    input,
+    traceProof: dryRunTraceProof(),
+  };
+}
+
+async function emitSafeVerification(
+  kind: SafeVerificationKind,
+  input: ReturnType<typeof safeTestInput>,
+) {
+  return runScriptWithTelemetry(
+    async () => {
+      let eventId: string | null = null;
+      let logSent = false;
+      const traceProofResult = emitSafeVerificationTrace(kind, input, () => {
+        eventId = captureSafeVerificationEvent(kind, input);
+        const log = safeVerificationLog(kind, input);
+        logSent = captureTelemetryLog(log.level, log.message, {
+          ...input,
+          attributes: log.attributes,
+        });
+      });
+
+      return {
+        kind,
+        eventId,
+        logSent,
+        ...serializeTraceProof(traceProofResult),
+        traceProof: traceProofResult,
+        evidence: sentryEvidence(kind, input),
+      };
+    },
+    scriptTelemetryOptions(kind, input),
+  );
+}
+
+async function emitScrubCanary(input: ReturnType<typeof safeTestInput>, kind: SafeTestKind) {
+  return runScriptWithTelemetry(
+    async () => {
+      const eventId = captureTelemetryError(new Error(SAFE_TEST_ERROR_NAMES[kind]), input);
+      const logSent = captureTelemetryLog(
+        'warn',
+        'sentry scrub canary synthetic alice@example.invalid',
+        {
+          ...input,
+          attributes: {
+            ...scrubCanaryAttributes(),
+          },
+        },
+      );
+      const traceProofResult = emitScrubCanaryTrace();
+      return {
+        kind,
+        eventId,
+        logSent,
+        ...serializeTraceProof(traceProofResult),
+        traceProof: traceProofResult,
+      };
+    },
+    scriptTelemetryOptions(kind, input),
+  );
+}
+
+function dryRunPayload(kind: SafeTestKind, input: ReturnType<typeof safeTestInput>) {
+  return isSafeVerificationKind(kind)
+    ? safeVerificationDryRun(kind, input)
+    : scrubCanaryDryRun(kind, input);
 }
 
 async function main(): Promise<void> {
@@ -425,15 +639,7 @@ async function main(): Promise<void> {
   const input = safeTestInput(args.kind);
 
   if (args.dryRun) {
-    console.log(
-      JSON.stringify(
-        isSafeVerificationKind(args.kind)
-          ? safeVerificationDryRun(args.kind, input)
-          : { kind: args.kind, input },
-        null,
-        2,
-      ),
-    );
+    console.log(JSON.stringify(dryRunPayload(args.kind, input), null, 2));
     return;
   }
 
@@ -443,45 +649,11 @@ async function main(): Promise<void> {
   }
 
   if (isSafeVerificationKind(args.kind)) {
-    const kind = args.kind;
-    let eventId: string | null = null;
-    let logSent = false;
-    const traceAttempted = emitSafeVerificationTrace(kind, input, () => {
-      eventId = captureSafeVerificationEvent(kind, input);
-      const log = safeVerificationLog(kind, input);
-      logSent = captureTelemetryLog(log.level, log.message, {
-        ...input,
-        attributes: log.attributes,
-      });
-    });
-    await flushTelemetry(2_000);
-    console.log(
-      JSON.stringify(
-        {
-          kind,
-          eventId,
-          logSent,
-          traceAttempted,
-          evidence: sentryEvidence(kind, input),
-        },
-        null,
-        2,
-      ),
-    );
+    console.log(JSON.stringify(await emitSafeVerification(args.kind, input), null, 2));
     return;
   }
 
-  const eventId = captureTelemetryError(new Error(SAFE_TEST_ERROR_NAMES[args.kind]), input);
-  const logSent =
-    args.kind === 'scrub-canary'
-      ? captureTelemetryLog('warn', 'sentry scrub canary synthetic alice@example.invalid', {
-          ...input,
-          attributes: scrubCanaryAttributes(),
-        })
-      : false;
-  const traceAttempted = args.kind === 'scrub-canary' ? emitScrubCanaryTrace() : false;
-  await flushTelemetry(2_000);
-  console.log(JSON.stringify({ kind: args.kind, eventId, logSent, traceAttempted }, null, 2));
+  console.log(JSON.stringify(await emitScrubCanary(input, args.kind), null, 2));
 }
 
 function isDirectRun(): boolean {
