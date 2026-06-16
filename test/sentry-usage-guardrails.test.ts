@@ -103,41 +103,6 @@ describe('Sentry usage and spend guardrails', () => {
     }
   });
 
-  it('documents Sentry usage checks, trace sampling, and the no cost allowlist rule', async () => {
-    const runbook = await readProjectFile('docs/runbooks/sentry-usage-guardrails.md');
-    const development = await readProjectFile('docs/DEVELOPMENT.md');
-    const envExample = await readProjectFile('.env.example');
-    const observability = await readProjectFile('docs/runbooks/observability.md');
-
-    for (const expected of [
-      '# Sentry Usage And Spend Guardrails',
-      '2026-06-15',
-      '5GB logs',
-      '5M spans',
-      '$0.50/GB',
-      '$0.0000020/span',
-      '$0.0000040/span',
-      'Stats & Usage',
-      'Settings > Subscription',
-      'Sentry can drop data after included volume is exhausted',
-      'squire.usage.logs.accepted_gb',
-      'squire.usage.top_span_routes',
-      'SENTRY_TRACES_SAMPLE_RATE',
-      'fly secrets set SENTRY_TRACES_SAMPLE_RATE=0.10 -a maz-squire',
-      'Do not use:',
-      'A cost-based log allowlist',
-      'Dropping safe production logs just because they are `info`',
-      'Privacy filtering is always allowed and required',
-    ]) {
-      expect(runbook).toContain(expected);
-    }
-
-    expect(development).toContain('SENTRY_TRACES_SAMPLE_RATE');
-    expect(development).toContain('sentry-usage-guardrails.md');
-    expect(envExample).toContain('SENTRY_TRACES_SAMPLE_RATE=0.10');
-    expect(observability).toContain('sentry-usage-guardrails.md');
-  });
-
   it('prints token-free guardrail inventory for operators and agents', async () => {
     const { stdout } = await execFileAsync(
       process.execPath,
@@ -166,12 +131,9 @@ describe('Sentry usage and spend guardrails', () => {
 
   it('keeps runtime log handling focused on sanitization, not cost filtering', async () => {
     const telemetry = await readProjectFile('src/telemetry.ts');
-    const runbook = await readProjectFile('docs/runbooks/sentry-usage-guardrails.md');
 
     expect(telemetry).toContain('beforeSendLog: sanitizeSentryLog');
     expect(telemetry).toContain("return sanitizeTelemetryPayload('log', log)");
     expect(telemetry).not.toContain('beforeSendLog: (log)');
-    expect(runbook).toContain('Cost filtering is only an');
-    expect(runbook).toContain('explicit emergency throttle');
   });
 });

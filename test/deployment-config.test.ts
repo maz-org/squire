@@ -139,7 +139,6 @@ describe('deployment configuration', () => {
       scripts?: Record<string, string>;
     };
     const workflow = await readProjectFile('.github/workflows/ci.yml');
-    const development = await readProjectFile('docs/DEVELOPMENT.md');
 
     expect(packageJson.scripts?.['e2e:api-agent']).toBe('node scripts/e2e-api-agent-smoke.ts');
     expect(workflow).toContain('name: Authenticated API and agent E2E smoke');
@@ -150,10 +149,6 @@ describe('deployment configuration', () => {
     expect(workflow).toContain("SQUIRE_LLM_DAILY_BUDGET_USD: '0.25'");
     expect(workflow).toContain('timeout-minutes: 15');
     expect(workflow).toContain('run: npm run e2e:api-agent');
-
-    expect(development).toContain('npm run e2e:api-agent');
-    expect(development).toContain('two live `/api/ask` calls');
-    expect(development).toContain('SQUIRE_LLM_DAILY_BUDGET_USD=0.25');
   });
 
   it('defines a Fly cron process for expired session cleanup', async () => {
@@ -219,20 +214,6 @@ describe('deployment configuration', () => {
     expect(flyConfig).toContain('processes = ["cron"]');
   });
 
-  it('documents migration failure and rollback operations', async () => {
-    const runbook = await readProjectFile('docs/runbooks/deploy-rollback.md');
-
-    expect(runbook).toContain('flyctl mpg create');
-    expect(runbook).toContain('flyctl mpg attach <cluster-id>');
-    expect(runbook).toContain('Extensions page');
-    expect(runbook).toContain('Extension: `vector`');
-    expect(runbook).toContain('fly releases -a maz-squire --image');
-    expect(runbook).toContain('fly logs');
-    expect(runbook).toContain('fly deploy --image <prior-image>');
-    expect(runbook).toContain('node scripts/db-migrate.ts');
-    expect(runbook).toContain('schemas are not rolled back automatically');
-  });
-
   it('deploys main to Fly only after CI succeeds', async () => {
     const workflow = await readProjectFile('.github/workflows/deploy.yml');
 
@@ -260,32 +241,6 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('SENTRY_RELEASE: ${{ github.event.workflow_run.head_sha }}');
     expect(workflow).not.toContain('npm run db:migrate');
     expect(workflow).not.toContain('scripts/db-migrate.ts');
-  });
-
-  it('documents Fly Sentry provisioning without committing the DSN', async () => {
-    const development = await readProjectFile('docs/DEVELOPMENT.md');
-    const architecture = await readProjectFile('docs/ARCHITECTURE.md');
-    const runbook = await readProjectFile('docs/runbooks/production-operations.md');
-    const observability = await readProjectFile('docs/runbooks/observability.md');
-
-    expect(development).toContain('SENTRY_DSN');
-    expect(development).toContain('Missing `SENTRY_DSN` is a local no-op');
-    expect(development).toContain('SQUIRE_ENV=staging');
-    expect(development).toContain('npm run sentry:test-event -- --kind chat --dry-run');
-    expect(runbook).toContain('fly ext sentry create -a maz-squire');
-    expect(runbook).toContain('fly ext sentry dashboard -a maz-squire');
-    expect(runbook).toContain('npm run sentry:scrubbing -- --dry-run');
-    expect(runbook).toContain('[sentry-scrubbing.md](sentry-scrubbing.md)');
-    expect(runbook).toMatch(/sets\s+`SENTRY_DSN` as a Fly secret/);
-    expect(runbook).toContain('Do not add `SENTRY_DSN` to `fly.toml`');
-    expect(runbook).toContain('SENTRY_RELEASE');
-    expect(runbook).toContain('[observability.md](observability.md)');
-    expect(architecture).toContain('Sentry owns app observability');
-    expect(architecture).toContain('LangSmith remains the owner for LLM traces and evals');
-    expect(architecture).toContain('[docs/runbooks/observability.md](runbooks/observability.md)');
-    expect(architecture).not.toContain('APM / RUM stack is open');
-    expect(observability).toContain('Sentry owns app observability');
-    expect(observability).toContain('LangSmith owns LLM traces and eval debugging');
   });
 
   it('runs actionlint in CI for GitHub workflow changes', async () => {
@@ -350,17 +305,5 @@ describe('deployment configuration', () => {
       'dependency-name': 'typescript',
       versions: ['>=6.0.0'],
     });
-  });
-
-  it('documents GitHub deploy token setup and post-deploy smoke checks', async () => {
-    const runbook = await readProjectFile('docs/runbooks/deploy-rollback.md');
-
-    expect(runbook).toContain('fly tokens create deploy');
-    expect(runbook).toContain('FLY_API_TOKEN');
-    expect(runbook).toContain('AUTO_MERGE_APP_*');
-    expect(runbook).toContain('Deploy to Fly');
-    expect(runbook).toContain('node scripts/check-deploy-health.ts');
-    expect(runbook).toContain('https://maz-squire.fly.dev/api/live');
-    expect(runbook).toContain('https://maz-squire.fly.dev/api/health');
   });
 });

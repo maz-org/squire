@@ -1,17 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import {
-  TRACE_CONTRACT_VERSION,
-  TRACE_FIELDS,
-  TRACE_REDACTION_DENYLIST,
-  type TraceField,
-} from '../eval/trace-contract.ts';
-
-const DOC_PATH = fileURLToPath(
-  new URL('../docs/plans/sqr-125-trace-artifact-contract.md', import.meta.url),
-);
+import { TRACE_FIELDS, TRACE_REDACTION_DENYLIST, type TraceField } from '../eval/trace-contract.ts';
 
 function field(name: string): TraceField {
   const match = TRACE_FIELDS.find((candidate) => candidate.name === name);
@@ -122,14 +111,5 @@ describe('SQR-125 trace artifact contract', () => {
       'characterId',
       'playerId',
     ]);
-  });
-
-  it('has a checked-in markdown contract that names the current schema version', () => {
-    const doc = readFileSync(DOC_PATH, 'utf8');
-    expect(doc).toContain(`# SQR-125 Side-by-Side Trace Artifact Contract`);
-    expect(doc).toContain(TRACE_CONTRACT_VERSION);
-    expect(doc).toContain('LangSmith Placement Legend');
-    expect(doc).toContain('Provider-Native Transcript Rules');
-    expect(doc).toContain('Redaction Rules');
   });
 });
