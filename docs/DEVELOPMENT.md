@@ -116,6 +116,8 @@ fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind chat'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind browser'
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind cron'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind uptime'
+fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind deploy-regression'
 ```
 
 `GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for

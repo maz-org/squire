@@ -11,6 +11,10 @@ import {
   appHealthDetectorPayload,
 } from '../scripts/sentry-app-health-config.ts';
 import {
+  SAFE_VERIFICATION_KINDS,
+  safeVerificationDryRunPayload,
+} from '../scripts/send-sentry-safe-test-event.ts';
+import {
   assertDashboardMatchesExpected,
   assertDetectorMatchesExpected,
   parseSentryNextPath,
@@ -64,13 +68,13 @@ describe('Sentry alert catalog', () => {
       expect(runbook).toContain(filter);
     }
 
-    for (const kind of ['backend', 'chat', 'browser', 'cron', 'deploy-regression']) {
+    for (const kind of ['backend', 'chat', 'browser', 'cron', 'uptime', 'deploy-regression']) {
       expect(runbook).toContain(`npm run sentry:test-event -- --kind ${kind}`);
     }
     expect(runbook).toContain('api/__sentry-uptime-test-404');
   });
 
-  it('exposes the safe test-event command without sending events in dry-run mode', async () => {
+  it('exposes safe test-event log and trace payloads without sending events in dry-run mode', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;
     };
@@ -81,26 +85,43 @@ describe('Sentry alert catalog', () => {
       'node scripts/sync-sentry-app-health.ts',
     );
 
-    const { stdout } = await execFileAsync(
-      process.execPath,
-      ['scripts/send-sentry-safe-test-event.ts', '--kind', 'chat', '--dry-run'],
-      { cwd: repoRoot },
-    );
-    const payload = JSON.parse(stdout) as {
-      kind?: string;
-      input?: { context?: Record<string, unknown> };
-    };
+    for (const kind of SAFE_VERIFICATION_KINDS) {
+      const payload = safeVerificationDryRunPayload(kind);
+      const stdout = JSON.stringify(payload);
 
-    expect(payload.kind).toBe('chat');
-    expect(payload.input?.context).toMatchObject({
-      surface: 'chat_sse',
-      failureKind: 'assistant_turn',
-      eventType: 'safe_test',
-    });
-    expect(stdout).not.toContain('cookie');
-    expect(stdout).not.toContain('Bearer');
-    expect(stdout).not.toContain('prompt');
-    expect(stdout).not.toContain('answer');
+      expect(payload.kind).toBe(kind);
+      expect(payload.input?.requestId).toBe(`sentry-test-${kind}`);
+      expect(payload.event).toMatchObject({ level: 'error' });
+      expect(payload.log?.message).toBe(`sentry.safe_test.${kind}`);
+      expect(payload.trace?.name).toBe(`squire.safe_test.${kind}`);
+      expect(payload.evidence).toMatchObject({
+        requestId: `sentry-test-${kind}`,
+        sentryEventSearchUrl: expect.stringContaining(`request_id%3Asentry-test-${kind}`),
+        sentryLogsSearchUrl: expect.stringContaining(`request_id%3Asentry-test-${kind}`),
+        sentryTraceSearchUrl: expect.stringContaining(`sentry-test-${kind}`),
+      });
+      expect(payload.evidence?.linearEvidence).toMatchObject({
+        Request: `sentry-test-${kind}`,
+        Environment: expect.any(String),
+        Release: expect.any(String),
+        'Sentry Issue/Event/Replay': expect.stringContaining('Event search: https://'),
+      });
+
+      for (const forbidden of [
+        'cookie',
+        'Bearer',
+        'prompt',
+        'answer',
+        'transcript',
+        'retrieved passage',
+        'provider payload',
+        'email',
+        'customerName',
+        'fullName',
+      ]) {
+        expect(stdout).not.toContain(forbidden);
+      }
+    }
   });
 
   it('exposes the app-health dashboard and alert sync dry run', async () => {
