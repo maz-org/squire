@@ -612,6 +612,63 @@ function answerWorkArtifactMessage(title: string, sourceLabel: ToolSourceLabel |
   return `Found ${title || 'source'}${sourceLabel ? ` in ${physicalToolSourceLabel(sourceLabel)}` : ''}`;
 }
 
+function failedToolProgressMessage(detail: string): string | null {
+  const resolveMatch = detail.match(/^Resolving\s+(.+)$/i);
+  if (resolveMatch) return `Couldn't resolve ${resolveMatch[1]!.trim()}`;
+
+  const lookupMatch = detail.match(/^(?:Looking up|Looked up)\s+(.+)$/i);
+  if (lookupMatch) return `Couldn't look up ${lookupMatch[1]!.trim()}`;
+
+  const openMatch = detail.match(/^Opening\s+(.+)$/i);
+  if (openMatch) return `Couldn't open ${openMatch[1]!.trim()}`;
+
+  if (/^Search(?:ing|ed)\s+available sources$/i.test(detail)) {
+    return "Couldn't search available sources";
+  }
+  if (/^Search(?:ing|ed)\s+selected sources$/i.test(detail)) {
+    return "Couldn't search selected sources";
+  }
+
+  return null;
+}
+
+function failedToolNameMessage(rawName: string | null): string | null {
+  if (!rawName) return null;
+  const normalized = rawName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  if (normalized.includes('lookup_entity')) return "Couldn't look up entity";
+  if (normalized.includes('resolve_entity')) return "Couldn't resolve entity";
+  if (normalized.includes('open_entity')) return "Couldn't open reference";
+  if (normalized.includes('search_knowledge')) return "Couldn't search sources";
+  if (normalized.includes('search_rules')) return "Couldn't search rules";
+  if (normalized.includes('search_cards')) return "Couldn't search cards";
+  if (normalized.includes('inspect_sources')) return "Couldn't inspect sources";
+  if (normalized.includes('neighbors')) return "Couldn't follow reference links";
+
+  return null;
+}
+
+function failedUnlabeledToolResultMessage(payload: Record<string, unknown>): string {
+  const resultDetail = payloadString(payload, 'message');
+  if (resultDetail) {
+    const rawFailedProgressDetail = failedToolProgressMessage(resultDetail);
+    if (rawFailedProgressDetail) return rawFailedProgressDetail;
+
+    const progressDetail = genericAnswerWorkProgressDetail(resultDetail);
+    const failedProgressDetail = failedToolProgressMessage(progressDetail);
+    if (failedProgressDetail) return failedProgressDetail;
+  }
+
+  return (
+    failedToolNameMessage(payloadString(payload, 'name')) ??
+    failedToolNameMessage(payloadString(payload, 'id')) ??
+    "Couldn't check sources"
+  );
+}
+
 function addCompletedAnswerWorkRow(
   rows: Map<string, CompletedAnswerWorkRow>,
   input: Omit<CompletedAnswerWorkRow, 'ordinal'>,
@@ -806,7 +863,7 @@ function buildCompletedAnswerWorkTimeline(
         if (ok) continue;
         addCompletedAnswerWorkRow(rows, {
           id: payloadString(payload, 'id') ?? `failed-source-${event.sequence}`,
-          detail: "Couldn't check source index",
+          detail: failedUnlabeledToolResultMessage(payload),
           sourceLabels: [],
           state: 'error',
           sort: 90,
