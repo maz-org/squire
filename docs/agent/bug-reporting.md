@@ -53,6 +53,23 @@ passages, cookies, auth headers, OAuth tokens, or secrets into Linear. If a
 piece of evidence cannot be safely gathered, leave it unavailable with the
 reason from the bundle.
 
+## Sentry logs/traces into Linear bug evidence
+
+When the report came from a production conversation, gather the Sentry links
+before creating the Linear issue whenever they exist:
+
+- Sentry issue or event URL for grouped app/runtime errors
+- Sentry replay URL for browser/layout/stream-state reports
+- Sentry logs query URL filtered by `request_id`, `conversation_id`,
+  `user_message_id`, `route`, or `event_type`
+- Sentry trace URL or trace ID for app latency and request/span debugging
+- LangSmith trace/thread/run URL for answer-quality or tool/retrieval debugging
+
+Pass those safe links into `buildDiagnosticBundle()` and render the issue with
+`createLinearBugReportBody()`. If a link is not available, do not omit the
+field. Let the diagnostic bundle render `Unavailable: <reason>` so the missing
+evidence is explicit.
+
 ## SQR-298 And SQR-299
 
 SQR-298's in-chat bug report flow should create the same `DiagnosticBundle` and

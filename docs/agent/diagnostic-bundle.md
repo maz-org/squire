@@ -46,3 +46,24 @@ SQR-310's Linear Evidence template renders this bundle with
 `createLinearBugReportBody()` in `src/linear-bug-report-template.ts`. New
 in-chat or agent-created bug report paths should call that helper rather than
 inventing ad hoc field names.
+
+## Extending The Bundle
+
+When adding a new diagnostic field, update the schema, sanitizer, collector,
+builder, and Linear rendering path in the same PR:
+
+- Add the field to `DiagnosticBundleSchema` and the TypeScript shape.
+- Accept only low-cardinality IDs, URLs, timestamps, booleans, counts, or other
+  values that are safe to copy into Linear.
+- Add an unavailable reason for every path where the field cannot be collected.
+- Render the field through `createLinearBugReportBody()` or explain why it is
+  internal-only.
+- Add tests for a full bundle, a missing-field bundle, and redaction of unsafe
+  input.
+
+Every new diagnostic field must add an unavailable reason before it can ship.
+
+Do not add fields for raw prompts, model output, retrieved passages, full
+transcripts, request bodies, cookies, tokens, emails, names, or provider
+payloads. Those belong in LangSmith or the original source system, not in a
+Linear bug ticket.

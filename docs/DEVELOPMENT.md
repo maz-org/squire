@@ -120,6 +120,137 @@ fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind deploy-regression'
 ```
 
+### Adding telemetry for new features
+
+Sentry owns app logs, app traces, app errors, browser diagnostics, release
+health, alerting, and uptime. LangSmith owns AI traces, evals, prompts, model
+output, tool calls, and retrieval debugging. A Sentry event may link to a
+LangSmith run, thread, or trace, but it must not copy AI payloads from
+LangSmith. Keep raw prompts, model output, retrieved passages, full
+transcripts, cookies, tokens, emails, structured names, request bodies, and
+provider payloads out of Sentry.
+
+Do not call `@sentry/node` directly for app event or log capture outside
+`src/telemetry.ts`. `src/instrumentation.ts` may wire Sentry's OpenTelemetry
+integration, and `scripts/send-sentry-safe-test-event.ts` may emit documented
+safe test events. New server and script telemetry should use the helpers in
+`src/telemetry.ts` or `src/script-telemetry.ts`. New browser telemetry should
+post sanitized payloads through the existing `/api/browser-telemetry` path so
+server-side redaction and Sentry configuration remain centralized.
+
+For a new server route or domain operation, emit a stable log label and safe
+attributes:
+
+```ts
+captureTelemetryLog('info', 'feature.lifecycle', {
+  route: '/api/example',
+  requestId,
+  conversationId,
+  userMessageId,
+  langsmithRunUrl,
+  context: {
+    surface: 'api_example',
+    status: 'ok',
+  },
+  attributes: {
+    event_type: 'feature.lifecycle',
+    surface: 'api_example',
+    status: 'ok',
+    duration_ms: durationMs,
+  },
+});
+```
+
+Use stable labels and low-cardinality fields for alerts. Put operational facts
+in `attributes`; put only the diagnostic IDs needed by a bug ticket in the
+top-level helper input. Do not put raw request bodies, user text, prompt text,
+model output, provider payloads, retrieved source text, cookies, auth headers,
+emails, or names into either place. The telemetry boundary redacts known
+protected keys as a backstop, but callers should still pass safe data.
+
+For a new app span, use OpenTelemetry and Squire-prefixed attributes that match
+the alert and evidence fields:
+
+```ts
+await trace
+  .getTracer('squire.feature')
+  .startActiveSpan('squire.feature.operation', async (span) => {
+    span.setAttributes({
+      'http.route': '/api/example',
+      'squire.surface': 'api_example',
+      'squire.request_id': requestId,
+      'squire.conversation_id': conversationId,
+      'squire.user_message_id': userMessageId,
+    });
+
+    try {
+      return await runOperation();
+    } finally {
+      span.end();
+    }
+  });
+```
+
+For a cron, migration, release command, or one-off script, wrap the main
+operation instead of hand-writing Sentry calls:
+
+```ts
+await runScriptWithTelemetry(
+  async () => {
+    await main();
+  },
+  {
+    scriptName: 'example-job',
+    scriptKind: 'cron',
+    requestId: 'example-job-' + Date.now(),
+  },
+);
+```
+
+For a new alert or dashboard query, update
+`scripts/sentry-app-health-config.ts` first. Add a new area to
+`SENTRY_APP_HEALTH_AREAS` when the area is new, add a widget when operators need
+a dashboard entry, and add a monitor to `SENTRY_APP_HEALTH_MONITORS` when it
+should page or email. Update [docs/runbooks/sentry-alerts.md](runbooks/sentry-alerts.md)
+in the same PR, then run:
+
+```bash
+npm run sentry:app-health -- --dry-run
+```
+
+For a new bug-evidence field, update `src/diagnostic-bundle.ts` and
+`src/linear-bug-report-template.ts` together. The field must have a
+`DiagnosticBundleSchema` entry, a safe value sanitizer, an unavailable reason,
+and rendering through `createLinearBugReportBody()`. When an agent already has
+safe links, it can assemble evidence with:
+
+```ts
+const bundle = buildDiagnosticBundle({
+  requestId,
+  conversationId,
+  userMessageId,
+  sentryEventUrl,
+  sentryLogsUrl,
+  sentryTraceUrl,
+  langsmithRunUrl,
+});
+
+const body = createLinearBugReportBody({
+  kind: 'app_runtime',
+  bundle,
+  observed,
+  expected,
+  likelyFailingArea,
+  firstFilesToInspect,
+  reproSteps,
+  acceptanceCriteria,
+});
+```
+
+Tests should cover the contract that matters: no-DSN local behavior, redaction,
+stable field names, alert filters, dry-run output, and generated Linear evidence
+with explicit unavailable reasons.
+
 `GOOGLE_OAUTH_REDIRECT_URI` is still the configured fallback callback for
 production and non-local hosts. In local development, `/auth/google/start` and
 `/auth/google/callback` reuse the current `localhost` origin so linked

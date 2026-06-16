@@ -733,21 +733,31 @@ traces include request ID and any caller-provided user/campaign IDs. The
 browser response includes `X-Request-ID`; the web chat URL and stream URL expose
 the conversation and user-message IDs needed to find the persisted turn.
 
-**App observability: Sentry.** Sentry owns app observability for backend
+**App observability: Sentry.** Sentry owns app logs, app traces, app errors,
+browser diagnostics, release health, alerting, and uptime. It covers backend
 errors, swallowed chat failures, SSE failures, browser errors, cron/script
-failures, uptime checks, release health, and alerts. Events must use safe tags
-and context: environment, release SHA, request ID, route, conversation ID, user
-message ID, and LangSmith thread/run links when available. Sentry must not store
-raw prompts, full model answers, provider payloads, cookies, bearer tokens,
-OAuth tokens, secrets, or retrieved source passages.
+failures, uptime checks, release regressions, structured operational logs, and
+app spans. App event and log capture goes through Squire's telemetry boundary.
+Do not call `@sentry/node` directly for capture outside `src/telemetry.ts`;
+`src/instrumentation.ts` may wire Sentry's OpenTelemetry integration, and
+`scripts/send-sentry-safe-test-event.ts` may emit documented safe test events.
+Events, logs, and spans must use safe tags and context: environment, release
+SHA, request ID, route, conversation ID, user message ID, and LangSmith
+thread/run links when available. Sentry must not store raw prompts, full model
+answers, provider payloads, cookies, bearer tokens, OAuth tokens, secrets,
+request bodies, emails, structured names, full transcripts, or retrieved source
+passages.
 
 Browser feedback is categorical and tied to Sentry event ids when available.
 Browser replay data is masked structural context only: approved selectors,
 turn/input/history counts, viewport, and route ids. Raw transcript text and
 free-form feedback prose stay out of Sentry.
 
-LangSmith remains the owner for LLM traces and evals. Sentry links to LangSmith
-instead of duplicating prompt, model-output, or retrieved-context payloads.
+LangSmith remains the owner for LLM traces and evals; specifically, LangSmith
+owns AI traces, evals, prompts, model output, tool calls, and retrieval
+debugging. Sentry links to LangSmith instead of duplicating prompt,
+model-output, or retrieved-context payloads.
+
 Operators start in Sentry for app/runtime errors and release regressions, then
 jump to LangSmith when the question is whether the agent reasoned correctly,
 retrieved the right sources, or passed eval expectations.

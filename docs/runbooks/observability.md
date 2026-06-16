@@ -70,6 +70,88 @@ If the user report is ambiguous, start with the conversation URL and timestamp,
 then gather a diagnostic bundle. The bundle should tell the bug ticket which
 Sentry and LangSmith links are present and which are unavailable.
 
+## Adding Or Changing Telemetry
+
+Use this checklist when a feature, fix, route, browser flow, or script needs new
+observability:
+
+1. Decide whether the question belongs in Sentry or LangSmith. Sentry owns app
+   logs, app traces, app errors, browser diagnostics, release health, alerting,
+   and uptime. LangSmith owns AI traces, evals, prompts, model output, tool
+   calls, and retrieval debugging.
+2. Add server-side Sentry events/logs through `src/telemetry.ts`. Do not call
+   `@sentry/node` directly for app event or log capture outside
+   `src/telemetry.ts`; `src/instrumentation.ts` may wire Sentry's OpenTelemetry
+   integration, and `scripts/send-sentry-safe-test-event.ts` may emit documented
+   safe test events.
+3. Add script lifecycle coverage through `runScriptWithTelemetry()` in
+   `src/script-telemetry.ts`.
+4. Add app spans with OpenTelemetry and stable `squire.*` attributes. Sentry may
+   ingest the span, but LangSmith remains the place to inspect AI payloads.
+5. Add browser diagnostics through `/api/browser-telemetry`; keep replay and
+   feedback masked and categorical.
+6. Add alert/dashboard coverage in `scripts/sentry-app-health-config.ts` and
+   update [sentry-alerts.md](sentry-alerts.md) in the same PR.
+7. If a bug ticket needs a new field, add it to `DiagnosticBundleSchema`, give
+   it a sanitizer, render it through `createLinearBugReportBody()`, and add an
+   unavailable reason.
+
+Safe telemetry payloads can include stable IDs, route patterns, operational
+status, durations, counters, error class names, release SHA, and links to
+Sentry or LangSmith. They must not include raw prompts, model output, retrieved
+passages, full transcripts, cookies, tokens, emails, structured names, request
+bodies, or provider payloads.
+
+Example log pattern:
+
+```ts
+captureTelemetryLog('info', 'feature.lifecycle', {
+  route: '/api/example',
+  requestId,
+  conversationId,
+  userMessageId,
+  context: { surface: 'api_example', status: 'ok' },
+  attributes: {
+    event_type: 'feature.lifecycle',
+    surface: 'api_example',
+    status: 'ok',
+    duration_ms: durationMs,
+  },
+});
+```
+
+Example span pattern:
+
+```ts
+await trace
+  .getTracer('squire.feature')
+  .startActiveSpan('squire.feature.operation', async (span) => {
+    span.setAttributes({
+      'http.route': '/api/example',
+      'squire.surface': 'api_example',
+      'squire.request_id': requestId,
+    });
+    try {
+      return await runOperation();
+    } finally {
+      span.end();
+    }
+  });
+```
+
+Example diagnostic bundle pattern:
+
+```ts
+const bundle = buildDiagnosticBundle({
+  requestId,
+  conversationId,
+  userMessageId,
+  sentryLogsUrl,
+  sentryTraceUrl,
+  langsmithRunUrl,
+});
+```
+
 ## User Report To Linear
 
 1. Capture the conversation URL, selected turn URL if available, user-reported
