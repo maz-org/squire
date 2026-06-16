@@ -134,7 +134,7 @@ function summarizeVitest(label: string, report: Record<string, unknown>): Timing
         : null,
     files,
     tests,
-    failedTests: tests.filter((test) => test.status !== 'passed'),
+    failedTests: tests.filter((test) => test.status === 'failed'),
   };
 }
 
