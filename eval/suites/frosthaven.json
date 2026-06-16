@@ -431,12 +431,12 @@
     "caseCategory": "trajectory"
   },
   {
-    "id": "drifter-blessed-correction",
+    "id": "drifter-ignore-negative-item-effects-correction",
     "category": "character-mats",
-    "question": "Earlier you said the Frosthaven Drifter has no perk named Blessed. The perk is called Blessed and it ignores negative item effects. Check the Drifter character mat and answer plainly.",
+    "question": "Earlier you said the Frosthaven Drifter has no perk that ignores negative item effects. Check the Drifter character mat and answer plainly.",
     "finalAnswer": {
-      "expected": "The Frosthaven Drifter character mat has a perk named Blessed: you may ignore negative item effects and the appearance of a cursed item.",
-      "grading": "Must identify Drifter's Blessed perk and state that it ignores negative item effects. Must not deny that Drifter has Blessed. Must not redirect the claim to another class unless directly supported by the opened Drifter source."
+      "expected": "The Frosthaven Drifter character mat has a perk that says you may ignore negative item effects and the appearance of a cursed item.",
+      "grading": "Must state that Drifter has a perk that ignores negative item effects. Must not deny that Drifter has this perk. Must not name the perk unless directly supported by the opened Drifter source. Must not redirect the claim to another class unless directly supported by the opened Drifter source."
     },
     "trajectory": {
       "requiredTools": ["lookup_entity"],
@@ -447,13 +447,13 @@
         "card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter"
       ],
       "maxToolCalls": 4,
-      "notes": "Regression for SQR-293: user correction should reopen the exact Drifter mat instead of repeating an unsupported denial."
+      "notes": "Regression for SQR-293: user correction should reopen the exact Drifter mat instead of repeating an unsupported denial. Per SQR-349, this case does not assert a printed perk name because the checked-in source data only supports the effect text."
     },
     "safety": {
-      "requiredAnswerPatterns": ["\\bBlessed\\b", "ignore negative item effects"],
+      "requiredAnswerPatterns": ["ignore negative item effects"],
       "forbiddenAnswerPatterns": [
-        "drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}blessed",
-        "banner spear[^.]{0,120}blessed"
+        "drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}(?:ignore negative item effects|negative item)",
+        "\\bBlessed\\b"
       ],
       "requiredCanonicalRefPatterns": [
         "^card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter$"

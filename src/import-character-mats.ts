@@ -231,13 +231,13 @@ export function formatPerk(perk: GhsPerk, characterName: string, labels: LabelDa
   return `${capitalize(perk.type)} ${perk.count} cards`;
 }
 
-const DRIFTER_BLESSED_PERK =
-  'Blessed: You may ignore negative item effects and the appearance of a cursed item';
+const DRIFTER_IGNORE_NEGATIVE_ITEM_EFFECTS_PERK =
+  'You may ignore negative item effects and the appearance of a cursed item';
 
 const CURATED_CHARACTER_MAT_PERKS: Record<string, readonly string[]> = {
-  // GHS omits the printed Drifter Blessed perk, which caused Squire to deny a
-  // real table correction. Keep this curation local to the import boundary.
-  'gloomhavensecretariat:character-mat/drifter': [DRIFTER_BLESSED_PERK],
+  // GHS omits this Drifter perk text. Keep the curation local to the import
+  // boundary and avoid unsupported printed perk names.
+  'gloomhavensecretariat:character-mat/drifter': [DRIFTER_IGNORE_NEGATIVE_ITEM_EFFECTS_PERK],
 };
 
 function applyCharacterMatCurations(sourceId: string, perks: string[]): string[] {

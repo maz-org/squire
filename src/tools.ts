@@ -796,7 +796,7 @@ type CharacterMatFallbackReason = 'explicit-mat' | 'class-data';
 
 function characterMatFallbackReason(query: string): CharacterMatFallbackReason | null {
   if (/\b(?:character\s+mat|mat)\b/i.test(query)) return 'explicit-mat';
-  if (/\b(?:perks?|blessed|negative item effects?)\b/i.test(query)) return 'class-data';
+  if (/\b(?:perks?|negative item effects?)\b/i.test(query)) return 'class-data';
   return null;
 }
 
