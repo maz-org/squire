@@ -40,8 +40,9 @@ export async function setupTestDb(): Promise<ReturnType<typeof createStandaloneD
 /**
  * Fast reset for mutable tables. Most DB tests create only a few rows, so
  * ordered DELETEs are far cheaper than TRUNCATE's lock-heavy FK/identity work.
- * Card and scenario-section tables are read-only test fixtures seeded once in
- * global setup and intentionally left alone here.
+ * Globally seeded card and scenario-section fixture tables are intentionally
+ * left alone here. Most tests read them only; tests that mutate fixture rows
+ * own local cleanup so the common reset path stays cheap.
  */
 export async function resetTestDb(): Promise<void> {
   if (!db) throw new Error('resetTestDb called before setupTestDb');
