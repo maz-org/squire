@@ -429,5 +429,44 @@
     "suite": "trajectory",
     "runtime": "langgraph",
     "caseCategory": "trajectory"
+  },
+  {
+    "id": "drifter-blessed-correction",
+    "category": "character-mats",
+    "question": "Earlier you said the Frosthaven Drifter has no perk named Blessed. The perk is called Blessed and it ignores negative item effects. Check the Drifter character mat and answer plainly.",
+    "finalAnswer": {
+      "expected": "The Frosthaven Drifter character mat has a perk named Blessed: you may ignore negative item effects and the appearance of a cursed item.",
+      "grading": "Must identify Drifter's Blessed perk and state that it ignores negative item effects. Must not deny that Drifter has Blessed. Must not redirect the claim to another class unless directly supported by the opened Drifter source."
+    },
+    "trajectory": {
+      "requiredTools": ["lookup_entity"],
+      "requiredToolKinds": ["open"],
+      "forbiddenTools": [],
+      "forbiddenToolKinds": [],
+      "requiredRefs": [
+        "card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter"
+      ],
+      "maxToolCalls": 4,
+      "notes": "Regression for SQR-293: user correction should reopen the exact Drifter mat instead of repeating an unsupported denial."
+    },
+    "safety": {
+      "requiredAnswerPatterns": ["\\bBlessed\\b", "ignore negative item effects"],
+      "forbiddenAnswerPatterns": [
+        "drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}blessed",
+        "banner spear[^.]{0,120}blessed"
+      ],
+      "requiredCanonicalRefPatterns": [
+        "^card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter$"
+      ],
+      "forbiddenCanonicalRefPatterns": [],
+      "requiredSourceLabelPatterns": ["Card Index"],
+      "forbiddenSourceLabelPatterns": [],
+      "notes": "The answer may mention data conflict only when the opened source lacks the curation; after SQR-292 it should answer from Drifter data."
+    },
+    "source": "data/extracted/character-mats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "character-mats"
   }
 ]

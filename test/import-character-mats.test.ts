@@ -289,9 +289,12 @@ describe('convertCharacterMat', () => {
     });
   });
 
-  it('formats perks as human-readable strings', () => {
+  it('formats perks as human-readable strings and applies the Drifter Blessed curation', () => {
     const result = convertCharacterMat(ghsDrifter, labels);
-    expect(result.perks).toEqual(['Remove 1 -2 card']);
+    expect(result.perks).toEqual([
+      'Remove 1 -2 card',
+      'Blessed: You may ignore negative item effects and the appearance of a cursed item',
+    ]);
   });
 
   it('resolves mastery label references', () => {
