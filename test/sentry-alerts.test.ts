@@ -49,6 +49,14 @@ describe('Sentry alert catalog', () => {
       expect(payload.event).toMatchObject({ level: 'error' });
       expect(payload.log?.message).toBe(`sentry.safe_test.${kind}`);
       expect(payload.trace?.name).toBe(`squire.safe_test.${kind}`);
+      expect(payload.traceProof).toMatchObject({
+        traceAttempted: false,
+        traceSpanStarted: false,
+        traceSearchable: null,
+        traceSearchableReason: expect.stringContaining('dry-run'),
+        traceId: null,
+        spanId: null,
+      });
       expect(payload.evidence).toMatchObject({
         requestId: `sentry-test-${kind}`,
         sentryEventSearchUrl: expect.stringContaining(`request_id%3Asentry-test-${kind}`),
@@ -60,6 +68,8 @@ describe('Sentry alert catalog', () => {
         Environment: expect.any(String),
         Release: expect.any(String),
         'Sentry Issue/Event/Replay': expect.stringContaining('Event search: https://'),
+        Expected: expect.stringContaining('trace rows require traceProof'),
+        Acceptance: expect.stringContaining('traceProof unavailable reason'),
       });
 
       for (const forbidden of [

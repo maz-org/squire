@@ -139,8 +139,8 @@ fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --
 fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind deploy-regression'
 ```
 
-Local dry runs print the safe event, log, trace, and Linear evidence payloads
-without sending to Sentry:
+Local dry runs print the safe event, log, trace-search, `traceProof`, and Linear
+evidence payloads without sending to Sentry:
 
 ```bash
 npm run sentry:test-event -- --kind chat --dry-run
@@ -155,8 +155,10 @@ The safe test events use synthetic IDs only:
 - `user_message_id=sentry-test-user-message` for chat/browser tests
 - no cookies, auth headers, raw prompts, model output, provider payloads, or
   retrieved passages
-- dry-run and production output include Sentry event, log, and trace search URLs
-  that can be copied into Linear Evidence fields
+- dry-run and production output include Sentry event/log search URLs, a trace
+  search URL, and `traceProof`
+- the trace search URL is not proof by itself; copy confirmed trace rows or
+  `traceSearchableReason` into the Linear Evidence section
 
 The uptime safe command proves app telemetry for the health-check path without
 breaking `/api/health`. For the uptime alert itself, prefer Sentry's monitor test

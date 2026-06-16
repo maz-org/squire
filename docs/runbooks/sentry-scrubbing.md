@@ -123,9 +123,10 @@ Expected results:
   masked, removed, or replaced. Confirm structured log attributes such as
   `providerPayload`, `retrievedPassages`, `request_body`, and `response_body`
   are removed or scrubbed, not merely nested under another serialized value.
-- If `SENTRY_TRACES_SAMPLE_RATE` is greater than `0`, the
-  `squire.safe_scrub_canary` span is present and the same fake values are
-  masked, removed, or replaced.
+- If `SENTRY_TRACES_SAMPLE_RATE` is greater than `0`, confirm Sentry has a
+  `squire.safe_scrub_canary` span before treating span scrubbing as proven. The
+  command's `traceProof.traceSearchableReason` is the evidence to copy when
+  searchability is unavailable or unverified.
 - Stable diagnostics remain searchable: `environment`, `release`, `route`,
   `request_id`, `conversation_id`, `user_message_id`, and
   `sentry_trace_id` when present.
