@@ -853,11 +853,14 @@ export async function loadConversation(input: {
   ];
   const publicWorkEventsByUserMessage =
     await MessageStreamEventRepository.listPublicWorkEventsByUserMessageIds(responseUserMessageIds);
+  const terminalEventsByUserMessage =
+    await MessageStreamEventRepository.listTerminalEventsByUserMessageIds(responseUserMessageIds);
   const messagesWithPublicWorkEvents = messages.map((message) =>
     message.role === 'assistant' && message.responseToMessageId
       ? {
           ...message,
           publicWorkEvents: publicWorkEventsByUserMessage.get(message.responseToMessageId) ?? [],
+          workCompletedAt: terminalEventsByUserMessage.get(message.responseToMessageId)?.createdAt,
         }
       : message,
   );

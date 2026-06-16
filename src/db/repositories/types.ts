@@ -329,6 +329,13 @@ export interface ConversationMessage {
    * not raw tool payloads or hidden model reasoning.
    */
   publicWorkEvents?: ConversationMessagePublicWorkEvent[];
+  /**
+   * Timestamp of the persisted terminal stream event (`done` or `error`) for
+   * this assistant turn. Reloaded work-log durations use this instead of
+   * `createdAt`, because Postgres `now()` is transaction-scoped and assistant
+   * rows can otherwise look like they completed at turn start.
+   */
+  workCompletedAt?: Date;
   createdAt: Date;
 }
 

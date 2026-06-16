@@ -926,7 +926,7 @@ function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedStr
   }
   const persistedTimeline = buildCompletedAnswerWorkTimeline(
     message.publicWorkEvents,
-    message.createdAt,
+    message.workCompletedAt ?? message.createdAt,
   );
   if (persistedTimeline.rows.length > 0) {
     return renderCompletedAnswerWorkTimeline(persistedTimeline);
