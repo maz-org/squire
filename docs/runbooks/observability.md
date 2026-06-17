@@ -295,7 +295,9 @@ Cron and script failures:
 Uptime failures:
 
 1. Start in the Sentry uptime monitor for
-   `https://squire.maz.org/api/health`.
+   `https://squire.maz.org/api/health`. The monitor checks every 60 seconds
+   with a 10 second timeout, alerts after 5 consecutive failures, and recovers
+   after 2 successful checks.
 2. Compare with:
 
    ```bash
@@ -304,9 +306,13 @@ Uptime failures:
    fly releases -a maz-squire --image
    ```
 
-3. If `/api/live` passes but `/api/health` fails, inspect database, vector, and
+3. If Sentry reports `Status Code: None` with a timeout, compare Sentry app
+   spans for `/api/health` before assuming the request reached Hono. If the app
+   spans are fast and direct probes pass, treat it as an external probe-path
+   timeout.
+4. If `/api/live` passes but `/api/health` fails, inspect database, vector, and
    embedder readiness before rolling back.
-4. If the failure follows a new release and Sentry has a deploy-regression
+5. If the failure follows a new release and Sentry has a deploy-regression
    issue, compare `SENTRY_RELEASE` with the GitHub deploy run and rollback only
    after confirming a current-release fault.
 
