@@ -1484,6 +1484,40 @@ describe('GET / — SQR-107 purpose-built landing', () => {
       expect(body).not.toContain('Looked up Bandit Archer');
     });
 
+    it('renders failed unlabeled lookup results with a useful public label', () => {
+      const body = renderTranscriptAnswer(
+        answerWith(null, {
+          publicWorkEvents: [
+            {
+              sequence: 1,
+              event: 'tool-result',
+              payload: {
+                id: 'lookup_entity',
+                name: 'lookup_entity',
+                ok: false,
+              },
+              createdAt: new Date('2026-04-20T00:00:01.000Z'),
+            },
+            {
+              sequence: 2,
+              event: 'tool-result',
+              payload: {
+                id: 'lookup_entity-drifter',
+                name: 'lookup_entity',
+                ok: false,
+                message: 'Resolving Drifter character mat',
+              },
+              createdAt: new Date('2026-04-20T00:00:02.000Z'),
+            },
+          ],
+        }),
+      );
+
+      expect(body).toContain('Couldn&#39;t look up entity');
+      expect(body).toContain('Couldn&#39;t resolve Drifter character mat');
+      expect(body).not.toContain('Couldn&#39;t check source index');
+    });
+
     it('renders completed persisted work with the elapsed disclosure title', () => {
       const body = renderTranscriptAnswer(
         answerWith(null, {
