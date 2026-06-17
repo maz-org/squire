@@ -483,11 +483,12 @@ export const SENTRY_EXISTING_APP_HEALTH_ALERTS: SentryExistingAppHealthAlert[] =
   {
     name: 'Squire production uptime failure',
     areas: ['uptime'],
-    query: 'https://squire.maz.org/api/health expects HTTP 200 and JSON status ok',
-    threshold: '2 failed checks in 5 minutes',
+    query:
+      'https://squire.maz.org/api/health expects a successful HTTP response; timeout 10s; response capture enabled; no JSON assertion',
+    threshold: '5 consecutive failed 60s checks; recovery after 2 successful checks',
     routeTo: 'team:4511564194512896 email',
     firstAction:
-      'Open the uptime monitor, compare /api/health and /api/live, then check Fly status.',
+      'Open the uptime monitor, check failure reason/status, compare /api/health and /api/live, then check Fly status.',
     safeTest:
       'npm run sentry:test-event -- --kind uptime, then use Sentry monitor test or a temporary duplicate monitor pointed at /api/__sentry-uptime-test-404.',
   },
