@@ -462,6 +462,27 @@ html {
   margin: 0 auto;
 }
 
+/* SQR-297: once a surface contains a transcript, the transcript scrolls
+   inside the viewport space above the input dock. Keeping the dock in normal
+   flex flow prevents the reloaded mobile transcript from sliding underneath
+   a sticky footer while preserving the home page's sticky first-submit dock. */
+.squire-column:has(> .squire-surface > .squire-transcript) {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.squire-column:has(> .squire-surface > .squire-transcript) .squire-surface {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.squire-column:has(> .squire-surface > .squire-transcript) .squire-input-dock {
+  position: static;
+}
+
 .squire-column--wide {
   max-width: 1120px;
 }
