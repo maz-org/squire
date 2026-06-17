@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   SENTRY_EXISTING_APP_HEALTH_ALERTS,
   SENTRY_APP_HEALTH_MONITORS,
@@ -11,7 +11,11 @@ import {
   appHealthDetectorPayload,
 } from '../scripts/sentry-app-health-config.ts';
 import {
+  SENTRY_SAFE_TEST_ISSUE_QUERY,
+  SAFE_TEST_KINDS,
   SAFE_VERIFICATION_KINDS,
+  cleanupSafeTestIssues,
+  safeTestDryRunPayload,
   safeVerificationDryRunPayload,
 } from '../scripts/send-sentry-safe-test-event.ts';
 import {
@@ -46,9 +50,25 @@ describe('Sentry alert catalog', () => {
 
       expect(payload.kind).toBe(kind);
       expect(payload.input?.requestId).toBe(`sentry-test-${kind}`);
+      expect(payload.input?.fingerprint).toEqual(['squire-safe-test', kind]);
+      expect(payload.input?.context).toMatchObject({
+        safeTest: 'true',
+        safeTestKind: kind,
+        synthetic: 'true',
+      });
       expect(payload.event).toMatchObject({ level: 'error' });
       expect(payload.log?.message).toBe(`sentry.safe_test.${kind}`);
+      expect(payload.log?.attributes).toMatchObject({
+        safe_test: true,
+        safe_test_kind: kind,
+        synthetic: true,
+      });
       expect(payload.trace?.name).toBe(`squire.safe_test.${kind}`);
+      expect(payload.trace?.attributes).toMatchObject({
+        'squire.safe_test': true,
+        'squire.safe_test.kind': kind,
+        'squire.synthetic': true,
+      });
       expect(payload.traceProof).toMatchObject({
         traceAttempted: false,
         traceSpanStarted: false,
@@ -59,6 +79,9 @@ describe('Sentry alert catalog', () => {
       });
       expect(payload.evidence).toMatchObject({
         requestId: `sentry-test-${kind}`,
+        cleanupCommand: 'npm run sentry:test-event -- --cleanup',
+        safeTestIssueQuery: SENTRY_SAFE_TEST_ISSUE_QUERY,
+        sentrySafeTestIssueSearchUrl: expect.stringContaining('safe_test%3Atrue'),
         sentryEventSearchUrl: expect.stringContaining(`request_id%3Asentry-test-${kind}`),
         sentryLogsSearchUrl: expect.stringContaining(`request_id%3Asentry-test-${kind}`),
         sentryTraceSearchUrl: expect.stringContaining(`sentry-test-${kind}`),
@@ -87,6 +110,116 @@ describe('Sentry alert catalog', () => {
         expect(stdout).not.toContain(forbidden);
       }
     }
+  });
+
+  it('marks every safe-test kind with synthetic cleanup metadata', () => {
+    for (const kind of SAFE_TEST_KINDS) {
+      const payload = safeTestDryRunPayload(kind);
+
+      expect(payload.input).toMatchObject({
+        requestId: `sentry-test-${kind}`,
+        fingerprint: ['squire-safe-test', kind],
+        context: {
+          safeTest: 'true',
+          safeTestKind: kind,
+          synthetic: 'true',
+        },
+      });
+    }
+  });
+
+  it('cleans up unresolved safe-test Sentry issues by synthetic query only', async () => {
+    const calls: Array<{ method: string; url: string }> = [];
+    const fetch = vi.fn(async (input: string | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      const url = String(input);
+      calls.push({ method, url });
+
+      if (method === 'PUT') {
+        return new Response(JSON.stringify({ id: url.split('/').at(-2), status: 'resolved' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (url.includes('cursor=page-2')) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: '7551288604',
+              shortId: 'MAZ-SQUIRE-1',
+              title: 'Error: SquireSafeScrubCanary',
+              permalink: 'https://brian-moseley.sentry.io/issues/7551288604/',
+              status: 'unresolved',
+            },
+          ]),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+
+      return new Response(
+        JSON.stringify([
+          {
+            id: '7555295841',
+            shortId: 'MAZ-SQUIRE-6',
+            title: 'browser.browser_stream_error',
+            permalink: 'https://brian-moseley.sentry.io/issues/7555295841/',
+            status: 'unresolved',
+          },
+          {
+            id: '7557533332',
+            shortId: 'MAZ-SQUIRE-8',
+            title: 'uptime.monitor_flap',
+            permalink: 'https://brian-moseley.sentry.io/issues/7557533332/',
+            status: 'unresolved',
+          },
+        ]),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            Link: '<https://sentry.io/api/0/projects/brian-moseley/maz-squire/issues/?cursor=page-2&limit=100>; rel="next"; results="true"; cursor="page-2"',
+          },
+        },
+      );
+    });
+
+    const dryRun = await cleanupSafeTestIssues({ token: 'token', dryRun: true, fetch });
+
+    expect(dryRun).toMatchObject({
+      mode: 'cleanup',
+      dryRun: true,
+      query: SENTRY_SAFE_TEST_ISSUE_QUERY,
+      resolvedIssues: [],
+    });
+    expect(dryRun.issues.map((issue) => issue.id)).toEqual([
+      '7555295841',
+      '7557533332',
+      '7551288604',
+    ]);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.method).toBe('GET');
+    expect(calls[0]?.url).toContain('query=is%3Aunresolved+safe_test%3Atrue');
+    expect(calls[1]?.method).toBe('GET');
+    expect(calls[1]?.url).toContain('cursor=page-2');
+
+    calls.length = 0;
+    const applied = await cleanupSafeTestIssues({ token: 'token', dryRun: false, fetch });
+
+    expect(applied).toMatchObject({
+      mode: 'cleanup',
+      dryRun: false,
+      query: SENTRY_SAFE_TEST_ISSUE_QUERY,
+    });
+    expect(applied.resolvedIssues.map((issue) => issue.id)).toEqual([
+      '7555295841',
+      '7557533332',
+      '7551288604',
+    ]);
+    expect(calls.map((call) => call.method)).toEqual(['GET', 'GET', 'PUT', 'PUT', 'PUT']);
+    expect(calls[2]?.url).toBe('https://sentry.io/api/0/issues/7555295841/');
+    expect(calls[3]?.url).toBe('https://sentry.io/api/0/issues/7557533332/');
+    expect(calls[4]?.url).toBe('https://sentry.io/api/0/issues/7551288604/');
   });
 
   it('exposes the app-health dashboard and alert sync dry run', async () => {

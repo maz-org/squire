@@ -4,11 +4,13 @@ const sentry = vi.hoisted(() => {
   const scope = {
     setTags: vi.fn(),
     setContext: vi.fn(),
+    setFingerprint: vi.fn(),
     setUser: vi.fn(),
   };
   type Scope = {
     setTags: typeof scope.setTags;
     setContext: typeof scope.setContext;
+    setFingerprint: typeof scope.setFingerprint;
     setUser: typeof scope.setUser;
   };
 
@@ -935,6 +937,20 @@ describe('telemetry boundary', () => {
     );
     expect(sentry.scope.setUser).toHaveBeenCalledWith({ id: 'user-1' });
     expect(sentry.captureException).toHaveBeenCalledWith(error);
+  });
+
+  it('sets only allowlisted low-cardinality fingerprint values', () => {
+    process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
+    process.env.SENTRY_RELEASE = 'abc123';
+    process.env.SQUIRE_ENV = 'production';
+    initTelemetry(process.env);
+
+    captureTelemetryError(new Error('safe test'), {
+      requestId: 'req-1',
+      fingerprint: ['squire-safe-test', 'browser', 'alice@example.com', 'req-1'],
+    });
+
+    expect(sentry.scope.setFingerprint).toHaveBeenCalledWith(['squire-safe-test', 'browser']);
   });
 
   it('redacts breadcrumb data and flushes when enabled', async () => {

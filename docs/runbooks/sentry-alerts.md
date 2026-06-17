@@ -154,17 +154,40 @@ npm run sentry:test-event -- --kind uptime --dry-run
 npm run sentry:app-health -- --dry-run
 ```
 
+The cleanup preview is separate from event dry-runs. Without `SENTRY_TOKEN`, it
+prints the cleanup query, Sentry issue-search URL, and commands. With
+`SENTRY_TOKEN`, it also queries Sentry and lists unresolved issues matching
+`safe_test:true` without resolving them:
+
+```bash
+npm run sentry:test-event -- --cleanup --dry-run
+SENTRY_TOKEN=... npm run sentry:test-event -- --cleanup --dry-run
+```
+
 The safe test events use synthetic IDs only:
 
 - `request_id=sentry-test-<kind>`
 - `conversation_id=sentry-test-conversation` for chat/browser tests
 - `user_message_id=sentry-test-user-message` for chat/browser tests
+- `safe_test=true`, `safe_test_kind=<kind>`, and `synthetic=true`
 - no cookies, auth headers, raw prompts, model output, provider payloads, or
   retrieved passages
 - dry-run and production output include Sentry event/log search URLs, a trace
   search URL, and `traceProof`
 - the trace search URL is not proof by itself; copy confirmed trace rows or
   `traceSearchableReason` into the Linear Evidence section
+
+After safe tests, open the Sentry Errors and Outages view with query
+`is:unresolved safe_test:true`. If the matching records are all synthetic, clean
+them up with:
+
+```bash
+SENTRY_TOKEN=... npm run sentry:test-event -- --cleanup
+```
+
+Never resolve broad production groups manually just because they share a surface
+such as browser, cron, or deploy-regression. Only use the cleanup command for
+records carrying `safe_test=true`.
 
 The uptime safe command proves app telemetry for the health-check path without
 breaking `/api/health`. For the uptime alert itself, prefer Sentry's monitor test
@@ -189,12 +212,18 @@ Alert filters depend on these stable tags:
 - `job_name`
 - `job_kind`
 - `security_event`
+- `safe_test`
+- `safe_test_kind`
+- `synthetic`
 - `status`
 - `duration_ms`
+- `squire.safe_test`
+- `squire.safe_test.kind`
 - `squire.surface`
 - `squire.request_id`
 - `squire.conversation_id`
 - `squire.user_message_id`
+- `squire.synthetic`
 - `squire.script_name`
 - `squire.script_kind`
 - `http.route`
@@ -213,6 +242,9 @@ After deploying log/trace telemetry:
 3. Send safe backend, chat, browser, cron, uptime, and deploy-regression events.
 4. Confirm the dashboard queries match on `environment`, `release`,
    `request_id`, `route`, `conversation_id`, `user_message_id`, `job_kind`,
-   `security_event`, and the relevant `squire.*` span fields.
+   `security_event`, `safe_test`, `safe_test_kind`, and the relevant `squire.*`
+   span fields.
 5. Confirm Sentry links to LangSmith for chat spans instead of copying prompts,
    model output, or retrieved passages.
+6. Run `npm run sentry:test-event -- --cleanup --dry-run`, confirm the matches
+   are synthetic, then run `npm run sentry:test-event -- --cleanup`.
