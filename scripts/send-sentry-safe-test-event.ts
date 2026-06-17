@@ -16,6 +16,7 @@ import {
   SENTRY_APP_HEALTH_ORG,
   SENTRY_APP_HEALTH_PROJECT_ID,
 } from './sentry-app-health-config.ts';
+import { DEFAULT_SENTRY_PROJECT_SLUG } from './sentry-scrubbing-config.ts';
 
 export const SAFE_TEST_KINDS = [
   'backend',
@@ -30,6 +31,7 @@ export const SAFE_TEST_KINDS = [
 type SafeTestKind = (typeof SAFE_TEST_KINDS)[number];
 type SafeVerificationKind = Exclude<SafeTestKind, 'scrub-canary'>;
 type TraceSearchable = true | false | null;
+type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
 interface SafeTraceProof {
   traceAttempted: boolean;
@@ -61,23 +63,44 @@ const SAFE_TEST_ERROR_NAMES: Record<SafeTestKind, string> = {
 
 const SENTRY_ORG_URL = `https://${SENTRY_APP_HEALTH_ORG}.sentry.io`;
 
-interface ParsedArgs {
+interface EmitArgs {
+  mode: 'emit';
   kind: SafeTestKind;
   dryRun: boolean;
 }
 
+interface CleanupArgs {
+  mode: 'cleanup';
+  dryRun: boolean;
+}
+
+type ParsedArgs = EmitArgs | CleanupArgs;
+
+export const SENTRY_SAFE_TEST_ISSUE_QUERY = 'is:unresolved safe_test:true';
+
+const SAFE_TEST_CLEANUP_COMMAND = 'npm run sentry:test-event -- --cleanup';
+const SAFE_TEST_CLEANUP_DRY_RUN_COMMAND = 'npm run sentry:test-event -- --cleanup --dry-run';
+
 function usage(): string {
-  return `Usage: node scripts/send-sentry-safe-test-event.ts --kind <${SAFE_TEST_KINDS.join('|')}> [--dry-run]`;
+  return [
+    `Usage: node scripts/send-sentry-safe-test-event.ts --kind <${SAFE_TEST_KINDS.join('|')}> [--dry-run]`,
+    '       node scripts/send-sentry-safe-test-event.ts --cleanup [--dry-run]',
+  ].join('\n');
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
   let kind: SafeTestKind | undefined;
   let dryRun = false;
+  let cleanup = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--dry-run') {
       dryRun = true;
+      continue;
+    }
+    if (arg === '--cleanup') {
+      cleanup = true;
       continue;
     }
     if (arg === '--kind') {
@@ -92,24 +115,34 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(usage());
   }
 
+  if (cleanup && kind) throw new Error(usage());
+  if (cleanup) return { mode: 'cleanup', dryRun };
   if (!kind) throw new Error(usage());
-  return { kind, dryRun };
+  return { mode: 'emit', kind, dryRun };
 }
 
 function safeTestInput(kind: SafeTestKind) {
   const requestId = `sentry-test-${kind}`;
   const conversationId = 'sentry-test-conversation';
   const userMessageId = 'sentry-test-user-message';
+  const fingerprint = ['squire-safe-test', kind] as const;
+  const context = (values: Record<string, unknown>) => ({
+    safeTest: 'true',
+    safeTestKind: kind,
+    synthetic: 'true',
+    ...values,
+  });
 
   switch (kind) {
     case 'backend':
       return {
         route: '/__sentry-test/backend',
         requestId,
-        context: {
+        fingerprint,
+        context: context({
           surface: 'server',
           eventType: 'safe_test',
-        },
+        }),
       };
     case 'chat':
       return {
@@ -117,11 +150,12 @@ function safeTestInput(kind: SafeTestKind) {
         requestId,
         conversationId,
         userMessageId,
-        context: {
+        fingerprint,
+        context: context({
           surface: 'chat_sse',
           failureKind: 'assistant_turn',
           eventType: 'safe_test',
-        },
+        }),
       };
     case 'browser':
       return {
@@ -129,7 +163,8 @@ function safeTestInput(kind: SafeTestKind) {
         requestId,
         conversationId,
         userMessageId,
-        context: {
+        fingerprint,
+        context: context({
           surface: 'browser',
           eventType: 'browser_error',
           maskedReplay: {
@@ -137,36 +172,39 @@ function safeTestInput(kind: SafeTestKind) {
             attributesMasked: true,
             turns: { assistantTurnCount: 1, errorBannerCount: 1 },
           },
-        },
+        }),
       };
     case 'cron':
       return {
         route: '/scripts/sweep-expired-sessions',
         requestId,
-        context: {
+        fingerprint,
+        context: context({
           scriptName: 'sweep-expired-sessions',
           scriptKind: 'cron',
           eventType: 'safe_test',
-        },
+        }),
       };
     case 'uptime':
       return {
         route: '/api/health',
         requestId,
-        context: {
+        fingerprint,
+        context: context({
           surface: 'uptime',
           eventType: 'uptime_verification',
           checkSlug: 'production-health',
-        },
+        }),
       };
     case 'deploy-regression':
       return {
         route: '/__sentry-test/deploy-regression',
         requestId,
-        context: {
+        fingerprint,
+        context: context({
           surface: 'server',
           eventType: 'deploy_regression_test',
-        },
+        }),
       };
     case 'scrub-canary':
       return {
@@ -174,7 +212,8 @@ function safeTestInput(kind: SafeTestKind) {
         requestId,
         conversationId,
         userMessageId,
-        context: {
+        fingerprint,
+        context: context({
           surface: 'server',
           eventType: 'scrub_canary',
           emailAddress: 'sentry-scrub-canary@example.invalid',
@@ -195,7 +234,7 @@ function safeTestInput(kind: SafeTestKind) {
               answer: 'Synthetic response body answer for scrubbing verification',
             },
           },
-        },
+        }),
       };
   }
 }
@@ -227,6 +266,158 @@ function sentrySearchUrl(path: string, query: string): string {
   return `${SENTRY_ORG_URL}/${path}?${params.toString()}`;
 }
 
+function sentrySafeTestIssueSearchUrl(): string {
+  return sentrySearchUrl('issues/', SENTRY_SAFE_TEST_ISSUE_QUERY);
+}
+
+interface SafeTestIssueSummary {
+  id: string;
+  shortId: string | null;
+  title: string;
+  permalink: string | null;
+  status: string | null;
+}
+
+interface SafeTestIssueCleanupResult {
+  mode: 'cleanup';
+  dryRun: boolean;
+  query: string;
+  sentrySafeTestIssueSearchUrl: string;
+  cleanupCommand: string;
+  cleanupDryRunCommand: string;
+  issues: SafeTestIssueSummary[];
+  resolvedIssues: SafeTestIssueSummary[];
+}
+
+interface CleanupSafeTestIssuesOptions {
+  dryRun?: boolean;
+  fetch?: FetchLike;
+  token?: string;
+}
+
+export function safeTestCleanupDryRunPayload(): SafeTestIssueCleanupResult {
+  return {
+    mode: 'cleanup',
+    dryRun: true,
+    query: SENTRY_SAFE_TEST_ISSUE_QUERY,
+    sentrySafeTestIssueSearchUrl: sentrySafeTestIssueSearchUrl(),
+    cleanupCommand: SAFE_TEST_CLEANUP_COMMAND,
+    cleanupDryRunCommand: SAFE_TEST_CLEANUP_DRY_RUN_COMMAND,
+    issues: [],
+    resolvedIssues: [],
+  };
+}
+
+function sentryProjectIssuesApiUrl(): string {
+  const url = new URL(
+    `https://sentry.io/api/0/projects/${SENTRY_APP_HEALTH_ORG}/${DEFAULT_SENTRY_PROJECT_SLUG}/issues/`,
+  );
+  url.searchParams.set('query', SENTRY_SAFE_TEST_ISSUE_QUERY);
+  url.searchParams.set('environment', SENTRY_APP_HEALTH_ENVIRONMENT);
+  url.searchParams.set('statsPeriod', '14d');
+  url.searchParams.set('limit', '100');
+  return url.toString();
+}
+
+function sentryIssueApiUrl(issueId: string): string {
+  return `https://sentry.io/api/0/issues/${issueId}/`;
+}
+
+function sentryApiHeaders(token: string): HeadersInit {
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+function readSentryToken(token: string | undefined = process.env.SENTRY_TOKEN): string {
+  const value = token?.trim();
+  if (!value) throw new Error('SENTRY_TOKEN is required for --cleanup');
+  return value;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+}
+
+function safeTestIssueSummary(value: unknown): SafeTestIssueSummary | null {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const id = stringOrNull(record.id);
+  const title = stringOrNull(record.title);
+  if (!id || !title) return null;
+  return {
+    id,
+    shortId: stringOrNull(record.shortId),
+    title,
+    permalink: stringOrNull(record.permalink),
+    status: stringOrNull(record.status),
+  };
+}
+
+async function sentryJson<T>(fetch: FetchLike, token: string, url: string, init?: RequestInit) {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      ...sentryApiHeaders(token),
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Sentry API request failed: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as T;
+}
+
+async function listSafeTestIssues(
+  fetch: FetchLike,
+  token: string,
+): Promise<SafeTestIssueSummary[]> {
+  const payload = await sentryJson<unknown[]>(fetch, token, sentryProjectIssuesApiUrl());
+  return payload
+    .map(safeTestIssueSummary)
+    .filter((issue): issue is SafeTestIssueSummary => issue !== null);
+}
+
+async function resolveSafeTestIssue(
+  fetch: FetchLike,
+  token: string,
+  issue: SafeTestIssueSummary,
+): Promise<SafeTestIssueSummary> {
+  const payload = await sentryJson<unknown>(fetch, token, sentryIssueApiUrl(issue.id), {
+    method: 'PUT',
+    body: JSON.stringify({ status: 'resolved' }),
+  });
+  return safeTestIssueSummary(payload) ?? { ...issue, status: 'resolved' };
+}
+
+export async function cleanupSafeTestIssues(
+  options: CleanupSafeTestIssuesOptions = {},
+): Promise<SafeTestIssueCleanupResult> {
+  const fetch = options.fetch ?? globalThis.fetch;
+  const token = readSentryToken(options.token);
+  const issues = await listSafeTestIssues(fetch, token);
+
+  if (options.dryRun) {
+    return {
+      ...safeTestCleanupDryRunPayload(),
+      issues,
+    };
+  }
+
+  const resolvedIssues: SafeTestIssueSummary[] = [];
+  for (const issue of issues) {
+    resolvedIssues.push(await resolveSafeTestIssue(fetch, token, issue));
+  }
+
+  return {
+    ...safeTestCleanupDryRunPayload(),
+    dryRun: false,
+    issues,
+    resolvedIssues,
+  };
+}
+
 function sentryEvidence(kind: SafeVerificationKind, input: ReturnType<typeof safeTestInput>) {
   const requestId = requestIdFromInput(input);
   const eventSearchUrl = sentrySearchUrl('issues/', `request_id:${requestId}`);
@@ -237,6 +428,10 @@ function sentryEvidence(kind: SafeVerificationKind, input: ReturnType<typeof saf
 
   return {
     requestId,
+    cleanupCommand: SAFE_TEST_CLEANUP_COMMAND,
+    cleanupDryRunCommand: SAFE_TEST_CLEANUP_DRY_RUN_COMMAND,
+    safeTestIssueQuery: SENTRY_SAFE_TEST_ISSUE_QUERY,
+    sentrySafeTestIssueSearchUrl: sentrySafeTestIssueSearchUrl(),
     sentryEventSearchUrl: eventSearchUrl,
     sentryLogsSearchUrl: logsSearchUrl,
     sentryTraceSearchUrl: traceSearchUrl,
@@ -262,7 +457,7 @@ function sentryEvidence(kind: SafeVerificationKind, input: ReturnType<typeof saf
       'First files to inspect': 'scripts/send-sentry-safe-test-event.ts; src/telemetry.ts',
       Repro: `fly ssh console -a maz-squire -C 'node scripts/send-sentry-safe-test-event.ts --kind ${kind}'`,
       Acceptance:
-        'Copy the event and log search URLs plus either confirmed trace rows or traceProof unavailable reason into Linear evidence',
+        'Copy the event and log search URLs plus either confirmed trace rows or traceProof unavailable reason into Linear evidence, then run the safe-test cleanup command',
     },
   };
 }
@@ -289,6 +484,7 @@ function safeVerificationLog(kind: SafeVerificationKind, input: ReturnType<typeo
     message: `sentry.safe_test.${kind}`,
     attributes: {
       safe_test_kind: kind,
+      safe_test: true,
       status: 'error',
       synthetic: true,
       route: routeFromInput(input),
@@ -312,6 +508,7 @@ function safeVerificationTrace(
     name: `squire.safe_test.${kind}`,
     op: 'squire.safe_test',
     attributes: {
+      'squire.safe_test': true,
       'squire.safe_test.kind': kind,
       'squire.request_id': requestIdFromInput(input),
       'squire.route': routeFromInput(input),
@@ -487,6 +684,9 @@ function emitSafeVerificationTrace(
 
 function scrubCanaryAttributes(): Record<string, unknown> {
   return {
+    safe_test: true,
+    safe_test_kind: 'scrub-canary',
+    synthetic: true,
     emailAddress: 'sentry-scrub-canary@example.invalid',
     phoneNumber: '+1 415 555 0100',
     customerName: 'Sentry Scrub Canary',
@@ -513,6 +713,9 @@ function emitScrubCanaryTrace(): SafeTraceProof {
       'squire.safe_scrub_canary',
       {
         attributes: {
+          'squire.safe_test': true,
+          'squire.safe_test.kind': 'scrub-canary',
+          'squire.synthetic': true,
           'gen_ai.prompt': 'Synthetic prompt text for span scrubbing verification',
           'gen_ai.completion': 'Synthetic model output for span scrubbing verification',
           providerPayload: 'Synthetic provider payload for span scrubbing verification',
@@ -634,8 +837,25 @@ function dryRunPayload(kind: SafeTestKind, input: ReturnType<typeof safeTestInpu
     : scrubCanaryDryRun(kind, input);
 }
 
+export function safeTestDryRunPayload(kind: SafeTestKind) {
+  return dryRunPayload(kind, safeTestInput(kind));
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+  if (args.mode === 'cleanup') {
+    const token = process.env.SENTRY_TOKEN?.trim();
+    if (args.dryRun && !token) {
+      console.log(JSON.stringify(safeTestCleanupDryRunPayload(), null, 2));
+      return;
+    }
+
+    console.log(
+      JSON.stringify(await cleanupSafeTestIssues({ dryRun: args.dryRun, token }), null, 2),
+    );
+    return;
+  }
+
   const input = safeTestInput(args.kind);
 
   if (args.dryRun) {

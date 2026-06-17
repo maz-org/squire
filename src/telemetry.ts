@@ -69,6 +69,11 @@ export interface TelemetryDiagnosticInput {
 
 export interface TelemetryCaptureInput extends TelemetryDiagnosticInput {
   /**
+   * Optional low-cardinality Sentry grouping key. Values are sanitized before
+   * they reach Sentry; never pass raw user text here.
+   */
+  fingerprint?: readonly string[];
+  /**
    * Operational context only. Never pass raw prompts, model output, provider
    * payloads, cookies, auth headers, or retrieved passages; the boundary still
    * redacts known protected keys as a backstop.
@@ -329,9 +334,23 @@ function contextTagPairs(input: { context?: Record<string, unknown> }): Array<[s
     ['job_name', safeContextTag(context.scriptName)],
     ['job_kind', safeContextTag(context.scriptKind)],
     ['security_event', safeContextTag(context.event)],
+    ['safe_test', safeContextTag(context.safeTest)],
+    ['safe_test_kind', safeContextTag(context.safeTestKind)],
+    ['synthetic', safeContextTag(context.synthetic)],
   ];
 
   return pairs.filter((pair): pair is [string, string] => pair[1] !== undefined);
+}
+
+function buildSafeFingerprint(fingerprint: readonly string[] | undefined): string[] | undefined {
+  if (!fingerprint || fingerprint.length === 0) return undefined;
+
+  const safeFingerprint = fingerprint
+    .map((value) => safeString(value))
+    .filter((value): value is string => value !== undefined)
+    .map((value) => truncateTag(redactSensitiveString(value)));
+
+  return safeFingerprint.length > 0 ? safeFingerprint : undefined;
 }
 
 function redactSensitiveString(value: string): string {
@@ -903,6 +922,8 @@ export function captureTelemetryError(
     Sentry.withScope((scope) => {
       scope.setTags(buildSafeTelemetryTags(input));
       scope.setContext('squire', buildSentryContext(input, process.env));
+      const fingerprint = buildSafeFingerprint(input.fingerprint);
+      if (fingerprint) scope.setFingerprint(fingerprint);
       const user = buildSafeUser(input);
       if (user) scope.setUser(user);
       eventId = Sentry.captureException(error);
@@ -930,6 +951,8 @@ export function captureTelemetryMessage(
     Sentry.withScope((scope) => {
       scope.setTags(buildSafeTelemetryTags(input));
       scope.setContext('squire', buildSentryContext(input, process.env));
+      const fingerprint = buildSafeFingerprint(input.fingerprint);
+      if (fingerprint) scope.setFingerprint(fingerprint);
       const user = buildSafeUser(input);
       if (user) scope.setUser(user);
       eventId = Sentry.captureMessage(redactSensitiveString(message), level);

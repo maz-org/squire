@@ -336,6 +336,7 @@ Local dry runs must not send to Sentry:
 ```bash
 npm run sentry:test-event -- --kind chat --dry-run
 npm run sentry:test-event -- --kind uptime --dry-run
+npm run sentry:test-event -- --cleanup --dry-run
 ```
 
 The safe verification commands print sanitized Sentry event/log search URLs and
@@ -343,6 +344,18 @@ a trace search URL. The trace URL is a search aid, not proof by itself. Copy the
 `traceProof` fields into the Linear Evidence section: use confirmed Sentry trace
 rows when available, or copy `traceSearchableReason` when the script reports
 trace searchability as unavailable or unverified.
+
+Safe test events must carry `safe_test=true`, `safe_test_kind=<kind>`, and
+`synthetic=true`. After production smoke, search Sentry Errors and Outages for
+`is:unresolved safe_test:true`. If every match is synthetic, resolve them with:
+
+```bash
+SENTRY_TOKEN=... npm run sentry:test-event -- --cleanup
+```
+
+Do not use the cleanup command for real production issues, and do not resolve
+all browser, cron, or deploy-regression groups just because one synthetic event
+used that surface.
 
 Browser replay and feedback smoke:
 
@@ -385,9 +398,11 @@ After observability changes deploy:
    `metadata.thread_id`, `metadata.userMessageId`, and `metadata.requestId`.
 4. Generate or preview safe Sentry test events for backend, chat, browser, cron,
    deploy-regression, scrub-canary, and uptime paths.
-5. Create or update a Linear bug with the required Evidence template, using
+5. Run `npm run sentry:test-event -- --cleanup --dry-run`, confirm all matches
+   are synthetic, then run `npm run sentry:test-event -- --cleanup`.
+6. Create or update a Linear bug with the required Evidence template, using
    unavailable reasons for anything not present.
-6. Check Sentry `Stats & Usage` for log accepted GB, accepted spans, dropped
+7. Check Sentry `Stats & Usage` for log accepted GB, accepted spans, dropped
    data, and the PAYG budget path in
    [sentry-usage-guardrails.md](sentry-usage-guardrails.md).
 
