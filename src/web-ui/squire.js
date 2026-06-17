@@ -1917,14 +1917,50 @@ function renderAnswerArtifact(artifactsEl, artifactEntries, payload) {
   if (bodyEl) bodyEl.textContent = payload.body;
 }
 
-// SQR-108 / ADR 0012 D-3: pin-to-bottom helpers. Use page-level scroll
-// (the conversation page scrolls the document body — `.squire-frame` is
-// `min-height: 100vh` and the input dock sticky-pins to the viewport).
+// SQR-108 / ADR 0012 D-3 plus SQR-297: pin-to-bottom helpers. Transcript
+// pages scroll `.squire-surface` so the input dock does not overlay answer
+// text; non-transcript pages still fall back to document-level scroll.
+var transcriptScrollRoot = null;
+
+function getTranscriptScrollRoot() {
+  if (typeof document === 'undefined' || !document.querySelector) return null;
+  var transcript = document.querySelector('.squire-transcript');
+  if (!transcript || typeof transcript.closest !== 'function') return null;
+  var surface = transcript.closest('.squire-surface');
+  if (
+    !surface ||
+    typeof surface.scrollHeight !== 'number' ||
+    typeof surface.scrollTop !== 'number' ||
+    typeof surface.clientHeight !== 'number'
+  ) {
+    return null;
+  }
+  return surface;
+}
+
+function getScrollRoot() {
+  return getTranscriptScrollRoot() || document.documentElement;
+}
+
+function updatePinToBottomFromScroll() {
+  pinToBottom = isNearBottom();
+}
+
+function syncTranscriptScrollRoot() {
+  var root = getTranscriptScrollRoot();
+  if (!root || root === transcriptScrollRoot || typeof root.addEventListener !== 'function') return;
+  transcriptScrollRoot = root;
+  root.addEventListener('scroll', updatePinToBottomFromScroll, { passive: true });
+}
+
 function isNearBottom(threshold) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return true;
-  var doc = document.documentElement;
-  if (!doc) return true;
-  var distance = doc.scrollHeight - (window.scrollY + window.innerHeight);
+  var root = getScrollRoot();
+  if (!root) return true;
+  var distance =
+    root === document.documentElement
+      ? root.scrollHeight - (window.scrollY + window.innerHeight)
+      : root.scrollHeight - (root.scrollTop + root.clientHeight);
   return distance <= (threshold == null ? SCROLL_PIN_THRESHOLD_PX : threshold);
 }
 
@@ -1940,16 +1976,29 @@ function scrollToBottom() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   if (scrollToBottomScheduled) return;
   if (typeof window.requestAnimationFrame !== 'function') {
-    var doc = document.documentElement;
-    if (doc) window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+    var immediateRoot = getScrollRoot();
+    if (!immediateRoot) return;
+    if (immediateRoot === document.documentElement) {
+      window.scrollTo({ top: immediateRoot.scrollHeight, behavior: 'auto' });
+    } else if (typeof immediateRoot.scrollTo === 'function') {
+      immediateRoot.scrollTo({ top: immediateRoot.scrollHeight, behavior: 'auto' });
+    } else {
+      immediateRoot.scrollTop = immediateRoot.scrollHeight;
+    }
     return;
   }
   scrollToBottomScheduled = true;
   window.requestAnimationFrame(function () {
     scrollToBottomScheduled = false;
-    var doc = document.documentElement;
-    if (!doc) return;
-    window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' });
+    var root = getScrollRoot();
+    if (!root) return;
+    if (root === document.documentElement) {
+      window.scrollTo({ top: root.scrollHeight, behavior: 'auto' });
+    } else if (typeof root.scrollTo === 'function') {
+      root.scrollTo({ top: root.scrollHeight, behavior: 'auto' });
+    } else {
+      root.scrollTop = root.scrollHeight;
+    }
   });
 }
 
@@ -2199,13 +2248,7 @@ function renderProposalBlock(answerEl, payload) {
 // returns true and the pin stays on. Genuine user-initiated scroll-up
 // drops below the threshold and disables pin.
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener(
-    'scroll',
-    function () {
-      pinToBottom = isNearBottom();
-    },
-    { passive: true },
-  );
+  window.addEventListener('scroll', updatePinToBottomFromScroll, { passive: true });
 }
 
 function attachPendingAnswerStream(answerEl) {
@@ -2735,6 +2778,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
   if (questionInput) questionInput.value = '';
   syncChatFormAction();
   syncActiveGameControls();
+  syncTranscriptScrollRoot();
 
   var swapTarget = event.detail && event.detail.target;
   var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
@@ -2765,6 +2809,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
 document.addEventListener('DOMContentLoaded', function () {
   syncChatFormAction();
   syncActiveGameControls();
+  syncTranscriptScrollRoot();
   openSheetSectionFromHash();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
   // back/forward navigation and refresh, so we don't pin or auto-scroll on

@@ -1928,6 +1928,108 @@ describe('squire.js chat form retargeting', () => {
       expect(harness.scrollToCalls[0]).toMatchObject({ top: 2000, behavior: 'auto' });
     });
 
+    it('uses the transcript surface as the scroll root when the page has a transcript', () => {
+      const docListeners = new Map<string, Array<() => void>>();
+      const surfaceListeners = new Map<string, Array<() => void>>();
+      const noopElement = { setAttribute() {}, removeAttribute() {}, textContent: '' };
+      const contentEl = new FakeElement('div');
+      contentEl.classList.add('squire-answer__content');
+      const toolsEl = new FakeElement('div');
+      toolsEl.classList.add('squire-answer__tools');
+      const skeletonEl = new FakeElement('div');
+      skeletonEl.classList.add('squire-answer__skeleton');
+      const answerEl = new FakeElement('article');
+      answerEl.classList.add('squire-answer--pending');
+      answerEl.setAttribute('data-stream-url', '/chat/surface/messages/m1/stream');
+      answerEl.appendChild(contentEl);
+      answerEl.appendChild(toolsEl);
+      answerEl.appendChild(skeletonEl);
+
+      const transcript = new FakeElement('section');
+      transcript.classList.add('squire-transcript');
+      transcript.appendChild(answerEl);
+      const surface = new FakeElement('main');
+      surface.classList.add('squire-surface');
+      surface.appendChild(transcript);
+
+      const surfaceScrollToCalls: Array<{ top?: number; behavior?: string }> = [];
+      Object.assign(surface, {
+        clientHeight: 700,
+        scrollHeight: 1600,
+        scrollTop: 850,
+        addEventListener(event: string, cb: () => void) {
+          surfaceListeners.set(event, [...(surfaceListeners.get(event) ?? []), cb]);
+        },
+        scrollTo(opts: { top?: number; behavior?: string }) {
+          surfaceScrollToCalls.push(opts);
+          if (typeof opts.top === 'number') {
+            (surface as unknown as { scrollTop: number }).scrollTop = opts.top;
+          }
+        },
+      });
+
+      const form = {
+        setAttribute() {},
+        dataset: {} as Record<string, string>,
+        querySelector(sel: string) {
+          if (sel === 'input[name="question"]') return noopElement;
+          if (sel === 'button[type="submit"]') return noopElement;
+          return null;
+        },
+      };
+      const document = {
+        addEventListener(event: string, cb: () => void) {
+          docListeners.set(event, [...(docListeners.get(event) ?? []), cb]);
+        },
+        createElement(t: string) {
+          return new FakeElement(t);
+        },
+        querySelector(sel: string) {
+          if (sel === '.squire-input-dock') return form;
+          if (sel === '.squire-transcript') return transcript;
+          return null;
+        },
+        querySelectorAll(sel: string) {
+          return sel === '.squire-answer--pending[data-stream-url]' ? [answerEl] : [];
+        },
+        documentElement: { scrollHeight: 10000 },
+      };
+
+      const windowScrollToCalls: Array<unknown> = [];
+      const win = {
+        location: { pathname: '/chat/surface' },
+        crypto: {},
+        EventSource: FakeEventSource,
+        scrollY: 0,
+        innerHeight: 800,
+        scrollTo: (opts: unknown) => {
+          windowScrollToCalls.push(opts);
+        },
+        addEventListener: () => {},
+        requestAnimationFrame: (cb: () => void) => {
+          cb();
+          return 0;
+        },
+      };
+      const ctx = vm.createContext({ document, window: win });
+      vm.runInContext(scriptSource, ctx);
+      for (const cb of docListeners.get('DOMContentLoaded') ?? []) cb();
+
+      const source = FakeEventSource.latest!;
+      source.emit('text-delta', { delta: 'Streaming in the surface.' });
+
+      expect(surfaceScrollToCalls).toHaveLength(1);
+      expect(surfaceScrollToCalls[0]).toMatchObject({ top: 1600, behavior: 'auto' });
+      expect(windowScrollToCalls).toHaveLength(0);
+
+      (surface as unknown as { scrollTop: number }).scrollTop = 500;
+      for (const cb of surfaceListeners.get('scroll') ?? []) cb();
+      source.emit('text-delta', { delta: 'The user is reading earlier text.' });
+
+      expect(surfaceScrollToCalls).toHaveLength(1);
+      expect(windowScrollToCalls).toHaveLength(0);
+    });
+
     it('coalesces multiple text-delta scrolls into a single scrollTo per animation frame (I5 perf fix)', () => {
       // With rAF-throttled scrollToBottom, ten deltas in one synchronous
       // batch should result in ONE scrollTo call (per frame), not ten.
