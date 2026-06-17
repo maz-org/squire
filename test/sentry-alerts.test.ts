@@ -142,6 +142,21 @@ describe('Sentry alert catalog', () => {
         });
       }
 
+      if (url.includes('cursor=page-2')) {
+        return new Response(
+          JSON.stringify([
+            {
+              id: '7551288604',
+              shortId: 'MAZ-SQUIRE-1',
+              title: 'Error: SquireSafeScrubCanary',
+              permalink: 'https://brian-moseley.sentry.io/issues/7551288604/',
+              status: 'unresolved',
+            },
+          ]),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+
       return new Response(
         JSON.stringify([
           {
@@ -152,14 +167,20 @@ describe('Sentry alert catalog', () => {
             status: 'unresolved',
           },
           {
-            id: '7551288604',
-            shortId: 'MAZ-SQUIRE-1',
-            title: 'Error: SquireSafeScrubCanary',
-            permalink: 'https://brian-moseley.sentry.io/issues/7551288604/',
+            id: '7557533332',
+            shortId: 'MAZ-SQUIRE-8',
+            title: 'uptime.monitor_flap',
+            permalink: 'https://brian-moseley.sentry.io/issues/7557533332/',
             status: 'unresolved',
           },
         ]),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            Link: '<https://sentry.io/api/0/projects/brian-moseley/maz-squire/issues/?cursor=page-2&limit=100>; rel="next"; results="true"; cursor="page-2"',
+          },
+        },
       );
     });
 
@@ -171,10 +192,16 @@ describe('Sentry alert catalog', () => {
       query: SENTRY_SAFE_TEST_ISSUE_QUERY,
       resolvedIssues: [],
     });
-    expect(dryRun.issues.map((issue) => issue.id)).toEqual(['7555295841', '7551288604']);
-    expect(calls).toHaveLength(1);
+    expect(dryRun.issues.map((issue) => issue.id)).toEqual([
+      '7555295841',
+      '7557533332',
+      '7551288604',
+    ]);
+    expect(calls).toHaveLength(2);
     expect(calls[0]?.method).toBe('GET');
     expect(calls[0]?.url).toContain('query=is%3Aunresolved+safe_test%3Atrue');
+    expect(calls[1]?.method).toBe('GET');
+    expect(calls[1]?.url).toContain('cursor=page-2');
 
     calls.length = 0;
     const applied = await cleanupSafeTestIssues({ token: 'token', dryRun: false, fetch });
@@ -184,10 +211,15 @@ describe('Sentry alert catalog', () => {
       dryRun: false,
       query: SENTRY_SAFE_TEST_ISSUE_QUERY,
     });
-    expect(applied.resolvedIssues.map((issue) => issue.id)).toEqual(['7555295841', '7551288604']);
-    expect(calls.map((call) => call.method)).toEqual(['GET', 'PUT', 'PUT']);
-    expect(calls[1]?.url).toBe('https://sentry.io/api/0/issues/7555295841/');
-    expect(calls[2]?.url).toBe('https://sentry.io/api/0/issues/7551288604/');
+    expect(applied.resolvedIssues.map((issue) => issue.id)).toEqual([
+      '7555295841',
+      '7557533332',
+      '7551288604',
+    ]);
+    expect(calls.map((call) => call.method)).toEqual(['GET', 'GET', 'PUT', 'PUT', 'PUT']);
+    expect(calls[2]?.url).toBe('https://sentry.io/api/0/issues/7555295841/');
+    expect(calls[3]?.url).toBe('https://sentry.io/api/0/issues/7557533332/');
+    expect(calls[4]?.url).toBe('https://sentry.io/api/0/issues/7551288604/');
   });
 
   it('exposes the app-health dashboard and alert sync dry run', async () => {

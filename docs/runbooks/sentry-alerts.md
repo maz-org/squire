@@ -151,8 +151,17 @@ evidence payloads without sending to Sentry:
 ```bash
 npm run sentry:test-event -- --kind chat --dry-run
 npm run sentry:test-event -- --kind uptime --dry-run
-npm run sentry:test-event -- --cleanup --dry-run
 npm run sentry:app-health -- --dry-run
+```
+
+The cleanup preview is separate from event dry-runs. Without `SENTRY_TOKEN`, it
+prints the cleanup query, Sentry issue-search URL, and commands. With
+`SENTRY_TOKEN`, it also queries Sentry and lists unresolved issues matching
+`safe_test:true` without resolving them:
+
+```bash
+npm run sentry:test-event -- --cleanup --dry-run
+SENTRY_TOKEN=... npm run sentry:test-event -- --cleanup --dry-run
 ```
 
 The safe test events use synthetic IDs only:

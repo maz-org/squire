@@ -315,6 +315,16 @@ const SQL_TEXT_ATTRIBUTE_KEYS = new Set([
   'querytext',
 ]);
 const ROUTE_ATTRIBUTE_KEYS = new Set(['httproute', 'route', 'squireroute']);
+const SAFE_FINGERPRINT_VALUES = new Set([
+  'squire-safe-test',
+  'backend',
+  'chat',
+  'browser',
+  'cron',
+  'uptime',
+  'deploy-regression',
+  'scrub-canary',
+]);
 
 function safeContextTag(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
@@ -348,6 +358,7 @@ function buildSafeFingerprint(fingerprint: readonly string[] | undefined): strin
   const safeFingerprint = fingerprint
     .map((value) => safeString(value))
     .filter((value): value is string => value !== undefined)
+    .filter((value) => SAFE_FINGERPRINT_VALUES.has(value))
     .map((value) => truncateTag(redactSensitiveString(value)));
 
   return safeFingerprint.length > 0 ? safeFingerprint : undefined;

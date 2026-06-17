@@ -127,10 +127,10 @@ function safeTestInput(kind: SafeTestKind) {
   const userMessageId = 'sentry-test-user-message';
   const fingerprint = ['squire-safe-test', kind] as const;
   const context = (values: Record<string, unknown>) => ({
+    ...values,
     safeTest: 'true',
     safeTestKind: kind,
     synthetic: 'true',
-    ...values,
   });
 
   switch (kind) {
@@ -355,7 +355,12 @@ function safeTestIssueSummary(value: unknown): SafeTestIssueSummary | null {
   };
 }
 
-async function sentryJson<T>(fetch: FetchLike, token: string, url: string, init?: RequestInit) {
+async function sentryJsonWithHeaders<T>(
+  fetch: FetchLike,
+  token: string,
+  url: string,
+  init?: RequestInit,
+): Promise<{ body: T; headers: Headers }> {
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -366,17 +371,57 @@ async function sentryJson<T>(fetch: FetchLike, token: string, url: string, init?
   if (!response.ok) {
     throw new Error(`Sentry API request failed: ${response.status} ${response.statusText}`);
   }
-  return (await response.json()) as T;
+  return {
+    body: (await response.json()) as T,
+    headers: response.headers,
+  };
+}
+
+async function sentryJson<T>(fetch: FetchLike, token: string, url: string, init?: RequestInit) {
+  return (await sentryJsonWithHeaders<T>(fetch, token, url, init)).body;
+}
+
+function sentryNextUrl(linkHeader: string | null): string | undefined {
+  if (!linkHeader) return undefined;
+
+  for (const part of linkHeader.split(/,\s*(?=<)/)) {
+    if (!/\brel="next"/.test(part) || !/\bresults="true"/.test(part)) continue;
+    const urlMatch = part.match(/<([^>]+)>/);
+    if (!urlMatch) continue;
+    try {
+      const url = new URL(urlMatch[1] ?? '');
+      if (url.origin !== 'https://sentry.io' || !url.pathname.startsWith('/api/0/')) continue;
+      return url.toString();
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
 }
 
 async function listSafeTestIssues(
   fetch: FetchLike,
   token: string,
 ): Promise<SafeTestIssueSummary[]> {
-  const payload = await sentryJson<unknown[]>(fetch, token, sentryProjectIssuesApiUrl());
-  return payload
-    .map(safeTestIssueSummary)
-    .filter((issue): issue is SafeTestIssueSummary => issue !== null);
+  const issues: SafeTestIssueSummary[] = [];
+  const seenUrls = new Set<string>();
+  let nextUrl: string | undefined = sentryProjectIssuesApiUrl();
+
+  while (nextUrl) {
+    if (seenUrls.has(nextUrl)) throw new Error('Sentry safe-test cleanup pagination loop');
+    seenUrls.add(nextUrl);
+
+    const { body, headers } = await sentryJsonWithHeaders<unknown[]>(fetch, token, nextUrl);
+    issues.push(
+      ...body
+        .map(safeTestIssueSummary)
+        .filter((issue): issue is SafeTestIssueSummary => issue !== null),
+    );
+    nextUrl = sentryNextUrl(headers.get('link'));
+  }
+
+  return issues;
 }
 
 async function resolveSafeTestIssue(

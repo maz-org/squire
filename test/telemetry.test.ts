@@ -939,7 +939,7 @@ describe('telemetry boundary', () => {
     expect(sentry.captureException).toHaveBeenCalledWith(error);
   });
 
-  it('sets a sanitized fingerprint when callers provide a safe grouping key', () => {
+  it('sets only allowlisted low-cardinality fingerprint values', () => {
     process.env.SENTRY_DSN = 'https://public@example.sentry.io/123';
     process.env.SENTRY_RELEASE = 'abc123';
     process.env.SQUIRE_ENV = 'production';
@@ -947,14 +947,10 @@ describe('telemetry boundary', () => {
 
     captureTelemetryError(new Error('safe test'), {
       requestId: 'req-1',
-      fingerprint: ['squire-safe-test', 'browser', 'alice@example.com'],
+      fingerprint: ['squire-safe-test', 'browser', 'alice@example.com', 'req-1'],
     });
 
-    expect(sentry.scope.setFingerprint).toHaveBeenCalledWith([
-      'squire-safe-test',
-      'browser',
-      TELEMETRY_REDACTED,
-    ]);
+    expect(sentry.scope.setFingerprint).toHaveBeenCalledWith(['squire-safe-test', 'browser']);
   });
 
   it('redacts breadcrumb data and flushes when enabled', async () => {

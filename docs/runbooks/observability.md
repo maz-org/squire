@@ -398,8 +398,9 @@ After observability changes deploy:
    `metadata.thread_id`, `metadata.userMessageId`, and `metadata.requestId`.
 4. Generate or preview safe Sentry test events for backend, chat, browser, cron,
    deploy-regression, scrub-canary, and uptime paths.
-5. Run `npm run sentry:test-event -- --cleanup --dry-run`, confirm all matches
-   are synthetic, then run `npm run sentry:test-event -- --cleanup`.
+5. Run `SENTRY_TOKEN=... npm run sentry:test-event -- --cleanup --dry-run`,
+   confirm all matches are synthetic, then run
+   `SENTRY_TOKEN=... npm run sentry:test-event -- --cleanup`.
 6. Create or update a Linear bug with the required Evidence template, using
    unavailable reasons for anything not present.
 7. Check Sentry `Stats & Usage` for log accepted GB, accepted spans, dropped
