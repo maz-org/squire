@@ -298,6 +298,49 @@ export interface CampaignModulesForm {
   errorMessage?: string;
 }
 
+export interface CampaignDashboardHeaderStats {
+  openScenarioCount?: number;
+}
+
+function campaignDashboardHeaderStatsLine(
+  campaign: Campaign,
+  headerStats?: CampaignDashboardHeaderStats,
+): string {
+  return [
+    gameLabel(campaign.game),
+    `PROSPERITY ${campaign.prosperity}`,
+    typeof headerStats?.openScenarioCount === 'number'
+      ? `OPEN ${headerStats.openScenarioCount}`
+      : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+export function renderCampaignDashboardHeaderStats(
+  campaign: Campaign,
+  headerStats?: CampaignDashboardHeaderStats,
+  options: { outOfBand?: boolean } = {},
+): HtmlEscapedString {
+  return html`<p
+    class="squire-campaign-dashboard__stats"
+    id="squire-campaign-dashboard-stats"
+    ${options.outOfBand ? html`hx-swap-oob="true"` : html``}
+  >
+    ${campaignDashboardHeaderStatsLine(campaign, headerStats)}
+  </p>` as HtmlEscapedString;
+}
+
+export function renderCampaignDashboardThreadsSwap(input: {
+  campaign: Campaign;
+  headerStats: CampaignDashboardHeaderStats;
+  threadsFragment: HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`${renderCampaignDashboardHeaderStats(input.campaign, input.headerStats, {
+    outOfBand: true,
+  })}${input.threadsFragment}` as HtmlEscapedString;
+}
+
 /**
  * A quiet modules disclosure. Toggling changes which scenario set the dashboard
  * shows; removal is non-destructive (a removed module's played/skipped keys
@@ -396,6 +439,7 @@ export function renderCampaignDashboardContent(
   inviteForm?: InviteMemberForm,
   renameForm?: CampaignRenameForm,
   modulesForm?: CampaignModulesForm,
+  headerStats?: CampaignDashboardHeaderStats,
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -404,10 +448,7 @@ export function renderCampaignDashboardContent(
   return html`<section class="squire-campaign-dashboard" data-campaign-id="${campaign.id}">
     <header class="squire-campaign-dashboard__header">
       <h1 class="squire-campaign-dashboard__name">${campaign.name}</h1>
-      <p class="squire-campaign-dashboard__stats">
-        ${gameLabel(campaign.game)} · PROSPERITY ${campaign.prosperity} · PLAYED
-        ${campaign.playedScenarios.length} · DRAWN ${campaign.drawnScenarios.length}
-      </p>
+      ${renderCampaignDashboardHeaderStats(campaign, headerStats)}
       ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
       ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
     </header>
