@@ -260,8 +260,6 @@ const UNSAFE_QUERY_VALUE_PARTS = [
   'session',
   'token',
 ];
-const DEFAULT_SENTRY_ORG_SLUG = 'brian-moseley';
-const DEFAULT_SENTRY_PROJECT_ID = '4511564194643969';
 const SENTRY_BUG_REPORT_REFERRER = 'squire-bug-report';
 const PUBLIC_WORK_EVENTS = new Set<string>([
   'tool-plan',
@@ -432,16 +430,13 @@ function envValue(
 function sentryOrgSlug(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
 ): string | undefined {
-  return (
-    safeUrlToken(envValue(env, 'SENTRY_ORG_SLUG') ?? envValue(env, 'SENTRY_ORG')) ??
-    DEFAULT_SENTRY_ORG_SLUG
-  );
+  return safeUrlToken(envValue(env, 'SENTRY_ORG_SLUG') ?? envValue(env, 'SENTRY_ORG'));
 }
 
 function sentryProjectId(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
 ): string | undefined {
-  return safeUrlToken(envValue(env, 'SENTRY_PROJECT_ID')) ?? DEFAULT_SENTRY_PROJECT_ID;
+  return safeUrlToken(envValue(env, 'SENTRY_PROJECT_ID'));
 }
 
 function sentryEnvironment(

@@ -279,6 +279,7 @@ describe('linear bug intake', () => {
       observed: 'Wrong answer.',
       expected: 'Correct answer.',
       linearApiKey: '',
+      env: {},
       fetch: async () => {
         throw new Error('fetch should not be called');
       },

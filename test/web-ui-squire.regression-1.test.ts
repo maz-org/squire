@@ -614,6 +614,7 @@ function bootBugReportHarness(pathname = '/chat/conv-1') {
     url: string;
     method?: string;
     headers?: Record<string, string>;
+    keepalive?: boolean;
     body: unknown;
   }> = [];
   const csrfMeta = {
@@ -643,7 +644,7 @@ function bootBugReportHarness(pathname = '/chat/conv-1') {
     },
   };
   const window = {
-    location: { pathname, href: `https://squire.maz.org${pathname}?token=secret` },
+    location: { pathname, href: `https://squire.maz.org${pathname}` },
     crypto: { randomUUID: () => 'bug-report-snapshot-1' },
     EventSource: function () {},
     addEventListener: () => {},
@@ -661,14 +662,21 @@ function bootBugReportHarness(pathname = '/chat/conv-1') {
     scrollTo: () => {},
     fetch(
       url: string,
-      init?: { method?: string; headers?: Record<string, string>; body?: unknown },
+      init?: {
+        method?: string;
+        headers?: Record<string, string>;
+        body?: unknown;
+        keepalive?: boolean;
+      },
     ) {
-      fetches.push({
+      const record: (typeof fetches)[number] = {
         url,
         method: init?.method,
         headers: init?.headers,
         body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
-      });
+      };
+      if (init && 'keepalive' in init) record.keepalive = Boolean(init.keepalive);
+      fetches.push(record);
       return Promise.resolve({
         ok: true,
         json: () =>
@@ -1108,7 +1116,7 @@ describe('squire.js bug reports', () => {
           byteSize: 5,
         },
         browser: {
-          url: 'https://squire.maz.org/chat/conv-1?token=secret',
+          url: 'https://squire.maz.org/chat/conv-1',
           userAgent: 'SquireTest/1.0',
           viewport: { width: 390, height: 844 },
           replaySnapshotId: 'bug-report-snapshot-1',
@@ -1116,6 +1124,7 @@ describe('squire.js bug reports', () => {
         },
       }),
     });
+    expect(fetches[0]?.keepalive).toBeUndefined();
   });
 
   it('does not ask Chrome for tab/window sharing when attaching a screenshot', async () => {
@@ -1160,6 +1169,8 @@ describe('squire.js bug reports', () => {
     const cancel = dialog.querySelector('button[type="button"]');
     const status = dialog.querySelector('.squire-bug-report__status');
     if (!form || !submit || !cancel || !status) throw new Error('expected bug report controls');
+
+    expect(dialog.getAttribute('aria-labelledby')).toBe('squire-bug-report-title');
 
     form.dispatch('submit', { preventDefault() {} });
     await flushMicrotasks();

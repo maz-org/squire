@@ -142,13 +142,15 @@ class LinearSdkIssueClient implements SquireLinearClient {
   async resolveTargets(input: LinearTargetInput): Promise<LinearTargets> {
     const [teams, projects, labels, states, viewer] = await Promise.all([
       this.sdk.teams({ first: 1, filter: { key: { eq: input.teamKey } } }),
-      this.sdk.projects({
-        first: 1,
-        filter: {
-          name: { eq: input.projectName },
-          accessibleTeams: { some: { key: { eq: input.teamKey } } },
-        },
-      }),
+      input.projectName
+        ? this.sdk.projects({
+            first: 1,
+            filter: {
+              name: { eq: input.projectName },
+              accessibleTeams: { some: { key: { eq: input.teamKey } } },
+            },
+          })
+        : Promise.resolve({ nodes: [] }),
       this.sdk.issueLabels({
         first: 10,
         filter: {

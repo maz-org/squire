@@ -44,6 +44,7 @@ import {
   API_ASK_RATE_LIMIT_POLICY,
   API_CARD_SEARCH_RATE_LIMIT_POLICY,
   API_RULE_SEARCH_RATE_LIMIT_POLICY,
+  BUG_REPORT_RATE_LIMIT_POLICY,
   CAMPAIGN_READ_RATE_LIMIT_POLICY,
   CAMPAIGN_WRITE_RATE_LIMIT_POLICY,
   GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY,
@@ -68,6 +69,7 @@ import { itemCostWarnings, levelXpWarnings } from './campaign/write-validation.t
 import { renderCharacterSheetContent } from './web-ui/character-sheet.ts';
 import { renderProfileContent } from './web-ui/profile-page.ts';
 import * as CharacterRepository from './db/repositories/character-repository.ts';
+import * as ConversationRepository from './db/repositories/conversation-repository.ts';
 import {
   findCardByName,
   findItemByNumber,
@@ -3705,6 +3707,32 @@ app.post('/api/bug-reports', requireSession(), requireCsrf(), async (c) => {
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   const requestId = correlateRequest(c);
+  const session = c.get('session') as { userId?: unknown } | undefined;
+  const userId = typeof session?.userId === 'string' ? session.userId : undefined;
+  if (!userId) return c.json(jsonError('Authentication required', 401), 401);
+
+  let rateLimit: RateLimitDecision;
+  try {
+    rateLimit = await getDefaultRateLimiter().consume({
+      policy: BUG_REPORT_RATE_LIMIT_POLICY,
+      identity: `user:${userId}`,
+    });
+  } catch (error) {
+    return apiRateLimitUnavailableResponse(
+      c,
+      error,
+      '/api/bug-reports',
+      BUG_REPORT_RATE_LIMIT_POLICY,
+    );
+  }
+  if (!rateLimit.allowed) {
+    return apiRateLimitedResponse(
+      c,
+      { decision: rateLimit, identityKind: 'user' },
+      '/api/bug-reports',
+    );
+  }
+
   let body: unknown;
   try {
     body = await c.req.json();
@@ -3716,19 +3744,23 @@ app.post('/api/bug-reports', requireSession(), requireCsrf(), async (c) => {
   if (!result.success) return c.json(jsonError('Invalid bug report payload', 400), 400);
 
   const report = result.data;
-  const session = c.get('session') as { userId?: unknown } | undefined;
-  const userId = typeof session?.userId === 'string' ? session.userId : undefined;
-  if (!userId) return c.json(jsonError('Authentication required', 401), 401);
+  const conversation = report.conversationId
+    ? await ConversationRepository.findOwnedById(userId, report.conversationId)
+    : null;
+  if (report.conversationId && !conversation) {
+    return c.json(jsonError('Conversation not found', 404), 404);
+  }
 
   const bundle = await collectDiagnosticBundle({
     route: '/api/bug-reports',
     requestId,
-    conversationId: report.conversationId,
-    userMessageId: report.userMessageId,
-    assistantMessageId: report.assistantMessageId,
+    conversationId: conversation?.id,
+    userMessageId: conversation ? report.userMessageId : undefined,
+    assistantMessageId: conversation ? report.assistantMessageId : undefined,
     conversationUrl: bugReportConversationUrl(report),
     browserUrl: report.browser?.url,
     user: { id: userId },
+    conversation,
     browser: report.browser,
     sentryIssueUrl: report.sentryIssueUrl,
     sentryEventUrl: report.sentryEventUrl,

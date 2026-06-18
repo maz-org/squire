@@ -86,6 +86,7 @@ const {
   mockCollectDiagnosticBundle,
   mockSubmitLinearBugReport,
   mockFindSessionById,
+  mockFindOwnedConversation,
 } = vi.hoisted(() => {
   const requestSpan = {
     setAttributes: vi.fn(),
@@ -127,6 +128,7 @@ const {
     mockCollectDiagnosticBundle: vi.fn(),
     mockSubmitLinearBugReport: vi.fn(),
     mockFindSessionById: vi.fn(),
+    mockFindOwnedConversation: vi.fn(),
   };
 });
 
@@ -202,6 +204,10 @@ vi.mock('../src/db/repositories/session-repository.ts', () => ({
   deleteExpired: vi.fn(),
 }));
 
+vi.mock('../src/db/repositories/conversation-repository.ts', () => ({
+  findOwnedById: mockFindOwnedConversation,
+}));
+
 vi.mock('@opentelemetry/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@opentelemetry/api')>();
   return {
@@ -245,6 +251,7 @@ import {
   API_ASK_RATE_LIMIT_POLICY,
   API_CARD_SEARCH_RATE_LIMIT_POLICY,
   API_RULE_SEARCH_RATE_LIMIT_POLICY,
+  BUG_REPORT_RATE_LIMIT_POLICY,
   hashRateLimitIdentity,
   resetRateLimiterForTesting,
   setRateLimiterForTesting,
@@ -335,6 +342,7 @@ function resetRouteMocks() {
   mockCollectDiagnosticBundle.mockReset();
   mockSubmitLinearBugReport.mockReset();
   mockFindSessionById.mockReset();
+  mockFindOwnedConversation.mockReset();
 }
 
 function findTelemetryLog(message: string) {
@@ -749,14 +757,15 @@ describe('POST /api/bug-reports', () => {
   }
 
   it('collects safe diagnostics and creates a Linear issue for an authenticated turn report', async () => {
+    const now = new Date();
     const session = {
       id: 'session-1',
       userId: 'user-1',
-      expiresAt: new Date(Date.now() + 60_000),
-      createdAt: new Date(),
+      expiresAt: new Date(now.getTime() + 60_000),
+      createdAt: now,
       ipAddress: null,
       userAgent: null,
-      lastSeenAt: new Date(),
+      lastSeenAt: now,
       user: {
         id: 'user-1',
         googleSub: 'google-sub-1',
@@ -766,8 +775,16 @@ describe('POST /api/bug-reports', () => {
         createdAt: new Date(),
       },
     };
+    const conversation = {
+      id: 'conv-1',
+      userId: 'user-1',
+      creationIdempotencyKey: null,
+      createdAt: now,
+      lastMessageAt: now,
+    };
     const diagnosticBundle = { schemaVersion: 1, report: {} };
     mockFindSessionById.mockResolvedValueOnce(session);
+    mockFindOwnedConversation.mockResolvedValueOnce(conversation);
     mockCollectDiagnosticBundle.mockResolvedValueOnce(diagnosticBundle);
     mockSubmitLinearBugReport.mockResolvedValueOnce({
       status: 'created',
@@ -796,7 +813,7 @@ describe('POST /api/bug-reports', () => {
         observed: 'The assistant got the rule wrong.',
         expected: 'The assistant should answer from the cited rule.',
         browser: {
-          url: 'https://squire.maz.org/chat/conv-1?token=secret',
+          url: 'https://squire.maz.org/chat/conv-1',
           userAgent: 'SquireTest/1.0',
           viewport: { width: 390, height: 844 },
           replaySnapshotId: 'replay-1',
@@ -830,9 +847,10 @@ describe('POST /api/bug-reports', () => {
         userMessageId: 'msg-user-1',
         assistantMessageId: 'msg-assistant-1',
         sentryEventId: 'abcdefabcdefabcdefabcdefabcdefab',
-        browserUrl: 'https://squire.maz.org/chat/conv-1?token=secret',
-        conversationUrl: 'https://squire.maz.org/chat/conv-1?token=secret',
+        browserUrl: 'https://squire.maz.org/chat/conv-1',
+        conversationUrl: 'https://squire.maz.org/chat/conv-1',
         user: { id: 'user-1' },
+        conversation,
         browser: expect.objectContaining({
           userAgent: 'SquireTest/1.0',
           viewport: { width: 390, height: 844 },
@@ -860,6 +878,94 @@ describe('POST /api/bug-reports', () => {
     expect(JSON.stringify(mockSubmitLinearBugReport.mock.calls)).not.toContain(
       'person@example.com',
     );
+    expect(mockFindOwnedConversation).toHaveBeenCalledWith('user-1', 'conv-1');
+  });
+
+  it('rejects bug reports for conversations not owned by the session user', async () => {
+    const now = new Date();
+    const session = {
+      id: 'session-1',
+      userId: 'user-1',
+      expiresAt: new Date(now.getTime() + 60_000),
+      createdAt: now,
+      ipAddress: null,
+      userAgent: null,
+      lastSeenAt: now,
+      user: {
+        id: 'user-1',
+        googleSub: 'google-sub-1',
+        email: 'person@example.com',
+        name: 'Test User',
+        avatarUrl: null,
+        createdAt: now,
+      },
+    };
+    mockFindSessionById.mockResolvedValueOnce(session);
+    mockFindOwnedConversation.mockResolvedValueOnce(null);
+
+    const res = await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: await signedSessionCookie(session.id),
+        'x-csrf-token': createCsrfToken(session.id),
+      },
+      body: JSON.stringify({
+        kind: 'bad_answer',
+        conversationId: 'foreign-conv',
+        userMessageId: 'foreign-msg',
+      }),
+    });
+
+    expect(res.status).toBe(404);
+    expect(mockCollectDiagnosticBundle).not.toHaveBeenCalled();
+    expect(mockSubmitLinearBugReport).not.toHaveBeenCalled();
+  });
+
+  it('rate limits authenticated bug reports before parsing the JSON body', async () => {
+    const now = new Date();
+    const session = {
+      id: 'session-1',
+      userId: 'user-1',
+      expiresAt: new Date(now.getTime() + 60_000),
+      createdAt: now,
+      ipAddress: null,
+      userAgent: null,
+      lastSeenAt: now,
+      user: {
+        id: 'user-1',
+        googleSub: 'google-sub-1',
+        email: 'person@example.com',
+        name: 'Test User',
+        avatarUrl: null,
+        createdAt: now,
+      },
+    };
+    const { calls } = installOneRequestLimiter();
+    mockFindSessionById.mockResolvedValue(session);
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Cookie: await signedSessionCookie(session.id),
+      'x-csrf-token': createCsrfToken(session.id),
+    };
+    await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers,
+      body: '{not valid json',
+    });
+    const rejected = await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers,
+      body: '{not valid json',
+    });
+
+    expect(rejected.status).toBe(429);
+    expect(calls).toEqual([
+      { policy: BUG_REPORT_RATE_LIMIT_POLICY, identity: 'user:user-1' },
+      { policy: BUG_REPORT_RATE_LIMIT_POLICY, identity: 'user:user-1' },
+    ]);
+    expect(mockCollectDiagnosticBundle).not.toHaveBeenCalled();
   });
 });
 

@@ -69,8 +69,9 @@ body by hand.
    Production Linear calls must go through `SquireLinearClient` in
    `src/linear-client.ts`; do not add new hand-written Linear GraphQL calls.
 4. Dedupe before creating anything. The marker is
-   `squire-bug:<env>:<conversationId>:<userMessageId>` and is embedded in the
-   Linear description.
+   `squire-bug:<env>:<conversationId>:<messageId>` and is embedded in the Linear
+   description. The message component prefers `userMessageId`, then
+   `assistantMessageId`, then `requestId` when earlier IDs are unavailable.
 5. File in Linear team `SQR`, project `Squire · Bugs`, state `Todo`, assigned
    to the Linear token owner, label `Bug`.
 

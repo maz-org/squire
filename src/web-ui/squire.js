@@ -388,7 +388,9 @@ function bugReportCsrfToken() {
 }
 
 function currentBrowserUrl() {
-  if (window.location && typeof window.location.href === 'string') return window.location.href;
+  if (window.location && typeof window.location.href === 'string') {
+    return window.location.href.split('#')[0].split('?')[0] || currentRoutePath();
+  }
   return currentRoutePath();
 }
 
@@ -713,7 +715,6 @@ function postBugReportPayload(payload) {
         'x-csrf-token': bugReportCsrfToken(),
       },
       body: JSON.stringify(payload),
-      keepalive: true,
     });
   } catch {
     return null;
@@ -888,8 +889,10 @@ function openBugReportDialog(button) {
   form.method = 'dialog';
   form.className = 'squire-bug-report__form';
   var title = document.createElement('h2');
+  title.id = 'squire-bug-report-title';
   title.className = 'squire-bug-report__title';
   title.textContent = 'Report bug';
+  dialog.setAttribute('aria-labelledby', title.id);
   form.appendChild(title);
 
   var kind = document.createElement('select');
