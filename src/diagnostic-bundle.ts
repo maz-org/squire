@@ -297,9 +297,10 @@ function safeUrlToken(value: string | undefined): string | undefined {
 function safeTimezone(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed || trimmed.length > 64) return undefined;
-  return /^(?:UTC|[A-Za-z]+(?:[._+-]?[A-Za-z0-9]+)*(?:\/[A-Za-z0-9._+-]+)+)$/.test(trimmed)
-    ? trimmed
-    : undefined;
+  if (trimmed === 'UTC') return trimmed;
+  const parts = trimmed.split('/');
+  if (parts.length < 2) return undefined;
+  return parts.every((part) => /^[A-Za-z][A-Za-z0-9._+-]*$/.test(part)) ? trimmed : undefined;
 }
 
 function safeSourceLabel(value: unknown): string | null {
