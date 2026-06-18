@@ -31,6 +31,7 @@ const {
           recordException: (error: unknown) => void;
           setStatus: (status: unknown) => void;
           end: () => void;
+          spanContext: () => { spanId: string };
         }) => unknown)
       | undefined;
     if (!callback) throw new Error(`No span callback for ${name}`);
@@ -44,6 +45,7 @@ const {
       recordException: vi.fn(),
       setStatus: vi.fn(),
       end: vi.fn(),
+      spanContext: () => ({ spanId: 'abcd0123456789ab' }),
     };
     mockStartedSpans.push({ name, span });
     return callback(span);
@@ -748,7 +750,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       ]),
     );
 
-    await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
+    const result = await runLangGraphAgentLoopWithTrajectory('How does loot work?', {
       emit: async () => undefined,
       toolSurface: 'redesigned',
       requestId: 'req-langgraph',
@@ -756,6 +758,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       userMessageId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
       userId: '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
       game: 'frosthaven',
+    });
+    expect(result.observability).toEqual({
+      langsmithRunId: '00000000-0000-0000-abcd-0123456789ab',
     });
 
     const attributes = spanAttributes('squire.agent.langgraph.run');

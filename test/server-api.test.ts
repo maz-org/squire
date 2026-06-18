@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { generateSignedCookie } from 'hono/cookie';
 
 import { parseSSE } from './helpers/server-oauth-helpers.ts';
 import { LlmBudgetExceededError } from '../src/llm-budget.ts';
@@ -82,6 +83,10 @@ const {
   mockSentryTraceSampleRateFromEnv,
   mockRequestSpan,
   mockStartActiveSpan,
+  mockCollectDiagnosticBundle,
+  mockSubmitLinearBugReport,
+  mockFindSessionById,
+  mockFindOwnedConversation,
 } = vi.hoisted(() => {
   const requestSpan = {
     setAttributes: vi.fn(),
@@ -120,6 +125,10 @@ const {
       if (!callback) throw new TypeError('startActiveSpan callback missing');
       return callback(requestSpan);
     }),
+    mockCollectDiagnosticBundle: vi.fn(),
+    mockSubmitLinearBugReport: vi.fn(),
+    mockFindSessionById: vi.fn(),
+    mockFindOwnedConversation: vi.fn(),
   };
 });
 
@@ -130,6 +139,12 @@ vi.mock('../src/service.ts', () => ({
   isReady: mockIsReady,
   refreshInitializationIfReady: mockRefreshInitializationIfReady,
   ask: mockAsk,
+  askWithResult: vi.fn(async (...args: unknown[]) => {
+    const result = await mockAsk(...args);
+    return typeof result === 'object' && result !== null && 'answer' in result
+      ? result
+      : { answer: result };
+  }),
   ensureAskBudgetAvailable: mockEnsureAskBudgetAvailable,
 }));
 vi.mock('../src/db.ts', () => ({
@@ -159,6 +174,38 @@ vi.mock('../src/telemetry.ts', () => ({
   captureTelemetryMessage: mockCaptureTelemetryMessage,
   addTelemetryBreadcrumb: mockAddTelemetryBreadcrumb,
   flushTelemetry: mockFlushTelemetry,
+}));
+
+vi.mock('../src/diagnostic-bundle.ts', async () => {
+  const actual = await vi.importActual<typeof import('../src/diagnostic-bundle.ts')>(
+    '../src/diagnostic-bundle.ts',
+  );
+  return {
+    ...actual,
+    collectDiagnosticBundle: mockCollectDiagnosticBundle,
+  };
+});
+
+vi.mock('../src/linear-bug-intake.ts', async () => {
+  const actual = await vi.importActual<typeof import('../src/linear-bug-intake.ts')>(
+    '../src/linear-bug-intake.ts',
+  );
+  return {
+    ...actual,
+    submitLinearBugReport: mockSubmitLinearBugReport,
+  };
+});
+
+vi.mock('../src/db/repositories/session-repository.ts', () => ({
+  SESSION_LIFETIME_MS: 30 * 24 * 60 * 60 * 1000,
+  findById: mockFindSessionById,
+  create: vi.fn(),
+  destroy: vi.fn(),
+  deleteExpired: vi.fn(),
+}));
+
+vi.mock('../src/db/repositories/conversation-repository.ts', () => ({
+  findOwnedById: mockFindOwnedConversation,
 }));
 
 vi.mock('@opentelemetry/api', async (importOriginal) => {
@@ -198,10 +245,13 @@ vi.mock('../src/auth.ts', () => ({
 
 import { app } from '../src/server.ts';
 import { verifyAccessToken } from '../src/auth.ts';
+import { createCsrfToken } from '../src/auth/csrf.ts';
+import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middleware.ts';
 import {
   API_ASK_RATE_LIMIT_POLICY,
   API_CARD_SEARCH_RATE_LIMIT_POLICY,
   API_RULE_SEARCH_RATE_LIMIT_POLICY,
+  BUG_REPORT_RATE_LIMIT_POLICY,
   hashRateLimitIdentity,
   resetRateLimiterForTesting,
   setRateLimiterForTesting,
@@ -214,7 +264,10 @@ const mockVerifyAccessToken = vi.mocked(verifyAccessToken);
 const ORIGINAL_ORIGIN_SHARED_SECRET = process.env.ORIGIN_SHARED_SECRET;
 const ORIGINAL_SQUIRE_ENV = process.env.SQUIRE_ENV;
 const ORIGINAL_SENTRY_RELEASE = process.env.SENTRY_RELEASE;
+const ORIGINAL_SESSION_SECRET = process.env.SESSION_SECRET;
+const ORIGINAL_LINEAR_API_KEY = process.env.LINEAR_API_KEY;
 const USER_HASH_PATTERN = /^[A-Za-z0-9_-]{32}$/;
+process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
 /** Stub bearer header — the mocked `verifyAccessToken` accepts anything. */
 async function auth(): Promise<Record<string, string>> {
@@ -260,6 +313,7 @@ function installUnavailableLimiter(error = new Error('redis unavailable')) {
 }
 
 function resetRouteMocks() {
+  process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
   vi.clearAllMocks();
   mockStartActiveSpan.mockReset();
   mockStartActiveSpan.mockImplementation((_: string, ...args: unknown[]) => {
@@ -285,6 +339,10 @@ function resetRouteMocks() {
   mockCaptureTelemetryFeedback.mockReset();
   mockCaptureTelemetryLog.mockReset();
   mockCaptureTelemetryMessage.mockReset();
+  mockCollectDiagnosticBundle.mockReset();
+  mockSubmitLinearBugReport.mockReset();
+  mockFindSessionById.mockReset();
+  mockFindOwnedConversation.mockReset();
 }
 
 function findTelemetryLog(message: string) {
@@ -307,6 +365,16 @@ function latestRequestSpanAttributes(): Record<string, unknown> {
 
 afterEach(() => {
   resetRateLimiterForTesting();
+  if (ORIGINAL_SESSION_SECRET === undefined) {
+    delete process.env.SESSION_SECRET;
+  } else {
+    process.env.SESSION_SECRET = ORIGINAL_SESSION_SECRET;
+  }
+  if (ORIGINAL_LINEAR_API_KEY === undefined) {
+    delete process.env.LINEAR_API_KEY;
+  } else {
+    process.env.LINEAR_API_KEY = ORIGINAL_LINEAR_API_KEY;
+  }
 });
 
 describe('POST /api/browser-telemetry', () => {
@@ -665,6 +733,239 @@ describe('POST /api/browser-telemetry', () => {
     expect(browserTelemetryLogCalls()).toEqual([]);
     expect(mockCaptureTelemetryMessage).not.toHaveBeenCalled();
     expect(mockCaptureTelemetryFeedback).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/bug-reports', () => {
+  beforeEach(() => {
+    resetRouteMocks();
+    process.env.LINEAR_API_KEY = 'lin-test';
+  });
+
+  async function signedSessionCookie(sessionId: string): Promise<string> {
+    const signedCookie = await generateSignedCookie(
+      SESSION_COOKIE_NAME,
+      sessionId,
+      getSessionSecret(),
+      {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    );
+    return signedCookie.split(';')[0] ?? signedCookie;
+  }
+
+  it('collects safe diagnostics and creates a Linear issue for an authenticated turn report', async () => {
+    const now = new Date();
+    const session = {
+      id: 'session-1',
+      userId: 'user-1',
+      expiresAt: new Date(now.getTime() + 60_000),
+      createdAt: now,
+      ipAddress: null,
+      userAgent: null,
+      lastSeenAt: now,
+      user: {
+        id: 'user-1',
+        googleSub: 'google-sub-1',
+        email: 'person@example.com',
+        name: 'Test User',
+        avatarUrl: null,
+        createdAt: new Date(),
+      },
+    };
+    const conversation = {
+      id: 'conv-1',
+      userId: 'user-1',
+      creationIdempotencyKey: null,
+      createdAt: now,
+      lastMessageAt: now,
+    };
+    const diagnosticBundle = { schemaVersion: 1, report: {} };
+    mockFindSessionById.mockResolvedValueOnce(session);
+    mockFindOwnedConversation.mockResolvedValueOnce(conversation);
+    mockCollectDiagnosticBundle.mockResolvedValueOnce(diagnosticBundle);
+    mockSubmitLinearBugReport.mockResolvedValueOnce({
+      status: 'created',
+      marker: 'squire-bug:production:conv-1:msg-user-1',
+      issue: {
+        id: 'issue-id',
+        identifier: 'SQR-123',
+        url: 'https://linear.app/squire/issue/SQR-123/example',
+      },
+    });
+
+    const res = await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: await signedSessionCookie(session.id),
+        'x-csrf-token': createCsrfToken(session.id),
+        'x-request-id': 'req-bug-1',
+      },
+      body: JSON.stringify({
+        kind: 'bad_answer',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        assistantMessageId: 'msg-assistant-1',
+        associatedEventId: 'abcdefabcdefabcdefabcdefabcdefab',
+        observed: 'The assistant got the rule wrong.',
+        expected: 'The assistant should answer from the cited rule.',
+        browser: {
+          url: 'https://squire.maz.org/chat/conv-1',
+          userAgent: 'SquireTest/1.0',
+          viewport: { width: 390, height: 844 },
+          replaySnapshotId: 'replay-1',
+          timezone: 'America/New_York',
+        },
+        screenshot: {
+          filename: 'squire-bug-test.jpg',
+          contentType: 'image/jpeg',
+          base64Content: 'aGVsbG8=',
+          width: 390,
+          height: 844,
+          byteSize: 5,
+        },
+      }),
+    });
+
+    expect(res.status).toBe(201);
+    await expect(res.json()).resolves.toEqual({
+      status: 'created',
+      issue: {
+        identifier: 'SQR-123',
+        url: 'https://linear.app/squire/issue/SQR-123/example',
+      },
+      marker: 'squire-bug:production:conv-1:msg-user-1',
+    });
+    expect(mockCollectDiagnosticBundle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        route: '/api/bug-reports',
+        requestId: 'req-bug-1',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        assistantMessageId: 'msg-assistant-1',
+        sentryEventId: 'abcdefabcdefabcdefabcdefabcdefab',
+        browserUrl: 'https://squire.maz.org/chat/conv-1',
+        conversationUrl: 'https://squire.maz.org/chat/conv-1',
+        user: { id: 'user-1' },
+        conversation,
+        browser: expect.objectContaining({
+          userAgent: 'SquireTest/1.0',
+          viewport: { width: 390, height: 844 },
+          replaySnapshotId: 'replay-1',
+        }),
+      }),
+    );
+    expect(mockSubmitLinearBugReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bundle: diagnosticBundle,
+        kind: 'bad_answer',
+        observed: 'The assistant got the rule wrong.',
+        expected: 'The assistant should answer from the cited rule.',
+        attachments: [
+          expect.objectContaining({
+            filename: 'squire-bug-test.jpg',
+            contentType: 'image/jpeg',
+            base64Content: 'aGVsbG8=',
+            title: 'Conversation UI screenshot',
+          }),
+        ],
+        linearApiKey: 'lin-test',
+      }),
+    );
+    expect(JSON.stringify(mockSubmitLinearBugReport.mock.calls)).not.toContain(
+      'person@example.com',
+    );
+    expect(mockFindOwnedConversation).toHaveBeenCalledWith('user-1', 'conv-1');
+  });
+
+  it('rejects bug reports for conversations not owned by the session user', async () => {
+    const now = new Date();
+    const session = {
+      id: 'session-1',
+      userId: 'user-1',
+      expiresAt: new Date(now.getTime() + 60_000),
+      createdAt: now,
+      ipAddress: null,
+      userAgent: null,
+      lastSeenAt: now,
+      user: {
+        id: 'user-1',
+        googleSub: 'google-sub-1',
+        email: 'person@example.com',
+        name: 'Test User',
+        avatarUrl: null,
+        createdAt: now,
+      },
+    };
+    mockFindSessionById.mockResolvedValueOnce(session);
+    mockFindOwnedConversation.mockResolvedValueOnce(null);
+
+    const res = await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: await signedSessionCookie(session.id),
+        'x-csrf-token': createCsrfToken(session.id),
+      },
+      body: JSON.stringify({
+        kind: 'bad_answer',
+        conversationId: 'foreign-conv',
+        userMessageId: 'foreign-msg',
+      }),
+    });
+
+    expect(res.status).toBe(404);
+    expect(mockCollectDiagnosticBundle).not.toHaveBeenCalled();
+    expect(mockSubmitLinearBugReport).not.toHaveBeenCalled();
+  });
+
+  it('rate limits authenticated bug reports before parsing the JSON body', async () => {
+    const now = new Date();
+    const session = {
+      id: 'session-1',
+      userId: 'user-1',
+      expiresAt: new Date(now.getTime() + 60_000),
+      createdAt: now,
+      ipAddress: null,
+      userAgent: null,
+      lastSeenAt: now,
+      user: {
+        id: 'user-1',
+        googleSub: 'google-sub-1',
+        email: 'person@example.com',
+        name: 'Test User',
+        avatarUrl: null,
+        createdAt: now,
+      },
+    };
+    const { calls } = installOneRequestLimiter();
+    mockFindSessionById.mockResolvedValue(session);
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Cookie: await signedSessionCookie(session.id),
+      'x-csrf-token': createCsrfToken(session.id),
+    };
+    await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers,
+      body: '{not valid json',
+    });
+    const rejected = await app.request('/api/bug-reports', {
+      method: 'POST',
+      headers,
+      body: '{not valid json',
+    });
+
+    expect(rejected.status).toBe(429);
+    expect(calls).toEqual([
+      { policy: BUG_REPORT_RATE_LIMIT_POLICY, identity: 'user:user-1' },
+      { policy: BUG_REPORT_RATE_LIMIT_POLICY, identity: 'user:user-1' },
+    ]);
+    expect(mockCollectDiagnosticBundle).not.toHaveBeenCalled();
   });
 });
 

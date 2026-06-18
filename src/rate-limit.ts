@@ -89,6 +89,12 @@ export const API_ASK_RATE_LIMIT_POLICY: RateLimitPolicy = {
   windowMs: 60 * 1000,
 };
 
+export const BUG_REPORT_RATE_LIMIT_POLICY: RateLimitPolicy = {
+  name: 'bug_report_create',
+  limit: 10,
+  windowMs: 60 * 60 * 1000,
+};
+
 /** Campaign-state reads, per user (ADR 0018 inventory, eng decision E7). */
 export const CAMPAIGN_READ_RATE_LIMIT_POLICY: RateLimitPolicy = {
   name: 'campaign_read',

@@ -70,6 +70,7 @@ function fullBundle() {
     user: { id: conversation.userId, email: 'person@example.com' },
     sentryIssueUrl: 'https://sentry.io/organizations/maz/issues/123/?query=secret',
     sentryEventUrl: 'https://sentry.io/organizations/maz/issues/123/events/abc/?project=1',
+    sentryEventId: 'abcdefabcdefabcdefabcdefabcdefab',
     sentryReplayUrl: 'https://sentry.io/replays/xyz/?query=secret',
     sentryTraceUrl: 'https://sentry.io/organizations/maz/traces/trace-1/?token=secret',
     sentryLogsUrl:
@@ -78,6 +79,7 @@ function fullBundle() {
     langsmithTraceUrl: 'https://smith.langchain.com/o/org/projects/p/project/r/run-1?secret=1',
     langsmithThreadUrl: 'https://smith.langchain.com/o/org/projects/p/project/threads/thread-1',
     langsmithRunId: 'run-1',
+    langsmithRunUrl: 'https://smith.langchain.com/o/org/projects/p/project/r/run-1?secret=1',
     conversation,
     messages: [userMessage, assistantMessage],
     streamEvents,
@@ -99,7 +101,17 @@ describe('linear bug report template', () => {
       ],
     });
 
-    expect(body).toContain('## Evidence');
+    expect(body.startsWith('## User Report')).toBe(true);
+    expect(body).toContain('Type: App/runtime bug');
+    expect(body).toContain('Observed:\nThe stream failed after the first tool result.');
+    expect(body).toContain(
+      'Expected:\nThe assistant should finish or show the normal SSE error state.',
+    );
+    expect(body).toContain('## Triage Notes');
+    expect(body).toContain(
+      'Likely failing area:\nSSE transport or conversation-service error handling.',
+    );
+    expect(body).toContain('## Diagnostic Evidence');
     expect(body).toContain(`Conversation: https://squire.maz.org/chat/${conversation.id}`);
     expect(body).toContain(
       `Turn: userMessageId=${userMessage.id}, assistantMessageId=${assistantMessage.id}`,
@@ -108,6 +120,7 @@ describe('linear bug report template', () => {
     expect(body).toContain('Sentry:');
     expect(body).toContain('- Issue: https://sentry.io/organizations/maz/issues/123/');
     expect(body).toContain('- Event: https://sentry.io/organizations/maz/issues/123/events/abc/');
+    expect(body).toContain('- Event ID: abcdefabcdefabcdefabcdefabcdefab');
     expect(body).toContain('- Replay: https://sentry.io/replays/xyz/');
     expect(body).toContain('- Trace: https://sentry.io/organizations/maz/traces/trace-1/');
     expect(body).toContain(
@@ -118,17 +131,17 @@ describe('linear bug report template', () => {
     expect(body).toContain('- Environment: production');
     expect(body).toContain('LangSmith:');
     expect(body).toContain('- Trace: https://smith.langchain.com/o/org/projects/p/project/r/run-1');
-    expect(body).toContain('- Thread: 11111111-1111-4111-8111-111111111111');
+    expect(body).toContain('- Thread: Unavailable: LangSmith thread id was not provided');
     expect(body).toContain(
       '- Thread URL: https://smith.langchain.com/o/org/projects/p/project/threads/thread-1',
     );
     expect(body).toContain('- Run ID: run-1');
-    expect(body).toContain('## Observed Behavior');
-    expect(body).toContain('## Expected Behavior');
-    expect(body).toContain('## Why This Is Likely Failing');
-    expect(body).toContain('## First Files To Inspect');
+    expect(body).toContain(
+      '- Run URL: https://smith.langchain.com/o/org/projects/p/project/r/run-1',
+    );
     expect(body).toContain('## Repro Steps');
     expect(body).toContain('## Acceptance Criteria');
+    expect(body.indexOf('## User Report')).toBeLessThan(body.indexOf('## Diagnostic Evidence'));
     expect(body.indexOf('Sentry:')).toBeLessThan(body.indexOf('LangSmith:'));
   });
 
@@ -144,8 +157,9 @@ describe('linear bug report template', () => {
       acceptanceCriteria: ['The corrected answer is backed by the cited rule source.'],
     });
 
+    expect(body).toContain('Type: Answer-quality bug');
     expect(body).toContain(
-      'Debug lane: Answer-quality bug. Start in LangSmith, then use Sentry only if there was an app/runtime error.',
+      'Suggested diagnostic starting point: Start in LangSmith for the answer trace. Use Sentry only if the app also reported an error, failed stream, replay, or log event.',
     );
     expect(body.indexOf('LangSmith:')).toBeLessThan(body.indexOf('Sentry:'));
   });
@@ -155,17 +169,20 @@ describe('linear bug report template', () => {
       bundle: buildDiagnosticBundle({
         now,
         env: { SQUIRE_ENV: 'test' },
-        conversationUrl: `https://squire.maz.org/chat/${conversation.id}`,
+        route: '/chat',
       }),
       kind: 'app_runtime',
     });
 
     expect(body).toContain('Request: Unavailable: request id was not provided');
-    expect(body).toContain('- Issue: Unavailable: Sentry issue URL was not provided');
+    expect(body).toContain('- Issue: Unavailable: Sentry issue URL was not provided or derivable');
     expect(body).toContain('- Event: Unavailable: Sentry event URL was not provided');
+    expect(body).toContain('- Event ID: Unavailable: Sentry event ID was not provided');
     expect(body).toContain('- Replay: Unavailable: Sentry replay URL was not provided');
-    expect(body).toContain('- Trace: Unavailable: Sentry trace URL was not provided');
-    expect(body).toContain('- Logs: Unavailable: Sentry logs query URL was not provided');
+    expect(body).toContain('- Trace: Unavailable: Sentry trace URL was not provided or derivable');
+    expect(body).toContain(
+      '- Logs: Unavailable: Sentry logs query URL was not provided or derivable',
+    );
     expect(body).toContain('- Trace ID: Unavailable: Sentry trace ID was not provided');
     expect(body).toContain('- Release: Unavailable: SENTRY_RELEASE is not configured');
     expect(body).toContain('- Trace: Unavailable: LangSmith trace URL was not provided');

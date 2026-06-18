@@ -11,6 +11,7 @@ import {
   initializeRetrieval,
 } from './vector-store.ts';
 import { listCardTypes } from './tools.ts';
+import type { AgentRunResult } from './agent.ts';
 import { runLangGraphAgentLoopWithTrajectory } from './agent-langgraph.ts';
 import { applyCampaignContextToAskOptions, type CampaignContextView } from './campaign/context.ts';
 import { assertLlmBudgetAvailable, recordLlmUsage } from './llm-budget.ts';
@@ -628,7 +629,10 @@ export async function ensureAskBudgetAvailable(userId?: string | null): Promise<
  * The agent decides which tools to call based on the question,
  * iterates until it has enough context, then produces a grounded answer.
  */
-export async function ask(question: string, options?: AskOptions): Promise<string> {
+export async function askWithResult(
+  question: string,
+  options?: AskOptions,
+): Promise<AgentRunResult> {
   if (!isReady()) await initialize();
   const {
     budgetPrechecked,
@@ -669,5 +673,10 @@ export async function ask(question: string, options?: AskOptions): Promise<strin
       },
     });
   }
+  return result;
+}
+
+export async function ask(question: string, options?: AskOptions): Promise<string> {
+  const result = await askWithResult(question, options);
   return result.answer;
 }

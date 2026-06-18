@@ -95,9 +95,11 @@ describe('chat observability lifecycle wrapper', () => {
           surface: 'chat_sse',
           status: 'ok',
           duration_ms: 42,
-          langsmith_thread_id: 'conv-1',
         }),
       }),
+    );
+    expect(mockCaptureTelemetryLog.mock.calls[0]?.[2].attributes).not.toHaveProperty(
+      'langsmith_thread_id',
     );
   });
 

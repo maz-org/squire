@@ -36,6 +36,7 @@ import {
 import { resolveSquireEnv } from './squire-env.ts';
 import { requireGameId } from './game.ts';
 import * as WriteTools from './campaign/write-tools.ts';
+import { langSmithRunReferenceFromSpan, type LangSmithRunReference } from './langsmith-links.ts';
 
 type MessageParam = Anthropic.MessageParam;
 type Tool = Anthropic.Tool;
@@ -718,6 +719,7 @@ export interface AgentRunTrajectory {
 export interface AgentRunResult {
   answer: string;
   trajectory: AgentRunTrajectory;
+  observability?: LangSmithRunReference;
 }
 
 export interface EvalAgentLoopOptions {
@@ -1434,7 +1436,10 @@ export async function runAgentLoopWithTrajectory(
           result.trajectory.tokenUsage.cacheCreationInputTokens,
         'squire.agent.cache_read_input_tokens': result.trajectory.tokenUsage.cacheReadInputTokens,
       });
-      return result;
+      return {
+        ...result,
+        observability: langSmithRunReferenceFromSpan(runSpan),
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       runSpan.setAttributes({

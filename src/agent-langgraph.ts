@@ -44,6 +44,7 @@ import {
   activeWorkLogProgressMessageFromCompleted,
   humanizeWorkLogProgressMessage,
 } from './work-log-display.ts';
+import { langSmithRunReferenceFromSpan } from './langsmith-links.ts';
 
 type Message = Anthropic.Message;
 type MessageParam = Anthropic.MessageParam;
@@ -1016,6 +1017,7 @@ async function runLangGraphAgentLoop(
       const result = {
         answer: finalState.finalAnswer,
         trajectory: trajectoryFromState(finalState, config.model),
+        observability: langSmithRunReferenceFromSpan(span),
       };
       span.setAttributes(
         langgraphRunTraceAttributes({

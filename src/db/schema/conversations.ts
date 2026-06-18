@@ -61,6 +61,9 @@ export const messages = pgTable(
     // message written before SQR-98 landed (pre-migration rows); both
     // render with footer hidden.
     consultedSources: jsonb('consulted_sources').$type<string[] | null>().default(null),
+    langsmithRunId: text('langsmith_run_id'),
+    langsmithRunUrl: text('langsmith_run_url'),
+    langsmithTraceUrl: text('langsmith_trace_url'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

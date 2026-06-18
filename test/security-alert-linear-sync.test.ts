@@ -4,6 +4,14 @@ import {
   collectRoutableAlerts,
   syncSecurityAlertsToLinear,
 } from '../scripts/sync-security-alerts-to-linear.ts';
+import type {
+  LinearIssueCreateInput,
+  LinearIssueRef,
+  LinearIssueUpdateInput,
+  LinearTargets,
+  LinearUploadFile,
+  SquireLinearClient,
+} from '../src/linear-client.ts';
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -11,6 +19,66 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
     headers: { 'content-type': 'application/json', ...init.headers },
     ...init,
   });
+}
+
+class FakeSecurityLinearClient implements SquireLinearClient {
+  readonly operations: string[] = [];
+  readonly targets: LinearTargets = {
+    teamId: 'team-id',
+    projectId: 'project-id',
+    labelIds: ['security-label-id'],
+    labelName: 'Security',
+  };
+
+  createInputs: LinearIssueCreateInput[] = [];
+  updateInputs: Array<{ id: string; input: LinearIssueUpdateInput }> = [];
+
+  async resolveTargets(): Promise<LinearTargets> {
+    this.operations.push('resolveTargets');
+    return this.targets;
+  }
+
+  async findIssueByMarker(_teamKey: string, marker: string): Promise<LinearIssueRef | undefined> {
+    this.operations.push('findIssueByMarker');
+    if (marker !== 'github-security:maz-org/squire:code-scanning:21') return undefined;
+    return {
+      id: 'existing-id',
+      identifier: 'SQR-999',
+      url: 'https://linear.app/existing',
+    };
+  }
+
+  async createIssue(input: LinearIssueCreateInput): Promise<LinearIssueRef> {
+    this.operations.push('createIssue');
+    this.createInputs.push(input);
+    return {
+      id: 'new-id',
+      identifier: 'SQR-998',
+      url: 'https://linear.app/new',
+    };
+  }
+
+  async updateIssue(id: string, input: LinearIssueUpdateInput): Promise<LinearIssueRef> {
+    this.operations.push('updateIssue');
+    this.updateInputs.push({ id, input });
+    return {
+      id: 'existing-id',
+      identifier: 'SQR-999',
+      url: 'https://linear.app/existing',
+    };
+  }
+
+  async createComment(_issueId: string, _body: string): Promise<void> {
+    throw new Error('createComment should not be called');
+  }
+
+  async requestFileUpload(_input: {
+    filename: string;
+    contentType: string;
+    size: number;
+  }): Promise<LinearUploadFile> {
+    throw new Error('requestFileUpload should not be called');
+  }
 }
 
 describe('security alert Linear sync', () => {
@@ -261,119 +329,40 @@ describe('security alert Linear sync', () => {
   });
 
   it('creates new Linear issues and updates existing ones by alert marker', async () => {
-    const operations: string[] = [];
-    const fetch: typeof globalThis.fetch = async (input, init) => {
+    const linearClient = new FakeSecurityLinearClient();
+    const fetch: typeof globalThis.fetch = async (input) => {
       const url = String(input);
 
-      if (!url.includes('api.linear.app')) {
-        if (url.includes('/dependabot/alerts')) {
-          return jsonResponse([
-            {
-              number: 11,
-              state: 'open',
-              html_url: 'https://github.com/maz-org/squire/security/dependabot/11',
-              dependency: { package: { name: 'vite', ecosystem: 'npm' } },
-              security_advisory: {
-                ghsa_id: 'GHSA-1111',
-                severity: 'high',
-                summary: 'vite dev server exposure',
-              },
-            },
-          ]);
-        }
-        if (url.includes('/code-scanning/alerts')) {
-          return jsonResponse([
-            {
-              number: 21,
-              state: 'open',
-              html_url: 'https://github.com/maz-org/squire/security/code-scanning/21',
-              rule: {
-                id: 'js/xss',
-                description: 'Unsanitized user input',
-                security_severity_level: 'critical',
-              },
-            },
-          ]);
-        }
-        return jsonResponse([]);
-      }
-
-      const body = JSON.parse(String(init?.body)) as {
-        operationName: string;
-        query: string;
-        variables?: Record<string, unknown>;
-      };
-      operations.push(body.operationName);
-
-      if (body.operationName === 'ResolveLinearTargets') {
-        expect(body.query).toContain('accessibleTeams');
-        expect(body.query).toContain('team: { null: true }');
-        return jsonResponse({
-          data: {
-            teams: { nodes: [{ id: 'team-id', key: 'SQR', name: 'Squire' }] },
-            projects: { nodes: [{ id: 'project-id', name: 'Squire · Security Alert Automation' }] },
-            issueLabels: { nodes: [{ id: 'security-label-id', name: 'Security', team: null }] },
-          },
-        });
-      }
-
-      if (body.operationName === 'FindIssueByAlertMarker') {
-        const marker = body.variables?.marker;
-        return jsonResponse({
-          data: {
-            issues: {
-              nodes:
-                marker === 'github-security:maz-org/squire:code-scanning:21'
-                  ? [
-                      {
-                        id: 'existing-id',
-                        identifier: 'SQR-999',
-                        url: 'https://linear.app/existing',
-                      },
-                    ]
-                  : [],
+      if (url.includes('/dependabot/alerts')) {
+        return jsonResponse([
+          {
+            number: 11,
+            state: 'open',
+            html_url: 'https://github.com/maz-org/squire/security/dependabot/11',
+            dependency: { package: { name: 'vite', ecosystem: 'npm' } },
+            security_advisory: {
+              ghsa_id: 'GHSA-1111',
+              severity: 'high',
+              summary: 'vite dev server exposure',
             },
           },
-        });
+        ]);
       }
-
-      if (body.operationName === 'CreateSecurityAlertIssue') {
-        expect(body.variables?.input).toMatchObject({
-          teamId: 'team-id',
-          projectId: 'project-id',
-          labelIds: ['security-label-id'],
-          priority: 2,
-        });
-        return jsonResponse({
-          data: {
-            issueCreate: {
-              success: true,
-              issue: { id: 'new-id', identifier: 'SQR-998', url: 'https://linear.app/new' },
+      if (url.includes('/code-scanning/alerts')) {
+        return jsonResponse([
+          {
+            number: 21,
+            state: 'open',
+            html_url: 'https://github.com/maz-org/squire/security/code-scanning/21',
+            rule: {
+              id: 'js/xss',
+              description: 'Unsanitized user input',
+              security_severity_level: 'critical',
             },
           },
-        });
+        ]);
       }
-
-      if (body.operationName === 'UpdateSecurityAlertIssue') {
-        expect(body.variables?.id).toBe('existing-id');
-        expect(body.variables?.input).toMatchObject({
-          labelIds: ['security-label-id'],
-        });
-        return jsonResponse({
-          data: {
-            issueUpdate: {
-              success: true,
-              issue: {
-                id: 'existing-id',
-                identifier: 'SQR-999',
-                url: 'https://linear.app/existing',
-              },
-            },
-          },
-        });
-      }
-
-      throw new Error(`Unexpected Linear operation: ${body.operationName}`);
+      return jsonResponse([]);
     };
 
     const result = await syncSecurityAlertsToLinear({
@@ -384,45 +373,37 @@ describe('security alert Linear sync', () => {
       linearProjectName: 'Squire · Security Alert Automation',
       dryRun: false,
       fetch,
+      linearClient,
       log: () => undefined,
     });
 
     expect(result).toMatchObject({ created: 1, updated: 1, dryRun: 0, alerts: 2 });
-    expect(operations).toEqual([
-      'ResolveLinearTargets',
-      'FindIssueByAlertMarker',
-      'CreateSecurityAlertIssue',
-      'FindIssueByAlertMarker',
-      'UpdateSecurityAlertIssue',
+    expect(linearClient.createInputs[0]).toMatchObject({
+      teamId: 'team-id',
+      projectId: 'project-id',
+      labelIds: ['security-label-id'],
+      priority: 2,
+    });
+    expect(linearClient.updateInputs[0]).toMatchObject({
+      id: 'existing-id',
+      input: { labelIds: ['security-label-id'] },
+    });
+    expect(linearClient.operations).toEqual([
+      'resolveTargets',
+      'findIssueByMarker',
+      'createIssue',
+      'findIssueByMarker',
+      'updateIssue',
     ]);
   });
 
   it('validates Linear configuration on live runs even when there are no alerts', async () => {
-    const operations: string[] = [];
+    const linearClient = new FakeSecurityLinearClient();
     const logs: string[] = [];
-    const fetch: typeof globalThis.fetch = async (input, init) => {
+    const fetch: typeof globalThis.fetch = async (input) => {
       const url = String(input);
-
-      if (!url.includes('api.linear.app')) {
-        return jsonResponse([]);
-      }
-
-      const body = JSON.parse(String(init?.body)) as {
-        operationName: string;
-      };
-      operations.push(body.operationName);
-
-      if (body.operationName === 'ResolveLinearTargets') {
-        return jsonResponse({
-          data: {
-            teams: { nodes: [{ id: 'team-id', key: 'SQR', name: 'Squire' }] },
-            projects: { nodes: [{ id: 'project-id', name: 'Squire · Security Alert Automation' }] },
-            issueLabels: { nodes: [{ id: 'security-label-id', name: 'Security', team: null }] },
-          },
-        });
-      }
-
-      throw new Error(`Unexpected Linear operation: ${body.operationName}`);
+      if (url.includes('api.linear.app')) throw new Error('test should use fake Linear client');
+      return jsonResponse([]);
     };
 
     const result = await syncSecurityAlertsToLinear({
@@ -434,11 +415,12 @@ describe('security alert Linear sync', () => {
       linearLabelName: 'Security',
       dryRun: false,
       fetch,
+      linearClient,
       log: (message) => logs.push(message),
     });
 
     expect(result).toMatchObject({ created: 0, updated: 0, dryRun: 0, alerts: 0 });
-    expect(operations).toEqual(['ResolveLinearTargets']);
+    expect(linearClient.operations).toEqual(['resolveTargets']);
     expect(logs.join('\n')).toContain('Validated Linear target');
     expect(logs.join('\n')).toContain('No high or critical GitHub security alerts found.');
   });

@@ -11,6 +11,11 @@ import {
   sentryDashboardUrl,
   sentryDetectorUrl,
 } from './sentry-app-health-config.ts';
+import {
+  SentryAdminClient,
+  type SentryListClient,
+  parseSentryNextPath,
+} from './sentry-admin-client.ts';
 import { pathToFileURL } from 'node:url';
 
 type Mode = 'apply' | 'dry-run' | 'verify';
@@ -19,10 +24,6 @@ interface SentryRecord {
   id?: unknown;
   name?: unknown;
   title?: unknown;
-}
-
-interface SentryListClient {
-  list(path: string): Promise<unknown[]>;
 }
 
 interface SyncResult {
@@ -46,8 +47,6 @@ interface SyncResult {
     name: string;
   }>;
 }
-
-const API_BASE = 'https://sentry.io/api/0';
 
 function usage(): string {
   return 'Usage: node scripts/sync-sentry-app-health.ts --dry-run | --apply | --verify';
@@ -312,95 +311,9 @@ function findRoutingWorkflowId(workflows: unknown[]): string {
   return workflowId;
 }
 
-function pathWithListPageSize(path: string): string {
-  const url = new URL(path, API_BASE);
-  if (!url.searchParams.has('per_page')) url.searchParams.set('per_page', '100');
-  return `${url.pathname}${url.search}`;
-}
+export { parseSentryNextPath };
 
-export function parseSentryNextPath(linkHeader: string | null): string | undefined {
-  if (!linkHeader) return undefined;
-
-  for (const part of linkHeader.split(/,\s*(?=<)/)) {
-    if (!/\brel="next"/.test(part) || !/\bresults="true"/.test(part)) continue;
-    const urlMatch = part.match(/<([^>]+)>/);
-    if (!urlMatch) continue;
-    try {
-      const url = new URL(urlMatch[1] ?? '');
-      const apiBasePath = new URL(API_BASE).pathname;
-      const relativePath = url.pathname.startsWith(`${apiBasePath}/`)
-        ? url.pathname.slice(apiBasePath.length)
-        : url.pathname;
-      return `${relativePath}${url.search}`;
-    } catch {
-      continue;
-    }
-  }
-
-  return undefined;
-}
-
-class SentryApi {
-  private readonly token: string;
-
-  constructor(token: string) {
-    this.token = token;
-  }
-
-  private async requestWithResponse<T>(
-    path: string,
-    options: RequestInit = {},
-  ): Promise<{ body: T; headers: Headers }> {
-    const headers = new Headers(options.headers);
-    headers.set('Authorization', `Bearer ${this.token}`);
-    headers.set('Accept', 'application/json');
-    if (options.body) headers.set('Content-Type', 'application/json');
-
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(
-        `${options.method ?? 'GET'} ${path} failed with ${response.status}: ${text.slice(0, 800)}`,
-      );
-    }
-    return {
-      body: (text.length > 0 ? JSON.parse(text) : null) as T,
-      headers: response.headers,
-    };
-  }
-
-  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    return (await this.requestWithResponse<T>(path, options)).body;
-  }
-
-  async list(path: string): Promise<unknown[]> {
-    const records: unknown[] = [];
-    const seenPaths = new Set<string>();
-    let nextPath: string | undefined = pathWithListPageSize(path);
-
-    while (nextPath) {
-      if (seenPaths.has(nextPath)) throw new Error(`Sentry pagination loop for ${path}`);
-      seenPaths.add(nextPath);
-
-      const { body, headers } = await this.requestWithResponse<unknown>(nextPath);
-      if (Array.isArray(body)) {
-        records.push(...body);
-      } else if (isRecord(body) && Array.isArray(body.results)) {
-        records.push(...body.results);
-      } else {
-        throw new Error(`Expected Sentry list response for ${path}`);
-      }
-      nextPath = parseSentryNextPath(headers.get('link'));
-    }
-
-    return records;
-  }
-}
-
-async function syncDashboard(api: SentryApi, mode: Mode): Promise<SyncResult['dashboard']> {
+async function syncDashboard(api: SentryAdminClient, mode: Mode): Promise<SyncResult['dashboard']> {
   const dashboards = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/dashboards/`);
   const existing = titled(dashboards, SENTRY_APP_HEALTH_DASHBOARD_TITLE);
   const existingId = stringField(existing, 'id');
@@ -459,7 +372,7 @@ async function syncDashboard(api: SentryApi, mode: Mode): Promise<SyncResult['da
   };
 }
 
-async function syncDetectors(api: SentryApi, mode: Mode): Promise<SyncResult['detectors']> {
+async function syncDetectors(api: SentryAdminClient, mode: Mode): Promise<SyncResult['detectors']> {
   const detectors = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/detectors/`);
   const workflows = await api.list(`/organizations/${SENTRY_APP_HEALTH_ORG}/workflows/`);
   const routingWorkflowId = findRoutingWorkflowId(workflows);
@@ -597,7 +510,7 @@ async function main(): Promise<void> {
   const token = process.env.SENTRY_TOKEN;
   if (!token) throw new Error('SENTRY_TOKEN is required for --apply and --verify');
 
-  const api = new SentryApi(token);
+  const api = new SentryAdminClient({ token });
   const result: SyncResult = {
     detectors: [],
     existingAlerts: [],

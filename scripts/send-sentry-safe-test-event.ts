@@ -16,6 +16,7 @@ import {
   SENTRY_APP_HEALTH_ORG,
   SENTRY_APP_HEALTH_PROJECT_ID,
 } from './sentry-app-health-config.ts';
+import { SentryAdminClient, parseSentryNextPath } from './sentry-admin-client.ts';
 import { DEFAULT_SENTRY_PROJECT_SLUG } from './sentry-scrubbing-config.ts';
 
 export const SAFE_TEST_KINDS = [
@@ -323,13 +324,6 @@ function sentryIssueApiUrl(issueId: string): string {
   return `https://sentry.io/api/0/issues/${issueId}/`;
 }
 
-function sentryApiHeaders(token: string): HeadersInit {
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-}
-
 function readSentryToken(token: string | undefined = process.env.SENTRY_TOKEN): string {
   const value = token?.trim();
   if (!value) throw new Error('SENTRY_TOKEN is required for --cleanup');
@@ -355,55 +349,7 @@ function safeTestIssueSummary(value: unknown): SafeTestIssueSummary | null {
   };
 }
 
-async function sentryJsonWithHeaders<T>(
-  fetch: FetchLike,
-  token: string,
-  url: string,
-  init?: RequestInit,
-): Promise<{ body: T; headers: Headers }> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      ...sentryApiHeaders(token),
-      ...(init?.headers ?? {}),
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Sentry API request failed: ${response.status} ${response.statusText}`);
-  }
-  return {
-    body: (await response.json()) as T,
-    headers: response.headers,
-  };
-}
-
-async function sentryJson<T>(fetch: FetchLike, token: string, url: string, init?: RequestInit) {
-  return (await sentryJsonWithHeaders<T>(fetch, token, url, init)).body;
-}
-
-function sentryNextUrl(linkHeader: string | null): string | undefined {
-  if (!linkHeader) return undefined;
-
-  for (const part of linkHeader.split(/,\s*(?=<)/)) {
-    if (!/\brel="next"/.test(part) || !/\bresults="true"/.test(part)) continue;
-    const urlMatch = part.match(/<([^>]+)>/);
-    if (!urlMatch) continue;
-    try {
-      const url = new URL(urlMatch[1] ?? '');
-      if (url.origin !== 'https://sentry.io' || !url.pathname.startsWith('/api/0/')) continue;
-      return url.toString();
-    } catch {
-      continue;
-    }
-  }
-
-  return undefined;
-}
-
-async function listSafeTestIssues(
-  fetch: FetchLike,
-  token: string,
-): Promise<SafeTestIssueSummary[]> {
+async function listSafeTestIssues(sentry: SentryAdminClient): Promise<SafeTestIssueSummary[]> {
   const issues: SafeTestIssueSummary[] = [];
   const seenUrls = new Set<string>();
   let nextUrl: string | undefined = sentryProjectIssuesApiUrl();
@@ -412,24 +358,23 @@ async function listSafeTestIssues(
     if (seenUrls.has(nextUrl)) throw new Error('Sentry safe-test cleanup pagination loop');
     seenUrls.add(nextUrl);
 
-    const { body, headers } = await sentryJsonWithHeaders<unknown[]>(fetch, token, nextUrl);
+    const { body, headers } = await sentry.requestWithHeaders<unknown[]>(nextUrl);
     issues.push(
       ...body
         .map(safeTestIssueSummary)
         .filter((issue): issue is SafeTestIssueSummary => issue !== null),
     );
-    nextUrl = sentryNextUrl(headers.get('link'));
+    nextUrl = parseSentryNextPath(headers.get('link'));
   }
 
   return issues;
 }
 
 async function resolveSafeTestIssue(
-  fetch: FetchLike,
-  token: string,
+  sentry: SentryAdminClient,
   issue: SafeTestIssueSummary,
 ): Promise<SafeTestIssueSummary> {
-  const payload = await sentryJson<unknown>(fetch, token, sentryIssueApiUrl(issue.id), {
+  const payload = await sentry.request<unknown>(sentryIssueApiUrl(issue.id), {
     method: 'PUT',
     body: JSON.stringify({ status: 'resolved' }),
   });
@@ -441,7 +386,8 @@ export async function cleanupSafeTestIssues(
 ): Promise<SafeTestIssueCleanupResult> {
   const fetch = options.fetch ?? globalThis.fetch;
   const token = readSentryToken(options.token);
-  const issues = await listSafeTestIssues(fetch, token);
+  const sentry = new SentryAdminClient({ token, fetch });
+  const issues = await listSafeTestIssues(sentry);
 
   if (options.dryRun) {
     return {
@@ -452,7 +398,7 @@ export async function cleanupSafeTestIssues(
 
   const resolvedIssues: SafeTestIssueSummary[] = [];
   for (const issue of issues) {
-    resolvedIssues.push(await resolveSafeTestIssue(fetch, token, issue));
+    resolvedIssues.push(await resolveSafeTestIssue(sentry, issue));
   }
 
   return {

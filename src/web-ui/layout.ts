@@ -991,6 +991,37 @@ function renderCompletedAnswerWork(message: ConversationMessage): HtmlEscapedStr
   return renderCompletedAnswerWorkTimeline(timelineFromConsultedSources(message.consultedSources));
 }
 
+function renderAnswerReportAction(options: {
+  userMessageId?: string | null;
+  assistantMessageId?: string | null;
+  langsmithRunId?: string | null;
+  langsmithRunUrl?: string | null;
+  langsmithTraceUrl?: string | null;
+  defaultKind: 'bad_answer' | 'broken_stream';
+}): HtmlEscapedString {
+  return html`<div class="squire-answer__actions">
+    <button
+      type="button"
+      class="squire-answer__report"
+      data-squire-report-bug
+      ${options.userMessageId ? html`data-user-message-id="${options.userMessageId}"` : html``}
+      ${options.assistantMessageId
+        ? html`data-assistant-message-id="${options.assistantMessageId}"`
+        : html``}
+      ${options.langsmithRunId ? html`data-langsmith-run-id="${options.langsmithRunId}"` : html``}
+      ${options.langsmithRunUrl
+        ? html`data-langsmith-run-url="${options.langsmithRunUrl}"`
+        : html``}
+      ${options.langsmithTraceUrl
+        ? html`data-langsmith-trace-url="${options.langsmithTraceUrl}"`
+        : html``}
+      data-bug-report-default-kind="${options.defaultKind}"
+    >
+      Report bug
+    </button>
+  </div>` as HtmlEscapedString;
+}
+
 function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   const content = message.isError
     ? (html`<p>${message.content}</p>` as HtmlEscapedString)
@@ -1007,6 +1038,14 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
   >
     <h2 class="sr-only" id="${labelId}">Squire answer</h2>
     ${renderCompletedAnswerWork(message)} ${renderAnswerContent(content)}
+    ${renderAnswerReportAction({
+      userMessageId: message.responseToMessageId,
+      assistantMessageId: message.id,
+      langsmithRunId: message.langsmithRunId,
+      langsmithRunUrl: message.langsmithRunUrl,
+      langsmithTraceUrl: message.langsmithTraceUrl,
+      defaultKind: message.isError ? 'broken_stream' : 'bad_answer',
+    })}
   </article>` as HtmlEscapedString;
 }
 
@@ -1049,6 +1088,11 @@ function renderPendingAnswerSkeleton(streamUrl: string): HtmlEscapedString {
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--mid"></div>
       <div class="squire-answer__skeleton-line squire-answer__skeleton-line--short"></div>
     </div>
+    ${renderAnswerReportAction({
+      userMessageId,
+      assistantMessageId: null,
+      defaultKind: 'broken_stream',
+    })}
   </article>` as HtmlEscapedString;
 }
 

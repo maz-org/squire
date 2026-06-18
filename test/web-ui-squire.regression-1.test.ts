@@ -51,15 +51,24 @@ class FakeElement {
   innerHTML = '';
   hidden = false;
   open = false;
+  disabled = false;
+  method = '';
+  name = '';
+  rows = 0;
+  selected = false;
+  type = '';
+  value = '';
   dataset: Record<string, string> = {};
+  style: Record<string, string> = {};
   parentNode: FakeElement | null = null;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly classList = new FakeClassList(this);
+  readonly listeners = new Map<string, Array<(event?: unknown) => void>>();
   readonly tagName: string;
 
   constructor(tagName: string) {
-    this.tagName = tagName;
+    this.tagName = tagName.toLowerCase();
   }
 
   appendChild(child: FakeElement) {
@@ -78,6 +87,31 @@ class FakeElement {
       child.parentNode = this;
       this.children.push(child);
     }
+  }
+
+  addEventListener(event: string, callback: (event?: unknown) => void) {
+    this.listeners.set(event, [...(this.listeners.get(event) ?? []), callback]);
+  }
+
+  dispatch(event: string, payload?: unknown) {
+    for (const callback of this.listeners.get(event) ?? []) callback(payload);
+  }
+
+  focus() {}
+
+  showModal() {
+    this.open = true;
+  }
+
+  close() {
+    this.open = false;
+  }
+
+  remove() {
+    if (!this.parentNode) return;
+    const index = this.parentNode.children.indexOf(this);
+    if (index !== -1) this.parentNode.children.splice(index, 1);
+    this.parentNode = null;
   }
 
   setAttribute(name: string, value: string) {
@@ -107,6 +141,30 @@ class FakeElement {
   querySelector(selector: string): FakeElement | null {
     if (selector === 'p') {
       return this.find((node) => node.tagName === 'p');
+    }
+
+    if (selector === 'form') {
+      return this.find((node) => node.tagName === 'form');
+    }
+
+    if (selector === 'button[type="submit"]') {
+      return this.find((node) => node.tagName === 'button' && node.type === 'submit');
+    }
+
+    if (selector === 'button[type="button"]') {
+      return this.find((node) => node.tagName === 'button' && node.type === 'button');
+    }
+
+    if (selector === 'select') {
+      return this.find((node) => node.tagName === 'select');
+    }
+
+    if (selector === 'textarea[name="observed"]') {
+      return this.find((node) => node.tagName === 'textarea' && node.name === 'observed');
+    }
+
+    if (selector === 'textarea[name="expected"]') {
+      return this.find((node) => node.tagName === 'textarea' && node.name === 'expected');
     }
 
     if (selector.startsWith('.')) {
@@ -505,6 +563,9 @@ function bootBrowserTelemetryHarness(
     },
     documentElement: { scrollHeight: 0 },
   };
+  const navigator = {
+    userAgent: 'SquireTest/1.0',
+  };
   const window = {
     location: { pathname },
     crypto: {
@@ -517,7 +578,7 @@ function bootBrowserTelemetryHarness(
     scrollY: 0,
     innerHeight: 844,
     innerWidth: 390,
-    navigator: { userAgent: 'SquireTest/1.0' },
+    navigator,
     scrollTo: () => {},
     fetch(url: string, init?: { body?: unknown }) {
       telemetryPayloads.push({
@@ -544,6 +605,197 @@ function bootBrowserTelemetryHarness(
     },
     telemetryPayloads,
   };
+}
+
+function bootBugReportHarness(pathname = '/chat/conv-1') {
+  const docListeners = new Map<string, Array<(event?: unknown) => void>>();
+  let displayMediaCalls = 0;
+  const fetches: Array<{
+    url: string;
+    method?: string;
+    headers?: Record<string, string>;
+    keepalive?: boolean;
+    body: unknown;
+  }> = [];
+  const csrfMeta = {
+    getAttribute(name: string) {
+      return name === 'content' ? 'csrf-test-token' : null;
+    },
+  };
+  const document = {
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      docListeners.set(event, [...(docListeners.get(event) ?? []), callback]);
+    },
+    querySelector(selector: string) {
+      return selector === 'meta[name="csrf-token"]' ? csrfMeta : null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+    documentElement: { scrollHeight: 0 },
+  };
+  const navigator = {
+    userAgent: 'SquireTest/1.0',
+    mediaDevices: {
+      getDisplayMedia() {
+        displayMediaCalls += 1;
+        throw new Error('getDisplayMedia should not be used for bug report screenshots');
+      },
+    },
+  };
+  const window = {
+    location: { pathname, href: `https://squire.maz.org${pathname}` },
+    crypto: { randomUUID: () => 'bug-report-snapshot-1' },
+    EventSource: function () {},
+    addEventListener: () => {},
+    scrollY: 0,
+    innerHeight: 844,
+    innerWidth: 390,
+    navigator,
+    Intl: {
+      DateTimeFormat: function () {
+        return {
+          resolvedOptions: () => ({ timeZone: 'America/New_York' }),
+        };
+      },
+    },
+    scrollTo: () => {},
+    fetch(
+      url: string,
+      init?: {
+        method?: string;
+        headers?: Record<string, string>;
+        body?: unknown;
+        keepalive?: boolean;
+      },
+    ) {
+      const record: (typeof fetches)[number] = {
+        url,
+        method: init?.method,
+        headers: init?.headers,
+        body: typeof init?.body === 'string' ? JSON.parse(init.body) : init?.body,
+      };
+      if (init && 'keepalive' in init) record.keepalive = Boolean(init.keepalive);
+      fetches.push(record);
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'created',
+            issue: { identifier: 'SQR-123', url: 'https://linear.app/squire/issue/SQR-123' },
+          }),
+      });
+    },
+  };
+  const context = vm.createContext({ document, window, navigator });
+
+  vm.runInContext(scriptSource, context);
+
+  return {
+    emitDocument(event: string, payload: unknown) {
+      for (const callback of docListeners.get(event) ?? []) callback(payload);
+    },
+    fetches,
+    getDisplayMediaCalls() {
+      return displayMediaCalls;
+    },
+  };
+}
+
+function bootBugReportDialogHarness(pathname = '/chat/conv-1') {
+  const docListeners = new Map<string, Array<(event?: unknown) => void>>();
+  const bugReports: Array<Record<string, unknown>> = [];
+  let resolveBugReport:
+    | ((response: { ok: boolean; json: () => Promise<Record<string, unknown>> }) => void)
+    | undefined;
+  const body = new FakeElement('body');
+  const csrfMeta = {
+    getAttribute(name: string) {
+      return name === 'content' ? 'csrf-test-token' : null;
+    },
+  };
+  const document = {
+    body,
+    documentElement: new FakeElement('html'),
+    createElement(tagName: string) {
+      return new FakeElement(tagName);
+    },
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      docListeners.set(event, [...(docListeners.get(event) ?? []), callback]);
+    },
+    querySelector(selector: string) {
+      return selector === 'meta[name="csrf-token"]' ? csrfMeta : null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+    styleSheets: [],
+  };
+  const window = {
+    location: { pathname, href: `https://squire.maz.org${pathname}` },
+    crypto: { randomUUID: () => 'bug-report-dialog-snapshot' },
+    EventSource: function () {},
+    addEventListener: () => {},
+    scrollY: 0,
+    innerHeight: 844,
+    innerWidth: 390,
+    navigator: { userAgent: 'SquireTest/1.0' },
+    Intl: {
+      DateTimeFormat: function () {
+        return {
+          resolvedOptions: () => ({ timeZone: 'America/New_York' }),
+        };
+      },
+    },
+    scrollTo: () => {},
+    fetch(url: string, init?: { body?: unknown }) {
+      if (url === '/api/browser-telemetry') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ eventId: '0123456789abcdef0123456789abcdef' }),
+        });
+      }
+      if (url === '/api/bug-reports') {
+        if (typeof init?.body === 'string') bugReports.push(JSON.parse(init.body));
+        return new Promise((resolve) => {
+          resolveBugReport = resolve;
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    },
+  };
+  const context = vm.createContext({ document, window });
+  vm.runInContext(scriptSource, context);
+
+  return {
+    clickReportButton(button: FakeElement) {
+      for (const callback of docListeners.get('click') ?? []) {
+        callback({
+          target: button,
+          preventDefault() {},
+        });
+      }
+    },
+    resolveBugReport(identifier = 'SQR-321') {
+      if (!resolveBugReport) throw new Error('bug report request was not started');
+      resolveBugReport({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'created',
+            issue: { identifier, url: `https://linear.app/squire/issue/${identifier}` },
+          }),
+      });
+    },
+    bugReports,
+    body,
+  };
+}
+
+async function flushMicrotasks(count = 12) {
+  for (let index = 0; index < count; index += 1) {
+    await Promise.resolve();
+  }
 }
 
 function workRowMessage(row: FakeElement): string | undefined {
@@ -809,6 +1061,147 @@ describe('squire.js browser telemetry', () => {
     });
     expect(telemetryPayloads[1].body).not.toHaveProperty('maskedReplay');
     expect(JSON.stringify(telemetryPayloads)).not.toContain('raw transcript');
+  });
+});
+
+describe('squire.js bug reports', () => {
+  it('submits an in-chat bug report with CSRF and safe browser metadata', async () => {
+    const { emitDocument, fetches } = bootBugReportHarness('/chat/conv-1');
+
+    emitDocument('squire:bug-report', {
+      detail: {
+        kind: 'bad_answer',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        assistantMessageId: 'msg-assistant-1',
+        observed: 'The answer used the wrong rule.',
+        expected: 'It should use the rule covering this turn.',
+        associatedEventId: '0123456789abcdef0123456789abcdef',
+        screenshot: {
+          filename: 'squire-bug-test.jpg',
+          contentType: 'image/jpeg',
+          base64Content: 'aGVsbG8=',
+          width: 390,
+          height: 844,
+          byteSize: 5,
+        },
+      },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetches).toHaveLength(1);
+    expect(fetches[0]).toEqual({
+      url: '/api/bug-reports',
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-csrf-token': 'csrf-test-token',
+      },
+      body: expect.objectContaining({
+        kind: 'bad_answer',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        assistantMessageId: 'msg-assistant-1',
+        observed: 'The answer used the wrong rule.',
+        expected: 'It should use the rule covering this turn.',
+        associatedEventId: '0123456789abcdef0123456789abcdef',
+        screenshot: {
+          filename: 'squire-bug-test.jpg',
+          contentType: 'image/jpeg',
+          base64Content: 'aGVsbG8=',
+          width: 390,
+          height: 844,
+          byteSize: 5,
+        },
+        browser: {
+          url: 'https://squire.maz.org/chat/conv-1',
+          userAgent: 'SquireTest/1.0',
+          viewport: { width: 390, height: 844 },
+          replaySnapshotId: 'bug-report-snapshot-1',
+          timezone: 'America/New_York',
+        },
+      }),
+    });
+    expect(fetches[0]?.keepalive).toBeUndefined();
+  });
+
+  it('does not ask Chrome for tab/window sharing when attaching a screenshot', async () => {
+    const { emitDocument, fetches, getDisplayMediaCalls } = bootBugReportHarness('/chat/conv-1');
+
+    emitDocument('squire:bug-report', {
+      detail: {
+        kind: 'visual_issue',
+        conversationId: 'conv-1',
+        userMessageId: 'msg-user-1',
+        includeScreenshot: true,
+      },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(getDisplayMediaCalls()).toBe(0);
+    expect(fetches).toHaveLength(1);
+    expect(fetches[0]?.body).not.toHaveProperty('screenshot');
+  });
+
+  it('shows submitting and created states instead of closing the bug dialog immediately', async () => {
+    const harness = bootBugReportDialogHarness('/chat/conv-1');
+    const button = new FakeElement('button');
+    button.setAttribute('data-squire-report-bug', '');
+    button.dataset.bugReportDefaultKind = 'bad_answer';
+    button.dataset.userMessageId = 'msg-user-1';
+    button.dataset.assistantMessageId = 'msg-assistant-1';
+    button.dataset.langsmithRunId = '00000000-0000-0000-abcd-0123456789ab';
+    button.dataset.langsmithRunUrl =
+      'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true';
+    button.dataset.langsmithTraceUrl =
+      'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true';
+
+    harness.clickReportButton(button);
+
+    const dialog = harness.body.querySelector('.squire-bug-report');
+    if (!dialog) throw new Error('expected bug report dialog');
+    const form = dialog.querySelector('form');
+    const submit = dialog.querySelector('button[type="submit"]');
+    const cancel = dialog.querySelector('button[type="button"]');
+    const status = dialog.querySelector('.squire-bug-report__status');
+    if (!form || !submit || !cancel || !status) throw new Error('expected bug report controls');
+
+    expect(dialog.getAttribute('aria-labelledby')).toBe('squire-bug-report-title');
+
+    form.dispatch('submit', { preventDefault() {} });
+    await flushMicrotasks();
+
+    expect(form.dataset.submitting).toBe('true');
+    expect(dialog.getAttribute('aria-busy')).toBe('true');
+    expect(submit.disabled).toBe(true);
+    expect(cancel.disabled).toBe(true);
+    expect(submit.textContent).toBe('Creating...');
+    expect(status.textContent).toBe('Creating bug...');
+    expect(harness.bugReports[0]).toMatchObject({
+      langsmithRunId: '00000000-0000-0000-abcd-0123456789ab',
+      langsmithRunUrl:
+        'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+      langsmithTraceUrl:
+        'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+    });
+
+    harness.resolveBugReport('SQR-321');
+    await flushMicrotasks();
+
+    expect(harness.body.querySelector('.squire-bug-report')).toBe(dialog);
+    expect(form.dataset.submitting).toBeUndefined();
+    expect(form.dataset.submitted).toBe('true');
+    expect(dialog.getAttribute('aria-busy')).toBeNull();
+    expect(submit.disabled).toBe(true);
+    expect(cancel.disabled).toBe(false);
+    expect(cancel.textContent).toBe('Close');
+    expect(submit.textContent).toBe('Created');
+    expect(status.textContent).toContain('Created SQR-321');
+    expect(button.textContent).toBe('Reported SQR-321');
   });
 });
 

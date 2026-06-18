@@ -53,6 +53,12 @@ vi.mock('../src/service.ts', () => ({
   })),
   isReady: vi.fn(() => true),
   ask: mockAsk,
+  askWithResult: vi.fn(async (...args: unknown[]) => {
+    const result = await mockAsk(...args);
+    return typeof result === 'object' && result !== null && 'answer' in result
+      ? result
+      : { answer: result };
+  }),
   startBootstrapLifecycle: vi.fn(),
 }));
 
@@ -498,7 +504,16 @@ describe('conversation history summaries', () => {
 
 describe('conversation web backend', () => {
   it('creates a conversation on first message and reload restores ordered history', async () => {
-    mockAsk.mockResolvedValueOnce('Loot tokens in your hex are picked up.');
+    mockAsk.mockResolvedValueOnce({
+      answer: 'Loot tokens in your hex are picked up.',
+      observability: {
+        langsmithRunId: '00000000-0000-0000-abcd-0123456789ab',
+        langsmithRunUrl:
+          'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+        langsmithTraceUrl:
+          'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+      },
+    });
     const auth = await createAuthContext();
 
     const createRes = await requestWithAuth(auth, 'http://localhost:3000/chat', {
@@ -528,16 +543,37 @@ describe('conversation web backend', () => {
     expect(page).toContain('action="/auth/logout"');
     expect(page).toContain('How does looting work?');
     expect(page).toContain('Loot tokens in your hex are picked up.');
+    expect(page).toContain('data-langsmith-run-id="00000000-0000-0000-abcd-0123456789ab"');
+    expect(page).toContain(
+      'data-langsmith-run-url="https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true"',
+    );
+    expect(page).toContain(
+      'data-langsmith-trace-url="https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true"',
+    );
 
     const { db } = getDb('server');
     const messages = await db.execute(sql`
-      select role, content
+      select role, content, langsmith_run_id, langsmith_run_url, langsmith_trace_url
       from messages
       order by created_at asc, id asc
     `);
     expect(messages.rows).toEqual([
-      { role: 'user', content: 'How does looting work?' },
-      { role: 'assistant', content: 'Loot tokens in your hex are picked up.' },
+      {
+        role: 'user',
+        content: 'How does looting work?',
+        langsmith_run_id: null,
+        langsmith_run_url: null,
+        langsmith_trace_url: null,
+      },
+      {
+        role: 'assistant',
+        content: 'Loot tokens in your hex are picked up.',
+        langsmith_run_id: '00000000-0000-0000-abcd-0123456789ab',
+        langsmith_run_url:
+          'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+        langsmith_trace_url:
+          'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+      },
     ]);
   });
 

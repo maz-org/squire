@@ -4,6 +4,7 @@ import {
   buildSentryRelayPiiConfig,
   buildSentryScrubbingProjectSettings,
 } from './sentry-scrubbing-config.ts';
+import { SentryAdminClient } from './sentry-admin-client.ts';
 
 type Mode = 'dry-run' | 'apply' | 'verify';
 
@@ -111,24 +112,6 @@ function verifyProjectSettings(project: SentryProjectPrivacySettings): string[] 
   return issues;
 }
 
-async function sentryRequest<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`https://sentry.io/api/0${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Sentry API ${response.status} ${response.statusText}: ${body}`);
-  }
-
-  return (await response.json()) as T;
-}
-
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const endpoint = `/projects/${args.orgSlug}/${args.projectSlug}/`;
@@ -155,15 +138,16 @@ async function main(): Promise<void> {
   }
 
   const token = readSentryToken();
+  const sentry = new SentryAdminClient({ token });
 
   if (args.mode === 'apply') {
-    await sentryRequest<SentryProjectPrivacySettings>(token, endpoint, {
+    await sentry.request<SentryProjectPrivacySettings>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
   }
 
-  const project = await sentryRequest<SentryProjectPrivacySettings>(token, endpoint);
+  const project = await sentry.request<SentryProjectPrivacySettings>(endpoint);
   const issues = verifyProjectSettings(project);
   console.log(
     JSON.stringify(

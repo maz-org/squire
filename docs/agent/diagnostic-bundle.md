@@ -20,9 +20,10 @@ Top-level fields:
 - `request`: request ID and route
 - `conversation`: conversation URL, conversation ID, turn IDs, safe user ID/hash,
   game/campaign IDs, message timestamps, assistant error flag
-- `sentry`: issue, event, replay, trace, logs-query URLs, and trace ID
+- `sentry`: issue, event, replay, trace, logs-query URLs, event ID, and trace ID
 - `langsmith`: trace/thread/run URLs and IDs
-- `browser`: safe browser URL, user agent, viewport, replay snapshot ID
+- `browser`: safe browser URL, user agent, viewport, timezone, replay snapshot
+  ID
 - `stream`: terminal status, event count, and safe work-log rows
 - `sourceIndex`: embedding version plus consulted/work-log source labels
 - `unavailable`: flattened list of missing field paths and reasons
@@ -41,6 +42,14 @@ loads messages or stream events.
 Use `buildDiagnosticBundle()` when the caller already has safe evidence, such as
 a Sentry issue/event/replay/trace/logs URL or LangSmith URL supplied by an
 agent workflow. Missing fields are not omitted; they are marked unavailable.
+When explicit links are not supplied, the builder derives Sentry issue/log/trace
+search links from safe request, conversation, and turn IDs using
+`SENTRY_ORG_SLUG`/`SENTRY_PROJECT_ID` plus the environment. It derives a
+LangSmith run/trace link from `LANGSMITH_WORKSPACE_ID`,
+`LANGSMITH_PROJECT_ID`, and an explicit or persisted LangSmith run ID. It does
+not derive LangSmith thread URLs from thread IDs; only include a thread URL when
+LangSmith or an agent workflow supplied a known-good URL. Do not use the Squire
+conversation ID as a LangSmith thread ID.
 
 SQR-310's Linear Evidence template renders this bundle with
 `createLinearBugReportBody()` in `src/linear-bug-report-template.ts`. New

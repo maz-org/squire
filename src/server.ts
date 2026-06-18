@@ -44,6 +44,7 @@ import {
   API_ASK_RATE_LIMIT_POLICY,
   API_CARD_SEARCH_RATE_LIMIT_POLICY,
   API_RULE_SEARCH_RATE_LIMIT_POLICY,
+  BUG_REPORT_RATE_LIMIT_POLICY,
   CAMPAIGN_READ_RATE_LIMIT_POLICY,
   CAMPAIGN_WRITE_RATE_LIMIT_POLICY,
   GOOGLE_OAUTH_CALLBACK_RATE_LIMIT_POLICY,
@@ -68,6 +69,7 @@ import { itemCostWarnings, levelXpWarnings } from './campaign/write-validation.t
 import { renderCharacterSheetContent } from './web-ui/character-sheet.ts';
 import { renderProfileContent } from './web-ui/profile-page.ts';
 import * as CharacterRepository from './db/repositories/character-repository.ts';
+import * as ConversationRepository from './db/repositories/conversation-repository.ts';
 import {
   findCardByName,
   findItemByNumber,
@@ -179,6 +181,12 @@ import {
   type ChatLifecycleInput,
 } from './chat/chat-observability.ts';
 import { resolveSquireEnv } from './squire-env.ts';
+import { collectDiagnosticBundle } from './diagnostic-bundle.ts';
+import {
+  InChatBugReportKindSchema,
+  submitLinearBugReport,
+  type LinearBugReportAttachment,
+} from './linear-bug-intake.ts';
 
 initTelemetry(process.env);
 
@@ -625,6 +633,89 @@ const BrowserTelemetrySchema = z
 
 type BrowserTelemetryEvent = z.infer<typeof BrowserTelemetrySchema>;
 
+const BrowserBugReportScreenshotSchema = z
+  .object({
+    filename: z
+      .string()
+      .min(1)
+      .max(96)
+      .regex(/^[A-Za-z0-9._-]+\.(?:jpe?g|png)$/i),
+    contentType: z.enum(['image/jpeg', 'image/png']),
+    base64Content: z
+      .string()
+      .min(1)
+      .max(2_000_000)
+      .regex(/^[A-Za-z0-9+/]+={0,2}$/),
+    width: z.number().int().positive().max(4_000).optional(),
+    height: z.number().int().positive().max(4_000).optional(),
+    byteSize: z.number().int().positive().max(1_500_000).optional(),
+  })
+  .strict();
+
+const BrowserBugReportPayloadSchema = z
+  .object({
+    kind: InChatBugReportKindSchema,
+    conversationId: BrowserTelemetryTokenSchema.optional(),
+    userMessageId: BrowserTelemetryTokenSchema.optional(),
+    assistantMessageId: BrowserTelemetryTokenSchema.optional(),
+    observed: z.string().max(2_000).optional(),
+    expected: z.string().max(2_000).optional(),
+    associatedEventId: BrowserTelemetryEventIdSchema.optional(),
+    sentryIssueUrl: z.string().min(1).max(2048).optional(),
+    sentryEventUrl: z.string().min(1).max(2048).optional(),
+    sentryEventId: BrowserTelemetryEventIdSchema.optional(),
+    sentryReplayUrl: z.string().min(1).max(2048).optional(),
+    sentryTraceUrl: z.string().min(1).max(2048).optional(),
+    sentryLogsUrl: z.string().min(1).max(2048).optional(),
+    sentryTraceId: BrowserTelemetryEventIdSchema.optional(),
+    langsmithTraceUrl: z.string().min(1).max(2048).optional(),
+    langsmithThreadUrl: z.string().min(1).max(2048).optional(),
+    langsmithThreadId: BrowserTelemetryTokenSchema.optional(),
+    langsmithRunUrl: z.string().min(1).max(2048).optional(),
+    langsmithRunId: BrowserTelemetryTokenSchema.optional(),
+    screenshot: BrowserBugReportScreenshotSchema.optional(),
+    browser: z
+      .object({
+        url: z.string().min(1).max(2048).optional(),
+        userAgent: z.string().min(1).max(512).optional(),
+        viewport: z
+          .object({
+            width: z.number().int().positive().max(20_000),
+            height: z.number().int().positive().max(20_000),
+          })
+          .strict()
+          .optional(),
+        replaySnapshotId: BrowserTelemetryTokenSchema.optional(),
+        timezone: z.string().min(1).max(64).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+type BrowserBugReportPayload = z.infer<typeof BrowserBugReportPayloadSchema>;
+
+function linearBugReportAttachmentFromScreenshot(
+  report: BrowserBugReportPayload,
+): LinearBugReportAttachment[] | undefined {
+  if (!report.screenshot) return undefined;
+  const decodedBytes = Buffer.from(report.screenshot.base64Content, 'base64');
+  if (decodedBytes.byteLength === 0 || decodedBytes.byteLength > 1_500_000) return undefined;
+  const dimensions =
+    report.screenshot.width && report.screenshot.height
+      ? `${String(report.screenshot.width)}x${String(report.screenshot.height)}`
+      : 'dimensions unavailable';
+  return [
+    {
+      filename: report.screenshot.filename,
+      contentType: report.screenshot.contentType,
+      base64Content: report.screenshot.base64Content,
+      title: 'Conversation UI screenshot',
+      subtitle: `Opt-in screenshot from ${report.kind} report (${dimensions}).`,
+    },
+  ];
+}
+
 const browserTelemetryTracer = trace.getTracer('squire.browser-telemetry');
 
 function browserTelemetryLevel(event: BrowserTelemetryEvent): 'info' | 'error' {
@@ -762,6 +853,25 @@ function buildBrowserFeedbackInput(
     feedbackKind: event.feedbackKind,
     associatedEventId: event.associatedEventId,
   };
+}
+
+function optionalBugReportText(value: string | undefined): string | undefined {
+  const text = value?.trim();
+  return text && text.length > 0 ? text : undefined;
+}
+
+function bugReportConversationUrl(report: BrowserBugReportPayload): string | undefined {
+  if (report.browser?.url) return report.browser.url;
+  if (report.conversationId) return `/chat/${report.conversationId}`;
+  return undefined;
+}
+
+function linearBugReportApiKey(): string | undefined {
+  return process.env.LINEAR_API_KEY?.trim() || undefined;
+}
+
+function bugReportStatusCode(status: 'created' | 'existing'): 200 | 201 {
+  return status === 'created' ? 201 : 200;
 }
 
 async function checkRegisterRateLimit(c: Context): Promise<RateLimitDecision> {
@@ -3590,6 +3700,113 @@ app.post('/api/browser-telemetry', optionalSession(), async (c) => {
         finishBrowserTelemetrySpan(span, logLevel);
       }
     },
+  );
+});
+
+app.post('/api/bug-reports', requireSession(), requireCsrf(), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  c.header('Vary', 'Cookie');
+  const requestId = correlateRequest(c);
+  const session = c.get('session') as { userId?: unknown } | undefined;
+  const userId = typeof session?.userId === 'string' ? session.userId : undefined;
+  if (!userId) return c.json(jsonError('Authentication required', 401), 401);
+
+  let rateLimit: RateLimitDecision;
+  try {
+    rateLimit = await getDefaultRateLimiter().consume({
+      policy: BUG_REPORT_RATE_LIMIT_POLICY,
+      identity: `user:${userId}`,
+    });
+  } catch (error) {
+    return apiRateLimitUnavailableResponse(
+      c,
+      error,
+      '/api/bug-reports',
+      BUG_REPORT_RATE_LIMIT_POLICY,
+    );
+  }
+  if (!rateLimit.allowed) {
+    return apiRateLimitedResponse(
+      c,
+      { decision: rateLimit, identityKind: 'user' },
+      '/api/bug-reports',
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(jsonError('Invalid JSON body', 400), 400);
+  }
+
+  const result = BrowserBugReportPayloadSchema.safeParse(body);
+  if (!result.success) return c.json(jsonError('Invalid bug report payload', 400), 400);
+
+  const report = result.data;
+  const conversation = report.conversationId
+    ? await ConversationRepository.findOwnedById(userId, report.conversationId)
+    : null;
+  if (report.conversationId && !conversation) {
+    return c.json(jsonError('Conversation not found', 404), 404);
+  }
+
+  const bundle = await collectDiagnosticBundle({
+    route: '/api/bug-reports',
+    requestId,
+    conversationId: conversation?.id,
+    userMessageId: conversation ? report.userMessageId : undefined,
+    assistantMessageId: conversation ? report.assistantMessageId : undefined,
+    conversationUrl: bugReportConversationUrl(report),
+    browserUrl: report.browser?.url,
+    user: { id: userId },
+    conversation,
+    browser: report.browser,
+    sentryIssueUrl: report.sentryIssueUrl,
+    sentryEventUrl: report.sentryEventUrl,
+    sentryEventId: report.sentryEventId ?? report.associatedEventId,
+    sentryReplayUrl: report.sentryReplayUrl,
+    sentryTraceUrl: report.sentryTraceUrl,
+    sentryLogsUrl: report.sentryLogsUrl,
+    sentryTraceId: report.sentryTraceId,
+    langsmithTraceUrl: report.langsmithTraceUrl,
+    langsmithThreadUrl: report.langsmithThreadUrl,
+    langsmithThreadId: report.langsmithThreadId,
+    langsmithRunUrl: report.langsmithRunUrl,
+    langsmithRunId: report.langsmithRunId,
+  });
+
+  const submission = await submitLinearBugReport({
+    bundle,
+    kind: report.kind,
+    observed: optionalBugReportText(report.observed),
+    expected: optionalBugReportText(report.expected),
+    attachments: linearBugReportAttachmentFromScreenshot(report),
+    linearApiKey: linearBugReportApiKey(),
+  });
+
+  if (submission.status === 'disabled') {
+    return c.json(
+      {
+        error: 'Bug reporting is not configured',
+        status: 503,
+        marker: submission.marker,
+      },
+      503,
+    );
+  }
+
+  return c.json(
+    {
+      status: submission.status,
+      issue: {
+        identifier: submission.issue.identifier,
+        url: submission.issue.url,
+      },
+      marker: submission.marker,
+      ...(submission.warnings?.length ? { warnings: submission.warnings } : {}),
+    },
+    bugReportStatusCode(submission.status),
   );
 });
 
