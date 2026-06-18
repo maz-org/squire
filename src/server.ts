@@ -128,6 +128,7 @@ import {
 import { renderAssistantContentHtml } from './web-ui/assistant-content.ts';
 import {
   renderCampaignDashboardContent,
+  renderCampaignDashboardThreadsSwap,
   renderCampaignListContent,
   type CampaignStripState,
 } from './web-ui/campaign-pages.ts';
@@ -1531,6 +1532,7 @@ async function renderCampaignDashboardPage(
   // Modules editor only for games that have optional modules to toggle.
   const gameId = normalizeGameId(detail.campaign.game);
   const gameDef = gameId ? gameDefinitionFor(gameId) : null;
+  const dashboardThreads = await dashboardThreadsFragment(detail.campaign, csrfToken);
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -1548,7 +1550,7 @@ async function renderCampaignDashboardPage(
     campaignStripProminent: true,
     mainContent: renderCampaignDashboardContent(
       detail,
-      await dashboardThreadsFragment(detail.campaign, csrfToken),
+      dashboardThreads?.html,
       renderCampaignJournal(await listJournal(identity, campaignId)),
       // Sheet links (SQR-277): member-visible projection only.
       (await CharacterRepository.listMemberVisibleByCampaign(campaignId)).map((character) => ({
@@ -1582,6 +1584,7 @@ async function renderCampaignDashboardPage(
             errorMessage: opts.modulesError,
           }
         : undefined,
+      { openScenarioCount: dashboardThreads?.openScenarioCount },
     ),
   });
   return c.html(body, status);
@@ -1830,7 +1833,7 @@ async function dashboardThreadsFragment(
   campaign: Campaign,
   csrfToken: string,
   announcement?: string,
-): Promise<HtmlEscapedString | undefined> {
+): Promise<{ html: HtmlEscapedString; openScenarioCount: number } | undefined> {
   const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
   if (graphs.length === 0) return undefined;
   const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
@@ -1841,7 +1844,13 @@ async function dashboardThreadsFragment(
     new Set(campaign.skippedScenarios),
     roster,
   );
-  return renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement });
+  const openScenarioCount = [...availability.statuses.values()].filter(
+    (status) => status === 'open',
+  ).length;
+  return {
+    html: renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement }),
+    openScenarioCount,
+  };
 }
 
 /**
@@ -1930,7 +1939,15 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   );
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
-  if (isHtmxRequest(c) && fragment) return c.html(fragment);
+  if (isHtmxRequest(c) && fragment) {
+    return c.html(
+      renderCampaignDashboardThreadsSwap({
+        campaign: detail.campaign,
+        headerStats: { openScenarioCount: fragment.openScenarioCount },
+        threadsFragment: fragment.html,
+      }),
+    );
+  }
   return c.redirect(`/campaigns/${campaignId}`, 303);
 });
 

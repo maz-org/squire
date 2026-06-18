@@ -66,6 +66,14 @@ const scenario = (key: string, overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+function dashboardHeaderStats(body: string): string {
+  const match = body.match(
+    /<p\b[^>]*class="squire-campaign-dashboard__stats"[^>]*>\s*([\s\S]*?)\s*<\/p>/,
+  );
+  if (!match) throw new Error('Dashboard header stats not found');
+  return match[1]!.replace(/\s+/g, ' ').trim();
+}
+
 async function setupFixture() {
   const { db } = getDb('server');
   await seedUnlockGraphModule(db, {
@@ -172,6 +180,11 @@ describe('dashboard rendering', () => {
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('squire-dashboard-stats');
 
+    const headerStats = dashboardHeaderStats(body);
+    expect(headerStats).toBe('FH · PROSPERITY 1 · OPEN 1');
+    expect(headerStats).not.toContain('PLAYED');
+    expect(headerStats).not.toContain('DRAWN');
+
     // No hazard banner yet: 2/3 close each other but neither is reachable
     // (locked culprits still project warnings — both unplayed, so the
     // banner SHOULD render inside Main Thread).
@@ -192,6 +205,8 @@ describe('toggle route', () => {
     expect(playedBody).toContain('PLAYED ✓');
     // 2 and 3 opened by playing 1.
     expect(playedBody.match(/--open/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(playedBody).toContain('hx-swap-oob="true"');
+    expect(dashboardHeaderStats(playedBody)).toBe('FH · PROSPERITY 1 · OPEN 2');
 
     // Manual cycle: via-event → drew-it → played.
     const drew = await toggle(owner, campaign.id, 'fh:4');
