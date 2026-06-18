@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 
-import { ask, type HistoryMessage, type EmitFn } from '../service.ts';
+import { askWithResult, type HistoryMessage, type EmitFn } from '../service.ts';
 import { getDb } from '../db.ts';
 import * as ConversationRepository from '../db/repositories/conversation-repository.ts';
 import * as MessageRepository from '../db/repositories/message-repository.ts';
@@ -264,7 +264,14 @@ async function generateAssistantReply(
   } = {
     retryOnTransportError: true,
   },
-) {
+): Promise<{
+  answer: string;
+  observability?: {
+    langsmithRunId?: string;
+    langsmithRunUrl?: string;
+    langsmithTraceUrl?: string;
+  };
+}> {
   const baseOptions = () =>
     agentOptions({
       history,
@@ -275,7 +282,11 @@ async function generateAssistantReply(
       emit,
     });
   try {
-    return await ask(question, baseOptions());
+    const result = await askWithResult(question, baseOptions());
+    return {
+      answer: result.answer,
+      observability: result.observability,
+    };
   } catch (err) {
     if (!isRetryableTransportError(err) || !options.retryOnTransportError) {
       throw err;
@@ -287,7 +298,11 @@ async function generateAssistantReply(
     // accumulator state populated by the failed first attempt.
     options.onRetry?.();
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return ask(question, baseOptions());
+    const result = await askWithResult(question, baseOptions());
+    return {
+      answer: result.answer,
+      observability: result.observability,
+    };
   }
 }
 
@@ -388,7 +403,7 @@ async function persistAssistantOutcome(input: {
           status: 'started',
           retry: input.onEvent === undefined,
         });
-        const answer = await generateAssistantReply(
+        const generated = await generateAssistantReply(
           input.question,
           history,
           input.userId,
@@ -415,13 +430,16 @@ async function persistAssistantOutcome(input: {
         const assistantMessage = await MessageRepository.createResponse(tx, {
           conversationId: input.conversationId,
           role: 'assistant',
-          content: answer,
+          content: generated.answer,
           responseToMessageId: input.currentUserMessageId,
           // Null when the agent used no source tools. Pre-SQR-98 rows and
           // tool-free answers both render with footer hidden — indistinguishable
           // at the render layer, which is correct: both states mean "no
           // provenance to show."
           consultedSources: capturedSources.length > 0 ? capturedSources : null,
+          langsmithRunId: generated.observability?.langsmithRunId ?? null,
+          langsmithRunUrl: generated.observability?.langsmithRunUrl ?? null,
+          langsmithTraceUrl: generated.observability?.langsmithTraceUrl ?? null,
         });
         await ConversationRepository.touchLastMessageAt(
           tx,

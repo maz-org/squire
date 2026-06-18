@@ -38,10 +38,13 @@ LANGSMITH_PROJECT=squire-evals
 LANGSMITH_TRACING=true
 # LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 # LANGSMITH_WORKSPACE_ID=...
+# LANGSMITH_PROJECT_ID=...
 
 # Optional Sentry app observability. Leave unset for normal local dev/tests.
 # SENTRY_DSN=...
 # SENTRY_RELEASE=local-dev
+# SENTRY_ORG_SLUG=brian-moseley
+# SENTRY_PROJECT_ID=4511564194643969
 
 # Trace environment label for LangSmith; defaults to NODE_ENV.
 SQUIRE_ENV=development
@@ -229,6 +232,7 @@ const bundle = buildDiagnosticBundle({
   requestId,
   conversationId,
   userMessageId,
+  sentryEventId,
   sentryEventUrl,
   sentryLogsUrl,
   sentryTraceUrl,
@@ -246,6 +250,12 @@ const body = createLinearBugReportBody({
   acceptanceCriteria,
 });
 ```
+
+For an in-chat or agent-filed Linear bug, prefer
+`buildLinearBugReportDraft()` for dry runs and `submitLinearBugReport()` for
+live filing. Both helpers live in `src/linear-bug-intake.ts`; they own the
+`squire-bug:<env>:<conversationId>:<userMessageId>` dedupe marker, priority
+mapping, Squire Bugs target, and redacted diagnostic JSON comment.
 
 Tests should cover the contract that matters: no-DSN local behavior, redaction,
 stable field names, alert filters, dry-run output, and generated Linear evidence

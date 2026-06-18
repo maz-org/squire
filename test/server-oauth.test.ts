@@ -67,6 +67,7 @@ vi.mock('../src/service.ts', () => ({
   isReady: mockIsReady,
   refreshInitializationIfReady: mockRefreshInitializationIfReady,
   ask: mockAsk,
+  askWithResult: vi.fn(),
 }));
 
 vi.mock('../src/tools.ts', () => ({

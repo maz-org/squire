@@ -2,6 +2,12 @@ import 'dotenv/config';
 
 import { pathToFileURL } from 'node:url';
 
+import {
+  createLinearClient,
+  type LinearTargets,
+  type SquireLinearClient,
+} from '../src/linear-client.ts';
+
 type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
 type Logger = (message: string) => void;
 
@@ -23,6 +29,7 @@ interface SyncSecurityAlertsOptions extends CollectAlertsOptions {
   linearLabelName?: string;
   dryRun: boolean;
   validateConfigOnly?: boolean;
+  linearClient?: SquireLinearClient;
 }
 
 export interface RoutableSecurityAlert {
@@ -89,21 +96,7 @@ interface GitHubSecretScanningAlert {
   validity?: unknown;
 }
 
-interface LinearIssueRef {
-  id: string;
-  identifier: string;
-  url: string;
-}
-
-interface LinearTargets {
-  teamId: string;
-  projectId?: string;
-  labelIds: string[];
-  labelName: string;
-}
-
 const GITHUB_API_VERSION = '2022-11-28';
-const LINEAR_GRAPHQL_URL = 'https://api.linear.app/graphql';
 const DEFAULT_LINEAR_TEAM_KEY = 'SQR';
 const DEFAULT_LINEAR_PROJECT_NAME = 'Squire · Security Alert Automation';
 const DEFAULT_LINEAR_LABEL_NAME = 'Security';
@@ -406,159 +399,10 @@ export async function collectRoutableAlerts(
   ];
 }
 
-async function linearGraphql<T>(
-  fetch: FetchLike,
-  linearApiKey: string,
-  operationName: string,
-  query: string,
-  variables: Record<string, unknown>,
-  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
-): Promise<T> {
-  const response = await fetchWithTimeout(
-    fetch,
-    LINEAR_GRAPHQL_URL,
-    {
-      method: 'POST',
-      headers: {
-        authorization: linearApiKey,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ operationName, query, variables }),
-    },
-    `Linear ${operationName}`,
-    timeoutMs,
-  );
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Linear ${operationName} returned ${response.status}: ${body}`);
-  }
-
-  const payload = (await readJson(response, `Linear ${operationName}`)) as {
-    data?: T;
-    errors?: { message?: string }[];
-  };
-  if (payload.errors?.length) {
-    throw new Error(
-      `Linear ${operationName} failed: ${payload.errors
-        .map((error) => error.message ?? 'unknown error')
-        .join('; ')}`,
-    );
-  }
-  if (!payload.data) {
-    throw new Error(`Linear ${operationName} returned no data`);
-  }
-  return payload.data;
-}
-
-async function resolveLinearTargets(
-  fetch: FetchLike,
-  linearApiKey: string,
-  linearTeamKey: string,
-  linearProjectName: string | undefined,
-  linearLabelName: string | undefined,
-  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
-): Promise<LinearTargets> {
-  const data = await linearGraphql<{
-    teams: { nodes: { id: string; key: string; name: string }[] };
-    projects: { nodes: { id: string; name: string }[] };
-    issueLabels: {
-      nodes: { id: string; name: string; team: { id: string; key: string } | null }[];
-    };
-  }>(
-    fetch,
-    linearApiKey,
-    'ResolveLinearTargets',
-    `query ResolveLinearTargets($teamKey: String!, $projectName: String!, $labelName: String!) {
-      teams(first: 1, filter: { key: { eq: $teamKey } }) {
-        nodes { id key name }
-      }
-      projects(
-        first: 1
-        filter: {
-          name: { eq: $projectName }
-          accessibleTeams: { some: { key: { eq: $teamKey } } }
-        }
-      ) {
-        nodes { id name }
-      }
-      issueLabels(
-        first: 10
-        filter: {
-          name: { eqIgnoreCase: $labelName }
-          or: [{ team: { null: true } }, { team: { key: { eq: $teamKey } } }]
-        }
-      ) {
-        nodes { id name team { id key } }
-      }
-    }`,
-    {
-      teamKey: linearTeamKey,
-      projectName: linearProjectName ?? DEFAULT_LINEAR_PROJECT_NAME,
-      labelName: linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME,
-    },
-    timeoutMs,
-  );
-
-  const team = data.teams.nodes[0];
-  if (!team) {
-    throw new Error(`Linear team ${linearTeamKey} was not found`);
-  }
-
-  const project = data.projects.nodes[0];
-  if (!project) {
-    throw new Error(
-      `Linear project ${linearProjectName ?? DEFAULT_LINEAR_PROJECT_NAME} was not found for team ${linearTeamKey}`,
-    );
-  }
-
-  const label =
-    data.issueLabels.nodes.find((candidate) => candidate.team === null) ??
-    data.issueLabels.nodes[0];
-  if (!label) {
-    throw new Error(
-      `Linear label ${linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME} was not found as a workspace or ${linearTeamKey} team label`,
-    );
-  }
-
-  return { teamId: team.id, projectId: project?.id, labelIds: [label.id], labelName: label.name };
-}
-
 function logValidatedLinearTarget(log: Logger, targets: LinearTargets): void {
   log(
     `Validated Linear target team=${targets.teamId} project=${targets.projectId ?? 'none'} label=${targets.labelName}`,
   );
-}
-
-async function findExistingIssue(
-  fetch: FetchLike,
-  linearApiKey: string,
-  linearTeamKey: string,
-  marker: string,
-  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
-): Promise<LinearIssueRef | undefined> {
-  const data = await linearGraphql<{
-    issues: { nodes: LinearIssueRef[] };
-  }>(
-    fetch,
-    linearApiKey,
-    'FindIssueByAlertMarker',
-    `query FindIssueByAlertMarker($teamKey: String!, $marker: String!) {
-      issues(
-        first: 1
-        filter: {
-          team: { key: { eq: $teamKey } }
-          description: { contains: $marker }
-        }
-      ) {
-        nodes { id identifier url }
-      }
-    }`,
-    { teamKey: linearTeamKey, marker },
-    timeoutMs,
-  );
-
-  return data.issues.nodes[0];
 }
 
 function issueDescription(alert: RoutableSecurityAlert): string {
@@ -578,80 +422,33 @@ function issueDescription(alert: RoutableSecurityAlert): string {
   ].join('\n');
 }
 
-async function createIssue(
-  fetch: FetchLike,
-  linearApiKey: string,
-  targets: LinearTargets,
-  alert: RoutableSecurityAlert,
-  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
-): Promise<LinearIssueRef> {
-  const input: Record<string, unknown> = {
+function createSecurityIssueInput(targets: LinearTargets, alert: RoutableSecurityAlert) {
+  return {
     teamId: targets.teamId,
     title: alert.title,
     description: issueDescription(alert),
     priority: 2,
+    projectId: targets.projectId,
+    labelIds: targets.labelIds,
   };
-  if (targets.projectId) input.projectId = targets.projectId;
-  input.labelIds = targets.labelIds;
-
-  const data = await linearGraphql<{
-    issueCreate: { success: boolean; issue: LinearIssueRef };
-  }>(
-    fetch,
-    linearApiKey,
-    'CreateSecurityAlertIssue',
-    `mutation CreateSecurityAlertIssue($input: IssueCreateInput!) {
-      issueCreate(input: $input) {
-        success
-        issue { id identifier url }
-      }
-    }`,
-    { input },
-    timeoutMs,
-  );
-
-  if (!data.issueCreate.success) {
-    throw new Error(`Linear issueCreate returned success=false for ${alert.key}`);
-  }
-  return data.issueCreate.issue;
 }
 
-async function updateIssue(
-  fetch: FetchLike,
-  linearApiKey: string,
-  targets: LinearTargets,
-  existingIssueId: string,
-  alert: RoutableSecurityAlert,
-  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
-): Promise<LinearIssueRef> {
-  const input: Record<string, unknown> = {
+function updateSecurityIssueInput(targets: LinearTargets, alert: RoutableSecurityAlert) {
+  return {
     title: alert.title,
     description: issueDescription(alert),
     priority: 2,
+    projectId: targets.projectId,
+    labelIds: targets.labelIds,
   };
-  if (targets.projectId) input.projectId = targets.projectId;
-  input.labelIds = targets.labelIds;
+}
 
-  const data = await linearGraphql<{
-    issueUpdate: { success: boolean; issue: LinearIssueRef };
-  }>(
-    fetch,
-    linearApiKey,
-    'UpdateSecurityAlertIssue',
-    `mutation UpdateSecurityAlertIssue($id: String!, $input: IssueUpdateInput!) {
-      issueUpdate(id: $id, input: $input) {
-        success
-        issue { id identifier url }
-      }
-    }`,
-    { id: existingIssueId, input },
-    timeoutMs,
-  );
-
-  if (!data.issueUpdate.success) {
-    throw new Error(`Linear issueUpdate returned success=false for ${alert.key}`);
+function linearClientFromOptions(options: SyncSecurityAlertsOptions): SquireLinearClient {
+  if (options.linearClient) return options.linearClient;
+  if (!options.linearApiKey) {
+    throw new Error('LINEAR_API_KEY is required unless SECURITY_ALERT_DRY_RUN=1');
   }
-  return data.issueUpdate.issue;
+  return createLinearClient(options.linearApiKey);
 }
 
 export async function syncSecurityAlertsToLinear(
@@ -661,17 +458,15 @@ export async function syncSecurityAlertsToLinear(
   const log = options.log ?? console.log;
 
   if (options.validateConfigOnly) {
-    if (!options.linearApiKey) {
+    if (!options.linearApiKey && !options.linearClient) {
       throw new Error('LINEAR_API_KEY is required for --validate-config');
     }
-    const targets = await resolveLinearTargets(
-      fetch,
-      options.linearApiKey,
-      options.linearTeamKey,
-      options.linearProjectName,
-      options.linearLabelName,
-      options.httpTimeoutMs,
-    );
+    const linearClient = linearClientFromOptions(options);
+    const targets = await linearClient.resolveTargets({
+      teamKey: options.linearTeamKey,
+      projectName: options.linearProjectName ?? DEFAULT_LINEAR_PROJECT_NAME,
+      labelName: options.linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME,
+    });
     logValidatedLinearTarget(log, targets);
     return { alerts: 0, created: 0, updated: 0, dryRun: 0 };
   }
@@ -701,18 +496,16 @@ export async function syncSecurityAlertsToLinear(
     return result;
   }
 
-  if (!options.linearApiKey) {
+  if (!options.linearApiKey && !options.linearClient) {
     throw new Error('LINEAR_API_KEY is required unless SECURITY_ALERT_DRY_RUN=1');
   }
 
-  const targets = await resolveLinearTargets(
-    fetch,
-    options.linearApiKey,
-    options.linearTeamKey,
-    options.linearProjectName,
-    options.linearLabelName,
-    options.httpTimeoutMs,
-  );
+  const linearClient = linearClientFromOptions(options);
+  const targets = await linearClient.resolveTargets({
+    teamKey: options.linearTeamKey,
+    projectName: options.linearProjectName ?? DEFAULT_LINEAR_PROJECT_NAME,
+    labelName: options.linearLabelName ?? DEFAULT_LINEAR_LABEL_NAME,
+  });
   logValidatedLinearTarget(log, targets);
 
   if (alerts.length === 0) {
@@ -721,33 +514,17 @@ export async function syncSecurityAlertsToLinear(
   }
 
   for (const alert of alerts) {
-    const existing = await findExistingIssue(
-      fetch,
-      options.linearApiKey,
-      options.linearTeamKey,
-      alert.key,
-      options.httpTimeoutMs,
-    );
+    const existing = await linearClient.findIssueByMarker(options.linearTeamKey, alert.key);
 
     if (existing) {
-      const updated = await updateIssue(
-        fetch,
-        options.linearApiKey,
-        targets,
+      const updated = await linearClient.updateIssue(
         existing.id,
-        alert,
-        options.httpTimeoutMs,
+        updateSecurityIssueInput(targets, alert),
       );
       log(`Updated ${updated.identifier} for ${alert.key}: ${updated.url}`);
       result.updated += 1;
     } else {
-      const created = await createIssue(
-        fetch,
-        options.linearApiKey,
-        targets,
-        alert,
-        options.httpTimeoutMs,
-      );
+      const created = await linearClient.createIssue(createSecurityIssueInput(targets, alert));
       log(`Created ${created.identifier} for ${alert.key}: ${created.url}`);
       result.created += 1;
     }

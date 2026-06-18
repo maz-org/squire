@@ -6,6 +6,7 @@ vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
   isReady: vi.fn(),
   ask: vi.fn(),
+  askWithResult: vi.fn(),
   ensureBootstrapStatus: vi.fn(),
   getBootstrapStatus: vi.fn(),
   startBootstrapLifecycle: vi.fn(),

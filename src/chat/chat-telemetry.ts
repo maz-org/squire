@@ -51,7 +51,6 @@ export function captureChatFailureTelemetry(
     failureKind: input.failureKind,
     game: input.game ?? null,
     originalErrorName: originalErrorName(error),
-    langsmithThreadId: input.conversationId ?? input.userMessageId ?? null,
     ...(safeErrorCode(error) ? { originalErrorCode: safeErrorCode(error) } : {}),
   };
 

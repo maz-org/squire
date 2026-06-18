@@ -20,6 +20,7 @@ var activeGame = defaultActiveGame;
 var activeGameInitialized = false;
 var browserTelemetryConfig = null;
 var lastBrowserTelemetryEventId = null;
+var BUG_REPORT_SCREENSHOT_MAX_BYTES = 1500000;
 
 var MASKED_REPLAY_MASK_SELECTORS = [
   '.squire-transcript',
@@ -46,6 +47,20 @@ var ALLOWED_BROWSER_FEEDBACK_KINDS = {
   ui_broken: true,
   source_problem: true,
   other: true,
+};
+var ALLOWED_BUG_REPORT_KINDS = {
+  bad_answer: true,
+  broken_stream: true,
+  visual_issue: true,
+  wrong_source: true,
+  other: true,
+};
+var BUG_REPORT_FEEDBACK_KIND = {
+  bad_answer: 'wrong_answer',
+  broken_stream: 'stream_failed',
+  visual_issue: 'ui_broken',
+  wrong_source: 'source_problem',
+  other: 'other',
 };
 
 function safePathOnly(raw) {
@@ -239,6 +254,16 @@ function browserFeedbackKind(value) {
   return 'other';
 }
 
+function bugReportKind(value) {
+  if (
+    typeof value === 'string' &&
+    Object.prototype.hasOwnProperty.call(ALLOWED_BUG_REPORT_KINDS, value)
+  ) {
+    return value;
+  }
+  return 'other';
+}
+
 function rememberBrowserTelemetryEventId(response, rememberEventId) {
   if (!response || typeof response.json !== 'function') return null;
   try {
@@ -354,7 +379,620 @@ function reportBrowserFeedback(details) {
   };
   if (eventId) payload.associatedEventId = eventId;
   if (details && details.streamUrl) payload.streamUrl = details.streamUrl;
-  sendBrowserTelemetry('browser_feedback', payload);
+  return sendBrowserTelemetry('browser_feedback', payload);
+}
+
+function bugReportCsrfToken() {
+  var meta = document.querySelector ? document.querySelector('meta[name="csrf-token"]') : null;
+  return meta && typeof meta.getAttribute === 'function' ? meta.getAttribute('content') || '' : '';
+}
+
+function currentBrowserUrl() {
+  if (window.location && typeof window.location.href === 'string') return window.location.href;
+  return currentRoutePath();
+}
+
+function browserTimezone() {
+  try {
+    var formatter =
+      window.Intl && typeof window.Intl.DateTimeFormat === 'function'
+        ? window.Intl.DateTimeFormat()
+        : null;
+    var options = formatter && formatter.resolvedOptions ? formatter.resolvedOptions() : null;
+    return typeof (options && options.timeZone) === 'string' ? options.timeZone : null;
+  } catch {
+    return null;
+  }
+}
+
+function bugReportText(value) {
+  if (typeof value !== 'string') return null;
+  var trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 2000) : null;
+}
+
+function bugReportUrl(value) {
+  if (typeof value !== 'string') return null;
+  var trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 2048) : null;
+}
+
+function bugReportToken(value) {
+  return telemetryToken(value, '');
+}
+
+function bugReportBase64ByteSize(value) {
+  if (typeof value !== 'string') return 0;
+  var padding = value.endsWith('==') ? 2 : value.endsWith('=') ? 1 : 0;
+  return Math.floor((value.length * 3) / 4) - padding;
+}
+
+function bugReportScreenshot(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (value.contentType !== 'image/jpeg' && value.contentType !== 'image/png') return null;
+  if (
+    typeof value.filename !== 'string' ||
+    !/^[A-Za-z0-9._-]{1,96}\.(?:jpe?g|png)$/i.test(value.filename)
+  ) {
+    return null;
+  }
+  if (
+    typeof value.base64Content !== 'string' ||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(value.base64Content)
+  ) {
+    return null;
+  }
+  var byteSize = bugReportBase64ByteSize(value.base64Content);
+  if (byteSize <= 0 || byteSize > BUG_REPORT_SCREENSHOT_MAX_BYTES) return null;
+  var screenshot = {
+    filename: value.filename,
+    contentType: value.contentType,
+    base64Content: value.base64Content,
+    byteSize: byteSize,
+  };
+  if (Number.isInteger(value.width) && value.width > 0 && value.width <= 4000) {
+    screenshot.width = value.width;
+  }
+  if (Number.isInteger(value.height) && value.height > 0 && value.height <= 4000) {
+    screenshot.height = value.height;
+  }
+  return screenshot;
+}
+
+function bugReportScreenshotFilename() {
+  var suffix = Date.now().toString(36);
+  return 'squire-bug-' + suffix + '.jpg';
+}
+
+function hideDuringScreenshot(element, callback) {
+  if (!element || !element.style) return callback();
+  var previousVisibility = element.style.visibility;
+  element.style.visibility = 'hidden';
+  return Promise.resolve()
+    .then(callback)
+    .finally(function () {
+      element.style.visibility = previousVisibility;
+    });
+}
+
+function screenshotAttempts(sourceWidth, sourceHeight) {
+  var attempts = [
+    { edge: 1280, quality: 0.72 },
+    { edge: 960, quality: 0.66 },
+    { edge: 720, quality: 0.6 },
+  ];
+  return attempts.map(function (attempt) {
+    var scale = Math.min(1, attempt.edge / Math.max(sourceWidth, sourceHeight));
+    return {
+      width: Math.max(1, Math.round(sourceWidth * scale)),
+      height: Math.max(1, Math.round(sourceHeight * scale)),
+      quality: attempt.quality,
+    };
+  });
+}
+
+function screenshotFromLoadedImage(image, sourceWidth, sourceHeight) {
+  var attempts = screenshotAttempts(sourceWidth, sourceHeight);
+  for (var i = 0; i < attempts.length; i += 1) {
+    var attempt = attempts[i];
+    var canvas = document.createElement('canvas');
+    canvas.width = attempt.width;
+    canvas.height = attempt.height;
+    var context = canvas.getContext && canvas.getContext('2d');
+    if (!context) return null;
+    context.drawImage(image, 0, 0, attempt.width, attempt.height);
+    var dataUrl = canvas.toDataURL('image/jpeg', attempt.quality);
+    var match = dataUrl.match(/^data:(image\/jpeg);base64,([A-Za-z0-9+/]+={0,2})$/);
+    if (!match) continue;
+    var byteSize = bugReportBase64ByteSize(match[2]);
+    if (byteSize > 0 && byteSize <= BUG_REPORT_SCREENSHOT_MAX_BYTES) {
+      return {
+        filename: bugReportScreenshotFilename(),
+        contentType: match[1],
+        base64Content: match[2],
+        width: attempt.width,
+        height: attempt.height,
+        byteSize: byteSize,
+      };
+    }
+  }
+  return null;
+}
+
+function screenshotStyles() {
+  if (!document.styleSheets) return '';
+  var chunks = [];
+  for (var i = 0; i < document.styleSheets.length; i += 1) {
+    var sheet = document.styleSheets[i];
+    var rules;
+    try {
+      rules = sheet.cssRules;
+    } catch {
+      rules = null;
+    }
+    if (!rules) continue;
+    for (var j = 0; j < rules.length; j += 1) {
+      var cssText = rules[j] && rules[j].cssText;
+      if (!cssText || /^@font-face\b/i.test(cssText) || /^@import\b/i.test(cssText)) continue;
+      chunks.push(cssText);
+    }
+  }
+  return chunks.join('\n');
+}
+
+function removeScreenshotExternalResources(clone) {
+  if (!clone || typeof clone.querySelectorAll !== 'function') return;
+  clone.querySelectorAll('script,link[rel="stylesheet"],style').forEach(function (node) {
+    if (node.parentNode) node.parentNode.removeChild(node);
+  });
+}
+
+function screenshotViewportCss(width, height) {
+  var scrollX = Math.max(0, Math.round(window.scrollX || window.pageXOffset || 0));
+  var scrollY = Math.max(0, Math.round(window.scrollY || window.pageYOffset || 0));
+  var doc = document.documentElement;
+  var body = document.body;
+  var pageWidth = Math.max(width, doc?.scrollWidth || 0, body?.scrollWidth || 0);
+  var pageHeight = Math.max(height, doc?.scrollHeight || 0, body?.scrollHeight || 0);
+  return [
+    `html{width:${pageWidth}px!important;min-height:${pageHeight}px!important;overflow:hidden!important;}`,
+    `body{width:${pageWidth}px!important;min-height:${pageHeight}px!important;margin:0!important;transform:translate(${-scrollX}px,${-scrollY}px);transform-origin:top left;}`,
+  ].join('\n');
+}
+
+function screenshotSvgMarkup(width, height) {
+  if (
+    !document.documentElement ||
+    typeof document.documentElement.cloneNode !== 'function' ||
+    typeof window.XMLSerializer !== 'function'
+  ) {
+    return null;
+  }
+  var clone = document.documentElement.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+  removeScreenshotExternalResources(clone);
+  var head = clone.querySelector && clone.querySelector('head');
+  if (!head) return null;
+  var style = document.createElement('style');
+  style.textContent = [screenshotStyles(), screenshotViewportCss(width, height)].join('\n');
+  head.appendChild(style);
+
+  var htmlMarkup = new window.XMLSerializer().serializeToString(clone);
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+    `<foreignObject x="0" y="0" width="${width}" height="${height}">`,
+    htmlMarkup,
+    '</foreignObject>',
+    '</svg>',
+  ].join('');
+}
+
+function loadScreenshotImage(svgMarkup, width, height) {
+  return new Promise(function (resolve) {
+    var ImageCtor = window.Image;
+    if (typeof ImageCtor !== 'function') {
+      resolve(null);
+      return;
+    }
+    var image = new ImageCtor();
+    image.onload = function () {
+      try {
+        resolve(screenshotFromLoadedImage(image, width, height));
+      } catch {
+        resolve(null);
+      }
+    };
+    image.onerror = function () {
+      resolve(null);
+    };
+    image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
+  });
+}
+
+function nextScreenshotFrame() {
+  return new Promise(function (resolve) {
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(function () {
+        resolve();
+      });
+      return;
+    }
+    window.setTimeout(resolve, 0);
+  });
+}
+
+function captureCurrentPageScreenshot() {
+  var width = Math.max(
+    1,
+    Math.round(window.innerWidth || document.documentElement?.clientWidth || 1),
+  );
+  var height = Math.max(
+    1,
+    Math.round(window.innerHeight || document.documentElement?.clientHeight || 1),
+  );
+  var svgMarkup = screenshotSvgMarkup(width, height);
+  return svgMarkup ? loadScreenshotImage(svgMarkup, width, height) : Promise.resolve(null);
+}
+
+function captureBugReportScreenshot(hiddenElement) {
+  if (
+    !document ||
+    !document.createElement ||
+    !document.documentElement ||
+    typeof window.XMLSerializer !== 'function'
+  ) {
+    return Promise.resolve(null);
+  }
+
+  return hideDuringScreenshot(hiddenElement, function () {
+    return nextScreenshotFrame()
+      .then(captureCurrentPageScreenshot)
+      .catch(function () {
+        return null;
+      });
+  });
+}
+
+function buildBugReportBrowserMetadata() {
+  var metadata = {
+    url: currentBrowserUrl(),
+    replaySnapshotId: maskedReplaySnapshotId(),
+  };
+  var userAgent = userAgentTelemetry();
+  if (userAgent) metadata.userAgent = userAgent;
+  var viewport = viewportTelemetry();
+  if (viewport) metadata.viewport = viewport;
+  var timezone = browserTimezone();
+  if (timezone) metadata.timezone = timezone;
+  return metadata;
+}
+
+function assignBugReportToken(payload, key, value) {
+  var token = bugReportToken(value);
+  if (token) payload[key] = token;
+}
+
+function buildBugReportPayload(details, associatedEventId) {
+  var routeConversationId = conversationIdFromPath(currentRoutePath());
+  var payload = {
+    kind: bugReportKind(details && details.kind),
+    browser: buildBugReportBrowserMetadata(),
+  };
+  assignBugReportToken(
+    payload,
+    'conversationId',
+    (details && details.conversationId) || routeConversationId,
+  );
+  assignBugReportToken(payload, 'userMessageId', details && details.userMessageId);
+  assignBugReportToken(payload, 'assistantMessageId', details && details.assistantMessageId);
+  assignBugReportToken(payload, 'langsmithRunId', details && details.langsmithRunId);
+  var langsmithRunUrl = bugReportUrl(details && details.langsmithRunUrl);
+  if (langsmithRunUrl) payload.langsmithRunUrl = langsmithRunUrl;
+  var langsmithTraceUrl = bugReportUrl(details && details.langsmithTraceUrl);
+  if (langsmithTraceUrl) payload.langsmithTraceUrl = langsmithTraceUrl;
+  var observed = bugReportText(details && details.observed);
+  if (observed) payload.observed = observed;
+  var expected = bugReportText(details && details.expected);
+  if (expected) payload.expected = expected;
+  var eventId =
+    sentryEventId(associatedEventId) || sentryEventId(details && details.associatedEventId);
+  if (eventId) payload.associatedEventId = eventId;
+  var screenshot = bugReportScreenshot(details && details.screenshot);
+  if (screenshot) payload.screenshot = screenshot;
+  return payload;
+}
+
+function postBugReportPayload(payload) {
+  var fetchFn = window.fetch;
+  if (typeof fetchFn !== 'function') return;
+  try {
+    return fetchFn.call(window, '/api/bug-reports', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-csrf-token': bugReportCsrfToken(),
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function submitBugReport(details) {
+  var kind = bugReportKind(details && details.kind);
+  var feedbackResult = reportBrowserFeedback({
+    feedbackKind: BUG_REPORT_FEEDBACK_KIND[kind],
+    associatedEventId: details && details.associatedEventId,
+  });
+  var feedbackPromise =
+    feedbackResult && typeof feedbackResult.then === 'function'
+      ? feedbackResult
+      : Promise.resolve(feedbackResult);
+  var screenshotPromise =
+    details && details.includeScreenshot
+      ? captureBugReportScreenshot(details.captureElement)
+      : Promise.resolve(null);
+
+  return Promise.all([
+    feedbackPromise.catch(function () {
+      return null;
+    }),
+    screenshotPromise,
+  ]).then(function (results) {
+    var screenshot = results[1] || (details && details.screenshot);
+    return postBugReportPayload(
+      buildBugReportPayload({ ...(details || {}), kind: kind, screenshot: screenshot }, results[0]),
+    );
+  });
+}
+
+function closestBugReportButton(target) {
+  var node = target;
+  while (node) {
+    if (node.getAttribute && node.getAttribute('data-squire-report-bug') !== null) {
+      return node;
+    }
+    node = node.parentNode || null;
+  }
+  return null;
+}
+
+function bugReportButtonDetails(button) {
+  var transcript =
+    button && typeof button.closest === 'function' ? button.closest('.squire-transcript') : null;
+  return {
+    kind: button && button.dataset ? button.dataset.bugReportDefaultKind : 'other',
+    conversationId:
+      (transcript && transcript.dataset && transcript.dataset.conversationId) ||
+      conversationIdFromPath(currentRoutePath()),
+    userMessageId: button && button.dataset ? button.dataset.userMessageId : null,
+    assistantMessageId: button && button.dataset ? button.dataset.assistantMessageId : null,
+    langsmithRunId: button && button.dataset ? button.dataset.langsmithRunId : null,
+    langsmithRunUrl: button && button.dataset ? button.dataset.langsmithRunUrl : null,
+    langsmithTraceUrl: button && button.dataset ? button.dataset.langsmithTraceUrl : null,
+  };
+}
+
+function appendBugReportOption(select, value, label, selected) {
+  var option = document.createElement('option');
+  option.value = value;
+  option.textContent = label;
+  if (selected) option.selected = true;
+  select.appendChild(option);
+}
+
+function appendBugReportField(form, labelText, field) {
+  var label = document.createElement('label');
+  label.className = 'squire-bug-report__field';
+  var span = document.createElement('span');
+  span.textContent = labelText;
+  label.appendChild(span);
+  label.appendChild(field);
+  form.appendChild(label);
+}
+
+function appendBugReportCheckbox(form, input, labelText, hintText) {
+  var label = document.createElement('label');
+  label.className = 'squire-bug-report__checkbox';
+  label.appendChild(input);
+  var text = document.createElement('span');
+  text.textContent = labelText;
+  label.appendChild(text);
+  form.appendChild(label);
+  if (hintText) {
+    var hint = document.createElement('p');
+    hint.className = 'squire-bug-report__hint';
+    hint.textContent = hintText;
+    form.appendChild(hint);
+  }
+}
+
+function setBugReportStatus(status, message) {
+  if (!status) return;
+  status.textContent = message || '';
+}
+
+function bugReportResponseError(body) {
+  if (body && typeof body.error === 'string' && body.error.trim()) return body.error.trim();
+  if (body && typeof body.message === 'string' && body.message.trim()) return body.message.trim();
+  return 'Could not create bug.';
+}
+
+function readBugReportResponse(response) {
+  var bodyPromise =
+    response && typeof response.json === 'function'
+      ? response.json().catch(function () {
+          return {};
+        })
+      : Promise.resolve({});
+  return bodyPromise.then(function (body) {
+    if (!response || !response.ok) throw new Error(bugReportResponseError(body));
+    return body;
+  });
+}
+
+function setBugReportControlsDisabled(controls, disabled) {
+  var fields = controls.fields || [];
+  for (var i = 0; i < fields.length; i += 1) {
+    if (fields[i]) fields[i].disabled = disabled;
+  }
+}
+
+function setBugReportSubmittingState(dialog, form, controls, submitting) {
+  if (submitting) {
+    form.dataset.submitting = 'true';
+    delete form.dataset.submitted;
+    dialog.setAttribute('aria-busy', 'true');
+    setBugReportControlsDisabled(controls, true);
+    controls.cancel.disabled = true;
+    controls.submit.disabled = true;
+    controls.submit.textContent = 'Creating...';
+    return;
+  }
+
+  delete form.dataset.submitting;
+  dialog.removeAttribute('aria-busy');
+  setBugReportControlsDisabled(controls, false);
+  controls.cancel.disabled = false;
+  controls.submit.disabled = false;
+  controls.submit.textContent = 'Create bug';
+}
+
+function setBugReportCreatedState(dialog, form, controls, status, identifier) {
+  delete form.dataset.submitting;
+  form.dataset.submitted = 'true';
+  dialog.removeAttribute('aria-busy');
+  setBugReportControlsDisabled(controls, true);
+  controls.cancel.disabled = false;
+  controls.cancel.textContent = 'Close';
+  controls.submit.disabled = true;
+  controls.submit.textContent = 'Created';
+  setBugReportStatus(status, identifier ? 'Created ' + identifier + '.' : 'Bug created.');
+}
+
+function closeBugReportDialog(dialog) {
+  if (!dialog) return;
+  if (typeof dialog.close === 'function') dialog.close();
+  if (typeof dialog.remove === 'function') dialog.remove();
+}
+
+function openBugReportDialog(button) {
+  if (!document.createElement || !document.body) return;
+  var baseDetails = bugReportButtonDetails(button);
+  var dialog = document.createElement('dialog');
+  dialog.className = 'squire-bug-report';
+  var form = document.createElement('form');
+  form.method = 'dialog';
+  form.className = 'squire-bug-report__form';
+  var title = document.createElement('h2');
+  title.className = 'squire-bug-report__title';
+  title.textContent = 'Report bug';
+  form.appendChild(title);
+
+  var kind = document.createElement('select');
+  kind.name = 'kind';
+  appendBugReportOption(kind, 'bad_answer', 'Bad answer', baseDetails.kind === 'bad_answer');
+  appendBugReportOption(
+    kind,
+    'broken_stream',
+    'Broken stream',
+    baseDetails.kind === 'broken_stream',
+  );
+  appendBugReportOption(kind, 'visual_issue', 'Visual issue', baseDetails.kind === 'visual_issue');
+  appendBugReportOption(kind, 'wrong_source', 'Wrong source', baseDetails.kind === 'wrong_source');
+  appendBugReportOption(kind, 'other', 'Other', baseDetails.kind === 'other');
+  appendBugReportField(form, 'Type', kind);
+
+  var observed = document.createElement('textarea');
+  observed.name = 'observed';
+  observed.rows = 3;
+  appendBugReportField(form, 'Observed', observed);
+
+  var expected = document.createElement('textarea');
+  expected.name = 'expected';
+  expected.rows = 3;
+  appendBugReportField(form, 'Expected', expected);
+
+  var includeScreenshot = document.createElement('input');
+  includeScreenshot.type = 'checkbox';
+  includeScreenshot.name = 'includeScreenshot';
+  appendBugReportCheckbox(
+    form,
+    includeScreenshot,
+    'Attach screenshot',
+    'Captures the current conversation view. Visible conversation text may be included.',
+  );
+
+  var status = document.createElement('p');
+  status.className = 'squire-bug-report__status';
+  status.setAttribute('role', 'status');
+  form.appendChild(status);
+
+  var actions = document.createElement('div');
+  actions.className = 'squire-bug-report__actions';
+  var cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'squire-button squire-button--ghost';
+  cancel.textContent = 'Cancel';
+  var submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'squire-button squire-button--primary';
+  submit.textContent = 'Create bug';
+  actions.appendChild(cancel);
+  actions.appendChild(submit);
+  form.appendChild(actions);
+  dialog.appendChild(form);
+  var controls = {
+    cancel: cancel,
+    submit: submit,
+    fields: [kind, observed, expected, includeScreenshot],
+  };
+
+  cancel.addEventListener('click', function () {
+    closeBugReportDialog(dialog);
+  });
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    setBugReportSubmittingState(dialog, form, controls, true);
+    setBugReportStatus(status, 'Creating bug...');
+    var response = submitBugReport({
+      ...baseDetails,
+      kind: kind.value,
+      observed: observed.value,
+      expected: expected.value,
+      includeScreenshot: includeScreenshot.checked,
+      captureElement: dialog,
+    });
+    if (!response || typeof response.then !== 'function') {
+      setBugReportSubmittingState(dialog, form, controls, false);
+      setBugReportStatus(status, 'Could not create bug.');
+      return;
+    }
+    response
+      .then(readBugReportResponse)
+      .then(function (body) {
+        var identifier = body && body.issue && body.issue.identifier;
+        if (button && identifier) button.textContent = 'Reported ' + identifier;
+        setBugReportCreatedState(dialog, form, controls, status, identifier);
+      })
+      .catch(function (error) {
+        setBugReportSubmittingState(dialog, form, controls, false);
+        setBugReportStatus(
+          status,
+          error instanceof Error && error.message ? error.message : 'Could not create bug.',
+        );
+      });
+  });
+
+  document.body.appendChild(dialog);
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute('open', '');
+  }
+  if (typeof observed.focus === 'function') observed.focus();
 }
 
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
@@ -402,6 +1040,15 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
   });
   document.addEventListener('squire:browser-feedback', function (event) {
     reportBrowserFeedback(event && event.detail);
+  });
+  document.addEventListener('squire:bug-report', function (event) {
+    submitBugReport(event && event.detail);
+  });
+  document.addEventListener('click', function (event) {
+    var button = closestBugReportButton(event && event.target);
+    if (!button) return;
+    event.preventDefault();
+    openBugReportDialog(button);
   });
 }
 

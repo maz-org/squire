@@ -78,9 +78,6 @@ function lifecycleAttributes(
     replay: input.replay,
     retry: input.retry,
     game: input.game,
-    // LangSmith uses conversationId/userMessageId as the thread id today.
-    // This is an id hint, not a prompt/model payload.
-    langsmith_thread_id: input.conversationId ?? input.userMessageId,
   }) as Record<string, string | number | boolean>;
 }
 
@@ -132,7 +129,6 @@ function spanAttributes(input: ChatLifecycleInput): Attributes {
     'squire.replay': input.replay,
     'squire.retry': input.retry,
     'squire.game': input.game,
-    'langsmith.thread_id': input.conversationId ?? input.userMessageId,
     'langsmith.thread_url': input.langsmithThreadUrl,
     'langsmith.run_url': input.langsmithRunUrl,
   }) as Attributes;

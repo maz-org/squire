@@ -34,6 +34,7 @@ vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
   isReady: vi.fn(() => true),
   ask: vi.fn(),
+  askWithResult: vi.fn(),
 }));
 
 vi.mock('../src/db.ts', () => ({

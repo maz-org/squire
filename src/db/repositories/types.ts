@@ -322,6 +322,12 @@ export interface ConversationMessage {
    * render time — no migration is needed.
    */
   consultedSources: string[] | null;
+  /** LangSmith root run id for this assistant turn, when tracing was active. */
+  langsmithRunId?: string | null;
+  /** LangSmith root run URL for this assistant turn, when derivable at write time. */
+  langsmithRunUrl?: string | null;
+  /** LangSmith trace URL for this assistant turn, usually the root run URL. */
+  langsmithTraceUrl?: string | null;
   /**
    * Completed browser-safe work timeline for this assistant turn, loaded from
    * `message_stream_events` by conversation-service on page-render paths.
@@ -347,6 +353,9 @@ export interface CreateConversationMessageInput {
   campaignId?: string | null;
   isError?: boolean;
   responseToMessageId?: string | null;
+  langsmithRunId?: string | null;
+  langsmithRunUrl?: string | null;
+  langsmithTraceUrl?: string | null;
   /**
    * Write-side accepts plain strings because the capture wrapper in
    * persistAssistantOutcome reads raw tool names off the agent's emit

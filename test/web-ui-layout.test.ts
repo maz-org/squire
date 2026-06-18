@@ -34,6 +34,7 @@ vi.mock('../src/service.ts', () => ({
   initialize: vi.fn(),
   isReady: vi.fn(),
   ask: vi.fn(),
+  askWithResult: vi.fn(),
 }));
 vi.mock('../src/db.ts', () => ({
   getDb: () => ({ db: { execute: vi.fn() }, close: async () => {} }),
@@ -673,6 +674,11 @@ describe('renderConversationTurnAppendFragment (SQR-108 / ADR 0012 E-3)', () => 
     expect(body).toContain('data-answer-work-status');
     expect(body).toContain('data-answer-work-rows');
     expect(body).toMatch(
+      /<button[^>]*type="button"[^>]*class="squire-answer__report"[^>]*data-squire-report-bug/,
+    );
+    expect(body).toContain('data-user-message-id="msg-456"');
+    expect(body).toContain('data-bug-report-default-kind="broken_stream"');
+    expect(body).toMatch(
       /<div[^>]*class="squire-answer__artifacts"[^>]*data-testid="answer-artifacts"[^>]*aria-live="polite"><\/div>/,
     );
     expect(body).toMatch(/class="squire-answer__skeleton"[^>]*aria-hidden="true"/);
@@ -736,7 +742,17 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     const body = String(
       actualLayout.renderConversationTranscript({
         conversationId: 'conv-123',
-        messages: messages.slice(0, 2),
+        messages: [
+          messages[0]!,
+          {
+            ...messages[1]!,
+            langsmithRunId: '00000000-0000-0000-abcd-0123456789ab',
+            langsmithRunUrl:
+              'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+            langsmithTraceUrl:
+              'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+          },
+        ],
       }),
     );
 
@@ -748,6 +764,17 @@ describe('renderConversationTranscript (SQR-108 / ADR 0012)', () => {
     expect(body).toMatch(
       /<article[^>]*class="squire-turn squire-answer"[^>]*data-testid="answer-turn"[^>]*data-message-id="m2"[^>]*data-response-to-message-id="m1"[^>]*aria-labelledby="squire-answer-label-m2"/,
     );
+    expect(body).toMatch(
+      /<button[^>]*type="button"[^>]*class="squire-answer__report"[^>]*data-squire-report-bug[^>]*data-user-message-id="m1"[^>]*data-assistant-message-id="m2"/,
+    );
+    expect(body).toContain('data-langsmith-run-id="00000000-0000-0000-abcd-0123456789ab"');
+    expect(body).toContain(
+      'data-langsmith-run-url="https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true"',
+    );
+    expect(body).toContain(
+      'data-langsmith-trace-url="https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true"',
+    );
+    expect(body).toContain('data-bug-report-default-kind="bad_answer"');
     expect(body).toContain('<h2 class="sr-only" id="squire-answer-label-m2">Squire answer</h2>');
     expect(body).toMatch(
       /<div[^>]*class="squire-answer__content squire-markdown"[^>]*data-testid="answer-content"/,

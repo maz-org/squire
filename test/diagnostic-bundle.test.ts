@@ -88,6 +88,7 @@ describe('diagnostic bundle', () => {
       user: { id: conversation.userId, hash: 'user-hash-1', email: 'person@example.com' },
       sentryIssueUrl: 'https://sentry.io/organizations/maz/issues/123/?query=secret',
       sentryEventUrl: 'https://sentry.io/organizations/maz/issues/123/events/abc/?project=1',
+      sentryEventId: 'abcdefabcdefabcdefabcdefabcdefab',
       sentryReplayUrl: 'https://sentry.io/replays/xyz/?query=secret',
       sentryTraceUrl: 'https://sentry.io/organizations/maz/traces/trace-1/?token=secret',
       sentryLogsUrl:
@@ -100,6 +101,7 @@ describe('diagnostic bundle', () => {
         userAgent: 'SquireTest/1.0',
         viewport: { width: 390, height: 844 },
         replaySnapshotId: 'masked-replay-snapshot-1',
+        timezone: 'America/New_York',
       },
       conversation,
       messages: [userMessage, assistantMessage],
@@ -128,6 +130,10 @@ describe('diagnostic bundle', () => {
       status: 'available',
       value: 'https://sentry.io/organizations/maz/issues/123/events/abc/',
     });
+    expect(bundle.sentry.eventId).toEqual({
+      status: 'available',
+      value: 'abcdefabcdefabcdefabcdefabcdefab',
+    });
     expect(bundle.sentry.traceUrl).toEqual({
       status: 'available',
       value: 'https://sentry.io/organizations/maz/traces/trace-1/',
@@ -144,6 +150,10 @@ describe('diagnostic bundle', () => {
     expect(bundle.langsmith.traceUrl).toEqual({
       status: 'available',
       value: 'https://smith.langchain.com/o/org/projects/p/project/r/run-1',
+    });
+    expect(bundle.browser.timezone).toEqual({
+      status: 'available',
+      value: 'America/New_York',
     });
     expect(bundle.stream.status).toEqual({ status: 'available', value: 'error' });
     expect(bundle.stream.workLogRows).toEqual({
@@ -185,7 +195,7 @@ describe('diagnostic bundle', () => {
 
     expect(bundle.sentry.logsUrl).toEqual({
       status: 'available',
-      value: 'https://sentry.io/organizations/maz/logs/?field=message',
+      value: 'https://sentry.io/organizations/maz/logs/?field=message&project=4511564194643969',
     });
     expect(JSON.stringify(bundle)).not.toContain('raw prompt');
     expect(JSON.stringify(bundle)).not.toContain('Alice');
@@ -203,27 +213,106 @@ describe('diagnostic bundle', () => {
     });
   });
 
+  it('derives Sentry searches and only real LangSmith run links from safe ids and server config', () => {
+    const bundle = buildDiagnosticBundle({
+      now,
+      env: {
+        SQUIRE_ENV: 'production',
+        SENTRY_ORG_SLUG: 'acme',
+        SENTRY_PROJECT_ID: '12345',
+        SENTRY_RELEASE: '5f2b5f152df6c3b277d2234a82717ef8cd060a52',
+        LANGSMITH_WORKSPACE_ID: '44be4d80-ba50-4833-ae22-6e176be2dbf2',
+        LANGSMITH_PROJECT_ID: 'd2a644ae-c64f-49ab-8b4a-fdf09e00f65a',
+      },
+      conversationUrl: `https://squire.maz.org/chat/${conversation.id}`,
+      requestId: 'req-safe-1',
+      langsmithRunId: 'run-1',
+      conversation,
+      messages: [userMessage, assistantMessage],
+      streamEvents,
+    });
+
+    expect(bundle.sentry.issueUrl).toEqual({
+      status: 'available',
+      value:
+        'https://acme.sentry.io/issues/?project=12345&environment=production&query=request_id%3Areq-safe-1+conversation_id%3A11111111-1111-4111-8111-111111111111+user_message_id%3A33333333-3333-4333-8333-333333333333+assistant_message_id%3A55555555-5555-4555-8555-555555555555&referrer=squire-bug-report',
+    });
+    expect(bundle.sentry.logsUrl).toEqual({
+      status: 'available',
+      value:
+        'https://acme.sentry.io/explore/logs/?project=12345&environment=production&query=request_id%3Areq-safe-1+conversation_id%3A11111111-1111-4111-8111-111111111111+user_message_id%3A33333333-3333-4333-8333-333333333333+assistant_message_id%3A55555555-5555-4555-8555-555555555555&referrer=squire-bug-report',
+    });
+    expect(bundle.sentry.traceUrl).toEqual({
+      status: 'available',
+      value:
+        'https://acme.sentry.io/explore/traces/?project=12345&environment=production&query=squire.request_id%3Areq-safe-1+squire.conversation_id%3A11111111-1111-4111-8111-111111111111+squire.user_message_id%3A33333333-3333-4333-8333-333333333333+squire.assistant_message_id%3A55555555-5555-4555-8555-555555555555&referrer=squire-bug-report',
+    });
+    expect(bundle.langsmith.traceUrl).toEqual({
+      status: 'available',
+      value:
+        'https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/d2a644ae-c64f-49ab-8b4a-fdf09e00f65a/r/run-1',
+    });
+    expect(bundle.langsmith.threadUrl).toEqual({
+      status: 'unavailable',
+      reason: 'LangSmith thread URL was not provided',
+    });
+    expect(bundle.langsmith.threadId).toEqual({
+      status: 'unavailable',
+      reason: 'LangSmith thread id was not provided',
+    });
+    expect(bundle.langsmith.runUrl).toEqual({
+      status: 'available',
+      value:
+        'https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/d2a644ae-c64f-49ab-8b4a-fdf09e00f65a/r/run-1',
+    });
+  });
+
+  it('keeps an explicit LangSmith thread id without deriving a thread URL', () => {
+    const bundle = buildDiagnosticBundle({
+      now,
+      env: {
+        LANGSMITH_WORKSPACE_ID: '44be4d80-ba50-4833-ae22-6e176be2dbf2',
+        LANGSMITH_PROJECT_ID: 'd2a644ae-c64f-49ab-8b4a-fdf09e00f65a',
+      },
+      langsmithThreadId: 'thread-1',
+      conversation,
+      messages: [userMessage, assistantMessage],
+    });
+
+    expect(bundle.langsmith.threadId).toEqual({
+      status: 'available',
+      value: 'thread-1',
+    });
+    expect(bundle.langsmith.threadUrl).toEqual({
+      status: 'unavailable',
+      reason: 'LangSmith thread URL was not provided',
+    });
+  });
+
   it('marks missing Sentry, LangSmith, replay, and message data with unavailable reasons', () => {
     const bundle = buildDiagnosticBundle({
       now,
       env: { SQUIRE_ENV: 'test' },
-      conversationUrl: `https://squire.maz.org/chat/${conversation.id}`,
+      route: '/chat',
     });
 
     expect(bundle.sentry.issueUrl.status).toBe('unavailable');
     expect(bundle.sentry.eventUrl.status).toBe('unavailable');
+    expect(bundle.sentry.eventId.status).toBe('unavailable');
     expect(bundle.sentry.replayUrl.status).toBe('unavailable');
     expect(bundle.sentry.traceUrl.status).toBe('unavailable');
     expect(bundle.sentry.logsUrl.status).toBe('unavailable');
     expect(bundle.sentry.traceId.status).toBe('unavailable');
     expect(bundle.langsmith.traceUrl.status).toBe('unavailable');
     expect(bundle.browser.replaySnapshotId.status).toBe('unavailable');
+    expect(bundle.browser.timezone.status).toBe('unavailable');
     expect(bundle.stream.workLogRows.status).toBe('unavailable');
     expect(bundle.unavailable).toEqual(
       expect.arrayContaining([
-        { path: 'sentry.issueUrl', reason: 'Sentry issue URL was not provided' },
-        { path: 'sentry.traceUrl', reason: 'Sentry trace URL was not provided' },
-        { path: 'sentry.logsUrl', reason: 'Sentry logs query URL was not provided' },
+        { path: 'sentry.issueUrl', reason: 'Sentry issue URL was not provided or derivable' },
+        { path: 'sentry.eventId', reason: 'Sentry event ID was not provided' },
+        { path: 'sentry.traceUrl', reason: 'Sentry trace URL was not provided or derivable' },
+        { path: 'sentry.logsUrl', reason: 'Sentry logs query URL was not provided or derivable' },
         { path: 'sentry.traceId', reason: 'Sentry trace ID was not provided' },
         { path: 'langsmith.traceUrl', reason: 'LangSmith trace URL was not provided' },
         { path: 'stream.workLogRows', reason: 'stream events were not loaded' },
@@ -287,10 +376,18 @@ describe('diagnostic bundle', () => {
   });
 
   it('collects conversation evidence by message id through an ownership-aware data source', async () => {
+    const assistantWithLangSmith: ConversationMessage = {
+      ...assistantMessage,
+      langsmithRunId: '00000000-0000-0000-abcd-0123456789ab',
+      langsmithRunUrl:
+        'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+      langsmithTraceUrl:
+        'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab?poll=true',
+    };
     const dataSource: DiagnosticBundleDataSource = {
       findOwnedConversation: vi.fn(async () => conversation),
       findMessageById: vi.fn(async () => userMessage),
-      listMessagesByConversationId: vi.fn(async () => [userMessage, assistantMessage]),
+      listMessagesByConversationId: vi.fn(async () => [userMessage, assistantWithLangSmith]),
       listStreamEventsByUserMessageId: vi.fn(async () => streamEvents),
     };
 
@@ -312,6 +409,20 @@ describe('diagnostic bundle', () => {
     expect(bundle.conversation.assistantMessageId).toEqual({
       status: 'available',
       value: assistantMessage.id,
+    });
+    expect(bundle.langsmith.runId).toEqual({
+      status: 'available',
+      value: '00000000-0000-0000-abcd-0123456789ab',
+    });
+    expect(bundle.langsmith.runUrl).toEqual({
+      status: 'available',
+      value:
+        'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab',
+    });
+    expect(bundle.langsmith.traceUrl).toEqual({
+      status: 'available',
+      value:
+        'https://smith.langchain.com/o/org/projects/p/project/r/00000000-0000-0000-abcd-0123456789ab',
     });
   });
 });

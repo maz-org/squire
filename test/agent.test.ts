@@ -39,6 +39,7 @@ const {
       recordException: (error: unknown) => void;
       setStatus: (status: unknown) => void;
       end: () => void;
+      spanContext: () => { spanId: string };
     } = {
       attributes,
       setAttributes: (nextAttributes: Record<string, unknown>) => {
@@ -50,6 +51,7 @@ const {
       recordException: vi.fn(),
       setStatus: vi.fn(),
       end: vi.fn(),
+      spanContext: () => ({ spanId: 'abcd0123456789ab' }),
     };
     mockStartedSpans.push({ name, span });
     return callback(span);

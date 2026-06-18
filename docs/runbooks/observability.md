@@ -40,8 +40,11 @@ Linear:
 - `conversation_id`: the `/chat/<conversationId>` UUID
 - `user_message_id`: the `/messages/<userMessageId>/stream` UUID for the turn
 - `assistant_message_id`: the persisted assistant row when available
-- `langsmith_thread_id`: equal to `conversation_id` for web chat
-- `langsmith_trace_url`, `langsmith_thread_url`, or `langsmith_run_url`
+- `langsmith_run_id`: persisted on assistant messages when the agent run
+  exposes a LangSmith root run ID
+- `langsmith_thread_id`: only when LangSmith supplied a real thread ID
+- `langsmith_trace_url`, `langsmith_thread_url`, or `langsmith_run_url`; thread
+  URLs must be explicit known-good URLs, not derived from Squire conversation IDs
 - `sentry_issue_url`, `sentry_event_url`, and `sentry_replay_url`
 
 If a field is missing, do not leave the ticket blank. Mark it as unavailable
@@ -84,6 +87,8 @@ observability:
    `src/telemetry.ts`; `src/instrumentation.ts` may wire Sentry's OpenTelemetry
    integration, and `scripts/send-sentry-safe-test-event.ts` may emit documented
    safe test events.
+   Sentry admin/config scripts should use `scripts/sentry-admin-client.ts`
+   instead of adding one-off `fetch` wrappers.
 3. Add script lifecycle coverage through `runScriptWithTelemetry()` in
    `src/script-telemetry.ts`.
 4. Add app spans with OpenTelemetry and stable `squire.*` attributes. Sentry may
@@ -163,16 +168,20 @@ const bundle = buildDiagnosticBundle({
    authenticated user and a conversation URL, conversation ID, or user-message
    ID. Use `buildDiagnosticBundle()` when you already have safe links and IDs
    from Sentry, LangSmith, logs, or screenshots.
-4. Render the Linear issue body with `createLinearBugReportBody()`.
-   `kind: "app_runtime"` puts Sentry first. `kind: "answer_quality"` puts
-   LangSmith first.
+4. For in-chat or agent-filed bugs, use `buildLinearBugReportDraft()` for a
+   dry run or `submitLinearBugReport()` to file. These helpers call
+   `createLinearBugReportBody()`, add the dedupe marker, and attach the
+   redacted diagnostic JSON comment. If you only need the body, call
+   `createLinearBugReportBody()` directly. `kind: "app_runtime"` puts Sentry
+   first. `kind: "answer_quality"` puts LangSmith first.
 5. Keep every required Evidence field in the issue:
    `Conversation`, `Turn`, `Request`, `Sentry Issue/Event/Replay`, `Release`,
    `Environment`, `LangSmith Trace/Thread/Run`, `Observed`, `Expected`,
    `Likely failing area`, `First files to inspect`, `Repro`, and `Acceptance`.
-6. Attach screenshots only if they do not show raw user prompts, model answers,
-   secrets, cookies, or private source passages. Prefer masked Sentry replay for
-   layout and stream-state reports.
+6. Prefer masked Sentry replay for automatic layout and stream-state evidence.
+   If the user explicitly opts into a screenshot from the bug dialog, Squire may
+   attach that single bounded conversation UI image to Linear. Do not attach
+   automatic screenshots without user action.
 
 ## Bad Answer
 
@@ -258,8 +267,8 @@ reports, and feedback events.
    transcript turn counts, input state, and route IDs, not raw transcript text.
 4. Confirm browser context has safe URL path, viewport, user agent, release,
    conversation ID, and user-message ID when available.
-5. If a user screenshot is needed, ask for the smallest crop that shows layout
-   or state without private text.
+5. If a user screenshot is needed, use the bug dialog screenshot checkbox or ask
+   for the smallest crop that shows the layout/state the user wants to share.
 6. File the bug as `kind: "app_runtime"`.
 
 Likely first files:

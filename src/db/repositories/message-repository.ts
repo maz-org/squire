@@ -21,6 +21,9 @@ function toDomain(row: MessageRow): ConversationMessage {
     // Post-SQR-105: may contain ToolSourceLabel strings for search_rules hits
     // or AgentToolName strings for other tools. aggregateSourceLabels handles both.
     consultedSources: (row.consultedSources as string[] | null) ?? null,
+    langsmithRunId: row.langsmithRunId,
+    langsmithRunUrl: row.langsmithRunUrl,
+    langsmithTraceUrl: row.langsmithTraceUrl,
     createdAt: row.createdAt,
   };
 }
@@ -40,6 +43,9 @@ export async function create(
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId ?? null,
       consultedSources: input.consultedSources ?? null,
+      langsmithRunId: input.langsmithRunId ?? null,
+      langsmithRunUrl: input.langsmithRunUrl ?? null,
+      langsmithTraceUrl: input.langsmithTraceUrl ?? null,
     })
     .returning();
   return toDomain(row);
@@ -60,6 +66,9 @@ export async function createResponse(
       isError: input.isError ?? false,
       responseToMessageId: input.responseToMessageId,
       consultedSources: input.consultedSources ?? null,
+      langsmithRunId: input.langsmithRunId ?? null,
+      langsmithRunUrl: input.langsmithRunUrl ?? null,
+      langsmithTraceUrl: input.langsmithTraceUrl ?? null,
     })
     .onConflictDoNothing({
       target: messages.responseToMessageId,

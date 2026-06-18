@@ -726,10 +726,13 @@ Squire emits OpenTelemetry traces from the agent loop, tool calls, and HTTP hand
 
 Runtime agent traces carry safe correlation metadata so an operator can follow
 one user-visible answer without reading PII from stdout logs. Web-chat traces
-include request ID, conversation ID, LangSmith `thread_id` equal to the
-conversation ID, user-message ID, user ID, `SQUIRE_ENV`, provider/model, tool
-surface, stop reason, token usage, and compact tool summaries. REST `/api/ask`
-traces include request ID and any caller-provided user/campaign IDs. The
+include request ID, conversation ID, user-message ID, user ID, `SQUIRE_ENV`,
+provider/model, tool surface, stop reason, token usage, and compact tool
+summaries. Assistant message rows persist the LangSmith root run ID and run URL
+when the agent exposes them, so reloaded conversations can still produce bug
+reports with LLM trace links. If LangSmith provides an actual thread ID, Squire
+can include that ID as evidence, but the Squire conversation ID is not treated
+as a LangSmith thread ID. REST `/api/ask` traces include request ID and any caller-provided user/campaign IDs. The
 browser response includes `X-Request-ID`; the web chat URL and stream URL expose
 the conversation and user-message IDs needed to find the persisted turn.
 

@@ -14,6 +14,7 @@ import {
   TELEMETRY_UNAVAILABLE,
   type TelemetryUserIdentity,
 } from './telemetry.ts';
+import { langSmithRunUrlFromRunId } from './langsmith-links.ts';
 import { EMBEDDING_VERSION } from './vector-store.ts';
 
 type DiagnosticPrimitive = string | number | boolean | null;
@@ -28,11 +29,13 @@ export interface DiagnosticBrowserMetadata {
   userAgent?: string;
   viewport?: { width: number; height: number };
   replaySnapshotId?: string;
+  timezone?: string;
 }
 
 export interface DiagnosticBundleLinkInput {
   sentryIssueUrl?: string;
   sentryEventUrl?: string;
+  sentryEventId?: string;
   sentryReplayUrl?: string;
   sentryTraceUrl?: string;
   sentryLogsUrl?: string;
@@ -150,6 +153,7 @@ export const DiagnosticBundleSchema = z
       .object({
         issueUrl: DiagnosticFieldSchema,
         eventUrl: DiagnosticFieldSchema,
+        eventId: DiagnosticFieldSchema,
         replayUrl: DiagnosticFieldSchema,
         traceUrl: DiagnosticFieldSchema,
         logsUrl: DiagnosticFieldSchema,
@@ -171,6 +175,7 @@ export const DiagnosticBundleSchema = z
         userAgent: DiagnosticFieldSchema,
         viewport: DiagnosticFieldSchema,
         replaySnapshotId: DiagnosticFieldSchema,
+        timezone: DiagnosticFieldSchema,
       })
       .strict(),
     stream: z
@@ -209,12 +214,15 @@ const DEFAULT_DATA_SOURCE: DiagnosticBundleDataSource = {
 };
 
 const TOKEN_PATTERN = /^[A-Za-z0-9._:-]{1,256}$/;
+const URL_TOKEN_PATTERN = /^[A-Za-z0-9._:-]{1,256}$/;
 const SAFE_REF_PATTERN =
   /^(?:rules|scenario|section|card|source):[A-Za-z0-9._:-]+(?:\/[A-Za-z0-9._:-]+)+(?:#chunk=\d+)?$/;
 const SAFE_SENTRY_LOG_QUERY_KEYS = new Set([
   'environment',
   'field',
+  'project',
   'query',
+  'referrer',
   'sort',
   'statsPeriod',
 ]);
@@ -252,6 +260,9 @@ const UNSAFE_QUERY_VALUE_PARTS = [
   'session',
   'token',
 ];
+const DEFAULT_SENTRY_ORG_SLUG = 'brian-moseley';
+const DEFAULT_SENTRY_PROJECT_ID = '4511564194643969';
+const SENTRY_BUG_REPORT_REFERRER = 'squire-bug-report';
 const PUBLIC_WORK_EVENTS = new Set<string>([
   'tool-plan',
   'tool-progress',
@@ -275,6 +286,20 @@ function safeToken(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed || !TOKEN_PATTERN.test(trimmed)) return undefined;
   return trimmed;
+}
+
+function safeUrlToken(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || !URL_TOKEN_PATTERN.test(trimmed)) return undefined;
+  return trimmed;
+}
+
+function safeTimezone(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed.length > 64) return undefined;
+  return /^(?:UTC|[A-Za-z]+(?:[._+-]?[A-Za-z0-9]+)*(?:\/[A-Za-z0-9._+-]+)+)$/.test(trimmed)
+    ? trimmed
+    : undefined;
 }
 
 function safeSourceLabel(value: unknown): string | null {
@@ -347,6 +372,34 @@ function safeSentryLogsUrl(value: string | undefined): string | undefined {
   }
 }
 
+function safeSentrySearchUrl(value: string | undefined): string | undefined {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return undefined;
+    if (!/\/(?:issues|explore\/traces)\//.test(url.pathname)) return undefined;
+    const safeParams = new URLSearchParams();
+    for (const [key, paramValue] of url.searchParams.entries()) {
+      if (!SAFE_SENTRY_LOG_QUERY_KEYS.has(key)) continue;
+      if (key === 'query') {
+        const safeQuery = safeSentryLogsQuery(paramValue);
+        if (safeQuery) safeParams.append(key, safeQuery);
+        continue;
+      }
+      const valueLower = paramValue.toLowerCase();
+      if (UNSAFE_QUERY_VALUE_PARTS.some((part) => valueLower.includes(part))) continue;
+      if (!SAFE_SENTRY_LOG_QUERY_VALUE_PATTERN.test(paramValue)) continue;
+      safeParams.append(key, paramValue);
+    }
+    const query = safeParams.toString();
+    return `${url.origin}${url.pathname}${query ? `?${query}` : ''}`;
+  } catch {
+    return undefined;
+  }
+}
+
 function safeSentryLogsQuery(value: string): string | undefined {
   const query = value.trim();
   if (!query) return undefined;
@@ -367,6 +420,75 @@ function safeSentryLogsQuery(value: string): string | undefined {
   return terms.join(' ');
 }
 
+function envValue(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
+  key: string,
+): string | undefined {
+  const raw = (env ?? process.env)[key];
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : undefined;
+}
+
+function sentryOrgSlug(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
+): string | undefined {
+  return (
+    safeUrlToken(envValue(env, 'SENTRY_ORG_SLUG') ?? envValue(env, 'SENTRY_ORG')) ??
+    DEFAULT_SENTRY_ORG_SLUG
+  );
+}
+
+function sentryProjectId(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
+): string | undefined {
+  return safeUrlToken(envValue(env, 'SENTRY_PROJECT_ID')) ?? DEFAULT_SENTRY_PROJECT_ID;
+}
+
+function sentryEnvironment(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
+  metadataEnvironment: string,
+): string | undefined {
+  const configured = safeUrlToken(envValue(env, 'SENTRY_ENVIRONMENT'));
+  if (configured) return configured;
+  return metadataEnvironment === TELEMETRY_UNAVAILABLE
+    ? undefined
+    : safeUrlToken(metadataEnvironment);
+}
+
+function sentrySearchUrl(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> | undefined,
+  metadataEnvironment: string,
+  path: string,
+  query: string,
+): string | undefined {
+  const org = sentryOrgSlug(env);
+  const project = sentryProjectId(env);
+  const environment = sentryEnvironment(env, metadataEnvironment);
+  if (!org || !project || !environment) return undefined;
+  const params = new URLSearchParams({
+    project,
+    environment,
+    query,
+    referrer: SENTRY_BUG_REPORT_REFERRER,
+  });
+  return `https://${org}.sentry.io/${path}?${params.toString()}`;
+}
+
+function sentryQueryTerms(input: {
+  requestId?: string;
+  conversationId?: string;
+  userMessageId?: string;
+  assistantMessageId?: string;
+}): string {
+  return [
+    ['request_id', safeToken(input.requestId)],
+    ['conversation_id', safeToken(input.conversationId)],
+    ['user_message_id', safeToken(input.userMessageId)],
+    ['assistant_message_id', safeToken(input.assistantMessageId)],
+  ]
+    .flatMap(([key, value]) => (value ? [`${key}:${value}`] : []))
+    .join(' ');
+}
+
 function isoDate(value: Date | undefined): string | undefined {
   if (!value || Number.isNaN(value.getTime())) return undefined;
   return value.toISOString();
@@ -376,6 +498,16 @@ function field<T>(value: T | undefined | null, unavailableReason: string): Diagn
   if (value === undefined || value === null) return unavailable(unavailableReason);
   if (typeof value === 'string' && value.trim().length === 0) return unavailable(unavailableReason);
   return available(value);
+}
+
+function urlField(
+  value: string | undefined | null,
+  unavailableReason: string,
+): DiagnosticField<string> {
+  if (value === undefined || value === null || value.trim().length === 0) {
+    return unavailable(unavailableReason);
+  }
+  return { status: 'available', value };
 }
 
 function parseLocator(input: DiagnosticBundleInput): {
@@ -577,6 +709,51 @@ export function buildDiagnosticBundle(input: DiagnosticBundleInput = {}): Diagno
     input.conversation?.id ??
     userMessage?.conversationId ??
     assistantMessage?.conversationId;
+  const derivedSentryQuery = sentryQueryTerms({
+    requestId: metadata.requestId === TELEMETRY_UNAVAILABLE ? input.requestId : metadata.requestId,
+    conversationId,
+    userMessageId: userMessage?.id ?? locator.userMessageId,
+    assistantMessageId: assistantMessage?.id ?? explicitAssistantId,
+  });
+  const derivedSentryIssueUrl =
+    derivedSentryQuery.length > 0
+      ? sentrySearchUrl(input.env, metadata.environment, 'issues/', derivedSentryQuery)
+      : undefined;
+  const derivedSentryLogsUrl =
+    derivedSentryQuery.length > 0
+      ? sentrySearchUrl(input.env, metadata.environment, 'explore/logs/', derivedSentryQuery)
+      : undefined;
+  const derivedSentryTraceUrl =
+    derivedSentryQuery.length > 0
+      ? sentrySearchUrl(
+          input.env,
+          metadata.environment,
+          'explore/traces/',
+          derivedSentryQuery
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((term) => {
+              const separator = term.indexOf(':');
+              return separator > 0
+                ? `squire.${term.slice(0, separator)}:${term.slice(separator + 1)}`
+                : term;
+            })
+            .join(' '),
+        )
+      : undefined;
+  const langsmithThreadId = safeToken(input.langsmithThreadId);
+  const langsmithRunId = safeToken(
+    input.langsmithRunId ?? assistantMessage?.langsmithRunId ?? undefined,
+  );
+  const derivedLangSmithRunUrl = langSmithRunUrlFromRunId(langsmithRunId, input.env);
+  const langsmithRunUrl =
+    safeExternalUrl(input.langsmithRunUrl) ??
+    safeExternalUrl(assistantMessage?.langsmithRunUrl ?? undefined) ??
+    safeExternalUrl(derivedLangSmithRunUrl);
+  const langsmithTraceUrl =
+    safeExternalUrl(input.langsmithTraceUrl) ??
+    safeExternalUrl(assistantMessage?.langsmithTraceUrl ?? undefined) ??
+    langsmithRunUrl;
 
   const bundleWithoutUnavailable = {
     schemaVersion: 1 as const,
@@ -633,34 +810,38 @@ export function buildDiagnosticBundle(input: DiagnosticBundleInput = {}): Diagno
           : available(assistantMessage.isError),
     },
     sentry: {
-      issueUrl: field(safeExternalUrl(input.sentryIssueUrl), 'Sentry issue URL was not provided'),
-      eventUrl: field(safeExternalUrl(input.sentryEventUrl), 'Sentry event URL was not provided'),
-      replayUrl: field(
+      issueUrl: urlField(
+        safeExternalUrl(input.sentryIssueUrl) ?? safeSentrySearchUrl(derivedSentryIssueUrl),
+        'Sentry issue URL was not provided or derivable',
+      ),
+      eventUrl: urlField(
+        safeExternalUrl(input.sentryEventUrl),
+        'Sentry event URL was not provided',
+      ),
+      eventId: field(safeToken(input.sentryEventId), 'Sentry event ID was not provided'),
+      replayUrl: urlField(
         safeExternalUrl(input.sentryReplayUrl),
         'Sentry replay URL was not provided',
       ),
-      traceUrl: field(safeExternalUrl(input.sentryTraceUrl), 'Sentry trace URL was not provided'),
-      logsUrl: field(
-        safeSentryLogsUrl(input.sentryLogsUrl),
-        'Sentry logs query URL was not provided',
+      traceUrl: urlField(
+        safeExternalUrl(input.sentryTraceUrl) ?? safeSentrySearchUrl(derivedSentryTraceUrl),
+        'Sentry trace URL was not provided or derivable',
+      ),
+      logsUrl: urlField(
+        safeSentryLogsUrl(input.sentryLogsUrl) ?? safeSentryLogsUrl(derivedSentryLogsUrl),
+        'Sentry logs query URL was not provided or derivable',
       ),
       traceId: field(safeToken(input.sentryTraceId), 'Sentry trace ID was not provided'),
     },
     langsmith: {
-      traceUrl: field(
-        safeExternalUrl(input.langsmithTraceUrl),
-        'LangSmith trace URL was not provided',
-      ),
-      threadUrl: field(
+      traceUrl: urlField(langsmithTraceUrl, 'LangSmith trace URL was not provided'),
+      threadUrl: urlField(
         safeExternalUrl(input.langsmithThreadUrl),
         'LangSmith thread URL was not provided',
       ),
-      threadId: field(
-        safeToken(input.langsmithThreadId) ?? safeToken(conversationId),
-        'LangSmith thread id was not provided or derivable',
-      ),
-      runUrl: field(safeExternalUrl(input.langsmithRunUrl), 'LangSmith run URL was not provided'),
-      runId: field(safeToken(input.langsmithRunId), 'LangSmith run id was not provided'),
+      threadId: field(langsmithThreadId, 'LangSmith thread id was not provided'),
+      runUrl: urlField(langsmithRunUrl, 'LangSmith run URL was not provided or derivable'),
+      runId: field(langsmithRunId, 'LangSmith run id was not provided'),
     },
     browser: {
       url: field(locator.browserUrl, 'browser URL was not provided'),
@@ -681,6 +862,7 @@ export function buildDiagnosticBundle(input: DiagnosticBundleInput = {}): Diagno
         safeToken(input.browser?.replaySnapshotId),
         'browser replay snapshot id was not provided',
       ),
+      timezone: field(safeTimezone(input.browser?.timezone), 'browser timezone was not provided'),
     },
     stream: {
       status: status.status,
