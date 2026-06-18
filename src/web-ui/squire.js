@@ -762,16 +762,17 @@ function closestBugReportButton(target) {
 function bugReportButtonDetails(button) {
   var transcript =
     button && typeof button.closest === 'function' ? button.closest('.squire-transcript') : null;
+  var dataset = button.dataset || null;
   return {
-    kind: button && button.dataset ? button.dataset.bugReportDefaultKind : 'other',
+    kind: dataset ? dataset.bugReportDefaultKind : 'other',
     conversationId:
       (transcript && transcript.dataset && transcript.dataset.conversationId) ||
       conversationIdFromPath(currentRoutePath()),
-    userMessageId: button && button.dataset ? button.dataset.userMessageId : null,
-    assistantMessageId: button && button.dataset ? button.dataset.assistantMessageId : null,
-    langsmithRunId: button && button.dataset ? button.dataset.langsmithRunId : null,
-    langsmithRunUrl: button && button.dataset ? button.dataset.langsmithRunUrl : null,
-    langsmithTraceUrl: button && button.dataset ? button.dataset.langsmithTraceUrl : null,
+    userMessageId: dataset ? dataset.userMessageId : null,
+    assistantMessageId: dataset ? dataset.assistantMessageId : null,
+    langsmithRunId: dataset ? dataset.langsmithRunId : null,
+    langsmithRunUrl: dataset ? dataset.langsmithRunUrl : null,
+    langsmithTraceUrl: dataset ? dataset.langsmithTraceUrl : null,
   };
 }
 
