@@ -302,6 +302,8 @@ export interface CampaignDashboardHeaderStats {
   openScenarioCount?: number;
 }
 
+export type CampaignDashboardView = 'scenarios' | 'party';
+
 function campaignDashboardHeaderStatsLine(
   campaign: Campaign,
   headerStats?: CampaignDashboardHeaderStats,
@@ -339,6 +341,33 @@ export function renderCampaignDashboardThreadsSwap(input: {
   return html`${renderCampaignDashboardHeaderStats(input.campaign, input.headerStats, {
     outOfBand: true,
   })}${input.threadsFragment}` as HtmlEscapedString;
+}
+
+function renderCampaignDashboardViewNav(
+  campaignId: string,
+  activeView: CampaignDashboardView,
+): HtmlEscapedString {
+  return html`<nav
+    class="squire-campaign-dashboard__view-nav"
+    aria-label="Campaign dashboard sections"
+  >
+    <a
+      class="squire-campaign-dashboard__view-link ${activeView === 'scenarios'
+        ? 'squire-campaign-dashboard__view-link--active'
+        : ''}"
+      href="/campaigns/${campaignId}"
+      ${activeView === 'scenarios' ? html`aria-current="page"` : html``}
+      >Scenarios</a
+    >
+    <a
+      class="squire-campaign-dashboard__view-link ${activeView === 'party'
+        ? 'squire-campaign-dashboard__view-link--active'
+        : ''}"
+      href="/campaigns/${campaignId}/party"
+      ${activeView === 'party' ? html`aria-current="page"` : html``}
+      >Party</a
+    >
+  </nav>` as HtmlEscapedString;
 }
 
 /**
@@ -440,6 +469,7 @@ export function renderCampaignDashboardContent(
   renameForm?: CampaignRenameForm,
   modulesForm?: CampaignModulesForm,
   headerStats?: CampaignDashboardHeaderStats,
+  activeView: CampaignDashboardView = 'scenarios',
 ): HtmlEscapedString {
   const { campaign } = detail;
   const activeMembers = detail.members.filter((member) => member.status === 'active');
@@ -452,64 +482,66 @@ export function renderCampaignDashboardContent(
       ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
       ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
     </header>
-    <section class="squire-campaign-dashboard__roster" aria-label="Party roster">
-      <h2 class="squire-campaign-dashboard__section-title">Party</h2>
-      <ul class="squire-campaign-dashboard__members">
-        ${activeMembers.map(
-          (member) =>
-            html`<li class="squire-campaign-dashboard__member">
-              ${member.name ?? member.email}
-              <span class="squire-campaign-dashboard__member-role"
-                >${member.role.toUpperCase()}</span
-              >
-            </li>`,
-        )}
-        ${pendingInvites.map(
-          (member) =>
-            html`<li
-              class="squire-campaign-dashboard__member squire-campaign-dashboard__member--invited"
-            >
-              ${member.email}
-              <span class="squire-campaign-dashboard__member-role">INVITED</span>
-            </li>`,
-        )}
-      </ul>
-      ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
-    </section>
-    <section class="squire-campaign-dashboard__characters" aria-label="Characters">
-      <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
-      ${characters && characters.length > 0
-        ? html`<ul class="squire-campaign-dashboard__members">
-            ${characters.map(
-              (character) =>
-                html`<li class="squire-campaign-dashboard__member">
-                  <a
-                    class="squire-campaign-dashboard__character-link"
-                    href="/characters/${character.id}"
-                    >${character.name}</a
+    ${renderCampaignDashboardViewNav(campaign.id, activeView)}
+    ${activeView === 'scenarios'
+      ? html`${threadsFragment ??
+        html`<section
+          class="squire-campaign-dashboard__threads"
+          id="squire-dashboard-threads"
+          aria-label="Scenario progression"
+        >
+          <p class="squire-campaign-dashboard__placeholder">
+            No scenario data for this campaign's modules yet.
+          </p>
+        </section>`}
+        ${journalFragment ?? html``}`
+      : html`<section class="squire-campaign-dashboard__roster" aria-label="Party roster">
+            <h2 class="squire-campaign-dashboard__section-title">Party</h2>
+            <ul class="squire-campaign-dashboard__members">
+              ${activeMembers.map(
+                (member) =>
+                  html`<li class="squire-campaign-dashboard__member">
+                    ${member.name ?? member.email}
+                    <span class="squire-campaign-dashboard__member-role"
+                      >${member.role.toUpperCase()}</span
+                    >
+                  </li>`,
+              )}
+              ${pendingInvites.map(
+                (member) =>
+                  html`<li
+                    class="squire-campaign-dashboard__member squire-campaign-dashboard__member--invited"
                   >
-                  <span class="squire-campaign-dashboard__member-role"
-                    >${character.className.toUpperCase()} ·
-                    L${character.level}${character.placeholder ? ' · UNCLAIMED' : ''}</span
-                  >
-                </li>`,
-            )}
-          </ul>`
-        : html`<p class="squire-campaign-dashboard__empty">
-            No characters yet — add your first below.
-          </p>`}
-      ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
-    </section>
-    ${threadsFragment ??
-    html`<section
-      class="squire-campaign-dashboard__threads"
-      id="squire-dashboard-threads"
-      aria-label="Scenario progression"
-    >
-      <p class="squire-campaign-dashboard__placeholder">
-        No scenario data for this campaign's modules yet.
-      </p>
-    </section>`}
-    ${journalFragment ?? html``}
+                    ${member.email}
+                    <span class="squire-campaign-dashboard__member-role">INVITED</span>
+                  </li>`,
+              )}
+            </ul>
+            ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
+          </section>
+          <section class="squire-campaign-dashboard__characters" aria-label="Characters">
+            <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
+            ${characters && characters.length > 0
+              ? html`<ul class="squire-campaign-dashboard__members">
+                  ${characters.map(
+                    (character) =>
+                      html`<li class="squire-campaign-dashboard__member">
+                        <a
+                          class="squire-campaign-dashboard__character-link"
+                          href="/characters/${character.id}"
+                          >${character.name}</a
+                        >
+                        <span class="squire-campaign-dashboard__member-role"
+                          >${character.className.toUpperCase()} ·
+                          L${character.level}${character.placeholder ? ' · UNCLAIMED' : ''}</span
+                        >
+                      </li>`,
+                  )}
+                </ul>`
+              : html`<p class="squire-campaign-dashboard__empty">
+                  No characters yet — add your first below.
+                </p>`}
+            ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
+          </section>`}
   </section>` as HtmlEscapedString;
 }

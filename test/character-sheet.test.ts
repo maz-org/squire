@@ -291,9 +291,9 @@ describe('items section', () => {
 });
 
 describe('dashboard reachability', () => {
-  it('links each character from the campaign dashboard', async () => {
+  it('links each character from the campaign party view', async () => {
     const { owner, campaign, character } = await setupSheetFixture();
-    const res = await app.request(`/campaigns/${campaign.id}`, {
+    const res = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
     const body = await res.text();

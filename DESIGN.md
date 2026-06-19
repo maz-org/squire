@@ -1,7 +1,7 @@
 # Design System — Squire
 
-**Version:** 0.9
-**Date:** 2026-06-12
+**Version:** 0.11
+**Date:** 2026-06-19
 **Status:** Approved via `/design-consultation`. Covers all eight phases of the
 Squire initiative, not just Phase 1. Implementation in `src/web-ui/` follows
 this document. v0.8 (2026-06-05) preserves the split home + scrolling-chat IA,
@@ -584,6 +584,15 @@ rail remains conversation history (ADR 0020). The **header context strip is
 the persistent bridge**: it shows the active campaign/character and tapping it
 opens the campaign dashboard from anywhere.
 
+Within `/campaigns/:id`, the dashboard itself is a two-view segmented surface:
+**Scenarios** is the default route view, and **Party** is the secondary view.
+The view state is encoded in the URL (`/campaigns/:id` for Scenarios,
+`/campaigns/:id/party` for Party) so no-JS users, agents, and shared links
+can reach either view. This supersedes the G2 assumption that party management
+and scenario progression should stack on one full-viewport surface; the route
+and context-strip parts of G2 still stand. See
+[ADR 0023](docs/adr/0023-campaign-dashboard-path-segmented-views.md).
+
 ### Context strip
 
 Small-caps Geist line in the header, present on chat and Phase 4 routes alike.
@@ -613,6 +622,12 @@ gets a glyph:
 
 ### Progression dashboard (`/campaigns/:id`)
 
+- **Segmented dashboard views**: Scenarios first, Party second. The segment
+  control is quiet ledger navigation, not a marketing tab bar: Geist small-caps,
+  44px tap targets, hairline rule, no pill badges. Scenarios renders the
+  flowchart, scenario stats, and journal. Party renders the member roster,
+  invite affordance, character links, and create-character form. The default
+  page must not put party management above the scenario flow.
 - **Stats line** under the header: `PLAYED 16 · OPEN 7 · LOCKED 58 ·
 BLOCKED 2` — Geist small caps with `tabular-nums`.
 - **Thread sections**: Fraunces heading + one-line `--sepia` note + hairline
@@ -701,12 +716,22 @@ holds at label sizes for the status vocabulary above.
 | 2026-06-12 | **G4: State transparency = per-answer work-log rows + route-level inspect/correct** (rejected dedicated chat panel, rejected routes-only)                                                                                                                                                                                                                                                               | The work log is already the trust surface; per-answer provenance ("used: Drifter L4 · gold 23") lands exactly where doubt arises, and the campaign/character routes carry the full "what Squire knows" view without new chat chrome. From plan-design-review D4 / SQR-258.                                                                                                                                                                                                                                      |
 | 2026-06-12 | **G5: Phase 4 component vocabulary** — sepia small-caps status labels (PLAYED sage / OPEN parchment / LOCKED sepia-dim / BLOCKED amber / VIA EVENT sepia / DREW IT amber), Fraunces thread headings + sepia notes, tabular-nums stats line, adjacent `.squire-banner` amber hazard warnings, confirmation block = surface panel + work-log rows + wax confirm (distinct from the Phase 5 verdict block) | Reuses the existing token and banner vocabulary instead of inventing new chrome; statuses as typography (not chips) keeps the printed-index feel and answered the variant-A "badges too loud" feedback. See §Phase 4 Components.                                                                                                                                                                                                                                                                                |
 | 2026-06-12 | **G6: Phase 4 a11y + responsive bundle** — 44px scenario-row/accordion targets, keyboard row-focus with Enter-to-toggle (hazard rows always confirm), `aria-live="polite"` recalc announcements, desktop multi-column thread grid (640px column is for prose, not data surfaces)                                                                                                                        | The dashboard is an interactive data surface, not a transcript; recalculation is the moment screen-reader users most need narrated, and the reading-column rule was never meant to constrain tabular layouts. From plan-design-review Pass 6.                                                                                                                                                                                                                                                                   |
+| 2026-06-19 | **G7: Campaign dashboard internal IA = Scenarios / Party segmented views** — narrows G2. `/campaigns/:id` defaults to Scenarios; `/campaigns/:id/party` opens Party. No-JS and agent links use the same URLs.                                                                                                                                                                                           | Real dashboard use is usually "find the next scenario" or "mark one played." Party management is secondary and should not push the scenario flow below the fold. A path segment reads as a named dashboard section instead of presentation state, which makes reports, logs, and agent links clearer. See [ADR 0023](docs/adr/0023-campaign-dashboard-path-segmented-views.md).                                                                                                                                 |
 
 <!-- markdownlint-enable MD060 -->
 
 ---
 
 ## Changelog
+
+- **2026-06-19 (v0.11):** SQR-322 now uses path-backed dashboard segments:
+  `/campaigns/:id` for Scenarios and `/campaigns/:id/party` for Party. ADR 0023
+  supersedes the earlier query-param route decision in ADR 0022.
+
+- **2026-06-18 (v0.10):** SQR-322 narrows the Phase 4 dashboard IA: the route
+  and context-strip bridge from G2 remain, but `/campaigns/:id` now defaults to
+  a Scenarios view with Party available via URL-backed segmented navigation.
+  Decision recorded as G7 and [ADR 0022](docs/adr/0022-campaign-dashboard-segmented-views.md).
 
 - **2026-06-12 (v0.9):** Phase 4 component section added (campaign &
   character surfaces): IA routes + context-strip bridge, scenario status

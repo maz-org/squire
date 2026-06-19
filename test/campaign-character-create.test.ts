@@ -1,11 +1,11 @@
 /**
  * Create-a-character web UI tests (SQR-318).
  *
- * The dashboard Characters section always renders a "New character" form
- * (a class select sourced from the game's real class names). Posting it
- * creates the character on the active campaign under the caller's identity;
- * an unknown/codename class is rejected with an inline banner; a non-member
- * gets the indistinguishable 404.
+ * The dashboard Party view renders a "New character" form (a class select
+ * sourced from the game's real class names). Posting it creates the character
+ * on the active campaign under the caller's identity; an unknown/codename
+ * class is rejected with an inline banner; a non-member gets the
+ * indistinguishable 404.
  */
 import { generateSignedCookie } from 'hono/cookie';
 import { inArray } from 'drizzle-orm';
@@ -134,7 +134,7 @@ afterAll(async () => {
 describe('create-character UI (SQR-318)', () => {
   it('renders a New character form with a class select of real class names', async () => {
     const { owner, campaign } = await setupFixture();
-    const res = await app.request(`/campaigns/${campaign.id}`, {
+    const res = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
     expect(res.status).toBe(200);
@@ -156,9 +156,9 @@ describe('create-character UI (SQR-318)', () => {
       level: '3',
     });
     expect(created.status).toBe(303);
-    expect(created.headers.get('location')).toBe(`/campaigns/${campaign.id}`);
+    expect(created.headers.get('location')).toBe(`/campaigns/${campaign.id}/party`);
 
-    const dash = await app.request(`/campaigns/${campaign.id}`, {
+    const dash = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
     const body = await dash.text();
@@ -176,7 +176,7 @@ describe('create-character UI (SQR-318)', () => {
       level: '1',
     });
     expect(created.status).toBe(303);
-    const dash = await app.request(`/campaigns/${campaign.id}`, {
+    const dash = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
     expect((await dash.text()).replace(/\s+/g, ' ')).toContain('BANNER SPEAR · L1');
@@ -195,7 +195,7 @@ describe('create-character UI (SQR-318)', () => {
     expect(body).toContain('not a class in this game');
 
     // Nothing was created — the roster is still empty.
-    const dash = await app.request(`/campaigns/${campaign.id}`, {
+    const dash = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
     expect(await dash.text()).toContain('No characters yet');
