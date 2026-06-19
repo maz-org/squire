@@ -1537,6 +1537,28 @@ async function renderCampaignDashboardPage(
   const gameDef = gameId ? gameDefinitionFor(gameId) : null;
   const dashboardThreads = await dashboardThreadsFragment(detail.campaign, csrfToken);
   const dashboardView = opts.view ?? 'scenarios';
+  const journalFragment =
+    dashboardView === 'scenarios'
+      ? renderCampaignJournal(await listJournal(identity, campaignId))
+      : undefined;
+  const partyCharacters =
+    dashboardView === 'party'
+      ? (await CharacterRepository.listMemberVisibleByCampaign(campaignId)).map((character) => ({
+          id: character.id,
+          name: character.name,
+          className: character.className,
+          level: character.level,
+          placeholder: character.placeholderForEmail !== null,
+        }))
+      : undefined;
+  const characterCreateForm =
+    dashboardView === 'party'
+      ? {
+          csrfToken,
+          classOptions: await knownClassNames(detail.campaign.game),
+          errorMessage: opts.characterError,
+        }
+      : undefined;
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -1555,22 +1577,9 @@ async function renderCampaignDashboardPage(
     mainContent: renderCampaignDashboardContent(
       detail,
       dashboardThreads?.html,
-      renderCampaignJournal(await listJournal(identity, campaignId)),
-      // Sheet links (SQR-277): member-visible projection only.
-      (await CharacterRepository.listMemberVisibleByCampaign(campaignId)).map((character) => ({
-        id: character.id,
-        name: character.name,
-        className: character.className,
-        level: character.level,
-        placeholder: character.placeholderForEmail !== null,
-      })),
-      // Create-character form (SQR-318): a select of the game's real class
-      // names structurally prevents an invalid class.
-      {
-        csrfToken,
-        classOptions: await knownClassNames(detail.campaign.game),
-        errorMessage: opts.characterError,
-      },
+      journalFragment,
+      partyCharacters,
+      characterCreateForm,
       // Invite-member affordance (SQR-319): form is owner-only; the error
       // banner still renders for a non-owner who tampers the route.
       { csrfToken, canInvite: isOwner, errorMessage: opts.inviteError },

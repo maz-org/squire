@@ -2302,7 +2302,7 @@ template#squire-banner-fixtures {
 .squire-campaign-dashboard__view-nav {
   display: flex;
   gap: var(--space-lg);
-  align-items: end;
+  align-items: flex-end;
   margin: var(--space-lg) 0 var(--space-md);
   border-bottom: 1px solid var(--rule);
 }
