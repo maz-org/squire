@@ -163,6 +163,40 @@ afterAll(async () => {
 });
 
 describe('dashboard rendering', () => {
+  it('defaults to the Scenarios view and keeps Party management one link away', async () => {
+    const { owner, campaign } = await setupFixture();
+    const res = await app.request(`/campaigns/${campaign.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+
+    expect(body).toContain('squire-campaign-dashboard__view-nav');
+    expect(body).toMatch(new RegExp(`href="/campaigns/${campaign.id}"[^>]*aria-current="page"`));
+    expect(body).toContain(`href="/campaigns/${campaign.id}/party"`);
+    expect(body).toContain('aria-label="Scenario progression"');
+    expect(body).not.toContain('aria-label="Party roster"');
+    expect(body).not.toContain('squire-character-create');
+  });
+
+  it('renders the deep-linked Party view without the scenario flow', async () => {
+    const { owner, campaign } = await setupFixture();
+    const res = await app.request(`/campaigns/${campaign.id}/party`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+
+    expect(body).toMatch(
+      new RegExp(`href="/campaigns/${campaign.id}/party"[^>]*aria-current="page"`),
+    );
+    expect(body).toContain(`href="/campaigns/${campaign.id}"`);
+    expect(body).toContain('aria-label="Party roster"');
+    expect(body).toContain('aria-label="Characters"');
+    expect(body).not.toContain('aria-label="Scenario progression"');
+    expect(body).not.toContain('squire-dashboard-grid');
+  });
+
   it('renders threads, statuses, stats, and adjacent hazard banners', async () => {
     const { owner, campaign } = await setupFixture();
     const res = await app.request(`/campaigns/${campaign.id}`, {

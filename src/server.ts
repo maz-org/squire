@@ -131,6 +131,7 @@ import {
   renderCampaignDashboardThreadsSwap,
   renderCampaignListContent,
   type CampaignStripState,
+  type CampaignDashboardView,
 } from './web-ui/campaign-pages.ts';
 import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
 import { renderCampaignJournal } from './web-ui/campaign-journal.ts';
@@ -1506,10 +1507,11 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 });
 
 /**
- * Render the `/campaigns/:id` dashboard page. Shared by the GET route and the
- * create-character / invite POST error paths so a failed write re-renders in
- * place with an inline banner (SQR-318, SQR-319). Throws `CampaignNotFoundError`
- * for non-members — callers map it to the indistinguishable 404 (ADR 0021).
+ * Render the campaign dashboard page. Shared by the Scenarios/Party GET routes
+ * and the create-character / invite POST error paths so a failed write
+ * re-renders in place with an inline banner (SQR-318, SQR-319). Throws
+ * `CampaignNotFoundError` for non-members — callers map it to the
+ * indistinguishable 404 (ADR 0021).
  */
 async function renderCampaignDashboardPage(
   c: Context,
@@ -1519,6 +1521,7 @@ async function renderCampaignDashboardPage(
     inviteError?: string;
     renameError?: string;
     modulesError?: string;
+    view?: CampaignDashboardView;
   } = {},
   status: 200 | 422 = 200,
 ): Promise<Response> {
@@ -1533,6 +1536,7 @@ async function renderCampaignDashboardPage(
   const gameId = normalizeGameId(detail.campaign.game);
   const gameDef = gameId ? gameDefinitionFor(gameId) : null;
   const dashboardThreads = await dashboardThreadsFragment(detail.campaign, csrfToken);
+  const dashboardView = opts.view ?? 'scenarios';
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -1585,9 +1589,14 @@ async function renderCampaignDashboardPage(
           }
         : undefined,
       { openScenarioCount: dashboardThreads?.openScenarioCount },
+      dashboardView,
     ),
   });
   return c.html(body, status);
+}
+
+function campaignPartyViewPath(campaignId: string): string {
+  return `/campaigns/${campaignId}/party`;
 }
 
 app.get('/campaigns/:id', async (c) => {
@@ -1595,6 +1604,18 @@ app.get('/campaigns/:id', async (c) => {
   if (!campaignId) return c.notFound();
   try {
     return await renderCampaignDashboardPage(c, campaignId);
+  } catch (error) {
+    // Non-member and absent are the same 404 page (ADR 0021).
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
+});
+
+app.get('/campaigns/:id/party', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  try {
+    return await renderCampaignDashboardPage(c, campaignId, { view: 'party' });
   } catch (error) {
     // Non-member and absent are the same 404 page (ADR 0021).
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
@@ -1623,7 +1644,7 @@ app.post('/campaigns/:id/characters', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: 'Character name is required.' },
+        { characterError: 'Character name is required.', view: 'party' },
         422,
       );
     }
@@ -1634,7 +1655,7 @@ app.post('/campaigns/:id/characters', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: 'Class is required.' },
+        { characterError: 'Class is required.', view: 'party' },
         422,
       );
     }
@@ -1645,21 +1666,26 @@ app.post('/campaigns/:id/characters', async (c) => {
       const message = check.suggestion
         ? `Unknown class "${classNameInput}". Did you mean ${check.suggestion}?`
         : `"${classNameInput}" is not a class in this game.`;
-      return await renderCampaignDashboardPage(c, campaignId, { characterError: message }, 422);
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: message, view: 'party' },
+        422,
+      );
     }
     await CharacterService.createCharacter(identity, campaignId, {
       name,
       className: check.canonical,
       level,
     });
-    return c.redirect(`/campaigns/${campaignId}`, 303);
+    return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
     if (error instanceof CampaignService.CampaignForbiddenError) {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: error.message },
+        { characterError: error.message, view: 'party' },
         422,
       );
     }
@@ -1685,7 +1711,7 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: 'Only the owner can invite members' },
+        { inviteError: 'Only the owner can invite members', view: 'party' },
         422,
       );
     }
@@ -1693,13 +1719,13 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: 'Enter a valid email address.' },
+        { inviteError: 'Enter a valid email address.', view: 'party' },
         422,
       );
     }
     // inviteMember re-checks the owner gate and enforces the allowlist + dedupe.
     await CampaignService.inviteMember(identity, campaignId, email);
-    return c.redirect(`/campaigns/${campaignId}`, 303);
+    return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
     if (
@@ -1707,7 +1733,12 @@ app.post('/campaigns/:id/invites', async (c) => {
       error instanceof CampaignService.NotAllowlistedError ||
       error instanceof CampaignService.AlreadyInvitedError
     ) {
-      return await renderCampaignDashboardPage(c, campaignId, { inviteError: error.message }, 422);
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { inviteError: error.message, view: 'party' },
+        422,
+      );
     }
     throw error;
   }

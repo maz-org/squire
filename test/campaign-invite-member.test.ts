@@ -1,7 +1,7 @@
 /**
  * Invite-a-member web UI tests (SQR-319).
  *
- * The dashboard Party section carries an owner-only "Invite member" form.
+ * The dashboard Party view carries an owner-only "Invite member" form.
  * Posting it creates a pending invite (shown distinctly in the roster);
  * non-owners never see the form and the route rejects them; invalid /
  * not-allowlisted / duplicate emails surface inline; a non-member gets the
@@ -108,13 +108,17 @@ describe('invite-member UI (SQR-319)', () => {
     const member = await addActiveMember(owner, campaign.id, MEMBER_EMAIL);
 
     const ownerView = await (
-      await app.request(`/campaigns/${campaign.id}`, { headers: { Cookie: owner.cookie } })
+      await app.request(`/campaigns/${campaign.id}/party`, {
+        headers: { Cookie: owner.cookie },
+      })
     ).text();
     expect(ownerView).toContain('squire-invite-member');
     expect(ownerView).toContain('INVITE BY EMAIL');
 
     const memberView = await (
-      await app.request(`/campaigns/${campaign.id}`, { headers: { Cookie: member.cookie } })
+      await app.request(`/campaigns/${campaign.id}/party`, {
+        headers: { Cookie: member.cookie },
+      })
     ).text();
     expect(memberView).not.toContain('squire-invite-member');
   });
@@ -123,10 +127,12 @@ describe('invite-member UI (SQR-319)', () => {
     const { owner, campaign } = await setupFixture();
     const res = await invite(owner, campaign.id, INVITEE_EMAIL);
     expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe(`/campaigns/${campaign.id}`);
+    expect(res.headers.get('location')).toBe(`/campaigns/${campaign.id}/party`);
 
     const dash = await (
-      await app.request(`/campaigns/${campaign.id}`, { headers: { Cookie: owner.cookie } })
+      await app.request(`/campaigns/${campaign.id}/party`, {
+        headers: { Cookie: owner.cookie },
+      })
     ).text();
     expect(dash).toContain(INVITEE_EMAIL);
     expect(dash).toContain('INVITED');
