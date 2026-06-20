@@ -1553,10 +1553,13 @@ async function renderCampaignDashboardPage(
   // Modules editor only for games that have optional modules to toggle.
   const gameId = normalizeGameId(detail.campaign.game);
   const gameDef = gameId ? gameDefinitionFor(gameId) : null;
-  const dashboardThreads = await dashboardThreadsFragment(detail.campaign, csrfToken);
-  const dashboardView = opts.view ?? 'scenarios';
+  const dashboardView = opts.view ?? 'progress';
+  const dashboardThreads =
+    dashboardView === 'progress'
+      ? await dashboardThreadsFragment(detail.campaign, csrfToken)
+      : undefined;
   const journalFragment =
-    dashboardView === 'scenarios'
+    dashboardView === 'progress'
       ? renderCampaignJournal(await listJournal(identity, campaignId))
       : undefined;
   const partyCharacters =
@@ -1643,6 +1646,30 @@ app.get('/campaigns/:id/party', async (c) => {
   if (!campaignId) return c.notFound();
   try {
     return await renderCampaignDashboardPage(c, campaignId, { view: 'party' });
+  } catch (error) {
+    // Non-member and absent are the same 404 page (ADR 0021).
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
+});
+
+app.get('/campaigns/:id/players', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  try {
+    return await renderCampaignDashboardPage(c, campaignId, { view: 'players' });
+  } catch (error) {
+    // Non-member and absent are the same 404 page (ADR 0021).
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    throw error;
+  }
+});
+
+app.get('/campaigns/:id/settings', async (c) => {
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  try {
+    return await renderCampaignDashboardPage(c, campaignId, { view: 'settings' });
   } catch (error) {
     // Non-member and absent are the same 404 page (ADR 0021).
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();

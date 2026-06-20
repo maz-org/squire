@@ -163,7 +163,7 @@ afterAll(async () => {
 });
 
 describe('dashboard rendering', () => {
-  it('defaults to the Scenarios view and keeps Party management one link away', async () => {
+  it('renders the campaign workspace shell with breadcrumb and four stable section tabs', async () => {
     const { owner, campaign } = await setupFixture();
     const res = await app.request(`/campaigns/${campaign.id}`, {
       headers: { Cookie: owner.cookie },
@@ -171,15 +171,34 @@ describe('dashboard rendering', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
 
-    expect(body).toContain('squire-campaign-dashboard__view-nav');
+    expect(body).toContain('class="squire-campaign-workspace"');
+    expect(body).toContain('Dashboard Campaign');
+    expect(body).toContain('aria-label="Breadcrumb"');
+    expect(body).toContain('href="/campaigns"');
+    expect(body).toContain('squire-campaign-workspace__breadcrumb-link');
+    expect(body).toContain('aria-current="page"');
+    expect(body).not.toContain('class="squire-campaign-workspace__breadcrumb-link" href="/"');
+    expect(body).not.toContain('squire-campaign-workspace__switcher');
+    expect(body).not.toContain('Switch campaign');
+    expect(dashboardHeaderStats(body)).toBe('Frosthaven · Prosperity 1');
+    expect(dashboardHeaderStats(body)).not.toContain('OPEN');
+    expect(body).toContain('aria-label="Campaign workspace sections"');
     expect(body).toMatch(new RegExp(`href="/campaigns/${campaign.id}"[^>]*aria-current="page"`));
     expect(body).toContain(`href="/campaigns/${campaign.id}/party"`);
+    expect(body).toContain(`href="/campaigns/${campaign.id}/players"`);
+    expect(body).toContain(`href="/campaigns/${campaign.id}/settings"`);
+    expect(body).toContain('Progress');
+    expect(body).toContain('Party');
+    expect(body).toContain('Players');
+    expect(body).toContain('Settings');
+    expect(body).not.toContain('>Scenarios</a>');
+    expect(body).not.toContain('>More</');
     expect(body).toContain('aria-label="Scenario progression"');
     expect(body).not.toContain('aria-label="Party roster"');
     expect(body).not.toContain('squire-character-create');
   });
 
-  it('renders the deep-linked Party view without the scenario flow', async () => {
+  it('renders the deep-linked Party view in the same workspace shell', async () => {
     const { owner, campaign } = await setupFixture();
     const res = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
@@ -196,6 +215,29 @@ describe('dashboard rendering', () => {
     expect(body).toContain('squire-section-reveal__summary">Add character</summary>');
     expect(body).not.toContain('aria-label="Scenario progression"');
     expect(body).not.toContain('squire-dashboard-grid');
+  });
+
+  it.each([
+    ['players', 'Players'],
+    ['settings', 'Settings'],
+  ])('renders the %s route with workspace shell navigation', async (path, label) => {
+    const { owner, campaign } = await setupFixture();
+    const res = await app.request(`/campaigns/${campaign.id}/${path}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+
+    expect(body).toContain('class="squire-campaign-workspace"');
+    expect(body).toContain('Dashboard Campaign');
+    expect(body).toMatch(
+      new RegExp(`href="/campaigns/${campaign.id}/${path}"[^>]*aria-current="page"`),
+    );
+    expect(body).toContain(`href="/campaigns/${campaign.id}"`);
+    expect(body).toContain(`href="/campaigns/${campaign.id}/party"`);
+    expect(body).toContain(`href="/campaigns/${campaign.id}/players"`);
+    expect(body).toContain(`href="/campaigns/${campaign.id}/settings"`);
+    expect(body).toContain(`<h2 class="squire-campaign-dashboard__section-title">${label}</h2>`);
   });
 
   it('renders threads, statuses, stats, and adjacent hazard banners', async () => {
@@ -216,7 +258,7 @@ describe('dashboard rendering', () => {
     expect(body).toContain('squire-dashboard-stats');
 
     const headerStats = dashboardHeaderStats(body);
-    expect(headerStats).toBe('FH · PROSPERITY 1 · OPEN 1');
+    expect(headerStats).toBe('Frosthaven · Prosperity 1');
     expect(headerStats).not.toContain('PLAYED');
     expect(headerStats).not.toContain('DRAWN');
 
@@ -241,7 +283,7 @@ describe('toggle route', () => {
     // 2 and 3 opened by playing 1.
     expect(playedBody.match(/--open/g)?.length).toBeGreaterThanOrEqual(2);
     expect(playedBody).toContain('hx-swap-oob="true"');
-    expect(dashboardHeaderStats(playedBody)).toBe('FH · PROSPERITY 1 · OPEN 2');
+    expect(dashboardHeaderStats(playedBody)).toBe('Frosthaven · Prosperity 1');
 
     // Manual cycle: via-event → drew-it → played.
     const drew = await toggle(owner, campaign.id, 'fh:4');

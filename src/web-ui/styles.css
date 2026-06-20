@@ -2239,6 +2239,147 @@ template#squire-banner-fixtures {
   padding: var(--space-lg) 0;
 }
 
+.squire-campaign-workspace {
+  padding: var(--space-lg) 0;
+}
+
+.squire-campaign-workspace .squire-campaign-dashboard {
+  padding-top: var(--space-md);
+}
+
+.squire-campaign-workspace__header {
+  display: grid;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-campaign-workspace__breadcrumbs {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--sepia);
+}
+
+.squire-campaign-workspace__breadcrumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.squire-campaign-workspace__breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.squire-campaign-workspace__breadcrumb-item + .squire-campaign-workspace__breadcrumb-item::before {
+  content: '>';
+  color: var(--sepia-dim);
+}
+
+.squire-campaign-workspace__breadcrumb-link {
+  color: var(--sepia);
+  text-decoration: underline;
+  text-decoration-color: var(--sepia-dim);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.squire-campaign-workspace__breadcrumb-link:hover,
+.squire-campaign-workspace__breadcrumb-link:focus-visible {
+  color: var(--parchment);
+  text-decoration-color: currentcolor;
+}
+
+.squire-campaign-workspace__header-main {
+  display: block;
+}
+
+.squire-campaign-workspace__identity {
+  min-width: 0;
+}
+
+.squire-campaign-workspace__tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(7rem, 1fr));
+  gap: var(--space-xs);
+  margin: var(--space-md) 0 0;
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--rule);
+  overflow-x: auto;
+}
+
+.squire-campaign-workspace__tab {
+  min-width: 0;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.squire-campaign-workspace__tab:hover,
+.squire-campaign-workspace__tab:focus-visible {
+  color: var(--parchment-dim);
+  border-color: var(--rule);
+}
+
+.squire-campaign-workspace__tab--active,
+.squire-campaign-workspace__tab[aria-current='page'] {
+  color: var(--parchment);
+  background: var(--surface);
+  border-color: var(--wax);
+}
+
+.squire-campaign-workspace__tab-icon {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
+.squire-campaign-workspace__tab-label {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .squire-campaign-workspace__tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .squire-campaign-workspace__tab {
+    flex-direction: column;
+    gap: var(--space-2xs);
+    min-height: 56px;
+    padding: var(--space-xs);
+    letter-spacing: 0;
+  }
+
+  .squire-campaign-workspace .squire-campaign-dashboard__name {
+    font-size: 22px;
+  }
+}
+
 .squire-campaigns__title,
 .squire-campaign-dashboard__name {
   font-family: 'Fraunces', 'Georgia', serif;
@@ -2246,6 +2387,13 @@ template#squire-banner-fixtures {
   font-size: 28px;
   color: var(--parchment);
   margin: 0 0 var(--space-sm);
+}
+
+.squire-campaign-workspace .squire-campaign-dashboard__name {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .squire-campaigns__empty,
@@ -2297,39 +2445,6 @@ template#squire-banner-fixtures {
   border-bottom: 1px solid var(--rule);
   padding-bottom: var(--space-xs);
   margin: var(--space-lg) 0 var(--space-sm);
-}
-
-.squire-campaign-dashboard__view-nav {
-  display: flex;
-  gap: var(--space-lg);
-  align-items: flex-end;
-  margin: var(--space-lg) 0 var(--space-md);
-  border-bottom: 1px solid var(--rule);
-}
-
-.squire-campaign-dashboard__view-link {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0 0 var(--space-xs);
-  margin-bottom: -1px;
-  border-bottom: 1px solid transparent;
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0;
-  text-transform: uppercase;
-  color: var(--sepia);
-  text-decoration: none;
-}
-
-.squire-campaign-dashboard__view-link:hover {
-  color: var(--parchment-dim);
-}
-
-.squire-campaign-dashboard__view-link--active,
-.squire-campaign-dashboard__view-link[aria-current='page'] {
-  color: var(--parchment);
-  border-bottom-color: var(--wax);
 }
 
 .squire-campaign-dashboard__member {
@@ -2821,8 +2936,9 @@ template#squire-banner-fixtures {
 }
 
 .squire-dashboard-stats {
-  display: flex;
-  gap: var(--space-xl);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
+  gap: var(--space-sm);
   margin: var(--space-md) 0 var(--space-lg);
   padding-bottom: var(--space-md);
   border-bottom: 1px solid var(--rule);
