@@ -2,7 +2,7 @@
  * Edit-campaign-modules web UI tests (SQR-321).
  *
  * Module choice on the create form (GH2e "Include solo scenarios") and a
- * post-creation editor on the dashboard. Modules are shared state, so any
+ * post-creation editor in Settings. Modules are shared state, so any
  * active member may edit; removal is non-destructive (a removed module's
  * scenario keys persist); validation runs in the service; a non-member 404s.
  */
@@ -125,19 +125,19 @@ describe('edit-modules UI (SQR-321)', () => {
     expect(await modulesOf(owner, fh)).toEqual(['fh']);
   });
 
-  it('dashboard shows the modules editor for GH2e but not Frosthaven', async () => {
+  it('Settings shows the modules editor for GH2e but not Frosthaven', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { solo: true });
     const fh = await createViaForm(owner, 'FH', 'frosthaven', { solo: false });
 
     const gh2eBody = await (
-      await app.request(`/campaigns/${gh2e}`, { headers: { Cookie: owner.cookie } })
+      await app.request(`/campaigns/${gh2e}/settings`, { headers: { Cookie: owner.cookie } })
     ).text();
     expect(gh2eBody).toContain('squire-campaign-modules');
     expect(gh2eBody).toContain('value="solo2e"');
 
     const fhBody = await (
-      await app.request(`/campaigns/${fh}`, { headers: { Cookie: owner.cookie } })
+      await app.request(`/campaigns/${fh}/settings`, { headers: { Cookie: owner.cookie } })
     ).text();
     expect(fhBody).not.toContain('squire-campaign-modules');
   });

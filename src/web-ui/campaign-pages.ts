@@ -348,9 +348,7 @@ export interface CampaignModulesForm {
   errorMessage?: string;
 }
 
-export interface CampaignDashboardHeaderStats {
-  openScenarioCount?: number;
-}
+export type CampaignDashboardHeaderStats = Record<string, never>;
 
 export type CampaignDashboardView = 'progress' | 'party' | 'players' | 'settings';
 
@@ -611,8 +609,6 @@ export function renderCampaignDashboardContent(
     ${renderCampaignWorkspaceHeader(campaign, headerStats)}
     ${renderCampaignWorkspaceNav(campaign.id, activeView)}
     <div class="squire-campaign-dashboard">
-      ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
-      ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
       ${activeView === 'progress'
         ? html`${threadsFragment ??
           html`<section
@@ -631,8 +627,6 @@ export function renderCampaignDashboardContent(
             <h2 class="squire-campaign-dashboard__section-title">Party</h2>
             ${renderDashboardCharacters(characters)}
             ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
-            ${renderPendingInvites(pendingInvites)}
-            ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
           </section>`
         : html``}
       ${activeView === 'players'
@@ -649,11 +643,15 @@ export function renderCampaignDashboardContent(
                   </li>`,
               )}
             </ul>
+            ${renderPendingInvites(pendingInvites)}
+            ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
           </section>`
         : html``}
       ${activeView === 'settings'
         ? html`<section class="squire-campaign-dashboard__settings" aria-label="Settings">
             <h2 class="squire-campaign-dashboard__section-title">Settings</h2>
+            ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
+            ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
           </section>`
         : html``}
     </div>

@@ -1525,9 +1525,9 @@ app.post('/campaigns/:id/leave-web', async (c) => {
 });
 
 /**
- * Render the campaign dashboard page. Shared by the Scenarios/Party GET routes
- * and the create-character / invite POST error paths so a failed write
- * re-renders in place with an inline banner (SQR-318, SQR-319). Throws
+ * Render the campaign dashboard page. Shared by workspace GET routes and POST
+ * error paths so a failed write re-renders in place with an inline banner.
+ * Throws
  * `CampaignNotFoundError` for non-members — callers map it to the
  * indistinguishable 404 (ADR 0021).
  */
@@ -1618,7 +1618,7 @@ async function renderCampaignDashboardPage(
             errorMessage: opts.modulesError,
           }
         : undefined,
-      { openScenarioCount: dashboardThreads?.openScenarioCount },
+      {},
       dashboardView,
     ),
   });
@@ -1627,6 +1627,14 @@ async function renderCampaignDashboardPage(
 
 function campaignPartyViewPath(campaignId: string): string {
   return `/campaigns/${campaignId}/party`;
+}
+
+function campaignPlayersViewPath(campaignId: string): string {
+  return `/campaigns/${campaignId}/players`;
+}
+
+function campaignSettingsViewPath(campaignId: string): string {
+  return `/campaigns/${campaignId}/settings`;
 }
 
 app.get('/campaigns/:id', async (c) => {
@@ -1747,7 +1755,7 @@ app.post('/campaigns/:id/characters', async (c) => {
   }
 });
 
-/** Invite a member from the dashboard Party section (owner-only, SQR-319). */
+/** Invite a member from the dashboard Players section (owner-only, SQR-319). */
 app.post('/campaigns/:id/invites', async (c) => {
   const session = c.get('session')!;
   const campaignId = campaignRouteId(c, 'id');
@@ -1765,7 +1773,7 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: 'Only the owner can invite members', view: 'party' },
+        { inviteError: 'Only the owner can invite members', view: 'players' },
         422,
       );
     }
@@ -1773,13 +1781,13 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: 'Enter a valid email address.', view: 'party' },
+        { inviteError: 'Enter a valid email address.', view: 'players' },
         422,
       );
     }
     // inviteMember re-checks the owner gate and enforces the allowlist + dedupe.
     await CampaignService.inviteMember(identity, campaignId, email);
-    return c.redirect(campaignPartyViewPath(campaignId), 303);
+    return c.redirect(campaignPlayersViewPath(campaignId), 303);
   } catch (error) {
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
     if (
@@ -1790,7 +1798,7 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: error.message, view: 'party' },
+        { inviteError: error.message, view: 'players' },
         422,
       );
     }
@@ -1798,7 +1806,7 @@ app.post('/campaigns/:id/invites', async (c) => {
   }
 });
 
-/** Rename a campaign from the dashboard header (SQR-320). */
+/** Rename a campaign from the dashboard Settings section (SQR-320). */
 app.post('/campaigns/:id/rename', async (c) => {
   const session = c.get('session')!;
   const campaignId = campaignRouteId(c, 'id');
@@ -1819,7 +1827,7 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Campaign name is required.' },
+        { renameError: 'Campaign name is required.', view: 'settings' },
         422,
       );
     }
@@ -1827,7 +1835,7 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Campaign name must be 200 characters or fewer.' },
+        { renameError: 'Campaign name must be 200 characters or fewer.', view: 'settings' },
         422,
       );
     }
@@ -1835,12 +1843,12 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Could not save — please refresh and try again.' },
+        { renameError: 'Could not save — please refresh and try again.', view: 'settings' },
         422,
       );
     }
     await CampaignService.updateSharedState(identity, campaignId, { name, expectedVersion });
-    return c.redirect(`/campaigns/${campaignId}`, 303);
+    return c.redirect(campaignSettingsViewPath(campaignId), 303);
   } catch (error) {
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
     if (error instanceof VersionConflictError) {
@@ -1848,18 +1856,26 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Updated elsewhere — showing the latest. Try the rename again.' },
+        {
+          renameError: 'Updated elsewhere — showing the latest. Try the rename again.',
+          view: 'settings',
+        },
         422,
       );
     }
     if (error instanceof CampaignService.CampaignForbiddenError) {
-      return await renderCampaignDashboardPage(c, campaignId, { renameError: error.message }, 422);
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { renameError: error.message, view: 'settings' },
+        422,
+      );
     }
     throw error;
   }
 });
 
-/** Edit a campaign's modules from the dashboard (SQR-321). */
+/** Edit a campaign's modules from the dashboard Settings section (SQR-321). */
 app.post('/campaigns/:id/modules', async (c) => {
   const session = c.get('session')!;
   const campaignId = campaignRouteId(c, 'id');
@@ -1879,7 +1895,7 @@ app.post('/campaigns/:id/modules', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { modulesError: 'Could not save — please refresh and try again.' },
+        { modulesError: 'Could not save — please refresh and try again.', view: 'settings' },
         422,
       );
     }
@@ -1892,14 +1908,14 @@ app.post('/campaigns/:id/modules', async (c) => {
       (module) => module === baseModule || checked.has(module),
     );
     await CampaignService.updateSharedState(identity, campaignId, { modules, expectedVersion });
-    return c.redirect(`/campaigns/${campaignId}`, 303);
+    return c.redirect(campaignSettingsViewPath(campaignId), 303);
   } catch (error) {
     if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
     if (error instanceof VersionConflictError) {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { modulesError: 'Updated elsewhere — showing the latest. Try again.' },
+        { modulesError: 'Updated elsewhere — showing the latest. Try again.', view: 'settings' },
         422,
       );
     }
@@ -1907,7 +1923,12 @@ app.post('/campaigns/:id/modules', async (c) => {
       error instanceof CampaignService.InvalidModulesError ||
       error instanceof CampaignService.CampaignForbiddenError
     ) {
-      return await renderCampaignDashboardPage(c, campaignId, { modulesError: error.message }, 422);
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { modulesError: error.message, view: 'settings' },
+        422,
+      );
     }
     throw error;
   }
@@ -2028,7 +2049,7 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
     return c.html(
       renderCampaignDashboardThreadsSwap({
         campaign: detail.campaign,
-        headerStats: { openScenarioCount: fragment.openScenarioCount },
+        headerStats: {},
         threadsFragment: fragment.html,
       }),
     );
