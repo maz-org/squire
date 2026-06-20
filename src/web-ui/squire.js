@@ -1302,6 +1302,25 @@ document.addEventListener('keydown', function (event) {
   trapHistoryDrawerFocus(event);
 });
 
+document.addEventListener('submit', function (event) {
+  var form = event.target;
+  if (
+    !form ||
+    !form.matches ||
+    !form.matches('.squire-character-create, .squire-party-row__action form')
+  ) {
+    return;
+  }
+  if (form.dataset.submitting === 'true') {
+    event.preventDefault();
+    return;
+  }
+  form.dataset.submitting = 'true';
+  form.setAttribute('aria-busy', 'true');
+  var submitButton = form.querySelector('button[type="submit"]');
+  if (submitButton) submitButton.setAttribute('disabled', 'true');
+});
+
 document.addEventListener('submit', function (e) {
   var form = e.target;
   if (!form || !form.matches || !form.matches('.squire-input-dock')) return;

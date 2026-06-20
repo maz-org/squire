@@ -406,9 +406,9 @@ describe('dashboard reachability', () => {
     const body = await res.text();
     expect(body).toContain(`href="/characters/${character.id}"`);
     expect(body).toContain('squire-campaign-dashboard__party');
-    expect(body).toContain('squire-campaign-dashboard__character-name');
-    expect(body).toContain('squire-campaign-dashboard__character-class');
-    expect(body).toContain('squire-campaign-dashboard__character-level');
+    expect(body).toContain('squire-party-row__name');
+    expect(body).toContain('squire-party-row__class');
+    expect(body.replace(/\s+/g, ' ')).toContain('Drifter 3');
     expect(body).not.toContain('squire-campaign-dashboard__member-role');
     expect(body).not.toContain('OWNER');
     expect(body).not.toContain('>Characters</h2>');
