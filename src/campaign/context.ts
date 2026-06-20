@@ -24,13 +24,12 @@ import {
 } from './campaign-service.ts';
 import type { CallerIdentity } from './identity.ts';
 import { listJournal, type JournalDay } from './journal.ts';
-import { deriveAvailability, type ScenarioStatus, type RosterCharacter } from './availability.ts';
+import { deriveAvailability, type RosterCharacter } from './availability.ts';
 import { loadModuleGraphs } from './unlock-graph-loader.ts';
 
 export interface CampaignAvailabilityContext {
-  counts: Partial<Record<ScenarioStatus, number>>;
-  openKeys: string[];
-  drewItKeys: string[];
+  counts: Record<string, number>;
+  unlockedKeys: string[];
   unknownKeys: string[];
   hazardWarnings: Array<{ key: string; closes: string[] }>;
 }
@@ -83,18 +82,21 @@ async function availabilityContext(
     new Set(view.skippedScenarios),
     characters,
   );
-  const counts: Partial<Record<ScenarioStatus, number>> = {};
-  const openKeys: string[] = [];
-  const drewItKeys: string[] = [];
+  const counts: Record<string, number> = {};
+  const unlockedKeys: string[] = [];
   for (const [key, status] of availability.statuses) {
-    counts[status] = (counts[status] ?? 0) + 1;
-    if (status === 'open') openKeys.push(key);
-    if (status === 'drew-it') drewItKeys.push(key);
+    if (status === 'open' || status === 'drew-it') {
+      counts.unlocked = (counts.unlocked ?? 0) + 1;
+      unlockedKeys.push(key);
+    } else if (status === 'via-event') {
+      counts.manual = (counts.manual ?? 0) + 1;
+    } else {
+      counts[status] = (counts[status] ?? 0) + 1;
+    }
   }
   return {
     counts,
-    openKeys: openKeys.sort(),
-    drewItKeys: drewItKeys.sort(),
+    unlockedKeys: unlockedKeys.sort(),
     unknownKeys: availability.unknownKeys,
     hazardWarnings: availability.hazardWarnings,
   };

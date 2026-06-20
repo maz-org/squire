@@ -18,7 +18,7 @@ import type {
   KnowledgeOpenResult,
   SourceInfo,
 } from '../tools.ts';
-import { deriveAvailability, type ScenarioStatus } from './availability.ts';
+import { deriveAvailability } from './availability.ts';
 import * as CampaignService from './campaign-service.ts';
 import { CampaignNotFoundError } from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
@@ -204,18 +204,21 @@ async function availabilitySummary(campaign: Campaign): Promise<Record<string, u
     new Set(campaign.skippedScenarios),
     roster,
   );
-  const counts: Partial<Record<ScenarioStatus, number>> = {};
-  const openKeys: string[] = [];
-  const drewItKeys: string[] = [];
+  const counts: Record<string, number> = {};
+  const unlockedKeys: string[] = [];
   for (const [key, status] of availability.statuses) {
-    counts[status] = (counts[status] ?? 0) + 1;
-    if (status === 'open') openKeys.push(key);
-    if (status === 'drew-it') drewItKeys.push(key);
+    if (status === 'open' || status === 'drew-it') {
+      counts.unlocked = (counts.unlocked ?? 0) + 1;
+      unlockedKeys.push(key);
+    } else if (status === 'via-event') {
+      counts.manual = (counts.manual ?? 0) + 1;
+    } else {
+      counts[status] = (counts[status] ?? 0) + 1;
+    }
   }
   return {
     counts,
-    openKeys: openKeys.sort(),
-    drewItKeys: drewItKeys.sort(),
+    unlockedKeys: unlockedKeys.sort(),
     unknownKeys: availability.unknownKeys,
     hazardWarnings: availability.hazardWarnings,
   };

@@ -86,6 +86,14 @@ describe('journalEntryLine', () => {
         }),
       ),
     ).toBe('SCENARIO 14 · PLAYED');
+    expect(
+      journalEntryLine(
+        entry({
+          before: { drawnScenarios: [] },
+          after: { drawnScenarios: ['fh:4'] },
+        }),
+      ),
+    ).toBe('SCENARIO 4 · UNLOCKED');
     expect(journalEntryLine(entry({ before: { prosperity: 3 }, after: { prosperity: 4 } }))).toBe(
       'PROSPERITY → 4',
     );

@@ -222,13 +222,13 @@ describe('open_entity', () => {
 
     const data = opened.entity.data as {
       playedScenarios: string[];
-      availability: { counts: Record<string, number>; openKeys: string[] };
+      availability: { counts: Record<string, number>; unlockedKeys: string[] };
       recentJournal: unknown[];
       members: Array<{ role: string }>;
     };
     expect(data.playedScenarios).toEqual(['fh:1']);
     expect(data.availability.counts.played).toBe(1);
-    expect(data.availability.openKeys).toEqual(['fh:2']);
+    expect(data.availability.unlockedKeys).toEqual(['fh:2']);
     expect(data.recentJournal.length).toBeGreaterThan(0);
     expect(data.members).toHaveLength(2);
 

@@ -2962,12 +2962,48 @@ template#squire-banner-fixtures {
   }
 }
 
-.squire-dashboard-announce {
+.squire-dashboard-toast-payload {
+  display: none;
+}
+
+.squire-dashboard-toast {
+  position: fixed;
+  right: var(--space-lg);
+  bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+  z-index: 80;
+  max-width: min(360px, calc(100vw - var(--space-xl)));
   margin: 0;
-  min-height: 1em;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface-2);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 12px;
-  color: var(--sage);
+  font-size: 13px;
+  color: var(--parchment);
+}
+
+.squire-dashboard-toast[hidden],
+.squire-dashboard-toast:empty {
+  display: none;
+}
+
+.squire-dashboard-toast[data-toast-kind='success'] {
+  border-color: color-mix(in srgb, var(--sage) 65%, var(--rule));
+}
+
+.squire-dashboard-toast[data-toast-kind='error'] {
+  border-color: color-mix(in srgb, var(--error) 75%, var(--rule));
+  color: var(--parchment);
+}
+
+@media (max-width: 560px) {
+  .squire-dashboard-toast {
+    right: var(--space-md);
+    bottom: max(var(--space-md), env(safe-area-inset-bottom));
+    left: var(--space-md);
+    max-width: none;
+  }
 }
 
 .squire-dashboard-loading {
@@ -3139,7 +3175,8 @@ template#squire-banner-fixtures {
   color: var(--sage);
 }
 
-.squire-scenario-row__status--open {
+.squire-scenario-row__status--open,
+.squire-scenario-row__status--drew-it {
   color: var(--parchment);
 }
 
@@ -3149,8 +3186,7 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
-.squire-scenario-row__status--blocked,
-.squire-scenario-row__status--drew-it {
+.squire-scenario-row__status--blocked {
   color: var(--amber);
 }
 
@@ -3195,6 +3231,22 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
+.squire-scenario-row__secondary {
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+}
+
+.squire-scenario-row__undo-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .squire-scenario-row__skip:hover,
 .squire-scenario-row__secondary:hover {
   color: var(--sepia);
@@ -3215,11 +3267,22 @@ template#squire-banner-fixtures {
 }
 
 .squire-dashboard-footnote {
+  display: grid;
+  gap: var(--space-xs);
   margin-top: var(--space-lg);
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: 13px;
   color: var(--sepia-dim);
+}
+
+.squire-dashboard-footnote__label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--sepia);
+}
+
+.squire-dashboard-footnote p {
+  margin: 0;
 }
 
 .squire-campaign-journal__empty {

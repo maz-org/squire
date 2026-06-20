@@ -35,7 +35,7 @@ export function journalEntryLine(entry: JournalEntry): string {
     }
     const drawn = addedKeys(entry, 'drawnScenarios');
     if (drawn.length > 0) {
-      return drawn.map((key) => `SCENARIO ${shortKey(key)} · DREW IT`).join(' · ');
+      return drawn.map((key) => `SCENARIO ${shortKey(key)} · UNLOCKED`).join(' · ');
     }
     const beforeProsperity = entry.before?.prosperity;
     const afterProsperity = entry.after?.prosperity;

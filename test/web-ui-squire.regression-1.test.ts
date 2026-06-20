@@ -702,6 +702,88 @@ function bootBugReportHarness(pathname = '/chat/conv-1') {
   };
 }
 
+function bootDashboardToastHarness() {
+  const docListeners = new Map<string, Array<(event?: unknown) => void>>();
+  const body = new FakeElement('body');
+  const documentElement = new FakeElement('html');
+  const timeouts = new Map<number, () => void>();
+  const clearedTimeouts: number[] = [];
+  let nextTimerId = 1;
+  const document = {
+    body,
+    documentElement,
+    createElement(tagName: string) {
+      return new FakeElement(tagName);
+    },
+    addEventListener(event: string, callback: (event?: unknown) => void) {
+      docListeners.set(event, [...(docListeners.get(event) ?? []), callback]);
+    },
+    querySelector(selector: string) {
+      return body.querySelector(selector);
+    },
+    querySelectorAll(selector: string) {
+      return body.querySelectorAll(selector);
+    },
+  };
+  const window = {
+    location: { pathname: '/campaigns/campaign-1' },
+    crypto: {},
+    EventSource: function () {},
+    addEventListener: () => {},
+    scrollY: 0,
+    innerHeight: 844,
+    innerWidth: 390,
+    scrollTo: () => {},
+    setTimeout(callback: () => void) {
+      const id = nextTimerId;
+      nextTimerId += 1;
+      timeouts.set(id, callback);
+      return id;
+    },
+    clearTimeout(id: number) {
+      clearedTimeouts.push(id);
+      timeouts.delete(id);
+    },
+  };
+  const context = vm.createContext({ document, window });
+
+  vm.runInContext(scriptSource, context);
+  for (const callback of docListeners.get('DOMContentLoaded') ?? []) callback();
+
+  function payload(message: string, kind: string) {
+    const fragment = new FakeElement('section');
+    const node = new FakeElement('p');
+    node.className = 'squire-dashboard-toast-payload';
+    node.hidden = true;
+    node.setAttribute('data-squire-toast-message', message);
+    node.setAttribute('data-squire-toast-kind', kind);
+    fragment.appendChild(node);
+    return { fragment, node };
+  }
+
+  return {
+    body,
+    clearedTimeouts,
+    emitAfterSwap(target: FakeElement) {
+      for (const callback of docListeners.get('htmx:afterSwap') ?? []) {
+        callback({ detail: { target } });
+      }
+    },
+    firstToast() {
+      return body.querySelector('.squire-dashboard-toast');
+    },
+    payload,
+    runTimeout(id: number) {
+      const callback = timeouts.get(id);
+      if (!callback) throw new Error(`timeout ${id} was not scheduled`);
+      callback();
+    },
+    scheduledTimeoutIds() {
+      return [...timeouts.keys()];
+    },
+  };
+}
+
 function bootBugReportDialogHarness(pathname = '/chat/conv-1') {
   const docListeners = new Map<string, Array<(event?: unknown) => void>>();
   const bugReports: Array<Record<string, unknown>> = [];
@@ -805,6 +887,39 @@ function workRowMessage(row: FakeElement): string | undefined {
 function workRowMessages(rowsEl: FakeElement): Array<string | undefined> {
   return rowsEl.children.map((row) => workRowMessage(row));
 }
+
+describe('squire.js dashboard toasts', () => {
+  it('promotes hidden HTMX toast payloads into an auto-dismissing viewport toast', () => {
+    const harness = bootDashboardToastHarness();
+    const first = harness.payload('Scenario 4 marked unlocked.', 'success');
+
+    harness.emitAfterSwap(first.fragment);
+
+    const toast = harness.firstToast();
+    expect(first.node.parentNode).toBeNull();
+    expect(toast).not.toBeNull();
+    expect(toast?.hidden).toBe(false);
+    expect(toast?.textContent).toBe('Scenario 4 marked unlocked.');
+    expect(toast?.getAttribute('data-toast-kind')).toBe('success');
+    expect(toast?.getAttribute('role')).toBe('status');
+    expect(toast?.getAttribute('aria-live')).toBe('polite');
+    expect(harness.scheduledTimeoutIds()).toEqual([1]);
+
+    const second = harness.payload('Scenario 1 cannot be skipped.', 'error');
+    harness.emitAfterSwap(second.fragment);
+
+    expect(toast?.textContent).toBe('Scenario 1 cannot be skipped.');
+    expect(toast?.getAttribute('data-toast-kind')).toBe('error');
+    expect(harness.clearedTimeouts).toEqual([1]);
+    expect(harness.scheduledTimeoutIds()).toEqual([2]);
+
+    harness.runTimeout(2);
+
+    expect(toast?.hidden).toBe(true);
+    expect(toast?.textContent).toBe('');
+    expect(toast?.getAttribute('data-toast-kind')).toBeNull();
+  });
+});
 
 describe('squire.js browser telemetry', () => {
   it('reports window errors without sending the thrown message body', () => {

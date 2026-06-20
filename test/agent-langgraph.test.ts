@@ -597,8 +597,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         activeCharacterId: 'character-1',
         availability: {
           counts: {},
-          openKeys: [],
-          drewItKeys: [],
+          unlockedKeys: [],
           unknownKeys: [],
           hazardWarnings: [],
         },
