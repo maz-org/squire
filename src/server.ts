@@ -1563,6 +1563,11 @@ async function renderCampaignDashboardPage(
   campaignId: string,
   opts: {
     characterError?: string;
+    characterActionError?: {
+      characterId: string;
+      message: string;
+      action: 'level' | 'retire' | 'remove';
+    };
     inviteError?: string;
     renameError?: string;
     modulesError?: string;
@@ -1596,7 +1601,10 @@ async function renderCampaignDashboardPage(
           name: character.name,
           className: character.className,
           level: character.level,
+          status: character.status,
+          version: character.version,
           placeholder: character.placeholderForEmail !== null,
+          own: character.ownerUserId === identity.userId,
         }))
       : undefined;
   const characterCreateForm =
@@ -1629,6 +1637,7 @@ async function renderCampaignDashboardPage(
       journalFragment,
       partyCharacters,
       characterCreateForm,
+      opts.characterActionError,
       // Invite-member affordance (SQR-319): form is owner-only; the error
       // banner still renders for a non-owner who tampers the route.
       { csrfToken, canInvite: isOwner, errorMessage: opts.inviteError },
@@ -1780,6 +1789,127 @@ app.post('/campaigns/:id/characters', async (c) => {
       );
     }
     throw error;
+  }
+});
+
+function characterActionFailureMessage(
+  action: 'level' | 'retire' | 'remove',
+  name: string,
+): string {
+  if (action === 'level') return `Could not update ${name}.`;
+  if (action === 'retire') return `Could not retire ${name}.`;
+  return `Could not remove ${name}.`;
+}
+
+async function renderCharacterActionErrorPage(
+  c: Context,
+  campaignId: string,
+  characterId: string,
+  action: 'level' | 'retire' | 'remove',
+  fallbackName: string,
+  error?: unknown,
+): Promise<Response> {
+  if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+  const name = fallbackName || 'character';
+  return renderCampaignDashboardPage(
+    c,
+    campaignId,
+    {
+      view: 'party',
+      characterActionError: {
+        characterId,
+        action,
+        message: characterActionFailureMessage(action, name),
+      },
+    },
+    422,
+  );
+}
+
+async function requirePartyCharacterName(
+  identity: CallerIdentity,
+  campaignId: string,
+  characterId: string,
+): Promise<string> {
+  const detail = await CharacterService.getCharacterDetail(identity, characterId);
+  if (detail.character.campaignId !== campaignId) throw new CampaignService.CampaignNotFoundError();
+  return detail.character.name;
+}
+
+app.post('/campaigns/:id/characters/:characterId/level', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  const characterId = campaignRouteId(c, 'characterId');
+  if (!campaignId || !characterId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const expectedVersion = formInt(form, 'expectedVersion');
+  const level = formInt(form, 'level');
+  let name = '';
+  try {
+    name = await requirePartyCharacterName(identity, campaignId, characterId);
+    if (expectedVersion === null || level === null || level < 1 || level > 20) {
+      return await renderCharacterActionErrorPage(c, campaignId, characterId, 'level', name);
+    }
+    await CharacterService.updateCharacter(identity, characterId, { expectedVersion, level });
+    return c.redirect(campaignPartyViewPath(campaignId), 303);
+  } catch (error) {
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'level', name, error);
+  }
+});
+
+async function confirmPartyCharacterProposal(
+  identity: CallerIdentity,
+  campaignId: string,
+  mutation: PendingMutations.StagedMutation,
+): Promise<void> {
+  const proposal = await PendingMutations.propose(identity, campaignId, mutation);
+  await PendingMutations.confirm(identity, proposal.id);
+}
+
+app.post('/campaigns/:id/characters/:characterId/retire', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  const characterId = campaignRouteId(c, 'characterId');
+  if (!campaignId || !characterId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  let name = '';
+  try {
+    name = await requirePartyCharacterName(identity, campaignId, characterId);
+    if (formString(form, 'confirm') !== 'retire') {
+      return await renderCharacterActionErrorPage(c, campaignId, characterId, 'retire', name);
+    }
+    await confirmPartyCharacterProposal(identity, campaignId, {
+      type: 'character.retire',
+      characterId,
+    });
+    return c.redirect(campaignPartyViewPath(campaignId), 303);
+  } catch (error) {
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'retire', name, error);
+  }
+});
+
+app.post('/campaigns/:id/characters/:characterId/remove', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  const characterId = campaignRouteId(c, 'characterId');
+  if (!campaignId || !characterId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  let name = '';
+  try {
+    name = await requirePartyCharacterName(identity, campaignId, characterId);
+    if (formString(form, 'confirm') !== 'remove') {
+      return await renderCharacterActionErrorPage(c, campaignId, characterId, 'remove', name);
+    }
+    await confirmPartyCharacterProposal(identity, campaignId, {
+      type: 'character.delete',
+      characterId,
+    });
+    return c.redirect(campaignPartyViewPath(campaignId), 303);
+  } catch (error) {
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'remove', name, error);
   }
 });
 

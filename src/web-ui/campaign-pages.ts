@@ -12,7 +12,7 @@ import { html, raw } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
-import type { Campaign } from '../db/repositories/types.ts';
+import type { Campaign, CharacterStatus } from '../db/repositories/types.ts';
 import { allOptionalModuleOptions, gameDefinitionFor, isGameId, moduleLabel } from '../game.ts';
 import { renderDashboardProgressEmpty } from './campaign-dashboard.ts';
 
@@ -179,7 +179,10 @@ export interface DashboardCharacterRow {
   name: string;
   className: string;
   level: number;
+  status: CharacterStatus;
+  version: number;
   placeholder: boolean;
+  own: boolean;
 }
 
 /** The "New character" create form on the dashboard (SQR-318). */
@@ -195,17 +198,23 @@ export interface CharacterCreateForm {
   errorMessage?: string;
 }
 
+export interface CharacterActionError {
+  characterId: string;
+  message: string;
+  action: 'level' | 'retire' | 'remove';
+}
+
 /** The dashboard Characters section: existing sheet links + the create form. */
 function renderCharacterCreateForm(
   campaignId: string,
   data: CharacterCreateForm,
 ): HtmlEscapedString {
   return html`<details
-    class="squire-section-reveal squire-character-create-reveal"
+    class="squire-party-section__add squire-character-create-reveal"
     ${data.errorMessage ? raw('open') : raw('')}
   >
-    <summary class="squire-section-reveal__summary">Add character</summary>
-    <div class="squire-section-reveal__body">
+    <summary class="squire-party-section__add-summary">Add character</summary>
+    <div class="squire-party-section__add-body">
       ${data.errorMessage
         ? html`<div class="squire-banner squire-banner--error" role="alert">
             <span class="squire-banner__label">COULD NOT SAVE</span>
@@ -285,27 +294,178 @@ function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): Htm
     : html``}` as HtmlEscapedString;
 }
 
-function renderDashboardCharacters(characters?: DashboardCharacterRow[]): HtmlEscapedString {
-  if (!characters || characters.length === 0) {
-    return html`<p class="squire-campaign-dashboard__empty">
-      No characters yet — add your first below.
-    </p>` as HtmlEscapedString;
-  }
-  return html`<ul class="squire-campaign-dashboard__characters">
-    ${characters.map(
-      (character) =>
-        html`<li class="squire-campaign-dashboard__character">
-          <a class="squire-campaign-dashboard__character-link" href="/characters/${character.id}">
-            <span class="squire-campaign-dashboard__character-name">${character.name}</span>
-            <span class="squire-campaign-dashboard__character-class">${character.className}</span>
-            <span class="squire-campaign-dashboard__character-level">Level ${character.level}</span>
-            ${character.placeholder
-              ? html`<span class="squire-campaign-dashboard__character-note">Unclaimed</span>`
-              : html``}
-          </a>
-        </li>`,
-    )}
-  </ul>` as HtmlEscapedString;
+function compactCharacterClass(character: DashboardCharacterRow): string {
+  return `${character.className} ${character.level}`;
+}
+
+function renderCharacterActionError(
+  character: DashboardCharacterRow,
+  actionError?: CharacterActionError,
+): HtmlEscapedString {
+  if (!actionError || actionError.characterId !== character.id) return html`` as HtmlEscapedString;
+  return html`<div class="squire-party-row__error" role="alert">
+    ${actionError.message}
+  </div>` as HtmlEscapedString;
+}
+
+function renderCharacterLevelAction(
+  campaignId: string,
+  csrfToken: string,
+  character: DashboardCharacterRow,
+  actionError?: CharacterActionError,
+): HtmlEscapedString {
+  const open = actionError?.characterId === character.id && actionError.action === 'level';
+  return html`<details
+    class="squire-party-row__action squire-party-row__action--level"
+    ${open ? raw('open') : raw('')}
+  >
+    <summary aria-label="Level ${character.name}">Level</summary>
+    <form method="post" action="/campaigns/${campaignId}/characters/${character.id}/level">
+      <input type="hidden" name="_csrf" value="${csrfToken}" />
+      <input type="hidden" name="expectedVersion" value="${character.version}" />
+      <label>
+        <span>Level</span>
+        <input name="level" type="number" min="1" max="20" value="${character.level}" />
+      </label>
+      <button type="submit">Save</button>
+    </form>
+  </details>` as HtmlEscapedString;
+}
+
+function renderCharacterConfirmAction(input: {
+  campaignId: string;
+  csrfToken: string;
+  character: DashboardCharacterRow;
+  action: 'retire' | 'remove';
+  label: string;
+  confirmValue: string;
+  actionError?: CharacterActionError;
+}): HtmlEscapedString {
+  const open =
+    input.actionError?.characterId === input.character.id &&
+    input.actionError.action === input.action;
+  return html`<details
+    class="squire-party-row__action squire-party-row__action--${input.action}"
+    ${open ? raw('open') : raw('')}
+  >
+    <summary aria-label="${input.label} ${input.character.name}">${input.label}</summary>
+    <div class="squire-party-row__confirm">
+      <p>${input.label} ${input.character.name}?</p>
+      <form
+        method="post"
+        action="/campaigns/${input.campaignId}/characters/${input.character.id}/${input.action}"
+      >
+        <input type="hidden" name="_csrf" value="${input.csrfToken}" />
+        <input type="hidden" name="confirm" value="${input.confirmValue}" />
+        <button type="submit">Confirm ${input.label.toLowerCase()}</button>
+      </form>
+    </div>
+  </details>` as HtmlEscapedString;
+}
+
+function renderPartyCharacterRow(input: {
+  campaignId: string;
+  csrfToken: string;
+  character: DashboardCharacterRow;
+  actionError?: CharacterActionError;
+}): HtmlEscapedString {
+  const { character } = input;
+  const inactive = character.status !== 'active';
+  return html`<li
+    class="squire-party-row ${inactive ? 'squire-party-row--retired' : 'squire-party-row--active'}"
+  >
+    <div class="squire-party-row__identity">
+      <span class="squire-party-row__name">${character.name}</span>
+      ${character.placeholder
+        ? html`<span class="squire-party-row__note">Unclaimed</span>`
+        : html``}
+    </div>
+    <span class="squire-party-row__class">${compactCharacterClass(character)}</span>
+    <div class="squire-party-row__actions">
+      <a class="squire-party-row__link" href="/characters/${character.id}">Open sheet</a>
+      ${character.status === 'active'
+        ? html`${renderCharacterLevelAction(
+            input.campaignId,
+            input.csrfToken,
+            character,
+            input.actionError,
+          )}
+          ${renderCharacterConfirmAction({
+            campaignId: input.campaignId,
+            csrfToken: input.csrfToken,
+            character,
+            action: 'retire',
+            label: 'Retire',
+            confirmValue: 'retire',
+            actionError: input.actionError,
+          })}
+          ${renderCharacterConfirmAction({
+            campaignId: input.campaignId,
+            csrfToken: input.csrfToken,
+            character,
+            action: 'remove',
+            label: 'Remove',
+            confirmValue: 'remove',
+            actionError: input.actionError,
+          })}`
+        : html``}
+    </div>
+    ${renderCharacterActionError(character, input.actionError)}
+  </li>` as HtmlEscapedString;
+}
+
+function renderPartyCharacterSection(input: {
+  campaignId: string;
+  csrfToken: string;
+  title: string;
+  characters: DashboardCharacterRow[];
+  empty: string;
+  actionError?: CharacterActionError;
+}): HtmlEscapedString {
+  return html`<section class="squire-party-roster__group" aria-label="${input.title}">
+    <h3 class="squire-party-roster__group-title">${input.title}</h3>
+    ${input.characters.length === 0
+      ? html`<p class="squire-party-roster__empty">${input.empty}</p>`
+      : html`<ul class="squire-party-roster__rows">
+          ${input.characters.map((character) =>
+            renderPartyCharacterRow({
+              campaignId: input.campaignId,
+              csrfToken: input.csrfToken,
+              character,
+              actionError: input.actionError,
+            }),
+          )}
+        </ul>`}
+  </section>` as HtmlEscapedString;
+}
+
+function renderPartyRoster(input: {
+  campaignId: string;
+  csrfToken: string;
+  characters?: DashboardCharacterRow[];
+  actionError?: CharacterActionError;
+}): HtmlEscapedString {
+  const characters = input.characters ?? [];
+  const active = characters.filter((character) => character.status === 'active');
+  const retired = characters.filter((character) => character.status === 'retired');
+  return html`<div class="squire-party-roster">
+    ${renderPartyCharacterSection({
+      campaignId: input.campaignId,
+      csrfToken: input.csrfToken,
+      title: 'Active characters',
+      characters: active,
+      empty: 'No active characters yet.',
+      actionError: input.actionError,
+    })}
+    ${renderPartyCharacterSection({
+      campaignId: input.campaignId,
+      csrfToken: input.csrfToken,
+      title: 'Retired characters',
+      characters: retired,
+      empty: 'No retired characters yet.',
+      actionError: input.actionError,
+    })}
+  </div>` as HtmlEscapedString;
 }
 
 function renderPendingInvites(pendingInvites: CampaignDetail['members']): HtmlEscapedString {
@@ -597,6 +757,7 @@ export function renderCampaignDashboardContent(
   journalFragment?: HtmlEscapedString,
   characters?: DashboardCharacterRow[],
   characterCreate?: CharacterCreateForm,
+  characterActionError?: CharacterActionError,
   inviteForm?: InviteMemberForm,
   renameForm?: CampaignRenameForm,
   modulesForm?: CampaignModulesForm,
@@ -615,9 +776,25 @@ export function renderCampaignDashboardContent(
         : html``}
       ${activeView === 'party'
         ? html`<section class="squire-campaign-dashboard__party" aria-label="Party">
-            <h2 class="squire-campaign-dashboard__section-title">Party</h2>
-            ${renderDashboardCharacters(characters)}
-            ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
+            <header class="squire-party-section__header">
+              <div>
+                <h2 class="squire-campaign-dashboard__section-title">Party</h2>
+                <p class="squire-party-section__lede">
+                  Manage active and retired player characters for this campaign.
+                </p>
+              </div>
+              <div class="squire-party-section__action">
+                ${characterCreate
+                  ? renderCharacterCreateForm(campaign.id, characterCreate)
+                  : html``}
+              </div>
+            </header>
+            ${renderPartyRoster({
+              campaignId: campaign.id,
+              csrfToken: characterCreate?.csrfToken ?? '',
+              characters,
+              actionError: characterActionError,
+            })}
           </section>`
         : html``}
       ${activeView === 'players'

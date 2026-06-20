@@ -217,7 +217,10 @@ describe('dashboard rendering', () => {
     expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--party');
     expect(body).toContain('class="squire-campaign-dashboard__party"');
     expect(body).toContain('aria-label="Party"');
-    expect(body).toContain('squire-section-reveal__summary">Add character</summary>');
+    expect(body).toContain('squire-party-section__action');
+    expect(body).toContain('squire-party-section__add-summary">Add character</summary>');
+    expect(body).toContain('Active characters');
+    expect(body).toContain('Retired characters');
     expect(body).not.toContain('aria-label="Scenario progression"');
     expect(body).not.toContain('squire-dashboard-grid');
   });

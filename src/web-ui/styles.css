@@ -2458,8 +2458,6 @@ template#squire-banner-fixtures {
   font-weight: 500;
   font-size: 18px;
   color: var(--parchment);
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: var(--space-xs);
   margin: var(--space-lg) 0 var(--space-sm);
 }
 
@@ -2641,6 +2639,16 @@ template#squire-banner-fixtures {
   padding: 0 var(--space-md);
   min-height: 44px;
   cursor: pointer;
+}
+
+.squire-character-create[data-submitting='true'],
+.squire-party-row__action form[data-submitting='true'] {
+  opacity: 0.75;
+}
+
+.squire-character-create[data-submitting='true'] button[type='submit'],
+.squire-party-row__action form[data-submitting='true'] button[type='submit'] {
+  cursor: wait;
 }
 
 .squire-character-create__submit:hover {
@@ -2939,6 +2947,326 @@ template#squire-banner-fixtures {
   min-height: 44px;
   padding: 0 var(--space-sm);
   font-family: 'Geist', system-ui, sans-serif;
+}
+
+/* ─── Campaign Party roster (SQR-360) ────────────────────────────────────── */
+
+.squire-party-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.squire-party-section__header .squire-campaign-dashboard__section-title {
+  margin: 0;
+}
+
+.squire-party-section__lede {
+  margin: var(--space-2xs) 0 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--sepia);
+}
+
+.squire-party-section__action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.squire-party-section__add {
+  position: relative;
+}
+
+.squire-party-section__add-summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--wax);
+  border-radius: 4px;
+  background: var(--wax);
+  color: var(--parchment);
+  cursor: pointer;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.squire-party-section__add-summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-party-section__add-summary:hover {
+  background: var(--wax-dim);
+}
+
+.squire-party-section__add-summary:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.squire-party-section__add-body {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  width: min(520px, calc(100vw - var(--space-xl)));
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface-2);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+}
+
+.squire-party-roster {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.squire-party-roster__group-title {
+  margin: 0 0 var(--space-sm);
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: var(--parchment);
+}
+
+.squire-party-roster__empty {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--sepia);
+}
+
+.squire-party-roster__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: visible;
+}
+
+.squire-party-row {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1.6fr) minmax(9rem, 0.8fr) max-content;
+  gap: var(--space-md);
+  align-items: center;
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-party-row:last-child {
+  border-bottom: none;
+}
+
+.squire-party-row:has(.squire-party-row__action[open]) {
+  padding-bottom: calc(var(--space-sm) + 140px);
+}
+
+.squire-party-row--retired {
+  color: var(--sepia-dim);
+}
+
+.squire-party-row__identity {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.squire-party-row__name {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 20px;
+  color: var(--parchment);
+}
+
+.squire-party-row--retired .squire-party-row__name {
+  color: var(--parchment-dim);
+}
+
+.squire-party-row__note,
+.squire-party-row__class {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--sepia);
+}
+
+.squire-party-row__class {
+  color: var(--parchment-dim);
+}
+
+.squire-party-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.squire-party-row__link,
+.squire-party-row__action > summary,
+.squire-party-row__confirm button,
+.squire-party-row__action--level button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--parchment);
+  cursor: pointer;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.squire-party-row__action > summary {
+  list-style: none;
+}
+
+.squire-party-row__action > summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-party-row__action--remove > summary {
+  color: var(--error);
+}
+
+.squire-party-row__link:hover,
+.squire-party-row__action > summary:hover {
+  border-color: var(--sepia);
+}
+
+.squire-party-row__link:focus-visible,
+.squire-party-row__action > summary:focus-visible,
+.squire-party-row__confirm button:focus-visible,
+.squire-party-row__action--level button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.squire-party-row__action {
+  position: relative;
+}
+
+.squire-party-row__action--level form,
+.squire-party-row__confirm {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-xs));
+  z-index: 8;
+  display: grid;
+  gap: var(--space-sm);
+  width: min(280px, calc(100vw - var(--space-xl)));
+  padding: var(--space-sm);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface-2);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+}
+
+.squire-party-row__action--level label {
+  display: grid;
+  gap: var(--space-xs);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-party-row__action--level input {
+  min-height: 44px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--parchment);
+  padding: 0 var(--space-sm);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.squire-party-row__confirm p {
+  margin: 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--parchment-dim);
+}
+
+.squire-party-row__confirm form {
+  margin: 0;
+}
+
+.squire-party-row__confirm button,
+.squire-party-row__action--level button {
+  width: 100%;
+  background: var(--wax);
+  border-color: var(--wax);
+}
+
+.squire-party-row__action--remove .squire-party-row__confirm button {
+  color: var(--parchment);
+  background: color-mix(in srgb, var(--error) 65%, var(--wax));
+  border-color: color-mix(in srgb, var(--error) 70%, var(--rule));
+}
+
+.squire-party-row__error {
+  grid-column: 1 / -1;
+  padding-top: var(--space-xs);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--error);
+}
+
+@media (max-width: 820px) {
+  .squire-party-section__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .squire-party-section__action {
+    justify-content: stretch;
+  }
+
+  .squire-party-section__add-summary {
+    width: 100%;
+  }
+
+  .squire-party-section__add-body {
+    position: static;
+    width: auto;
+  }
+
+  .squire-party-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
+
+  .squire-party-row__actions {
+    justify-content: flex-start;
+  }
+
+  .squire-party-row__action--level form,
+  .squire-party-row__confirm {
+    right: auto;
+    left: 0;
+  }
 }
 
 /* ─── Phase 4: scenario-progression dashboard (SQR-276) ────────────────── */

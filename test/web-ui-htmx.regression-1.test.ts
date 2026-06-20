@@ -44,6 +44,14 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain('delete form.dataset.submitting');
   });
 
+  it('marks Party character forms submitting without touching chat submit text', () => {
+    expect(squireJs).toContain(
+      "form.matches('.squire-character-create, .squire-party-row__action form')",
+    );
+    expect(squireJs).toContain("form.dataset.submitting = 'true';");
+    expect(squireJs).toContain("form.setAttribute('aria-busy', 'true');");
+  });
+
   it('keeps lookup work separate from answer prose and collapses it after completion', () => {
     expect(squireJs).toContain('function answerWorkElements(answerEl) {');
     expect(squireJs).toContain('function renderAnswerWorkRow(');
