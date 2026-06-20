@@ -202,6 +202,12 @@ describe('create-character UI (SQR-318)', () => {
     });
     expect(res.status).toBe(422);
     const body = await res.text();
+    expect(body).toContain('class="squire-campaign-workspace"');
+    expect(body).toMatch(
+      new RegExp(`href="/campaigns/${campaign.id}/party"[^>]*aria-current="page"`),
+    );
+    expect(body).toContain(`href="/campaigns/${campaign.id}/players"`);
+    expect(body).toContain(`href="/campaigns/${campaign.id}/settings"`);
     expect(body).toContain('COULD NOT SAVE');
     expect(body).toContain('not a class in this game');
     const revealTag = body.match(
