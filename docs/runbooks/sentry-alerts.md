@@ -126,9 +126,11 @@ that they still exist.
 
 The uptime monitor checks the public `squire.maz.org` path through CloudFront,
 not Fly's internal machine health check. Sentry timeouts with `Status Code:
-None` and no matching slow `/api/health` app spans usually mean an external
-probe-path timeout, not a Hono readiness failure. Confirm with direct probes,
-Fly status, and Sentry app spans before treating the alert as an app outage.
+None` usually mean an external probe-path timeout, not a Hono readiness
+failure. `/api/live` and `/api/health` intentionally suppress app span export
+because probe traffic is high-volume quota noise. Confirm with direct probes,
+Fly status, Sentry monitor status, and request logs before treating the alert
+as an app outage.
 
 ## Safe Test Events
 
