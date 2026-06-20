@@ -107,8 +107,13 @@ describe('campaign routes', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('Travel Campaign');
+    expect(body).toContain('squire-column squire-column--wide');
+    expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--progress');
     expect(body).toContain('squire-campaign-strip--prominent');
     expect(body).toContain('Frosthaven · Prosperity 1');
+    expect(body).toContain('<h2 class="squire-campaign-dashboard__section-title">Progress</h2>');
+    expect(body).toContain("No scenario data for this campaign's modules yet.");
+    expect(body).not.toContain('Record progress');
   });
 
   it('serves the indistinguishable 404 to non-members and for absent ids', async () => {

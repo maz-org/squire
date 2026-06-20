@@ -110,7 +110,7 @@ async function toggle(
   user: TestUser,
   campaignId: string,
   key: string,
-  mode?: 'skip',
+  mode?: 'skip' | 'undo-draw',
 ): Promise<Response> {
   const form = new FormData();
   form.set('_csrf', createCsrfToken(user.sessionId));
@@ -171,7 +171,9 @@ describe('dashboard rendering', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
 
+    expect(body).toContain('squire-column squire-column--wide');
     expect(body).toContain('class="squire-campaign-workspace"');
+    expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--progress');
     expect(body).toContain('Dashboard Campaign');
     expect(body).toContain('aria-label="Breadcrumb"');
     expect(body).toContain('href="/campaigns"');
@@ -194,6 +196,8 @@ describe('dashboard rendering', () => {
     expect(body).not.toContain('>Scenarios</a>');
     expect(body).not.toContain('>More</');
     expect(body).toContain('aria-label="Scenario progression"');
+    expect(body).toContain('<h2 class="squire-campaign-dashboard__section-title">Progress</h2>');
+    expect(body).toContain('Record progress');
     expect(body).not.toContain('aria-label="Party roster"');
     expect(body).not.toContain('squire-character-create');
   });
@@ -210,6 +214,7 @@ describe('dashboard rendering', () => {
       new RegExp(`href="/campaigns/${campaign.id}/party"[^>]*aria-current="page"`),
     );
     expect(body).toContain(`href="/campaigns/${campaign.id}"`);
+    expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--party');
     expect(body).toContain('class="squire-campaign-dashboard__party"');
     expect(body).toContain('aria-label="Party"');
     expect(body).toContain('squire-section-reveal__summary">Add character</summary>');
@@ -254,6 +259,9 @@ describe('dashboard rendering', () => {
     expect(body).toContain('LOCKED'); // 2 and 3 gated on 1
     expect(body).toContain('VIA EVENT'); // manual 4 with cond note
     expect(body).toContain('Drawn from the event deck');
+    expect(body).toContain('Record progress');
+    expect(body).toContain('id="squire-dashboard-progress-loading"');
+    expect(body).toContain('hx-indicator="#squire-dashboard-progress-loading"');
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('squire-dashboard-stats');
 
@@ -268,6 +276,22 @@ describe('dashboard rendering', () => {
     expect(body).toContain('HAZARD');
     const mainThread = body.slice(body.indexOf('Main Thread'), body.indexOf('Event Thread'));
     expect(mainThread).toContain('permanently closes');
+  });
+
+  it('surfaces unknown scenario state as partial advisory data', async () => {
+    const { owner, campaign } = await setupFixture();
+    await CampaignService.updateSharedState(identityFromSessionUser(owner.userId), campaign.id, {
+      expectedVersion: campaign.version,
+      drawnScenarios: ['fh:999'],
+    });
+
+    const res = await app.request(`/campaigns/${campaign.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('UNKNOWN: fh:999');
+    expect(body).toContain('trust the game');
   });
 });
 
@@ -285,15 +309,34 @@ describe('toggle route', () => {
     expect(playedBody).toContain('hx-swap-oob="true"');
     expect(dashboardHeaderStats(playedBody)).toBe('Frosthaven · Prosperity 1');
 
-    // Manual cycle: via-event → drew-it → played.
+    // Manual cycle: via-event → drew-it → played, with correction available
+    // after the easy-to-misclick draw step.
     const drew = await toggle(owner, campaign.id, 'fh:4');
-    expect(await drew.text()).toContain('Scenario 4 marked drawn.');
+    const drewBody = await drew.text();
+    expect(drewBody).toContain('Scenario 4 marked drawn.');
+    expect(drewBody).toContain('DREW IT');
+    expect(drewBody).toContain('Undo draw');
+    expect(drewBody).toContain('name="mode" value="undo-draw"');
+    expect(drewBody).toContain('aria-label="Undo draw for scenario 4 Scenario 4"');
     const playedManual = await toggle(owner, campaign.id, 'fh:4');
     const manualBody = await playedManual.text();
     expect(manualBody).toContain('Scenario 4 marked played.');
 
     // Played rows are not tappable in v1 (un-play is destructive).
     expect(manualBody).not.toContain('name="key" value="fh:4"');
+  });
+
+  it('undoes an accidental event draw and returns the scenario to via-event', async () => {
+    const { owner, campaign } = await setupFixture();
+
+    await toggle(owner, campaign.id, 'fh:4');
+    const undo = await toggle(owner, campaign.id, 'fh:4', 'undo-draw');
+    expect(undo.status).toBe(200);
+    const body = await undo.text();
+    expect(body).toContain('Scenario 4 returned to via event.');
+    expect(body).toContain('VIA EVENT');
+    expect(body).not.toContain('Undo draw');
+    expect(body).not.toContain('name="mode" value="undo-draw"');
   });
 
   it('confirms hazardous taps and 404s non-members', async () => {

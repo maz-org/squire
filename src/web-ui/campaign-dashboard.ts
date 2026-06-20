@@ -10,7 +10,8 @@
  * Statuses are derived per request (never stored); tapping an actionable
  * row posts to the toggle route, which re-renders this fragment with an
  * aria-live announcement. Marking played is one-way in v1 — un-play is a
- * destructive mutation and joins the propose→confirm gate.
+ * destructive mutation and joins the propose→confirm gate. Drawing an event
+ * scenario is reversible because it is an easy mistaken click at the table.
  * TODO(SQR-279): allow un-play through a confirmed proposal.
  */
 import { html } from 'hono/html';
@@ -32,6 +33,21 @@ const STATUS_LABEL: Record<ScenarioStatus, string> = {
 
 /** Statuses a tap can advance (played is one-way in v1; see header note). */
 const ACTIONABLE: ReadonlySet<ScenarioStatus> = new Set(['open', 'via-event', 'drew-it']);
+
+const PROGRESS_LOADING_INDICATOR = '#squire-dashboard-progress-loading';
+
+function progressSectionHeader(options: { hasScenarioData: boolean }): HtmlEscapedString {
+  return html`<header class="squire-progress-section__header">
+    <h2 class="squire-campaign-dashboard__section-title">Progress</h2>
+    ${options.hasScenarioData
+      ? html`<a
+          class="squire-button squire-button--primary squire-button--small"
+          href="#squire-dashboard-thread-list"
+          >Record progress</a
+        >`
+      : html``}
+  </header>` as HtmlEscapedString;
+}
 
 export interface DashboardThreadsInput {
   campaign: Campaign;
@@ -84,6 +100,7 @@ function scenarioRow(input: {
   // Skip is offered only for a skippable intro that is currently open — the
   // single moment the party can decline to play it. Never on other rows.
   const showSkip = Boolean(input.skippable) && input.status === 'open';
+  const showUndoDraw = input.status === 'drew-it';
   // A manual scenario explains itself via its event cond; a character-gated
   // solo via its class requirement. Never event language for the latter.
   const subLabel = input.status === 'via-event' && input.cond ? input.cond : input.requirement;
@@ -111,6 +128,7 @@ function scenarioRow(input: {
         hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
         hx-target="#squire-dashboard-threads"
         hx-swap="outerHTML"
+        hx-indicator="${PROGRESS_LOADING_INDICATOR}"
         class="squire-scenario-row__skip-form"
       >
         <input type="hidden" name="_csrf" value="${input.csrfToken}" />
@@ -125,12 +143,34 @@ function scenarioRow(input: {
         </button>
       </form>`
     : html``;
+  const undoDrawForm = showUndoDraw
+    ? html`<form
+        method="post"
+        action="/campaigns/${input.campaignId}/scenarios/toggle"
+        hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
+        hx-target="#squire-dashboard-threads"
+        hx-swap="outerHTML"
+        hx-indicator="${PROGRESS_LOADING_INDICATOR}"
+        class="squire-scenario-row__secondary-form"
+      >
+        <input type="hidden" name="_csrf" value="${input.csrfToken}" />
+        <input type="hidden" name="key" value="${input.qualified}" />
+        <input type="hidden" name="mode" value="undo-draw" />
+        <button
+          type="submit"
+          class="squire-scenario-row__secondary"
+          aria-label="Undo draw for scenario ${input.scenarioKey} ${input.name}"
+        >
+          Undo draw
+        </button>
+      </form>`
+    : html``;
 
   // Actionable rows are real forms: plain-POST safe, HTMX-enhanced swap.
   return html`<li
     class="squire-scenario-row squire-scenario-row--${input.status}${showSkip
       ? ' squire-scenario-row--skippable'
-      : ''}"
+      : ''}${showSkip || showUndoDraw ? ' squire-scenario-row--with-secondary' : ''}"
   >
     <form
       method="post"
@@ -138,14 +178,52 @@ function scenarioRow(input: {
       hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
       hx-target="#squire-dashboard-threads"
       hx-swap="outerHTML"
+      hx-indicator="${PROGRESS_LOADING_INDICATOR}"
       ${input.confirmText ? html`hx-confirm="${input.confirmText}"` : html``}
     >
       <input type="hidden" name="_csrf" value="${input.csrfToken}" />
       <input type="hidden" name="key" value="${input.qualified}" />
       <button type="submit" class="squire-scenario-row__tap">${rowBody}</button>
     </form>
-    ${skipForm}
+    ${skipForm} ${undoDrawForm}
   </li>` as HtmlEscapedString;
+}
+
+export function renderDashboardProgressEmpty(): HtmlEscapedString {
+  return html`<section
+    class="squire-campaign-dashboard__threads"
+    id="squire-dashboard-threads"
+    aria-label="Scenario progression"
+  >
+    ${progressSectionHeader({ hasScenarioData: false })}
+    <p class="squire-dashboard-announce" aria-live="polite" role="status"></p>
+    <p class="squire-campaign-dashboard__placeholder">
+      No scenario data for this campaign's modules yet.
+    </p>
+  </section>` as HtmlEscapedString;
+}
+
+export function renderDashboardProgressError(campaignId: string): HtmlEscapedString {
+  return html`<section
+    class="squire-campaign-dashboard__threads"
+    id="squire-dashboard-threads"
+    aria-label="Scenario progression"
+  >
+    ${progressSectionHeader({ hasScenarioData: false })}
+    <p class="squire-dashboard-announce" aria-live="polite" role="status"></p>
+    <div class="squire-banner squire-banner--error" role="alert">
+      <span class="squire-banner__label">COULD NOT LOAD</span>
+      <p class="squire-banner__body">Progress is unavailable right now.</p>
+      <div class="squire-banner__actions">
+        <a
+          class="squire-button squire-button--ghost squire-button--small"
+          href="/campaigns/${campaignId}"
+        >
+          Retry
+        </a>
+      </div>
+    </div>
+  </section>` as HtmlEscapedString;
 }
 
 /**
@@ -178,11 +256,20 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
     id="squire-dashboard-threads"
     aria-label="Scenario progression"
   >
+    ${progressSectionHeader({ hasScenarioData: threads.length > 0 })}
     <p class="squire-dashboard-announce" aria-live="polite" role="status">
       ${input.announcement ?? ''}
     </p>
+    <p
+      class="squire-dashboard-loading htmx-indicator"
+      id="squire-dashboard-progress-loading"
+      aria-live="polite"
+      role="status"
+    >
+      Updating progress...
+    </p>
     ${statsLine(availability)}
-    <div class="squire-dashboard-grid">
+    <div class="squire-dashboard-grid" id="squire-dashboard-thread-list">
       ${threads.map(({ thread, qualifiedKeys }) => {
         // Skipped scenarios are done too — count them toward thread progress.
         const playedCount = qualifiedKeys.filter((key) => {

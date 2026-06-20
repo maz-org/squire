@@ -135,7 +135,10 @@ import {
   type CampaignStripState,
   type CampaignDashboardView,
 } from './web-ui/campaign-pages.ts';
-import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
+import {
+  renderDashboardProgressError,
+  renderDashboardThreads,
+} from './web-ui/campaign-dashboard.ts';
 import { renderCampaignJournal } from './web-ui/campaign-journal.ts';
 import { listJournal } from './campaign/journal.ts';
 import * as PendingMutations from './campaign/pending-mutations.ts';
@@ -1589,6 +1592,7 @@ async function renderCampaignDashboardPage(
     csrfToken,
     showChatChrome: false,
     showRail: false,
+    columnClassName: 'squire-column squire-column--wide',
     campaignStrip: {
       campaignId: detail.campaign.id,
       campaignName: detail.campaign.name,
@@ -1940,23 +1944,36 @@ async function dashboardThreadsFragment(
   csrfToken: string,
   announcement?: string,
 ): Promise<{ html: HtmlEscapedString; openScenarioCount: number } | undefined> {
-  const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
-  if (graphs.length === 0) return undefined;
-  const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
-  const availability = deriveAvailability(
-    graphs,
-    new Set(campaign.playedScenarios),
-    new Set(campaign.drawnScenarios),
-    new Set(campaign.skippedScenarios),
-    roster,
-  );
-  const openScenarioCount = [...availability.statuses.values()].filter(
-    (status) => status === 'open',
-  ).length;
-  return {
-    html: renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement }),
-    openScenarioCount,
-  };
+  try {
+    const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
+    if (graphs.length === 0) return undefined;
+    const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
+    const availability = deriveAvailability(
+      graphs,
+      new Set(campaign.playedScenarios),
+      new Set(campaign.drawnScenarios),
+      new Set(campaign.skippedScenarios),
+      roster,
+    );
+    const openScenarioCount = [...availability.statuses.values()].filter(
+      (status) => status === 'open',
+    ).length;
+    return {
+      html: renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement }),
+      openScenarioCount,
+    };
+  } catch (error) {
+    captureTelemetryError(error, {
+      route: '/campaigns/:id',
+      fingerprint: ['campaign-progress-load'],
+      context: {
+        surface: 'campaign_progress',
+        game: campaign.game,
+        module_count: campaign.modules.length,
+      },
+    });
+    return { html: renderDashboardProgressError(campaign.id), openScenarioCount: 0 };
+  }
 }
 
 /**
@@ -1971,9 +1988,11 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   const form = await c.req.formData();
   const key = typeof form.get('key') === 'string' ? (form.get('key') as string).trim() : '';
   if (!key || key.length > 200) return c.notFound();
-  // `mode=skip` is the skippable-intro path (GH2e scenario 0); default is the
+  // `mode=skip` is the skippable-intro path (GH2e scenario 0);
+  // `mode=undo-draw` corrects an accidental event draw; default is the
   // play/draw advance cycle.
-  const mode = form.get('mode') === 'skip' ? 'skip' : 'advance';
+  const modeValue = form.get('mode');
+  const mode = modeValue === 'skip' || modeValue === 'undo-draw' ? modeValue : 'advance';
 
   const identity = identityFromSessionUser(session.userId);
   let announcement: string;
@@ -2008,6 +2027,16 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
         announcement = `Scenario ${shortKey} marked skipped.`;
       } else {
         announcement = `Scenario ${shortKey} cannot be skipped.`;
+      }
+    } else if (mode === 'undo-draw') {
+      if (status === 'drew-it') {
+        await CampaignService.updateSharedState(identity, campaignId, {
+          expectedVersion: detail.campaign.version,
+          drawnScenarios: detail.campaign.drawnScenarios.filter((drawn) => drawn !== key),
+        });
+        announcement = `Scenario ${shortKey} returned to via event.`;
+      } else {
+        announcement = `Scenario ${shortKey} cannot be returned to via event.`;
       }
     } else if (status === 'open' || status === 'drew-it') {
       await CampaignService.updateSharedState(identity, campaignId, {
