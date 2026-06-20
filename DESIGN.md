@@ -632,6 +632,7 @@ gets a glyph:
 | Status               | Treatment                                                                                     |
 | -------------------- | --------------------------------------------------------------------------------------------- |
 | PLAYED               | `--sage` label + checkmark                                                                    |
+| SKIPPED              | `--sepia-dim` label, row text dimmed                                                          |
 | UNLOCKED             | `--parchment` label: available to play, no matter how it was unlocked                         |
 | LOCKED               | `--sepia-dim` label, row text dimmed                                                          |
 | BLOCKED              | `--amber` label (mutex/locked-out by a played choice)                                         |

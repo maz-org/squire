@@ -111,7 +111,7 @@ function manualUnlockLabel(cond: string | null): string {
   if (normalized.includes('event')) return 'EVENT';
   if (normalized.includes('not documented')) return 'CHECK BOOK';
   if (normalized.includes('section')) return 'SECTION';
-  return 'LOCKED';
+  return 'EVENT';
 }
 
 function undoIcon(): HtmlEscapedString {
@@ -375,7 +375,7 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
     </div>
     ${availability.unknownKeys.length > 0
       ? html`<div class="squire-dashboard-footnote" role="note">
-          <span class="squire-dashboard-footnote__label">MISSING FLOWCHART DATA</span>
+          <span class="squire-dashboard-footnote__label">missing graph data</span>
           <p>
             Squire cannot place these recorded scenarios on the graph yet:
             ${availability.unknownKeys.map((key) => key.split(':')[1] ?? key).join(', ')}.

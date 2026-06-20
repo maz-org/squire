@@ -292,7 +292,7 @@ describe('dashboard rendering', () => {
     });
     expect(res.status).toBe(200);
     const body = await res.text();
-    expect(body).toContain('MISSING FLOWCHART DATA');
+    expect(body).toContain('missing graph data');
     expect(body).toContain('Squire cannot place these recorded scenarios on the graph yet:');
     expect(body).toContain('999.');
     expect(body).toContain('Keep tracking them with the scenario book.');
