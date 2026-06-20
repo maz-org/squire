@@ -3020,7 +3020,7 @@ template#squire-banner-fixtures {
   margin-top: var(--space-sm);
   padding: var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface-2);
   box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
 }
@@ -3053,7 +3053,7 @@ template#squire-banner-fixtures {
   margin: 0;
   padding: 0;
   border: 1px solid var(--rule);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: visible;
 }
 
@@ -3116,7 +3116,8 @@ template#squire-banner-fixtures {
 .squire-party-row__link,
 .squire-party-row__action > summary,
 .squire-party-row__confirm button,
-.squire-party-row__action--level button {
+.squire-party-row__action--level button,
+.squire-party-row__cancel {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -3176,7 +3177,7 @@ template#squire-banner-fixtures {
   width: min(280px, calc(100vw - var(--space-xl)));
   padding: var(--space-sm);
   border: 1px solid var(--rule);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface-2);
   box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
 }
@@ -3210,6 +3211,8 @@ template#squire-banner-fixtures {
 }
 
 .squire-party-row__confirm form {
+  display: grid;
+  gap: var(--space-xs);
   margin: 0;
 }
 
@@ -3218,6 +3221,10 @@ template#squire-banner-fixtures {
   width: 100%;
   background: var(--wax);
   border-color: var(--wax);
+}
+
+.squire-party-row__cancel {
+  width: 100%;
 }
 
 .squire-party-row__action--remove .squire-party-row__confirm button {

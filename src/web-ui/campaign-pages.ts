@@ -202,6 +202,7 @@ export interface CharacterActionError {
   characterId: string;
   message: string;
   action: 'level' | 'retire' | 'remove';
+  levelValue?: string;
 }
 
 /** The dashboard Characters section: existing sheet links + the create form. */
@@ -315,6 +316,8 @@ function renderCharacterLevelAction(
   actionError?: CharacterActionError,
 ): HtmlEscapedString {
   const open = actionError?.characterId === character.id && actionError.action === 'level';
+  const value =
+    open && actionError.levelValue !== undefined ? actionError.levelValue : character.level;
   return html`<details
     class="squire-party-row__action squire-party-row__action--level"
     ${open ? raw('open') : raw('')}
@@ -323,9 +326,10 @@ function renderCharacterLevelAction(
     <form method="post" action="/campaigns/${campaignId}/characters/${character.id}/level">
       <input type="hidden" name="_csrf" value="${csrfToken}" />
       <input type="hidden" name="expectedVersion" value="${character.version}" />
+      ${open ? renderCharacterActionError(character, actionError) : html``}
       <label>
         <span>Level</span>
-        <input name="level" type="number" min="1" max="20" value="${character.level}" />
+        <input name="level" type="number" min="1" max="20" value="${value}" />
       </label>
       <button type="submit">Save</button>
     </form>
@@ -351,6 +355,7 @@ function renderCharacterConfirmAction(input: {
     <summary aria-label="${input.label} ${input.character.name}">${input.label}</summary>
     <div class="squire-party-row__confirm">
       <p>${input.label} ${input.character.name}?</p>
+      ${open ? renderCharacterActionError(input.character, input.actionError) : html``}
       <form
         method="post"
         action="/campaigns/${input.campaignId}/characters/${input.character.id}/${input.action}"
@@ -358,6 +363,7 @@ function renderCharacterConfirmAction(input: {
         <input type="hidden" name="_csrf" value="${input.csrfToken}" />
         <input type="hidden" name="confirm" value="${input.confirmValue}" />
         <button type="submit">Confirm ${input.label.toLowerCase()}</button>
+        <a class="squire-party-row__cancel" href="/campaigns/${input.campaignId}/party"> Cancel </a>
       </form>
     </div>
   </details>` as HtmlEscapedString;
@@ -398,19 +404,18 @@ function renderPartyCharacterRow(input: {
             label: 'Retire',
             confirmValue: 'retire',
             actionError: input.actionError,
-          })}
-          ${renderCharacterConfirmAction({
-            campaignId: input.campaignId,
-            csrfToken: input.csrfToken,
-            character,
-            action: 'remove',
-            label: 'Remove',
-            confirmValue: 'remove',
-            actionError: input.actionError,
           })}`
         : html``}
+      ${renderCharacterConfirmAction({
+        campaignId: input.campaignId,
+        csrfToken: input.csrfToken,
+        character,
+        action: 'remove',
+        label: 'Remove',
+        confirmValue: 'remove',
+        actionError: input.actionError,
+      })}
     </div>
-    ${renderCharacterActionError(character, input.actionError)}
   </li>` as HtmlEscapedString;
 }
 

@@ -1567,6 +1567,7 @@ async function renderCampaignDashboardPage(
       characterId: string;
       message: string;
       action: 'level' | 'retire' | 'remove';
+      levelValue?: string;
     };
     inviteError?: string;
     renameError?: string;
@@ -1807,6 +1808,7 @@ async function renderCharacterActionErrorPage(
   characterId: string,
   action: 'level' | 'retire' | 'remove',
   fallbackName: string,
+  details: { levelValue?: string } = {},
   error?: unknown,
 ): Promise<Response> {
   if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
@@ -1820,6 +1822,7 @@ async function renderCharacterActionErrorPage(
         characterId,
         action,
         message: characterActionFailureMessage(action, name),
+        levelValue: details.levelValue,
       },
     },
     422,
@@ -1845,16 +1848,29 @@ app.post('/campaigns/:id/characters/:characterId/level', async (c) => {
   const form = await c.req.formData();
   const expectedVersion = formInt(form, 'expectedVersion');
   const level = formInt(form, 'level');
+  const levelValue = formString(form, 'level') ?? '';
   let name = '';
   try {
     name = await requirePartyCharacterName(identity, campaignId, characterId);
     if (expectedVersion === null || level === null || level < 1 || level > 20) {
-      return await renderCharacterActionErrorPage(c, campaignId, characterId, 'level', name);
+      return await renderCharacterActionErrorPage(c, campaignId, characterId, 'level', name, {
+        levelValue,
+      });
     }
     await CharacterService.updateCharacter(identity, characterId, { expectedVersion, level });
     return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
-    return renderCharacterActionErrorPage(c, campaignId, characterId, 'level', name, error);
+    return renderCharacterActionErrorPage(
+      c,
+      campaignId,
+      characterId,
+      'level',
+      name,
+      {
+        levelValue,
+      },
+      error,
+    );
   }
 });
 
@@ -1886,7 +1902,7 @@ app.post('/campaigns/:id/characters/:characterId/retire', async (c) => {
     });
     return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
-    return renderCharacterActionErrorPage(c, campaignId, characterId, 'retire', name, error);
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'retire', name, {}, error);
   }
 });
 
@@ -1909,7 +1925,7 @@ app.post('/campaigns/:id/characters/:characterId/remove', async (c) => {
     });
     return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
-    return renderCharacterActionErrorPage(c, campaignId, characterId, 'remove', name, error);
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'remove', name, {}, error);
   }
 });
 

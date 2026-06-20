@@ -206,6 +206,9 @@ describe('create-character UI (SQR-318)', () => {
     expect(body).toContain('Remove');
     expect(body).toContain('aria-label="Retire Manual Bruiser"');
     expect(body).toContain('aria-label="Remove Manual Bruiser"');
+    expect(body).toContain('aria-label="Remove Old Bones"');
+    expect(body).toContain(`href="/campaigns/${campaign.id}/party"`);
+    expect(body).toContain('Cancel');
     expect(body).not.toContain('Invite by email');
     expect(body).not.toContain('Pending invites');
   });
@@ -271,6 +274,7 @@ describe('create-character UI (SQR-318)', () => {
     body = await res.text();
     expect(body).toContain('Leveler');
     expect(body).toContain('Could not update Leveler.');
+    expect(body).toContain('value="5"');
   });
 
   it('retires and removes characters from explicit party row confirmations', async () => {
@@ -318,6 +322,46 @@ describe('create-character UI (SQR-318)', () => {
     });
     body = await page.text();
     expect(body).not.toContain('Remove Me');
+  });
+
+  it('removes retired characters from explicit party row confirmations', async () => {
+    const { owner, campaign } = await setupFixture();
+    const retired = await CharacterService.createCharacter(
+      identityFromSessionUser(owner.userId),
+      campaign.id,
+      { name: 'Remove Retired', className: 'Banner Spear', level: 2 },
+    );
+    const proposal = await import('../src/campaign/pending-mutations.ts').then((mod) =>
+      mod.propose(identityFromSessionUser(owner.userId), campaign.id, {
+        type: 'character.retire',
+        characterId: retired.id,
+      }),
+    );
+    await import('../src/campaign/pending-mutations.ts').then((mod) =>
+      mod.confirm(identityFromSessionUser(owner.userId), proposal.id),
+    );
+
+    let page = await app.request(`/campaigns/${campaign.id}/party`, {
+      headers: { Cookie: owner.cookie },
+    });
+    let body = await page.text();
+    expect(body).toContain('aria-label="Remove Remove Retired"');
+
+    const remove = new FormData();
+    remove.set('_csrf', createCsrfToken(owner.sessionId));
+    remove.set('confirm', 'remove');
+    const res = await app.request(`/campaigns/${campaign.id}/characters/${retired.id}/remove`, {
+      method: 'POST',
+      headers: { Cookie: owner.cookie },
+      body: remove,
+    });
+    expect(res.status).toBe(303);
+
+    page = await app.request(`/campaigns/${campaign.id}/party`, {
+      headers: { Cookie: owner.cookie },
+    });
+    body = await page.text();
+    expect(body).not.toContain('Remove Retired');
   });
 
   it('rejects party row actions when the character belongs to another campaign', async () => {
