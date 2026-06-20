@@ -1060,7 +1060,7 @@ describe('request lifecycle telemetry', () => {
   });
 
   it('logs and traces successful requests with safe route metadata', async () => {
-    const res = await app.request('/api/live?email=alice@example.com', {
+    const res = await app.request('/favicon.svg?email=alice@example.com', {
       headers: {
         Cookie: 'session=secret',
         'X-Request-ID': 'req-lifecycle-ok-1',
@@ -1069,7 +1069,7 @@ describe('request lifecycle telemetry', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-ok-1');
-    await expect(res.json()).resolves.toEqual({ status: 'ok' });
+    await expect(res.text()).resolves.toContain('<svg');
 
     const [, , startedInput] = findTelemetryLog('server.request.started');
     expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
@@ -1099,13 +1099,13 @@ describe('request lifecycle telemetry', () => {
       'info',
       'server.request.completed',
       expect.objectContaining({
-        route: '/api/live',
+        route: '/favicon.svg',
         requestId: 'req-lifecycle-ok-1',
         attributes: expect.objectContaining({
           environment: 'test',
           release: 'test-release-sha',
           method: 'GET',
-          route: '/api/live',
+          route: '/favicon.svg',
           status: 200,
           duration_ms: expect.any(Number),
           request_id: 'req-lifecycle-ok-1',
@@ -1118,7 +1118,7 @@ describe('request lifecycle telemetry', () => {
     expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
       expect.objectContaining({
         'http.request.method': 'GET',
-        'http.route': '/api/live',
+        'http.route': '/favicon.svg',
         'http.response.status_code': 200,
         'squire.duration_ms': expect.any(Number),
         'squire.environment': 'test',
@@ -1127,6 +1127,68 @@ describe('request lifecycle telemetry', () => {
       }),
     );
     expect(mockRequestSpan.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs health probe requests without tracing them', async () => {
+    mockRunReadinessChecks.mockResolvedValue({
+      status: 'ok',
+      db: { status: 'ok' },
+      vector: { status: 'ok' },
+      embedder: { status: 'ok' },
+    });
+
+    const live = await app.request('/api/live?email=alice@example.com', {
+      headers: {
+        Cookie: 'session=secret',
+        'X-Request-ID': 'req-lifecycle-live-1',
+      },
+    });
+    const health = await app.request('/api/health', {
+      headers: {
+        'X-Request-ID': 'req-lifecycle-health-1',
+      },
+    });
+
+    expect(live.status).toBe(200);
+    await expect(live.json()).resolves.toEqual({ status: 'ok' });
+    expect(health.status).toBe(200);
+    await expect(health.json()).resolves.toEqual({
+      status: 'ok',
+      db: { status: 'ok' },
+      vector: { status: 'ok' },
+      embedder: { status: 'ok' },
+    });
+
+    expect(mockStartActiveSpan).not.toHaveBeenCalled();
+    expect(mockRequestSpan.setAttributes).not.toHaveBeenCalled();
+    expect(mockRequestSpan.end).not.toHaveBeenCalled();
+
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'server.request.completed',
+      expect.objectContaining({
+        route: '/api/live',
+        requestId: 'req-lifecycle-live-1',
+        attributes: expect.objectContaining({
+          route: '/api/live',
+          status: 200,
+          request_id: 'req-lifecycle-live-1',
+        }),
+      }),
+    );
+    expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
+      'info',
+      'server.request.completed',
+      expect.objectContaining({
+        route: '/api/health',
+        requestId: 'req-lifecycle-health-1',
+        attributes: expect.objectContaining({
+          route: '/api/health',
+          status: 200,
+          request_id: 'req-lifecycle-health-1',
+        }),
+      }),
+    );
   });
 
   it('logs and traces origin-lock rejections before route handlers run', async () => {
