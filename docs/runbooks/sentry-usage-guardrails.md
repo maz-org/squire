@@ -148,6 +148,11 @@ from `0` to `1`:
 LangSmith remains the trace and eval source for AI behavior. Lowering
 `SENTRY_TRACES_SAMPLE_RATE` should not reduce LangSmith tracing.
 
+`/api/live` and `/api/health` intentionally suppress app span export. Fly and
+Sentry probe those routes constantly, so tracing them consumes performance-unit
+quota without improving app debugging. Keep request logs and the Sentry uptime
+monitor for those routes.
+
 Production should store the sample rate as a Fly secret so it can change without
 a code deploy:
 

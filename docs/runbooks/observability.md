@@ -315,10 +315,10 @@ Uptime failures:
    fly releases -a maz-squire --image
    ```
 
-3. If Sentry reports `Status Code: None` with a timeout, compare Sentry app
-   spans for `/api/health` before assuming the request reached Hono. If the app
-   spans are fast and direct probes pass, treat it as an external probe-path
-   timeout.
+3. If Sentry reports `Status Code: None` with a timeout, use direct probes,
+   Sentry monitor status, Fly status, and request logs before assuming the
+   request reached Hono. `/api/live` and `/api/health` intentionally suppress
+   app span export because probe traffic is high-volume quota noise.
 4. If `/api/live` passes but `/api/health` fails, inspect database, vector, and
    embedder readiness before rolling back.
 5. If the failure follows a new release and Sentry has a deploy-regression

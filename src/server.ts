@@ -10,7 +10,8 @@ import 'dotenv/config';
 import './instrumentation.ts';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { SpanStatusCode, trace, type Attributes, type Span } from '@opentelemetry/api';
+import { context, SpanStatusCode, trace, type Attributes, type Span } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import { Hono, type Context, type MiddlewareHandler } from 'hono';
 import {
   identityFromSessionUser,
@@ -202,6 +203,8 @@ export const app = new Hono();
 
 const UNRESOLVED_REQUEST_ROUTE = 'unresolved';
 const UNMATCHED_REQUEST_ROUTE = 'unmatched';
+// Health probes run constantly from Fly and Sentry; logging them is useful, tracing them is quota noise.
+const UNTRACED_HEALTH_PATHS = new Set(['/api/live', '/api/health']);
 const TEST_TELEMETRY_HASH_SECRET = 'squire-test-telemetry-hash-secret';
 const DEV_TELEMETRY_HASH_SECRET = 'squire-development-telemetry-hash-secret';
 
@@ -464,51 +467,60 @@ function annotateRequestSpan(
   }
 }
 
-async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>): Promise<void> {
-  await trace.getTracer('squire.server').startActiveSpan('http.server.request', async (span) => {
-    const startedAt = Date.now();
-    const requestId = correlateRequest(c);
-    const environment = safeTelemetryEnvironment();
-    const release = safeTelemetryRelease();
-    const startRoute = safeRequestStartRoute(c);
+function shouldSuppressRequestTracing(c: Context): boolean {
+  return UNTRACED_HEALTH_PATHS.has(c.req.path);
+}
+
+async function runRequestLifecycle(
+  c: Context,
+  next: () => Promise<void>,
+  span?: Span,
+): Promise<void> {
+  const startedAt = Date.now();
+  const requestId = correlateRequest(c);
+  const environment = safeTelemetryEnvironment();
+  const release = safeTelemetryRelease();
+  const startRoute = safeRequestStartRoute(c);
+
+  captureTelemetryLog(
+    'info',
+    'server.request.started',
+    buildRequestLifecycleLogInput({
+      c,
+      requestId,
+      route: startRoute,
+      environment,
+      release,
+    }),
+  );
+
+  let caughtError: unknown;
+  try {
+    await next();
+  } catch (error) {
+    caughtError = error;
+    throw error;
+  } finally {
+    const status = responseStatus(c, caughtError);
+    const durationMs = requestDurationMs(startedAt);
+    const route = safeRequestRoute(c);
+    const user = safeLifecycleUserFromContext(c);
 
     captureTelemetryLog(
-      'info',
-      'server.request.started',
+      requestLifecycleLevel(status),
+      'server.request.completed',
       buildRequestLifecycleLogInput({
         c,
         requestId,
-        route: startRoute,
+        route,
         environment,
         release,
+        status,
+        durationMs,
       }),
     );
 
-    let caughtError: unknown;
-    try {
-      await next();
-    } catch (error) {
-      caughtError = error;
-      throw error;
-    } finally {
-      const status = responseStatus(c, caughtError);
-      const durationMs = requestDurationMs(startedAt);
-      const route = safeRequestRoute(c);
-      const user = safeLifecycleUserFromContext(c);
-
-      captureTelemetryLog(
-        requestLifecycleLevel(status),
-        'server.request.completed',
-        buildRequestLifecycleLogInput({
-          c,
-          requestId,
-          route,
-          environment,
-          release,
-          status,
-          durationMs,
-        }),
-      );
+    if (span) {
       annotateRequestSpan(span, {
         method: c.req.method,
         route,
@@ -521,6 +533,17 @@ async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>)
       });
       span.end();
     }
+  }
+}
+
+async function requestLifecycleMiddleware(c: Context, next: () => Promise<void>): Promise<void> {
+  if (shouldSuppressRequestTracing(c)) {
+    await context.with(suppressTracing(context.active()), () => runRequestLifecycle(c, next));
+    return;
+  }
+
+  await trace.getTracer('squire.server').startActiveSpan('http.server.request', async (span) => {
+    await runRequestLifecycle(c, next, span);
   });
 }
 
