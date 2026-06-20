@@ -136,7 +136,11 @@ import {
   type CampaignStripState,
   type CampaignDashboardView,
 } from './web-ui/campaign-pages.ts';
-import { renderDashboardThreads } from './web-ui/campaign-dashboard.ts';
+import {
+  renderDashboardProgressError,
+  renderDashboardThreads,
+  type DashboardToast,
+} from './web-ui/campaign-dashboard.ts';
 import { renderCampaignJournal } from './web-ui/campaign-journal.ts';
 import { listJournal } from './campaign/journal.ts';
 import * as PendingMutations from './campaign/pending-mutations.ts';
@@ -1612,6 +1616,7 @@ async function renderCampaignDashboardPage(
     csrfToken,
     showChatChrome: false,
     showRail: false,
+    columnClassName: 'squire-column squire-column--wide',
     campaignStrip: {
       campaignId: detail.campaign.id,
       campaignName: detail.campaign.name,
@@ -1961,30 +1966,43 @@ app.post('/campaigns/:id/modules', async (c) => {
 async function dashboardThreadsFragment(
   campaign: Campaign,
   csrfToken: string,
-  announcement?: string,
+  toast?: DashboardToast,
 ): Promise<{ html: HtmlEscapedString; openScenarioCount: number } | undefined> {
-  const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
-  if (graphs.length === 0) return undefined;
-  const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
-  const availability = deriveAvailability(
-    graphs,
-    new Set(campaign.playedScenarios),
-    new Set(campaign.drawnScenarios),
-    new Set(campaign.skippedScenarios),
-    roster,
-  );
-  const openScenarioCount = [...availability.statuses.values()].filter(
-    (status) => status === 'open',
-  ).length;
-  return {
-    html: renderDashboardThreads({ campaign, graphs, availability, csrfToken, announcement }),
-    openScenarioCount,
-  };
+  try {
+    const graphs = await loadModuleGraphs(campaign.game, campaign.modules);
+    if (graphs.length === 0) return undefined;
+    const roster = await CharacterRepository.listActiveRosterByCampaign(campaign.id);
+    const availability = deriveAvailability(
+      graphs,
+      new Set(campaign.playedScenarios),
+      new Set(campaign.drawnScenarios),
+      new Set(campaign.skippedScenarios),
+      roster,
+    );
+    const openScenarioCount = [...availability.statuses.values()].filter(
+      (status) => status === 'open' || status === 'drew-it',
+    ).length;
+    return {
+      html: renderDashboardThreads({ campaign, graphs, availability, csrfToken, toast }),
+      openScenarioCount,
+    };
+  } catch (error) {
+    captureTelemetryError(error, {
+      route: '/campaigns/:id',
+      fingerprint: ['campaign-progress-load'],
+      context: {
+        surface: 'campaign_progress',
+        game: campaign.game,
+        module_count: campaign.modules.length,
+      },
+    });
+    return { html: renderDashboardProgressError(campaign.id), openScenarioCount: 0 };
+  }
 }
 
 /**
- * Tap-to-advance a scenario (SQR-276): open→played, via-event→drew-it,
- * drew-it→played. Marking played is one-way in v1 — un-play is destructive.
+ * Tap-to-advance a scenario (SQR-276): unlocked→played, manual unlock source
+ * → unlocked. Marking played is one-way in v1 — un-play is destructive.
  * TODO(SQR-279): allow un-play through a confirmed proposal.
  */
 app.post('/campaigns/:id/scenarios/toggle', async (c) => {
@@ -1994,12 +2012,14 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   const form = await c.req.formData();
   const key = typeof form.get('key') === 'string' ? (form.get('key') as string).trim() : '';
   if (!key || key.length > 200) return c.notFound();
-  // `mode=skip` is the skippable-intro path (GH2e scenario 0); default is the
-  // play/draw advance cycle.
-  const mode = form.get('mode') === 'skip' ? 'skip' : 'advance';
+  // `mode=skip` is the skippable-intro path (GH2e scenario 0);
+  // `mode=undo-draw` corrects an accidental manual unlock; default is the
+  // play/unlock advance cycle.
+  const modeValue = form.get('mode');
+  const mode = modeValue === 'skip' || modeValue === 'undo-draw' ? modeValue : 'advance';
 
   const identity = identityFromSessionUser(session.userId);
-  let announcement: string;
+  let toast: DashboardToast;
   let detail: Awaited<ReturnType<typeof CampaignService.getCampaignDetail>>;
   try {
     detail = await CampaignService.getCampaignDetail(identity, campaignId);
@@ -2028,9 +2048,19 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
           expectedVersion: detail.campaign.version,
           skippedScenarios: [...detail.campaign.skippedScenarios, key],
         });
-        announcement = `Scenario ${shortKey} marked skipped.`;
+        toast = { message: `Scenario ${shortKey} marked skipped.`, kind: 'success' };
       } else {
-        announcement = `Scenario ${shortKey} cannot be skipped.`;
+        toast = { message: `Scenario ${shortKey} cannot be skipped.`, kind: 'error' };
+      }
+    } else if (mode === 'undo-draw') {
+      if (status === 'drew-it') {
+        await CampaignService.updateSharedState(identity, campaignId, {
+          expectedVersion: detail.campaign.version,
+          drawnScenarios: detail.campaign.drawnScenarios.filter((drawn) => drawn !== key),
+        });
+        toast = { message: `Scenario ${shortKey} returned to locked.`, kind: 'success' };
+      } else {
+        toast = { message: `Scenario ${shortKey} cannot be returned to locked.`, kind: 'error' };
       }
     } else if (status === 'open' || status === 'drew-it') {
       await CampaignService.updateSharedState(identity, campaignId, {
@@ -2038,15 +2068,15 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
         playedScenarios: [...detail.campaign.playedScenarios, key],
         drawnScenarios: detail.campaign.drawnScenarios.filter((drawn) => drawn !== key),
       });
-      announcement = `Scenario ${shortKey} marked played.`;
+      toast = { message: `Scenario ${shortKey} marked played.`, kind: 'success' };
     } else if (status === 'via-event') {
       await CampaignService.updateSharedState(identity, campaignId, {
         expectedVersion: detail.campaign.version,
         drawnScenarios: [...detail.campaign.drawnScenarios, key],
       });
-      announcement = `Scenario ${shortKey} marked drawn.`;
+      toast = { message: `Scenario ${shortKey} marked unlocked.`, kind: 'success' };
     } else {
-      announcement = `Scenario ${shortKey} is not actionable.`;
+      toast = { message: `Scenario ${shortKey} is not actionable.`, kind: 'error' };
     }
     // Re-read after the write so the fragment reflects the new state.
     detail = await CampaignService.getCampaignDetail(identity, campaignId);
@@ -2055,7 +2085,7 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
     if (error instanceof VersionConflictError) {
       // A concurrent edit won — re-render current state with a notice.
       detail = await CampaignService.getCampaignDetail(identity, campaignId);
-      announcement = 'Updated elsewhere — showing the latest state.';
+      toast = { message: 'Updated elsewhere — showing the latest state.', kind: 'error' };
     } else {
       throw error;
     }
@@ -2064,7 +2094,7 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   const fragment = await dashboardThreadsFragment(
     detail.campaign,
     createCsrfToken(session.id),
-    announcement,
+    toast,
   );
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');

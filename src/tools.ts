@@ -705,7 +705,7 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
       {
         name: 'availability',
         type: 'object',
-        description: 'Derived scenario availability: status counts, open/drew-it keys, hazards',
+        description: 'Derived scenario availability: status counts, unlocked keys, hazards',
       },
       {
         name: 'recentJournal',

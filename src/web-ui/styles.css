@@ -2247,6 +2247,12 @@ template#squire-banner-fixtures {
   padding-top: var(--space-md);
 }
 
+.squire-campaign-workspace .squire-campaign-dashboard--party,
+.squire-campaign-workspace .squire-campaign-dashboard--players,
+.squire-campaign-workspace .squire-campaign-dashboard--settings {
+  max-width: 640px;
+}
+
 .squire-campaign-workspace__header {
   display: grid;
   gap: var(--space-sm);
@@ -2277,6 +2283,12 @@ template#squire-banner-fixtures {
   min-width: 0;
 }
 
+.squire-campaign-workspace__breadcrumb-item[aria-current='page'] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .squire-campaign-workspace__breadcrumb-item + .squire-campaign-workspace__breadcrumb-item::before {
   content: '>';
   color: var(--sepia-dim);
@@ -2298,10 +2310,13 @@ template#squire-banner-fixtures {
 
 .squire-campaign-workspace__header-main {
   display: block;
+  min-width: 0;
+  width: 100%;
 }
 
 .squire-campaign-workspace__identity {
   min-width: 0;
+  width: 100%;
 }
 
 .squire-campaign-workspace__tabs {
@@ -2391,6 +2406,7 @@ template#squire-banner-fixtures {
 
 .squire-campaign-workspace .squire-campaign-dashboard__name {
   max-width: 100%;
+  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2927,12 +2943,85 @@ template#squire-banner-fixtures {
 
 /* ─── Phase 4: scenario-progression dashboard (SQR-276) ────────────────── */
 
-.squire-dashboard-announce {
+.squire-progress-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.squire-progress-section__header .squire-campaign-dashboard__section-title {
   margin: 0;
+}
+
+@media (max-width: 560px) {
+  .squire-progress-section__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+.squire-dashboard-toast-payload {
+  display: none;
+}
+
+.squire-dashboard-toast {
+  position: fixed;
+  right: var(--space-lg);
+  bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+  z-index: 80;
+  max-width: min(360px, calc(100vw - var(--space-xl)));
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface-2);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--parchment);
+}
+
+.squire-dashboard-toast[hidden],
+.squire-dashboard-toast:empty {
+  display: none;
+}
+
+.squire-dashboard-toast[data-toast-kind='success'] {
+  border-color: color-mix(in srgb, var(--sage) 65%, var(--rule));
+}
+
+.squire-dashboard-toast[data-toast-kind='error'] {
+  border-color: color-mix(in srgb, var(--error) 75%, var(--rule));
+  color: var(--parchment);
+}
+
+@media (max-width: 560px) {
+  .squire-dashboard-toast {
+    right: var(--space-md);
+    bottom: max(var(--space-md), env(safe-area-inset-bottom));
+    left: var(--space-md);
+    max-width: none;
+  }
+}
+
+.squire-dashboard-loading {
+  margin: var(--space-xs) 0 0;
   min-height: 1em;
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 12px;
-  color: var(--sage);
+  color: var(--sepia);
+  transition: opacity 120ms ease;
+}
+
+.squire-dashboard-loading.htmx-indicator {
+  opacity: 0;
+}
+
+.squire-dashboard-loading.htmx-request,
+.htmx-request .squire-dashboard-loading.htmx-indicator {
+  opacity: 1;
 }
 
 .squire-dashboard-stats {
@@ -3086,7 +3175,8 @@ template#squire-banner-fixtures {
   color: var(--sage);
 }
 
-.squire-scenario-row__status--open {
+.squire-scenario-row__status--open,
+.squire-scenario-row__status--drew-it {
   color: var(--parchment);
 }
 
@@ -3096,8 +3186,7 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
-.squire-scenario-row__status--blocked,
-.squire-scenario-row__status--drew-it {
+.squire-scenario-row__status--blocked {
   color: var(--amber);
 }
 
@@ -3112,22 +3201,23 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
-/* Skippable intro: the play tap keeps the row width; a quiet Skip control
-   sits beside it, visually subordinate to the primary tap. */
-.squire-scenario-row--skippable {
+/* Secondary row actions sit beside the play tap, visually subordinate. */
+.squire-scenario-row--with-secondary {
   display: flex;
   align-items: center;
 }
 
-.squire-scenario-row--skippable > form:first-of-type {
+.squire-scenario-row--with-secondary > form:first-of-type {
   flex: 1;
 }
 
-.squire-scenario-row__skip-form {
+.squire-scenario-row__skip-form,
+.squire-scenario-row__secondary-form {
   margin: 0;
 }
 
-.squire-scenario-row__skip {
+.squire-scenario-row__skip,
+.squire-scenario-row__secondary {
   all: unset;
   cursor: pointer;
   display: flex;
@@ -3141,11 +3231,29 @@ template#squire-banner-fixtures {
   color: var(--sepia-dim);
 }
 
-.squire-scenario-row__skip:hover {
+.squire-scenario-row__secondary {
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+}
+
+.squire-scenario-row__undo-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.squire-scenario-row__skip:hover,
+.squire-scenario-row__secondary:hover {
   color: var(--sepia);
 }
 
-.squire-scenario-row__skip:focus-visible {
+.squire-scenario-row__skip:focus-visible,
+.squire-scenario-row__secondary:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
@@ -3159,11 +3267,22 @@ template#squire-banner-fixtures {
 }
 
 .squire-dashboard-footnote {
+  display: grid;
+  gap: var(--space-xs);
   margin-top: var(--space-lg);
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: 13px;
   color: var(--sepia-dim);
+}
+
+.squire-dashboard-footnote__label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--sepia);
+}
+
+.squire-dashboard-footnote p {
+  margin: 0;
 }
 
 .squire-campaign-journal__empty {

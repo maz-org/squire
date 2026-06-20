@@ -21,6 +21,8 @@ var activeGameInitialized = false;
 var browserTelemetryConfig = null;
 var lastBrowserTelemetryEventId = null;
 var BUG_REPORT_SCREENSHOT_MAX_BYTES = 1500000;
+var DASHBOARD_TOAST_TIMEOUT_MS = 4000;
+var dashboardToastTimer = null;
 
 var MASKED_REPLAY_MASK_SELECTORS = [
   '.squire-transcript',
@@ -1030,6 +1032,78 @@ function reportHtmxTransportError(eventName, event) {
     htmxStatus: status,
     source: safePathOnly(xhr.responseURL || pathInfo.requestPath),
   });
+}
+
+function clearDashboardToastTimer() {
+  if (
+    dashboardToastTimer !== null &&
+    typeof window !== 'undefined' &&
+    typeof window.clearTimeout === 'function'
+  ) {
+    window.clearTimeout(dashboardToastTimer);
+  }
+  dashboardToastTimer = null;
+}
+
+function ensureDashboardToastRegion() {
+  if (typeof document === 'undefined' || !document.createElement) return null;
+  var existing = document.querySelector ? document.querySelector('.squire-dashboard-toast') : null;
+  if (existing) return existing;
+
+  var root = document.body || document.documentElement;
+  if (!root || !root.appendChild) return null;
+
+  var toast = document.createElement('p');
+  toast.className = 'squire-dashboard-toast';
+  toast.hidden = true;
+  toast.setAttribute('hidden', '');
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  root.appendChild(toast);
+  return toast;
+}
+
+function hideDashboardToast() {
+  clearDashboardToastTimer();
+  var toast = document.querySelector ? document.querySelector('.squire-dashboard-toast') : null;
+  if (!toast) return;
+  toast.textContent = '';
+  toast.hidden = true;
+  toast.setAttribute('hidden', '');
+  toast.removeAttribute('data-toast-kind');
+}
+
+function showDashboardToast(message, kind) {
+  var normalizedMessage = typeof message === 'string' ? message.trim() : '';
+  if (!normalizedMessage) return;
+  var toast = ensureDashboardToastRegion();
+  if (!toast) return;
+
+  clearDashboardToastTimer();
+  toast.textContent = normalizedMessage;
+  toast.setAttribute('data-toast-kind', kind === 'error' ? 'error' : 'success');
+  toast.hidden = false;
+  toast.removeAttribute('hidden');
+
+  if (typeof window !== 'undefined' && typeof window.setTimeout === 'function') {
+    dashboardToastTimer = window.setTimeout(hideDashboardToast, DASHBOARD_TOAST_TIMEOUT_MS);
+  }
+}
+
+function consumeDashboardToastPayload(root) {
+  var scope = root && root.querySelector ? root : document;
+  if (!scope || !scope.querySelector) return;
+
+  var payload = scope.querySelector('.squire-dashboard-toast-payload');
+  if (!payload && scope !== document && document.querySelector) {
+    payload = document.querySelector('.squire-dashboard-toast-payload');
+  }
+  if (!payload) return;
+
+  var message = payload.getAttribute ? payload.getAttribute('data-squire-toast-message') : '';
+  var kind = payload.getAttribute ? payload.getAttribute('data-squire-toast-kind') : 'success';
+  if (payload.remove) payload.remove();
+  showDashboardToast(message, kind);
 }
 
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
@@ -3427,6 +3501,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
   var form = document.querySelector('.squire-input-dock');
   var questionInput = form && form.querySelector('input[name="question"]');
   if (questionInput) questionInput.value = '';
+  consumeDashboardToastPayload(event.detail && event.detail.target);
   syncChatFormAction();
   syncActiveGameControls();
   syncTranscriptScrollRoot();
@@ -3458,6 +3533,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+  consumeDashboardToastPayload(document);
   syncChatFormAction();
   syncActiveGameControls();
   syncTranscriptScrollRoot();

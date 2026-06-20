@@ -8,9 +8,11 @@
  * hazard warnings sit ADJACENT to the affected thread, never pooled.
  *
  * Statuses are derived per request (never stored); tapping an actionable
- * row posts to the toggle route, which re-renders this fragment with an
- * aria-live announcement. Marking played is one-way in v1 — un-play is a
- * destructive mutation and joins the propose→confirm gate.
+ * row posts to the toggle route, which re-renders this fragment with a hidden
+ * toast payload consumed by squire.js. Marking played is one-way in v1 —
+ * un-play is a destructive mutation and joins the propose→confirm gate.
+ * Manually unlocking a scenario is reversible because it is an easy mistaken
+ * click at the table.
  * TODO(SQR-279): allow un-play through a confirmed proposal.
  */
 import { html } from 'hono/html';
@@ -23,23 +25,55 @@ import type { Campaign } from '../db/repositories/types.ts';
 const STATUS_LABEL: Record<ScenarioStatus, string> = {
   played: 'PLAYED ✓',
   skipped: 'SKIPPED',
-  open: 'OPEN',
+  open: 'UNLOCKED',
   locked: 'LOCKED',
   blocked: 'BLOCKED',
-  'via-event': 'VIA EVENT',
-  'drew-it': 'DREW IT',
+  'via-event': 'MANUAL',
+  'drew-it': 'UNLOCKED',
 };
 
 /** Statuses a tap can advance (played is one-way in v1; see header note). */
 const ACTIONABLE: ReadonlySet<ScenarioStatus> = new Set(['open', 'via-event', 'drew-it']);
+
+const PROGRESS_LOADING_INDICATOR = '#squire-dashboard-progress-loading';
+
+function progressSectionHeader(options: { hasScenarioData: boolean }): HtmlEscapedString {
+  return html`<header class="squire-progress-section__header">
+    <h2 class="squire-campaign-dashboard__section-title">Progress</h2>
+    ${options.hasScenarioData
+      ? html`<a
+          class="squire-button squire-button--primary squire-button--small"
+          href="#squire-dashboard-thread-list"
+          >Record progress</a
+        >`
+      : html``}
+  </header>` as HtmlEscapedString;
+}
 
 export interface DashboardThreadsInput {
   campaign: Campaign;
   graphs: ModuleGraph[];
   availability: AvailabilityResult;
   csrfToken: string;
-  /** aria-live announcement after a toggle ("Scenario 19 now open"). */
-  announcement?: string;
+  /** Browser-rendered viewport toast after a toggle. */
+  toast?: DashboardToast;
+}
+
+export type DashboardToastKind = 'success' | 'error';
+
+export interface DashboardToast {
+  message: string;
+  kind: DashboardToastKind;
+}
+
+function toastPayload(toast: DashboardToast | undefined): HtmlEscapedString {
+  if (!toast) return html`` as HtmlEscapedString;
+  return html`<p
+    class="squire-dashboard-toast-payload"
+    hidden
+    data-squire-toast-kind="${toast.kind}"
+    data-squire-toast-message="${toast.message}"
+  ></p>` as HtmlEscapedString;
 }
 
 function statsLine(availability: AvailabilityResult): HtmlEscapedString {
@@ -49,7 +83,7 @@ function statsLine(availability: AvailabilityResult): HtmlEscapedString {
   }
   const stats: Array<[string, number]> = [
     ['PLAYED', counts.played ?? 0],
-    ['OPEN', counts.open ?? 0],
+    ['UNLOCKED', (counts.open ?? 0) + (counts['drew-it'] ?? 0)],
     ['LOCKED', counts.locked ?? 0],
     ['BLOCKED', counts.blocked ?? 0],
   ];
@@ -66,6 +100,32 @@ function statsLine(availability: AvailabilityResult): HtmlEscapedString {
   </dl>` as HtmlEscapedString;
 }
 
+function manualUnlockLabel(cond: string | null): string {
+  const normalized = cond?.toLowerCase() ?? '';
+  if (normalized.includes('personal quest') || normalized.includes('retire')) {
+    return 'PERSONAL QUEST';
+  }
+  if (normalized.includes('random')) return 'RANDOM';
+  if (normalized.includes('puzzle')) return 'PUZZLE';
+  if (normalized.includes('event') && normalized.includes('retirement')) return 'EVENT / RETIRE';
+  if (normalized.includes('event')) return 'EVENT';
+  if (normalized.includes('not documented')) return 'CHECK BOOK';
+  if (normalized.includes('section')) return 'SECTION';
+  return 'EVENT';
+}
+
+function undoIcon(): HtmlEscapedString {
+  return html`<svg
+    class="squire-scenario-row__undo-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M9 14 4 9l5-5" />
+    <path d="M4 9h10a6 6 0 1 1 0 12h-1" />
+  </svg>` as HtmlEscapedString;
+}
+
 function scenarioRow(input: {
   campaignId: string;
   csrfToken: string;
@@ -80,12 +140,14 @@ function scenarioRow(input: {
   skippable?: boolean;
   confirmText?: string;
 }): HtmlEscapedString {
-  const label = STATUS_LABEL[input.status];
+  const label =
+    input.status === 'via-event' ? manualUnlockLabel(input.cond) : STATUS_LABEL[input.status];
   // Skip is offered only for a skippable intro that is currently open — the
   // single moment the party can decline to play it. Never on other rows.
   const showSkip = Boolean(input.skippable) && input.status === 'open';
-  // A manual scenario explains itself via its event cond; a character-gated
-  // solo via its class requirement. Never event language for the latter.
+  const showUndoDraw = input.status === 'drew-it';
+  // A manual scenario explains how to unlock it until the table has marked it
+  // unlocked. Once unlocked, it is just an unlocked scenario like any other.
   const subLabel = input.status === 'via-event' && input.cond ? input.cond : input.requirement;
   const rowBody = html`<span class="squire-scenario-row__number">${input.scenarioKey}</span>
     <span class="squire-scenario-row__name"
@@ -111,6 +173,7 @@ function scenarioRow(input: {
         hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
         hx-target="#squire-dashboard-threads"
         hx-swap="outerHTML"
+        hx-indicator="${PROGRESS_LOADING_INDICATOR}"
         class="squire-scenario-row__skip-form"
       >
         <input type="hidden" name="_csrf" value="${input.csrfToken}" />
@@ -125,12 +188,35 @@ function scenarioRow(input: {
         </button>
       </form>`
     : html``;
+  const undoDrawForm = showUndoDraw
+    ? html`<form
+        method="post"
+        action="/campaigns/${input.campaignId}/scenarios/toggle"
+        hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
+        hx-target="#squire-dashboard-threads"
+        hx-swap="outerHTML"
+        hx-indicator="${PROGRESS_LOADING_INDICATOR}"
+        class="squire-scenario-row__secondary-form"
+      >
+        <input type="hidden" name="_csrf" value="${input.csrfToken}" />
+        <input type="hidden" name="key" value="${input.qualified}" />
+        <input type="hidden" name="mode" value="undo-draw" />
+        <button
+          type="submit"
+          class="squire-scenario-row__secondary"
+          aria-label="Undo unlock for scenario ${input.scenarioKey} ${input.name}"
+          title="Undo unlock"
+        >
+          ${undoIcon()}
+        </button>
+      </form>`
+    : html``;
 
   // Actionable rows are real forms: plain-POST safe, HTMX-enhanced swap.
   return html`<li
     class="squire-scenario-row squire-scenario-row--${input.status}${showSkip
       ? ' squire-scenario-row--skippable'
-      : ''}"
+      : ''}${showSkip || showUndoDraw ? ' squire-scenario-row--with-secondary' : ''}"
   >
     <form
       method="post"
@@ -138,14 +224,50 @@ function scenarioRow(input: {
       hx-post="/campaigns/${input.campaignId}/scenarios/toggle"
       hx-target="#squire-dashboard-threads"
       hx-swap="outerHTML"
+      hx-indicator="${PROGRESS_LOADING_INDICATOR}"
       ${input.confirmText ? html`hx-confirm="${input.confirmText}"` : html``}
     >
       <input type="hidden" name="_csrf" value="${input.csrfToken}" />
       <input type="hidden" name="key" value="${input.qualified}" />
       <button type="submit" class="squire-scenario-row__tap">${rowBody}</button>
     </form>
-    ${skipForm}
+    ${skipForm} ${undoDrawForm}
   </li>` as HtmlEscapedString;
+}
+
+export function renderDashboardProgressEmpty(): HtmlEscapedString {
+  return html`<section
+    class="squire-campaign-dashboard__threads"
+    id="squire-dashboard-threads"
+    aria-label="Scenario progression"
+  >
+    ${progressSectionHeader({ hasScenarioData: false })}
+    <p class="squire-campaign-dashboard__placeholder">
+      No scenario data for this campaign's modules yet.
+    </p>
+  </section>` as HtmlEscapedString;
+}
+
+export function renderDashboardProgressError(campaignId: string): HtmlEscapedString {
+  return html`<section
+    class="squire-campaign-dashboard__threads"
+    id="squire-dashboard-threads"
+    aria-label="Scenario progression"
+  >
+    ${progressSectionHeader({ hasScenarioData: false })}
+    <div class="squire-banner squire-banner--error" role="alert">
+      <span class="squire-banner__label">COULD NOT LOAD</span>
+      <p class="squire-banner__body">Progress is unavailable right now.</p>
+      <div class="squire-banner__actions">
+        <a
+          class="squire-button squire-button--ghost squire-button--small"
+          href="/campaigns/${campaignId}"
+        >
+          Retry
+        </a>
+      </div>
+    </div>
+  </section>` as HtmlEscapedString;
 }
 
 /**
@@ -178,11 +300,17 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
     id="squire-dashboard-threads"
     aria-label="Scenario progression"
   >
-    <p class="squire-dashboard-announce" aria-live="polite" role="status">
-      ${input.announcement ?? ''}
+    ${progressSectionHeader({ hasScenarioData: threads.length > 0 })} ${toastPayload(input.toast)}
+    <p
+      class="squire-dashboard-loading htmx-indicator"
+      id="squire-dashboard-progress-loading"
+      aria-live="polite"
+      role="status"
+    >
+      Updating progress...
     </p>
     ${statsLine(availability)}
-    <div class="squire-dashboard-grid">
+    <div class="squire-dashboard-grid" id="squire-dashboard-thread-list">
       ${threads.map(({ thread, qualifiedKeys }) => {
         // Skipped scenarios are done too — count them toward thread progress.
         const playedCount = qualifiedKeys.filter((key) => {
@@ -246,10 +374,14 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
       })}
     </div>
     ${availability.unknownKeys.length > 0
-      ? html`<p class="squire-dashboard-footnote">
-          UNKNOWN: ${availability.unknownKeys.join(', ')} — not in the curated graph yet. The graph
-          is advisory; trust the game.
-        </p>`
+      ? html`<div class="squire-dashboard-footnote" role="note">
+          <span class="squire-dashboard-footnote__label">missing graph data</span>
+          <p>
+            Squire cannot place these recorded scenarios on the graph yet:
+            ${availability.unknownKeys.map((key) => key.split(':')[1] ?? key).join(', ')}.
+          </p>
+          <p>Keep tracking them with the scenario book.</p>
+        </div>`
       : html``}
   </section>` as HtmlEscapedString;
 }

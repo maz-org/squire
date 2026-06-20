@@ -3,8 +3,8 @@
  *
  * Seeded against a tiny module graph: thread sections render with derived
  * statuses and the DESIGN.md status vocabulary; hazard banners sit inside
- * the affected thread; the toggle route advances open→played and the
- * manual via-event→drew-it→played cycle with aria-live announcements;
+ * the affected thread; the toggle route advances unlocked→played and the
+ * manual unlock→unlocked→played cycle with toast announcements;
  * played rows are not tappable in v1 (un-play is destructive, SQR-279);
  * non-members get the indistinguishable 404.
  */
@@ -110,7 +110,7 @@ async function toggle(
   user: TestUser,
   campaignId: string,
   key: string,
-  mode?: 'skip',
+  mode?: 'skip' | 'undo-draw',
 ): Promise<Response> {
   const form = new FormData();
   form.set('_csrf', createCsrfToken(user.sessionId));
@@ -171,7 +171,9 @@ describe('dashboard rendering', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
 
+    expect(body).toContain('squire-column squire-column--wide');
     expect(body).toContain('class="squire-campaign-workspace"');
+    expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--progress');
     expect(body).toContain('Dashboard Campaign');
     expect(body).toContain('aria-label="Breadcrumb"');
     expect(body).toContain('href="/campaigns"');
@@ -194,6 +196,8 @@ describe('dashboard rendering', () => {
     expect(body).not.toContain('>Scenarios</a>');
     expect(body).not.toContain('>More</');
     expect(body).toContain('aria-label="Scenario progression"');
+    expect(body).toContain('<h2 class="squire-campaign-dashboard__section-title">Progress</h2>');
+    expect(body).toContain('Record progress');
     expect(body).not.toContain('aria-label="Party roster"');
     expect(body).not.toContain('squire-character-create');
   });
@@ -210,6 +214,7 @@ describe('dashboard rendering', () => {
       new RegExp(`href="/campaigns/${campaign.id}/party"[^>]*aria-current="page"`),
     );
     expect(body).toContain(`href="/campaigns/${campaign.id}"`);
+    expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--party');
     expect(body).toContain('class="squire-campaign-dashboard__party"');
     expect(body).toContain('aria-label="Party"');
     expect(body).toContain('squire-section-reveal__summary">Add character</summary>');
@@ -250,12 +255,17 @@ describe('dashboard rendering', () => {
 
     expect(body).toContain('Main Thread');
     expect(body).toContain('The opening arc');
-    expect(body).toContain('OPEN'); // scenario 1
+    expect(body).toContain('UNLOCKED'); // scenario 1
     expect(body).toContain('LOCKED'); // 2 and 3 gated on 1
-    expect(body).toContain('VIA EVENT'); // manual 4 with cond note
+    expect(body).toContain('EVENT'); // manual 4 with cond note before unlock
     expect(body).toContain('Drawn from the event deck');
+    expect(body).toContain('Record progress');
+    expect(body).toContain('id="squire-dashboard-progress-loading"');
+    expect(body).toContain('hx-indicator="#squire-dashboard-progress-loading"');
+    expect(body).not.toContain('squire-dashboard-toast-payload');
     expect(body).toContain('aria-live="polite"');
     expect(body).toContain('squire-dashboard-stats');
+    expect(body).toContain('<dt class="squire-dashboard-stats__label">UNLOCKED</dt>');
 
     const headerStats = dashboardHeaderStats(body);
     expect(headerStats).toBe('Frosthaven · Prosperity 1');
@@ -269,31 +279,76 @@ describe('dashboard rendering', () => {
     const mainThread = body.slice(body.indexOf('Main Thread'), body.indexOf('Event Thread'));
     expect(mainThread).toContain('permanently closes');
   });
+
+  it('surfaces unknown scenario state as partial advisory data', async () => {
+    const { owner, campaign } = await setupFixture();
+    await CampaignService.updateSharedState(identityFromSessionUser(owner.userId), campaign.id, {
+      expectedVersion: campaign.version,
+      drawnScenarios: ['fh:999'],
+    });
+
+    const res = await app.request(`/campaigns/${campaign.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('missing graph data');
+    expect(body).toContain('Squire cannot place these recorded scenarios on the graph yet:');
+    expect(body).toContain('999.');
+    expect(body).toContain('Keep tracking them with the scenario book.');
+  });
 });
 
 describe('toggle route', () => {
-  it('advances open→played and the manual cycle with announcements', async () => {
+  it('advances unlocked→played and the manual unlock cycle with toast announcements', async () => {
     const { owner, campaign } = await setupFixture();
 
     const played = await toggle(owner, campaign.id, 'fh:1');
     expect(played.status).toBe(200);
     const playedBody = await played.text();
-    expect(playedBody).toContain('Scenario 1 marked played.');
+    expect(playedBody).toContain('data-squire-toast-message="Scenario 1 marked played."');
+    expect(playedBody).toContain('data-squire-toast-kind="success"');
+    expect(playedBody).toContain('class="squire-dashboard-toast-payload"');
+    expect(playedBody).not.toContain('class="squire-dashboard-toast"');
     expect(playedBody).toContain('PLAYED ✓');
     // 2 and 3 opened by playing 1.
     expect(playedBody.match(/--open/g)?.length).toBeGreaterThanOrEqual(2);
     expect(playedBody).toContain('hx-swap-oob="true"');
     expect(dashboardHeaderStats(playedBody)).toBe('Frosthaven · Prosperity 1');
 
-    // Manual cycle: via-event → drew-it → played.
-    const drew = await toggle(owner, campaign.id, 'fh:4');
-    expect(await drew.text()).toContain('Scenario 4 marked drawn.');
+    // Manual cycle: unlock source → unlocked → played, with correction available
+    // after the easy-to-misclick unlock step.
+    const unlocked = await toggle(owner, campaign.id, 'fh:4');
+    const unlockedBody = await unlocked.text();
+    expect(unlockedBody).toContain('data-squire-toast-message="Scenario 4 marked unlocked."');
+    expect(unlockedBody).toContain('UNLOCKED');
+    expect(unlockedBody).not.toContain('DREW IT');
+    expect(unlockedBody).not.toContain('Undo draw');
+    expect(unlockedBody).toContain('name="mode" value="undo-draw"');
+    expect(unlockedBody).toContain('aria-label="Undo unlock for scenario 4 Scenario 4"');
+    expect(unlockedBody).toContain('squire-scenario-row__undo-icon');
     const playedManual = await toggle(owner, campaign.id, 'fh:4');
     const manualBody = await playedManual.text();
-    expect(manualBody).toContain('Scenario 4 marked played.');
+    expect(manualBody).toContain('data-squire-toast-message="Scenario 4 marked played."');
 
     // Played rows are not tappable in v1 (un-play is destructive).
     expect(manualBody).not.toContain('name="key" value="fh:4"');
+  });
+
+  it('undoes an accidental manual unlock and returns the scenario to its unlock source label', async () => {
+    const { owner, campaign } = await setupFixture();
+
+    await toggle(owner, campaign.id, 'fh:4');
+    const undo = await toggle(owner, campaign.id, 'fh:4', 'undo-draw');
+    expect(undo.status).toBe(200);
+    const body = await undo.text();
+    expect(body).toContain('Scenario 4 returned to locked.');
+    const eventThread = body.slice(body.indexOf('Event Thread'));
+    expect(eventThread).toContain('EVENT');
+    expect(eventThread).toContain('Drawn from the event deck');
+    expect(eventThread).not.toContain('UNLOCKED');
+    expect(eventThread).not.toContain('Undo unlock');
+    expect(eventThread).not.toContain('name="mode" value="undo-draw"');
   });
 
   it('confirms hazardous taps and 404s non-members', async () => {
@@ -350,6 +405,8 @@ describe('skippable intro (SQR-317)', () => {
     await toggle(owner, campaign.id, 'fh:0', 'skip'); // 1 becomes open
     const denied = await toggle(owner, campaign.id, 'fh:1', 'skip');
     expect(denied.status).toBe(200);
-    expect(await denied.text()).toContain('Scenario 1 cannot be skipped.');
+    const body = await denied.text();
+    expect(body).toContain('data-squire-toast-message="Scenario 1 cannot be skipped."');
+    expect(body).toContain('data-squire-toast-kind="error"');
   });
 });

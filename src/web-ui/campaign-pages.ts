@@ -14,6 +14,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
 import type { Campaign } from '../db/repositories/types.ts';
 import { allOptionalModuleOptions, gameDefinitionFor, isGameId, moduleLabel } from '../game.ts';
+import { renderDashboardProgressEmpty } from './campaign-dashboard.ts';
 
 /** Header context-strip state. Null = signed-in user with no campaigns. */
 export interface CampaignStripState {
@@ -608,19 +609,9 @@ export function renderCampaignDashboardContent(
   return html`<section class="squire-campaign-workspace" data-campaign-id="${campaign.id}">
     ${renderCampaignWorkspaceHeader(campaign, headerStats)}
     ${renderCampaignWorkspaceNav(campaign.id, activeView)}
-    <div class="squire-campaign-dashboard">
+    <div class="squire-campaign-dashboard squire-campaign-dashboard--${activeView}">
       ${activeView === 'progress'
-        ? html`${threadsFragment ??
-          html`<section
-            class="squire-campaign-dashboard__threads"
-            id="squire-dashboard-threads"
-            aria-label="Scenario progression"
-          >
-            <p class="squire-campaign-dashboard__placeholder">
-              No scenario data for this campaign's modules yet.
-            </p>
-          </section>`}
-          ${journalFragment ?? html``}`
+        ? html`${threadsFragment ?? renderDashboardProgressEmpty()} ${journalFragment ?? html``}`
         : html``}
       ${activeView === 'party'
         ? html`<section class="squire-campaign-dashboard__party" aria-label="Party">
