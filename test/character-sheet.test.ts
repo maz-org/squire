@@ -198,6 +198,32 @@ describe('GET /characters/:id', () => {
     expect(body).toContain('Artwork: Cephalofair Games');
   });
 
+  it('renders an explicit class stats fallback when mat data is unavailable', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const ownerIdentity = identityFromSessionUser(owner.userId);
+    const campaign = await CampaignService.createCampaign(ownerIdentity, {
+      name: 'Unknown Class Campaign',
+      game: 'gloomhaven-2e',
+      modules: [],
+    });
+    const character = await CharacterService.createCharacter(ownerIdentity, campaign.id, {
+      name: 'Unknown Hero',
+      className: 'Unrecorded Class',
+      level: 3,
+      xp: 120,
+      gold: 15,
+    });
+
+    const res = await app.request(`/characters/${character.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('squire-sheet__hero-stats');
+    expect(body).toContain('CLASS STATS NOT RECORDED');
+    expect(body).not.toContain('HAND 10');
+  });
+
   it('serves mirrored character mat artwork from this app', async () => {
     const res = await app.request('/assets/character-mats/gloomhaven-2e/gh2-bruiser.jpeg');
     expect(res.status).toBe(200);

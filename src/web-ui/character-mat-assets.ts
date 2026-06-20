@@ -65,5 +65,9 @@ export async function readCharacterMatAsset(input: {
 }): Promise<Buffer | null> {
   if (input.game !== 'gloomhaven-2e') return null;
   if (!GH2E_ALLOWED_FILES.has(input.file)) return null;
-  return readFile(new URL(`${input.game}/${input.file}`, CHARACTER_MAT_ASSET_ROOT));
+  try {
+    return await readFile(new URL(`${input.game}/${input.file}`, CHARACTER_MAT_ASSET_ROOT));
+  } catch {
+    return null;
+  }
 }

@@ -27,12 +27,12 @@ The top-level workspace sections are:
 The build must use the approved mockup as the visual reference, not as disposable
 concept art.
 
-| Screen                   | Approved Mockup                                                                                | Direction                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Campaign workspace Party | `/Users/bcm/.gstack/projects/maz-org-squire/designs/campaign-workspace-20260619/variant-A.png` | Start with Variant A. Add Variant C's navigation tab icons and action button treatment. Include a visible way to view retired characters. |
+| Screen                   | Approved Mockup                                                           | Direction                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Campaign workspace Party | `docs/artifacts/campaign-workspace-redesign/party-approved-variant-a.png` | Start with Variant A. Add Variant C's navigation tab icons and action button treatment. Include a visible way to view retired characters. |
 
 Supporting artifact:
-`/Users/bcm/.gstack/projects/maz-org-squire/designs/campaign-workspace-20260619/approved.json`
+`docs/artifacts/campaign-workspace-redesign/approved-reference.json`
 
 ## Visual Parity Requirement
 
@@ -371,7 +371,7 @@ Scope:
 Acceptance:
 
 - Desktop Party screenshot is compared to
-  `/Users/bcm/.gstack/projects/maz-org-squire/designs/campaign-workspace-20260619/variant-A.png`.
+  `docs/artifacts/campaign-workspace-redesign/party-approved-variant-a.png`.
 - Mobile screenshots confirm icon tabs, row actions, text fit, and no overlap.
 - Manual QA covers Progress, Party, Players, Settings, campaign switching, and
   destructive confirmations.

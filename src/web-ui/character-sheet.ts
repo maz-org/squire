@@ -168,6 +168,20 @@ function renderTraitList(mat: CharacterMatSummary | null | undefined): HtmlEscap
   </span>` as HtmlEscapedString;
 }
 
+function renderHeroStats(
+  mat: CharacterMatSummary | null | undefined,
+  levelHp: number | null,
+): HtmlEscapedString {
+  if (!mat || levelHp === null) {
+    return html`<span class="squire-sheet__hero-empty"
+      >CLASS STATS NOT RECORDED</span
+    >` as HtmlEscapedString;
+  }
+  return html`${renderHeroStat('HAND', mat.handSize)} ${renderHeroStat('HP', levelHp)}
+  ${renderHeroStat('PERKS', mat.perks.length)} ${renderHeroStat('MASTERIES', mat.masteries.length)}
+  ${renderTraitList(mat)}` as HtmlEscapedString;
+}
+
 function renderMatArtwork(input: { game: string; className: string }): HtmlEscapedString {
   const artwork = characterMatArtworkFor(input.game, input.className);
   if (!artwork) {
@@ -205,11 +219,7 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
           ${character.status === 'retired' ? html`<span>Retired</span>` : html``}
         </p>
         <div class="squire-sheet__hero-stats" aria-label="Class stats">
-          ${renderHeroStat('HAND', data.characterMat?.handSize ?? null)}
-          ${renderHeroStat('HP', levelHp)}
-          ${renderHeroStat('PERKS', data.characterMat?.perks.length ?? null)}
-          ${renderHeroStat('MASTERIES', data.characterMat?.masteries.length ?? null)}
-          ${renderTraitList(data.characterMat)}
+          ${renderHeroStats(data.characterMat, levelHp)}
         </div>
       </div>
       ${renderMatArtwork({ game: data.campaign.game, className: character.className })}
