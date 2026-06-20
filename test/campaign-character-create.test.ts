@@ -39,9 +39,14 @@ const OUTSIDER_EMAIL = 'outsider@example.com';
 // auth state), so seed once and clean up in afterAll.
 const MAT_SOURCE_IDS = ['test-create-drifter', 'test-create-banner-spear'];
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function expectSelectOption(body: string, value: string, selected = false) {
+  const escapedValue = escapeRegExp(value);
   const optionPattern = new RegExp(
-    `<option\\s+value="${value}"[\\s\\S]*?${selected ? 'selected' : ''}[\\s\\S]*?>\\s*${value}\\s*</option>`,
+    `<option\\s+value="${escapedValue}"[\\s\\S]*?${selected ? 'selected' : ''}[\\s\\S]*?>\\s*${escapedValue}\\s*</option>`,
   );
   expect(body).toMatch(optionPattern);
 }
