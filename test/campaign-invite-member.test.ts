@@ -123,7 +123,7 @@ describe('invite-member UI (SQR-319)', () => {
     expect(memberView).not.toContain('squire-invite-member');
   });
 
-  it('lets the owner invite a member, shown as INVITED in the roster', async () => {
+  it('lets the owner invite a member, shown as pending in the Party section', async () => {
     const { owner, campaign } = await setupFixture();
     const res = await invite(owner, campaign.id, INVITEE_EMAIL);
     expect(res.status).toBe(303);
@@ -135,8 +135,9 @@ describe('invite-member UI (SQR-319)', () => {
       })
     ).text();
     expect(dash).toContain(INVITEE_EMAIL);
-    expect(dash).toContain('INVITED');
-    expect(dash).toContain('squire-campaign-dashboard__member--invited');
+    expect(dash).toContain('Pending invites');
+    expect(dash).toContain('squire-campaign-dashboard__invite-status');
+    expect(dash).toContain('Invited');
   });
 
   it('rejects an invalid email with an inline error', async () => {

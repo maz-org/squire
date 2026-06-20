@@ -19,12 +19,14 @@ import * as CampaignService from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
 import { identityFromSessionUser } from '../src/campaign/identity.ts';
 import { cardItems } from '../src/db/schema/cards.ts';
+import { cardCharacterMats } from '../src/db/schema/cards.ts';
 import { users } from '../src/db/schema/core.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
 const OWNER_EMAIL = 'owner@example.com';
 const MEMBER_EMAIL = 'member@example.com';
 const OUTSIDER_EMAIL = 'outsider@example.com';
+const SHEET_MAT_SOURCE_IDS = ['test-sheet-drifter', 'test-sheet-bruiser'];
 
 interface TestUser {
   cookie: string;
@@ -83,17 +85,72 @@ async function setupSheetFixture() {
   return { owner, member, ownerIdentity, campaign, character };
 }
 
+async function seedSheetMats() {
+  const { db } = getDb('server');
+  await db
+    .insert(cardCharacterMats)
+    .values([
+      {
+        game: 'frosthaven',
+        sourceId: SHEET_MAT_SOURCE_IDS[0],
+        name: 'Drifter',
+        characterClass: 'Inox',
+        handSize: 9,
+        traits: ['durable', 'resourceful'],
+        hp: { '1': 10, '2': 12, '3': 14 },
+        perks: ['Ignore negative item effects'],
+        masteries: ['Never drop below half health'],
+      },
+      {
+        game: 'gloomhaven-2e',
+        sourceId: SHEET_MAT_SOURCE_IDS[1],
+        name: 'Bruiser',
+        characterClass: 'Inox',
+        handSize: 10,
+        traits: ['strong', 'armored'],
+        hp: { '1': 10, '2': 12, '3': 14 },
+        perks: ['Replace 2 -1 cards with +1 cards'],
+        masteries: ['Push a foe into danger'],
+      },
+    ])
+    .onConflictDoNothing();
+}
+
+async function setupGh2SheetFixture() {
+  const owner = await createTestUser(OWNER_EMAIL);
+  const ownerIdentity = identityFromSessionUser(owner.userId);
+  const campaign = await CampaignService.createCampaign(ownerIdentity, {
+    name: 'Mat Campaign',
+    game: 'gloomhaven-2e',
+    modules: [],
+  });
+  const character = await CharacterService.createCharacter(ownerIdentity, campaign.id, {
+    name: 'Mat Hero',
+    className: 'Bruiser',
+    level: 3,
+    xp: 120,
+    gold: 15,
+  });
+  return { owner, campaign, character };
+}
+
 beforeAll(async () => {
   await setupTestDb();
+  await seedSheetMats();
 });
 
 beforeEach(async () => {
   await resetTestDb();
+  await seedSheetMats();
   process.env.SQUIRE_ALLOWED_EMAILS = [OWNER_EMAIL, MEMBER_EMAIL, OUTSIDER_EMAIL].join(',');
 });
 
 afterAll(async () => {
   delete process.env.SQUIRE_ALLOWED_EMAILS;
+  const { db } = getDb('server');
+  await db
+    .delete(cardCharacterMats)
+    .where(inArray(cardCharacterMats.sourceId, SHEET_MAT_SOURCE_IDS));
   await teardownTestDb();
   await shutdownServerPool();
 });
@@ -122,6 +179,30 @@ describe('GET /characters/:id', () => {
     expect(body).toContain('SHEET-PQ-SECRET');
     expect(body).toContain('Sheet Hero');
     expect(body).toContain('action="/characters/' + character.id + '/update"');
+  });
+
+  it('renders the redesigned identity header with mat art and class stats', async () => {
+    const { owner, character } = await setupGh2SheetFixture();
+    const res = await app.request(`/characters/${character.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('squire-sheet__hero');
+    expect(body).toContain('squire-sheet__hero-stats');
+    expect(body).toContain('squire-sheet__mat-art');
+    expect(body).toContain('src="/assets/character-mats/gloomhaven-2e/gh2-bruiser.jpeg"');
+    expect(body).toContain('HAND 10');
+    expect(body).toContain('HP 14');
+    expect(body).toContain('STRONG');
+    expect(body).toContain('Artwork: Cephalofair Games');
+  });
+
+  it('serves mirrored character mat artwork from this app', async () => {
+    const res = await app.request('/assets/character-mats/gloomhaven-2e/gh2-bruiser.jpeg');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('image/jpeg');
+    expect(res.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
   });
 
   it('shows non-owners public fields only — no private sections, no edit forms', async () => {
@@ -291,13 +372,19 @@ describe('items section', () => {
 });
 
 describe('dashboard reachability', () => {
-  it('links each character from the campaign party view', async () => {
+  it('links each character from one Party section without owner-role roster chrome', async () => {
     const { owner, campaign, character } = await setupSheetFixture();
     const res = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
     const body = await res.text();
     expect(body).toContain(`href="/characters/${character.id}"`);
-    expect(body).toContain('Characters');
+    expect(body).toContain('squire-campaign-dashboard__party');
+    expect(body).toContain('squire-campaign-dashboard__character-name');
+    expect(body).toContain('squire-campaign-dashboard__character-class');
+    expect(body).toContain('squire-campaign-dashboard__character-level');
+    expect(body).not.toContain('squire-campaign-dashboard__member-role');
+    expect(body).not.toContain('OWNER');
+    expect(body).not.toContain('>Characters</h2>');
   });
 });

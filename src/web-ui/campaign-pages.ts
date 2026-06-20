@@ -8,7 +8,7 @@
  * SET UP`; it never shows fake state. The dashboard content itself
  * (threads, statuses) lands in SQR-276 — this module owns the shells.
  */
-import { html } from 'hono/html';
+import { html, raw } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
@@ -199,43 +199,51 @@ function renderCharacterCreateForm(
   campaignId: string,
   data: CharacterCreateForm,
 ): HtmlEscapedString {
-  return html`${data.errorMessage
-      ? html`<div class="squire-banner squire-banner--error" role="alert">
-          <span class="squire-banner__label">COULD NOT SAVE</span>
-          <p class="squire-banner__body">${data.errorMessage}</p>
-        </div>`
-      : html``}
-    <form
-      method="post"
-      action="/campaigns/${campaignId}/characters"
-      class="squire-character-create"
-      aria-label="Add a character"
-    >
-      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-      <label class="squire-character-create__field">
-        <span class="squire-character-create__field-label">NAME</span>
-        <input name="name" type="text" required maxlength="100" autocomplete="off" />
-      </label>
-      <label class="squire-character-create__field">
-        <span class="squire-character-create__field-label">CLASS</span>
-        ${data.classOptions.length > 0
-          ? html`<select name="className" required>
-              ${data.classOptions.map((cls) => html`<option value="${cls}">${cls}</option>`)}
-            </select>`
-          : html`<input
-              name="className"
-              type="text"
-              required
-              maxlength="100"
-              autocomplete="off"
-            />`}
-      </label>
-      <label class="squire-character-create__field">
-        <span class="squire-character-create__field-label">LEVEL</span>
-        <input name="level" type="number" min="1" max="20" value="1" />
-      </label>
-      <button type="submit" class="squire-character-create__submit">ADD CHARACTER</button>
-    </form>` as HtmlEscapedString;
+  return html`<details
+    class="squire-section-reveal squire-character-create-reveal"
+    ${data.errorMessage ? raw('open') : raw('')}
+  >
+    <summary class="squire-section-reveal__summary">Add character</summary>
+    <div class="squire-section-reveal__body">
+      ${data.errorMessage
+        ? html`<div class="squire-banner squire-banner--error" role="alert">
+            <span class="squire-banner__label">COULD NOT SAVE</span>
+            <p class="squire-banner__body">${data.errorMessage}</p>
+          </div>`
+        : html``}
+      <form
+        method="post"
+        action="/campaigns/${campaignId}/characters"
+        class="squire-character-create"
+        aria-label="Add a character"
+      >
+        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+        <label class="squire-character-create__field">
+          <span class="squire-character-create__field-label">NAME</span>
+          <input name="name" type="text" required maxlength="100" autocomplete="off" />
+        </label>
+        <label class="squire-character-create__field">
+          <span class="squire-character-create__field-label">CLASS</span>
+          ${data.classOptions.length > 0
+            ? html`<select name="className" required>
+                ${data.classOptions.map((cls) => html`<option value="${cls}">${cls}</option>`)}
+              </select>`
+            : html`<input
+                name="className"
+                type="text"
+                required
+                maxlength="100"
+                autocomplete="off"
+              />`}
+        </label>
+        <label class="squire-character-create__field">
+          <span class="squire-character-create__field-label">LEVEL</span>
+          <input name="level" type="number" min="1" max="20" value="1" />
+        </label>
+        <button type="submit" class="squire-character-create__submit">ADD CHARACTER</button>
+      </form>
+    </div>
+  </details>` as HtmlEscapedString;
 }
 
 /** The dashboard "Invite member" affordance state (SQR-319). */
@@ -274,6 +282,48 @@ function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): Htm
         <button type="submit" class="squire-invite-member__submit">INVITE</button>
       </form>`
     : html``}` as HtmlEscapedString;
+}
+
+function renderDashboardCharacters(characters?: DashboardCharacterRow[]): HtmlEscapedString {
+  if (!characters || characters.length === 0) {
+    return html`<p class="squire-campaign-dashboard__empty">
+      No characters yet — add your first below.
+    </p>` as HtmlEscapedString;
+  }
+  return html`<ul class="squire-campaign-dashboard__characters">
+    ${characters.map(
+      (character) =>
+        html`<li class="squire-campaign-dashboard__character">
+          <a class="squire-campaign-dashboard__character-link" href="/characters/${character.id}">
+            <span class="squire-campaign-dashboard__character-name">${character.name}</span>
+            <span class="squire-campaign-dashboard__character-class">${character.className}</span>
+            <span class="squire-campaign-dashboard__character-level">Level ${character.level}</span>
+            ${character.placeholder
+              ? html`<span class="squire-campaign-dashboard__character-note">Unclaimed</span>`
+              : html``}
+          </a>
+        </li>`,
+    )}
+  </ul>` as HtmlEscapedString;
+}
+
+function renderPendingInvites(pendingInvites: CampaignDetail['members']): HtmlEscapedString {
+  if (pendingInvites.length === 0) return html`` as HtmlEscapedString;
+  return html`<section
+    class="squire-campaign-dashboard__pending-invites"
+    aria-label="Pending invites"
+  >
+    <h3 class="squire-campaign-dashboard__subsection-title">Pending invites</h3>
+    <ul class="squire-campaign-dashboard__invite-list">
+      ${pendingInvites.map(
+        (member) =>
+          html`<li class="squire-campaign-dashboard__invite-row">
+            <span>${member.email}</span>
+            <span class="squire-campaign-dashboard__invite-status">Invited</span>
+          </li>`,
+      )}
+    </ul>
+  </section>` as HtmlEscapedString;
 }
 
 /** The dashboard "Rename campaign" affordance (SQR-320). */
@@ -472,7 +522,6 @@ export function renderCampaignDashboardContent(
   activeView: CampaignDashboardView = 'scenarios',
 ): HtmlEscapedString {
   const { campaign } = detail;
-  const activeMembers = detail.members.filter((member) => member.status === 'active');
   // Pending invites are real state — shown distinctly, never as fake rows.
   const pendingInvites = detail.members.filter((member) => member.status === 'invited');
   return html`<section class="squire-campaign-dashboard" data-campaign-id="${campaign.id}">
@@ -495,53 +544,12 @@ export function renderCampaignDashboardContent(
           </p>
         </section>`}
         ${journalFragment ?? html``}`
-      : html`<section class="squire-campaign-dashboard__roster" aria-label="Party roster">
-            <h2 class="squire-campaign-dashboard__section-title">Party</h2>
-            <ul class="squire-campaign-dashboard__members">
-              ${activeMembers.map(
-                (member) =>
-                  html`<li class="squire-campaign-dashboard__member">
-                    ${member.name ?? member.email}
-                    <span class="squire-campaign-dashboard__member-role"
-                      >${member.role.toUpperCase()}</span
-                    >
-                  </li>`,
-              )}
-              ${pendingInvites.map(
-                (member) =>
-                  html`<li
-                    class="squire-campaign-dashboard__member squire-campaign-dashboard__member--invited"
-                  >
-                    ${member.email}
-                    <span class="squire-campaign-dashboard__member-role">INVITED</span>
-                  </li>`,
-              )}
-            </ul>
-            ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
-          </section>
-          <section class="squire-campaign-dashboard__characters" aria-label="Characters">
-            <h2 class="squire-campaign-dashboard__section-title">Characters</h2>
-            ${characters && characters.length > 0
-              ? html`<ul class="squire-campaign-dashboard__members">
-                  ${characters.map(
-                    (character) =>
-                      html`<li class="squire-campaign-dashboard__member">
-                        <a
-                          class="squire-campaign-dashboard__character-link"
-                          href="/characters/${character.id}"
-                          >${character.name}</a
-                        >
-                        <span class="squire-campaign-dashboard__member-role"
-                          >${character.className.toUpperCase()} ·
-                          L${character.level}${character.placeholder ? ' · UNCLAIMED' : ''}</span
-                        >
-                      </li>`,
-                  )}
-                </ul>`
-              : html`<p class="squire-campaign-dashboard__empty">
-                  No characters yet — add your first below.
-                </p>`}
-            ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
-          </section>`}
+      : html`<section class="squire-campaign-dashboard__party" aria-label="Party">
+          <h2 class="squire-campaign-dashboard__section-title">Party</h2>
+          ${renderDashboardCharacters(characters)}
+          ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
+          ${renderPendingInvites(pendingInvites)}
+          ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
+        </section>`}
   </section>` as HtmlEscapedString;
 }

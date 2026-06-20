@@ -2348,6 +2348,84 @@ template#squire-banner-fixtures {
   letter-spacing: 0.14em;
 }
 
+.squire-campaign-dashboard__party {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.squire-campaign-dashboard__characters,
+.squire-campaign-dashboard__invite-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.squire-campaign-dashboard__character {
+  border-top: 1px solid var(--rule);
+}
+
+.squire-campaign-dashboard__character-link {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-sm);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-sm) 0;
+  color: var(--parchment-dim);
+  text-decoration: none;
+}
+
+.squire-campaign-dashboard__character-link:hover {
+  color: var(--parchment);
+}
+
+.squire-campaign-dashboard__character-name,
+.squire-campaign-dashboard__character-class,
+.squire-campaign-dashboard__character-level {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.squire-campaign-dashboard__character-note {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.squire-campaign-dashboard__pending-invites {
+  margin-top: var(--space-xs);
+}
+
+.squire-campaign-dashboard__subsection-title {
+  margin: 0 0 var(--space-xs);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--sepia);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.squire-campaign-dashboard__invite-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 44px;
+  align-items: center;
+  color: var(--sepia);
+  border-top: 1px solid var(--rule);
+}
+
+.squire-campaign-dashboard__invite-status {
+  font-size: 11px;
+  color: var(--sepia-dim);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .squire-campaign-dashboard__empty {
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 13px;
@@ -2360,12 +2438,41 @@ template#squire-banner-fixtures {
 
 /* New-character create form (SQR-318): mirrors the campaign create form —
    small-caps field labels, wax primary action, 44px controls. */
+.squire-section-reveal {
+  margin-top: var(--space-xs);
+}
+
+.squire-section-reveal__summary {
+  width: fit-content;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--sepia);
+  cursor: pointer;
+  list-style: none;
+}
+
+.squire-section-reveal__summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-section-reveal__summary:hover {
+  color: var(--parchment-dim);
+}
+
+.squire-section-reveal__body {
+  margin-top: var(--space-xs);
+}
+
 .squire-character-create {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-md);
   align-items: end;
-  margin-top: var(--space-sm);
 }
 
 .squire-character-create__field {
@@ -3065,11 +3172,10 @@ template#squire-banner-fixtures {
   color: var(--sepia);
 }
 
-/* ─── Accordion character sheet (SQR-277, DESIGN.md §Accordion sheet) ────────
-   Collapsible ledger sections built for the everyday single-field edit:
-   44px summary targets, small-caps section vocabulary, deep-linkable ids.
-   Banner variants: --warning (amber rules check), --claim (sage placeholder
-   claim) extend the shared .squire-banner shell. */
+/* ─── Character sheet (SQR-326 supersedes SQR-277 / DESIGN.md G3) ────────────
+   A heavier identity + mat-art header sits above the same deep-linkable
+   edit-in-place sections. The sections stay boring on purpose: they preserve
+   the single-field correction path, no-JS fallback, and anchor contract. */
 
 .squire-banner--claim {
   border-left-color: var(--sage);
@@ -3081,17 +3187,36 @@ template#squire-banner-fixtures {
 }
 
 .squire-sheet {
-  max-width: 640px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 16px;
   display: grid;
-  gap: 14px;
+  gap: 18px;
+}
+
+.squire-sheet__hero {
+  display: grid;
+  gap: var(--space-lg);
+  align-items: start;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--rule);
+}
+
+@media (min-width: 1080px) {
+  .squire-sheet__hero {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+  }
+}
+
+.squire-sheet__identity {
+  display: grid;
+  gap: var(--space-sm);
 }
 
 .squire-sheet__breadcrumb {
   margin: 0 0 4px;
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
 }
 
 .squire-sheet__breadcrumb a {
@@ -3106,19 +3231,94 @@ template#squire-banner-fixtures {
 .squire-sheet__name {
   margin: 0;
   font-family: 'Fraunces', serif;
-  font-size: 1.6rem;
+  font-size: 2.75rem;
+  line-height: 1.05;
+  color: var(--parchment);
 }
 
-.squire-sheet__stats {
-  margin: 4px 0 0;
+@media (min-width: 700px) {
+  .squire-sheet__name {
+    font-size: 4.25rem;
+  }
+}
+
+.squire-sheet__class-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin: 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--parchment-dim);
+}
+
+.squire-sheet__hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.squire-sheet__hero-stat,
+.squire-sheet__trait {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: 'Geist', system-ui, sans-serif;
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--parchment-dim);
+}
+
+.squire-sheet__traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.squire-sheet__trait {
   color: var(--sepia);
+}
+
+.squire-sheet__mat {
+  margin: 0;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.squire-sheet__mat-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.squire-sheet__mat-credit,
+.squire-sheet__mat-placeholder {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--sepia);
+}
+
+.squire-sheet__mat--placeholder {
+  min-height: 120px;
+  align-content: center;
+  padding: var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
 }
 
 .squire-sheet__sections {
   display: grid;
   gap: 8px;
+  max-width: 720px;
 }
 
 .squire-sheet__section {

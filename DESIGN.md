@@ -1,6 +1,6 @@
 # Design System — Squire
 
-**Version:** 0.11
+**Version:** 0.13
 **Date:** 2026-06-19
 **Status:** Approved via `/design-consultation`. Covers all eight phases of the
 Squire initiative, not just Phase 1. Implementation in `src/web-ui/` follows
@@ -574,24 +574,36 @@ Log below). **Approved visual reference:**
 implementers in any worktree build from the approved direction. Storyline art
 per thread (from the rejected variant B) may be adopted if it survives a
 visual check during implementation; it is optional, the layout is not.
+For the campaign workspace redesign, the approved Party reference is
+`/Users/bcm/.gstack/projects/maz-org-squire/designs/campaign-workspace-20260619/variant-A.png`
+with the adjustments recorded in
+[docs/plans/campaign-workspace-redesign-design-plan.md](docs/plans/campaign-workspace-redesign-design-plan.md);
+that reference supersedes the older dashboard mockup when building the new
+campaign workspace.
 
 ### Information architecture
 
 Dedicated routes sharing the ledger shell — `/campaigns` (list/create/join),
 `/campaigns/:id` (progression dashboard + shared state + roster + journal),
-`/characters/:id` (accordion sheet). Chat stays the home surface; the desktop
+`/characters/:id` (character sheet). Chat stays the home surface; the desktop
 rail remains conversation history (ADR 0020). The **header context strip is
 the persistent bridge**: it shows the active campaign/character and tapping it
 opens the campaign dashboard from anywhere.
 
-Within `/campaigns/:id`, the dashboard itself is a two-view segmented surface:
-**Scenarios** is the default route view, and **Party** is the secondary view.
-The view state is encoded in the URL (`/campaigns/:id` for Scenarios,
-`/campaigns/:id/party` for Party) so no-JS users, agents, and shared links
-can reach either view. This supersedes the G2 assumption that party management
-and scenario progression should stack on one full-viewport surface; the route
-and context-strip parts of G2 still stand. See
-[ADR 0023](docs/adr/0023-campaign-dashboard-path-segmented-views.md).
+Within `/campaigns/:id`, the campaign surface is a four-section workspace:
+**Progress**, **Party**, **Players**, and **Settings**. The campaign root
+defaults to Progress, because campaign play is primarily about current
+progression and next choices. Party is characters only. Players is campaign
+membership and invites. Settings is campaign setup such as name and optional
+content.
+
+Section state is encoded in path segments so no-JS users, agents, shared links,
+bug reports, and manual tests can target the same surfaces:
+`/campaigns/:id`, `/campaigns/:id/party`, `/campaigns/:id/players`, and
+`/campaigns/:id/settings`. The older Scenarios/Party-only design in G7/G8 is
+historical guidance for the current implementation, not the target for new
+campaign workspace work. See
+[docs/plans/campaign-workspace-redesign-design-plan.md](docs/plans/campaign-workspace-redesign-design-plan.md).
 
 ### Context strip
 
@@ -601,6 +613,11 @@ campaign-only, and `NO CAMPAIGN · SET UP` (links to `/campaigns`) when none.
 **On campaign surfaces the campaign name is more prominent than the Squire
 brand** — the user's campaign outranks our wordmark there. Never shows fake
 state: no campaign means the set-up affordance, not placeholder content.
+
+On campaign workspace routes, the header also carries campaign switching:
+current campaign name, campaign system metadata, a compact campaign switcher,
+and a visible `Campaigns` or `Home` return link. The switcher changes campaign
+context; it does not replace the section navigation.
 
 ### Scenario status vocabulary
 
@@ -620,39 +637,86 @@ gets a glyph:
 | DREW IT   | `--amber` label (event scenario drawn, not yet played)          |
 | UNKNOWN   | `--sepia-dim` label + advisory footnote ("trust the game")      |
 
-### Progression dashboard (`/campaigns/:id`)
+### Campaign workspace components (`/campaigns/:id` and section routes)
 
-- **Segmented dashboard views**: Scenarios first, Party second. The segment
-  control is quiet ledger navigation, not a marketing tab bar: Geist small-caps,
-  44px tap targets, hairline rule, no pill badges. Scenarios renders the
-  flowchart, scenario stats, and journal. Party renders the member roster,
-  invite affordance, character links, and create-character form. The default
-  page must not put party management above the scenario flow.
+- **Workspace header**: campaign name is the strongest first-viewport signal.
+  It sits with campaign system metadata, a campaign switcher, and a visible
+  `Campaigns` or `Home` return link. Do not make the campaign name only tiny
+  nav text.
+- **Workspace icon tabs**: Progress, Party, Players, and Settings stay visible
+  as icon-plus-label tabs with 44px minimum tap targets and stable URLs.
+  Active state uses the ledger vocabulary: parchment text, hairline rule, and
+  sparing wax accent. Do not hide Players or Settings behind `More`.
+- **Section action bar**: every section starts with a heading and one clear
+  primary action aligned with that section's job, such as `Record progress`,
+  `Add character`, `Invite player`, or `Save settings`. These actions must
+  read as buttons, not detached small-caps text.
+- **Progress items**: Progress renders a scenario progression surface, not a
+  generic table. Scenario nodes or grouped rows distinguish available,
+  completed, locked, and unknown states using the status vocabulary above.
+  Open-scenario counts and scenario summaries belong here, not on Party.
+- **Character rows**: Party is character state, not member administration.
+  Active characters appear first; retired characters remain visible below.
+  Rows show name plus compact class/level text such as `Bruiser 3`, and expose
+  `Open sheet`, `Level`, `Retire`, and `Remove` actions without hover.
+- **Player rows**: Players is membership state. Joined players and pending
+  invites are separate sections with visible remove/cancel actions. Invites do
+  not belong on Party.
+- **Settings forms**: Settings owns campaign name and optional content. Use
+  explicit labels such as `Campaign name` and `Optional content`; do not use
+  loose controls named `Rename` or `Modules`.
+- **Inline errors**: failed row or form actions render next to the failed
+  control and preserve entered values. Do not pool unrelated failures at the
+  top of the workspace.
+- **Destructive confirmations**: remove, retire, and membership-removal actions
+  require an explicit confirmation that names the thing being changed and
+  offers cancel plus confirm.
+- Desktop: data surfaces may use multi-column layouts — the 640px reading
+  column applies to prose surfaces, not campaign management. Mobile keeps a
+  single content column with visible icon tabs.
+
+### Progression surface (`/campaigns/:id`)
+
 - **Stats line** under the header: `PLAYED 16 · OPEN 7 · LOCKED 58 ·
 BLOCKED 2` — Geist small caps with `tabular-nums`.
-- **Thread sections**: Fraunces heading + one-line `--sepia` note + hairline
-  `--rule` separators; scenario rows are number + name (Geist) + status
-  label. Rows are 44px minimum touch targets.
-- **Tap to mark played** (drew→played→clear cycle for event scenarios);
-  derived statuses recalculate via HTMX swap with an `aria-live="polite"`
-  announcement ("Scenario 19 now open"). Rows with hazard consequences
-  always confirm before applying.
+- **Thread or flow sections**: Fraunces heading + one-line `--sepia` note +
+  hairline `--rule` separators; scenario rows are number + name (Geist) +
+  status label. Rows are 44px minimum touch targets.
+- **Record progress** is the primary action. Derived statuses recalculate via
+  HTMX swap with an `aria-live="polite"` announcement ("Scenario 19 now
+  open"). Rows with hazard consequences always confirm before applying.
 - **Hazard warnings** use the `.squire-banner` amber variant placed
   **adjacent to the affected thread/scenario**, never pooled at the top:
   "Playing 27 permanently closes 10, 21, 35 & 36."
-- Desktop: multi-column thread grid — the 640px reading column applies to
-  prose surfaces, not data surfaces. Mobile: single column.
+- If full flowchart data is incomplete, show a simplified progression view with
+  explicit missing-data treatment rather than falling back to a plain list.
 
-### Accordion character sheet (`/characters/:id`)
+### Section-scoped reveal controls
 
-One route, collapsible ledger sections (identity, level/XP, gold, items,
-cards, perks, personal quest, notes) — optimized for the everyday
-single-field edit, not the rare full create (conversational onboarding owns
-that). Sections edit in place with GHS-data autocomplete; each section has a
-**deep-linkable anchor** (`#gold`) so agent work-log rows and validation
-warnings can link "fix it here." Non-owners see member-visible fields only;
-unclaimed placeholders show a claim banner (`.squire-banner` sage variant).
-Empty sections say "not recorded" with an add affordance — never fake values.
+Inline forms that are secondary to a section's main job use a native
+`<details>` reveal, collapsed by default and opened by the server when an error
+needs attention. The summary is a quiet small-caps action (`Add character`,
+`Invite player`, etc.) with a 44px tap target. The body contains the ordinary
+form, so no-JS users get the same behavior and failed posts can re-render with
+the form open plus a local `.squire-banner--error`.
+
+### Character sheet (`/characters/:id`)
+
+One route with a heavy identity/stat hero above lighter edit sections. The hero
+shows character name, class, level, gold, class stats from the character-mat
+data (hand size, HP at current level, perk/mastery counts, traits), and actual
+class mat artwork when Squire has a mirrored local asset. Artwork is attributed
+and served from Squire, never hot-linked. This supersedes G3's accordion-only
+direction; see [ADR 0024](docs/adr/0024-character-sheet-mat-art-hero.md).
+
+The edit sections still use collapsible ledger sections (identity, level/XP,
+gold, items, cards, perks, personal quest, notes) because the everyday action is
+still a single-field correction. Sections edit in place with GHS-data
+autocomplete; each section has a **deep-linkable anchor** (`#gold`) so agent
+work-log rows and validation warnings can link "fix it here." Non-owners see
+member-visible fields only; unclaimed placeholders show a claim banner
+(`.squire-banner` sage variant). Empty sections say "not recorded" with an add
+affordance — never fake values.
 
 ### Confirmation block (conversational writes)
 
@@ -712,17 +776,34 @@ holds at label sizes for the status vocabulary above.
 | 2026-06-07 | **Compact state-driven work-log disclosure** — the `Compact` / `Normal` / `Full` control is removed. Each work log has only a caret summary and compact event rows. It opens while Squire is working, collapses after `done` to `Checked N sources`, stays reopenable, and stays open on errors. No plus/minus icon, header bar, or border treatment ships around the log.                              | The first SQR-255 pass spent too many pixels on mode controls and chrome. The useful information is the event list itself: `Checked rulebook`, `Checked card index`. State-driven disclosure matches how the user reads it at the table: see work while waiting, get a small provenance summary after the answer.                                                                                                                                                                                               |
 | 2026-06-12 | **G1: Dashboard visual direction = variant C** (layout + brand logo), variant B's storyline art optional, lockout warnings adjacent to the affected thread/scenario, campaign name more prominent than the Squire brand, no italic statuses. Approved mockup committed at `docs/artifacts/phase-4-dashboard-mockup-approved.png`.                                                                       | User rated three generated variants on a comparison board (plan-design-review 2026-06-12): A read crowded with bulky badges; B had weaker status distinction but the best thread art; C was clearest. Feedback captured in the design session's `approved.json`.                                                                                                                                                                                                                                                |
 | 2026-06-12 | **G2: IA = dedicated routes + context-strip bridge** (rejected panels-over-chat, rejected hybrid glance panel). `/campaigns`, `/campaigns/:id`, `/characters/:id`; chat stays home; strip tap → dashboard; `NO CAMPAIGN · SET UP` when none.                                                                                                                                                            | The dashboard is a dense full-viewport surface (the prototype is a full screen for a reason); the desktop rail is already conversation history (ADR 0020); the always-visible strip gives a one-gesture bridge so routes don't feel like a second app. From plan-design-review D2.                                                                                                                                                                                                                              |
-| 2026-06-12 | **G3: Character entry = accordion sheet** (rejected stepped wizard, rejected hybrid)                                                                                                                                                                                                                                                                                                                    | Post-onboarding, the dominant form use is the single-field correction (gold after shopping); an accordion opens straight to the one section needed and deep-link anchors let the agent point at it. Conversational onboarding owns the long create path where a wizard would have helped. From plan-design-review D3.                                                                                                                                                                                           |
+| 2026-06-12 | **G3: Character entry = accordion sheet** (rejected stepped wizard, rejected hybrid) — **superseded by G9 / ADR 0024**                                                                                                                                                                                                                                                                                  | Post-onboarding, the dominant form use is the single-field correction (gold after shopping); an accordion opens straight to the one section needed and deep-link anchors let the agent point at it. Conversational onboarding owns the long create path where a wizard would have helped. From plan-design-review D3.                                                                                                                                                                                           |
 | 2026-06-12 | **G4: State transparency = per-answer work-log rows + route-level inspect/correct** (rejected dedicated chat panel, rejected routes-only)                                                                                                                                                                                                                                                               | The work log is already the trust surface; per-answer provenance ("used: Drifter L4 · gold 23") lands exactly where doubt arises, and the campaign/character routes carry the full "what Squire knows" view without new chat chrome. From plan-design-review D4 / SQR-258.                                                                                                                                                                                                                                      |
 | 2026-06-12 | **G5: Phase 4 component vocabulary** — sepia small-caps status labels (PLAYED sage / OPEN parchment / LOCKED sepia-dim / BLOCKED amber / VIA EVENT sepia / DREW IT amber), Fraunces thread headings + sepia notes, tabular-nums stats line, adjacent `.squire-banner` amber hazard warnings, confirmation block = surface panel + work-log rows + wax confirm (distinct from the Phase 5 verdict block) | Reuses the existing token and banner vocabulary instead of inventing new chrome; statuses as typography (not chips) keeps the printed-index feel and answered the variant-A "badges too loud" feedback. See §Phase 4 Components.                                                                                                                                                                                                                                                                                |
 | 2026-06-12 | **G6: Phase 4 a11y + responsive bundle** — 44px scenario-row/accordion targets, keyboard row-focus with Enter-to-toggle (hazard rows always confirm), `aria-live="polite"` recalc announcements, desktop multi-column thread grid (640px column is for prose, not data surfaces)                                                                                                                        | The dashboard is an interactive data surface, not a transcript; recalculation is the moment screen-reader users most need narrated, and the reading-column rule was never meant to constrain tabular layouts. From plan-design-review Pass 6.                                                                                                                                                                                                                                                                   |
-| 2026-06-19 | **G7: Campaign dashboard internal IA = Scenarios / Party segmented views** — narrows G2. `/campaigns/:id` defaults to Scenarios; `/campaigns/:id/party` opens Party. No-JS and agent links use the same URLs.                                                                                                                                                                                           | Real dashboard use is usually "find the next scenario" or "mark one played." Party management is secondary and should not push the scenario flow below the fold. A path segment reads as a named dashboard section instead of presentation state, which makes reports, logs, and agent links clearer. See [ADR 0023](docs/adr/0023-campaign-dashboard-path-segmented-views.md).                                                                                                                                 |
+| 2026-06-19 | **G7: Campaign dashboard internal IA = Scenarios / Party segmented views** — narrows G2; **superseded by G11** for new campaign workspace work. `/campaigns/:id` defaults to Scenarios; `/campaigns/:id/party` opens Party. No-JS and agent links use the same URLs.                                                                                                                                    | Real dashboard use is usually "find the next scenario" or "mark one played." Party management is secondary and should not push the scenario flow below the fold. A path segment reads as a named dashboard section instead of presentation state, which makes reports, logs, and agent links clearer. See [ADR 0023](docs/adr/0023-campaign-dashboard-path-segmented-views.md).                                                                                                                                 |
+| 2026-06-19 | **G8: Party section = characters, not member-role roster** — narrows G7; **superseded by G11** for new campaign workspace work. Party rows are character rows; name, class, and level share equal weight, and owner/member role labels are removed from the dashboard Party view.                                                                                                                       | The party is what the table plays, not an admin list. Owner/member metadata is useful for permissions but noisy on the dashboard. Equal visual weight for name/class/level makes the Party view scan like a compact character roster instead of a name with dim metadata. From SQR-324.                                                                                                                                                                                                                         |
+| 2026-06-19 | **G9: Character sheet = mat-art hero + edit sections** — supersedes G3. `/characters/:id` opens with a heavy identity/stat hero and mirrored class mat artwork, then keeps deep-linkable edit sections below.                                                                                                                                                                                           | The old accordion preserved edits but made every field equal and visually flat. The hero gives the physical-sheet signal Brian wanted while preserving edit-in-place, anchors, no-JS forms, claim/concurrency banners, and private projection. See [ADR 0024](docs/adr/0024-character-sheet-mat-art-hero.md).                                                                                                                                                                                                   |
+| 2026-06-19 | **G10: Section-scoped reveal controls** — secondary inline forms are collapsed native disclosures that open on validation errors.                                                                                                                                                                                                                                                                       | The create-character form is useful but should not consume dashboard space on every visit. Native `<details>` keeps the pattern CSP-clean, no-JS friendly, and reusable for future small section actions. From SQR-325.                                                                                                                                                                                                                                                                                         |
+| 2026-06-19 | **G11: Campaign workspace = Progress / Party / Players / Settings** — supersedes the two-section Scenarios/Party target for new campaign workspace work. `/campaigns/:id` opens Progress; Party, Players, and Settings use path routes. Header includes campaign switcher; mobile keeps visible icon tabs; Party includes active and retired characters; Players owns invites and membership.           | The Party page IA blurred campaign context, character state, player membership, settings, and scenario progress. The approved redesign makes campaign progress the default surface, gives players and settings real homes, and requires strict visual parity with the approved mockup at `/Users/bcm/.gstack/projects/maz-org-squire/designs/campaign-workspace-20260619/variant-A.png`. See `docs/plans/campaign-workspace-redesign-design-plan.md`.                                                           |
 
 <!-- markdownlint-enable MD060 -->
 
 ---
 
 ## Changelog
+
+- **2026-06-19 (v0.13):** Campaign workspace redesign supersedes the
+  Scenarios/Party-only target for new campaign workspace work. The target IA is
+  Progress, Party, Players, and Settings with path routes, visible mobile icon
+  tabs, a campaign switcher, active and retired characters, Players-owned
+  invites, explicit state coverage, and strict visual parity with the approved
+  mockup recorded in
+  `docs/plans/campaign-workspace-redesign-design-plan.md`.
+
+- **2026-06-19 (v0.12):** SQR-324/325/326 update Phase 4 surfaces: Party now
+  lists characters instead of owner/member role rows, create-character uses a
+  section-scoped reveal, and character sheets use a mat-art identity hero plus
+  preserved edit sections. ADR 0024 records the G3 supersession.
 
 - **2026-06-19 (v0.11):** SQR-322 now uses path-backed dashboard segments:
   `/campaigns/:id` for Scenarios and `/campaigns/:id/party` for Party. ADR 0023

@@ -73,10 +73,12 @@ import * as ConversationRepository from './db/repositories/conversation-reposito
 import {
   findCardByName,
   findItemByNumber,
+  getCharacterMatSummary,
   listCardOptionsForClass,
   listItemOptions,
   resolveCardDisplayNames,
 } from './campaign/character-sheet-data.ts';
+import { readCharacterMatAsset } from './web-ui/character-mat-assets.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
@@ -1250,6 +1252,22 @@ app.get('/:file{htmx\\.[a-f0-9]+\\.js}', async (c) => {
   return c.body(content);
 });
 
+app.get('/assets/character-mats/:game/:file{[a-z0-9-]+\\.jpeg}', async (c) => {
+  const asset = await readCharacterMatAsset({
+    game: c.req.param('game'),
+    file: c.req.param('file'),
+  });
+  if (!asset) return c.notFound();
+  const body = new Uint8Array(asset.byteLength);
+  body.set(asset);
+  return new Response(body.buffer, {
+    headers: {
+      'content-type': 'image/jpeg',
+      'cache-control': PROD_ASSET_CACHE_CONTROL,
+    },
+  });
+});
+
 // ─── Web UI: companion-first layout shell (SQR-65) ───────────────────────────
 //
 // GET / renders the authenticated app shell and redirects unauthenticated
@@ -2023,6 +2041,7 @@ async function renderCharacterSheetPage(
     itemSourceIds: detail.items.map((item) => item.sourceId),
     cardSourceIds: detail.cards.map((card) => card.sourceId),
   });
+  const characterMat = await getCharacterMatSummary(game, detail.character.className);
   c.header('Cache-Control', 'no-store');
   c.header('Vary', 'Cookie');
   return c.html(
@@ -2031,6 +2050,7 @@ async function renderCharacterSheetPage(
       csrfToken: createCsrfToken(session.id),
       showChatChrome: false,
       showRail: false,
+      columnClassName: 'squire-column squire-column--wide',
       campaignStrip: {
         campaignId: campaignDetail.campaign.id,
         campaignName: campaignDetail.campaign.name,
@@ -2052,6 +2072,7 @@ async function renderCharacterSheetPage(
           : [],
         itemNames: names.items,
         cardNames: names.cards,
+        characterMat,
         ...state,
       }),
     }),
