@@ -1,8 +1,8 @@
 /**
  * Rename-a-campaign web UI tests (SQR-320).
  *
- * A quiet rename disclosure under the dashboard title. The campaign name is
- * shared state, so any active member may rename (matching updateSharedState's
+ * A quiet rename disclosure in the Settings view. The campaign name is shared
+ * state, so any active member may rename (matching updateSharedState's
  * authorization and the scenario-toggle control) — not owner-gated. Renaming
  * updates the title AND the header context strip; empty/over-long names and
  * stale version tokens surface inline; a non-member gets the 404.
@@ -110,7 +110,9 @@ describe('rename-campaign UI (SQR-320)', () => {
   it('renders the rename disclosure on the dashboard', async () => {
     const { owner, campaign } = await setupFixture();
     const body = await (
-      await app.request(`/campaigns/${campaign.id}`, { headers: { Cookie: owner.cookie } })
+      await app.request(`/campaigns/${campaign.id}/settings`, {
+        headers: { Cookie: owner.cookie },
+      })
     ).text();
     expect(body).toContain('squire-campaign-rename');
     expect(body).toContain('action="/campaigns/' + campaign.id + '/rename"');
@@ -123,7 +125,7 @@ describe('rename-campaign UI (SQR-320)', () => {
     const { owner, campaign } = await setupFixture();
     const res = await rename(owner, campaign.id, 'Renamed Quest', campaign.version);
     expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe(`/campaigns/${campaign.id}`);
+    expect(res.headers.get('location')).toBe(`/campaigns/${campaign.id}/settings`);
 
     const body = await (
       await app.request(`/campaigns/${campaign.id}`, { headers: { Cookie: owner.cookie } })

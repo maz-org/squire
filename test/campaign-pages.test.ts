@@ -108,7 +108,7 @@ describe('campaign routes', () => {
     const body = await res.text();
     expect(body).toContain('Travel Campaign');
     expect(body).toContain('squire-campaign-strip--prominent');
-    expect(body).toContain('PROSPERITY 1');
+    expect(body).toContain('Frosthaven · Prosperity 1');
   });
 
   it('serves the indistinguishable 404 to non-members and for absent ids', async () => {

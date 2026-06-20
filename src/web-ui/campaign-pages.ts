@@ -348,25 +348,20 @@ export interface CampaignModulesForm {
   errorMessage?: string;
 }
 
-export interface CampaignDashboardHeaderStats {
-  openScenarioCount?: number;
-}
+export type CampaignDashboardHeaderStats = Record<string, never>;
 
-export type CampaignDashboardView = 'scenarios' | 'party';
+export type CampaignDashboardView = 'progress' | 'party' | 'players' | 'settings';
+
+function gameSystemLabel(game: string): string {
+  if (!isGameId(game)) return game;
+  return gameDefinitionFor(game).label.replace(' (', ' ').replace(')', '');
+}
 
 function campaignDashboardHeaderStatsLine(
   campaign: Campaign,
-  headerStats?: CampaignDashboardHeaderStats,
+  _headerStats?: CampaignDashboardHeaderStats,
 ): string {
-  return [
-    gameLabel(campaign.game),
-    `PROSPERITY ${campaign.prosperity}`,
-    typeof headerStats?.openScenarioCount === 'number'
-      ? `OPEN ${headerStats.openScenarioCount}`
-      : undefined,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  return [gameSystemLabel(campaign.game), `Prosperity ${campaign.prosperity}`].join(' · ');
 }
 
 export function renderCampaignDashboardHeaderStats(
@@ -393,31 +388,117 @@ export function renderCampaignDashboardThreadsSwap(input: {
   })}${input.threadsFragment}` as HtmlEscapedString;
 }
 
-function renderCampaignDashboardViewNav(
+function campaignWorkspacePath(campaignId: string, view: CampaignDashboardView): string {
+  if (view === 'progress') return `/campaigns/${campaignId}`;
+  return `/campaigns/${campaignId}/${view}`;
+}
+
+function renderCampaignWorkspaceTabIcon(view: CampaignDashboardView): HtmlEscapedString {
+  if (view === 'progress') {
+    return html`<svg
+      class="squire-campaign-workspace__tab-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M5 18V6l4 2 6-3 4 2v12l-4-2-6 3-4-2Z"></path>
+      <path d="M9 8v12"></path>
+      <path d="M15 5v12"></path>
+    </svg>` as HtmlEscapedString;
+  }
+  if (view === 'party') {
+    return html`<svg
+      class="squire-campaign-workspace__tab-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+      <path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+      <path d="M4 19a4 4 0 0 1 8 0"></path>
+      <path d="M12 19a4 4 0 0 1 8 0"></path>
+    </svg>` as HtmlEscapedString;
+  }
+  if (view === 'players') {
+    return html`<svg
+      class="squire-campaign-workspace__tab-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path>
+      <path d="M5 20a7 7 0 0 1 14 0"></path>
+      <path d="M19 8h3"></path>
+      <path d="M20.5 6.5v3"></path>
+    </svg>` as HtmlEscapedString;
+  }
+  return html`<svg
+    class="squire-campaign-workspace__tab-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
+    <path d="M19 12h2"></path>
+    <path d="M3 12h2"></path>
+    <path d="M12 3v2"></path>
+    <path d="M12 19v2"></path>
+    <path d="m17 7 1.5-1.5"></path>
+    <path d="m5.5 18.5 1.5-1.5"></path>
+    <path d="m7 7-1.5-1.5"></path>
+    <path d="m18.5 18.5-1.5-1.5"></path>
+  </svg>` as HtmlEscapedString;
+}
+
+function renderCampaignWorkspaceNav(
   campaignId: string,
   activeView: CampaignDashboardView,
 ): HtmlEscapedString {
-  return html`<nav
-    class="squire-campaign-dashboard__view-nav"
-    aria-label="Campaign dashboard sections"
-  >
-    <a
-      class="squire-campaign-dashboard__view-link ${activeView === 'scenarios'
-        ? 'squire-campaign-dashboard__view-link--active'
-        : ''}"
-      href="/campaigns/${campaignId}"
-      ${activeView === 'scenarios' ? html`aria-current="page"` : html``}
-      >Scenarios</a
-    >
-    <a
-      class="squire-campaign-dashboard__view-link ${activeView === 'party'
-        ? 'squire-campaign-dashboard__view-link--active'
-        : ''}"
-      href="/campaigns/${campaignId}/party"
-      ${activeView === 'party' ? html`aria-current="page"` : html``}
-      >Party</a
-    >
+  const tabs: { view: CampaignDashboardView; label: string }[] = [
+    { view: 'progress', label: 'Progress' },
+    { view: 'party', label: 'Party' },
+    { view: 'players', label: 'Players' },
+    { view: 'settings', label: 'Settings' },
+  ];
+  return html`<nav class="squire-campaign-workspace__tabs" aria-label="Campaign workspace sections">
+    ${tabs.map(
+      (tab) =>
+        html`<a
+          class="squire-campaign-workspace__tab ${activeView === tab.view
+            ? 'squire-campaign-workspace__tab--active'
+            : ''}"
+          href="${campaignWorkspacePath(campaignId, tab.view)}"
+          ${activeView === tab.view ? html`aria-current="page"` : html``}
+        >
+          ${renderCampaignWorkspaceTabIcon(tab.view)}
+          <span class="squire-campaign-workspace__tab-label">${tab.label}</span>
+        </a>`,
+    )}
   </nav>` as HtmlEscapedString;
+}
+
+function renderCampaignWorkspaceHeader(
+  campaign: Campaign,
+  headerStats?: CampaignDashboardHeaderStats,
+): HtmlEscapedString {
+  return html`<header class="squire-campaign-workspace__header">
+    <nav class="squire-campaign-workspace__breadcrumbs" aria-label="Breadcrumb">
+      <ol class="squire-campaign-workspace__breadcrumb-list">
+        <li class="squire-campaign-workspace__breadcrumb-item">
+          <a class="squire-campaign-workspace__breadcrumb-link" href="/campaigns">Campaigns</a>
+        </li>
+        <li class="squire-campaign-workspace__breadcrumb-item" aria-current="page">
+          ${campaign.name}
+        </li>
+      </ol>
+    </nav>
+    <div class="squire-campaign-workspace__header-main">
+      <div class="squire-campaign-workspace__identity">
+        <h1 class="squire-campaign-dashboard__name">${campaign.name}</h1>
+        ${renderCampaignDashboardHeaderStats(campaign, headerStats)}
+      </div>
+    </div>
+  </header>` as HtmlEscapedString;
 }
 
 /**
@@ -519,37 +600,60 @@ export function renderCampaignDashboardContent(
   renameForm?: CampaignRenameForm,
   modulesForm?: CampaignModulesForm,
   headerStats?: CampaignDashboardHeaderStats,
-  activeView: CampaignDashboardView = 'scenarios',
+  activeView: CampaignDashboardView = 'progress',
 ): HtmlEscapedString {
   const { campaign } = detail;
   // Pending invites are real state — shown distinctly, never as fake rows.
   const pendingInvites = detail.members.filter((member) => member.status === 'invited');
-  return html`<section class="squire-campaign-dashboard" data-campaign-id="${campaign.id}">
-    <header class="squire-campaign-dashboard__header">
-      <h1 class="squire-campaign-dashboard__name">${campaign.name}</h1>
-      ${renderCampaignDashboardHeaderStats(campaign, headerStats)}
-      ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
-      ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
-    </header>
-    ${renderCampaignDashboardViewNav(campaign.id, activeView)}
-    ${activeView === 'scenarios'
-      ? html`${threadsFragment ??
-        html`<section
-          class="squire-campaign-dashboard__threads"
-          id="squire-dashboard-threads"
-          aria-label="Scenario progression"
-        >
-          <p class="squire-campaign-dashboard__placeholder">
-            No scenario data for this campaign's modules yet.
-          </p>
-        </section>`}
-        ${journalFragment ?? html``}`
-      : html`<section class="squire-campaign-dashboard__party" aria-label="Party">
-          <h2 class="squire-campaign-dashboard__section-title">Party</h2>
-          ${renderDashboardCharacters(characters)}
-          ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
-          ${renderPendingInvites(pendingInvites)}
-          ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
-        </section>`}
+  return html`<section class="squire-campaign-workspace" data-campaign-id="${campaign.id}">
+    ${renderCampaignWorkspaceHeader(campaign, headerStats)}
+    ${renderCampaignWorkspaceNav(campaign.id, activeView)}
+    <div class="squire-campaign-dashboard">
+      ${activeView === 'progress'
+        ? html`${threadsFragment ??
+          html`<section
+            class="squire-campaign-dashboard__threads"
+            id="squire-dashboard-threads"
+            aria-label="Scenario progression"
+          >
+            <p class="squire-campaign-dashboard__placeholder">
+              No scenario data for this campaign's modules yet.
+            </p>
+          </section>`}
+          ${journalFragment ?? html``}`
+        : html``}
+      ${activeView === 'party'
+        ? html`<section class="squire-campaign-dashboard__party" aria-label="Party">
+            <h2 class="squire-campaign-dashboard__section-title">Party</h2>
+            ${renderDashboardCharacters(characters)}
+            ${characterCreate ? renderCharacterCreateForm(campaign.id, characterCreate) : html``}
+          </section>`
+        : html``}
+      ${activeView === 'players'
+        ? html`<section class="squire-campaign-dashboard__players" aria-label="Players">
+            <h2 class="squire-campaign-dashboard__section-title">Players</h2>
+            <ul class="squire-campaign-dashboard__members">
+              ${detail.members.map(
+                (member) =>
+                  html`<li class="squire-campaign-dashboard__member">
+                    <span>${member.email}</span>
+                    <span class="squire-campaign-dashboard__member-role"
+                      >${member.status === 'active' ? member.role : member.status}</span
+                    >
+                  </li>`,
+              )}
+            </ul>
+            ${renderPendingInvites(pendingInvites)}
+            ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
+          </section>`
+        : html``}
+      ${activeView === 'settings'
+        ? html`<section class="squire-campaign-dashboard__settings" aria-label="Settings">
+            <h2 class="squire-campaign-dashboard__section-title">Settings</h2>
+            ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
+            ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
+          </section>`
+        : html``}
+    </div>
   </section>` as HtmlEscapedString;
 }

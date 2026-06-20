@@ -61,8 +61,9 @@ Required checks:
 Campaign workspace shell:
 
 ```text
-Squire / Campaigns / Travel Campaign
-Campaign: Travel Campaign          GH2
+Campaigns > Travel Campaign
+Travel Campaign
+Gloomhaven 2nd Edition · Prosperity 1
 
 Progress | Party | Players | Settings
 
@@ -133,9 +134,8 @@ Required routes:
 - `/campaigns/:id/settings`: Settings, campaign name and optional content.
 
 The workspace header must make the current campaign clear on every route and
-must provide a visible path back to the campaign list/home surface. Direct links
-to section routes should be stable enough for bug reports, support, and manual
-testing.
+must provide a visible path back to the campaign list. Direct links to section
+routes should be stable enough for bug reports, support, and manual testing.
 
 ## Progress Scope
 
@@ -165,22 +165,23 @@ Non-goals for this pass:
 - Large custom canvas or pan/zoom flowchart behavior.
 - Optimizing the scenario graph for every expansion/module.
 
-## Campaign Switching
+## Campaign Wayfinding
 
-Decision: the workspace header includes a campaign switcher.
+Decision: the workspace header uses a conventional breadcrumb, not a campaign
+switcher.
 
 The header must show:
 
 - The current campaign name as a first-viewport signal.
-- A compact switcher/dropdown for other campaigns.
-- A visible `Campaigns` or `Home` link that returns to the campaign list/home
-  surface.
-- The campaign system, such as `GH2`, as metadata near the campaign name
-  instead of as a detached page fact.
+- A linked `Campaigns` breadcrumb followed by the unlinked current campaign
+  name.
+- The full campaign system, such as `Gloomhaven 2nd Edition`, as metadata near
+  the campaign name instead of as a detached page fact.
+- No open-scenario count in the header; Progress owns scenario counts.
 
-The switcher is for changing campaign context. It must not replace the section
-navigation. The user should always be able to answer: which campaign am I in,
-where are the campaign sections, and how do I get back to my campaign list?
+Campaign switching happens on `/campaigns`. The user may play multiple
+campaigns at the same time, so the workspace header should not imply one global
+active campaign.
 
 ## Component System
 
@@ -189,9 +190,9 @@ forms and loose text controls.
 
 Required components:
 
-- **Campaign workspace header**: campaign name, campaign system metadata,
-  campaign switcher, and `Campaigns`/`Home` return link. The campaign name is
-  the dominant signal on campaign routes; the Squire brand is secondary.
+- **Campaign workspace header**: `Campaigns > current campaign` breadcrumb,
+  campaign name, and full campaign system metadata. The campaign name is the
+  dominant signal on campaign routes; the Squire brand is secondary.
 - **Workspace icon tabs**: four visible tabs for `Progress`, `Party`,
   `Players`, and `Settings`. Each tab has an icon plus text label, 44px minimum
   tap target, clear active state, and stable URL. Do not use a vague `More`
@@ -253,7 +254,7 @@ Implementation must preserve these gates:
 - Start from the approved mockup and this plan.
 - Keep route changes, data/model changes, UI components, and QA acceptance
   explicit in the issue set.
-- Build Progress, Party, Players, Settings, campaign switching, state coverage,
+- Build Progress, Party, Players, Settings, state coverage,
   and visual parity as one coherent workspace.
 - Review against `DESIGN.md` v0.13 and this plan before shipping.
 - Include manual browser QA for desktop and mobile.
@@ -267,16 +268,15 @@ Decision: split implementation by user-visible sections.
 Scope:
 
 - Create the shared campaign workspace shell.
-- Add the campaign header, campaign switcher, campaign system metadata, and
-  visible `Campaigns`/`Home` return link.
+- Add the campaign header, breadcrumb back to `Campaigns`, and campaign system
+  metadata.
 - Add path-backed icon tabs for `Progress`, `Party`, `Players`, and `Settings`.
 - Ensure `/campaigns/:id` opens Progress and section routes remain stable.
 
 Acceptance:
 
 - Every campaign workspace route makes the current campaign obvious.
-- Users can switch campaigns or return to the campaign list/home from the
-  header.
+- Users can return to the campaign list from the header.
 - Mobile shows visible icon-plus-label tabs without hiding core sections behind
   `More`.
 - Shell loading and error states keep header and navigation visible.
@@ -373,7 +373,7 @@ Acceptance:
 - Desktop Party screenshot is compared to
   `docs/artifacts/campaign-workspace-redesign/party-approved-variant-a.png`.
 - Mobile screenshots confirm icon tabs, row actions, text fit, and no overlap.
-- Manual QA covers Progress, Party, Players, Settings, campaign switching, and
+- Manual QA covers Progress, Party, Players, Settings, breadcrumb return, and
   destructive confirmations.
 - PR notes list any intentional differences from the approved mockup and this
   plan.
