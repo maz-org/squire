@@ -39,6 +39,13 @@ const OUTSIDER_EMAIL = 'outsider@example.com';
 // auth state), so seed once and clean up in afterAll.
 const MAT_SOURCE_IDS = ['test-create-drifter', 'test-create-banner-spear'];
 
+function expectSelectOption(body: string, value: string, selected = false) {
+  const optionPattern = new RegExp(
+    `<option\\s+value="${value}"[\\s\\S]*?${selected ? 'selected' : ''}[\\s\\S]*?>\\s*${value}\\s*</option>`,
+  );
+  expect(body).toMatch(optionPattern);
+}
+
 async function createTestUser(email: string): Promise<TestUser> {
   const { db } = getDb('server');
   const [user] = await db
@@ -149,8 +156,8 @@ describe('create-character UI (SQR-318)', () => {
     expect(body).toContain('squire-character-create');
     expect(body).toContain('action="/campaigns/' + campaign.id + '/characters"');
     // Class select offers the seeded real class names.
-    expect(body).toContain('<option value="Banner Spear">Banner Spear</option>');
-    expect(body).toContain('<option value="Drifter">Drifter</option>');
+    expectSelectOption(body, 'Banner Spear');
+    expectSelectOption(body, 'Drifter');
     // Empty roster shows the create call-to-action, never fake values.
     expect(body).toContain('No active characters yet');
   });
@@ -218,7 +225,7 @@ describe('create-character UI (SQR-318)', () => {
     const res = await createCharacter(owner, campaign.id, {
       name: '  ',
       className: 'Drifter',
-      level: '1',
+      level: '4',
     });
     expect(res.status).toBe(422);
     const body = await res.text();
@@ -230,6 +237,8 @@ describe('create-character UI (SQR-318)', () => {
     )?.[0];
     expect(revealTag).toContain('open');
     expect(body).toContain('Character name is required.');
+    expectSelectOption(body, 'Drifter', true);
+    expect(body).toContain('value="4"');
   });
 
   it('updates level from the party row and reports stale-row failures inline', async () => {

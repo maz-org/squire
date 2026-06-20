@@ -196,6 +196,9 @@ export interface CharacterCreateForm {
   classOptions: string[];
   /** Inline error rendered above the form after a failed create attempt. */
   errorMessage?: string;
+  nameValue?: string;
+  classNameValue?: string;
+  levelValue?: string;
 }
 
 export interface CharacterActionError {
@@ -231,13 +234,28 @@ function renderCharacterCreateForm(
         <input type="hidden" name="_csrf" value="${data.csrfToken}" />
         <label class="squire-character-create__field">
           <span class="squire-character-create__field-label">NAME</span>
-          <input name="name" type="text" required maxlength="100" autocomplete="off" />
+          <input
+            name="name"
+            type="text"
+            required
+            maxlength="100"
+            autocomplete="off"
+            value="${data.nameValue ?? ''}"
+          />
         </label>
         <label class="squire-character-create__field">
           <span class="squire-character-create__field-label">CLASS</span>
           ${data.classOptions.length > 0
             ? html`<select name="className" required>
-                ${data.classOptions.map((cls) => html`<option value="${cls}">${cls}</option>`)}
+                ${data.classOptions.map(
+                  (cls) =>
+                    html`<option
+                      value="${cls}"
+                      ${data.classNameValue === cls ? raw('selected') : raw('')}
+                    >
+                      ${cls}
+                    </option>`,
+                )}
               </select>`
             : html`<input
                 name="className"
@@ -245,11 +263,12 @@ function renderCharacterCreateForm(
                 required
                 maxlength="100"
                 autocomplete="off"
+                value="${data.classNameValue ?? ''}"
               />`}
         </label>
         <label class="squire-character-create__field">
           <span class="squire-character-create__field-label">LEVEL</span>
-          <input name="level" type="number" min="1" max="20" value="1" />
+          <input name="level" type="number" min="1" max="20" value="${data.levelValue ?? '1'}" />
         </label>
         <button type="submit" class="squire-character-create__submit">ADD CHARACTER</button>
       </form>

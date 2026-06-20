@@ -2992,10 +2992,8 @@ template#squire-banner-fixtures {
   color: var(--parchment);
   cursor: pointer;
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 

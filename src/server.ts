@@ -1572,6 +1572,11 @@ async function renderCampaignDashboardPage(
     inviteError?: string;
     renameError?: string;
     modulesError?: string;
+    characterFormValues?: {
+      nameValue?: string;
+      classNameValue?: string;
+      levelValue?: string;
+    };
     view?: CampaignDashboardView;
   } = {},
   status: 200 | 422 = 200,
@@ -1614,6 +1619,7 @@ async function renderCampaignDashboardPage(
           csrfToken,
           classOptions: await knownClassNames(detail.campaign.game),
           errorMessage: opts.characterError,
+          ...opts.characterFormValues,
         }
       : undefined;
   // Per-user, never-cached: set on every path through the shared renderer
@@ -1734,8 +1740,14 @@ app.post('/campaigns/:id/characters', async (c) => {
   const classNameInput =
     typeof form.get('className') === 'string' ? (form.get('className') as string).trim() : '';
   const levelRaw = form.get('level');
+  const levelValue = typeof levelRaw === 'string' ? levelRaw : '1';
   const levelNum = typeof levelRaw === 'string' ? Number.parseInt(levelRaw, 10) : Number.NaN;
   const level = Number.isFinite(levelNum) ? Math.min(20, Math.max(1, levelNum)) : 1;
+  const characterFormValues = {
+    nameValue: name,
+    classNameValue: classNameInput,
+    levelValue,
+  };
 
   try {
     // getCampaignDetail gates membership: a non-member gets the 404 below.
@@ -1744,7 +1756,7 @@ app.post('/campaigns/:id/characters', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: 'Character name is required.', view: 'party' },
+        { characterError: 'Character name is required.', characterFormValues, view: 'party' },
         422,
       );
     }
@@ -1755,7 +1767,7 @@ app.post('/campaigns/:id/characters', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: 'Class is required.', view: 'party' },
+        { characterError: 'Class is required.', characterFormValues, view: 'party' },
         422,
       );
     }
@@ -1769,7 +1781,7 @@ app.post('/campaigns/:id/characters', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: message, view: 'party' },
+        { characterError: message, characterFormValues, view: 'party' },
         422,
       );
     }
@@ -1785,7 +1797,7 @@ app.post('/campaigns/:id/characters', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { characterError: error.message, view: 'party' },
+        { characterError: error.message, characterFormValues, view: 'party' },
         422,
       );
     }
