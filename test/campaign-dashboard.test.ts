@@ -191,8 +191,9 @@ describe('dashboard rendering', () => {
       new RegExp(`href="/campaigns/${campaign.id}/party"[^>]*aria-current="page"`),
     );
     expect(body).toContain(`href="/campaigns/${campaign.id}"`);
-    expect(body).toContain('aria-label="Party roster"');
-    expect(body).toContain('aria-label="Characters"');
+    expect(body).toContain('class="squire-campaign-dashboard__party"');
+    expect(body).toContain('aria-label="Party"');
+    expect(body).toContain('squire-section-reveal__summary">Add character</summary>');
     expect(body).not.toContain('aria-label="Scenario progression"');
     expect(body).not.toContain('squire-dashboard-grid');
   });

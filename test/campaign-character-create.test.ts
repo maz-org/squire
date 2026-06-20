@@ -139,6 +139,12 @@ describe('create-character UI (SQR-318)', () => {
     });
     expect(res.status).toBe(200);
     const body = await res.text();
+    const revealTag = body.match(
+      /<details[^>]*class="squire-section-reveal squire-character-create-reveal"[^>]*>/,
+    )?.[0];
+    expect(revealTag).toBeDefined();
+    expect(revealTag).not.toContain('open');
+    expect(body).toContain('squire-section-reveal__summary">Add character</summary>');
     expect(body).toContain('squire-character-create');
     expect(body).toContain('action="/campaigns/' + campaign.id + '/characters"');
     // Class select offers the seeded real class names.
@@ -163,8 +169,11 @@ describe('create-character UI (SQR-318)', () => {
     });
     const body = await dash.text();
     expect(body).toContain('Vesper');
-    // The role span wraps across lines; normalize whitespace to assert content.
-    expect(body.replace(/\s+/g, ' ')).toContain('DRIFTER · L3');
+    expect(body).toContain('squire-campaign-dashboard__character-name');
+    expect(body).toContain('squire-campaign-dashboard__character-class');
+    expect(body).toContain('squire-campaign-dashboard__character-level');
+    expect(body.replace(/\s+/g, ' ')).toContain('Drifter');
+    expect(body.replace(/\s+/g, ' ')).toContain('Level 3');
     expect(body).toContain('/characters/'); // sheet link
   });
 
@@ -179,7 +188,9 @@ describe('create-character UI (SQR-318)', () => {
     const dash = await app.request(`/campaigns/${campaign.id}/party`, {
       headers: { Cookie: owner.cookie },
     });
-    expect((await dash.text()).replace(/\s+/g, ' ')).toContain('BANNER SPEAR · L1');
+    const body = (await dash.text()).replace(/\s+/g, ' ');
+    expect(body).toContain('Banner Spear');
+    expect(body).toContain('Level 1');
   });
 
   it('rejects an unknown/codename class with an inline error and no create', async () => {
@@ -193,6 +204,10 @@ describe('create-character UI (SQR-318)', () => {
     const body = await res.text();
     expect(body).toContain('COULD NOT SAVE');
     expect(body).toContain('not a class in this game');
+    const revealTag = body.match(
+      /<details[^>]*class="squire-section-reveal squire-character-create-reveal"[^>]*>/,
+    )?.[0];
+    expect(revealTag).toContain('open');
 
     // Nothing was created — the roster is still empty.
     const dash = await app.request(`/campaigns/${campaign.id}/party`, {

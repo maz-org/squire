@@ -14,7 +14,12 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CharacterDetail } from '../campaign/character-service.ts';
 import type { Character, CharacterCard, CharacterItem } from '../db/repositories/types.ts';
-import type { CardOption, ItemOption } from '../campaign/character-sheet-data.ts';
+import type {
+  CardOption,
+  CharacterMatSummary,
+  ItemOption,
+} from '../campaign/character-sheet-data.ts';
+import { characterMatArtworkFor } from './character-mat-assets.ts';
 
 export interface CharacterSheetData {
   detail: CharacterDetail;
@@ -26,6 +31,7 @@ export interface CharacterSheetData {
   cardOptions: CardOption[];
   itemNames: Map<string, ItemOption>;
   cardNames: Map<string, CardOption>;
+  characterMat?: CharacterMatSummary | null;
   /** Save-failure banner; the named section renders open with it. */
   errorMessage?: string;
   /** Soft rules-legality warning (SQR-285) surfaced inline. */
@@ -143,6 +149,52 @@ function privateValue(value: string | null): string {
   return value && value.trim().length > 0 ? value : '';
 }
 
+function hpForLevel(mat: CharacterMatSummary | null | undefined, level: number): number | null {
+  if (!mat) return null;
+  return mat.hpByLevel[String(level)] ?? null;
+}
+
+function renderHeroStat(label: string, value: string | number | null): HtmlEscapedString {
+  if (value === null || value === '') return html`` as HtmlEscapedString;
+  return html`<span class="squire-sheet__hero-stat">${label} ${value}</span>` as HtmlEscapedString;
+}
+
+function renderTraitList(mat: CharacterMatSummary | null | undefined): HtmlEscapedString {
+  if (!mat || mat.traits.length === 0) return html`` as HtmlEscapedString;
+  return html`<span class="squire-sheet__traits" aria-label="Class traits">
+    ${mat.traits
+      .slice(0, 3)
+      .map((trait) => html`<span class="squire-sheet__trait">${trait.toUpperCase()}</span>`)}
+  </span>` as HtmlEscapedString;
+}
+
+function renderHeroStats(
+  mat: CharacterMatSummary | null | undefined,
+  levelHp: number | null,
+): HtmlEscapedString {
+  if (!mat || levelHp === null) {
+    return html`<span class="squire-sheet__hero-empty"
+      >CLASS STATS NOT RECORDED</span
+    >` as HtmlEscapedString;
+  }
+  return html`${renderHeroStat('HAND', mat.handSize)} ${renderHeroStat('HP', levelHp)}
+  ${renderHeroStat('PERKS', mat.perks.length)} ${renderHeroStat('MASTERIES', mat.masteries.length)}
+  ${renderTraitList(mat)}` as HtmlEscapedString;
+}
+
+function renderMatArtwork(input: { game: string; className: string }): HtmlEscapedString {
+  const artwork = characterMatArtworkFor(input.game, input.className);
+  if (!artwork) {
+    return html`<div class="squire-sheet__mat squire-sheet__mat--placeholder">
+      <p class="squire-sheet__mat-placeholder">Mat artwork not mirrored for this class yet.</p>
+    </div>` as HtmlEscapedString;
+  }
+  return html`<figure class="squire-sheet__mat">
+    <img class="squire-sheet__mat-art" src="${artwork.src}" alt="${artwork.alt}" loading="lazy" />
+    <figcaption class="squire-sheet__mat-credit">${artwork.attribution}</figcaption>
+  </figure>` as HtmlEscapedString;
+}
+
 export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscapedString {
   const { detail, csrfToken } = data;
   const character = detail.character;
@@ -151,17 +203,26 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
   const open = (sectionId: string) => data.openSection === sectionId;
   const updateAction = `/characters/${id}/update`;
   const privateTier = own ? (character as Character) : null;
+  const levelHp = hpForLevel(data.characterMat, character.level);
 
   return html`<section class="squire-sheet" data-character-id="${id}">
-    <header class="squire-sheet__header">
-      <p class="squire-sheet__breadcrumb">
-        <a href="/campaigns/${data.campaign.id}">${data.campaign.name.toUpperCase()}</a>
-      </p>
-      <h1 class="squire-sheet__name">${character.name}</h1>
-      <p class="squire-sheet__stats">
-        ${character.className.toUpperCase()} · L${character.level} · ${character.gold} GOLD
-        ${character.status === 'retired' ? ' · RETIRED' : ''}
-      </p>
+    <header class="squire-sheet__hero">
+      <div class="squire-sheet__identity">
+        <p class="squire-sheet__breadcrumb">
+          <a href="/campaigns/${data.campaign.id}">${data.campaign.name.toUpperCase()}</a>
+        </p>
+        <h1 class="squire-sheet__name">${character.name}</h1>
+        <p class="squire-sheet__class-line">
+          <span>${character.className}</span>
+          <span>Level ${character.level}</span>
+          <span>${character.gold} gold</span>
+          ${character.status === 'retired' ? html`<span>Retired</span>` : html``}
+        </p>
+        <div class="squire-sheet__hero-stats" aria-label="Class stats">
+          ${renderHeroStats(data.characterMat, levelHp)}
+        </div>
+      </div>
+      ${renderMatArtwork({ game: data.campaign.game, className: character.className })}
     </header>
 
     ${data.errorMessage

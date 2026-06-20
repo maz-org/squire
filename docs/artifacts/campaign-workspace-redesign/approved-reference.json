@@ -1,0 +1,16 @@
+{
+  "approved_variant": "A",
+  "approved_mockup": "docs/artifacts/campaign-workspace-redesign/party-approved-variant-a.png",
+  "feedback": {
+    "ratings": {
+      "A": 4,
+      "B": 0,
+      "C": 0
+    },
+    "variant_a_comments": "artistic flourishes, use of icons, clear controls",
+    "direction": "Start with A. Add C's navigation tab icons and action button treatments. Party must include a way to see retired characters, not only active characters."
+  },
+  "date": "2026-06-19T18:44:00Z",
+  "screen": "campaign-workspace-party",
+  "branch": "bcm/sqr-324-325-326-party-character-polish"
+}

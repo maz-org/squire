@@ -6,7 +6,7 @@
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { getDb } from '../db.ts';
-import { cardCharacterAbilities, cardItems } from '../db/schema/cards.ts';
+import { cardCharacterAbilities, cardCharacterMats, cardItems } from '../db/schema/cards.ts';
 
 export interface ItemOption {
   sourceId: string;
@@ -18,6 +18,62 @@ export interface CardOption {
   sourceId: string;
   name: string;
   level: string | null;
+}
+
+export interface CharacterMatSummary {
+  name: string;
+  ancestry: string;
+  handSize: string;
+  traits: string[];
+  hpByLevel: Record<string, number>;
+  perks: string[];
+  masteries: string[];
+}
+
+function formatHandSize(value: unknown): string {
+  if (typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map((entry) => String(entry)).join(' / ');
+  return String(value);
+}
+
+function normalizeHpByLevel(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const normalized: Record<string, number> = {};
+  for (const [level, hp] of Object.entries(value)) {
+    if (typeof hp === 'number') normalized[level] = hp;
+  }
+  return normalized;
+}
+
+export async function getCharacterMatSummary(
+  game: string,
+  className: string,
+): Promise<CharacterMatSummary | null> {
+  const { db } = getDb('server');
+  const rows = await db
+    .select({
+      name: cardCharacterMats.name,
+      ancestry: cardCharacterMats.characterClass,
+      handSize: cardCharacterMats.handSize,
+      traits: cardCharacterMats.traits,
+      hp: cardCharacterMats.hp,
+      perks: cardCharacterMats.perks,
+      masteries: cardCharacterMats.masteries,
+    })
+    .from(cardCharacterMats)
+    .where(and(eq(cardCharacterMats.game, game), eq(cardCharacterMats.name, className)))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    name: row.name,
+    ancestry: row.ancestry,
+    handSize: formatHandSize(row.handSize),
+    traits: row.traits,
+    hpByLevel: normalizeHpByLevel(row.hp),
+    perks: row.perks,
+    masteries: row.masteries,
+  };
 }
 
 export async function listItemOptions(game: string): Promise<ItemOption[]> {
