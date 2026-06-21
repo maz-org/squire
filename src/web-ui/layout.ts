@@ -24,6 +24,7 @@ import { renderCampaignStrip, type CampaignStripState } from './campaign-pages.t
 import { aggregateSourceLabels, type ToolSourceLabel } from './consulted-footer.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
+import { NO_CAMPAIGN_CONTEXT } from '../chat-campaign-context-contract.ts';
 import {
   SUPPORTED_MARKDOWN_FEATURES,
   SUPPORTED_MARKDOWN_SPECIMEN,
@@ -269,7 +270,7 @@ function renderChatCampaignContext(
             )}
             <form method="post" action="/chat/campaign-context">
               <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
-              <input type="hidden" name="campaignId" value="__none" />
+              <input type="hidden" name="campaignId" value="${NO_CAMPAIGN_CONTEXT}" />
               <input type="hidden" name="returnTo" value="${context.returnTo}" />
               <button type="submit" ${active === null ? html`aria-current="true"` : html``}>
                 No campaign

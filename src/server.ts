@@ -156,6 +156,7 @@ import {
 } from './db/repositories/campaign-member-repository.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
 import { getSquireLogoPng } from './web-ui/logo.ts';
+import { NO_CAMPAIGN_CONTEXT } from './chat-campaign-context-contract.ts';
 import {
   appendMessage,
   createPendingConversation,
@@ -1401,7 +1402,15 @@ app.get('/profile', requirePageSession(), async (c) => {
 // ─── Campaign pages + context strip (SQR-275, SQR-11) ───────────────────────
 
 const ACTIVE_CAMPAIGN_COOKIE = 'squire_active_campaign';
-const NO_CAMPAIGN_CONTEXT = '__none';
+
+function activeCampaignCookieOptions() {
+  return {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax' as const,
+  };
+}
 
 function campaignStripFrom(campaign: Campaign): CampaignStripState {
   return { campaignId: campaign.id, campaignName: campaign.name, game: campaign.game };
@@ -1533,11 +1542,13 @@ app.post('/campaigns', async (c) => {
       game,
       modules,
     });
-    await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaign.id, getSessionSecret(), {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'Lax',
-    });
+    await setSignedCookie(
+      c,
+      ACTIVE_CAMPAIGN_COOKIE,
+      campaign.id,
+      getSessionSecret(),
+      activeCampaignCookieOptions(),
+    );
     return c.redirect(`/campaigns/${campaign.id}`, 303);
   } catch (error) {
     if (error instanceof Error && 'code' in error) {
@@ -1557,11 +1568,13 @@ app.post('/campaigns/:id/activate', async (c) => {
   } catch {
     return c.notFound();
   }
-  await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaignId, getSessionSecret(), {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'Lax',
-  });
+  await setSignedCookie(
+    c,
+    ACTIVE_CAMPAIGN_COOKIE,
+    campaignId,
+    getSessionSecret(),
+    activeCampaignCookieOptions(),
+  );
   return c.redirect('/campaigns', 303);
 });
 
@@ -3202,11 +3215,13 @@ app.post('/chat/campaign-context', async (c) => {
   const returnTo = safeReturnTo(form.get('returnTo'));
 
   if (campaignIdValue === NO_CAMPAIGN_CONTEXT) {
-    await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, NO_CAMPAIGN_CONTEXT, getSessionSecret(), {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'Lax',
-    });
+    await setSignedCookie(
+      c,
+      ACTIVE_CAMPAIGN_COOKIE,
+      NO_CAMPAIGN_CONTEXT,
+      getSessionSecret(),
+      activeCampaignCookieOptions(),
+    );
     return c.redirect(returnTo, 303);
   }
 
@@ -3221,11 +3236,13 @@ app.post('/chat/campaign-context', async (c) => {
   } catch {
     return c.notFound();
   }
-  await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaignIdValue, getSessionSecret(), {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'Lax',
-  });
+  await setSignedCookie(
+    c,
+    ACTIVE_CAMPAIGN_COOKIE,
+    campaignIdValue,
+    getSessionSecret(),
+    activeCampaignCookieOptions(),
+  );
   return c.redirect(returnTo, 303);
 });
 
