@@ -156,6 +156,7 @@ import {
 } from './db/repositories/campaign-member-repository.ts';
 import { getAppCss, getHtmxJs, getSquireJs } from './web-ui/assets.ts';
 import { getSquireLogoPng } from './web-ui/logo.ts';
+import { NO_CAMPAIGN_CONTEXT } from './chat-campaign-context-contract.ts';
 import {
   appendMessage,
   createPendingConversation,
@@ -1335,7 +1336,7 @@ app.get('/', requirePageSession(), async (c) => {
     return c.html(
       await renderHomePage(session, createCsrfToken(session.id), {
         conversationHistory,
-        campaignStrip: await campaignStripFor(c, session.userId),
+        chatCampaignContext: await chatCampaignContextFor(c, session.userId),
       }),
     );
   } catch (err) {
@@ -1402,6 +1403,38 @@ app.get('/profile', requirePageSession(), async (c) => {
 
 const ACTIVE_CAMPAIGN_COOKIE = 'squire_active_campaign';
 
+function activeCampaignCookieOptions() {
+  return {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax' as const,
+  };
+}
+
+function campaignStripFrom(campaign: Campaign): CampaignStripState {
+  return { campaignId: campaign.id, campaignName: campaign.name, game: campaign.game };
+}
+
+async function campaignSelectionFor(
+  c: Context,
+  userId: string,
+  preferCampaignId?: string,
+): Promise<{ campaigns: Campaign[]; active: Campaign | null }> {
+  const campaigns = await CampaignService.listMyCampaigns(identityFromSessionUser(userId));
+  const cookieSelection = await getSignedCookie(c, getSessionSecret(), ACTIVE_CAMPAIGN_COOKIE);
+  const preferred = preferCampaignId
+    ? campaigns.find((campaign) => campaign.id === preferCampaignId)
+    : undefined;
+  if (preferred) return { campaigns, active: preferred };
+  if (cookieSelection === NO_CAMPAIGN_CONTEXT) return { campaigns, active: null };
+  const cookieCampaign =
+    typeof cookieSelection === 'string'
+      ? campaigns.find((campaign) => campaign.id === cookieSelection)
+      : undefined;
+  return { campaigns, active: cookieCampaign ?? campaigns[0] ?? null };
+}
+
 /**
  * The active campaign for the header strip: the explicit selection (signed
  * cookie, validated against current membership) when present, else the most
@@ -1413,15 +1446,32 @@ async function campaignStripFor(
   userId: string,
   preferCampaignId?: string,
 ): Promise<CampaignStripState | null> {
-  const mine = await CampaignService.listMyCampaigns(identityFromSessionUser(userId));
-  const cookieSelection = await getSignedCookie(c, getSessionSecret(), ACTIVE_CAMPAIGN_COOKIE);
-  const active =
-    (preferCampaignId && mine.find((campaign) => campaign.id === preferCampaignId)) ||
-    (typeof cookieSelection === 'string' &&
-      mine.find((campaign) => campaign.id === cookieSelection)) ||
-    mine[0];
-  if (!active) return null;
-  return { campaignId: active.id, campaignName: active.name, game: active.game };
+  const { active } = await campaignSelectionFor(c, userId, preferCampaignId);
+  return active ? campaignStripFrom(active) : null;
+}
+
+function requestReturnTo(c: Context): string {
+  const url = new URL(c.req.url);
+  return `${url.pathname}${url.search}`;
+}
+
+function safeReturnTo(value: FormDataEntryValue | null): string {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return '/';
+  try {
+    const parsed = new URL(value, 'https://squire.local');
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return '/';
+  }
+}
+
+async function chatCampaignContextFor(c: Context, userId: string) {
+  const { campaigns, active } = await campaignSelectionFor(c, userId);
+  return {
+    activeCampaign: active ? campaignStripFrom(active) : null,
+    campaigns: campaigns.map(campaignStripFrom),
+    returnTo: requestReturnTo(c),
+  };
 }
 
 async function renderCampaignListPage(c: Context, errorMessage?: string): Promise<Response> {
@@ -1492,11 +1542,13 @@ app.post('/campaigns', async (c) => {
       game,
       modules,
     });
-    await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaign.id, getSessionSecret(), {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'Lax',
-    });
+    await setSignedCookie(
+      c,
+      ACTIVE_CAMPAIGN_COOKIE,
+      campaign.id,
+      getSessionSecret(),
+      activeCampaignCookieOptions(),
+    );
     return c.redirect(`/campaigns/${campaign.id}`, 303);
   } catch (error) {
     if (error instanceof Error && 'code' in error) {
@@ -1516,11 +1568,13 @@ app.post('/campaigns/:id/activate', async (c) => {
   } catch {
     return c.notFound();
   }
-  await setSignedCookie(c, ACTIVE_CAMPAIGN_COOKIE, campaignId, getSessionSecret(), {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'Lax',
-  });
+  await setSignedCookie(
+    c,
+    ACTIVE_CAMPAIGN_COOKIE,
+    campaignId,
+    getSessionSecret(),
+    activeCampaignCookieOptions(),
+  );
   return c.redirect('/campaigns', 303);
 });
 
@@ -3154,6 +3208,44 @@ function renderChatErrorFragment(message: string) {
   </div>`;
 }
 
+app.post('/chat/campaign-context', async (c) => {
+  const session = c.get('session')!;
+  const form = await c.req.formData();
+  const campaignIdValue = form.get('campaignId');
+  const returnTo = safeReturnTo(form.get('returnTo'));
+
+  if (campaignIdValue === NO_CAMPAIGN_CONTEXT) {
+    await setSignedCookie(
+      c,
+      ACTIVE_CAMPAIGN_COOKIE,
+      NO_CAMPAIGN_CONTEXT,
+      getSessionSecret(),
+      activeCampaignCookieOptions(),
+    );
+    return c.redirect(returnTo, 303);
+  }
+
+  if (
+    typeof campaignIdValue !== 'string' ||
+    !z.string().uuid().safeParse(campaignIdValue).success
+  ) {
+    return c.notFound();
+  }
+  try {
+    await CampaignService.requireActiveMember(campaignIdValue, session.userId);
+  } catch {
+    return c.notFound();
+  }
+  await setSignedCookie(
+    c,
+    ACTIVE_CAMPAIGN_COOKIE,
+    campaignIdValue,
+    getSessionSecret(),
+    activeCampaignCookieOptions(),
+  );
+  return c.redirect(returnTo, 303);
+});
+
 function buildStreamUrl(conversationId: string, messageId: string): string {
   return `/chat/${conversationId}/messages/${messageId}/stream`;
 }
@@ -3303,7 +3395,7 @@ app.get('/chat/:conversationId', async (c) => {
       messages: loaded.messages,
       pendingStreamUrls,
       conversationHistory,
-      campaignStrip: await campaignStripFor(c, session.userId),
+      chatCampaignContext: await chatCampaignContextFor(c, session.userId),
     }),
   );
 });

@@ -586,9 +586,10 @@ campaign workspace.
 Dedicated routes sharing the ledger shell — `/campaigns` (list/create/join),
 `/campaigns/:id` (progression dashboard + shared state + roster + journal),
 `/characters/:id` (character sheet). Chat stays the home surface; the desktop
-rail remains conversation history (ADR 0020). The **header context strip is
-the persistent bridge**: it shows the active campaign/character and tapping it
-opens the campaign dashboard from anywhere.
+rail remains conversation history (ADR 0020). Chat renders campaign context in
+the ask area, directly above the input, so players can verify or change the
+campaign immediately before asking. Campaign surfaces use header wayfinding
+and the campaign strip as the bridge back into campaign management.
 
 Within `/campaigns/:id`, the campaign surface is a four-section workspace:
 **Progress**, **Party**, **Players**, and **Settings**. The campaign root
@@ -605,14 +606,21 @@ historical guidance for the current implementation, not the target for new
 campaign workspace work. See
 [docs/plans/campaign-workspace-redesign-design-plan.md](docs/plans/campaign-workspace-redesign-design-plan.md).
 
-### Context strip
+### Campaign context
 
-Small-caps Geist line in the header, present on chat and Phase 4 routes alike.
-States: `GH2E · TRAVEL CAMPAIGN · DRIFTER L4` (campaign + active character),
+Small-caps Geist line in the header on Phase 4 routes. States:
+`GH2E · TRAVEL CAMPAIGN · DRIFTER L4` (campaign + active character),
 campaign-only, and `NO CAMPAIGN · SET UP` (links to `/campaigns`) when none.
 **On campaign surfaces the campaign name is more prominent than the Squire
 brand** — the user's campaign outranks our wordmark there. Never shows fake
 state: no campaign means the set-up affordance, not placeholder content.
+
+On chat routes, do not put campaign selection in the header. Render a compact
+campaign context panel above the ask widget with the active campaign, an
+`Open campaign` link, and a `Change` control. When chat is in no-campaign mode,
+the same panel owns the game picker. This keeps the active campaign useful for
+LLM context while making the next question's binding explicit at the moment of
+use.
 
 On campaign workspace routes, the header carries campaign wayfinding: a
 breadcrumb back to `Campaigns`, the current campaign name as the dominant page
