@@ -98,7 +98,7 @@
     "@redis/client": "^6.0.0",
     "@sentry/node": "^10.59.0",
     "@sentry/opentelemetry": "^10.57.0",
-    "@tailwindcss/node": "^4.3.0",
+    "@tailwindcss/node": "^4.3.1",
     "@tailwindcss/oxide": "^4.3.0",
     "deepagents": "^1.10.5",
     "dotenv": "^17.4.2",
