@@ -1570,6 +1570,14 @@ async function renderCampaignDashboardPage(
       levelValue?: string;
     };
     inviteError?: string;
+    inviteFormValues?: {
+      emailValue?: string;
+    };
+    playerActionError?: {
+      memberId: string;
+      action: 'remove' | 'cancel';
+      message: string;
+    };
     renameError?: string;
     modulesError?: string;
     characterFormValues?: {
@@ -1647,7 +1655,13 @@ async function renderCampaignDashboardPage(
       opts.characterActionError,
       // Invite-member affordance (SQR-319): form is owner-only; the error
       // banner still renders for a non-owner who tampers the route.
-      { csrfToken, canInvite: isOwner, errorMessage: opts.inviteError },
+      {
+        csrfToken,
+        canInvite: isOwner,
+        errorMessage: opts.inviteError,
+        ...opts.inviteFormValues,
+      },
+      opts.playerActionError,
       // Rename affordance (SQR-320): any active member; the name is shared
       // state. expectedVersion drives optimistic concurrency.
       { csrfToken, version: detail.campaign.version, errorMessage: opts.renameError },
@@ -1941,6 +1955,120 @@ app.post('/campaigns/:id/characters/:characterId/remove', async (c) => {
   }
 });
 
+function playerActionFailureMessage(
+  action: 'remove' | 'cancel',
+  member: CampaignService.RosterMember | null,
+  error?: unknown,
+): string {
+  if (error instanceof CampaignService.CampaignForbiddenError) return error.message;
+  if (action === 'cancel') return 'Could not cancel this invitation.';
+  return `Could not remove ${member?.email ?? 'this player'}.`;
+}
+
+async function renderPlayerActionErrorPage(
+  c: Context,
+  campaignId: string,
+  memberId: string,
+  action: 'remove' | 'cancel',
+  member: CampaignService.RosterMember | null,
+  message?: string,
+  error?: unknown,
+): Promise<Response> {
+  if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+  return renderCampaignDashboardPage(
+    c,
+    campaignId,
+    {
+      view: 'players',
+      playerActionError: {
+        memberId,
+        action,
+        message: message ?? playerActionFailureMessage(action, member, error),
+      },
+    },
+    422,
+  );
+}
+
+async function requireCampaignRosterMember(
+  identity: CallerIdentity,
+  campaignId: string,
+  memberId: string,
+): Promise<CampaignService.RosterMember> {
+  const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+  const member = detail.members.find((row) => row.memberId === memberId);
+  if (!member) throw new CampaignService.CampaignNotFoundError();
+  return member;
+}
+
+async function confirmCampaignMemberRemoval(
+  identity: CallerIdentity,
+  campaignId: string,
+  memberId: string,
+): Promise<void> {
+  const proposal = await PendingMutations.propose(identity, campaignId, {
+    type: 'member.remove',
+    memberId,
+  });
+  await PendingMutations.confirm(identity, proposal.id);
+}
+
+app.post('/campaigns/:id/members/:memberId/remove', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  const memberId = campaignRouteId(c, 'memberId');
+  if (!campaignId || !memberId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  let member: CampaignService.RosterMember | null = null;
+  try {
+    member = await requireCampaignRosterMember(identity, campaignId, memberId);
+    if (member.status !== 'active') throw new CampaignService.CampaignNotFoundError();
+    if (formString(form, 'confirm') !== 'remove') {
+      return await renderPlayerActionErrorPage(
+        c,
+        campaignId,
+        memberId,
+        'remove',
+        member,
+        'Confirm remove to remove this player from the campaign.',
+      );
+    }
+    await confirmCampaignMemberRemoval(identity, campaignId, memberId);
+    return c.redirect(campaignPlayersViewPath(campaignId), 303);
+  } catch (error) {
+    return renderPlayerActionErrorPage(c, campaignId, memberId, 'remove', member, undefined, error);
+  }
+});
+
+app.post('/campaigns/:id/invites/:memberId/cancel', async (c) => {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  const memberId = campaignRouteId(c, 'memberId');
+  if (!campaignId || !memberId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  let member: CampaignService.RosterMember | null = null;
+  try {
+    member = await requireCampaignRosterMember(identity, campaignId, memberId);
+    if (member.status !== 'invited') throw new CampaignService.CampaignNotFoundError();
+    if (formString(form, 'confirm') !== 'cancel') {
+      return await renderPlayerActionErrorPage(
+        c,
+        campaignId,
+        memberId,
+        'cancel',
+        member,
+        'Confirm cancel to remove the pending invite.',
+      );
+    }
+    await confirmCampaignMemberRemoval(identity, campaignId, memberId);
+    return c.redirect(campaignPlayersViewPath(campaignId), 303);
+  } catch (error) {
+    return renderPlayerActionErrorPage(c, campaignId, memberId, 'cancel', member, undefined, error);
+  }
+});
+
 /** Invite a member from the dashboard Players section (owner-only, SQR-319). */
 app.post('/campaigns/:id/invites', async (c) => {
   const session = c.get('session')!;
@@ -1959,7 +2087,11 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: 'Only the owner can invite members', view: 'players' },
+        {
+          inviteError: 'Only the owner can invite members',
+          inviteFormValues: { emailValue: email },
+          view: 'players',
+        },
         422,
       );
     }
@@ -1967,7 +2099,11 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: 'Enter a valid email address.', view: 'players' },
+        {
+          inviteError: 'Enter a valid email address.',
+          inviteFormValues: { emailValue: email },
+          view: 'players',
+        },
         422,
       );
     }
@@ -1984,7 +2120,7 @@ app.post('/campaigns/:id/invites', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { inviteError: error.message, view: 'players' },
+        { inviteError: error.message, inviteFormValues: { emailValue: email }, view: 'players' },
         422,
       );
     }

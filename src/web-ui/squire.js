@@ -1307,7 +1307,9 @@ document.addEventListener('submit', function (event) {
   if (
     !form ||
     !form.matches ||
-    !form.matches('.squire-character-create, .squire-party-row__action form')
+    !form.matches(
+      '.squire-character-create, .squire-invite-member, .squire-party-row__action form, .squire-player-row__action form',
+    )
   ) {
     return;
   }

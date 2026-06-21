@@ -45,9 +45,10 @@ describe('squire.js HTMX first-turn submit regression', () => {
   });
 
   it('marks Party character forms submitting without touching chat submit text', () => {
-    expect(squireJs).toContain(
-      "form.matches('.squire-character-create, .squire-party-row__action form')",
-    );
+    expect(squireJs).toContain('.squire-character-create');
+    expect(squireJs).toContain('.squire-invite-member');
+    expect(squireJs).toContain('.squire-party-row__action form');
+    expect(squireJs).toContain('.squire-player-row__action form');
     expect(squireJs).toContain("form.dataset.submitting = 'true';");
     expect(squireJs).toContain("form.setAttribute('aria-busy', 'true');");
   });
