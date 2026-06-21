@@ -197,6 +197,9 @@ describe('dashboard rendering', () => {
     expect(body).not.toContain('>More</');
     expect(body).toContain('aria-label="Scenario progression"');
     expect(body).toContain('<h2 class="squire-campaign-dashboard__section-title">Progress</h2>');
+    expect(body).toContain(
+      'Track unlocked, played, skipped, and blocked scenarios for this campaign.',
+    );
     expect(body).toContain('Record progress');
     expect(body).not.toContain('aria-label="Party roster"');
     expect(body).not.toContain('squire-character-create');

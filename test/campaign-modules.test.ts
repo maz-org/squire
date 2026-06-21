@@ -125,7 +125,7 @@ describe('edit-modules UI (SQR-321)', () => {
     expect(await modulesOf(owner, fh)).toEqual(['fh']);
   });
 
-  it('Settings shows the modules editor for GH2e but not Frosthaven', async () => {
+  it('Settings shows the optional-content editor for GH2e but not Frosthaven', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { solo: true });
     const fh = await createViaForm(owner, 'FH', 'frosthaven', { solo: false });
@@ -133,13 +133,38 @@ describe('edit-modules UI (SQR-321)', () => {
     const gh2eBody = await (
       await app.request(`/campaigns/${gh2e}/settings`, { headers: { Cookie: owner.cookie } })
     ).text();
-    expect(gh2eBody).toContain('squire-campaign-modules');
+    expect(gh2eBody).toContain('aria-label="Edit optional content"');
     expect(gh2eBody).toContain('value="solo2e"');
 
     const fhBody = await (
       await app.request(`/campaigns/${fh}/settings`, { headers: { Cookie: owner.cookie } })
     ).text();
-    expect(fhBody).not.toContain('squire-campaign-modules');
+    expect(fhBody).not.toContain('aria-label="Edit optional content"');
+  });
+
+  it('Settings presents optional content explicitly, including the no-optional-content state', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { solo: true });
+    const fh = await createViaForm(owner, 'FH', 'frosthaven', { solo: false });
+
+    const gh2eBody = await (
+      await app.request(`/campaigns/${gh2e}/settings`, { headers: { Cookie: owner.cookie } })
+    ).text();
+    expect(gh2eBody).toMatch(
+      /squire-campaign-settings__group-title"[^>]*>\s*Optional content\s*<\/h3>/,
+    );
+    expect(gh2eBody).toContain('aria-label="Save optional content"');
+    expect(gh2eBody).toContain('squire-campaign-settings__group-body');
+    expect(gh2eBody).not.toContain('squire-campaign-modules__toggle">Modules</summary>');
+
+    const fhBody = await (
+      await app.request(`/campaigns/${fh}/settings`, { headers: { Cookie: owner.cookie } })
+    ).text();
+    expect(fhBody).toMatch(
+      /squire-campaign-settings__group-title"[^>]*>\s*Optional content\s*<\/h3>/,
+    );
+    expect(fhBody).toContain('No optional content is available for Frosthaven.');
+    expect(fhBody).not.toContain('squire-campaign-modules__toggle">Modules</summary>');
   });
 
   it('removing then re-adding a module is non-destructive to played keys', async () => {
@@ -192,7 +217,24 @@ describe('edit-modules UI (SQR-321)', () => {
     await editModules(owner, id, [], stale); // bumps version
     const conflict = await editModules(owner, id, ['solo2e'], stale);
     expect(conflict.status).toBe(422);
-    expect(await conflict.text()).toContain('Updated elsewhere');
+    expect(await conflict.text()).toContain(
+      'Updated elsewhere — review your choices and try again.',
+    );
+  });
+
+  it('keeps edited optional-content choices visible after a failed save', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const id = await createViaForm(owner, 'Conflict', 'gloomhaven-2e', { solo: true });
+    const stale = (
+      await CampaignService.getCampaignDetail(identityFromSessionUser(owner.userId), id)
+    ).campaign.version;
+    await editModules(owner, id, [], stale); // latest state now has solo unchecked
+
+    const conflict = await editModules(owner, id, ['solo2e'], stale);
+    expect(conflict.status).toBe(422);
+    const body = await conflict.text();
+    expect(body).toContain('Updated elsewhere — review your choices and try again.');
+    expect(body).toMatch(/name="module"\s+value="solo2e"[\s\S]*checked/);
   });
 
   it('404s a non-member posting the modules route', async () => {

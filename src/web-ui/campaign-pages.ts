@@ -712,6 +712,8 @@ export interface CampaignRenameForm {
   csrfToken: string;
   /** Optimistic-concurrency token; submitted as expectedVersion. */
   version: number;
+  /** Submitted value to preserve after a failed save. Defaults to the current campaign name. */
+  nameValue?: string;
   /** Inline error/notice after a failed rename (validation or version race). */
   errorMessage?: string;
 }
@@ -882,92 +884,122 @@ function renderCampaignWorkspaceHeader(
   </header>` as HtmlEscapedString;
 }
 
-/**
- * A quiet modules disclosure. Toggling changes which scenario set the dashboard
- * shows; removal is non-destructive (a removed module's played/skipped keys
- * persist and return if it is re-added). Any active member may edit — modules
- * are shared state. Only rendered for games that have optional modules.
- */
 function renderCampaignModulesForm(
   campaign: Campaign,
   data: CampaignModulesForm,
 ): HtmlEscapedString {
   const checked = new Set(data.current);
-  return html`<details class="squire-campaign-modules" ${data.errorMessage ? 'open' : ''}>
-    <summary class="squire-campaign-modules__toggle">Modules</summary>
-    ${data.errorMessage
-      ? html`<div class="squire-banner squire-banner--error" role="alert">
-          <span class="squire-banner__label">COULD NOT SAVE</span>
-          <p class="squire-banner__body">${data.errorMessage}</p>
-        </div>`
-      : html``}
-    <form
-      method="post"
-      action="/campaigns/${campaign.id}/modules"
-      class="squire-campaign-modules__form"
-      aria-label="Edit campaign modules"
-    >
-      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-      <input type="hidden" name="expectedVersion" value="${data.version}" />
-      <label class="squire-campaign-modules__option">
-        <input type="checkbox" checked disabled />
-        ${moduleLabel(data.baseModule)}
-        <span class="squire-campaign-modules__required">required</span>
-      </label>
-      ${data.optionalModules.map(
-        (module) =>
-          html`<label class="squire-campaign-modules__option">
-            <input
-              type="checkbox"
-              name="module"
-              value="${module}"
-              ${checked.has(module) ? 'checked' : ''}
-            />
-            ${moduleLabel(module)}
-          </label>`,
-      )}
-      <button type="submit" class="squire-campaign-modules__submit">SAVE MODULES</button>
-    </form>
-  </details>` as HtmlEscapedString;
+  return html`<section
+    class="squire-campaign-settings__group"
+    aria-labelledby="optional-content-title"
+  >
+    <div class="squire-campaign-settings__group-copy">
+      <h3 class="squire-campaign-settings__group-title" id="optional-content-title">
+        Optional content
+      </h3>
+      <p class="squire-campaign-settings__group-lede">
+        Choose the scenario packs that belong to this campaign.
+      </p>
+    </div>
+    <div class="squire-campaign-settings__group-body">
+      ${data.errorMessage
+        ? html`<div class="squire-banner squire-banner--error" role="alert">
+            <span class="squire-banner__label">COULD NOT SAVE</span>
+            <p class="squire-banner__body">${data.errorMessage}</p>
+          </div>`
+        : html``}
+      ${data.optionalModules.length === 0
+        ? html`<p class="squire-campaign-settings__empty">
+            No optional content is available for ${gameSystemLabel(campaign.game)}.
+          </p>`
+        : html`
+            <form
+              method="post"
+              action="/campaigns/${campaign.id}/modules"
+              class="squire-campaign-settings__form"
+              aria-label="Edit optional content"
+            >
+              <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+              <input type="hidden" name="expectedVersion" value="${data.version}" />
+              <label class="squire-campaign-settings__option">
+                <input type="checkbox" checked disabled />
+                ${moduleLabel(data.baseModule)}
+                <span class="squire-campaign-settings__required">required</span>
+              </label>
+              ${data.optionalModules.map(
+                (module) =>
+                  html`<label class="squire-campaign-settings__option">
+                    <input
+                      type="checkbox"
+                      name="module"
+                      value="${module}"
+                      ${checked.has(module) ? 'checked' : ''}
+                    />
+                    ${moduleLabel(module)}
+                  </label>`,
+              )}
+              <button
+                type="submit"
+                class="squire-campaign-settings__submit"
+                aria-label="Save optional content"
+              >
+                Save optional content
+              </button>
+            </form>
+          `}
+    </div>
+  </section>` as HtmlEscapedString;
 }
 
-/**
- * A quiet rename disclosure under the campaign title. Any active member may
- * rename (campaign name is shared state, like the scenario toggles), so the
- * affordance is not owner-gated. The disclosure opens automatically when a
- * prior attempt failed so the error and form are visible.
- */
 function renderCampaignRenameForm(campaign: Campaign, data: CampaignRenameForm): HtmlEscapedString {
-  return html`<details class="squire-campaign-rename" ${data.errorMessage ? 'open' : ''}>
-    <summary class="squire-campaign-rename__toggle">Rename</summary>
-    ${data.errorMessage
-      ? html`<div class="squire-banner squire-banner--error" role="alert">
-          <span class="squire-banner__label">COULD NOT SAVE</span>
-          <p class="squire-banner__body">${data.errorMessage}</p>
-        </div>`
-      : html``}
-    <form
-      method="post"
-      action="/campaigns/${campaign.id}/rename"
-      class="squire-campaign-rename__form"
-      aria-label="Rename campaign"
-    >
-      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-      <input type="hidden" name="expectedVersion" value="${data.version}" />
-      <label class="squire-campaign-rename__field">
-        <span class="squire-campaign-rename__field-label">CAMPAIGN NAME</span>
-        <input
-          name="name"
-          type="text"
-          required
-          maxlength="200"
-          autocomplete="off"
-          value="${campaign.name}"
-        />
-      </label>
-      <button type="submit" class="squire-campaign-rename__submit">SAVE</button>
-    </form>
-  </details>` as HtmlEscapedString;
+  const nameValue = data.nameValue ?? campaign.name;
+  return html`<section
+    class="squire-campaign-settings__group"
+    aria-labelledby="campaign-name-title"
+  >
+    <div class="squire-campaign-settings__group-copy">
+      <h3 class="squire-campaign-settings__group-title" id="campaign-name-title">Campaign name</h3>
+      <p class="squire-campaign-settings__group-lede">
+        This name appears in the campaign workspace and player campaign lists.
+      </p>
+    </div>
+    <div class="squire-campaign-settings__group-body">
+      ${data.errorMessage
+        ? html`<div class="squire-banner squire-banner--error" role="alert">
+            <span class="squire-banner__label">COULD NOT SAVE</span>
+            <p class="squire-banner__body">${data.errorMessage}</p>
+          </div>`
+        : html``}
+      <form
+        method="post"
+        action="/campaigns/${campaign.id}/rename"
+        class="squire-campaign-settings__form squire-campaign-settings__form--name"
+        aria-label="Edit campaign name"
+      >
+        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+        <input type="hidden" name="expectedVersion" value="${data.version}" />
+        <div class="squire-campaign-settings__field squire-campaign-settings__field--with-action">
+          <label class="sr-only" for="squire-campaign-name-${campaign.id}">Campaign name</label>
+          <input
+            id="squire-campaign-name-${campaign.id}"
+            name="name"
+            type="text"
+            required
+            maxlength="200"
+            autocomplete="off"
+            value="${nameValue}"
+          />
+          <button
+            type="submit"
+            class="squire-campaign-settings__submit squire-campaign-settings__submit--field-action"
+            aria-label="Save campaign name"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>` as HtmlEscapedString;
 }
 
 /** `/campaigns/:id` — dashboard: header, threads (SQR-276), roster. */
@@ -1021,7 +1053,14 @@ export function renderCampaignDashboardContent(
         : html``}
       ${activeView === 'settings'
         ? html`<section class="squire-campaign-dashboard__settings" aria-label="Settings">
-            <h2 class="squire-campaign-dashboard__section-title">Settings</h2>
+            <header class="squire-campaign-settings__header">
+              <div>
+                <h2 class="squire-campaign-dashboard__section-title">Settings</h2>
+                <p class="squire-campaign-settings__lede">
+                  Manage campaign setup and content choices.
+                </p>
+              </div>
+            </header>
             ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
             ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
           </section>`

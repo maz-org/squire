@@ -112,7 +112,10 @@ describe('campaign routes', () => {
     expect(body).toContain('squire-campaign-strip--prominent');
     expect(body).toContain('Frosthaven · Prosperity 1');
     expect(body).toContain('<h2 class="squire-campaign-dashboard__section-title">Progress</h2>');
-    expect(body).toContain("No scenario data for this campaign's modules yet.");
+    expect(body).toContain(
+      'Track unlocked, played, skipped, and blocked scenarios for this campaign.',
+    );
+    expect(body).toContain('No scenario progress is available for this campaign yet.');
     expect(body).not.toContain('Record progress');
   });
 

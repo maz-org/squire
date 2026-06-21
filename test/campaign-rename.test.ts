@@ -107,18 +107,37 @@ afterAll(async () => {
 });
 
 describe('rename-campaign UI (SQR-320)', () => {
-  it('renders the rename disclosure on the dashboard', async () => {
+  it('renders the campaign-name settings form', async () => {
     const { owner, campaign } = await setupFixture();
     const body = await (
       await app.request(`/campaigns/${campaign.id}/settings`, {
         headers: { Cookie: owner.cookie },
       })
     ).text();
-    expect(body).toContain('squire-campaign-rename');
     expect(body).toContain('action="/campaigns/' + campaign.id + '/rename"');
-    expect(body).toContain('CAMPAIGN NAME');
+    expect(body).toContain('Campaign name');
     // The current name pre-fills the input.
     expect(body).toContain('value="Original Name"');
+  });
+
+  it('renders campaign naming as an explicit Settings field, not a loose Rename control', async () => {
+    const { owner, campaign } = await setupFixture();
+    const body = await (
+      await app.request(`/campaigns/${campaign.id}/settings`, {
+        headers: { Cookie: owner.cookie },
+      })
+    ).text();
+
+    expect(body).toMatch(
+      /<label class="sr-only" for="squire-campaign-name-[^"]+">\s*Campaign name\s*<\/label>/,
+    );
+    expect(body).toContain('squire-campaign-settings__group-body');
+    expect(body).toContain('squire-campaign-settings__form--name');
+    expect(body).toContain('squire-campaign-settings__field--with-action');
+    expect(body).toContain('aria-label="Save campaign name"');
+    expect(body).toMatch(/>\s*Save\s*<\/button>/);
+    expect(body).not.toMatch(/>\s*Save campaign name\s*<\/button>/);
+    expect(body).not.toContain('squire-campaign-rename__toggle">Rename</summary>');
   });
 
   it('renames the campaign and updates the title + context strip', async () => {
@@ -164,6 +183,18 @@ describe('rename-campaign UI (SQR-320)', () => {
     expect(await res.text()).toContain('200 characters or fewer');
   });
 
+  it('keeps the edited campaign name visible after a failed save', async () => {
+    const { owner, campaign } = await setupFixture();
+    const edited = 'x'.repeat(201);
+    const res = await rename(owner, campaign.id, edited, campaign.version);
+
+    expect(res.status).toBe(422);
+    const body = await res.text();
+    expect(body).toContain('Campaign name must be 200 characters or fewer.');
+    expect(body).toContain(`value="${edited}"`);
+    expect(body).not.toContain('value="Original Name"');
+  });
+
   it('surfaces a version conflict (stale expectedVersion)', async () => {
     const { owner, campaign } = await setupFixture();
     // First rename succeeds and bumps the version.
@@ -171,7 +202,9 @@ describe('rename-campaign UI (SQR-320)', () => {
     // Second rename reuses the now-stale original version.
     const conflict = await rename(owner, campaign.id, 'Second', campaign.version);
     expect(conflict.status).toBe(422);
-    expect(await conflict.text()).toContain('Updated elsewhere');
+    const body = await conflict.text();
+    expect(body).toContain('Updated elsewhere — review your change and try again.');
+    expect(body).toContain('value="Second"');
   });
 
   it('rejects a malformed version token instead of parsing it leniently', async () => {

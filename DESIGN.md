@@ -641,6 +641,18 @@ gets a glyph:
 
 ### Campaign workspace components (`/campaigns/:id` and section routes)
 
+- **Campaign typography scale**: workspace and list page titles use the
+  largest campaign heading step (`1.556rem` desktop, `1.375rem` mobile).
+  Route-level section headings such as Progress, Party, Players, Settings,
+  Invitations, and New campaign use the next step (`1.222rem` desktop,
+  `1.25rem` mobile). Nested groups, scenario threads, character names, player
+  names, and campaign-list item names use `1rem` desktop / `1.125rem` mobile;
+  minor date headings use `0.889rem` desktop / `1rem` mobile; ledes and
+  empty-state copy use Geist `0.778rem` desktop / `0.875rem` mobile. The rem
+  values differ because the app root is `18px` on desktop and `16px` on
+  mobile; the intended rendered ladder is 28/22/18/16/14. Do not visually
+  invert semantic heading order: an `h3` group title must not render larger
+  than its parent `h2`.
 - **Workspace header**: campaign name is the strongest first-viewport signal.
   It sits below a conventional breadcrumb: linked `Campaigns` followed by the
   unlinked current campaign name. The subtitle uses the full game system name
