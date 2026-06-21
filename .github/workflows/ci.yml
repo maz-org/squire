@@ -142,6 +142,7 @@ jobs:
 
   authenticated-api-agent-e2e:
     name: Authenticated API and agent E2E smoke
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
