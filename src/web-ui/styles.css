@@ -2642,12 +2642,16 @@ template#squire-banner-fixtures {
 }
 
 .squire-character-create[data-submitting='true'],
-.squire-party-row__action form[data-submitting='true'] {
+.squire-invite-member[data-submitting='true'],
+.squire-party-row__action form[data-submitting='true'],
+.squire-player-row__action form[data-submitting='true'] {
   opacity: 0.75;
 }
 
 .squire-character-create[data-submitting='true'] button[type='submit'],
-.squire-party-row__action form[data-submitting='true'] button[type='submit'] {
+.squire-invite-member[data-submitting='true'] button[type='submit'],
+.squire-party-row__action form[data-submitting='true'] button[type='submit'],
+.squire-player-row__action form[data-submitting='true'] button[type='submit'] {
   cursor: wait;
 }
 
@@ -2947,6 +2951,294 @@ template#squire-banner-fixtures {
   min-height: 44px;
   padding: 0 var(--space-sm);
   font-family: 'Geist', system-ui, sans-serif;
+}
+
+/* ─── Campaign Players roster (SQR-361) ──────────────────────────────────── */
+
+.squire-player-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.squire-player-section__header .squire-campaign-dashboard__section-title {
+  margin: 0;
+}
+
+.squire-player-section__lede {
+  margin: var(--space-2xs) 0 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--sepia);
+}
+
+.squire-player-section__action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.squire-player-section__invite {
+  position: relative;
+}
+
+.squire-player-section__invite-summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--wax);
+  border-radius: 4px;
+  background: var(--wax);
+  color: var(--parchment);
+  cursor: pointer;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.squire-player-section__invite-summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-player-section__invite-summary:hover {
+  background: var(--wax-dim);
+}
+
+.squire-player-section__invite-summary:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.squire-player-section__invite-body {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  width: min(520px, calc(100vw - var(--space-xl)));
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface-2);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+}
+
+.squire-player-roster {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.squire-player-roster__group-title {
+  margin: 0 0 var(--space-sm);
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: 20px;
+  color: var(--parchment);
+}
+
+.squire-player-roster__empty {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--sepia);
+}
+
+.squire-player-roster__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: visible;
+}
+
+.squire-player-row {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1.6fr) minmax(8rem, 0.6fr) max-content;
+  gap: var(--space-md);
+  align-items: center;
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-player-row:last-child {
+  border-bottom: none;
+}
+
+.squire-player-row:has(.squire-player-row__action[open]) {
+  padding-bottom: calc(var(--space-sm) + 120px);
+}
+
+.squire-player-row__identity {
+  display: grid;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.squire-player-row__name {
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 20px;
+  color: var(--parchment);
+  overflow-wrap: anywhere;
+}
+
+.squire-player-row__email,
+.squire-player-row__status {
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--sepia);
+}
+
+.squire-player-row__status {
+  color: var(--parchment-dim);
+}
+
+.squire-player-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+}
+
+.squire-player-row__action > summary,
+.squire-player-row__confirm button,
+.squire-player-row__cancel {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--parchment);
+  cursor: pointer;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.squire-player-row__action > summary {
+  list-style: none;
+}
+
+.squire-player-row__action > summary::-webkit-details-marker {
+  display: none;
+}
+
+.squire-player-row__action--remove > summary,
+.squire-player-row__action--cancel > summary {
+  color: var(--error);
+}
+
+.squire-player-row__action > summary:hover {
+  border-color: var(--sepia);
+}
+
+.squire-player-row__action > summary:focus-visible,
+.squire-player-row__confirm button:focus-visible,
+.squire-player-row__cancel:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.squire-player-row__action {
+  position: relative;
+}
+
+.squire-player-row__confirm {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-xs));
+  z-index: 8;
+  display: grid;
+  gap: var(--space-sm);
+  width: min(300px, calc(100vw - var(--space-xl)));
+  padding: var(--space-sm);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface-2);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+}
+
+.squire-player-row__confirm p {
+  margin: 0;
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--parchment-dim);
+}
+
+.squire-player-row__confirm form {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.squire-player-row__confirm button {
+  width: 100%;
+  background: color-mix(in srgb, var(--error) 65%, var(--wax));
+  border-color: color-mix(in srgb, var(--error) 70%, var(--rule));
+  color: var(--parchment);
+}
+
+.squire-player-row__cancel {
+  width: 100%;
+}
+
+.squire-player-row__error {
+  grid-column: 1 / -1;
+  padding-top: var(--space-xs);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--error);
+}
+
+@media (max-width: 820px) {
+  .squire-player-section__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .squire-player-section__action {
+    justify-content: stretch;
+  }
+
+  .squire-player-section__invite-summary {
+    width: 100%;
+  }
+
+  .squire-player-section__invite-body {
+    position: static;
+    width: auto;
+  }
+
+  .squire-player-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
+
+  .squire-player-row__actions {
+    justify-content: flex-start;
+  }
+
+  .squire-player-row__confirm {
+    right: auto;
+    left: 0;
+  }
 }
 
 /* ─── Campaign Party roster (SQR-360) ────────────────────────────────────── */

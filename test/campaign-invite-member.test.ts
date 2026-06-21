@@ -87,6 +87,27 @@ async function invite(user: TestUser, campaignId: string, email: string): Promis
   });
 }
 
+async function memberAction(input: {
+  user: TestUser;
+  campaignId: string;
+  memberId: string;
+  pathAction: 'remove' | 'cancel';
+  confirm?: string;
+}): Promise<Response> {
+  const form = new FormData();
+  form.set('_csrf', createCsrfToken(input.user.sessionId));
+  if (input.confirm !== undefined) form.set('confirm', input.confirm);
+  const segment =
+    input.pathAction === 'cancel'
+      ? `/invites/${input.memberId}/cancel`
+      : `/members/${input.memberId}/remove`;
+  return app.request(`/campaigns/${input.campaignId}${segment}`, {
+    method: 'POST',
+    headers: { Cookie: input.user.cookie, 'HX-Request': 'true' },
+    body: form,
+  });
+}
+
 beforeAll(async () => {
   await setupTestDb();
 });
@@ -136,17 +157,65 @@ describe('invite-member UI (SQR-319)', () => {
     ).text();
     expect(dash).toContain(INVITEE_EMAIL);
     expect(dash).toContain('Pending invites');
-    expect(dash).toContain('squire-campaign-dashboard__invite-status');
+    expect(dash).toContain('squire-player-row__status');
     expect(dash).toContain('Invited');
   });
 
-  it('rejects an invalid email with an inline error', async () => {
+  it('separates joined players from pending invites and gates owner actions', async () => {
+    const { owner, campaign } = await setupFixture();
+    const member = await addActiveMember(owner, campaign.id, MEMBER_EMAIL);
+    await invite(owner, campaign.id, INVITEE_EMAIL);
+
+    const ownerView = await (
+      await app.request(`/campaigns/${campaign.id}/players`, {
+        headers: { Cookie: owner.cookie },
+      })
+    ).text();
+    expect(ownerView).toContain('Joined players');
+    expect(ownerView).toContain('Pending invites');
+    expect(ownerView).toContain(MEMBER_EMAIL);
+    expect(ownerView).toContain(INVITEE_EMAIL);
+    expect(ownerView).toContain('action="/campaigns/' + campaign.id + '/members/');
+    expect(ownerView).toContain('/remove"');
+    expect(ownerView).toContain('Remove member@example.com?');
+    expect(ownerView).toContain('action="/campaigns/' + campaign.id + '/invites/');
+    expect(ownerView).toContain('/cancel"');
+    expect(ownerView).toContain('Cancel invite for invitee@example.com?');
+    expect(ownerView).not.toContain('No pending invites.');
+
+    const memberView = await (
+      await app.request(`/campaigns/${campaign.id}/players`, {
+        headers: { Cookie: member.cookie },
+      })
+    ).text();
+    expect(memberView).toContain('Joined players');
+    expect(memberView).toContain('Pending invites');
+    expect(memberView).toContain(MEMBER_EMAIL);
+    expect(memberView).toContain(INVITEE_EMAIL);
+    expect(memberView).not.toContain('/remove"');
+    expect(memberView).not.toContain('/cancel"');
+  });
+
+  it('shows an explicit empty state when there are no pending invites', async () => {
+    const { owner, campaign } = await setupFixture();
+    const body = await (
+      await app.request(`/campaigns/${campaign.id}/players`, {
+        headers: { Cookie: owner.cookie },
+      })
+    ).text();
+    expect(body).toContain('Joined players');
+    expect(body).toContain('Pending invites');
+    expect(body).toContain('No pending invites.');
+  });
+
+  it('rejects an invalid email with an inline error and preserves the entered value', async () => {
     const { owner, campaign } = await setupFixture();
     const res = await invite(owner, campaign.id, 'not-an-email');
     expect(res.status).toBe(422);
     const body = await res.text();
     expect(body).toContain('COULD NOT SAVE');
     expect(body).toContain('Enter a valid email address.');
+    expect(body).toContain('value="not-an-email"');
   });
 
   it('rejects an email that is not on the allowlist', async () => {
@@ -187,5 +256,79 @@ describe('invite-member UI (SQR-319)', () => {
     const outsider = await createTestUser(OUTSIDER_EMAIL);
     const res = await invite(outsider, campaign.id, INVITEE_EMAIL);
     expect(res.status).toBe(404);
+  });
+
+  it('cancels pending invites with a destructive confirmation', async () => {
+    const { owner, campaign } = await setupFixture();
+    const inviteRow = await CampaignService.inviteMember(
+      identityFromSessionUser(owner.userId),
+      campaign.id,
+      INVITEE_EMAIL,
+    );
+
+    const missingConfirm = await memberAction({
+      user: owner,
+      campaignId: campaign.id,
+      memberId: inviteRow.memberId,
+      pathAction: 'cancel',
+    });
+    expect(missingConfirm.status).toBe(422);
+    const errorBody = await missingConfirm.text();
+    expect(errorBody).toContain('Cancel invite for invitee@example.com?');
+    expect(errorBody).toContain('Confirm cancel to remove the pending invite.');
+
+    const cancelled = await memberAction({
+      user: owner,
+      campaignId: campaign.id,
+      memberId: inviteRow.memberId,
+      pathAction: 'cancel',
+      confirm: 'cancel',
+    });
+    expect(cancelled.status).toBe(303);
+    expect(cancelled.headers.get('location')).toBe(`/campaigns/${campaign.id}/players`);
+
+    const players = await (
+      await app.request(`/campaigns/${campaign.id}/players`, {
+        headers: { Cookie: owner.cookie },
+      })
+    ).text();
+    expect(players).not.toContain(INVITEE_EMAIL);
+    expect(players).toContain('No pending invites.');
+  });
+
+  it('removes joined players with a destructive confirmation', async () => {
+    const { owner, campaign } = await setupFixture();
+    await addActiveMember(owner, campaign.id, MEMBER_EMAIL);
+    const memberId = (
+      await CampaignService.getCampaignDetail(identityFromSessionUser(owner.userId), campaign.id)
+    ).members.find((member) => member.email === MEMBER_EMAIL)!.memberId;
+
+    const missingConfirm = await memberAction({
+      user: owner,
+      campaignId: campaign.id,
+      memberId,
+      pathAction: 'remove',
+    });
+    expect(missingConfirm.status).toBe(422);
+    const errorBody = await missingConfirm.text();
+    expect(errorBody).toContain('Remove member@example.com?');
+    expect(errorBody).toContain('Confirm remove to remove this player from the campaign.');
+
+    const removed = await memberAction({
+      user: owner,
+      campaignId: campaign.id,
+      memberId,
+      pathAction: 'remove',
+      confirm: 'remove',
+    });
+    expect(removed.status).toBe(303);
+    expect(removed.headers.get('location')).toBe(`/campaigns/${campaign.id}/players`);
+
+    const ownerView = await (
+      await app.request(`/campaigns/${campaign.id}/players`, {
+        headers: { Cookie: owner.cookie },
+      })
+    ).text();
+    expect(ownerView).not.toContain(MEMBER_EMAIL);
   });
 });

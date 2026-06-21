@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.25] - 2026-06-21
+
+### Added
+
+- Built the campaign Players section with separate joined-player and pending-invite rosters, owner-only invite creation, member removal, invite cancellation, row-level confirmations, and empty states.
+- Added Players-section tests covering owner/member visibility, preserved invite errors, cancel-invite flow, remove-member flow, and browser pending states.
+
 ## [0.1.24] - 2026-06-14
 
 ### Added

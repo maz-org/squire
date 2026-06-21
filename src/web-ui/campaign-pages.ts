@@ -283,10 +283,12 @@ export interface InviteMemberForm {
   canInvite: boolean;
   /** Inline error rendered after a failed invite attempt. */
   errorMessage?: string;
+  /** Preserve the submitted address when validation or authorization fails. */
+  emailValue?: string;
 }
 
 /**
- * The Party-section invite affordance. The error banner renders independently
+ * The Players-section invite affordance. The error banner renders independently
  * of the form so a non-owner who tampers the route still sees the rejection,
  * while only the owner ever sees the form inputs.
  */
@@ -307,11 +309,224 @@ function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): Htm
         <input type="hidden" name="_csrf" value="${data.csrfToken}" />
         <label class="squire-invite-member__field">
           <span class="squire-invite-member__field-label">INVITE BY EMAIL</span>
-          <input name="email" type="email" required maxlength="320" autocomplete="off" />
+          <input
+            name="email"
+            type="email"
+            required
+            maxlength="320"
+            autocomplete="off"
+            value="${data.emailValue ?? ''}"
+          />
         </label>
         <button type="submit" class="squire-invite-member__submit">INVITE</button>
       </form>`
     : html``}` as HtmlEscapedString;
+}
+
+type CampaignPlayerRow = CampaignDetail['members'][number];
+
+export interface CampaignPlayerActionError {
+  memberId: string;
+  action: 'remove' | 'cancel';
+  message: string;
+}
+
+function playerDisplayName(member: CampaignPlayerRow): string {
+  return member.name?.trim() || member.email;
+}
+
+function playerRoleLabel(member: CampaignPlayerRow): string {
+  return member.role === 'owner' ? 'Owner' : 'Member';
+}
+
+function renderPlayerActionError(
+  member: CampaignPlayerRow,
+  actionError?: CampaignPlayerActionError,
+): HtmlEscapedString {
+  if (!actionError || actionError.memberId !== member.memberId) return html`` as HtmlEscapedString;
+  return html`<div class="squire-player-row__error" role="alert">
+    ${actionError.message}
+  </div>` as HtmlEscapedString;
+}
+
+function renderPlayerConfirmAction(input: {
+  campaignId: string;
+  csrfToken: string;
+  member: CampaignPlayerRow;
+  action: 'remove' | 'cancel';
+  label: string;
+  confirmValue: string;
+  prompt: string;
+  actionError?: CampaignPlayerActionError;
+}): HtmlEscapedString {
+  const open =
+    input.actionError?.memberId === input.member.memberId &&
+    input.actionError.action === input.action;
+  const actionPath =
+    input.action === 'cancel'
+      ? `/campaigns/${input.campaignId}/invites/${input.member.memberId}/cancel`
+      : `/campaigns/${input.campaignId}/members/${input.member.memberId}/remove`;
+  return html`<details
+    class="squire-player-row__action squire-player-row__action--${input.action}"
+    ${open ? raw('open') : raw('')}
+  >
+    <summary aria-label="${input.label} ${playerDisplayName(input.member)}">${input.label}</summary>
+    <div class="squire-player-row__confirm">
+      <p>${input.prompt}</p>
+      ${open ? renderPlayerActionError(input.member, input.actionError) : html``}
+      <form method="post" action="${actionPath}">
+        <input type="hidden" name="_csrf" value="${input.csrfToken}" />
+        <input type="hidden" name="confirm" value="${input.confirmValue}" />
+        <button type="submit">Confirm ${input.label.toLowerCase()}</button>
+        <a class="squire-player-row__cancel" href="/campaigns/${input.campaignId}/players">
+          Cancel
+        </a>
+      </form>
+    </div>
+  </details>` as HtmlEscapedString;
+}
+
+function renderJoinedPlayerRow(input: {
+  campaignId: string;
+  csrfToken: string;
+  member: CampaignPlayerRow;
+  canManage: boolean;
+  isSelf: boolean;
+  actionError?: CampaignPlayerActionError;
+}): HtmlEscapedString {
+  const { member } = input;
+  const displayName = playerDisplayName(member);
+  return html`<li class="squire-player-row squire-player-row--joined">
+    <div class="squire-player-row__identity">
+      <span class="squire-player-row__name">${displayName}</span>
+      ${displayName !== member.email
+        ? html`<span class="squire-player-row__email">${member.email}</span>`
+        : html``}
+    </div>
+    <span class="squire-player-row__status">${playerRoleLabel(member)}</span>
+    <div class="squire-player-row__actions">
+      ${input.canManage && !input.isSelf
+        ? renderPlayerConfirmAction({
+            campaignId: input.campaignId,
+            csrfToken: input.csrfToken,
+            member,
+            action: 'remove',
+            label: 'Remove',
+            confirmValue: 'remove',
+            prompt: `Remove ${member.email}?`,
+            actionError: input.actionError,
+          })
+        : html``}
+    </div>
+  </li>` as HtmlEscapedString;
+}
+
+function renderPendingInviteRow(input: {
+  campaignId: string;
+  csrfToken: string;
+  member: CampaignPlayerRow;
+  canManage: boolean;
+  actionError?: CampaignPlayerActionError;
+}): HtmlEscapedString {
+  const { member } = input;
+  return html`<li class="squire-player-row squire-player-row--pending">
+    <div class="squire-player-row__identity">
+      <span class="squire-player-row__name">${member.email}</span>
+    </div>
+    <span class="squire-player-row__status">Invited</span>
+    <div class="squire-player-row__actions">
+      ${input.canManage
+        ? renderPlayerConfirmAction({
+            campaignId: input.campaignId,
+            csrfToken: input.csrfToken,
+            member,
+            action: 'cancel',
+            label: 'Cancel',
+            confirmValue: 'cancel',
+            prompt: `Cancel invite for ${member.email}?`,
+            actionError: input.actionError,
+          })
+        : html``}
+    </div>
+  </li>` as HtmlEscapedString;
+}
+
+function renderPlayerRosterSection(input: {
+  title: string;
+  empty: string;
+  rows: CampaignPlayerRow[];
+  rowRenderer: (member: CampaignPlayerRow) => HtmlEscapedString;
+}): HtmlEscapedString {
+  return html`<section class="squire-player-roster__group" aria-label="${input.title}">
+    <h3 class="squire-player-roster__group-title">${input.title}</h3>
+    ${input.rows.length === 0
+      ? html`<p class="squire-player-roster__empty">${input.empty}</p>`
+      : html`<ul class="squire-player-roster__rows">
+          ${input.rows.map((member) => input.rowRenderer(member))}
+        </ul>`}
+  </section>` as HtmlEscapedString;
+}
+
+function renderPlayersSection(input: {
+  detail: CampaignDetail;
+  inviteForm?: InviteMemberForm;
+  actionError?: CampaignPlayerActionError;
+}): HtmlEscapedString {
+  const { campaign, self } = input.detail;
+  const joinedPlayers = input.detail.members.filter((member) => member.status === 'active');
+  const pendingInvites = input.detail.members.filter((member) => member.status === 'invited');
+  const csrfToken = input.inviteForm?.csrfToken ?? '';
+  const canManage = input.inviteForm?.canInvite === true;
+  return html`<section class="squire-campaign-dashboard__players" aria-label="Players">
+    <header class="squire-player-section__header">
+      <div>
+        <h2 class="squire-campaign-dashboard__section-title">Players</h2>
+        <p class="squire-player-section__lede">Manage campaign members and pending invitations.</p>
+      </div>
+      <div class="squire-player-section__action">
+        ${input.inviteForm?.canInvite
+          ? html`<details class="squire-player-section__invite">
+              <summary class="squire-player-section__invite-summary">Invite player</summary>
+              <div class="squire-player-section__invite-body">
+                ${renderInviteMemberForm(campaign.id, input.inviteForm)}
+              </div>
+            </details>`
+          : html``}
+      </div>
+    </header>
+    ${!input.inviteForm?.canInvite && input.inviteForm?.errorMessage
+      ? renderInviteMemberForm(campaign.id, input.inviteForm)
+      : html``}
+    <div class="squire-player-roster">
+      ${renderPlayerRosterSection({
+        title: 'Joined players',
+        empty: 'No joined players yet.',
+        rows: joinedPlayers,
+        rowRenderer: (member) =>
+          renderJoinedPlayerRow({
+            campaignId: campaign.id,
+            csrfToken,
+            member,
+            canManage,
+            isSelf: member.memberId === self.memberId,
+            actionError: input.actionError,
+          }),
+      })}
+      ${renderPlayerRosterSection({
+        title: 'Pending invites',
+        empty: 'No pending invites.',
+        rows: pendingInvites,
+        rowRenderer: (member) =>
+          renderPendingInviteRow({
+            campaignId: campaign.id,
+            csrfToken,
+            member,
+            canManage,
+            actionError: input.actionError,
+          }),
+      })}
+    </div>
+  </section>` as HtmlEscapedString;
 }
 
 function compactCharacterClass(character: DashboardCharacterRow): string {
@@ -490,25 +705,6 @@ function renderPartyRoster(input: {
       actionError: input.actionError,
     })}
   </div>` as HtmlEscapedString;
-}
-
-function renderPendingInvites(pendingInvites: CampaignDetail['members']): HtmlEscapedString {
-  if (pendingInvites.length === 0) return html`` as HtmlEscapedString;
-  return html`<section
-    class="squire-campaign-dashboard__pending-invites"
-    aria-label="Pending invites"
-  >
-    <h3 class="squire-campaign-dashboard__subsection-title">Pending invites</h3>
-    <ul class="squire-campaign-dashboard__invite-list">
-      ${pendingInvites.map(
-        (member) =>
-          html`<li class="squire-campaign-dashboard__invite-row">
-            <span>${member.email}</span>
-            <span class="squire-campaign-dashboard__invite-status">Invited</span>
-          </li>`,
-      )}
-    </ul>
-  </section>` as HtmlEscapedString;
 }
 
 /** The dashboard "Rename campaign" affordance (SQR-320). */
@@ -783,14 +979,13 @@ export function renderCampaignDashboardContent(
   characterCreate?: CharacterCreateForm,
   characterActionError?: CharacterActionError,
   inviteForm?: InviteMemberForm,
+  playerActionError?: CampaignPlayerActionError,
   renameForm?: CampaignRenameForm,
   modulesForm?: CampaignModulesForm,
   headerStats?: CampaignDashboardHeaderStats,
   activeView: CampaignDashboardView = 'progress',
 ): HtmlEscapedString {
   const { campaign } = detail;
-  // Pending invites are real state — shown distinctly, never as fake rows.
-  const pendingInvites = detail.members.filter((member) => member.status === 'invited');
   return html`<section class="squire-campaign-workspace" data-campaign-id="${campaign.id}">
     ${renderCampaignWorkspaceHeader(campaign, headerStats)}
     ${renderCampaignWorkspaceNav(campaign.id, activeView)}
@@ -822,22 +1017,7 @@ export function renderCampaignDashboardContent(
           </section>`
         : html``}
       ${activeView === 'players'
-        ? html`<section class="squire-campaign-dashboard__players" aria-label="Players">
-            <h2 class="squire-campaign-dashboard__section-title">Players</h2>
-            <ul class="squire-campaign-dashboard__members">
-              ${detail.members.map(
-                (member) =>
-                  html`<li class="squire-campaign-dashboard__member">
-                    <span>${member.email}</span>
-                    <span class="squire-campaign-dashboard__member-role"
-                      >${member.status === 'active' ? member.role : member.status}</span
-                    >
-                  </li>`,
-              )}
-            </ul>
-            ${renderPendingInvites(pendingInvites)}
-            ${inviteForm ? renderInviteMemberForm(campaign.id, inviteForm) : html``}
-          </section>`
+        ? renderPlayersSection({ detail, inviteForm, actionError: playerActionError })
         : html``}
       ${activeView === 'settings'
         ? html`<section class="squire-campaign-dashboard__settings" aria-label="Settings">
