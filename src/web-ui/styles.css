@@ -627,13 +627,11 @@ html {
   cursor: pointer;
 }
 
-/* Header monogram is the 28px variant. The box styling (display, background,
-   border-radius, centering, font) lives on the base `.squire-monogram` rule
+/* Header monogram is the 28px variant. The image-backed mark styling
+   lives on the base `.squire-monogram` rule
    below in the SQR-66 signature components block, so the desktop rail's
    `.squire-monogram--masthead` and any future surface (sign-in page, channel
-   avatar) inherit it without re-declaring. CodeRabbit caught the missing
-   inheritance on PR #202 — the rail monogram was rendering as a bare glyph
-   because only the header selector had the box. */
+   avatar) inherit it without re-declaring. */
 .squire-header .squire-monogram {
   width: 28px;
   height: 28px;
@@ -763,12 +761,8 @@ html {
   font-style: italic;
 }
 
-/* The submit control IS the Squire seal (SQR-99): the same wax-seal "S"
-   tile as the header monogram, scaled to the 44px tap target so the ask
-   affordance reads as a signature interaction rather than a generic
-   button. Typography mirrors `.squire-monogram` — Fraunces 700 with the
-   opsz/SOFT display axes — and the glyph fills ~85% of the square to
-   match the brand mark at other sizes. */
+/* The submit control IS the Squire seal (SQR-99): the same wax-seal mark as
+   the header monogram, scaled to the 44px tap target. */
 .squire-input-dock__submit {
   width: 44px;
   height: 44px;
@@ -776,23 +770,17 @@ html {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--wax);
+  background: var(--wax) url('/squire-wax-seal-s.png') center / contain no-repeat;
   color: var(--parchment);
-  border: none;
-  border-radius: 4px;
-  font-family: 'Fraunces', 'Georgia', serif;
-  font-weight: 700;
-  font-variation-settings:
-    'opsz' 144,
-    'SOFT' 80;
-  font-size: 38px;
+  border: 1px solid var(--wax);
+  border-radius: 6px;
   line-height: 1;
-  padding: 0 0 3px;
+  padding: 0;
   cursor: pointer;
 }
 
 .squire-input-dock__submit:hover {
-  background: var(--wax-dim);
+  filter: brightness(0.94);
 }
 
 .squire-auth-page {
@@ -1255,36 +1243,21 @@ template#squire-banner-fixtures {
  * DESIGN.md §Signature Components + §Typography.
  */
 
-/* Monogram — Fraunces weight 700 "S" inside a wax-seal square. The header
-   tile is 28px (SQR-65 ships that size). The .squire-monogram--masthead
-   modifier is the 56px masthead variant used on the desktop rail / sign-in
-   page / channel avatars. Font size is ~85% of the square so the cap fills
-   the tile without looking squished at either size. Fraunces has a small
-   baseline gap, so a few pixels of padding-bottom keep the S optically
-   centered instead of floating high. */
+/* Monogram — image-backed Squire wax-seal square. The header tile is 28px
+   (SQR-65 ships that size). The .squire-monogram--masthead modifier is the
+   56px masthead variant used on the desktop rail / sign-in page / channel
+   avatars. */
 .squire-monogram {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--wax);
-  color: var(--parchment);
-  border-radius: 4px;
-  font-family: 'Fraunces', 'Georgia', serif;
-  font-weight: 700;
-  font-variation-settings:
-    'opsz' 144,
-    'SOFT' 80;
-  font-size: 24px;
+  display: inline-block;
+  background: transparent url('/squire-wax-seal-s.png') center / contain no-repeat;
+  color: transparent;
   line-height: 1;
-  padding-bottom: 2px;
+  overflow: hidden;
 }
 
 .squire-monogram--masthead {
   width: 56px;
   height: 56px;
-  font-size: 48px;
-  padding-bottom: 4px;
-  border-radius: 4px;
 }
 
 /* Wordmark stays upright at every scale — italic Fraunces reads precious

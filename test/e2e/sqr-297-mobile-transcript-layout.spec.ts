@@ -20,7 +20,7 @@ function renderReloadedConversationFixture(): string {
         <div class="squire-frame">
           <div class="squire-column">
             <header class="squire-header">
-              <span class="squire-monogram" aria-hidden="true">S</span>
+              <span class="squire-monogram" aria-hidden="true"></span>
               <span class="squire-wordmark">Squire</span>
               <span class="squire-context">GH2 TABLETOP CAMPAIGN</span>
             </header>
@@ -43,9 +43,7 @@ function renderReloadedConversationFixture(): string {
             </main>
             <form class="squire-input-dock" method="post" action="/chat/conversation-123/messages">
               <input id="squire-input" name="question" type="text" autocomplete="off" placeholder="Ask a question..." />
-              <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                <span aria-hidden="true">S</span>
-              </button>
+              <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
             </form>
           </div>
         </div>

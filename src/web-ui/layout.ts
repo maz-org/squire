@@ -297,7 +297,7 @@ export function renderConversationHistoryShell(
     <aside class="squire-rail" aria-label="Conversation history">
       <div class="squire-history-head">
         <a class="squire-history-brand" href="/" aria-label="Go to Squire home">
-          <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+          <span class="squire-monogram squire-monogram--masthead" aria-hidden="true"></span>
           <span class="squire-wordmark">Squire</span>
         </a>
         ${renderNewChatLink('squire-history-new-chat')}
@@ -398,7 +398,7 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
         <meta name="htmx-config" content='{"includeIndicatorStyles":false}' />
         ${renderBrowserTelemetryConfig()}
         <title>Squire</title>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
         ${options.csrfToken
           ? html`<meta name="${CSRF_META_NAME}" content="${options.csrfToken}" />`
           : html``}
@@ -1156,7 +1156,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           <header class="squire-header">
             ${authenticated && options.session
               ? html`<a class="squire-header__brand" href="/" aria-label="Go to Squire home">
-                    <span class="squire-monogram" aria-hidden="true">S</span>
+                    <span class="squire-monogram" aria-hidden="true"></span>
                     <span class="squire-wordmark">Squire</span>
                   </a>
                   ${conversationHistory ? renderHistoryToggle() : html``}
@@ -1173,7 +1173,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   <div class="squire-header__account">
                     ${renderAccountMenu(options.session, authenticatedCsrfToken)}
                   </div>`
-              : html`<span class="squire-monogram" aria-hidden="true">S</span>
+              : html`<span class="squire-monogram" aria-hidden="true"></span>
                   <span class="squire-wordmark">Squire</span>
                   <span class="squire-context">${headerContext}</span>`}
           </header>
@@ -1206,9 +1206,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                   autocomplete="off"
                   placeholder="Ask a question..."
                 />
-                <button type="submit" class="squire-input-dock__submit" aria-label="Ask">
-                  <span aria-hidden="true">S</span>
-                </button>
+                <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
               </form>`}
         </div>
       </div>` as HtmlEscapedString,
@@ -1282,7 +1280,7 @@ export async function renderLoginPage(options: LoginPageOptions = {}): Promise<H
   return renderAuthPage(
     html`<main class="squire-auth-page">
       <section class="squire-auth-page__stack" aria-label="Sign in to Squire">
-        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true"></span>
         <span class="squire-wordmark squire-wordmark--auth">Squire</span>
         <p class="squire-tagline">A HAVEN RULES COMPANION</p>
         <a
@@ -1315,7 +1313,7 @@ export async function renderNotInvitedPage(): Promise<HtmlEscapedString> {
   return renderAuthPage(
     html`<main class="squire-auth-page">
       <section class="squire-auth-page__stack" aria-label="Not invited to Squire">
-        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true"></span>
         <span class="squire-wordmark squire-wordmark--auth">Squire</span>
         <p class="squire-tagline">A HAVEN RULES COMPANION</p>
         ${renderAuthBanner({
@@ -1331,7 +1329,7 @@ export async function renderEmailNotVerifiedPage(): Promise<HtmlEscapedString> {
   return renderAuthPage(
     html`<main class="squire-auth-page">
       <section class="squire-auth-page__stack" aria-label="Google email not verified">
-        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true">S</span>
+        <span class="squire-monogram squire-monogram--masthead" aria-hidden="true"></span>
         <span class="squire-wordmark squire-wordmark--auth">Squire</span>
         <p class="squire-tagline">A HAVEN RULES COMPANION</p>
         <div class="squire-banner squire-banner--error" role="alert">

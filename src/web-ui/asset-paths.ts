@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 export const WEB_UI_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const STYLES_PATH = path.join(WEB_UI_DIR, 'styles.css');
 export const SQUIRE_JS_PATH = path.join(WEB_UI_DIR, 'squire.js');
+export const SQUIRE_LOGO_PNG_PATH = path.join(WEB_UI_DIR, 'squire-wax-seal-s.png');
 export const HTMX_JS_PATH = path.join(
   WEB_UI_DIR,
   '..',

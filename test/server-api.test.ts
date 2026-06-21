@@ -1060,7 +1060,7 @@ describe('request lifecycle telemetry', () => {
   });
 
   it('logs and traces successful requests with safe route metadata', async () => {
-    const res = await app.request('/favicon.svg?email=alice@example.com', {
+    const res = await app.request('/favicon.png?email=alice@example.com', {
       headers: {
         Cookie: 'session=secret',
         'X-Request-ID': 'req-lifecycle-ok-1',
@@ -1069,7 +1069,10 @@ describe('request lifecycle telemetry', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('X-Request-ID')).toBe('req-lifecycle-ok-1');
-    await expect(res.text()).resolves.toContain('<svg');
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(body.subarray(0, 8)).toEqual(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    );
 
     const [, , startedInput] = findTelemetryLog('server.request.started');
     expect(mockCaptureTelemetryLog).toHaveBeenCalledWith(
@@ -1099,13 +1102,13 @@ describe('request lifecycle telemetry', () => {
       'info',
       'server.request.completed',
       expect.objectContaining({
-        route: '/favicon.svg',
+        route: '/favicon.png',
         requestId: 'req-lifecycle-ok-1',
         attributes: expect.objectContaining({
           environment: 'test',
           release: 'test-release-sha',
           method: 'GET',
-          route: '/favicon.svg',
+          route: '/favicon.png',
           status: 200,
           duration_ms: expect.any(Number),
           request_id: 'req-lifecycle-ok-1',
@@ -1118,7 +1121,7 @@ describe('request lifecycle telemetry', () => {
     expect(mockRequestSpan.setAttributes).toHaveBeenCalledWith(
       expect.objectContaining({
         'http.request.method': 'GET',
-        'http.route': '/favicon.svg',
+        'http.route': '/favicon.png',
         'http.response.status_code': 200,
         'squire.duration_ms': expect.any(Number),
         'squire.environment': 'test',

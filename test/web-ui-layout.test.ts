@@ -156,7 +156,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(res.headers.get('vary')).toContain('Cookie');
     const body = await res.text();
     expect(body).toMatch(/^<!doctype html>/i);
-    expect(body).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
+    expect(body).toContain('<link rel="icon" href="/favicon.png" type="image/png" />');
   });
 
   it('renders same-origin browser telemetry config without leaking a Sentry DSN', async () => {
@@ -179,16 +179,26 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     }
   });
 
-  it('serves the favicon svg asset', async () => {
-    const res = await app.request('/favicon.svg');
+  it('serves the favicon png asset', async () => {
+    const res = await app.request('/favicon.png');
     expect(res.status).toBe(200);
-    expect(res.headers.get('content-type')).toContain('image/svg+xml');
+    expect(res.headers.get('content-type')).toContain('image/png');
     expect(res.headers.get('cache-control')).toBe('no-cache');
-    const body = await res.text();
-    expect(body).toContain('<svg');
-    expect(body).toContain('<rect');
-    expect(body).toContain('<text');
-    expect(body).toMatch(/>\s*S\s*</);
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(body.subarray(0, 8)).toEqual(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    );
+  });
+
+  it('serves the Squire wax-seal png asset', async () => {
+    const res = await app.request('/squire-wax-seal-s.png');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('image/png');
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(body.subarray(0, 8)).toEqual(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    );
   });
 
   it('renders the centered login composition', async () => {
@@ -340,7 +350,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="idempotencyKey"[^>]*value=""/);
     expect(body).toMatch(/placeholder="Ask a question\.\.\."/);
     expect(body).toMatch(
-      /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*<span aria-hidden="true">S<\/span>\s*<\/button>/,
+      /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*<\/button>/,
     );
   });
 
@@ -451,10 +461,9 @@ describe('SQR-71 dev asset pipeline — bare paths', () => {
     expect(body).toContain('EventSource');
     // SQR-108 QA: removed `submitButton.textContent = '...'` and
     // `submitButton.textContent = 'Ask'` mutations. They destroyed the
-    // inner `<span>S</span>` that renders the wax-seal monogram. The
-    // pending visual is now driven entirely by `data-submitting='true'`
-    // on the form + the `disabled` attribute on the button + CSS
-    // opacity.
+    // PNG-backed wax-seal mark. The pending visual is now driven
+    // entirely by `data-submitting='true'` on the form + the `disabled`
+    // attribute on the button + CSS opacity.
     expect(body).not.toContain("submitButton.textContent = '...'");
     expect(body).not.toContain("submitButton.textContent = 'Ask'");
     expect(body).not.toContain("action === '/chat'");
@@ -1319,21 +1328,18 @@ describe('styles.css — SQR-66 signature component rules', () => {
     expect(css).toMatch(/\.squire-monogram--masthead\s*\{[^}]*width:\s*56px[^}]*height:\s*56px/);
   });
 
-  it('puts the wax-box styling on the BASE .squire-monogram so all contexts inherit it', () => {
-    // Regression: CodeRabbit on PR #202 caught that the box styling
-    // (display, background, centering) was scoped to .squire-header
-    // .squire-monogram, so the desktop rail's masthead monogram rendered
-    // as a bare Fraunces "S" instead of a wax square. The fix lifts the
-    // box styling to the base selector. This test pins the new structure
-    // so a future cleanup can't accidentally re-scope it.
+  it('puts the PNG-backed mark styling on the BASE .squire-monogram', () => {
+    // Regression: CodeRabbit on PR #202 caught that the monogram styling
+    // was scoped to .squire-header .squire-monogram. The base selector must
+    // keep owning the shared brand mark so the desktop rail and auth pages
+    // do not drift from the header.
     const baseRule = css.match(/^\.squire-monogram\s*\{[^}]*\}/m);
     expect(baseRule).not.toBeNull();
     const body = baseRule![0];
-    expect(body).toContain('display: inline-flex');
-    expect(body).toContain('background: var(--wax)');
-    expect(body).toContain('color: var(--parchment)');
-    expect(body).toContain('border-radius: 4px');
-    expect(body).toContain('justify-content: center');
+    expect(body).toContain('display: inline-block');
+    expect(body).toContain("url('/squire-wax-seal-s.png')");
+    expect(body).toContain('color: transparent');
+    expect(body).toContain('overflow: hidden');
   });
 
   it('gates hover transitions on .cite under prefers-reduced-motion: reduce', () => {

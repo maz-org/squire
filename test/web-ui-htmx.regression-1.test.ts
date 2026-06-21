@@ -34,7 +34,7 @@ describe('squire.js HTMX first-turn submit regression', () => {
     expect(squireJs).toContain("form.setAttribute('hx-swap', 'beforeend');");
   });
 
-  it('does NOT mutate submitButton.textContent in setFormPendingState (SQR-108 QA: would destroy the inner <span>S</span> wax-seal monogram from SQR-99)', () => {
+  it('does NOT mutate submitButton.textContent in setFormPendingState (SQR-108 QA: preserves the PNG-backed wax-seal mark from SQR-99)', () => {
     expect(squireJs).not.toContain("submitButton.textContent = 'Ask'");
     expect(squireJs).not.toContain("submitButton.textContent = '...'");
     expect(squireJs).not.toContain("submitButton.textContent = '→'");
