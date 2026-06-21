@@ -98,6 +98,12 @@ const testSession: Session = {
 
 const testCsrfToken = 'test-csrf-token';
 
+const noCampaignChatContext = {
+  activeCampaign: null,
+  campaigns: [],
+  returnTo: '/',
+};
+
 function testConversationHistory() {
   return {
     rows: [
@@ -256,7 +262,6 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('class="squire-header"');
     expect(body).toContain('class="squire-header__brand"');
     expect(body).toMatch(/<a[^>]*class="squire-header__brand"[^>]*href="\/"[^>]*>/);
-    expect(body).toContain('class="squire-game-picker"');
     expect(body).toContain('class="squire-account-menu"');
     expect(body).toContain('class="squire-account-menu__avatar"');
     expect(body).toContain('Open account menu for Test User');
@@ -270,17 +275,27 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toMatch(/>\s*Log out\s*</);
   });
 
-  it('renders an active-game selector in the header and submits the current game with chat forms', async () => {
-    const body = String(await actualLayout.renderHomePage(testSession, testCsrfToken));
+  it('renders a no-campaign game selector in the chat context and submits the current game with chat forms', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(testSession, testCsrfToken, {
+        chatCampaignContext: noCampaignChatContext,
+      }),
+    );
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
 
-    expect(body).toContain('class="squire-game-picker"');
-    expect(body).toContain('aria-label="Active game"');
-    expect(body).toMatch(
+    expect(header).not.toContain('squire-game-picker');
+    expect(context).toContain('No campaign selected');
+    expect(context).toContain('class="squire-game-picker"');
+    expect(context).toContain('aria-label="Active game"');
+    expect(context).toMatch(
       /<input[^>]*type="radio"[^>]*name="activeGame"[^>]*value="frosthaven"[^>]*checked/,
     );
-    expect(body).toMatch(/<input[^>]*type="radio"[^>]*name="activeGame"[^>]*value="gloomhaven-2e"/);
-    expect(body).toContain('Frosthaven');
-    expect(body).toContain('Gloomhaven 2e');
+    expect(context).toMatch(
+      /<input[^>]*type="radio"[^>]*name="activeGame"[^>]*value="gloomhaven-2e"/,
+    );
+    expect(context).toContain('Frosthaven');
+    expect(context).toContain('Gloomhaven 2e');
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="game"[^>]*value="frosthaven"/);
   });
 

@@ -58,6 +58,12 @@ export interface LayoutShellOptions {
   campaignStrip?: CampaignStripState | null;
   campaignStripProminent?: boolean;
   /**
+   * Chat-specific campaign context. Unlike `campaignStrip`, this renders in
+   * the ask surface rather than the header, so users verify context immediately
+   * before asking and can change it without leaving chat.
+   */
+  chatCampaignContext?: ChatCampaignContextView;
+  /**
    * Slot content rendered inside `main.squire-surface`. Must be an
    * already-escaped `HtmlEscapedString` produced by hono/html's `html`
    * tagged template (or `raw()` if the caller has manually escaped). The
@@ -111,6 +117,12 @@ export interface LayoutShellOptions {
    * two nested polite regions.
    */
   transcriptOwnsLiveRegion?: boolean;
+}
+
+export interface ChatCampaignContextView {
+  activeCampaign: CampaignStripState | null;
+  campaigns: CampaignStripState[];
+  returnTo: string;
 }
 
 const EMPTY_CONVERSATION_HISTORY: ConversationHistoryViewModel = {
@@ -206,6 +218,68 @@ function renderActiveGamePicker(): HtmlEscapedString {
         </label>`,
     )}
   </fieldset>` as HtmlEscapedString;
+}
+
+function chatGameLabel(game: string): string {
+  return SUPPORTED_GAMES.find((definition) => definition.id === game)?.label ?? game;
+}
+
+function renderChatCampaignContext(
+  context: ChatCampaignContextView,
+  csrfToken: string,
+): HtmlEscapedString {
+  const active = context.activeCampaign;
+  return html`<section class="squire-chat-context" aria-label="Chat campaign context">
+    <div class="squire-chat-context__current">
+      <span class="squire-chat-context__label">Current campaign</span>
+      <strong class="squire-chat-context__name"
+        >${active ? active.campaignName : 'No campaign selected'}</strong
+      >
+      <span class="squire-chat-context__meta">
+        ${active
+          ? `${chatGameLabel(active.game)} context for your next question`
+          : 'Game-only rules lookup'}
+      </span>
+    </div>
+    ${active
+      ? html`<a class="squire-chat-context__campaign-link" href="/campaigns/${active.campaignId}">
+          Open campaign
+        </a>`
+      : renderActiveGamePicker()}
+    ${context.campaigns.length > 0
+      ? html`<details class="squire-chat-context__switcher">
+          <summary>Change</summary>
+          <div class="squire-chat-context__menu">
+            ${context.campaigns.map(
+              (campaign) =>
+                html`<form method="post" action="/chat/campaign-context">
+                  <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+                  <input type="hidden" name="campaignId" value="${campaign.campaignId}" />
+                  <input type="hidden" name="returnTo" value="${context.returnTo}" />
+                  <button
+                    type="submit"
+                    ${active?.campaignId === campaign.campaignId
+                      ? html`aria-current="true"`
+                      : html``}
+                  >
+                    ${campaign.campaignName}
+                    <span>${chatGameLabel(campaign.game)}</span>
+                  </button>
+                </form>`,
+            )}
+            <form method="post" action="/chat/campaign-context">
+              <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+              <input type="hidden" name="campaignId" value="__none" />
+              <input type="hidden" name="returnTo" value="${context.returnTo}" />
+              <button type="submit" ${active === null ? html`aria-current="true"` : html``}>
+                No campaign
+                <span>Use the game picker</span>
+              </button>
+            </form>
+          </div>
+        </details>`
+      : html`<a class="squire-chat-context__setup" href="/campaigns">Set up campaign</a>`}
+  </section>` as HtmlEscapedString;
 }
 
 function statusLabel(status: ConversationHistoryStatus): string {
@@ -1120,14 +1194,19 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
   const chatFormAction = options.chatFormAction ?? '/chat';
   const chatFormHxTarget = options.chatFormHxTarget ?? '#squire-surface';
   const chatFormHxSwap = options.chatFormHxSwap ?? 'innerHTML';
+  const activeChatCampaign =
+    options.chatCampaignContext !== undefined
+      ? options.chatCampaignContext.activeCampaign
+      : options.campaignStrip;
   const headerContext = options.headerContext ?? 'HAVEN · RULES';
   const columnClassName = options.columnClassName ?? 'squire-column';
   const historyQuery = conversationHistory?.query ?? '';
   const chatFormHiddenFields = [
     ...(csrfToken ? [{ name: CSRF_FORM_FIELD_NAME, value: csrfToken }] : []),
-    // E8: an active campaign supplies the game dimension; the per-session
-    // selector (and its hidden field) exist only for no-campaign sessions.
-    ...(options.campaignStrip ? [] : [{ name: 'game', value: DEFAULT_GAME_ID }]),
+    // E8/SQR-364: a campaign context supplies the game dimension; no-campaign
+    // chat keeps the game picker and game hidden field available.
+    ...(activeChatCampaign ? [] : [{ name: 'game', value: DEFAULT_GAME_ID }]),
+    ...(activeChatCampaign ? [{ name: 'campaignId', value: activeChatCampaign.campaignId }] : []),
     ...(historyQuery ? [{ name: 'historyQuery', value: historyQuery }] : []),
     ...(options.chatFormHiddenFields ?? []),
   ];
@@ -1166,9 +1245,7 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                       })
                     : html``}
                   ${showChatChrome
-                    ? options.campaignStrip
-                      ? html``
-                      : renderActiveGamePicker()
+                    ? html``
                     : html`<span class="squire-context">${headerContext}</span>`}
                   <div class="squire-header__account">
                     ${renderAccountMenu(options.session, authenticatedCsrfToken)}
@@ -1187,27 +1264,30 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           </main>
           ${!authenticated || !showChatChrome
             ? html``
-            : html`<form
-                class="squire-input-dock"
-                method="post"
-                action="${chatFormAction}"
-                hx-post="${chatFormAction}"
-                hx-target="${chatFormHxTarget}"
-                hx-swap="${chatFormHxSwap}"
-              >
-                ${chatFormHiddenFields.map(
-                  (field) =>
-                    html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
-                )}
-                <input
-                  id="squire-input"
-                  name="question"
-                  type="text"
-                  autocomplete="off"
-                  placeholder="Ask a question..."
-                />
-                <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
-              </form>`}
+            : html`${options.chatCampaignContext
+                  ? renderChatCampaignContext(options.chatCampaignContext, authenticatedCsrfToken)
+                  : html``}
+                <form
+                  class="squire-input-dock"
+                  method="post"
+                  action="${chatFormAction}"
+                  hx-post="${chatFormAction}"
+                  hx-target="${chatFormHxTarget}"
+                  hx-swap="${chatFormHxSwap}"
+                >
+                  ${chatFormHiddenFields.map(
+                    (field) =>
+                      html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
+                  )}
+                  <input
+                    id="squire-input"
+                    name="question"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Ask a question..."
+                  />
+                  <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
+                </form>`}
         </div>
       </div>` as HtmlEscapedString,
   });
@@ -1406,6 +1486,7 @@ export async function renderHomePage(
   options: {
     conversationHistory?: ConversationHistoryViewModel;
     campaignStrip?: CampaignStripState | null;
+    chatCampaignContext?: ChatCampaignContextView;
   } = {},
 ): Promise<HtmlEscapedString> {
   return layoutShell({
@@ -1413,15 +1494,9 @@ export async function renderHomePage(
     csrfToken,
     conversationHistory: options.conversationHistory,
     campaignStrip: options.campaignStrip,
+    chatCampaignContext: options.chatCampaignContext,
     chatFormAction: '/chat',
-    chatFormHiddenFields: [
-      { name: 'idempotencyKey', value: '' },
-      // Per-message campaign binding (E6/SQR-19): chat turns bind to the
-      // active campaign shown in the strip.
-      ...(options.campaignStrip
-        ? [{ name: 'campaignId', value: options.campaignStrip.campaignId }]
-        : []),
-    ],
+    chatFormHiddenFields: [{ name: 'idempotencyKey', value: '' }],
     mainContent: renderHomeLanding(),
   });
 }
@@ -1433,6 +1508,7 @@ export async function renderConversationPage(options: {
   messages: ConversationMessage[];
   conversationHistory?: ConversationHistoryViewModel;
   campaignStrip?: CampaignStripState | null;
+  chatCampaignContext?: ChatCampaignContextView;
   /**
    * Map of user-message id → SSE stream URL for any user message
    * without an assistant reply. The common case is a single entry (one
@@ -1460,12 +1536,11 @@ export async function renderConversationPage(options: {
     mainContent: transcript,
     conversationHistory: options.conversationHistory,
     campaignStrip: options.campaignStrip,
+    chatCampaignContext: options.chatCampaignContext,
     chatFormAction: `/chat/${options.conversationId}/messages`,
     chatFormHxTarget: '.squire-transcript',
     chatFormHxSwap: 'beforeend',
-    chatFormHiddenFields: options.campaignStrip
-      ? [{ name: 'campaignId', value: options.campaignStrip.campaignId }]
-      : [],
+    chatFormHiddenFields: [],
     transcriptOwnsLiveRegion: true,
   });
 }

@@ -1,10 +1,10 @@
 /**
- * Campaign route shell + context strip tests (SQR-275).
+ * Campaign route shell + chat context tests (SQR-275, SQR-364).
  *
- * The strip is the persistent bridge (DESIGN.md §Phase 4): campaign name
- * on chat and campaign surfaces, NO CAMPAIGN · SET UP when none, and the
- * chat form binds turns to the strip's campaign (E6). Non-member campaign
- * pages are the indistinguishable 404.
+ * Campaign pages still use the header strip/wayfinding bridge. Chat renders
+ * campaign context in the ask area so the next turn's binding is visible and
+ * changeable immediately before asking. Non-member campaign pages are the
+ * indistinguishable 404.
  */
 import { generateSignedCookie } from 'hono/cookie';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -68,7 +68,7 @@ afterAll(async () => {
   await shutdownServerPool();
 });
 
-describe('context strip states', () => {
+describe('chat context states', () => {
   it('shows NO CAMPAIGN · SET UP for users without campaigns', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const res = await pageRequest(owner, '/campaigns');
@@ -88,10 +88,15 @@ describe('context strip states', () => {
     const res = await pageRequest(owner, '/');
     expect(res.status).toBe(200);
     const body = await res.text();
-    expect(body).toContain('GH2 · TRAVEL CAMPAIGN');
-    expect(body).toContain(`/campaigns/${campaign.id}`);
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    expect(header).not.toContain('TRAVEL CAMPAIGN');
+    expect(context).toContain('Current campaign');
+    expect(context).toContain('Travel Campaign');
+    expect(context).toContain(`/campaigns/${campaign.id}`);
     // E6: the chat form carries the binding as a hidden field.
     expect(body).toContain(`name="campaignId" value="${campaign.id}"`);
+    expect(body).not.toContain('class="squire-game-picker"');
   });
 });
 
@@ -199,9 +204,69 @@ describe('campaign picker (SQR-11)', () => {
       headers: { Cookie: `${owner.cookie}; ${cookie.split(';')[0]}` },
     });
     const body = await home.text();
-    expect(body).toContain('GH2 · SECOND CAMPAIGN');
+    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    expect(context).toContain('Second Campaign');
     // E8: an active campaign hides the per-session game selector.
     expect(body).not.toContain('squire-game-picker');
+  });
+
+  it('switches active campaign from the chat context panel and returns to chat', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const identity = identityFromSessionUser(owner.userId);
+    await CampaignService.createCampaign(identity, {
+      name: 'First Campaign',
+      game: 'frosthaven',
+    });
+    const second = await CampaignService.createCampaign(identity, {
+      name: 'Second Campaign',
+      game: 'gloomhaven-2e',
+    });
+
+    const switchRes = await formPost(owner, '/chat/campaign-context', {
+      campaignId: second.id,
+      returnTo: '/',
+    });
+    expect(switchRes.status).toBe(303);
+    expect(switchRes.headers.get('location')).toBe('/');
+    const cookie = switchRes.headers.get('set-cookie') ?? '';
+    expect(cookie).toContain('squire_active_campaign');
+
+    const home = await app.request('/', {
+      headers: { Cookie: `${owner.cookie}; ${cookie.split(';')[0]}` },
+    });
+    const body = await home.text();
+    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    expect(context).toContain('Second Campaign');
+    expect(body).toContain(`name="campaignId" value="${second.id}"`);
+  });
+
+  it('can switch chat to no-campaign mode and exposes the game picker in the ask area', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    await CampaignService.createCampaign(identityFromSessionUser(owner.userId), {
+      name: 'Travel Campaign',
+      game: 'frosthaven',
+    });
+
+    const switchRes = await formPost(owner, '/chat/campaign-context', {
+      campaignId: '__none',
+      returnTo: '/',
+    });
+    expect(switchRes.status).toBe(303);
+    const cookie = switchRes.headers.get('set-cookie') ?? '';
+    expect(cookie).toContain('squire_active_campaign');
+
+    const home = await app.request('/', {
+      headers: { Cookie: `${owner.cookie}; ${cookie.split(';')[0]}` },
+    });
+    const body = await home.text();
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const askForm = body.match(/<form[^>]*class="squire-input-dock"[\s\S]*?<\/form>/)?.[0];
+    expect(header).not.toContain('Travel Campaign');
+    expect(context).toContain('No campaign selected');
+    expect(context).toContain('class="squire-game-picker"');
+    expect(askForm).toContain(`name="game" value="frosthaven"`);
+    expect(askForm).not.toContain('name="campaignId"');
   });
 
   it('lists pending invites distinctly and accepts via form post', async () => {

@@ -1,8 +1,8 @@
 /**
- * Campaign picker E2E (SQR-11): list/create happy path, active-campaign
- * switching reflected by the context strip, and the navigation bridge
- * (chat → strip → dashboard). Failure path: campaign creation blocked by
- * the allowlist is covered at the integration layer
+ * Campaign picker E2E (SQR-11/SQR-364): list/create happy path, campaign
+ * activation reflected in campaign wayfinding, and the chat context bridge
+ * to the campaign dashboard. Failure path: campaign creation blocked by the
+ * allowlist is covered at the integration layer
  * (test/campaign-pages.test.ts) because the E2E server pins the dev user
  * onto the allowlist for the happy path.
  */
@@ -17,7 +17,7 @@ async function loginAsDevUser(page: Page): Promise<void> {
   await expect(page).toHaveURL('/');
 }
 
-test.describe('campaign picker and context strip', () => {
+test.describe('campaign picker and chat context', () => {
   test.beforeEach(async ({ page }) => {
     await resetE2eDb();
     await page.context().clearCookies();
@@ -28,11 +28,13 @@ test.describe('campaign picker and context strip', () => {
     await teardownE2eDb();
   });
 
-  test('creates a campaign, switches activation, and bridges via the strip', async ({ page }) => {
+  test('creates a campaign, switches activation, and bridges via chat context', async ({
+    page,
+  }) => {
     await loginAsDevUser(page);
 
-    // Chat home shows the set-up affordance or an existing campaign strip.
-    await expect(page.locator('.squire-campaign-strip')).toBeVisible();
+    // Chat home shows the set-up affordance or an existing campaign context.
+    await expect(page.locator('.squire-chat-context')).toBeVisible();
 
     await page.goto('/campaigns');
     const name = `E2E Campaign ${Date.now()}`;
@@ -47,16 +49,17 @@ test.describe('campaign picker and context strip', () => {
       name.toUpperCase(),
     );
 
-    // The picker lists it as ACTIVE; the strip bridges from chat home.
+    // The picker lists it as ACTIVE; the chat context bridges to the dashboard.
     await page.goto('/campaigns');
     const row = page.locator('.squire-campaigns__row', { hasText: name });
     await expect(row.locator('.squire-campaigns__active')).toHaveText('ACTIVE');
 
     await page.goto('/');
-    await expect(page.locator('.squire-campaign-strip')).toContainText(name.toUpperCase());
+    await expect(page.locator('.squire-header')).not.toContainText(name);
+    await expect(page.locator('.squire-chat-context')).toContainText(name);
     // E8: an active campaign hides the per-session game selector.
     await expect(page.locator('.squire-game-picker')).toHaveCount(0);
-    await page.locator('.squire-campaign-strip').click();
+    await page.getByRole('link', { name: 'Open campaign' }).click();
     await expect(page).toHaveURL(/\/campaigns\/[0-9a-f-]{36}/);
   });
 });
