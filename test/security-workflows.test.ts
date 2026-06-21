@@ -15,7 +15,7 @@ describe('security workflows', () => {
     expect(workflow).toContain('branches: [main]');
     expect(workflow).toContain('contents: read');
     expect(workflow).toContain('name: dependency-review');
-    expect(workflow).toContain('uses: actions/checkout@v6');
+    expect(workflow).toContain('uses: actions/checkout@v7');
     expect(workflow).toContain('uses: actions/dependency-review-action@v5');
     expect(workflow).toContain('fail-on-severity: high');
     expect(workflow).toContain('fail-on-scopes: runtime');

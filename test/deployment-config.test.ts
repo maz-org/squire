@@ -144,7 +144,9 @@ describe('deployment configuration', () => {
 
     expect(packageJson.scripts?.['e2e:api-agent']).toBe('node scripts/e2e-api-agent-smoke.ts');
     expect(workflow).toContain('name: Authenticated API and agent E2E smoke');
-    expect(workflow).toContain("if: github.actor != 'dependabot[bot]'");
+    expect(workflow).toContain(
+      "if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]'",
+    );
     expect(workflow).not.toContain("github.event_name == 'schedule'");
     expect(workflow).toContain('ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}');
     expect(workflow).toContain('VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}');
