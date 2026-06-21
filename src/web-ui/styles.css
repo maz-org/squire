@@ -770,9 +770,10 @@ html {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent url('/squire-wax-seal-s.png') center / contain no-repeat;
-  color: transparent;
-  border: none;
+  background: var(--wax) url('/squire-wax-seal-s.png') center / contain no-repeat;
+  color: var(--parchment);
+  border: 1px solid var(--wax);
+  border-radius: 6px;
   line-height: 1;
   padding: 0;
   cursor: pointer;
