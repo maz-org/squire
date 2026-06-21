@@ -36,10 +36,15 @@ const STATUS_LABEL: Record<ScenarioStatus, string> = {
 const ACTIONABLE: ReadonlySet<ScenarioStatus> = new Set(['open', 'via-event', 'drew-it']);
 
 const PROGRESS_LOADING_INDICATOR = '#squire-dashboard-progress-loading';
+const PROGRESS_SECTION_LEDE =
+  'Track unlocked, played, skipped, and blocked scenarios for this campaign.';
 
 function progressSectionHeader(options: { hasScenarioData: boolean }): HtmlEscapedString {
   return html`<header class="squire-progress-section__header">
-    <h2 class="squire-campaign-dashboard__section-title">Progress</h2>
+    <div>
+      <h2 class="squire-campaign-dashboard__section-title">Progress</h2>
+      <p class="squire-progress-section__lede">${PROGRESS_SECTION_LEDE}</p>
+    </div>
     ${options.hasScenarioData
       ? html`<a
           class="squire-button squire-button--primary squire-button--small"
@@ -243,7 +248,7 @@ export function renderDashboardProgressEmpty(): HtmlEscapedString {
   >
     ${progressSectionHeader({ hasScenarioData: false })}
     <p class="squire-campaign-dashboard__placeholder">
-      No scenario data for this campaign's modules yet.
+      No scenario progress is available for this campaign yet.
     </p>
   </section>` as HtmlEscapedString;
 }
@@ -322,7 +327,7 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
           .filter((warning): warning is NonNullable<typeof warning> => warning !== undefined);
         return html`<section class="squire-dashboard-thread">
           <header class="squire-dashboard-thread__header">
-            <h2 class="squire-dashboard-thread__title">${thread.label}</h2>
+            <h3 class="squire-dashboard-thread__title">${thread.label}</h3>
             <p class="squire-dashboard-thread__note">
               ${thread.note}
               <span class="squire-dashboard-thread__progress"

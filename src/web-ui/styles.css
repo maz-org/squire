@@ -2247,10 +2247,8 @@ template#squire-banner-fixtures {
   padding-top: var(--space-md);
 }
 
-.squire-campaign-workspace .squire-campaign-dashboard--party,
-.squire-campaign-workspace .squire-campaign-dashboard--players,
 .squire-campaign-workspace .squire-campaign-dashboard--settings {
-  max-width: 640px;
+  max-width: 820px;
 }
 
 .squire-campaign-workspace__header {
@@ -2391,7 +2389,11 @@ template#squire-banner-fixtures {
   }
 
   .squire-campaign-workspace .squire-campaign-dashboard__name {
-    font-size: 22px;
+    font-size: var(--squire-campaign-type-page, 1.375rem);
+  }
+
+  .squire-campaign-workspace .squire-campaign-dashboard__section-title {
+    font-size: var(--squire-campaign-type-section, 1.25rem);
   }
 }
 
@@ -2399,9 +2401,30 @@ template#squire-banner-fixtures {
 .squire-campaign-dashboard__name {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 28px;
+  font-size: var(--squire-campaign-type-page, 1.75rem);
+  line-height: 1.25;
   color: var(--parchment);
   margin: 0 0 var(--space-sm);
+}
+
+.squire-campaigns,
+.squire-campaign-workspace {
+  --squire-campaign-type-page: 1.556rem;
+  --squire-campaign-type-section: 1.222rem;
+  --squire-campaign-type-group: 1rem;
+  --squire-campaign-type-minor: 0.889rem;
+  --squire-campaign-type-body: 0.778rem;
+}
+
+@media (max-width: 640px) {
+  .squire-campaigns,
+  .squire-campaign-workspace {
+    --squire-campaign-type-page: 1.375rem;
+    --squire-campaign-type-section: 1.25rem;
+    --squire-campaign-type-group: 1.125rem;
+    --squire-campaign-type-minor: 1rem;
+    --squire-campaign-type-body: 0.875rem;
+  }
 }
 
 .squire-campaign-workspace .squire-campaign-dashboard__name {
@@ -2412,8 +2435,19 @@ template#squire-banner-fixtures {
   text-overflow: ellipsis;
 }
 
-.squire-campaigns__empty,
+.squire-campaigns__empty {
+  color: var(--sepia);
+}
+
 .squire-campaign-dashboard__placeholder {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: var(--squire-campaign-type-body, 0.875rem);
+  line-height: 1.45;
   color: var(--sepia);
 }
 
@@ -2439,7 +2473,8 @@ template#squire-banner-fixtures {
 
 .squire-campaigns__name {
   font-family: 'Fraunces', 'Georgia', serif;
-  font-size: 18px;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
   color: var(--parchment);
 }
 
@@ -2456,7 +2491,8 @@ template#squire-banner-fixtures {
 .squire-campaign-dashboard__section-title {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 18px;
+  font-size: var(--squire-campaign-type-section, 1.375rem);
+  line-height: 1.25;
   color: var(--parchment);
   margin: var(--space-lg) 0 var(--space-sm);
 }
@@ -2714,49 +2750,87 @@ template#squire-banner-fixtures {
   background: var(--wax-dim);
 }
 
-/* Rename campaign (SQR-320): a quiet disclosure under the title. */
-.squire-campaign-rename {
-  margin-top: var(--space-sm);
+/* Campaign settings (SQR-362): campaign setup belongs on one explicit page. */
+.squire-campaign-settings__header {
+  margin-bottom: var(--space-lg);
 }
 
-.squire-campaign-rename__toggle {
+.squire-campaign-settings__header .squire-campaign-dashboard__section-title {
+  margin: 0;
+}
+
+.squire-campaign-settings__lede,
+.squire-player-section__lede,
+.squire-party-section__lede,
+.squire-progress-section__lede {
+  margin: var(--space-2xs) 0 0;
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sepia-dim);
-  cursor: pointer;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
-.squire-campaign-rename__toggle:hover {
+  font-size: var(--squire-campaign-type-body, 0.875rem);
+  line-height: 1.45;
   color: var(--sepia);
 }
 
-.squire-campaign-rename__form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  align-items: end;
-  margin-top: var(--space-sm);
+.squire-campaign-settings__group {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.35fr) minmax(280px, 0.65fr);
+  gap: var(--space-lg);
+  padding: var(--space-lg) 0;
+  border-top: 1px solid var(--rule);
 }
 
-.squire-campaign-rename__field {
-  display: flex;
-  flex-direction: column;
+.squire-campaign-settings__group-copy {
+  display: grid;
+  align-content: start;
   gap: var(--space-xs);
 }
 
-.squire-campaign-rename__field-label {
+.squire-campaign-settings__group-body {
+  display: grid;
+  align-content: start;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.squire-campaign-settings__group-title {
+  margin: 0;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-weight: 500;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
+  color: var(--parchment);
+}
+
+.squire-campaign-settings__group-lede,
+.squire-campaign-settings__empty {
+  margin: 0;
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: var(--squire-campaign-type-body, 0.875rem);
+  line-height: 1.45;
   color: var(--sepia);
 }
 
-.squire-campaign-rename__field input {
+.squire-campaign-settings__form {
+  display: grid;
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.squire-campaign-settings__form--name {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.squire-campaign-settings__field {
+  display: grid;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.squire-campaign-settings__field--with-action {
+  position: relative;
+}
+
+.squire-campaign-settings__field input {
+  width: min(100%, 34rem);
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: 4px;
@@ -2764,56 +2838,15 @@ template#squire-banner-fixtures {
   min-height: 44px;
   padding: 0 var(--space-sm);
   font-family: 'Geist', system-ui, sans-serif;
-  min-width: 16rem;
+  font-size: 15px;
 }
 
-.squire-campaign-rename__submit {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  color: var(--parchment);
-  background: var(--wax);
-  border: 1px solid var(--wax);
-  border-radius: 4px;
-  padding: 0 var(--space-md);
-  min-height: 44px;
-  cursor: pointer;
+.squire-campaign-settings__field--with-action input {
+  width: 100%;
+  padding-right: 5.5rem;
 }
 
-.squire-campaign-rename__submit:hover {
-  background: var(--wax-dim);
-}
-
-/* Modules editor (SQR-321): a quiet disclosure mirroring rename. */
-.squire-campaign-modules {
-  margin-top: var(--space-xs);
-}
-
-.squire-campaign-modules__toggle {
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sepia-dim);
-  cursor: pointer;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-
-.squire-campaign-modules__toggle:hover {
-  color: var(--sepia);
-}
-
-.squire-campaign-modules__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  margin-top: var(--space-sm);
-  align-items: start;
-}
-
-.squire-campaign-modules__option {
+.squire-campaign-settings__option {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -2823,17 +2856,18 @@ template#squire-banner-fixtures {
   color: var(--parchment-dim);
 }
 
-.squire-campaign-modules__required {
+.squire-campaign-settings__required {
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--sepia-dim);
 }
 
-.squire-campaign-modules__submit {
+.squire-campaign-settings__submit {
+  justify-self: start;
   font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--parchment);
   background: var(--wax);
   border: 1px solid var(--wax);
@@ -2841,11 +2875,38 @@ template#squire-banner-fixtures {
   padding: 0 var(--space-md);
   min-height: 44px;
   cursor: pointer;
-  margin-top: var(--space-xs);
+  white-space: nowrap;
 }
 
-.squire-campaign-modules__submit:hover {
+.squire-campaign-settings__submit--field-action {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  min-height: 36px;
+  padding: 0 var(--space-sm);
+}
+
+.squire-campaign-settings__submit:hover {
   background: var(--wax-dim);
+}
+
+@media (max-width: 820px) {
+  .squire-campaign-settings__group {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .squire-campaign-settings__form--name {
+    grid-template-columns: 1fr;
+  }
+
+  .squire-campaign-settings__submit {
+    width: 100%;
+  }
+
+  .squire-campaign-settings__submit--field-action {
+    width: auto;
+  }
 }
 
 /* Create-form optional-content checkboxes (SQR-321). */
@@ -2915,7 +2976,8 @@ template#squire-banner-fixtures {
 .squire-campaigns__section-title {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 18px;
+  font-size: var(--squire-campaign-type-section, 1.375rem);
+  line-height: 1.25;
   color: var(--parchment);
   border-bottom: 1px solid var(--rule);
   padding-bottom: var(--space-xs);
@@ -2965,13 +3027,6 @@ template#squire-banner-fixtures {
 
 .squire-player-section__header .squire-campaign-dashboard__section-title {
   margin: 0;
-}
-
-.squire-player-section__lede {
-  margin: var(--space-2xs) 0 0;
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 14px;
-  color: var(--sepia);
 }
 
 .squire-player-section__action {
@@ -3036,7 +3091,8 @@ template#squire-banner-fixtures {
   margin: 0 0 var(--space-sm);
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 20px;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
   color: var(--parchment);
 }
 
@@ -3085,7 +3141,8 @@ template#squire-banner-fixtures {
 
 .squire-player-row__name {
   font-family: 'Fraunces', 'Georgia', serif;
-  font-size: 20px;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
   color: var(--parchment);
   overflow-wrap: anywhere;
 }
@@ -3255,13 +3312,6 @@ template#squire-banner-fixtures {
   margin: 0;
 }
 
-.squire-party-section__lede {
-  margin: var(--space-2xs) 0 0;
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 14px;
-  color: var(--sepia);
-}
-
 .squire-party-section__action {
   display: flex;
   justify-content: flex-end;
@@ -3324,7 +3374,8 @@ template#squire-banner-fixtures {
   margin: 0 0 var(--space-sm);
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 20px;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
   color: var(--parchment);
 }
 
@@ -3349,7 +3400,7 @@ template#squire-banner-fixtures {
 
 .squire-party-row {
   display: grid;
-  grid-template-columns: minmax(16rem, 1.6fr) minmax(9rem, 0.8fr) max-content;
+  grid-template-columns: minmax(14rem, 1.4fr) minmax(8rem, 0.65fr) minmax(28rem, 1fr);
   gap: var(--space-md);
   align-items: center;
   min-height: 64px;
@@ -3376,7 +3427,8 @@ template#squire-banner-fixtures {
 
 .squire-party-row__name {
   font-family: 'Fraunces', 'Georgia', serif;
-  font-size: 20px;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
   color: var(--parchment);
 }
 
@@ -3570,10 +3622,10 @@ template#squire-banner-fixtures {
 
 .squire-progress-section__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
 }
 
 .squire-progress-section__header .squire-campaign-dashboard__section-title {
@@ -3668,7 +3720,7 @@ template#squire-banner-fixtures {
 .squire-dashboard-stats__value {
   margin: 0;
   font-family: 'Fraunces', 'Georgia', serif;
-  font-size: 28px;
+  font-size: var(--squire-campaign-type-page, 1.75rem);
   font-variant-numeric: tabular-nums;
   color: var(--parchment);
 }
@@ -3696,7 +3748,8 @@ template#squire-banner-fixtures {
 .squire-dashboard-thread__title {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 20px;
+  font-size: var(--squire-campaign-type-group, 1.125rem);
+  line-height: 1.25;
   color: var(--parchment);
   margin: 0;
 }
@@ -3917,7 +3970,8 @@ template#squire-banner-fixtures {
 .squire-campaign-journal__date {
   font-family: 'Fraunces', 'Georgia', serif;
   font-weight: 500;
-  font-size: 15px;
+  font-size: var(--squire-campaign-type-minor, 1rem);
+  line-height: 1.25;
   color: var(--parchment-dim);
   margin: var(--space-md) 0 var(--space-xs);
 }

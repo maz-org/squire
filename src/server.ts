@@ -1580,6 +1580,8 @@ async function renderCampaignDashboardPage(
     };
     renameError?: string;
     modulesError?: string;
+    renameNameValue?: string;
+    moduleValues?: readonly string[];
     characterFormValues?: {
       nameValue?: string;
       classNameValue?: string;
@@ -1664,15 +1666,21 @@ async function renderCampaignDashboardPage(
       opts.playerActionError,
       // Rename affordance (SQR-320): any active member; the name is shared
       // state. expectedVersion drives optimistic concurrency.
-      { csrfToken, version: detail.campaign.version, errorMessage: opts.renameError },
-      // Modules editor (SQR-321): only when the game has optional modules.
-      gameDef && gameDef.optionalModules.length > 0
+      {
+        csrfToken,
+        version: detail.campaign.version,
+        nameValue: opts.renameNameValue,
+        errorMessage: opts.renameError,
+      },
+      // Optional content settings (SQR-321/SQR-362): always rendered for
+      // supported games so Settings owns the default/no-optional-content state.
+      gameDef
         ? {
             csrfToken,
             version: detail.campaign.version,
             baseModule: gameDef.baseModule,
             optionalModules: gameDef.optionalModules,
-            current: detail.campaign.modules,
+            current: opts.moduleValues ?? detail.campaign.modules,
             errorMessage: opts.modulesError,
           }
         : undefined,
@@ -2135,7 +2143,8 @@ app.post('/campaigns/:id/rename', async (c) => {
   if (!campaignId) return c.notFound();
   const identity = identityFromSessionUser(session.userId);
   const form = await c.req.formData();
-  const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
+  const rawName = typeof form.get('name') === 'string' ? (form.get('name') as string) : '';
+  const name = rawName.trim();
   // Strict parse via formInt (`/^\d+$/` → null) so a malformed token like
   // "7abc" can't slip past Number.parseInt's leniency into the version guard.
   const expectedVersion = formInt(form, 'expectedVersion');
@@ -2149,7 +2158,11 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Campaign name is required.', view: 'settings' },
+        {
+          renameError: 'Campaign name is required.',
+          renameNameValue: rawName,
+          view: 'settings',
+        },
         422,
       );
     }
@@ -2157,7 +2170,11 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Campaign name must be 200 characters or fewer.', view: 'settings' },
+        {
+          renameError: 'Campaign name must be 200 characters or fewer.',
+          renameNameValue: rawName,
+          view: 'settings',
+        },
         422,
       );
     }
@@ -2165,7 +2182,11 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: 'Could not save — please refresh and try again.', view: 'settings' },
+        {
+          renameError: 'Could not save — please refresh and try again.',
+          renameNameValue: rawName,
+          view: 'settings',
+        },
         422,
       );
     }
@@ -2179,7 +2200,8 @@ app.post('/campaigns/:id/rename', async (c) => {
         c,
         campaignId,
         {
-          renameError: 'Updated elsewhere — showing the latest. Try the rename again.',
+          renameError: 'Updated elsewhere — review your change and try again.',
+          renameNameValue: rawName,
           view: 'settings',
         },
         422,
@@ -2189,7 +2211,7 @@ app.post('/campaigns/:id/rename', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { renameError: error.message, view: 'settings' },
+        { renameError: error.message, renameNameValue: rawName, view: 'settings' },
         422,
       );
     }
@@ -2217,7 +2239,11 @@ app.post('/campaigns/:id/modules', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { modulesError: 'Could not save — please refresh and try again.', view: 'settings' },
+        {
+          modulesError: 'Could not save — please refresh and try again.',
+          moduleValues: [...checked],
+          view: 'settings',
+        },
         422,
       );
     }
@@ -2237,7 +2263,11 @@ app.post('/campaigns/:id/modules', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { modulesError: 'Updated elsewhere — showing the latest. Try again.', view: 'settings' },
+        {
+          modulesError: 'Updated elsewhere — review your choices and try again.',
+          moduleValues: [...checked],
+          view: 'settings',
+        },
         422,
       );
     }
@@ -2248,7 +2278,7 @@ app.post('/campaigns/:id/modules', async (c) => {
       return await renderCampaignDashboardPage(
         c,
         campaignId,
-        { modulesError: error.message, view: 'settings' },
+        { modulesError: error.message, moduleValues: [...checked], view: 'settings' },
         422,
       );
     }
