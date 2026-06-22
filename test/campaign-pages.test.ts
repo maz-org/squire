@@ -1,10 +1,10 @@
 /**
  * Campaign route shell + chat context tests (SQR-275, SQR-364).
  *
- * Campaign pages still use the header strip/wayfinding bridge. Chat renders
- * campaign context in the ask area so the next turn's binding is visible and
- * changeable immediately before asking. Non-member campaign pages are the
- * indistinguishable 404.
+ * Campaign pages share the same app header as chat. Chat renders campaign
+ * context in the ask area so the next turn's binding is visible and changeable
+ * immediately before asking. Non-member campaign pages are the indistinguishable
+ * 404.
  */
 import { generateSignedCookie } from 'hono/cookie';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -69,12 +69,14 @@ afterAll(async () => {
 });
 
 describe('chat context states', () => {
-  it('shows NO CAMPAIGN · SET UP for users without campaigns', async () => {
+  it('renders campaigns without campaign context in the app header for users without campaigns', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const res = await pageRequest(owner, '/campaigns');
     expect(res.status).toBe(200);
     const body = await res.text();
-    expect(body).toContain('NO CAMPAIGN · SET UP');
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+    expect(header).not.toContain('NO CAMPAIGN');
+    expect(header).not.toContain('squire-campaign-strip');
     expect(body).toContain('No campaigns yet');
   });
 
@@ -89,7 +91,7 @@ describe('chat context states', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
     const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
-    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const context = body.match(/<section[^>]*class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
     expect(header).not.toContain('TRAVEL CAMPAIGN');
     expect(context).toContain('Current campaign');
     expect(context).toContain('Travel Campaign');
@@ -101,7 +103,7 @@ describe('chat context states', () => {
 });
 
 describe('campaign routes', () => {
-  it('renders the dashboard shell for members; prominent strip', async () => {
+  it('renders the dashboard shell for members without campaign context in the app header', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const campaign = await CampaignService.createCampaign(identityFromSessionUser(owner.userId), {
       name: 'Travel Campaign',
@@ -111,10 +113,17 @@ describe('campaign routes', () => {
     const res = await pageRequest(owner, `/campaigns/${campaign.id}`);
     expect(res.status).toBe(200);
     const body = await res.text();
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
     expect(body).toContain('Travel Campaign');
     expect(body).toContain('squire-column squire-column--wide');
     expect(body).toContain('squire-campaign-dashboard squire-campaign-dashboard--progress');
-    expect(body).toContain('squire-campaign-strip--prominent');
+    expect(header).toMatch(/<a[^>]*href="\/"[^>]*>\s*Chat\s*<\/a>/);
+    expect(header).toMatch(
+      /<a[^>]*href="\/campaigns"[^>]*aria-current="page"[^>]*>\s*Campaigns\s*<\/a>/,
+    );
+    expect(header).not.toContain('HAVEN · RULES');
+    expect(header).not.toContain('Travel Campaign');
+    expect(header).not.toContain('squire-campaign-strip');
     expect(body).toContain('Frosthaven · Prosperity 1');
     expect(body).toContain('<h2 class="squire-campaign-dashboard__section-title">Progress</h2>');
     expect(body).toContain(
@@ -204,7 +213,7 @@ describe('campaign picker (SQR-11)', () => {
       headers: { Cookie: `${owner.cookie}; ${cookie.split(';')[0]}` },
     });
     const body = await home.text();
-    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const context = body.match(/<section[^>]*class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
     expect(context).toContain('Second Campaign');
     // E8: an active campaign hides the per-session game selector.
     expect(body).not.toContain('squire-game-picker');
@@ -235,7 +244,7 @@ describe('campaign picker (SQR-11)', () => {
       headers: { Cookie: `${owner.cookie}; ${cookie.split(';')[0]}` },
     });
     const body = await home.text();
-    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const context = body.match(/<section[^>]*class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
     expect(context).toContain('Second Campaign');
     expect(body).toContain(`name="campaignId" value="${second.id}"`);
   });
@@ -260,7 +269,7 @@ describe('campaign picker (SQR-11)', () => {
     });
     const body = await home.text();
     const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
-    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const context = body.match(/<section[^>]*class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
     const askForm = body.match(/<form[^>]*class="squire-input-dock"[\s\S]*?<\/form>/)?.[0];
     expect(header).not.toContain('Travel Campaign');
     expect(context).toContain('No campaign selected');

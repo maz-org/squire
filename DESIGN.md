@@ -588,8 +588,19 @@ Dedicated routes sharing the ledger shell — `/campaigns` (list/create/join),
 `/characters/:id` (character sheet). Chat stays the home surface; the desktop
 rail remains conversation history (ADR 0020). Chat renders campaign context in
 the ask area, directly above the input, so players can verify or change the
-campaign immediately before asking. Campaign surfaces use header wayfinding
-and the campaign strip as the bridge back into campaign management.
+campaign immediately before asking. Campaign surfaces put campaign wayfinding in
+page content, never in the shared app header.
+
+The authenticated shell has one primary page header. It carries the Squire
+brand, account menu, and ordinary `Chat` / `Campaigns` navigation. The
+header never carries active campaign state, campaign names, subtitles, or game
+metadata. The conversation history rail is secondary navigation under that
+header; do not put another Squire logo or wordmark in the rail. Desktop chat
+locks the app frame to the viewport and lets the history rail and transcript
+scroll internally, so the ask widget stays available even when conversation
+history is long. The header is not sticky; the chat shell preserves the
+first-viewport ask path without keeping another bar permanently over the
+content.
 
 Within `/campaigns/:id`, the campaign surface is a four-section workspace:
 **Progress**, **Party**, **Players**, and **Settings**. The campaign root
@@ -608,21 +619,21 @@ campaign workspace work. See
 
 ### Campaign context
 
-Small-caps Geist line in the header on Phase 4 routes. States:
-`GH2E · TRAVEL CAMPAIGN · DRIFTER L4` (campaign + active character),
-campaign-only, and `NO CAMPAIGN · SET UP` (links to `/campaigns`) when none.
-**On campaign surfaces the campaign name is more prominent than the Squire
-brand** — the user's campaign outranks our wordmark there. Never shows fake
-state: no campaign means the set-up affordance, not placeholder content.
+The old app-header campaign strip is retired. The app header stays stable across
+chat and campaign management: brand, primary navigation, account controls, and
+the mobile history affordance when chat history exists. Campaign names,
+subtitles, active-campaign markers, and game metadata belong in the page body or
+chat composer.
 
 On chat routes, do not put campaign selection in the header. Render a compact
-campaign context panel above the ask widget with the active campaign, an
-`Open campaign` link, and a `Change` control. When chat is in no-campaign mode,
-the same panel owns the game picker. This keeps the active campaign useful for
-LLM context while making the next question's binding explicit at the moment of
-use.
+campaign context panel above the ask widget with the active campaign name
+itself linking to the campaign workspace and a `Change` control. When chat is
+in no-campaign mode, the same panel owns the game picker. This keeps the active
+campaign useful for LLM context while making the next question's binding
+explicit at the moment of use. The primary Chat/Campaigns header navigation
+stays lightweight link text with active state, not a segmented control.
 
-On campaign workspace routes, the header carries campaign wayfinding: a
+On campaign workspace routes, the page content carries campaign wayfinding: a
 breadcrumb back to `Campaigns`, the current campaign name as the dominant page
 title, and full campaign system metadata such as `Gloomhaven 2nd Edition`.
 Campaign switching happens on the campaign list, not in the workspace header;

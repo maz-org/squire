@@ -250,6 +250,8 @@ export interface Conversation {
   id: string;
   userId: string;
   creationIdempotencyKey: string | null;
+  /** Campaign binding for the full conversation. Null = no-campaign/legacy. */
+  campaignId: string | null;
   createdAt: Date;
   lastMessageAt: Date;
 }
@@ -257,6 +259,7 @@ export interface Conversation {
 export interface CreateConversationInput {
   userId: string;
   creationIdempotencyKey?: string | null;
+  campaignId?: string | null;
 }
 
 export interface ConversationHistoryCursor {

@@ -352,7 +352,7 @@ function bootPendingTranscript(
   };
 
   // SQR-108: setFormPendingState writes to form.dataset and reads back
-  // form.querySelector('input[name="question"]'/'button[type="submit"]'),
+  // form.querySelector('[name="question"]'/'button[type="submit"]'),
   // so the fake form needs both. We don't care about the input/button
   // pendingState transitions in these tests — just give them no-op
   // setAttribute/removeAttribute so the lock+unlock path doesn't blow up.
@@ -365,7 +365,7 @@ function bootPendingTranscript(
     setAttribute() {},
     dataset: {} as Record<string, string>,
     querySelector(selector: string) {
-      if (selector === 'input[name="question"]') return noopElement;
+      if (selector === '[name="question"]') return noopElement;
       if (selector === 'button[type="submit"]') return noopElement;
       return null;
     },
@@ -2342,7 +2342,7 @@ describe('squire.js chat form retargeting', () => {
           return sel === '.squire-input-dock';
         },
         querySelector(sel: string) {
-          if (sel === 'input[name="question"]') return noopElement;
+          if (sel === '[name="question"]') return noopElement;
           if (sel === 'button[type="submit"]') return noopElement;
           if (sel === 'input[name="idempotencyKey"]') return null;
           return null;
@@ -2480,7 +2480,7 @@ describe('squire.js chat form retargeting', () => {
         setAttribute() {},
         dataset: {} as Record<string, string>,
         querySelector(sel: string) {
-          if (sel === 'input[name="question"]') return noopElement;
+          if (sel === '[name="question"]') return noopElement;
           if (sel === 'button[type="submit"]') return noopElement;
           return null;
         },
@@ -2562,7 +2562,7 @@ describe('squire.js chat form retargeting', () => {
         setAttribute() {},
         dataset: {} as Record<string, string>,
         querySelector(sel: string) {
-          if (sel === 'input[name="question"]') return noopElement;
+          if (sel === '[name="question"]') return noopElement;
           if (sel === 'button[type="submit"]') return noopElement;
           return null;
         },
@@ -2662,7 +2662,7 @@ describe('squire.js chat form retargeting', () => {
           return sel === '.squire-input-dock';
         },
         querySelector(sel: string) {
-          if (sel === 'input[name="question"]') return noopElement;
+          if (sel === '[name="question"]') return noopElement;
           if (sel === 'button[type="submit"]') return noopElement;
           return null;
         },
@@ -2762,7 +2762,7 @@ describe('squire.js chat form retargeting', () => {
         setAttribute() {},
         dataset: {} as Record<string, string>,
         querySelector(selector: string) {
-          if (selector === 'input[name="question"]') return noopElement;
+          if (selector === '[name="question"]') return noopElement;
           if (selector === 'button[type="submit"]') return noopElement;
           return null;
         },

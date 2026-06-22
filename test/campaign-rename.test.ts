@@ -4,7 +4,7 @@
  * A quiet rename disclosure in the Settings view. The campaign name is shared
  * state, so any active member may rename (matching updateSharedState's
  * authorization and the scenario-toggle control) — not owner-gated. Renaming
- * updates the title AND the header context strip; empty/over-long names and
+ * updates the workspace title while the global header remains generic; empty/over-long names and
  * stale version tokens surface inline; a non-member gets the 404.
  */
 import { generateSignedCookie } from 'hono/cookie';
@@ -140,7 +140,7 @@ describe('rename-campaign UI (SQR-320)', () => {
     expect(body).not.toContain('squire-campaign-rename__toggle">Rename</summary>');
   });
 
-  it('renames the campaign and updates the title + context strip', async () => {
+  it('renames the campaign and updates the workspace title without changing the global header', async () => {
     const { owner, campaign } = await setupFixture();
     const res = await rename(owner, campaign.id, 'Renamed Quest', campaign.version);
     expect(res.status).toBe(303);
@@ -149,10 +149,9 @@ describe('rename-campaign UI (SQR-320)', () => {
     const body = await (
       await app.request(`/campaigns/${campaign.id}`, { headers: { Cookie: owner.cookie } })
     ).text();
-    // Title (h1).
     expect(body).toContain('>Renamed Quest</h1>');
-    // Header context strip rebuilt from the new name.
-    expect(body.replace(/\s+/g, ' ')).toContain('RENAMED QUEST');
+    const globalHeader = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+    expect(globalHeader).not.toContain('Renamed Quest');
     expect(body).not.toContain('>Original Name</h1>');
   });
 

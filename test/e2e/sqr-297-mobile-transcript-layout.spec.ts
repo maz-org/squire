@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 const appCss = readFileSync(new URL('../../src/web-ui/styles.css', import.meta.url), 'utf8');
 
 function renderReloadedConversationFixture(): string {
-  const longAnswerItems = Array.from({ length: 13 }, (_unused, index) => {
+  const longAnswerItems = Array.from({ length: 20 }, (_unused, index) => {
     const n = index + 1;
     return `<li>Drifter perk entry ${n} with enough text to wrap into the next line on a phone viewport.</li>`;
   }).join('');
@@ -17,13 +17,13 @@ function renderReloadedConversationFixture(): string {
         <style>${appCss}</style>
       </head>
       <body class="squire-body">
+        <header class="squire-header">
+          <span class="squire-monogram" aria-hidden="true"></span>
+          <span class="squire-wordmark">Squire</span>
+          <span class="squire-context">GH2 TABLETOP CAMPAIGN</span>
+        </header>
         <div class="squire-frame">
           <div class="squire-column">
-            <header class="squire-header">
-              <span class="squire-monogram" aria-hidden="true"></span>
-              <span class="squire-wordmark">Squire</span>
-              <span class="squire-context">GH2 TABLETOP CAMPAIGN</span>
-            </header>
             <main id="squire-surface" class="squire-surface" aria-live="off" aria-atomic="true">
               <section class="squire-transcript" data-testid="conversation-transcript" role="log" aria-live="polite">
                 <article class="squire-turn">
@@ -41,10 +41,18 @@ function renderReloadedConversationFixture(): string {
                 </article>
               </section>
             </main>
-            <form class="squire-input-dock" method="post" action="/chat/conversation-123/messages">
-              <input id="squire-input" name="question" type="text" autocomplete="off" placeholder="Ask a question..." />
-              <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
-            </form>
+            <div class="squire-composer">
+              <form class="squire-input-dock" method="post" action="/chat/conversation-123/messages">
+                <textarea
+                  id="squire-input"
+                  name="question"
+                  rows="3"
+                  autocomplete="off"
+                  placeholder="Ask about a rule, card, item, monster, or scenario"
+                ></textarea>
+                <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
+              </form>
+            </div>
           </div>
         </div>
       </body>
@@ -52,7 +60,7 @@ function renderReloadedConversationFixture(): string {
 }
 
 test.describe('SQR-297 mobile transcript layout', () => {
-  test('keeps a reloaded transcript scroll surface above the input dock at phone size', async ({
+  test('scrolls a reloaded transcript and ask widget as one column at phone size', async ({
     page,
   }, testInfo) => {
     test.skip(
@@ -64,27 +72,60 @@ test.describe('SQR-297 mobile transcript layout', () => {
     await page.setContent(renderReloadedConversationFixture());
 
     const geometry = await page.evaluate(() => {
+      const column = document.querySelector('.squire-column');
       const surface = document.querySelector('.squire-surface');
       const dock = document.querySelector('.squire-input-dock');
-      if (!(surface instanceof HTMLElement) || !(dock instanceof HTMLElement)) {
+      if (
+        !(column instanceof HTMLElement) ||
+        !(surface instanceof HTMLElement) ||
+        !(dock instanceof HTMLElement)
+      ) {
         throw new Error('missing Squire transcript fixture elements');
       }
 
+      const columnStyle = window.getComputedStyle(column);
       const surfaceRect = surface.getBoundingClientRect();
       const dockRect = dock.getBoundingClientRect();
       const surfaceStyle = window.getComputedStyle(surface);
 
       return {
-        dockTop: dockRect.top,
-        surfaceBottom: surfaceRect.bottom,
+        columnClientHeight: column.clientHeight,
+        columnOverflowY: columnStyle.overflowY,
+        columnScrollHeight: column.scrollHeight,
+        dockOffsetTop: dock.offsetTop,
+        dockTopBeforeScroll: dockRect.top,
+        surfaceHeight: surfaceRect.height,
         surfaceClientHeight: surface.clientHeight,
         surfaceOverflowY: surfaceStyle.overflowY,
         surfaceScrollHeight: surface.scrollHeight,
       };
     });
 
-    expect(geometry.surfaceBottom).toBeLessThanOrEqual(geometry.dockTop + 1);
-    expect(geometry.surfaceOverflowY).toBe('auto');
-    expect(geometry.surfaceScrollHeight).toBeGreaterThan(geometry.surfaceClientHeight);
+    expect(geometry.columnOverflowY).toBe('auto');
+    expect(geometry.columnScrollHeight).toBeGreaterThan(geometry.columnClientHeight);
+    expect(geometry.surfaceOverflowY).toBe('visible');
+    expect(geometry.surfaceScrollHeight).toBeLessThanOrEqual(geometry.surfaceClientHeight + 1);
+    expect(geometry.dockOffsetTop).toBeGreaterThanOrEqual(geometry.surfaceHeight - 1);
+    expect(geometry.dockTopBeforeScroll).toBeGreaterThan(geometry.columnClientHeight);
+
+    const afterScroll = await page.evaluate(() => {
+      const column = document.querySelector('.squire-column');
+      const dock = document.querySelector('.squire-input-dock');
+      if (column instanceof HTMLElement) {
+        column.scrollTop = column.scrollHeight - column.clientHeight;
+      }
+      if (!(dock instanceof HTMLElement)) {
+        throw new Error('missing Squire input dock after scroll');
+      }
+      const dockRect = dock.getBoundingClientRect();
+      return {
+        dockBottom: dockRect.bottom,
+        dockTop: dockRect.top,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    expect(afterScroll.dockTop).toBeLessThan(afterScroll.viewportHeight);
+    expect(afterScroll.dockBottom).toBeLessThanOrEqual(afterScroll.viewportHeight + 1);
   });
 });

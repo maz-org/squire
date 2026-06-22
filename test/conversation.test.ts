@@ -91,6 +91,8 @@ import * as SessionRepository from '../src/db/repositories/session-repository.ts
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
 import {
   GENERIC_FAILURE_MESSAGE,
+  createPendingConversation,
+  createPendingFollowUp,
   loadConversation,
   loadConversationHistory,
 } from '../src/chat/conversation-service.ts';
@@ -338,6 +340,60 @@ async function assistantConsultedSources(): Promise<Array<string[] | null>> {
 }
 
 describe('conversation history summaries', () => {
+  it('pins a new conversation to the campaign selected for its first message', async () => {
+    const auth = await createAuthContext({ email: 'conversation-campaign@example.com' });
+    const campaignId = 'aaaaaaaa-0000-4000-8000-000000000000';
+
+    const pending = await createPendingConversation({
+      userId: auth.userId,
+      question: 'What is my party prosperity?',
+      idempotencyKey: 'conversation-campaign-start',
+      campaignId,
+    });
+
+    expect(pending.conversation.campaignId).toBe(campaignId);
+    expect(pending.currentUserMessage?.campaignId).toBe(campaignId);
+
+    const loaded = await loadConversation({
+      conversationId: pending.conversation.id,
+      userId: auth.userId,
+    });
+
+    expect(loaded?.conversation.campaignId).toBe(campaignId);
+    expect(loaded?.messages.map((message) => message.campaignId ?? null)).toEqual([campaignId]);
+  });
+
+  it('keeps follow-up messages in the conversation campaign even when another campaign is active', async () => {
+    const auth = await createAuthContext({ email: 'conversation-campaign-followup@example.com' });
+    const conversationCampaignId = 'aaaaaaaa-0000-4000-8000-000000000000';
+    const newlyActiveCampaignId = 'bbbbbbbb-0000-4000-8000-000000000000';
+    const pending = await createPendingConversation({
+      userId: auth.userId,
+      question: 'What is my active scenario?',
+      idempotencyKey: 'conversation-campaign-followup',
+      campaignId: conversationCampaignId,
+    });
+
+    const followUp = await createPendingFollowUp({
+      conversationId: pending.conversation.id,
+      userId: auth.userId,
+      question: 'What about now?',
+      campaignId: newlyActiveCampaignId,
+    });
+
+    expect(followUp?.conversation.campaignId).toBe(conversationCampaignId);
+    expect(followUp?.currentUserMessage?.campaignId).toBe(conversationCampaignId);
+
+    const loaded = await loadConversation({
+      conversationId: pending.conversation.id,
+      userId: auth.userId,
+    });
+    expect(loaded?.messages.map((message) => message.campaignId ?? null)).toEqual([
+      conversationCampaignId,
+      conversationCampaignId,
+    ]);
+  });
+
   it('lists only owned conversations newest first with derived row text', async () => {
     const alice = await createAuthContext({ email: 'alice-history@example.com' });
     const bob = await createAuthContext({
