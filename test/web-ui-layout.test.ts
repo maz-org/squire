@@ -104,6 +104,28 @@ const noCampaignChatContext = {
   returnTo: '/',
 };
 
+const activeCampaignChatContext = {
+  activeCampaign: {
+    campaignId: 'campaign-123',
+    campaignName: 'Center Table Campaign',
+    game: 'frosthaven',
+  },
+  campaigns: [
+    {
+      campaignId: 'campaign-123',
+      campaignName: 'Center Table Campaign',
+      game: 'frosthaven',
+    },
+  ],
+  returnTo: '/',
+};
+
+const fixedCampaignChatContext = {
+  ...activeCampaignChatContext,
+  campaigns: [],
+  fixed: true,
+};
+
 function testConversationHistory() {
   return {
     rows: [
@@ -282,7 +304,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
       }),
     );
     const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
-    const context = body.match(/<section class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const context = body.match(/<section[^>]*class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
 
     expect(header).not.toContain('squire-game-picker');
     expect(context).toContain('No campaign selected');
@@ -356,14 +378,15 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).not.toContain('class="squire-run-progress"');
     expect(body).toContain('class="sr-only-focusable"');
     expect(body).toMatch(/<a href="#squire-input"[^>]*sr-only-focusable/);
-    expect(body).toMatch(/<input[^>]*id="squire-input"/);
+    expect(body).toMatch(/<textarea[^>]*id="squire-input"/);
+    expect(body).not.toMatch(/<input[^>]*id="squire-input"/);
     expect(body).not.toMatch(/<form[^>]*id="squire-input"/);
     expect(body).toMatch(/<form[^>]*class="squire-input-dock"[^>]*action="\/chat"/);
     expect(body).toMatch(/hx-post="\/chat"/);
     expect(body).toMatch(/hx-target="#squire-surface"/);
     expect(body).toMatch(/hx-swap="innerHTML"/);
     expect(body).toMatch(/<input[^>]*type="hidden"[^>]*name="idempotencyKey"[^>]*value=""/);
-    expect(body).toMatch(/placeholder="Ask a question\.\.\."/);
+    expect(body).toMatch(/placeholder="Ask about a rule, card, item, monster, or scenario"/);
     expect(body).toMatch(
       /<button[^>]*type="submit"[^>]*class="squire-input-dock__submit"[^>]*aria-label="Ask"[^>]*>\s*<\/button>/,
     );
@@ -394,6 +417,85 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     expect(body).toContain('Frosthaven');
   });
 
+  it('renders chat as the primary header surface and keeps history subordinate (SQR-366)', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(testSession, testCsrfToken, {
+        conversationHistory: testConversationHistory(),
+        chatCampaignContext: noCampaignChatContext,
+      }),
+    );
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+    const historyShell = body.match(/<div[^>]*id="squire-history-shell"[\s\S]*?<\/div>/)?.[0] ?? '';
+
+    expect(body.indexOf('<header class="squire-header">')).toBeLessThan(
+      body.indexOf('<div class="squire-frame">'),
+    );
+    expect(body.indexOf('id="squire-history-shell"')).toBeGreaterThan(
+      body.indexOf('<div class="squire-frame">'),
+    );
+    expect(header).toContain('class="squire-app-nav"');
+    expect(header).toMatch(/<a[^>]*href="\/"[^>]*aria-current="page"[^>]*>\s*Chat\s*<\/a>/);
+    expect(header).toMatch(/<a[^>]*href="\/campaigns"[^>]*>\s*Campaigns\s*<\/a>/);
+    expect(body).not.toContain('HAVEN · RULES');
+    expect(historyShell).toContain('class="squire-history-title"');
+    expect(historyShell).toContain('Conversations');
+    expect(historyShell).not.toContain('squire-history-brand');
+    expect(historyShell).not.toContain('squire-monogram--masthead');
+    expect(historyShell).not.toContain('squire-wordmark');
+  });
+
+  it('links the current campaign name from the chat context without a separate campaign action (SQR-366)', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(testSession, testCsrfToken, {
+        chatCampaignContext: activeCampaignChatContext,
+      }),
+    );
+    const context = body.match(/<section[^>]*class="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+
+    expect(context).toMatch(
+      /<a[^>]*class="squire-chat-context__name"[^>]*href="\/campaigns\/campaign-123"[^>]*>\s*Center Table Campaign\s*<\/a>/,
+    );
+    expect(context).not.toContain('Open campaign');
+  });
+
+  it('renders an existing conversation with a fixed campaign context', async () => {
+    const body = String(
+      await actualLayout.renderConversationPage({
+        session: testSession,
+        csrfToken: testCsrfToken,
+        conversationId: 'conv-123',
+        messages: [],
+        chatCampaignContext: fixedCampaignChatContext,
+      }),
+    );
+    const context = body.match(/<section[^>]*id="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+    const form = body.match(/<form[^>]*class="squire-input-dock"[\s\S]*?<\/form>/)?.[0] ?? '';
+
+    expect(context).toContain('Conversation campaign');
+    expect(context).toContain('Center Table Campaign');
+    expect(context).toContain('Frosthaven context for this conversation');
+    expect(context).not.toContain('squire-chat-context__switcher');
+    expect(context).not.toContain('Change');
+    expect(context).not.toContain('Set up campaign');
+    expect(form).not.toMatch(/<input[^>]*name="campaignId"/);
+  });
+
+  it('keeps campaign context out of the shared app header (SQR-366)', async () => {
+    const body = String(
+      await actualLayout.renderHomePage(testSession, testCsrfToken, {
+        campaignStrip: activeCampaignChatContext.activeCampaign,
+        chatCampaignContext: activeCampaignChatContext,
+      }),
+    );
+    const header = body.match(/<header class="squire-header">[\s\S]*?<\/header>/)?.[0] ?? '';
+
+    expect(header).toContain('class="squire-app-nav"');
+    expect(header).not.toContain('squire-campaign-strip');
+    expect(header).not.toContain('Center Table Campaign');
+    expect(body).toContain('class="squire-chat-context"');
+    expect(body).toContain('Center Table Campaign');
+  });
+
   it('renders a history search affordance in the desktop rail and mobile drawer', async () => {
     const body = String(
       await actualLayout.renderHomePage(testSession, testCsrfToken, {
@@ -402,6 +504,7 @@ describe('GET / — companion-first layout shell (SQR-65)', () => {
     );
 
     expect(body).toContain('class="squire-history-search"');
+    expect(body).toContain('class="squire-history-search__field"');
     expect(body).toContain('name="historyQuery"');
     expect(body).toContain('placeholder="Search history"');
     expect(body).toContain('value="poison"');
@@ -1087,6 +1190,27 @@ describe('conversation transcript rendering helpers', () => {
     );
   });
 
+  it('can include an out-of-band fixed campaign context with the first transcript swap', () => {
+    const body = String(
+      actualLayout.renderConversationTranscriptWithHistoryOob({
+        conversationHistory: testConversationHistory(),
+        conversationId: 'conv-123',
+        messages: [messages[0]],
+        pendingStreamUrls: new Map([['m1', '/chat/conv-123/messages/m1/stream']]),
+        chatCampaignContext: fixedCampaignChatContext,
+        csrfToken: testCsrfToken,
+      }),
+    );
+    const context = body.match(/<section[^>]*id="squire-chat-context"[\s\S]*?<\/section>/)?.[0];
+
+    expect(context).toMatch(/hx-swap-oob="true"/);
+    expect(context).toContain('Conversation campaign');
+    expect(context).toContain('Frosthaven context for this conversation');
+    expect(context).not.toContain('Change');
+    expect(body).toContain('id="squire-history-shell"');
+    expect(body).toContain('class="squire-transcript"');
+  });
+
   it('renders multiple pending skeletons when concurrent turns exist (SQR-108 defense-in-depth)', async () => {
     // Codex flagged that an older still-running turn could disappear
     // from the in-flight UI on reload because computePendingStreamUrl
@@ -1226,6 +1350,66 @@ describe('GET / — signature components (SQR-66)', () => {
 
 describe('styles.css — SQR-66 signature component rules', () => {
   const css = readFileSync(new URL('../src/web-ui/styles.css', import.meta.url), 'utf8');
+  const compactCss = css.replace(/\s+/g, '');
+
+  it('uses one conversation-page scroll container so the transcript and ask widget move together (SQR-366)', () => {
+    expect(css).toMatch(
+      /\.squire-column:has\(> \.squire-surface > \.squire-transcript\)\s*\{[^}]*height:\s*100%[^}]*overflow-y:\s*auto/,
+    );
+    expect(css).toMatch(
+      /\.squire-column:has\(> \.squire-surface > \.squire-transcript\)\s+\.squire-surface\s*\{[^}]*flex:\s*0 0 auto[^}]*overflow:\s*visible/,
+    );
+    expect(compactCss).not.toContain(
+      '.squire-column:has(>.squire-surface>.squire-transcript).squire-surface{min-height:0;overflow-y:auto;',
+    );
+    expect(css).toMatch(
+      /@media\s*\(min-width:\s*1024px\)[\s\S]*\.squire-frame:has\(\.squire-rail\)\s*\{[^}]*min-height:\s*0[^}]*overflow:\s*hidden/,
+    );
+    expect(css).toMatch(
+      /@media\s*\(min-width:\s*1024px\)[\s\S]*\.squire-frame:has\(\.squire-rail\)\s+\.squire-rail\s*\{[^}]*height:\s*100%[^}]*overflow-y:\s*auto/,
+    );
+  });
+
+  it('keeps the SQR-366 chat nav lightweight and centers the home composer', () => {
+    const navRule = css.match(/\.squire-app-nav\s*\{[^}]*\}/)?.[0] ?? '';
+    expect(navRule).toContain('background: transparent');
+    expect(navRule).not.toContain('border:');
+    expect(css).toContain('--squire-content-column-width: 640px');
+    expect(css).toContain('--squire-content-inline-padding-desktop: 24px');
+    expect(css).toContain('--squire-header-nav-baseline-offset: 5px');
+    expect(css).toMatch(/\.squire-header\s*\{[^}]*position:\s*relative/);
+    expect(compactCss).toContain(
+      '.squire-app-nav{position:absolute;left:max(var(--squire-header-nav-min-left),calc((100vw-var(--squire-content-column-width))/2+var(--squire-content-inline-padding-desktop)));top:calc(50%+var(--squire-header-nav-baseline-offset));',
+    );
+    expect(compactCss).toContain(
+      '.squire-body:has(.squire-rail).squire-app-nav{left:max(var(--squire-header-nav-min-left),calc(var(--squire-rail-width)+max(var(--space-xl),calc((100vw-var(--squire-content-column-width))/2-var(--squire-rail-width)))+var(--squire-content-inline-padding-desktop)));',
+    );
+    expect(css).toMatch(
+      /\.squire-app-nav__link--active\s*\{[^}]*border-bottom-color:\s*var\(--wax\)/,
+    );
+    expect(css).toMatch(
+      /\.squire-column:has\(> \.squire-composer\):not\(:has\(> \.squire-surface > \.squire-transcript\)\)\s+\.squire-composer\s*\{[^}]*position:\s*absolute[^}]*top:\s*50%[^}]*transform:\s*translateY\(-50%\)/,
+    );
+  });
+
+  it('aligns the desktop chat content column with non-rail pages when space allows (SQR-366)', () => {
+    expect(css).toContain('--squire-rail-width: 280px');
+    expect(compactCss).toContain(
+      '.squire-frame:has(.squire-rail).squire-column:not(.squire-column--wide){margin-left:max(var(--space-xl),calc((100vw-var(--squire-content-column-width))/2-var(--squire-rail-width)));margin-right:auto;',
+    );
+  });
+
+  it('places history search and ask actions inside their fields (SQR-366)', () => {
+    expect(css).toMatch(/\.squire-history-search__field\s*\{[^}]*position:\s*relative/);
+    expect(css).toMatch(
+      /\.squire-history-search__submit\s*\{[^}]*position:\s*absolute[^}]*right:\s*4px[^}]*bottom:\s*4px/,
+    );
+    expect(css).toMatch(/\.squire-input-dock\s*\{[^}]*position:\s*relative/);
+    expect(css).toMatch(/\.squire-input-dock #squire-input\s*\{[^}]*min-height:\s*112px/);
+    expect(css).toMatch(
+      /\.squire-input-dock__submit\s*\{[^}]*position:\s*absolute[^}]*right:\s*12px[^}]*bottom:\s*12px/,
+    );
+  });
 
   it('declares .squire-question with Fraunces clamp font-size and line-height 1.25', () => {
     expect(css).toMatch(/\.squire-question\s*\{[^}]*font-family:\s*["']?Fraunces["']?/);

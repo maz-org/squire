@@ -20,7 +20,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import { getAppCssUrl, getHtmxJsUrl, getSquireJsUrl } from './assets.ts';
 import { renderAssistantContent } from './assistant-content.ts';
-import { renderCampaignStrip, type CampaignStripState } from './campaign-pages.ts';
+import type { CampaignStripState } from './campaign-pages.ts';
 import { aggregateSourceLabels, type ToolSourceLabel } from './consulted-footer.ts';
 import { CSRF_FORM_FIELD_NAME, CSRF_HEADER_NAME, CSRF_META_NAME } from './csrf.ts';
 import { FONT_PRECONNECTS, GOOGLE_FONTS_HREF } from './fonts.ts';
@@ -50,14 +50,11 @@ import type {
 
 export interface LayoutShellOptions {
   /**
-   * Header context strip (SQR-275): the persistent campaign bridge.
-   * Pass the active campaign (or null for the NO CAMPAIGN affordance);
-   * leave undefined to omit the strip entirely (unauthenticated chrome).
-   * `campaignStripProminent` marks campaign surfaces, where the campaign
-   * name outranks the brand.
+   * Active campaign context used for chat form binding when a caller has not
+   * supplied `chatCampaignContext`. The shared app header never renders this
+   * state; campaign identity belongs in page content or the chat composer.
    */
   campaignStrip?: CampaignStripState | null;
-  campaignStripProminent?: boolean;
   /**
    * Chat-specific campaign context. Unlike `campaignStrip`, this renders in
    * the ask surface rather than the header, so users verify context immediately
@@ -109,6 +106,7 @@ export interface LayoutShellOptions {
   showChatChrome?: boolean;
   conversationHistory?: ConversationHistoryViewModel;
   headerContext?: string;
+  activeAppSection?: AppNavSection;
   columnClassName?: string;
   /**
    * Set to true on pages whose `mainContent` contains its own live region
@@ -124,7 +122,10 @@ export interface ChatCampaignContextView {
   activeCampaign: CampaignStripState | null;
   campaigns: CampaignStripState[];
   returnTo: string;
+  fixed?: boolean;
 }
+
+export type AppNavSection = 'chat' | 'campaigns' | 'none';
 
 const EMPTY_CONVERSATION_HISTORY: ConversationHistoryViewModel = {
   rows: [],
@@ -221,6 +222,28 @@ function renderActiveGamePicker(): HtmlEscapedString {
   </fieldset>` as HtmlEscapedString;
 }
 
+function renderAppNav(activeSection: AppNavSection): HtmlEscapedString {
+  const chatClass = [
+    'squire-app-nav__link',
+    activeSection === 'chat' ? 'squire-app-nav__link--active' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const campaignsClass = [
+    'squire-app-nav__link',
+    activeSection === 'campaigns' ? 'squire-app-nav__link--active' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const chatCurrent = activeSection === 'chat' ? html` aria-current="page"` : html``;
+  const campaignsCurrent = activeSection === 'campaigns' ? html` aria-current="page"` : html``;
+
+  return html`<nav class="squire-app-nav" aria-label="Primary">
+    <a class="${chatClass}" href="/" ${chatCurrent}>Chat</a>
+    <a class="${campaignsClass}" href="/campaigns" ${campaignsCurrent}>Campaigns</a>
+  </nav>` as HtmlEscapedString;
+}
+
 function chatGameLabel(game: string): string {
   return SUPPORTED_GAMES.find((definition) => definition.id === game)?.label ?? game;
 }
@@ -228,59 +251,79 @@ function chatGameLabel(game: string): string {
 function renderChatCampaignContext(
   context: ChatCampaignContextView,
   csrfToken: string,
+  options: { oob?: boolean } = {},
 ): HtmlEscapedString {
   const active = context.activeCampaign;
-  return html`<section class="squire-chat-context" aria-label="Chat campaign context">
+  const fixed = context.fixed === true;
+  return html`<section
+    id="squire-chat-context"
+    class="squire-chat-context"
+    aria-label="Chat campaign context"
+    ${options.oob ? html`hx-swap-oob="true"` : html``}
+  >
     <div class="squire-chat-context__current">
-      <span class="squire-chat-context__label">Current campaign</span>
-      <strong class="squire-chat-context__name"
-        >${active ? active.campaignName : 'No campaign selected'}</strong
-      >
+      <span class="squire-chat-context__label">
+        ${fixed ? 'Conversation campaign' : 'Current campaign'}
+      </span>
+      ${active
+        ? html`<a class="squire-chat-context__name" href="/campaigns/${active.campaignId}">
+            ${active.campaignName}
+          </a>`
+        : html`<strong class="squire-chat-context__name">No campaign selected</strong>`}
       <span class="squire-chat-context__meta">
         ${active
-          ? `${chatGameLabel(active.game)} context for your next question`
-          : 'Game-only rules lookup'}
+          ? fixed
+            ? `${chatGameLabel(active.game)} context for this conversation`
+            : `${chatGameLabel(active.game)} context for your next question`
+          : fixed
+            ? 'Game-only rules lookup for this conversation'
+            : 'Game-only rules lookup'}
       </span>
     </div>
-    ${active
-      ? html`<a class="squire-chat-context__campaign-link" href="/campaigns/${active.campaignId}">
-          Open campaign
-        </a>`
-      : renderActiveGamePicker()}
-    ${context.campaigns.length > 0
-      ? html`<details class="squire-chat-context__switcher">
-          <summary>Change</summary>
-          <div class="squire-chat-context__menu">
-            ${context.campaigns.map(
-              (campaign) =>
-                html`<form method="post" action="/chat/campaign-context">
-                  <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
-                  <input type="hidden" name="campaignId" value="${campaign.campaignId}" />
-                  <input type="hidden" name="returnTo" value="${context.returnTo}" />
-                  <button
-                    type="submit"
-                    ${active?.campaignId === campaign.campaignId
-                      ? html`aria-current="true"`
-                      : html``}
-                  >
-                    ${campaign.campaignName}
-                    <span>${chatGameLabel(campaign.game)}</span>
-                  </button>
-                </form>`,
-            )}
-            <form method="post" action="/chat/campaign-context">
-              <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
-              <input type="hidden" name="campaignId" value="${NO_CAMPAIGN_CONTEXT}" />
-              <input type="hidden" name="returnTo" value="${context.returnTo}" />
-              <button type="submit" ${active === null ? html`aria-current="true"` : html``}>
-                No campaign
-                <span>Use the game picker</span>
-              </button>
-            </form>
-          </div>
-        </details>`
-      : html`<a class="squire-chat-context__setup" href="/campaigns">Set up campaign</a>`}
+    ${active ? html`` : renderActiveGamePicker()}
+    ${fixed
+      ? html``
+      : context.campaigns.length > 0
+        ? html`<details class="squire-chat-context__switcher">
+            <summary>Change</summary>
+            <div class="squire-chat-context__menu">
+              ${context.campaigns.map(
+                (campaign) =>
+                  html`<form method="post" action="/chat/campaign-context">
+                    <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+                    <input type="hidden" name="campaignId" value="${campaign.campaignId}" />
+                    <input type="hidden" name="returnTo" value="${context.returnTo}" />
+                    <button
+                      type="submit"
+                      ${active?.campaignId === campaign.campaignId
+                        ? html`aria-current="true"`
+                        : html``}
+                    >
+                      ${campaign.campaignName}
+                      <span>${chatGameLabel(campaign.game)}</span>
+                    </button>
+                  </form>`,
+              )}
+              <form method="post" action="/chat/campaign-context">
+                <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+                <input type="hidden" name="campaignId" value="${NO_CAMPAIGN_CONTEXT}" />
+                <input type="hidden" name="returnTo" value="${context.returnTo}" />
+                <button type="submit" ${active === null ? html`aria-current="true"` : html``}>
+                  No campaign
+                  <span>Use the game picker</span>
+                </button>
+              </form>
+            </div>
+          </details>`
+        : html`<a class="squire-chat-context__setup" href="/campaigns">Set up campaign</a>`}
   </section>` as HtmlEscapedString;
+}
+
+export function renderChatCampaignContextOob(
+  context: ChatCampaignContextView,
+  csrfToken: string,
+): HtmlEscapedString {
+  return renderChatCampaignContext(context, csrfToken, { oob: true });
 }
 
 function statusLabel(status: ConversationHistoryStatus): string {
@@ -333,16 +376,18 @@ function renderConversationHistorySearch(
   const query = history.query ?? '';
   return html`<form class="squire-history-search" method="get" role="search">
     <label class="sr-only" for="squire-history-search-${idSuffix}">Search history</label>
-    <input
-      id="squire-history-search-${idSuffix}"
-      class="squire-history-search__input"
-      type="search"
-      name="historyQuery"
-      value="${query}"
-      placeholder="Search history"
-      autocomplete="off"
-    />
-    <button class="squire-history-search__submit" type="submit">Search</button>
+    <div class="squire-history-search__field">
+      <input
+        id="squire-history-search-${idSuffix}"
+        class="squire-history-search__input"
+        type="search"
+        name="historyQuery"
+        value="${query}"
+        placeholder="Search history"
+        autocomplete="off"
+      />
+      <button class="squire-history-search__submit" type="submit">Search</button>
+    </div>
   </form>` as HtmlEscapedString;
 }
 
@@ -371,10 +416,7 @@ export function renderConversationHistoryShell(
   >
     <aside class="squire-rail" aria-label="Conversation history">
       <div class="squire-history-head">
-        <a class="squire-history-brand" href="/" aria-label="Go to Squire home">
-          <span class="squire-monogram squire-monogram--masthead" aria-hidden="true"></span>
-          <span class="squire-wordmark">Squire</span>
-        </a>
+        <span class="squire-history-title">Conversations</span>
         ${renderNewChatLink('squire-history-new-chat')}
       </div>
       ${renderConversationHistorySearch(history, 'rail')} ${renderConversationHistoryList(history)}
@@ -391,7 +433,9 @@ export function renderConversationHistoryShell(
       hidden
     >
       <div class="squire-history-drawer__header">
-        <span id="squire-history-drawer-title" class="squire-history-drawer__title"> History </span>
+        <span id="squire-history-drawer-title" class="squire-history-drawer__title">
+          Conversations
+        </span>
         <button
           type="button"
           class="squire-history-drawer__close"
@@ -413,8 +457,13 @@ export function renderConversationTranscriptWithHistoryOob(options: {
   conversationId: string;
   messages: ConversationMessage[];
   pendingStreamUrls?: Map<string, string>;
+  chatCampaignContext?: ChatCampaignContextView;
+  csrfToken?: string;
 }): HtmlEscapedString {
   return html`${renderConversationHistoryShell(options.conversationHistory, { oob: true })}
+  ${options.chatCampaignContext && options.csrfToken
+    ? renderChatCampaignContextOob(options.chatCampaignContext, options.csrfToken)
+    : html``}
   ${renderConversationTranscript({
     conversationId: options.conversationId,
     messages: options.messages,
@@ -1199,7 +1248,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     options.chatCampaignContext !== undefined
       ? options.chatCampaignContext.activeCampaign
       : options.campaignStrip;
+  const chatCampaignIsFixed = options.chatCampaignContext?.fixed === true;
   const headerContext = options.headerContext ?? 'HAVEN · RULES';
+  const activeAppSection =
+    options.activeAppSection ?? (authenticated && showChatChrome ? 'chat' : 'none');
   const columnClassName = options.columnClassName ?? 'squire-column';
   const historyQuery = conversationHistory?.query ?? '';
   const chatFormHiddenFields = [
@@ -1207,7 +1259,9 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     // E8/SQR-364: a campaign context supplies the game dimension; no-campaign
     // chat keeps the game picker and game hidden field available.
     ...(activeChatCampaign ? [] : [{ name: 'game', value: DEFAULT_GAME_ID }]),
-    ...(activeChatCampaign ? [{ name: 'campaignId', value: activeChatCampaign.campaignId }] : []),
+    ...(activeChatCampaign && !chatCampaignIsFixed
+      ? [{ name: 'campaignId', value: activeChatCampaign.campaignId }]
+      : []),
     ...(historyQuery ? [{ name: 'historyQuery', value: historyQuery }] : []),
     ...(options.chatFormHiddenFields ?? []),
   ];
@@ -1223,6 +1277,19 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
         <p class="squire-banner__body">${options.errorBanner.message}</p>
       </div>`
     : (options.mainContent ?? (html`` as HtmlEscapedString));
+  const headerContent =
+    authenticated && options.session
+      ? html`<a class="squire-header__brand" href="/" aria-label="Go to Squire home">
+            <span class="squire-monogram" aria-hidden="true"></span>
+            <span class="squire-wordmark">Squire</span>
+          </a>
+          ${renderAppNav(activeAppSection)} ${conversationHistory ? renderHistoryToggle() : html``}
+          <div class="squire-header__account">
+            ${renderAccountMenu(options.session, authenticatedCsrfToken)}
+          </div>`
+      : html`<span class="squire-monogram" aria-hidden="true"></span>
+          <span class="squire-wordmark">Squire</span>
+          <span class="squire-context">${headerContext}</span>`;
   return renderDocument({
     authenticated,
     csrfToken,
@@ -1230,31 +1297,10 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     bodyContent: html`${!authenticated || !showChatChrome
         ? html``
         : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
+      <header class="squire-header">${headerContent}</header>
       <div class="squire-frame">
         ${conversationHistory ? renderConversationHistoryShell(conversationHistory) : html``}
         <div class="${columnClassName}">
-          <header class="squire-header">
-            ${authenticated && options.session
-              ? html`<a class="squire-header__brand" href="/" aria-label="Go to Squire home">
-                    <span class="squire-monogram" aria-hidden="true"></span>
-                    <span class="squire-wordmark">Squire</span>
-                  </a>
-                  ${conversationHistory ? renderHistoryToggle() : html``}
-                  ${options.campaignStrip !== undefined
-                    ? renderCampaignStrip(options.campaignStrip, {
-                        prominent: options.campaignStripProminent,
-                      })
-                    : html``}
-                  ${showChatChrome
-                    ? html``
-                    : html`<span class="squire-context">${headerContext}</span>`}
-                  <div class="squire-header__account">
-                    ${renderAccountMenu(options.session, authenticatedCsrfToken)}
-                  </div>`
-              : html`<span class="squire-monogram" aria-hidden="true"></span>
-                  <span class="squire-wordmark">Squire</span>
-                  <span class="squire-context">${headerContext}</span>`}
-          </header>
           <main
             id="squire-surface"
             class="squire-surface"
@@ -1265,7 +1311,8 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           </main>
           ${!authenticated || !showChatChrome
             ? html``
-            : html`${options.chatCampaignContext
+            : html`<div class="squire-composer">
+                ${options.chatCampaignContext
                   ? renderChatCampaignContext(options.chatCampaignContext, authenticatedCsrfToken)
                   : html``}
                 <form
@@ -1280,15 +1327,16 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
                     (field) =>
                       html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
                   )}
-                  <input
+                  <textarea
                     id="squire-input"
                     name="question"
-                    type="text"
+                    rows="3"
                     autocomplete="off"
-                    placeholder="Ask a question..."
-                  />
+                    placeholder="Ask about a rule, card, item, monster, or scenario"
+                  ></textarea>
                   <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
-                </form>`}
+                </form>
+              </div>`}
         </div>
       </div>` as HtmlEscapedString,
   });
@@ -1599,6 +1647,7 @@ export async function renderMarkdownStyleguidePage(
     mainContent,
     showRail: false,
     showChatChrome: false,
+    activeAppSection: 'none',
     headerContext: 'INTERNAL · STYLEGUIDE',
     columnClassName: 'squire-column squire-column--wide',
   });

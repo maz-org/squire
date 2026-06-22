@@ -1389,7 +1389,6 @@ app.get('/profile', requirePageSession(), async (c) => {
       csrfToken: createCsrfToken(session.id),
       showChatChrome: false,
       showRail: false,
-      campaignStrip: await campaignStripFor(c, session.userId),
       mainContent: renderProfileContent({
         name: user.name,
         email: user.email,
@@ -1399,7 +1398,7 @@ app.get('/profile', requirePageSession(), async (c) => {
   );
 });
 
-// ─── Campaign pages + context strip (SQR-275, SQR-11) ───────────────────────
+// ─── Campaign pages + chat campaign context (SQR-275, SQR-11) ────────────────
 
 const ACTIVE_CAMPAIGN_COOKIE = 'squire_active_campaign';
 
@@ -1436,10 +1435,9 @@ async function campaignSelectionFor(
 }
 
 /**
- * The active campaign for the header strip: the explicit selection (signed
- * cookie, validated against current membership) when present, else the most
- * recently updated membership. Null = signed-in user with no campaigns →
- * the NO CAMPAIGN affordance.
+ * The active campaign selection: the explicit signed cookie, validated against
+ * current membership, when present; otherwise the first campaign membership.
+ * Null means the user has chosen no-campaign chat mode or has no campaigns.
  */
 async function campaignStripFor(
   c: Context,
@@ -1474,6 +1472,41 @@ async function chatCampaignContextFor(c: Context, userId: string) {
   };
 }
 
+async function chatCampaignContextForConversation(
+  c: Context,
+  userId: string,
+  campaignId: string | null | undefined,
+) {
+  if (!campaignId) {
+    return {
+      activeCampaign: null,
+      campaigns: [],
+      returnTo: requestReturnTo(c),
+      fixed: true,
+    };
+  }
+
+  try {
+    const detail = await CampaignService.getCampaignDetail(
+      identityFromSessionUser(userId),
+      campaignId,
+    );
+    return {
+      activeCampaign: campaignStripFrom(detail.campaign),
+      campaigns: [],
+      returnTo: requestReturnTo(c),
+      fixed: true,
+    };
+  } catch {
+    return {
+      activeCampaign: null,
+      campaigns: [],
+      returnTo: requestReturnTo(c),
+      fixed: true,
+    };
+  }
+}
+
 async function renderCampaignListPage(c: Context, errorMessage?: string): Promise<Response> {
   const session = c.get('session')!;
   const identity = identityFromSessionUser(session.userId);
@@ -1499,7 +1532,7 @@ async function renderCampaignListPage(c: Context, errorMessage?: string): Promis
       csrfToken: createCsrfToken(session.id),
       showChatChrome: false,
       showRail: false,
-      campaignStrip: strip,
+      activeAppSection: 'campaigns',
       mainContent: renderCampaignListContent({
         rows,
         invites,
@@ -1702,12 +1735,7 @@ async function renderCampaignDashboardPage(
     showChatChrome: false,
     showRail: false,
     columnClassName: 'squire-column squire-column--wide',
-    campaignStrip: {
-      campaignId: detail.campaign.id,
-      campaignName: detail.campaign.name,
-      game: detail.campaign.game,
-    },
-    campaignStripProminent: true,
+    activeAppSection: 'campaigns',
     mainContent: renderCampaignDashboardContent(
       detail,
       dashboardThreads?.html,
@@ -2536,12 +2564,7 @@ async function renderCharacterSheetPage(
       showChatChrome: false,
       showRail: false,
       columnClassName: 'squire-column squire-column--wide',
-      campaignStrip: {
-        campaignId: campaignDetail.campaign.id,
-        campaignName: campaignDetail.campaign.name,
-        game,
-      },
-      campaignStripProminent: true,
+      activeAppSection: 'campaigns',
       mainContent: renderCharacterSheetContent({
         detail,
         campaign: {
@@ -3395,7 +3418,11 @@ app.get('/chat/:conversationId', async (c) => {
       messages: loaded.messages,
       pendingStreamUrls,
       conversationHistory,
-      chatCampaignContext: await chatCampaignContextFor(c, session.userId),
+      chatCampaignContext: await chatCampaignContextForConversation(
+        c,
+        session.userId,
+        loaded.conversation.campaignId,
+      ),
     }),
   );
 });
@@ -3486,6 +3513,12 @@ app.post('/chat', async (c) => {
           conversationId: loaded.conversation.id,
           messages: loaded.messages,
           pendingStreamUrls,
+          chatCampaignContext: await chatCampaignContextForConversation(
+            c,
+            session.userId,
+            loaded.conversation.campaignId,
+          ),
+          csrfToken: createCsrfToken(session.id),
         }),
       );
     }
@@ -3507,6 +3540,12 @@ app.post('/chat', async (c) => {
             buildStreamUrl(pending.conversation.id, pending.currentUserMessage.id),
           ],
         ]),
+        chatCampaignContext: await chatCampaignContextForConversation(
+          c,
+          session.userId,
+          pending.conversation.campaignId,
+        ),
+        csrfToken: createCsrfToken(session.id),
       }),
     );
   }
@@ -3529,12 +3568,7 @@ app.post('/chat', async (c) => {
 app.post('/chat/:conversationId/messages', async (c) => {
   const requestId = correlateRequest(c);
   const session = c.get('session')!;
-  const {
-    question,
-    game: rawGame,
-    campaignId: rawCampaignId,
-    historyQuery,
-  } = await readQuestionForm(c);
+  const { question, game: rawGame, historyQuery } = await readQuestionForm(c);
   if (!question) return badChatRequest(c, 'Question is required');
   let game: string | undefined;
   try {
@@ -3550,7 +3584,6 @@ app.post('/chat/:conversationId/messages', async (c) => {
       userId: session.userId,
       question,
       game,
-      campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
       requestId,
       telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
     });
@@ -3584,7 +3617,6 @@ app.post('/chat/:conversationId/messages', async (c) => {
     userId: session.userId,
     question,
     game,
-    campaignId: await chatCampaignBinding(session.userId, rawCampaignId),
     requestId,
     telemetry: { route: '/chat/:conversationId/messages', surface: 'web_chat' },
   });

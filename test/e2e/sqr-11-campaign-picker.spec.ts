@@ -42,12 +42,11 @@ test.describe('campaign picker and chat context', () => {
     await page.getByLabel('GAME').selectOption('frosthaven');
     await page.getByRole('button', { name: 'CREATE' }).click();
 
-    // Create redirects to the new dashboard with the prominent strip.
+    // Create redirects to the new dashboard. The shared app header stays
+    // generic; campaign identity lives in page content.
     await expect(page).toHaveURL(/\/campaigns\/[0-9a-f-]{36}/);
     await expect(page.getByRole('heading', { name })).toBeVisible();
-    await expect(page.locator('.squire-campaign-strip--prominent')).toContainText(
-      name.toUpperCase(),
-    );
+    await expect(page.locator('.squire-header')).not.toContainText(name);
 
     // The picker lists it as ACTIVE; the chat context bridges to the dashboard.
     await page.goto('/campaigns');
@@ -59,7 +58,7 @@ test.describe('campaign picker and chat context', () => {
     await expect(page.locator('.squire-chat-context')).toContainText(name);
     // E8: an active campaign hides the per-session game selector.
     await expect(page.locator('.squire-game-picker')).toHaveCount(0);
-    await page.getByRole('link', { name: 'Open campaign' }).click();
+    await page.locator('.squire-chat-context').getByRole('link', { name }).click();
     await expect(page).toHaveURL(/\/campaigns\/[0-9a-f-]{36}/);
   });
 });

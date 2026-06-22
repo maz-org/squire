@@ -524,6 +524,7 @@ async function createConversationTurn(input: {
     const existingOrCreated = await ConversationRepository.getOrCreateByIdempotencyKey(tx, {
       userId: input.userId,
       creationIdempotencyKey: input.idempotencyKey,
+      campaignId: input.campaignId ?? null,
     });
 
     if (!existingOrCreated.created) {
@@ -537,7 +538,7 @@ async function createConversationTurn(input: {
       conversationId: existingOrCreated.conversation.id,
       role: 'user',
       content: input.question,
-      game: input.game ?? null,
+      game: input.campaignId ? null : (input.game ?? null),
       campaignId: input.campaignId ?? null,
     });
     await ConversationRepository.touchLastMessageAt(
@@ -552,13 +553,14 @@ async function createConversationTurn(input: {
   });
 
   if (result.currentUserMessage) {
+    const conversationCampaignId = result.conversation.campaignId ?? null;
     recordChatLifecycleEvent('turn.accepted', {
       route: input.telemetry?.route,
       surface: input.telemetry?.surface ?? 'web_chat',
       requestId: input.requestId,
       conversationId: result.conversation.id,
       userMessageId: result.currentUserMessage.id,
-      game: result.currentUserMessage.game ?? input.game ?? null,
+      game: conversationCampaignId ? null : (result.currentUserMessage.game ?? input.game ?? null),
       status: 'accepted',
       retry: false,
     });
@@ -573,7 +575,7 @@ async function createConversationTurn(input: {
       requestId: input.requestId,
       conversationId: result.conversation.id,
       userMessageId: repairedMessage.id,
-      game: repairedMessage.game ?? input.game ?? null,
+      game: result.conversation.campaignId ? null : (repairedMessage.game ?? input.game ?? null),
       status: 'replayed',
       replay: true,
     });
@@ -611,14 +613,15 @@ export async function createPendingFollowUp(input: {
     input.conversationId,
   );
   if (!existingConversation) return null;
+  const conversationCampaignId = existingConversation.campaignId ?? null;
 
   const currentUserMessage = await getDb('server').db.transaction(async (tx) => {
     const userMessage = await MessageRepository.create(tx, {
       conversationId: input.conversationId,
       role: 'user',
       content: input.question,
-      game: input.game ?? null,
-      campaignId: input.campaignId ?? null,
+      game: conversationCampaignId ? null : (input.game ?? null),
+      campaignId: conversationCampaignId,
     });
     await ConversationRepository.touchLastMessageAt(
       tx,
@@ -634,7 +637,7 @@ export async function createPendingFollowUp(input: {
     requestId: input.requestId,
     conversationId: input.conversationId,
     userMessageId: currentUserMessage.id,
-    game: currentUserMessage.game ?? input.game ?? null,
+    game: conversationCampaignId ? null : (currentUserMessage.game ?? input.game ?? null),
     status: 'accepted',
     retry: false,
   });
@@ -719,12 +722,14 @@ export async function startConversation(input: {
 }): Promise<Conversation> {
   const result = await createConversationTurn(input);
   if (result.currentUserMessage) {
+    const conversationCampaignId = result.conversation.campaignId ?? null;
     await persistAssistantOutcome({
       conversationId: result.conversation.id,
       question: result.currentUserMessage.content,
       userId: input.userId,
       currentUserMessageId: result.currentUserMessage.id,
-      game: result.currentUserMessage.game ?? input.game,
+      game: conversationCampaignId ? undefined : (result.currentUserMessage.game ?? input.game),
+      campaignId: conversationCampaignId,
       requestId: input.requestId,
       telemetry: input.telemetry,
     });
@@ -747,13 +752,15 @@ export async function appendMessage(input: {
 }): Promise<Conversation | null> {
   const result = await createPendingFollowUp(input);
   if (!result?.currentUserMessage) return null;
+  const conversationCampaignId = result.conversation.campaignId ?? null;
 
   await persistAssistantOutcome({
     conversationId: input.conversationId,
     question: input.question,
     userId: input.userId,
     currentUserMessageId: result.currentUserMessage.id,
-    game: result.currentUserMessage.game ?? input.game,
+    game: conversationCampaignId ? undefined : (result.currentUserMessage.game ?? input.game),
+    campaignId: conversationCampaignId,
     requestId: input.requestId,
     telemetry: input.telemetry,
   });

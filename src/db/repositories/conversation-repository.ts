@@ -18,6 +18,7 @@ function toDomain(row: ConversationRow): Conversation {
     id: row.id,
     userId: row.userId,
     creationIdempotencyKey: row.creationIdempotencyKey,
+    campaignId: row.campaignId,
     createdAt: row.createdAt,
     lastMessageAt: row.lastMessageAt,
   };
@@ -190,6 +191,7 @@ export async function create(
     .values({
       userId: input.userId,
       creationIdempotencyKey: input.creationIdempotencyKey ?? null,
+      campaignId: input.campaignId ?? null,
     })
     .returning();
   return toDomain(row);
@@ -209,6 +211,7 @@ export async function getOrCreateByIdempotencyKey(
     .values({
       userId: input.userId,
       creationIdempotencyKey: key,
+      campaignId: input.campaignId ?? null,
     })
     .onConflictDoNothing({
       target: [conversations.userId, conversations.creationIdempotencyKey],

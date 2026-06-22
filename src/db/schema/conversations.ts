@@ -22,11 +22,16 @@ export const conversations = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     creationIdempotencyKey: text('creation_idempotency_key'),
+    // Conversation-level campaign binding. Plain uuid, no FK: chat history
+    // should remain readable after a campaign is deleted, matching
+    // messages.campaignId.
+    campaignId: uuid('campaign_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     lastMessageAt: timestamp('last_message_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index('conversations_user_last_message_idx').on(t.userId, t.lastMessageAt),
+    index('conversations_campaign_idx').on(t.campaignId),
     uniqueIndex('conversations_user_creation_idempotency_idx').on(
       t.userId,
       t.creationIdempotencyKey,

@@ -66,6 +66,11 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
   --space-4xl: 96px;
+  --squire-rail-width: 280px;
+  --squire-content-column-width: 640px;
+  --squire-content-inline-padding-desktop: 24px;
+  --squire-header-nav-min-left: 10rem;
+  --squire-header-nav-baseline-offset: 5px;
 }
 
 /*
@@ -120,6 +125,7 @@ html {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  min-height: 100dvh;
 
   /* Body text floor — DESIGN.md §Typography "16px mobile / 18px desktop." */
   font-size: 16px;
@@ -129,6 +135,12 @@ html {
 .squire-body {
   /* Prevent horizontal scroll at 375px viewport (an SQR-65 acceptance
      criterion). The mobile regions are width-bounded by the column wrapper. */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
@@ -138,7 +150,7 @@ html {
 
 /* Skip-link: visually hidden until focused, then becomes a wax-outlined
    button at the top of the viewport so keyboard users land directly on the
-   real `<input id="squire-input">` inside `.squire-input-dock`. */
+   real `<textarea id="squire-input">` inside `.squire-input-dock`. */
 .sr-only-focusable {
   position: absolute;
   width: 1px;
@@ -187,7 +199,9 @@ html {
 .squire-frame {
   display: flex;
   flex-direction: row;
-  min-height: 100vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 
 .squire-history-shell {
@@ -196,30 +210,27 @@ html {
 
 .squire-rail {
   display: none; /* Hidden on mobile + tablet — desktop only. */
-  width: 280px;
+  width: var(--squire-rail-width);
   flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--rule);
   padding: 20px 16px;
 }
 
-.squire-history-head,
-.squire-history-brand {
-  display: flex;
-  align-items: center;
-}
-
 .squire-history-head {
+  display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 16px;
   margin-bottom: 20px;
 }
 
-.squire-history-brand {
-  gap: 12px;
+.squire-history-title {
   color: var(--parchment);
-  text-decoration: none;
+  font-family: 'Fraunces', 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .squire-history-new-chat {
@@ -244,18 +255,21 @@ html {
 }
 
 .squire-history-search {
-  display: flex;
-  gap: 6px;
+  display: block;
   margin-bottom: 14px;
+}
+
+.squire-history-search__field {
+  position: relative;
 }
 
 .squire-history-search__input {
   min-width: 0;
   width: 100%;
-  height: 36px;
+  height: 44px;
   border: 1px solid var(--rule);
   border-radius: 6px;
-  padding: 0 10px;
+  padding: 0 5.75rem 0 10px;
   color: var(--parchment);
   background: var(--surface);
   font-family: 'Geist', system-ui, sans-serif;
@@ -273,12 +287,15 @@ html {
 }
 
 .squire-history-search__submit {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
   min-height: 36px;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--wax);
   border-radius: 6px;
   padding: 0 10px;
   color: var(--parchment);
-  background: var(--surface-2);
+  background: var(--wax);
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 12px;
   font-weight: 600;
@@ -286,8 +303,9 @@ html {
 
 .squire-history-search__submit:hover,
 .squire-history-search__submit:focus-visible {
-  color: var(--wax);
-  border-color: var(--wax);
+  color: var(--parchment);
+  border-color: var(--wax-dim);
+  background: var(--wax-dim);
 }
 
 .squire-history-list {
@@ -453,34 +471,33 @@ html {
    while the body was bounded — visually asymmetric. CodeRabbit caught it
    on PR #198. */
 .squire-column {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 100vh;
+  min-height: 0;
   width: 100%;
-  max-width: 640px;
+  max-width: var(--squire-content-column-width);
   margin: 0 auto;
 }
 
-/* SQR-297: once a surface contains a transcript, the transcript scrolls
-   inside the viewport space above the input dock. Keeping the dock in normal
-   flex flow prevents the reloaded mobile transcript from sliding underneath
-   a sticky footer while preserving the home page's sticky first-submit dock. */
+/* SQR-297 / SQR-366: once a surface contains a transcript, the whole
+   conversation column scrolls as one object. The ask widget remains in normal
+   flow after the transcript, so it appears after the current answer instead of
+   being pinned in a separate viewport lane. */
 .squire-column:has(> .squire-surface > .squire-transcript) {
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
-  overflow: hidden;
-}
-
-.squire-column:has(> .squire-surface > .squire-transcript) .squire-surface {
+  height: 100%;
   min-height: 0;
   overflow-y: auto;
 }
 
-.squire-column:has(> .squire-surface > .squire-transcript) .squire-input-dock {
-  position: static;
+.squire-column:has(> .squire-surface > .squire-transcript) .squire-surface {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.squire-column:has(> .squire-surface > .squire-transcript) .squire-composer {
+  flex: 0 0 auto;
 }
 
 .squire-column--wide {
@@ -489,8 +506,9 @@ html {
 
 /* 1. Header bar — thin, with bottom hairline rule. */
 .squire-header {
+  position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto auto 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
@@ -512,12 +530,47 @@ html {
 }
 
 .squire-header__account {
+  grid-column: -2 / -1;
   justify-self: end;
 }
 
 .squire-header__brand:hover .squire-wordmark,
 .squire-header__brand:focus-visible .squire-wordmark {
   color: var(--wax);
+}
+
+.squire-app-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-left: var(--space-md);
+  padding: 0;
+  background: transparent;
+}
+
+.squire-app-nav__link {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 2px;
+  border-bottom: 2px solid transparent;
+  color: var(--sepia);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.squire-app-nav__link:hover,
+.squire-app-nav__link:focus-visible {
+  color: var(--parchment);
+}
+
+.squire-app-nav__link--active {
+  color: var(--parchment);
+  border-bottom-color: var(--wax);
 }
 
 .squire-account-menu {
@@ -637,8 +690,7 @@ html {
   height: 28px;
 }
 
-.squire-header .squire-wordmark,
-.squire-rail .squire-wordmark {
+.squire-header .squire-wordmark {
   font-family: 'Fraunces', 'Georgia', serif;
   font-size: 18px;
   font-weight: 500;
@@ -715,7 +767,7 @@ html {
 
 .squire-chat-context {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-sm);
   align-items: center;
   margin: 0 0 var(--space-sm);
@@ -746,6 +798,7 @@ html {
 
 .squire-chat-context__name {
   min-width: 0;
+  display: block;
   overflow: hidden;
   color: var(--parchment);
   font-family: 'Fraunces', 'Georgia', serif;
@@ -756,7 +809,19 @@ html {
   white-space: nowrap;
 }
 
-.squire-chat-context__campaign-link,
+a.squire-chat-context__name {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--sepia) 72%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a.squire-chat-context__name:hover,
+a.squire-chat-context__name:focus-visible {
+  color: var(--wax);
+  text-decoration-color: var(--wax);
+}
+
 .squire-chat-context__setup,
 .squire-chat-context__switcher summary {
   min-height: 44px;
@@ -774,7 +839,6 @@ html {
   cursor: pointer;
 }
 
-.squire-chat-context__campaign-link:hover,
 .squire-chat-context__setup:hover,
 .squire-chat-context__switcher summary:hover {
   color: var(--parchment);
@@ -855,36 +919,57 @@ html {
   width: 100%;
 }
 
-/* 5. Input dock — sticky at the bottom of the viewport, never collapses,
-   respects iOS safe-area-inset-bottom so the home indicator doesn't sit on
-   top of the submit button. */
+.squire-composer {
+  width: 100%;
+  padding: 0 16px 16px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .squire-composer {
+    padding: 0 var(--squire-content-inline-padding-desktop) 24px;
+  }
+}
+
+.squire-column:has(> .squire-composer):not(:has(> .squire-surface > .squire-transcript))
+  .squire-surface {
+  flex: 0 0 auto;
+}
+
+.squire-column:has(> .squire-composer):not(:has(> .squire-surface > .squire-transcript))
+  .squire-composer {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+/* 5. Input dock — the asking field. The submit control sits inside the
+   textarea edge so the first question reads as one focused action. */
 .squire-input-dock {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: var(--ink);
-  border-top: 1px solid var(--rule);
+  position: relative;
+  display: block;
+  padding: 0;
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+  background: transparent;
   flex-shrink: 0;
 }
 
 .squire-input-dock #squire-input {
-  flex: 1 1 auto;
+  display: block;
+  width: 100%;
+  min-height: 112px;
   background: var(--surface);
   color: var(--parchment);
   border: 1px solid var(--rule);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 16px 68px 56px 16px;
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 16px;
-  font-style: italic;
-
-  /* 44px tap target floor — input height = 16px text + 12px*2 padding +
-     1px*2 border = 43px; bump min-height for the WCAG floor. */
-  min-height: 44px;
+  font-style: normal;
+  line-height: 1.45;
+  resize: vertical;
 }
 
 .squire-input-dock #squire-input::placeholder {
@@ -895,6 +980,9 @@ html {
 /* The submit control IS the Squire seal (SQR-99): the same wax-seal mark as
    the header monogram, scaled to the 44px tap target. */
 .squire-input-dock__submit {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -1284,7 +1372,21 @@ template#squire-banner-fixtures {
    the desktop rail stays hidden — same regions, narrower main column. */
 @media (min-width: 768px) {
   .squire-surface {
-    padding: 32px 24px;
+    padding: 32px var(--squire-content-inline-padding-desktop);
+  }
+
+  .squire-app-nav {
+    position: absolute;
+    left: max(
+      var(--squire-header-nav-min-left),
+      calc(
+        (100vw - var(--squire-content-column-width)) / 2 +
+          var(--squire-content-inline-padding-desktop)
+      )
+    );
+    top: calc(50% + var(--squire-header-nav-baseline-offset));
+    transform: translateY(-50%);
+    margin-left: 0;
   }
 
   .squire-styleguide__summary,
@@ -1315,6 +1417,19 @@ template#squire-banner-fixtures {
     justify-content: end;
   }
 
+  .squire-app-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    position: static;
+    transform: none;
+    justify-self: start;
+    margin-left: 0;
+  }
+
+  .squire-app-nav__link {
+    flex: 0 0 auto;
+  }
+
   .squire-history-toggle {
     grid-column: 2 / 3;
     grid-row: 1;
@@ -1323,6 +1438,17 @@ template#squire-banner-fixtures {
 
   .squire-header .squire-context {
     grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .squire-header:has(.squire-app-nav) .squire-context {
+    grid-row: 3;
+  }
+
+  .squire-campaign-strip {
+    grid-column: 1 / -1;
+    grid-row: 3;
     justify-self: start;
   }
 
@@ -1341,7 +1467,6 @@ template#squire-banner-fixtures {
     align-items: stretch;
   }
 
-  .squire-chat-context__campaign-link,
   .squire-chat-context__setup,
   .squire-chat-context__switcher summary {
     justify-content: flex-start;
@@ -1369,16 +1494,51 @@ template#squire-banner-fixtures {
   }
 
   .squire-frame {
-    /* Outer 12px border-radius lives on a wrapper container at this
-       breakpoint — DESIGN.md §Spacing border-radius scale. `overflow:
-       hidden` is required for the radius to actually clip the rail and
-       column corners — without it, child square corners poke through.
-       The frame keeps `min-height: 100vh`, so the input dock's
-       `position: sticky` still pins to the viewport bottom for short
-       content (the dock's nearest scroll ancestor becomes the frame
-       at this breakpoint, but the frame is at least viewport-tall). */
-    border-radius: 12px;
+    overflow: visible;
+  }
+
+  .squire-frame:has(.squire-rail) {
+    min-height: 0;
     overflow: hidden;
+  }
+
+  .squire-frame:has(.squire-rail) .squire-column {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .squire-frame:has(.squire-rail) .squire-column:not(.squire-column--wide) {
+    margin-left: max(
+      var(--space-xl),
+      calc((100vw - var(--squire-content-column-width)) / 2 - var(--squire-rail-width))
+    );
+    margin-right: auto;
+  }
+
+  .squire-body:has(.squire-rail) .squire-app-nav {
+    left: max(
+      var(--squire-header-nav-min-left),
+      calc(
+        var(--squire-rail-width) +
+          max(
+            var(--space-xl),
+            calc((100vw - var(--squire-content-column-width)) / 2 - var(--squire-rail-width))
+          ) +
+          var(--squire-content-inline-padding-desktop)
+      )
+    );
+  }
+
+  .squire-frame:has(.squire-rail)
+    .squire-column:not(:has(> .squire-surface > .squire-transcript))
+    .squire-surface {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .squire-frame:has(.squire-rail) .squire-rail {
+    height: 100%;
+    overflow-y: auto;
   }
 }
 
@@ -2353,6 +2513,14 @@ template#squire-banner-fixtures {
 
 .squire-campaign-strip--empty {
   color: var(--sepia-dim);
+}
+
+@media (max-width: 767px) {
+  .squire-campaign-strip {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: start;
+  }
 }
 
 .squire-campaigns,

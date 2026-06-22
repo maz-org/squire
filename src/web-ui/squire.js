@@ -1327,7 +1327,7 @@ document.addEventListener('submit', function (e) {
   var form = e.target;
   if (!form || !form.matches || !form.matches('.squire-input-dock')) return;
 
-  var questionInput = form.querySelector('input[name="question"]');
+  var questionInput = form.querySelector('[name="question"]');
   var submitButton = form.querySelector('button[type="submit"]');
   setHiddenGameInputs(activeGame);
   ensureIdempotencyKey(form);
@@ -1381,7 +1381,7 @@ function ensureIdempotencyKey(form) {
 
 function setFormPendingState(form, pending) {
   if (!form) return;
-  var questionInput = form.querySelector('input[name="question"]');
+  var questionInput = form.querySelector('[name="question"]');
   var submitButton = form.querySelector('button[type="submit"]');
 
   if (pending) {
@@ -3516,7 +3516,7 @@ document.addEventListener('htmx:afterSwap', function (event) {
   // the append-fragment swap touches `.squire-transcript`, not the form
   // — so we manage form state here regardless of the swap target id.
   var form = document.querySelector('.squire-input-dock');
-  var questionInput = form && form.querySelector('input[name="question"]');
+  var questionInput = form && form.querySelector('[name="question"]');
   if (questionInput) questionInput.value = '';
   consumeDashboardToastPayload(event.detail && event.detail.target);
   syncChatFormAction();

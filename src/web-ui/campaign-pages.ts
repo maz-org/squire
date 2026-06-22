@@ -1,12 +1,11 @@
 /**
- * Phase 4 campaign surfaces (SQR-275): the route shells and the header
- * context strip that bridges them.
+ * Phase 4 campaign surfaces (SQR-275): the route shells and campaign page
+ * content that bridges into campaign management.
  *
  * DESIGN.md §Phase 4 Components is authoritative: dedicated routes under
- * the ledger shell; the strip shows the active campaign (campaign name
- * outranks the Squire brand on campaign surfaces) or `NO CAMPAIGN ·
- * SET UP`; it never shows fake state. The dashboard content itself
- * (threads, statuses) lands in SQR-276 — this module owns the shells.
+ * the ledger shell. The shared app header stays generic; campaign identity
+ * belongs in page content and chat composer context. The dashboard content
+ * itself (threads, statuses) lands in SQR-276 — this module owns the shells.
  */
 import { html, raw } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
@@ -29,10 +28,7 @@ function gameLabel(game: string): string {
   return isGameId(game) ? gameDefinitionFor(game).sourcePrefix.toUpperCase() : game.toUpperCase();
 }
 
-/**
- * The persistent bridge: tap → campaign dashboard. `prominent` marks
- * campaign surfaces, where the campaign name outranks the brand.
- */
+/** Historical header-strip renderer retained for old fixtures and migrations. */
 export function renderCampaignStrip(
   strip: CampaignStripState | null,
   options: { prominent?: boolean } = {},
