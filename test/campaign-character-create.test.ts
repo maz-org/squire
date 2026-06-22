@@ -157,7 +157,9 @@ describe('create-character UI (SQR-318)', () => {
     )?.[0];
     expect(revealTag).toBeDefined();
     expect(revealTag).not.toContain('open');
-    expect(body).toContain('squire-party-section__add-summary">Add character</summary>');
+    expect(body).toContain(
+      'squire-party-section__add-summary" role="button">Add character</summary>',
+    );
     expect(body).toContain('squire-character-create');
     expect(body).toContain('action="/campaigns/' + campaign.id + '/characters"');
     // Class select offers the seeded real class names.
@@ -216,9 +218,10 @@ describe('create-character UI (SQR-318)', () => {
     expect(body).toContain('Level');
     expect(body).toContain('Retire');
     expect(body).toContain('Remove');
-    expect(body).toContain('aria-label="Retire Manual Bruiser"');
-    expect(body).toContain('aria-label="Remove Manual Bruiser"');
-    expect(body).toContain('aria-label="Remove Old Bones"');
+    expect(body).toContain('aria-label="Level Manual Bruiser" role="button"');
+    expect(body).toContain('aria-label="Retire Manual Bruiser" role="button"');
+    expect(body).toContain('aria-label="Remove Manual Bruiser" role="button"');
+    expect(body).toContain('aria-label="Remove Old Bones" role="button"');
     expect(body).toContain(`href="/campaigns/${campaign.id}/party"`);
     expect(body).toContain('Cancel');
     expect(body).not.toContain('Invite by email');
@@ -236,7 +239,9 @@ describe('create-character UI (SQR-318)', () => {
     const body = await res.text();
 
     expect(body).toContain('squire-party-section__action');
-    expect(body).toContain('squire-party-section__add-summary">Add character</summary>');
+    expect(body).toContain(
+      'squire-party-section__add-summary" role="button">Add character</summary>',
+    );
     const revealTag = body.match(
       /<details[^>]*class="squire-party-section__add squire-character-create-reveal"[^>]*>/,
     )?.[0];
@@ -359,7 +364,7 @@ describe('create-character UI (SQR-318)', () => {
       headers: { Cookie: owner.cookie },
     });
     let body = await page.text();
-    expect(body).toContain('aria-label="Remove Remove Retired"');
+    expect(body).toContain('aria-label="Remove Remove Retired" role="button"');
 
     const remove = new FormData();
     remove.set('_csrf', createCsrfToken(owner.sessionId));
