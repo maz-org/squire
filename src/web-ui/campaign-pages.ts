@@ -213,7 +213,7 @@ function renderCharacterCreateForm(
     class="squire-party-section__add squire-character-create-reveal"
     ${data.errorMessage ? raw('open') : raw('')}
   >
-    <summary class="squire-party-section__add-summary">Add character</summary>
+    <summary class="squire-party-section__add-summary" role="button">Add character</summary>
     <div class="squire-party-section__add-body">
       ${data.errorMessage
         ? html`<div class="squire-banner squire-banner--error" role="alert">
@@ -366,7 +366,9 @@ function renderPlayerConfirmAction(input: {
     class="squire-player-row__action squire-player-row__action--${input.action}"
     ${open ? raw('open') : raw('')}
   >
-    <summary aria-label="${input.label} ${playerDisplayName(input.member)}">${input.label}</summary>
+    <summary aria-label="${input.label} ${playerDisplayName(input.member)}" role="button">
+      ${input.label}
+    </summary>
     <div class="squire-player-row__confirm">
       <p>${input.prompt}</p>
       ${open ? renderPlayerActionError(input.member, input.actionError) : html``}
@@ -482,7 +484,9 @@ function renderPlayersSection(input: {
       <div class="squire-player-section__action">
         ${input.inviteForm?.canInvite
           ? html`<details class="squire-player-section__invite">
-              <summary class="squire-player-section__invite-summary">Invite player</summary>
+              <summary class="squire-player-section__invite-summary" role="button">
+                Invite player
+              </summary>
               <div class="squire-player-section__invite-body">
                 ${renderInviteMemberForm(campaign.id, input.inviteForm)}
               </div>
@@ -552,7 +556,7 @@ function renderCharacterLevelAction(
     class="squire-party-row__action squire-party-row__action--level"
     ${open ? raw('open') : raw('')}
   >
-    <summary aria-label="Level ${character.name}">Level</summary>
+    <summary aria-label="Level ${character.name}" role="button">Level</summary>
     <form method="post" action="/campaigns/${campaignId}/characters/${character.id}/level">
       <input type="hidden" name="_csrf" value="${csrfToken}" />
       <input type="hidden" name="expectedVersion" value="${character.version}" />
@@ -582,7 +586,9 @@ function renderCharacterConfirmAction(input: {
     class="squire-party-row__action squire-party-row__action--${input.action}"
     ${open ? raw('open') : raw('')}
   >
-    <summary aria-label="${input.label} ${input.character.name}">${input.label}</summary>
+    <summary aria-label="${input.label} ${input.character.name}" role="button">
+      ${input.label}
+    </summary>
     <div class="squire-party-row__confirm">
       <p>${input.label} ${input.character.name}?</p>
       ${open ? renderCharacterActionError(input.character, input.actionError) : html``}

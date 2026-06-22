@@ -135,6 +135,7 @@ describe('invite-member UI (SQR-319)', () => {
     ).text();
     expect(ownerView).toContain('squire-invite-member');
     expect(ownerView).toContain('INVITE BY EMAIL');
+    expect(ownerView).toContain('squire-player-section__invite-summary" role="button"');
 
     const memberView = await (
       await app.request(`/campaigns/${campaign.id}/players`, {
@@ -178,9 +179,11 @@ describe('invite-member UI (SQR-319)', () => {
     expect(ownerView).toContain('action="/campaigns/' + campaign.id + '/members/');
     expect(ownerView).toContain('/remove"');
     expect(ownerView).toContain('Remove member@example.com?');
+    expect(ownerView).toContain('aria-label="Remove member" role="button"');
     expect(ownerView).toContain('action="/campaigns/' + campaign.id + '/invites/');
     expect(ownerView).toContain('/cancel"');
     expect(ownerView).toContain('Cancel invite for invitee@example.com?');
+    expect(ownerView).toContain('aria-label="Cancel invitee@example.com" role="button"');
     expect(ownerView).not.toContain('No pending invites.');
 
     const memberView = await (

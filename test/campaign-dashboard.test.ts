@@ -221,7 +221,9 @@ describe('dashboard rendering', () => {
     expect(body).toContain('class="squire-campaign-dashboard__party"');
     expect(body).toContain('aria-label="Party"');
     expect(body).toContain('squire-party-section__action');
-    expect(body).toContain('squire-party-section__add-summary">Add character</summary>');
+    expect(body).toContain(
+      'squire-party-section__add-summary" role="button">Add character</summary>',
+    );
     expect(body).toContain('Active characters');
     expect(body).toContain('Retired characters');
     expect(body).not.toContain('aria-label="Scenario progression"');
