@@ -12,8 +12,9 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
 
+import type { GameId } from './game.ts';
 import {
-  kebabToTitle,
+  resolveCharacterDisplayName,
   formatAction,
   loadLabels,
   resolveGhsImporterConfig,
@@ -46,6 +47,7 @@ export function convertAbility(
   ghs: GhsAbility,
   characterName: string,
   labels: LabelData,
+  game?: GameId,
 ): ExtractedCharacterAbility {
   const topParts = (ghs.actions ?? [])
     .map((a) => formatAction(a, labels))
@@ -57,7 +59,7 @@ export function convertAbility(
 
   return {
     cardName: ghs.name,
-    characterClass: kebabToTitle(characterName),
+    characterClass: resolveCharacterDisplayName(characterName, labels, game),
     level: ghs.level,
     initiative: ghs.initiative,
     top: {
@@ -98,7 +100,7 @@ export function importCharacterAbilities(
     const sourceIdCounts = new Map<string, number>();
 
     for (const ability of deck.abilities) {
-      const converted = convertAbility(ability, characterName, labels);
+      const converted = convertAbility(ability, characterName, labels, config.game);
       const duplicateCount = sourceIdCounts.get(converted.sourceId) ?? 0;
       sourceIdCounts.set(converted.sourceId, duplicateCount + 1);
       if (duplicateCount > 0) {

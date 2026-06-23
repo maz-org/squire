@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
 import { convertCharacterMat, formatPerk } from '../src/import-character-mats.ts';
 
 // ─── formatPerk ─────────────────────────────────────────────────────────────
@@ -247,6 +248,29 @@ describe('convertCharacterMat', () => {
   it('converts name from kebab-case to title case', () => {
     const result = convertCharacterMat(ghsDrifter, labels);
     expect(result.name).toBe('Drifter');
+  });
+
+  it('uses GH2e spoiler labels instead of legacy class symbols', () => {
+    const result = convertCharacterMat(
+      {
+        ...ghsDrifter,
+        name: 'angry-face',
+        characterClass: 'orchid',
+        edition: 'gh2e',
+      },
+      {
+        character: {
+          gh2e: {
+            'angry-face': 'Doomstalker',
+          },
+        },
+        custom: { fh: { drifter: {} } },
+      },
+      GLOOMHAVEN_2E_GAME_ID,
+    );
+
+    expect(result.name).toBe('Doomstalker');
+    expect(result.sourceId).toBe('gloomhavensecretariat:character-mat/angry-face');
   });
 
   it('converts characterClass to title case', () => {

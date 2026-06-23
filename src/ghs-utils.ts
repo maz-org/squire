@@ -201,6 +201,16 @@ export function kebabToTitle(name: string): string {
     .join(' ');
 }
 
+export function resolveCharacterDisplayName(
+  name: string,
+  labels: LabelData,
+  game: GameId = DEFAULT_GAME_ID,
+): string {
+  const ref = `%data.character.${ghsGameDataSubdirFor(game)}.${name}%`;
+  const resolved = resolveLabel(ref, labels);
+  return resolved === ref ? kebabToTitle(name) : resolved;
+}
+
 function titleToken(name: string): string {
   const cleaned = name.replace(/^(?:fh|gh2e)-/, '');
   if (cleaned === 'onehand') return 'One Hand';

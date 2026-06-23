@@ -1107,6 +1107,11 @@ Current GH2 GHS coverage:
 - Supported card tables: items, monster stats, monster abilities, scenarios,
   events, battle goals, character abilities, character mats, and personal
   quests.
+- GH2 character ability coverage depends on upstream
+  `data/gh2e/character/deck/*.json`. SQR-314 added the currently available
+  Doomstalker and Quartermaster decks; Berserker, Bladewarm, Plagueherald,
+  Soultether, Sunkeeper, and Wildfury still have character mats but no upstream
+  GH2 ability deck JSON to import.
 - Supported scenario/section tables: scenario metadata, section metadata
   summaries, and section-to-parent-scenario links.
 - Explicitly unsupported: GH2 buildings, because upstream GHS has no

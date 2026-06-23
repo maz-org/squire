@@ -18,6 +18,7 @@ import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.t
 import * as CampaignService from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
 import { identityFromSessionUser } from '../src/campaign/identity.ts';
+import { listCardOptionsForClass } from '../src/campaign/character-sheet-data.ts';
 import { cardItems } from '../src/db/schema/cards.ts';
 import { cardCharacterMats } from '../src/db/schema/cards.ts';
 import { users } from '../src/db/schema/core.ts';
@@ -196,6 +197,18 @@ describe('GET /characters/:id', () => {
     expect(body).toContain('HP 14');
     expect(body).toContain('STRONG');
     expect(body).toContain('Artwork: Cephalofair Games');
+  });
+
+  it('lists GH2e locked-class ability cards by real class name', async () => {
+    const doomstalker = await listCardOptionsForClass('gloomhaven-2e', 'Doomstalker');
+    const quartermaster = await listCardOptionsForClass('gloomhaven-2e', 'Quartermaster');
+    const legacySymbol = await listCardOptionsForClass('gloomhaven-2e', 'Three Spears');
+
+    expect(doomstalker.length).toBe(30);
+    expect(doomstalker.map((card) => card.name)).toContain('Rain of Arrows');
+    expect(quartermaster.length).toBe(30);
+    expect(quartermaster.map((card) => card.name)).toContain('Booster Pack');
+    expect(legacySymbol).toHaveLength(0);
   });
 
   it('renders an explicit class stats fallback when mat data is unavailable', async () => {

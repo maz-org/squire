@@ -12,12 +12,14 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { GameId } from './game.ts';
 import {
   kebabToTitle,
   capitalize,
   loadLabels,
   resolveLabel,
   resolveGameTokens,
+  resolveCharacterDisplayName,
   resolveGhsImporterConfig,
   type GhsImporterConfigInput,
   type LabelData,
@@ -271,7 +273,11 @@ function parseHandSize(raw: number | string): number | [number, number] {
   return [parts[0], parts[1]];
 }
 
-export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): ExtractedCharacterMat {
+export function convertCharacterMat(
+  ghs: GhsCharacter,
+  labels: LabelData,
+  game?: GameId,
+): ExtractedCharacterMat {
   const hp: Record<string, number> = {};
   for (const stat of ghs.stats) {
     hp[String(stat.level)] = stat.health;
@@ -286,7 +292,7 @@ export function convertCharacterMat(ghs: GhsCharacter, labels: LabelData): Extra
   const masteries = ghs.masteries.map((m) => resolvePerkText(m, labels));
 
   return {
-    name: kebabToTitle(ghs.name),
+    name: resolveCharacterDisplayName(ghs.name, labels, game),
     characterClass: kebabToTitle(ghs.characterClass),
     handSize: parseHandSize(ghs.handSize),
     traits: ghs.traits,
@@ -318,7 +324,7 @@ export function importCharacterMats(
     if (!file.endsWith('.json')) continue;
 
     const ghs: GhsCharacter = JSON.parse(readFileSync(join(ghsCharacterDir, file), 'utf-8'));
-    const record = convertCharacterMat(ghs, labels);
+    const record = convertCharacterMat(ghs, labels, config.game);
 
     const allText = [...record.perks, ...record.masteries];
     const unresolved = allText.find((t) => /%(?:data|game)\./.test(t));
