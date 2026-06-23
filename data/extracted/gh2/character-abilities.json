@@ -1,5 +1,547 @@
 [
   {
+    "cardName": "Rain of Arrows",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 9,
+    "top": {
+      "action": "On the next four deaths of an enemy that has Doom while there os another enemy within Range 4 (of you) perform Attack 3 Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Add Pierce 2 to all your attacks targeting this enemy."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/381"
+  },
+  {
+    "cardName": "Race to the Grave",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 75,
+    "top": {
+      "action": "Summon Vicious Jackal",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "This enemy suffers Damage 1 at the start of each of its turns."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/382"
+  },
+  {
+    "cardName": "Gut Shot",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 21,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/383"
+  },
+  {
+    "cardName": "Detonation",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 8,
+    "top": {
+      "action": "Attack 4, Target 2, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "When this enemy dies, all enemies adjacent to the hex it occupied suffer Damage 2."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/384"
+  },
+  {
+    "cardName": "Murderous Stalker",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 13,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/385"
+  },
+  {
+    "cardName": "A Moment's Peace",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 88,
+    "top": {
+      "action": "Loot 1",
+      "effects": [
+        "Reveal the top card of one monster within Range 5's ability card deck."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Heal 2, Target 1 of your summons of self, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/386"
+  },
+  {
+    "cardName": "The Hunt Begins",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 20,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Your summons add Attack +1 to all their attacks targeting this enemy. Your summons focus on this enemy."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/387"
+  },
+  {
+    "cardName": "Solid Bow",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 54,
+    "top": {
+      "action": "Attack 3, Range 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Whenever you or one of your summons damaged this enemy, you may perform:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/388"
+  },
+  {
+    "cardName": "Foot Snare",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 14,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Immobilize, Range 1",
+      "effects": [
+        "Move 3"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/389"
+  },
+  {
+    "cardName": "Forward Momentum",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 11,
+    "top": {
+      "action": "Whenever an enemy that has Doom dies, instead of moving any Doom on the target to your discard pile, you may discard this card to perform the Doom actions of the cards, targeting an enemy within Range 3 of the hex where the enemy died.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/390"
+  },
+  {
+    "cardName": "Hidden Danger",
+    "characterClass": "Doomstalker",
+    "level": 1,
+    "initiative": 72,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Add Attack +1 to all your attacks targeting this enemy."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/391"
+  },
+  {
+    "cardName": "Give Chase",
+    "characterClass": "Doomstalker",
+    "level": "X",
+    "initiative": 80,
+    "top": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Your summons add Move +2 and Jump to all their move abilities. Your summons focus on this enemy."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/392"
+  },
+  {
+    "cardName": "Feral Aid",
+    "characterClass": "Doomstalker",
+    "level": "X",
+    "initiative": 35,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 2, Range 4",
+      "effects": [
+        "Grant one of your summons:"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/393"
+  },
+  {
+    "cardName": "Fierce Fighter",
+    "characterClass": "Doomstalker",
+    "level": "X",
+    "initiative": 78,
+    "top": {
+      "action": "Summon Battle Boar",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Gain advantage on all your attacks this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/394"
+  },
+  {
+    "cardName": "Relentless Offensive",
+    "characterClass": "Doomstalker",
+    "level": 2,
+    "initiative": 63,
+    "top": {
+      "action": "Attack 2, Range 4",
+      "effects": [
+        "Grant one of your summons:"
+      ]
+    },
+    "bottom": {
+      "action": "",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/395"
+  },
+  {
+    "cardName": "Dual Shot",
+    "characterClass": "Doomstalker",
+    "level": 2,
+    "initiative": 52,
+    "top": {
+      "action": "Attack 2, Target 2, Range 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Gain advantage on all your attacks targeting this enemy. When this enemy dies, shuffle one Curse card into the monster attack modifier deck."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/396"
+  },
+  {
+    "cardName": "Walking Bastion",
+    "characterClass": "Doomstalker",
+    "level": 3,
+    "initiative": 90,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Your summons focus on this enemy. After one of your summons perform an attack targeting this enemy, triggering no more than once each round, grant that summon:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/397"
+  },
+  {
+    "cardName": "Swift Trickery",
+    "characterClass": "Doomstalker",
+    "level": 3,
+    "initiative": 10,
+    "top": {
+      "action": "Attack 2, Range 4",
+      "effects": [
+        "Add Attack +2 and gain Experience 1 if the target has Doom."
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/398"
+  },
+  {
+    "cardName": "Camouflage",
+    "characterClass": "Doomstalker",
+    "level": 4,
+    "initiative": 6,
+    "top": {
+      "action": "Attack 2, Range 4",
+      "effects": [
+        "(ability text not yet available)"
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "All attacks targeting any summons adjacent to you this round gain disadvantage."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/399"
+  },
+  {
+    "cardName": "Coated Arrows",
+    "characterClass": "Doomstalker",
+    "level": 4,
+    "initiative": 25,
+    "top": {
+      "action": "On your next four ranged attacks, add Poison, then Wound, then Immobilize, then Disarm (one to each attack).",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Add Attack +2 to all your attacks targeting enemies that have Doom this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/400"
+  },
+  {
+    "cardName": "Falling Swoop",
+    "characterClass": "Doomstalker",
+    "level": 5,
+    "initiative": 93,
+    "top": {
+      "action": "Summon War Raptor",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/401"
+  },
+  {
+    "cardName": "Expose",
+    "characterClass": "Doomstalker",
+    "level": 5,
+    "initiative": 31,
+    "top": {
+      "action": "Gain advantage on your first attack targeting an enemy that has Doom each turn.",
+      "effects": [
+        "All enemies lose Invisible and may no longer gain Invisible."
+      ]
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Your summons add Wound to and gain advantage on all their attacks targeting this enemy."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/402"
+  },
+  {
+    "cardName": "Wild Command",
+    "characterClass": "Doomstalker",
+    "level": 6,
+    "initiative": 46,
+    "top": {
+      "action": "Grant one of your summons:",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Attack 2, Target 1 enemy that has Doom at any Range"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/403"
+  },
+  {
+    "cardName": "Impending End",
+    "characterClass": "Doomstalker",
+    "level": 6,
+    "initiative": 47,
+    "top": {
+      "action": "Attack 4, Range 5",
+      "effects": [
+        "If this attack kills the target, instead of moving any Doom on the target to your discard pile, you may perform the Doom actions of the cards, targeting an enemy within Range 3 of the hex where the enemy died."
+      ]
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Add Immobilize to your first attack targeting this enemy and add Attack +2 to your second and third attacks targeting this enemy."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/404"
+  },
+  {
+    "cardName": "Charging Beast",
+    "characterClass": "Doomstalker",
+    "level": 7,
+    "initiative": 82,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Your summons focus on this enemy. When this enemy dies, you an all allies may perform:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/405"
+  },
+  {
+    "cardName": "Darkened Skies",
+    "characterClass": "Doomstalker",
+    "level": 7,
+    "initiative": 36,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "When this enemy dies, you may perform:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/406"
+  },
+  {
+    "cardName": "Feral Instincts",
+    "characterClass": "Doomstalker",
+    "level": 8,
+    "initiative": 17,
+    "top": {
+      "action": "Attack 3, Range 5",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Heal 4, Target 1 of your summons of self, Range 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/407"
+  },
+  {
+    "cardName": "Press the Attack",
+    "characterClass": "Doomstalker",
+    "level": 8,
+    "initiative": 22,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 3, Range 4, Poison",
+      "effects": [
+        "Move 4",
+        "Attack 3, Range 4, Immobilize",
+        "Move 4",
+        "Attack 3, Range 4, Wound"
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/408"
+  },
+  {
+    "cardName": "Predator and Prey",
+    "characterClass": "Doomstalker",
+    "level": 9,
+    "initiative": 86,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Doom DOOM",
+      "effects": [
+        "Add +X Attack to all your attacks targeting this enemy, where X is the difference between the Range of the attack and the number of hexes to the enemy."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/409"
+  },
+  {
+    "cardName": "Heart of Doom",
+    "characterClass": "Doomstalker",
+    "level": 9,
+    "initiative": 40,
+    "top": {
+      "action": "You may immediately play a card from your hand to perform a Doom action of the card.",
+      "effects": [
+        "Attack 3, Target 1 enemy that has Doom at any Range",
+        "Attack 3, Range 5"
+      ]
+    },
+    "bottom": {
+      "action": "You may have any number of Doom active on the same target. If you discard this card, you must discard all but one active Doom.",
+      "effects": [
+        "You may play one card from your hand or discard pile to perform a Doom action of the card."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/angry-face/410"
+  },
+  {
     "cardName": "Trample",
     "characterClass": "Bruiser",
     "level": 1,
@@ -4180,6 +4722,552 @@
     },
     "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/spellweaver/87"
+  },
+  {
+    "cardName": "Booster Pack",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 73,
+    "top": {
+      "action": "Shuffle the Supply Item item supply face-down and randomly draw five cards. Give the drawn items to any number of adjacent allies and self, giving no more than three of the items to yourself.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Recover one of your spent items.",
+      "effects": [
+        "Move 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/205"
+  },
+  {
+    "cardName": "Readied Blade",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 98,
+    "top": {
+      "action": "Attack 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/206"
+  },
+  {
+    "cardName": "Crushing Hammer",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 33,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Give one adjacent ally or self the Iron Plate item to gain Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/207"
+  },
+  {
+    "cardName": "Hastened Step",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 26,
+    "top": {
+      "action": "Attack 2",
+      "effects": [
+        "Move 1",
+        "Give one adjacent ally the Sharpened Dirk item to gain Experience 1."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/208"
+  },
+  {
+    "cardName": "Bladed Boomerang",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 44,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Gain 10 Supplies."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/209"
+  },
+  {
+    "cardName": "Impaling Spear",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 62,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Attack 1, Target 1 enemy within 2 hexes, Wound",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/210"
+  },
+  {
+    "cardName": "Light Javelin",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 81,
+    "top": {
+      "action": "Attack 3, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Loot 2",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/211"
+  },
+  {
+    "cardName": "Cleave and Thrust",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 39,
+    "top": {
+      "action": "Give one ally within Range 2 the Sturdy Spear item to gain Experience 1.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Gain 10 Supplies."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/212"
+  },
+  {
+    "cardName": "Iron Bulwark",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 17,
+    "top": {
+      "action": "Shield 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Grant all adjacent allies and self:, Shield 1",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/213"
+  },
+  {
+    "cardName": "Proficiency",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 52,
+    "top": {
+      "action": "During each of your turns, the first time you use an item with a Lost icon, add Attack +1 to all your melee attacks for the turn.",
+      "effects": [
+        "Whenever you Supplies Consume to Recover an item with a gold cost of 30 or greater, you may gain one random item from the Supply Item item supply."
+      ]
+    },
+    "bottom": {
+      "action": "Add Retaliate +1 to all Barbed Strip items and Shield +1 to all Iron Plate items.",
+      "effects": [
+        "Whenever you rest, gain the Barbed Strip or Iron Plate item."
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/214"
+  },
+  {
+    "cardName": "Provisions",
+    "characterClass": "Quartermaster",
+    "level": 1,
+    "initiative": 48,
+    "top": {
+      "action": "Gain 10 Supplies.",
+      "effects": [
+        "Gain the Scroll of Relocation item."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/215"
+  },
+  {
+    "cardName": "Caustic Bolt",
+    "characterClass": "Quartermaster",
+    "level": "X",
+    "initiative": 88,
+    "top": {
+      "action": "Attack 2, Range 3, Pierce 2",
+      "effects": [
+        "Give one adjacent ally the Corrosive Coating item."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "One adjecent ally may Recover one of their spent items."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/216"
+  },
+  {
+    "cardName": "Scroll of Recall",
+    "characterClass": "Quartermaster",
+    "level": "X",
+    "initiative": 19,
+    "top": {
+      "action": "Pull 2, Ally, Range 3",
+      "effects": [
+        "Heal 3, Range 1"
+      ]
+    },
+    "bottom": {
+      "action": "Gain the Barbed Strip item.",
+      "effects": [
+        "Pull 2, Target 2, Range 3, Muddle"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/217"
+  },
+  {
+    "cardName": "Sharpening Kit",
+    "characterClass": "Quartermaster",
+    "level": "X",
+    "initiative": 23,
+    "top": {
+      "action": "Heal 3, Ally, Range 1",
+      "effects": []
+    },
+    "bottom": {
+      "action": "You and all adjacent allies add Attack +1 to all attacks this round.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/218"
+  },
+  {
+    "cardName": "Scroll Case",
+    "characterClass": "Quartermaster",
+    "level": 2,
+    "initiative": 95,
+    "top": {
+      "action": "Gain 10 Supplies.",
+      "effects": [
+        "Give one adjacent ally the Scroll of Embers item.",
+        "Give one adjacent ally the Scroll of Foresight item to gain Experience 1."
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Give one adjacent ally the Scroll of Relocation item."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/219"
+  },
+  {
+    "cardName": "Lethal Arsenal",
+    "characterClass": "Quartermaster",
+    "level": 2,
+    "initiative": 18,
+    "top": {
+      "action": "Attack 3",
+      "effects": [
+        "Gain the Sharpened Dirk and Sturdy Spear items."
+      ]
+    },
+    "bottom": {
+      "action": "Attack 2",
+      "effects": [
+        "Move 1"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/220"
+  },
+  {
+    "cardName": "Quiver of Arrows",
+    "characterClass": "Quartermaster",
+    "level": 3,
+    "initiative": 61,
+    "top": {
+      "action": "Attack 2, Target 2, Range 4",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On the next four ranged attack abilities performed by adjacent allies, add Target +1.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/221"
+  },
+  {
+    "cardName": "Concussive Snare",
+    "characterClass": "Quartermaster",
+    "level": 3,
+    "initiative": 89,
+    "top": {
+      "action": "Give one adjacent ally the Weighted Bolas item to gain Experience 1.",
+      "effects": [
+        "Move 1",
+        "Attack 3, Push 2"
+      ]
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Gain 10 Supplies."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/222"
+  },
+  {
+    "cardName": "Hammer and Anvil",
+    "characterClass": "Quartermaster",
+    "level": 4,
+    "initiative": 21,
+    "top": {
+      "action": "Give one ally within Range 2 the Sturdy Spear item.",
+      "effects": [
+        "Gain the Barbed Strip or Iron Plate item.",
+        "Shield 1"
+      ]
+    },
+    "bottom": {
+      "action": "Move 5",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/223"
+  },
+  {
+    "cardName": "Giant Club",
+    "characterClass": "Quartermaster",
+    "level": 4,
+    "initiative": 40,
+    "top": {
+      "action": "Attack 5, Muddle",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 6",
+      "effects": [
+        "You may give up to four items of your choice from the Supply Item item supply to any allies occupying hexes adjacent to any hexes you entered during the move ability. Gain 10 Supplies for each ally you gave an item."
+      ]
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/224"
+  },
+  {
+    "cardName": "Scroll of Judgment",
+    "characterClass": "Quartermaster",
+    "level": 5,
+    "initiative": 12,
+    "top": {
+      "action": "All enemies within Range 4 suffer Damage 2.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 2",
+      "effects": [
+        "Shield 1",
+        "After the next attack targeting you this round, Recover one of your spent items and gain Experience 1."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/225"
+  },
+  {
+    "cardName": "Set Up Shop",
+    "characterClass": "Quartermaster",
+    "level": 5,
+    "initiative": 41,
+    "top": {
+      "action": "At the end of each of your turns, gain 10 Supplies.",
+      "effects": [
+        "Whenever an ally ends their move or teleport ability in a hex adjacent to you, you may Supplies Consume to Recover that ally's items."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": [
+        "Give one adjacent ally the Scroll of Foresight item.",
+        "At the end of the round, perform:"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/226"
+  },
+  {
+    "cardName": "Scroll of Lightning",
+    "characterClass": "Quartermaster",
+    "level": 6,
+    "initiative": 77,
+    "top": {
+      "action": "Attack 5, Range 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Gain the Corrosive Coating item.",
+      "effects": [
+        "Attack 2, Range 4, Pierce 1, Muddle"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/227"
+  },
+  {
+    "cardName": "Continual Supply",
+    "characterClass": "Quartermaster",
+    "level": 6,
+    "initiative": 86,
+    "top": {
+      "action": "Gain 20 Supplies.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "On your next three turns that you end with 0 Supplies, gain 30 Supplies.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/228"
+  },
+  {
+    "cardName": "Twin Lances",
+    "characterClass": "Quartermaster",
+    "level": 7,
+    "initiative": 32,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Give one adjacent ally the Sturdy Spear item.",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/229"
+  },
+  {
+    "cardName": "Tools of War",
+    "characterClass": "Quartermaster",
+    "level": 7,
+    "initiative": 84,
+    "top": {
+      "action": "One adjacent ally may Recover one of their spent items.",
+      "effects": [
+        "Move 1",
+        "Give one adjacent ally the Scroll of embers and Weighted Bolas items to gain Experience 1."
+      ]
+    },
+    "bottom": {
+      "action": "Move 4",
+      "effects": []
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/230"
+  },
+  {
+    "cardName": "Scroll of Blizzards",
+    "characterClass": "Quartermaster",
+    "level": 8,
+    "initiative": 46,
+    "top": {
+      "action": "",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Move 2"
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/231"
+  },
+  {
+    "cardName": "Armed th the Teeth",
+    "characterClass": "Quartermaster",
+    "level": 8,
+    "initiative": 10,
+    "top": {
+      "action": "Give one adjacent ally the Barbed Strip and Sharpened Dirk items to gain Experience 1.",
+      "effects": [
+        "Grant one adjacent ally or self:, Shield 2"
+      ]
+    },
+    "bottom": {
+      "action": "Recover one of your spent items.",
+      "effects": [
+        "Move 3",
+        "Gain the Scroll of Foresight item."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/232"
+  },
+  {
+    "cardName": "Reinforced Steel",
+    "characterClass": "Quartermaster",
+    "level": 9,
+    "initiative": 56,
+    "top": {
+      "action": "At the end of each of your turns, you may shuffle the Supply Item item supply face-down and draw one random card to give that item to an ally within Range 2.",
+      "effects": []
+    },
+    "bottom": {
+      "action": "At the end of each round, Recover one of your spent items.",
+      "effects": []
+    },
+    "lost": true,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/233"
+  },
+  {
+    "cardName": "Bag of Holding",
+    "characterClass": "Quartermaster",
+    "level": 9,
+    "initiative": 91,
+    "top": {
+      "action": "Loot 3",
+      "effects": []
+    },
+    "bottom": {
+      "action": "Move 3",
+      "effects": [
+        "Gain 20 Supplies."
+      ]
+    },
+    "lost": false,
+    "sourceId": "gloomhavensecretariat:character-ability/three-spears/234"
   },
   {
     "cardName": "Potent Potable",

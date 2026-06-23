@@ -53,6 +53,21 @@ describe('GH2 imported GHS data', () => {
     expect(buildings, 'GH2 has no supported GHS buildings.json source').toHaveLength(0);
   });
 
+  it('seeds available GH2 locked-class ability decks under real class names', async () => {
+    const rows = await db
+      .select({ className: schema.cardCharacterAbilities.characterClass })
+      .from(schema.cardCharacterAbilities)
+      .where(eq(schema.cardCharacterAbilities.game, GLOOMHAVEN_2E_GAME_ID));
+
+    const counts = new Map<string, number>();
+    for (const row of rows) counts.set(row.className, (counts.get(row.className) ?? 0) + 1);
+
+    expect(counts.get('Doomstalker')).toBe(30);
+    expect(counts.get('Quartermaster')).toBe(30);
+    expect(counts.has('Angry Face')).toBe(false);
+    expect(counts.has('Three Spears')).toBe(false);
+  });
+
   it('opens and searches GH2 item and monster card rows through the card tools', async () => {
     await expect(
       getCard('items', 'gloomhavensecretariat:item/1', { game: 'gh2' }),

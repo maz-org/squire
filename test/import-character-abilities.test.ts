@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { GLOOMHAVEN_2E_GAME_ID } from '../src/game.ts';
 import { convertAbility } from '../src/import-character-abilities.ts';
 
 // ─── convertAbility ──────────────────────────────────────────────────────────
@@ -91,6 +92,28 @@ describe('convertAbility', () => {
 
     const result = convertAbility(ghsAbility, 'banner-spear', labels);
     expect(result.characterClass).toBe('Banner Spear');
+  });
+
+  it('uses GH2e spoiler labels instead of legacy class symbols', () => {
+    const ghsAbility = {
+      name: 'Booster Pack',
+      cardId: 431,
+      level: 1,
+      initiative: 52,
+      actions: [{ type: 'attack', value: 2 }],
+      bottomActions: [{ type: 'move', value: 2 }],
+    };
+    const gh2Labels = {
+      character: {
+        gh2e: {
+          'three-spears': { '': 'Quartermaster' },
+        },
+      },
+    };
+
+    const result = convertAbility(ghsAbility, 'three-spears', gh2Labels, GLOOMHAVEN_2E_GAME_ID);
+    expect(result.characterClass).toBe('Quartermaster');
+    expect(result.sourceId).toBe('gloomhavensecretariat:character-ability/three-spears/431');
   });
 
   it('puts multiple top actions as primary + effects', () => {
