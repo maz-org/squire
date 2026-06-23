@@ -29,7 +29,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: production-seed-scenario-section-books
+  # Shared across production data workflows because each runs db:migrate against prod.
+  group: production-data-db
   cancel-in-progress: false
 
 jobs:

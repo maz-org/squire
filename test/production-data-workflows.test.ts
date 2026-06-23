@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
+import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -22,6 +23,20 @@ function postgresFixtureUrl(options: { host: string; database?: string; port?: n
   if (options.database !== undefined) url.pathname = `/${options.database}`;
   return url.toString();
 }
+
+const productionDataMigrationWorkflowPaths = [
+  '.github/workflows/production-seed-cards.yml',
+  '.github/workflows/production-seed-scenario-section-books.yml',
+  '.github/workflows/production-seed-unlock-graphs.yml',
+  '.github/workflows/production-reindex-pdfs.yml',
+];
+
+type WorkflowConfig = {
+  concurrency?: {
+    group?: string;
+    'cancel-in-progress'?: boolean;
+  };
+};
 
 describe('production data lifecycle workflows', () => {
   it('defines package scripts for production data URL verification and sanity checks', async () => {
@@ -156,6 +171,17 @@ describe('production data lifecycle workflows', () => {
     expect(() => parseProductionDataOptions(['bogus'])).toThrow(
       /cards, scenario-section-books, unlock-graphs, embeddings, all, smoke, verify-url, or truncate-embeddings/,
     );
+  });
+
+  it('serializes production data workflows before they run production migrations', async () => {
+    for (const workflowPath of productionDataMigrationWorkflowPaths) {
+      const workflow = parse(await readProjectFile(workflowPath)) as WorkflowConfig;
+
+      expect(workflow.concurrency, workflowPath).toEqual({
+        group: 'production-data-db',
+        'cancel-in-progress': false,
+      });
+    }
   });
 
   it('seeds production card data only through the protected production environment', async () => {
