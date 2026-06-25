@@ -275,7 +275,7 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 - **frosthaven-storyline.com may not support Gloomhaven (2nd Edition).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 by the time automated ingestion begins, the Phase 6 ingestion path needs to be re-evaluated for GH2 specifically. Mitigation: confirm storyline GH2 support before Phase 6 begins; if absent, consider switching campaign management to GHS itself for the GH2 campaign.
 - **Action item for Brian:** before Phase 6 begins, verify that frosthaven-storyline.com (or its successor) supports Gloomhaven (2nd Edition). If not, plan the GH2 campaign-tracking workflow accordingly.
 
-**Out of scope:** original Gloomhaven (1st Edition), Jaws of the Lion, Crimson Scales, Forgotten Circles. Those stay in Future Enhancements.
+**Out of scope:** full rules Q&A support for original Gloomhaven (1st Edition), Jaws of the Lion, Crimson Scales, and Forgotten Circles. Campaign tracking can model GH1e/Jaws content sets ahead of full knowledge-agent support, but those games are not supported for chat/rules answers until their rules corpus, static data imports, game contracts, and eval coverage exist.
 
 **Deliverable:** When Brian's group sits down for their first Gloomhaven (2nd Edition) scenario, Squire answers GH2 rules questions correctly, never mixes them up with Frosthaven rules, and works from the same phone-at-the-table workflow as the MVP.
 
@@ -450,7 +450,7 @@ Tech risks (browser-extension fragility, build guide fetch reliability, embeddin
 ## Future Enhancements (Out of Scope)
 
 - **Turn-by-turn combat advice** (real-time during battle)
-- **Support for other Gloomhaven games** (original Gloomhaven, Jaws of the Lion, Crimson Scales, Forgotten Circles)
+- **Support for other Gloomhaven games** (original Gloomhaven, Jaws of the Lion, Crimson Scales, Forgotten Circles). GH1e and Jaws may have tracker-only seed data in the repo before full support.
 - **Native mobile apps** (iOS / Android)
 - **Party coordination features** (sync with teammates' characters in real time)
 - **Automated campaign tracking** (fully sync with frosthaven-storyline events automatically, beyond character state)

@@ -47,18 +47,18 @@ async function createTestUser(email: string): Promise<TestUser> {
   return { cookie: signedCookie.split(';')[0], sessionId, userId: user.id };
 }
 
-/** Create a campaign via the web form (returns the new id). `solo` toggles solo2e. */
+/** Create a campaign via the web form (returns the new id). `modules` are checked boxes. */
 async function createViaForm(
   user: TestUser,
   name: string,
   game: string,
-  opts: { solo: boolean },
+  opts: { modules?: string[] } = {},
 ): Promise<string> {
   const form = new FormData();
   form.set('_csrf', createCsrfToken(user.sessionId));
   form.set('name', name);
   form.set('game', game);
-  if (opts.solo) form.append('module', 'solo2e');
+  for (const module of opts.modules ?? []) form.append('module', module);
   const res = await app.request('/campaigns', {
     method: 'POST',
     headers: { Cookie: user.cookie },
@@ -112,23 +112,51 @@ afterAll(async () => {
 describe('edit-modules UI (SQR-321)', () => {
   it('create form: GH2e with solo checked includes solo2e; unchecked omits it', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const withSolo = await createViaForm(owner, 'With Solo', 'gloomhaven-2e', { solo: true });
+    const withSolo = await createViaForm(owner, 'With Solo', 'gloomhaven-2e', {
+      modules: ['solo2e'],
+    });
     expect(await modulesOf(owner, withSolo)).toEqual(['gh2e', 'solo2e']);
 
-    const noSolo = await createViaForm(owner, 'No Solo', 'gloomhaven-2e', { solo: false });
+    const noSolo = await createViaForm(owner, 'No Solo', 'gloomhaven-2e');
     expect(await modulesOf(owner, noSolo)).toEqual(['gh2e']);
   });
 
-  it('create form: Frosthaven always gets just fh', async () => {
+  it('create form: stores the supported campaign content combinations', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const fh = await createViaForm(owner, 'Frost', 'frosthaven', { solo: true });
-    expect(await modulesOf(owner, fh)).toEqual(['fh']);
+    const gh1e = await createViaForm(owner, 'GH1e', 'gloomhaven-1e', {
+      modules: ['solo1e', 'jotl', 'solo2e', 'fhsolo'],
+    });
+    expect(await modulesOf(owner, gh1e)).toEqual(['gh1e', 'solo1e', 'jotl']);
+
+    const jotl = await createViaForm(owner, 'JotL', 'jaws-of-the-lion', {
+      modules: ['solo1e', 'jotl', 'solo2e', 'fhsolo'],
+    });
+    expect(await modulesOf(owner, jotl)).toEqual(['jotl']);
+
+    const gh2e = await createViaForm(owner, 'GH2e', 'gloomhaven-2e', {
+      modules: ['solo1e', 'jotl', 'solo2e', 'fhsolo'],
+    });
+    expect(await modulesOf(owner, gh2e)).toEqual(['gh2e', 'solo2e']);
+
+    const fh = await createViaForm(owner, 'Frost', 'frosthaven', {
+      modules: ['solo1e', 'jotl', 'solo2e', 'fhsolo'],
+    });
+    expect(await modulesOf(owner, fh)).toEqual(['fh', 'fhsolo']);
   });
 
-  it('Settings shows the optional-content editor for GH2e but not Frosthaven', async () => {
+  it('Settings shows the optional-content editor for games with optional modules', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { solo: true });
-    const fh = await createViaForm(owner, 'FH', 'frosthaven', { solo: false });
+    const gh1e = await createViaForm(owner, 'GH1', 'gloomhaven-1e', { modules: ['solo1e'] });
+    const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { modules: ['solo2e'] });
+    const fh = await createViaForm(owner, 'FH', 'frosthaven', { modules: ['fhsolo'] });
+    const jotl = await createViaForm(owner, 'JotL', 'jaws-of-the-lion');
+
+    const gh1eBody = await (
+      await app.request(`/campaigns/${gh1e}/settings`, { headers: { Cookie: owner.cookie } })
+    ).text();
+    expect(gh1eBody).toContain('aria-label="Edit optional content"');
+    expect(gh1eBody).toContain('value="solo1e"');
+    expect(gh1eBody).toContain('value="jotl"');
 
     const gh2eBody = await (
       await app.request(`/campaigns/${gh2e}/settings`, { headers: { Cookie: owner.cookie } })
@@ -139,13 +167,19 @@ describe('edit-modules UI (SQR-321)', () => {
     const fhBody = await (
       await app.request(`/campaigns/${fh}/settings`, { headers: { Cookie: owner.cookie } })
     ).text();
-    expect(fhBody).not.toContain('aria-label="Edit optional content"');
+    expect(fhBody).toContain('aria-label="Edit optional content"');
+    expect(fhBody).toContain('value="fhsolo"');
+
+    const jotlBody = await (
+      await app.request(`/campaigns/${jotl}/settings`, { headers: { Cookie: owner.cookie } })
+    ).text();
+    expect(jotlBody).not.toContain('aria-label="Edit optional content"');
   });
 
   it('Settings presents optional content explicitly, including the no-optional-content state', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { solo: true });
-    const fh = await createViaForm(owner, 'FH', 'frosthaven', { solo: false });
+    const gh2e = await createViaForm(owner, 'GH2', 'gloomhaven-2e', { modules: ['solo2e'] });
+    const jotl = await createViaForm(owner, 'JotL', 'jaws-of-the-lion');
 
     const gh2eBody = await (
       await app.request(`/campaigns/${gh2e}/settings`, { headers: { Cookie: owner.cookie } })
@@ -157,19 +191,19 @@ describe('edit-modules UI (SQR-321)', () => {
     expect(gh2eBody).toContain('squire-campaign-settings__group-body');
     expect(gh2eBody).not.toContain('squire-campaign-modules__toggle">Modules</summary>');
 
-    const fhBody = await (
-      await app.request(`/campaigns/${fh}/settings`, { headers: { Cookie: owner.cookie } })
+    const jotlBody = await (
+      await app.request(`/campaigns/${jotl}/settings`, { headers: { Cookie: owner.cookie } })
     ).text();
-    expect(fhBody).toMatch(
+    expect(jotlBody).toMatch(
       /squire-campaign-settings__group-title"[^>]*>\s*Optional content\s*<\/h3>/,
     );
-    expect(fhBody).toContain('No optional content is available for Frosthaven.');
-    expect(fhBody).not.toContain('squire-campaign-modules__toggle">Modules</summary>');
+    expect(jotlBody).toContain('No optional content is available for Jaws of the Lion.');
+    expect(jotlBody).not.toContain('squire-campaign-modules__toggle">Modules</summary>');
   });
 
   it('removing then re-adding a module is non-destructive to played keys', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const id = await createViaForm(owner, 'Toggle', 'gloomhaven-2e', { solo: true });
+    const id = await createViaForm(owner, 'Toggle', 'gloomhaven-2e', { modules: ['solo2e'] });
     const identity = identityFromSessionUser(owner.userId);
 
     // Mark a solo scenario played, then remove solo2e.
@@ -197,7 +231,7 @@ describe('edit-modules UI (SQR-321)', () => {
 
   it('the service rejects an invalid module set (missing base)', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const id = await createViaForm(owner, 'Bad', 'gloomhaven-2e', { solo: true });
+    const id = await createViaForm(owner, 'Bad', 'gloomhaven-2e', { modules: ['solo2e'] });
     const identity = identityFromSessionUser(owner.userId);
     const detail = await CampaignService.getCampaignDetail(identity, id);
     await expect(
@@ -210,7 +244,7 @@ describe('edit-modules UI (SQR-321)', () => {
 
   it('surfaces a version conflict', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const id = await createViaForm(owner, 'Conflict', 'gloomhaven-2e', { solo: true });
+    const id = await createViaForm(owner, 'Conflict', 'gloomhaven-2e', { modules: ['solo2e'] });
     const stale = (
       await CampaignService.getCampaignDetail(identityFromSessionUser(owner.userId), id)
     ).campaign.version;
@@ -224,7 +258,7 @@ describe('edit-modules UI (SQR-321)', () => {
 
   it('keeps edited optional-content choices visible after a failed save', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const id = await createViaForm(owner, 'Conflict', 'gloomhaven-2e', { solo: true });
+    const id = await createViaForm(owner, 'Conflict', 'gloomhaven-2e', { modules: ['solo2e'] });
     const stale = (
       await CampaignService.getCampaignDetail(identityFromSessionUser(owner.userId), id)
     ).campaign.version;
@@ -239,7 +273,7 @@ describe('edit-modules UI (SQR-321)', () => {
 
   it('404s a non-member posting the modules route', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
-    const id = await createViaForm(owner, 'Private', 'gloomhaven-2e', { solo: true });
+    const id = await createViaForm(owner, 'Private', 'gloomhaven-2e', { modules: ['solo2e'] });
     const outsider = await createTestUser(OUTSIDER_EMAIL);
     const res = await editModules(outsider, id, [], 0);
     expect(res.status).toBe(404);

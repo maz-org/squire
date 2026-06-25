@@ -16,7 +16,12 @@ import { getDb, shutdownServerPool } from '../src/db.ts';
 import * as CampaignService from '../src/campaign/campaign-service.ts';
 import { CampaignNotFoundError } from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
-import { loadCampaignContext, renderCampaignContextBlock } from '../src/campaign/context.ts';
+import {
+  applyCampaignContextToAskOptions,
+  loadCampaignContext,
+  renderCampaignContextBlock,
+  type CampaignContextView,
+} from '../src/campaign/context.ts';
 import { identityFromSessionUser, type CallerIdentity } from '../src/campaign/identity.ts';
 import { campaignScopedHistory } from '../src/chat/conversation-service.ts';
 import type { ConversationMessage } from '../src/db/repositories/types.ts';
@@ -104,6 +109,34 @@ describe('loadCampaignContext (the single projection)', () => {
     // …while shared facts are present.
     expect(block).toContain('Quartermaster');
     expect(block).toContain('<campaign_data>');
+  });
+
+  it('only falls back to the campaign game when rules Q&A supports that game', async () => {
+    const fixture = await setupFixture();
+    type AskOptions = {
+      campaignId?: string;
+      userId?: string;
+      game?: string;
+      campaignContext?: CampaignContextView;
+    };
+
+    const gh2e = await applyCampaignContextToAskOptions<AskOptions>({
+      campaignId: fixture.campaignId,
+      userId: fixture.owner.userId,
+    });
+    expect(gh2e.game).toBe('gloomhaven-2e');
+
+    const gh1eCampaign = await CampaignService.createCampaign(fixture.owner, {
+      name: 'Tracker Only',
+      game: 'gloomhaven-1e',
+      modules: ['gh1e'],
+    });
+    const gh1e = await applyCampaignContextToAskOptions<AskOptions>({
+      campaignId: gh1eCampaign.id,
+      userId: fixture.owner.userId,
+    });
+    expect(gh1e.campaignContext?.campaign.game).toBe('gloomhaven-1e');
+    expect(gh1e.game).toBeUndefined();
   });
 
   it('is member-gated and validates explicit character selections', async () => {

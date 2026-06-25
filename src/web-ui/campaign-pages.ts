@@ -12,7 +12,13 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
 import type { Campaign, CharacterStatus } from '../db/repositories/types.ts';
-import { allOptionalModuleOptions, gameDefinitionFor, isGameId, moduleLabel } from '../game.ts';
+import {
+  CAMPAIGN_GAMES,
+  allOptionalModuleOptions,
+  campaignGameDefinitionFor,
+  moduleLabel,
+  normalizeCampaignGameId,
+} from '../game.ts';
 import { renderDashboardProgressEmpty } from './campaign-dashboard.ts';
 
 /** Header context-strip state. Null = signed-in user with no campaigns. */
@@ -25,7 +31,8 @@ export interface CampaignStripState {
 }
 
 function gameLabel(game: string): string {
-  return isGameId(game) ? gameDefinitionFor(game).sourcePrefix.toUpperCase() : game.toUpperCase();
+  const campaignGame = normalizeCampaignGameId(game);
+  return campaignGame ? campaignGameDefinitionFor(campaignGame).sourcePrefix.toUpperCase() : game;
 }
 
 /** Historical header-strip renderer retained for old fixtures and migrations. */
@@ -146,16 +153,21 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
         <label class="squire-campaigns__field">
           <span class="squire-campaigns__field-label">GAME</span>
           <select name="game">
-            <option value="frosthaven">Frosthaven</option>
-            <option value="gloomhaven-2e">Gloomhaven (2nd Edition)</option>
+            ${CAMPAIGN_GAMES.map((game) => html`<option value="${game.id}">${game.label}</option>`)}
           </select>
         </label>
         ${allOptionalModuleOptions().length > 0
-          ? html`<fieldset class="squire-campaigns__field squire-campaigns__modules">
+          ? html`<fieldset
+              class="squire-campaigns__field squire-campaigns__modules"
+              data-campaign-module-options
+            >
               <legend class="squire-campaigns__field-label">OPTIONAL CONTENT</legend>
               ${allOptionalModuleOptions().map(
                 (option) =>
-                  html`<label class="squire-campaigns__module">
+                  html`<label
+                    class="squire-campaigns__module"
+                    data-campaign-module-game="${option.gameId}"
+                  >
                     <input type="checkbox" name="module" value="${option.module}" checked />
                     ${moduleLabel(option.module)}
                     <span class="squire-campaigns__module-game">${option.gameLabel}</span>
@@ -738,8 +750,9 @@ export type CampaignDashboardHeaderStats = Record<string, never>;
 export type CampaignDashboardView = 'progress' | 'party' | 'players' | 'settings';
 
 function gameSystemLabel(game: string): string {
-  if (!isGameId(game)) return game;
-  return gameDefinitionFor(game).label.replace(' (', ' ').replace(')', '');
+  const campaignGame = normalizeCampaignGameId(game);
+  if (!campaignGame) return game;
+  return campaignGameDefinitionFor(campaignGame).label.replace(' (', ' ').replace(')', '');
 }
 
 function campaignDashboardHeaderStatsLine(

@@ -83,7 +83,12 @@ import { readCharacterMatAsset } from './web-ui/character-mat-assets.ts';
 import { claimWorktreePort } from './worktree-runtime.ts';
 import { searchRules, searchCards, listCardTypes, listCards, getCard } from './tools.ts';
 import type { CardType } from './schemas.ts';
-import { availableModulesFor, gameDefinitionFor, normalizeGameId, requireGameId } from './game.ts';
+import {
+  campaignAvailableModulesFor,
+  campaignGameDefinitionFor,
+  normalizeCampaignGameId,
+  requireGameId,
+} from './game.ts';
 import { z } from 'zod';
 import { createMcpServer } from './mcp.ts';
 import { startHttpServerWithTelemetry } from './server-start.ts';
@@ -1559,14 +1564,15 @@ app.post('/campaigns', async (c) => {
   const game = typeof form.get('game') === 'string' ? (form.get('game') as string) : '';
   if (!name) return renderCampaignListPage(c, 'Campaign name is required.');
   // Base module always; optional modules are opt-in via the form checkboxes.
-  // A checked module for a different game is filtered out by availableModulesFor.
-  const gameId = normalizeGameId(game);
+  // A checked module for a different campaign game is filtered out by the
+  // campaign module registry.
+  const gameId = normalizeCampaignGameId(game);
   const checked = new Set(
     form.getAll('module').filter((value): value is string => typeof value === 'string'),
   );
   const modules = gameId
-    ? availableModulesFor(gameId).filter(
-        (module) => module === gameDefinitionFor(gameId).baseModule || checked.has(module),
+    ? campaignAvailableModulesFor(gameId).filter(
+        (module) => module === campaignGameDefinitionFor(gameId).baseModule || checked.has(module),
       )
     : undefined;
   try {
@@ -1692,8 +1698,8 @@ async function renderCampaignDashboardPage(
   // everyone else, matching the service-layer role gate.
   const isOwner = detail.self.role === 'owner';
   // Modules editor only for games that have optional modules to toggle.
-  const gameId = normalizeGameId(detail.campaign.game);
-  const gameDef = gameId ? gameDefinitionFor(gameId) : null;
+  const gameId = normalizeCampaignGameId(detail.campaign.game);
+  const gameDef = gameId ? campaignGameDefinitionFor(gameId) : null;
   const dashboardView = opts.view ?? 'progress';
   const dashboardThreads =
     dashboardView === 'progress'
@@ -2335,12 +2341,12 @@ app.post('/campaigns/:id/modules', async (c) => {
         422,
       );
     }
-    const gameId = normalizeGameId(detail.campaign.game);
+    const gameId = normalizeCampaignGameId(detail.campaign.game);
     if (!gameId) return c.notFound();
     // Base is always on; add the checked optional modules. The computed set is
     // valid by construction; updateSharedState re-validates as defense-in-depth.
-    const baseModule = gameDefinitionFor(gameId).baseModule;
-    const modules = availableModulesFor(gameId).filter(
+    const baseModule = campaignGameDefinitionFor(gameId).baseModule;
+    const modules = campaignAvailableModulesFor(gameId).filter(
       (module) => module === baseModule || checked.has(module),
     );
     await CampaignService.updateSharedState(identity, campaignId, { modules, expectedVersion });

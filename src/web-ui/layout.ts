@@ -31,7 +31,13 @@ import {
   UNSUPPORTED_MARKDOWN_FEATURES,
   UNSUPPORTED_MARKDOWN_SPECIMEN,
 } from './markdown-styleguide.ts';
-import { DEFAULT_GAME_ID, SUPPORTED_GAME_IDS, SUPPORTED_GAMES } from '../game.ts';
+import {
+  DEFAULT_GAME_ID,
+  SUPPORTED_GAME_IDS,
+  SUPPORTED_GAMES,
+  campaignGameDefinitionFor,
+  normalizeCampaignGameId,
+} from '../game.ts';
 import {
   formatWorkLogDuration,
   humanizeWorkLogProgressMessage,
@@ -245,7 +251,10 @@ function renderAppNav(activeSection: AppNavSection): HtmlEscapedString {
 }
 
 function chatGameLabel(game: string): string {
-  return SUPPORTED_GAMES.find((definition) => definition.id === game)?.label ?? game;
+  const rulesGame = SUPPORTED_GAMES.find((definition) => definition.id === game);
+  if (rulesGame) return rulesGame.label;
+  const campaignGame = normalizeCampaignGameId(game);
+  return campaignGame ? campaignGameDefinitionFor(campaignGame).label : game;
 }
 
 function renderChatCampaignContext(
