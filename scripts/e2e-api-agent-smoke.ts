@@ -16,6 +16,7 @@ const DEFAULT_PORT = '3000';
 const DEFAULT_BUDGET_USD = '0.25';
 const DEFAULT_SERVER_WAIT_MS = 120_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
+const DEFAULT_BOOTSTRAP_RETRY_MS = 1_000;
 const BUDGET_GUARD_MODEL = 'squire-e2e-budget-guard';
 const OVERRUN_COST_USD_MICROS = 1_000_000;
 
@@ -63,6 +64,7 @@ interface SmokeOptions {
   clearBudgetExhaustion?: () => Promise<void>;
   seedBudgetExhaustion?: () => Promise<void>;
   requestTimeoutMs?: number;
+  bootstrapRetryDelayMs?: number;
 }
 
 export interface SmokeResult {
@@ -309,8 +311,8 @@ function dataRecord(data: unknown): Record<string, unknown> {
   return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
 }
 
-async function runAsk(baseUrl: string, fetchImpl: FetchLike, token: string, game: E2eSmokeGame) {
-  const res = await fetchImpl(urlFor(baseUrl, '/api/ask'), {
+async function postAsk(baseUrl: string, fetchImpl: FetchLike, token: string, game: E2eSmokeGame) {
+  return fetchImpl(urlFor(baseUrl, '/api/ask'), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -321,6 +323,33 @@ async function runAsk(baseUrl: string, fetchImpl: FetchLike, token: string, game
       game: game.game,
     }),
   });
+}
+
+function isWarmingUpResponse(status: number, body: string): boolean {
+  return status === 503 && body.toLowerCase().includes('warming up');
+}
+
+async function runAsk(
+  baseUrl: string,
+  fetchImpl: FetchLike,
+  token: string,
+  game: E2eSmokeGame,
+  timeoutMs: number,
+  retryDelayMs: number,
+) {
+  const started = Date.now();
+  let res = await postAsk(baseUrl, fetchImpl, token, game);
+  while (res.status === 503) {
+    const body = await readBody(res);
+    if (!isWarmingUpResponse(res.status, body)) {
+      throw new Error(`${game.label} ask: expected 200, got ${res.status}: ${body}`);
+    }
+    if (Date.now() - started >= timeoutMs) {
+      throw new Error(`${game.label} ask: timed out waiting for ask bootstrap: ${body}`);
+    }
+    await sleep(retryDelayMs);
+    res = await postAsk(baseUrl, fetchImpl, token, game);
+  }
   await expectStatus(`${game.label} ask`, res, 200);
   const contentType = res.headers.get('content-type') ?? '';
   if (!contentType.includes('text/event-stream')) {
@@ -412,6 +441,8 @@ export async function runApiAgentSmoke(options: SmokeOptions): Promise<SmokeResu
   const clearBudgetExhaustion = options.clearBudgetExhaustion ?? clearBudgetExhaustionLedger;
   const seedBudgetExhaustion = options.seedBudgetExhaustion ?? seedBudgetExhaustionLedger;
   const baseUrl = normalizeBaseUrl(options.baseUrl);
+  const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const bootstrapRetryDelayMs = options.bootstrapRetryDelayMs ?? DEFAULT_BOOTSTRAP_RETRY_MS;
 
   await clearBudgetExhaustion();
 
@@ -426,7 +457,7 @@ export async function runApiAgentSmoke(options: SmokeOptions): Promise<SmokeResu
     log(logger, `searching ${game.label} rules`);
     await runRuleSearch(baseUrl, fetchImpl, token, game);
     log(logger, `asking ${game.label} agent question`);
-    await runAsk(baseUrl, fetchImpl, token, game);
+    await runAsk(baseUrl, fetchImpl, token, game, requestTimeoutMs, bootstrapRetryDelayMs);
   }
 
   log(logger, 'seeding budget ledger and checking pre-stream 429');

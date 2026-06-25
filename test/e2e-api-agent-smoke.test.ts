@@ -48,6 +48,7 @@ describe('scheduled API and agent E2E smoke runner', () => {
   it('runs health, bearer auth, per-game search, per-game ask, and budget checks', async () => {
     const calls: string[] = [];
     const budgetSteps: string[] = [];
+    const askAttempts = new Map<string, number>();
     let budgetLedgerSeeded = false;
 
     const fetch: FetchLike = async (url, init = {}) => {
@@ -102,6 +103,14 @@ describe('scheduled API and agent E2E smoke runner', () => {
         }
         const body = JSON.parse(String(init.body)) as { game: string };
         const expected = E2E_SMOKE_GAMES.find((entry) => entry.game === body.game)!;
+        const attempts = askAttempts.get(body.game) ?? 0;
+        askAttempts.set(body.game, attempts + 1);
+        if (attempts === 0) {
+          return jsonResponse(
+            { error: 'Service is warming up. Retry in a moment.', status: 503 },
+            { status: 503 },
+          );
+        }
         return sseResponse([
           {
             event: 'tool_result',
@@ -128,6 +137,7 @@ describe('scheduled API and agent E2E smoke runner', () => {
         budgetSteps.push('seed');
         budgetLedgerSeeded = true;
       },
+      bootstrapRetryDelayMs: 0,
       logger: () => undefined,
     });
 
@@ -141,7 +151,7 @@ describe('scheduled API and agent E2E smoke runner', () => {
     expect(calls).toContain('POST /token');
     expect(calls).toContain('GET /api/search/rules?q=loot&topK=3&game=frosthaven');
     expect(calls).toContain('GET /api/search/rules?q=advantage&topK=3&game=gloomhaven-2e');
-    expect(calls.filter((call) => call === 'POST /api/ask')).toHaveLength(3);
+    expect(calls.filter((call) => call === 'POST /api/ask')).toHaveLength(5);
   });
 
   it('times out a hung agent request', async () => {
