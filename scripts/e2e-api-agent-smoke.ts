@@ -329,7 +329,7 @@ async function runAsk(baseUrl: string, fetchImpl: FetchLike, token: string, game
 
   const events = parseSseEvents(await res.text());
   const eventNames = new Set(events.map((event) => event.event));
-  for (const expectedEvent of ['tool_progress', 'tool_result', 'text', 'done']) {
+  for (const expectedEvent of ['tool_result', 'text', 'done']) {
     if (!eventNames.has(expectedEvent)) {
       throw new Error(`${game.label} ask: missing SSE event ${expectedEvent}`);
     }

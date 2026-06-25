@@ -103,7 +103,6 @@ describe('scheduled API and agent E2E smoke runner', () => {
         const body = JSON.parse(String(init.body)) as { game: string };
         const expected = E2E_SMOKE_GAMES.find((entry) => entry.game === body.game)!;
         return sseResponse([
-          { event: 'tool_progress', data: { toolName: 'search_knowledge' } },
           {
             event: 'tool_result',
             data: {
