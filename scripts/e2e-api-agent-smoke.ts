@@ -16,7 +16,9 @@ const DEFAULT_PORT = '3000';
 const DEFAULT_BUDGET_USD = '0.25';
 const DEFAULT_SERVER_WAIT_MS = 120_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
+const DEFAULT_BOOTSTRAP_TIMEOUT_MS = 180_000;
 const DEFAULT_BOOTSTRAP_RETRY_MS = 1_000;
+const DEFAULT_ASK_MAX_ATTEMPTS = 2;
 const BUDGET_GUARD_MODEL = 'squire-e2e-budget-guard';
 const OVERRUN_COST_USD_MICROS = 1_000_000;
 
@@ -64,7 +66,9 @@ interface SmokeOptions {
   clearBudgetExhaustion?: () => Promise<void>;
   seedBudgetExhaustion?: () => Promise<void>;
   requestTimeoutMs?: number;
+  bootstrapTimeoutMs?: number;
   bootstrapRetryDelayMs?: number;
+  askMaxAttempts?: number;
 }
 
 export interface SmokeResult {
@@ -311,6 +315,13 @@ function dataRecord(data: unknown): Record<string, unknown> {
   return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
 }
 
+function errorEventMessage(events: SseEvent[]): string | undefined {
+  const errorEvent = events.find((event) => event.event === 'error');
+  if (!errorEvent) return undefined;
+  const message = dataRecord(errorEvent.data).message;
+  return typeof message === 'string' && message.length > 0 ? message : undefined;
+}
+
 async function postAsk(baseUrl: string, fetchImpl: FetchLike, token: string, game: E2eSmokeGame) {
   return fetchImpl(urlFor(baseUrl, '/api/ask'), {
     method: 'POST',
@@ -334,58 +345,75 @@ async function runAsk(
   fetchImpl: FetchLike,
   token: string,
   game: E2eSmokeGame,
-  timeoutMs: number,
+  bootstrapTimeoutMs: number,
   retryDelayMs: number,
+  maxAttempts: number,
 ) {
-  const started = Date.now();
-  let res = await postAsk(baseUrl, fetchImpl, token, game);
-  while (res.status === 503) {
-    const body = await readBody(res);
-    if (!isWarmingUpResponse(res.status, body)) {
-      throw new Error(`${game.label} ask: expected 200, got ${res.status}: ${body}`);
+  let lastRetryableFailure = '';
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const started = Date.now();
+    let res = await postAsk(baseUrl, fetchImpl, token, game);
+    while (res.status === 503) {
+      const body = await readBody(res);
+      if (!isWarmingUpResponse(res.status, body)) {
+        throw new Error(`${game.label} ask: expected 200, got ${res.status}: ${body}`);
+      }
+      if (Date.now() - started >= bootstrapTimeoutMs) {
+        throw new Error(`${game.label} ask: timed out waiting for ask bootstrap: ${body}`);
+      }
+      await sleep(retryDelayMs);
+      res = await postAsk(baseUrl, fetchImpl, token, game);
     }
-    if (Date.now() - started >= timeoutMs) {
-      throw new Error(`${game.label} ask: timed out waiting for ask bootstrap: ${body}`);
+    await expectStatus(`${game.label} ask`, res, 200);
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!contentType.includes('text/event-stream')) {
+      throw new Error(`${game.label} ask: expected SSE stream, got ${contentType || '<missing>'}`);
     }
-    await sleep(retryDelayMs);
-    res = await postAsk(baseUrl, fetchImpl, token, game);
-  }
-  await expectStatus(`${game.label} ask`, res, 200);
-  const contentType = res.headers.get('content-type') ?? '';
-  if (!contentType.includes('text/event-stream')) {
-    throw new Error(`${game.label} ask: expected SSE stream, got ${contentType || '<missing>'}`);
-  }
 
-  const events = parseSseEvents(await res.text());
-  const eventNames = new Set(events.map((event) => event.event));
-  for (const expectedEvent of ['text', 'done']) {
-    if (!eventNames.has(expectedEvent)) {
-      throw new Error(`${game.label} ask: missing SSE event ${expectedEvent}`);
-    }
-  }
-
-  const sourceLabels = events
-    .filter((event) => event.event === 'tool_result')
-    .flatMap((event) => {
-      const sourceBooks = dataRecord(event.data).sourceBooks;
-      return Array.isArray(sourceBooks)
-        ? sourceBooks.filter((value) => typeof value === 'string')
-        : [];
-    });
-  if (eventNames.has('tool_result') && sourceLabels.length === 0) {
-    throw new Error(`${game.label} ask: tool_result events had no citation/source labels`);
-  }
-
-  const answer = events
-    .filter((event) => event.event === 'text')
-    .map((event) => dataRecord(event.data).delta)
-    .filter((delta): delta is string => typeof delta === 'string')
-    .join('');
-  if (!containsRequiredTerms(answer, game.requiredAnswerTerms)) {
-    throw new Error(
-      `${game.label} semantic answer check failed: missing ${game.requiredAnswerTerms.join(', ')}`,
+    const events = parseSseEvents(await res.text());
+    const eventNames = new Set(events.map((event) => event.event));
+    const missingEvents = ['text', 'done'].filter(
+      (expectedEvent) => !eventNames.has(expectedEvent),
     );
+    if (missingEvents.length > 0) {
+      const eventList = events.map((event) => event.event ?? '<unnamed>').join(', ') || '<none>';
+      const errorMessage = errorEventMessage(events);
+      lastRetryableFailure = `${game.label} ask: missing SSE event ${missingEvents.join(
+        ', ',
+      )}; events: ${eventList}${errorMessage ? `; error: ${errorMessage}` : ''}`;
+      if (attempt < maxAttempts) {
+        await sleep(retryDelayMs);
+        continue;
+      }
+      throw new Error(lastRetryableFailure);
+    }
+
+    const sourceLabels = events
+      .filter((event) => event.event === 'tool_result')
+      .flatMap((event) => {
+        const sourceBooks = dataRecord(event.data).sourceBooks;
+        return Array.isArray(sourceBooks)
+          ? sourceBooks.filter((value) => typeof value === 'string')
+          : [];
+      });
+    if (eventNames.has('tool_result') && sourceLabels.length === 0) {
+      throw new Error(`${game.label} ask: tool_result events had no citation/source labels`);
+    }
+
+    const answer = events
+      .filter((event) => event.event === 'text')
+      .map((event) => dataRecord(event.data).delta)
+      .filter((delta): delta is string => typeof delta === 'string')
+      .join('');
+    if (!containsRequiredTerms(answer, game.requiredAnswerTerms)) {
+      throw new Error(
+        `${game.label} semantic answer check failed: missing ${game.requiredAnswerTerms.join(', ')}`,
+      );
+    }
+    return;
   }
+
+  throw new Error(lastRetryableFailure || `${game.label} ask: exhausted ask attempts`);
 }
 
 async function seedBudgetExhaustionLedger() {
@@ -441,8 +469,9 @@ export async function runApiAgentSmoke(options: SmokeOptions): Promise<SmokeResu
   const clearBudgetExhaustion = options.clearBudgetExhaustion ?? clearBudgetExhaustionLedger;
   const seedBudgetExhaustion = options.seedBudgetExhaustion ?? seedBudgetExhaustionLedger;
   const baseUrl = normalizeBaseUrl(options.baseUrl);
-  const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const bootstrapTimeoutMs = options.bootstrapTimeoutMs ?? DEFAULT_BOOTSTRAP_TIMEOUT_MS;
   const bootstrapRetryDelayMs = options.bootstrapRetryDelayMs ?? DEFAULT_BOOTSTRAP_RETRY_MS;
+  const askMaxAttempts = options.askMaxAttempts ?? DEFAULT_ASK_MAX_ATTEMPTS;
 
   await clearBudgetExhaustion();
 
@@ -457,7 +486,15 @@ export async function runApiAgentSmoke(options: SmokeOptions): Promise<SmokeResu
     log(logger, `searching ${game.label} rules`);
     await runRuleSearch(baseUrl, fetchImpl, token, game);
     log(logger, `asking ${game.label} agent question`);
-    await runAsk(baseUrl, fetchImpl, token, game, requestTimeoutMs, bootstrapRetryDelayMs);
+    await runAsk(
+      baseUrl,
+      fetchImpl,
+      token,
+      game,
+      bootstrapTimeoutMs,
+      bootstrapRetryDelayMs,
+      askMaxAttempts,
+    );
   }
 
   log(logger, 'seeding budget ledger and checking pre-stream 429');
