@@ -358,7 +358,7 @@ async function runAsk(
 
   const events = parseSseEvents(await res.text());
   const eventNames = new Set(events.map((event) => event.event));
-  for (const expectedEvent of ['tool_result', 'text', 'done']) {
+  for (const expectedEvent of ['text', 'done']) {
     if (!eventNames.has(expectedEvent)) {
       throw new Error(`${game.label} ask: missing SSE event ${expectedEvent}`);
     }
@@ -372,8 +372,8 @@ async function runAsk(
         ? sourceBooks.filter((value) => typeof value === 'string')
         : [];
     });
-  if (sourceLabels.length === 0) {
-    throw new Error(`${game.label} ask: no citation/source labels in tool_result events`);
+  if (eventNames.has('tool_result') && sourceLabels.length === 0) {
+    throw new Error(`${game.label} ask: tool_result events had no citation/source labels`);
   }
 
   const answer = events

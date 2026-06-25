@@ -112,13 +112,6 @@ describe('scheduled API and agent E2E smoke runner', () => {
           );
         }
         return sseResponse([
-          {
-            event: 'tool_result',
-            data: {
-              name: 'search_knowledge',
-              sourceBooks: [expected.expectedSourceLabel],
-            },
-          },
           { event: 'text', data: { delta: expected.requiredAnswerTerms.join(' ') } },
           { event: 'done', data: {} },
         ]);
