@@ -228,6 +228,75 @@ describe('scheduled API and agent E2E smoke runner', () => {
     expect(askAttempts.get('gloomhaven-2e')).toBe(2);
   });
 
+  it('reports safe stream error fields when ask retries are exhausted', async () => {
+    const fetch: FetchLike = async (url) => {
+      const parsed = new URL(String(url));
+
+      if (parsed.pathname === '/api/live') return jsonResponse({ status: 'ok' });
+      if (parsed.pathname === '/api/health') {
+        return jsonResponse({
+          status: 'ok',
+          db: { status: 'ok' },
+          vector: { status: 'ok' },
+          embedder: { status: 'ok' },
+        });
+      }
+      if (parsed.pathname === '/register') {
+        return jsonResponse({ client_id: 'client-1' }, { status: 201 });
+      }
+      if (parsed.pathname === '/authorize') {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: 'http://localhost:8080/callback?code=code-1' },
+        });
+      }
+      if (parsed.pathname === '/token') {
+        return jsonResponse({ access_token: 'token-1', token_type: 'bearer' });
+      }
+      if (parsed.pathname === '/api/search/rules') {
+        const game = parsed.searchParams.get('game');
+        const expected = E2E_SMOKE_GAMES.find((entry) => entry.game === game);
+        return jsonResponse({
+          results: [
+            {
+              game,
+              source: expected?.expectedSourceMarker + 'rule-book.pdf',
+              sourceLabel: expected?.expectedSourceLabel,
+            },
+          ],
+        });
+      }
+      if (parsed.pathname === '/api/ask') {
+        return sseResponse([
+          {
+            event: 'error',
+            data: {
+              message: 'Internal server error',
+              errorName: 'APIError',
+              errorStatus: 529,
+              errorType: 'overloaded_error',
+            },
+          },
+        ]);
+      }
+
+      throw new Error(`Unexpected request: ${parsed.pathname}`);
+    };
+
+    await expect(
+      runApiAgentSmoke({
+        baseUrl: 'http://localhost:3000',
+        fetch,
+        clearBudgetExhaustion: async () => undefined,
+        seedBudgetExhaustion: async () => undefined,
+        askMaxAttempts: 1,
+        logger: () => undefined,
+      }),
+    ).rejects.toThrow(
+      /Frosthaven ask: missing SSE event text, done; events: error; error: message: Internal server error; errorName: APIError; errorStatus: 529; errorType: overloaded_error/,
+    );
+  });
+
   it('uses a separate bootstrap timeout for warming ask responses', async () => {
     let askAttempts = 0;
     let budgetLedgerSeeded = false;

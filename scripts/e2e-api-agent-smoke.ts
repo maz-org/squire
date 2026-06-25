@@ -18,7 +18,7 @@ const DEFAULT_SERVER_WAIT_MS = 120_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 120_000;
 const DEFAULT_BOOTSTRAP_TIMEOUT_MS = 180_000;
 const DEFAULT_BOOTSTRAP_RETRY_MS = 1_000;
-const DEFAULT_ASK_MAX_ATTEMPTS = 2;
+const DEFAULT_ASK_MAX_ATTEMPTS = 4;
 const BUDGET_GUARD_MODEL = 'squire-e2e-budget-guard';
 const OVERRUN_COST_USD_MICROS = 1_000_000;
 
@@ -315,11 +315,21 @@ function dataRecord(data: unknown): Record<string, unknown> {
   return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
 }
 
-function errorEventMessage(events: SseEvent[]): string | undefined {
+function errorEventSummary(events: SseEvent[]): string | undefined {
   const errorEvent = events.find((event) => event.event === 'error');
   if (!errorEvent) return undefined;
-  const message = dataRecord(errorEvent.data).message;
-  return typeof message === 'string' && message.length > 0 ? message : undefined;
+  const error = dataRecord(errorEvent.data);
+  const fields = ['message', 'errorName', 'errorStatus', 'errorType', 'errorCode']
+    .map((key) => {
+      const value = error[key];
+      return typeof value === 'string' || typeof value === 'number' ? `${key}: ${value}` : '';
+    })
+    .filter((value) => value.length > 0);
+  return fields.length > 0 ? fields.join('; ') : undefined;
+}
+
+function streamRetryDelayMs(baseDelayMs: number, attempt: number): number {
+  return Math.min(baseDelayMs * 2 ** Math.max(attempt - 1, 0), 15_000);
 }
 
 async function postAsk(baseUrl: string, fetchImpl: FetchLike, token: string, game: E2eSmokeGame) {
@@ -377,12 +387,12 @@ async function runAsk(
     );
     if (missingEvents.length > 0) {
       const eventList = events.map((event) => event.event ?? '<unnamed>').join(', ') || '<none>';
-      const errorMessage = errorEventMessage(events);
+      const errorMessage = errorEventSummary(events);
       lastRetryableFailure = `${game.label} ask: missing SSE event ${missingEvents.join(
         ', ',
       )}; events: ${eventList}${errorMessage ? `; error: ${errorMessage}` : ''}`;
       if (attempt < maxAttempts) {
-        await sleep(retryDelayMs);
+        await sleep(streamRetryDelayMs(retryDelayMs, attempt));
         continue;
       }
       throw new Error(lastRetryableFailure);

@@ -4613,6 +4613,34 @@ const AskRequestSchema = z.object({
   game: z.string().optional(),
 });
 
+function safeE2eAskErrorDetails(error: unknown): Record<string, string | number> {
+  if (resolveSquireEnv(process.env) !== 'e2e') return {};
+  if (typeof error !== 'object' || error === null) return {};
+  const record = error as {
+    name?: unknown;
+    status?: unknown;
+    type?: unknown;
+    code?: unknown;
+    error?: { type?: unknown; code?: unknown };
+  };
+  const details: Record<string, string | number> = {};
+  if (typeof record.name === 'string' && /^[A-Za-z][A-Za-z0-9_.:-]{0,63}$/.test(record.name)) {
+    details.errorName = record.name;
+  }
+  if (typeof record.status === 'number' && Number.isInteger(record.status)) {
+    details.errorStatus = record.status;
+  }
+  const type = typeof record.type === 'string' ? record.type : record.error?.type;
+  if (typeof type === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(type)) {
+    details.errorType = type;
+  }
+  const code = typeof record.code === 'string' ? record.code : record.error?.code;
+  if (typeof code === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(code)) {
+    details.errorCode = code;
+  }
+  return details;
+}
+
 app.post('/api/ask', async (c) => {
   const requestId = correlateRequest(c);
 
@@ -4740,7 +4768,10 @@ app.post('/api/ask', async (c) => {
         });
         await stream.writeSSE({
           event: 'error',
-          data: JSON.stringify({ message: 'Internal server error' }),
+          data: JSON.stringify({
+            message: 'Internal server error',
+            ...safeE2eAskErrorDetails(error),
+          }),
         });
       }
     });
