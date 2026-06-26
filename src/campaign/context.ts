@@ -26,6 +26,7 @@ import type { CallerIdentity } from './identity.ts';
 import { listJournal, type JournalDay } from './journal.ts';
 import { deriveAvailability, type RosterCharacter } from './availability.ts';
 import { loadModuleGraphs } from './unlock-graph-loader.ts';
+import { knowledgeGameForCampaignGame } from '../game.ts';
 
 export interface CampaignAvailabilityContext {
   counts: Record<string, number>;
@@ -188,9 +189,11 @@ export function renderCampaignContextBlock(view: CampaignContextView): string {
 
 /**
  * Apply campaign binding to agent ask-options: load the single projection
- * and let the campaign supply the game when none was passed (E8). Shared
- * by the production ask() path and the eval runner so both channels get
- * identical context semantics. No identity → no campaign state.
+ * and let the campaign supply the rules game when none was passed (E8).
+ * Tracker-only campaign games still provide campaign context, but they do
+ * not become `options.game` until their rules corpus is supported.
+ * Shared by the production ask() path and the eval runner so both channels
+ * get identical context semantics. No identity → no campaign state.
  */
 export async function applyCampaignContextToAskOptions<
   T extends {
@@ -207,5 +210,10 @@ export async function applyCampaignContextToAskOptions<
     options.campaignId,
     options.activeCharacterId,
   );
-  return { ...options, campaignContext: view, game: options.game ?? view.campaign.game };
+  const campaignRulesGame = knowledgeGameForCampaignGame(view.campaign.game);
+  return {
+    ...options,
+    campaignContext: view,
+    game: options.game ?? campaignRulesGame ?? undefined,
+  };
 }

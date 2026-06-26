@@ -39,13 +39,49 @@ describe('seedUnlockGraphs', () => {
     const first = await seedUnlockGraphs(db);
     expect(first.map((r) => `${r.module}:${r.scenarios}`)).toEqual([
       'fh:162',
+      'gh1e:95',
       'gh2e:101',
+      'jotl:25',
+      'solo1e:17',
       'solo2e:18',
     ]);
 
     const second = await seedUnlockGraphs(db);
-    expect(second.map((r) => r.prunedScenarios)).toEqual([0, 0, 0]);
-    expect(second.map((r) => r.scenarios)).toEqual([162, 101, 18]);
+    expect(second.map((r) => r.prunedScenarios)).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(second.map((r) => r.scenarios)).toEqual([162, 95, 101, 25, 17, 18]);
+  });
+
+  it('imports the future GH1e and JotL modules through the shared format', () => {
+    const extracts = readUnlockGraphExtracts();
+    const gh1e = extracts.find((extract) => extract.module === 'gh1e');
+    const jotl = extracts.find((extract) => extract.module === 'jotl');
+    const solo1e = extracts.find((extract) => extract.module === 'solo1e');
+
+    expect(gh1e).toMatchObject({ game: 'gloomhaven-1e', scenarios: expect.any(Array) });
+    expect(jotl).toMatchObject({ game: 'jaws-of-the-lion', scenarios: expect.any(Array) });
+    expect(solo1e).toMatchObject({ game: 'gloomhaven-1e', scenarios: expect.any(Array) });
+
+    const barrowLair = gh1e?.scenarios.find((scenario) => scenario.key === '2');
+    expect(barrowLair).toMatchObject({
+      name: 'Barrow Lair',
+      prereqsAll: ['1'],
+      prereqsAny: [],
+    });
+
+    const gh1eHazard = gh1e?.scenarios.find((scenario) => scenario.key === '27');
+    expect(gh1eHazard).toMatchObject({ name: 'Ruinous Rift', hazard: true });
+
+    const jotlBranch = jotl?.scenarios.find((scenario) => scenario.key === '9');
+    expect(jotlBranch).toMatchObject({
+      name: 'Explosive Evolution',
+      prereqsAny: ['7', '8'],
+    });
+
+    expect(solo1e?.scenarios.find((scenario) => scenario.key === 'brute')).toMatchObject({
+      name: 'Return to the Black Barrow',
+      manual: true,
+      cond: 'Brute level 5',
+    });
   });
 
   it('prunes scenarios and threads missing from the latest extract', async () => {
@@ -132,5 +168,22 @@ describe('seedUnlockGraphs', () => {
     expect(seven?.name).toBe('Black Barrow');
     expect(seven?.prereqsAny).toEqual(['4', '5']);
     expect(graphs[0].threads[0].position).toBe(0);
+
+    const futureGraphs = await loadModuleGraphs('jaws-of-the-lion', ['jotl']);
+    expect(futureGraphs).toHaveLength(1);
+    expect(futureGraphs[0].scenarios).toHaveLength(25);
+    expect(futureGraphs[0].threads.map((thread) => thread.id)).toEqual([
+      'jotl_tutorial',
+      'jotl_main',
+      'jotl_personal',
+    ]);
+
+    const gh1eWithJotlGraphs = await loadModuleGraphs('gloomhaven-1e', ['gh1e', 'solo1e', 'jotl']);
+    expect(gh1eWithJotlGraphs.map((g) => `${g.game}:${g.module}`)).toEqual([
+      'gloomhaven-1e:gh1e',
+      'gloomhaven-1e:solo1e',
+      'jaws-of-the-lion:jotl',
+    ]);
+    expect(gh1eWithJotlGraphs.find((g) => g.module === 'jotl')?.scenarios).toHaveLength(25);
   });
 });

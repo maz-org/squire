@@ -1,0 +1,221 @@
+{
+  "provenance": "Exfiltrated from the Squire campaign-tracker prototype (github.com/maz-org/squire-campaign-tracker, src/GloomhavenTracker.jsx). Gloomhaven 1st Edition solo-scenario graph curated from the prototype. Advisory by design: trust the game when it disagrees. Scenario keys are module-local; campaigns store them qualified as \"<module>:<key>\".",
+  "game": "gloomhaven-1e",
+  "module": "solo1e",
+  "scenarios": [
+    {
+      "key": "brute",
+      "name": "Return to the Black Barrow",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Brute level 5",
+      "hazard": false
+    },
+    {
+      "key": "tinkerer",
+      "name": "An Unfortunate Intrusion",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Tinkerer level 5",
+      "hazard": false
+    },
+    {
+      "key": "spellweaver",
+      "name": "Corrupted Laboratory",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Spellweaver level 5",
+      "hazard": false
+    },
+    {
+      "key": "scoundrel",
+      "name": "Armory Heist",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Scoundrel level 5",
+      "hazard": false
+    },
+    {
+      "key": "cragheart",
+      "name": "Stone Defense",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Cragheart level 5",
+      "hazard": false
+    },
+    {
+      "key": "mindthief",
+      "name": "Rodent Liberation",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Mindthief level 5",
+      "hazard": false
+    },
+    {
+      "key": "sunkeeper",
+      "name": "Caravan Escort",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Sunkeeper level 5",
+      "hazard": false
+    },
+    {
+      "key": "quartermaster",
+      "name": "Storage Fees",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Quartermaster level 5",
+      "hazard": false
+    },
+    {
+      "key": "summoner",
+      "name": "Plane of Wild Beasts",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Summoner level 5",
+      "hazard": false
+    },
+    {
+      "key": "nightshroud",
+      "name": "Harvesting the Night",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Nightshroud level 5",
+      "hazard": false
+    },
+    {
+      "key": "plagueherald",
+      "name": "Plagued Crypt",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Plagueherald level 5",
+      "hazard": false
+    },
+    {
+      "key": "soothsinger",
+      "name": "Battle of the Bards",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Soothsinger level 5",
+      "hazard": false
+    },
+    {
+      "key": "elementalist",
+      "name": "Elemental Secrets",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Elementalist level 5",
+      "hazard": false
+    },
+    {
+      "key": "beast-tyrant",
+      "name": "The Caged Bear",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Beast Tyrant level 5",
+      "hazard": false
+    },
+    {
+      "key": "berserker",
+      "name": "Unnatural Insults",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Berserker level 5",
+      "hazard": false
+    },
+    {
+      "key": "doomstalker",
+      "name": "The End of the Hunt",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Doomstalker level 5",
+      "hazard": false
+    },
+    {
+      "key": "sawbones",
+      "name": "The Thin Line",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Sawbones level 5",
+      "hazard": false
+    }
+  ],
+  "threads": [
+    {
+      "id": "solo1e",
+      "label": "Solo Scenarios (1st Ed)",
+      "note": "One per class - level 5 character, prosperity 3, 2 retirements",
+      "position": 0,
+      "keys": [
+        "brute",
+        "tinkerer",
+        "spellweaver",
+        "scoundrel",
+        "cragheart",
+        "mindthief",
+        "sunkeeper",
+        "quartermaster",
+        "summoner",
+        "nightshroud",
+        "plagueherald",
+        "soothsinger",
+        "elementalist",
+        "beast-tyrant",
+        "berserker",
+        "doomstalker",
+        "sawbones"
+      ]
+    }
+  ]
+}

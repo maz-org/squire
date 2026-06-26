@@ -298,7 +298,7 @@ The web channel passes a `Session` domain object through the request lifecycle. 
 
 ## Game Dimension
 
-Squire targets multiple games in the \*haven family. Today: Frosthaven and Gloomhaven (2nd Edition). Future: possibly Jaws of the Lion, the original Gloomhaven, or others.
+Squire targets multiple games in the \*haven family. Today, the rules Q&A agent supports Frosthaven and Gloomhaven (2nd Edition). Campaign tracking has a broader content registry: Gloomhaven 1e can include 1e solos and Jaws of the Lion, Jaws can stand alone, GH2e can include GH2e solos, and Frosthaven can include a future `fhsolo` module. Tracker-only games are not valid knowledge-agent `GameId`s until their rules corpus, static data, and eval coverage are added.
 
 To prevent cross-contamination between games (e.g., the agent answering a GH2 question with a Frosthaven rule), each piece of game data carries a `game` dimension:
 

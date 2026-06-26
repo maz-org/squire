@@ -1,0 +1,376 @@
+{
+  "provenance": "Exfiltrated from the Squire campaign-tracker prototype (github.com/maz-org/squire-campaign-tracker, src/GloomhavenTracker.jsx). Jaws of the Lion campaign graph curated from the prototype. Advisory by design: trust the game when it disagrees. Scenario keys are module-local; campaigns store them qualified as \"<module>:<key>\".",
+  "game": "jaws-of-the-lion",
+  "module": "jotl",
+  "scenarios": [
+    {
+      "key": "1",
+      "name": "Roadside Ambush",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "2",
+      "name": "A Hole in the Wall",
+      "prereqsAll": [
+        "1"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "3",
+      "name": "The Black Ship",
+      "prereqsAll": [
+        "2"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "4",
+      "name": "A Ritual in Stone",
+      "prereqsAll": [
+        "3"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "5",
+      "name": "A Deeper Understanding",
+      "prereqsAll": [
+        "4"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "6",
+      "name": "Corrupted Research",
+      "prereqsAll": [
+        "5"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "7",
+      "name": "Sunken Tumor",
+      "prereqsAll": [
+        "6"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "8",
+      "name": "Hidden Tumor",
+      "prereqsAll": [
+        "6"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "9",
+      "name": "Explosive Evolution",
+      "prereqsAll": [],
+      "prereqsAny": [
+        "7",
+        "8"
+      ],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "10",
+      "name": "The Gauntlet",
+      "prereqsAll": [
+        "9"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "11",
+      "name": "Defiled Sewers",
+      "prereqsAll": [
+        "9"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "12",
+      "name": "Beguiling Sewers",
+      "prereqsAll": [
+        "11"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "13",
+      "name": "Vile Harvest",
+      "prereqsAll": [
+        "10"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "14",
+      "name": "Toxic Harvest",
+      "prereqsAll": [
+        "10"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "15",
+      "name": "Tainted Blood",
+      "prereqsAll": [
+        "13"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "16",
+      "name": "Mixed Results",
+      "prereqsAll": [],
+      "prereqsAny": [
+        "12",
+        "15"
+      ],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "17",
+      "name": "Red Twilight",
+      "prereqsAll": [
+        "16"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "18",
+      "name": "The Heist",
+      "prereqsAll": [
+        "17"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "19",
+      "name": "Den of Thieves",
+      "prereqsAll": [
+        "18"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "20",
+      "name": "Misplaced Goods",
+      "prereqsAll": [
+        "17"
+      ],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "21",
+      "name": "Agents of Chaos",
+      "prereqsAll": [],
+      "prereqsAny": [
+        "19",
+        "20"
+      ],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": false,
+      "cond": null,
+      "hazard": false
+    },
+    {
+      "key": "22",
+      "name": "Unfriendly Message",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Red Guard personal mission",
+      "hazard": false
+    },
+    {
+      "key": "23",
+      "name": "Best of the Best",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Hatchet personal mission",
+      "hazard": false
+    },
+    {
+      "key": "24",
+      "name": "Warding the Void",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Voidwarden personal mission",
+      "hazard": false
+    },
+    {
+      "key": "25",
+      "name": "The Greatest Job in the World",
+      "prereqsAll": [],
+      "prereqsAny": [],
+      "mutex": [],
+      "lockedIf": [],
+      "manual": true,
+      "cond": "Demolitionist personal mission",
+      "hazard": false
+    }
+  ],
+  "threads": [
+    {
+      "id": "jotl_tutorial",
+      "label": "JotL - Tutorial",
+      "note": "Scenarios 1-5: play in order, each teaches new rules",
+      "position": 0,
+      "keys": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    },
+    {
+      "id": "jotl_main",
+      "label": "JotL - Main Campaign",
+      "note": "Scenarios 6-21: branching paths that eventually converge",
+      "position": 1,
+      "keys": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21"
+      ]
+    },
+    {
+      "id": "jotl_personal",
+      "label": "JotL - Personal Missions",
+      "note": "One per character - unlock via that character's personal quest",
+      "position": 2,
+      "keys": [
+        "22",
+        "23",
+        "24",
+        "25"
+      ]
+    }
+  ]
+}

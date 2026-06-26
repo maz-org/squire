@@ -1253,6 +1253,40 @@ function syncActiveGameControls() {
   }
 }
 
+function syncCampaignCreateModuleOptions(root) {
+  var scope = root || document;
+  var forms = scope.querySelectorAll
+    ? scope.querySelectorAll('.squire-campaigns__create-form')
+    : [];
+  for (var i = 0; i < forms.length; i += 1) {
+    var form = forms[i];
+    var select = form.querySelector ? form.querySelector('select[name="game"]') : null;
+    if (!select) continue;
+    var options = form.querySelectorAll ? form.querySelectorAll('[data-campaign-module-game]') : [];
+    var update = function () {
+      var selectedGame = select.value;
+      var visibleCount = 0;
+      for (var j = 0; j < options.length; j += 1) {
+        var option = options[j];
+        var input = option.querySelector ? option.querySelector('input[name="module"]') : null;
+        var matches = option.getAttribute('data-campaign-module-game') === selectedGame;
+        option.hidden = !matches;
+        if (input) input.disabled = !matches;
+        if (matches) visibleCount += 1;
+      }
+      var fieldset = form.querySelector
+        ? form.querySelector('[data-campaign-module-options]')
+        : null;
+      if (fieldset) fieldset.hidden = visibleCount === 0;
+    };
+    if (!form.dataset || form.dataset.squireCampaignModulesBound !== 'true') {
+      if (form.dataset) form.dataset.squireCampaignModulesBound = 'true';
+      select.addEventListener('change', update);
+    }
+    update();
+  }
+}
+
 function preferredAnswerWorkOpen(container) {
   var state = container && container.getAttribute ? container.getAttribute('data-work-state') : '';
   if (state === 'error') return true;
@@ -3553,6 +3587,7 @@ document.addEventListener('DOMContentLoaded', function () {
   consumeDashboardToastPayload(document);
   syncChatFormAction();
   syncActiveGameControls();
+  syncCampaignCreateModuleOptions(document);
   syncTranscriptScrollRoot();
   openSheetSectionFromHash();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on

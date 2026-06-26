@@ -29,7 +29,7 @@ import type {
   CampaignRole,
   UpdateCampaignSharedStateInput,
 } from '../db/repositories/types.ts';
-import { normalizeGameId, validateModules } from '../game.ts';
+import { normalizeCampaignGameId, validateCampaignModules } from '../game.ts';
 import type { DbOrTx } from '../auth/audit.ts';
 import { auditedMutation } from './audit.ts';
 import { deriveAvailability } from './availability.ts';
@@ -234,7 +234,7 @@ export async function createCampaign(
   const user = await requireUser(identity.userId);
   assertAllowlisted(user.email);
 
-  const game = normalizeGameId(input.game);
+  const game = normalizeCampaignGameId(input.game);
   if (!game) throw new UnsupportedGameError(input.game);
 
   return auditedMutation(
@@ -317,9 +317,9 @@ export async function updateSharedState(
       // advisory unknowns and return if it is re-added), so no proposal gate.
       let normalizedInput = input;
       if (input.modules !== undefined) {
-        const game = normalizeGameId(before.game);
+        const game = normalizeCampaignGameId(before.game);
         if (!game) throw new UnsupportedGameError(before.game);
-        const check = validateModules(game, input.modules);
+        const check = validateCampaignModules(game, input.modules);
         if (!check.ok) throw new InvalidModulesError(check.reason);
         normalizedInput = { ...input, modules: check.modules };
       }

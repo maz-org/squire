@@ -7,7 +7,7 @@
 import { html } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
-import { gameDefinitionFor, isGameId } from '../game.ts';
+import { campaignGameDefinitionFor, normalizeCampaignGameId } from '../game.ts';
 
 export interface ProfileMembershipRow {
   campaignId: string;
@@ -23,7 +23,8 @@ export interface ProfilePageData {
 }
 
 function gameLabel(game: string): string {
-  return isGameId(game) ? gameDefinitionFor(game).sourcePrefix.toUpperCase() : game.toUpperCase();
+  const campaignGame = normalizeCampaignGameId(game);
+  return campaignGame ? campaignGameDefinitionFor(campaignGame).sourcePrefix.toUpperCase() : game;
 }
 
 export function renderProfileContent(data: ProfilePageData): HtmlEscapedString {
