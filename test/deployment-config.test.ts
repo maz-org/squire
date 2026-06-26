@@ -136,18 +136,20 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('actions/upload-artifact');
   });
 
-  it('defines the manual authenticated API and agent smoke command', async () => {
+  it('defines the scheduled and manual authenticated API and agent smoke command', async () => {
     const packageJson = JSON.parse(await readProjectFile('package.json')) as {
       scripts?: Record<string, string>;
     };
-    const workflow = await readProjectFile('.github/workflows/ci.yml');
+    const ciWorkflow = await readProjectFile('.github/workflows/ci.yml');
+    const workflow = await readProjectFile('.github/workflows/authenticated-api-agent-e2e.yml');
 
     expect(packageJson.scripts?.['e2e:api-agent']).toBe('node scripts/e2e-api-agent-smoke.ts');
+    expect(ciWorkflow).not.toContain('run: npm run e2e:api-agent');
     expect(workflow).toContain('name: Authenticated API and agent E2E smoke');
-    expect(workflow).toContain(
-      "if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]'",
-    );
-    expect(workflow).not.toContain("github.event_name == 'schedule'");
+    expect(workflow).toContain('schedule:');
+    expect(workflow).toContain('cron:');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).not.toContain('pull_request:');
     expect(workflow).toContain('ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}');
     expect(workflow).toContain('VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}');
     expect(workflow).toContain("SQUIRE_LLM_DAILY_BUDGET_USD: '0.25'");
