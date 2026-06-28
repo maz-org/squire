@@ -177,6 +177,10 @@ describe('GET /characters/:id', () => {
     }
     expect(body).not.toContain('data-sheet-section="goals"');
     expect(body).not.toContain('name="level"');
+    expect(body).toContain('squire-sheet__workspace');
+    expect(body).toContain('squire-sheet__panel');
+    expect(body).toContain('squire-sheet__metrics');
+    expect(body).not.toContain('squire-sheet__summary');
     expect(body).toContain('SHEET-PQ-SECRET');
     expect(body).toContain('NOT RECORDED');
     expect(body).toContain('Sheet Hero');

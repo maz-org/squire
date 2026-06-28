@@ -4386,10 +4386,9 @@ template#squire-banner-fixtures {
   color: var(--sepia);
 }
 
-/* ─── Character sheet (SQR-326 supersedes SQR-277 / DESIGN.md G3) ────────────
-   A heavier identity + mat-art header sits above the same deep-linkable
-   edit-in-place sections. The sections stay boring on purpose: they preserve
-   the single-field correction path, no-JS fallback, and anchor contract. */
+/* ─── Character sheet (SQR-326 + SQR-368) ────────────────────────────────────
+   A mat-art hero sits above fixed, paper-sheet-inspired panels. The panels
+   preserve no-JS edits and anchors without looking like accordion rows. */
 
 .squire-banner--claim {
   border-left-color: var(--sage);
@@ -4534,56 +4533,86 @@ template#squire-banner-fixtures {
   border-radius: 8px;
 }
 
-.squire-sheet__sections {
+.squire-sheet__workspace {
   display: grid;
-  gap: 8px;
-  max-width: 720px;
+  gap: var(--space-md);
 }
 
-.squire-sheet__section {
-  background: var(--surface);
+@media (min-width: 980px) {
+  .squire-sheet__workspace {
+    grid-template-columns: minmax(280px, 410px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.squire-sheet__column,
+.squire-sheet__metrics {
+  display: grid;
+  gap: var(--space-md);
+  align-content: start;
+}
+
+.squire-sheet__metrics {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.squire-sheet__panel {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: color-mix(in srgb, var(--surface) 88%, var(--ink));
   border: 1px solid var(--rule);
   border-radius: 8px;
 }
 
-.squire-sheet__summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-  padding: 10px 14px;
-  cursor: pointer;
-  list-style: none;
+.squire-sheet__panel:target {
+  border-color: var(--wax);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wax) 72%, transparent);
 }
 
-.squire-sheet__summary::-webkit-details-marker {
-  display: none;
-}
-
-.squire-sheet__summary-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--sepia);
-}
-
-.squire-sheet__summary-value {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--cream);
-  text-align: right;
-}
-
-.squire-sheet__section[open] .squire-sheet__summary {
+.squire-sheet__panel-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: start;
+  padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--rule);
 }
 
-.squire-sheet__body {
-  padding: 12px 14px 14px;
+.squire-sheet__panel-title {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 1.22rem;
+  line-height: 1.1;
+  color: var(--parchment);
+}
+
+.squire-sheet__panel-value {
+  max-width: 14rem;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-align: right;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-sheet__panel--metric {
+  min-height: 100%;
+}
+
+.squire-sheet__panel--metric .squire-sheet__panel-head {
+  grid-template-columns: 1fr;
+}
+
+.squire-sheet__panel--metric .squire-sheet__panel-value {
+  text-align: left;
+}
+
+.squire-sheet__panel-body {
   display: grid;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .squire-sheet__form {
@@ -4609,7 +4638,7 @@ template#squire-banner-fixtures {
 .squire-sheet__field select,
 .squire-sheet__field textarea {
   width: 100%;
-  max-width: 320px;
+  max-width: 100%;
   min-height: 44px;
   padding: 8px 10px;
   font: inherit;
@@ -4624,14 +4653,36 @@ template#squire-banner-fixtures {
   appearance: none;
 }
 
+.squire-sheet__field--number input {
+  max-width: 9rem;
+  min-height: 58px;
+  font-family: 'Fraunces', serif;
+  font-size: 2rem;
+  line-height: 1;
+}
+
 .squire-sheet__field textarea {
   max-width: 100%;
 }
 
-.squire-sheet__checklist {
-  width: min(100%, 44rem);
+.squire-sheet__xp {
+  width: min(100%, 22rem);
   display: grid;
-  gap: 8px;
+  gap: var(--space-xs);
+  font-size: 12px;
+  color: var(--sepia);
+}
+
+.squire-sheet__xp-meter {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--wax);
+}
+
+.squire-sheet__checklist {
+  width: 100%;
+  display: grid;
+  gap: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -4651,15 +4702,16 @@ template#squire-banner-fixtures {
   gap: 10px;
   align-items: start;
   min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--ink) 74%, transparent);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
   color: var(--parchment-dim);
 }
 
 .squire-sheet__check input {
   margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--wax);
 }
 
 .squire-sheet__check span {
@@ -4679,7 +4731,6 @@ template#squire-banner-fixtures {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 6px;
 }
 
 .squire-sheet__row {
@@ -4688,6 +4739,8 @@ template#squire-banner-fixtures {
   justify-content: space-between;
   gap: 10px;
   min-height: 44px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
   font-size: 13px;
 }
 

@@ -2783,8 +2783,8 @@ function scrollPendingAnswerIntoView(answerEl) {
   answerEl.scrollIntoView({ block: 'start', behavior: 'auto' });
 }
 
-// ─── Accordion character sheet (SQR-277) ─────────────────────────────────────
-// Deep-link anchors: /characters/:id#gold opens the matching section so a
+// ─── Structured character sheet (SQR-277 / SQR-368) ─────────────────────────
+// Deep-link anchors: /characters/:id#gold scroll to the matching panel so a
 // work-log row or validation warning lands the user directly on the field.
 
 function openSheetSectionFromHash() {
@@ -2792,10 +2792,9 @@ function openSheetSectionFromHash() {
   var sectionId = window.location.hash.slice(1);
   if (!sectionId || !document.querySelector) return;
   var section = document.querySelector(
-    '.squire-sheet__section[data-sheet-section="' + sectionId + '"]',
+    '.squire-sheet__panel[data-sheet-section="' + sectionId + '"]',
   );
   if (!section) return;
-  section.open = true;
   if (typeof section.scrollIntoView === 'function') {
     section.scrollIntoView({ block: 'start', behavior: 'auto' });
   }
@@ -3307,7 +3306,7 @@ function attachPendingAnswerStream(answerEl) {
     preToolBuffer = '';
     toolPhaseStarted = true;
     // SQR-258: the state snapshot row sorts first and carries the
-    // fix-it-here deep link to the accordion edit surface.
+    // fix-it-here deep link to the character-sheet panel.
     var row = renderAnswerWorkNarrative(
       answerWork,
       answerWorkEntries,

@@ -20,7 +20,10 @@ and around campaign-managed availability.
 
 ## Decision
 
-Character pages use structured sheet sections, not a generic accordion editor.
+Character pages use structured sheet panels, not a generic accordion editor.
+The panels are always visible and arranged like a digital character record:
+compact identity/progression/gold controls, checklist-style perks, ledger-style
+item and card rows, and separate private panels for personal quest and notes.
 
 - Level is read-only derived state from XP using the shared XP threshold table.
   XP is the only editable progression field.
@@ -47,6 +50,8 @@ Easier:
 - The character sheet can offer controls that match the physical game artifacts:
   class perk checklist, class ability-card picker, campaign item picker, and
   personal quest picker.
+- The page no longer looks like a stack of accordion rows while still keeping
+  the anchor and no-JS save contract.
 - UI state, REST writes, proposals, and agent tools agree on the same character
   contract.
 - Roster level, hero HP, solo availability, and journal reads all derive from

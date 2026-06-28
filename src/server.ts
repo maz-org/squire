@@ -2617,7 +2617,7 @@ app.post('/campaigns/:id/scenarios/toggle', async (c) => {
   return c.redirect(`/campaigns/${campaignId}`, 303);
 });
 
-// ─── Accordion character sheet (SQR-277, design G3) ─────────────────────────
+// ─── Structured character sheet (SQR-277, SQR-368) ──────────────────────────
 
 app.use('/characters/*', requirePageSession());
 app.use('/characters/*', requireCsrf());
@@ -2629,7 +2629,7 @@ const SHEET_CONFLICT_MESSAGE =
 async function renderCharacterSheetPage(
   c: Context,
   characterId: string,
-  state: { errorMessage?: string; warningMessage?: string; openSection?: string } = {},
+  state: { errorMessage?: string; warningMessage?: string } = {},
   status: 200 | 400 | 404 | 409 | 422 = 200,
 ): Promise<Response> {
   const session = c.get('session')!;
@@ -2711,28 +2711,13 @@ async function sheetActionErrorResponse(
 ): Promise<Response> {
   if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
   if (error instanceof VersionConflictError) {
-    return renderCharacterSheetPage(
-      c,
-      characterId,
-      { errorMessage: SHEET_CONFLICT_MESSAGE, openSection: section },
-      409,
-    );
+    return renderCharacterSheetPage(c, characterId, { errorMessage: SHEET_CONFLICT_MESSAGE }, 409);
   }
   if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
-    return renderCharacterSheetPage(
-      c,
-      characterId,
-      { errorMessage: error.message, openSection: section },
-      422,
-    );
+    return renderCharacterSheetPage(c, characterId, { errorMessage: error.message }, 422);
   }
   if (error instanceof CharacterService.CharacterStateValidationError) {
-    return renderCharacterSheetPage(
-      c,
-      characterId,
-      { errorMessage: error.message, openSection: section },
-      422,
-    );
+    return renderCharacterSheetPage(c, characterId, { errorMessage: error.message }, 422);
   }
   throw error;
 }
@@ -2776,7 +2761,7 @@ app.post('/characters/:id/update', async (c) => {
         return renderCharacterSheetPage(
           c,
           characterId,
-          { errorMessage: 'Character name is required.', openSection: section },
+          { errorMessage: 'Character name is required.' },
           400,
         );
       }
@@ -2789,7 +2774,7 @@ app.post('/characters/:id/update', async (c) => {
         return renderCharacterSheetPage(
           c,
           characterId,
-          { errorMessage: 'XP must be a whole number.', openSection: section },
+          { errorMessage: 'XP must be a whole number.' },
           400,
         );
       }
@@ -2802,7 +2787,7 @@ app.post('/characters/:id/update', async (c) => {
         return renderCharacterSheetPage(
           c,
           characterId,
-          { errorMessage: 'Gold must be a whole number.', openSection: section },
+          { errorMessage: 'Gold must be a whole number.' },
           400,
         );
       }
@@ -2819,7 +2804,6 @@ app.post('/characters/:id/update', async (c) => {
           characterId,
           {
             errorMessage: 'Perks must come from the class perk checklist.',
-            openSection: section,
           },
           400,
         );
@@ -2847,7 +2831,6 @@ app.post('/characters/:id/update', async (c) => {
         characterId,
         {
           errorMessage: 'Character update is not valid for this sheet section.',
-          openSection: section,
         },
         400,
       );
@@ -2890,7 +2873,6 @@ app.post('/characters/:id/items/add', async (c) => {
         characterId,
         {
           errorMessage: `Pick an available ${campaign.campaign.game} item from the catalog.`,
-          openSection: 'items',
         },
         400,
       );
@@ -2902,10 +2884,7 @@ app.post('/characters/:id/items/add', async (c) => {
       detail.character.gold,
     );
     if (warnings.length > 0) {
-      return renderCharacterSheetPage(c, characterId, {
-        warningMessage: warnings[0],
-        openSection: 'items',
-      });
+      return renderCharacterSheetPage(c, characterId, { warningMessage: warnings[0] });
     }
     return c.redirect(`/characters/${characterId}#items`, 303);
   } catch (error) {
@@ -2940,7 +2919,6 @@ app.post('/characters/:id/cards/add', async (c) => {
         characterId,
         {
           errorMessage: `Pick a ${detail.character.className} card from the class list.`,
-          openSection: 'cards',
         },
         400,
       );

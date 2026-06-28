@@ -1,7 +1,7 @@
 /**
  * Structured character sheet — the `/characters/:id` surface for viewing and
- * editing real character state. Sections are deep-linkable (`#items`, `#quest`)
- * but not accordion-first; the controls use the campaign/catalog data the
+ * editing real character state. Panels are deep-linkable (`#items`, `#quest`)
+ * but are not disclosure rows; the controls use the campaign/catalog data the
  * service layer validates.
  *
  * Non-owners see member-visible fields only — the private tier is absent
@@ -19,6 +19,7 @@ import type {
   ItemOption,
   PersonalQuestOption,
 } from '../campaign/character-sheet-data.ts';
+import { LEVEL_XP_THRESHOLDS } from '../campaign/character-level.ts';
 import { characterMatArtworkFor } from './character-mat-assets.ts';
 
 export interface CharacterSheetData {
@@ -38,7 +39,6 @@ export interface CharacterSheetData {
   errorMessage?: string;
   /** Soft rules-legality warning (SQR-285) surfaced inline. */
   warningMessage?: string;
-  openSection?: string;
 }
 
 function csrfField(token: string): HtmlEscapedString {
@@ -53,22 +53,22 @@ function versionField(version: number): HtmlEscapedString {
   />` as HtmlEscapedString;
 }
 
-function section(input: {
+function panel(input: {
   id: string;
-  label: string;
+  title: string;
   summaryValue: string;
   body: HtmlEscapedString;
+  className?: string;
 }): HtmlEscapedString {
-  return html`<section
-    class="squire-sheet__section"
-    id="${input.id}"
-    data-sheet-section="${input.id}"
-  >
-    <header class="squire-sheet__summary">
-      <span class="squire-sheet__summary-label">${input.label}</span>
-      <span class="squire-sheet__summary-value">${input.summaryValue}</span>
+  const className = input.className
+    ? `squire-sheet__panel ${input.className}`
+    : 'squire-sheet__panel';
+  return html`<section class="${className}" id="${input.id}" data-sheet-section="${input.id}">
+    <header class="squire-sheet__panel-head">
+      <h2 class="squire-sheet__panel-title">${input.title}</h2>
+      <span class="squire-sheet__panel-value">${input.summaryValue}</span>
     </header>
-    <div class="squire-sheet__body">${input.body}</div>
+    <div class="squire-sheet__panel-body">${input.body}</div>
   </section>` as HtmlEscapedString;
 }
 
@@ -158,6 +158,45 @@ function selectedPerks(
 function hpForLevel(mat: CharacterMatSummary | null | undefined, level: number): number | null {
   if (!mat) return null;
   return mat.hpByLevel[String(level)] ?? null;
+}
+
+function xpBand(
+  level: number,
+  xp: number,
+): {
+  current: number;
+  next: number | null;
+  value: number;
+  label: string;
+} {
+  const current =
+    LEVEL_XP_THRESHOLDS[Math.max(0, Math.min(level - 1, LEVEL_XP_THRESHOLDS.length - 1))];
+  const next = LEVEL_XP_THRESHOLDS[level] ?? null;
+  if (next === null) {
+    return {
+      current,
+      next,
+      value: Math.max(current, xp),
+      label: 'Maximum sheet level',
+    };
+  }
+  return {
+    current,
+    next,
+    value: Math.max(current, Math.min(xp, next)),
+    label: `Next: L${level + 1} at ${next} XP`,
+  };
+}
+
+function renderXpMeter(level: number, xp: number): HtmlEscapedString {
+  const band = xpBand(level, xp);
+  const max = band.next ?? Math.max(band.current + 1, band.value);
+  return html`<div class="squire-sheet__xp">
+    <meter class="squire-sheet__xp-meter" min="${band.current}" max="${max}" value="${band.value}">
+      ${band.value}
+    </meter>
+    <span>${band.label}</span>
+  </div>` as HtmlEscapedString;
 }
 
 function renderHeroStat(label: string, value: string | number | null): HtmlEscapedString {
@@ -354,189 +393,210 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
         </div>`
       : html``}
 
-    <div class="squire-sheet__sections">
-      ${section({
-        id: 'identity',
-        label: 'IDENTITY',
-        summaryValue: `${character.name} · ${character.className.toUpperCase()}`,
-        body: own
-          ? fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'identity',
-              fields: html`<label class="squire-sheet__field">
-                <span>Name</span>
-                <input type="text" name="name" value="${character.name}" required maxlength="100" />
-              </label>` as HtmlEscapedString,
-            })
-          : (html`<p class="squire-sheet__readonly">
-              ${character.name} · ${character.className}
-            </p>` as HtmlEscapedString),
-      })}
-      ${section({
-        id: 'progress',
-        label: 'PROGRESS',
-        summaryValue: `L${character.level} · ${character.xp} XP`,
-        body: own
-          ? fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'progress',
-              fields: html`<label class="squire-sheet__field">
-                  <span>XP</span>
-                  <input type="number" name="xp" value="${character.xp}" min="0" required />
-                </label>
-                <p class="squire-sheet__readonly">
-                  Level is derived from XP.
-                </p>` as HtmlEscapedString,
-            })
-          : (html`<p class="squire-sheet__readonly">
-              L${character.level} · ${character.xp} XP
-            </p>` as HtmlEscapedString),
-      })}
-      ${section({
-        id: 'gold',
-        label: 'GOLD',
-        summaryValue: `${character.gold}`,
-        body: own
-          ? fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'gold',
-              fields: html`<label class="squire-sheet__field">
-                <span>Gold</span>
-                <input type="number" name="gold" value="${character.gold}" min="0" required />
-              </label>` as HtmlEscapedString,
-            })
-          : (html`<p class="squire-sheet__readonly">
-              ${character.gold} gold
-            </p>` as HtmlEscapedString),
-      })}
-      ${section({
-        id: 'perks',
-        label: 'PERKS',
-        summaryValue:
-          character.perks.length > 0 ? `${character.perks.length} MARKED` : 'NOT RECORDED',
-        body: own
-          ? fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'perks',
-              fields: renderPerkControls(character, data.characterMat),
-            })
-          : (html`<p class="squire-sheet__readonly">
-              ${character.perks.length > 0 ? `${character.perks.length} marked` : 'Not recorded'}
-            </p>` as HtmlEscapedString),
-      })}
-      ${section({
-        id: 'items',
-        label: 'ITEMS',
-        summaryValue: detail.items.length > 0 ? `${detail.items.length} CARRIED` : 'NOT RECORDED',
-        body: html`${detail.items.length > 0
-          ? html`<ul class="squire-sheet__rows">
-              ${detail.items.map((item) => itemRow(item, data.itemNames, own, id, csrfToken))}
-            </ul>`
-          : html`<p class="squire-sheet__empty">Not recorded.</p>`}
-        ${own
-          ? html`<form
-              class="squire-sheet__form"
-              method="post"
-              action="/characters/${id}/items/add"
-            >
-              ${csrfField(csrfToken)}
-              <label class="squire-sheet__field">
-                <span>Add item from catalog</span>
-                <select name="sourceId" required>
-                  <option value="">Choose an available item</option>
-                  ${renderItemSelectOptions(data.itemOptions, ownedItemIds)}
-                </select>
-              </label>
-              <button
-                type="submit"
-                class="squire-button squire-button--primary squire-button--small"
-              >
-                Add item
-              </button>
-            </form>`
-          : html``}` as HtmlEscapedString,
-      })}
-      ${section({
-        id: 'cards',
-        label: 'ABILITY CARDS',
-        summaryValue: detail.cards.length > 0 ? `${detail.cards.length} IN POOL` : 'NOT RECORDED',
-        body: html`${detail.cards.length > 0
-          ? html`<ul class="squire-sheet__rows">
-              ${detail.cards.map((card) => cardRow(card, data.cardNames, own, id, csrfToken))}
-            </ul>`
-          : html`<p class="squire-sheet__empty">Not recorded.</p>`}
-        ${own
-          ? html`<form
-              class="squire-sheet__form"
-              method="post"
-              action="/characters/${id}/cards/add"
-            >
-              ${csrfField(csrfToken)}
-              <label class="squire-sheet__field">
-                <span>Add ${character.className} card</span>
-                <select name="sourceId" required>
-                  <option value="">Choose a class card</option>
-                  ${renderCardSelectOptions(data.cardOptions, ownedCardIds)}
-                </select>
-              </label>
-              <button
-                type="submit"
-                class="squire-button squire-button--primary squire-button--small"
-              >
-                Add card
-              </button>
-            </form>`
-          : html``}` as HtmlEscapedString,
-      })}
-      ${privateTier
-        ? html`${section({
-            id: 'quest',
-            label: 'PERSONAL QUEST',
-            summaryValue: selectedQuestName(privateTier.personalQuestSourceId, data.questNames),
-            body: fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'quest',
-              fields: html`<label class="squire-sheet__field">
-                <span>Personal quest</span>
-                <select name="personalQuestSourceId">
-                  <option value="">No personal quest selected</option>
-                  ${renderQuestSelectOptions({
-                    options: data.questOptions,
-                    selected: privateTier.personalQuestSourceId,
-                    characterId: id,
-                  })}
-                </select>
-              </label>` as HtmlEscapedString,
-            }),
+    <div class="squire-sheet__workspace">
+      <div class="squire-sheet__column squire-sheet__column--record">
+        <div class="squire-sheet__metrics" aria-label="Core character fields">
+          ${panel({
+            id: 'identity',
+            title: 'Name',
+            summaryValue: character.className.toUpperCase(),
+            className: 'squire-sheet__panel--metric',
+            body: own
+              ? fieldForm({
+                  action: updateAction,
+                  csrfToken,
+                  version: character.version,
+                  sectionId: 'identity',
+                  fields: html`<label class="squire-sheet__field">
+                    <span>Name</span>
+                    <input
+                      type="text"
+                      name="name"
+                      value="${character.name}"
+                      required
+                      maxlength="100"
+                    />
+                  </label>` as HtmlEscapedString,
+                })
+              : (html`<p class="squire-sheet__readonly">
+                  ${character.name} · ${character.className}
+                </p>` as HtmlEscapedString),
           })}
-          ${section({
-            id: 'notes',
-            label: 'NOTES',
-            summaryValue: privateValue(privateTier.privateNotes) ? 'RECORDED' : 'NOT RECORDED',
-            body: fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'notes',
-              fields: html`<label class="squire-sheet__field">
-                <span>Private notes (only you can see this)</span>
-                <textarea name="privateNotes" maxlength="5000" rows="4">
-${privateValue(privateTier.privateNotes)}</textarea
+          ${panel({
+            id: 'progress',
+            title: 'Level / XP',
+            summaryValue: `L${character.level}`,
+            className: 'squire-sheet__panel--metric',
+            body: own
+              ? fieldForm({
+                  action: updateAction,
+                  csrfToken,
+                  version: character.version,
+                  sectionId: 'progress',
+                  fields: html`<label class="squire-sheet__field squire-sheet__field--number">
+                      <span>XP</span>
+                      <input type="number" name="xp" value="${character.xp}" min="0" required />
+                    </label>
+                    ${renderXpMeter(character.level, character.xp)}
+                    <p class="squire-sheet__readonly">
+                      Level is derived from XP.
+                    </p>` as HtmlEscapedString,
+                })
+              : (html`<p class="squire-sheet__readonly">
+                  L${character.level} · ${character.xp} XP
+                </p>` as HtmlEscapedString),
+          })}
+          ${panel({
+            id: 'gold',
+            title: 'Gold',
+            summaryValue: `${character.gold}`,
+            className: 'squire-sheet__panel--metric',
+            body: own
+              ? fieldForm({
+                  action: updateAction,
+                  csrfToken,
+                  version: character.version,
+                  sectionId: 'gold',
+                  fields: html`<label class="squire-sheet__field squire-sheet__field--number">
+                    <span>Gold</span>
+                    <input type="number" name="gold" value="${character.gold}" min="0" required />
+                  </label>` as HtmlEscapedString,
+                })
+              : (html`<p class="squire-sheet__readonly">
+                  ${character.gold} gold
+                </p>` as HtmlEscapedString),
+          })}
+        </div>
+
+        ${panel({
+          id: 'items',
+          title: 'Items',
+          summaryValue: detail.items.length > 0 ? `${detail.items.length} CARRIED` : 'NOT RECORDED',
+          body: html`${detail.items.length > 0
+            ? html`<ul class="squire-sheet__rows">
+                ${detail.items.map((item) => itemRow(item, data.itemNames, own, id, csrfToken))}
+              </ul>`
+            : html`<p class="squire-sheet__empty">Not recorded.</p>`}
+          ${own
+            ? html`<form
+                class="squire-sheet__form"
+                method="post"
+                action="/characters/${id}/items/add"
+              >
+                ${csrfField(csrfToken)}
+                <label class="squire-sheet__field">
+                  <span>Add item from catalog</span>
+                  <select name="sourceId" required>
+                    <option value="">Choose an available item</option>
+                    ${renderItemSelectOptions(data.itemOptions, ownedItemIds)}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  class="squire-button squire-button--primary squire-button--small"
                 >
-              </label>` as HtmlEscapedString,
-            }),
-          })}`
-        : html``}
+                  Add item
+                </button>
+              </form>`
+            : html``}` as HtmlEscapedString,
+        })}
+        ${privateTier
+          ? panel({
+              id: 'quest',
+              title: 'Personal Quest',
+              summaryValue: selectedQuestName(privateTier.personalQuestSourceId, data.questNames),
+              body: fieldForm({
+                action: updateAction,
+                csrfToken,
+                version: character.version,
+                sectionId: 'quest',
+                fields: html`<label class="squire-sheet__field">
+                  <span>Personal quest</span>
+                  <select name="personalQuestSourceId">
+                    <option value="">No personal quest selected</option>
+                    ${renderQuestSelectOptions({
+                      options: data.questOptions,
+                      selected: privateTier.personalQuestSourceId,
+                      characterId: id,
+                    })}
+                  </select>
+                </label>` as HtmlEscapedString,
+              }),
+            })
+          : html``}
+      </div>
+
+      <div class="squire-sheet__column squire-sheet__column--build">
+        ${panel({
+          id: 'perks',
+          title: 'Perks',
+          summaryValue:
+            character.perks.length > 0 ? `${character.perks.length} MARKED` : 'NOT RECORDED',
+          className: 'squire-sheet__panel--wide',
+          body: own
+            ? fieldForm({
+                action: updateAction,
+                csrfToken,
+                version: character.version,
+                sectionId: 'perks',
+                fields: renderPerkControls(character, data.characterMat),
+              })
+            : (html`<p class="squire-sheet__readonly">
+                ${character.perks.length > 0 ? `${character.perks.length} marked` : 'Not recorded'}
+              </p>` as HtmlEscapedString),
+        })}
+        ${panel({
+          id: 'cards',
+          title: 'Ability Cards',
+          summaryValue: detail.cards.length > 0 ? `${detail.cards.length} IN POOL` : 'NOT RECORDED',
+          body: html`${detail.cards.length > 0
+            ? html`<ul class="squire-sheet__rows">
+                ${detail.cards.map((card) => cardRow(card, data.cardNames, own, id, csrfToken))}
+              </ul>`
+            : html`<p class="squire-sheet__empty">Not recorded.</p>`}
+          ${own
+            ? html`<form
+                class="squire-sheet__form"
+                method="post"
+                action="/characters/${id}/cards/add"
+              >
+                ${csrfField(csrfToken)}
+                <label class="squire-sheet__field">
+                  <span>Add ${character.className} card</span>
+                  <select name="sourceId" required>
+                    <option value="">Choose a class card</option>
+                    ${renderCardSelectOptions(data.cardOptions, ownedCardIds)}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  class="squire-button squire-button--primary squire-button--small"
+                >
+                  Add card
+                </button>
+              </form>`
+            : html``}` as HtmlEscapedString,
+        })}
+        ${privateTier
+          ? panel({
+              id: 'notes',
+              title: 'Notes',
+              summaryValue: privateValue(privateTier.privateNotes) ? 'RECORDED' : 'NOT RECORDED',
+              body: fieldForm({
+                action: updateAction,
+                csrfToken,
+                version: character.version,
+                sectionId: 'notes',
+                fields: html`<label class="squire-sheet__field">
+                  <span>Private notes (only you can see this)</span>
+                  <textarea name="privateNotes" maxlength="5000" rows="4">
+${privateValue(privateTier.privateNotes)}</textarea
+                  >
+                </label>` as HtmlEscapedString,
+              }),
+            })
+          : html``}
+      </div>
     </div>
   </section>` as HtmlEscapedString;
 }
