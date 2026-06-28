@@ -88,7 +88,15 @@ async function ensureCharacter(input: {
   const existing = (
     await CharacterRepository.listOwnedByCampaign(input.campaignId, input.ownerUserId)
   ).find((character) => character.name === input.name);
-  if (existing) return existing.id;
+  if (existing) {
+    if (existing.privateNotes !== (input.privateNotes ?? null)) {
+      await CharacterRepository.update(db, existing.id, {
+        expectedVersion: existing.version,
+        privateNotes: input.privateNotes ?? null,
+      });
+    }
+    return existing.id;
+  }
   const character = await CharacterRepository.create(db, {
     campaignId: input.campaignId,
     ownerUserId: input.ownerUserId,

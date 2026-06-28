@@ -88,13 +88,32 @@ function hasPrivateFields(input: {
   personalQuestSourceId?: string | null;
   privateNotes?: string | null;
 }): boolean {
-  // Key presence, not value: even an explicit null is an attempt to record
-  // a private-tier field on a placeholder (ADR 0021).
-  return 'personalQuestSourceId' in input || 'privateNotes' in input;
+  // Explicit null and any defined private-tier value are attempts to record a
+  // private field on a placeholder; undefined is equivalent to omission.
+  return input.personalQuestSourceId !== undefined || input.privateNotes !== undefined;
 }
 
 function stateValidation(error: CharacterCatalogError): CharacterStateValidationError {
   return new CharacterStateValidationError(error.message);
+}
+
+function isPersonalQuestAssignmentConflict(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === '23505' &&
+    'constraint' in error &&
+    (error as { constraint?: unknown }).constraint ===
+      'characters_campaign_personal_quest_source_idx'
+  );
+}
+
+function mapCharacterWriteError(error: unknown): never {
+  if (isPersonalQuestAssignmentConflict(error)) {
+    throw new CharacterStateValidationError('Personal quest is already assigned.');
+  }
+  throw error;
 }
 
 async function campaignFor(campaignId: string) {
@@ -192,6 +211,7 @@ export async function createCharacter(
           // The row does not exist yet, so assignment exclusion can use a
           // never-matching UUID.
           await assertPersonalQuestAvailable({
+            handle: tx,
             campaignId,
             game: campaign.game,
             sourceId: input.personalQuestSourceId,
@@ -203,18 +223,23 @@ export async function createCharacter(
         throw error;
       }
 
-      const character = await CharacterRepository.create(tx, {
-        campaignId,
-        ownerUserId: identity.userId,
-        placeholderForEmail,
-        name: input.name,
-        className,
-        xp: input.xp,
-        gold: input.gold,
-        perks: input.perks,
-        personalQuestSourceId: input.personalQuestSourceId,
-        privateNotes: input.privateNotes,
-      });
+      let character: Character;
+      try {
+        character = await CharacterRepository.create(tx, {
+          campaignId,
+          ownerUserId: identity.userId,
+          placeholderForEmail,
+          name: input.name,
+          className,
+          xp: input.xp,
+          gold: input.gold,
+          perks: input.perks,
+          personalQuestSourceId: input.personalQuestSourceId,
+          privateNotes: input.privateNotes,
+        });
+      } catch (error) {
+        mapCharacterWriteError(error);
+      }
       return {
         result: character,
         entityId: character.id,
@@ -264,6 +289,7 @@ export async function getCharacterDetail(
 }
 
 async function validateCharacterPatch(
+  tx: DbOrTx,
   characterId: string,
   before: Character,
   input: UpdateCharacterInput,
@@ -295,6 +321,7 @@ async function validateCharacterPatch(
     }
     if (input.personalQuestSourceId !== undefined && input.personalQuestSourceId !== null) {
       await assertPersonalQuestAvailable({
+        handle: tx,
         campaignId: before.campaignId,
         game: campaign.game,
         sourceId: input.personalQuestSourceId,
@@ -341,7 +368,7 @@ export async function updateCharacter(
       if (before.placeholderForEmail !== null && hasPrivateFields(input)) {
         throw new PlaceholderPrivateFieldsError();
       }
-      const validatedInput = await validateCharacterPatch(characterId, before, input);
+      const validatedInput = await validateCharacterPatch(tx, characterId, before, input);
       // Retirement reverses an active character — destructive per the
       // matrix (the guided flow itself stays deferred, SQR-289).
       if (
@@ -351,7 +378,12 @@ export async function updateCharacter(
       ) {
         throw new ProposalRequiredError('character.retire');
       }
-      const updated = await CharacterRepository.update(tx, characterId, validatedInput);
+      let updated: Character;
+      try {
+        updated = await CharacterRepository.update(tx, characterId, validatedInput);
+      } catch (error) {
+        mapCharacterWriteError(error);
+      }
 
       const changedKeys = Object.keys(validatedInput).filter((key) => key !== 'expectedVersion');
       const pick = (source: Record<string, unknown>) =>

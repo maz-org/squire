@@ -492,6 +492,24 @@ describe('create-character UI (SQR-318)', () => {
     expect(await res.text()).toContain('Class is required.');
   });
 
+  it('rejects malformed XP without truncating it', async () => {
+    const { owner, campaign } = await setupFixture();
+    const res = await createCharacter(owner, campaign.id, {
+      name: 'Bad XP',
+      className: 'Drifter',
+      xp: '12abc',
+    });
+    expect(res.status).toBe(422);
+    const body = await res.text();
+    expect(body).toContain('XP must be a whole number.');
+    expect(body).toContain('value="12abc"');
+
+    const dash = await app.request(`/campaigns/${campaign.id}/party`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(await dash.text()).toContain('No active characters yet');
+  });
+
   it('404s a non-member who tries to create on a campaign they cannot see', async () => {
     const { campaign } = await setupFixture();
     const outsider = await createTestUser(OUTSIDER_EMAIL);

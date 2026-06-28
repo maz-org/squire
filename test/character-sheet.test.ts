@@ -178,6 +178,7 @@ describe('GET /characters/:id', () => {
     expect(body).not.toContain('data-sheet-section="goals"');
     expect(body).not.toContain('name="level"');
     expect(body).toContain('SHEET-PQ-SECRET');
+    expect(body).toContain('NOT RECORDED');
     expect(body).toContain('Sheet Hero');
     expect(body).toContain('action="/characters/' + character.id + '/update"');
   });

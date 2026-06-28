@@ -1,4 +1,5 @@
 ALTER TABLE "characters" ADD COLUMN "personal_quest_source_id" text;
+CREATE UNIQUE INDEX "characters_campaign_personal_quest_source_idx" ON "characters" USING btree ("campaign_id","personal_quest_source_id") WHERE "personal_quest_source_id" IS NOT NULL;
 
 CREATE TABLE "campaign_item_catalog" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

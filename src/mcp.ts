@@ -352,7 +352,6 @@ export function createMcpServer(): McpServer {
         campaignId: z.string().describe('Campaign UUID'),
         name: z.string().describe('Character name'),
         className: z.string().describe('Class, e.g. Drifter'),
-        level: z.number().int().optional(),
         xp: z.number().int().optional(),
         gold: z.number().int().optional(),
         placeholderForEmail: z

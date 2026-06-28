@@ -441,7 +441,6 @@ export const AGENT_TOOLS = [
         campaignId: { type: 'string', description: 'Campaign UUID' },
         name: { type: 'string', description: 'Character name' },
         className: { type: 'string', description: 'Class, e.g. Drifter or Banner Spear' },
-        level: { type: 'integer', minimum: 1, maximum: 20 },
         xp: { type: 'integer', minimum: 0 },
         gold: { type: 'integer', minimum: 0 },
         placeholderForEmail: {

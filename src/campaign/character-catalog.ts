@@ -7,6 +7,7 @@
  */
 import { and, eq, inArray } from 'drizzle-orm';
 
+import type { DbOrTx } from '../auth/audit.ts';
 import { getDb } from '../db.ts';
 import * as CatalogRepository from '../db/repositories/character-catalog-repository.ts';
 import type { CampaignCatalogEntry, CampaignCatalogStatus } from '../db/repositories/types.ts';
@@ -184,12 +185,13 @@ export async function assertAbilityCardSourceForClass(input: {
 }
 
 export async function assertPersonalQuestAvailable(input: {
+  handle?: DbOrTx;
   campaignId: string;
   game: string;
   sourceId: string;
   characterId: string;
 }): Promise<void> {
-  const { db } = getDb('server');
+  const db = input.handle ?? getDb('server').db;
   const rows = await db
     .select({ name: cardPersonalQuests.name })
     .from(cardPersonalQuests)

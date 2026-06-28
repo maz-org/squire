@@ -22,7 +22,7 @@ import * as CharacterRepository from '../db/repositories/character-repository.ts
 import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
 import { availabilityShiftLines } from './availability.ts';
 import { checkClassName, knownClassNames } from './class-validation.ts';
-import { CharacterStatePatchSchema } from './character-state.ts';
+import { CharacterStatePatchSchema, hasCharacterPatchFields } from './character-state.ts';
 import * as CampaignService from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from './identity.ts';
@@ -155,7 +155,7 @@ const WriteCampaignStateInputSchema = z.object({
 const WriteCharacterStateInputSchema = z.object({
   characterId: z.string().uuid(),
   patch: CharacterStatePatchSchema.omit({ status: true, successorId: true }).refine(
-    (patch) => Object.keys(patch).length > 0,
+    hasCharacterPatchFields,
     {
       message: 'At least one field to update is required',
     },

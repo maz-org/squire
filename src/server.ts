@@ -73,7 +73,11 @@ import {
   updateItemCatalogStatus,
   updatePersonalQuestCatalogStatus,
 } from './campaign/character-catalog.ts';
-import { CharacterStatePatchSchema } from './campaign/character-state.ts';
+import {
+  CharacterStatePatchSchema,
+  NonEmptyCharacterStatePatchSchema,
+  hasCharacterPatchFields,
+} from './campaign/character-state.ts';
 import { renderCharacterSheetContent } from './web-ui/character-sheet.ts';
 import { renderProfileContent } from './web-ui/profile-page.ts';
 import * as CharacterRepository from './db/repositories/character-repository.ts';
@@ -1910,9 +1914,8 @@ app.post('/campaigns/:id/characters', async (c) => {
   const classNameInput =
     typeof form.get('className') === 'string' ? (form.get('className') as string).trim() : '';
   const xpRaw = form.get('xp');
-  const xpValue = typeof xpRaw === 'string' ? xpRaw : '0';
-  const xpNum = typeof xpRaw === 'string' ? Number.parseInt(xpRaw, 10) : Number.NaN;
-  const xp = Number.isFinite(xpNum) ? Math.max(0, xpNum) : 0;
+  const xpValue = typeof xpRaw === 'string' ? xpRaw.trim() : '0';
+  const xp = xpValue === '' ? 0 : /^\d+$/.test(xpValue) ? Number.parseInt(xpValue, 10) : null;
   const characterFormValues = {
     nameValue: name,
     classNameValue: classNameInput,
@@ -1938,6 +1941,14 @@ app.post('/campaigns/:id/characters', async (c) => {
         c,
         campaignId,
         { characterError: 'Class is required.', characterFormValues, view: 'party' },
+        422,
+      );
+    }
+    if (xp === null) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: 'XP must be a whole number.', characterFormValues, view: 'party' },
         422,
       );
     }
@@ -2829,7 +2840,7 @@ app.post('/characters/:id/update', async (c) => {
 
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
-    const parsedPatch = CharacterStatePatchSchema.safeParse(patch);
+    const parsedPatch = NonEmptyCharacterStatePatchSchema.safeParse(patch);
     if (!parsedPatch.success) {
       return renderCharacterSheetPage(
         c,
@@ -5270,7 +5281,7 @@ const UpdateCharacterRequestSchema = z
     ...CharacterStatePatchSchema.shape,
   })
   .strict()
-  .refine((body) => Object.keys(body).length > 1, {
+  .refine(hasCharacterPatchFields, {
     message: 'At least one field to update is required',
   });
 

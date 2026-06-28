@@ -178,6 +178,9 @@ export const characters = pgTable(
     index('characters_campaign_idx').on(t.campaignId),
     index('characters_owner_idx').on(t.ownerUserId),
     index('characters_successor_idx').on(t.successorId),
+    uniqueIndex('characters_campaign_personal_quest_source_idx')
+      .on(t.campaignId, t.personalQuestSourceId)
+      .where(sql`${t.personalQuestSourceId} IS NOT NULL`),
   ],
 );
 

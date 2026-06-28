@@ -292,7 +292,7 @@ function selectedQuestName(
   sourceId: string | null | undefined,
   names: Map<string, PersonalQuestOption>,
 ): string {
-  if (!sourceId) return 'NOT SELECTED';
+  if (!sourceId) return 'NOT RECORDED';
   return names.get(sourceId)?.name.toUpperCase() ?? 'SELECTED';
 }
 

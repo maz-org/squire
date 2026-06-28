@@ -8,6 +8,11 @@
 import { z } from 'zod';
 
 const PrivateNotesSchema = z.string().trim().min(1).max(5000).nullable();
+const EMPTY_PATCH_MESSAGE = 'At least one character field to update is required';
+
+export function hasCharacterPatchFields(patch: object): boolean {
+  return Object.keys(patch).some((key) => key !== 'expectedVersion');
+}
 
 export const CharacterStatePatchSchema = z
   .object({
@@ -23,12 +28,17 @@ export const CharacterStatePatchSchema = z
   })
   .strict();
 
+export const NonEmptyCharacterStatePatchSchema = CharacterStatePatchSchema.refine(
+  hasCharacterPatchFields,
+  { message: EMPTY_PATCH_MESSAGE },
+);
+
 export const StagedCharacterStatePatchSchema = CharacterStatePatchSchema.pick({
   name: true,
   className: true,
   xp: true,
   gold: true,
   perks: true,
-}).refine((patch) => Object.keys(patch).length > 0, { message: 'Empty patch' });
+}).refine(hasCharacterPatchFields, { message: EMPTY_PATCH_MESSAGE });
 
 export type CharacterStatePatch = z.infer<typeof CharacterStatePatchSchema>;

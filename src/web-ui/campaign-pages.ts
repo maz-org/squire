@@ -985,6 +985,7 @@ function renderCampaignCatalogForm(
             <label class="squire-campaign-settings__field">
               <span>${data.sourceLabel}</span>
               <select name="sourceId" required>
+                <option value="">Choose ${data.sourceLabel.toLowerCase()}</option>
                 ${data.options.map(
                   (option) =>
                     html`<option value="${option.sourceId}">
@@ -998,12 +999,7 @@ function renderCampaignCatalogForm(
               ${(['available', 'locked', 'unavailable'] as const).map(
                 (status) =>
                   html`<label class="squire-campaign-settings__option">
-                    <input
-                      type="radio"
-                      name="status"
-                      value="${status}"
-                      ${status === 'available' ? raw('checked') : raw('')}
-                    />
+                    <input type="radio" name="status" value="${status}" required />
                     ${status}
                   </label>`,
               )}

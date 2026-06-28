@@ -19,7 +19,12 @@ import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middl
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
 import { users } from '../src/db/schema/core.ts';
-import { cardCharacterAbilities, cardCharacterMats, cardItems } from '../src/db/schema/cards.ts';
+import {
+  cardCharacterAbilities,
+  cardCharacterMats,
+  cardItems,
+  cardPersonalQuests,
+} from '../src/db/schema/cards.ts';
 import { updateItemCatalogStatus } from '../src/campaign/character-catalog.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -178,6 +183,11 @@ describe('owner character CRUD', () => {
     expect(conflict.error).toBe('version_conflict');
     expect(conflict.currentVersion).toBe(updated.version);
 
+    const emptyPatch = await request(owner, 'PATCH', `/api/characters/${character.id}`, {
+      expectedVersion: updated.version,
+    });
+    expect(emptyPatch.status).toBe(400);
+
     // One-shot character delete is impossible (SQR-279); the proposal
     // dance executes it.
     const oneShot = await request(owner, 'DELETE', `/api/characters/${character.id}`);
@@ -203,6 +213,42 @@ describe('owner character CRUD', () => {
       characters: Array<Record<string, unknown>>;
     };
     expect(characters.map((ch) => ch.name).sort()).toEqual(['First', 'Owners', 'Second']);
+  });
+
+  it('rejects assigning the same personal quest to two characters', async () => {
+    const { owner, campaignId } = await setupCampaign();
+    const { db } = getDb('server');
+    const sourceId = 'test-api-pq-unique';
+    await db
+      .insert(cardPersonalQuests)
+      .values({
+        game: 'frosthaven',
+        sourceId,
+        cardId: '999',
+        altId: '999',
+        name: 'Shared Fate',
+        requirements: [],
+        openEnvelope: '',
+      })
+      .onConflictDoNothing();
+
+    try {
+      await createCharacter(owner, campaignId, {
+        name: 'Quest Owner',
+        personalQuestSourceId: sourceId,
+      });
+      const duplicate = await request(owner, 'POST', `/api/campaigns/${campaignId}/characters`, {
+        name: 'Quest Duplicate',
+        className: 'Drifter',
+        personalQuestSourceId: sourceId,
+      });
+      expect(duplicate.status).toBe(422);
+      const body = (await duplicate.json()) as { error: string; message: string };
+      expect(body.error).toBe('invalid_character_state');
+      expect(body.message).toContain('already assigned');
+    } finally {
+      await db.delete(cardPersonalQuests).where(eq(cardPersonalQuests.sourceId, sourceId));
+    }
   });
 
   it('validates and canonicalizes class names at the API write boundary', async () => {
