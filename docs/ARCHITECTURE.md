@@ -155,7 +155,7 @@ when changing stream routes, browser rendering, or regression coverage.
 
 **Note on transports:** an earlier design considered using **internal MCP** as the transport between the conversation and knowledge agents. That was dropped because internal callers would have needed to bypass auth, which was undesirable. The two-agent _split_ remains; only the internal MCP _transport_ was rejected. The split uses direct in-process function calls today.
 
-This pays off as channels multiply (Phase 8). A future Discord bot or iMessage client can call the same knowledge agent with the same reasoning, instead of each channel reimplementing the agent loop. The knowledge agent becomes the durable core; conversation agents are channel-specific skins.
+This pays off as channels multiply (Phase 7). A future Discord bot or iMessage client can call the same knowledge agent with the same reasoning, instead of each channel reimplementing the agent loop. The knowledge agent becomes the durable core; conversation agents are channel-specific skins.
 
 ### Graduated optimization
 
@@ -215,7 +215,7 @@ _Note: embedding model and vector store are two independent choices that can evo
   - Sonnet 4.6 — default agent loop
   - Haiku 4.5 — cheap / fast cases (simple lookups, classification)
   - Opus 4.6 — complex reasoning only when Sonnet falls short
-- **Capabilities used:** long context, tool use, structured JSON output. Vision is reserved for the future character-state ingestion path (Phase 6 in SPEC.md) and is not part of the current architecture.
+- **Capabilities used:** long context, tool use, structured JSON output. Vision is not part of the current architecture.
 
 ### Document parsing
 
@@ -392,7 +392,7 @@ embedding model/version changes or known corrupt indexes. The operator procedure
 
 ### Character State
 
-_Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md) for the user-facing description and the five ingestion options under consideration. The data model is:_
+_Phase 4 owns campaign and character state. Squire's Postgres state is the source of truth for the current GH2 campaign; third-party tracker ingestion is no longer on the roadmap. The data model is:_
 
 ```typescript
 {
@@ -413,8 +413,10 @@ _Phase 4 (manual entry) and Phase 6 (automated ingestion). See [SPEC.md](SPEC.md
     completedScenarios: string[]
     // etc.
   }
-  lastSyncedAt: timestamp
-  syncMethod: 'manual' | 'browser-extension' | 'json-export' | 'sync-protocol' | 'screenshot-vision' | 'ghs-tracker'
+  lastSyncedAt?: timestamp
+  syncMethod?: string // provenance label for manual or one-time import writes
+  sourceAuthority?: string
+  externalRef?: string
 }
 ```
 
@@ -587,7 +589,6 @@ graph TB
 - `getCharacterState(characterId)` — Phase 4, campaign state
 - `getPartyInfo(campaignId)` — Phase 4, campaign state
 - `fetchBuildGuide(url)` — Phase 5, recommendation engine
-- `extractCharacterFromScreenshots(images[])` — Phase 6, only if screenshot path is chosen over browser-extension or GHS-as-tracker alternatives
 
 ### Why atomic tools matter
 
@@ -688,8 +689,8 @@ An earlier design considered using **internal MCP** as the transport between the
 | Claude Code        | `/mcp`                  | OAuth 2.1 (auth code + PKCE) | userId from token                     |
 | Other MCP agents   | `/mcp`                  | OAuth 2.1                    | userId from token                     |
 | CLI / scripts      | `/api/*`                | OAuth 2.1                    | userId from token or service identity |
-| Discord (Phase 8)  | `/api/ask`              | Service credentials          | userId from Discord identity mapping  |
-| iMessage (Phase 8) | `/api/ask`              | TBD                          | TBD                                   |
+| Discord (Phase 7)  | `/api/ask`              | Service credentials          | userId from Discord identity mapping  |
+| iMessage (Phase 7) | `/api/ask`              | TBD                          | TBD                                   |
 
 **Web UI conversation agent:**
 
@@ -805,7 +806,7 @@ sweeper has a reliable scheduler without tying cleanup to web request traffic.
 - Claude API (Sonnet 4.6): ~$10–30 depending on chat volume
 - **Total: ~$67–92/month** within the $100/mo Phase 1 budget. See [ADR 0016](adr/0016-phase-1-hosting-platform.md).
 
-Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. Per-user daily budget circuit breakers, embedding caching, and model tiering (Haiku for cheap cases) are the primary mitigations. Vision API costs (~$0.15–0.30 per character sync) are deferred to Phase 6 and only apply if the screenshot path is chosen over the browser-extension or GHS-as-tracker alternatives.
+Costs grow when Phase 3 (multi-user) and Phase 5 (recommendation engine) ship. Per-user daily budget circuit breakers, embedding caching, and model tiering (Haiku for cheap cases) are the primary mitigations.
 
 ---
 
@@ -884,32 +885,27 @@ For developer setup, running the server, working on import scripts locally, and 
 
 1. **Embedding quality.** Squire uses Voyage AI embeddings after the SQR-247 retrieval bakeoff. The vector store (pgvector) is independent of the embedding provider. Mitigation: monitor retrieval quality via LangSmith evals and rerun provider bakeoffs when scores drop.
 
-2. **Browser-extension fragility (Phase 6).** The browser-extension and JSON-export approaches for character state ingestion inherit the same class of risk as classic web scraping — site DOM / localStorage shape can change without notice and break extraction silently. localStorage schema is undocumented and not a stable contract. No SLA from the storyline maintainers. Mitigation: keep manual entry as a permanent fallback; pin the extension to a known schema version with a clear "site updated, extension needs work" error.
+2. **Build guide web fetch reliability (Phase 5).** Google Docs and Reddit posts can be slow to fetch (2-5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if web fetch proves unreliable.
 
-3. **Build guide web fetch reliability (Phase 5).** Google Docs and Reddit posts can be slow to fetch (2–5s) or rate-limited. Link rot: guides get deleted, moved, made private. Mitigation: cache fetched guides server-side, maintain archived copies of curated guides, implement RAG fallback if web fetch proves unreliable.
+3. **Build guide content nuance (Phase 5).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
 
-4. **Build guide content nuance (Phase 5).** Even with on-demand fetch (no parsing), Claude has to interpret guide content with conditional logic, alternatives, and opinion. Pure recommendations are rare. The agent needs to surface this nuance, not flatten it into a single answer.
+4. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via LangSmith, model tiering (Haiku for cheap cases) when justified.
 
-5. **Claude API costs at scale.** Phase 1 cost is small. Once multi-user (Phase 3+) and the recommendation engine (Phase 5) ship, per-user cost increases. Mitigation: per-user daily budget circuit breakers, cache aggressively, monitor via LangSmith, model tiering (Haiku for cheap cases) when justified.
+5. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, scenario/section books, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
 
-6. **frosthaven-storyline.com may not support Gloomhaven (2nd Edition) (Phase 6).** Brian uses storyline as his canonical campaign tracker for Frosthaven today. If storyline doesn't support GH2 when automated ingestion begins, all four storyline-based ingestion options in Phase 6 become non-viable for GH2. Mitigation: option 5 in Phase 6 (GHS-as-tracker) sidesteps this entirely. Action: confirm storyline GH2 support before Phase 6 begins.
-
-7. **Prompt injection.** The knowledge agent assembles context from multiple sources (rulebook, scenario/section books, card data, conversation history, campaign state) and sends it to Claude. Every input path is a prompt injection surface. See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
-
-8. **OAuth implementation surface.** Custom auth is a real trust boundary. Use
+6. **OAuth implementation surface.** Custom auth is a real trust boundary. Use
    MCP SDK auth handlers, exact-match redirect URI validation, Redis-backed
    app rate limits for client registration, hash bearer secrets at rest, and
    keep the long-lived token policy under review as the threat model changes.
    See [SECURITY.md](SECURITY.md).
 
-9. **Campaign data isolation (Phase 4).** Multiplayer campaigns require strict horizontal privilege separation — User A must not see User B's personal quest or battle goals, even via LLM-mediated leaks. The data isolation design must come **before** building the campaign data model, not after. See [SECURITY.md](SECURITY.md).
+7. **Campaign data isolation (Phase 4).** Multiplayer campaigns require strict horizontal privilege separation — User A must not see User B's personal quest or battle goals, even via LLM-mediated leaks. The data isolation design must come **before** building the campaign data model, not after. See [SECURITY.md](SECURITY.md).
 
 ---
 
 ## Open Tech Questions
 
-- **Character state ingestion path (Phase 6).** Browser extension vs JSON export vs storyline sync protocol vs screenshot+Vision vs GHS-as-tracker — defer until Phase 6 begins. The GH2 campaign may force this decision earlier than the Frosthaven one.
-- **Storyline GH2 support (Phase 6 input).** Confirm whether frosthaven-storyline.com supports Gloomhaven (2nd Edition) before automated character/campaign ingestion begins. If not, Brian's GH2 campaign-tracking workflow needs to switch (most likely to GHS).
+No roadmap-level architecture questions are open at this time.
 
 ---
 
@@ -926,8 +922,8 @@ For developer setup, running the server, working on import scripts locally, and 
   architecture. Production card seeding, scenario/section-book seeding, and
   rule-source reindexing now accept `all`, `frosthaven`, and `gloomhaven-2e`
   scopes. The architecture now reflects that Frosthaven and Gloomhaven (2nd
-  Edition) are both current supported games, while campaign tracking and
-  automated ingestion remain later-phase work.
+  Edition) are both current supported games. Campaign tracking moved into
+  Phase 4, and external tracker ingestion is no longer on the roadmap.
 
 - **2026-05-06:** SQR-59 picked the Phase 1 hosting platform: Fly.io app + Fly Managed Postgres (Basic) in one region, no staging. SQR-58 later put Route 53, CloudFront, and AWS WAF in front of the Fly origin with an origin-secret lock. App-to-DB traffic stays on private 6PN. Migrations run via `release_command` before traffic cutover. ARCHITECTURE.md §Deployment and §Cost updated to reflect the concrete pick. Reasoning, alternatives (Neon, Railway, Render, VPS, Cloudflare Workers), and re-evaluation triggers in [ADR 0016](adr/0016-phase-1-hosting-platform.md). Unblocks SQR-58 (WAF), SQR-42 (Dockerize), SQR-43 (migrate-on-deploy), SQR-44 (CI/CD).
 

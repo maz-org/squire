@@ -20,9 +20,9 @@
  * - Scenario identity in `played_scenarios` / `drawn_scenarios` uses the
  *   module-scoped scenario keys defined by the unlock-graph seed (SQR-267);
  *   this schema stores them as opaque strings.
- * - Phase 6 sync hedges: `external_ref` + `source_authority` on syncable
- *   records, `last_synced_at` + `sync_method` on campaigns (decision D12).
- *   Conflict/merge semantics are deliberately NOT modeled — Phase 6 scope.
+ * - Optional import/provenance metadata: `external_ref` + `source_authority`
+ *   on syncable records, `last_synced_at` + `sync_method` on campaigns
+ *   (decision D12). Recurring third-party tracker sync is not on the roadmap.
  */
 
 import { sql } from 'drizzle-orm';
@@ -56,7 +56,7 @@ export const campaigns = pgTable(
     activeScenario: text('active_scenario'),
     /**
      * Shared progression state. Unlock/completion data is modeled completely
-     * enough to drive Phase 7 spoiler filtering (decision D4.3): which
+     * enough to drive Phase 6 spoiler filtering (decision D4.3): which
      * scenarios were played/drawn and which classes/items/buildings the
      * party has unlocked.
      */
@@ -70,7 +70,7 @@ export const campaigns = pgTable(
     unlockedBuildings: text('unlocked_buildings').array().notNull().default([]),
     /** Optimistic CAS counter (E3). Bumped on every shared-state write. */
     version: integer('version').notNull().default(1),
-    // Phase 6 sync hedges (D12) — columns only, no conflict semantics.
+    // Optional import/provenance metadata (D12).
     lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
     syncMethod: text('sync_method'),
     externalRef: text('external_ref'),
@@ -161,7 +161,7 @@ export const characters = pgTable(
     }),
     /** Optimistic CAS counter (E3). */
     version: integer('version').notNull().default(1),
-    // Phase 6 sync hedges (D12).
+    // Optional import/provenance metadata (D12).
     externalRef: text('external_ref'),
     sourceAuthority: text('source_authority'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

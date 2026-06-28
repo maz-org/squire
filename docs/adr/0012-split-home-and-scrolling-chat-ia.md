@@ -128,8 +128,8 @@ CARD, ITEM, MONSTER, OR SCENARIO` sepia small-caps scope line, and
   or their own routes. ADR 0010's "peer modes in `main.squire-surface`"
   bet is off the table.
 - Deep-link-to-a-specific-turn goes away. `/chat/:id/messages/:mid`
-  301-redirects forever; Phase 6 cross-device sync would have to design
-  a fresh URL shape if this ever comes back.
+  301-redirects forever; any future cross-device state feature would have to
+  design a fresh URL shape if this ever comes back.
 - Accessibility on a streaming scrolling transcript is harder than on a
   one-turn surface. The `role="log"` + permanent pending slot +
   `aria-busy` pattern mitigates; empirical VoiceOver iOS QA is required.

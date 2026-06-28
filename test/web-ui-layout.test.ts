@@ -2098,7 +2098,7 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     });
   });
 
-  it('ships hidden fixtures for the error, sync, verdict, and PICKED variants', async () => {
+  it('ships hidden fixtures for the error, status, verdict, and PICKED variants', async () => {
     // SQR-107 / ADR 0012: the visible home page drops the verdict block
     // and PICKED badge. They stay in this hidden `<template>` so CSS
     // drift tests that read `styles.css` keep a markup reference, and
@@ -2109,7 +2109,8 @@ describe('GET / — SQR-107 purpose-built landing', () => {
     expect(tpl).not.toBeNull();
     expect(tpl![0]).toMatch(/squire-banner squire-banner--error/);
     expect(tpl![0]).toMatch(/squire-banner squire-banner--sync/);
-    expect(tpl![0]).toContain('SYNCED · 2H AGO');
+    expect(tpl![0]).toContain('SAVED');
+    expect(tpl![0]).toContain('Status banner fixture for QA / tests.');
     expect(tpl![0]).toMatch(/class="squire-verdict"/);
     expect(tpl![0]).toContain('SQUIRE RECOMMENDS');
     expect(tpl![0]).toMatch(/class="squire-picked"/);

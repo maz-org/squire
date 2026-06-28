@@ -188,15 +188,16 @@ visibility, permission, and gating questions; the isolation proof suite has an
 enumerable test matrix; the LLM leak path is closed by construction rather
 than by prompt discipline.
 
-Harder: the single-projection rule means new context needs (Phase 5
-recommendations, Phase 6 sync) must extend `CampaignContextView` rather than
+Harder: the single-projection rule means new context needs (for example,
+Phase 5 recommendations) must extend `CampaignContextView` rather than
 querying ad hoc — deliberate friction. One-owner-per-campaign means owner
 departure requires campaign delete or a future ownership-transfer mutation;
 re-evaluate if a real party hits this.
 
 Re-evaluation triggers: a second campaign role genuinely needed in practice;
-spoiler protection (Phase 7) needing per-member visibility of _shared_ state;
-Phase 6 sync requiring a service identity that doesn't map to a member.
+spoiler protection (Phase 6) needing per-member visibility of _shared_ state;
+or a future import feature requiring a service identity that doesn't map to a
+member.
 
 ## Advice
 

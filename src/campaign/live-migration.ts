@@ -10,8 +10,9 @@
  * Idempotent on campaign identity: repeatable against fresh exports until
  * cutover (find by name + owner membership, else create). Writes ride
  * CampaignService with the owner's identity, so audit rows record the
- * import like any other mutation. Recurring sync is Phase 6 — this is a
- * one-time operational step (docs/runbooks/production-operations.md).
+ * import like any other mutation. Recurring third-party tracker sync is not
+ * on the roadmap — this is a one-time operational step
+ * (docs/runbooks/production-operations.md).
  */
 import { z } from 'zod';
 

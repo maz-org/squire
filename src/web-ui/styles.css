@@ -12,7 +12,7 @@
  *
  * DARK MODE IS UNCONDITIONAL IN PHASE 1.
  * The tokens declared on `:root` are the dark-mode values. A light-mode
- * variant exists via `[data-theme="light"]` on <html> for the Phase 7 user
+ * variant exists via `[data-theme="light"]` on <html> for the Phase 6 user
  * toggle, but Phase 1 does NOT honor `prefers-color-scheme` — the
  * phone-at-the-table primary surface is dark-first by deliberate design
  * choice. See DESIGN.md §Color and the 2026-04-08 decisions log entry
@@ -75,7 +75,7 @@
 
 /*
  * Light-mode overrides — shipped in Phase 1 so the CSS is ready for the
- * Phase 7 user-controlled toggle. No toggle UI exists yet. Activated by
+ * Phase 6 user-controlled toggle. No toggle UI exists yet. Activated by
  * setting `data-theme="light"` on <html>.
  *
  * prefers-color-scheme is intentionally NOT honored — see comment block above.
@@ -1276,9 +1276,8 @@ a.squire-chat-context__name:focus-visible {
   color: var(--amber);
 }
 
-/* SQR-67 — Phase 6 sync status banner variant. Ships the CSS now with a
-   hidden <template> fixture so Phase 6's SYNCED banner doesn't need to
-   re-derive the styling. Sage accent + 8% sage tint per DESIGN.md. */
+/* SQR-67 — status banner variant for successful background work. Sage accent
+   + 8% sage tint per DESIGN.md. */
 .squire-banner--sync {
   border-left-color: var(--sage);
   background: rgb(122 140 92 / 0.08);

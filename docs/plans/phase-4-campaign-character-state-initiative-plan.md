@@ -18,15 +18,13 @@ already reserves `campaign`, `character`, and `party` entity kinds.
 
 Phase 4 is the pivot from _generic rules reference_ to _personalized
 companion_: Squire knows who you are, what your party looks like, and which
-character you're playing. It is the prerequisite for Phase 5 (recommendations),
-Phase 6 (automated ingestion), and Phase 7 (spoiler protection).
+character you're playing. It is the prerequisite for Phase 5 (recommendations)
+and Phase 6 (polish and spoiler protection).
 
-Landscape (2026-06-12): the tracker space is crowded and good — Gloomhaven
-Secretariat, Gloomhaven Campaign Tracker, the official Frosthaven companion
-app, frosthaven-storyline. None has an agent layer. Squire does not try to
-out-tracker the trackers; its wedge is conversational state entry plus
-rules-grounded personalization, with Phase 6 later syncing from the trackers
-people already use.
+Landscape (2026-06-12): the tracker space is crowded and good, but none has an
+agent layer. Squire's wedge is conversational state entry plus rules-grounded
+personalization, and the current GH2 campaign uses Squire itself as the
+campaign workspace.
 
 ## CEO scope decisions (2026-06-12)
 
@@ -37,7 +35,7 @@ people already use.
 | D3   | Multi-user campaign membership (invite/join/leave) in v1                                             | ACCEPTED                                                                                             |
 | D4.1 | Conversational campaign onboarding interview                                                         | ACCEPTED                                                                                             |
 | D4.2 | Campaign journal / session timeline                                                                  | ACCEPTED                                                                                             |
-| D4.3 | Spoiler-protection data hooks (schema-only, Phase 7 input)                                           | ACCEPTED                                                                                             |
+| D4.3 | Spoiler-protection data hooks (schema-only, Phase 6 input)                                           | ACCEPTED                                                                                             |
 | D4.4 | Rules-legal validation on state writes (soft warnings)                                               | ACCEPTED                                                                                             |
 | D4.5 | Character retirement & legacy flow                                                                   | DEFERRED — `status` field + successor link ship in v1 schema; guided flow tracked as follow-up issue |
 
@@ -75,7 +73,7 @@ gates all implementation:
   battle goals; visibility of items/gold/cards/perks decided by the
   contract).
 - Spoiler-protection hook (D4.3): unlock + completion state is modeled
-  completely enough that Phase 7 spoiler filtering is a filter, not a
+  completely enough that Phase 6 spoiler filtering is a filter, not a
   migration. Acceptance criterion on the schema issue.
 - Campaign membership check on every request; LLM context scoped to the
   requesting player's data + shared state; other players' private fields
@@ -93,10 +91,9 @@ gates all implementation:
   issues.
 - Isolation proven by deterministic integration tests AND adversarial evals
   (see success metrics for the split).
-- Schema ships `lastSyncedAt` + `syncMethod`, plus nullable `externalRef` +
-  `sourceAuthority` columns on every syncable record, so Phase 6 ingestion
-  lands without migration. Conflict/merge/tombstone semantics stay Phase 6
-  scope — they depend on which ingestion option wins.
+- Schema ships nullable provenance metadata (`lastSyncedAt`, `syncMethod`,
+  `externalRef`, `sourceAuthority`) so one-time imports can identify their
+  source. Recurring third-party tracker sync is not on the roadmap.
 - The SQR-28 contract includes an explicit **permission matrix**: who can
   delete a campaign, remove a member, edit shared state, edit another
   member's character, and correct journal entries.
@@ -273,13 +270,13 @@ inspection surface.
 
 ## Explicitly out of scope
 
-- Automated ingestion from external trackers (Phase 6). Schema hedges only
-  (`lastSyncedAt`, `syncMethod`).
+- Third-party tracker import/sync is not planned. Squire is the source of truth
+  for the current GH2 campaign.
 - Recommendations (Phase 5). Phase 4 ends where personalization of _lookup_
   answers ends; "which card should I pick?" reasoning is Phase 5.
   Rules-legal _validation_ (deterministic legality warnings) is
   distinguishable from _recommendation_ (judgment) and stays.
-- Spoiler protection UI/filtering (Phase 7) — Phase 4 ships only the data
+- Spoiler protection UI/filtering (Phase 6) — Phase 4 ships only the data
   model hooks (D4.3).
 - Guided character retirement & legacy flow (D4.5 deferral — tracked issue).
 - Real-time party sync / live multiplayer presence.
@@ -309,7 +306,7 @@ inspection surface.
 6. **Real use:** Brian runs a real session week with Squire tracking both
    campaigns. Manual-entry friction is mitigated by conversational
    onboarding (D4.1) — if entry still feels like homework, that's a Phase 4
-   bug to fix, not a Phase 6 wait.
+   bug to fix, not an import wait.
 
 ## Engineering decisions (eng review, 2026-06-12)
 
@@ -461,10 +458,9 @@ stale text mislead implementers.
 
 1. **Multi-user membership in v1?** — RESOLVED by D3: yes, full
    invite/join/leave membership ships in Phase 4.
-2. **Manual-entry friction vs Phase 6?** — RESOLVED by D4.1: conversational
-   onboarding is the friction mitigation; no further friction budget is
-   allocated. If entry still stalls real use, treat as a Phase 4 bug
-   (metric 6).
+2. **Manual-entry friction?** — RESOLVED by D4.1: conversational onboarding is
+   the friction mitigation; no further external-ingestion budget is allocated.
+   If entry still stalls real use, treat as a Phase 4 bug (metric 6).
 
 ## Open questions for design review
 
